@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="MeshSyncClientMQ/MeshSyncClientMQ.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ/pch.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="External\mqsdk\MQInit.cpp">
+      <Filter>External\mqsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="External\mqsdk\MQPlugin.cpp">
+      <Filter>External\mqsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Sources\mqsdk456\mqsdk\MQBasePlugin.cpp">
+      <Filter>External\mqsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Sources\mqsdk456\mqsdk\MQWidget.cpp">
+      <Filter>External\mqsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Sources\mqsdk456\mqsdk\MQSetting.cpp">
+      <Filter>External\mqsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\Dialog.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MeshSyncClientMQ/pch.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ/MeshSyncClientMQ.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="External\mqsdk\MQPlugin.h">
+      <Filter>External\mqsdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Sources\mqsdk456\mqsdk\MQBasePlugin.h">
+      <Filter>External\mqsdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Sources\mqsdk456\mqsdk\MQSetting.h">
+      <Filter>External\mqsdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Sources\mqsdk456\mqsdk\MQWidget.h">
+      <Filter>External\mqsdk</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\Dialog.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MeshSyncClientMQ">
+      <UniqueIdentifier>{9c638e9c-d6ef-4dc0-a470-bcd0298c4d16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{7dbb5883-859b-401e-a36c-f78af837b799}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\mqsdk">
+      <UniqueIdentifier>{e79d40f9-c3cd-4978-9593-bea914e84457}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

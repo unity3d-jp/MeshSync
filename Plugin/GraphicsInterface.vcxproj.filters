@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="GraphicsInterface">
+      <UniqueIdentifier>{43f41a03-e172-47f9-a63f-afa377c6b7c1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GraphicsInterface\giInternal.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsInterface\GraphicsInterface.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsInterface\pch.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsInterface\giUnityPluginImpl.h">
+      <Filter>GraphicsInterface</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GraphicsInterface\GraphicsInterface.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\GraphicsInterfaceD3D9.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\GraphicsInterfaceD3D11.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\GraphicsInterfaceOpenGL.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\pch.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\GraphicsInterfaceD3D12.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\GraphicsInterfaceVulkan.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\giUnityPluginImpl.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsInterface\giInternal.cpp">
+      <Filter>GraphicsInterface</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{E6D71B6A-A12A-4818-9933-0D43DC6A5C9F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsInterface", "GraphicsInterface.vcxproj", "{29751262-3A23-4CF5-9DEC-8D11AFF02599}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshUtils", "MeshUtils.vcxproj", "{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup.vcxproj", "{1C5DE91B-7AE9-4304-9FA1-0DE1ABA8C02D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncServer", "MeshSyncServer.vcxproj", "{66397903-6FF2-46C6-B51E-B323FD248FAD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientMQ", "MeshSyncClientMQ.vcxproj", "{12C849FC-DFEC-4FCD-9351-38BE0020BED5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{11990C37-1C63-418F-9AB1-74076C470584}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Master|x64 = Master|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{29751262-3A23-4CF5-9DEC-8D11AFF02599}.Debug|x64.ActiveCfg = Debug|x64
+		{29751262-3A23-4CF5-9DEC-8D11AFF02599}.Debug|x64.Build.0 = Debug|x64
+		{29751262-3A23-4CF5-9DEC-8D11AFF02599}.Master|x64.ActiveCfg = Master|x64
+		{29751262-3A23-4CF5-9DEC-8D11AFF02599}.Master|x64.Build.0 = Master|x64
+		{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}.Debug|x64.ActiveCfg = Debug|x64
+		{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}.Debug|x64.Build.0 = Debug|x64
+		{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}.Master|x64.ActiveCfg = Master|x64
+		{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}.Master|x64.Build.0 = Master|x64
+		{1C5DE91B-7AE9-4304-9FA1-0DE1ABA8C02D}.Debug|x64.ActiveCfg = Debug|x64
+		{1C5DE91B-7AE9-4304-9FA1-0DE1ABA8C02D}.Debug|x64.Build.0 = Debug|x64
+		{1C5DE91B-7AE9-4304-9FA1-0DE1ABA8C02D}.Master|x64.ActiveCfg = Master|x64
+		{1C5DE91B-7AE9-4304-9FA1-0DE1ABA8C02D}.Master|x64.Build.0 = Master|x64
+		{66397903-6FF2-46C6-B51E-B323FD248FAD}.Debug|x64.ActiveCfg = Debug|x64
+		{66397903-6FF2-46C6-B51E-B323FD248FAD}.Debug|x64.Build.0 = Debug|x64
+		{66397903-6FF2-46C6-B51E-B323FD248FAD}.Master|x64.ActiveCfg = Master|x64
+		{66397903-6FF2-46C6-B51E-B323FD248FAD}.Master|x64.Build.0 = Master|x64
+		{12C849FC-DFEC-4FCD-9351-38BE0020BED5}.Debug|x64.ActiveCfg = Debug|x64
+		{12C849FC-DFEC-4FCD-9351-38BE0020BED5}.Debug|x64.Build.0 = Debug|x64
+		{12C849FC-DFEC-4FCD-9351-38BE0020BED5}.Master|x64.ActiveCfg = Master|x64
+		{12C849FC-DFEC-4FCD-9351-38BE0020BED5}.Master|x64.Build.0 = Master|x64
+		{11990C37-1C63-418F-9AB1-74076C470584}.Debug|x64.ActiveCfg = Debug|x64
+		{11990C37-1C63-418F-9AB1-74076C470584}.Debug|x64.Build.0 = Debug|x64
+		{11990C37-1C63-418F-9AB1-74076C470584}.Master|x64.ActiveCfg = Master|x64
+		{11990C37-1C63-418F-9AB1-74076C470584}.Master|x64.Build.0 = Master|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{11990C37-1C63-418F-9AB1-74076C470584} = {E6D71B6A-A12A-4818-9933-0D43DC6A5C9F}
+	EndGlobalSection
+EndGlobal

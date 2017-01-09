@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Master|x64">
+      <Configuration>Master</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Sources\mqsdk456\mqsdk\MQBasePlugin.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Sources\mqsdk456\mqsdk\MQSetting.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Sources\mqsdk456\mqsdk\MQWidget.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="External\mqsdk\MQInit.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="External\mqsdk\MQPlugin.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ/MeshSyncClientMQ.cpp" />
+    <ClCompile Include="MeshSyncClientMQ/pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\Dialog.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Sources\mqsdk456\mqsdk\MQBasePlugin.h" />
+    <ClInclude Include="..\..\..\Sources\mqsdk456\mqsdk\MQSetting.h" />
+    <ClInclude Include="..\..\..\Sources\mqsdk456\mqsdk\MQWidget.h" />
+    <ClInclude Include="External\mqsdk\MQPlugin.h" />
+    <ClInclude Include="MeshSyncClientMQ/MeshSyncClientMQ.h" />
+    <ClInclude Include="MeshSyncClientMQ/pch.h" />
+    <ClInclude Include="MeshSyncClientMQ\Dialog.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="setup.vcxproj">
+      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{12C849FC-DFEC-4FCD-9351-38BE0020BED5}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <ProjectName>MeshSyncClientMQ</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformToolset>v140</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk;$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+    <LibraryPath>$(SolutionDir)External\Poco\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk;$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+    <LibraryPath>$(SolutionDir)External\Poco\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>tImpl;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>tImpl;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>Full</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WarningLevel>Level3</WarningLevel>
+      <StringPooling>true</StringPooling>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
