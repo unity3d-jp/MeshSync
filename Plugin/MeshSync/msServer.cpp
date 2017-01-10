@@ -101,5 +101,10 @@ void Server::stop()
     m_server.reset();
 }
 
+const ServerSettings& Server::getSettings() const
+{
+    return m_settings;
+}
+
 } // namespace ms
 

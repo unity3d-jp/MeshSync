@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RawVector.h"
+
 namespace ms {
 
 using namespace mu;
@@ -19,13 +21,16 @@ struct EventData
 struct EditData : public EventData
 {
     std::string obj_path;
-    std::vector<float3> points;
-    std::vector<float2> uv;
-    std::vector<int> indices;
+    RawVector<float3> points;
+    RawVector<float3> normals;
+    RawVector<float4> tangents;
+    RawVector<float2> uv;
+    RawVector<int> indices;
     float3 position{ 0.0f, 0.0f, 0.0f };
 
     EditData();
     void clear();
+    void generateNormals(bool gen_tangents);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     bool deserialize(std::istream& is);
@@ -33,10 +38,12 @@ struct EditData : public EventData
 
 struct EditDataRef
 {
-    const char *obj_path = nullptr;
-    const float3 *points = nullptr;
-    const float2 *uv = nullptr;
-    const int *indices = nullptr;
+    char *obj_path = nullptr;
+    float3 *points = nullptr;
+    float3 *normals = nullptr;
+    float4 *tangents = nullptr;
+    float2 *uv = nullptr;
+    int *indices = nullptr;
     int num_points = 0;
     int num_indices = 0;
 

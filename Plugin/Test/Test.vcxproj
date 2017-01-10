@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\MeshSync\Allocator.cpp" />
     <ClCompile Include="..\MeshSync\msClient.cpp" />
     <ClCompile Include="..\MeshSync\msCommon.cpp" />
     <ClCompile Include="..\MeshSync\msServer.cpp" />
@@ -24,11 +25,16 @@
     <ProjectReference Include="..\MeshSyncServer.vcxproj">
       <Project>{66397903-6ff2-46c6-b51e-b323fd248fad}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\MeshUtils.vcxproj">
+      <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\MeshSync\Allocator.h" />
     <ClInclude Include="..\MeshSync\msClient.h" />
     <ClInclude Include="..\MeshSync\msCommon.h" />
     <ClInclude Include="..\MeshSync\msServer.h" />
+    <ClInclude Include="..\MeshSync\RawVector.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

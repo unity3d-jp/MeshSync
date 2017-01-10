@@ -24,6 +24,9 @@
     <ClCompile Include="MeshSync\msClient.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\Allocator.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncServer\MeshSyncServer.h">
@@ -39,6 +42,12 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msClient.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\Allocator.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\RawVector.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>

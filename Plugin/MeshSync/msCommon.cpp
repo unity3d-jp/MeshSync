@@ -52,9 +52,43 @@ void EditData::clear()
 {
     obj_path.clear();
     points.clear();
+    normals.clear();
+    tangents.clear();
     uv.clear();
     indices.clear();
     position = {0.0f, 0.0f, 0.0f};
+}
+
+void EditData::generateNormals(bool gen_tangents)
+{
+    bool gen_normals = normals.size() != points.size();
+    gen_tangents = gen_tangents && tangents.size() != points.size() && uv.size() == points.size();
+    if (!gen_normals && !gen_tangents) { return; }
+
+
+    RawVector<int> counts, offsets;
+
+    int num_faces = (int)(indices.size() / 3);
+    counts.resize(num_faces);
+    offsets.resize(num_faces);
+    std::fill(counts.begin(), counts.end(), 3);
+    for (int i = 0; i < num_faces; ++i) {
+        offsets[i] = i * 3;
+    }
+
+    if (gen_normals) {
+        normals.resize(points.size());
+        GenerateNormals(normals.data(), points.data(),
+            counts.data(), offsets.data(), indices.data(),
+            points.size(), counts.size());
+    }
+    if (gen_tangents) {
+        tangents.resize(points.size());
+        GenerateTangents(tangents.data(),
+            points.cdata(), normals.cdata(), uv.cdata(),
+            counts.cdata(), offsets.cdata(), indices.cdata(),
+            points.size(), counts.size());
+    }
 }
 
 uint32_t EditData::getSerializeSize() const
@@ -63,6 +97,8 @@ uint32_t EditData::getSerializeSize() const
     ret += size_pod(EditDataVersion);
     ret += size_vector(obj_path);
     ret += size_vector(points);
+    ret += size_vector(normals);
+    ret += size_vector(tangents);
     ret += size_vector(uv);
     ret += size_vector(indices);
     ret += size_pod(position);
@@ -74,6 +110,8 @@ void EditData::serialize(std::ostream& os) const
     write_pod(os, EditDataVersion);
     write_vector(os, obj_path);
     write_vector(os, points);
+    write_vector(os, normals);
+    write_vector(os, tangents);
     write_vector(os, uv);
     write_vector(os, indices);
     write_pod(os, position);
@@ -83,16 +121,20 @@ bool EditData::deserialize(std::istream& is)
 {
     int version = 0;
     read_pod(is, version);
-    if (version != 1) {
+    if (version == 1) {
+        read_vector(is, obj_path);
+        read_vector(is, points);
+        read_vector(is, normals);
+        read_vector(is, tangents);
+        read_vector(is, uv);
+        read_vector(is, indices);
+        read_pod(is, position);
+        return true;
+    }
+    else {
         clear();
         return false;
     }
-    read_vector(is, obj_path);
-    read_vector(is, points);
-    read_vector(is, uv);
-    read_vector(is, indices);
-    read_pod(is, position);
-    return true;
 }
 
 } // namespace ms

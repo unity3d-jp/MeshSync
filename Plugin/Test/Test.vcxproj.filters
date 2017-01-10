@@ -12,6 +12,9 @@
       <Filter>MeshSync</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\MeshSync\Allocator.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSync">
@@ -29,5 +32,11 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="..\MeshSync\Allocator.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MeshSync\RawVector.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
