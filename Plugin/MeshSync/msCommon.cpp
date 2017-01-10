@@ -43,6 +43,11 @@ inline void read_vector(std::istream& is, T& v)
 
 static const int EditDataVersion = 1;
 
+EditData::EditData()
+{
+    type = EventType::Edit;
+}
+
 void EditData::clear()
 {
     obj_path.clear();

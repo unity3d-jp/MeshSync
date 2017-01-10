@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    server.processEditEvents([](const ms::EditData& data) {
+    server.processEvents([](const ms::EventData& data) {
         printf("hoge\n");
     });
 }

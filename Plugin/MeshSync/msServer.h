@@ -26,24 +26,34 @@ public:
         body(m_tmp_edit_data);
         if (!m_tmp_edit_data.obj_path.empty()) {
             m_edit_data[m_tmp_edit_data.obj_path] = m_tmp_edit_data;
-            m_history.push_back(m_tmp_edit_data.obj_path);
+            m_history.push_back({ EventType::Edit, m_tmp_edit_data.obj_path });
         }
     }
 
-    // Body: [](const EditData& data) -> void
+    // Body: [](const EventData& data) -> void
     template<class Body>
-    void processEditEvents(const Body& body)
+    void processEvents(const Body& body)
     {
-        for (auto& s : m_history) {
-            body(m_edit_data[s]);
+        for (auto& r : m_history) {
+            switch (r.type) {
+            case EventType::Edit:
+                body(m_edit_data[r.arg]);
+                break;
+            }
         }
         m_history.clear();
     }
 
 private:
     using EditDataTable = std::map<std::string, EditData>;
-    using EditHistory = std::vector<std::string>;
     using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
+
+    struct Record
+    {
+        EventType type;
+        std::string arg;
+    };
+    using EditHistory = std::vector<Record>;
 
     ServerSettings m_settings;
     HTTPServerPtr m_server;

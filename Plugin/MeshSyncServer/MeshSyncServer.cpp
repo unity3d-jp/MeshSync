@@ -3,9 +3,7 @@
 #include "MeshSyncServer.h"
 
 
-extern "C" {
-
-msAPI ms::Server* mssServerStart(const ms::ServerSettings *settings)
+msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
     ms::Server *ret = nullptr;
     if (settings) {
@@ -18,9 +16,15 @@ msAPI ms::Server* mssServerStart(const ms::ServerSettings *settings)
     return ret;
 }
 
-msAPI void  mssServerStop(ms::Server *server)
+msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
+{
+    if (!server) { return; }
+    server->processEvents([handler](ms::EventData& data) {
+        handler(data.type, &data);
+    });
+}
+
+msAPI void  msServerStop(ms::Server *server)
 {
     delete server;
 }
-
-} // extern "C"

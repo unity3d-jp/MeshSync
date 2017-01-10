@@ -35,8 +35,8 @@ obj/
 Plugin/build_*
 CMakeFiles/
 CMakeCache.txt
-USDForUnity/*.sln
-USDForUnity/*.csproj
+MeshSync/*.sln
+MeshSync/*.csproj
 bin/
 
 MeshUtilsCore.h
