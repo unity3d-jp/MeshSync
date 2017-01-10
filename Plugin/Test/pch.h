@@ -25,6 +25,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include "MeshUtils/MeshUtils.h"
 
@@ -55,3 +56,11 @@
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/SocketStream.h"
 #include "Poco/Net/SocketAddress.h"
+
+
+namespace ms {
+    using namespace mu;
+
+    struct ServerSettings;
+    class Server;
+} // namespace mss

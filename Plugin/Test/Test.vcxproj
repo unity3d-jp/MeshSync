@@ -11,12 +11,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\MeshSync\msClient.cpp" />
+    <ClCompile Include="..\MeshSync\msCommon.cpp" />
+    <ClCompile Include="..\MeshSync\msServer.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MeshSyncServer.vcxproj">
       <Project>{66397903-6ff2-46c6-b51e-b323fd248fad}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\MeshSync\msClient.h" />
+    <ClInclude Include="..\MeshSync\msCommon.h" />
+    <ClInclude Include="..\MeshSync\msServer.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{11990C37-1C63-418F-9AB1-74076C470584}</ProjectGuid>
@@ -38,14 +51,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>External\libs\x86_64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
-    <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>External\libs\x86_64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -55,7 +68,7 @@
       </Command>
     </PostBuildEvent>
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -73,7 +86,7 @@
       </Command>
     </PostBuildEvent>
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>

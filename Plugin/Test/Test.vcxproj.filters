@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Tests.cpp" />
+    <ClCompile Include="..\MeshSync\msServer.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MeshSync\msClient.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MeshSync\msCommon.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MeshSync">
+      <UniqueIdentifier>{45d38b1d-a383-4fec-9aee-9a2d1315fa3c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\MeshSync\msServer.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MeshSync\msClient.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MeshSync\msCommon.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+</Project>

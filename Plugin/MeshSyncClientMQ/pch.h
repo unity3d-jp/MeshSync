@@ -38,6 +38,7 @@
 #include "Poco/DirectoryIterator.h"
 #include "Poco/Timestamp.h"
 #include "Poco/URI.h"
+#include "Poco/StreamCopier.h"
 #include "Poco/Net/TCPServer.h"
 #include "Poco/Net/TCPServerParams.h"
 #include "Poco/Net/HTTPServer.h"

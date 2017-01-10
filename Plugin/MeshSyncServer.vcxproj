@@ -16,10 +16,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeshSync\msClient.cpp" />
+    <ClCompile Include="MeshSync\msCommon.cpp" />
+    <ClCompile Include="MeshSync\msServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncServer\MeshSyncServer.h" />
     <ClInclude Include="MeshSyncServer\pch.h" />
+    <ClInclude Include="MeshSync\msClient.h" />
+    <ClInclude Include="MeshSync\msCommon.h" />
+    <ClInclude Include="MeshSync\msServer.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="GraphicsInterface.vcxproj">
