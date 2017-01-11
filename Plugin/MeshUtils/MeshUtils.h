@@ -247,7 +247,7 @@ inline void CountIndices(
         auto f = counts[fi];
         offsets[fi] = reti;
         reti += f;
-        rett += (f - 2) * 3;
+        rett += std::max<int>(f - 2, 0) * 3;
     }
     num_indices = reti;
     num_indices_triangulated = rett;

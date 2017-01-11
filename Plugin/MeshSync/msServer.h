@@ -1,6 +1,8 @@
 #pragma once
 
+#include <mutex>
 #include "msCommon.h"
+#include "tls.h"
 
 namespace Poco {
     namespace Net {
@@ -14,6 +16,7 @@ namespace ms {
 struct ServerSettings
 {
     int max_queue = 100;
+    int max_threads = 4;
     uint16_t port = 8080;
     MeshFlags mesh_flags;
     float scale = 0.01f;
@@ -71,6 +74,7 @@ private:
     };
     using DataTable = std::map<std::string, ObjectData>;
     using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
+    using lock_t = std::unique_lock<std::mutex>;
 
     struct Record
     {
@@ -81,14 +85,12 @@ private:
 
     ServerSettings m_settings;
     HTTPServerPtr m_server;
-    bool m_end_flag = false;
 
     DataTable m_data;
     History m_history;
 
-    DeleteData m_tmp_del;
-    XformData m_tmp_xf;
-    MeshData m_tmp_mesh;
+    std::mutex m_mutex;
+    tls<ObjectData> m_tmp;
 };
 
 } // namespace ms

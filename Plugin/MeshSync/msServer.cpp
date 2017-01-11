@@ -37,34 +37,46 @@ RequestHandler::RequestHandler(Server *server)
 template<class Body>
 void Server::recvDelete(const Body& body)
 {
-    body(m_tmp_del);
+    auto& tmp = m_tmp.local().del;
+    body(tmp);
     {
-        m_data[m_tmp_xf.obj_path].del = m_tmp_del;
-        m_history.push_back({ EventType::Delete, m_tmp_del.obj_path });
-        m_tmp_del.clear();
+        {
+            lock_t l(m_mutex);
+            m_data[tmp.obj_path].del = tmp;
+            m_history.push_back({ EventType::Delete, tmp.obj_path });
+        }
+        tmp.clear();
     }
 }
 
 template<class Body>
 void Server::recvXform(const Body& body)
 {
-    body(m_tmp_xf);
+    auto& tmp = m_tmp.local().xform;
+    body(tmp);
     {
-        m_data[m_tmp_xf.obj_path].xform = m_tmp_xf;
-        m_history.push_back({ EventType::Xform, m_tmp_xf.obj_path });
-        m_tmp_xf.clear();
+        {
+            lock_t l(m_mutex);
+            m_data[tmp.obj_path].xform = tmp;
+            m_history.push_back({ EventType::Xform, tmp.obj_path });
+        }
+        tmp.clear();
     }
 }
 
 template<class Body>
 void Server::recvMesh(const Body& body)
 {
-    body(m_tmp_mesh);
-    if (!m_tmp_mesh.obj_path.empty()) {
-        m_tmp_mesh.refine(m_settings.mesh_flags, m_settings.scale);
-        m_data[m_tmp_mesh.obj_path].mesh = m_tmp_mesh;
-        m_history.push_back({ EventType::Mesh, m_tmp_mesh.obj_path });
-        m_tmp_mesh.clear();
+    auto& tmp = m_tmp.local().mesh;
+    body(tmp);
+    if (!tmp.obj_path.empty()) {
+        tmp.refine(m_settings.mesh_flags, m_settings.scale);
+        {
+            lock_t l(m_mutex);
+            m_data[tmp.obj_path].mesh = tmp;
+            m_history.push_back({ EventType::Mesh, tmp.obj_path });
+        }
+        tmp.clear();
     }
 }
 
@@ -118,11 +130,9 @@ Server::~Server()
 bool Server::start()
 {
     if (!m_server) {
-        m_end_flag = false;
-
         auto* params = new Poco::Net::HTTPServerParams;
         params->setMaxQueued(m_settings.max_queue);
-        params->setMaxThreads(1);
+        params->setMaxThreads(m_settings.max_threads);
         params->setThreadIdleTime(Poco::Timespan(3, 0));
 
         try {

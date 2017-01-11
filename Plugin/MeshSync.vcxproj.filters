@@ -36,6 +36,9 @@
     <ClInclude Include="MeshSync\RawVector.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSync\tls.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSync">

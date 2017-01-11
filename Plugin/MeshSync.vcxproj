@@ -25,6 +25,7 @@
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\RawVector.h" />
     <ClInclude Include="MeshSync\pch.h" />
+    <ClInclude Include="MeshSync\tls.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSync\Allocator.cpp" />

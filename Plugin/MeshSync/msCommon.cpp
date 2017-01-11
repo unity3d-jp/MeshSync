@@ -187,31 +187,31 @@ void MeshData::refine(MeshFlags flags, float scale)
             points.size(), counts.size());
     }
 
-    // flatten
-    if ((int)normals.size() == num_indices || (int)uv.size() == num_indices) {
-        indices_flattened_triangulated.resize(num_indices_tri);
-        mu::TriangulateIndices(indices_flattened_triangulated, counts, (RawVector<int>*)nullptr, flags.swap_faces);
+    //// flatten
+    //if ((int)normals.size() == num_indices || (int)uv.size() == num_indices) {
+    //    indices_flattened_triangulated.resize(num_indices_tri);
+    //    mu::TriangulateIndices(indices_flattened_triangulated, counts, (RawVector<int>*)nullptr, flags.swap_faces);
 
-        {
-            RawVector<float3> flattened;
-            mu::CopyWithIndices(flattened, points, indices_triangulated, 0, num_indices_tri);
-            points.swap(flattened);
-        }
-        if (!normals.empty()) {
-            RawVector<float3> flattened;
-            mu::CopyWithIndices(flattened, normals,
-                (int)normals.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
-            normals.swap(flattened);
-        }
-        if (!uv.empty()) {
-            RawVector<float2> flattened;
-            mu::CopyWithIndices(flattened, uv,
-                (int)uv.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
-            uv.swap(flattened);
-        }
+    //    {
+    //        RawVector<float3> flattened;
+    //        mu::CopyWithIndices(flattened, points, indices_triangulated, 0, num_indices_tri);
+    //        points.swap(flattened);
+    //    }
+    //    if (!normals.empty()) {
+    //        RawVector<float3> flattened;
+    //        mu::CopyWithIndices(flattened, normals,
+    //            (int)normals.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
+    //        normals.swap(flattened);
+    //    }
+    //    if (!uv.empty()) {
+    //        RawVector<float2> flattened;
+    //        mu::CopyWithIndices(flattened, uv,
+    //            (int)uv.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
+    //        uv.swap(flattened);
+    //    }
 
-        std::iota(indices_triangulated.begin(), indices_triangulated.end(), 0);
-    }
+    //    std::iota(indices_triangulated.begin(), indices_triangulated.end(), 0);
+    //}
 
     // tangents
     bool gen_tangents = flags.gen_tangents && tangents.empty() && !uv.empty();

@@ -105,6 +105,7 @@ public class MeshSyncServer : MonoBehaviour
     public struct ServerSettings
     {
         public int max_queue;
+        public int max_threads;
         public ushort port;
         public ServerFlags flags;
         public float scale;
@@ -116,6 +117,7 @@ public class MeshSyncServer : MonoBehaviour
                 return new ServerSettings
                 {
                     max_queue = 100,
+                    max_threads = 4,
                     port = 8080,
                     scale = 0.001f,
                 };
@@ -270,11 +272,6 @@ public class MeshSyncServer : MonoBehaviour
 
         if (t == null)
         {
-            return;
-        }
-        if (!create)
-        {
-            GameObject.Destroy(t.gameObject);
             return;
         }
 
