@@ -8,6 +8,10 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include <future>
+#include <mutex>
+
+#include <ppl.h>
 
 #ifdef _WIN32
     #include <windows.h>

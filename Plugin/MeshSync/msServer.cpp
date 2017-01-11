@@ -34,6 +34,40 @@ RequestHandler::RequestHandler(Server *server)
 {
 }
 
+template<class Body>
+void Server::recvDelete(const Body& body)
+{
+    body(m_tmp_del);
+    {
+        m_data[m_tmp_xf.obj_path].del = m_tmp_del;
+        m_history.push_back({ EventType::Delete, m_tmp_del.obj_path });
+        m_tmp_del.clear();
+    }
+}
+
+template<class Body>
+void Server::recvXform(const Body& body)
+{
+    body(m_tmp_xf);
+    {
+        m_data[m_tmp_xf.obj_path].xform = m_tmp_xf;
+        m_history.push_back({ EventType::Xform, m_tmp_xf.obj_path });
+        m_tmp_xf.clear();
+    }
+}
+
+template<class Body>
+void Server::recvMesh(const Body& body)
+{
+    body(m_tmp_mesh);
+    if (!m_tmp_mesh.obj_path.empty()) {
+        m_tmp_mesh.refine(m_settings.mesh_flags);
+        m_data[m_tmp_mesh.obj_path].mesh = m_tmp_mesh;
+        m_history.push_back({ EventType::Mesh, m_tmp_mesh.obj_path });
+        m_tmp_mesh.clear();
+    }
+}
+
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     if (request.getURI() == "delete") {
@@ -41,13 +75,13 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
             tmp.deserialize(request.stream());
         });
     }
-    if (request.getURI() == "mesh") {
-        m_server->recvMesh([&request](MeshData& tmp) {
+    if (request.getURI() == "xform") {
+        m_server->recvXform([&request](XformData& tmp) {
             tmp.deserialize(request.stream());
         });
     }
-    if (request.getURI() == "xform") {
-        m_server->recvXform([&request](XformData& tmp) {
+    if (request.getURI() == "mesh") {
+        m_server->recvMesh([this, &request](MeshData& tmp) {
             tmp.deserialize(request.stream());
         });
     }

@@ -18,9 +18,24 @@ public class MeshSyncServer : MonoBehaviour
     {
         Unknown,
         Delete,
-        Mesh,
         Xform,
+        Mesh,
     }
+
+    public struct DeleteData
+    {
+        public IntPtr obj_path;
+    }
+
+    public struct XformData
+    {
+        public IntPtr     obj_path;
+        public Vector3    position;
+        public Quaternion rotation;
+        public Vector3    scale;
+        public Matrix4x4  transform;
+    }
+
 
     public struct MeshData
     {
@@ -31,8 +46,9 @@ public class MeshSyncServer : MonoBehaviour
         public IntPtr uv;
         public IntPtr counts;
         public IntPtr indices;
-        public int num_points;
-        public int num_indices;
+        public int    num_points;
+        public int    num_counts;
+        public int    num_indices;
     };
 
 
@@ -66,6 +82,24 @@ public class MeshSyncServer : MonoBehaviour
                 else { flags &= ~0x4; }
             }
         }
+        public bool swapHandedness
+        {
+            get { return (flags & 0x8) != 0; }
+            set
+            {
+                if (value) { flags |= 0x8; }
+                else { flags &= ~0x8; }
+            }
+        }
+        public bool swapFaces
+{
+            get { return (flags & 0x10) != 0; }
+            set
+            {
+                if (value) { flags |= 0x10; }
+                else { flags &= ~0x10; }
+            }
+        }
     }
 
     public struct ServerSettings
@@ -93,8 +127,10 @@ public class MeshSyncServer : MonoBehaviour
     public delegate void msEventHandler(EventType type, IntPtr data);
     [DllImport("MeshSyncServer")] public static extern void msServerProcessEvents(IntPtr sv, msEventHandler handler);
 
-    [DllImport("MeshSyncServer")] public static extern void msCopyMeshData(ref MeshData dst, ref MeshData src);
-    [DllImport("MeshSyncServer")] public static extern void msCopyMeshData(ref MeshData dst, IntPtr src);
+    [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref DeleteData dst, IntPtr src);
+    [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref XformData dst, IntPtr src);
+    [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, ref MeshData src);
+    [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, IntPtr src);
 
 
     public static IntPtr RawPtr(Array v)
@@ -109,9 +145,11 @@ public class MeshSyncServer : MonoBehaviour
 
 
     #region fields
+    [SerializeField] int m_port = 8080;
     [SerializeField] bool m_genNormals = true;
     [SerializeField] bool m_genTangents = false;
-    [SerializeField] int m_port = 8080;
+    [SerializeField] bool m_swapHandedness= false;
+    [SerializeField] bool m_swapFaces = false;
     IntPtr m_server;
     msEventHandler m_handler;
 
@@ -132,6 +170,8 @@ public class MeshSyncServer : MonoBehaviour
         var settings = ServerSettings.default_value;
         settings.flags.genNormals = m_genNormals;
         settings.flags.genTangents = m_genTangents;
+        settings.flags.swapHandedness = m_swapHandedness;
+        settings.flags.swapFaces = m_swapFaces;
         settings.port = (ushort)m_port;
         m_server = msServerStart(ref settings);
     }
@@ -151,16 +191,40 @@ public class MeshSyncServer : MonoBehaviour
     {
         switch (type)
         {
+            case EventType.Delete:
+                OnRecvDelete(data);
+                break;
+            case EventType.Xform:
+                OnRecvXform(data);
+                break;
             case EventType.Mesh:
-                OnEditEvent(data);
+                OnRecvMesh(data);
                 break;
         }
     }
 
-    void OnEditEvent(IntPtr data)
+    void OnRecvDelete(IntPtr data)
+    {
+        var edata = default(DeleteData);
+        msCopyData(EventType.Delete, ref edata, data);
+        var path = S(edata.obj_path);
+
+        Debug.Log("MeshSyncServer: Delete " + path);
+    }
+
+    void OnRecvXform(IntPtr data)
+    {
+        var edata = default(XformData);
+        msCopyData(EventType.Xform, ref edata, data);
+        var path = S(edata.obj_path);
+
+        Debug.Log("MeshSyncServer: Xform " + path);
+    }
+
+    void OnRecvMesh(IntPtr data)
     {
         var edata = default(MeshData);
-        msCopyMeshData(ref edata, data);
+        msCopyData(EventType.Mesh, ref edata, data);
 
 
         var mdata = default(MeshData);
@@ -189,7 +253,7 @@ public class MeshSyncServer : MonoBehaviour
             m_indices = new int[edata.num_indices];
             mdata.indices = RawPtr(m_indices);
         }
-        msCopyMeshData(ref mdata, ref edata);
+        msCopyData(EventType.Mesh, ref mdata, ref edata);
 
 
         var create = edata.num_points > 0;
@@ -221,7 +285,7 @@ public class MeshSyncServer : MonoBehaviour
         mesh.UploadMeshData(false);
 
         ForceRepaint();
-        Debug.Log("MeshSyncServer: Edit " + path);
+        Debug.Log("MeshSyncServer: Mesh " + path);
     }
 
 

@@ -1,13 +1,29 @@
 #include "pch.h"
 #include "Sync.h"
 
-void Sync::gather(MQDocument doc)
+Sync::Sync()
+{
+}
+
+void Sync::setClientSettings(const ms::ClientSettings& v)
+{
+    m_settings = v;
+}
+
+void Sync::sync(MQDocument doc)
 {
     int nobj = doc->GetObjectCount();
-    data.resize(nobj);
-    for (int oi = 0; oi < nobj; ++oi) {
-        gather(doc->GetObject(oi), data[oi]);
+    while ((int)m_data.size() < nobj) {
+        m_data.emplace_back(new ms::MeshData());
     }
+
+    concurrency::parallel_for(0, nobj, [doc, this](int i) {
+        auto& data = *m_data[i];
+        gather(doc->GetObject(i), data);
+
+        ms::Client client(m_settings);
+        client.send(data);
+    });
 }
 
 void Sync::gather(MQObject obj, ms::MeshData& dst)

@@ -13,6 +13,18 @@ enum class EventType
     Mesh,
 };
 
+union MeshFlags
+{
+    uint32_t flags = 0x1 | 0x2;
+    struct {
+        uint32_t split : 1;
+        uint32_t gen_normals : 1;
+        uint32_t gen_tangents : 1;
+        uint32_t swap_handedness : 1;
+        uint32_t swap_faces : 1;
+    };
+};
+
 
 struct EventData
 {
@@ -51,6 +63,7 @@ struct MeshData : public EventData
     RawVector<float2> uv;
     RawVector<int> counts;
     RawVector<int> indices;
+    RawVector<int> indices_triangulated;
 
     MeshData();
     void clear();
@@ -58,19 +71,19 @@ struct MeshData : public EventData
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
-    void generateNormals(bool gen_tangents);
+    void refine(MeshFlags flags);
 };
 
 
 
-struct DeleteDataRef
+struct DeleteDataCS
 {
     const char *obj_path = nullptr;
 
-    DeleteDataRef(const DeleteData& v);
+    DeleteDataCS(const DeleteData& v);
 };
 
-struct XformDataRef
+struct XformDataCS
 {
     const char *obj_path = nullptr;
     float3 position;
@@ -78,10 +91,10 @@ struct XformDataRef
     float3 scale;
     float4x4 transform;
 
-    XformDataRef(const XformData& v);
+    XformDataCS(const XformData& v);
 };
 
-struct MeshDataRef
+struct MeshDataCS
 {
     const char *obj_path = nullptr;
     float3 *points = nullptr;
@@ -91,9 +104,10 @@ struct MeshDataRef
     int *counts = nullptr;
     int *indices = nullptr;
     int num_points = 0;
+    int num_counts = 0;
     int num_indices = 0;
 
-    MeshDataRef(const MeshData& v);
+    MeshDataCS(const MeshData& v);
 };
 
 } // namespace ms

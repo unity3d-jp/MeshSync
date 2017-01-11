@@ -13,14 +13,7 @@ namespace ms {
 
 struct ServerSettings
 {
-    union {
-        uint32_t flags = 0x1 | 0x2;
-        struct {
-            uint32_t split : 1;
-            uint32_t gen_normals : 1;
-            uint32_t gen_tangents : 1;
-        };
-    };
+    MeshFlags mesh_flags;
     int max_queue = 100;
     uint16_t port = 8080;
 };
@@ -38,42 +31,15 @@ public:
 
     // Body: [](DeleteData& data) -> void
     template<class Body>
-    void recvDelete(const Body& body)
-    {
-        body(m_tmp_del);
-        {
-            m_data[m_tmp_xf.obj_path].del = m_tmp_del;
-            m_history.push_back({ EventType::Delete, m_tmp_del.obj_path });
-            m_tmp_del.clear();
-        }
-    }
+    void recvDelete(const Body& body);
 
     // Body: [](XformData& data) -> void
     template<class Body>
-    void recvXform(const Body& body)
-    {
-        body(m_tmp_xf);
-        {
-            m_data[m_tmp_xf.obj_path].xform = m_tmp_xf;
-            m_history.push_back({ EventType::Xform, m_tmp_xf.obj_path });
-            m_tmp_xf.clear();
-        }
-    }
+    void recvXform(const Body& body);
 
     // Body: [](MeshData& data) -> void
     template<class Body>
-    void recvMesh(const Body& body)
-    {
-        body(m_tmp_mesh);
-        if (!m_tmp_mesh.obj_path.empty()) {
-            if (m_settings.gen_normals) {
-                m_tmp_mesh.generateNormals(m_settings.gen_tangents);
-            }
-            m_data[m_tmp_mesh.obj_path].mesh = m_tmp_mesh;
-            m_history.push_back({ EventType::Mesh, m_tmp_mesh.obj_path });
-            m_tmp_mesh.clear();
-        }
-    }
+    void recvMesh(const Body& body);
 
     // Body: [](const EventData& data) -> void
     template<class Body>

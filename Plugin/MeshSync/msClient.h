@@ -14,9 +14,16 @@ class Client
 {
 public:
     Client(const ClientSettings& settings);
-    bool sendEdit(const MeshData& data);
+    bool send(const EventData& data);
 
 private:
+    template<class Data>
+    bool send(const char *uri, const Data& data);
+
+    bool sendDelete(const DeleteData& data);
+    bool sendXform(const XformData& data);
+    bool sendMesh(const MeshData& data);
+
     ClientSettings m_settings;
 };
 

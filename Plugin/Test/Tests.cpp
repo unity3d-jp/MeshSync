@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         data.indices = { 0, 1, 2, 0, 2, 3 };
 
         ms::Client client(ms::ClientSettings{});
-        client.sendEdit(data);
+        client.send(data);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));

@@ -21,15 +21,15 @@ msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
     if (!server) { return; }
     server->processEvents([handler](ms::EventData& data) {
         if (data.type == ms::EventType::Delete) {
-            ms::DeleteDataRef ref = (ms::DeleteData&)data;
+            ms::DeleteDataCS ref = (ms::DeleteData&)data;
             handler(data.type, &ref);
         }
         else if (data.type == ms::EventType::Xform) {
-            ms::XformDataRef ref = (ms::XformData&)data;
+            ms::XformDataCS ref = (ms::XformData&)data;
             handler(data.type, &ref);
         }
         else if (data.type == ms::EventType::Mesh) {
-            ms::MeshDataRef ref = (ms::MeshData&)data;
+            ms::MeshDataCS ref = (ms::MeshData&)data;
             handler(data.type, &ref);
         }
     });
@@ -40,14 +40,31 @@ msAPI void  msServerStop(ms::Server *server)
     delete server;
 }
 
-msAPI void  msCopyMeshData(ms::MeshDataRef *dst, const ms::MeshDataRef *src)
+
+static void msCopyData(ms::DeleteDataCS *dst, const ms::DeleteDataCS *src)
 {
     if (!dst || !src) { return; }
 
+    dst->obj_path = src->obj_path;
+}
+static void msCopyData(ms::XformDataCS *dst, const ms::XformDataCS *src)
+{
+    if (!dst || !src) { return; }
+
+    dst->obj_path  = src->obj_path;
+    dst->position  = src->position;
+    dst->rotation  = src->rotation;
+    dst->scale     = src->scale;
+    dst->transform = src->transform;
+}
+static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
+{
+    if (!dst || !src) { return; }
+
+    dst->obj_path = src->obj_path;
     dst->num_points = src->num_points;
     dst->num_indices = src->num_indices;
 
-    dst->obj_path = src->obj_path;
     if (src->points) {
         if (dst->points) {
             memcpy(dst->points, src->points, sizeof(float3)*src->num_points);
@@ -87,5 +104,19 @@ msAPI void  msCopyMeshData(ms::MeshDataRef *dst, const ms::MeshDataRef *src)
         else {
             dst->indices = src->indices;
         }
+    }
+}
+msAPI void msCopyData(ms::EventType et, void *dst, const void *src)
+{
+    switch (et) {
+    case ms::EventType::Delete:
+        msCopyData((ms::DeleteDataCS*)dst, (const ms::DeleteDataCS*)src);
+        break;
+    case ms::EventType::Xform:
+        msCopyData((ms::XformDataCS*)dst, (const ms::XformDataCS*)src);
+        break;
+    case ms::EventType::Mesh:
+        msCopyData((ms::MeshDataCS*)dst, (const ms::MeshDataCS*)src);
+        break;
     }
 }

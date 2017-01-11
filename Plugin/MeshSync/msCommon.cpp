@@ -105,7 +105,7 @@ void XformData::deserialize(std::istream& is)
 }
 
 
-#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices)
+#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(indices_triangulated)
 
 
 MeshData::MeshData()
@@ -147,22 +147,67 @@ void MeshData::deserialize(std::istream& is)
 #undef Body
 }
 
-void MeshData::generateNormals(bool gen_tangents)
+void MeshData::refine(MeshFlags flags)
 {
-    bool gen_normals = normals.size() != points.size();
-    gen_tangents = gen_tangents && tangents.size() != points.size() && uv.size() == points.size();
-    if (!gen_normals && !gen_tangents) { return; }
-
     RawVector<int> offsets;
-    int num_indices, num_indices_tri;
-    mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
+    RawVector<int> indices_flattened_triangulated;
+    int num_indices = 0;
+    int num_indices_tri = 0;
 
+    if (flags.swap_handedness) {
+        mu::InvertX(points.data(), points.size());
+    }
+
+    // triangulate
+    if (counts.empty()) {
+        // assume all faces are triangles
+        num_indices = num_indices_tri = indices.size();
+        int nfaces = int(indices.size() / 3);
+        indices_triangulated = indices;
+        counts.resize(nfaces);
+        offsets.resize(nfaces);
+        std::fill(counts.begin(), counts.end(), 3);
+        for (int i = 0; i < nfaces; ++i) { offsets[i] = i * 3; }
+    }
+    else {
+        mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
+        indices_triangulated.resize(num_indices_tri);
+        mu::TriangulateIndices(indices_triangulated, counts, &indices, flags.swap_faces);
+    }
+
+    // normals
+    bool gen_normals = flags.gen_normals && normals.empty();
     if (gen_normals) {
         normals.resize(points.size());
         mu::GenerateNormals(normals.data(), points.data(),
             counts.data(), offsets.data(), indices.data(),
             points.size(), counts.size());
     }
+
+    // flatten
+    if (normals.size() == num_indices || uv.size() == num_indices) {
+        indices_flattened_triangulated.resize(num_indices_tri);
+        mu::TriangulateIndices(indices_flattened_triangulated, counts, (RawVector<int>*)nullptr, flags.swap_faces);
+
+        {
+            RawVector<float3> flattened;
+            mu::CopyWithIndices(flattened, points, indices_flattened_triangulated, 0, num_indices_tri);
+            points.swap(flattened);
+        }
+        if (!normals.empty() && normals.size() != num_indices) {
+            RawVector<float3> flattened;
+            mu::CopyWithIndices(flattened, normals, indices_flattened_triangulated, 0, num_indices_tri);
+            normals.swap(flattened);
+        }
+        if (!uv.empty() && uv.size() != num_indices) {
+            RawVector<float2> flattened;
+            mu::CopyWithIndices(flattened, uv, indices_flattened_triangulated, 0, num_indices_tri);
+            uv.swap(flattened);
+        }
+    }
+
+    // tangents
+    bool gen_tangents = flags.gen_tangents && tangents.empty() && !uv.empty();
     if (gen_tangents) {
         tangents.resize(points.size());
         mu::GenerateTangents(tangents.data(),
@@ -174,12 +219,12 @@ void MeshData::generateNormals(bool gen_tangents)
 
 
 
-DeleteDataRef::DeleteDataRef(const DeleteData & v)
+DeleteDataCS::DeleteDataCS(const DeleteData & v)
 {
     obj_path = v.obj_path.c_str();
 }
 
-XformDataRef::XformDataRef(const XformData & v)
+XformDataCS::XformDataCS(const XformData & v)
 {
     obj_path = v.obj_path.c_str();
     position = v.position;
@@ -188,14 +233,18 @@ XformDataRef::XformDataRef(const XformData & v)
     transform = v.transform;
 }
 
-MeshDataRef::MeshDataRef(const MeshData & v)
+MeshDataCS::MeshDataCS(const MeshData & v)
 {
-    obj_path = v.obj_path.c_str();
-#define Body(A) A = (decltype(A))v.points.data();
-    EachArray(Body)
-#undef Body
-    num_points = (int)v.points.size();
-    num_indices = (int)v.indices.size();
+    obj_path    = v.obj_path.c_str();
+    points      = (float3*)v.points.data();
+    normals     = (float3*)v.normals.data();
+    tangents    = (float4*)v.tangents.data();
+    uv          = (float2*)v.uv.data();
+    counts      = (int*)v.counts.data();
+    indices     = (int*)v.indices_triangulated.data();
+    num_points  = (int)v.points.size();
+    num_counts  = (int)v.counts.size();
+    num_indices = (int)v.indices_triangulated.size();
 }
 
 } // namespace ms
