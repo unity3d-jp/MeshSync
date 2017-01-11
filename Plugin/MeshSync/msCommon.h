@@ -71,7 +71,7 @@ struct MeshData : public EventData
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
-    void refine(MeshFlags flags);
+    void refine(MeshFlags flags, float scale);
 };
 
 

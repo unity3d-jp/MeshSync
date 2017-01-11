@@ -61,7 +61,7 @@ void Server::recvMesh(const Body& body)
 {
     body(m_tmp_mesh);
     if (!m_tmp_mesh.obj_path.empty()) {
-        m_tmp_mesh.refine(m_settings.mesh_flags);
+        m_tmp_mesh.refine(m_settings.mesh_flags, m_settings.scale);
         m_data[m_tmp_mesh.obj_path].mesh = m_tmp_mesh;
         m_history.push_back({ EventType::Mesh, m_tmp_mesh.obj_path });
         m_tmp_mesh.clear();

@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Sync.h"
+
 class MeshSyncClientPlugin : public MQStationPlugin
 {
 public:
@@ -32,10 +34,16 @@ public:
 
 
     typedef bool (MeshSyncClientPlugin::*ExecuteCallbackProc)(MQDocument doc);
+
     void Execute(ExecuteCallbackProc proc);
 
+protected:
     struct CallbackInfo {
         ExecuteCallbackProc proc;
     };
+
     bool ExecuteCallback(MQDocument doc, void *option) override;
+
+private:
+    Sync m_sync;
 };

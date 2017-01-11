@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Sync.h"
+
 class MeshSyncClientPlugin : public MQStationPlugin
 {
 public:
@@ -72,4 +74,7 @@ protected:
 
     // コールバックに対する実装部
     virtual bool ExecuteCallback(MQDocument doc, void *option);
+
+private:
+    Sync m_sync;
 };

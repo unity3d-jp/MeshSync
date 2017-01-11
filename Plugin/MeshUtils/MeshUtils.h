@@ -227,7 +227,7 @@ inline void CopyWithIndices(DataArray& dst, const DataArray& src, const IndexArr
     size_t size = end - beg;
     dst.resize(size);
 
-    for (int i = 0; i < size; ++i) {
+    for (int i = 0; i < (int)size; ++i) {
         dst[i] = src[indices[beg + i]];
     }
 }

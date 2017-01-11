@@ -13,9 +13,10 @@ namespace ms {
 
 struct ServerSettings
 {
-    MeshFlags mesh_flags;
     int max_queue = 100;
     uint16_t port = 8080;
+    MeshFlags mesh_flags;
+    float scale = 0.01f;
 };
 
 class Server

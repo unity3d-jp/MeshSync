@@ -23,6 +23,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <numeric>
 
 #include "MeshUtils/MeshUtils.h"
 

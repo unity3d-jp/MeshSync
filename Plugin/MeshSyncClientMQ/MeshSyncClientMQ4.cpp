@@ -179,7 +179,8 @@ void MeshSyncClientPlugin::OnSaveDocument(MQDocument doc, const char *filename, 
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    return FALSE;
+    m_sync.sync(doc);
+    return TRUE;
 }
 
 //---------------------------------------------------------------------------
@@ -188,7 +189,8 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    return FALSE;
+    m_sync.sync(doc);
+    return TRUE;
 }
 
 //---------------------------------------------------------------------------
@@ -205,6 +207,7 @@ void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 {
+    m_sync.sync(doc);
 }
 
 //---------------------------------------------------------------------------

@@ -104,9 +104,10 @@ public class MeshSyncServer : MonoBehaviour
 
     public struct ServerSettings
     {
-        public ServerFlags flags;
         public int max_queue;
         public ushort port;
+        public ServerFlags flags;
+        public float scale;
 
         public static ServerSettings default_value
         {
@@ -116,6 +117,7 @@ public class MeshSyncServer : MonoBehaviour
                 {
                     max_queue = 100,
                     port = 8080,
+                    scale = 0.001f,
                 };
             }
         }
@@ -148,7 +150,7 @@ public class MeshSyncServer : MonoBehaviour
     [SerializeField] int m_port = 8080;
     [SerializeField] bool m_genNormals = true;
     [SerializeField] bool m_genTangents = false;
-    [SerializeField] bool m_swapHandedness= false;
+    [SerializeField] bool m_swapHandedness= true;
     [SerializeField] bool m_swapFaces = false;
     IntPtr m_server;
     msEventHandler m_handler;
@@ -168,6 +170,7 @@ public class MeshSyncServer : MonoBehaviour
         StopServer();
 
         var settings = ServerSettings.default_value;
+        settings.flags.split = true;
         settings.flags.genNormals = m_genNormals;
         settings.flags.genTangents = m_genTangents;
         settings.flags.swapHandedness = m_swapHandedness;
