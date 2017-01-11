@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="MeshSyncClientMQ/MeshSyncClientMQ.cpp">
-      <Filter>MeshSyncClientMQ</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
@@ -12,9 +9,6 @@
     </ClCompile>
     <ClCompile Include="External/mqsdk4/MQWidget.cpp">
       <Filter>External\mqsdk4</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ/Dialog.cpp">
-      <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
     <ClCompile Include="External/mqsdk4/MQInit.cpp">
       <Filter>External\mqsdk4</Filter>
@@ -25,12 +19,18 @@
     <ClCompile Include="External/mqsdk4/MQSetting.cpp">
       <Filter>External\mqsdk4</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\DialogMQ4.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\Sync.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMQ/pch.h">
-      <Filter>MeshSyncClientMQ</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ/MeshSyncClientMQ.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
     <ClInclude Include="External/mqsdk4/MQPlugin.h">
@@ -45,7 +45,13 @@
     <ClInclude Include="External/mqsdk4/MQWidget.h">
       <Filter>External\mqsdk4</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ/Dialog.h">
+    <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ4.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\DialogMQ4.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\Sync.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
   </ItemGroup>

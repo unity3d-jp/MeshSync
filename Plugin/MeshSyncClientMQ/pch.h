@@ -12,6 +12,9 @@
 #ifdef _WIN32
     #include <windows.h>
     #pragma warning(disable:4996)
+    #ifdef GetObject
+        #undef GetObject
+    #endif
 #else 
     #include <dlfcn.h>
     #ifdef __APPLE__
@@ -24,4 +27,7 @@
 
 #include "MQPlugin.h"
 #include "MQBasePlugin.h"
-#include "MQWidget.h"
+#if MQPLUGIN_VERSION > 0x0400
+    #include "MQWidget.h"
+#endif
+#include "MeshSync/msClient.h"

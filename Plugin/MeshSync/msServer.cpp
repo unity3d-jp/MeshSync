@@ -36,8 +36,18 @@ RequestHandler::RequestHandler(Server *server)
 
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    if (request.getURI() == "/edit") {
-        m_server->receiveEditData([&request](EditData& tmp) {
+    if (request.getURI() == "delete") {
+        m_server->recvMesh([&request](MeshData& tmp) {
+            tmp.deserialize(request.stream());
+        });
+    }
+    if (request.getURI() == "mesh") {
+        m_server->recvMesh([&request](MeshData& tmp) {
+            tmp.deserialize(request.stream());
+        });
+    }
+    if (request.getURI() == "xform") {
+        m_server->recvXform([&request](XformData& tmp) {
             tmp.deserialize(request.stream());
         });
     }

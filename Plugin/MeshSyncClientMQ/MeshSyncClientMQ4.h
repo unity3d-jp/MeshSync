@@ -2,17 +2,6 @@
 
 class MeshSyncClientPlugin : public MQStationPlugin
 {
-    friend class SettingsDlg;
-
-protected:
-    SettingsDlg *dlgMain;
-    bool m_bActivate;
-    bool m_bOnDraw;
-    bool m_bOnUpdateScene;
-    bool m_bOnUpdateUndo;
-    bool m_bWidgetEvents;
-    bool m_bMouseMove;
-
 public:
     MeshSyncClientPlugin();
     virtual ~MeshSyncClientPlugin();
@@ -75,9 +64,6 @@ public:
     typedef bool (MeshSyncClientPlugin::*ExecuteCallbackProc)(MQDocument doc);
 
     void Execute(ExecuteCallbackProc proc);
-
-    // 面の削除
-    bool DeleteFace(MQDocument doc);
 
 protected:
     struct CallbackInfo {

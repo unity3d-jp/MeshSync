@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientMQ4", "MeshSy
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSync", "MeshSync.vcxproj", "{7D79CF0C-F0B6-4D4E-BBEE-822E4BDA4061}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientMQ3", "MeshSyncClientMQ3.vcxproj", "{49C765EA-DD7C-481D-9584-CEFAD935735E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -76,6 +78,12 @@ Global
 		{7D79CF0C-F0B6-4D4E-BBEE-822E4BDA4061}.Master|x64.Build.0 = Master|x64
 		{7D79CF0C-F0B6-4D4E-BBEE-822E4BDA4061}.Master|x86.ActiveCfg = Master|Win32
 		{7D79CF0C-F0B6-4D4E-BBEE-822E4BDA4061}.Master|x86.Build.0 = Master|Win32
+		{49C765EA-DD7C-481D-9584-CEFAD935735E}.Debug|x64.ActiveCfg = Debug|Win32
+		{49C765EA-DD7C-481D-9584-CEFAD935735E}.Debug|x86.ActiveCfg = Debug|Win32
+		{49C765EA-DD7C-481D-9584-CEFAD935735E}.Debug|x86.Build.0 = Debug|Win32
+		{49C765EA-DD7C-481D-9584-CEFAD935735E}.Master|x64.ActiveCfg = Master|Win32
+		{49C765EA-DD7C-481D-9584-CEFAD935735E}.Master|x86.ActiveCfg = Master|Win32
+		{49C765EA-DD7C-481D-9584-CEFAD935735E}.Master|x86.Build.0 = Master|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

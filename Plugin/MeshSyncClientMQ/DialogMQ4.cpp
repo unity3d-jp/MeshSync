@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
-#include "Dialog.h"
-#include "MeshSyncClientMQ.h"
+#include "DialogMQ4.h"
+#include "MeshSyncClientMQ4.h"
 
 
 SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : MQWindow(parent)
@@ -90,10 +90,6 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
 
 BOOL SettingsDlg::OnHide(MQWidgetBase *sender, MQDocument doc)
 {
-    if (m_pPlugin->m_bActivate) {
-        m_pPlugin->m_bActivate = false;
-        m_pPlugin->WindowClose();
-    }
     return FALSE;
 }
 
@@ -125,27 +121,22 @@ BOOL SettingsDlg::OnClear(MQWidgetBase *sender, MQDocument doc)
 
 BOOL SettingsDlg::OnCheckOnDraw(MQWidgetBase *sender, MQDocument doc)
 {
-    m_pPlugin->m_bOnDraw = m_CheckOnDraw->GetChecked();
     return FALSE;
 }
 
 BOOL SettingsDlg::OnCheckOnUpdateScene(MQWidgetBase *sender, MQDocument doc)
 {
-    m_pPlugin->m_bOnUpdateScene = m_CheckOnUpdateScene->GetChecked();
     return FALSE;
 }
 
 BOOL SettingsDlg::OnCheckOnUpdateUndo(MQWidgetBase *sender, MQDocument doc)
 {
-    m_pPlugin->m_bOnUpdateUndo = m_CheckOnUpdateUndo->GetChecked();
     return FALSE;
 }
 
 BOOL SettingsDlg::OnCheckWidgetEvent(MQWidgetBase *sender, MQDocument doc)
 {
-    m_pPlugin->m_bWidgetEvents = m_CheckWidgetEvent->GetChecked();
-
-    if (m_pPlugin->m_bWidgetEvents) {
+    if (false) {
         m_MessageList->AddLeftDownEvent(this, &SettingsDlg::OnListLeftDown);
         m_MessageList->AddLeftUpEvent(this, &SettingsDlg::OnListLeftUp);
         m_MessageList->AddLeftDoubleClickEvent(this, &SettingsDlg::OnListLeftDoubleClick);
@@ -179,9 +170,7 @@ BOOL SettingsDlg::OnCheckWidgetEvent(MQWidgetBase *sender, MQDocument doc)
 
 BOOL SettingsDlg::OnCheckMouseMove(MQWidgetBase *sender, MQDocument doc)
 {
-    m_pPlugin->m_bMouseMove = m_CheckMouseMove->GetChecked();
-
-    if (m_pPlugin->m_bMouseMove) {
+    if (false) {
         m_MessageList->AddMouseMoveEvent(this, &SettingsDlg::OnListMouseMove);
     }
     else {

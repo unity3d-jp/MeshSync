@@ -17,20 +17,22 @@ public class MeshSyncServer : MonoBehaviour
     public enum EventType
     {
         Unknown,
-        Edit,
+        Delete,
+        Mesh,
+        Xform,
     }
 
-    public struct EditData
+    public struct MeshData
     {
         public IntPtr obj_path;
         public IntPtr points;
         public IntPtr normals;
         public IntPtr tangents;
         public IntPtr uv;
+        public IntPtr counts;
         public IntPtr indices;
         public int num_points;
         public int num_indices;
-        public Vector3 position;
     };
 
 
@@ -91,8 +93,8 @@ public class MeshSyncServer : MonoBehaviour
     public delegate void msEventHandler(EventType type, IntPtr data);
     [DllImport("MeshSyncServer")] public static extern void msServerProcessEvents(IntPtr sv, msEventHandler handler);
 
-    [DllImport("MeshSyncServer")] public static extern void msCopyEditData(ref EditData dst, ref EditData src);
-    [DllImport("MeshSyncServer")] public static extern void msCopyEditData(ref EditData dst, IntPtr src);
+    [DllImport("MeshSyncServer")] public static extern void msCopyMeshData(ref MeshData dst, ref MeshData src);
+    [DllImport("MeshSyncServer")] public static extern void msCopyMeshData(ref MeshData dst, IntPtr src);
 
 
     public static IntPtr RawPtr(Array v)
@@ -102,10 +104,6 @@ public class MeshSyncServer : MonoBehaviour
     public static string S(IntPtr cstring)
     {
         return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
-    }
-
-    public class MeshData
-    {
     }
     #endregion
 
@@ -153,7 +151,7 @@ public class MeshSyncServer : MonoBehaviour
     {
         switch (type)
         {
-            case EventType.Edit:
+            case EventType.Mesh:
                 OnEditEvent(data);
                 break;
         }
@@ -161,11 +159,11 @@ public class MeshSyncServer : MonoBehaviour
 
     void OnEditEvent(IntPtr data)
     {
-        var edata = default(EditData);
-        msCopyEditData(ref edata, data);
+        var edata = default(MeshData);
+        msCopyMeshData(ref edata, data);
 
 
-        var mdata = default(EditData);
+        var mdata = default(MeshData);
         if (edata.points != IntPtr.Zero)
         {
             m_points = new Vector3[edata.num_points];
@@ -191,7 +189,7 @@ public class MeshSyncServer : MonoBehaviour
             m_indices = new int[edata.num_indices];
             mdata.indices = RawPtr(m_indices);
         }
-        msCopyEditData(ref mdata, ref edata);
+        msCopyMeshData(ref mdata, ref edata);
 
 
         var create = edata.num_points > 0;

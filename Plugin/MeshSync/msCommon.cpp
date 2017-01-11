@@ -41,114 +41,161 @@ inline void read_vector(std::istream& is, T& v)
     is.read((char*)v.data(), sizeof(typename T::value_type) * size);
 }
 
-static const int EditDataVersion = 1;
 
-EditData::EditData()
+
+DeleteData::DeleteData()
 {
-    type = EventType::Edit;
+    type = EventType::Delete;
+}
+void DeleteData::clear()
+{
+    *this = DeleteData();
+}
+uint32_t DeleteData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += size_vector(obj_path);
+    return ret;
+}
+void DeleteData::serialize(std::ostream& os) const
+{
+    write_vector(os, obj_path);
+}
+void DeleteData::deserialize(std::istream& is)
+{
+    read_vector(is, obj_path);
 }
 
-void EditData::clear()
+
+XformData::XformData()
+{
+    type = EventType::Xform;
+}
+
+void XformData::clear()
+{
+    *this = XformData();
+}
+
+uint32_t XformData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += size_vector(obj_path);
+    ret += size_pod(position);
+    ret += size_pod(rotation);
+    ret += size_pod(scale);
+    ret += size_pod(transform);
+    return ret;
+}
+void XformData::serialize(std::ostream& os) const
+{
+    write_vector(os, obj_path);
+    write_pod(os, position);
+    write_pod(os, rotation);
+    write_pod(os, scale);
+    write_pod(os, transform);
+}
+void XformData::deserialize(std::istream& is)
+{
+    read_vector(is, obj_path);
+    read_pod(is, position);
+    read_pod(is, rotation);
+    read_pod(is, scale);
+    read_pod(is, transform);
+}
+
+
+#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices)
+
+
+MeshData::MeshData()
+{
+    type = EventType::Mesh;
+}
+
+void MeshData::clear()
 {
     obj_path.clear();
-    points.clear();
-    normals.clear();
-    tangents.clear();
-    uv.clear();
-    indices.clear();
-    position = {0.0f, 0.0f, 0.0f};
+#define Body(A) A.clear();
+    EachArray(Body);
+#undef Body
 }
 
-void EditData::generateNormals(bool gen_tangents)
+uint32_t MeshData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += size_vector(obj_path);
+#define Body(A) ret += size_vector(A);
+    EachArray(Body);
+#undef Body
+    return ret;
+}
+
+void MeshData::serialize(std::ostream& os) const
+{
+    write_vector(os, obj_path);
+#define Body(A) write_vector(os, A);
+    EachArray(Body)
+#undef Body
+}
+
+void MeshData::deserialize(std::istream& is)
+{
+    read_vector(is, obj_path);
+#define Body(A) read_vector(is, A);
+    EachArray(Body);
+#undef Body
+}
+
+void MeshData::generateNormals(bool gen_tangents)
 {
     bool gen_normals = normals.size() != points.size();
     gen_tangents = gen_tangents && tangents.size() != points.size() && uv.size() == points.size();
     if (!gen_normals && !gen_tangents) { return; }
 
-
-    RawVector<int> counts, offsets;
-
-    int num_faces = (int)(indices.size() / 3);
-    counts.resize(num_faces);
-    offsets.resize(num_faces);
-    std::fill(counts.begin(), counts.end(), 3);
-    for (int i = 0; i < num_faces; ++i) {
-        offsets[i] = i * 3;
-    }
+    RawVector<int> offsets;
+    int num_indices, num_indices_tri;
+    mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
 
     if (gen_normals) {
         normals.resize(points.size());
-        GenerateNormals(normals.data(), points.data(),
+        mu::GenerateNormals(normals.data(), points.data(),
             counts.data(), offsets.data(), indices.data(),
             points.size(), counts.size());
     }
     if (gen_tangents) {
         tangents.resize(points.size());
-        GenerateTangents(tangents.data(),
+        mu::GenerateTangents(tangents.data(),
             points.cdata(), normals.cdata(), uv.cdata(),
             counts.cdata(), offsets.cdata(), indices.cdata(),
             points.size(), counts.size());
     }
 }
 
-uint32_t EditData::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += size_pod(EditDataVersion);
-    ret += size_vector(obj_path);
-    ret += size_vector(points);
-    ret += size_vector(normals);
-    ret += size_vector(tangents);
-    ret += size_vector(uv);
-    ret += size_vector(indices);
-    ret += size_pod(position);
-    return ret;
-}
 
-void EditData::serialize(std::ostream& os) const
-{
-    write_pod(os, EditDataVersion);
-    write_vector(os, obj_path);
-    write_vector(os, points);
-    write_vector(os, normals);
-    write_vector(os, tangents);
-    write_vector(os, uv);
-    write_vector(os, indices);
-    write_pod(os, position);
-}
 
-bool EditData::deserialize(std::istream& is)
-{
-    int version = 0;
-    read_pod(is, version);
-    if (version == 1) {
-        read_vector(is, obj_path);
-        read_vector(is, points);
-        read_vector(is, normals);
-        read_vector(is, tangents);
-        read_vector(is, uv);
-        read_vector(is, indices);
-        read_pod(is, position);
-        return true;
-    }
-    else {
-        clear();
-        return false;
-    }
-}
-
-EditDataRef& EditDataRef::operator=(const EditData & v)
+DeleteDataRef::DeleteDataRef(const DeleteData & v)
 {
     obj_path = v.obj_path.c_str();
-    points = (float3*)v.points.data();
-    normals = (float3*)v.normals.data();
-    tangents = (float4*)v.tangents.data();
-    uv = (float2*)v.uv.data();
-    indices = (int*)v.indices.data();
+}
+
+XformDataRef::XformDataRef(const XformData & v)
+{
+    obj_path = v.obj_path.c_str();
+    position = v.position;
+    rotation = v.rotation;
+    scale = v.scale;
+    transform = v.transform;
+}
+
+MeshDataRef::MeshDataRef(const MeshData & v)
+{
+    obj_path = v.obj_path.c_str();
+#define Body(A) A = (decltype(A))v.points.data();
+    EachArray(Body)
+#undef Body
     num_points = (int)v.points.size();
     num_indices = (int)v.indices.size();
-    position = v.position;
-    return *this;
 }
 
 } // namespace ms

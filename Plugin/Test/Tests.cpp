@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     }
 
     {
-        ms::EditData data;
+        ms::MeshData data;
         data.obj_path = "Root/Child";
         data.points = {
             { -1.0f, 0.0f, -1.0f },

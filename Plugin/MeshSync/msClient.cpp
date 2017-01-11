@@ -11,12 +11,12 @@ Client::Client(const ClientSettings & settings)
 {
 }
 
-bool Client::sendEdit(const EditData& data)
+bool Client::sendEdit(const MeshData& data)
 {
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
 
-        HTTPRequest request{ HTTPRequest::HTTP_POST, "/edit" };
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "mesh" };
         request.setContentType("application/octet-stream");
         request.setContentLength(data.getSerializeSize());
         auto& os = session.sendRequest(request);

@@ -8,8 +8,6 @@
 
 #define muDefaultEpsilon 0.00001f
 
-namespace mu {
-
 struct float2
 {
     float x, y;
@@ -254,5 +252,3 @@ inline float4x4 swap_handedness(const float4x4& m)
         {-m[3].x, m[3].z, m[3].y, m[3].w },
     } };
 }
-
-} // namespace mu

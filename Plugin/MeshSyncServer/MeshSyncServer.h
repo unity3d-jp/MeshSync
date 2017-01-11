@@ -13,4 +13,4 @@ msAPI ms::Server*   msServerStart(const ms::ServerSettings *settings);
 msAPI void          msServerProcessEvents(ms::Server *server, msEventHandler handler);
 msAPI void          msServerStop(ms::Server *server);
 
-msAPI void          msCopyEditData(ms::EditDataRef *dst, const ms::EditDataRef *src);
+msAPI void          msCopyMeshData(ms::MeshDataRef *dst, const ms::MeshDataRef *src);

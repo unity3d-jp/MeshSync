@@ -1,55 +1,99 @@
 #pragma once
 
 #include "RawVector.h"
+#include "MeshUtils/MeshUtils.h"
 
 namespace ms {
-
-using namespace mu;
 
 enum class EventType
 {
     Unknown,
-    Edit,
+    Delete,
+    Xform,
+    Mesh,
 };
 
 
 struct EventData
 {
     EventType type = EventType::Unknown;
+    std::string obj_path;
 };
 
-struct EditData : public EventData
+struct DeleteData : public EventData
 {
-    std::string obj_path;
+    DeleteData();
+    void clear();
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+
+struct XformData : public EventData
+{
+    float3 position;
+    quatf rotation;
+    float3 scale;
+    float4x4 transform;
+
+    XformData();
+    void clear();
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+
+struct MeshData : public EventData
+{
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float4> tangents;
     RawVector<float2> uv;
+    RawVector<int> counts;
     RawVector<int> indices;
-    float3 position{ 0.0f, 0.0f, 0.0f };
 
-    EditData();
+    MeshData();
     void clear();
-    void generateNormals(bool gen_tangents);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
-    bool deserialize(std::istream& is);
+    void deserialize(std::istream& is);
+
+    void generateNormals(bool gen_tangents);
 };
 
-struct EditDataRef
+
+
+struct DeleteDataRef
+{
+    const char *obj_path = nullptr;
+
+    DeleteDataRef(const DeleteData& v);
+};
+
+struct XformDataRef
+{
+    const char *obj_path = nullptr;
+    float3 position;
+    quatf rotation;
+    float3 scale;
+    float4x4 transform;
+
+    XformDataRef(const XformData& v);
+};
+
+struct MeshDataRef
 {
     const char *obj_path = nullptr;
     float3 *points = nullptr;
     float3 *normals = nullptr;
     float4 *tangents = nullptr;
     float2 *uv = nullptr;
+    int *counts = nullptr;
     int *indices = nullptr;
     int num_points = 0;
     int num_indices = 0;
 
-    float3 position{ 0.0f, 0.0f, 0.0f };
-
-    EditDataRef& operator=(const EditData& v);
+    MeshDataRef(const MeshData& v);
 };
 
 } // namespace ms

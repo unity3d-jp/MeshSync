@@ -14,7 +14,7 @@ class Client
 {
 public:
     Client(const ClientSettings& settings);
-    bool sendEdit(const EditData& data);
+    bool sendEdit(const MeshData& data);
 
 private:
     ClientSettings m_settings;

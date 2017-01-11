@@ -36,18 +36,42 @@ public:
 
     const ServerSettings& getSettings() const;
 
-    // Body: [](EditData& data) -> void
+    // Body: [](DeleteData& data) -> void
     template<class Body>
-    void receiveEditData(const Body& body)
+    void recvDelete(const Body& body)
     {
-        body(m_tmp_edit_data);
-        if (!m_tmp_edit_data.obj_path.empty()) {
+        body(m_tmp_del);
+        {
+            m_data[m_tmp_xf.obj_path].del = m_tmp_del;
+            m_history.push_back({ EventType::Delete, m_tmp_del.obj_path });
+            m_tmp_del.clear();
+        }
+    }
+
+    // Body: [](XformData& data) -> void
+    template<class Body>
+    void recvXform(const Body& body)
+    {
+        body(m_tmp_xf);
+        {
+            m_data[m_tmp_xf.obj_path].xform = m_tmp_xf;
+            m_history.push_back({ EventType::Xform, m_tmp_xf.obj_path });
+            m_tmp_xf.clear();
+        }
+    }
+
+    // Body: [](MeshData& data) -> void
+    template<class Body>
+    void recvMesh(const Body& body)
+    {
+        body(m_tmp_mesh);
+        if (!m_tmp_mesh.obj_path.empty()) {
             if (m_settings.gen_normals) {
-                m_tmp_edit_data.generateNormals(m_settings.gen_tangents);
+                m_tmp_mesh.generateNormals(m_settings.gen_tangents);
             }
-            m_edit_data[m_tmp_edit_data.obj_path] = m_tmp_edit_data;
-            m_history.push_back({ EventType::Edit, m_tmp_edit_data.obj_path });
-            m_tmp_edit_data.clear();
+            m_data[m_tmp_mesh.obj_path].mesh = m_tmp_mesh;
+            m_history.push_back({ EventType::Mesh, m_tmp_mesh.obj_path });
+            m_tmp_mesh.clear();
         }
     }
 
@@ -57,8 +81,14 @@ public:
     {
         for (auto& r : m_history) {
             switch (r.type) {
-            case EventType::Edit:
-                body(m_edit_data[r.arg]);
+            case EventType::Delete:
+                body(m_data[r.arg].del);
+                break;
+            case EventType::Xform:
+                body(m_data[r.arg].xform);
+                break;
+            case EventType::Mesh:
+                body(m_data[r.arg].mesh);
                 break;
             }
         }
@@ -66,7 +96,13 @@ public:
     }
 
 private:
-    using EditDataTable = std::map<std::string, EditData>;
+    struct ObjectData
+    {
+        DeleteData del;
+        XformData xform;
+        MeshData mesh;
+    };
+    using DataTable = std::map<std::string, ObjectData>;
     using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
 
     struct Record
@@ -74,15 +110,18 @@ private:
         EventType type;
         std::string arg;
     };
-    using EditHistory = std::vector<Record>;
+    using History = std::vector<Record>;
 
     ServerSettings m_settings;
     HTTPServerPtr m_server;
     bool m_end_flag = false;
 
-    EditDataTable m_edit_data;
-    EditHistory m_history;
-    EditData m_tmp_edit_data;
+    DataTable m_data;
+    History m_history;
+
+    DeleteData m_tmp_del;
+    XformData m_tmp_xf;
+    MeshData m_tmp_mesh;
 };
 
 } // namespace ms

@@ -232,4 +232,64 @@ inline void CopyWithIndices(DataArray& dst, const DataArray& src, const IndexArr
     }
 }
 
+template<class IntArray>
+inline void CountIndices(
+    const IntArray &counts,
+    IntArray& offsets,
+    int& num_indices,
+    int& num_indices_triangulated)
+{
+    int reti = 0, rett = 0;
+    size_t num_faces = counts.size();
+    offsets.resize(num_faces);
+    for (size_t fi = 0; fi < num_faces; ++fi)
+    {
+        auto f = counts[fi];
+        offsets[fi] = reti;
+        reti += f;
+        rett += (f - 2) * 3;
+    }
+    num_indices = reti;
+    num_indices_triangulated = rett;
+}
+
+template<class IntArray>
+inline void TriangulateIndices(
+    IntArray& triangulated,
+    const IntArray &counts,
+    const IntArray *indices,
+    bool swap_face)
+{
+    const int i1 = swap_face ? 2 : 1;
+    const int i2 = swap_face ? 1 : 2;
+    size_t num_faces = counts.size();
+
+    int n = 0;
+    int i = 0;
+    if (indices) {
+        for (size_t fi = 0; fi < num_faces; ++fi) {
+            int ngon = counts[fi];
+            for (int ni = 0; ni < ngon - 2; ++ni) {
+                triangulated[i + 0] = (*indices)[n + 0];
+                triangulated[i + 1] = (*indices)[n + ni + i1];
+                triangulated[i + 2] = (*indices)[n + ni + i2];
+                i += 3;
+            }
+            n += ngon;
+        }
+    }
+    else {
+        for (size_t fi = 0; fi < num_faces; ++fi) {
+            int ngon = counts[fi];
+            for (int ni = 0; ni < ngon - 2; ++ni) {
+                triangulated[i + 0] = n + 0;
+                triangulated[i + 1] = n + ni + i1;
+                triangulated[i + 2] = n + ni + i2;
+                i += 3;
+            }
+            n += ngon;
+        }
+    }
+}
+
 } // namespace mu
