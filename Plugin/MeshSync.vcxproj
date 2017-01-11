@@ -19,27 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshUtils\mikktspace.h" />
-    <ClInclude Include="MeshUtils\muVector.h" />
-    <ClInclude Include="MeshUtils\pch.h" />
-    <ClInclude Include="MeshUtils\MeshUtils.h" />
+    <ClInclude Include="MeshSync\Allocator.h" />
+    <ClInclude Include="MeshSync\msClient.h" />
+    <ClInclude Include="MeshSync\msCommon.h" />
+    <ClInclude Include="MeshSync\msServer.h" />
+    <ClInclude Include="MeshSync\RawVector.h" />
+    <ClInclude Include="MeshSync\pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshUtils\mikktspace.c">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="MeshUtils\pch.cpp">
+    <ClCompile Include="MeshSync\Allocator.cpp" />
+    <ClCompile Include="MeshSync\msClient.cpp" />
+    <ClCompile Include="MeshSync\msCommon.cpp" />
+    <ClCompile Include="MeshSync\msServer.cpp" />
+    <ClCompile Include="MeshSync/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshUtils\MeshUtils.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse2,sse4,avx --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --opt=force-aligned-memory</Command>
-      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse2,sse4,avx --arch=x86 --opt=fast-masked-vload --opt=fast-math --opt=force-aligned-memory</Command>
-      <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse2.obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj</Outputs>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="setup.vcxproj">
@@ -47,7 +41,7 @@
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}</ProjectGuid>
+    <ProjectGuid>{7D79CF0C-F0B6-4D4E-BBEE-822E4BDA4061}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -71,7 +65,7 @@
     <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\OpenEXR\include\OpenEXR;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -87,7 +81,6 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -116,7 +109,6 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <ControlFlowGuard>false</ControlFlowGuard>
       <FloatingPointExceptions>false</FloatingPointExceptions>
-      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

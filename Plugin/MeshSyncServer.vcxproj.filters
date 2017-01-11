@@ -4,9 +4,6 @@
     <Filter Include="MeshSyncServer">
       <UniqueIdentifier>{d039ae94-4ce1-4932-b8b3-d9e219efd163}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MeshSync">
-      <UniqueIdentifier>{50763f3b-6bfc-4ed4-8f05-100a5bf4dfb9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncServer\MeshSyncServer.cpp">
@@ -15,18 +12,6 @@
     <ClCompile Include="MeshSyncServer\pch.cpp">
       <Filter>MeshSyncServer</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\msCommon.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSync\msServer.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSync\msClient.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSync\Allocator.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncServer\MeshSyncServer.h">
@@ -34,21 +19,6 @@
     </ClInclude>
     <ClInclude Include="MeshSyncServer\pch.h">
       <Filter>MeshSyncServer</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\msCommon.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\msServer.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\msClient.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\Allocator.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\RawVector.h">
-      <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

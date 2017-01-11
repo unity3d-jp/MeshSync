@@ -15,8 +15,8 @@
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Identity)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Master|x64'">%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">External\ispc.exe;External\mqsdk;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Master|x64'">External\ispc.exe;External\mqsdk;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">External\ispc.exe;External\mqsdk4;External\mqsdk3;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Master|x64'">External\ispc.exe;External\mqsdk4;External\mqsdk3;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Identity)</Message>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='Master|x64'">%(Identity)</Message>

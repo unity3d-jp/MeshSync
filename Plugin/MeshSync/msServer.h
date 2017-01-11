@@ -2,6 +2,12 @@
 
 #include "msCommon.h"
 
+namespace Poco {
+    namespace Net {
+        class HTTPServer;
+    }
+}
+
 namespace ms {
 
 

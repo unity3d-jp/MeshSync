@@ -4,7 +4,7 @@
 namespace ms {
 
 template<class T>
-inline uint32_t size_pod(const T& v)
+inline uint32_t size_pod(const T&)
 {
     return sizeof(T);
 }

@@ -11,10 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\MeshSync\Allocator.cpp" />
-    <ClCompile Include="..\MeshSync\msClient.cpp" />
-    <ClCompile Include="..\MeshSync\msCommon.cpp" />
-    <ClCompile Include="..\MeshSync\msServer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
@@ -22,6 +18,9 @@
     <ClCompile Include="Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MeshSync.vcxproj">
+      <Project>{7d79cf0c-f0b6-4d4e-bbee-822e4bda4061}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\MeshSyncServer.vcxproj">
       <Project>{66397903-6ff2-46c6-b51e-b323fd248fad}</Project>
     </ProjectReference>
@@ -30,11 +29,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\MeshSync\Allocator.h" />
-    <ClInclude Include="..\MeshSync\msClient.h" />
-    <ClInclude Include="..\MeshSync\msCommon.h" />
-    <ClInclude Include="..\MeshSync\msServer.h" />
-    <ClInclude Include="..\MeshSync\RawVector.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -58,13 +52,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)External\Poco\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
     <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)External\Poco\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
