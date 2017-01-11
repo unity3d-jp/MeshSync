@@ -38,7 +38,7 @@ struct EditData : public EventData
 
 struct EditDataRef
 {
-    char *obj_path = nullptr;
+    const char *obj_path = nullptr;
     float3 *points = nullptr;
     float3 *normals = nullptr;
     float4 *tangents = nullptr;
@@ -48,6 +48,8 @@ struct EditDataRef
     int num_indices = 0;
 
     float3 position{ 0.0f, 0.0f, 0.0f };
+
+    EditDataRef& operator=(const EditData& v);
 };
 
 } // namespace ms

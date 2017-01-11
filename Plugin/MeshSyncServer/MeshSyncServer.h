@@ -7,7 +7,7 @@
 #endif
 
 
-using msEventHandler = void(*)(ms::EventType type, void *data);
+using msEventHandler = void(*)(ms::EventType type, const void *data);
 
 msAPI ms::Server*   msServerStart(const ms::ServerSettings *settings);
 msAPI void          msServerProcessEvents(ms::Server *server, msEventHandler handler);

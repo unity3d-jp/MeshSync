@@ -11,20 +11,26 @@ Client::Client(const ClientSettings & settings)
 {
 }
 
-void Client::sendEdit(const EditData& data)
+bool Client::sendEdit(const EditData& data)
 {
-    HTTPClientSession session{ m_settings.server, m_settings.port };
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
 
-    HTTPRequest request{ HTTPRequest::HTTP_POST, "/edit" };
-    request.setContentType("application/octet-stream");
-    request.setContentLength(data.getSerializeSize());
-    auto& os = session.sendRequest(request);
-    data.serialize(os);
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "/edit" };
+        request.setContentType("application/octet-stream");
+        request.setContentLength(data.getSerializeSize());
+        auto& os = session.sendRequest(request);
+        data.serialize(os);
 
-    HTTPResponse response;
-    auto& rs = session.receiveResponse(response);
-    std::ostringstream ostr;
-    StreamCopier::copyStream(rs, ostr);
+        HTTPResponse response;
+        auto& rs = session.receiveResponse(response);
+        std::ostringstream ostr;
+        StreamCopier::copyStream(rs, ostr);
+        return true;
+    }
+    catch (...) {
+        return false;
+    }
 }
 
 } // namespace ms

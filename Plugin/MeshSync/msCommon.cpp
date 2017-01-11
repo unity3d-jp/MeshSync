@@ -137,4 +137,18 @@ bool EditData::deserialize(std::istream& is)
     }
 }
 
+EditDataRef& EditDataRef::operator=(const EditData & v)
+{
+    obj_path = v.obj_path.c_str();
+    points = (float3*)v.points.data();
+    normals = (float3*)v.normals.data();
+    tangents = (float4*)v.tangents.data();
+    uv = (float2*)v.uv.data();
+    indices = (int*)v.indices.data();
+    num_points = (int)v.points.size();
+    num_indices = (int)v.indices.size();
+    position = v.position;
+    return *this;
+}
+
 } // namespace ms

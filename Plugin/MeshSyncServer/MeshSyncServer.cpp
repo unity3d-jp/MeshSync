@@ -20,7 +20,11 @@ msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
 {
     if (!server) { return; }
     server->processEvents([handler](ms::EventData& data) {
-        handler(data.type, &data);
+        if (data.type == ms::EventType::Edit) {
+            ms::EditDataRef ref;
+            ref = (ms::EditData&)data;
+            handler(data.type, &ref);
+        }
     });
 }
 
@@ -37,6 +41,7 @@ msAPI void  msCopyEditData(ms::EditDataRef *dst, const ms::EditDataRef *src)
     dst->num_indices = src->num_indices;
     dst->position = src->position;
 
+    dst->obj_path = src->obj_path;
     if (src->points) {
         if (dst->points) {
             memcpy(dst->points, src->points, sizeof(ms::float3)*src->num_points);
@@ -67,6 +72,14 @@ msAPI void  msCopyEditData(ms::EditDataRef *dst, const ms::EditDataRef *src)
         }
         else {
             dst->uv = src->uv;
+        }
+    }
+    if (src->indices) {
+        if (dst->indices) {
+            memcpy(dst->indices, src->indices, sizeof(int)*src->num_indices);
+        }
+        else {
+            dst->indices = src->indices;
         }
     }
 }

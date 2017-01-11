@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Reflection;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -100,16 +101,11 @@ public class MeshSyncServer : MonoBehaviour
     }
     public static string S(IntPtr cstring)
     {
-        return Marshal.PtrToStringAnsi(cstring);
+        return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
     }
 
     public class MeshData
     {
-        public Vector3[] points;
-        public Vector3[] normals;
-        public Vector4[] tangents;
-        public Vector2[] uv;
-        public int[] indices;
     }
     #endregion
 
@@ -121,7 +117,11 @@ public class MeshSyncServer : MonoBehaviour
     IntPtr m_server;
     msEventHandler m_handler;
 
-    MeshData m_data = new MeshData();
+    Vector3[] m_points;
+    Vector3[] m_normals;
+    Vector4[] m_tangents;
+    Vector2[] m_uv;
+    int[] m_indices;
     #endregion
 
 
@@ -144,6 +144,11 @@ public class MeshSyncServer : MonoBehaviour
         m_server = IntPtr.Zero;
     }
 
+    void PollServerEvents()
+    {
+        msServerProcessEvents(m_server, m_handler);
+    }
+
     void OnServerEvent(EventType type, IntPtr data)
     {
         switch (type)
@@ -153,44 +158,146 @@ public class MeshSyncServer : MonoBehaviour
                 break;
         }
     }
+
     void OnEditEvent(IntPtr data)
     {
         var edata = default(EditData);
         msCopyEditData(ref edata, data);
 
+
         var mdata = default(EditData);
         if (edata.points != IntPtr.Zero)
         {
-            m_data.points = new Vector3[edata.num_points];
-            mdata.points = RawPtr(m_data.points);
+            m_points = new Vector3[edata.num_points];
+            mdata.points = RawPtr(m_points);
         }
         if (edata.normals != IntPtr.Zero)
         {
-            m_data.normals = new Vector3[edata.num_points];
-            mdata.normals = RawPtr(m_data.normals);
+            m_normals = new Vector3[edata.num_points];
+            mdata.normals = RawPtr(m_normals);
         }
         if (edata.tangents != IntPtr.Zero)
         {
-            m_data.tangents = new Vector4[edata.num_points];
-            mdata.tangents = RawPtr(m_data.tangents);
+            m_tangents = new Vector4[edata.num_points];
+            mdata.tangents = RawPtr(m_tangents);
         }
         if (edata.uv != IntPtr.Zero)
         {
-            m_data.uv = new Vector2[edata.num_points];
-            mdata.uv = RawPtr(m_data.uv);
+            m_uv = new Vector2[edata.num_points];
+            mdata.uv = RawPtr(m_uv);
         }
         if (edata.indices != IntPtr.Zero)
         {
-            m_data.indices = new int[edata.num_indices];
-            mdata.indices = RawPtr(m_data.indices);
+            m_indices = new int[edata.num_indices];
+            mdata.indices = RawPtr(m_indices);
         }
         msCopyEditData(ref mdata, ref edata);
 
+
+        var create = edata.num_points > 0;
+        var path = S(edata.obj_path);
+        var names = path.Split('/');
+        Transform t = null;
+        foreach (var name in names)
+        {
+            t = FindOrCreateObject(t, name, create);
+        }
+
+        if (t == null)
+        {
+            return;
+        }
+        if (!create)
+        {
+            GameObject.Destroy(t.gameObject);
+            return;
+        }
+
+        var mesh = GetOrAddMeshComponents(t.gameObject);
+        mesh.Clear();
+        if (edata.points != IntPtr.Zero) { mesh.vertices = m_points; }
+        if (edata.normals != IntPtr.Zero) { mesh.normals = m_normals; }
+        if (edata.tangents != IntPtr.Zero) { mesh.tangents = m_tangents; }
+        if (edata.uv != IntPtr.Zero) { mesh.uv = m_uv; }
+        mesh.SetIndices(m_indices, MeshTopology.Triangles, 0);
+        mesh.UploadMeshData(false);
+
+        ForceRepaint();
+        Debug.Log("MeshSyncServer: Edit " + path);
     }
 
-    public void PollServerEvents()
+
+    Transform FindOrCreateObject(Transform parent, string name, bool create)
     {
-        msServerProcessEvents(m_server, m_handler);
+        Transform ret = null;
+        if (parent == null)
+        {
+            var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach(var go in roots)
+            {
+                if(go.name == name)
+                {
+                    ret = go.GetComponent<Transform>();
+                    break;
+                }
+            }
+        }
+        else
+        {
+            ret = parent.FindChild(name);
+        }
+
+        if (create && ret == null)
+        {
+            var go = new GameObject();
+            go.name = name;
+            ret = go.GetComponent<Transform>();
+            if(parent != null)
+            {
+                ret.SetParent(parent, false);
+            }
+        }
+        return ret;
+    }
+
+#if UNITY_EDITOR
+    static MethodInfo s_GetBuiltinExtraResourcesMethod;
+    public static Material GetDefaultMaterial()
+    {
+        if (s_GetBuiltinExtraResourcesMethod == null)
+        {
+            BindingFlags bfs = BindingFlags.NonPublic | BindingFlags.Static;
+            s_GetBuiltinExtraResourcesMethod = typeof(EditorGUIUtility).GetMethod("GetBuiltinExtraResource", bfs);
+        }
+        return (Material)s_GetBuiltinExtraResourcesMethod.Invoke(null, new object[] { typeof(Material), "Default-Material.mat" });
+    }
+#endif
+
+    Mesh GetOrAddMeshComponents(GameObject go)
+    {
+        var mfilter = go.GetComponent<MeshFilter>();
+        if(mfilter == null)
+        {
+            mfilter = go.AddComponent<MeshFilter>();
+            var mesh = new Mesh();
+            mfilter.sharedMesh = mesh;
+            mesh.MarkDynamic();
+
+            var renderer = go.AddComponent<MeshRenderer>();
+#if UNITY_EDITOR
+            Material[] materials = new Material[] { UnityEngine.Object.Instantiate(GetDefaultMaterial()) };
+            materials[0].name = "Material_0";
+            renderer.sharedMaterials = materials;
+#endif
+        }
+        return mfilter.sharedMesh;
+    }
+
+    void ForceRepaint()
+    {
+#if UNITY_EDITOR
+        SceneView.RepaintAll();
+#endif
     }
 
 
