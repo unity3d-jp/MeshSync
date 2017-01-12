@@ -13,7 +13,7 @@ void Test_Sync(bool create_server)
 
     {
         ms::MeshData data;
-        data.obj_path = "Root/Child";
+        data.obj_path = "/Root/Child";
         data.points = {
             { -1.0f, 0.0f, -1.0f },
             { -1.0f, 0.0f,  1.0f },
@@ -62,6 +62,6 @@ void Test_GenNormals()
 
 int main(int argc, char *argv[])
 {
-    //Test_Sync(false);
-    Test_GenNormals();
+    Test_Sync(false);
+    //Test_GenNormals();
 }

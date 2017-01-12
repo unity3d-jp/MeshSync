@@ -41,7 +41,9 @@ inline void read_vector(std::istream& is, T& v)
     is.read((char*)v.data(), sizeof(typename T::value_type) * size);
 }
 
-
+EventData::~EventData()
+{
+}
 
 DeleteData::DeleteData()
 {
@@ -54,11 +56,13 @@ void DeleteData::clear()
 uint32_t DeleteData::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += size_pod(type);
     ret += size_vector(obj_path);
     return ret;
 }
 void DeleteData::serialize(std::ostream& os) const
 {
+    write_pod(os, type);
     write_vector(os, obj_path);
 }
 void DeleteData::deserialize(std::istream& is)
@@ -80,6 +84,7 @@ void XformData::clear()
 uint32_t XformData::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += size_pod(type);
     ret += size_vector(obj_path);
     ret += size_pod(position);
     ret += size_pod(rotation);
@@ -89,6 +94,7 @@ uint32_t XformData::getSerializeSize() const
 }
 void XformData::serialize(std::ostream& os) const
 {
+    write_pod(os, type);
     write_vector(os, obj_path);
     write_pod(os, position);
     write_pod(os, rotation);
@@ -124,6 +130,7 @@ void MeshData::clear()
 uint32_t MeshData::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += size_pod(type);
     ret += size_vector(obj_path);
 #define Body(A) ret += size_vector(A);
     EachArray(Body);
@@ -134,6 +141,7 @@ uint32_t MeshData::getSerializeSize() const
 
 void MeshData::serialize(std::ostream& os) const
 {
+    write_pod(os, type);
     write_vector(os, obj_path);
 #define Body(A) write_vector(os, A);
     EachArray(Body);

@@ -13,30 +13,30 @@ Client::Client(const ClientSettings & settings)
 
 bool Client::send(const EventData& data)
 {
-    switch (data.type) {
-    case EventType::Delete:
-        sendDelete(static_cast<const DeleteData&>(data));
-        break;
-    case EventType::Xform:
-        sendXform(static_cast<const XformData&>(data));
-        break;
-    case EventType::Mesh:
-        sendMesh(static_cast<const MeshData&>(data));
-        break;
-    }
-    return false;
+    const EventData *a[] = {&data};
+    return send(a, 1);
 }
 
-template<class Data>
-bool Client::send(const char *uri, const Data& data)
+bool Client::send(const EventData * const data[], int num)
 {
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
-        HTTPRequest request{ HTTPRequest::HTTP_POST, uri };
+        session.setTimeout(m_settings.timeout_ms * 1000);
+
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "event" };
         request.setContentType("application/octet-stream");
-        request.setContentLength(data.getSerializeSize());
+
+        size_t len = 4;
+        for (int i = 0; i < num; ++i) {
+            len += data[i]->getSerializeSize();
+        }
+
+        request.setContentLength(len);
         auto& os = session.sendRequest(request);
-        data.serialize(os);
+        os.write((char*)&num, 4);
+        for (int i = 0; i < num; ++i) {
+            data[i]->serialize(os);
+        }
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
@@ -47,21 +47,6 @@ bool Client::send(const char *uri, const Data& data)
     catch (...) {
         return false;
     }
-}
-
-bool Client::sendDelete(const DeleteData& data)
-{
-    return send("delete", data);
-}
-
-bool Client::sendXform(const XformData& data)
-{
-    return send("xform", data);
-}
-
-bool Client::sendMesh(const MeshData& data)
-{
-    return send("mesh", data);
 }
 
 } // namespace ms

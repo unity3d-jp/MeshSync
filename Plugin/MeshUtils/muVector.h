@@ -53,6 +53,14 @@ struct float3x3
     const float3& operator[](int i) const { return m[i]; }
     bool operator==(const float3x3& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
     bool operator!=(const float3x3& v) const { return !((*this) == v); }
+    static float3x3 identity()
+    {
+        return{ {
+            { 1.0f, 0.0f, 0.0f },
+            { 0.0f, 1.0f, 0.0f },
+            { 0.0f, 0.0f, 1.0f },
+        } };
+    }
 };
 struct float4x4 
 {
@@ -61,6 +69,15 @@ struct float4x4
     const float4& operator[](int i) const { return m[i]; }
     bool operator==(const float4x4& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
     bool operator!=(const float4x4& v) const { return !((*this) == v); }
+    static float4x4 identity()
+    {
+        return{ {
+            { 1.0f, 0.0f, 0.0f, 0.0f },
+            { 0.0f, 1.0f, 0.0f, 0.0f },
+            { 0.0f, 0.0f, 1.0f, 0.0f },
+            { 0.0f, 0.0f, 0.0f, 1.0f },
+        } };
+    }
 };
 
 

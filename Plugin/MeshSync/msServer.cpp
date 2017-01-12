@@ -82,20 +82,32 @@ void Server::recvMesh(const Body& body)
 
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    if (request.getURI() == "delete") {
-        m_server->recvMesh([&request](MeshData& tmp) {
-            tmp.deserialize(request.stream());
-        });
-    }
-    if (request.getURI() == "xform") {
-        m_server->recvXform([&request](XformData& tmp) {
-            tmp.deserialize(request.stream());
-        });
-    }
-    if (request.getURI() == "mesh") {
-        m_server->recvMesh([this, &request](MeshData& tmp) {
-            tmp.deserialize(request.stream());
-        });
+    if (request.getURI() == "event") {
+        auto& is = request.stream();
+        int num = 0;
+        is.read((char*)&num, 4);
+        for (int i = 0; i < num; ++i) {
+            EventType type;
+            is.read((char*)&type, 4);
+
+            switch (type) {
+            case EventType::Delete:
+                m_server->recvDelete([this, &is](DeleteData& tmp) {
+                    tmp.deserialize(is);
+                });
+                break;
+            case EventType::Xform:
+                m_server->recvXform([&is](XformData& tmp) {
+                    tmp.deserialize(is);
+                });
+                break;
+            case EventType::Mesh:
+                m_server->recvMesh([&is](MeshData& tmp) {
+                    tmp.deserialize(is);
+                });
+                break;
+            }
+        }
     }
 
     std::string ok = "ok";

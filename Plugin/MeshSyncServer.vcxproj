@@ -22,9 +22,6 @@
     <ClInclude Include="MeshSyncServer\pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="GraphicsInterface.vcxproj">
-      <Project>{29751262-3a23-4cf5-9dec-8d11aff02599}</Project>
-    </ProjectReference>
     <ProjectReference Include="MeshSync.vcxproj">
       <Project>{7d79cf0c-f0b6-4d4e-bbee-822e4bda4061}</Project>
     </ProjectReference>

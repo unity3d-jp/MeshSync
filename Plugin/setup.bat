@@ -21,13 +21,13 @@ IF NOT EXIST "External\mqsdk4" (
     cd ..
 )
 IF NOT EXIST "External\mqsdk3" (
-    IF NOT EXIST "External\mqsdk311.zip" (
-        echo "downloading mqsdk311.zip ..."
-        powershell.exe -Command "(new-object System.Net.WebClient).DownloadFile('http://www.metaseq.net/metaseq/mqsdk311.zip', 'External/mqsdk311.zip')"
+    IF NOT EXIST "External\mqsdk249c.zip" (
+        echo "downloading mqsdk249c.zip ..."
+        powershell.exe -Command "(new-object System.Net.WebClient).DownloadFile('http://www.metaseq.net/metaseq/mqsdk249c.zip', 'External/mqsdk249c.zip')"
         
     )
     cd External
-    7z\7za.exe x -omqsdk311 -aos mqsdk311.zip
-    mklink /J mqsdk3 mqsdk311\mqsdk
+    7z\7za.exe x -omqsdk249c -aos mqsdk249c.zip
+    mklink /J mqsdk3 mqsdk249c\mqsdk
     cd ..
 )

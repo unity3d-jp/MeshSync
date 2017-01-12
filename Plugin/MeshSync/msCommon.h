@@ -26,37 +26,51 @@ union MeshFlags
 };
 
 
-struct EventData
+class EventData
 {
+public:
     EventType type = EventType::Unknown;
     std::string obj_path;
+
+    virtual ~EventData() = 0;
+    virtual void clear() = 0;
+    virtual uint32_t getSerializeSize() const = 0;
+    virtual void serialize(std::ostream& os) const = 0;
+    virtual void deserialize(std::istream& is) = 0;
 };
 
-struct DeleteData : public EventData
+class DeleteData : public EventData
 {
+using super = EventData;
+public:
+
     DeleteData();
-    void clear();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    void clear() override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 };
 
-struct XformData : public EventData
+class XformData : public EventData
 {
-    float3 position;
-    quatf rotation;
-    float3 scale;
-    float4x4 transform;
+using super = EventData;
+public:
+    float3   position  = float3::zero();
+    quatf    rotation  = quatf::identity();
+    float3   scale     = float3::one();
+    float4x4 transform = float4x4::identity();
 
     XformData();
-    void clear();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    void clear() override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 };
 
-struct MeshData : public EventData
+class MeshData : public EventData
 {
+using super = EventData;
+public:
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float4> tangents;
@@ -67,10 +81,10 @@ struct MeshData : public EventData
     float smooth_angle = 0.0f;
 
     MeshData();
-    void clear();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    void clear() override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 
     void refine(MeshFlags flags, float scale);
 };
