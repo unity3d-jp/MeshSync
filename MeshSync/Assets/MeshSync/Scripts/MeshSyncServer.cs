@@ -148,6 +148,7 @@ public class MeshSyncServer : MonoBehaviour
 
     #region fields
     [SerializeField] int m_port = 8080;
+    [SerializeField] float m_scale = 0.001f;
     [SerializeField] bool m_genNormals = true;
     [SerializeField] bool m_genTangents = false;
     [SerializeField] bool m_swapHandedness= true;
@@ -175,6 +176,7 @@ public class MeshSyncServer : MonoBehaviour
         settings.flags.genTangents = m_genTangents;
         settings.flags.swapHandedness = m_swapHandedness;
         settings.flags.swapFaces = m_swapFaces;
+        settings.scale = m_scale;
         settings.port = (ushort)m_port;
         m_server = msServerStart(ref settings);
     }
@@ -211,6 +213,11 @@ public class MeshSyncServer : MonoBehaviour
         var edata = default(DeleteData);
         msCopyData(EventType.Delete, ref edata, data);
         var path = S(edata.obj_path);
+        var target = FindObjectByPath(null, path);
+        if(target != null)
+        {
+            DestroyImmediate(target.gameObject);
+        }
 
         Debug.Log("MeshSyncServer: Delete " + path);
     }
@@ -220,6 +227,13 @@ public class MeshSyncServer : MonoBehaviour
         var edata = default(XformData);
         msCopyData(EventType.Xform, ref edata, data);
         var path = S(edata.obj_path);
+        var target = FindObjectByPath(null, path);
+        if (target != null)
+        {
+            target.localPosition = edata.position;
+            target.localRotation = edata.rotation;
+            target.localScale = edata.scale;
+        }
 
         Debug.Log("MeshSyncServer: Xform " + path);
     }
@@ -228,7 +242,6 @@ public class MeshSyncServer : MonoBehaviour
     {
         var edata = default(MeshData);
         msCopyData(EventType.Mesh, ref edata, data);
-
 
         var mdata = default(MeshData);
         if (edata.points != IntPtr.Zero)
@@ -261,13 +274,7 @@ public class MeshSyncServer : MonoBehaviour
 
         var create = edata.num_points > 0;
         var path = S(edata.obj_path);
-        var names = path.Split('/');
-        Transform t = null;
-        foreach (var name in names)
-        {
-            t = FindOrCreateObject(t, name, create);
-        }
-
+        Transform t = FindObjectByPath(null, path, create);
         if (t == null)
         {
             return;
@@ -287,7 +294,20 @@ public class MeshSyncServer : MonoBehaviour
     }
 
 
-    Transform FindOrCreateObject(Transform parent, string name, bool create)
+    Transform FindObjectByPath(Transform parent, string path, bool createIfNotExist = false)
+    {
+        var names = path.Split('/');
+        Transform t = null;
+        foreach (var name in names)
+        {
+            if (name.Length == 0) { continue; }
+            t = FindObjectByName(t, name, createIfNotExist);
+            if(t == null) { break; }
+        }
+        return t;
+    }
+
+    Transform FindObjectByName(Transform parent, string name, bool createIfNotExist = false)
     {
         Transform ret = null;
         if (parent == null)
@@ -307,7 +327,7 @@ public class MeshSyncServer : MonoBehaviour
             ret = parent.FindChild(name);
         }
 
-        if (create && ret == null)
+        if (createIfNotExist && ret == null)
         {
             var go = new GameObject();
             go.name = name;

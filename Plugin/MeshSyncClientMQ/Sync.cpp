@@ -49,11 +49,10 @@ void Sync::sync(MQDocument doc)
 
         ms::Client client(m_settings);
         client.send(send_data.data(), (int)send_data.size());
-
     }
 }
 
-inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)
+static inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)
 {
     if (auto parent = doc->GetParentObject(obj)) {
         BuildPath(doc, parent, path);
@@ -82,7 +81,9 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = obj->GetFacePointCount(fi);
         dst.counts[fi] = c;
-        nindices += c;
+        if (c >= 3) { // ignore lines and points
+            nindices += c;
+        }
     }
 
     // copy indices & uv
@@ -92,9 +93,16 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     auto *uv = dst.uv.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
-        obj->GetFacePointArray(fi, indices);
-        obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
-        indices += c;
-        uv += c;
+        if (c >= 3) {
+            obj->GetFacePointArray(fi, indices);
+            obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
+            indices += c;
+            uv += c;
+        }
     }
+
+    // remove line and points
+    dst.counts.erase(
+        std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
+        dst.counts.end());
 }

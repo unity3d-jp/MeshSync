@@ -108,6 +108,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
+    m_sync.sync(doc);
 }
 
 //---------------------------------------------------------------------------
