@@ -44,10 +44,8 @@ public class MeshSyncServer : MonoBehaviour
         public IntPtr normals;
         public IntPtr tangents;
         public IntPtr uv;
-        public IntPtr counts;
         public IntPtr indices;
         public int    num_points;
-        public int    num_counts;
         public int    num_indices;
     };
 

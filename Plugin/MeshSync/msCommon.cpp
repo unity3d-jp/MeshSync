@@ -128,6 +128,7 @@ uint32_t MeshData::getSerializeSize() const
 #define Body(A) ret += size_vector(A);
     EachArray(Body);
 #undef Body
+    ret += size_pod(smooth_angle);
     return ret;
 }
 
@@ -135,8 +136,9 @@ void MeshData::serialize(std::ostream& os) const
 {
     write_vector(os, obj_path);
 #define Body(A) write_vector(os, A);
-    EachArray(Body)
+    EachArray(Body);
 #undef Body
+    write_pod(os, smooth_angle);
 }
 
 void MeshData::deserialize(std::istream& is)
@@ -145,6 +147,7 @@ void MeshData::deserialize(std::istream& is)
 #define Body(A) read_vector(is, A);
     EachArray(Body);
 #undef Body
+    read_pod(is, smooth_angle);
 }
 
 void MeshData::refine(MeshFlags flags, float scale)
@@ -181,46 +184,47 @@ void MeshData::refine(MeshFlags flags, float scale)
     // normals
     bool gen_normals = flags.gen_normals && normals.empty();
     if (gen_normals) {
-        normals.resize(points.size());
-        mu::GenerateNormals(normals.data(), points.data(),
-            counts.data(), offsets.data(), indices.data(),
-            points.size(), counts.size());
+        if (smooth_angle > 0.0f && smooth_angle < 360.0f) {
+            normals.resize(indices.size());
+            mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, smooth_angle);
+        }
+        else {
+            normals.resize(points.size());
+            mu::GenerateNormals(normals, points, counts, offsets, indices);
+        }
     }
 
-    //// flatten
-    //if ((int)normals.size() == num_indices || (int)uv.size() == num_indices) {
-    //    indices_flattened_triangulated.resize(num_indices_tri);
-    //    mu::TriangulateIndices(indices_flattened_triangulated, counts, (RawVector<int>*)nullptr, flags.swap_faces);
+    // flatten
+    if ((int)normals.size() == num_indices || (int)uv.size() == num_indices) {
+        indices_flattened_triangulated.resize(num_indices_tri);
+        mu::TriangulateIndices(indices_flattened_triangulated, counts, (RawVector<int>*)nullptr, flags.swap_faces);
 
-    //    {
-    //        RawVector<float3> flattened;
-    //        mu::CopyWithIndices(flattened, points, indices_triangulated, 0, num_indices_tri);
-    //        points.swap(flattened);
-    //    }
-    //    if (!normals.empty()) {
-    //        RawVector<float3> flattened;
-    //        mu::CopyWithIndices(flattened, normals,
-    //            (int)normals.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
-    //        normals.swap(flattened);
-    //    }
-    //    if (!uv.empty()) {
-    //        RawVector<float2> flattened;
-    //        mu::CopyWithIndices(flattened, uv,
-    //            (int)uv.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
-    //        uv.swap(flattened);
-    //    }
+        {
+            RawVector<float3> flattened;
+            mu::CopyWithIndices(flattened, points, indices_triangulated, 0, num_indices_tri);
+            points.swap(flattened);
+        }
+        if (!normals.empty()) {
+            RawVector<float3> flattened;
+            mu::CopyWithIndices(flattened, normals,
+                (int)normals.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
+            normals.swap(flattened);
+        }
+        if (!uv.empty()) {
+            RawVector<float2> flattened;
+            mu::CopyWithIndices(flattened, uv,
+                (int)uv.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
+            uv.swap(flattened);
+        }
 
-    //    std::iota(indices_triangulated.begin(), indices_triangulated.end(), 0);
-    //}
+        std::iota(indices_triangulated.begin(), indices_triangulated.end(), 0);
+    }
 
     // tangents
     bool gen_tangents = flags.gen_tangents && tangents.empty() && !uv.empty();
     if (gen_tangents) {
         tangents.resize(points.size());
-        mu::GenerateTangents(tangents.data(),
-            points.cdata(), normals.cdata(), uv.cdata(),
-            counts.cdata(), offsets.cdata(), indices.cdata(),
-            points.size(), counts.size());
+        mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
     }
 }
 
@@ -247,10 +251,8 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     normals     = (float3*)v.normals.data();
     tangents    = (float4*)v.tangents.data();
     uv          = (float2*)v.uv.data();
-    counts      = (int*)v.counts.data();
     indices     = (int*)v.indices_triangulated.data();
     num_points  = (int)v.points.size();
-    num_counts  = (int)v.counts.size();
     num_indices = (int)v.indices_triangulated.size();
 }
 

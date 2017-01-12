@@ -25,6 +25,7 @@ public:
     {
         operator=(v);
     }
+    explicit RawVector(size_t initial_size) { resize(initial_size); }
     RawVector& operator=(const RawVector& v)
     {
         assign(v.begin(), v.end());
@@ -154,6 +155,11 @@ public:
     bool operator != (const RawVector& other) const
     {
         return !(*this == other);
+    }
+
+    void zeroclear()
+    {
+        memset(m_data, 0, sizeof(T)*m_size);
     }
 
 private:

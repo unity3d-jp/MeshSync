@@ -110,7 +110,7 @@ RequestHandlerFactory::RequestHandlerFactory(Server *server)
 {
 }
 
-HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest &request)
+HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest&)
 {
     return new RequestHandler(m_server);
 }
@@ -141,8 +141,7 @@ bool Server::start()
             m_server->start();
         }
         catch (Poco::IOException &e) {
-            //wiDebugPrint(e.what());
-            //wiAssert(false);
+            printf("%s\n", e.what());
             return false;
         }
     }

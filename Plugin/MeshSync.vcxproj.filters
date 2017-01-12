@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="MeshSync\Allocator.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSync\msClient.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
@@ -18,9 +15,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSync\Allocator.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSync\msClient.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
@@ -31,12 +25,6 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\pch.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\RawVector.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\tls.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>

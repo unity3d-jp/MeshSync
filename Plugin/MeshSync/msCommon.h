@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RawVector.h"
+#include "MeshUtils/RawVector.h"
 #include "MeshUtils/MeshUtils.h"
 
 namespace ms {
@@ -64,6 +64,7 @@ struct MeshData : public EventData
     RawVector<int> counts;
     RawVector<int> indices;
     RawVector<int> indices_triangulated;
+    float smooth_angle = 0.0f;
 
     MeshData();
     void clear();
@@ -101,10 +102,8 @@ struct MeshDataCS
     float3 *normals = nullptr;
     float4 *tangents = nullptr;
     float2 *uv = nullptr;
-    int *counts = nullptr;
     int *indices = nullptr;
     int num_points = 0;
-    int num_counts = 0;
     int num_indices = 0;
 
     MeshDataCS(const MeshData& v);

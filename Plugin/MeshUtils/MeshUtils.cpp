@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshUtils.h"
 #include "mikktspace.h"
+#include "RawVector.h"
+#include "IntrusiveArray.h"
 
 #ifdef muEnableHalf
 #ifdef _WIN32
@@ -9,6 +11,10 @@
 #endif // muEnableHalf
 
 namespace mu {
+
+const float PI = 3.14159265358979323846264338327950288419716939937510f;
+const float Deg2Rad = PI / 180.0f;
+
 
 #ifdef muEnableHalf
 void FloatToHalf_Generic(half *dst, const float *src, size_t num)
@@ -75,51 +81,110 @@ void Normalize_Generic(float3 *dst, size_t num)
     }
 }
 
-void GenerateNormals_Generic(
-    float3 *dst, const float3 *p,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces)
+bool GenerateNormals(
+    IA<float3> dst, const IA<float3> points,
+    const IA<int> counts, const IA<int> offsets, const IA<int> indices)
 {
-    memset(dst, 0, sizeof(float3)*num_points);
+    if (dst.size() != points.size()) {
+        return false;
+    }
+    dst.zeroclear();
 
+    size_t num_faces = counts.size();
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
         const int *face = &indices[offsets[fi]];
-        int i0 = face[0];
-        int i1 = face[1];
-        int i2 = face[2];
-        float3 p0 = p[i0];
-        float3 p1 = p[i1];
-        float3 p2 = p[i2];
+        float3 p0 = points[face[0]];
+        float3 p1 = points[face[1]];
+        float3 p2 = points[face[2]];
         float3 n = cross(p1 - p0, p2 - p0);
         for (int ci = 0; ci < count; ++ci) {
             dst[face[ci]] += n;
         }
     }
+    Normalize(dst.data(), dst.size());
+    return true;
+}
 
-    for (size_t i = 0; i < num_points; ++i) {
-        dst[i] = normalize(dst[i]);
+bool GenerateNormalsWithThreshold(
+    IA<float3> dst, const IA<float3> points,
+    const IA<int> counts, const IA<int> offsets, const IA<int> indices, float threshold)
+{
+    size_t num_points = points.size();
+    size_t num_indices = indices.size();
+    size_t num_faces = counts.size();
+
+    if (dst.size() != num_indices) {
+        // dst size must be num_indices
+        return false;
     }
+
+    // build connected face list
+    RawVector<int> cf_counts, cf_offsets, cf_connections;
+    BuildConnectedFaceList(cf_counts, cf_offsets, cf_connections, counts, indices, num_points);
+
+    // gen face normals
+    RawVector<float3> face_normals(num_faces);
+    face_normals.zeroclear();
+    for (size_t fi = 0; fi < num_faces; ++fi)
+    {
+        int offset = offsets[fi];
+        const int *face = &indices[offset];
+        float3 p0 = points[face[0]];
+        float3 p1 = points[face[1]];
+        float3 p2 = points[face[2]];
+        float3 n = cross(p1 - p0, p2 - p0);
+        face_normals[fi] = n;
+    }
+    Normalize(face_normals.data(), face_normals.size());
+
+    // gen vertex normals
+    const float angle = std::cos(threshold * Deg2Rad) - 0.001f;
+    for (size_t fi = 0; fi < num_faces; ++fi)
+    {
+        int count = counts[fi];
+        int offset = offsets[fi];
+        const int *face = &indices[offset];
+        auto& face_normal = face_normals[fi];
+        for (int ci = 0; ci < count; ++ci) {
+            int vi = face[ci];
+
+            int num_connections = cf_counts[vi];
+            int *connection = &cf_connections[cf_offsets[vi]];
+            auto normal = float3::zero();
+            for (int ni = 0; ni < num_connections; ++ni) {
+                auto& connected_normal = face_normals[connection[ni]];
+                float dp = dot(face_normal, connected_normal);
+                if (dp > angle) {
+                    normal += connected_normal;
+                }
+            }
+            dst[offset + ci] = normal;
+        }
+    }
+
+    // normalize
+    Normalize(dst.data(), dst.size());
+    return true;
 }
 
 
 
 struct TSpaceContext
 {
-    float4 *dst;
-    const float3 *p;
-    const float3 *n;
-    const float2 *t;
-    const int *counts;
-    const int *offsets;
-    const int *indices;
-    size_t num_points;
-    size_t num_faces;
+    IA<float4> dst;
+    const IA<float3> points;
+    const IA<float3> normals;
+    const IA<float2> uv;
+    const IA<int> counts;
+    const IA<int> offsets;
+    const IA<int> indices;
 
     static int getNumFaces(const SMikkTSpaceContext *tctx)
     {
         auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        return (int)_this->num_faces;
+        return (int)_this->counts.size();
     }
 
     static int getCount(const SMikkTSpaceContext *tctx, int i)
@@ -132,21 +197,21 @@ struct TSpaceContext
     {
         auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
         const int *face = &_this->indices[_this->offsets[iface]];
-        (float3&)*o_pos = _this->p[face[ivtx]];
+        (float3&)*o_pos = _this->points[face[ivtx]];
     }
 
     static void getNormal(const SMikkTSpaceContext *tctx, float *o_normal, int iface, int ivtx)
     {
         auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
         const int *face = &_this->indices[_this->offsets[iface]];
-        (float3&)*o_normal = _this->n[face[ivtx]];
+        (float3&)*o_normal = _this->normals[face[ivtx]];
     }
 
     static void getTexCoord(const SMikkTSpaceContext *tctx, float *o_tcoord, int iface, int ivtx)
     {
         auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
         const int *face = &_this->indices[_this->offsets[iface]];
-        (float2&)*o_tcoord = _this->t[face[ivtx]];
+        (float2&)*o_tcoord = _this->uv[face[ivtx]];
     }
 
     static void setTangent(const SMikkTSpaceContext *tctx, const float* tangent, const float* /*bitangent*/,
@@ -160,10 +225,10 @@ struct TSpaceContext
 };
 
 bool GenerateTangents(
-    float4 *dst, const float3 *p, const float3 *n, const float2 *t,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces)
+    IA<float4> dst, const IA<float3> points, const IA<float3> normals, const IA<float2> uv,
+    const IA<int> counts, const IA<int> offsets, const IA<int> indices)
 {
-    TSpaceContext ctx = {dst, p, n, t, counts, offsets, indices, num_points, num_faces};
+    TSpaceContext ctx = {dst, points, normals, uv, counts, offsets, indices};
 
     SMikkTSpaceInterface iface;
     memset(&iface, 0, sizeof(iface));
@@ -399,14 +464,5 @@ void Normalize(float3 *dst, size_t num)
 {
     Forward(Normalize, dst, num);
 }
-
-void GenerateNormals(
-    float3 *dst, const float3 *p,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces)
-{
-    Forward(GenerateNormals, dst, p, counts, offsets, indices, num_points, num_faces);
-}
-
-
 
 } // namespace mu

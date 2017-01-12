@@ -10,5 +10,15 @@
                 <ValuePointer>m_data</ValuePointer>
             </ArrayItems>
         </Expand>
-    </Type> 
+    </Type>
+    <Type Name="IntrusiveArray&lt;*&gt;">
+        <DisplayString>{{ size={m_size} }}</DisplayString>
+        <Expand>
+            <Item Name="[size]" ExcludeView="simple">m_size</Item>
+            <ArrayItems>
+                <Size>m_size</Size>
+                <ValuePointer>m_data</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
 </AutoVisualizer>

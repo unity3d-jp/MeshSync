@@ -19,12 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MeshUtils\Allocator.h" />
+    <ClInclude Include="MeshUtils\IntrusiveArray.h" />
     <ClInclude Include="MeshUtils\mikktspace.h" />
     <ClInclude Include="MeshUtils\muVector.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
+    <ClInclude Include="MeshUtils\RawVector.h" />
+    <ClInclude Include="MeshUtils\tls.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MeshUtils\Allocator.cpp" />
     <ClCompile Include="MeshUtils\mikktspace.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

@@ -2,16 +2,9 @@
 #include "MeshSync/msServer.h"
 #include "MeshSync/msClient.h"
 
-int main(int argc, char *argv[])
+void Test_Sync(bool create_server)
 {
-    bool create_server = false;
     std::unique_ptr<ms::Server> server;
-
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "-server") == 0) {
-            create_server = true;
-        }
-    }
 
     if (create_server) {
         server.reset(new ms::Server(ms::ServerSettings{}));
@@ -40,4 +33,35 @@ int main(int argc, char *argv[])
             printf("break here\n");
         });
     }
+}
+
+void Test_GenNormals()
+{
+    RawVector<float3> points = {
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f },
+        { 1.0f, 1.0f, 0.0f },
+        { 1.0f, 1.0f, 1.0f },
+        { 2.0f, 0.0f, 0.0f },
+        { 2.0f, 0.0f, 1.0f },
+    };
+    RawVector<int> indices = {
+        0, 1, 3, 2,
+        2, 3, 5, 4,
+    };
+    RawVector<int> counts = {
+        4, 4,
+    };
+    RawVector<int> offsets = {
+        0, 4,
+    };
+
+    RawVector<float3> normals(indices.size());
+    mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, 10.0f);
+}
+
+int main(int argc, char *argv[])
+{
+    //Test_Sync(false);
+    Test_GenNormals();
 }

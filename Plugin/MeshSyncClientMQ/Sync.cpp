@@ -31,6 +31,7 @@ void Sync::gather(MQObject obj, ms::MeshData& dst)
     char name[1024];
     obj->GetName(name, sizeof(name));
     dst.obj_path = name;
+    dst.smooth_angle = obj->GetSmoothAngle();
 
     // copy vertices
     int npoints = obj->GetVertexCount();

@@ -1,8 +1,12 @@
 #pragma once
 
 #include "muVector.h"
+#include "IntrusiveArray.h"
 
 namespace mu {
+
+extern const float PI;
+extern const float Deg2Rad;
 
 #ifdef muEnableHalf
 void FloatToHalf(half *dst, const float *src, size_t num);
@@ -15,12 +19,24 @@ void Scale(float *dst, float s, size_t num);
 void Scale(float3 *dst, float s, size_t num);
 void ComputeBounds(const float3 *p, size_t num, float3& o_min, float3& o_max);
 void Normalize(float3 *dst, size_t num);
-void GenerateNormals(
-    float3 *dst, const float3 *p,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces);
+
+template<class T>
+using IA = IntrusiveArray<T>;
+
+// size of dst must be num_points
+bool GenerateNormals(
+    IA<float3> dst, const IA<float3> points,
+    const IA<int> counts, const IA<int> offsets, const IA<int> indices);
+
+// size of dst must be num_indices
+bool GenerateNormalsWithThreshold(
+    IA<float3> dst, const IA<float3> points,
+    const IA<int> counts, const IA<int> offsets, const IA<int> indices, float threshold);
+
 bool GenerateTangents(
-    float4 *dst, const float3 *p, const float3 *n, const float2 *t,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces);
+    IA<float4> dst, const IA<float3> points, const IA<float3> normals, const IA<float2> uv,
+    const IA<int> counts, const IA<int> offsets, const IA<int> indices);
+
 
 
 // vertex interleave
@@ -205,13 +221,6 @@ void ComputeBounds_ISPC(const float3 *p, size_t num, float3& o_min, float3& o_ma
 void Normalize_Generic(float3 *dst, size_t num);
 void Normalize_ISPC(float3 *dst, size_t num);
 
-void GenerateNormals_Generic(
-    float3 *dst, const float3 *p,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces);
-void GenerateNormals_ISPC(
-    float3 *dst, const float3 *p,
-    const int *counts, const int *offsets, const int *indices, size_t num_points, size_t num_faces);
-
 template<class VertexT> void Interleave_Generic(VertexT *dst, const typename VertexT::source_t& src, size_t num);
 
 
@@ -288,6 +297,52 @@ inline void TriangulateIndices(
                 i += 3;
             }
             n += ngon;
+        }
+    }
+}
+
+template<class DstArray, class SrcArray, class TmpArray = DstArray>
+inline void BuildConnectedFaceList(
+    DstArray& dst_counts, DstArray& dst_offsets, DstArray& dst_connections,
+    const SrcArray& counts, const SrcArray& indices, size_t num_points)
+{
+    size_t num_faces = counts.size();
+    size_t num_indices = indices.size();
+
+    dst_counts.resize(num_points);
+    dst_offsets.resize(num_points);
+    dst_connections.resize(num_indices);
+    memset(dst_counts.data(), 0, sizeof(int)*num_points);
+
+    {
+        const int *idx = indices.data();
+        for (auto& c : counts) {
+            for (int i = 0; i < c; ++i) {
+                dst_counts[idx[i]]++;
+            }
+            idx += c;
+        }
+    }
+
+    TmpArray tmp_indices;
+    tmp_indices.resize(num_points);
+    memset(tmp_indices.data(), 0, sizeof(int)*num_points);
+
+    {
+        int offset = 0;
+        for (size_t i = 0; i < num_points; ++i) {
+            dst_offsets[i] = offset;
+            offset += dst_counts[i];
+        }
+    }
+    {
+        const int *idx = indices.data();
+        for (int fi = 0; fi < (int)num_faces; ++fi) {
+            int c = counts[fi];
+            for (int i = 0; i < c; ++i) {
+                dst_connections[dst_offsets[idx[i]] + tmp_indices[idx[i]]++] = fi;
+            }
+            idx += c;
         }
     }
 }

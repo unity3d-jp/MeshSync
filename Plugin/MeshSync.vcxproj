@@ -19,16 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSync\Allocator.h" />
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msCommon.h" />
     <ClInclude Include="MeshSync\msServer.h" />
-    <ClInclude Include="MeshSync\RawVector.h" />
     <ClInclude Include="MeshSync\pch.h" />
-    <ClInclude Include="MeshSync\tls.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshSync\Allocator.cpp" />
     <ClCompile Include="MeshSync\msClient.cpp" />
     <ClCompile Include="MeshSync\msCommon.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />
