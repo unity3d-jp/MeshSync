@@ -10,6 +10,7 @@
 #include <functional>
 #include <future>
 #include <mutex>
+#include <memory>
 
 #include <ppl.h>
 

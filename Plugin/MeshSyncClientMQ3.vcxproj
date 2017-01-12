@@ -26,6 +26,10 @@
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\Dialog\MainDlg.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp" />
     <ClCompile Include="MeshSyncClientMQ\Sync.cpp" />
   </ItemGroup>
@@ -34,6 +38,9 @@
     <ClInclude Include="External/mqsdk3/MQSetting.h" />
     <ClInclude Include="External/mqsdk3/MQPlugin.h" />
     <ClInclude Include="MeshSyncClientMQ/pch.h" />
+    <ClInclude Include="MeshSyncClientMQ\Dialog\MainDlg.h" />
+    <ClInclude Include="MeshSyncClientMQ\Dialog\resource.h" />
+    <ClInclude Include="MeshSyncClientMQ\Dialog\stdafx.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ3.h" />
     <ClInclude Include="MeshSyncClientMQ\Sync.h" />
   </ItemGroup>
@@ -47,6 +54,9 @@
     <ProjectReference Include="setup.vcxproj">
       <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MeshSyncClientMQ\Dialog\Dialog.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{49C765EA-DD7C-481D-9584-CEFAD935735E}</ProjectGuid>
@@ -67,7 +77,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk3;$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk3;$(SolutionDir)External\Poco\include;$(SolutionDir)External\WTL\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>

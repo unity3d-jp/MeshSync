@@ -22,6 +22,9 @@
     <ClCompile Include="MeshSyncClientMQ\Sync.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\Dialog\MainDlg.cpp">
+      <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk3/MQBasePlugin.h">
@@ -42,6 +45,15 @@
     <ClInclude Include="MeshSyncClientMQ\Sync.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\Dialog\resource.h">
+      <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\Dialog\stdafx.h">
+      <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\Dialog\MainDlg.h">
+      <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="External">
@@ -53,5 +65,13 @@
     <Filter Include="MeshSyncClientMQ">
       <UniqueIdentifier>{cda89d94-97e2-493d-aeca-b01bf3373769}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MeshSyncClientMQ\Dialog">
+      <UniqueIdentifier>{ebe265d8-6802-4bce-9a6c-1b26089e30bb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MeshSyncClientMQ\Dialog\Dialog.rc">
+      <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

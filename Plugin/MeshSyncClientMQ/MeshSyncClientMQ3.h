@@ -32,9 +32,7 @@ public:
     void OnMaterialModified(MQDocument doc) override;
     void OnUpdateMaterialList(MQDocument doc) override;
 
-
     typedef bool (MeshSyncClientPlugin::*ExecuteCallbackProc)(MQDocument doc);
-
     void Execute(ExecuteCallbackProc proc);
 
 protected:
@@ -44,6 +42,13 @@ protected:
 
     bool ExecuteCallback(MQDocument doc, void *option) override;
 
+public:
+    bool& getAutoSync();
+    ms::ClientSettings& getClientSettings();
+
 private:
+    void autoSync(MQDocument doc);
+
     Sync m_sync;
+    bool m_auto_sync = false;
 };

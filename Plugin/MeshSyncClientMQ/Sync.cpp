@@ -5,9 +5,9 @@ Sync::Sync()
 {
 }
 
-void Sync::setClientSettings(const ms::ClientSettings& v)
+ms::ClientSettings& Sync::getClientSettings()
 {
-    m_settings = v;
+    return m_settings;
 }
 
 void Sync::sync(MQDocument doc)

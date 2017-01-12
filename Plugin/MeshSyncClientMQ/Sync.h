@@ -4,7 +4,7 @@ struct Sync
 {
 public:
     Sync();
-    void setClientSettings(const ms::ClientSettings& v);
+    ms::ClientSettings& getClientSettings();
     void sync(MQDocument doc);
 
 private:

@@ -3,6 +3,12 @@
 
 static MeshSyncClientPlugin g_plugin;
 
+void InitializeSettingDialog(MeshSyncClientPlugin *plugin, HWND parent);
+void FinalizeSettingDialog();
+void ShowSettingDialog(bool show);
+bool IsSettingDialogActive();
+
+
 MeshSyncClientPlugin::MeshSyncClientPlugin()
 {
 }
@@ -46,6 +52,7 @@ const char *MeshSyncClientPlugin::EnumString(void)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::Initialize()
 {
+    InitializeSettingDialog(this, MQ_GetWindowHandle());
     return TRUE;
 }
 
@@ -55,6 +62,7 @@ BOOL MeshSyncClientPlugin::Initialize()
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::Exit()
 {
+    FinalizeSettingDialog();
 }
 
 //---------------------------------------------------------------------------
@@ -63,7 +71,8 @@ void MeshSyncClientPlugin::Exit()
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::Activate(MQDocument doc, BOOL flag)
 {
-    return TRUE;
+    ShowSettingDialog(IsSettingDialogActive() ? false : true);
+    return IsSettingDialogActive();
 }
 
 //---------------------------------------------------------------------------
@@ -72,7 +81,7 @@ BOOL MeshSyncClientPlugin::Activate(MQDocument doc, BOOL flag)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::IsActivated(MQDocument doc)
 {
-    return TRUE;
+    return IsSettingDialogActive();
 }
 
 //---------------------------------------------------------------------------
@@ -108,7 +117,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
-    m_sync.sync(doc);
+    autoSync(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -125,7 +134,7 @@ void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    m_sync.sync(doc);
+    autoSync(doc);
     return TRUE;
 }
 
@@ -135,7 +144,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    m_sync.sync(doc);
+    autoSync(doc);
     return TRUE;
 }
 
@@ -153,7 +162,7 @@ void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 {
-    m_sync.sync(doc);
+    autoSync(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -162,6 +171,7 @@ void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 {
+    autoSync(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -198,6 +208,26 @@ bool MeshSyncClientPlugin::ExecuteCallback(MQDocument doc, void *option)
     return ((*this).*info->proc)(doc);
 }
 
+std::string& GetServer(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getClientSettings().server;
+}
+uint16_t& GetPort(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getClientSettings().port;
+}
+bool& GetAutoSync(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getAutoSync();
+}
+
+bool& MeshSyncClientPlugin::getAutoSync() { return m_auto_sync; }
+
+ms::ClientSettings& MeshSyncClientPlugin::getClientSettings()
+{
+    return m_sync.getClientSettings();
+}
+
 // コールバックの呼び出し
 void MeshSyncClientPlugin::Execute(ExecuteCallbackProc proc)
 {
@@ -213,26 +243,11 @@ MQBasePlugin *GetPluginClass()
 }
 
 
-//---------------------------------------------------------------------------
-//  DllMain
-//---------------------------------------------------------------------------
-BOOL APIENTRY DllMain(HINSTANCE hInstance,
-    DWORD  ul_reason_for_call,
-    LPVOID lpReserved
-)
+
+void MeshSyncClientPlugin::autoSync(MQDocument doc)
 {
-    if (ul_reason_for_call == DLL_PROCESS_ATTACH)
-    {
-        HRESULT hRes = ::CoInitialize(NULL);
-
-        return SUCCEEDED(hRes);
+    if (m_auto_sync) {
+        m_sync.sync(doc);
     }
-
-    if (ul_reason_for_call == DLL_PROCESS_DETACH)
-    {
-        ::CoUninitialize();
-    }
-
-    return TRUE;
 }
 
