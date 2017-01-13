@@ -24,6 +24,7 @@ union GetFlags
         uint32_t mesh_get_normals : 1;
         uint32_t mesh_get_tangents : 1;
         uint32_t mesh_get_uv : 1;
+        uint32_t mesh_get_indices : 1;
         uint32_t mesh_get_bones : 1;
         uint32_t mesh_swap_handedness : 1;
         uint32_t mesh_swap_faces : 1;

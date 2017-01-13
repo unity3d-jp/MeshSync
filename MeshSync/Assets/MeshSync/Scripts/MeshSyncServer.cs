@@ -32,10 +32,11 @@ public class MeshSyncServer : MonoBehaviour
         public bool mesh_get_normals { get { return (flags & 0x8) != 0; } }
         public bool mesh_get_tangents { get { return (flags & 0x10) != 0; } }
         public bool mesh_get_uv { get { return (flags & 0x20) != 0; } }
-        public bool mesh_get_bones { get { return (flags & 0x40) != 0; } }
-        public bool mesh_swap_handedness { get { return (flags & 0x80) != 0; } }
-        public bool mesh_swap_faces { get { return (flags & 0x100) != 0; } }
-        public bool mesh_apply_transform { get { return (flags & 0x200) != 0; } }
+        public bool mesh_get_indices { get { return (flags & 0x40) != 0; } }
+        public bool mesh_get_bones { get { return (flags & 0x80) != 0; } }
+        public bool mesh_swap_handedness { get { return (flags & 0x100) != 0; } }
+        public bool mesh_swap_faces { get { return (flags & 0x200) != 0; } }
+        public bool mesh_apply_transform { get { return (flags & 0x400) != 0; } }
     }
 
     public struct GetData
@@ -151,8 +152,8 @@ public class MeshSyncServer : MonoBehaviour
     public delegate void msEventHandler(EventType type, IntPtr data);
     [DllImport("MeshSyncServer")] public static extern void msServerProcessEvents(IntPtr sv, msEventHandler handler);
 
-    [DllImport("MeshSyncServer")] public static extern void msServerBeginServeData(IntPtr sv);
-    [DllImport("MeshSyncServer")] public static extern void msServerEndServeData(IntPtr sv);
+    [DllImport("MeshSyncServer")] public static extern void msServerBeginServe(IntPtr sv);
+    [DllImport("MeshSyncServer")] public static extern void msServerEndServe(IntPtr sv);
     [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, ref XformData data);
     [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, ref MeshData data);
 
@@ -189,7 +190,6 @@ public class MeshSyncServer : MonoBehaviour
     Vector4[] m_tangents;
     Vector2[] m_uv;
     int[] m_indices;
-    GetFlags m_serve_frags;
     #endregion
 
 
@@ -245,16 +245,18 @@ public class MeshSyncServer : MonoBehaviour
         var edata = default(GetData);
         msCopyData(EventType.Get, ref edata, data);
 
-        msServerBeginServeData(m_server);
+        msServerBeginServe(m_server);
         foreach (var mr in FindObjectsOfType<MeshRenderer>())
         {
-            ServeData(mr);
+            ServeData(mr, edata.flags);
         }
         foreach (var smr in FindObjectsOfType<SkinnedMeshRenderer>())
         {
-            ServeData(smr);
+            ServeData(smr, edata.flags);
         }
-        msServerEndServeData(m_server);
+        msServerEndServe(m_server);
+
+        Debug.Log("MeshSyncServer: Get");
     }
 
     void OnRecvDelete(IntPtr data)
@@ -430,7 +432,7 @@ public class MeshSyncServer : MonoBehaviour
     }
 
 
-    void ServeData(MeshRenderer mr)
+    void ServeData(MeshRenderer mr, GetFlags flags)
     {
         var mesh = mr.GetComponent<MeshFilter>().sharedMesh;
         if (mesh == null) return;
@@ -440,22 +442,22 @@ public class MeshSyncServer : MonoBehaviour
             return;
         }
 
-        if(m_serve_frags.get_xforms)
+        if(flags.get_xforms)
         {
             var data = default(XformData);
             Capture(ref data, mr.GetComponent<Transform>());
             msServerAddServeData(m_server, EventType.Xform, ref data);
         }
-        if(m_serve_frags.get_meshes)
+        if(flags.get_meshes)
         {
             var data = default(MeshData);
             data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
-            Capture(ref data, mesh);
+            Capture(ref data, mesh, flags);
             msServerAddServeData(m_server, EventType.Mesh, ref data);
         }
     }
 
-    void ServeData(SkinnedMeshRenderer mr)
+    void ServeData(SkinnedMeshRenderer mr, GetFlags flags)
     {
         var mesh = mr.sharedMesh;
         if (mesh == null) return;
@@ -465,17 +467,17 @@ public class MeshSyncServer : MonoBehaviour
             return;
         }
 
-        if (m_serve_frags.get_xforms)
+        if (flags.get_xforms)
         {
             var data = default(XformData);
             Capture(ref data, mr.GetComponent<Transform>());
             msServerAddServeData(m_server, EventType.Xform, ref data);
         }
-        if (m_serve_frags.get_meshes)
+        if (flags.get_meshes)
         {
             var data = default(MeshData);
             data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
-            Capture(ref data, mesh);
+            Capture(ref data, mesh, flags);
             msServerAddServeData(m_server, EventType.Mesh, ref data);
         }
     }
@@ -487,31 +489,37 @@ public class MeshSyncServer : MonoBehaviour
         data.position = trans.localPosition;
     }
 
-    void Capture(ref MeshData data, Mesh mesh)
+    void Capture(ref MeshData data, Mesh mesh, GetFlags flags)
     {
-        if(m_serve_frags.mesh_get_points)
+        if(flags.mesh_get_points)
         {
             m_points = mesh.vertices;
             data.points = RawPtr(m_points);
+            data.num_points = m_points.Length;
         }
-        if (m_serve_frags.mesh_get_normals)
+        if (flags.mesh_get_normals)
         {
             m_normals = mesh.normals;
             data.normals = RawPtr(m_normals);
+            data.num_points = m_normals.Length;
         }
-        if (m_serve_frags.mesh_get_tangents)
+        if (flags.mesh_get_tangents)
         {
             m_tangents = mesh.tangents;
             data.tangents = RawPtr(m_tangents);
+            data.num_points = m_tangents.Length;
         }
-        if (m_serve_frags.mesh_get_uv)
+        if (flags.mesh_get_uv)
         {
             m_uv = mesh.uv;
             data.uv = RawPtr(m_uv);
+            data.num_points = m_uv.Length;
         }
+        if (flags.mesh_get_indices)
         {
             m_indices = mesh.triangles;
             data.indices = RawPtr(m_indices);
+            data.num_indices = m_indices.Length;
         }
     }
 

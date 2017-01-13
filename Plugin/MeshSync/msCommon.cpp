@@ -46,6 +46,11 @@ inline void read_vector(std::istream& is, T& v)
 GetData::GetData()
 {
     type = EventType::Get;
+    flags.get_meshes = 1;
+    flags.mesh_get_points = 1;
+    flags.mesh_get_uv = 1;
+    flags.mesh_get_indices = 1;
+    flags.mesh_apply_transform = 1;
 }
 void GetData::clear()
 {

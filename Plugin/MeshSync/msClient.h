@@ -21,7 +21,7 @@ public:
 
     using DataPtr = std::unique_ptr<EventData>;
     using DaraList = std::vector<DataPtr>;
-    DaraList sendGet(GetFlags flags);
+    DaraList sendGet(const GetData& gdata);
 
 private:
     ClientSettings m_settings;

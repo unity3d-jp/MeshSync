@@ -35,6 +35,17 @@ void Test_Sync(bool create_server)
     }
 }
 
+void Test_Get()
+{
+    ms::Client client(ms::ClientSettings{});
+
+    ms::GetData gdata;
+    auto data = client.sendGet(gdata);
+    for(auto& a : data) {
+        printf("");
+    }
+}
+
 void Test_GenNormals()
 {
     RawVector<float3> points = {
@@ -62,6 +73,7 @@ void Test_GenNormals()
 
 int main(int argc, char *argv[])
 {
-    Test_Sync(false);
+    //Test_Sync(false);
+    Test_Get();
     //Test_GenNormals();
 }

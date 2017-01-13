@@ -49,9 +49,9 @@ bool Client::sendEdit(const EventData * const data[], int num)
     }
 }
 
-Client::DaraList Client::sendGet(GetFlags flags)
+Client::DaraList Client::sendGet(const GetData& gdata)
 {
-    DaraList data;
+    DaraList ret;
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
         session.setTimeout(m_settings.timeout_ms * 1000);
@@ -60,10 +60,9 @@ Client::DaraList Client::sendGet(GetFlags flags)
         request.setContentType("application/octet-stream");
 
         {
-            GetData data;
-            request.setContentLength(data.getSerializeSize());
+            request.setContentLength(gdata.getSerializeSize());
             auto& os = session.sendRequest(request);
-            data.serialize(os);
+            gdata.serialize(os);
         }
 
         HTTPResponse response;
@@ -80,14 +79,14 @@ Client::DaraList Client::sendGet(GetFlags flags)
             {
                 auto tmp = new XformData();
                 tmp->deserialize(is);
-                data.emplace_back(tmp);
+                ret.emplace_back(tmp);
                 break;
             }
             case EventType::Mesh:
             {
                 auto tmp = new MeshData();
                 tmp->deserialize(is);
-                data.emplace_back(tmp);
+                ret.emplace_back(tmp);
                 break;
             }
             }
@@ -95,7 +94,7 @@ Client::DaraList Client::sendGet(GetFlags flags)
     }
     catch (...) {
     }
-    return data;
+    return ret;
 }
 
 } // namespace ms
