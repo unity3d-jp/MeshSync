@@ -71,6 +71,11 @@ void Sync::import()
     gd.flags.mesh_swap_handedness = 1;
     gd.flags.mesh_apply_transform = 1;
 
+    MQSendMessageInfo info;
+    info.Product = MQPluginProduct;
+    info.ID = MQPluginID;
+    MQ_SendMessage(MQMESSAGE_UPDATE_UNDO, &info);
+
     auto ret = client.sendGet(gd);
     for (auto& data : ret) {
         if (data->type == ms::EventType::Mesh) {
@@ -78,7 +83,8 @@ void Sync::import()
             m_doc->AddObject(obj);
         }
     }
-    MQ_RefreshView(nullptr);
+
+    MQ_SendMessage(MQMESSAGE_REDRAW_ALL_SCENE, &info);
 }
 
 MQObject Sync::create(const ms::MeshData& data)

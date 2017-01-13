@@ -117,6 +117,7 @@ public:
     RawVector<int> indices;
     RawVector<int> indices_triangulated;
     float smooth_angle = 0.0f;
+    float4x4 transform = float4x4::identity();
 
     MeshData();
     MeshData(const MeshDataCS& cs);
@@ -127,7 +128,7 @@ public:
 
     void swap(MeshData& v);
     void refine(MeshRefineFlags flags, float scale);
-    void transform(const float4x4& t);
+    void applyTransform(const float4x4& t);
 };
 
 

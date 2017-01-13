@@ -10,8 +10,8 @@
 using msEventHandler = void(*)(ms::EventType type, const void *data);
 
 msAPI ms::Server*   msServerStart(const ms::ServerSettings *settings);
-msAPI void          msServerProcessEvents(ms::Server *server, msEventHandler handler);
 msAPI void          msServerStop(ms::Server *server);
+msAPI void          msServerProcessEvents(ms::Server *server, msEventHandler handler);
 
 msAPI void          msServerBeginServe(ms::Server *server);
 msAPI void          msServerEndServe(ms::Server *server);

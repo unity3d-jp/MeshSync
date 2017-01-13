@@ -25,8 +25,8 @@ void MeshSyncClientPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 {
     // プロダクト名(制作者名)とIDを、全部で64bitの値として返す
     // 値は他と重複しないようなランダムなもので良い
-    *Product = 0x483ADF11;
-    *ID = 0xB0CC9999;
+    *Product = MQPluginProduct;
+    *ID = MQPluginID;
 }
 
 //---------------------------------------------------------------------------

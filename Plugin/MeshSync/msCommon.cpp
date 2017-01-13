@@ -171,6 +171,7 @@ MeshData::MeshData(const MeshDataCS & cs)
     if (cs.tangents){ tangents.assign(cs.tangents, cs.tangents + cs.num_points); }
     if (cs.uv)      { uv.assign(cs.uv, cs.uv + cs.num_points); }
     if (cs.indices) { indices.assign(cs.indices, cs.indices + cs.num_indices); }
+    transform = cs.transform;
 }
 
 void MeshData::clear()
@@ -190,6 +191,7 @@ uint32_t MeshData::getSerializeSize() const
     EachArray(Body);
 #undef Body
     ret += size_pod(smooth_angle);
+    ret += size_pod(transform);
     return ret;
 }
 
@@ -201,6 +203,7 @@ void MeshData::serialize(std::ostream& os) const
     EachArray(Body);
 #undef Body
     write_pod(os, smooth_angle);
+    write_pod(os, transform);
 }
 
 void MeshData::deserialize(std::istream& is)
@@ -210,6 +213,7 @@ void MeshData::deserialize(std::istream& is)
     EachArray(Body);
 #undef Body
     read_pod(is, smooth_angle);
+    read_pod(is, transform);
 }
 
 void MeshData::swap(MeshData & v)
@@ -219,6 +223,7 @@ void MeshData::swap(MeshData & v)
     EachArray(Body);
 #undef Body
     std::swap(smooth_angle, v.smooth_angle);
+    std::swap(transform, v.transform);
 }
 
 void MeshData::refine(MeshRefineFlags flags, float scale)
@@ -297,6 +302,14 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
         tangents.resize(points.size());
         mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
     }
+}
+
+
+void MeshData::applyTransform(const float4x4& m)
+{
+    for (auto& v : points) { v = applyTRS(m, v); }
+    for (auto& v : normals) { v = m * v; }
+    mu::Normalize(normals.data(), normals.size());
 }
 
 

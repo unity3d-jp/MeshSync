@@ -22,7 +22,7 @@ struct ServerSettings
     int max_threads = 4;
     uint16_t port = 8080;
     MeshRefineFlags mesh_flags;
-    float scale = 0.01f;
+    float scale = 0.1f;
 };
 
 class Server
@@ -34,9 +34,7 @@ public:
     bool start();
     void stop();
 
-    const ServerSettings& getSettings() const;
-
-    void setSendData(const EventData& data);
+    ServerSettings& getSettings();
 
     // Body: [](DeleteData& data) -> void
     template<class Body>

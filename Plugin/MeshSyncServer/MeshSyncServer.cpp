@@ -2,23 +2,32 @@
 #include "MeshSync/msServer.h"
 #include "MeshSyncServer.h"
 
+static std::map<uint16_t, ms::Server*> g_servers;
 
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
-    ms::Server *ret = nullptr;
-    if (settings) {
+    if (!settings) { return nullptr; }
+
+    ms::Server *ret = g_servers[settings->port];
+    if (!ret) {
         ret = new ms::Server(*settings);
-        if (!ret->start()) {
-            delete ret;
-            ret = nullptr;
-        }
+        ret->start();
+        g_servers[settings->port] = ret;
+    }
+    else {
+        ret->getSettings() = *settings;
     }
     return ret;
 }
 
+msAPI void  msServerStop(ms::Server *server)
+{
+    //delete server;
+}
+
 msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
 {
-    if (!server) { return; }
+    if (!server || !handler) { return; }
     server->processEvents([handler](ms::EventData& data) {
         if (data.type == ms::EventType::Get) {
             ms::GetDataCS cs = (ms::GetData&)data;
@@ -37,11 +46,6 @@ msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
             handler(data.type, &cs);
         }
     });
-}
-
-msAPI void  msServerStop(ms::Server *server)
-{
-    delete server;
 }
 
 msAPI void msServerBeginServe(ms::Server *server)

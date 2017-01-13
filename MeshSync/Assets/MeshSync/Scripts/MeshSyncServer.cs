@@ -211,6 +211,7 @@ public class MeshSyncServer : MonoBehaviour
         settings.scale = m_scale;
         settings.port = (ushort)m_port;
         m_server = msServerStart(ref settings);
+        m_handler = OnServerEvent;
     }
 
     void StopServer()
@@ -228,18 +229,18 @@ public class MeshSyncServer : MonoBehaviour
     {
         switch (type)
         {
-            case EventType.Get:
-                OnRecvGet(data);
-                break;
-            case EventType.Delete:
-                OnRecvDelete(data);
-                break;
-            case EventType.Xform:
-                OnRecvXform(data);
-                break;
-            case EventType.Mesh:
-                OnRecvMesh(data);
-                break;
+        case EventType.Get:
+            OnRecvGet(data);
+            break;
+        case EventType.Delete:
+            OnRecvDelete(data);
+            break;
+        case EventType.Xform:
+            OnRecvXform(data);
+            break;
+        case EventType.Mesh:
+            OnRecvMesh(data);
+            break;
         }
     }
 
@@ -336,12 +337,15 @@ public class MeshSyncServer : MonoBehaviour
 
         var mesh = GetOrAddMeshComponents(t.gameObject);
         mesh.Clear();
-        if (edata.points != IntPtr.Zero) { mesh.vertices = m_points; }
-        if (edata.normals != IntPtr.Zero) { mesh.normals = m_normals; }
-        if (edata.tangents != IntPtr.Zero) { mesh.tangents = m_tangents; }
-        if (edata.uv != IntPtr.Zero) { mesh.uv = m_uv; }
-        mesh.SetIndices(m_indices, MeshTopology.Triangles, 0);
-        mesh.UploadMeshData(false);
+        if(edata.num_points > 0 && edata.num_indices > 0)
+        {
+            if (edata.points != IntPtr.Zero) { mesh.vertices = m_points; }
+            if (edata.normals != IntPtr.Zero) { mesh.normals = m_normals; }
+            if (edata.tangents != IntPtr.Zero) { mesh.tangents = m_tangents; }
+            if (edata.uv != IntPtr.Zero) { mesh.uv = m_uv; }
+            mesh.SetIndices(m_indices, MeshTopology.Triangles, 0);
+            mesh.UploadMeshData(false);
+        }
 
         ForceRepaint();
         Debug.Log("MeshSyncServer: Mesh " + path);
@@ -538,8 +542,6 @@ public class MeshSyncServer : MonoBehaviour
 
     void Awake()
     {
-        m_handler = OnServerEvent;
-
         StartServer();
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
@@ -554,9 +556,28 @@ public class MeshSyncServer : MonoBehaviour
         StopServer();
     }
 
+
+#if UNITY_EDITOR
+    bool m_isCompiling;
+#endif
+
     void Update()
     {
-        //PollServerEvents();
+#if UNITY_EDITOR
+        if (EditorApplication.isCompiling && !m_isCompiling)
+        {
+            // on compile begin
+            m_isCompiling = true;
+            StopServer();
+        }
+        else if (!EditorApplication.isCompiling && m_isCompiling)
+        {
+            // on compile end
+            m_isCompiling = false;
+            StartServer();
+        }
+#endif
+        PollServerEvents();
     }
     #endregion
 }
