@@ -18,3 +18,5 @@ msAPI void          msServerEndServe(ms::Server *server);
 msAPI void          msServerAddServeData(ms::Server *server, ms::EventType type, const void *data);
 
 msAPI void          msCopyData(ms::EventType et, void *dst, const void *src);
+msAPI const char*   msCreateString(const char *str);
+msAPI void          msDeleteString(const char *str);

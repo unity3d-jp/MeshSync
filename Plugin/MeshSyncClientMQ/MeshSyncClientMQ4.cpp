@@ -155,6 +155,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
+    m_sync.setDocument(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -163,6 +164,7 @@ void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, N
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 {
+    m_sync.setDocument(nullptr);
 }
 
 //---------------------------------------------------------------------------
@@ -179,7 +181,7 @@ void MeshSyncClientPlugin::OnSaveDocument(MQDocument doc, const char *filename, 
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    m_sync.sync(doc);
+    m_sync.send();
     return TRUE;
 }
 
@@ -189,7 +191,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    m_sync.sync(doc);
+    m_sync.send();
     return TRUE;
 }
 
@@ -207,7 +209,7 @@ void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 {
-    m_sync.sync(doc);
+    m_sync.send();
 }
 
 //---------------------------------------------------------------------------
@@ -248,6 +250,7 @@ void MeshSyncClientPlugin::OnUpdateMaterialList(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateScene(MQDocument doc, MQScene scene)
 {
+    m_sync.send();
 }
 
 //---------------------------------------------------------------------------

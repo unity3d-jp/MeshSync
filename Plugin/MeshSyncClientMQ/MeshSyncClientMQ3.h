@@ -45,9 +45,11 @@ protected:
 public:
     bool& getAutoSync();
     ms::ClientSettings& getClientSettings();
+    void send();
+    void import();
 
 private:
-    void autoSync(MQDocument doc);
+    void autoSync();
 
     Sync m_sync;
     bool m_auto_sync = false;

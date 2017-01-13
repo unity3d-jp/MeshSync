@@ -160,3 +160,15 @@ msAPI void msCopyData(ms::EventType et, void *dst, const void *src)
         break;
     }
 }
+
+msAPI const char* msCreateString(const char *str)
+{
+    auto len = strlen(str) + 1;
+    auto ret = new char[len];
+    memcpy(ret, str, len);
+    return ret;
+}
+msAPI void msDeleteString(const char *str)
+{
+    delete[] str;
+}

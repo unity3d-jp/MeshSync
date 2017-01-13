@@ -9,6 +9,8 @@ CMessageLoop theLoop;
 std::string& GetServer(MeshSyncClientPlugin *plugin);
 uint16_t& GetPort(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
+void Send(MeshSyncClientPlugin *plugin);
+void Import(MeshSyncClientPlugin *plugin);
 
 
 CMainDlg::CMainDlg(MeshSyncClientPlugin *plugin)
@@ -103,16 +105,14 @@ LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND 
 
 LRESULT CMainDlg::OnBnClickedButtonSync(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    // TODO: Add your control notification handler code here
-
+    Send(m_plugin);
     return 0;
 }
 
 
 LRESULT CMainDlg::OnBnClickedButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    // TODO: Add your control notification handler code here
-
+    Import(m_plugin);
     return 0;
 }
 

@@ -5,23 +5,27 @@ Sync::Sync()
 {
 }
 
+void Sync::setDocument(MQDocument doc)
+{
+    m_doc = doc;
+}
+
 ms::ClientSettings& Sync::getClientSettings()
 {
     return m_settings;
 }
 
-void Sync::sync(MQDocument doc)
+void Sync::send()
 {
-    int nobj = doc->GetObjectCount();
+    int nobj = m_doc->GetObjectCount();
     while ((int)m_data.size() < nobj) {
         m_data.emplace_back(new ms::MeshData());
     }
-    m_fences.resize(nobj);
 
     // gather object data
-    concurrency::parallel_for(0, nobj, [doc, this](int i) {
+    concurrency::parallel_for(0, nobj, [this](int i) {
         auto& data = *m_data[i];
-        gather(doc, doc->GetObject(i), data);
+        gather(m_doc, m_doc->GetObject(i), data);
 
         ms::Client client(m_settings);
         client.sendEdit(data);
@@ -43,6 +47,8 @@ void Sync::sync(MQDocument doc)
             del_data.push_back(data);
         }
     }
+
+    // send delete event
     if (!del_data.empty()) {
         std::vector<ms::EventData*> send_data(del_data.size());
         for (size_t i = 0; i < del_data.size(); ++i) { send_data[i] = &del_data[i]; }
@@ -50,6 +56,55 @@ void Sync::sync(MQDocument doc)
         ms::Client client(m_settings);
         client.sendEdit(send_data.data(), (int)send_data.size());
     }
+}
+
+void Sync::import()
+{
+    if (!m_doc) { return; }
+
+    ms::Client client(m_settings);
+    ms::GetData gd;
+    gd.flags.get_meshes = 1;
+    gd.flags.mesh_get_indices = 1;
+    gd.flags.mesh_get_points = 1;
+    gd.flags.mesh_get_uv = 1;
+    gd.flags.mesh_swap_handedness = 1;
+    gd.flags.mesh_apply_transform = 1;
+
+    auto ret = client.sendGet(gd);
+    for (auto& data : ret) {
+        if (data->type == ms::EventType::Mesh) {
+            auto obj = create(dynamic_cast<ms::MeshData&>(*data));
+            m_doc->AddObject(obj);
+        }
+    }
+    MQ_RefreshView(nullptr);
+}
+
+MQObject Sync::create(const ms::MeshData& data)
+{
+    auto ret = MQ_CreateObject();
+    ret->SetName(data.obj_path.c_str());
+    for (auto& p : data.points) {
+        ret->AddVertex((MQPoint&)p);
+    }
+    {
+        size_t nindices = data.indices.size();
+        for (size_t i = 0; i < nindices; i += 3) {
+            ret->AddFace(3, const_cast<int*>(&data.indices[i]));
+        }
+    }
+    if(!data.uv.empty()) {
+        float2 uv[3];
+        size_t nfaces = data.indices.size() / 3;
+        for (size_t i = 0; i < nfaces; ++i) {
+            uv[0] = data.uv[data.indices[i * 3 + 0]];
+            uv[1] = data.uv[data.indices[i * 3 + 1]];
+            uv[2] = data.uv[data.indices[i * 3 + 2]];
+            ret->SetFaceCoordinateArray((int)i, (MQCoordinate*)uv);
+        }
+    }
+    return ret;
 }
 
 static inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)

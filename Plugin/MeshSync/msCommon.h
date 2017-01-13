@@ -32,9 +32,9 @@ union GetFlags
     };
 };
 
-union MeshFlags
+union MeshRefineFlags
 {
-    uint32_t flags = 0x1 | 0x2;
+    uint32_t flags = 0;
     struct {
         uint32_t split : 1;
         uint32_t gen_normals : 1;
@@ -126,7 +126,7 @@ public:
     void deserialize(std::istream& is) override;
 
     void swap(MeshData& v);
-    void refine(MeshFlags flags, float scale);
+    void refine(MeshRefineFlags flags, float scale);
     void transform(const float4x4& t);
 };
 

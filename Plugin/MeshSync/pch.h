@@ -27,6 +27,8 @@
 #include <mutex>
 #include <atomic>
 
+#include <ppl.h>
+
 #include "MeshUtils/MeshUtils.h"
 
 #define POCO_STATIC

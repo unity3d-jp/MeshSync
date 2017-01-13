@@ -21,7 +21,7 @@ struct ServerSettings
     int max_queue = 100;
     int max_threads = 4;
     uint16_t port = 8080;
-    MeshFlags mesh_flags;
+    MeshRefineFlags mesh_flags;
     float scale = 0.01f;
 };
 
@@ -89,7 +89,8 @@ private:
         MeshData mesh;
     };
     using DataTable = std::map<std::string, ObjectData>;
-    using ServeDataTable = std::vector<std::shared_ptr<EventData>>;
+    using DataPtr = std::shared_ptr<EventData>;
+    using ServeDataTable = std::vector<DataPtr>;
     using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 

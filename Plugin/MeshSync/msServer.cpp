@@ -187,6 +187,16 @@ void Server::beginServe()
 }
 void Server::endServe()
 {
+    float scale = m_settings.scale != 1.0f ? 1.0f / m_settings.scale : 1.0f;
+    MeshRefineFlags flags;
+    flags.swap_faces = m_get_data.flags.mesh_swap_faces;
+    flags.swap_handedness = m_get_data.flags.mesh_swap_handedness;
+
+    concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [scale, flags](DataPtr& p) {
+        if (auto data = dynamic_cast<MeshData*>(p.get())) {
+            data->refine(flags, scale);
+        }
+    });
     m_serve_waiting = 0;
 }
 void Server::addServeData(EventData *data)

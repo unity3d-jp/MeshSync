@@ -117,7 +117,8 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
-    autoSync(doc);
+    m_sync.setDocument(doc);
+    autoSync();
 }
 
 //---------------------------------------------------------------------------
@@ -126,6 +127,7 @@ void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, N
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 {
+    m_sync.setDocument(nullptr);
 }
 
 //---------------------------------------------------------------------------
@@ -134,7 +136,7 @@ void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    autoSync(doc);
+    autoSync();
     return TRUE;
 }
 
@@ -144,7 +146,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    autoSync(doc);
+    autoSync();
     return TRUE;
 }
 
@@ -162,7 +164,7 @@ void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 {
-    autoSync(doc);
+    autoSync();
 }
 
 //---------------------------------------------------------------------------
@@ -171,7 +173,7 @@ void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 {
-    autoSync(doc);
+    autoSync();
 }
 
 //---------------------------------------------------------------------------
@@ -208,26 +210,6 @@ bool MeshSyncClientPlugin::ExecuteCallback(MQDocument doc, void *option)
     return ((*this).*info->proc)(doc);
 }
 
-std::string& GetServer(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getClientSettings().server;
-}
-uint16_t& GetPort(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getClientSettings().port;
-}
-bool& GetAutoSync(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getAutoSync();
-}
-
-bool& MeshSyncClientPlugin::getAutoSync() { return m_auto_sync; }
-
-ms::ClientSettings& MeshSyncClientPlugin::getClientSettings()
-{
-    return m_sync.getClientSettings();
-}
-
 // コールバックの呼び出し
 void MeshSyncClientPlugin::Execute(ExecuteCallbackProc proc)
 {
@@ -244,10 +226,49 @@ MQBasePlugin *GetPluginClass()
 
 
 
-void MeshSyncClientPlugin::autoSync(MQDocument doc)
+std::string& GetServer(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getClientSettings().server;
+}
+uint16_t& GetPort(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getClientSettings().port;
+}
+bool& GetAutoSync(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getAutoSync();
+}
+void Send(MeshSyncClientPlugin *plugin)
+{
+    plugin->send();
+}
+void Import(MeshSyncClientPlugin *plugin)
+{
+    plugin->import();
+}
+
+bool& MeshSyncClientPlugin::getAutoSync() { return m_auto_sync; }
+
+ms::ClientSettings& MeshSyncClientPlugin::getClientSettings()
+{
+    return m_sync.getClientSettings();
+}
+
+void MeshSyncClientPlugin::send()
+{
+    m_sync.send();
+}
+
+void MeshSyncClientPlugin::import()
+{
+    m_sync.import();
+}
+
+
+void MeshSyncClientPlugin::autoSync()
 {
     if (m_auto_sync) {
-        m_sync.sync(doc);
+        m_sync.send();
     }
 }
 

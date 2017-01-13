@@ -221,7 +221,7 @@ void MeshData::swap(MeshData & v)
     std::swap(smooth_angle, v.smooth_angle);
 }
 
-void MeshData::refine(MeshFlags flags, float scale)
+void MeshData::refine(MeshRefineFlags flags, float scale)
 {
     RawVector<int> offsets;
     RawVector<int> indices_flattened_triangulated;

@@ -163,6 +163,9 @@ public class MeshSyncServer : MonoBehaviour
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, ref MeshData src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, IntPtr src);
 
+    [DllImport("MeshSyncServer")] public static extern IntPtr msCreateString(string str);
+    [DllImport("MeshSyncServer")] public static extern void msDeleteString(IntPtr str);
+
 
     public static IntPtr RawPtr(Array v)
     {
@@ -445,15 +448,19 @@ public class MeshSyncServer : MonoBehaviour
         if(flags.get_xforms)
         {
             var data = default(XformData);
+            data.obj_path = msCreateString(mr.name);
             Capture(ref data, mr.GetComponent<Transform>());
             msServerAddServeData(m_server, EventType.Xform, ref data);
+            msDeleteString(data.obj_path);
         }
-        if(flags.get_meshes)
+        if (flags.get_meshes)
         {
             var data = default(MeshData);
+            data.obj_path = msCreateString(mr.name);
             data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
             Capture(ref data, mesh, flags);
             msServerAddServeData(m_server, EventType.Mesh, ref data);
+            msDeleteString(data.obj_path);
         }
     }
 
@@ -470,15 +477,19 @@ public class MeshSyncServer : MonoBehaviour
         if (flags.get_xforms)
         {
             var data = default(XformData);
+            data.obj_path = msCreateString(mr.name);
             Capture(ref data, mr.GetComponent<Transform>());
             msServerAddServeData(m_server, EventType.Xform, ref data);
+            msDeleteString(data.obj_path);
         }
         if (flags.get_meshes)
         {
             var data = default(MeshData);
+            data.obj_path = msCreateString(mr.name);
             data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
             Capture(ref data, mesh, flags);
             msServerAddServeData(m_server, EventType.Mesh, ref data);
+            msDeleteString(data.obj_path);
         }
     }
 
