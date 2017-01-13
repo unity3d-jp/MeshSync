@@ -41,6 +41,34 @@ inline void read_vector(std::istream& is, T& v)
     is.read((char*)v.data(), sizeof(typename T::value_type) * size);
 }
 
+
+
+GetData::GetData()
+{
+    type = EventType::Get;
+}
+void GetData::clear()
+{
+    *this = GetData();
+}
+uint32_t GetData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += size_pod(type);
+    ret += size_pod(flags);
+    return ret;
+}
+void GetData::serialize(std::ostream& os) const
+{
+    write_pod(os, type);
+    write_pod(os, flags);
+}
+void GetData::deserialize(std::istream& is)
+{
+    read_pod(is, flags);
+}
+
+
 EventData::~EventData()
 {
 }
@@ -74,6 +102,16 @@ void DeleteData::deserialize(std::istream& is)
 XformData::XformData()
 {
     type = EventType::Xform;
+}
+
+XformData::XformData(const XformDataCS & cs)
+{
+    type = EventType::Xform;
+    obj_path = cs.obj_path ? cs.obj_path : "";
+    position = cs.position;
+    rotation = cs.rotation;
+    scale    = cs.scale;
+    transform= cs.transform;
 }
 
 void XformData::clear()
@@ -119,6 +157,17 @@ MeshData::MeshData()
     type = EventType::Mesh;
 }
 
+MeshData::MeshData(const MeshDataCS & cs)
+{
+    type = EventType::Mesh;
+    obj_path = cs.obj_path ? cs.obj_path : "";
+    if (cs.points)  { points.assign(cs.points, cs.points + cs.num_points); }
+    if (cs.normals) { normals.assign(cs.normals, cs.normals + cs.num_points); }
+    if (cs.tangents){ tangents.assign(cs.tangents, cs.tangents + cs.num_points); }
+    if (cs.uv)      { uv.assign(cs.uv, cs.uv + cs.num_points); }
+    if (cs.indices) { indices.assign(cs.indices, cs.indices + cs.num_indices); }
+}
+
 void MeshData::clear()
 {
     obj_path.clear();
@@ -156,6 +205,15 @@ void MeshData::deserialize(std::istream& is)
     EachArray(Body);
 #undef Body
     read_pod(is, smooth_angle);
+}
+
+void MeshData::swap(MeshData & v)
+{
+    obj_path.swap(v.obj_path);
+#define Body(A) A.swap(v.A);
+    EachArray(Body);
+#undef Body
+    std::swap(smooth_angle, v.smooth_angle);
 }
 
 void MeshData::refine(MeshFlags flags, float scale)
@@ -238,6 +296,11 @@ void MeshData::refine(MeshFlags flags, float scale)
 
 
 
+GetDataCS::GetDataCS(const GetData& v)
+{
+    flags = v.flags;
+}
+
 DeleteDataCS::DeleteDataCS(const DeleteData & v)
 {
     obj_path = v.obj_path.c_str();
@@ -248,8 +311,8 @@ XformDataCS::XformDataCS(const XformData & v)
     obj_path = v.obj_path.c_str();
     position = v.position;
     rotation = v.rotation;
-    scale = v.scale;
-    transform = v.transform;
+    scale    = v.scale;
+    transform= v.transform;
 }
 
 MeshDataCS::MeshDataCS(const MeshData & v)

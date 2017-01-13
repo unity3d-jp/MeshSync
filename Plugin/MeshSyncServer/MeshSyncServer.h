@@ -13,4 +13,8 @@ msAPI ms::Server*   msServerStart(const ms::ServerSettings *settings);
 msAPI void          msServerProcessEvents(ms::Server *server, msEventHandler handler);
 msAPI void          msServerStop(ms::Server *server);
 
+msAPI void          msServerBeginServe(ms::Server *server);
+msAPI void          msServerEndServe(ms::Server *server);
+msAPI void          msServerAddServeData(ms::Server *server, ms::EventType type, const void *data);
+
 msAPI void          msCopyData(ms::EventType et, void *dst, const void *src);

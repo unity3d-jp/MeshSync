@@ -20,17 +20,21 @@ msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
 {
     if (!server) { return; }
     server->processEvents([handler](ms::EventData& data) {
-        if (data.type == ms::EventType::Delete) {
-            ms::DeleteDataCS ref = (ms::DeleteData&)data;
-            handler(data.type, &ref);
+        if (data.type == ms::EventType::Get) {
+            ms::GetDataCS cs = (ms::GetData&)data;
+            handler(data.type, &cs);
+        }
+        else if (data.type == ms::EventType::Delete) {
+            ms::DeleteDataCS cs = (ms::DeleteData&)data;
+            handler(data.type, &cs);
         }
         else if (data.type == ms::EventType::Xform) {
-            ms::XformDataCS ref = (ms::XformData&)data;
-            handler(data.type, &ref);
+            ms::XformDataCS cs = (ms::XformData&)data;
+            handler(data.type, &cs);
         }
         else if (data.type == ms::EventType::Mesh) {
-            ms::MeshDataCS ref = (ms::MeshData&)data;
-            handler(data.type, &ref);
+            ms::MeshDataCS cs = (ms::MeshData&)data;
+            handler(data.type, &cs);
         }
     });
 }
@@ -40,7 +44,40 @@ msAPI void  msServerStop(ms::Server *server)
     delete server;
 }
 
+msAPI void msServerBeginServe(ms::Server *server)
+{
+    if (!server) { return; }
+    server->beginServe();
+}
+msAPI void msServerEndServe(ms::Server *server)
+{
+    if (!server) { return; }
+    server->endServe();
+}
+msAPI void msServerAddServeData(ms::Server *server, ms::EventType type, const void *data)
+{
+    if (!server) { return; }
+    switch (type) {
+    case ms::EventType::Xform:
+    {
+        auto edata = new ms::XformData(*(const ms::XformDataCS*)data);
+        server->addServeData(edata);
+    }
+    case ms::EventType::Mesh:
+    {
+        auto edata = new ms::MeshData(*(const ms::MeshDataCS*)data);
+        server->addServeData(edata);
+    }
+    }
+}
 
+
+static void msCopyData(ms::GetDataCS *dst, const ms::GetDataCS *src)
+{
+    if (!dst || !src) { return; }
+
+    dst->flags = src->flags;
+}
 static void msCopyData(ms::DeleteDataCS *dst, const ms::DeleteDataCS *src)
 {
     if (!dst || !src) { return; }
@@ -109,6 +146,9 @@ static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
 msAPI void msCopyData(ms::EventType et, void *dst, const void *src)
 {
     switch (et) {
+    case ms::EventType::Get:
+        msCopyData((ms::GetDataCS*)dst, (const ms::GetDataCS*)src);
+        break;
     case ms::EventType::Delete:
         msCopyData((ms::DeleteDataCS*)dst, (const ms::DeleteDataCS*)src);
         break;

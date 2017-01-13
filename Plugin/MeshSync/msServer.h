@@ -1,12 +1,15 @@
 #pragma once
 
 #include <mutex>
+#include <atomic>
 #include "msCommon.h"
 #include "MeshUtils/tls.h"
 
 namespace Poco {
     namespace Net {
         class HTTPServer;
+        class HTTPServerRequest;
+        class HTTPServerResponse;
     }
 }
 
@@ -33,6 +36,8 @@ public:
 
     const ServerSettings& getSettings() const;
 
+    void setSendData(const EventData& data);
+
     // Body: [](DeleteData& data) -> void
     template<class Body>
     void recvDelete(const Body& body);
@@ -49,21 +54,32 @@ public:
     template<class Body>
     void processEvents(const Body& body)
     {
-        for (auto& r : m_history) {
+        for (auto& r : m_recv_history) {
             switch (r.type) {
+            case EventType::Get:
+                body(m_get_data);
+                break;
             case EventType::Delete:
-                body(m_data[r.arg].del);
+                body(m_recv_data[r.arg].del);
                 break;
             case EventType::Xform:
-                body(m_data[r.arg].xform);
+                body(m_recv_data[r.arg].xform);
                 break;
             case EventType::Mesh:
-                body(m_data[r.arg].mesh);
+                body(m_recv_data[r.arg].mesh);
                 break;
             }
         }
-        m_history.clear();
+        m_recv_history.clear();
     }
+
+    void beginServe();
+    void endServe();
+    void addServeData(EventData *data);
+    void serve(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+
+private:
+    void serveGet(const GetData& data, Poco::Net::HTTPServerResponse &response);
 
 private:
     struct ObjectData
@@ -73,6 +89,7 @@ private:
         MeshData mesh;
     };
     using DataTable = std::map<std::string, ObjectData>;
+    using ServeDataTable = std::vector<std::shared_ptr<EventData>>;
     using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 
@@ -86,10 +103,14 @@ private:
     ServerSettings m_settings;
     HTTPServerPtr m_server;
 
-    DataTable m_data;
-    History m_history;
+    DataTable m_recv_data;
+    History m_recv_history;
+
+    GetData m_get_data;
+    ServeDataTable m_serve_data;
 
     std::mutex m_mutex;
+    std::atomic_int m_serve_waiting;
     tls<ObjectData> m_tmp;
 };
 

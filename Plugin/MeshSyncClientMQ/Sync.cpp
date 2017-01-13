@@ -24,7 +24,7 @@ void Sync::sync(MQDocument doc)
         gather(doc, doc->GetObject(i), data);
 
         ms::Client client(m_settings);
-        client.send(data);
+        client.sendEdit(data);
     });
 
     // detect deleted objects
@@ -48,7 +48,7 @@ void Sync::sync(MQDocument doc)
         for (size_t i = 0; i < del_data.size(); ++i) { send_data[i] = &del_data[i]; }
 
         ms::Client client(m_settings);
-        client.send(send_data.data(), (int)send_data.size());
+        client.sendEdit(send_data.data(), (int)send_data.size());
     }
 }
 

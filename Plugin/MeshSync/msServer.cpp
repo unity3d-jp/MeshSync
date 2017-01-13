@@ -42,8 +42,8 @@ void Server::recvDelete(const Body& body)
     {
         {
             lock_t l(m_mutex);
-            m_data[tmp.obj_path].del = tmp;
-            m_history.push_back({ EventType::Delete, tmp.obj_path });
+            m_recv_history.push_back({ EventType::Delete, tmp.obj_path });
+            m_recv_data[tmp.obj_path].del = tmp;
         }
         tmp.clear();
     }
@@ -57,8 +57,8 @@ void Server::recvXform(const Body& body)
     {
         {
             lock_t l(m_mutex);
-            m_data[tmp.obj_path].xform = tmp;
-            m_history.push_back({ EventType::Xform, tmp.obj_path });
+            m_recv_history.push_back({ EventType::Xform, tmp.obj_path });
+            m_recv_data[tmp.obj_path].xform = tmp;
         }
         tmp.clear();
     }
@@ -73,16 +73,24 @@ void Server::recvMesh(const Body& body)
         tmp.refine(m_settings.mesh_flags, m_settings.scale);
         {
             lock_t l(m_mutex);
-            m_data[tmp.obj_path].mesh = tmp;
-            m_history.push_back({ EventType::Mesh, tmp.obj_path });
+            m_recv_history.push_back({ EventType::Mesh, tmp.obj_path });
+            m_recv_data[tmp.obj_path].mesh.swap(tmp);
         }
         tmp.clear();
     }
 }
 
+static void RespondText(HTTPServerResponse &response, const std::string& message)
+{
+    response.setContentType("text/plain");
+    response.setContentLength(message.size());
+    std::ostream &ostr = response.send();
+    ostr.write(message.c_str(), message.size());
+}
+
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    if (request.getURI() == "event") {
+    if (request.getURI() == "edit") {
         auto& is = request.stream();
         int num = 0;
         is.read((char*)&num, 4);
@@ -108,13 +116,14 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
                 break;
             }
         }
+        RespondText(response, "ok");
     }
-
-    std::string ok = "ok";
-    response.setContentType("text/plain");
-    response.setContentLength(ok.size());
-    std::ostream &ostr = response.send();
-    ostr.write(ok.c_str(), ok.size());
+    else if (request.getURI() == "get") {
+        m_server->serve(request, response);
+    }
+    else {
+        RespondText(response, "unknown request");
+    }
 }
 
 RequestHandlerFactory::RequestHandlerFactory(Server *server)
@@ -169,6 +178,76 @@ void Server::stop()
 const ServerSettings& Server::getSettings() const
 {
     return m_settings;
+}
+
+
+void Server::beginServe()
+{
+    m_serve_data.clear();
+}
+void Server::endServe()
+{
+    m_serve_waiting = 0;
+}
+void Server::addServeData(EventData *data)
+{
+    m_serve_data.emplace_back(data);
+}
+
+void Server::serve(HTTPServerRequest &request, HTTPServerResponse &response)
+{
+    // queue request
+    auto& is = request.stream();
+    EventType type;
+    is.read((char*)&type, 4);
+    switch (type) {
+    case EventType::Get:
+    {
+        GetData data;
+        data.deserialize(is);
+        serveGet(data, response);
+        break;
+    }
+    default:
+        RespondText(response, "unknown request");
+        break;
+    }
+}
+
+void Server::serveGet(const GetData& data, Poco::Net::HTTPServerResponse& response)
+{
+    {
+        lock_t l(m_mutex);
+        m_get_data = data;
+        m_recv_history.push_back({ EventType::Get, "" });
+    }
+
+
+    // wait for data arrive (or timeout)
+    m_serve_waiting++;
+    for (int i = 0; i < 100; ++i) {
+        if (m_serve_waiting == 0) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    {
+        lock_t l(m_mutex);
+
+        // serve data
+        int num = (int)m_serve_data.size();
+        size_t len = 4;
+        for (int i = 0; i < num; ++i) {
+            len += m_serve_data[i]->getSerializeSize();
+        }
+        response.setContentLength(len);
+        auto& os = response.send();
+        os.write((char*)&num, 4);
+        for (int i = 0; i < num; ++i) {
+            m_serve_data[i]->serialize(os);
+        }
+    }
 }
 
 } // namespace ms

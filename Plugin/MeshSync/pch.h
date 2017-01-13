@@ -25,6 +25,7 @@
 #include <sstream>
 #include <numeric>
 #include <mutex>
+#include <atomic>
 
 #include "MeshUtils/MeshUtils.h"
 

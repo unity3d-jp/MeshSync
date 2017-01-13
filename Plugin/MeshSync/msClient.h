@@ -15,8 +15,13 @@ class Client
 {
 public:
     Client(const ClientSettings& settings);
-    bool send(const EventData& data);
-    bool send(const EventData * const data[], int num);
+
+    bool sendEdit(const EventData& data);
+    bool sendEdit(const EventData * const data[], int num);
+
+    using DataPtr = std::unique_ptr<EventData>;
+    using DaraList = std::vector<DataPtr>;
+    DaraList sendGet(GetFlags flags);
 
 private:
     ClientSettings m_settings;

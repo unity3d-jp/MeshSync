@@ -17,9 +17,30 @@ public class MeshSyncServer : MonoBehaviour
     public enum EventType
     {
         Unknown,
+        Get,
         Delete,
         Xform,
         Mesh,
+    }
+
+    public struct GetFlags
+    {
+        public int flags;
+        public bool get_xforms { get { return (flags & 0x1) != 0; } }
+        public bool get_meshes { get { return (flags & 0x2) != 0; } }
+        public bool mesh_get_points { get { return (flags & 0x4) != 0; } }
+        public bool mesh_get_normals { get { return (flags & 0x8) != 0; } }
+        public bool mesh_get_tangents { get { return (flags & 0x10) != 0; } }
+        public bool mesh_get_uv { get { return (flags & 0x20) != 0; } }
+        public bool mesh_get_bones { get { return (flags & 0x40) != 0; } }
+        public bool mesh_swap_handedness { get { return (flags & 0x80) != 0; } }
+        public bool mesh_swap_faces { get { return (flags & 0x100) != 0; } }
+        public bool mesh_apply_transform { get { return (flags & 0x200) != 0; } }
+    }
+
+    public struct GetData
+    {
+        public GetFlags flags;
     }
 
     public struct DeleteData
@@ -47,6 +68,7 @@ public class MeshSyncServer : MonoBehaviour
         public IntPtr indices;
         public int    num_points;
         public int    num_indices;
+        public Matrix4x4 transform;
     };
 
 
@@ -129,6 +151,12 @@ public class MeshSyncServer : MonoBehaviour
     public delegate void msEventHandler(EventType type, IntPtr data);
     [DllImport("MeshSyncServer")] public static extern void msServerProcessEvents(IntPtr sv, msEventHandler handler);
 
+    [DllImport("MeshSyncServer")] public static extern void msServerBeginServeData(IntPtr sv);
+    [DllImport("MeshSyncServer")] public static extern void msServerEndServeData(IntPtr sv);
+    [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, ref XformData data);
+    [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, ref MeshData data);
+
+    [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref GetData dst, IntPtr src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref DeleteData dst, IntPtr src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref XformData dst, IntPtr src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, ref MeshData src);
@@ -161,6 +189,7 @@ public class MeshSyncServer : MonoBehaviour
     Vector4[] m_tangents;
     Vector2[] m_uv;
     int[] m_indices;
+    GetFlags m_serve_frags;
     #endregion
 
 
@@ -196,6 +225,9 @@ public class MeshSyncServer : MonoBehaviour
     {
         switch (type)
         {
+            case EventType.Get:
+                OnRecvGet(data);
+                break;
             case EventType.Delete:
                 OnRecvDelete(data);
                 break;
@@ -206,6 +238,23 @@ public class MeshSyncServer : MonoBehaviour
                 OnRecvMesh(data);
                 break;
         }
+    }
+
+    void OnRecvGet(IntPtr data)
+    {
+        var edata = default(GetData);
+        msCopyData(EventType.Get, ref edata, data);
+
+        msServerBeginServeData(m_server);
+        foreach (var mr in FindObjectsOfType<MeshRenderer>())
+        {
+            ServeData(mr);
+        }
+        foreach (var smr in FindObjectsOfType<SkinnedMeshRenderer>())
+        {
+            ServeData(smr);
+        }
+        msServerEndServeData(m_server);
     }
 
     void OnRecvDelete(IntPtr data)
@@ -378,6 +427,92 @@ public class MeshSyncServer : MonoBehaviour
 #if UNITY_EDITOR
         SceneView.RepaintAll();
 #endif
+    }
+
+
+    void ServeData(MeshRenderer mr)
+    {
+        var mesh = mr.GetComponent<MeshFilter>().sharedMesh;
+        if (mesh == null) return;
+        if(!mesh.isReadable)
+        {
+            Debug.Log("Mesh " + mr.name + " is not readable and be ignored");
+            return;
+        }
+
+        if(m_serve_frags.get_xforms)
+        {
+            var data = default(XformData);
+            Capture(ref data, mr.GetComponent<Transform>());
+            msServerAddServeData(m_server, EventType.Xform, ref data);
+        }
+        if(m_serve_frags.get_meshes)
+        {
+            var data = default(MeshData);
+            data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
+            Capture(ref data, mesh);
+            msServerAddServeData(m_server, EventType.Mesh, ref data);
+        }
+    }
+
+    void ServeData(SkinnedMeshRenderer mr)
+    {
+        var mesh = mr.sharedMesh;
+        if (mesh == null) return;
+        if (!mesh.isReadable)
+        {
+            Debug.Log("Mesh " + mr.name + " is not readable and be ignored");
+            return;
+        }
+
+        if (m_serve_frags.get_xforms)
+        {
+            var data = default(XformData);
+            Capture(ref data, mr.GetComponent<Transform>());
+            msServerAddServeData(m_server, EventType.Xform, ref data);
+        }
+        if (m_serve_frags.get_meshes)
+        {
+            var data = default(MeshData);
+            data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
+            Capture(ref data, mesh);
+            msServerAddServeData(m_server, EventType.Mesh, ref data);
+        }
+    }
+
+    void Capture(ref XformData data, Transform trans)
+    {
+        data.position = trans.localPosition;
+        data.rotation = trans.localRotation;
+        data.position = trans.localPosition;
+    }
+
+    void Capture(ref MeshData data, Mesh mesh)
+    {
+        if(m_serve_frags.mesh_get_points)
+        {
+            m_points = mesh.vertices;
+            data.points = RawPtr(m_points);
+        }
+        if (m_serve_frags.mesh_get_normals)
+        {
+            m_normals = mesh.normals;
+            data.normals = RawPtr(m_normals);
+        }
+        if (m_serve_frags.mesh_get_tangents)
+        {
+            m_tangents = mesh.tangents;
+            data.tangents = RawPtr(m_tangents);
+        }
+        if (m_serve_frags.mesh_get_uv)
+        {
+            m_uv = mesh.uv;
+            data.uv = RawPtr(m_uv);
+        }
+        {
+            m_indices = mesh.triangles;
+            data.indices = RawPtr(m_indices);
+        }
     }
 
 

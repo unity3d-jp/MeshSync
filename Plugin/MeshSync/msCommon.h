@@ -8,9 +8,27 @@ namespace ms {
 enum class EventType
 {
     Unknown,
+    Get,
     Delete,
     Xform,
     Mesh,
+};
+
+union GetFlags
+{
+    uint32_t flags = 0;
+    struct {
+        uint32_t get_xforms : 1;
+        uint32_t get_meshes : 1;
+        uint32_t mesh_get_points : 1;
+        uint32_t mesh_get_normals : 1;
+        uint32_t mesh_get_tangents : 1;
+        uint32_t mesh_get_uv : 1;
+        uint32_t mesh_get_bones : 1;
+        uint32_t mesh_swap_handedness : 1;
+        uint32_t mesh_swap_faces : 1;
+        uint32_t mesh_apply_transform : 1;
+    };
 };
 
 union MeshFlags
@@ -26,11 +44,14 @@ union MeshFlags
 };
 
 
+struct DeleteDataCS;
+struct XformDataCS;
+struct MeshDataCS;
+
 class EventData
 {
 public:
     EventType type = EventType::Unknown;
-    std::string obj_path;
 
     virtual ~EventData() = 0;
     virtual void clear() = 0;
@@ -39,10 +60,23 @@ public:
     virtual void deserialize(std::istream& is) = 0;
 };
 
+class GetData : public EventData
+{
+public:
+    GetFlags flags;
+
+    GetData();
+    void clear() override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+
 class DeleteData : public EventData
 {
 using super = EventData;
 public:
+    std::string obj_path;
 
     DeleteData();
     void clear() override;
@@ -55,12 +89,14 @@ class XformData : public EventData
 {
 using super = EventData;
 public:
+    std::string obj_path;
     float3   position  = float3::zero();
     quatf    rotation  = quatf::identity();
     float3   scale     = float3::one();
     float4x4 transform = float4x4::identity();
 
     XformData();
+    XformData(const XformDataCS& cs);
     void clear() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -71,6 +107,7 @@ class MeshData : public EventData
 {
 using super = EventData;
 public:
+    std::string obj_path;
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float4> tangents;
@@ -81,15 +118,24 @@ public:
     float smooth_angle = 0.0f;
 
     MeshData();
+    MeshData(const MeshDataCS& cs);
     void clear() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 
+    void swap(MeshData& v);
     void refine(MeshFlags flags, float scale);
+    void transform(const float4x4& t);
 };
 
 
+struct GetDataCS
+{
+    GetFlags flags;
+
+    GetDataCS(const GetData& v);
+};
 
 struct DeleteDataCS
 {
@@ -101,9 +147,9 @@ struct DeleteDataCS
 struct XformDataCS
 {
     const char *obj_path = nullptr;
-    float3 position;
-    quatf rotation;
-    float3 scale;
+    float3   position;
+    quatf    rotation;
+    float3   scale;
     float4x4 transform;
 
     XformDataCS(const XformData& v);
@@ -119,6 +165,7 @@ struct MeshDataCS
     int *indices = nullptr;
     int num_points = 0;
     int num_indices = 0;
+    float4x4 transform;
 
     MeshDataCS(const MeshData& v);
 };
