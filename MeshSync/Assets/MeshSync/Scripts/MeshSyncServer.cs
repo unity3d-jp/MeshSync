@@ -84,54 +84,51 @@ public class MeshSyncServer : MonoBehaviour
         public int    num_indices;
     };
 
-
-
-    public struct ServerFlags
+    public struct MeshRefineFlags
     {
         public int flags;
         public bool split
         {
             get { return (flags & 0x1) != 0; }
-            set
-            {
-                if (value) { flags |= 0x1; }
-                else { flags &= ~0x1; }
-            }
+            set { SwitchBit(ref flags, value, 0x1); }
         }
         public bool genNormals
         {
             get { return (flags & 0x2) != 0; }
-            set
-            {
-                if (value) { flags |= 0x2; }
-                else { flags &= ~0x2; }
-            }
+            set { SwitchBit(ref flags, value, 0x2); }
         }
         public bool genTangents
         {
             get { return (flags & 0x4) != 0; }
-            set
-            {
-                if (value) { flags |= 0x4; }
-                else { flags &= ~0x4; }
-            }
+            set { SwitchBit(ref flags, value, 0x4); }
         }
         public bool swapHandedness
         {
             get { return (flags & 0x8) != 0; }
-            set
-            {
-                if (value) { flags |= 0x8; }
-                else { flags &= ~0x8; }
-            }
+            set { SwitchBit(ref flags, value, 0x8); }
         }
         public bool swapFaces
 {
             get { return (flags & 0x10) != 0; }
-            set
+            set { SwitchBit(ref flags, value, 0x10); }
+        }
+    }
+
+    public struct MeshRefineSettings
+    {
+        public MeshRefineFlags flags;
+        public float scale;
+        public int split_unit;
+
+        public static MeshRefineSettings default_value
+        {
+            get
             {
-                if (value) { flags |= 0x10; }
-                else { flags &= ~0x10; }
+                return new MeshRefineSettings
+                {
+                    scale = 0.01f,
+                    split_unit = 65000,
+                };
             }
         }
     }
@@ -141,8 +138,7 @@ public class MeshSyncServer : MonoBehaviour
         public int max_queue;
         public int max_threads;
         public ushort port;
-        public ServerFlags flags;
-        public float scale;
+        public MeshRefineSettings mrs;
 
         public static ServerSettings default_value
         {
@@ -153,7 +149,7 @@ public class MeshSyncServer : MonoBehaviour
                     max_queue = 100,
                     max_threads = 4,
                     port = 8080,
-                    scale = 0.001f,
+                    mrs = MeshRefineSettings.default_value,
                 };
             }
         }
@@ -179,9 +175,16 @@ public class MeshSyncServer : MonoBehaviour
     [DllImport("MeshSyncServer")] public static extern IntPtr msCreateString(string str);
     [DllImport("MeshSyncServer")] public static extern void msDeleteString(IntPtr str);
 
-    [DllImport("MeshSyncServer")] public static extern SubmeshData msGetSubmeshData(ref MeshData v, int i);
+    [DllImport("MeshSyncServer")] public static extern void msGetSubmeshData(ref SubmeshData dst, ref MeshData v, int i);
     [DllImport("MeshSyncServer")] public static extern void msCopySubmeshData(ref SubmeshData dst, ref SubmeshData src);
 
+
+    static void SwitchBit(ref int flags, bool f, int bit)
+    {
+
+        if (f) { flags |= bit; }
+        else { flags &= ~bit; }
+    }
 
     public static IntPtr RawPtr(Array v)
     {
@@ -219,12 +222,12 @@ public class MeshSyncServer : MonoBehaviour
         StopServer();
 
         var settings = ServerSettings.default_value;
-        settings.flags.split = true;
-        settings.flags.genNormals = m_genNormals;
-        settings.flags.genTangents = m_genTangents;
-        settings.flags.swapHandedness = m_swapHandedness;
-        settings.flags.swapFaces = m_swapFaces;
-        settings.scale = m_scale;
+        settings.mrs.flags.split = true;
+        settings.mrs.flags.genNormals = m_genNormals;
+        settings.mrs.flags.genTangents = m_genTangents;
+        settings.mrs.flags.swapHandedness = m_swapHandedness;
+        settings.mrs.flags.swapFaces = m_swapFaces;
+        settings.mrs.scale = m_scale;
         settings.port = (ushort)m_port;
         m_server = msServerStart(ref settings);
         m_handler = OnServerEvent;
@@ -364,7 +367,9 @@ public class MeshSyncServer : MonoBehaviour
         {
             for (int i = 0; i < edata.num_submeshes; ++i)
             {
-                SubmeshData smd = msGetSubmeshData(ref edata, i);
+                var smd = default(SubmeshData);
+                msGetSubmeshData(ref smd, ref edata, i);
+
                 var mdata = default(SubmeshData);
                 if (smd.points != IntPtr.Zero)
                 {
@@ -515,7 +520,7 @@ public class MeshSyncServer : MonoBehaviour
     void ForceRepaint()
     {
 #if UNITY_EDITOR
-        SceneView.RepaintAll();
+        UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 #endif
     }
 

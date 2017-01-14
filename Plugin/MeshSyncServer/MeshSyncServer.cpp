@@ -180,9 +180,9 @@ msAPI void msDeleteString(const char *str)
 }
 
 
-msAPI ms::SubmeshDataCS msGetSubmeshData(const ms::MeshDataCS *v, int i)
+msAPI void msGetSubmeshData(ms::SubmeshDataCS *dst, const ms::MeshDataCS *v, int i)
 {
-    return ms::SubmeshDataCS(*v->cpp->submeshes[i]);
+    *dst = *v->cpp->submeshes[i];
 }
 
 msAPI void msCopySubmeshData(ms::SubmeshDataCS *dst, const ms::SubmeshDataCS *src)

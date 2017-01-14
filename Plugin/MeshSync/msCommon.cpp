@@ -46,11 +46,6 @@ inline void read_vector(std::istream& is, T& v)
 GetData::GetData()
 {
     type = EventType::Get;
-    flags.get_meshes = 1;
-    flags.mesh_get_points = 1;
-    flags.mesh_get_uv = 1;
-    flags.mesh_get_indices = 1;
-    flags.mesh_apply_transform = 1;
 }
 void GetData::clear()
 {
@@ -154,7 +149,7 @@ void XformData::deserialize(std::istream& is)
 }
 
 
-#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(indices_triangulated)
+#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices)
 
 
 MeshData::MeshData()
@@ -229,12 +224,15 @@ void MeshData::swap(MeshData & v)
     std::swap(num_submeshes, v.num_submeshes);
 }
 
-void MeshData::refine(MeshRefineFlags flags, float scale)
+void MeshData::refine(const MeshRefineSettings &settings)
 {
-    if (scale != 1.0f) {
-        mu::Scale(points.data(), scale, points.size());
+    if (settings.flags.apply_transform) {
+        applyTransform(transform);
     }
-    if (flags.swap_handedness) {
+    if (settings.scale != 1.0f) {
+        mu::Scale(points.data(), settings.scale, points.size());
+    }
+    if (settings.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
     }
 
@@ -256,7 +254,7 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
     }
 
     // normals
-    bool gen_normals = flags.gen_normals && normals.empty();
+    bool gen_normals = settings.flags.gen_normals && normals.empty();
     if (gen_normals) {
         if (smooth_angle > 0.0f && smooth_angle < 360.0f) {
             normals.resize(indices.size());
@@ -270,7 +268,7 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
 
     // flatten
     bool flatten = false;
-    if (points.size() > 65000 || (int)normals.size() == num_indices || (int)uv.size() == num_indices) {
+    if (points.size() > settings.split_unit || (int)normals.size() == num_indices || (int)uv.size() == num_indices) {
         {
             RawVector<float3> flattened;
             mu::CopyWithIndices(flattened, points, indices, 0, num_indices);
@@ -290,54 +288,49 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
     }
 
     // tangents
-    bool gen_tangents = flags.gen_tangents && tangents.empty() && !uv.empty();
+    bool gen_tangents = settings.flags.gen_tangents && tangents.empty() && !normals.empty() && !uv.empty();
     if (gen_tangents) {
         tangents.resize(points.size());
         mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
     }
 
     // split & triangulate
-    bool split = flags.split && points.size() > 65000;
+    bool split = settings.flags.split && points.size() > settings.split_unit;
     num_submeshes = 0;
     if (split) {
-        mu::Split(counts, 65000, [&](int nth, int face_begin, int num_faces, int num_vertices, int num_indices_triangulated) {
+        mu::Split(counts, settings.split_unit, [&](int nth, int face_begin, int num_faces, int num_vertices, int num_indices_triangulated) {
             ++num_submeshes;
             while (submeshes.size() <= nth) {
                 submeshes.emplace_back(new Submesh());
             }
             auto& sub = *submeshes[nth];
             sub.indices.resize(num_indices_triangulated);
-            mu::Triangulate(sub.indices, IntrusiveArray<int>(&counts[face_begin], num_faces), flags.swap_faces);
+            mu::Triangulate(sub.indices, IntrusiveArray<int>(&counts[face_begin], num_faces), settings.flags.swap_faces);
 
             size_t ibegin = offsets[face_begin];
-            size_t iend = ibegin + num_vertices;
             if (!points.empty()) {
-                sub.points.resize(num_vertices);
-                memcpy(sub.points.data(), &points[ibegin], sizeof(float3) * num_vertices);
+                sub.points.reset(&points[ibegin], num_vertices);
             }
             if (!normals.empty()) {
-                sub.normals.resize(num_vertices);
-                memcpy(sub.normals.data(), &normals[ibegin], sizeof(float3) * num_vertices);
+                sub.normals.reset(&normals[ibegin], num_vertices);
             }
             if (!uv.empty()) {
-                sub.uv.resize(num_vertices);
-                memcpy(sub.uv.data(), &uv[ibegin], sizeof(float2) * num_vertices);
+                sub.uv.reset(&uv[ibegin], num_vertices);
             }
             if (!tangents.empty()) {
-                sub.tangents.resize(num_vertices);
-                memcpy(sub.tangents.data(), &tangents[ibegin], sizeof(float4) * num_vertices);
+                sub.tangents.reset(&tangents[ibegin], num_vertices);
             }
         });
     }
     else {
-        indices_triangulated.resize(num_indices_tri);
-
+        decltype(indices) indices_triangulated(num_indices_tri);
         if (flatten) {
-            mu::Triangulate(indices_triangulated, counts, flags.swap_faces);
+            mu::Triangulate(indices_triangulated, counts, settings.flags.swap_faces);
         }
         else {
-            mu::TriangulateWithIndices(indices_triangulated, counts, indices, flags.swap_faces);
+            mu::TriangulateWithIndices(indices_triangulated, counts, indices, settings.flags.swap_faces);
         }
+        indices.swap(indices_triangulated);
     }
 }
 
@@ -378,9 +371,9 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     normals     = (float3*)v.normals.data();
     tangents    = (float4*)v.tangents.data();
     uv          = (float2*)v.uv.data();
-    indices     = (int*)v.indices_triangulated.data();
+    indices     = (int*)v.indices.data();
     num_points  = (int)v.points.size();
-    num_indices = (int)v.indices_triangulated.size();
+    num_indices = (int)v.indices.size();
     num_submeshes = v.num_submeshes;
 }
 

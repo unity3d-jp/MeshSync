@@ -21,8 +21,7 @@ struct ServerSettings
     int max_queue = 100;
     int max_threads = 4;
     uint16_t port = 8080;
-    MeshRefineFlags mesh_flags;
-    float scale = 0.1f;
+    MeshRefineSettings mrs;
 };
 
 class Server
@@ -52,6 +51,7 @@ public:
     template<class Body>
     void processEvents(const Body& body)
     {
+        lock_t l(m_mutex);
         for (auto& r : m_recv_history) {
             switch (r.type) {
             case EventType::Get:

@@ -70,7 +70,7 @@ void Server::recvMesh(const Body& body)
     auto& tmp = m_tmp.local().mesh;
     body(tmp);
     if (!tmp.obj_path.empty()) {
-        tmp.refine(m_settings.mesh_flags, m_settings.scale);
+        tmp.refine(m_settings.mrs);
         {
             lock_t l(m_mutex);
             m_recv_history.push_back({ EventType::Mesh, tmp.obj_path });
@@ -187,18 +187,15 @@ void Server::beginServe()
 }
 void Server::endServe()
 {
-    MeshRefineFlags flags;
-    flags.swap_faces = m_get_data.flags.mesh_swap_faces;
-    flags.swap_handedness = m_get_data.flags.mesh_swap_handedness;
-    bool apply_transform = m_get_data.flags.mesh_apply_transform;
-    float scale = m_settings.scale != 1.0f ? 1.0f / m_settings.scale : 1.0f;
+    MeshRefineSettings mrs;
+    mrs.flags.swap_faces = m_get_data.flags.mesh_swap_faces;
+    mrs.flags.swap_handedness = m_get_data.flags.mesh_swap_handedness;
+    mrs.flags.apply_transform = m_get_data.flags.mesh_apply_transform;
+    mrs.scale = m_settings.mrs.scale != 1.0f ? 1.0f / m_settings.mrs.scale : 1.0f;
 
-    concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [scale, flags, apply_transform](DataPtr& p) {
+    concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](DataPtr& p) {
         if (auto data = dynamic_cast<MeshData*>(p.get())) {
-            if (apply_transform) {
-                data->applyTransform(data->transform);
-            }
-            data->refine(flags, scale);
+            data->refine(mrs);
         }
     });
     m_serve_waiting = 0;

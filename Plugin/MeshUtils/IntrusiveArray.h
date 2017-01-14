@@ -13,11 +13,17 @@ public:
     typedef const_pointer   const_iterator;
 
     IntrusiveArray() {}
-    IntrusiveArray(const T *data, size_t size) : m_data(const_cast<T*>(data)), m_size(size) {}
+    IntrusiveArray(const T *d, size_t s) : m_data(const_cast<T*>(d)), m_size(s) {}
     IntrusiveArray(const IntrusiveArray& v) : m_data(const_cast<T*>(v.m_data)), m_size(v.m_size) {}
     template<class Container>
     IntrusiveArray(const Container& v) : m_data(const_cast<T*>(v.data())), m_size(v.size()) {}
-    IntrusiveArray& operator=(const IntrusiveArray& v) { m_data = v.data; m_size = v.size; return *this; }
+    IntrusiveArray& operator=(const IntrusiveArray& v) { m_data = const_cast<T*>(v.m_data); m_size = v.m_size; return *this; }
+
+    void reset(T *d, size_t s)
+    {
+        m_data = d;
+        m_size = s;
+    }
 
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
