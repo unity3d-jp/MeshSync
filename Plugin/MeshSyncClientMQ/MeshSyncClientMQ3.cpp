@@ -281,3 +281,7 @@ void Import(MeshSyncClientPlugin *plugin)
 {
     plugin->Import();
 }
+void CloseWindow(MeshSyncClientPlugin *plugin)
+{
+    plugin->WindowClose();
+}

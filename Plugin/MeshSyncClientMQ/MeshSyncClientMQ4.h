@@ -80,11 +80,13 @@ public:
     Sync& getSync();
     bool& getActive();
 
-    void Send(MQDocument doc);
-    void Import(MQDocument doc);
+    void Send();
+    void Import();
 
 private:
+    bool SendImpl(MQDocument doc);
+    bool ImportImpl(MQDocument doc);
+
     Sync m_sync;
     SettingsDlg *m_dlg = nullptr;
-    bool m_active = false;
 };

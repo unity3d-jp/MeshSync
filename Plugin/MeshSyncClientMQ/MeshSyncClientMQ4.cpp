@@ -112,9 +112,9 @@ BOOL MeshSyncClientPlugin::Activate(MQDocument doc, BOOL flag)
         return FALSE;
     }
 
-    m_active = flag ? true : false;
-    m_dlg->SetVisible(m_active);
-    return m_active;
+    bool active = flag ? true : false;
+    m_dlg->SetVisible(active);
+    return active;
 }
 
 //---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ BOOL MeshSyncClientPlugin::IsActivated(MQDocument doc)
     if (!m_dlg) {
         return FALSE;
     }
-    return m_active;
+    return m_dlg->GetVisible();
 }
 
 //---------------------------------------------------------------------------
@@ -296,18 +296,27 @@ Sync& MeshSyncClientPlugin::getSync()
 {
     return m_sync;
 }
-bool& MeshSyncClientPlugin::getActive()
+
+void MeshSyncClientPlugin::Send()
 {
-    return m_active;
+    Execute(&MeshSyncClientPlugin::SendImpl);
 }
 
-void MeshSyncClientPlugin::Send(MQDocument doc)
+void MeshSyncClientPlugin::Import()
 {
-    m_sync.send(doc);
+    Execute(&MeshSyncClientPlugin::ImportImpl);
 }
-void MeshSyncClientPlugin::Import(MQDocument doc)
+
+bool MeshSyncClientPlugin::SendImpl(MQDocument doc)
+{
+    m_sync.send(doc, true);
+    return true;
+}
+
+bool MeshSyncClientPlugin::ImportImpl(MQDocument doc)
 {
     m_sync.import(doc);
+    return true;
 }
 
 

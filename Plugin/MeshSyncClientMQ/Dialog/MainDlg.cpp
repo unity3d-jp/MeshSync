@@ -13,6 +13,7 @@ float& GetScaleFactor(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
 void Send(MeshSyncClientPlugin *plugin);
 void Import(MeshSyncClientPlugin *plugin);
+void CloseWindow(MeshSyncClientPlugin *plugin);
 
 
 CMainDlg::CMainDlg(MeshSyncClientPlugin *plugin)
@@ -80,6 +81,7 @@ LRESULT CMainDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOO
 void CMainDlg::CloseDialog(int nVal)
 {
     ShowWindow(SW_HIDE);
+    CloseWindow(m_plugin);
 }
 
 

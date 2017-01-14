@@ -51,7 +51,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
     m_check_autosync->SetChecked(m_plugin->getSync().getAutoSync());
     m_check_autosync->AddChangedEvent(this, &SettingsDlg::OnAutoSyncChange);
 
-    m_button_sync = CreateButton(frame, L"Sync Now");
+    m_button_sync = CreateButton(frame, L"Manual Sync");
     m_button_sync->AddClickEvent(this, &SettingsDlg::OnSyncClicked);
 
     m_button_import = CreateButton(frame, L"Import Unity Scene");
@@ -62,10 +62,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
 
 BOOL SettingsDlg::OnHide(MQWidgetBase *sender, MQDocument doc)
 {
-    if (m_plugin->getActive()) {
-        m_plugin->getActive() = false;
-        m_plugin->WindowClose();
-    }
+    m_plugin->WindowClose();
     return FALSE;
 }
 
@@ -101,13 +98,13 @@ BOOL SettingsDlg::OnAutoSyncChange(MQWidgetBase * sender, MQDocument doc)
 
 BOOL SettingsDlg::OnSyncClicked(MQWidgetBase * sender, MQDocument doc)
 {
-    m_plugin->Send(doc);
+    m_plugin->Send();
     return 0;
 }
 
 BOOL SettingsDlg::OnImportClicked(MQWidgetBase * sender, MQDocument doc)
 {
-    m_plugin->Import(doc);
+    m_plugin->Import();
     return 0;
 }
 
