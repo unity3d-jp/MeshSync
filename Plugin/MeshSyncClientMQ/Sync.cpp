@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Sync.h"
 
+#define MaxNameBuffer 256
+
 Sync::Sync()
 {
 }
@@ -66,23 +68,36 @@ void Sync::import(MQDocument doc)
     gd.flags.mesh_apply_transform = 1;
     gd.scale = 1.0f / m_scale_factor;
 
-    MQSendMessageInfo info;
-    info.Product = MQPluginProduct;
-    info.ID = MQPluginID;
-    MQ_SendMessage(MQMESSAGE_UPDATE_UNDO, &info);
-
     auto ret = client.sendGet(gd);
     for (auto& data : ret) {
         if (data->type == ms::EventType::Mesh) {
-            auto obj = create(dynamic_cast<ms::MeshData&>(*data));
+            auto& mdata = dynamic_cast<ms::MeshData&>(*data);
+            if (auto obj = findObject(doc, mdata.obj_path)) {
+                obj->DeleteThis();
+            }
+            auto obj = createObject(mdata);
             doc->AddObject(obj);
         }
     }
-
-    MQ_SendMessage(MQMESSAGE_REDRAW_ALL_SCENE, &info);
 }
 
-MQObject Sync::create(const ms::MeshData& data)
+MQObject Sync::findObject(MQDocument doc, const std::string & name)
+{
+    int nobj = doc->GetObjectCount();
+    for (int i = 0; i < nobj; ++i) {
+        auto obj = doc->GetObject(i);
+        if (!obj) { continue; }
+
+        char tmp[MaxNameBuffer];
+        obj->GetName(tmp, sizeof(tmp));
+        if (strcmp(tmp, name.c_str()) == 0) {
+            return obj;
+        }
+    }
+    return nullptr;
+}
+
+MQObject Sync::createObject(const ms::MeshData& data)
 {
     auto ret = MQ_CreateObject();
     ret->SetName(data.obj_path.c_str());
@@ -113,7 +128,7 @@ static inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)
     if (auto parent = doc->GetParentObject(obj)) {
         BuildPath(doc, parent, path);
     }
-    char name[256];
+    char name[MaxNameBuffer];
     obj->GetName(name, sizeof(name));
     path += "/";
     path += name;
@@ -121,6 +136,8 @@ static inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)
 
 void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
 {
+    if (!obj) { return; }
+
     dst.obj_path.clear();
     BuildPath(doc, obj, dst.obj_path);
     dst.smooth_angle = obj->GetSmoothAngle();

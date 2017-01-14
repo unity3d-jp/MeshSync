@@ -37,6 +37,7 @@ public class MeshSyncServer : MonoBehaviour
         public bool mesh_swap_handedness { get { return (flags & 0x100) != 0; } }
         public bool mesh_swap_faces { get { return (flags & 0x200) != 0; } }
         public bool mesh_apply_transform { get { return (flags & 0x400) != 0; } }
+        public bool mesh_bake_skin { get { return (flags & 0x800) != 0; } }
     }
 
     public struct GetData
@@ -548,36 +549,65 @@ public class MeshSyncServer : MonoBehaviour
             var data = default(MeshData);
             data.obj_path = msCreateString(mr.name);
             data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
-            Capture(ref data, mesh, flags);
+            Capture(ref data, mesh, null, flags);
             msServerAddServeData(m_server, EventType.Mesh, ref data);
             msDeleteString(data.obj_path);
         }
     }
 
-    void ServeData(SkinnedMeshRenderer mr, GetFlags flags)
+    void ServeData(SkinnedMeshRenderer smr, GetFlags flags)
     {
-        var mesh = mr.sharedMesh;
-        if (mesh == null) return;
-        if (!mesh.isReadable)
-        {
-            Debug.Log("Mesh " + mr.name + " is not readable and be ignored");
-            return;
-        }
-
         if (flags.get_xforms)
         {
             var data = default(XformData);
-            data.obj_path = msCreateString(mr.name);
-            Capture(ref data, mr.GetComponent<Transform>());
+            data.obj_path = msCreateString(smr.name);
+            Capture(ref data, smr.GetComponent<Transform>());
             msServerAddServeData(m_server, EventType.Xform, ref data);
             msDeleteString(data.obj_path);
         }
         if (flags.get_meshes)
         {
             var data = default(MeshData);
-            data.obj_path = msCreateString(mr.name);
-            data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
-            Capture(ref data, mesh, flags);
+
+            if(flags.mesh_bake_skin)
+            {
+                Cloth cloth = smr.GetComponent<Cloth>();
+                if (cloth != null)
+                {
+                    var mesh = smr.sharedMesh;
+                    if (mesh == null)
+                    {
+                        return;
+                    }
+                    if (!mesh.isReadable)
+                    {
+                        Debug.Log("Mesh " + smr.name + " is not readable and be ignored");
+                        return;
+                    }
+                    Capture(ref data, mesh, cloth, flags);
+                }
+                else
+                {
+                    var mesh = new Mesh();
+                    smr.BakeMesh(mesh);
+                    Capture(ref data, mesh, null, flags);
+                }
+            }
+            else
+            {
+                var mesh = smr.sharedMesh;
+                if (mesh == null) return;
+                if (!mesh.isReadable)
+                {
+                    Debug.Log("Mesh " + smr.name + " is not readable and be ignored");
+                    return;
+                }
+                Capture(ref data, mesh, null, flags);
+            }
+
+            data.obj_path = msCreateString(smr.name);
+            data.transform = smr.GetComponent<Transform>().localToWorldMatrix;
+
             msServerAddServeData(m_server, EventType.Mesh, ref data);
             msDeleteString(data.obj_path);
         }
@@ -590,17 +620,19 @@ public class MeshSyncServer : MonoBehaviour
         data.position = trans.localPosition;
     }
 
-    void Capture(ref MeshData data, Mesh mesh, GetFlags flags)
+    void Capture(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags)
     {
+        bool use_cloth = cloth != null;
+
         if(flags.mesh_get_points)
         {
-            m_points = mesh.vertices;
+            m_points = use_cloth ? cloth.vertices : mesh.vertices;
             data.points = RawPtr(m_points);
             data.num_points = m_points.Length;
         }
         if (flags.mesh_get_normals)
         {
-            m_normals = mesh.normals;
+            m_normals = use_cloth ? cloth.normals : mesh.normals;
             data.normals = RawPtr(m_normals);
             data.num_points = m_normals.Length;
         }

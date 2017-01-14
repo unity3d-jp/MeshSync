@@ -44,6 +44,7 @@ struct GetFlags
     uint32_t mesh_swap_handedness : 1;
     uint32_t mesh_swap_faces : 1;
     uint32_t mesh_apply_transform : 1;
+    uint32_t mesh_bake_skin : 1;
 };
 
 class GetData : public EventData

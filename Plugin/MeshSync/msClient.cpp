@@ -54,7 +54,7 @@ Client::DaraList Client::sendGet(const GetData& gdata)
     DaraList ret;
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
-        session.setTimeout(m_settings.timeout_ms * 1000);
+        session.setTimeout(5000 * 1000);
 
         HTTPRequest request{ HTTPRequest::HTTP_POST, "get" };
         request.setContentType("application/octet-stream");
