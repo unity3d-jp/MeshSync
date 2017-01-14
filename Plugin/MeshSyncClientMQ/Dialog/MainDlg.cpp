@@ -96,7 +96,7 @@ LRESULT CMainDlg::OnEnChangeEditPort(WORD /*wNotifyCode*/, WORD /*wID*/, HWND hW
 {
     char buf[1024];
     ::GetWindowTextA(hWndCtl, buf, sizeof(buf));
-    GetPort(m_plugin) = atoi(buf);
+    GetPort(m_plugin) = std::atoi(buf);
     return 0;
 }
 
@@ -104,7 +104,7 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
 {
     char buf[1024];
     ::GetWindowTextA(hWndCtl, buf, sizeof(buf));
-    auto scale = atof(buf);
+    auto scale = std::atof(buf);
     if (scale != 0.0) {
         GetScaleFactor(m_plugin) = (float)scale;
     }

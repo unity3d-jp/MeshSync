@@ -42,6 +42,8 @@ public:
 
 
     Sync& getSync();
+    bool& getActive();
+
     void Send();
     void Import();
 
@@ -50,4 +52,5 @@ private:
     bool ImportImpl(MQDocument doc);
 
     Sync m_sync;
+    bool m_active = false;
 };

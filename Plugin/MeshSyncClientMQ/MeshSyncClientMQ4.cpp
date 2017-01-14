@@ -84,6 +84,9 @@ const wchar_t *MeshSyncClientPlugin::GetSubCommandString(int index)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::Initialize()
 {
+    if (!m_dlg) {
+        m_dlg = new SettingsDlg(this, MQWindow::GetMainWindow());
+    }
     return TRUE;
 }
 
@@ -93,6 +96,10 @@ BOOL MeshSyncClientPlugin::Initialize()
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::Exit()
 {
+    if (m_dlg) {
+        delete m_dlg;
+        m_dlg = nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -101,7 +108,13 @@ void MeshSyncClientPlugin::Exit()
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::Activate(MQDocument doc, BOOL flag)
 {
-    return TRUE;
+    if (!m_dlg) {
+        return FALSE;
+    }
+
+    m_active = flag ? true : false;
+    m_dlg->SetVisible(m_active);
+    return m_active;
 }
 
 //---------------------------------------------------------------------------
@@ -110,7 +123,10 @@ BOOL MeshSyncClientPlugin::Activate(MQDocument doc, BOOL flag)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::IsActivated(MQDocument doc)
 {
-    return TRUE;
+    if (!m_dlg) {
+        return FALSE;
+    }
+    return m_active;
 }
 
 //---------------------------------------------------------------------------
@@ -274,6 +290,24 @@ void MeshSyncClientPlugin::Execute(ExecuteCallbackProc proc)
 MQBasePlugin *GetPluginClass()
 {
     return &g_plugin;
+}
+
+Sync& MeshSyncClientPlugin::getSync()
+{
+    return m_sync;
+}
+bool& MeshSyncClientPlugin::getActive()
+{
+    return m_active;
+}
+
+void MeshSyncClientPlugin::Send(MQDocument doc)
+{
+    m_sync.send(doc);
+}
+void MeshSyncClientPlugin::Import(MQDocument doc)
+{
+    m_sync.import(doc);
 }
 
 

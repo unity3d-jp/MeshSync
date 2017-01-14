@@ -2,6 +2,8 @@
 
 #include "Sync.h"
 
+class SettingsDlg;
+
 class MeshSyncClientPlugin : public MQStationPlugin
 {
 public:
@@ -76,12 +78,13 @@ public:
 
 
     Sync& getSync();
-    void Send();
-    void Import();
+    bool& getActive();
+
+    void Send(MQDocument doc);
+    void Import(MQDocument doc);
 
 private:
-    bool SendImpl(MQDocument doc);
-    bool ImportImpl(MQDocument doc);
-
     Sync m_sync;
+    SettingsDlg *m_dlg = nullptr;
+    bool m_active = false;
 };

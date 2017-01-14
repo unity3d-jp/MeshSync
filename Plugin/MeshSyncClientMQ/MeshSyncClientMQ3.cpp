@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿#include "MeshSyncClientMQ4.h"
+#include "pch.h"
 #include "MeshSyncClientMQ3.h"
 
 static MeshSyncClientPlugin g_plugin;
@@ -227,6 +228,10 @@ MQBasePlugin *GetPluginClass()
 Sync& MeshSyncClientPlugin::getSync()
 {
     return m_sync;
+}
+bool& MeshSyncClientPlugin::getActive()
+{
+    return m_active;
 }
 
 void MeshSyncClientPlugin::Send()
