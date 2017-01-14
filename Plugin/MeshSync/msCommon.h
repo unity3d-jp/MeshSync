@@ -50,6 +50,7 @@ class GetData : public EventData
 {
 public:
     GetFlags flags = {0};
+    float scale = 1.0f;
 
     GetData();
     void clear() override;

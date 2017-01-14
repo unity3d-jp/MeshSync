@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "stdafx.h"
 #include <string>
 #include <memory>
@@ -8,6 +9,7 @@ CMessageLoop theLoop;
 
 std::string& GetServer(MeshSyncClientPlugin *plugin);
 uint16_t& GetPort(MeshSyncClientPlugin *plugin);
+float& GetScaleFactor(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
 void Send(MeshSyncClientPlugin *plugin);
 void Import(MeshSyncClientPlugin *plugin);
@@ -44,12 +46,15 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
     m_edit_server.Attach(GetDlgItem(IDC_EDIT_SERVER));
     m_edit_port.Attach(GetDlgItem(IDC_EDIT_PORT));
+    m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));
 
     char buf[256];
     m_edit_server.SetWindowText(GetServer(m_plugin).c_str());
     sprintf(buf, "%d", (int)GetPort(m_plugin));
     m_edit_port.SetWindowText(buf);
+    sprintf(buf, "%.3f", GetScaleFactor(m_plugin));
+    m_edit_scale.SetWindowText(buf);
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
 
     return TRUE;
@@ -95,10 +100,21 @@ LRESULT CMainDlg::OnEnChangeEditPort(WORD /*wNotifyCode*/, WORD /*wID*/, HWND hW
     return 0;
 }
 
+LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
+{
+    char buf[1024];
+    ::GetWindowTextA(hWndCtl, buf, sizeof(buf));
+    auto scale = atof(buf);
+    if (scale != 0.0) {
+        GetScaleFactor(m_plugin) = (float)scale;
+    }
+    return 0;
+}
+
 
 LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
-    GetAutoSync(m_plugin) = m_check_autosync.GetCheck();
+    GetAutoSync(m_plugin) = m_check_autosync.GetCheck() != 0;
     return 0;
 }
 

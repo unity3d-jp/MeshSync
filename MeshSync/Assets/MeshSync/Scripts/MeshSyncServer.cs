@@ -126,7 +126,7 @@ public class MeshSyncServer : MonoBehaviour
             {
                 return new MeshRefineSettings
                 {
-                    scale = 0.01f,
+                    scale = 1.0f,
                     split_unit = 65000,
                 };
             }

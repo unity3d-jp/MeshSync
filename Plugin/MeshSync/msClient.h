@@ -8,7 +8,7 @@ struct ClientSettings
 {
     std::string server = "localhost";
     uint16_t port = 8080;
-    int timeout_ms = 100;
+    int timeout_ms = 200;
 };
 
 class Client

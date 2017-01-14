@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by WTL.rc
+// Used by Dialog.rc
 //
 #define IDD_MAINDLG                     129
 #define IDC_STATIC_SERVER_PORT          1000
@@ -10,6 +10,9 @@
 #define IDC_BUTTON_SYNC                 1004
 #define IDC_BUTTON2                     1005
 #define IDC_BUTTON_IMPORT               1005
+#define IDC_EDIT_SERVER2                1006
+#define IDC_EDIT_SCALEFACTOR            1006
+#define IDC_STATIC_SCALEFACTOR          1007
 
 // Next default values for new objects
 // 

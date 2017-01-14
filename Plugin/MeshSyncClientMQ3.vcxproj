@@ -134,4 +134,9 @@ copy $(TargetPath) C:\SSD\Misc\Metaseq24\Plugins\Station</Command>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="MeshSyncClientMQ\Dialog\Dialog.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

@@ -5,27 +5,23 @@ Sync::Sync()
 {
 }
 
-void Sync::setDocument(MQDocument doc)
-{
-    m_doc = doc;
-}
+ms::ClientSettings& Sync::getClientSettings() { return m_settings; }
+float& Sync::getScaleFactor() { return m_scale_factor; }
+bool& Sync::getAutoSync() { return m_auto_sync; }
 
-ms::ClientSettings& Sync::getClientSettings()
+void Sync::send(MQDocument doc, bool force)
 {
-    return m_settings;
-}
+    if (!force && !m_auto_sync) { return; }
 
-void Sync::send()
-{
-    int nobj = m_doc->GetObjectCount();
+    int nobj = doc->GetObjectCount();
     while ((int)m_data.size() < nobj) {
         m_data.emplace_back(new ms::MeshData());
     }
 
     // gather object data
-    concurrency::parallel_for(0, nobj, [this](int i) {
+    concurrency::parallel_for(0, nobj, [this, doc](int i) {
         auto& data = *m_data[i];
-        gather(m_doc, m_doc->GetObject(i), data);
+        gather(doc, doc->GetObject(i), data);
 
         ms::Client client(m_settings);
         client.sendEdit(data);
@@ -58,10 +54,8 @@ void Sync::send()
     }
 }
 
-void Sync::import()
+void Sync::import(MQDocument doc)
 {
-    if (!m_doc) { return; }
-
     ms::Client client(m_settings);
     ms::GetData gd;
     gd.flags.get_meshes = 1;
@@ -70,6 +64,7 @@ void Sync::import()
     gd.flags.mesh_get_uv = 1;
     gd.flags.mesh_swap_handedness = 1;
     gd.flags.mesh_apply_transform = 1;
+    gd.scale = 1.0f / m_scale_factor;
 
     MQSendMessageInfo info;
     info.Product = MQPluginProduct;
@@ -80,7 +75,7 @@ void Sync::import()
     for (auto& data : ret) {
         if (data->type == ms::EventType::Mesh) {
             auto obj = create(dynamic_cast<ms::MeshData&>(*data));
-            m_doc->AddObject(obj);
+            doc->AddObject(obj);
         }
     }
 
@@ -134,6 +129,9 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     int npoints = obj->GetVertexCount();
     dst.points.resize(npoints);
     obj->GetVertexArray((MQPoint*)dst.points.data());
+    if (m_scale_factor != 1.0f) {
+        mu::Scale(dst.points.data(), m_scale_factor, dst.points.size());
+    }
 
     // copy counts
     int nfaces = obj->GetFaceCount();

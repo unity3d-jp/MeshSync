@@ -191,7 +191,7 @@ void Server::endServe()
     mrs.flags.swap_faces = m_get_data.flags.mesh_swap_faces;
     mrs.flags.swap_handedness = m_get_data.flags.mesh_swap_handedness;
     mrs.flags.apply_transform = m_get_data.flags.mesh_apply_transform;
-    mrs.scale = m_settings.mrs.scale != 1.0f ? 1.0f / m_settings.mrs.scale : 1.0f;
+    mrs.scale = (1.0f / m_settings.mrs.scale) * m_get_data.scale;
 
     concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](DataPtr& p) {
         if (auto data = dynamic_cast<MeshData*>(p.get())) {

@@ -67,7 +67,6 @@ public:
 
     void Execute(ExecuteCallbackProc proc);
 
-protected:
     struct CallbackInfo {
         ExecuteCallbackProc proc;
     };
@@ -75,6 +74,14 @@ protected:
     // コールバックに対する実装部
     virtual bool ExecuteCallback(MQDocument doc, void *option);
 
+
+    Sync& getSync();
+    void Send();
+    void Import();
+
 private:
+    bool SendImpl(MQDocument doc);
+    bool ImportImpl(MQDocument doc);
+
     Sync m_sync;
 };

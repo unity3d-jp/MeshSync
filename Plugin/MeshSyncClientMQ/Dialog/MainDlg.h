@@ -25,6 +25,7 @@ public:
         COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
         COMMAND_HANDLER(IDC_EDIT_SERVER, EN_CHANGE, OnEnChangeEditServer)
         COMMAND_HANDLER(IDC_EDIT_PORT, EN_CHANGE, OnEnChangeEditPort)
+        COMMAND_HANDLER(IDC_EDIT_SCALEFACTOR, EN_CHANGE, OnEnChangeScaleFactor)
         COMMAND_HANDLER(IDC_CHECK_AUTOSYNC, BN_CLICKED, OnBnClickedCheckAutosync)
         COMMAND_HANDLER(IDC_BUTTON_SYNC, BN_CLICKED, OnBnClickedButtonSync)
         COMMAND_HANDLER(IDC_BUTTON_IMPORT, BN_CLICKED, OnBnClickedButtonImport)
@@ -37,6 +38,7 @@ public:
 
     LRESULT OnEnChangeEditServer(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnEnChangeEditPort(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnEnChangeScaleFactor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedButtonSync(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -46,5 +48,6 @@ private:
     MeshSyncClientPlugin *m_plugin = nullptr;
     CEdit m_edit_server;
     CEdit m_edit_port;
+    CEdit m_edit_scale;
     CButton m_check_autosync;
 };

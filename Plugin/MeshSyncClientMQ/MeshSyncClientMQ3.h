@@ -35,22 +35,19 @@ public:
     typedef bool (MeshSyncClientPlugin::*ExecuteCallbackProc)(MQDocument doc);
     void Execute(ExecuteCallbackProc proc);
 
-protected:
     struct CallbackInfo {
         ExecuteCallbackProc proc;
     };
-
     bool ExecuteCallback(MQDocument doc, void *option) override;
 
-public:
-    bool& getAutoSync();
-    ms::ClientSettings& getClientSettings();
-    void send();
-    void import();
+
+    Sync& getSync();
+    void Send();
+    void Import();
 
 private:
-    void autoSync();
+    bool SendImpl(MQDocument doc);
+    bool ImportImpl(MQDocument doc);
 
     Sync m_sync;
-    bool m_auto_sync = false;
 };

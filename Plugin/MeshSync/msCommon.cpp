@@ -56,16 +56,19 @@ uint32_t GetData::getSerializeSize() const
     uint32_t ret = 0;
     ret += size_pod(type);
     ret += size_pod(flags);
+    ret += size_pod(scale);
     return ret;
 }
 void GetData::serialize(std::ostream& os) const
 {
     write_pod(os, type);
     write_pod(os, flags);
+    write_pod(os, scale);
 }
 void GetData::deserialize(std::istream& is)
 {
     read_pod(is, flags);
+    read_pod(is, scale);
 }
 
 
