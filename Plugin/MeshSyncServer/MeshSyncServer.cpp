@@ -102,9 +102,11 @@ static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
 {
     if (!dst || !src) { return; }
 
+    dst->cpp = src->cpp;
     dst->obj_path = src->obj_path;
     dst->num_points = src->num_points;
     dst->num_indices = src->num_indices;
+    dst->num_submeshes = src->num_submeshes;
 
     if (src->points) {
         if (dst->points) {
@@ -175,4 +177,32 @@ msAPI const char* msCreateString(const char *str)
 msAPI void msDeleteString(const char *str)
 {
     delete[] str;
+}
+
+
+msAPI ms::SubmeshDataCS msGetSubmeshData(const ms::MeshDataCS *v, int i)
+{
+    return ms::SubmeshDataCS(*v->cpp->submeshes[i]);
+}
+
+msAPI void msCopySubmeshData(ms::SubmeshDataCS *dst, const ms::SubmeshDataCS *src)
+{
+    dst->num_points = src->num_points;
+    dst->num_indices = src->num_indices;
+
+    if (src->points && dst->points) {
+        memcpy(dst->points, src->points, sizeof(float3)*src->num_points);
+    }
+    if (src->normals && dst->normals) {
+        memcpy(dst->normals, src->normals, sizeof(float3)*src->num_points);
+    }
+    if (src->tangents && dst->tangents) {
+        memcpy(dst->tangents, src->tangents, sizeof(float4)*src->num_points);
+    }
+    if (src->uv && dst->uv) {
+        memcpy(dst->uv, src->uv, sizeof(float2)*src->num_points);
+    }
+    if (src->indices && dst->indices) {
+        memcpy(dst->indices, src->indices, sizeof(int)*src->num_indices);
+    }
 }

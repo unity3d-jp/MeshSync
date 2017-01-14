@@ -20,3 +20,6 @@ msAPI void          msServerAddServeData(ms::Server *server, ms::EventType type,
 msAPI void          msCopyData(ms::EventType et, void *dst, const void *src);
 msAPI const char*   msCreateString(const char *str);
 msAPI void          msDeleteString(const char *str);
+
+msAPI ms::SubmeshDataCS msGetSubmeshData(const ms::MeshDataCS *v, int i);
+msAPI void              msCopySubmeshData(ms::SubmeshDataCS *dst, const ms::SubmeshDataCS *src);

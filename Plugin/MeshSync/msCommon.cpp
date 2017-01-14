@@ -224,14 +224,13 @@ void MeshData::swap(MeshData & v)
 #undef Body
     std::swap(smooth_angle, v.smooth_angle);
     std::swap(transform, v.transform);
+
+    std::swap(submeshes, v.submeshes);
+    std::swap(num_submeshes, v.num_submeshes);
 }
 
 void MeshData::refine(MeshRefineFlags flags, float scale)
 {
-    RawVector<int> offsets;
-
-    bool split = flags.split && points.size() > 65000;
-
     if (scale != 1.0f) {
         mu::Scale(points.data(), scale, points.size());
     }
@@ -239,6 +238,7 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
         mu::InvertX(points.data(), points.size());
     }
 
+    RawVector<int> offsets;
     int num_indices = 0;
     int num_indices_tri = 0;
     if (counts.empty()) {
@@ -270,7 +270,7 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
 
     // flatten
     bool flatten = false;
-    if ((int)normals.size() == num_indices || (int)uv.size() == num_indices) {
+    if (points.size() > 65000 || (int)normals.size() == num_indices || (int)uv.size() == num_indices) {
         {
             RawVector<float3> flattened;
             mu::CopyWithIndices(flattened, points, indices, 0, num_indices);
@@ -297,7 +297,39 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
     }
 
     // split & triangulate
-    if(!split) {
+    bool split = flags.split && points.size() > 65000;
+    num_submeshes = 0;
+    if (split) {
+        mu::Split(counts, 65000, [&](int nth, int face_begin, int num_faces, int num_vertices, int num_indices_triangulated) {
+            ++num_submeshes;
+            while (submeshes.size() <= nth) {
+                submeshes.emplace_back(new Submesh());
+            }
+            auto& sub = *submeshes[nth];
+            sub.indices.resize(num_indices_triangulated);
+            mu::Triangulate(sub.indices, IntrusiveArray<int>(&counts[face_begin], num_faces), flags.swap_faces);
+
+            size_t ibegin = offsets[face_begin];
+            size_t iend = ibegin + num_vertices;
+            if (!points.empty()) {
+                sub.points.resize(num_vertices);
+                memcpy(sub.points.data(), &points[ibegin], sizeof(float3) * num_vertices);
+            }
+            if (!normals.empty()) {
+                sub.normals.resize(num_vertices);
+                memcpy(sub.normals.data(), &normals[ibegin], sizeof(float3) * num_vertices);
+            }
+            if (!uv.empty()) {
+                sub.uv.resize(num_vertices);
+                memcpy(sub.uv.data(), &uv[ibegin], sizeof(float2) * num_vertices);
+            }
+            if (!tangents.empty()) {
+                sub.tangents.resize(num_vertices);
+                memcpy(sub.tangents.data(), &tangents[ibegin], sizeof(float4) * num_vertices);
+            }
+        });
+    }
+    else {
         indices_triangulated.resize(num_indices_tri);
 
         if (flatten) {
@@ -340,6 +372,7 @@ XformDataCS::XformDataCS(const XformData & v)
 
 MeshDataCS::MeshDataCS(const MeshData & v)
 {
+    cpp = const_cast<MeshData*>(&v);
     obj_path    = v.obj_path.c_str();
     points      = (float3*)v.points.data();
     normals     = (float3*)v.normals.data();
@@ -348,6 +381,22 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     indices     = (int*)v.indices_triangulated.data();
     num_points  = (int)v.points.size();
     num_indices = (int)v.indices_triangulated.size();
+    num_submeshes = v.num_submeshes;
+}
+
+SubmeshDataCS::SubmeshDataCS()
+{
+}
+
+SubmeshDataCS::SubmeshDataCS(const MeshData::Submesh & v)
+{
+    points      = (float3*)v.points.data();
+    normals     = (float3*)v.normals.data();
+    tangents    = (float4*)v.tangents.data();
+    uv          = (float2*)v.uv.data();
+    indices     = (int*)v.indices.data();
+    num_points  = (int)v.points.size();
+    num_indices = (int)v.indices.size();
 }
 
 } // namespace ms

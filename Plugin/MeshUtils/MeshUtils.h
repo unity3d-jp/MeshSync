@@ -365,6 +365,7 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
     for (int nth = 0; ; ++nth) {
         int num_faces = 0;
         int num_vertices = 0;
+        int num_indices_triangulated = 0;
         int face_end = (int)counts.size();
         bool last = true;
         for (int fi = face_begin; fi < face_end; ++fi) {
@@ -377,10 +378,11 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
             else {
                 ++num_faces;
                 num_vertices += count;
+                num_indices_triangulated += (count - 2) * 3;
             }
         }
 
-        handler(nth, face_begin, num_faces, num_vertices);
+        handler(nth, face_begin, num_faces, num_vertices, num_indices_triangulated);
 
         if (last) { break; }
         face_begin += num_faces;

@@ -108,6 +108,17 @@ class MeshData : public EventData
 {
 using super = EventData;
 public:
+    struct Submesh
+    {
+        RawVector<float3> points;
+        RawVector<float3> normals;
+        RawVector<float4> tangents;
+        RawVector<float2> uv;
+        RawVector<int> indices;
+    };
+    using SubmeshPtr = std::shared_ptr<Submesh>;
+    using Submeshes = std::vector<SubmeshPtr>;
+
     std::string obj_path;
     RawVector<float3> points;
     RawVector<float3> normals;
@@ -118,6 +129,8 @@ public:
     RawVector<int> indices_triangulated;
     float smooth_angle = 0.0f;
     float4x4 transform = float4x4::identity();
+    Submeshes submeshes;
+    int num_submeshes = 0;
 
     MeshData();
     MeshData(const MeshDataCS& cs);
@@ -159,6 +172,7 @@ struct XformDataCS
 
 struct MeshDataCS
 {
+    MeshData *cpp = nullptr;
     const char *obj_path = nullptr;
     float3 *points = nullptr;
     float3 *normals = nullptr;
@@ -167,9 +181,23 @@ struct MeshDataCS
     int *indices = nullptr;
     int num_points = 0;
     int num_indices = 0;
+    int num_submeshes = 0;
     float4x4 transform;
 
     MeshDataCS(const MeshData& v);
+};
+struct SubmeshDataCS
+{
+    float3 *points = nullptr;
+    float3 *normals = nullptr;
+    float4 *tangents = nullptr;
+    float2 *uv = nullptr;
+    int *indices = nullptr;
+    int num_points = 0;
+    int num_indices = 0;
+
+    SubmeshDataCS();
+    SubmeshDataCS(const MeshData::Submesh& v);
 };
 
 } // namespace ms
