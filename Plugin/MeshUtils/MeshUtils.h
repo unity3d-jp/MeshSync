@@ -262,11 +262,10 @@ inline void CountIndices(
     num_indices_triangulated = rett;
 }
 
-template<class IntArray>
-inline void TriangulateIndices(
-    IntArray& triangulated,
-    const IntArray &counts,
-    const IntArray *indices,
+template<class DstArray, class SrcArray>
+inline void Triangulate(
+    DstArray& dst,
+    const SrcArray& counts,
     bool swap_face)
 {
     const int i1 = swap_face ? 2 : 1;
@@ -275,29 +274,40 @@ inline void TriangulateIndices(
 
     int n = 0;
     int i = 0;
-    if (indices) {
-        for (size_t fi = 0; fi < num_faces; ++fi) {
-            int ngon = counts[fi];
-            for (int ni = 0; ni < ngon - 2; ++ni) {
-                triangulated[i + 0] = (*indices)[n + 0];
-                triangulated[i + 1] = (*indices)[n + ni + i1];
-                triangulated[i + 2] = (*indices)[n + ni + i2];
-                i += 3;
-            }
-            n += ngon;
+    for (size_t fi = 0; fi < num_faces; ++fi) {
+        int count = counts[fi];
+        for (int ni = 0; ni < count - 2; ++ni) {
+            dst[i + 0] = n + 0;
+            dst[i + 1] = n + ni + i1;
+            dst[i + 2] = n + ni + i2;
+            i += 3;
         }
+        n += count;
     }
-    else {
-        for (size_t fi = 0; fi < num_faces; ++fi) {
-            int ngon = counts[fi];
-            for (int ni = 0; ni < ngon - 2; ++ni) {
-                triangulated[i + 0] = n + 0;
-                triangulated[i + 1] = n + ni + i1;
-                triangulated[i + 2] = n + ni + i2;
-                i += 3;
-            }
-            n += ngon;
+}
+
+template<class DstArray, class SrcArray>
+inline void TriangulateWithIndices(
+    DstArray& dst,
+    const SrcArray& counts,
+    const SrcArray& indices,
+    bool swap_face)
+{
+    const int i1 = swap_face ? 2 : 1;
+    const int i2 = swap_face ? 1 : 2;
+    size_t num_faces = counts.size();
+
+    int n = 0;
+    int i = 0;
+    for (size_t fi = 0; fi < num_faces; ++fi) {
+        int count = counts[fi];
+        for (int ni = 0; ni < count - 2; ++ni) {
+            dst[i + 0] = indices[n + 0];
+            dst[i + 1] = indices[n + ni + i1];
+            dst[i + 2] = indices[n + ni + i2];
+            i += 3;
         }
+        n += count;
     }
 }
 
@@ -345,6 +355,37 @@ inline void BuildConnectedFaceList(
             idx += c;
         }
     }
+}
+
+// SplitMeshHandler: [](int nth, int face_begin, int face_count, int vertex_count) -> void
+template<class IndexArray, class SplitMeshHandler>
+inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHandler& handler)
+{
+    int face_begin = 0;
+    for (int nth = 0; ; ++nth) {
+        int num_faces = 0;
+        int num_vertices = 0;
+        int face_end = (int)counts.size();
+        bool last = true;
+        for (int fi = face_begin; fi < face_end; ++fi) {
+            int count = counts[fi];
+            if (num_vertices + count > max_vertices) {
+                last = false;
+                if (count >= max_vertices) { return false; }
+                break;
+            }
+            else {
+                ++num_faces;
+                num_vertices += count;
+            }
+        }
+
+        handler(nth, face_begin, num_faces, num_vertices);
+
+        if (last) { break; }
+        face_begin += num_faces;
+    }
+    return true;
 }
 
 } // namespace mu

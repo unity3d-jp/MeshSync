@@ -229,9 +229,8 @@ void MeshData::swap(MeshData & v)
 void MeshData::refine(MeshRefineFlags flags, float scale)
 {
     RawVector<int> offsets;
-    RawVector<int> indices_flattened_triangulated;
-    int num_indices = 0;
-    int num_indices_tri = 0;
+
+    bool split = flags.split && points.size() > 65000;
 
     if (scale != 1.0f) {
         mu::Scale(points.data(), scale, points.size());
@@ -240,21 +239,20 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
         mu::InvertX(points.data(), points.size());
     }
 
-    // triangulate
+    int num_indices = 0;
+    int num_indices_tri = 0;
     if (counts.empty()) {
-        // assume all faces are triangles
+        // assume all faces are triangle
         num_indices = num_indices_tri = (int)indices.size();
-        int nfaces = int(indices.size() / 3);
-        indices_triangulated = indices;
-        counts.resize(nfaces);
-        offsets.resize(nfaces);
-        std::fill(counts.begin(), counts.end(), 3);
-        for (int i = 0; i < nfaces; ++i) { offsets[i] = i * 3; }
+        int num_faces = num_indices / 3;
+        counts.resize(num_faces, 3);
+        offsets.resize(num_faces);
+        for (int i = 0; i < num_faces; ++i) {
+            offsets[i] = i * 3;
+        }
     }
     else {
         mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
-        indices_triangulated.resize(num_indices_tri);
-        mu::TriangulateIndices(indices_triangulated, counts, &indices, flags.swap_faces);
     }
 
     // normals
@@ -271,29 +269,24 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
     }
 
     // flatten
+    bool flatten = false;
     if ((int)normals.size() == num_indices || (int)uv.size() == num_indices) {
-        indices_flattened_triangulated.resize(num_indices_tri);
-        mu::TriangulateIndices(indices_flattened_triangulated, counts, (RawVector<int>*)nullptr, flags.swap_faces);
-
         {
             RawVector<float3> flattened;
-            mu::CopyWithIndices(flattened, points, indices_triangulated, 0, num_indices_tri);
+            mu::CopyWithIndices(flattened, points, indices, 0, num_indices);
             points.swap(flattened);
         }
-        if (!normals.empty()) {
+        if (!normals.empty() && (int)normals.size() != num_indices) {
             RawVector<float3> flattened;
-            mu::CopyWithIndices(flattened, normals,
-                (int)normals.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
+            mu::CopyWithIndices(flattened, normals, indices, 0, num_indices);
             normals.swap(flattened);
         }
-        if (!uv.empty()) {
+        if (!uv.empty() && (int)uv.size() != num_indices) {
             RawVector<float2> flattened;
-            mu::CopyWithIndices(flattened, uv,
-                (int)uv.size() == num_indices ? indices_flattened_triangulated : indices_triangulated, 0, num_indices_tri);
+            mu::CopyWithIndices(flattened, uv, indices, 0, num_indices);
             uv.swap(flattened);
         }
-
-        std::iota(indices_triangulated.begin(), indices_triangulated.end(), 0);
+        flatten = true;
     }
 
     // tangents
@@ -301,6 +294,18 @@ void MeshData::refine(MeshRefineFlags flags, float scale)
     if (gen_tangents) {
         tangents.resize(points.size());
         mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
+    }
+
+    // split & triangulate
+    if(!split) {
+        indices_triangulated.resize(num_indices_tri);
+
+        if (flatten) {
+            mu::Triangulate(indices_triangulated, counts, flags.swap_faces);
+        }
+        else {
+            mu::TriangulateWithIndices(indices_triangulated, counts, indices, flags.swap_faces);
+        }
     }
 }
 

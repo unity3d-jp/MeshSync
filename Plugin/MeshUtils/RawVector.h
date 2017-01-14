@@ -89,6 +89,15 @@ public:
         m_size = s;
     }
 
+    void resize(size_t s, const T& v)
+    {
+        resize(s);
+        // std::fill() can suppress compiler's optimization...
+        for (size_t i = 0; i < s; ++i) {
+            m_data[i] = v;
+        }
+    }
+
     void clear()
     {
         size_t oldsize = sizeof(T) * m_size;
