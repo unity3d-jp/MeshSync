@@ -100,8 +100,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy $(TargetPath) C:\SSD\Misc\metaseq316\Plugins\Station
-copy $(TargetPath) C:\SSD\Misc\Metaseq24\Plugins\Station</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Master'">
@@ -127,8 +127,8 @@ copy $(TargetPath) C:\SSD\Misc\Metaseq24\Plugins\Station</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Master|Win32'">copy $(TargetPath) C:\SSD\Misc\metaseq316\Plugins\Station
-copy $(TargetPath) C:\SSD\Misc\Metaseq24\Plugins\Station</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Master|Win32'">
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
