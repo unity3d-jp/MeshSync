@@ -7,17 +7,17 @@
 #endif
 
 
-using msEventHandler = void(*)(ms::EventType type, const void *data);
+using msMessageHandler = void(*)(ms::MessageType type, const void *data);
 
 msAPI ms::Server*   msServerStart(const ms::ServerSettings *settings);
 msAPI void          msServerStop(ms::Server *server);
-msAPI void          msServerProcessEvents(ms::Server *server, msEventHandler handler);
+msAPI void          msServerProcessMessages(ms::Server *server, msMessageHandler handler);
 
 msAPI void          msServerBeginServe(ms::Server *server);
 msAPI void          msServerEndServe(ms::Server *server);
-msAPI void          msServerAddServeData(ms::Server *server, ms::EventType type, const void *data);
+msAPI void          msServerAddServeData(ms::Server *server, ms::MessageType type, const void *data);
 
-msAPI void          msCopyData(ms::EventType et, void *dst, const void *src);
+msAPI void          msCopyData(ms::MessageType et, void *dst, const void *src);
 msAPI const char*   msCreateString(const char *str);
 msAPI void          msDeleteString(const char *str);
 

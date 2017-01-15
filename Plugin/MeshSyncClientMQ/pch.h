@@ -36,7 +36,6 @@
 #if MQPLUGIN_VERSION > 0x0400
     #include "MQWidget.h"
 #endif
-#include "MeshSync/msClient.h"
 
 #define MQPluginProduct 0x483ADF11
 #define MQPluginID 0xB0CC9999;

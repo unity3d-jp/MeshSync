@@ -3,225 +3,218 @@
 
 namespace ms {
 
-template<class T>
-inline uint32_t size_pod(const T&)
-{
-    return sizeof(T);
-}
-template<class T>
-inline uint32_t size_vector(const T& v)
-{
-    return 4 + sizeof(typename T::value_type) * (uint32_t)v.size();
-}
+namespace {
 
 template<class T>
-inline void write_pod(std::ostream& os, const T& v)
+struct ssize_impl
 {
-    os.write((const char*)&v, sizeof(T));
-}
+    uint32_t operator()(const T&) { return sizeof(T); }
+};
 template<class T>
-inline void write_vector(std::ostream& os, const T& v)
+struct ssize_impl<RawVector<T>>
 {
-    auto size = (uint32_t)v.size();
-    os.write((const char*)&size, 4);
-    os.write((const char*)v.data(), sizeof(typename T::value_type) * size);
-}
+    uint32_t operator()(const RawVector<T>& v) { return uint32_t(4 + sizeof(T) * v.size()); }
+};
+template<>
+struct ssize_impl<std::string>
+{
+    uint32_t operator()(const std::string& v) { return uint32_t(4 + v.size()); }
+};
 
 template<class T>
-inline void read_pod(std::istream& is, const T& v)
-{
-    is.read((char*)&v, sizeof(T));
-}
+inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
+
+
 template<class T>
-inline void read_vector(std::istream& is, T& v)
+struct write_impl
 {
-    uint32_t size = 0;
-    is.read((char*)&size, 4);
-    v.resize(size);
-    is.read((char*)v.data(), sizeof(typename T::value_type) * size);
+    void operator()(std::ostream& os, const T& v)
+    {
+        os.write((const char*)&v, sizeof(T));
+    }
+};
+template<class T>
+struct write_impl<RawVector<T>>
+{
+    void operator()(std::ostream& os, const RawVector<T>& v)
+    {
+        auto size = (uint32_t)v.size();
+        os.write((const char*)&size, 4);
+        os.write((const char*)v.data(), sizeof(T) * size);
+    }
+};
+template<>
+struct write_impl<std::string>
+{
+    void operator()(std::ostream& os, const std::string& v)
+    {
+        auto size = (uint32_t)v.size();
+        os.write((const char*)&size, 4);
+        os.write((const char*)v.data(), size);
+    }
+};
+template<class T>
+inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
+
+
+
+template<class T>
+struct read_impl
+{
+    void operator()(std::istream& is, T& v)
+    {
+        is.read((char*)&v, sizeof(T));
+    }
+};
+template<class T>
+struct read_impl<RawVector<T>>
+{
+    void operator()(std::istream& is, RawVector<T>& v)
+    {
+        uint32_t size = 0;
+        is.read((char*)&size, 4);
+        v.resize(size);
+        is.read((char*)v.data(), sizeof(T) * size);
+    }
+};
+template<>
+struct read_impl<std::string>
+{
+    void operator()(std::istream& is, std::string& v)
+    {
+        uint32_t size = 0;
+        is.read((char*)&size, 4);
+        v.resize(size);
+        is.read((char*)v.data(), size);
+    }
+};
+template<class T>
+inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
+
+} // namespace
+
+
+
+
+MessageData::~MessageData()
+{
 }
-
-
 
 GetData::GetData()
 {
-    type = EventType::Get;
-}
-void GetData::clear()
-{
-    *this = GetData();
 }
 uint32_t GetData::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += size_pod(type);
-    ret += size_pod(flags);
-    ret += size_pod(scale);
+    ret += ssize(flags);
+    ret += ssize(scale);
     return ret;
 }
 void GetData::serialize(std::ostream& os) const
 {
-    write_pod(os, type);
-    write_pod(os, flags);
-    write_pod(os, scale);
+    write(os, flags);
+    write(os, scale);
 }
 void GetData::deserialize(std::istream& is)
 {
-    read_pod(is, flags);
-    read_pod(is, scale);
+    read(is, flags);
+    read(is, scale);
 }
 
-
-EventData::~EventData()
-{
-}
 
 DeleteData::DeleteData()
 {
-    type = EventType::Delete;
-}
-void DeleteData::clear()
-{
-    *this = DeleteData();
 }
 uint32_t DeleteData::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += size_pod(type);
-    ret += size_vector(obj_path);
+    ret += ssize(path);
     return ret;
 }
 void DeleteData::serialize(std::ostream& os) const
 {
-    write_pod(os, type);
-    write_vector(os, obj_path);
+    write(os, path);
 }
 void DeleteData::deserialize(std::istream& is)
 {
-    read_vector(is, obj_path);
-}
-
-
-XformData::XformData()
-{
-    type = EventType::Xform;
-}
-
-XformData::XformData(const XformDataCS & cs)
-{
-    type = EventType::Xform;
-    obj_path = cs.obj_path ? cs.obj_path : "";
-    position = cs.position;
-    rotation = cs.rotation;
-    scale    = cs.scale;
-    transform= cs.transform;
-}
-
-void XformData::clear()
-{
-    *this = XformData();
-}
-
-uint32_t XformData::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += size_pod(type);
-    ret += size_vector(obj_path);
-    ret += size_pod(position);
-    ret += size_pod(rotation);
-    ret += size_pod(scale);
-    ret += size_pod(transform);
-    return ret;
-}
-void XformData::serialize(std::ostream& os) const
-{
-    write_pod(os, type);
-    write_vector(os, obj_path);
-    write_pod(os, position);
-    write_pod(os, rotation);
-    write_pod(os, scale);
-    write_pod(os, transform);
-}
-void XformData::deserialize(std::istream& is)
-{
-    read_vector(is, obj_path);
-    read_pod(is, position);
-    read_pod(is, rotation);
-    read_pod(is, scale);
-    read_pod(is, transform);
+    read(is, path);
 }
 
 
 #define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices)
 
-
 MeshData::MeshData()
 {
-    type = EventType::Mesh;
 }
 
 MeshData::MeshData(const MeshDataCS & cs)
 {
-    type = EventType::Mesh;
-    obj_path = cs.obj_path ? cs.obj_path : "";
-    if (cs.points)  { points.assign(cs.points, cs.points + cs.num_points); }
-    if (cs.normals) { normals.assign(cs.normals, cs.normals + cs.num_points); }
-    if (cs.tangents){ tangents.assign(cs.tangents, cs.tangents + cs.num_points); }
-    if (cs.uv)      { uv.assign(cs.uv, cs.uv + cs.num_points); }
-    if (cs.indices) { indices.assign(cs.indices, cs.indices + cs.num_indices); }
-    transform = cs.transform;
+    path = cs.path ? cs.path : "";
+    flags = cs.flags;
+    if (flags.has_points && cs.points) points.assign(cs.points, cs.points + cs.num_points);
+    if (flags.has_normals && cs.normals) normals.assign(cs.normals, cs.normals + cs.num_points);
+    if (flags.has_tangents && cs.tangents) tangents.assign(cs.tangents, cs.tangents + cs.num_points);
+    if (flags.has_uv && cs.uv) uv.assign(cs.uv, cs.uv + cs.num_points);
+    if (flags.has_indices && cs.indices) indices.assign(cs.indices, cs.indices + cs.num_indices);
+    if (flags.has_transform) transform = cs.transform;
 }
 
 void MeshData::clear()
 {
-    obj_path.clear();
+    path.clear();
+    flags = {0};
 #define Body(A) A.clear();
     EachArray(Body);
 #undef Body
+    transform = Transform();
+    submeshes.clear();
+    num_submeshes = 0;
 }
 
 uint32_t MeshData::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += size_pod(type);
-    ret += size_vector(obj_path);
-#define Body(A) ret += size_vector(A);
+    ret += ssize(path);
+    ret += ssize(flags);
+#define Body(A) if(flags.has_##A) ret += ssize(A);
     EachArray(Body);
 #undef Body
-    ret += size_pod(smooth_angle);
-    ret += size_pod(transform);
+    if (flags.has_transform) ret += ssize(transform);
+    ret += ssize(csd);
     return ret;
 }
 
 void MeshData::serialize(std::ostream& os) const
 {
-    write_pod(os, type);
-    write_vector(os, obj_path);
-#define Body(A) write_vector(os, A);
+    write(os, path);
+    write(os, flags);
+#define Body(A) if(flags.has_##A) write(os, A);
     EachArray(Body);
 #undef Body
-    write_pod(os, smooth_angle);
-    write_pod(os, transform);
+    if (flags.has_transform) write(os, transform);
+    write(os, csd);
 }
 
 void MeshData::deserialize(std::istream& is)
 {
-    read_vector(is, obj_path);
-#define Body(A) read_vector(is, A);
+    read(is, path);
+    read(is, flags);
+#define Body(A) if(flags.has_##A) read(is, A);
     EachArray(Body);
 #undef Body
-    read_pod(is, smooth_angle);
-    read_pod(is, transform);
+    if (flags.has_transform) read(is, transform);
+    read(is, csd);
 }
 
 void MeshData::swap(MeshData & v)
 {
-    obj_path.swap(v.obj_path);
+    path.swap(v.path);
+    std::swap(flags, v.flags);
 #define Body(A) A.swap(v.A);
     EachArray(Body);
 #undef Body
-    std::swap(smooth_angle, v.smooth_angle);
     std::swap(transform, v.transform);
+    std::swap(csd, v.csd);
 
     std::swap(submeshes, v.submeshes);
     std::swap(num_submeshes, v.num_submeshes);
@@ -230,7 +223,7 @@ void MeshData::swap(MeshData & v)
 void MeshData::refine(const MeshRefineSettings &settings)
 {
     if (settings.flags.apply_transform) {
-        applyTransform(transform);
+        applyTransform(transform.local2world);
     }
     if (settings.scale != 1.0f) {
         mu::Scale(points.data(), settings.scale, points.size());
@@ -259,9 +252,11 @@ void MeshData::refine(const MeshRefineSettings &settings)
     // normals
     bool gen_normals = settings.flags.gen_normals && normals.empty();
     if (gen_normals) {
-        if (smooth_angle > 0.0f && smooth_angle < 360.0f) {
+        bool do_smoothing =
+            csd.type == ClientSpecificData::Type::Metasequia && (csd.mq.smooth_angle > 0.0f && csd.mq.smooth_angle < 360.0f);
+        if (do_smoothing) {
             normals.resize(indices.size());
-            mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, smooth_angle);
+            mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, csd.mq.smooth_angle);
         }
         else {
             normals.resize(points.size());
@@ -354,22 +349,15 @@ GetDataCS::GetDataCS(const GetData& v)
 
 DeleteDataCS::DeleteDataCS(const DeleteData & v)
 {
-    obj_path = v.obj_path.c_str();
+    obj_path = v.path.c_str();
 }
 
-XformDataCS::XformDataCS(const XformData & v)
-{
-    obj_path = v.obj_path.c_str();
-    position = v.position;
-    rotation = v.rotation;
-    scale    = v.scale;
-    transform= v.transform;
-}
 
 MeshDataCS::MeshDataCS(const MeshData & v)
 {
-    cpp = const_cast<MeshData*>(&v);
-    obj_path    = v.obj_path.c_str();
+    flags       = v.flags;
+    cpp         = const_cast<MeshData*>(&v);
+    path        = v.path.c_str();
     points      = (float3*)v.points.data();
     normals     = (float3*)v.normals.data();
     tangents    = (float4*)v.tangents.data();
@@ -384,7 +372,7 @@ SubmeshDataCS::SubmeshDataCS()
 {
 }
 
-SubmeshDataCS::SubmeshDataCS(const MeshData::Submesh & v)
+SubmeshDataCS::SubmeshDataCS(const Submesh & v)
 {
     points      = (float3*)v.points.data();
     normals     = (float3*)v.normals.data();

@@ -26,14 +26,14 @@ void Sync::send(MQDocument doc, bool force)
         gather(doc, doc->GetObject(i), data);
 
         ms::Client client(m_settings);
-        client.sendEdit(data);
+        client.send(data);
     });
 
     // detect deleted objects
     m_prev_objects.swap(m_current_objects);
     m_current_objects.resize(nobj);
     for (int i = 0; i < nobj; ++i) {
-        m_current_objects[i] = m_data[i]->obj_path;
+        m_current_objects[i] = m_data[i]->path;
     }
     std::sort(m_current_objects.begin(), m_current_objects.end());
 
@@ -41,18 +41,18 @@ void Sync::send(MQDocument doc, bool force)
     for (auto& n : m_prev_objects) {
         if (std::lower_bound(m_current_objects.begin(), m_current_objects.end(), n) == m_current_objects.end()) {
             ms::DeleteData data;
-            data.obj_path = n;
+            data.path = n;
             del_data.push_back(data);
         }
     }
 
     // send delete event
     if (!del_data.empty()) {
-        std::vector<ms::EventData*> send_data(del_data.size());
+        std::vector<ms::DeleteData*> send_data(del_data.size());
         for (size_t i = 0; i < del_data.size(); ++i) { send_data[i] = &del_data[i]; }
 
         ms::Client client(m_settings);
-        client.sendEdit(send_data.data(), (int)send_data.size());
+        client.send(send_data.data(), (int)send_data.size());
     }
 }
 
@@ -60,25 +60,23 @@ void Sync::import(MQDocument doc)
 {
     ms::Client client(m_settings);
     ms::GetData gd;
-    gd.flags.get_meshes = 1;
-    gd.flags.mesh_get_indices = 1;
-    gd.flags.mesh_get_points = 1;
-    gd.flags.mesh_get_uv = 1;
-    gd.flags.mesh_swap_handedness = 1;
-    gd.flags.mesh_apply_transform = 1;
-    gd.flags.mesh_bake_skin = 1;
+    gd.flags.get_transform = 1;
+    gd.flags.get_indices = 1;
+    gd.flags.get_points = 1;
+    gd.flags.get_uv = 1;
+    gd.flags.swap_handedness = 1;
+    gd.flags.apply_transform = 1;
+    gd.flags.bake_skin = 1;
     gd.scale = 1.0f / m_scale_factor;
 
-    auto ret = client.sendGet(gd);
+    auto ret = client.send(gd);
     for (auto& data : ret) {
-        if (data->type == ms::EventType::Mesh) {
-            auto& mdata = dynamic_cast<ms::MeshData&>(*data);
-            if (auto obj = findObject(doc, mdata.obj_path)) {
-                obj->DeleteThis();
-            }
-            auto obj = createObject(mdata);
-            doc->AddObject(obj);
+        auto& mdata = static_cast<ms::MeshData&>(*data);
+        if (auto obj = findObject(doc, mdata.path)) {
+            doc->DeleteObject(doc->GetObjectIndex(obj));
         }
+        auto obj = createObject(mdata);
+        doc->AddObject(obj);
     }
 }
 
@@ -101,7 +99,7 @@ MQObject Sync::findObject(MQDocument doc, const std::string & name)
 MQObject Sync::createObject(const ms::MeshData& data)
 {
     auto ret = MQ_CreateObject();
-    ret->SetName(data.obj_path.c_str());
+    ret->SetName(data.path.c_str());
     for (auto& p : data.points) {
         ret->AddVertex((MQPoint&)p);
     }
@@ -139,9 +137,15 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
 {
     if (!obj) { return; }
 
-    dst.obj_path.clear();
-    BuildPath(doc, obj, dst.obj_path);
-    dst.smooth_angle = obj->GetSmoothAngle();
+    dst.path.clear();
+    BuildPath(doc, obj, dst.path);
+    dst.csd.type = ms::ClientSpecificData::Type::Metasequia;
+    dst.csd.mq.smooth_angle = obj->GetSmoothAngle();
+
+    dst.flags.has_points = 1;
+    dst.flags.has_uv = 1;
+    dst.flags.has_counts = 1;
+    dst.flags.has_indices = 1;
 
     // copy vertices
     int npoints = obj->GetVertexCount();

@@ -16,12 +16,15 @@ class Client
 public:
     Client(const ClientSettings& settings);
 
-    bool sendEdit(const EventData& data);
-    bool sendEdit(const EventData * const data[], int num);
-
-    using DataPtr = std::unique_ptr<EventData>;
+    using DataPtr = std::unique_ptr<MeshData>;
     using DaraList = std::vector<DataPtr>;
-    DaraList sendGet(const GetData& gdata);
+    DaraList send(const GetData& gdata);
+
+    bool send(const DeleteData& data);
+    bool send(const DeleteData * const data[], int num);
+
+    bool send(const MeshData& data);
+    bool send(const MeshData * const data[], int num);
 
 private:
     ClientSettings m_settings;

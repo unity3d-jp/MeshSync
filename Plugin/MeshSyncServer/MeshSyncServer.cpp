@@ -25,25 +25,21 @@ msAPI void  msServerStop(ms::Server *server)
     //delete server;
 }
 
-msAPI void msServerProcessEvents(ms::Server *server, msEventHandler handler)
+msAPI void msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return; }
-    server->processEvents([handler](ms::EventData& data) {
-        if (data.type == ms::EventType::Get) {
-            ms::GetDataCS cs = (ms::GetData&)data;
-            handler(data.type, &cs);
+    server->processMessages([handler](ms::MessageData& data) {
+        if (auto* get = dynamic_cast<ms::GetData*>(&data)) {
+            ms::GetDataCS cs = *get;
+            handler(ms::MessageType::Get, &cs);
         }
-        else if (data.type == ms::EventType::Delete) {
-            ms::DeleteDataCS cs = (ms::DeleteData&)data;
-            handler(data.type, &cs);
+        else if (auto* del = dynamic_cast<ms::DeleteData*>(&data)) {
+            ms::DeleteDataCS cs = *del;
+            handler(ms::MessageType::Delete, &cs);
         }
-        else if (data.type == ms::EventType::Xform) {
-            ms::XformDataCS cs = (ms::XformData&)data;
-            handler(data.type, &cs);
-        }
-        else if (data.type == ms::EventType::Mesh) {
-            ms::MeshDataCS cs = (ms::MeshData&)data;
-            handler(data.type, &cs);
+        else if (auto* mesh = dynamic_cast<ms::MeshData*>(&data)) {
+            ms::MeshDataCS cs = *mesh;
+            handler(ms::MessageType::Mesh, &cs);
         }
     });
 }
@@ -58,16 +54,11 @@ msAPI void msServerEndServe(ms::Server *server)
     if (!server) { return; }
     server->endServe();
 }
-msAPI void msServerAddServeData(ms::Server *server, ms::EventType type, const void *data)
+msAPI void msServerAddServeData(ms::Server *server, ms::MessageType type, const void *data)
 {
     if (!server) { return; }
     switch (type) {
-    case ms::EventType::Xform:
-    {
-        auto edata = new ms::XformData(*(const ms::XformDataCS*)data);
-        server->addServeData(edata);
-    }
-    case ms::EventType::Mesh:
+    case ms::MessageType::Mesh:
     {
         auto edata = new ms::MeshData(*(const ms::MeshDataCS*)data);
         server->addServeData(edata);
@@ -88,25 +79,16 @@ static void msCopyData(ms::DeleteDataCS *dst, const ms::DeleteDataCS *src)
 
     dst->obj_path = src->obj_path;
 }
-static void msCopyData(ms::XformDataCS *dst, const ms::XformDataCS *src)
-{
-    if (!dst || !src) { return; }
-
-    dst->obj_path  = src->obj_path;
-    dst->position  = src->position;
-    dst->rotation  = src->rotation;
-    dst->scale     = src->scale;
-    dst->transform = src->transform;
-}
 static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
 {
     if (!dst || !src) { return; }
 
     dst->cpp = src->cpp;
-    dst->obj_path = src->obj_path;
+    dst->path = src->path;
     dst->num_points = src->num_points;
     dst->num_indices = src->num_indices;
     dst->num_submeshes = src->num_submeshes;
+    dst->transform = src->transform;
 
     if (src->points) {
         if (dst->points) {
@@ -149,19 +131,16 @@ static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
         }
     }
 }
-msAPI void msCopyData(ms::EventType et, void *dst, const void *src)
+msAPI void msCopyData(ms::MessageType et, void *dst, const void *src)
 {
     switch (et) {
-    case ms::EventType::Get:
+    case ms::MessageType::Get:
         msCopyData((ms::GetDataCS*)dst, (const ms::GetDataCS*)src);
         break;
-    case ms::EventType::Delete:
+    case ms::MessageType::Delete:
         msCopyData((ms::DeleteDataCS*)dst, (const ms::DeleteDataCS*)src);
         break;
-    case ms::EventType::Xform:
-        msCopyData((ms::XformDataCS*)dst, (const ms::XformDataCS*)src);
-        break;
-    case ms::EventType::Mesh:
+    case ms::MessageType::Mesh:
         msCopyData((ms::MeshDataCS*)dst, (const ms::MeshDataCS*)src);
         break;
     }

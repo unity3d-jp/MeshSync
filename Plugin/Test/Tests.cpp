@@ -13,7 +13,7 @@ void Test_Sync(bool create_server)
 
     {
         ms::MeshData data;
-        data.obj_path = "/Root/Child";
+        data.path = "/Root/Child";
         data.points = {
             { -1.0f, 0.0f, -1.0f },
             { -1.0f, 0.0f,  1.0f },
@@ -23,13 +23,13 @@ void Test_Sync(bool create_server)
         data.indices = { 0, 1, 2, 0, 2, 3 };
 
         ms::Client client(ms::ClientSettings{});
-        client.sendEdit(data);
+        client.send(data);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     if (create_server) {
-        server->processEvents([](const ms::EventData& data) {
+        server->processMessages([](const ms::MessageData& data) {
             printf("break here\n");
         });
     }
@@ -40,7 +40,7 @@ void Test_Get()
     ms::Client client(ms::ClientSettings{});
 
     ms::GetData gdata;
-    auto data = client.sendGet(gdata);
+    auto data = client.send(gdata);
     for(auto& a : data) {
         printf("");
     }

@@ -19,25 +19,23 @@ public class MeshSyncServer : MonoBehaviour
         Unknown,
         Get,
         Delete,
-        Xform,
         Mesh,
     }
 
     public struct GetFlags
     {
         public int flags;
-        public bool get_xforms { get { return (flags & 0x1) != 0; } }
-        public bool get_meshes { get { return (flags & 0x2) != 0; } }
-        public bool mesh_get_points { get { return (flags & 0x4) != 0; } }
-        public bool mesh_get_normals { get { return (flags & 0x8) != 0; } }
-        public bool mesh_get_tangents { get { return (flags & 0x10) != 0; } }
-        public bool mesh_get_uv { get { return (flags & 0x20) != 0; } }
-        public bool mesh_get_indices { get { return (flags & 0x40) != 0; } }
-        public bool mesh_get_bones { get { return (flags & 0x80) != 0; } }
-        public bool mesh_swap_handedness { get { return (flags & 0x100) != 0; } }
-        public bool mesh_swap_faces { get { return (flags & 0x200) != 0; } }
-        public bool mesh_apply_transform { get { return (flags & 0x400) != 0; } }
-        public bool mesh_bake_skin { get { return (flags & 0x800) != 0; } }
+        public bool get_transform { get { return (flags & 0x1) != 0; } }
+        public bool get_points { get { return (flags & 0x2) != 0; } }
+        public bool get_normals { get { return (flags & 0x4) != 0; } }
+        public bool get_tangents { get { return (flags & 0x8) != 0; } }
+        public bool get_uv { get { return (flags & 0x10) != 0; } }
+        public bool get_indices { get { return (flags & 0x20) != 0; } }
+        public bool get_bones { get { return (flags & 0x40) != 0; } }
+        public bool swap_handedness { get { return (flags & 0x80) != 0; } }
+        public bool swap_faces { get { return (flags & 0x100) != 0; } }
+        public bool apply_transform { get { return (flags & 0x200) != 0; } }
+        public bool bake_skin { get { return (flags & 0x400) != 0; } }
     }
 
     public struct GetData
@@ -47,23 +45,66 @@ public class MeshSyncServer : MonoBehaviour
 
     public struct DeleteData
     {
-        public IntPtr obj_path;
+        public IntPtr path;
     }
 
-    public struct XformData
+
+    public struct MeshDataFlags
     {
-        public IntPtr     obj_path;
-        public Vector3    position;
-        public Quaternion rotation;
-        public Vector3    scale;
-        public Matrix4x4  transform;
-    }
+        public int flags;
+        public bool has_transform
+        {
+            get { return (flags & 0x1) != 0; }
+            set { SwitchBit(ref flags, value, 0x1); }
+        }
+        public bool has_indices
+        {
+            get { return (flags & 0x2) != 0; }
+            set { SwitchBit(ref flags, value, 0x2); }
+        }
+        public bool has_counts
+        {
+            get { return (flags & 0x4) != 0; }
+            set { SwitchBit(ref flags, value, 0x4); }
+        }
+        public bool has_points
+        {
+            get { return (flags & 0x8) != 0; }
+            set { SwitchBit(ref flags, value, 0x8); }
+        }
+        public bool has_normals
+        {
+            get { return (flags & 0x10) != 0; }
+            set { SwitchBit(ref flags, value, 0x10); }
+        }
+        public bool has_tangents
+        {
+            get { return (flags & 0x20) != 0; }
+            set { SwitchBit(ref flags, value, 0x20); }
+        }
+        public bool has_uv
+        {
+            get { return (flags & 0x40) != 0; }
+            set { SwitchBit(ref flags, value, 0x40); }
+        }
+    };
 
+
+    public struct TRS
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 rotation_eularZXY;
+        public Vector3 scale;
+        public Matrix4x4 local2world;
+        public Matrix4x4 world2local;
+    };
 
     public struct MeshData
     {
+        public MeshDataFlags flags;
         public IntPtr cpp;
-        public IntPtr obj_path;
+        public IntPtr path;
         public IntPtr points;
         public IntPtr normals;
         public IntPtr tangents;
@@ -72,7 +113,7 @@ public class MeshSyncServer : MonoBehaviour
         public int    num_points;
         public int    num_indices;
         public int    num_submeshes;
-        public Matrix4x4 transform;
+        public TRS    transform;
     };
     public struct SubmeshData
     {
@@ -159,17 +200,15 @@ public class MeshSyncServer : MonoBehaviour
     [DllImport("MeshSyncServer")] public static extern IntPtr msServerStart(ref ServerSettings settings);
     [DllImport("MeshSyncServer")] public static extern void msServerStop(IntPtr sv);
 
-    public delegate void msEventHandler(EventType type, IntPtr data);
-    [DllImport("MeshSyncServer")] public static extern void msServerProcessEvents(IntPtr sv, msEventHandler handler);
+    public delegate void msMessageHandler(EventType type, IntPtr data);
+    [DllImport("MeshSyncServer")] public static extern void msServerProcessMessages(IntPtr sv, msMessageHandler handler);
 
     [DllImport("MeshSyncServer")] public static extern void msServerBeginServe(IntPtr sv);
     [DllImport("MeshSyncServer")] public static extern void msServerEndServe(IntPtr sv);
-    [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, ref XformData data);
     [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, ref MeshData data);
 
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref GetData dst, IntPtr src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref DeleteData dst, IntPtr src);
-    [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref XformData dst, IntPtr src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, ref MeshData src);
     [DllImport("MeshSyncServer")] public static extern void msCopyData(EventType et, ref MeshData dst, IntPtr src);
 
@@ -206,7 +245,7 @@ public class MeshSyncServer : MonoBehaviour
     [SerializeField] bool m_swapHandedness= true;
     [SerializeField] bool m_swapFaces = false;
     IntPtr m_server;
-    msEventHandler m_handler;
+    msMessageHandler m_handler;
 
     Vector3[] m_points;
     Vector3[] m_normals;
@@ -242,7 +281,7 @@ public class MeshSyncServer : MonoBehaviour
 
     void PollServerEvents()
     {
-        msServerProcessEvents(m_server, m_handler);
+        msServerProcessMessages(m_server, m_handler);
     }
 
     void OnServerEvent(EventType type, IntPtr data)
@@ -254,9 +293,6 @@ public class MeshSyncServer : MonoBehaviour
             break;
         case EventType.Delete:
             OnRecvDelete(data);
-            break;
-        case EventType.Xform:
-            OnRecvXform(data);
             break;
         case EventType.Mesh:
             OnRecvMesh(data);
@@ -287,7 +323,7 @@ public class MeshSyncServer : MonoBehaviour
     {
         var edata = default(DeleteData);
         msCopyData(EventType.Delete, ref edata, data);
-        var path = S(edata.obj_path);
+        var path = S(edata.path);
         var target = FindObjectByPath(null, path);
         if(target != null)
         {
@@ -297,30 +333,21 @@ public class MeshSyncServer : MonoBehaviour
         Debug.Log("MeshSyncServer: Delete " + path);
     }
 
-    void OnRecvXform(IntPtr data)
-    {
-        var edata = default(XformData);
-        msCopyData(EventType.Xform, ref edata, data);
-        var path = S(edata.obj_path);
-        var target = FindObjectByPath(null, path);
-        if (target != null)
-        {
-            target.localPosition = edata.position;
-            target.localRotation = edata.rotation;
-            target.localScale = edata.scale;
-        }
-
-        Debug.Log("MeshSyncServer: Xform " + path);
-    }
-
     void OnRecvMesh(IntPtr data)
     {
         var edata = default(MeshData);
         msCopyData(EventType.Mesh, ref edata, data);
-        var path = S(edata.obj_path);
+        var path = S(edata.path);
 
         Transform target = FindObjectByPath(null, path, true);
         if (target == null) { return; }
+
+        if(edata.flags.has_transform)
+        {
+            target.localPosition = edata.transform.position;
+            target.localRotation = edata.transform.rotation;
+            target.localScale = edata.transform.scale;
+        }
 
         if (edata.num_submeshes == 0)
         {
@@ -545,123 +572,117 @@ public class MeshSyncServer : MonoBehaviour
             return;
         }
 
-        if(flags.get_xforms)
+        var data = default(MeshData);
+        if (flags.get_transform)
         {
-            var data = default(XformData);
-            data.obj_path = msCreateString(mr.name);
-            Capture(ref data, mr.GetComponent<Transform>());
-            msServerAddServeData(m_server, EventType.Xform, ref data);
-            msDeleteString(data.obj_path);
+            data.flags.has_transform = true;
+            Capture(ref data.transform, mr.GetComponent<Transform>());
         }
-        if (flags.get_meshes)
-        {
-            var data = default(MeshData);
-            data.obj_path = msCreateString(mr.name);
-            data.transform = mr.GetComponent<Transform>().localToWorldMatrix;
-            Capture(ref data, mesh, null, flags);
-            msServerAddServeData(m_server, EventType.Mesh, ref data);
-            msDeleteString(data.obj_path);
-        }
+        Capture(ref data, mesh, null, flags);
+
+        data.path = msCreateString(mr.name);
+        msServerAddServeData(m_server, EventType.Mesh, ref data);
+        msDeleteString(data.path);
     }
 
     void ServeData(SkinnedMeshRenderer smr, GetFlags flags)
     {
-        if (flags.get_xforms)
-        {
-            var data = default(XformData);
-            data.obj_path = msCreateString(smr.name);
-            Capture(ref data, smr.GetComponent<Transform>());
-            msServerAddServeData(m_server, EventType.Xform, ref data);
-            msDeleteString(data.obj_path);
-        }
-        if (flags.get_meshes)
-        {
-            var data = default(MeshData);
+        var data = default(MeshData);
 
-            if(flags.mesh_bake_skin)
-            {
-                Cloth cloth = smr.GetComponent<Cloth>();
-                if (cloth != null)
-                {
-                    var mesh = smr.sharedMesh;
-                    if (mesh == null)
-                    {
-                        return;
-                    }
-                    if (!mesh.isReadable)
-                    {
-                        Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
-                        return;
-                    }
-                    Capture(ref data, mesh, cloth, flags);
-                }
-                else
-                {
-                    var mesh = new Mesh();
-                    smr.BakeMesh(mesh);
-                    Capture(ref data, mesh, null, flags);
-                }
-            }
-            else
+        if (flags.get_transform)
+        {
+            data.flags.has_transform = true;
+            Capture(ref data.transform, smr.GetComponent<Transform>());
+        }
+        if (flags.bake_skin)
+        {
+            Cloth cloth = smr.GetComponent<Cloth>();
+            if (cloth != null)
             {
                 var mesh = smr.sharedMesh;
-                if (mesh == null) return;
+                if (mesh == null)
+                {
+                    return;
+                }
                 if (!mesh.isReadable)
                 {
                     Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                     return;
                 }
+                Capture(ref data, mesh, cloth, flags);
+            }
+            else
+            {
+                var mesh = new Mesh();
+                smr.BakeMesh(mesh);
                 Capture(ref data, mesh, null, flags);
             }
-
-            data.obj_path = msCreateString(smr.name);
-            data.transform = smr.GetComponent<Transform>().localToWorldMatrix;
-
-            msServerAddServeData(m_server, EventType.Mesh, ref data);
-            msDeleteString(data.obj_path);
         }
+        else
+        {
+            var mesh = smr.sharedMesh;
+            if (mesh == null) return;
+            if (!mesh.isReadable)
+            {
+                Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
+                return;
+            }
+            Capture(ref data, mesh, null, flags);
+        }
+
+        data.path = msCreateString(smr.name);
+        msServerAddServeData(m_server, EventType.Mesh, ref data);
+        msDeleteString(data.path);
     }
 
-    void Capture(ref XformData data, Transform trans)
+    void Capture(ref TRS data, Transform trans)
     {
         data.position = trans.localPosition;
         data.rotation = trans.localRotation;
+        data.rotation_eularZXY = trans.localEulerAngles;
         data.position = trans.localPosition;
+        data.local2world = trans.localToWorldMatrix;
+        data.world2local = trans.worldToLocalMatrix;
     }
 
     void Capture(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags)
     {
         bool use_cloth = cloth != null;
 
-        if(flags.mesh_get_points)
+        if(flags.get_points)
         {
             m_points = use_cloth ? cloth.vertices : mesh.vertices;
             data.points = RawPtr(m_points);
             data.num_points = m_points.Length;
+            data.flags.has_points = m_points != null && m_points.Length > 0;
         }
-        if (flags.mesh_get_normals)
+        if (flags.get_normals)
         {
             m_normals = use_cloth ? cloth.normals : mesh.normals;
             data.normals = RawPtr(m_normals);
             data.num_points = m_normals.Length;
+            data.flags.has_normals = m_normals != null && m_normals.Length > 0;
         }
-        if (flags.mesh_get_tangents)
+        if (flags.get_tangents)
         {
             m_tangents = mesh.tangents;
             data.tangents = RawPtr(m_tangents);
             data.num_points = m_tangents.Length;
+            data.flags.has_tangents = m_tangents != null && m_tangents.Length > 0;
         }
-        if (flags.mesh_get_uv)
+        if (flags.get_uv)
         {
             m_uv = mesh.uv;
             data.uv = RawPtr(m_uv);
             data.num_points = m_uv.Length;
+            data.flags.has_uv = m_uv != null && m_uv.Length > 0;
         }
-        if (flags.mesh_get_indices)
+        if (flags.get_indices)
         {
             m_indices = mesh.triangles;
             data.indices = RawPtr(m_indices);
             data.num_indices = m_indices.Length;
+            data.flags.has_indices = m_indices != null && m_indices.Length > 0;
         }
     }
 

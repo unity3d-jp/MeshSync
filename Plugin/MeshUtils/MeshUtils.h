@@ -263,7 +263,7 @@ inline void CountIndices(
 }
 
 template<class DstArray, class SrcArray>
-inline void Triangulate(
+inline int Triangulate(
     DstArray& dst,
     const SrcArray& counts,
     bool swap_face)
@@ -284,6 +284,7 @@ inline void Triangulate(
         }
         n += count;
     }
+    return i;
 }
 
 template<class DstArray, class SrcArray>

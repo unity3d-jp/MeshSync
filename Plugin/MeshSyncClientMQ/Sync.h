@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MeshSync/msClient.h"
+
 struct Sync
 {
 public:
@@ -21,7 +23,7 @@ private:
 
     ms::ClientSettings m_settings;
     std::vector<MeshDataPtr> m_data;
-    std::vector<std::string> m_current_objects;;
+    std::vector<std::string> m_current_objects;
     std::vector<std::string> m_prev_objects;
     float m_scale_factor = 0.01f;
     bool m_auto_sync = false;

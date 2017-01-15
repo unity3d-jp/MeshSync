@@ -39,9 +39,6 @@ public:
     template<class Body>
     void recvDelete(const Body& body);
 
-    // Body: [](XformData& data) -> void
-    template<class Body>
-    void recvXform(const Body& body);
 
     // Body: [](MeshData& data) -> void
     template<class Body>
@@ -49,23 +46,30 @@ public:
 
     // Body: [](const EventData& data) -> void
     template<class Body>
-    void processEvents(const Body& body)
+    void processMessages(const Body& body)
     {
         lock_t l(m_mutex);
         for (auto& r : m_recv_history) {
             switch (r.type) {
-            case EventType::Get:
-                body(m_get_data);
+            case MessageType::Get:
+            {
+                m_current_get_request = r.get_data;
+                body(r.get_data);
                 break;
-            case EventType::Delete:
-                body(m_recv_data[r.arg].del);
+            }
+            case MessageType::Delete:
+            {
+                DeleteData data;
+                data.path = r.arg;
+                body(data);
+                m_recv_data.erase(r.arg);
                 break;
-            case EventType::Xform:
-                body(m_recv_data[r.arg].xform);
+            }
+            case MessageType::Mesh:
+            {
+                body(m_recv_data[r.arg]);
                 break;
-            case EventType::Mesh:
-                body(m_recv_data[r.arg].mesh);
-                break;
+            }
             }
         }
         m_recv_history.clear();
@@ -73,29 +77,23 @@ public:
 
     void beginServe();
     void endServe();
-    void addServeData(EventData *data);
-    void serve(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void addServeData(MeshData *data);
+
+public:
+    void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
 private:
-    void serveGet(const GetData& data, Poco::Net::HTTPServerResponse &response);
-
-private:
-    struct ObjectData
-    {
-        DeleteData del;
-        XformData xform;
-        MeshData mesh;
-    };
-    using DataTable = std::map<std::string, ObjectData>;
-    using DataPtr = std::shared_ptr<EventData>;
+    using DataTable = std::map<std::string, MeshData>;
+    using DataPtr = std::shared_ptr<MeshData>;
     using ServeDataTable = std::vector<DataPtr>;
     using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 
     struct Record
     {
-        EventType type;
+        MessageType type;
         std::string arg;
+        GetData get_data;
     };
     using History = std::vector<Record>;
 
@@ -105,12 +103,12 @@ private:
     DataTable m_recv_data;
     History m_recv_history;
 
-    GetData m_get_data;
+    GetData m_current_get_request;
     ServeDataTable m_serve_data;
 
     std::mutex m_mutex;
     std::atomic_int m_serve_waiting;
-    tls<ObjectData> m_tmp;
+    tls<MeshData> m_tmp;
 };
 
 } // namespace ms
