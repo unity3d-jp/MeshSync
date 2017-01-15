@@ -667,6 +667,24 @@ public class MeshSyncServer : MonoBehaviour
 
 
 
+#if UNITY_EDITOR
+    void Reset()
+    {
+        // force disable batching for export
+        var method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", BindingFlags.NonPublic | BindingFlags.Static);
+        if(method != null)
+        {
+            method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneLinux, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneLinux64, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneLinuxUniversal, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneOSXIntel64, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneOSXUniversal, 0, 0 });
+        }
+    }
+#endif
+
     void Awake()
     {
         StartServer();
