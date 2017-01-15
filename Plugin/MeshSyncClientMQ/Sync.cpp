@@ -66,6 +66,7 @@ void Sync::import(MQDocument doc)
     gd.flags.mesh_get_uv = 1;
     gd.flags.mesh_swap_handedness = 1;
     gd.flags.mesh_apply_transform = 1;
+    gd.flags.mesh_bake_skin = 1;
     gd.scale = 1.0f / m_scale_factor;
 
     auto ret = client.sendGet(gd);

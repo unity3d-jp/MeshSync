@@ -353,6 +353,7 @@ public class MeshSyncServer : MonoBehaviour
             msCopyData(EventType.Mesh, ref mdata, ref edata);
 
             var mesh = GetOrAddMeshComponents(target.gameObject);
+            if(!mesh.isReadable) { return; }
             mesh.Clear();
             if (mdata.num_points > 0 && mdata.num_indices > 0)
             {
@@ -404,7 +405,9 @@ public class MeshSyncServer : MonoBehaviour
                 {
                     t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true);
                 }
+
                 var mesh = GetOrAddMeshComponents(t.gameObject);
+                if (!mesh.isReadable) { return; }
                 mesh.Clear();
                 if (mdata.num_points > 0 && mdata.num_indices > 0)
                 {
@@ -492,6 +495,12 @@ public class MeshSyncServer : MonoBehaviour
 
     Mesh GetOrAddMeshComponents(GameObject go)
     {
+        var smr = go.GetComponent<SkinnedMeshRenderer>();
+        if(smr != null)
+        {
+            return smr.sharedMesh;
+        }
+
         var mfilter = go.GetComponent<MeshFilter>();
         if(mfilter == null)
         {
@@ -532,7 +541,7 @@ public class MeshSyncServer : MonoBehaviour
         if (mesh == null) return;
         if(!mesh.isReadable)
         {
-            Debug.Log("Mesh " + mr.name + " is not readable and be ignored");
+            Debug.LogWarning("Mesh " + mr.name + " is not readable and be ignored");
             return;
         }
 
@@ -581,7 +590,7 @@ public class MeshSyncServer : MonoBehaviour
                     }
                     if (!mesh.isReadable)
                     {
-                        Debug.Log("Mesh " + smr.name + " is not readable and be ignored");
+                        Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                         return;
                     }
                     Capture(ref data, mesh, cloth, flags);
@@ -599,7 +608,7 @@ public class MeshSyncServer : MonoBehaviour
                 if (mesh == null) return;
                 if (!mesh.isReadable)
                 {
-                    Debug.Log("Mesh " + smr.name + " is not readable and be ignored");
+                    Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                     return;
                 }
                 Capture(ref data, mesh, null, flags);
