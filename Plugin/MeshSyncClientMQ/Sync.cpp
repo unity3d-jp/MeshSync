@@ -65,7 +65,7 @@ void Sync::import(MQDocument doc)
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
     gd.flags.swap_handedness = 1;
-    gd.flags.apply_transform = 1;
+    gd.flags.apply_local2world = 1;
     gd.flags.bake_skin = 1;
     gd.scale = 1.0f / m_scale_factor;
 

@@ -161,7 +161,7 @@ msAPI void msDeleteString(const char *str)
 
 msAPI void msGetSubmeshData(ms::SubmeshDataCS *dst, const ms::MeshDataCS *v, int i)
 {
-    *dst = *v->cpp->submeshes[i];
+    *dst = v->cpp->submeshes[i];
 }
 
 msAPI void msCopySubmeshData(ms::SubmeshDataCS *dst, const ms::SubmeshDataCS *src)

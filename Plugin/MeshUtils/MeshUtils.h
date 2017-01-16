@@ -358,7 +358,7 @@ inline void BuildConnectedFaceList(
     }
 }
 
-// SplitMeshHandler: [](int nth, int face_begin, int face_count, int vertex_count) -> void
+// SplitMeshHandler: [](int face_begin, int face_count, int vertex_count) -> void
 template<class IndexArray, class SplitMeshHandler>
 inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHandler& handler)
 {
@@ -383,7 +383,7 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
             }
         }
 
-        handler(nth, face_begin, num_faces, num_vertices, num_indices_triangulated);
+        handler(face_begin, num_faces, num_vertices, num_indices_triangulated);
 
         if (last) { break; }
         face_begin += num_faces;

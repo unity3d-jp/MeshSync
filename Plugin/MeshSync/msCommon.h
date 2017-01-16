@@ -41,7 +41,8 @@ struct GetFlags
     uint32_t get_bones : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
-    uint32_t apply_transform : 1;
+    uint32_t apply_local2world : 1;
+    uint32_t apply_world2local : 1;
     uint32_t bake_skin : 1;
 };
 
@@ -82,7 +83,8 @@ struct MeshRefineFlags
     uint32_t gen_tangents : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
-    uint32_t apply_transform : 1;
+    uint32_t apply_local2world : 1;
+    uint32_t apply_world2local : 1;
 };
 
 struct MeshDataFlags
@@ -119,7 +121,7 @@ struct Submesh
     IntrusiveArray<float3> normals;
     IntrusiveArray<float4> tangents;
     IntrusiveArray<float2> uv;
-    RawVector<int> indices;
+    IntrusiveArray<int> indices;
 };
 
 struct ClientSpecificData
@@ -138,9 +140,6 @@ class MeshData : public MessageData
 {
 using super = MessageData;
 public:
-    using SubmeshPtr = std::shared_ptr<Submesh>;
-    using Submeshes = std::vector<SubmeshPtr>;
-
     std::string       path;
     MeshDataFlags     flags = {0};
     RawVector<float3> points;
@@ -153,8 +152,9 @@ public:
     Transform         transform;
     ClientSpecificData csd;
 
-    Submeshes submeshes;
-    int num_submeshes = 0;
+    // not serialized
+    RawVector<Submesh> submeshes;
+
 
     MeshData();
     MeshData(const MeshDataCS& cs);

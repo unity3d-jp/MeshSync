@@ -168,7 +168,7 @@ void MeshData::clear()
 #undef Body
     transform = Transform();
     submeshes.clear();
-    num_submeshes = 0;
+    submeshes.clear();
 }
 
 uint32_t MeshData::getSerializeSize() const
@@ -217,13 +217,15 @@ void MeshData::swap(MeshData & v)
     std::swap(csd, v.csd);
 
     std::swap(submeshes, v.submeshes);
-    std::swap(num_submeshes, v.num_submeshes);
 }
 
 void MeshData::refine(const MeshRefineSettings &settings)
 {
-    if (settings.flags.apply_transform) {
+    if (settings.flags.apply_local2world) {
         applyTransform(transform.local2world);
+    }
+    if (settings.flags.apply_world2local) {
+        applyTransform(transform.world2local);
     }
     if (settings.scale != 1.0f) {
         mu::Scale(points.data(), settings.scale, points.size());
@@ -253,7 +255,7 @@ void MeshData::refine(const MeshRefineSettings &settings)
     bool gen_normals = settings.flags.gen_normals && normals.empty();
     if (gen_normals) {
         bool do_smoothing =
-            csd.type == ClientSpecificData::Type::Metasequia && (csd.mq.smooth_angle > 0.0f && csd.mq.smooth_angle < 360.0f);
+            csd.type == ClientSpecificData::Type::Metasequia && (csd.mq.smooth_angle >= 0.0f && csd.mq.smooth_angle < 360.0f);
         if (do_smoothing) {
             normals.resize(indices.size());
             mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, csd.mq.smooth_angle);
@@ -294,16 +296,16 @@ void MeshData::refine(const MeshRefineSettings &settings)
 
     // split & triangulate
     bool split = settings.flags.split && points.size() > settings.split_unit;
-    num_submeshes = 0;
     if (split) {
-        mu::Split(counts, settings.split_unit, [&](int nth, int face_begin, int num_faces, int num_vertices, int num_indices_triangulated) {
-            ++num_submeshes;
-            while (submeshes.size() <= nth) {
-                submeshes.emplace_back(new Submesh());
-            }
-            auto& sub = *submeshes[nth];
-            sub.indices.resize(num_indices_triangulated);
+        submeshes.clear();
+        indices.resize(num_indices_tri);
+        int *sub_indices = indices.data();
+        mu::Split(counts, settings.split_unit, [&](int face_begin, int num_faces, int num_vertices, int num_indices_triangulated) {
+            auto sub = Submesh();
+
+            sub.indices.reset(sub_indices, num_indices_triangulated);
             mu::Triangulate(sub.indices, IntrusiveArray<int>(&counts[face_begin], num_faces), settings.flags.swap_faces);
+            sub_indices += num_indices_triangulated;
 
             size_t ibegin = offsets[face_begin];
             if (!points.empty()) {
@@ -318,6 +320,8 @@ void MeshData::refine(const MeshRefineSettings &settings)
             if (!tangents.empty()) {
                 sub.tangents.reset(&tangents[ibegin], num_vertices);
             }
+
+            submeshes.push_back(sub);
         });
     }
     else {
@@ -365,7 +369,7 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     indices     = (int*)v.indices.data();
     num_points  = (int)v.points.size();
     num_indices = (int)v.indices.size();
-    num_submeshes = v.num_submeshes;
+    num_submeshes = (int)v.submeshes.size();
 }
 
 SubmeshDataCS::SubmeshDataCS()

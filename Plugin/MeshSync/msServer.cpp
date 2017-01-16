@@ -168,7 +168,7 @@ void Server::endServe()
     MeshRefineSettings mrs;
     mrs.flags.swap_faces = m_current_get_request.flags.swap_faces;
     mrs.flags.swap_handedness = m_current_get_request.flags.swap_handedness;
-    mrs.flags.apply_transform = m_current_get_request.flags.apply_transform;
+    mrs.flags.apply_local2world = m_current_get_request.flags.apply_local2world;
     mrs.scale = (1.0f / m_settings.mrs.scale) * m_current_get_request.scale;
 
     concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](DataPtr& p) {
