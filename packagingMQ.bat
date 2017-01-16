@@ -1,0 +1,6 @@
+mkdir "UnityMeshSync for Metasequoia\Metasequoia3"
+mkdir "UnityMeshSync for Metasequoia\Metasequoia4 (32bit)"
+mkdir "UnityMeshSync for Metasequoia\Metasequoia4 (64bit)"
+copy Plugin\_out\MeshSyncClientMQ3_Win32_Master\MeshSyncClientMQ3.dll "UnityMeshSync for Metasequoia\Metasequoia3"
+copy Plugin\_out\MeshSyncClientMQ4_Win32_Master\MeshSyncClientMQ4.dll "UnityMeshSync for Metasequoia\Metasequoia4 (32bit)"
+copy Plugin\_out\MeshSyncClientMQ4_x64_Master\MeshSyncClientMQ4.dll "UnityMeshSync for Metasequoia\Metasequoia4 (64bit)"

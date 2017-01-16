@@ -7,6 +7,11 @@ Sync::Sync()
 {
 }
 
+Sync::~Sync()
+{
+    waitAsyncSend();
+}
+
 ms::ClientSettings& Sync::getClientSettings() { return m_settings; }
 float& Sync::getScaleFactor() { return m_scale_factor; }
 bool& Sync::getAutoSync() { return m_auto_sync; }
@@ -15,45 +20,54 @@ void Sync::send(MQDocument doc, bool force)
 {
     if (!force && !m_auto_sync) { return; }
 
+    waitAsyncSend();
+
     int nobj = doc->GetObjectCount();
     while ((int)m_data.size() < nobj) {
         m_data.emplace_back(new ms::MeshData());
     }
 
-    // gather object data
+    // gather mesh data
     concurrency::parallel_for(0, nobj, [this, doc](int i) {
-        auto& data = *m_data[i];
-        gather(doc, doc->GetObject(i), data);
-
-        ms::Client client(m_settings);
-        client.send(data);
+        gather(doc, doc->GetObject(i), *m_data[i]);
     });
 
-    // detect deleted objects
-    m_prev_objects.swap(m_current_objects);
-    m_current_objects.resize(nobj);
-    for (int i = 0; i < nobj; ++i) {
-        m_current_objects[i] = m_data[i]->path;
-    }
-    std::sort(m_current_objects.begin(), m_current_objects.end());
 
-    std::vector<ms::DeleteData> del_data;
-    for (auto& n : m_prev_objects) {
-        if (std::lower_bound(m_current_objects.begin(), m_current_objects.end(), n) == m_current_objects.end()) {
-            ms::DeleteData data;
-            data.path = n;
-            del_data.push_back(data);
-        }
-    }
-
-    // send delete event
-    if (!del_data.empty()) {
-        std::vector<ms::DeleteData*> send_data(del_data.size());
-        for (size_t i = 0; i < del_data.size(); ++i) { send_data[i] = &del_data[i]; }
-
+    // kick async send
+    m_future_send = std::async(std::launch::async, [this, nobj]() {
         ms::Client client(m_settings);
-        client.send(send_data.data(), (int)send_data.size());
-    }
+
+        // send mesh
+        concurrency::parallel_for(0, nobj, [this, &client](int i) {
+            client.send(*m_data[i]);
+        });
+
+        // detect deleted objects
+        m_prev_objects.swap(m_current_objects);
+        m_current_objects.resize(nobj);
+        for (int i = 0; i < nobj; ++i) {
+            m_current_objects[i] = m_data[i]->path;
+        }
+        std::sort(m_current_objects.begin(), m_current_objects.end());
+
+        std::vector<ms::DeleteData> del_data;
+        for (auto& n : m_prev_objects) {
+            if (std::lower_bound(m_current_objects.begin(), m_current_objects.end(), n) == m_current_objects.end()) {
+                ms::DeleteData data;
+                data.path = n;
+                del_data.push_back(data);
+            }
+        }
+
+        // send delete event
+        if (!del_data.empty()) {
+            std::vector<ms::DeleteData*> send_data(del_data.size());
+            for (size_t i = 0; i < del_data.size(); ++i) { send_data[i] = &del_data[i]; }
+
+            client.send(send_data.data(), (int)send_data.size());
+        }
+    });
+
 }
 
 void Sync::import(MQDocument doc)
@@ -81,6 +95,13 @@ void Sync::import(MQDocument doc)
         }
         auto obj = createObject(mdata, name);
         doc->AddObject(obj);
+    }
+}
+
+void Sync::waitAsyncSend()
+{
+    if (m_future_send.valid()) {
+        m_future_send.get();
     }
 }
 

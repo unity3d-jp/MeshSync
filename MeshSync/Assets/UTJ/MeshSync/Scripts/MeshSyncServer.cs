@@ -9,12 +9,25 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-
+namespace UTJ
+{
 [ExecuteInEditMode]
 public class MeshSyncServer : MonoBehaviour
 {
-    #region internal
-    public enum EventType
+        #region internal
+#if UNITY_EDITOR
+        [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
+        public static void CreateMeshSyncServer(MenuCommand menuCommand)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/UTJ/MeshSync/Prefabs/MeshSyncServer.prefab");
+            if (prefab != null)
+            {
+                PrefabUtility.InstantiatePrefab(prefab);
+            }
+        }
+#endif
+
+        public enum EventType
     {
         Unknown,
         Get,
@@ -764,4 +777,6 @@ public class MeshSyncServer : MonoBehaviour
         PollServerEvents();
     }
     #endregion
+}
+
 }
