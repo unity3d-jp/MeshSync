@@ -16,9 +16,9 @@ class Client
 public:
     Client(const ClientSettings& settings);
 
-    using DataPtr = std::unique_ptr<MeshData>;
-    using DaraList = std::vector<DataPtr>;
-    DaraList send(const GetData& gdata);
+    using MeshPtr = std::shared_ptr<MeshData>;
+    using Meshes = std::vector<MeshPtr>;
+    Meshes send(const GetData& gdata);
 
     bool send(const DeleteData& data);
     bool send(const DeleteData * const data[], int num);

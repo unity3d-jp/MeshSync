@@ -87,7 +87,7 @@ private:
     using DataTable = std::map<std::string, MeshData>;
     using DataPtr = std::shared_ptr<MeshData>;
     using ServeDataTable = std::vector<DataPtr>;
-    using HTTPServerPtr = std::unique_ptr<Poco::Net::HTTPServer>;
+    using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 
     struct Record

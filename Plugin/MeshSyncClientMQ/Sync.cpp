@@ -207,6 +207,7 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
             uv += c;
         }
     }
+    mu::InvertV(dst.uv.data(), dst.uv.size());
 
     // remove line and points
     dst.counts.erase(

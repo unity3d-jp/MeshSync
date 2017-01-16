@@ -86,9 +86,9 @@ bool Client::send(const MeshData * const data[], int num)
     }
 }
 
-Client::DaraList Client::send(const GetData& gdata)
+Client::Meshes Client::send(const GetData& gdata)
 {
-    DaraList ret;
+    Meshes ret;
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
         session.setTimeout(5000 * 1000);

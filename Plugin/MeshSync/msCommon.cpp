@@ -313,22 +313,32 @@ void MeshData::refine(const MeshRefineSettings &settings)
 
     // flatten
     bool flatten = false;
-    if (points.size() > settings.split_unit || (int)normals.size() == num_indices || (int)uv.size() == num_indices) {
+    if ((int)points.size() > settings.split_unit ||
+        (int)normals.size() == num_indices ||
+        (int)uv.size() == num_indices ||
+        (int)tangents.size() == num_indices)
+    {
         {
-            RawVector<float3> flattened;
+            decltype(points) flattened;
             mu::CopyWithIndices(flattened, points, indices, 0, num_indices);
             points.swap(flattened);
         }
         if (!normals.empty() && (int)normals.size() != num_indices) {
-            RawVector<float3> flattened;
+            decltype(normals) flattened;
             mu::CopyWithIndices(flattened, normals, indices, 0, num_indices);
             normals.swap(flattened);
         }
         if (!uv.empty() && (int)uv.size() != num_indices) {
-            RawVector<float2> flattened;
+            decltype(uv) flattened;
             mu::CopyWithIndices(flattened, uv, indices, 0, num_indices);
             uv.swap(flattened);
         }
+        if (!tangents.empty() && (int)tangents.size() != num_indices) {
+            decltype(tangents) flattened;
+            mu::CopyWithIndices(flattened, tangents, indices, 0, num_indices);
+            tangents.swap(flattened);
+        }
+        std::iota(indices.begin(), indices.end(), 0);
         flatten = true;
     }
 
@@ -369,7 +379,7 @@ void MeshData::refine(const MeshRefineSettings &settings)
             submeshes.push_back(sub);
         });
     }
-    else {
+    else if(settings.flags.triangulate) {
         decltype(indices) indices_triangulated(num_indices_tri);
         if (flatten) {
             mu::Triangulate(indices_triangulated, counts, settings.flags.swap_faces);

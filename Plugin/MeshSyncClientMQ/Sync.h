@@ -15,7 +15,8 @@ public:
     void import(MQDocument doc);
 
 private:
-    using MeshDataPtr = std::shared_ptr<ms::MeshData>;
+    using MeshPtr = std::shared_ptr<ms::MeshData>;
+    using Meshes = std::vector<MeshPtr>;
 
     void waitAsyncSend();
     MQObject findObject(MQDocument doc, const char *name);
@@ -24,7 +25,7 @@ private:
 
     ms::ClientSettings m_settings;
 
-    std::vector<MeshDataPtr> m_data;
+    std::vector<MeshPtr> m_data;
     std::vector<std::string> m_current_objects;
     std::vector<std::string> m_prev_objects;
     std::future<void> m_future_send;

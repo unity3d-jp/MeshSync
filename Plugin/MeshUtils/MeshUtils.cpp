@@ -44,6 +44,14 @@ void InvertX_Generic(float4 *dst, size_t num)
     }
 }
 
+void InvertV(float2 *dst, size_t num)
+{
+    for (size_t i = 0; i < num; ++i) {
+        dst[i].y = 1.0f - dst[i].y;
+    }
+}
+
+
 void Scale_Generic(float *dst, float s, size_t num)
 {
     for (size_t i = 0; i < num; ++i) {
@@ -222,6 +230,14 @@ struct TSpaceContext
         float sign = (IsOrientationPreserving != 0) ? 1.0f : -1.0f;
         _this->dst[face[ivtx]] = { tangent[0], tangent[1], tangent[2], sign };
     }
+
+    static void setTangentFlattened(const SMikkTSpaceContext *tctx, const float* tangent, const float* /*bitangent*/,
+        float /*fMagS*/, float /*fMagT*/, tbool IsOrientationPreserving, int iface, int ivtx)
+    {
+        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
+        float sign = (IsOrientationPreserving != 0) ? 1.0f : -1.0f;
+        _this->dst[_this->offsets[iface] + ivtx] = { tangent[0], tangent[1], tangent[2], sign };
+    }
 };
 
 bool GenerateTangents(
@@ -237,7 +253,7 @@ bool GenerateTangents(
     iface.m_getPosition = TSpaceContext::getPosition;
     iface.m_getNormal   = TSpaceContext::getNormal;
     iface.m_getTexCoord = TSpaceContext::getTexCoord;
-    iface.m_setTSpace   = TSpaceContext::setTangent;
+    iface.m_setTSpace   = dst.size() == indices.size() ? TSpaceContext::setTangentFlattened : TSpaceContext::setTangent;
 
     SMikkTSpaceContext tctx;
     memset(&tctx, 0, sizeof(tctx));

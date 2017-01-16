@@ -85,10 +85,11 @@ public:
 struct MeshRefineFlags
 {
     uint32_t split : 1;
-    uint32_t gen_normals : 1;
-    uint32_t gen_tangents : 1;
+    uint32_t triangulate : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
+    uint32_t gen_normals : 1;
+    uint32_t gen_tangents : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
 };
