@@ -15,6 +15,7 @@ msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
         g_servers[settings->port] = ret;
     }
     else {
+        ret->setServe(true);
         ret->getSettings() = *settings;
     }
     return ret;
@@ -22,13 +23,16 @@ msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 
 msAPI void  msServerStop(ms::Server *server)
 {
-    //delete server;
+    // actually not stop. just make server ignore further requests.
+    if (server) {
+        server->setServe(false);
+    }
 }
 
-msAPI void msServerProcessMessages(ms::Server *server, msMessageHandler handler)
+msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
-    if (!server || !handler) { return; }
-    server->processMessages([handler](ms::MessageData& data) {
+    if (!server || !handler) { return 0; }
+    return server->processMessages([handler](ms::MessageData& data) {
         if (auto* get = dynamic_cast<ms::GetData*>(&data)) {
             ms::GetDataCS cs = *get;
             handler(ms::MessageType::Get, &cs);

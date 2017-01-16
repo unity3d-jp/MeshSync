@@ -1,5 +1,10 @@
 #pragma once
 
+#include <string>
+#include <vector>
+#include <memory>
+#include <atomic>
+#include <mutex>
 #include "MeshUtils/RawVector.h"
 #include "MeshUtils/MeshUtils.h"
 
@@ -41,9 +46,9 @@ struct GetFlags
     uint32_t get_bones : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
+    uint32_t bake_skin : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
-    uint32_t bake_skin : 1;
 };
 
 class GetData : public MessageData
@@ -51,6 +56,7 @@ class GetData : public MessageData
 public:
     GetFlags flags = {0};
     float scale = 1.0f;
+    std::shared_ptr<std::atomic_int> wait_flag;
 
     GetData();
     uint32_t getSerializeSize() const;
@@ -134,12 +140,17 @@ struct ClientSpecificData
     struct Metasequoia {
         float smooth_angle = 0.0f;
     } mq;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
 };
 
 class MeshData : public MessageData
 {
 using super = MessageData;
 public:
+    int               id = 0;
     std::string       path;
     MeshDataFlags     flags = {0};
     RawVector<float3> points;
@@ -163,6 +174,7 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
+    const char* getName() const;
     void swap(MeshData& v);
     void refine(const MeshRefineSettings &s);
     void applyTransform(const float4x4& t);
@@ -185,6 +197,7 @@ struct DeleteDataCS
 
 struct MeshDataCS
 {
+    int id = 0;
     MeshDataFlags flags = {0};
     MeshData *cpp = nullptr;
     const char *path = nullptr;

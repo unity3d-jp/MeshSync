@@ -56,11 +56,6 @@ const char *MeshSyncClientPlugin::EnumString(void)
 //---------------------------------------------------------------------------
 const char *MeshSyncClientPlugin::EnumSubCommand(int index)
 {
-    switch (index) {
-    case 0: return "Message";
-    case 1: return "Vertex";
-    case 2: return "Face";
-    }
     return NULL;
 }
 
@@ -70,11 +65,6 @@ const char *MeshSyncClientPlugin::EnumSubCommand(int index)
 //---------------------------------------------------------------------------
 const wchar_t *MeshSyncClientPlugin::GetSubCommandString(int index)
 {
-    switch (index) {
-    case 0: return L"Message";
-    case 1: return L"Vertex";
-    case 2: return L"Face";
-    }
     return NULL;
 }
 
@@ -241,6 +231,7 @@ void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateObjectList(MQDocument doc)
 {
+    m_sync.send(doc);
 }
 
 //---------------------------------------------------------------------------

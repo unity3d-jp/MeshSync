@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Sync.h"
 
-#define MaxNameBuffer 256
+#define MaxNameBuffer 1024
 
 Sync::Sync()
 {
@@ -72,15 +72,19 @@ void Sync::import(MQDocument doc)
     auto ret = client.send(gd);
     for (auto& data : ret) {
         auto& mdata = static_cast<ms::MeshData&>(*data);
-        if (auto obj = findObject(doc, mdata.path)) {
+
+        char name[MaxNameBuffer];
+        sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id);
+
+        if (auto obj = findObject(doc, name)) {
             doc->DeleteObject(doc->GetObjectIndex(obj));
         }
-        auto obj = createObject(mdata);
+        auto obj = createObject(mdata, name);
         doc->AddObject(obj);
     }
 }
 
-MQObject Sync::findObject(MQDocument doc, const std::string & name)
+MQObject Sync::findObject(MQDocument doc, const char *name)
 {
     int nobj = doc->GetObjectCount();
     for (int i = 0; i < nobj; ++i) {
@@ -89,17 +93,18 @@ MQObject Sync::findObject(MQDocument doc, const std::string & name)
 
         char tmp[MaxNameBuffer];
         obj->GetName(tmp, sizeof(tmp));
-        if (strcmp(tmp, name.c_str()) == 0) {
+        if (strcmp(tmp, name) == 0) {
             return obj;
         }
     }
     return nullptr;
 }
 
-MQObject Sync::createObject(const ms::MeshData& data)
+MQObject Sync::createObject(const ms::MeshData& data, const char *name)
 {
     auto ret = MQ_CreateObject();
-    ret->SetName(data.path.c_str());
+
+    ret->SetName(name);
     for (auto& p : data.points) {
         ret->AddVertex((MQPoint&)p);
     }

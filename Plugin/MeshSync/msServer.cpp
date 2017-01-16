@@ -39,11 +39,9 @@ void Server::recvDelete(const Body& body)
 {
     DeleteData tmp;
     body(tmp);
-    {
-        {
-            lock_t l(m_mutex);
-            m_recv_history.push_back({ MessageType::Delete, tmp.path });
-        }
+    if(m_serve) {
+        lock_t l(m_mutex);
+        m_recv_history.push_back({ MessageType::Delete, tmp.path });
     }
 }
 
@@ -52,7 +50,7 @@ void Server::recvMesh(const Body& body)
 {
     auto& tmp = m_tmp.local();
     body(tmp);
-    if (!tmp.path.empty()) {
+    if (m_serve && !tmp.path.empty()) {
         tmp.refine(m_settings.mrs);
         {
             lock_t l(m_mutex);
@@ -159,6 +157,11 @@ ServerSettings& Server::getSettings()
 }
 
 
+void Server::setServe(bool v)
+{
+    m_serve = v;
+}
+
 void Server::beginServe()
 {
     m_serve_data.clear();
@@ -176,7 +179,9 @@ void Server::endServe()
             data->refine(mrs);
         }
     });
-    m_serve_waiting = 0;
+    if (m_current_get_request.wait_flag) {
+        *m_current_get_request.wait_flag = 0;
+    }
 }
 void Server::addServeData(MeshData *data)
 {
@@ -189,6 +194,17 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     GetData data;
     data.deserialize(is);
 
+    if (!m_serve) {
+        response.setContentLength(4);
+        auto& os = response.send();
+        int num = 0;
+        os.write((char*)&num, 4);
+        return;
+    }
+
+    std::shared_ptr<std::atomic_int> wait_flag(new std::atomic_int(1));
+    data.wait_flag = wait_flag;
+
     // queue request
     {
         lock_t l(m_mutex);
@@ -199,9 +215,8 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     }
 
     // wait for data arrive (or timeout)
-    m_serve_waiting++;
-    for (int i = 0; i < 100; ++i) {
-        if (m_serve_waiting == 0) {
+    for (int i = 0; i < 300; ++i) {
+        if (*wait_flag == 0) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

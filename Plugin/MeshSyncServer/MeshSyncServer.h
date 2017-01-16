@@ -11,7 +11,7 @@ using msMessageHandler = void(*)(ms::MessageType type, const void *data);
 
 msAPI ms::Server*   msServerStart(const ms::ServerSettings *settings);
 msAPI void          msServerStop(ms::Server *server);
-msAPI void          msServerProcessMessages(ms::Server *server, msMessageHandler handler);
+msAPI int           msServerProcessMessages(ms::Server *server, msMessageHandler handler);
 
 msAPI void          msServerBeginServe(ms::Server *server);
 msAPI void          msServerEndServe(ms::Server *server);

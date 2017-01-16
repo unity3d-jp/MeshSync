@@ -34,8 +34,9 @@ public class MeshSyncServer : MonoBehaviour
         public bool get_bones { get { return (flags & 0x40) != 0; } }
         public bool swap_handedness { get { return (flags & 0x80) != 0; } }
         public bool swap_faces { get { return (flags & 0x100) != 0; } }
-        public bool apply_transform { get { return (flags & 0x200) != 0; } }
-        public bool bake_skin { get { return (flags & 0x400) != 0; } }
+        public bool bake_skin { get { return (flags & 0x200) != 0; } }
+        public bool apply_local2world { get { return (flags & 0x400) != 0; } }
+        public bool apply_world2local { get { return (flags & 0x800) != 0; } }
     }
 
     public struct GetData
@@ -90,7 +91,7 @@ public class MeshSyncServer : MonoBehaviour
     };
 
 
-    public struct TRS
+    public struct TransformData
     {
         public Vector3 position;
         public Quaternion rotation;
@@ -102,6 +103,7 @@ public class MeshSyncServer : MonoBehaviour
 
     public struct MeshData
     {
+        public int id;
         public MeshDataFlags flags;
         public IntPtr cpp;
         public IntPtr path;
@@ -113,7 +115,7 @@ public class MeshSyncServer : MonoBehaviour
         public int    num_points;
         public int    num_indices;
         public int    num_submeshes;
-        public TRS    transform;
+        public TransformData transform;
     };
     public struct SubmeshData
     {
@@ -201,7 +203,7 @@ public class MeshSyncServer : MonoBehaviour
     [DllImport("MeshSyncServer")] public static extern void msServerStop(IntPtr sv);
 
     public delegate void msMessageHandler(EventType type, IntPtr data);
-    [DllImport("MeshSyncServer")] public static extern void msServerProcessMessages(IntPtr sv, msMessageHandler handler);
+    [DllImport("MeshSyncServer")] public static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
 
     [DllImport("MeshSyncServer")] public static extern void msServerBeginServe(IntPtr sv);
     [DllImport("MeshSyncServer")] public static extern void msServerEndServe(IntPtr sv);
@@ -281,7 +283,10 @@ public class MeshSyncServer : MonoBehaviour
 
     void PollServerEvents()
     {
-        msServerProcessMessages(m_server, m_handler);
+        if(msServerProcessMessages(m_server, m_handler) > 0)
+        {
+            ForceRepaint();
+        }
     }
 
     void OnServerEvent(EventType type, IntPtr data)
@@ -316,7 +321,7 @@ public class MeshSyncServer : MonoBehaviour
         }
         msServerEndServe(m_server);
 
-        Debug.Log("MeshSyncServer: Get");
+        //Debug.Log("MeshSyncServer: Get");
     }
 
     void OnRecvDelete(IntPtr data)
@@ -330,7 +335,7 @@ public class MeshSyncServer : MonoBehaviour
             DestroyImmediate(target.gameObject);
         }
 
-        Debug.Log("MeshSyncServer: Delete " + path);
+        //Debug.Log("MeshSyncServer: Delete " + path);
     }
 
     void OnRecvMesh(IntPtr data)
@@ -456,8 +461,7 @@ public class MeshSyncServer : MonoBehaviour
             DestroyImmediate(t.gameObject);
         }
 
-        ForceRepaint();
-        Debug.Log("MeshSyncServer: Mesh " + path);
+        //Debug.Log("MeshSyncServer: Mesh " + path);
     }
 
 
@@ -561,6 +565,18 @@ public class MeshSyncServer : MonoBehaviour
 #endif
     }
 
+    string GetPath(Transform t)
+    {
+        var parent = t.parent;
+        if(parent != null)
+        {
+            return GetPath(parent) + "/" + t.name;
+        }
+        else
+        {
+            return "/" + t.name;
+        }
+    }
 
     void ServeData(MeshRenderer mr, GetFlags flags)
     {
@@ -573,6 +589,7 @@ public class MeshSyncServer : MonoBehaviour
         }
 
         var data = default(MeshData);
+        data.id = mr.gameObject.GetInstanceID();
         if (flags.get_transform)
         {
             data.flags.has_transform = true;
@@ -580,7 +597,7 @@ public class MeshSyncServer : MonoBehaviour
         }
         Capture(ref data, mesh, null, flags);
 
-        data.path = msCreateString(mr.name);
+        data.path = msCreateString(GetPath(mr.GetComponent<Transform>()));
         msServerAddServeData(m_server, EventType.Mesh, ref data);
         msDeleteString(data.path);
     }
@@ -588,6 +605,7 @@ public class MeshSyncServer : MonoBehaviour
     void ServeData(SkinnedMeshRenderer smr, GetFlags flags)
     {
         var data = default(MeshData);
+        data.id = smr.gameObject.GetInstanceID();
 
         if (flags.get_transform)
         {
@@ -630,12 +648,12 @@ public class MeshSyncServer : MonoBehaviour
             Capture(ref data, mesh, null, flags);
         }
 
-        data.path = msCreateString(smr.name);
+        data.path = msCreateString(GetPath(smr.GetComponent<Transform>()));
         msServerAddServeData(m_server, EventType.Mesh, ref data);
         msDeleteString(data.path);
     }
 
-    void Capture(ref TRS data, Transform trans)
+    void Capture(ref TransformData data, Transform trans)
     {
         data.position = trans.localPosition;
         data.rotation = trans.localRotation;

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mutex>
-#include <atomic>
 #include "msCommon.h"
 #include "MeshUtils/tls.h"
 
@@ -46,7 +44,7 @@ public:
 
     // Body: [](const EventData& data) -> void
     template<class Body>
-    void processMessages(const Body& body)
+    int processMessages(const Body& body)
     {
         lock_t l(m_mutex);
         for (auto& r : m_recv_history) {
@@ -72,9 +70,12 @@ public:
             }
             }
         }
+        int ret = (int)m_recv_history.size();
         m_recv_history.clear();
+        return ret;
     }
 
+    void setServe(bool v);
     void beginServe();
     void endServe();
     void addServeData(MeshData *data);
@@ -97,6 +98,7 @@ private:
     };
     using History = std::vector<Record>;
 
+    bool m_serve = true;
     ServerSettings m_settings;
     HTTPServerPtr m_server;
 
@@ -107,7 +109,6 @@ private:
     ServeDataTable m_serve_data;
 
     std::mutex m_mutex;
-    std::atomic_int m_serve_waiting;
     tls<MeshData> m_tmp;
 };
 

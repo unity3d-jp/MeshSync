@@ -172,7 +172,6 @@ void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 {
-    m_sync.send(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -181,6 +180,7 @@ void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateObjectList(MQDocument doc)
 {
+    m_sync.send(doc);
 }
 
 //---------------------------------------------------------------------------

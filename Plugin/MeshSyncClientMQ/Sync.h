@@ -16,10 +16,9 @@ public:
 private:
     using MeshDataPtr = std::shared_ptr<ms::MeshData>;
 
-    MQObject findObject(MQDocument doc, const std::string& name);
-    MQObject createObject(const ms::MeshData& data);
+    MQObject findObject(MQDocument doc, const char *name);
+    MQObject createObject(const ms::MeshData& data, const char *name);
     void gather(MQDocument doc, MQObject obj, ms::MeshData& data);
-
 
     ms::ClientSettings m_settings;
     std::vector<MeshDataPtr> m_data;

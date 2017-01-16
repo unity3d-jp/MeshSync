@@ -141,6 +141,36 @@ void DeleteData::deserialize(std::istream& is)
 }
 
 
+uint32_t ClientSpecificData::getSerializeSize() const
+{
+    uint32_t ret = ssize(type);
+    switch (type) {
+    case Type::Metasequia:
+        ret += ssize(mq);
+        break;
+    }
+    return ret;
+}
+void ClientSpecificData::serialize(std::ostream& os) const
+{
+    write(os, type);
+    switch (type) {
+    case Type::Metasequia:
+        write(os, mq);
+        break;
+    }
+}
+void ClientSpecificData::deserialize(std::istream& is)
+{
+    read(is, type);
+    switch (type) {
+    case Type::Metasequia:
+        read(is, mq);
+        break;
+    }
+}
+
+
 #define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices)
 
 MeshData::MeshData()
@@ -149,6 +179,7 @@ MeshData::MeshData()
 
 MeshData::MeshData(const MeshDataCS & cs)
 {
+    id = cs.id;
     path = cs.path ? cs.path : "";
     flags = cs.flags;
     if (flags.has_points && cs.points) points.assign(cs.points, cs.points + cs.num_points);
@@ -161,53 +192,66 @@ MeshData::MeshData(const MeshDataCS & cs)
 
 void MeshData::clear()
 {
+    id = 0;
     path.clear();
     flags = {0};
 #define Body(A) A.clear();
     EachArray(Body);
 #undef Body
     transform = Transform();
-    submeshes.clear();
+    csd = ClientSpecificData();
     submeshes.clear();
 }
 
 uint32_t MeshData::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += ssize(id);
     ret += ssize(path);
     ret += ssize(flags);
 #define Body(A) if(flags.has_##A) ret += ssize(A);
     EachArray(Body);
 #undef Body
     if (flags.has_transform) ret += ssize(transform);
-    ret += ssize(csd);
+    ret += csd.getSerializeSize();
     return ret;
 }
 
 void MeshData::serialize(std::ostream& os) const
 {
+    write(os, id);
     write(os, path);
     write(os, flags);
 #define Body(A) if(flags.has_##A) write(os, A);
     EachArray(Body);
 #undef Body
     if (flags.has_transform) write(os, transform);
-    write(os, csd);
+    csd.serialize(os);
 }
 
 void MeshData::deserialize(std::istream& is)
 {
+    read(is, id);
     read(is, path);
     read(is, flags);
 #define Body(A) if(flags.has_##A) read(is, A);
     EachArray(Body);
 #undef Body
     if (flags.has_transform) read(is, transform);
-    read(is, csd);
+    csd.deserialize(is);
+}
+
+const char* MeshData::getName() const
+{
+    size_t name_pos = path.find_last_of('/');
+    if (name_pos != std::string::npos) { ++name_pos; }
+    else { name_pos = 0; }
+    return path.c_str() + name_pos;
 }
 
 void MeshData::swap(MeshData & v)
 {
+    std::swap(id, v.id);
     path.swap(v.path);
     std::swap(flags, v.flags);
 #define Body(A) A.swap(v.A);
@@ -226,6 +270,7 @@ void MeshData::refine(const MeshRefineSettings &settings)
     }
     if (settings.flags.apply_world2local) {
         applyTransform(transform.world2local);
+        flags.has_transform = 0;
     }
     if (settings.scale != 1.0f) {
         mu::Scale(points.data(), settings.scale, points.size());
@@ -359,6 +404,7 @@ DeleteDataCS::DeleteDataCS(const DeleteData & v)
 
 MeshDataCS::MeshDataCS(const MeshData & v)
 {
+    id          = v.id;
     flags       = v.flags;
     cpp         = const_cast<MeshData*>(&v);
     path        = v.path.c_str();
