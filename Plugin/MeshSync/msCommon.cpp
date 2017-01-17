@@ -145,7 +145,7 @@ uint32_t ClientSpecificData::getSerializeSize() const
 {
     uint32_t ret = ssize(type);
     switch (type) {
-    case Type::Metasequia:
+    case Type::Metasequoia:
         ret += ssize(mq);
         break;
     }
@@ -155,7 +155,7 @@ void ClientSpecificData::serialize(std::ostream& os) const
 {
     write(os, type);
     switch (type) {
-    case Type::Metasequia:
+    case Type::Metasequoia:
         write(os, mq);
         break;
     }
@@ -164,7 +164,7 @@ void ClientSpecificData::deserialize(std::istream& is)
 {
     read(is, type);
     switch (type) {
-    case Type::Metasequia:
+    case Type::Metasequoia:
         read(is, mq);
         break;
     }
@@ -279,6 +279,21 @@ void MeshData::refine(const MeshRefineSettings &settings)
         mu::InvertX(points.data(), points.size());
     }
 
+    if (csd.type == ClientSpecificData::Type::Metasequoia) {
+        if (csd.mq.flags.invert_v) {
+            mu::InvertV(uv.data(), uv.size());
+        }
+        if (csd.mq.flags.mirror_x) {
+            applyMirror({ 1.0f, 0.0f, 0.0f }, 0.0f);
+        }
+        if (csd.mq.flags.mirror_y) {
+            applyMirror({ 0.0f, 1.0f, 0.0f }, 0.0f);
+        }
+        if (csd.mq.flags.mirror_z) {
+            applyMirror({ 0.0f, 0.0f, 1.0f }, 0.0f);
+        }
+    }
+
     RawVector<int> offsets;
     int num_indices = 0;
     int num_indices_tri = 0;
@@ -300,7 +315,7 @@ void MeshData::refine(const MeshRefineSettings &settings)
     bool gen_normals = settings.flags.gen_normals && normals.empty();
     if (gen_normals) {
         bool do_smoothing =
-            csd.type == ClientSpecificData::Type::Metasequia && (csd.mq.smooth_angle >= 0.0f && csd.mq.smooth_angle < 360.0f);
+            csd.type == ClientSpecificData::Type::Metasequoia && (csd.mq.smooth_angle >= 0.0f && csd.mq.smooth_angle < 360.0f);
         if (do_smoothing) {
             normals.resize(indices.size());
             mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, csd.mq.smooth_angle);
@@ -391,6 +406,26 @@ void MeshData::refine(const MeshRefineSettings &settings)
     }
 }
 
+void MeshData::applyMirror(const float3 & plane_n, float plane_d)
+{
+    size_t num_points = points.size();
+    size_t num_faces = counts.size();
+    size_t num_indices = indices.size();
+    points.resize(num_points * 2);
+    counts.resize(num_faces * 2);
+    indices.resize(num_indices * 2);
+    mu::MirrorPoints(points.data() + num_points, IntrusiveArray<float3>{points.data(), num_points}, plane_n, plane_d);
+    mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
+        IntrusiveArray<int>{counts.data(), num_faces}, IntrusiveArray<int>{indices.data(), num_indices}, (int)num_points);
+
+    if (uv.data()) {
+        size_t num_uv = uv.size();
+        uv.resize(num_uv * 2);
+        memcpy(uv.data() + num_uv, uv.data(), sizeof(float2) * num_uv);
+    }
+    // todo: normals, tangents
+}
+
 
 void MeshData::applyTransform(const float4x4& m)
 {
@@ -414,9 +449,9 @@ DeleteDataCS::DeleteDataCS(const DeleteData & v)
 
 MeshDataCS::MeshDataCS(const MeshData & v)
 {
+    cpp         = const_cast<MeshData*>(&v);
     id          = v.id;
     flags       = v.flags;
-    cpp         = const_cast<MeshData*>(&v);
     path        = v.path.c_str();
     points      = (float3*)v.points.data();
     normals     = (float3*)v.normals.data();

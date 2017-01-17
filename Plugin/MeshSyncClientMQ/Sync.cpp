@@ -165,9 +165,22 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
 
     dst.path.clear();
     BuildPath(doc, obj, dst.path);
-    dst.csd.type = ms::ClientSpecificData::Type::Metasequia;
-    dst.csd.mq.smooth_angle = obj->GetSmoothAngle();
 
+    // metasequoia specific attributes
+    {
+        dst.csd.type = ms::ClientSpecificData::Type::Metasequoia;
+        dst.csd.mq.smooth_angle = obj->GetSmoothAngle();
+        dst.csd.mq.flags.invert_v = 1;
+
+        if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {
+            int axis = obj->GetMirrorAxis();
+            dst.csd.mq.flags.mirror_x = (axis & MQOBJECT_MIRROR_AXIS_X) ? 1 : 0;
+            dst.csd.mq.flags.mirror_y = (axis & MQOBJECT_MIRROR_AXIS_Y) ? 1 : 0;
+            dst.csd.mq.flags.mirror_z = (axis & MQOBJECT_MIRROR_AXIS_Z) ? 1 : 0;
+        }
+    }
+
+    dst.flags.visible = obj->GetVisible();
     dst.flags.has_points = 1;
     dst.flags.has_uv = 1;
     dst.flags.has_counts = 1;
@@ -200,14 +213,13 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     auto *uv = dst.uv.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
-        if (c >= 3) {
+        if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
             obj->GetFacePointArray(fi, indices);
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
             indices += c;
             uv += c;
         }
     }
-    mu::InvertV(dst.uv.data(), dst.uv.size());
 
     // remove line and points
     dst.counts.erase(

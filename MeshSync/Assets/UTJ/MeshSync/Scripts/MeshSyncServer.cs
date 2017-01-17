@@ -66,40 +66,45 @@ namespace UTJ
         public struct MeshDataFlags
         {
             public int flags;
-            public bool has_transform
+            public bool visible
             {
                 get { return (flags & 0x1) != 0; }
                 set { SwitchBit(ref flags, value, 0x1); }
             }
-            public bool has_indices
+            public bool has_transform
             {
                 get { return (flags & 0x2) != 0; }
                 set { SwitchBit(ref flags, value, 0x2); }
             }
-            public bool has_counts
+            public bool has_indices
             {
                 get { return (flags & 0x4) != 0; }
                 set { SwitchBit(ref flags, value, 0x4); }
             }
-            public bool has_points
+            public bool has_counts
             {
                 get { return (flags & 0x8) != 0; }
                 set { SwitchBit(ref flags, value, 0x8); }
             }
-            public bool has_normals
+            public bool has_points
             {
                 get { return (flags & 0x10) != 0; }
                 set { SwitchBit(ref flags, value, 0x10); }
             }
-            public bool has_tangents
+            public bool has_normals
             {
                 get { return (flags & 0x20) != 0; }
                 set { SwitchBit(ref flags, value, 0x20); }
             }
-            public bool has_uv
+            public bool has_tangents
             {
                 get { return (flags & 0x40) != 0; }
                 set { SwitchBit(ref flags, value, 0x40); }
+            }
+            public bool has_uv
+            {
+                get { return (flags & 0x80) != 0; }
+                set { SwitchBit(ref flags, value, 0x80); }
             }
         };
 
@@ -116,9 +121,9 @@ namespace UTJ
 
         public struct MeshData
         {
+            public IntPtr cpp;
             public int id;
             public MeshDataFlags flags;
-            public IntPtr cpp;
             public IntPtr path;
             public IntPtr points;
             public IntPtr normals;
@@ -367,6 +372,21 @@ namespace UTJ
             Transform target = FindObjectByPath(null, path, true);
             if (target == null) { return; }
 
+            // if object is not visible, just disable and return
+            if(!edata.flags.visible)
+            {
+                target.gameObject.SetActive(false);
+                for (int i = 0; ; ++i)
+                {
+                    var t = FindObjectByPath(null, path + "/Submesh[" + i + "]");
+                    if (t == null) { break; }
+                    t.gameObject.SetActive(false);
+                }
+                return;
+            }
+
+            target.gameObject.SetActive(true);
+
             if (edata.flags.has_transform)
             {
                 target.localPosition = edata.transform.position;
@@ -459,6 +479,7 @@ namespace UTJ
                     if (i > 0)
                     {
                         t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true);
+                        t.gameObject.SetActive(true);
                     }
 
                     var mesh = GetOrAddMeshComponents(t.gameObject);
@@ -616,6 +637,8 @@ namespace UTJ
 
             var data = default(MeshData);
             data.id = mr.gameObject.GetInstanceID();
+            data.flags.visible = true;
+
             if (flags.get_transform)
             {
                 data.flags.has_transform = true;
@@ -632,6 +655,7 @@ namespace UTJ
         {
             var data = default(MeshData);
             data.id = smr.gameObject.GetInstanceID();
+            data.flags.visible = true;
 
             if (flags.get_transform)
             {

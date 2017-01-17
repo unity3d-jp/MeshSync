@@ -96,6 +96,7 @@ struct MeshRefineFlags
 
 struct MeshDataFlags
 {
+    uint32_t visible : 1;
     uint32_t has_transform : 1;
     uint32_t has_indices : 1;
     uint32_t has_counts : 1;
@@ -135,10 +136,16 @@ struct ClientSpecificData
 {
     enum class Type {
         NoData,
-        Metasequia,
+        Metasequoia,
     };
     Type type;
     struct Metasequoia {
+        struct {
+            uint32_t invert_v : 1;
+            uint32_t mirror_x : 1;
+            uint32_t mirror_y : 1;
+            uint32_t mirror_z : 1;
+        } flags;
         float smooth_angle = 0.0f;
     } mq;
 
@@ -178,6 +185,7 @@ public:
     const char* getName() const;
     void swap(MeshData& v);
     void refine(const MeshRefineSettings &s);
+    void applyMirror(const float3& plane_n, float plane_d);
     void applyTransform(const float4x4& t);
 };
 
@@ -198,9 +206,9 @@ struct DeleteDataCS
 
 struct MeshDataCS
 {
+    MeshData *cpp = nullptr;
     int id = 0;
     MeshDataFlags flags = {0};
-    MeshData *cpp = nullptr;
     const char *path = nullptr;
     float3 *points = nullptr;
     float3 *normals = nullptr;

@@ -87,6 +87,8 @@ static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
 {
     if (!dst || !src) { return; }
 
+    dst->id = src->id;
+    dst->flags = src->flags;
     dst->cpp = src->cpp;
     dst->path = src->path;
     dst->num_points = src->num_points;

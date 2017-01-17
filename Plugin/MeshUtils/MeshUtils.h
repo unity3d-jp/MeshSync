@@ -392,4 +392,33 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
     return true;
 }
 
+
+template<class Points>
+inline void MirrorPoints(float3 *dst, const Points& src, float3 plane_n, float plane_d)
+{
+    if (!dst || !src.data()) { return; }
+
+    auto n = src.size();
+    for (size_t i = 0; i < n; ++i) {
+        auto& p = src[i];
+        float d = dot(plane_n, p) - plane_d;
+        dst[i] = p - (plane_n * (d  * 2.0f));
+    }
+}
+
+template<class IntArray>
+inline void MirrorTopology(int *dst_counts, int *dst_indices, const IntArray& counts, const IntArray& indices, int offset)
+{
+    if (!dst_counts || !dst_indices) { return; }
+
+    memcpy(dst_counts, counts.data(), sizeof(int) * counts.size());
+    size_t i = 0;
+    for (int count : counts) {
+        for (int ci = 0; ci < count; ++ci) {
+            dst_indices[i + ci] = offset + indices[i + (count - ci - 1)];
+        }
+        i += count;
+    }
+}
+
 } // namespace mu
