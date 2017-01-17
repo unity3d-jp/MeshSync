@@ -86,6 +86,7 @@ struct MeshRefineFlags
 {
     uint32_t split : 1;
     uint32_t triangulate : 1;
+    uint32_t optimize_topology : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
     uint32_t gen_normals : 1;
@@ -104,6 +105,7 @@ struct MeshDataFlags
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv : 1;
+    uint32_t has_materialIDs : 1;
 };
 
 struct MeshRefineSettings
@@ -146,9 +148,11 @@ struct ClientSpecificData
             uint32_t mirror_y : 1;
             uint32_t mirror_z : 1;
         } flags;
-        float smooth_angle = 0.0f;
+        float scale_factor;
+        float smooth_angle;
     } mq;
 
+    ClientSpecificData();
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -167,6 +171,7 @@ public:
     RawVector<float2> uv;
     RawVector<int>    counts;
     RawVector<int>    indices;
+    RawVector<int>    materialIDs;
 
     Transform         transform;
     ClientSpecificData csd;

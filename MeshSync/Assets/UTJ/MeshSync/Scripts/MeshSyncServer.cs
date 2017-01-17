@@ -159,25 +159,30 @@ namespace UTJ
                 get { return (flags & 0x2) != 0; }
                 set { SwitchBit(ref flags, value, 0x2); }
             }
-            public bool swapHandedness
+            public bool optimizeTopology
             {
                 get { return (flags & 0x4) != 0; }
                 set { SwitchBit(ref flags, value, 0x4); }
             }
-            public bool swapFaces
+            public bool swapHandedness
             {
                 get { return (flags & 0x8) != 0; }
                 set { SwitchBit(ref flags, value, 0x8); }
             }
-            public bool genNormals
+            public bool swapFaces
             {
                 get { return (flags & 0x10) != 0; }
                 set { SwitchBit(ref flags, value, 0x10); }
             }
-            public bool genTangents
+            public bool genNormals
             {
                 get { return (flags & 0x20) != 0; }
                 set { SwitchBit(ref flags, value, 0x20); }
+            }
+            public bool genTangents
+            {
+                get { return (flags & 0x40) != 0; }
+                set { SwitchBit(ref flags, value, 0x40); }
             }
         }
 

@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 #ifdef muEnableHalf
     #include "half.h"
 #endif // muEnableHalf
@@ -253,6 +254,13 @@ inline float3 cross(const float3& l, const float3& r)
         l.x * r.y - l.y * r.x };
 }
 
+inline float3 apply_rotation(const quatf& q, const float3& p)
+{
+    float3 a = cross((float3&)q, p);
+    float3 b = cross((float3&)q, a);
+    return p + (a * q.w + b) * 2.0f;
+}
+
 inline quatf rotateX(float angle)
 {
     float c = std::cos(angle * 0.5f);
@@ -271,6 +279,51 @@ inline quatf rotateZ(float angle)
     float s = std::sin(angle * 0.5f);
     return{ 0.0f, 0.0f, s, c };
 }
+
+// eular -> quaternion
+inline quatf rotateXYZ(const float3& euler)
+{
+    quatf qX = rotateX(euler.x);
+    quatf qY = rotateY(euler.y);
+    quatf qZ = rotateZ(euler.z);
+    return (qZ * qY) * qX;
+}
+inline quatf rotateXZY(const float3& euler)
+{
+    quatf qX = rotateX(euler.x);
+    quatf qY = rotateY(euler.y);
+    quatf qZ = rotateZ(euler.z);
+    return (qY * qZ) * qX;
+}
+inline quatf rotateYXZ(const float3& euler)
+{
+    quatf qX = rotateX(euler.x);
+    quatf qY = rotateY(euler.y);
+    quatf qZ = rotateZ(euler.z);
+    return (qZ * qX) * qY;
+}
+inline quatf rotateYZX(const float3& euler)
+{
+    quatf qX = rotateX(euler.x);
+    quatf qY = rotateY(euler.y);
+    quatf qZ = rotateZ(euler.z);
+    return (qX * qZ) * qY;
+}
+inline quatf rotateZXY(const float3& euler)
+{
+    quatf qX = rotateX(euler.x);
+    quatf qY = rotateY(euler.y);
+    quatf qZ = rotateZ(euler.z);
+    return (qY * qX) * qZ;
+}
+inline quatf rotateZYX(const float3& euler)
+{
+    quatf qX = rotateX(euler.x);
+    quatf qY = rotateY(euler.y);
+    quatf qZ = rotateZ(euler.z);
+    return (qX * qY) * qZ;
+}
+
 inline quatf rotate(const float3& axis, float angle)
 {
     return{
@@ -279,6 +332,54 @@ inline quatf rotate(const float3& axis, float angle)
         axis.z * std::sin(angle * 0.5f),
         std::cos(angle * 0.5f)
     };
+}
+
+template<class T> inline float clamp(T v, T vmin, T vmax) { return std::min<T>(std::max<T>(v, vmin), vmax); }
+inline float saturate(float v) { return clamp(v, -1.0f, 1.0f); }
+
+inline float3 eularZXY(const quatf& q)
+{
+    float d[] = {
+        q.x*q.x, q.x*q.y, q.x*q.z, q.x*q.w,
+        q.y*q.y, q.y*q.z, q.y*q.w,
+        q.z*q.z, q.z*q.w,
+        q.w*q.w
+    };
+
+    float v0 = d[5] - d[3];
+    float v1 = 2.0f*(d[1] + d[8]);
+    float v2 = d[4] - d[7] - d[0] + d[9];
+    float v3 = -1.0f;
+    float v4 = 2.0f * v0;
+
+    const float SINGULARITY_CUTOFF = 0.499999f;
+    if (std::abs(v0) < SINGULARITY_CUTOFF)
+    {
+        float v5 = 2.0f * (d[2] + d[6]);
+        float v6 = d[7] - d[0] - d[4] + d[9];
+
+        return{
+            v3 * std::asin(saturate(v4)),
+            std::atan2(v5, v6),
+            std::atan2(v1, v2)
+        };
+    }
+    else
+    {
+        float a = d[1] + d[8];
+        float b =-d[5] + d[3];
+        float c = d[1] - d[8];
+        float e = d[5] + d[3];
+
+        float v5 = a*e + b*c;
+        float v6 = b*e - a*c;
+
+        return{
+            v3 * std::asin(saturate(v4)),
+            std::atan2(v5, v6),
+            0.0f
+        };
+    }
 }
 
 inline quatf swap_handedness(const quatf& q)
@@ -303,4 +404,82 @@ inline float4x4 swap_handedness(const float4x4& m)
         { m[1].x, m[1].z, m[1].y, m[1].w },
         {-m[3].x, m[3].z, m[3].y, m[3].w },
     } };
+}
+
+inline float3x3 to_float3x3(const quatf& q)
+{
+    return {
+        1.0f-2.0f*q.y*q.y - 2.0f*q.z*q.z, 2.0f*q.x*q.y - 2.0f*q.z*q.w,        2.0f*q.x*q.y + 2.0f*q.z*q.w,
+        2.0f*q.x*q.z + 2.0f*q.y*q.w,      1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z, 2.0f*q.y*q.z - 2.0f*q.x*q.w,
+        2.0f*q.x*q.z - 2.0f*q.y*q.w,      2.0f*q.y*q.z + 2.0f*q.x*q.w,        1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y,
+    };
+}
+inline float4x4 to_float4x4(const quatf& q)
+{
+    return {
+        1.0f-2.0f*q.y*q.y - 2.0f*q.z*q.z, 2.0f*q.x*q.y - 2.0f*q.z*q.w,        2.0f*q.x*q.y + 2.0f*q.z*q.w,        0.0,
+        2.0f*q.x*q.z + 2.0f*q.y*q.w,      1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z, 2.0f*q.y*q.z - 2.0f*q.x*q.w,        0.0,
+        2.0f*q.x*q.z - 2.0f*q.y*q.w,      2.0f*q.y*q.z + 2.0f*q.x*q.w,        1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y, 0.0,
+        0.0,                              0.0,                                0.0,                                1.0
+    };
+}
+
+
+template<class T>
+inline quatf to_quat_impl(const T& m)
+{
+    float tr, s;
+    float q[4];
+    int i, j, k;
+    quatf quat;
+
+    int nxt[3] = { 1, 2, 0 };
+    tr = m[0][0] + m[1][1] + m[2][2];
+
+    // check the diagonal
+    if (tr > 0.0) {
+        s = std::sqrt(tr + 1.0f);
+        quat.w = s / 2.0f;
+        s = 0.5f / s;
+
+        quat.x = (m[1][2] - m[2][1]) * s;
+        quat.y = (m[2][0] - m[0][2]) * s;
+        quat.z = (m[0][1] - m[1][0]) * s;
+    }
+    else {
+        // diagonal is negative
+        i = 0;
+        if (m[1][1] > m[0][0])
+            i = 1;
+        if (m[2][2] > m[i][i])
+            i = 2;
+
+        j = nxt[i];
+        k = nxt[j];
+        s = std::sqrt((m[i][i] - (m[j][j] + m[k][k])) + 1.0f);
+
+        q[i] = s * 0.5f;
+        if (s != 0.0f)
+            s = 0.5f / s;
+
+        q[3] = (m[j][k] - m[k][j]) * s;
+        q[j] = (m[i][j] + m[j][i]) * s;
+        q[k] = (m[i][k] + m[k][i]) * s;
+
+        quat.x = q[0];
+        quat.y = q[1];
+        quat.z = q[2];
+        quat.w = q[3];
+    }
+
+    return quat;
+}
+
+inline quatf to_quat(const float3x3& m)
+{
+    return to_quat_impl(m);
+}
+inline quatf to_quat(const float4x4& m)
+{
+    return to_quat_impl(m);
 }

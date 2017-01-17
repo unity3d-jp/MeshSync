@@ -141,6 +141,11 @@ void DeleteData::deserialize(std::istream& is)
 }
 
 
+ClientSpecificData::ClientSpecificData()
+{
+    memset(this, 0, sizeof(*this));
+}
+
 uint32_t ClientSpecificData::getSerializeSize() const
 {
     uint32_t ret = ssize(type);
@@ -171,7 +176,7 @@ void ClientSpecificData::deserialize(std::istream& is)
 }
 
 
-#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices)
+#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs)
 
 MeshData::MeshData()
 {
@@ -265,6 +270,30 @@ void MeshData::swap(MeshData & v)
 
 void MeshData::refine(const MeshRefineSettings &settings)
 {
+    if (csd.type == ClientSpecificData::Type::Metasequoia) {
+        if (csd.mq.flags.invert_v) {
+            mu::InvertV(uv.data(), uv.size());
+        }
+        if (csd.mq.flags.mirror_x) {
+            float3 plane_n = apply_rotation(transform.rotation, { 1.0f, 0.0f, 0.0f });
+            float plane_d = dot(plane_n, transform.position);
+            applyMirror(plane_n, plane_d);
+        }
+        if (csd.mq.flags.mirror_y) {
+            float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 1.0f, 0.0f });
+            float plane_d = dot(plane_n, transform.position);
+            applyMirror(plane_n, plane_d);
+        }
+        if (csd.mq.flags.mirror_z) {
+            float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 0.0f, 1.0f });
+            float plane_d = dot(plane_n, transform.position);
+            applyMirror(plane_n, plane_d);
+        }
+        if (csd.mq.scale_factor != 1.0f) {
+            mu::Scale(points.data(), csd.mq.scale_factor, points.size());
+        }
+    }
+
     if (settings.flags.apply_local2world) {
         applyTransform(transform.local2world);
     }
@@ -277,21 +306,6 @@ void MeshData::refine(const MeshRefineSettings &settings)
     }
     if (settings.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
-    }
-
-    if (csd.type == ClientSpecificData::Type::Metasequoia) {
-        if (csd.mq.flags.invert_v) {
-            mu::InvertV(uv.data(), uv.size());
-        }
-        if (csd.mq.flags.mirror_x) {
-            applyMirror({ 1.0f, 0.0f, 0.0f }, 0.0f);
-        }
-        if (csd.mq.flags.mirror_y) {
-            applyMirror({ 0.0f, 1.0f, 0.0f }, 0.0f);
-        }
-        if (csd.mq.flags.mirror_z) {
-            applyMirror({ 0.0f, 0.0f, 1.0f }, 0.0f);
-        }
     }
 
     RawVector<int> offsets;
@@ -327,34 +341,33 @@ void MeshData::refine(const MeshRefineSettings &settings)
     }
 
     // flatten
-    bool flatten = false;
+    bool flattened = false;
     if ((int)points.size() > settings.split_unit ||
         (int)normals.size() == num_indices ||
         (int)uv.size() == num_indices ||
         (int)tangents.size() == num_indices)
     {
         {
-            decltype(points) flattened;
-            mu::CopyWithIndices(flattened, points, indices, 0, num_indices);
-            points.swap(flattened);
+            decltype(points) tmp;
+            mu::CopyWithIndices(tmp, points, indices, 0, num_indices);
+            points.swap(tmp);
         }
         if (!normals.empty() && (int)normals.size() != num_indices) {
-            decltype(normals) flattened;
-            mu::CopyWithIndices(flattened, normals, indices, 0, num_indices);
-            normals.swap(flattened);
+            decltype(normals) tmp;
+            mu::CopyWithIndices(tmp, normals, indices, 0, num_indices);
+            normals.swap(tmp);
         }
         if (!uv.empty() && (int)uv.size() != num_indices) {
-            decltype(uv) flattened;
-            mu::CopyWithIndices(flattened, uv, indices, 0, num_indices);
-            uv.swap(flattened);
+            decltype(uv) tmp;
+            mu::CopyWithIndices(tmp, uv, indices, 0, num_indices);
+            uv.swap(tmp);
         }
         if (!tangents.empty() && (int)tangents.size() != num_indices) {
-            decltype(tangents) flattened;
-            mu::CopyWithIndices(flattened, tangents, indices, 0, num_indices);
-            tangents.swap(flattened);
+            decltype(tangents) tmp;
+            mu::CopyWithIndices(tmp, tangents, indices, 0, num_indices);
+            tangents.swap(tmp);
         }
-        std::iota(indices.begin(), indices.end(), 0);
-        flatten = true;
+        flattened = true;
     }
 
     // tangents
@@ -396,7 +409,7 @@ void MeshData::refine(const MeshRefineSettings &settings)
     }
     else if(settings.flags.triangulate) {
         decltype(indices) indices_triangulated(num_indices_tri);
-        if (flatten) {
+        if (flattened) {
             mu::Triangulate(indices_triangulated, counts, settings.flags.swap_faces);
         }
         else {

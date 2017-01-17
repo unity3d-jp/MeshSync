@@ -1,6 +1,6 @@
 #pragma once
 
-#include "muVector.h"
+#include "Math.h"
 #include "IntrusiveArray.h"
 
 namespace mu {

@@ -21,8 +21,8 @@
   <ItemGroup>
     <ClInclude Include="MeshUtils\Allocator.h" />
     <ClInclude Include="MeshUtils\IntrusiveArray.h" />
+    <ClInclude Include="MeshUtils\Math.h" />
     <ClInclude Include="MeshUtils\mikktspace.h" />
-    <ClInclude Include="MeshUtils\muVector.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
     <ClInclude Include="MeshUtils\RawVector.h" />

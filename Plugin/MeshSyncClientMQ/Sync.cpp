@@ -20,7 +20,10 @@ void Sync::send(MQDocument doc, bool force)
 {
     if (!force && !m_auto_sync) { return; }
 
-    waitAsyncSend();
+    // just return if previous request is in progress. responsively is highest priority.
+    if (isAsyncSendInProgress()) {
+        return;
+    }
 
     int nobj = doc->GetObjectCount();
     while ((int)m_data.size() < nobj) {
@@ -29,7 +32,7 @@ void Sync::send(MQDocument doc, bool force)
 
     // gather mesh data
     concurrency::parallel_for(0, nobj, [this, doc](int i) {
-        gather(doc, doc->GetObject(i), *m_data[i]);
+        extractMeshData(doc, doc->GetObject(i), *m_data[i]);
     });
 
 
@@ -72,6 +75,8 @@ void Sync::send(MQDocument doc, bool force)
 
 void Sync::import(MQDocument doc)
 {
+    waitAsyncSend();
+
     ms::Client client(m_settings);
     ms::GetData gd;
     gd.flags.get_transform = 1;
@@ -96,6 +101,14 @@ void Sync::import(MQDocument doc)
         auto obj = createObject(mdata, name);
         doc->AddObject(obj);
     }
+}
+
+bool Sync::isAsyncSendInProgress()
+{
+    if (m_future_send.valid()) {
+        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
+    }
+    return false;
 }
 
 void Sync::waitAsyncSend()
@@ -159,7 +172,7 @@ static inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)
     path += name;
 }
 
-void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
+void Sync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
 {
     if (!obj) { return; }
 
@@ -169,6 +182,7 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     // metasequoia specific attributes
     {
         dst.csd.type = ms::ClientSpecificData::Type::Metasequoia;
+        dst.csd.mq.scale_factor = m_scale_factor;
         dst.csd.mq.smooth_angle = obj->GetSmoothAngle();
         dst.csd.mq.flags.invert_v = 1;
 
@@ -181,18 +195,33 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     }
 
     dst.flags.visible = obj->GetVisible();
+    if (!dst.flags.visible) {
+        // not send actual contents if not visible
+        return;
+    }
+
+    dst.flags.has_transform = 1;
     dst.flags.has_points = 1;
     dst.flags.has_uv = 1;
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
+    dst.flags.has_materialIDs = 1;
+
+    // transform
+    {
+        auto ang = obj->GetRotation();
+        auto eular = float3{ ang.pitch, ang.head, ang.bank } *mu::Deg2Rad;
+        quatf rot = rotateZXY(eular);
+
+        dst.transform.position = (const float3&)obj->GetTranslation();
+        dst.transform.rotation = rot;
+        dst.transform.scale = (const float3&)obj->GetScaling();
+    }
 
     // copy vertices
     int npoints = obj->GetVertexCount();
     dst.points.resize(npoints);
     obj->GetVertexArray((MQPoint*)dst.points.data());
-    if (m_scale_factor != 1.0f) {
-        mu::Scale(dst.points.data(), m_scale_factor, dst.points.size());
-    }
 
     // copy counts
     int nfaces = obj->GetFaceCount();
@@ -206,13 +235,15 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
         }
     }
 
-    // copy indices & uv
+    // copy indices, uv, material ID
     dst.indices.resize(nindices);
     dst.uv.resize(nindices);
+    dst.materialIDs.resize(nfaces);
     auto *indices = dst.indices.data();
     auto *uv = dst.uv.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
+        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi);
         if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
             obj->GetFacePointArray(fi, indices);
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
@@ -222,6 +253,9 @@ void Sync::gather(MQDocument doc, MQObject obj, ms::MeshData& dst)
     }
 
     // remove line and points
+    dst.materialIDs.erase(
+        std::remove(dst.materialIDs.begin(), dst.materialIDs.end(), -2),
+        dst.materialIDs.end());
     dst.counts.erase(
         std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
         dst.counts.end());

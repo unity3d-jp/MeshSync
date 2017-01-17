@@ -7,9 +7,6 @@
     <ClInclude Include="MeshUtils\pch.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
-    <ClInclude Include="MeshUtils\muVector.h">
-      <Filter>MeshUtils</Filter>
-    </ClInclude>
     <ClInclude Include="MeshUtils\mikktspace.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
@@ -23,6 +20,9 @@
       <Filter>MeshUtils</Filter>
     </ClInclude>
     <ClInclude Include="MeshUtils\IntrusiveArray.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils\Math.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
   </ItemGroup>

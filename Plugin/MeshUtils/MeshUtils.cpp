@@ -208,6 +208,12 @@ struct TSpaceContext
         (float3&)*o_pos = _this->points[face[ivtx]];
     }
 
+    static void getPositionFlattened(const SMikkTSpaceContext *tctx, float *o_pos, int iface, int ivtx)
+    {
+        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
+        (float3&)*o_pos = _this->points[_this->offsets[iface] + ivtx];
+    }
+
     static void getNormal(const SMikkTSpaceContext *tctx, float *o_normal, int iface, int ivtx)
     {
         auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
@@ -215,11 +221,23 @@ struct TSpaceContext
         (float3&)*o_normal = _this->normals[face[ivtx]];
     }
 
+    static void getNormalFlattened(const SMikkTSpaceContext *tctx, float *o_normal, int iface, int ivtx)
+    {
+        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
+        (float3&)*o_normal = _this->normals[_this->offsets[iface] + ivtx];
+    }
+
     static void getTexCoord(const SMikkTSpaceContext *tctx, float *o_tcoord, int iface, int ivtx)
     {
         auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
         const int *face = &_this->indices[_this->offsets[iface]];
         (float2&)*o_tcoord = _this->uv[face[ivtx]];
+    }
+
+    static void getTexCoordFlattened(const SMikkTSpaceContext *tctx, float *o_tcoord, int iface, int ivtx)
+    {
+        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
+        (float2&)*o_tcoord = _this->uv[_this->offsets[iface] + ivtx];
     }
 
     static void setTangent(const SMikkTSpaceContext *tctx, const float* tangent, const float* /*bitangent*/,
@@ -250,10 +268,19 @@ bool GenerateTangents(
     memset(&iface, 0, sizeof(iface));
     iface.m_getNumFaces = TSpaceContext::getNumFaces;
     iface.m_getNumVerticesOfFace = TSpaceContext::getCount;
-    iface.m_getPosition = TSpaceContext::getPosition;
-    iface.m_getNormal   = TSpaceContext::getNormal;
-    iface.m_getTexCoord = TSpaceContext::getTexCoord;
-    iface.m_setTSpace   = dst.size() == indices.size() ? TSpaceContext::setTangentFlattened : TSpaceContext::setTangent;
+    if (dst.size() == indices.size()) {
+        iface.m_getPosition = TSpaceContext::getPositionFlattened;
+        iface.m_getNormal   = TSpaceContext::getNormalFlattened;
+        iface.m_getTexCoord = TSpaceContext::getTexCoordFlattened;
+        iface.m_setTSpace   = TSpaceContext::setTangentFlattened;
+
+    }
+    else {
+        iface.m_getPosition = TSpaceContext::getPosition;
+        iface.m_getNormal   = TSpaceContext::getNormal;
+        iface.m_getTexCoord = TSpaceContext::getTexCoord;
+        iface.m_setTSpace   = TSpaceContext::setTangent;
+    }
 
     SMikkTSpaceContext tctx;
     memset(&tctx, 0, sizeof(tctx));
