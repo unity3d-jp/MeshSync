@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msCommon.h"
+#include "MeshUtils/tls.h"
 
 namespace ms {
 
@@ -268,6 +269,8 @@ void MeshData::swap(MeshData & v)
     std::swap(submeshes, v.submeshes);
 }
 
+static tls<mu::TopologyRefiner> g_refiner;
+
 void MeshData::refine(const MeshRefineSettings &settings)
 {
     if (csd.type == ClientSpecificData::Type::Metasequoia) {
@@ -325,50 +328,57 @@ void MeshData::refine(const MeshRefineSettings &settings)
         mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
     }
 
+    auto& refiner = g_refiner.local();
+    refiner.prepare(counts, offsets, indices, points);
+    refiner.uv = uv;
+
     // normals
     bool gen_normals = settings.flags.gen_normals && normals.empty();
     if (gen_normals) {
         bool do_smoothing =
             csd.type == ClientSpecificData::Type::Metasequoia && (csd.mq.smooth_angle >= 0.0f && csd.mq.smooth_angle < 360.0f);
         if (do_smoothing) {
-            normals.resize(indices.size());
-            mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, csd.mq.smooth_angle);
+            refiner.genNormals(csd.mq.smooth_angle);
         }
         else {
-            normals.resize(points.size());
-            mu::GenerateNormals(normals, points, counts, offsets, indices);
+            refiner.genNormals();
         }
     }
 
-    // flatten
     bool flattened = false;
-    if ((int)points.size() > settings.split_unit ||
-        (int)normals.size() == num_indices ||
-        (int)uv.size() == num_indices ||
-        (int)tangents.size() == num_indices)
     {
-        {
-            decltype(points) tmp;
-            mu::CopyWithIndices(tmp, points, indices, 0, num_indices);
-            points.swap(tmp);
+        if (refiner.refine()) {
+            points.swap(refiner.new_points);
+            normals.swap(refiner.new_normals);
+            uv.swap(refiner.new_uv);
+            indices.swap(refiner.new_indices);
         }
-        if (!normals.empty() && (int)normals.size() != num_indices) {
-            decltype(normals) tmp;
-            mu::CopyWithIndices(tmp, normals, indices, 0, num_indices);
-            normals.swap(tmp);
+        else {
+            normals.swap(refiner.vertex_normals);
         }
-        if (!uv.empty() && (int)uv.size() != num_indices) {
-            decltype(uv) tmp;
-            mu::CopyWithIndices(tmp, uv, indices, 0, num_indices);
-            uv.swap(tmp);
-        }
-        if (!tangents.empty() && (int)tangents.size() != num_indices) {
-            decltype(tangents) tmp;
-            mu::CopyWithIndices(tmp, tangents, indices, 0, num_indices);
-            tangents.swap(tmp);
-        }
-        flattened = true;
     }
+    //// flatten
+    //if ((int)points.size() > settings.split_unit ||
+    //    (int)normals.size() == num_indices ||
+    //    (int)uv.size() == num_indices)
+    //{
+    //    {
+    //        decltype(points) tmp;
+    //        mu::CopyWithIndices(tmp, points, indices, 0, num_indices);
+    //        points.swap(tmp);
+    //    }
+    //    if (!normals.empty() && (int)normals.size() != num_indices) {
+    //        decltype(normals) tmp;
+    //        mu::CopyWithIndices(tmp, normals, indices, 0, num_indices);
+    //        normals.swap(tmp);
+    //    }
+    //    if (!uv.empty() && (int)uv.size() != num_indices) {
+    //        decltype(uv) tmp;
+    //        mu::CopyWithIndices(tmp, uv, indices, 0, num_indices);
+    //        uv.swap(tmp);
+    //    }
+    //    flattened = true;
+    //}
 
     // tangents
     bool gen_tangents = settings.flags.gen_tangents && tangents.empty() && !normals.empty() && !uv.empty();

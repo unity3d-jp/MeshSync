@@ -90,8 +90,8 @@ void Normalize_Generic(float3 *dst, size_t num)
 }
 
 bool GenerateNormals(
-    IA<float3> dst, const IA<float3> points,
-    const IA<int> counts, const IA<int> offsets, const IA<int> indices)
+    IArray<float3> dst, const IArray<float3> points,
+    const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices)
 {
     if (dst.size() != points.size()) {
         return false;
@@ -115,25 +115,63 @@ bool GenerateNormals(
     return true;
 }
 
-bool GenerateNormalsWithThreshold(
-    IA<float3> dst, const IA<float3> points,
-    const IA<int> counts, const IA<int> offsets, const IA<int> indices, float threshold)
+void TopologyRefiner::prepare(
+    const IArray<int>& counts_, const IArray<int>& offsets_, const IArray<int>& indices_, const IArray<float3>& points_)
 {
-    size_t num_points = points.size();
+    counts = counts_;
+    offsets = offsets_;
+    indices = indices_;
+    points = points_;
+    normals.reset(nullptr, 0);
+    uv.reset(nullptr, 0);
+
+    v2f_counts.clear();
+    v2f_offsets.clear();
+    shared_faces.clear();
+    shared_indices.clear();
+    face_normals.clear();
+    vertex_normals.clear();
+
+    new_points.clear();
+    new_normals.clear();
+    new_uv.clear();
+    new_indices.clear();
+    old2new.clear();
+}
+
+void TopologyRefiner::genNormals()
+{
+    vertex_normals.resize(points.size());
+    vertex_normals.zeroclear();
+
+    size_t num_faces = counts.size();
+    for (size_t fi = 0; fi < num_faces; ++fi)
+    {
+        int count = counts[fi];
+        const int *face = &indices[offsets[fi]];
+        float3 p0 = points[face[0]];
+        float3 p1 = points[face[1]];
+        float3 p2 = points[face[2]];
+        float3 n = cross(p1 - p0, p2 - p0);
+        for (int ci = 0; ci < count; ++ci) {
+            vertex_normals[face[ci]] += n;
+        }
+    }
+    Normalize(vertex_normals.data(), vertex_normals.size());
+
+    normals = vertex_normals;
+}
+
+void TopologyRefiner::genNormals(float smooth_angle)
+{
+    if (v2f_counts.empty()) { buildConnection(); }
+
     size_t num_indices = indices.size();
     size_t num_faces = counts.size();
-
-    if (dst.size() != num_indices) {
-        // dst size must be num_indices
-        return false;
-    }
-
-    // build connected face list
-    RawVector<int> cf_counts, cf_offsets, cf_connections;
-    BuildConnectedFaceList(cf_counts, cf_offsets, cf_connections, counts, indices, num_points);
+    vertex_normals.resize(num_indices);
 
     // gen face normals
-    RawVector<float3> face_normals(num_faces);
+    face_normals.resize(num_faces);
     face_normals.zeroclear();
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
@@ -148,7 +186,7 @@ bool GenerateNormalsWithThreshold(
     Normalize(face_normals.data(), face_normals.size());
 
     // gen vertex normals
-    const float angle = std::cos(threshold * Deg2Rad) - 0.001f;
+    const float angle = std::cos(smooth_angle * Deg2Rad) - 0.001f;
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
@@ -158,8 +196,8 @@ bool GenerateNormalsWithThreshold(
         for (int ci = 0; ci < count; ++ci) {
             int vi = face[ci];
 
-            int num_connections = cf_counts[vi];
-            int *connection = &cf_connections[cf_offsets[vi]];
+            int num_connections = v2f_counts[vi];
+            int *connection = &shared_faces[v2f_offsets[vi]];
             auto normal = float3::zero();
             for (int ni = 0; ni < num_connections; ++ni) {
                 auto& connected_normal = face_normals[connection[ni]];
@@ -168,26 +206,205 @@ bool GenerateNormalsWithThreshold(
                     normal += connected_normal;
                 }
             }
-            dst[offset + ci] = normal;
+            vertex_normals[offset + ci] = normal;
         }
     }
 
     // normalize
-    Normalize(dst.data(), dst.size());
+    Normalize(vertex_normals.data(), vertex_normals.size());
+
+    normals = vertex_normals;
+}
+
+bool TopologyRefiner::refine()
+{
+    int nindices = (int)indices.size();
+    new_points.reserve(nindices);
+    new_normals.reserve(nindices);
+    new_uv.reserve(nindices);
+    new_indices.reserve(nindices);
+
+    if (!uv.empty()) {
+        if (!normals.empty()) {
+            if (normals.size() == indices.size() && uv.size() == indices.size()) {
+                buildConnection();
+                for (int i = 0; i < nindices; ++i) {
+                    int vi = indices[i];
+                    int ni = findOrAddVertexPNT(vi, points[vi], normals[i], uv[i]);
+                    new_indices.push_back(ni);
+                }
+            }
+            else if (normals.size() == indices.size() && uv.size() == points.size()) {
+                buildConnection();
+                for (int i = 0; i < nindices; ++i) {
+                    int vi = indices[i];
+                    int ni = findOrAddVertexPNT(vi, points[vi], normals[i], uv[vi]);
+                    new_indices.push_back(ni);
+                }
+            }
+            else if (normals.size() == points.size() && uv.size() == indices.size()) {
+                buildConnection();
+                for (int i = 0; i < nindices; ++i) {
+                    int vi = indices[i];
+                    int ni = findOrAddVertexPNT(vi, points[vi], normals[vi], uv[i]);
+                    new_indices.push_back(ni);
+                }
+            }
+            else if (normals.size() == points.size() && uv.size() == points.size()) {
+                // no need to refine
+                return false;
+            }
+        }
+        else {
+            if (uv.size() == indices.size()) {
+                buildConnection();
+                for (int i = 0; i < nindices; ++i) {
+                    int vi = indices[i];
+                    int ni = findOrAddVertexPT(vi, points[vi], uv[i]);
+                    new_indices.push_back(ni);
+                }
+            }
+            else if (uv.size() == points.size()) {
+                // no need to refine
+                return false;
+            }
+        }
+    }
+    else {
+        if (normals.size() == indices.size()) {
+            buildConnection();
+            for (int i = 0; i < nindices; ++i) {
+                int vi = indices[i];
+                int ni = findOrAddVertexPN(vi, points[vi], normals[i]);
+                new_indices.push_back(ni);
+            }
+        }
+        else if (normals.size() == points.size()) {
+            // no need to refine
+            return false;
+        }
+    }
     return true;
 }
 
+void TopologyRefiner::buildConnection()
+{
+    if (v2f_counts.size() == points.size()) { return; }
 
+    size_t num_faces = counts.size();
+    size_t num_indices = indices.size();
+    size_t num_points = points.size();
+
+    v2f_counts.resize(num_points);
+    v2f_offsets.resize(num_points);
+    shared_faces.resize(num_indices);
+    shared_indices.resize(num_indices);
+    old2new.resize(num_indices, -1);
+    memset(v2f_counts.data(), 0, sizeof(int)*num_points);
+
+    {
+        const int *idx = indices.data();
+        for (auto& c : counts) {
+            for (int i = 0; i < c; ++i) {
+                v2f_counts[idx[i]]++;
+            }
+            idx += c;
+        }
+    }
+
+    RawVector<int> v2f_indices;
+    v2f_indices.resize(num_points);
+    memset(v2f_indices.data(), 0, sizeof(int)*num_points);
+
+    {
+        int offset = 0;
+        for (size_t i = 0; i < num_points; ++i) {
+            v2f_offsets[i] = offset;
+            offset += v2f_counts[i];
+        }
+    }
+    {
+        int i = 0;
+        for (int fi = 0; fi < (int)num_faces; ++fi) {
+            int c = counts[fi];
+            for (int ci = 0; ci < c; ++ci) {
+                int vi = indices[i + ci];
+                int ti = v2f_offsets[vi] + v2f_indices[vi]++;
+                shared_faces[ti] = fi;
+                shared_indices[ti] = i + ci;
+            }
+            i += c;
+        }
+    }
+}
+
+int TopologyRefiner::findOrAddVertexPNT(int vi, const float3& p, const float3& n, const float2& t)
+{
+    int offset = v2f_offsets[vi];
+    int count = v2f_counts[vi];
+    for (int ci = 0; ci < count; ++ci) {
+        int& ni = old2new[shared_indices[offset + ci]];
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n) && near_equal(new_uv[ni], t)) {
+            return ni;
+        }
+        else if (ni == -1) {
+            ni = (int)new_points.size();
+            new_points.push_back(p);
+            new_normals.push_back(n);
+            new_uv.push_back(t);
+            return ni;
+        }
+    }
+    return 0;
+}
+
+int TopologyRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
+{
+    int offset = v2f_offsets[vi];
+    int count = v2f_counts[vi];
+    for (int ci = 0; ci < count; ++ci) {
+        int& ni = old2new[shared_indices[offset + ci]];
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n)) {
+            return ni;
+        }
+        else if (ni == -1) {
+            ni = (int)new_points.size();
+            new_points.push_back(p);
+            new_normals.push_back(n);
+            return ni;
+        }
+    }
+    return 0;
+}
+
+int TopologyRefiner::findOrAddVertexPT(int vi, const float3 & p, const float2 & t)
+{
+    int offset = v2f_offsets[vi];
+    int count = v2f_counts[vi];
+    for (int ci = 0; ci < count; ++ci) {
+        int& ni = old2new[shared_indices[offset + ci]];
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_uv[ni], t)) {
+            return ni;
+        }
+        else if (ni == -1) {
+            ni = (int)new_points.size();
+            new_points.push_back(p);
+            new_uv.push_back(t);
+            return ni;
+        }
+    }
+    return 0;
+}
 
 struct TSpaceContext
 {
-    IA<float4> dst;
-    const IA<float3> points;
-    const IA<float3> normals;
-    const IA<float2> uv;
-    const IA<int> counts;
-    const IA<int> offsets;
-    const IA<int> indices;
+    IArray<float4> dst;
+    const IArray<float3> points;
+    const IArray<float3> normals;
+    const IArray<float2> uv;
+    const IArray<int> counts;
+    const IArray<int> offsets;
+    const IArray<int> indices;
 
     static int getNumFaces(const SMikkTSpaceContext *tctx)
     {
@@ -259,8 +476,8 @@ struct TSpaceContext
 };
 
 bool GenerateTangents(
-    IA<float4> dst, const IA<float3> points, const IA<float3> normals, const IA<float2> uv,
-    const IA<int> counts, const IA<int> offsets, const IA<int> indices)
+    IArray<float4> dst, const IArray<float3> points, const IArray<float3> normals, const IArray<float2> uv,
+    const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices)
 {
     TSpaceContext ctx = {dst, points, normals, uv, counts, offsets, indices};
 

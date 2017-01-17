@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math.h"
+#include "RawVector.h"
 #include "IntrusiveArray.h"
 
 namespace mu {
@@ -21,22 +22,14 @@ void Scale(float3 *dst, float s, size_t num);
 void ComputeBounds(const float3 *p, size_t num, float3& o_min, float3& o_max);
 void Normalize(float3 *dst, size_t num);
 
-template<class T>
-using IA = IntrusiveArray<T>;
-
 // size of dst must be num_points
 bool GenerateNormals(
-    IA<float3> dst, const IA<float3> points,
-    const IA<int> counts, const IA<int> offsets, const IA<int> indices);
-
-// size of dst must be num_indices
-bool GenerateNormalsWithThreshold(
-    IA<float3> dst, const IA<float3> points,
-    const IA<int> counts, const IA<int> offsets, const IA<int> indices, float threshold);
+    IArray<float3> dst, const IArray<float3> points,
+    const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices);
 
 bool GenerateTangents(
-    IA<float4> dst, const IA<float3> points, const IA<float3> normals, const IA<float2> uv,
-    const IA<int> counts, const IA<int> offsets, const IA<int> indices);
+    IArray<float4> dst, const IArray<float3> points, const IArray<float3> normals, const IArray<float2> uv,
+    const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices);
 
 
 
@@ -313,51 +306,39 @@ inline void TriangulateWithIndices(
     }
 }
 
-template<class DstArray, class SrcArray, class TmpArray = DstArray>
-inline void BuildConnectedFaceList(
-    DstArray& dst_counts, DstArray& dst_offsets, DstArray& dst_connections,
-    const SrcArray& counts, const SrcArray& indices, size_t num_points)
+struct TopologyRefiner
 {
-    size_t num_faces = counts.size();
-    size_t num_indices = indices.size();
+    IArray<int> counts;
+    IArray<int> offsets;
+    IArray<int> indices;
+    IArray<float3> points;
+    IArray<float3> normals;
+    IArray<float2> uv;
 
-    dst_counts.resize(num_points);
-    dst_offsets.resize(num_points);
-    dst_connections.resize(num_indices);
-    memset(dst_counts.data(), 0, sizeof(int)*num_points);
+    RawVector<int> v2f_counts;
+    RawVector<int> v2f_offsets;
+    RawVector<int> shared_faces;
+    RawVector<int> shared_indices;
+    RawVector<float3> face_normals;
+    RawVector<float3> vertex_normals;
 
-    {
-        const int *idx = indices.data();
-        for (auto& c : counts) {
-            for (int i = 0; i < c; ++i) {
-                dst_counts[idx[i]]++;
-            }
-            idx += c;
-        }
-    }
+    RawVector<float3> new_points;
+    RawVector<float3> new_normals;
+    RawVector<float2> new_uv;
+    RawVector<int>    new_indices;
+    RawVector<int>    old2new;
 
-    TmpArray tmp_indices;
-    tmp_indices.resize(num_points);
-    memset(tmp_indices.data(), 0, sizeof(int)*num_points);
+    void prepare(const IArray<int>& counts, const IArray<int>& offsets, const IArray<int>& indices, const IArray<float3>& points);
+    void genNormals();
+    void genNormals(float smooth_angle);
+    bool refine();
 
-    {
-        int offset = 0;
-        for (size_t i = 0; i < num_points; ++i) {
-            dst_offsets[i] = offset;
-            offset += dst_counts[i];
-        }
-    }
-    {
-        const int *idx = indices.data();
-        for (int fi = 0; fi < (int)num_faces; ++fi) {
-            int c = counts[fi];
-            for (int i = 0; i < c; ++i) {
-                dst_connections[dst_offsets[idx[i]] + tmp_indices[idx[i]]++] = fi;
-            }
-            idx += c;
-        }
-    }
-}
+private:
+    void buildConnection();
+    int findOrAddVertexPNT(int vi, const float3& p, const float3& n, const float2& t);
+    int findOrAddVertexPN(int vi, const float3& p, const float3& n);
+    int findOrAddVertexPT(int vi, const float3& p, const float2& t);
+};
 
 // SplitMeshHandler: [](int face_begin, int face_count, int vertex_count) -> void
 template<class IndexArray, class SplitMeshHandler>

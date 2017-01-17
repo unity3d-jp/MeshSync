@@ -49,31 +49,43 @@ void Test_Get()
 void Test_GenNormals()
 {
     RawVector<float3> points = {
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 1.0f },
-        { 1.0f, 1.0f, 0.0f },
-        { 1.0f, 1.0f, 1.0f },
-        { 2.0f, 0.0f, 0.0f },
-        { 2.0f, 0.0f, 1.0f },
+        { 0.0f, 0.0f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 2.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f },{ 1.0f, 0.0f, 1.0f },{ 2.0f, 0.0f, 1.0f },
+        { 0.0f, 0.0f, 2.0f },{ 1.0f, 0.0f, 2.0f },{ 2.0f, 1.0f, 2.0f },
+    };
+    RawVector<float2> uv = {
+        { 0.0f, 0.0f },{ 0.5f, 0.0f },{ 1.0f, 0.0f },
+        { 0.0f, 0.5f },{ 0.5f, 0.5f },{ 1.0f, 0.5f },
+        { 0.0f, 1.0f },{ 0.5f, 1.0f },{ 1.0f, 1.0f },
     };
     RawVector<int> indices = {
-        0, 1, 3, 2,
-        2, 3, 5, 4,
+        0, 1, 4, 3,
+        1, 2, 5, 4,
+        3, 4, 7, 6,
+        4, 5, 8, 7,
     };
     RawVector<int> counts = {
-        4, 4,
+        4, 4, 4, 4
     };
     RawVector<int> offsets = {
-        0, 4,
+        0, 4, 8, 12
     };
 
-    RawVector<float3> normals(indices.size());
-    mu::GenerateNormalsWithThreshold(normals, points, counts, offsets, indices, 10.0f);
+    RawVector<float2> uv_flattened(indices.size());
+    for (int i = 0; i < indices.size(); ++i) {
+        uv_flattened[i] = uv[indices[i]];
+    }
+
+    mu::TopologyRefiner refiner;
+    refiner.prepare(counts, offsets, indices, points);
+    refiner.uv = uv_flattened;
+    //refiner.genNormals(40.0f);
+    refiner.refine();
 }
 
 int main(int argc, char *argv[])
 {
     //Test_Sync(false);
-    Test_Get();
-    //Test_GenNormals();
+    //Test_Get();
+    Test_GenNormals();
 }

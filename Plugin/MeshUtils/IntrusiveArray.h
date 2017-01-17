@@ -48,3 +48,5 @@ private:
     T *m_data = nullptr;
     size_t m_size = 0;
 };
+
+template<class T> using IArray = IntrusiveArray<T>;
