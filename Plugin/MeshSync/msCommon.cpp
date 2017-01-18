@@ -206,7 +206,7 @@ void MeshData::clear()
 #undef Body
     transform = Transform();
     csd = ClientSpecificData();
-    submeshes.clear();
+    splits.clear();
 }
 
 uint32_t MeshData::getSerializeSize() const
@@ -266,7 +266,7 @@ void MeshData::swap(MeshData & v)
     std::swap(transform, v.transform);
     std::swap(csd, v.csd);
 
-    std::swap(submeshes, v.submeshes);
+    std::swap(splits, v.splits);
 }
 
 static tls<mu::TopologyRefiner> g_refiner;
@@ -329,11 +329,14 @@ void MeshData::refine(const MeshRefineSettings &settings)
     }
 
     auto& refiner = g_refiner.local();
+    refiner.triangulate = true;
+    refiner.swap_faces = true;
+    refiner.split_unit = settings.split_unit;
     refiner.prepare(counts, offsets, indices, points);
     refiner.uv = uv;
 
     // normals
-    bool gen_normals = settings.flags.gen_normals && normals.empty();
+    bool gen_normals = settings.flags.gen_normals && !points.empty();
     if (gen_normals) {
         bool do_smoothing =
             csd.type == ClientSpecificData::Type::Metasequoia && (csd.mq.smooth_angle >= 0.0f && csd.mq.smooth_angle < 360.0f);
@@ -344,88 +347,50 @@ void MeshData::refine(const MeshRefineSettings &settings)
             refiner.genNormals();
         }
     }
-
-    bool flattened = false;
-    {
-        if (refiner.refine()) {
-            points.swap(refiner.new_points);
-            normals.swap(refiner.new_normals);
-            uv.swap(refiner.new_uv);
-            indices.swap(refiner.new_indices);
-        }
-        else {
-            normals.swap(refiner.vertex_normals);
-        }
+    else {
+        refiner.normals = normals;
     }
-    //// flatten
-    //if ((int)points.size() > settings.split_unit ||
-    //    (int)normals.size() == num_indices ||
-    //    (int)uv.size() == num_indices)
-    //{
-    //    {
-    //        decltype(points) tmp;
-    //        mu::CopyWithIndices(tmp, points, indices, 0, num_indices);
-    //        points.swap(tmp);
-    //    }
-    //    if (!normals.empty() && (int)normals.size() != num_indices) {
-    //        decltype(normals) tmp;
-    //        mu::CopyWithIndices(tmp, normals, indices, 0, num_indices);
-    //        normals.swap(tmp);
-    //    }
-    //    if (!uv.empty() && (int)uv.size() != num_indices) {
-    //        decltype(uv) tmp;
-    //        mu::CopyWithIndices(tmp, uv, indices, 0, num_indices);
-    //        uv.swap(tmp);
-    //    }
-    //    flattened = true;
-    //}
 
     // tangents
-    bool gen_tangents = settings.flags.gen_tangents && tangents.empty() && !normals.empty() && !uv.empty();
+    bool gen_tangents = settings.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
     if (gen_tangents) {
-        tangents.resize(points.size());
-        mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
+        refiner.genTangents();
     }
 
-    // split & triangulate
-    bool split = settings.flags.split && points.size() > settings.split_unit;
-    if (split) {
-        submeshes.clear();
-        indices.resize(num_indices_tri);
+    // refine topology
+    {
+        refiner.refine();
+
+        points.swap(refiner.new_points);
+        normals.swap(refiner.new_normals);
+        tangents.swap(refiner.tangents);
+        uv.swap(refiner.new_uv);
+        indices.swap(refiner.new_indices_triangulated);
+
+        splits.clear();
+
         int *sub_indices = indices.data();
-        mu::Split(counts, settings.split_unit, [&](int face_begin, int num_faces, int num_vertices, int num_indices_triangulated) {
-            auto sub = Submesh();
+        for (auto& split : refiner.splits) {
+            auto sub = SplitData();
 
-            sub.indices.reset(sub_indices, num_indices_triangulated);
-            mu::Triangulate(sub.indices, IntrusiveArray<int>(&counts[face_begin], num_faces), settings.flags.swap_faces);
-            sub_indices += num_indices_triangulated;
+            sub.indices.reset(sub_indices, split.num_indices_triangulated);
+            sub_indices += split.num_indices_triangulated;
 
-            size_t ibegin = offsets[face_begin];
             if (!points.empty()) {
-                sub.points.reset(&points[ibegin], num_vertices);
+                sub.points.reset(&points[split.offset_points], split.num_points);
             }
             if (!normals.empty()) {
-                sub.normals.reset(&normals[ibegin], num_vertices);
+                sub.normals.reset(&normals[split.offset_points], split.num_points);
             }
             if (!uv.empty()) {
-                sub.uv.reset(&uv[ibegin], num_vertices);
+                sub.uv.reset(&uv[split.offset_points], split.num_points);
             }
             if (!tangents.empty()) {
-                sub.tangents.reset(&tangents[ibegin], num_vertices);
+                sub.tangents.reset(&tangents[split.offset_points], split.num_points);
             }
 
-            submeshes.push_back(sub);
-        });
-    }
-    else if(settings.flags.triangulate) {
-        decltype(indices) indices_triangulated(num_indices_tri);
-        if (flattened) {
-            mu::Triangulate(indices_triangulated, counts, settings.flags.swap_faces);
+            splits.push_back(sub);
         }
-        else {
-            mu::TriangulateWithIndices(indices_triangulated, counts, indices, settings.flags.swap_faces);
-        }
-        indices.swap(indices_triangulated);
     }
 }
 
@@ -483,14 +448,14 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     indices     = (int*)v.indices.data();
     num_points  = (int)v.points.size();
     num_indices = (int)v.indices.size();
-    num_submeshes = (int)v.submeshes.size();
+    num_splits = (int)v.splits.size();
 }
 
-SubmeshDataCS::SubmeshDataCS()
+SplitDataCS::SplitDataCS()
 {
 }
 
-SubmeshDataCS::SubmeshDataCS(const Submesh & v)
+SplitDataCS::SplitDataCS(const SplitData & v)
 {
     points      = (float3*)v.points.data();
     normals     = (float3*)v.normals.data();

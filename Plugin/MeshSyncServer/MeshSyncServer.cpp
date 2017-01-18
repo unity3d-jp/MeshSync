@@ -93,7 +93,7 @@ static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
     dst->path = src->path;
     dst->num_points = src->num_points;
     dst->num_indices = src->num_indices;
-    dst->num_submeshes = src->num_submeshes;
+    dst->num_splits = src->num_splits;
     dst->transform = src->transform;
 
     if (src->points) {
@@ -165,12 +165,12 @@ msAPI void msDeleteString(const char *str)
 }
 
 
-msAPI void msGetSubmeshData(ms::SubmeshDataCS *dst, const ms::MeshDataCS *v, int i)
+msAPI void msGetSplitData(ms::SplitDataCS *dst, const ms::MeshDataCS *v, int i)
 {
-    *dst = v->cpp->submeshes[i];
+    *dst = v->cpp->splits[i];
 }
 
-msAPI void msCopySubmeshData(ms::SubmeshDataCS *dst, const ms::SubmeshDataCS *src)
+msAPI void msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src)
 {
     dst->num_points = src->num_points;
     dst->num_indices = src->num_indices;

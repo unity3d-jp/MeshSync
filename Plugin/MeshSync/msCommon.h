@@ -125,7 +125,7 @@ struct Transform
     float4x4 world2local = float4x4::identity();
 };
 
-struct Submesh
+struct SplitData
 {
     IntrusiveArray<float3> points;
     IntrusiveArray<float3> normals;
@@ -177,7 +177,7 @@ public:
     ClientSpecificData csd;
 
     // not serialized
-    RawVector<Submesh> submeshes;
+    RawVector<SplitData> splits;
 
 
     MeshData();
@@ -222,13 +222,13 @@ struct MeshDataCS
     int *indices = nullptr;
     int num_points = 0;
     int num_indices = 0;
-    int num_submeshes = 0;
+    int num_splits = 0;
     Transform transform;
 
     MeshDataCS(const MeshData& v);
 };
 
-struct SubmeshDataCS
+struct SplitDataCS
 {
     float3 *points = nullptr;
     float3 *normals = nullptr;
@@ -238,8 +238,8 @@ struct SubmeshDataCS
     int num_points = 0;
     int num_indices = 0;
 
-    SubmeshDataCS();
-    SubmeshDataCS(const Submesh& v);
+    SplitDataCS();
+    SplitDataCS(const SplitData& v);
 };
 
 } // namespace ms

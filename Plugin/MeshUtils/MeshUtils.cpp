@@ -131,12 +131,15 @@ void TopologyRefiner::prepare(
     shared_indices.clear();
     face_normals.clear();
     vertex_normals.clear();
+    tangents.clear();
 
     new_points.clear();
     new_normals.clear();
     new_uv.clear();
     new_indices.clear();
     old2new.clear();
+
+    splits.clear();
 }
 
 void TopologyRefiner::genNormals()
@@ -216,75 +219,163 @@ void TopologyRefiner::genNormals(float smooth_angle)
     normals = vertex_normals;
 }
 
+template<class Body>
+void TopologyRefiner::doRefine(const Body& body)
+{
+    buildConnection();
+
+    int num_indices = (int)indices.size();
+    new_points.reserve(num_indices);
+    new_normals.reserve(num_indices);
+    new_uv.reserve(num_indices);
+    new_indices.reserve(num_indices);
+
+    splits.push_back({});
+    old2new.resize(num_indices, -1);
+
+    int num_faces = (int)counts.size();
+    for (int fi = 0; fi < num_faces; ++fi) {
+        int offset = offsets[fi];
+        int count = counts[fi];
+
+        if (split_unit > 0 && (int)new_points.size() - splits.back().offset_points + count > split_unit) {
+            // add new split
+            splits.push_back({});
+            auto& prev = splits[splits.size() - 2];
+            auto& cur = splits.back();
+            prev.num_points = (int)new_points.size() - prev.offset_points;
+            prev.num_indices = (int)new_indices.size() - prev.offset_indices;
+            cur.offset_faces = prev.offset_faces + prev.num_faces;
+            cur.offset_points = prev.offset_points + prev.num_points;
+            cur.offset_indices = prev.offset_indices + prev.num_indices;
+            std::fill(old2new.begin(), old2new.end(), -1);
+        }
+
+        auto& si = splits.back();
+        for (int ci = 0; ci < count; ++ci) {
+            int i = offset + ci;
+            int vi = indices[i];
+            int ni = body(vi, i);
+            new_indices.push_back(ni - si.offset_points);
+        }
+        ++si.num_faces;
+        si.num_indices_triangulated += (count - 2) * 3;
+    }
+
+    {
+        auto& cur = splits.back();
+        cur.num_points = (int)new_points.size() - cur.offset_points;
+        cur.num_indices = (int)new_indices.size() - cur.offset_indices;
+    }
+
+
+    if (triangulate) {
+        int num_indices_triangulated = 0;
+        for (auto& split : splits) {
+            num_indices_triangulated += split.num_indices_triangulated;
+        }
+
+        new_indices_triangulated.resize(num_indices_triangulated);
+        int *sub_indices = new_indices_triangulated.data();
+        for (auto& split : splits) {
+            mu::TriangulateWithIndices(sub_indices,
+                IntrusiveArray<int>(&counts[split.offset_faces], split.num_faces),
+                IntrusiveArray<int>(&new_indices[split.offset_indices], split.num_indices),
+                swap_faces);
+            sub_indices += split.num_indices_triangulated;
+        }
+    }
+    else if (swap_faces) {
+        // todo
+    }
+}
+
 bool TopologyRefiner::refine()
 {
-    int nindices = (int)indices.size();
-    new_points.reserve(nindices);
-    new_normals.reserve(nindices);
-    new_uv.reserve(nindices);
-    new_indices.reserve(nindices);
+    int num_points = (int)points.size();
+    int num_indices = (int)indices.size();
+    int num_normals = (int)normals.size();
+    int num_uv = (int)uv.size();
 
     if (!uv.empty()) {
         if (!normals.empty()) {
-            if (normals.size() == indices.size() && uv.size() == indices.size()) {
-                buildConnection();
-                for (int i = 0; i < nindices; ++i) {
-                    int vi = indices[i];
-                    int ni = findOrAddVertexPNT(vi, points[vi], normals[i], uv[i]);
-                    new_indices.push_back(ni);
+            if (!tangents.empty()) {
+                if (num_normals == num_indices && num_uv == num_indices) {
+                    doRefine([this](int vi, int i) {
+                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents[i], uv[i]);
+                    });
+                }
+                else if (num_normals == num_indices && num_uv == num_points) {
+                    doRefine([this](int vi, int i) {
+                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents[i], uv[vi]);
+                    });
+                }
+                else if (num_normals == num_points && num_uv == num_indices) {
+                    doRefine([this](int vi, int i) {
+                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents[i], uv[i]);
+                    });
+                }
+                else if (num_normals == num_points && num_uv == num_points) {
+                    doRefine([this](int vi, int) {
+                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents[vi], uv[vi]);
+                    });
                 }
             }
-            else if (normals.size() == indices.size() && uv.size() == points.size()) {
-                buildConnection();
-                for (int i = 0; i < nindices; ++i) {
-                    int vi = indices[i];
-                    int ni = findOrAddVertexPNT(vi, points[vi], normals[i], uv[vi]);
-                    new_indices.push_back(ni);
+            else {
+                if (num_normals == num_indices && num_uv == num_indices) {
+                    doRefine([this](int vi, int i) {
+                        return findOrAddVertexPNU(vi, points[vi], normals[i], uv[i]);
+                    });
                 }
-            }
-            else if (normals.size() == points.size() && uv.size() == indices.size()) {
-                buildConnection();
-                for (int i = 0; i < nindices; ++i) {
-                    int vi = indices[i];
-                    int ni = findOrAddVertexPNT(vi, points[vi], normals[vi], uv[i]);
-                    new_indices.push_back(ni);
+                else if (num_normals == num_indices && num_uv == num_points) {
+                    doRefine([this](int vi, int i) {
+                        return findOrAddVertexPNU(vi, points[vi], normals[i], uv[vi]);
+                    });
                 }
-            }
-            else if (normals.size() == points.size() && uv.size() == points.size()) {
-                // no need to refine
-                return false;
+                else if (num_normals == num_points && num_uv == num_indices) {
+                    doRefine([this](int vi, int i) {
+                        return findOrAddVertexPNU(vi, points[vi], normals[vi], uv[i]);
+                    });
+                }
+                else if (num_normals == num_points && num_uv == num_points) {
+                    doRefine([this](int vi, int) {
+                        return findOrAddVertexPNU(vi, points[vi], normals[vi], uv[vi]);
+                    });
+                }
             }
         }
         else {
-            if (uv.size() == indices.size()) {
-                buildConnection();
-                for (int i = 0; i < nindices; ++i) {
-                    int vi = indices[i];
-                    int ni = findOrAddVertexPT(vi, points[vi], uv[i]);
-                    new_indices.push_back(ni);
-                }
+            if (num_uv == num_indices) {
+                doRefine([this](int vi, int i) {
+                    return findOrAddVertexPU(vi, points[vi], uv[i]);
+                });
             }
-            else if (uv.size() == points.size()) {
-                // no need to refine
-                return false;
+            else if (num_uv == num_points) {
+                doRefine([this](int vi, int) {
+                    return findOrAddVertexPU(vi, points[vi], uv[vi]);
+                });
             }
         }
     }
     else {
-        if (normals.size() == indices.size()) {
-            buildConnection();
-            for (int i = 0; i < nindices; ++i) {
-                int vi = indices[i];
-                int ni = findOrAddVertexPN(vi, points[vi], normals[i]);
-                new_indices.push_back(ni);
-            }
+        if (num_normals == num_indices) {
+            doRefine([this](int vi, int i) {
+                return findOrAddVertexPN(vi, points[vi], normals[i]);
+            });
         }
-        else if (normals.size() == points.size()) {
-            // no need to refine
-            return false;
+        else if (num_normals == num_points) {
+            doRefine([this](int vi, int) {
+                return findOrAddVertexPN(vi, points[vi], normals[vi]);
+            });
         }
     }
     return true;
+}
+
+void TopologyRefiner::genTangents()
+{
+    tangents.resize(std::max<size_t>(normals.size(), uv.size()));
+    mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
 }
 
 void TopologyRefiner::buildConnection()
@@ -299,7 +390,6 @@ void TopologyRefiner::buildConnection()
     v2f_offsets.resize(num_points);
     shared_faces.resize(num_indices);
     shared_indices.resize(num_indices);
-    old2new.resize(num_indices, -1);
     memset(v2f_counts.data(), 0, sizeof(int)*num_points);
 
     {
@@ -338,20 +428,42 @@ void TopologyRefiner::buildConnection()
     }
 }
 
-int TopologyRefiner::findOrAddVertexPNT(int vi, const float3& p, const float3& n, const float2& t)
+int TopologyRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
     for (int ci = 0; ci < count; ++ci) {
         int& ni = old2new[shared_indices[offset + ci]];
-        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n) && near_equal(new_uv[ni], t)) {
+        // tangent can be omitted as it is generated by point, normal and uv
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n) && near_equal(new_uv[ni], u)) {
             return ni;
         }
         else if (ni == -1) {
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_normals.push_back(n);
-            new_uv.push_back(t);
+            new_tangents.push_back(t);
+            new_uv.push_back(u);
+            return ni;
+        }
+    }
+    return 0;
+}
+
+int TopologyRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u)
+{
+    int offset = v2f_offsets[vi];
+    int count = v2f_counts[vi];
+    for (int ci = 0; ci < count; ++ci) {
+        int& ni = old2new[shared_indices[offset + ci]];
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n) && near_equal(new_uv[ni], u)) {
+            return ni;
+        }
+        else if (ni == -1) {
+            ni = (int)new_points.size();
+            new_points.push_back(p);
+            new_normals.push_back(n);
+            new_uv.push_back(u);
             return ni;
         }
     }
@@ -377,19 +489,19 @@ int TopologyRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
     return 0;
 }
 
-int TopologyRefiner::findOrAddVertexPT(int vi, const float3 & p, const float2 & t)
+int TopologyRefiner::findOrAddVertexPU(int vi, const float3& p, const float2& u)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
     for (int ci = 0; ci < count; ++ci) {
         int& ni = old2new[shared_indices[offset + ci]];
-        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_uv[ni], t)) {
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_uv[ni], u)) {
             return ni;
         }
         else if (ni == -1) {
             ni = (int)new_points.size();
             new_points.push_back(p);
-            new_uv.push_back(t);
+            new_uv.push_back(u);
             return ni;
         }
     }
@@ -485,19 +597,10 @@ bool GenerateTangents(
     memset(&iface, 0, sizeof(iface));
     iface.m_getNumFaces = TSpaceContext::getNumFaces;
     iface.m_getNumVerticesOfFace = TSpaceContext::getCount;
-    if (dst.size() == indices.size()) {
-        iface.m_getPosition = TSpaceContext::getPositionFlattened;
-        iface.m_getNormal   = TSpaceContext::getNormalFlattened;
-        iface.m_getTexCoord = TSpaceContext::getTexCoordFlattened;
-        iface.m_setTSpace   = TSpaceContext::setTangentFlattened;
-
-    }
-    else {
-        iface.m_getPosition = TSpaceContext::getPosition;
-        iface.m_getNormal   = TSpaceContext::getNormal;
-        iface.m_getTexCoord = TSpaceContext::getTexCoord;
-        iface.m_setTSpace   = TSpaceContext::setTangent;
-    }
+    iface.m_getPosition = points.size()  == indices.size() ? TSpaceContext::getPositionFlattened : TSpaceContext::getPosition;
+    iface.m_getNormal   = normals.size() == indices.size() ? TSpaceContext::getNormalFlattened : TSpaceContext::getNormal;
+    iface.m_getTexCoord = uv.size()      == indices.size() ? TSpaceContext::getTexCoord : TSpaceContext::getTexCoordFlattened;
+    iface.m_setTSpace   = dst.size()     == indices.size() ? TSpaceContext::setTangentFlattened : TSpaceContext::setTangent;
 
     SMikkTSpaceContext tctx;
     memset(&tctx, 0, sizeof(tctx));

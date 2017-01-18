@@ -79,7 +79,9 @@ void Test_GenNormals()
     mu::TopologyRefiner refiner;
     refiner.prepare(counts, offsets, indices, points);
     refiner.uv = uv_flattened;
-    //refiner.genNormals(40.0f);
+    refiner.split_unit = 4;
+    refiner.genNormals(40.0f);
+    refiner.genTangents();
     refiner.refine();
 }
 

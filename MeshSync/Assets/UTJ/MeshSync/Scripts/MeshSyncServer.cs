@@ -132,10 +132,10 @@ namespace UTJ
             public IntPtr indices;
             public int num_points;
             public int num_indices;
-            public int num_submeshes;
+            public int num_splits;
             public TransformData transform;
         };
-        public struct SubmeshData
+        public struct SplitData
         {
             public IntPtr points;
             public IntPtr normals;
@@ -245,8 +245,8 @@ namespace UTJ
         [DllImport("MeshSyncServer")] public static extern IntPtr msCreateString(string str);
         [DllImport("MeshSyncServer")] public static extern void msDeleteString(IntPtr str);
 
-        [DllImport("MeshSyncServer")] public static extern void msGetSubmeshData(ref SubmeshData dst, ref MeshData v, int i);
-        [DllImport("MeshSyncServer")] public static extern void msCopySubmeshData(ref SubmeshData dst, ref SubmeshData src);
+        [DllImport("MeshSyncServer")] public static extern void msGetSplitData(ref SplitData dst, ref MeshData v, int i);
+        [DllImport("MeshSyncServer")] public static extern void msCopySplitData(ref SplitData dst, ref SplitData src);
 
 
         static void SwitchBit(ref int flags, bool f, int bit)
@@ -399,37 +399,47 @@ namespace UTJ
                 target.localScale = edata.transform.scale;
             }
 
-            if (edata.num_submeshes == 0)
+            for (int i = 0; i < edata.num_splits; ++i)
             {
-                var mdata = default(MeshData);
-                if (edata.points != IntPtr.Zero)
+                var smd = default(SplitData);
+                msGetSplitData(ref smd, ref edata, i);
+
+                var mdata = default(SplitData);
+                if (smd.points != IntPtr.Zero)
                 {
-                    m_points = new Vector3[edata.num_points];
+                    m_points = new Vector3[smd.num_points];
                     mdata.points = RawPtr(m_points);
                 }
-                if (edata.normals != IntPtr.Zero)
+                if (smd.normals != IntPtr.Zero)
                 {
-                    m_normals = new Vector3[edata.num_points];
+                    m_normals = new Vector3[smd.num_points];
                     mdata.normals = RawPtr(m_normals);
                 }
-                if (edata.tangents != IntPtr.Zero)
+                if (smd.tangents != IntPtr.Zero)
                 {
-                    m_tangents = new Vector4[edata.num_points];
+                    m_tangents = new Vector4[smd.num_points];
                     mdata.tangents = RawPtr(m_tangents);
                 }
-                if (edata.uv != IntPtr.Zero)
+                if (smd.uv != IntPtr.Zero)
                 {
-                    m_uv = new Vector2[edata.num_points];
+                    m_uv = new Vector2[smd.num_points];
                     mdata.uv = RawPtr(m_uv);
                 }
-                if (edata.indices != IntPtr.Zero)
+                if (smd.indices != IntPtr.Zero)
                 {
-                    m_indices = new int[edata.num_indices];
+                    m_indices = new int[smd.num_indices];
                     mdata.indices = RawPtr(m_indices);
                 }
-                msCopyData(EventType.Mesh, ref mdata, ref edata);
+                msCopySplitData(ref mdata, ref smd);
 
-                var mesh = GetOrAddMeshComponents(target.gameObject);
+                var t = target;
+                if (i > 0)
+                {
+                    t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true);
+                    t.gameObject.SetActive(true);
+                }
+
+                var mesh = GetOrAddMeshComponents(t.gameObject);
                 if (!mesh.isReadable) { return; }
                 mesh.Clear();
                 if (mdata.num_points > 0 && mdata.num_indices > 0)
@@ -445,68 +455,9 @@ namespace UTJ
                     mesh.UploadMeshData(false);
                 }
             }
-            else
-            {
-                for (int i = 0; i < edata.num_submeshes; ++i)
-                {
-                    var smd = default(SubmeshData);
-                    msGetSubmeshData(ref smd, ref edata, i);
 
-                    var mdata = default(SubmeshData);
-                    if (smd.points != IntPtr.Zero)
-                    {
-                        m_points = new Vector3[smd.num_points];
-                        mdata.points = RawPtr(m_points);
-                    }
-                    if (smd.normals != IntPtr.Zero)
-                    {
-                        m_normals = new Vector3[smd.num_points];
-                        mdata.normals = RawPtr(m_normals);
-                    }
-                    if (smd.tangents != IntPtr.Zero)
-                    {
-                        m_tangents = new Vector4[smd.num_points];
-                        mdata.tangents = RawPtr(m_tangents);
-                    }
-                    if (smd.uv != IntPtr.Zero)
-                    {
-                        m_uv = new Vector2[smd.num_points];
-                        mdata.uv = RawPtr(m_uv);
-                    }
-                    if (smd.indices != IntPtr.Zero)
-                    {
-                        m_indices = new int[smd.num_indices];
-                        mdata.indices = RawPtr(m_indices);
-                    }
-                    msCopySubmeshData(ref mdata, ref smd);
-
-                    var t = target;
-                    if (i > 0)
-                    {
-                        t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true);
-                        t.gameObject.SetActive(true);
-                    }
-
-                    var mesh = GetOrAddMeshComponents(t.gameObject);
-                    if (!mesh.isReadable) { return; }
-                    mesh.Clear();
-                    if (mdata.num_points > 0 && mdata.num_indices > 0)
-                    {
-                        if (mdata.points != IntPtr.Zero) { mesh.vertices = m_points; }
-                        if (mdata.normals != IntPtr.Zero) { mesh.normals = m_normals; }
-                        if (mdata.tangents != IntPtr.Zero) { mesh.tangents = m_tangents; }
-                        if (mdata.uv != IntPtr.Zero) { mesh.uv = m_uv; }
-                        mesh.SetIndices(m_indices, MeshTopology.Triangles, 0);
-#if UNITY_EDITOR
-                        if (m_genLightmapUV) Unwrapping.GenerateSecondaryUVSet(mesh);
-#endif
-                        mesh.UploadMeshData(false);
-                    }
-                }
-            }
-
-            int num_submeshes = Math.Max(1, edata.num_submeshes);
-            for (int i = num_submeshes; ; ++i)
+            int num_splits = Math.Max(1, edata.num_splits);
+            for (int i = num_splits; ; ++i)
             {
                 var t = FindObjectByPath(null, path + "/Submesh[" + i + "]");
                 if (t == null) { break; }

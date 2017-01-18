@@ -308,6 +308,10 @@ inline void TriangulateWithIndices(
 
 struct TopologyRefiner
 {
+    int split_unit = 0; // 0 == no split
+    bool triangulate = true;
+    bool swap_faces = true;
+
     IArray<int> counts;
     IArray<int> offsets;
     IArray<int> indices;
@@ -321,23 +325,41 @@ struct TopologyRefiner
     RawVector<int> shared_indices;
     RawVector<float3> face_normals;
     RawVector<float3> vertex_normals;
+    RawVector<float4> tangents;
 
     RawVector<float3> new_points;
     RawVector<float3> new_normals;
+    RawVector<float4> new_tangents;
     RawVector<float2> new_uv;
     RawVector<int>    new_indices;
+    RawVector<int>    new_indices_triangulated;
     RawVector<int>    old2new;
+
+    struct SplitInfo
+    {
+        int offset_faces = 0;
+        int offset_points = 0;
+        int offset_indices = 0;
+        int num_faces = 0;
+        int num_points = 0;
+        int num_indices = 0;
+        int num_indices_triangulated = 0;
+    };
+    RawVector<SplitInfo> splits;
 
     void prepare(const IArray<int>& counts, const IArray<int>& offsets, const IArray<int>& indices, const IArray<float3>& points);
     void genNormals();
     void genNormals(float smooth_angle);
     bool refine();
+    void genTangents();
 
 private:
     void buildConnection();
-    int findOrAddVertexPNT(int vi, const float3& p, const float3& n, const float2& t);
+    template<class Body> void doRefine(const Body& body);
+    int findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u);
+    int findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u);
     int findOrAddVertexPN(int vi, const float3& p, const float3& n);
-    int findOrAddVertexPT(int vi, const float3& p, const float2& t);
+    int findOrAddVertexPU(int vi, const float3& p, const float2& u);
 };
 
 // SplitMeshHandler: [](int face_begin, int face_count, int vertex_count) -> void

@@ -21,5 +21,5 @@ msAPI void          msCopyData(ms::MessageType et, void *dst, const void *src);
 msAPI const char*   msCreateString(const char *str);
 msAPI void          msDeleteString(const char *str);
 
-msAPI void          msGetSubmeshData(ms::SubmeshDataCS *dst, const ms::MeshDataCS *v, int i);
-msAPI void          msCopySubmeshData(ms::SubmeshDataCS *dst, const ms::SubmeshDataCS *src);
+msAPI void          msGetSplitData(ms::SplitDataCS *dst, const ms::MeshDataCS *v, int i);
+msAPI void          msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src);
