@@ -184,8 +184,8 @@ void Interleave(void *dst, VertexFormat format, size_t num,
 template<class VertexT>
 void TInterleave(VertexT *dst, const typename VertexT::arrays_t& src, size_t num);
 
-template<class DataArray, class IndexArray>
-void CopyWithIndices(DataArray& dst, const DataArray& src, const IndexArray& indices, size_t beg, size_t end);
+template<class DstArray, class SrcArray>
+void CopyWithIndices(DstArray& dst, const SrcArray& src, const SrcArray& indices, size_t beg, size_t end);
 
 
 
@@ -222,8 +222,8 @@ template<class VertexT> void Interleave_Generic(VertexT *dst, const typename Ver
 // impl
 // ------------------------------------------------------------
 
-template<class DataArray, class IndexArray>
-inline void CopyWithIndices(DataArray& dst, const DataArray& src, const IndexArray& indices, size_t beg, size_t end)
+template<class DstArray, class SrcArray, class IndexArray>
+inline void CopyWithIndices(DstArray& dst, const SrcArray& src, const IndexArray& indices, size_t beg, size_t end)
 {
     if (src.empty()) { return; }
 
@@ -235,10 +235,10 @@ inline void CopyWithIndices(DataArray& dst, const DataArray& src, const IndexArr
     }
 }
 
-template<class IntArray>
+template<class IntArray1, class IntArray2>
 inline void CountIndices(
-    const IntArray &counts,
-    IntArray& offsets,
+    const IntArray1 &counts,
+    IntArray2& offsets,
     int& num_indices,
     int& num_indices_triangulated)
 {
@@ -310,22 +310,23 @@ struct TopologyRefiner
 {
     int split_unit = 0; // 0 == no split
     bool triangulate = true;
-    bool swap_faces = true;
+    bool swap_faces = false;
 
     IArray<int> counts;
-    IArray<int> offsets;
     IArray<int> indices;
     IArray<float3> points;
     IArray<float3> normals;
     IArray<float2> uv;
 
+    RawVector<int> counts_tmp;
+    RawVector<int> offsets;
     RawVector<int> v2f_counts;
     RawVector<int> v2f_offsets;
     RawVector<int> shared_faces;
     RawVector<int> shared_indices;
     RawVector<float3> face_normals;
-    RawVector<float3> vertex_normals;
-    RawVector<float4> tangents;
+    RawVector<float3> normals_tmp;
+    RawVector<float4> tangents_tmp;
 
     RawVector<float3> new_points;
     RawVector<float3> new_normals;
@@ -334,27 +335,30 @@ struct TopologyRefiner
     RawVector<int>    new_indices;
     RawVector<int>    new_indices_triangulated;
     RawVector<int>    old2new;
+    int num_indices_tri = 0;
 
     struct SplitInfo
     {
-        int offset_faces = 0;
-        int offset_points = 0;
-        int offset_indices = 0;
         int num_faces = 0;
-        int num_points = 0;
+        int num_vertices = 0;
         int num_indices = 0;
         int num_indices_triangulated = 0;
     };
     RawVector<SplitInfo> splits;
 
-    void prepare(const IArray<int>& counts, const IArray<int>& offsets, const IArray<int>& indices, const IArray<float3>& points);
+    void prepare(const IArray<int>& counts, const IArray<int>& indices, const IArray<float3>& points);
     void genNormals();
     void genNormals(float smooth_angle);
-    bool refine();
     void genTangents();
+    bool refine(bool optimize);
+
+    void swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx);
 
 private:
+    bool refineDumb();
+    bool refineWithOptimization();
     void buildConnection();
+
     template<class Body> void doRefine(const Body& body);
     int findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u);
     int findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u);
@@ -362,18 +366,17 @@ private:
     int findOrAddVertexPU(int vi, const float3& p, const float2& u);
 };
 
-// SplitMeshHandler: [](int face_begin, int face_count, int vertex_count) -> void
 template<class IndexArray, class SplitMeshHandler>
 inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHandler& handler)
 {
-    int face_begin = 0;
+    int offset_faces = 0;
     for (int nth = 0; ; ++nth) {
         int num_faces = 0;
         int num_vertices = 0;
         int num_indices_triangulated = 0;
         int face_end = (int)counts.size();
         bool last = true;
-        for (int fi = face_begin; fi < face_end; ++fi) {
+        for (int fi = offset_faces; fi < face_end; ++fi) {
             int count = counts[fi];
             if (num_vertices + count > max_vertices) {
                 last = false;
@@ -387,10 +390,10 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
             }
         }
 
-        handler(face_begin, num_faces, num_vertices, num_indices_triangulated);
+        handler(num_faces, num_vertices, num_indices_triangulated);
 
         if (last) { break; }
-        face_begin += num_faces;
+        offset_faces += num_faces;
     }
     return true;
 }

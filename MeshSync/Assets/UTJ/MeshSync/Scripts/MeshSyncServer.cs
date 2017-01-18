@@ -275,6 +275,7 @@ namespace UTJ
         [SerializeField] bool m_genLightmapUV = false;
         [SerializeField] bool m_swapHandedness = true;
         [SerializeField] bool m_swapFaces = false;
+        [SerializeField] bool m_optimizeTopology = true;
         IntPtr m_server;
         msMessageHandler m_handler;
 
@@ -299,6 +300,7 @@ namespace UTJ
             settings.mrs.flags.genTangents = m_genTangents;
             settings.mrs.flags.swapHandedness = m_swapHandedness;
             settings.mrs.flags.swapFaces = m_swapFaces;
+            settings.mrs.flags.optimizeTopology = m_optimizeTopology;
             settings.mrs.scale = m_scale;
             settings.port = (ushort)m_port;
             m_server = msServerStart(ref settings);

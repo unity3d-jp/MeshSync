@@ -116,36 +116,55 @@ bool GenerateNormals(
 }
 
 void TopologyRefiner::prepare(
-    const IArray<int>& counts_, const IArray<int>& offsets_, const IArray<int>& indices_, const IArray<float3>& points_)
+    const IArray<int>& counts_, const IArray<int>& indices_, const IArray<float3>& points_)
 {
     counts = counts_;
-    offsets = offsets_;
     indices = indices_;
     points = points_;
     normals.reset(nullptr, 0);
     uv.reset(nullptr, 0);
 
+    counts_tmp.clear();
+    offsets.clear();
     v2f_counts.clear();
     v2f_offsets.clear();
     shared_faces.clear();
     shared_indices.clear();
     face_normals.clear();
-    vertex_normals.clear();
-    tangents.clear();
+    normals_tmp.clear();
+    tangents_tmp.clear();
 
     new_points.clear();
     new_normals.clear();
     new_uv.clear();
     new_indices.clear();
+    new_indices_triangulated.clear();
     old2new.clear();
 
     splits.clear();
+
+    int num_indices = 0;
+    if (counts.empty()) {
+        // assume all faces are triangle
+        num_indices = num_indices_tri = (int)indices.size();
+        int num_faces = num_indices / 3;
+        counts_tmp.resize(num_faces, 3);
+        offsets.resize(num_faces);
+        for (int i = 0; i < num_faces; ++i) {
+            offsets[i] = i * 3;
+        }
+        counts = counts_tmp;
+    }
+    else {
+        mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
+    }
+
 }
 
 void TopologyRefiner::genNormals()
 {
-    vertex_normals.resize(points.size());
-    vertex_normals.zeroclear();
+    normals_tmp.resize(points.size());
+    normals_tmp.zeroclear();
 
     size_t num_faces = counts.size();
     for (size_t fi = 0; fi < num_faces; ++fi)
@@ -157,12 +176,12 @@ void TopologyRefiner::genNormals()
         float3 p2 = points[face[2]];
         float3 n = cross(p1 - p0, p2 - p0);
         for (int ci = 0; ci < count; ++ci) {
-            vertex_normals[face[ci]] += n;
+            normals_tmp[face[ci]] += n;
         }
     }
-    Normalize(vertex_normals.data(), vertex_normals.size());
+    Normalize(normals_tmp.data(), normals_tmp.size());
 
-    normals = vertex_normals;
+    normals = normals_tmp;
 }
 
 void TopologyRefiner::genNormals(float smooth_angle)
@@ -171,7 +190,7 @@ void TopologyRefiner::genNormals(float smooth_angle)
 
     size_t num_indices = indices.size();
     size_t num_faces = counts.size();
-    vertex_normals.resize(num_indices);
+    normals_tmp.resize(num_indices);
 
     // gen face normals
     face_normals.resize(num_faces);
@@ -209,15 +228,91 @@ void TopologyRefiner::genNormals(float smooth_angle)
                     normal += connected_normal;
                 }
             }
-            vertex_normals[offset + ci] = normal;
+            normals_tmp[offset + ci] = normal;
         }
     }
 
     // normalize
-    Normalize(vertex_normals.data(), vertex_normals.size());
+    Normalize(normals_tmp.data(), normals_tmp.size());
 
-    normals = vertex_normals;
+    normals = normals_tmp;
 }
+
+void TopologyRefiner::genTangents()
+{
+    tangents_tmp.resize(std::max<size_t>(normals.size(), uv.size()));
+    mu::GenerateTangents(tangents_tmp, points, normals, uv, counts, offsets, indices);
+}
+
+bool TopologyRefiner::refine(bool optimize)
+{
+    return optimize ? refineWithOptimization() : refineDumb();
+}
+
+bool TopologyRefiner::refineDumb()
+{
+    int num_indices = (int)indices.size();
+    bool flattened = false;
+
+    // flatten
+    if ((int)points.size() > split_unit ||
+        (int)normals.size() == num_indices ||
+        (int)uv.size() == num_indices)
+    {
+        {
+            mu::CopyWithIndices(new_points, points, indices, 0, num_indices);
+            points = new_points;
+        }
+        if (!normals.empty() && (int)normals.size() != num_indices) {
+            mu::CopyWithIndices(new_normals, normals, indices, 0, num_indices);
+            normals = new_normals;
+        }
+        if (!uv.empty() && (int)uv.size() != num_indices) {
+            mu::CopyWithIndices(new_uv, uv, indices, 0, num_indices);
+            uv = new_uv;
+        }
+        flattened = true;
+    }
+
+
+    // split & triangulate
+    splits.clear();
+    new_indices_triangulated.resize(num_indices_tri);
+    if ((int)points.size() > split_unit) {
+        int *sub_indices = new_indices_triangulated.data();
+        int offset_faces = 0;
+        int offset_vertices = 0;
+        mu::Split(counts, split_unit, [&](int num_faces, int num_vertices, int num_indices_triangulated) {
+            mu::Triangulate(sub_indices, IntrusiveArray<int>(&counts[offset_faces], num_faces), swap_faces);
+            sub_indices += num_indices_triangulated;
+            offset_faces += num_faces;
+            offset_vertices += num_vertices;
+
+            auto split = SplitInfo{};
+            split.num_faces = num_faces;
+            split.num_vertices = num_vertices;
+            split.num_indices = num_vertices; // in this case num_vertex == num_indices
+            split.num_indices_triangulated = num_indices_triangulated;
+            splits.push_back(split);
+        });
+    }
+    else if (triangulate) {
+        if (flattened) {
+            mu::Triangulate(new_indices_triangulated, counts, swap_faces);
+        }
+        else {
+            mu::TriangulateWithIndices(new_indices_triangulated, counts, indices, swap_faces);
+        }
+        auto split = SplitInfo{};
+        split.num_faces = (int)counts.size();
+        split.num_vertices = (int)points.size();
+        split.num_indices = (int)indices.size();
+        split.num_indices_triangulated = (int)new_indices_triangulated.size();
+        splits.push_back(split);
+    }
+    return true;
+}
+
 
 template<class Body>
 void TopologyRefiner::doRefine(const Body& body)
@@ -230,59 +325,70 @@ void TopologyRefiner::doRefine(const Body& body)
     new_uv.reserve(num_indices);
     new_indices.reserve(num_indices);
 
-    splits.push_back({});
     old2new.resize(num_indices, -1);
 
-    int num_faces = (int)counts.size();
-    for (int fi = 0; fi < num_faces; ++fi) {
+    int nf = (int)counts.size();
+    int offset_vertices = 0;
+    int offset_indices = 0;
+    int num_faces = 0;
+    int num_indices_triangulated = 0;
+    for (int fi = 0; fi < nf; ++fi) {
         int offset = offsets[fi];
         int count = counts[fi];
 
-        if (split_unit > 0 && (int)new_points.size() - splits.back().offset_points + count > split_unit) {
+        if (split_unit > 0 && (int)new_points.size() - offset_vertices + count > split_unit) {
             // add new split
-            splits.push_back({});
-            auto& prev = splits[splits.size() - 2];
-            auto& cur = splits.back();
-            prev.num_points = (int)new_points.size() - prev.offset_points;
-            prev.num_indices = (int)new_indices.size() - prev.offset_indices;
-            cur.offset_faces = prev.offset_faces + prev.num_faces;
-            cur.offset_points = prev.offset_points + prev.num_points;
-            cur.offset_indices = prev.offset_indices + prev.num_indices;
+            auto split = SplitInfo{};
+            split.num_faces = num_faces;
+            split.num_indices_triangulated = num_indices_triangulated;
+            split.num_vertices = (int)new_points.size() - offset_vertices;
+            split.num_indices = (int)new_indices.size() - offset_indices;
+            splits.push_back(split);
+
             std::fill(old2new.begin(), old2new.end(), -1);
+            offset_vertices += split.num_vertices;
+            offset_indices += split.num_indices;
+            num_faces = 0;
+            num_indices_triangulated = 0;
         }
 
-        auto& si = splits.back();
         for (int ci = 0; ci < count; ++ci) {
             int i = offset + ci;
             int vi = indices[i];
             int ni = body(vi, i);
-            new_indices.push_back(ni - si.offset_points);
+            new_indices.push_back(ni - offset_vertices);
         }
-        ++si.num_faces;
-        si.num_indices_triangulated += (count - 2) * 3;
+        ++num_faces;
+        num_indices_triangulated += (count - 2) * 3;
     }
 
     {
-        auto& cur = splits.back();
-        cur.num_points = (int)new_points.size() - cur.offset_points;
-        cur.num_indices = (int)new_indices.size() - cur.offset_indices;
+        auto split = SplitInfo{};
+        split.num_faces = num_faces;
+        split.num_indices_triangulated = num_indices_triangulated;
+        split.num_vertices = (int)new_points.size() - offset_vertices;
+        split.num_indices = (int)new_indices.size() - offset_indices;
+        splits.push_back(split);
     }
 
-
     if (triangulate) {
-        int num_indices_triangulated = 0;
+        int nindices = 0;
         for (auto& split : splits) {
-            num_indices_triangulated += split.num_indices_triangulated;
+            nindices += split.num_indices_triangulated;
         }
 
-        new_indices_triangulated.resize(num_indices_triangulated);
+        new_indices_triangulated.resize(nindices);
         int *sub_indices = new_indices_triangulated.data();
+        int *n_counts = counts.data();
+        int *n_indices = new_indices.data();
         for (auto& split : splits) {
             mu::TriangulateWithIndices(sub_indices,
-                IntrusiveArray<int>(&counts[split.offset_faces], split.num_faces),
-                IntrusiveArray<int>(&new_indices[split.offset_indices], split.num_indices),
+                IntrusiveArray<int>(n_counts, split.num_faces),
+                IntrusiveArray<int>(n_indices, split.num_indices),
                 swap_faces);
             sub_indices += split.num_indices_triangulated;
+            n_counts += split.num_faces;
+            n_indices += split.num_indices;
         }
     }
     else if (swap_faces) {
@@ -290,7 +396,7 @@ void TopologyRefiner::doRefine(const Body& body)
     }
 }
 
-bool TopologyRefiner::refine()
+bool TopologyRefiner::refineWithOptimization()
 {
     int num_points = (int)points.size();
     int num_indices = (int)indices.size();
@@ -299,25 +405,25 @@ bool TopologyRefiner::refine()
 
     if (!uv.empty()) {
         if (!normals.empty()) {
-            if (!tangents.empty()) {
+            if (!tangents_tmp.empty()) {
                 if (num_normals == num_indices && num_uv == num_indices) {
                     doRefine([this](int vi, int i) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents[i], uv[i]);
+                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents_tmp[i], uv[i]);
                     });
                 }
                 else if (num_normals == num_indices && num_uv == num_points) {
                     doRefine([this](int vi, int i) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents[i], uv[vi]);
+                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents_tmp[i], uv[vi]);
                     });
                 }
                 else if (num_normals == num_points && num_uv == num_indices) {
                     doRefine([this](int vi, int i) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents[i], uv[i]);
+                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents_tmp[i], uv[i]);
                     });
                 }
                 else if (num_normals == num_points && num_uv == num_points) {
                     doRefine([this](int vi, int) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents[vi], uv[vi]);
+                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents_tmp[vi], uv[vi]);
                     });
                 }
             }
@@ -372,10 +478,19 @@ bool TopologyRefiner::refine()
     return true;
 }
 
-void TopologyRefiner::genTangents()
+void TopologyRefiner::swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx)
 {
-    tangents.resize(std::max<size_t>(normals.size(), uv.size()));
-    mu::GenerateTangents(tangents, points, normals, uv, counts, offsets, indices);
+    if (!new_points.empty()) { p.swap(new_points); }
+
+    if (!new_normals.empty()) { n.swap(new_normals); }
+    else if (!normals_tmp.empty()) { n.swap(normals_tmp); }
+
+    if (!new_tangents.empty()) { t.swap(new_tangents); }
+    else if (!tangents_tmp.empty()) { t.swap(tangents_tmp); }
+
+    if (!new_uv.empty()) { u.swap(new_uv); }
+
+    if (!new_indices_triangulated.empty()) { idx.swap(new_indices_triangulated); }
 }
 
 void TopologyRefiner::buildConnection()

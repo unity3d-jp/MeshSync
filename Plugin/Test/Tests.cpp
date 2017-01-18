@@ -67,9 +67,6 @@ void Test_GenNormals()
     RawVector<int> counts = {
         4, 4, 4, 4
     };
-    RawVector<int> offsets = {
-        0, 4, 8, 12
-    };
 
     RawVector<float2> uv_flattened(indices.size());
     for (int i = 0; i < indices.size(); ++i) {
@@ -77,12 +74,12 @@ void Test_GenNormals()
     }
 
     mu::TopologyRefiner refiner;
-    refiner.prepare(counts, offsets, indices, points);
+    refiner.prepare(counts, indices, points);
     refiner.uv = uv_flattened;
-    refiner.split_unit = 4;
+    refiner.split_unit = 100;
     refiner.genNormals(40.0f);
     refiner.genTangents();
-    refiner.refine();
+    refiner.refine(false);
 }
 
 int main(int argc, char *argv[])

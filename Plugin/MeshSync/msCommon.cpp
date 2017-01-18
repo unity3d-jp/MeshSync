@@ -311,28 +311,11 @@ void MeshData::refine(const MeshRefineSettings &settings)
         mu::InvertX(points.data(), points.size());
     }
 
-    RawVector<int> offsets;
-    int num_indices = 0;
-    int num_indices_tri = 0;
-    if (counts.empty()) {
-        // assume all faces are triangle
-        num_indices = num_indices_tri = (int)indices.size();
-        int num_faces = num_indices / 3;
-        counts.resize(num_faces, 3);
-        offsets.resize(num_faces);
-        for (int i = 0; i < num_faces; ++i) {
-            offsets[i] = i * 3;
-        }
-    }
-    else {
-        mu::CountIndices(counts, offsets, num_indices, num_indices_tri);
-    }
-
     auto& refiner = g_refiner.local();
     refiner.triangulate = true;
-    refiner.swap_faces = true;
+    refiner.swap_faces = settings.flags.swap_faces;
     refiner.split_unit = settings.split_unit;
-    refiner.prepare(counts, offsets, indices, points);
+    refiner.prepare(counts, indices, points);
     refiner.uv = uv;
 
     // normals
@@ -359,17 +342,12 @@ void MeshData::refine(const MeshRefineSettings &settings)
 
     // refine topology
     {
-        refiner.refine();
-
-        points.swap(refiner.new_points);
-        normals.swap(refiner.new_normals);
-        tangents.swap(refiner.tangents);
-        uv.swap(refiner.new_uv);
-        indices.swap(refiner.new_indices_triangulated);
+        refiner.refine(settings.flags.optimize_topology);
+        refiner.swapNewData(points, normals, tangents, uv, indices);
 
         splits.clear();
-
         int *sub_indices = indices.data();
+        int offset_vertices = 0;
         for (auto& split : refiner.splits) {
             auto sub = SplitData();
 
@@ -377,18 +355,18 @@ void MeshData::refine(const MeshRefineSettings &settings)
             sub_indices += split.num_indices_triangulated;
 
             if (!points.empty()) {
-                sub.points.reset(&points[split.offset_points], split.num_points);
+                sub.points.reset(&points[offset_vertices], split.num_vertices);
             }
             if (!normals.empty()) {
-                sub.normals.reset(&normals[split.offset_points], split.num_points);
+                sub.normals.reset(&normals[offset_vertices], split.num_vertices);
             }
             if (!uv.empty()) {
-                sub.uv.reset(&uv[split.offset_points], split.num_points);
+                sub.uv.reset(&uv[offset_vertices], split.num_vertices);
             }
             if (!tangents.empty()) {
-                sub.tangents.reset(&tangents[split.offset_points], split.num_points);
+                sub.tangents.reset(&tangents[offset_vertices], split.num_vertices);
             }
-
+            offset_vertices += split.num_vertices;
             splits.push_back(sub);
         }
     }
