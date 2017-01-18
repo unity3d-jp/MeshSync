@@ -375,6 +375,29 @@ void MeshData::refine(const MeshRefineSettings &settings)
             offset_vertices += split.num_vertices;
             splits.push_back(sub);
         }
+
+        // setup submeshes
+        {
+            int nsm = 0;
+            int *tri = indices.data();
+            for (auto& split : refiner.splits) {
+                for (int i = 0; i < split.num_submeshes; ++i) {
+                    auto& sm = refiner.submeshes[nsm + i];
+                    SubmeshData tmp;
+                    tmp.materialID = sm.materialID;
+                    tmp.indices.reset(tri, sm.num_indices_tri);
+                    tri += sm.num_indices_tri;
+                    submeshes.push_back(tmp);
+                }
+                nsm += split.num_submeshes;
+            }
+            nsm = 0;
+            for (int i = 0; i < splits.size(); ++i) {
+                int n = refiner.splits[i].num_submeshes;
+                splits[i].submeshes.reset(&submeshes[nsm], n);
+                nsm += n;
+            }
+        }
     }
 }
 
@@ -432,7 +455,7 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     indices     = (int*)v.indices.data();
     num_points  = (int)v.points.size();
     num_indices = (int)v.indices.size();
-    num_splits = (int)v.splits.size();
+    num_splits  = (int)v.splits.size();
 }
 
 SplitDataCS::SplitDataCS()
@@ -446,8 +469,10 @@ SplitDataCS::SplitDataCS(const SplitData & v)
     tangents    = (float4*)v.tangents.data();
     uv          = (float2*)v.uv.data();
     indices     = (int*)v.indices.data();
+    submeshes   = (SubmeshData*)v.submeshes.data();
     num_points  = (int)v.points.size();
     num_indices = (int)v.indices.size();
+    num_submeshes = (int)v.submeshes.size();
 }
 
 } // namespace ms

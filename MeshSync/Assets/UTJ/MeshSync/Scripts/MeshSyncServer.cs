@@ -142,8 +142,10 @@ namespace UTJ
             public IntPtr tangents;
             public IntPtr uv;
             public IntPtr indices;
+            public IntPtr submeshes;
             public int num_points;
             public int num_indices;
+            public int num_submeshes;
         };
 
         public struct MeshRefineFlags
@@ -247,6 +249,9 @@ namespace UTJ
 
         [DllImport("MeshSyncServer")] public static extern void msGetSplitData(ref SplitData dst, ref MeshData v, int i);
         [DllImport("MeshSyncServer")] public static extern void msCopySplitData(ref SplitData dst, ref SplitData src);
+        [DllImport("MeshSyncServer")] public static extern int  msSubmeshGetMaterialID(ref SplitData src, int i);
+        [DllImport("MeshSyncServer")] public static extern int  msSubmeshGetNumIndices(ref SplitData src, int i);
+        [DllImport("MeshSyncServer")] public static extern void msSubmeshCopyIndices(IntPtr dst, ref SplitData src, int i);
 
 
         static void SwitchBit(ref int flags, bool f, int bit)
@@ -427,11 +432,6 @@ namespace UTJ
                     m_uv = new Vector2[smd.num_points];
                     mdata.uv = RawPtr(m_uv);
                 }
-                if (smd.indices != IntPtr.Zero)
-                {
-                    m_indices = new int[smd.num_indices];
-                    mdata.indices = RawPtr(m_indices);
-                }
                 msCopySplitData(ref mdata, ref smd);
 
                 var t = target;
@@ -450,7 +450,27 @@ namespace UTJ
                     if (mdata.normals != IntPtr.Zero) { mesh.normals = m_normals; }
                     if (mdata.tangents != IntPtr.Zero) { mesh.tangents = m_tangents; }
                     if (mdata.uv != IntPtr.Zero) { mesh.uv = m_uv; }
-                    mesh.SetIndices(m_indices, MeshTopology.Triangles, 0);
+
+                    if (mdata.num_submeshes == 0 && smd.indices != IntPtr.Zero)
+                    {
+                        var tmp = default(SplitData);
+                        m_indices = new int[smd.num_indices];
+                        tmp.indices = RawPtr(m_indices);
+                        msCopySplitData(ref tmp, ref smd);
+                        mesh.subMeshCount = 1;
+                        mesh.SetIndices(m_indices, MeshTopology.Triangles, 0);
+                    }
+                    else
+                    {
+                        mesh.subMeshCount = mdata.num_submeshes;
+                        for (int smi = 0; smi < mdata.num_submeshes; ++smi)
+                        {
+                            int num_indices = msSubmeshGetNumIndices(ref smd, smi);
+                            m_indices = new int[num_indices];
+                            msSubmeshCopyIndices(RawPtr(m_indices), ref smd, smi);
+                            mesh.SetIndices(m_indices, MeshTopology.Triangles, smi);
+                        }
+                    }
 #if UNITY_EDITOR
                     if (m_genLightmapUV) Unwrapping.GenerateSecondaryUVSet(mesh);
 #endif

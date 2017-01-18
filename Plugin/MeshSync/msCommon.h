@@ -128,6 +128,7 @@ struct Transform
 struct SubmeshData
 {
     IntrusiveArray<int> indices;
+    int materialID = 0;
 };
 
 struct SplitData
@@ -242,8 +243,11 @@ struct SplitDataCS
     float4 *tangents = nullptr;
     float2 *uv = nullptr;
     int *indices = nullptr;
+    SubmeshData *submeshes = nullptr;
+
     int num_points = 0;
     int num_indices = 0;
+    int num_submeshes = 0;
 
     SplitDataCS();
     SplitDataCS(const SplitData& v);

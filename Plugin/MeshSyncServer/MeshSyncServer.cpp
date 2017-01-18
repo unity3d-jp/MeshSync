@@ -174,6 +174,8 @@ msAPI void msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src)
 {
     dst->num_points = src->num_points;
     dst->num_indices = src->num_indices;
+    dst->num_submeshes = src->num_submeshes;
+    dst->submeshes = src->submeshes;
 
     if (src->points && dst->points) {
         memcpy(dst->points, src->points, sizeof(float3)*src->num_points);
@@ -190,4 +192,19 @@ msAPI void msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src)
     if (src->indices && dst->indices) {
         memcpy(dst->indices, src->indices, sizeof(int)*src->num_indices);
     }
+}
+
+msAPI int msSubmeshGetMaterialID(ms::SplitDataCS * src, int i)
+{
+    if (!src) { return 0; }
+    return (int)src->submeshes[i].materialID;
+}
+msAPI int msSubmeshGetNumIndices(ms::SplitDataCS * src, int i)
+{
+    if (!src) { return 0; }
+    return (int)src->submeshes[i].indices.size();
+}
+msAPI void msSubmeshCopyIndices(int * dst, ms::SplitDataCS * src, int i)
+{
+    memcpy(dst, src->submeshes[i].indices.data(), sizeof(int) * src->submeshes[i].indices.size());
 }

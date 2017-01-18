@@ -67,6 +67,9 @@ void Test_GenNormals()
     RawVector<int> counts = {
         4, 4, 4, 4
     };
+    RawVector<int> materialIDs = {
+        0, 1, 2, 3
+    };
 
     RawVector<float2> uv_flattened(indices.size());
     for (int i = 0; i < indices.size(); ++i) {
@@ -76,10 +79,11 @@ void Test_GenNormals()
     mu::TopologyRefiner refiner;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv_flattened;
-    refiner.split_unit = 100;
+    refiner.split_unit = 8;
     refiner.genNormals(40.0f);
     refiner.genTangents();
     refiner.refine(false);
+    refiner.genSubmesh(materialIDs);
 }
 
 int main(int argc, char *argv[])

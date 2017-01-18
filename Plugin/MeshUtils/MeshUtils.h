@@ -312,14 +312,10 @@ struct TopologyRefiner
 {
     struct Submesh
     {
-        RawVector<int> offset_faces_tri;
-        RawVector<int> faces_tri;
-        RawVector<int*> faces_to_write;
-
-        void clear();
+        int num_indices_tri = 0;
+        int materialID = 0;
+        int* faces_to_write = nullptr;
     };
-    using SubmeshPtr = std::shared_ptr<Submesh>;
-    using Submeshes = std::vector<SubmeshPtr>;
 
     struct Split
     {
@@ -327,6 +323,7 @@ struct TopologyRefiner
         int num_vertices = 0;
         int num_indices = 0;
         int num_indices_triangulated = 0;
+        int num_submeshes = 0;
     };
 
 
@@ -340,7 +337,7 @@ struct TopologyRefiner
     IArray<float3> normals;
     IArray<float2> uv;
 
-    Submeshes submeshes;
+    RawVector<Submesh> submeshes;
     RawVector<Split> splits;
 
 private:
@@ -360,6 +357,7 @@ private:
     RawVector<float2> new_uv;
     RawVector<int>    new_indices;
     RawVector<int>    new_indices_triangulated;
+    RawVector<int>    new_indices_submeshes;
     RawVector<int>    old2new;
     int num_indices_tri = 0;
 
@@ -371,7 +369,7 @@ public:
 
     bool refine(bool optimize);
 
-    // should be called after refine()
+    // should be called after refine(), and only valid for triangulated meshes
     bool genSubmesh(const IArray<int>& materialIDs);
 
     void swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx);

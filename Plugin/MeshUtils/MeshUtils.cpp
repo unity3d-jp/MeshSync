@@ -124,6 +124,9 @@ void TopologyRefiner::prepare(
     normals.reset(nullptr, 0);
     uv.reset(nullptr, 0);
 
+    submeshes.clear();
+    splits.clear();
+
     counts_tmp.clear();
     offsets.clear();
     v2f_counts.clear();
@@ -139,11 +142,9 @@ void TopologyRefiner::prepare(
     new_uv.clear();
     new_indices.clear();
     new_indices_triangulated.clear();
+    new_indices_submeshes.clear();
     old2new.clear();
     num_indices_tri = 0;
-
-    splits.clear();
-    submeshes.clear();
 
     int num_indices = 0;
     if (counts.empty()) {
@@ -253,12 +254,6 @@ bool TopologyRefiner::refine(bool optimize)
 
 
 
-void TopologyRefiner::Submesh::clear()
-{
-    offset_faces_tri.clear();
-    faces_tri.clear();
-    faces_to_write.clear();
-}
 
 bool TopologyRefiner::genSubmesh(const IArray<int>& materialIDs)
 {
@@ -266,45 +261,55 @@ bool TopologyRefiner::genSubmesh(const IArray<int>& materialIDs)
         return false;
     }
 
-    while (submeshes.size() < splits.size()) {
-        submeshes.emplace_back(new Submesh());
-    }
-    for (auto& sm : submeshes) { sm->clear(); }
+    submeshes.clear();
+
+    new_indices_submeshes.resize(new_indices_triangulated.size());
+    const int *faces_to_read = new_indices_triangulated.data();
+    int *faces_to_write = new_indices_submeshes.data();
 
     int num_splits = (int)splits.size();
-
     int offset_faces = 0;
-    const int *faces_to_read = new_indices_triangulated.data();
+
+    RawVector<Submesh> sm;
+
     for (int si = 0; si < num_splits; ++si) {
         auto& split = splits[si];
-        auto& sm = *submeshes[si];
 
-        sm.faces_tri.resize(split.num_indices_triangulated);
+        // count triangle indices
         for (int fi = 0; fi < split.num_faces; ++fi) {
             int mid = materialIDs[offset_faces + fi];
-            if (mid >= (int)sm.offset_faces_tri.size()) {
-                sm.offset_faces_tri.resize(mid + 1, 0);
-                sm.faces_to_write.resize(mid + 1, nullptr);
+            while (mid >= (int)sm.size()) {
+                int id = (int)sm.size();
+                sm.push_back({});
+                sm.back().materialID = id;
             }
-            sm.offset_faces_tri[mid] += (counts[fi] - 2) * 3;
+            sm[mid].num_indices_tri += (counts[fi] - 2) * 3;
         }
 
-        int *writer = sm.faces_tri.data();
-        for (int mi = 0; mi < (int)sm.faces_to_write.size(); ++mi) {
-            sm.faces_to_write[mi] = writer;
-            writer += sm.offset_faces_tri[mi];
+        for (int mi = 0; mi < (int)sm.size(); ++mi) {
+            sm[mi].faces_to_write = faces_to_write;
+            faces_to_write += sm[mi].num_indices_tri;
         }
 
+        // copy triangles
         for (int fi = 0; fi < split.num_faces; ++fi) {
             int mid = materialIDs[offset_faces + fi];
             int count = counts[offset_faces + fi];
             int nidx = (count - 2) * 3;
             for (int i = 0; i < nidx; ++i) {
-                *(sm.faces_to_write[mid]++) = *(faces_to_read++);
+                *(sm[mid].faces_to_write++) = *(faces_to_read++);
+            }
+        }
+
+        for (int mi = 0; mi < (int)sm.size(); ++mi) {
+            if (sm[mi].num_indices_tri > 0) {
+                ++split.num_submeshes;
+                submeshes.push_back(sm[mi]);
             }
         }
 
         offset_faces += split.num_faces;
+        sm.clear();
     }
     return true;
 }
@@ -550,7 +555,8 @@ void TopologyRefiner::swapNewData(RawVector<float3>& p, RawVector<float3>& n, Ra
 
     if (!new_uv.empty()) { u.swap(new_uv); }
 
-    if (!new_indices_triangulated.empty()) { idx.swap(new_indices_triangulated); }
+    if (!new_indices_submeshes.empty()) { idx.swap(new_indices_submeshes); }
+    else if (!new_indices_triangulated.empty()) { idx.swap(new_indices_triangulated); }
 }
 
 void TopologyRefiner::buildConnection()

@@ -23,3 +23,5 @@ msAPI void          msDeleteString(const char *str);
 
 msAPI void          msGetSplitData(ms::SplitDataCS *dst, const ms::MeshDataCS *v, int i);
 msAPI void          msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src);
+msAPI int           msGetNumSubmeshIndices(ms::SplitDataCS *src, int i);
+msAPI void          msCopySubmeshIndices(int *dst, ms::SplitDataCS *src, int i);
