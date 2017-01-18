@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+#include <memory>
 #include "Math.h"
 #include "RawVector.h"
 #include "IntrusiveArray.h"
@@ -308,6 +310,26 @@ inline void TriangulateWithIndices(
 
 struct TopologyRefiner
 {
+    struct Submesh
+    {
+        RawVector<int> offset_faces_tri;
+        RawVector<int> faces_tri;
+        RawVector<int*> faces_to_write;
+
+        void clear();
+    };
+    using SubmeshPtr = std::shared_ptr<Submesh>;
+    using Submeshes = std::vector<SubmeshPtr>;
+
+    struct Split
+    {
+        int num_faces = 0;
+        int num_vertices = 0;
+        int num_indices = 0;
+        int num_indices_triangulated = 0;
+    };
+
+
     int split_unit = 0; // 0 == no split
     bool triangulate = true;
     bool swap_faces = false;
@@ -318,6 +340,10 @@ struct TopologyRefiner
     IArray<float3> normals;
     IArray<float2> uv;
 
+    Submeshes submeshes;
+    RawVector<Split> splits;
+
+private:
     RawVector<int> counts_tmp;
     RawVector<int> offsets;
     RawVector<int> v2f_counts;
@@ -337,20 +363,16 @@ struct TopologyRefiner
     RawVector<int>    old2new;
     int num_indices_tri = 0;
 
-    struct SplitInfo
-    {
-        int num_faces = 0;
-        int num_vertices = 0;
-        int num_indices = 0;
-        int num_indices_triangulated = 0;
-    };
-    RawVector<SplitInfo> splits;
-
+public:
     void prepare(const IArray<int>& counts, const IArray<int>& indices, const IArray<float3>& points);
     void genNormals();
     void genNormals(float smooth_angle);
     void genTangents();
+
     bool refine(bool optimize);
+
+    // should be called after refine()
+    bool genSubmesh(const IArray<int>& materialIDs);
 
     void swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx);
 

@@ -125,6 +125,11 @@ struct Transform
     float4x4 world2local = float4x4::identity();
 };
 
+struct SubmeshData
+{
+    IntrusiveArray<int> indices;
+};
+
 struct SplitData
 {
     IntrusiveArray<float3> points;
@@ -132,6 +137,7 @@ struct SplitData
     IntrusiveArray<float4> tangents;
     IntrusiveArray<float2> uv;
     IntrusiveArray<int> indices;
+    IntrusiveArray<SubmeshData> submeshes;
 };
 
 struct ClientSpecificData
@@ -177,6 +183,7 @@ public:
     ClientSpecificData csd;
 
     // not serialized
+    RawVector<SubmeshData> submeshes;
     RawVector<SplitData> splits;
 
 

@@ -16,8 +16,8 @@ namespace ms {
 
 struct ServerSettings
 {
-    int max_queue = 100;
-    int max_threads = 4;
+    int max_queue = 256;
+    int max_threads = 8;
     uint16_t port = 8080;
     MeshRefineSettings mrs;
 };

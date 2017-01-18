@@ -140,8 +140,10 @@ void TopologyRefiner::prepare(
     new_indices.clear();
     new_indices_triangulated.clear();
     old2new.clear();
+    num_indices_tri = 0;
 
     splits.clear();
+    submeshes.clear();
 
     int num_indices = 0;
     if (counts.empty()) {
@@ -249,6 +251,64 @@ bool TopologyRefiner::refine(bool optimize)
     return optimize ? refineWithOptimization() : refineDumb();
 }
 
+
+
+void TopologyRefiner::Submesh::clear()
+{
+    offset_faces_tri.clear();
+    faces_tri.clear();
+    faces_to_write.clear();
+}
+
+bool TopologyRefiner::genSubmesh(const IArray<int>& materialIDs)
+{
+    if (materialIDs.size() != counts.size()) {
+        return false;
+    }
+
+    while (submeshes.size() < splits.size()) {
+        submeshes.emplace_back(new Submesh());
+    }
+    for (auto& sm : submeshes) { sm->clear(); }
+
+    int num_splits = (int)splits.size();
+
+    int offset_faces = 0;
+    const int *faces_to_read = new_indices_triangulated.data();
+    for (int si = 0; si < num_splits; ++si) {
+        auto& split = splits[si];
+        auto& sm = *submeshes[si];
+
+        sm.faces_tri.resize(split.num_indices_triangulated);
+        for (int fi = 0; fi < split.num_faces; ++fi) {
+            int mid = materialIDs[offset_faces + fi];
+            if (mid >= (int)sm.offset_faces_tri.size()) {
+                sm.offset_faces_tri.resize(mid + 1, 0);
+                sm.faces_to_write.resize(mid + 1, nullptr);
+            }
+            sm.offset_faces_tri[mid] += (counts[fi] - 2) * 3;
+        }
+
+        int *writer = sm.faces_tri.data();
+        for (int mi = 0; mi < (int)sm.faces_to_write.size(); ++mi) {
+            sm.faces_to_write[mi] = writer;
+            writer += sm.offset_faces_tri[mi];
+        }
+
+        for (int fi = 0; fi < split.num_faces; ++fi) {
+            int mid = materialIDs[offset_faces + fi];
+            int count = counts[offset_faces + fi];
+            int nidx = (count - 2) * 3;
+            for (int i = 0; i < nidx; ++i) {
+                *(sm.faces_to_write[mid]++) = *(faces_to_read++);
+            }
+        }
+
+        offset_faces += split.num_faces;
+    }
+    return true;
+}
+
 bool TopologyRefiner::refineDumb()
 {
     int num_indices = (int)indices.size();
@@ -288,7 +348,7 @@ bool TopologyRefiner::refineDumb()
             offset_faces += num_faces;
             offset_vertices += num_vertices;
 
-            auto split = SplitInfo{};
+            auto split = Split{};
             split.num_faces = num_faces;
             split.num_vertices = num_vertices;
             split.num_indices = num_vertices; // in this case num_vertex == num_indices
@@ -303,7 +363,7 @@ bool TopologyRefiner::refineDumb()
         else {
             mu::TriangulateWithIndices(new_indices_triangulated, counts, indices, swap_faces);
         }
-        auto split = SplitInfo{};
+        auto split = Split{};
         split.num_faces = (int)counts.size();
         split.num_vertices = (int)points.size();
         split.num_indices = (int)indices.size();
@@ -338,7 +398,7 @@ void TopologyRefiner::doRefine(const Body& body)
 
         if (split_unit > 0 && (int)new_points.size() - offset_vertices + count > split_unit) {
             // add new split
-            auto split = SplitInfo{};
+            auto split = Split{};
             split.num_faces = num_faces;
             split.num_indices_triangulated = num_indices_triangulated;
             split.num_vertices = (int)new_points.size() - offset_vertices;
@@ -363,7 +423,7 @@ void TopologyRefiner::doRefine(const Body& body)
     }
 
     {
-        auto split = SplitInfo{};
+        auto split = Split{};
         split.num_faces = num_faces;
         split.num_indices_triangulated = num_indices_triangulated;
         split.num_vertices = (int)new_points.size() - offset_vertices;

@@ -83,6 +83,27 @@ public:
         }
     }
 
+    void shrink_to_fit()
+    {
+        if (m_size == m_capacity) {
+            // nothing to do
+            return;
+        }
+        else if (m_size == 0) {
+            deallocate(m_data, m_size);
+            m_size = m_capacity = 0;
+        }
+        else {
+            size_t newsize = sizeof(T) * m_size;
+            size_t oldsize = sizeof(T) * m_capacity;
+            T *newdata = (T*)allocate(newsize);
+            memcpy(newdata, m_data, newsize);
+            deallocate(m_data, oldsize);
+            m_data = newdata;
+            m_capacity = m_size;
+        }
+    }
+
     void resize(size_t s)
     {
         reserve(s);
@@ -91,18 +112,16 @@ public:
 
     void resize(size_t s, const T& v)
     {
+        size_t pos = size();
         resize(s);
         // std::fill() can suppress compiler's optimization...
-        for (size_t i = 0; i < s; ++i) {
+        for (size_t i = pos; i < s; ++i) {
             m_data[i] = v;
         }
     }
 
     void clear()
     {
-        size_t oldsize = sizeof(T) * m_size;
-        deallocate(m_data, oldsize);
-        m_data = nullptr;
         m_size = m_capacity = 0;
     }
 

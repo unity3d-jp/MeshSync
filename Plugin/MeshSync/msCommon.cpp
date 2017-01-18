@@ -295,6 +295,11 @@ void MeshData::refine(const MeshRefineSettings &settings)
         if (csd.mq.scale_factor != 1.0f) {
             mu::Scale(points.data(), csd.mq.scale_factor, points.size());
         }
+
+        // Metasequoia uses -1 as invalid material. +1 to make it zero-based
+        for (int& mid : materialIDs) {
+            mid += 1; 
+        }
     }
 
     if (settings.flags.apply_local2world) {
@@ -343,6 +348,7 @@ void MeshData::refine(const MeshRefineSettings &settings)
     // refine topology
     {
         refiner.refine(settings.flags.optimize_topology);
+        refiner.genSubmesh(materialIDs);
         refiner.swapNewData(points, normals, tangents, uv, indices);
 
         splits.clear();
