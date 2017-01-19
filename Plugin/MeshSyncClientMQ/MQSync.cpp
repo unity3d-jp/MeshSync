@@ -121,6 +121,7 @@ void MQSync::importMeshes(MQDocument doc)
     gd.flags.swap_handedness = 1;
     gd.flags.apply_local2world = 1;
     gd.flags.bake_skin = 1;
+    gd.flags.invert_v = 1;
     gd.scale = 1.0f / m_scale_factor;
 
     auto ret = client.send(gd);
