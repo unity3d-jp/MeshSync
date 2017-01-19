@@ -232,6 +232,19 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
         dst.transform.position = (const float3&)obj->GetTranslation();
         dst.transform.rotation = rot;
         dst.transform.scale = (const float3&)obj->GetScaling();
+
+        auto pos_id = dst.path.find_first_of("[id:");
+        if (pos_id != std::string::npos) {
+            int id = 0;
+            if (sscanf(&dst.path[pos_id], "[id:%x]", &id) == 1) {
+                auto ite = m_import_objects.find(id);
+                if (ite != m_import_objects.end()) {
+                    dst.refine_settings.flags.apply_world2local = 1;
+                    dst.transform.local2world = ite->second->transform.local2world;
+                    dst.transform.world2local = ite->second->transform.world2local;
+                }
+            }
+        }
     }
 
     // copy vertices

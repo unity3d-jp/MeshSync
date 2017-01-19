@@ -165,6 +165,7 @@ MeshData::MeshData(const MeshDataCS & cs)
 
 void MeshData::clear()
 {
+    sender = SenderType::Unknown;
     id_unity = 0;
     id_dcc = 0;
     path.clear();
@@ -174,6 +175,7 @@ void MeshData::clear()
 #undef Body
     transform = Transform();
     refine_settings = MeshRefineSettings();
+    submeshes.clear();
     splits.clear();
 }
 
@@ -209,6 +211,7 @@ void MeshData::serialize(std::ostream& os) const
 
 void MeshData::deserialize(std::istream& is)
 {
+    clear();
     read(is, sender);
     read(is, id_unity);
     read(is, id_dcc);
@@ -227,23 +230,6 @@ const char* MeshData::getName() const
     if (name_pos != std::string::npos) { ++name_pos; }
     else { name_pos = 0; }
     return path.c_str() + name_pos;
-}
-
-void MeshData::swap(MeshData & v)
-{
-    std::swap(sender, v.sender);
-    std::swap(id_unity, v.id_unity);
-    std::swap(id_dcc, v.id_dcc);
-    path.swap(v.path);
-    std::swap(flags, v.flags);
-#define Body(A) A.swap(v.A);
-    EachArray(Body);
-#undef Body
-    std::swap(transform, v.transform);
-    std::swap(refine_settings, v.refine_settings);
-
-    std::swap(splits, v.splits);
-    std::swap(submeshes, v.submeshes);
 }
 
 static tls<mu::TopologyRefiner> g_refiner;
@@ -268,6 +254,7 @@ void MeshData::refine()
         float plane_d = dot(plane_n, transform.position);
         applyMirror(plane_n, plane_d);
     }
+
     if (refine_settings.flags.apply_local2world) {
         applyTransform(transform.local2world);
     }
@@ -275,11 +262,11 @@ void MeshData::refine()
         applyTransform(transform.world2local);
         flags.has_transform = 0;
     }
-    if (refine_settings.flags.swap_handedness) {
-        mu::InvertX(points.data(), points.size());
-    }
     if (refine_settings.scale_factor != 1.0f) {
         mu::Scale(points.data(), refine_settings.scale_factor, points.size());
+    }
+    if (refine_settings.flags.swap_handedness) {
+        mu::InvertX(points.data(), points.size());
     }
 
     auto& refiner = g_refiner.local();
@@ -307,7 +294,11 @@ void MeshData::refine()
     }
 
     // refine topology
-    {
+    bool refine_topology =
+        refine_settings.flags.triangulate ||
+        (refine_settings.split_unit && points.size() > refine_settings.split_unit) ||
+        (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()));
+    if(refine_topology) {
         refiner.refine(refine_settings.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
         refiner.swapNewData(points, normals, tangents, uv, indices);
@@ -359,6 +350,9 @@ void MeshData::refine()
                 nsm += n;
             }
         }
+    }
+    else {
+        refiner.swapNewData(points, normals, tangents, uv, indices);
     }
 }
 

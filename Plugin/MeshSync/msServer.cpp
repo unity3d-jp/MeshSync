@@ -29,7 +29,8 @@ private:
 
 
 
-tls<MeshData> g_tmp_mesh;
+using MeshDataPtr = std::shared_ptr<MeshData>;
+tls<MeshDataPtr> g_tmp_mesh;
 
 RequestHandler::RequestHandler(Server *server)
     : m_server(server)
@@ -50,21 +51,25 @@ void Server::recvDelete(const Body& body)
 template<class Body>
 void Server::recvMesh(const Body& body)
 {
-    auto& tmp = g_tmp_mesh.local();
-    body(tmp);
-    if (m_serve && !tmp.path.empty()) {
-        tmp.refine_settings.flags.triangulate = 1;
-        tmp.refine_settings.flags.split = 1;
-        tmp.refine_settings.flags.optimize_topology = 1;
-        tmp.refine_settings.split_unit = 65000;
-        tmp.refine();
+    auto& tmesh_ptr = g_tmp_mesh.local();
+    if (!tmesh_ptr) {
+        tmesh_ptr.reset(new MeshData());
+    }
+
+    auto& tmesh = *tmesh_ptr;
+    body(tmesh);
+    if (m_serve && !tmesh.path.empty()) {
+        tmesh.refine_settings.flags.triangulate = 1;
+        tmesh.refine_settings.flags.split = 1;
+        tmesh.refine_settings.flags.optimize_topology = 1;
+        tmesh.refine_settings.split_unit = 65000;
+        tmesh.refine();
 
         {
             lock_t l(m_mutex);
-            m_recv_history.push_back({ MessageType::Mesh, tmp.path });
-            m_recv_data[tmp.path].swap(tmp);
+            m_recv_history.push_back({ MessageType::Mesh, tmesh.path });
+            std::swap(tmesh_ptr, m_recv_data[tmesh.path]);
         }
-        tmp.clear();
     }
 }
 
@@ -181,7 +186,7 @@ void Server::endServe()
     mrs.flags.apply_local2world = m_current_get_request.flags.apply_local2world;
     mrs.scale_factor = m_current_get_request.scale;
 
-    concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](DataPtr& p) {
+    concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](MeshPtr& p) {
         if (auto data = static_cast<MeshData*>(p.get())) {
             data->refine_settings = mrs;
             data->refine();

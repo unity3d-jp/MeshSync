@@ -190,7 +190,6 @@ public:
     void deserialize(std::istream& is);
 
     const char* getName() const;
-    void swap(MeshData& v);
     void refine();
     void applyMirror(const float3& plane_n, float plane_d);
     void applyTransform(const float4x4& t);

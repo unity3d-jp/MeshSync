@@ -403,7 +403,8 @@ namespace UTJ
                         {
                             int num_indices = msSubmeshGetNumIndices(ref smd, smi);
                             m_indices = new int[num_indices];
-                            msSubmeshCopyIndices(RawPtr(m_indices), ref smd, smi);
+                            var ptr = RawPtr(m_indices);
+                            msSubmeshCopyIndices(ptr, ref smd, smi);
                             mesh.SetIndices(m_indices, MeshTopology.Triangles, smi);
                         }
                     }
@@ -498,6 +499,7 @@ namespace UTJ
             {
                 mfilter = go.AddComponent<MeshFilter>();
                 var mesh = new Mesh();
+                mesh.name = go.name;
                 mfilter.sharedMesh = mesh;
                 mesh.MarkDynamic();
 

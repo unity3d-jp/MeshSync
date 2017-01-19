@@ -64,7 +64,10 @@ public:
             }
             case MessageType::Mesh:
             {
-                body(m_recv_data[r.arg]);
+                auto ite = m_recv_data.find(r.arg);
+                if (ite != m_recv_data.end()) {
+                    body(*ite->second);
+                }
                 break;
             }
             }
@@ -83,9 +86,9 @@ public:
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
 private:
-    using DataTable = std::map<std::string, MeshData>;
-    using DataPtr = std::shared_ptr<MeshData>;
-    using ServeDataTable = std::vector<DataPtr>;
+    using MeshPtr = std::shared_ptr<MeshData>;
+    using Meshes = std::vector<MeshPtr>;
+    using MeshTable = std::map<std::string, MeshPtr>;
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 
@@ -101,11 +104,11 @@ private:
     ServerSettings m_settings;
     HTTPServerPtr m_server;
 
-    DataTable m_recv_data;
+    MeshTable m_recv_data;
     History m_recv_history;
 
     GetData m_current_get_request;
-    ServeDataTable m_serve_data;
+    Meshes m_serve_data;
 
     std::mutex m_mutex;
 };
