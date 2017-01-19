@@ -241,6 +241,7 @@ namespace UTJ
         {
             public GameObject go;
             public int[][] materialIDs;
+            public bool recved = false;
             public bool edited = false;
 
             public bool CompareMaterialIDs(int[][] v)
@@ -418,6 +419,7 @@ namespace UTJ
                 rec = new Record
                 {
                     go = t.gameObject,
+                    recved = true,
                 };
                 m_recvedObjects[path] = rec;
             }
@@ -435,7 +437,7 @@ namespace UTJ
 
 
             // if object is not visible, just disable and return
-            if(!edata.flags.visible)
+            if (!edata.flags.visible)
             {
                 target.gameObject.SetActive(false);
                 for (int i = 0; ; ++i)
@@ -452,7 +454,7 @@ namespace UTJ
             // allocate material list
             int maxMaterialID = 0;
             var materialIDs = GetMaterialIDs(ref edata, ref maxMaterialID);
-            bool materialsUpdated = rec.materialIDs == null || !rec.CompareMaterialIDs(materialIDs);
+            bool materialsUpdated = rec.recved && (rec.materialIDs == null || !rec.CompareMaterialIDs(materialIDs));
             rec.materialIDs = materialIDs;
             if(m_materials == null || maxMaterialID + 1 > m_materials.Length)
             {

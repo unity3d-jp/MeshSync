@@ -88,10 +88,10 @@ void MQSync::sendMesh(MQDocument doc, bool force)
             if (!i->second) {
                 ms::DeleteData del;
                 del.path = i->first;
-                auto pos_id = del.path.find_first_of("[id:");
+                auto pos_id = del.path.find("[id:");
                 if (pos_id != std::string::npos) {
                     int id = 0;
-                    if (sscanf(&del.path[pos_id], "[id:%x]", &id) == 1) {
+                    if (sscanf(&del.path[pos_id], "[id:%08x]", &id) == 1) {
                         del.id = id;
                     }
                 }
@@ -252,10 +252,10 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
         dst.transform.rotation = rot;
         dst.transform.scale = (const float3&)obj->GetScaling();
 
-        auto pos_id = dst.path.find_first_of("[id:");
+        auto pos_id = dst.path.find("[id:");
         if (pos_id != std::string::npos) {
             int id = 0;
-            if (sscanf(&dst.path[pos_id], "[id:%x]", &id) == 1) {
+            if (sscanf(&dst.path[pos_id], "[id:%08x]", &id) == 1) {
                 auto ite = m_import_objects.find(id);
                 if (ite != m_import_objects.end()) {
                     dst.id = id;
