@@ -130,15 +130,18 @@ uint32_t DeleteData::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(path);
+    ret += ssize(id);
     return ret;
 }
 void DeleteData::serialize(std::ostream& os) const
 {
     write(os, path);
+    write(os, id);
 }
 void DeleteData::deserialize(std::istream& is)
 {
     read(is, path);
+    read(is, id);
 }
 
 
@@ -151,8 +154,7 @@ MeshData::MeshData()
 
 MeshData::MeshData(const MeshDataCS & cs)
 {
-    id_unity = cs.id_unity;
-    id_dcc = cs.id_dcc;
+    id = cs.id;
     path = cs.path ? cs.path : "";
     flags = cs.flags;
     if (flags.has_points && cs.points) points.assign(cs.points, cs.points + cs.num_points);
@@ -166,8 +168,7 @@ MeshData::MeshData(const MeshDataCS & cs)
 void MeshData::clear()
 {
     sender = SenderType::Unknown;
-    id_unity = 0;
-    id_dcc = 0;
+    id = 0;
     path.clear();
     flags = {0};
 #define Body(A) A.clear();
@@ -183,8 +184,7 @@ uint32_t MeshData::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(sender);
-    ret += ssize(id_unity);
-    ret += ssize(id_dcc);
+    ret += ssize(id);
     ret += ssize(path);
     ret += ssize(flags);
 #define Body(A) if(flags.has_##A) ret += ssize(A);
@@ -198,8 +198,7 @@ uint32_t MeshData::getSerializeSize() const
 void MeshData::serialize(std::ostream& os) const
 {
     write(os, sender);
-    write(os, id_unity);
-    write(os, id_dcc);
+    write(os, id);
     write(os, path);
     write(os, flags);
 #define Body(A) if(flags.has_##A) write(os, A);
@@ -213,8 +212,7 @@ void MeshData::deserialize(std::istream& is)
 {
     clear();
     read(is, sender);
-    read(is, id_unity);
-    read(is, id_dcc);
+    read(is, id);
     read(is, path);
     read(is, flags);
 #define Body(A) if(flags.has_##A) read(is, A);
@@ -258,15 +256,16 @@ void MeshData::refine()
     if (refine_settings.flags.apply_local2world) {
         applyTransform(transform.local2world);
     }
-    if (refine_settings.flags.apply_world2local) {
-        applyTransform(transform.world2local);
-        flags.has_transform = 0;
-    }
     if (refine_settings.scale_factor != 1.0f) {
         mu::Scale(points.data(), refine_settings.scale_factor, points.size());
+        transform.position *= refine_settings.scale_factor;
     }
     if (refine_settings.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
+        transform.position.x *= -1.0f;
+    }
+    if (refine_settings.flags.apply_world2local) {
+        applyTransform(transform.world2local);
     }
 
     auto& refiner = g_refiner.local();
@@ -393,15 +392,15 @@ GetDataCS::GetDataCS(const GetData& v)
 
 DeleteDataCS::DeleteDataCS(const DeleteData & v)
 {
-    obj_path = v.path.c_str();
+    path = v.path.c_str();
+    id = v.id;
 }
 
 
 MeshDataCS::MeshDataCS(const MeshData & v)
 {
     cpp         = const_cast<MeshData*>(&v);
-    id_unity    = v.id_unity;
-    id_dcc      = v.id_dcc;
+    id          = v.id;
     flags       = v.flags;
     path        = v.path.c_str();
     points      = (float3*)v.points.data();
@@ -412,6 +411,7 @@ MeshDataCS::MeshDataCS(const MeshData & v)
     num_points  = (int)v.points.size();
     num_indices = (int)v.indices.size();
     num_splits  = (int)v.splits.size();
+    transform = v.transform;
 }
 
 SplitDataCS::SplitDataCS()

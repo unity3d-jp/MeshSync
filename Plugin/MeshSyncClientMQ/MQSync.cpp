@@ -35,6 +35,7 @@ void MQSync::clear()
 {
     m_export_objects.clear();
     m_import_objects.clear();
+    m_exist_record.clear();
     m_pending_send_mesh = false;
 }
 
@@ -87,6 +88,15 @@ void MQSync::sendMesh(MQDocument doc, bool force)
             if (!i->second) {
                 ms::DeleteData del;
                 del.path = i->first;
+                auto pos_id = del.path.find_first_of("[id:");
+                if (pos_id != std::string::npos) {
+                    int id = 0;
+                    if (sscanf(&del.path[pos_id], "[id:%x]", &id) == 1) {
+                        del.id = id;
+                    }
+                }
+
+
                 client.send(del);
                 m_exist_record.erase(i++);
             }
@@ -118,7 +128,7 @@ void MQSync::importMeshes(MQDocument doc)
         auto& mdata = *data;
 
         char name[MaxNameBuffer];
-        sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id_unity);
+        sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id);
 
         if (auto obj = findMQObject(doc, name)) {
             doc->DeleteObject(doc->GetObjectIndex(obj));
@@ -126,7 +136,7 @@ void MQSync::importMeshes(MQDocument doc)
         auto obj = createObject(mdata, name);
         doc->AddObject(obj);
 
-        m_import_objects[mdata.id_unity] = data;
+        m_import_objects[mdata.id] = data;
     }
 }
 
@@ -166,6 +176,15 @@ MQObject MQSync::createObject(const ms::MeshData& data, const char *name)
     auto ret = MQ_CreateObject();
 
     ret->SetName(name);
+
+    ret->SetTranslation((MQPoint&)(data.transform.position));
+    ret->SetScaling((MQPoint&)data.transform.scale);
+    auto rotation = MQAngle(
+        data.transform.rotation_eularZXY.y,
+        data.transform.rotation_eularZXY.x,
+        data.transform.rotation_eularZXY.z);
+    ret->SetRotation(rotation);
+
     for (auto& p : data.points) {
         ret->AddVertex((MQPoint&)p);
     }
@@ -194,7 +213,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
 
     dst.sender = ms::SenderType::Metasequoia;
     dst.path = BuildPath(doc, obj);
-    dst.id_dcc = doc->GetObjectIndex(obj);
+    dst.id = doc->GetObjectIndex(obj);
 
     dst.flags.visible = obj->GetVisible();
     if (!dst.flags.visible) {
@@ -239,6 +258,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
             if (sscanf(&dst.path[pos_id], "[id:%x]", &id) == 1) {
                 auto ite = m_import_objects.find(id);
                 if (ite != m_import_objects.end()) {
+                    dst.id = id;
                     dst.refine_settings.flags.apply_world2local = 1;
                     dst.transform.local2world = ite->second->transform.local2world;
                     dst.transform.world2local = ite->second->transform.world2local;

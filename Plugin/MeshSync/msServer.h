@@ -72,6 +72,7 @@ public:
             }
             }
         }
+
         int ret = (int)m_recv_history.size();
         m_recv_history.clear();
         return ret;

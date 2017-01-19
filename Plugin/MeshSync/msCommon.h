@@ -79,6 +79,7 @@ class DeleteData : public MessageData
 using super = MessageData;
 public:
     std::string path;
+    int id = 0;
 
     DeleteData();
     uint32_t getSerializeSize() const;
@@ -162,8 +163,7 @@ class MeshData : public MessageData
 using super = MessageData;
 public:
     SenderType        sender = SenderType::Unknown;
-    int               id_unity = 0;
-    int               id_dcc = 0;
+    int               id = 0;
     std::string       path;
     MeshDataFlags     flags = {0};
     RawVector<float3> points;
@@ -205,7 +205,8 @@ struct GetDataCS
 
 struct DeleteDataCS
 {
-    const char *obj_path = nullptr;
+    const char *path = nullptr;
+    int id = 0;
 
     DeleteDataCS(const DeleteData& v);
 };
@@ -213,8 +214,7 @@ struct DeleteDataCS
 struct MeshDataCS
 {
     MeshData *cpp = nullptr;
-    int id_unity = 0;
-    int id_dcc = 0;
+    int id = 0;
     MeshDataFlags flags = {0};
     const char *path = nullptr;
     float3 *points = nullptr;

@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 using System.Reflection;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -237,6 +236,25 @@ namespace UTJ
         {
             return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
         }
+
+        public class Record
+        {
+            public GameObject go;
+            public int[][] materialIDs;
+            public bool edited = false;
+
+            public bool CompareMaterialIDs(int[][] v)
+            {
+                if(materialIDs.Length != v.Length) { return false; }
+                for(int i=0; i< materialIDs.Length; ++i)
+                {
+                    if(!materialIDs[i].SequenceEqual(v[i])) { return false; }
+                }
+                return false;
+            }
+        }
+
+
         #endregion
 
 
@@ -254,14 +272,7 @@ namespace UTJ
         Vector2[] m_uv;
         int[] m_indices;
         bool m_requestRestart = false;
-
-        public class Record
-        {
-            public GameObject go;
-            public int[][] materialIDs;
-            public bool edited = false;
-        }
-
+        bool m_requestReassignMaterials = false;
 
         Dictionary<string, Record> m_recvedObjects = new Dictionary<string, Record>();
         Dictionary<int, Record> m_sentObjects = new Dictionary<int, Record>();
@@ -301,6 +312,12 @@ namespace UTJ
             {
                 m_requestRestart = false;
                 StartServer();
+            }
+            if(m_requestReassignMaterials)
+            {
+                m_requestReassignMaterials = false;
+                ReassignMaterials();
+                ForceRepaint();
             }
 
             if (msServerProcessMessages(m_server, m_handler) > 0)
@@ -434,7 +451,9 @@ namespace UTJ
 
             // allocate material list
             int maxMaterialID = 0;
-            rec.materialIDs = GetMaterialIDs(ref edata, ref maxMaterialID);
+            var materialIDs = GetMaterialIDs(ref edata, ref maxMaterialID);
+            bool materialsUpdated = rec.materialIDs == null || !rec.CompareMaterialIDs(materialIDs);
+            rec.materialIDs = materialIDs;
             if(m_materials == null || maxMaterialID + 1 > m_materials.Length)
             {
                 var tmp = new Material[maxMaterialID + 1];
@@ -546,29 +565,9 @@ namespace UTJ
 
 
             // assign materials if needed
-            if (createdNewMesh)
+            if (materialsUpdated)
             {
-                var mlist = GetMaterialList(rec.materialIDs);
-                for(int i=0; i<mlist.Length; ++i)
-                {
-                    Renderer r = null;
-                    if(i == 0)
-                    {
-                        r = target.GetComponent<Renderer>();
-                    }
-                    else
-                    {
-
-                        var t = FindObjectByPath(null, path + "/Submesh[" + i + "]");
-                        if (t == null) { break; }
-                        r = t.GetComponent<Renderer>();
-                    }
-
-                    if(r != null)
-                    {
-                        r.sharedMaterials = mlist[i];
-                    }
-                }
+                AssignMaterials(rec);
             }
 
 #if UNITY_EDITOR
@@ -578,19 +577,54 @@ namespace UTJ
             //Debug.Log("MeshSyncServer: Mesh " + path);
         }
 
-
-        Material[][] GetMaterialList(int[][] materialIDs)
+        void ReassignMaterials()
         {
-            var ret = new Material[materialIDs.Length][];
-            for (int i = 0; i < materialIDs.Length; ++i)
+            foreach (var rec in m_recvedObjects)
             {
-                ret[i] = new Material[materialIDs[i].Length];
-                for (int j = 0; j < materialIDs[i].Length; ++j)
+                AssignMaterials(rec.Value);
+            }
+            foreach (var rec in m_sentObjects)
+            {
+                AssignMaterials(rec.Value);
+            }
+        }
+
+
+        void AssignMaterials(Record rec)
+        {
+            if(rec.go == null || !rec.edited) { return; }
+
+            var mids = rec.materialIDs;
+            var mlist = new Material[mids.Length][];
+            for (int i = 0; i < mids.Length; ++i)
+            {
+                mlist[i] = new Material[mids[i].Length];
+                for (int j = 0; j < mids[i].Length; ++j)
                 {
-                    ret[i][j] = m_materials[materialIDs[i][j]];
+                    mlist[i][j] = m_materials[mids[i][j]];
                 }
             }
-            return ret;
+
+            for (int i = 0; i < mlist.Length; ++i)
+            {
+                Renderer r = null;
+                if (i == 0)
+                {
+                    r = rec.go.GetComponent<Renderer>();
+                }
+                else
+                {
+
+                    var t = rec.go.transform.FindChild("/Submesh[" + i + "]");
+                    if (t == null) { break; }
+                    r = t.GetComponent<Renderer>();
+                }
+
+                if (r != null)
+                {
+                    r.sharedMaterials = mlist[i];
+                }
+            }
         }
 
 
@@ -883,6 +917,7 @@ namespace UTJ
         void OnValidate()
         {
             m_requestRestart = true;
+            m_requestReassignMaterials = true;
         }
 #endif
 

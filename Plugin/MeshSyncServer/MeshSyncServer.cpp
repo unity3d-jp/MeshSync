@@ -81,14 +81,14 @@ static void msCopyData(ms::DeleteDataCS *dst, const ms::DeleteDataCS *src)
 {
     if (!dst || !src) { return; }
 
-    dst->obj_path = src->obj_path;
+    dst->path = src->path;
+    dst->id = src->id;
 }
 static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
 {
     if (!dst || !src) { return; }
 
-    dst->id_unity = src->id_unity;
-    dst->id_dcc = src->id_dcc;
+    dst->id = src->id;
     dst->flags = src->flags;
     dst->cpp = src->cpp;
     dst->path = src->path;
@@ -195,17 +195,17 @@ msAPI void msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src)
     }
 }
 
-msAPI int msSubmeshGetMaterialID(ms::SplitDataCS * src, int i)
+msAPI int msSplitGetMaterialID(ms::SplitDataCS * src, int i)
 {
     if (!src) { return 0; }
     return (int)src->submeshes[i].materialID;
 }
-msAPI int msSubmeshGetNumIndices(ms::SplitDataCS * src, int i)
+msAPI int msSplitGetNumIndices(ms::SplitDataCS * src, int i)
 {
     if (!src) { return 0; }
     return (int)src->submeshes[i].indices.size();
 }
-msAPI void msSubmeshCopyIndices(int * dst, ms::SplitDataCS * src, int i)
+msAPI void msSplitCopyIndices(int * dst, ms::SplitDataCS * src, int i)
 {
     memcpy(dst, src->submeshes[i].indices.data(), sizeof(int) * src->submeshes[i].indices.size());
 }
