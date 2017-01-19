@@ -19,11 +19,9 @@ namespace UTJ
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         public static void CreateMeshSyncServer(MenuCommand menuCommand)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/UTJ/MeshSync/Prefabs/MeshSyncServer.prefab");
-            if (prefab != null)
-            {
-                PrefabUtility.InstantiatePrefab(prefab);
-            }
+            var go = new GameObject();
+            go.name = "MeshSyncServer";
+            go.AddComponent<MeshSyncServer>();
         }
 #endif
 
@@ -60,6 +58,7 @@ namespace UTJ
         public struct DeleteData
         {
             public IntPtr path;
+            public int id;
         }
 
 
@@ -132,8 +131,7 @@ namespace UTJ
         public struct MeshData
         {
             public IntPtr cpp;
-            public int id_unity;
-            public int id_dcc;
+            public int id;
             public MeshDataFlags flags;
             public IntPtr path;
             public IntPtr points;
@@ -199,10 +197,30 @@ namespace UTJ
 
         [DllImport("MeshSyncServer")] public static extern void msGetSplitData(ref SplitData dst, ref MeshData v, int i);
         [DllImport("MeshSyncServer")] public static extern void msCopySplitData(ref SplitData dst, ref SplitData src);
-        [DllImport("MeshSyncServer")] public static extern int  msSubmeshGetMaterialID(ref SplitData src, int i);
-        [DllImport("MeshSyncServer")] public static extern int  msSubmeshGetNumIndices(ref SplitData src, int i);
-        [DllImport("MeshSyncServer")] public static extern void msSubmeshCopyIndices(IntPtr dst, ref SplitData src, int i);
+        [DllImport("MeshSyncServer")] public static extern int  msSplitGetMaterialID(ref SplitData src, int i);
+        [DllImport("MeshSyncServer")] public static extern int  msSplitGetNumIndices(ref SplitData src, int i);
+        [DllImport("MeshSyncServer")] public static extern void msSplitCopyIndices(IntPtr dst, ref SplitData src, int i);
 
+        static int[][] GetMaterialIDs(ref MeshData mdata, ref int maxID)
+        {
+            maxID = 0;
+            int[][] ret = new int[mdata.num_splits][];
+            var split = default(SplitData);
+            for (int si = 0; si < mdata.num_splits; ++si)
+            {
+                msGetSplitData(ref split, ref mdata, si);
+                var ids = new int[split.num_submeshes];
+                ret[si] = ids;
+                for (int mi = 0; mi < split.num_submeshes; ++mi)
+                {
+                    int mid = msSplitGetMaterialID(ref split, mi);
+                    ids[mi] = mid;
+                    maxID = Math.Max(maxID, mid);
+                }
+            }
+
+            return ret;
+        }
 
         static void SwitchBits(ref int flags, bool f, int bit)
         {
@@ -225,6 +243,8 @@ namespace UTJ
         #region fields
         [SerializeField] int m_port = 8080;
         [SerializeField] bool m_genLightmapUV = false;
+        [SerializeField] Material[] m_materials;
+
         IntPtr m_server;
         msMessageHandler m_handler;
 
@@ -233,6 +253,18 @@ namespace UTJ
         Vector4[] m_tangents;
         Vector2[] m_uv;
         int[] m_indices;
+        bool m_requestRestart = false;
+
+        public class Record
+        {
+            public GameObject go;
+            public int[][] materialIDs;
+            public bool edited = false;
+        }
+
+
+        Dictionary<string, Record> m_recvedObjects = new Dictionary<string, Record>();
+        Dictionary<int, Record> m_sentObjects = new Dictionary<int, Record>();
         #endregion
 
 
@@ -246,16 +278,31 @@ namespace UTJ
             settings.port = (ushort)m_port;
             m_server = msServerStart(ref settings);
             m_handler = OnServerEvent;
+#if UNITY_EDITOR
+            EditorApplication.update += PollServerEvents;
+#endif
         }
 
         void StopServer()
         {
-            msServerStop(m_server);
-            m_server = IntPtr.Zero;
+            if(m_server != IntPtr.Zero)
+            {
+#if UNITY_EDITOR
+                EditorApplication.update -= PollServerEvents;
+#endif
+                msServerStop(m_server);
+                m_server = IntPtr.Zero;
+            }
         }
 
         void PollServerEvents()
         {
+            if(m_requestRestart)
+            {
+                m_requestRestart = false;
+                StartServer();
+            }
+
             if (msServerProcessMessages(m_server, m_handler) > 0)
             {
                 ForceRepaint();
@@ -284,13 +331,9 @@ namespace UTJ
             msCopyData(EventType.Get, ref edata, data);
 
             msServerBeginServe(m_server);
-            foreach (var mr in FindObjectsOfType<MeshRenderer>())
+            foreach (var mr in FindObjectsOfType<Renderer>())
             {
                 ServeData(mr, edata.flags);
-            }
-            foreach (var smr in FindObjectsOfType<SkinnedMeshRenderer>())
-            {
-                ServeData(smr, edata.flags);
             }
             msServerEndServe(m_server);
 
@@ -302,10 +345,24 @@ namespace UTJ
             var edata = default(DeleteData);
             msCopyData(EventType.Delete, ref edata, data);
             var path = S(edata.path);
-            var target = FindObjectByPath(null, path);
-            if (target != null)
+
+            if (edata.id != 0 && m_sentObjects.ContainsKey(edata.id))
             {
-                DestroyImmediate(target.gameObject);
+                var rec = m_sentObjects[edata.id];
+                if (rec.go != null)
+                {
+                    DestroyImmediate(rec.go);
+                }
+                m_sentObjects.Remove(edata.id);
+            }
+            else if (m_recvedObjects.ContainsKey(path))
+            {
+                var rec = m_recvedObjects[path];
+                if (rec.go != null)
+                {
+                    DestroyImmediate(rec.go);
+                }
+                m_recvedObjects.Remove(path);
             }
 
             //Debug.Log("MeshSyncServer: Delete " + path);
@@ -316,9 +373,49 @@ namespace UTJ
             var edata = default(MeshData);
             msCopyData(EventType.Mesh, ref edata, data);
             var path = S(edata.path);
+            bool createdNewMesh = false;
 
-            Transform target = FindObjectByPath(null, path, true);
-            if (target == null) { return; }
+            // find or create target object
+            Record rec = null;
+            if(edata.id !=0 && m_sentObjects.ContainsKey(edata.id))
+            {
+                rec = m_sentObjects[edata.id];
+                if(rec.go == null)
+                {
+                    m_sentObjects.Remove(edata.id);
+                    rec = null;
+                }
+            }
+            else if(m_recvedObjects.ContainsKey(path))
+            {
+                rec = m_recvedObjects[path];
+                if (rec.go == null)
+                {
+                    m_recvedObjects.Remove(path);
+                }
+            }
+
+            if(rec == null)
+            {
+                var t = FindObjectByPath(null, path, true, ref createdNewMesh);
+                rec = new Record
+                {
+                    go = t.gameObject,
+                };
+                m_recvedObjects[path] = rec;
+            }
+            if (rec == null) { return; }
+
+
+            // currently editing skinned mesh is not supported
+            if (rec.go.GetComponent<SkinnedMeshRenderer>() != null)
+            {
+                return;
+            }
+
+            var target = rec.go.GetComponent<Transform>();
+            rec.edited = true;
+
 
             // if object is not visible, just disable and return
             if(!edata.flags.visible)
@@ -332,9 +429,32 @@ namespace UTJ
                 }
                 return;
             }
-
             target.gameObject.SetActive(true);
 
+
+            // allocate material list
+            int maxMaterialID = 0;
+            rec.materialIDs = GetMaterialIDs(ref edata, ref maxMaterialID);
+            if(m_materials == null || maxMaterialID + 1 > m_materials.Length)
+            {
+                var tmp = new Material[maxMaterialID + 1];
+                if(m_materials != null)
+                {
+                    Array.Copy(m_materials, tmp, Math.Min(m_materials.Length, maxMaterialID));
+#if UNITY_EDITOR
+                    for (int i = m_materials.Length; i < tmp.Length; ++i)
+                    {
+                        var mat = Instantiate(GetDefaultMaterial());
+                        mat.name = "DefaultMaterial";
+                        tmp[i] = mat;
+                    }
+#endif
+                }
+                m_materials = tmp;
+            }
+
+
+            // update transform
             if (edata.flags.has_transform)
             {
                 target.localPosition = edata.transform.position;
@@ -342,6 +462,7 @@ namespace UTJ
                 target.localScale = edata.transform.scale;
             }
 
+            // update mesh
             for (int i = 0; i < edata.num_splits; ++i)
             {
                 var smd = default(SplitData);
@@ -373,7 +494,7 @@ namespace UTJ
                 var t = target;
                 if (i > 0)
                 {
-                    t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true);
+                    t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true, ref createdNewMesh);
                     t.gameObject.SetActive(true);
                 }
 
@@ -401,10 +522,10 @@ namespace UTJ
                         mesh.subMeshCount = mdata.num_submeshes;
                         for (int smi = 0; smi < mdata.num_submeshes; ++smi)
                         {
-                            int num_indices = msSubmeshGetNumIndices(ref smd, smi);
+                            int num_indices = msSplitGetNumIndices(ref smd, smi);
                             m_indices = new int[num_indices];
                             var ptr = RawPtr(m_indices);
-                            msSubmeshCopyIndices(ptr, ref smd, smi);
+                            msSplitCopyIndices(ptr, ref smd, smi);
                             mesh.SetIndices(m_indices, MeshTopology.Triangles, smi);
                         }
                     }
@@ -423,24 +544,84 @@ namespace UTJ
                 DestroyImmediate(t.gameObject);
             }
 
+
+            // assign materials if needed
+            if (createdNewMesh)
+            {
+                var mlist = GetMaterialList(rec.materialIDs);
+                for(int i=0; i<mlist.Length; ++i)
+                {
+                    Renderer r = null;
+                    if(i == 0)
+                    {
+                        r = target.GetComponent<Renderer>();
+                    }
+                    else
+                    {
+
+                        var t = FindObjectByPath(null, path + "/Submesh[" + i + "]");
+                        if (t == null) { break; }
+                        r = t.GetComponent<Renderer>();
+                    }
+
+                    if(r != null)
+                    {
+                        r.sharedMaterials = mlist[i];
+                    }
+                }
+            }
+
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(target.gameObject);
+#endif
+
             //Debug.Log("MeshSyncServer: Mesh " + path);
         }
 
 
-        Transform FindObjectByPath(Transform parent, string path, bool createIfNotExist = false)
+        Material[][] GetMaterialList(int[][] materialIDs)
+        {
+            var ret = new Material[materialIDs.Length][];
+            for (int i = 0; i < materialIDs.Length; ++i)
+            {
+                ret[i] = new Material[materialIDs[i].Length];
+                for (int j = 0; j < materialIDs[i].Length; ++j)
+                {
+                    ret[i][j] = m_materials[materialIDs[i][j]];
+                }
+            }
+            return ret;
+        }
+
+
+        Transform FindObjectByPath(Transform parent, string path)
         {
             var names = path.Split('/');
             Transform t = null;
             foreach (var name in names)
             {
                 if (name.Length == 0) { continue; }
-                t = FindObjectByName(t, name, createIfNotExist);
+                bool created = false;
+                t = FindObjectByName(t, name, false, ref created);
                 if (t == null) { break; }
             }
             return t;
         }
 
-        Transform FindObjectByName(Transform parent, string name, bool createIfNotExist = false)
+        Transform FindObjectByPath(Transform parent, string path, bool createIfNotExist, ref bool created)
+        {
+            var names = path.Split('/');
+            Transform t = null;
+            foreach (var name in names)
+            {
+                if (name.Length == 0) { continue; }
+                t = FindObjectByName(t, name, createIfNotExist, ref created);
+                if (t == null) { break; }
+            }
+            return t;
+        }
+
+        Transform FindObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
         {
             Transform ret = null;
             if (parent == null)
@@ -469,6 +650,7 @@ namespace UTJ
                 {
                     ret.SetParent(parent, false);
                 }
+                created = true;
             }
             return ret;
         }
@@ -485,6 +667,11 @@ namespace UTJ
             return (Material)s_GetBuiltinExtraResourcesMethod.Invoke(null, new object[] { typeof(Material), "Default-Material.mat" });
         }
 #endif
+
+        void SyncMaterials()
+        {
+
+        }
 
         Mesh GetOrAddMeshComponents(GameObject go)
         {
@@ -509,14 +696,6 @@ namespace UTJ
                     var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
                     renderer.sharedMaterials = parent.sharedMaterials;
                 }
-                else
-                {
-#if UNITY_EDITOR
-                    Material[] materials = new Material[] { UnityEngine.Object.Instantiate(GetDefaultMaterial()) };
-                    materials[0].name = "Material_0";
-                    renderer.sharedMaterials = materials;
-#endif
-                }
             }
             return mfilter.sharedMesh;
         }
@@ -524,7 +703,8 @@ namespace UTJ
         void ForceRepaint()
         {
 #if UNITY_EDITOR
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            EditorUtility.SetDirty(this);
+            SceneView.RepaintAll();
 #endif
         }
 
@@ -541,43 +721,62 @@ namespace UTJ
             }
         }
 
-        void ServeData(MeshRenderer mr, GetFlags flags)
+        bool ServeData(Renderer renderer, GetFlags flags)
+        {
+            bool ret = false;
+
+            var dst = default(MeshData);
+            if (renderer.GetType() == typeof(MeshRenderer))
+            {
+                ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, flags);
+            }
+            else if (renderer.GetType() == typeof(SkinnedMeshRenderer))
+            {
+                ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, flags);
+            }
+
+            if (ret)
+            {
+                dst.id = renderer.gameObject.GetInstanceID();
+                dst.flags.visible = true;
+                if (flags.get_transform)
+                {
+                    dst.flags.has_transform = true;
+                    CaptureTransform(ref dst.transform, renderer.GetComponent<Transform>());
+                }
+
+                int id = renderer.gameObject.GetInstanceID();
+                if(!m_sentObjects.ContainsKey(id))
+                {
+                    m_sentObjects[id] = new Record
+                    {
+                        go = renderer.gameObject,
+                    };
+                }
+
+                dst.path = msCreateString(GetPath(renderer.GetComponent<Transform>()));
+                msServerAddServeData(m_server, EventType.Mesh, ref dst);
+                msDeleteString(dst.path);
+            }
+            return ret;
+        }
+
+        bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetFlags flags)
         {
             var mesh = mr.GetComponent<MeshFilter>().sharedMesh;
-            if (mesh == null) return;
+            if (mesh == null) return false;
             if (!mesh.isReadable)
             {
                 Debug.LogWarning("Mesh " + mr.name + " is not readable and be ignored");
-                return;
+                return false;
             }
 
-            var data = default(MeshData);
-            data.id_unity = mr.gameObject.GetInstanceID();
-            data.flags.visible = true;
-
-            if (flags.get_transform)
-            {
-                data.flags.has_transform = true;
-                Capture(ref data.transform, mr.GetComponent<Transform>());
-            }
-            Capture(ref data, mesh, null, flags);
-
-            data.path = msCreateString(GetPath(mr.GetComponent<Transform>()));
-            msServerAddServeData(m_server, EventType.Mesh, ref data);
-            msDeleteString(data.path);
+            CaptureMesh(ref dst, mesh, null, flags);
+            return true;
         }
 
-        void ServeData(SkinnedMeshRenderer smr, GetFlags flags)
+        bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetFlags flags)
         {
-            var data = default(MeshData);
-            data.id_unity = smr.gameObject.GetInstanceID();
-            data.flags.visible = true;
-
-            if (flags.get_transform)
-            {
-                data.flags.has_transform = true;
-                Capture(ref data.transform, smr.GetComponent<Transform>());
-            }
             if (flags.bake_skin)
             {
                 Cloth cloth = smr.GetComponent<Cloth>();
@@ -586,50 +785,47 @@ namespace UTJ
                     var mesh = smr.sharedMesh;
                     if (mesh == null)
                     {
-                        return;
+                        return false;
                     }
                     if (!mesh.isReadable)
                     {
                         Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
-                        return;
+                        return false;
                     }
-                    Capture(ref data, mesh, cloth, flags);
+                    CaptureMesh(ref dst, mesh, cloth, flags);
                 }
                 else
                 {
                     var mesh = new Mesh();
                     smr.BakeMesh(mesh);
-                    Capture(ref data, mesh, null, flags);
+                    CaptureMesh(ref dst, mesh, null, flags);
                 }
             }
             else
             {
                 var mesh = smr.sharedMesh;
-                if (mesh == null) return;
+                if (mesh == null) return false;
                 if (!mesh.isReadable)
                 {
                     Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
-                    return;
+                    return false;
                 }
-                Capture(ref data, mesh, null, flags);
+                CaptureMesh(ref dst, mesh, null, flags);
             }
-
-            data.path = msCreateString(GetPath(smr.GetComponent<Transform>()));
-            msServerAddServeData(m_server, EventType.Mesh, ref data);
-            msDeleteString(data.path);
+            return true;
         }
 
-        void Capture(ref TransformData data, Transform trans)
+        void CaptureTransform(ref TransformData data, Transform trans)
         {
             data.position = trans.localPosition;
             data.rotation = trans.localRotation;
             data.rotation_eularZXY = trans.localEulerAngles;
-            data.position = trans.localPosition;
+            data.scale = trans.localScale;
             data.local2world = trans.localToWorldMatrix;
             data.world2local = trans.worldToLocalMatrix;
         }
 
-        void Capture(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags)
+        void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags)
         {
             bool use_cloth = cloth != null;
 
@@ -686,23 +882,17 @@ namespace UTJ
 
         void OnValidate()
         {
-            StartServer();
+            m_requestRestart = true;
         }
 #endif
 
         void Awake()
         {
             StartServer();
-#if UNITY_EDITOR
-            EditorApplication.update += PollServerEvents;
-#endif
         }
 
         void OnDestroy()
         {
-#if UNITY_EDITOR
-            EditorApplication.update -= PollServerEvents;
-#endif
             StopServer();
         }
 
