@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Sync.h"
+#include "MQSync.h"
 
 class SettingsDlg;
 
@@ -77,7 +77,7 @@ public:
     virtual bool ExecuteCallback(MQDocument doc, void *option);
 
 
-    Sync& getSync();
+    MQSync& getSync();
     bool& getActive();
 
     void Send();
@@ -87,6 +87,6 @@ private:
     bool SendImpl(MQDocument doc);
     bool ImportImpl(MQDocument doc);
 
-    Sync m_sync;
+    MQSync m_sync;
     SettingsDlg *m_dlg = nullptr;
 };

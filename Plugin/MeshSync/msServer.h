@@ -19,7 +19,6 @@ struct ServerSettings
     int max_queue = 256;
     int max_threads = 8;
     uint16_t port = 8080;
-    MeshRefineSettings mrs;
 };
 
 class Server
@@ -109,7 +108,6 @@ private:
     ServeDataTable m_serve_data;
 
     std::mutex m_mutex;
-    tls<MeshData> m_tmp;
 };
 
 } // namespace ms

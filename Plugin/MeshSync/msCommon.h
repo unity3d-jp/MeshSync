@@ -18,6 +18,13 @@ enum class MessageType
     Mesh,
 };
 
+enum class SenderType
+{
+    Unknown,
+    Unity,
+    Metasequoia,
+};
+
 struct GetDataCS;
 struct DeleteDataCS;
 struct MeshDataCS;
@@ -82,6 +89,20 @@ public:
 
 // Mesh
 
+struct MeshDataFlags
+{
+    uint32_t visible : 1;
+    uint32_t has_indices : 1;
+    uint32_t has_counts : 1;
+    uint32_t has_points : 1;
+    uint32_t has_normals : 1;
+    uint32_t has_tangents : 1;
+    uint32_t has_uv : 1;
+    uint32_t has_materialIDs : 1;
+    uint32_t has_transform : 1;
+    uint32_t has_refine_settings : 1;
+};
+
 struct MeshRefineFlags
 {
     uint32_t split : 1;
@@ -90,28 +111,23 @@ struct MeshRefineFlags
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
     uint32_t gen_normals : 1;
+    uint32_t gen_normals_with_smooth_angle : 1;
     uint32_t gen_tangents : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
-};
 
-struct MeshDataFlags
-{
-    uint32_t visible : 1;
-    uint32_t has_transform : 1;
-    uint32_t has_indices : 1;
-    uint32_t has_counts : 1;
-    uint32_t has_points : 1;
-    uint32_t has_normals : 1;
-    uint32_t has_tangents : 1;
-    uint32_t has_uv : 1;
-    uint32_t has_materialIDs : 1;
+    // Metasequoia - equivalent
+    uint32_t invert_v : 1;
+    uint32_t mirror_x : 1;
+    uint32_t mirror_y : 1;
+    uint32_t mirror_z : 1;
 };
 
 struct MeshRefineSettings
 {
     MeshRefineFlags flags = { 0 };
-    float scale = 1.0f;
+    float scale_factor = 1.0f;
+    float smooth_angle = 0.0f;
     int split_unit = 65000;
 };
 
@@ -141,35 +157,13 @@ struct SplitData
     IntrusiveArray<SubmeshData> submeshes;
 };
 
-struct ClientSpecificData
-{
-    enum class Type {
-        NoData,
-        Metasequoia,
-    };
-    Type type;
-    struct Metasequoia {
-        struct {
-            uint32_t invert_v : 1;
-            uint32_t mirror_x : 1;
-            uint32_t mirror_y : 1;
-            uint32_t mirror_z : 1;
-        } flags;
-        float scale_factor;
-        float smooth_angle;
-    } mq;
-
-    ClientSpecificData();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-};
-
 class MeshData : public MessageData
 {
 using super = MessageData;
 public:
-    int               id = 0;
+    SenderType        sender = SenderType::Unknown;
+    int               id_unity = 0;
+    int               id_dcc = 0;
     std::string       path;
     MeshDataFlags     flags = {0};
     RawVector<float3> points;
@@ -181,7 +175,7 @@ public:
     RawVector<int>    materialIDs;
 
     Transform         transform;
-    ClientSpecificData csd;
+    MeshRefineSettings refine_settings;
 
     // not serialized
     RawVector<SubmeshData> submeshes;
@@ -197,7 +191,7 @@ public:
 
     const char* getName() const;
     void swap(MeshData& v);
-    void refine(const MeshRefineSettings &s);
+    void refine();
     void applyMirror(const float3& plane_n, float plane_d);
     void applyTransform(const float4x4& t);
 };
@@ -220,7 +214,8 @@ struct DeleteDataCS
 struct MeshDataCS
 {
     MeshData *cpp = nullptr;
-    int id = 0;
+    int id_unity = 0;
+    int id_dcc = 0;
     MeshDataFlags flags = {0};
     const char *path = nullptr;
     float3 *points = nullptr;

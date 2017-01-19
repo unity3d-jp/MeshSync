@@ -109,6 +109,7 @@ int MeshSyncClientPlugin::OnReceiveUserMessage(MQDocument doc, DWORD src_product
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
+    m_sync.flushPendingRequests(doc);
 }
 
 
@@ -118,7 +119,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
-    m_sync.send(doc);
+    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -127,6 +128,7 @@ void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, N
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 {
+    m_sync.clear();
 }
 
 //---------------------------------------------------------------------------
@@ -135,7 +137,7 @@ void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    m_sync.send(doc);
+    m_sync.sendMesh(doc);
     return TRUE;
 }
 
@@ -145,7 +147,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    m_sync.send(doc);
+    m_sync.sendMesh(doc);
     return TRUE;
 }
 
@@ -163,7 +165,7 @@ void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 {
-    m_sync.send(doc);
+    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -180,7 +182,7 @@ void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateObjectList(MQDocument doc)
 {
-    m_sync.send(doc);
+    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -225,7 +227,7 @@ MQBasePlugin *GetPluginClass()
 
 
 
-Sync& MeshSyncClientPlugin::getSync()
+MQSync& MeshSyncClientPlugin::getSync()
 {
     return m_sync;
 }
@@ -246,13 +248,13 @@ void MeshSyncClientPlugin::Import()
 
 bool MeshSyncClientPlugin::SendImpl(MQDocument doc)
 {
-    m_sync.send(doc, true);
+    m_sync.sendMesh(doc, true);
     return true;
 }
 
 bool MeshSyncClientPlugin::ImportImpl(MQDocument doc)
 {
-    m_sync.import(doc);
+    m_sync.importMeshes(doc);
     return true;
 }
 

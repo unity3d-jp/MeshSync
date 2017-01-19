@@ -25,7 +25,7 @@
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ\Sync.cpp">
+    <ClCompile Include="MeshSyncClientMQ\MQSync.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,7 +51,7 @@
     <ClInclude Include="MeshSyncClientMQ\DialogMQ4.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ\Sync.h">
+    <ClInclude Include="MeshSyncClientMQ\MQSync.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
   </ItemGroup>

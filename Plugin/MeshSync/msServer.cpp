@@ -29,6 +29,8 @@ private:
 
 
 
+tls<MeshData> g_tmp_mesh;
+
 RequestHandler::RequestHandler(Server *server)
     : m_server(server)
 {
@@ -48,10 +50,15 @@ void Server::recvDelete(const Body& body)
 template<class Body>
 void Server::recvMesh(const Body& body)
 {
-    auto& tmp = m_tmp.local();
+    auto& tmp = g_tmp_mesh.local();
     body(tmp);
     if (m_serve && !tmp.path.empty()) {
-        tmp.refine(m_settings.mrs);
+        tmp.refine_settings.flags.triangulate = 1;
+        tmp.refine_settings.flags.split = 1;
+        tmp.refine_settings.flags.optimize_topology = 1;
+        tmp.refine_settings.split_unit = 65000;
+        tmp.refine();
+
         {
             lock_t l(m_mutex);
             m_recv_history.push_back({ MessageType::Mesh, tmp.path });
@@ -172,11 +179,12 @@ void Server::endServe()
     mrs.flags.swap_faces = m_current_get_request.flags.swap_faces;
     mrs.flags.swap_handedness = m_current_get_request.flags.swap_handedness;
     mrs.flags.apply_local2world = m_current_get_request.flags.apply_local2world;
-    mrs.scale = (1.0f / m_settings.mrs.scale) * m_current_get_request.scale;
+    mrs.scale_factor = m_current_get_request.scale;
 
     concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](DataPtr& p) {
         if (auto data = static_cast<MeshData*>(p.get())) {
-            data->refine(mrs);
+            data->refine_settings = mrs;
+            data->refine();
         }
     });
     if (m_current_get_request.wait_flag) {

@@ -19,11 +19,11 @@
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ\Sync.cpp">
-      <Filter>MeshSyncClientMQ</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\Dialog\MainDlg.cpp">
       <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\MQSync.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -42,9 +42,6 @@
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ3.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ\Sync.h">
-      <Filter>MeshSyncClientMQ</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\Dialog\resource.h">
       <Filter>MeshSyncClientMQ\Dialog</Filter>
     </ClInclude>
@@ -53,6 +50,9 @@
     </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\Dialog\MainDlg.h">
       <Filter>MeshSyncClientMQ\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\MQSync.h">
+      <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

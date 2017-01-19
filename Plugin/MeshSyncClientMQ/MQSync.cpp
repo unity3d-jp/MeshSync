@@ -1,40 +1,71 @@
 #include "pch.h"
-#include "Sync.h"
+#include "MQSync.h"
 
 #define MaxNameBuffer 1024
 
-Sync::Sync()
+static inline std::string BuildPath(MQDocument doc, MQObject obj)
+{
+    std::string ret;
+    if (auto parent = doc->GetParentObject(obj)) {
+        ret += BuildPath(doc, parent);
+    }
+    char name[MaxNameBuffer];
+    obj->GetName(name, sizeof(name));
+    ret += "/";
+    ret += name;
+    return ret;
+}
+
+
+
+MQSync::MQSync()
 {
 }
 
-Sync::~Sync()
+MQSync::~MQSync()
 {
     waitAsyncSend();
 }
 
-ms::ClientSettings& Sync::getClientSettings() { return m_settings; }
-float& Sync::getScaleFactor() { return m_scale_factor; }
-bool& Sync::getAutoSync() { return m_auto_sync; }
+ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
+float& MQSync::getScaleFactor() { return m_scale_factor; }
+bool& MQSync::getAutoSync() { return m_auto_sync; }
 
-void Sync::send(MQDocument doc, bool force)
+void MQSync::clear()
+{
+    m_export_objects.clear();
+    m_import_objects.clear();
+    m_pending_send_mesh = false;
+}
+
+void MQSync::flushPendingRequests(MQDocument doc)
+{
+    if (m_pending_send_mesh) {
+        sendMesh(doc, true);
+    }
+}
+
+void MQSync::sendMesh(MQDocument doc, bool force)
 {
     if (!force && !m_auto_sync) { return; }
 
-    // just return if previous request is in progress. responsively is highest priority.
+    // just return if previous request is in progress. responsiveness is highest priority.
     if (isAsyncSendInProgress()) {
+        m_pending_send_mesh = true;
         return;
     }
 
+    m_pending_send_mesh = false;
+
     int nobj = doc->GetObjectCount();
-    while ((int)m_data.size() < nobj) {
-        m_data.emplace_back(new ms::MeshData());
+    while ((int)m_export_objects.size() < nobj) {
+        m_export_objects.emplace_back(new ms::MeshData());
     }
 
     // gather mesh data
     concurrency::parallel_for(0, nobj, [this, doc](int i) {
-        extractMeshData(doc, doc->GetObject(i), *m_data[i]);
+        extractMeshData(doc, doc->GetObject(i), *m_export_objects[i]);
     });
-
 
     // kick async send
     m_future_send = std::async(std::launch::async, [this, nobj]() {
@@ -42,38 +73,32 @@ void Sync::send(MQDocument doc, bool force)
 
         // send mesh
         concurrency::parallel_for(0, nobj, [this, &client](int i) {
-            client.send(*m_data[i]);
+            client.send(*m_export_objects[i]);
         });
 
-        // detect deleted objects
-        m_prev_objects.swap(m_current_objects);
-        m_current_objects.resize(nobj);
+        // detect deleted objects and send delete message
+        for (auto& e : m_exist_record) {
+            e.second = false;
+        }
         for (int i = 0; i < nobj; ++i) {
-            m_current_objects[i] = m_data[i]->path;
+            m_exist_record[m_export_objects[i]->path] = true;
         }
-        std::sort(m_current_objects.begin(), m_current_objects.end());
-
-        std::vector<ms::DeleteData> del_data;
-        for (auto& n : m_prev_objects) {
-            if (std::lower_bound(m_current_objects.begin(), m_current_objects.end(), n) == m_current_objects.end()) {
-                ms::DeleteData data;
-                data.path = n;
-                del_data.push_back(data);
+        for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
+            if (!i->second) {
+                ms::DeleteData del;
+                del.path = i->first;
+                client.send(del);
+                m_exist_record.erase(i++);
             }
-        }
-
-        // send delete event
-        if (!del_data.empty()) {
-            std::vector<ms::DeleteData*> send_data(del_data.size());
-            for (size_t i = 0; i < del_data.size(); ++i) { send_data[i] = &del_data[i]; }
-
-            client.send(send_data.data(), (int)send_data.size());
+            else {
+                ++i;
+            }
         }
     });
 
 }
 
-void Sync::import(MQDocument doc)
+void MQSync::importMeshes(MQDocument doc)
 {
     waitAsyncSend();
 
@@ -90,20 +115,22 @@ void Sync::import(MQDocument doc)
 
     auto ret = client.send(gd);
     for (auto& data : ret) {
-        auto& mdata = static_cast<ms::MeshData&>(*data);
+        auto& mdata = *data;
 
         char name[MaxNameBuffer];
-        sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id);
+        sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id_unity);
 
-        if (auto obj = findObject(doc, name)) {
+        if (auto obj = findMQObject(doc, name)) {
             doc->DeleteObject(doc->GetObjectIndex(obj));
         }
         auto obj = createObject(mdata, name);
         doc->AddObject(obj);
+
+        m_import_objects[mdata.id_unity] = data;
     }
 }
 
-bool Sync::isAsyncSendInProgress()
+bool MQSync::isAsyncSendInProgress()
 {
     if (m_future_send.valid()) {
         return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
@@ -111,14 +138,14 @@ bool Sync::isAsyncSendInProgress()
     return false;
 }
 
-void Sync::waitAsyncSend()
+void MQSync::waitAsyncSend()
 {
     if (m_future_send.valid()) {
         m_future_send.get();
     }
 }
 
-MQObject Sync::findObject(MQDocument doc, const char *name)
+MQObject MQSync::findMQObject(MQDocument doc, const char *name)
 {
     int nobj = doc->GetObjectCount();
     for (int i = 0; i < nobj; ++i) {
@@ -134,7 +161,7 @@ MQObject Sync::findObject(MQDocument doc, const char *name)
     return nullptr;
 }
 
-MQObject Sync::createObject(const ms::MeshData& data, const char *name)
+MQObject MQSync::createObject(const ms::MeshData& data, const char *name)
 {
     auto ret = MQ_CreateObject();
 
@@ -161,38 +188,13 @@ MQObject Sync::createObject(const ms::MeshData& data, const char *name)
     return ret;
 }
 
-static inline void BuildPath(MQDocument doc, MQObject obj, std::string& path)
-{
-    if (auto parent = doc->GetParentObject(obj)) {
-        BuildPath(doc, parent, path);
-    }
-    char name[MaxNameBuffer];
-    obj->GetName(name, sizeof(name));
-    path += "/";
-    path += name;
-}
-
-void Sync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
+void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
 {
     if (!obj) { return; }
 
-    dst.path.clear();
-    BuildPath(doc, obj, dst.path);
-
-    // metasequoia specific attributes
-    {
-        dst.csd.type = ms::ClientSpecificData::Type::Metasequoia;
-        dst.csd.mq.scale_factor = m_scale_factor;
-        dst.csd.mq.smooth_angle = obj->GetSmoothAngle();
-        dst.csd.mq.flags.invert_v = 1;
-
-        if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {
-            int axis = obj->GetMirrorAxis();
-            dst.csd.mq.flags.mirror_x = (axis & MQOBJECT_MIRROR_AXIS_X) ? 1 : 0;
-            dst.csd.mq.flags.mirror_y = (axis & MQOBJECT_MIRROR_AXIS_Y) ? 1 : 0;
-            dst.csd.mq.flags.mirror_z = (axis & MQOBJECT_MIRROR_AXIS_Z) ? 1 : 0;
-        }
-    }
+    dst.sender = ms::SenderType::Metasequoia;
+    dst.path = BuildPath(doc, obj);
+    dst.id_dcc = doc->GetObjectIndex(obj);
 
     dst.flags.visible = obj->GetVisible();
     if (!dst.flags.visible) {
@@ -200,12 +202,26 @@ void Sync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
         return;
     }
 
-    dst.flags.has_transform = 1;
     dst.flags.has_points = 1;
     dst.flags.has_uv = 1;
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
     dst.flags.has_materialIDs = 1;
+    dst.flags.has_transform = 1;
+    dst.flags.has_refine_settings = 1;
+
+    dst.refine_settings.scale_factor = m_scale_factor;
+    dst.refine_settings.flags.swap_handedness = 1;
+    dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
+    dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
+    dst.refine_settings.flags.gen_tangents = 1;
+    dst.refine_settings.flags.invert_v = 1;
+    if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {
+        int axis = obj->GetMirrorAxis();
+        dst.refine_settings.flags.mirror_x = (axis & MQOBJECT_MIRROR_AXIS_X) ? 1 : 0;
+        dst.refine_settings.flags.mirror_y = (axis & MQOBJECT_MIRROR_AXIS_Y) ? 1 : 0;
+        dst.refine_settings.flags.mirror_z = (axis & MQOBJECT_MIRROR_AXIS_Z) ? 1 : 0;
+    }
 
     // transform
     {
@@ -223,7 +239,7 @@ void Sync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
     dst.points.resize(npoints);
     obj->GetVertexArray((MQPoint*)dst.points.data());
 
-    // copy counts
+    // copy faces
     int nfaces = obj->GetFaceCount();
     int nindices = 0;
     dst.counts.resize(nfaces);
@@ -243,7 +259,7 @@ void Sync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
     auto *uv = dst.uv.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
-        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi);
+        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
         if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
             obj->GetFacePointArray(fi, indices);
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
@@ -259,4 +275,9 @@ void Sync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
     dst.counts.erase(
         std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
         dst.counts.end());
+
+    // Metasequoia uses -1 as invalid material. +1 to make it zero-based
+    for (int& mid : dst.materialIDs) {
+        mid += 1;
+    }
 }

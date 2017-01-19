@@ -69,42 +69,52 @@ namespace UTJ
             public bool visible
             {
                 get { return (flags & 0x1) != 0; }
-                set { SwitchBit(ref flags, value, 0x1); }
-            }
-            public bool has_transform
-            {
-                get { return (flags & 0x2) != 0; }
-                set { SwitchBit(ref flags, value, 0x2); }
+                set { SwitchBits(ref flags, value, 0x1); }
             }
             public bool has_indices
             {
-                get { return (flags & 0x4) != 0; }
-                set { SwitchBit(ref flags, value, 0x4); }
+                get { return (flags & 0x2) != 0; }
+                set { SwitchBits(ref flags, value, 0x2); }
             }
             public bool has_counts
             {
-                get { return (flags & 0x8) != 0; }
-                set { SwitchBit(ref flags, value, 0x8); }
+                get { return (flags & 0x4) != 0; }
+                set { SwitchBits(ref flags, value, 0x4); }
             }
             public bool has_points
             {
-                get { return (flags & 0x10) != 0; }
-                set { SwitchBit(ref flags, value, 0x10); }
+                get { return (flags & 0x8) != 0; }
+                set { SwitchBits(ref flags, value, 0x8); }
             }
             public bool has_normals
             {
-                get { return (flags & 0x20) != 0; }
-                set { SwitchBit(ref flags, value, 0x20); }
+                get { return (flags & 0x10) != 0; }
+                set { SwitchBits(ref flags, value, 0x10); }
             }
             public bool has_tangents
             {
-                get { return (flags & 0x40) != 0; }
-                set { SwitchBit(ref flags, value, 0x40); }
+                get { return (flags & 0x20) != 0; }
+                set { SwitchBits(ref flags, value, 0x20); }
             }
             public bool has_uv
             {
+                get { return (flags & 0x40) != 0; }
+                set { SwitchBits(ref flags, value, 0x40); }
+            }
+            public bool has_materialIDs
+            {
                 get { return (flags & 0x80) != 0; }
-                set { SwitchBit(ref flags, value, 0x80); }
+                set { SwitchBits(ref flags, value, 0x80); }
+            }
+            public bool has_transform
+            {
+                get { return (flags & 0x100) != 0; }
+                set { SwitchBits(ref flags, value, 0x100); }
+            }
+            public bool has_refine_settings
+            {
+                get { return (flags & 0x200) != 0; }
+                set { SwitchBits(ref flags, value, 0x200); }
             }
         };
 
@@ -122,7 +132,8 @@ namespace UTJ
         public struct MeshData
         {
             public IntPtr cpp;
-            public int id;
+            public int id_unity;
+            public int id_dcc;
             public MeshDataFlags flags;
             public IntPtr path;
             public IntPtr points;
@@ -148,71 +159,11 @@ namespace UTJ
             public int num_submeshes;
         };
 
-        public struct MeshRefineFlags
-        {
-            public int flags;
-            public bool split
-            {
-                get { return (flags & 0x1) != 0; }
-                set { SwitchBit(ref flags, value, 0x1); }
-            }
-            public bool triangulate
-            {
-                get { return (flags & 0x2) != 0; }
-                set { SwitchBit(ref flags, value, 0x2); }
-            }
-            public bool optimizeTopology
-            {
-                get { return (flags & 0x4) != 0; }
-                set { SwitchBit(ref flags, value, 0x4); }
-            }
-            public bool swapHandedness
-            {
-                get { return (flags & 0x8) != 0; }
-                set { SwitchBit(ref flags, value, 0x8); }
-            }
-            public bool swapFaces
-            {
-                get { return (flags & 0x10) != 0; }
-                set { SwitchBit(ref flags, value, 0x10); }
-            }
-            public bool genNormals
-            {
-                get { return (flags & 0x20) != 0; }
-                set { SwitchBit(ref flags, value, 0x20); }
-            }
-            public bool genTangents
-            {
-                get { return (flags & 0x40) != 0; }
-                set { SwitchBit(ref flags, value, 0x40); }
-            }
-        }
-
-        public struct MeshRefineSettings
-        {
-            public MeshRefineFlags flags;
-            public float scale;
-            public int split_unit;
-
-            public static MeshRefineSettings default_value
-            {
-                get
-                {
-                    return new MeshRefineSettings
-                    {
-                        scale = 1.0f,
-                        split_unit = 65000,
-                    };
-                }
-            }
-        }
-
         public struct ServerSettings
         {
             public int max_queue;
             public int max_threads;
             public ushort port;
-            public MeshRefineSettings mrs;
 
             public static ServerSettings default_value
             {
@@ -220,10 +171,9 @@ namespace UTJ
                 {
                     return new ServerSettings
                     {
-                        max_queue = 100,
-                        max_threads = 4,
+                        max_queue = 256,
+                        max_threads = 8,
                         port = 8080,
-                        mrs = MeshRefineSettings.default_value,
                     };
                 }
             }
@@ -254,7 +204,7 @@ namespace UTJ
         [DllImport("MeshSyncServer")] public static extern void msSubmeshCopyIndices(IntPtr dst, ref SplitData src, int i);
 
 
-        static void SwitchBit(ref int flags, bool f, int bit)
+        static void SwitchBits(ref int flags, bool f, int bit)
         {
 
             if (f) { flags |= bit; }
@@ -274,13 +224,7 @@ namespace UTJ
 
         #region fields
         [SerializeField] int m_port = 8080;
-        [SerializeField] float m_scale = 0.001f;
-        [SerializeField] bool m_genNormals = true;
-        [SerializeField] bool m_genTangents = false;
         [SerializeField] bool m_genLightmapUV = false;
-        [SerializeField] bool m_swapHandedness = true;
-        [SerializeField] bool m_swapFaces = false;
-        [SerializeField] bool m_optimizeTopology = true;
         IntPtr m_server;
         msMessageHandler m_handler;
 
@@ -299,14 +243,6 @@ namespace UTJ
             StopServer();
 
             var settings = ServerSettings.default_value;
-            settings.mrs.flags.split = true;
-            settings.mrs.flags.triangulate = true;
-            settings.mrs.flags.genNormals = m_genNormals;
-            settings.mrs.flags.genTangents = m_genTangents;
-            settings.mrs.flags.swapHandedness = m_swapHandedness;
-            settings.mrs.flags.swapFaces = m_swapFaces;
-            settings.mrs.flags.optimizeTopology = m_optimizeTopology;
-            settings.mrs.scale = m_scale;
             settings.port = (ushort)m_port;
             m_server = msServerStart(ref settings);
             m_handler = OnServerEvent;
@@ -614,7 +550,7 @@ namespace UTJ
             }
 
             var data = default(MeshData);
-            data.id = mr.gameObject.GetInstanceID();
+            data.id_unity = mr.gameObject.GetInstanceID();
             data.flags.visible = true;
 
             if (flags.get_transform)
@@ -632,7 +568,7 @@ namespace UTJ
         void ServeData(SkinnedMeshRenderer smr, GetFlags flags)
         {
             var data = default(MeshData);
-            data.id = smr.gameObject.GetInstanceID();
+            data.id_unity = smr.gameObject.GetInstanceID();
             data.flags.visible = true;
 
             if (flags.get_transform)

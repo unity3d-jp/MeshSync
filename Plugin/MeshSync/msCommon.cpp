@@ -142,40 +142,6 @@ void DeleteData::deserialize(std::istream& is)
 }
 
 
-ClientSpecificData::ClientSpecificData()
-{
-    memset(this, 0, sizeof(*this));
-}
-
-uint32_t ClientSpecificData::getSerializeSize() const
-{
-    uint32_t ret = ssize(type);
-    switch (type) {
-    case Type::Metasequoia:
-        ret += ssize(mq);
-        break;
-    }
-    return ret;
-}
-void ClientSpecificData::serialize(std::ostream& os) const
-{
-    write(os, type);
-    switch (type) {
-    case Type::Metasequoia:
-        write(os, mq);
-        break;
-    }
-}
-void ClientSpecificData::deserialize(std::istream& is)
-{
-    read(is, type);
-    switch (type) {
-    case Type::Metasequoia:
-        read(is, mq);
-        break;
-    }
-}
-
 
 #define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs)
 
@@ -185,7 +151,8 @@ MeshData::MeshData()
 
 MeshData::MeshData(const MeshDataCS & cs)
 {
-    id = cs.id;
+    id_unity = cs.id_unity;
+    id_dcc = cs.id_dcc;
     path = cs.path ? cs.path : "";
     flags = cs.flags;
     if (flags.has_points && cs.points) points.assign(cs.points, cs.points + cs.num_points);
@@ -198,53 +165,60 @@ MeshData::MeshData(const MeshDataCS & cs)
 
 void MeshData::clear()
 {
-    id = 0;
+    id_unity = 0;
+    id_dcc = 0;
     path.clear();
     flags = {0};
 #define Body(A) A.clear();
     EachArray(Body);
 #undef Body
     transform = Transform();
-    csd = ClientSpecificData();
+    refine_settings = MeshRefineSettings();
     splits.clear();
 }
 
 uint32_t MeshData::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(id);
+    ret += ssize(sender);
+    ret += ssize(id_unity);
+    ret += ssize(id_dcc);
     ret += ssize(path);
     ret += ssize(flags);
 #define Body(A) if(flags.has_##A) ret += ssize(A);
     EachArray(Body);
 #undef Body
     if (flags.has_transform) ret += ssize(transform);
-    ret += csd.getSerializeSize();
+    if (flags.has_refine_settings) ret += ssize(refine_settings);
     return ret;
 }
 
 void MeshData::serialize(std::ostream& os) const
 {
-    write(os, id);
+    write(os, sender);
+    write(os, id_unity);
+    write(os, id_dcc);
     write(os, path);
     write(os, flags);
 #define Body(A) if(flags.has_##A) write(os, A);
     EachArray(Body);
 #undef Body
     if (flags.has_transform) write(os, transform);
-    csd.serialize(os);
+    if (flags.has_refine_settings) write(os, refine_settings);
 }
 
 void MeshData::deserialize(std::istream& is)
 {
-    read(is, id);
+    read(is, sender);
+    read(is, id_unity);
+    read(is, id_dcc);
     read(is, path);
     read(is, flags);
 #define Body(A) if(flags.has_##A) read(is, A);
     EachArray(Body);
 #undef Body
     if (flags.has_transform) read(is, transform);
-    csd.deserialize(is);
+    if (flags.has_refine_settings) read(is, refine_settings);
 }
 
 const char* MeshData::getName() const
@@ -257,97 +231,84 @@ const char* MeshData::getName() const
 
 void MeshData::swap(MeshData & v)
 {
-    std::swap(id, v.id);
+    std::swap(sender, v.sender);
+    std::swap(id_unity, v.id_unity);
+    std::swap(id_dcc, v.id_dcc);
     path.swap(v.path);
     std::swap(flags, v.flags);
 #define Body(A) A.swap(v.A);
     EachArray(Body);
 #undef Body
     std::swap(transform, v.transform);
-    std::swap(csd, v.csd);
+    std::swap(refine_settings, v.refine_settings);
 
     std::swap(splits, v.splits);
+    std::swap(submeshes, v.submeshes);
 }
 
 static tls<mu::TopologyRefiner> g_refiner;
 
-void MeshData::refine(const MeshRefineSettings &settings)
+void MeshData::refine()
 {
-    if (csd.type == ClientSpecificData::Type::Metasequoia) {
-        if (csd.mq.flags.invert_v) {
-            mu::InvertV(uv.data(), uv.size());
-        }
-        if (csd.mq.flags.mirror_x) {
-            float3 plane_n = apply_rotation(transform.rotation, { 1.0f, 0.0f, 0.0f });
-            float plane_d = dot(plane_n, transform.position);
-            applyMirror(plane_n, plane_d);
-        }
-        if (csd.mq.flags.mirror_y) {
-            float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 1.0f, 0.0f });
-            float plane_d = dot(plane_n, transform.position);
-            applyMirror(plane_n, plane_d);
-        }
-        if (csd.mq.flags.mirror_z) {
-            float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 0.0f, 1.0f });
-            float plane_d = dot(plane_n, transform.position);
-            applyMirror(plane_n, plane_d);
-        }
-        if (csd.mq.scale_factor != 1.0f) {
-            mu::Scale(points.data(), csd.mq.scale_factor, points.size());
-        }
-
-        // Metasequoia uses -1 as invalid material. +1 to make it zero-based
-        for (int& mid : materialIDs) {
-            mid += 1; 
-        }
+    if (refine_settings.flags.invert_v) {
+        mu::InvertV(uv.data(), uv.size());
     }
-
-    if (settings.flags.apply_local2world) {
+    if (refine_settings.flags.mirror_x) {
+        float3 plane_n = apply_rotation(transform.rotation, { 1.0f, 0.0f, 0.0f });
+        float plane_d = dot(plane_n, transform.position);
+        applyMirror(plane_n, plane_d);
+    }
+    if (refine_settings.flags.mirror_y) {
+        float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 1.0f, 0.0f });
+        float plane_d = dot(plane_n, transform.position);
+        applyMirror(plane_n, plane_d);
+    }
+    if (refine_settings.flags.mirror_z) {
+        float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 0.0f, 1.0f });
+        float plane_d = dot(plane_n, transform.position);
+        applyMirror(plane_n, plane_d);
+    }
+    if (refine_settings.flags.apply_local2world) {
         applyTransform(transform.local2world);
     }
-    if (settings.flags.apply_world2local) {
+    if (refine_settings.flags.apply_world2local) {
         applyTransform(transform.world2local);
         flags.has_transform = 0;
     }
-    if (settings.scale != 1.0f) {
-        mu::Scale(points.data(), settings.scale, points.size());
-    }
-    if (settings.flags.swap_handedness) {
+    if (refine_settings.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
+    }
+    if (refine_settings.scale_factor != 1.0f) {
+        mu::Scale(points.data(), refine_settings.scale_factor, points.size());
     }
 
     auto& refiner = g_refiner.local();
-    refiner.triangulate = true;
-    refiner.swap_faces = settings.flags.swap_faces;
-    refiner.split_unit = settings.split_unit;
+    refiner.triangulate = refiner.triangulate;
+    refiner.swap_faces = refine_settings.flags.swap_faces;
+    refiner.split_unit = refine_settings.split_unit;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
 
     // normals
-    bool gen_normals = settings.flags.gen_normals && !points.empty();
-    if (gen_normals) {
-        bool do_smoothing =
-            csd.type == ClientSpecificData::Type::Metasequoia && (csd.mq.smooth_angle >= 0.0f && csd.mq.smooth_angle < 360.0f);
-        if (do_smoothing) {
-            refiner.genNormals(csd.mq.smooth_angle);
-        }
-        else {
-            refiner.genNormals();
-        }
+    if (refine_settings.flags.gen_normals_with_smooth_angle) {
+        refiner.genNormals(refine_settings.smooth_angle);
+    }
+    else if (refine_settings.flags.gen_normals) {
+        refiner.genNormals();
     }
     else {
         refiner.normals = normals;
     }
 
     // tangents
-    bool gen_tangents = settings.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
+    bool gen_tangents = refine_settings.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
     if (gen_tangents) {
         refiner.genTangents();
     }
 
     // refine topology
     {
-        refiner.refine(settings.flags.optimize_topology);
+        refiner.refine(refine_settings.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
         refiner.swapNewData(points, normals, tangents, uv, indices);
 
@@ -445,7 +406,8 @@ DeleteDataCS::DeleteDataCS(const DeleteData & v)
 MeshDataCS::MeshDataCS(const MeshData & v)
 {
     cpp         = const_cast<MeshData*>(&v);
-    id          = v.id;
+    id_unity    = v.id_unity;
+    id_dcc      = v.id_dcc;
     flags       = v.flags;
     path        = v.path.c_str();
     points      = (float3*)v.points.data();
