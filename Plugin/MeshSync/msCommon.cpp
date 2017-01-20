@@ -152,19 +152,6 @@ MeshData::MeshData()
 {
 }
 
-MeshData::MeshData(const MeshDataCS & cs)
-{
-    id = cs.id;
-    path = cs.path ? cs.path : "";
-    flags = cs.flags;
-    if (flags.has_points && cs.points) points.assign(cs.points, cs.points + cs.num_points);
-    if (flags.has_normals && cs.normals) normals.assign(cs.normals, cs.normals + cs.num_points);
-    if (flags.has_tangents && cs.tangents) tangents.assign(cs.tangents, cs.tangents + cs.num_points);
-    if (flags.has_uv && cs.uv) uv.assign(cs.uv, cs.uv + cs.num_points);
-    if (flags.has_indices && cs.indices) indices.assign(cs.indices, cs.indices + cs.num_indices);
-    if (flags.has_transform) transform = cs.transform;
-}
-
 void MeshData::clear()
 {
     sender = SenderType::Unknown;
@@ -353,6 +340,12 @@ void MeshData::refine()
     else {
         refiner.swapNewData(points, normals, tangents, uv, indices);
     }
+
+    flags.has_points = !points.empty();
+    flags.has_normals = !normals.empty();
+    flags.has_tangents = !tangents.empty();
+    flags.has_uv = !uv.empty();
+    flags.has_indices = !indices.empty();
 }
 
 void MeshData::applyMirror(const float3 & plane_n, float plane_d)
@@ -383,52 +376,5 @@ void MeshData::applyTransform(const float4x4& m)
     mu::Normalize(normals.data(), normals.size());
 }
 
-
-
-GetDataCS::GetDataCS(const GetData& v)
-{
-    flags = v.flags;
-}
-
-DeleteDataCS::DeleteDataCS(const DeleteData & v)
-{
-    path = v.path.c_str();
-    id = v.id;
-}
-
-
-MeshDataCS::MeshDataCS(const MeshData & v)
-{
-    cpp         = const_cast<MeshData*>(&v);
-    id          = v.id;
-    flags       = v.flags;
-    path        = v.path.c_str();
-    points      = (float3*)v.points.data();
-    normals     = (float3*)v.normals.data();
-    tangents    = (float4*)v.tangents.data();
-    uv          = (float2*)v.uv.data();
-    indices     = (int*)v.indices.data();
-    num_points  = (int)v.points.size();
-    num_indices = (int)v.indices.size();
-    num_splits  = (int)v.splits.size();
-    transform = v.transform;
-}
-
-SplitDataCS::SplitDataCS()
-{
-}
-
-SplitDataCS::SplitDataCS(const SplitData & v)
-{
-    points      = (float3*)v.points.data();
-    normals     = (float3*)v.normals.data();
-    tangents    = (float4*)v.tangents.data();
-    uv          = (float2*)v.uv.data();
-    indices     = (int*)v.indices.data();
-    submeshes   = (SubmeshData*)v.submeshes.data();
-    num_points  = (int)v.points.size();
-    num_indices = (int)v.indices.size();
-    num_submeshes = (int)v.submeshes.size();
-}
 
 } // namespace ms

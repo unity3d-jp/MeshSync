@@ -34,16 +34,13 @@ msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
     if (!server || !handler) { return 0; }
     return server->processMessages([handler](ms::MessageData& data) {
         if (auto* get = dynamic_cast<ms::GetData*>(&data)) {
-            ms::GetDataCS cs = *get;
-            handler(ms::MessageType::Get, &cs);
+            handler(ms::MessageType::Get, get);
         }
         else if (auto* del = dynamic_cast<ms::DeleteData*>(&data)) {
-            ms::DeleteDataCS cs = *del;
-            handler(ms::MessageType::Delete, &cs);
+            handler(ms::MessageType::Delete, del);
         }
         else if (auto* mesh = dynamic_cast<ms::MeshData*>(&data)) {
-            ms::MeshDataCS cs = *mesh;
-            handler(ms::MessageType::Mesh, &cs);
+            handler(ms::MessageType::Mesh, mesh);
         }
     });
 }
@@ -58,154 +55,191 @@ msAPI void msServerEndServe(ms::Server *server)
     if (!server) { return; }
     server->endServe();
 }
-msAPI void msServerAddServeData(ms::Server *server, ms::MessageType type, const void *data)
+msAPI void msServerAddServeData(ms::Server *server, ms::MessageType type, void *data)
 {
     if (!server) { return; }
     switch (type) {
     case ms::MessageType::Mesh:
     {
-        auto edata = new ms::MeshData(*(const ms::MeshDataCS*)data);
-        server->addServeData(edata);
+        server->addServeData((ms::MeshData*)data);
     }
     }
 }
 
-
-static void msCopyData(ms::GetDataCS *dst, const ms::GetDataCS *src)
+msAPI ms::GetFlags msGetGetFlags(ms::GetData *_this)
 {
-    if (!dst || !src) { return; }
-
-    dst->flags = src->flags;
-}
-static void msCopyData(ms::DeleteDataCS *dst, const ms::DeleteDataCS *src)
-{
-    if (!dst || !src) { return; }
-
-    dst->path = src->path;
-    dst->id = src->id;
-}
-static void msCopyData(ms::MeshDataCS *dst, const ms::MeshDataCS *src)
-{
-    if (!dst || !src) { return; }
-
-    dst->id = src->id;
-    dst->flags = src->flags;
-    dst->cpp = src->cpp;
-    dst->path = src->path;
-    dst->num_points = src->num_points;
-    dst->num_indices = src->num_indices;
-    dst->num_splits = src->num_splits;
-    dst->transform = src->transform;
-
-    if (src->points) {
-        if (dst->points) {
-            memcpy(dst->points, src->points, sizeof(float3)*src->num_points);
-        }
-        else {
-            dst->points = src->points;
-        }
-    }
-    if (src->normals) {
-        if (dst->normals) {
-            memcpy(dst->normals, src->normals, sizeof(float3)*src->num_points);
-        }
-        else {
-            dst->normals = src->normals;
-        }
-    }
-    if (src->tangents) {
-        if (dst->tangents) {
-            memcpy(dst->tangents, src->tangents, sizeof(float4)*src->num_points);
-        }
-        else {
-            dst->tangents = src->tangents;
-        }
-    }
-    if (src->uv) {
-        if (dst->uv) {
-            memcpy(dst->uv, src->uv, sizeof(float2)*src->num_points);
-        }
-        else {
-            dst->uv = src->uv;
-        }
-    }
-    if (src->indices) {
-        if (dst->indices) {
-            memcpy(dst->indices, src->indices, sizeof(int)*src->num_indices);
-        }
-        else {
-            dst->indices = src->indices;
-        }
-    }
-}
-msAPI void msCopyData(ms::MessageType et, void *dst, const void *src)
-{
-    switch (et) {
-    case ms::MessageType::Get:
-        msCopyData((ms::GetDataCS*)dst, (const ms::GetDataCS*)src);
-        break;
-    case ms::MessageType::Delete:
-        msCopyData((ms::DeleteDataCS*)dst, (const ms::DeleteDataCS*)src);
-        break;
-    case ms::MessageType::Mesh:
-        msCopyData((ms::MeshDataCS*)dst, (const ms::MeshDataCS*)src);
-        break;
-    }
+    return _this->flags;
 }
 
-msAPI const char* msCreateString(const char *str)
+msAPI const char* msDeleteGetPath(ms::DeleteData *_this)
 {
-    auto len = strlen(str) + 1;
-    auto ret = new char[len];
-    memcpy(ret, str, len);
-    return ret;
+    return _this->path.c_str();
 }
-msAPI void msDeleteString(const char *str)
+msAPI int msDeleteGetID(ms::DeleteData *_this)
 {
-    delete[] str;
+    return _this->id;
 }
 
 
-msAPI void msGetSplitData(ms::SplitDataCS *dst, const ms::MeshDataCS *v, int i)
+msAPI ms::MeshData* msMeshCreate()
 {
-    *dst = v->cpp->splits[i];
+    return new ms::MeshData();
+}
+msAPI int msMeshGetID(ms::MeshData *_this)
+{
+    return _this->id;
+}
+msAPI void msMeshSetID(ms::MeshData *_this, int v)
+{
+    _this->id = v;
+}
+msAPI ms::MeshDataFlags msMeshGetFlags(ms::MeshData *_this)
+{
+    return _this->flags;
+}
+msAPI void msMeshSetFlags(ms::MeshData *_this, ms::MeshDataFlags v)
+{
+    _this->flags = v;
+}
+msAPI const char* msMeshGetPath(ms::MeshData *_this)
+{
+    return _this->path.c_str();
+}
+msAPI void msMeshSetPath(ms::MeshData *_this, const char *v)
+{
+    _this->path = v;
+}
+msAPI int msMeshGetNumPoints(ms::MeshData *_this)
+{
+    return (int)_this->points.size();
+}
+msAPI int msMeshGetNumIndices(ms::MeshData *_this)
+{
+    return (int)_this->indices.size();
+}
+msAPI int msMeshGetNumSplits(ms::MeshData *_this)
+{
+    return (int)_this->splits.size();
+}
+msAPI void msMeshReadPoints(ms::MeshData *_this, float3 *dst)
+{
+    memcpy(dst, _this->points.data(), sizeof(float3) * _this->points.size());
+}
+msAPI void msMeshWritePoints(ms::MeshData *_this, const float3 *v, int size)
+{
+    _this->points.resize(size);
+    memcpy(_this->points.data(), v, sizeof(float3) * size);
+    _this->flags.has_points = 1;
+}
+msAPI void msMeshReadNormals(ms::MeshData *_this, float3 *dst)
+{
+    memcpy(dst, _this->normals.data(), sizeof(float3) * _this->normals.size());
+}
+msAPI void msMeshWriteNormals(ms::MeshData *_this, const float3 *v, int size)
+{
+    _this->normals.resize(size);
+    memcpy(_this->normals.data(), v, sizeof(float3) * size);
+    _this->flags.has_normals = 1;
+}
+msAPI void msMeshReadTangents(ms::MeshData *_this, float4 *dst)
+{
+    memcpy(dst, _this->tangents.data(), sizeof(float4) * _this->tangents.size());
+}
+msAPI void msMeshWriteTangents(ms::MeshData *_this, const float4 *v, int size)
+{
+    _this->tangents.resize(size);
+    memcpy(_this->tangents.data(), v, sizeof(float4) * size);
+    _this->flags.has_tangents = 1;
+}
+msAPI void msMeshReadUV(ms::MeshData *_this, float2 *dst)
+{
+    memcpy(dst, _this->uv.data(), sizeof(float2) * _this->uv.size());
+}
+msAPI void msMeshWriteUV(ms::MeshData *_this, const float2 *v, int size)
+{
+    _this->uv.resize(size);
+    memcpy(_this->uv.data(), v, sizeof(float2) * size);
+    _this->flags.has_uv = 1;
+}
+msAPI void msMeshReadIndices(ms::MeshData *_this, int *dst)
+{
+    memcpy(dst, _this->indices.data(), sizeof(int) * _this->indices.size());
+}
+msAPI void msMeshWriteIndices(ms::MeshData *_this, const int *v, int size)
+{
+    _this->indices.resize(size);
+    memcpy(_this->indices.data(), v, sizeof(int) * size);
+    _this->flags.has_indices = 1;
+    _this->flags.visible = 1;
+}
+msAPI ms::SplitData* msMeshGetSplit(ms::MeshData *_this, int i)
+{
+    return &_this->splits[i];
+}
+msAPI void msMeshGetTransform(ms::MeshData *_this, ms::Transform *dst)
+{
+    *dst = _this->transform;
+}
+msAPI void msMeshSetTransform(ms::MeshData *_this, const ms::Transform *v)
+{
+    _this->transform = *v;
+    _this->flags.has_transform = 1;
 }
 
-msAPI void msCopySplitData(ms::SplitDataCS *dst, const ms::SplitDataCS *src)
-{
-    dst->num_points = src->num_points;
-    dst->num_indices = src->num_indices;
-    dst->num_submeshes = src->num_submeshes;
-    dst->submeshes = src->submeshes;
 
-    if (src->points && dst->points) {
-        memcpy(dst->points, src->points, sizeof(float3)*src->num_points);
-    }
-    if (src->normals && dst->normals) {
-        memcpy(dst->normals, src->normals, sizeof(float3)*src->num_points);
-    }
-    if (src->tangents && dst->tangents) {
-        memcpy(dst->tangents, src->tangents, sizeof(float4)*src->num_points);
-    }
-    if (src->uv && dst->uv) {
-        memcpy(dst->uv, src->uv, sizeof(float2)*src->num_points);
-    }
-    if (src->indices && dst->indices) {
-        memcpy(dst->indices, src->indices, sizeof(int)*src->num_indices);
-    }
+msAPI int msSplitGetNumPoints(ms::SplitData *_this)
+{
+    return (int)_this->points.size();
+}
+msAPI int msSplitGetNumIndices(ms::SplitData *_this)
+{
+    return (int)_this->indices.size();
+}
+msAPI int msSplitGetNumSubmeshes(ms::SplitData *_this)
+{
+    return (int)_this->submeshes.size();
+}
+msAPI int msSplitReadPoints(ms::SplitData *_this, float3 *dst)
+{
+    memcpy(dst, _this->points.data(), sizeof(float3) * _this->points.size());
+    return (int)_this->points.size();
+}
+msAPI int msSplitReadNormals(ms::SplitData *_this, float3 *dst)
+{
+    memcpy(dst, _this->normals.data(), sizeof(float3) * _this->normals.size());
+    return (int)_this->normals.size();
+}
+msAPI int msSplitReadTangents(ms::SplitData *_this, float4 *dst)
+{
+    memcpy(dst, _this->tangents.data(), sizeof(float4) * _this->tangents.size());
+    return (int)_this->tangents.size();
+}
+msAPI int msSplitReadUV(ms::SplitData *_this, float2 *dst)
+{
+    memcpy(dst, _this->uv.data(), sizeof(float2) * _this->uv.size());
+    return (int)_this->uv.size();
+}
+msAPI int msSplitReadIndices(ms::SplitData *_this, int *dst)
+{
+    memcpy(dst, _this->indices.data(), sizeof(int) * _this->indices.size());
+    return (int)_this->indices.size();
+}
+msAPI ms::SubmeshData* msSplitGetSubmesh(ms::SplitData *_this, int i)
+{
+    return &_this->submeshes[i];
 }
 
-msAPI int msSplitGetMaterialID(ms::SplitDataCS * src, int i)
+
+msAPI int msSubmeshGetNumIndices(ms::SubmeshData *_this)
 {
-    if (!src) { return 0; }
-    return (int)src->submeshes[i].materialID;
+    return (int)_this->indices.size();
 }
-msAPI int msSplitGetNumIndices(ms::SplitDataCS * src, int i)
+msAPI int msSubmeshGetMaterialID(ms::SubmeshData *_this)
 {
-    if (!src) { return 0; }
-    return (int)src->submeshes[i].indices.size();
+    return _this->materialID;
 }
-msAPI void msSplitCopyIndices(int * dst, ms::SplitDataCS * src, int i)
+msAPI int msSubmeshReadIndices(ms::SubmeshData *_this, int *dst)
 {
-    memcpy(dst, src->submeshes[i].indices.data(), sizeof(int) * src->submeshes[i].indices.size());
+    memcpy(dst, _this->indices.data(), sizeof(int) * _this->indices.size());
+    return (int)_this->indices.size();
 }

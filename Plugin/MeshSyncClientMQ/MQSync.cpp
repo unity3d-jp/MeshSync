@@ -214,7 +214,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
 
     dst.sender = ms::SenderType::Metasequoia;
     dst.path = BuildPath(doc, obj);
-    dst.id = doc->GetObjectIndex(obj);
 
     dst.flags.visible = obj->GetVisible();
     if (!dst.flags.visible) {

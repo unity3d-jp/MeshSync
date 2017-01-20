@@ -25,9 +25,6 @@ enum class SenderType
     Metasequoia,
 };
 
-struct GetDataCS;
-struct DeleteDataCS;
-struct MeshDataCS;
 
 
 class MessageData
@@ -184,7 +181,6 @@ public:
 
 
     MeshData();
-    MeshData(const MeshDataCS& cs);
     void clear();
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
@@ -194,58 +190,6 @@ public:
     void refine();
     void applyMirror(const float3& plane_n, float plane_d);
     void applyTransform(const float4x4& t);
-};
-
-
-struct GetDataCS
-{
-    GetFlags flags = {};
-
-    GetDataCS(const GetData& v);
-};
-
-struct DeleteDataCS
-{
-    const char *path = nullptr;
-    int id = 0;
-
-    DeleteDataCS(const DeleteData& v);
-};
-
-struct MeshDataCS
-{
-    MeshData *cpp = nullptr;
-    int id = 0;
-    MeshDataFlags flags = {0};
-    const char *path = nullptr;
-    float3 *points = nullptr;
-    float3 *normals = nullptr;
-    float4 *tangents = nullptr;
-    float2 *uv = nullptr;
-    int *indices = nullptr;
-    int num_points = 0;
-    int num_indices = 0;
-    int num_splits = 0;
-    Transform transform;
-
-    MeshDataCS(const MeshData& v);
-};
-
-struct SplitDataCS
-{
-    float3 *points = nullptr;
-    float3 *normals = nullptr;
-    float4 *tangents = nullptr;
-    float2 *uv = nullptr;
-    int *indices = nullptr;
-    SubmeshData *submeshes = nullptr;
-
-    int num_points = 0;
-    int num_indices = 0;
-    int num_submeshes = 0;
-
-    SplitDataCS();
-    SplitDataCS(const SplitData& v);
 };
 
 } // namespace ms
