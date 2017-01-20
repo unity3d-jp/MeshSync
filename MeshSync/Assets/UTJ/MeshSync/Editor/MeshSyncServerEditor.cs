@@ -19,9 +19,9 @@ namespace UTJ
             {
                 t.GenerateLightmapUV();
             }
-            if (GUILayout.Button("Export Mesh To Asset File"))
+            if (GUILayout.Button("Export Meshes"))
             {
-                t.ExportMeshesToAsset();
+                t.ExportMeshes();
             }
         }
     }

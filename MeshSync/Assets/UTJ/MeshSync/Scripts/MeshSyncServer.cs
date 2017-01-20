@@ -1170,7 +1170,7 @@ namespace UTJ
             }
         }
 
-        public void ExportMeshesToAsset(GameObject go)
+        public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
             AssetDatabase.CreateFolder(".", m_assetPath);
@@ -1189,17 +1189,21 @@ namespace UTJ
                 {
                     var t = go.transform.FindChild("[" + i + "]");
                     if(t == null) { break; }
-                    ExportMeshesToAsset(t.gameObject);
+                    ExportMeshes(t.gameObject);
                 }
             }
         }
-        public void ExportMeshesToAsset()
+        public void ExportMeshes()
         {
             foreach (var kvp in m_clientMeshes)
             {
-                ExportMeshesToAsset(kvp.Value.go);
+                ExportMeshes(kvp.Value.go);
             }
-
+            foreach (var kvp in m_hostMeshes)
+            {
+                if (kvp.Value.edited)
+                    ExportMeshes(kvp.Value.go);
+            }
         }
 #endif
 

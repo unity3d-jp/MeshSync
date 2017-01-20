@@ -270,6 +270,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
                 auto ite = m_host_meshes.find(id);
                 if (ite != m_host_meshes.end()) {
                     dst.id = id;
+                    dst.refine_settings.flags.apply_world2local = 1;
+                    dst.transform.local2world = ite->second->transform.local2world;
+                    dst.transform.world2local = ite->second->transform.world2local;
                 }
             }
         }
