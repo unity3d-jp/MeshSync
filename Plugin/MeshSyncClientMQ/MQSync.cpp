@@ -16,6 +16,16 @@ static inline std::string BuildPath(MQDocument doc, MQObject obj)
     return ret;
 }
 
+static inline bool ExtractID(const char *name, int& id)
+{
+    if (auto p = std::strstr(name, "[id:")) {
+        if (sscanf(p, "[id:%08x]", &id) == 1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 
 MQSync::MQSync()
@@ -33,15 +43,15 @@ bool& MQSync::getAutoSync() { return m_auto_sync; }
 
 void MQSync::clear()
 {
-    m_export_objects.clear();
-    m_import_objects.clear();
+    m_client_meshes.clear();
+    m_host_meshes.clear();
     m_exist_record.clear();
-    m_pending_send_mesh = false;
+    m_pending_send_meshes = false;
 }
 
 void MQSync::flushPendingRequests(MQDocument doc)
 {
-    if (m_pending_send_mesh) {
+    if (m_pending_send_meshes) {
         sendMesh(doc, true);
     }
 }
@@ -52,20 +62,20 @@ void MQSync::sendMesh(MQDocument doc, bool force)
 
     // just return if previous request is in progress. responsiveness is highest priority.
     if (isAsyncSendInProgress()) {
-        m_pending_send_mesh = true;
+        m_pending_send_meshes = true;
         return;
     }
 
-    m_pending_send_mesh = false;
+    m_pending_send_meshes = false;
 
     int nobj = doc->GetObjectCount();
-    while ((int)m_export_objects.size() < nobj) {
-        m_export_objects.emplace_back(new ms::MeshData());
+    while ((int)m_client_meshes.size() < nobj) {
+        m_client_meshes.emplace_back(new ms::MeshData());
     }
 
     // gather mesh data
     concurrency::parallel_for(0, nobj, [this, doc](int i) {
-        extractMeshData(doc, doc->GetObject(i), *m_export_objects[i]);
+        extractMeshData(doc, doc->GetObject(i), *m_client_meshes[i]);
     });
 
     // kick async send
@@ -74,7 +84,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
 
         // send mesh
         concurrency::parallel_for(0, nobj, [this, &client](int i) {
-            client.send(*m_export_objects[i]);
+            client.send(*m_client_meshes[i]);
         });
 
         // detect deleted objects and send delete message
@@ -82,20 +92,15 @@ void MQSync::sendMesh(MQDocument doc, bool force)
             e.second = false;
         }
         for (int i = 0; i < nobj; ++i) {
-            m_exist_record[m_export_objects[i]->path] = true;
+            if (!m_client_meshes[i]->path.empty()) {
+                m_exist_record[m_client_meshes[i]->path] = true;
+            }
         }
         for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
             if (!i->second) {
                 ms::DeleteData del;
                 del.path = i->first;
-                auto pos_id = del.path.find("[id:");
-                if (pos_id != std::string::npos) {
-                    int id = 0;
-                    if (sscanf(&del.path[pos_id], "[id:%08x]", &id) == 1) {
-                        del.id = id;
-                    }
-                }
-
+                ExtractID(del.path.c_str(), del.id);
 
                 client.send(del);
                 m_exist_record.erase(i++);
@@ -137,7 +142,7 @@ void MQSync::importMeshes(MQDocument doc)
         auto obj = createObject(mdata, name);
         doc->AddObject(obj);
 
-        m_import_objects[mdata.id] = data;
+        m_host_meshes[mdata.id] = data;
     }
 }
 
@@ -205,16 +210,24 @@ MQObject MQSync::createObject(const ms::MeshData& data, const char *name)
             ret->SetFaceCoordinateArray((int)i, (MQCoordinate*)uv);
         }
     }
+    if (!data.materialIDs.empty()) {
+        size_t nfaces = data.indices.size() / 3;
+        for (size_t i = 0; i < nfaces; ++i) {
+            ret->SetFaceMaterial((int)i, data.materialIDs[i]);
+        }
+    }
     return ret;
 }
 
 void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
 {
-    if (!obj) { return; }
-
     dst.sender = ms::SenderType::Metasequoia;
-    dst.path = BuildPath(doc, obj);
+    if (!obj) {
+        dst.clear();
+        return;
+    }
 
+    dst.path = BuildPath(doc, obj);
     dst.flags.visible = obj->GetVisible();
     if (!dst.flags.visible) {
         // not send actual contents if not visible
@@ -251,17 +264,12 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
         dst.transform.position = (const float3&)obj->GetTranslation();
         dst.transform.rotation = rot;
         dst.transform.scale = (const float3&)obj->GetScaling();
-
-        auto pos_id = dst.path.find("[id:");
-        if (pos_id != std::string::npos) {
-            int id = 0;
-            if (sscanf(&dst.path[pos_id], "[id:%08x]", &id) == 1) {
-                auto ite = m_import_objects.find(id);
-                if (ite != m_import_objects.end()) {
+        {
+            int id;
+            if (ExtractID(dst.path.c_str(), id)) {
+                auto ite = m_host_meshes.find(id);
+                if (ite != m_host_meshes.end()) {
                     dst.id = id;
-                    dst.refine_settings.flags.apply_world2local = 1;
-                    dst.transform.local2world = ite->second->transform.local2world;
-                    dst.transform.world2local = ite->second->transform.world2local;
                 }
             }
         }

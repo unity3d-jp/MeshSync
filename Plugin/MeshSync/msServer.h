@@ -41,35 +41,24 @@ public:
     template<class Body>
     void recvMesh(const Body& body);
 
-    // Body: [](const EventData& data) -> void
+    // Body: [](MessageType type, const MessageData& data) -> void
     template<class Body>
     int processMessages(const Body& body)
     {
         lock_t l(m_mutex);
-        for (auto& r : m_recv_history) {
-            switch (r.type) {
-            case MessageType::Get:
-            {
-                m_current_get_request = r.get_data;
-                body(r.get_data);
-                break;
+        for (auto& p : m_recv_history) {
+            if (auto *get = dynamic_cast<GetData*>(p.get())) {
+                m_current_get_request = get;
+                body(MessageType::Get, *p);
+                m_current_get_request = nullptr;
             }
-            case MessageType::Delete:
-            {
-                DeleteData data;
-                data.path = r.arg;
-                body(data);
-                m_recv_data.erase(r.arg);
-                break;
+            else if (auto *del = dynamic_cast<DeleteData*>(p.get())) {
+                body(MessageType::Delete, *p);
+                m_client_meshes.erase(del->path);
+
             }
-            case MessageType::Mesh:
-            {
-                auto ite = m_recv_data.find(r.arg);
-                if (ite != m_recv_data.end()) {
-                    body(*ite->second);
-                }
-                break;
-            }
+            else if (auto *mesh = dynamic_cast<MeshData*>(p.get())) {
+                body(MessageType::Mesh, *p);
             }
         }
 
@@ -87,31 +76,26 @@ public:
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
 private:
-    using MeshPtr = std::shared_ptr<MeshData>;
-    using Meshes = std::vector<MeshPtr>;
-    using MeshTable = std::map<std::string, MeshPtr>;
+    using GetPtr    = std::shared_ptr<GetData>;
+    using DeletePtr = std::shared_ptr<DeleteData>;
+    using MeshPtr   = std::shared_ptr<MeshData>;
+    using ClientMeshes = std::map<std::string, MeshPtr>;
+    using HostMeshes = std::vector<MeshPtr>;
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 
-    struct Record
-    {
-        MessageType type;
-        std::string arg;
-        GetData get_data;
-    };
-    using History = std::vector<Record>;
+    using MessagePtr = std::shared_ptr<MessageData>;
+    using History = std::vector<MessagePtr>;
 
-    bool m_serve = true;
+    bool m_serving = true;
     ServerSettings m_settings;
     HTTPServerPtr m_server;
-
-    MeshTable m_recv_data;
-    History m_recv_history;
-
-    GetData m_current_get_request;
-    Meshes m_serve_data;
-
     std::mutex m_mutex;
+
+    ClientMeshes m_client_meshes;
+    HostMeshes m_host_meshes;
+    History m_recv_history;
+    GetData *m_current_get_request = nullptr;
 };
 
 } // namespace ms

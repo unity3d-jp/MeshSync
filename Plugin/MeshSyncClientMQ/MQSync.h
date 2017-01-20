@@ -26,17 +26,17 @@ private:
     MQObject createObject(const ms::MeshData& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& data);
 
-    using ExportObjects = std::vector<MeshPtr>;
-    using ImportObjects = std::map<int, MeshPtr>;
+    using ClientMeshes = std::vector<MeshPtr>;
+    using HostMeshes = std::map<int, MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
 
     ms::ClientSettings m_settings;
     float m_scale_factor = 0.005f;
     bool m_auto_sync = false;
 
-    ExportObjects m_export_objects;
-    ImportObjects m_import_objects;
+    ClientMeshes m_client_meshes;
+    HostMeshes m_host_meshes;
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
-    bool m_pending_send_mesh = false;
+    bool m_pending_send_meshes = false;
 };

@@ -40,11 +40,11 @@ RequestHandler::RequestHandler(Server *server)
 template<class Body>
 void Server::recvDelete(const Body& body)
 {
-    DeleteData tmp;
-    body(tmp);
-    if(m_serve) {
+    auto *tmp = new DeleteData();
+    body(*tmp);
+    if(m_serving) {
         lock_t l(m_mutex);
-        m_recv_history.push_back({ MessageType::Delete, tmp.path });
+        m_recv_history.emplace_back(tmp);
     }
 }
 
@@ -58,7 +58,7 @@ void Server::recvMesh(const Body& body)
 
     auto& tmesh = *tmesh_ptr;
     body(tmesh);
-    if (m_serve && !tmesh.path.empty()) {
+    if (m_serving && !tmesh.path.empty()) {
         tmesh.refine_settings.flags.triangulate = 1;
         tmesh.refine_settings.flags.split = 1;
         tmesh.refine_settings.flags.optimize_topology = 1;
@@ -67,8 +67,9 @@ void Server::recvMesh(const Body& body)
 
         {
             lock_t l(m_mutex);
-            m_recv_history.push_back({ MessageType::Mesh, tmesh.path });
-            std::swap(tmesh_ptr, m_recv_data[tmesh.path]);
+            auto& dst = m_client_meshes[tmesh.path];
+            std::swap(tmesh_ptr, dst);
+            m_recv_history.push_back(dst);
         }
     }
 }
@@ -171,44 +172,46 @@ ServerSettings& Server::getSettings()
 
 void Server::setServe(bool v)
 {
-    m_serve = v;
+    m_serving = v;
 }
 
 void Server::beginServe()
 {
-    m_serve_data.clear();
+    m_host_meshes.clear();
 }
 void Server::endServe()
 {
+    auto& request = *m_current_get_request;
     MeshRefineSettings mrs;
-    mrs.flags.swap_faces = m_current_get_request.flags.swap_faces;
-    mrs.flags.swap_handedness = m_current_get_request.flags.swap_handedness;
-    mrs.flags.apply_local2world = m_current_get_request.flags.apply_local2world;
-    mrs.flags.invert_v = m_current_get_request.flags.invert_v;
-    mrs.scale_factor = m_current_get_request.scale;
+    mrs.flags.swap_faces = request.flags.swap_faces;
+    mrs.flags.swap_handedness = request.flags.swap_handedness;
+    mrs.flags.apply_local2world = request.flags.apply_local2world;
+    mrs.flags.invert_v = request.flags.invert_v;
+    mrs.scale_factor = request.scale;
 
-    concurrency::parallel_for_each(m_serve_data.begin(), m_serve_data.end(), [&mrs](MeshPtr& p) {
+    concurrency::parallel_for_each(m_host_meshes.begin(), m_host_meshes.end(), [&mrs](MeshPtr& p) {
         if (auto data = static_cast<MeshData*>(p.get())) {
+            data->sender = SenderType::Unity;
             data->refine_settings = mrs;
             data->refine();
         }
     });
-    if (m_current_get_request.wait_flag) {
-        *m_current_get_request.wait_flag = 0;
+    if (request.wait_flag) {
+        *request.wait_flag = 0;
     }
 }
 void Server::addServeData(MeshData *data)
 {
-    m_serve_data.emplace_back(data);
+    m_host_meshes.emplace_back(data);
 }
 
 void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     auto& is = request.stream();
-    GetData data;
-    data.deserialize(is);
+    auto *data = new GetData();
+    data->deserialize(is);
 
-    if (!m_serve) {
+    if (!m_serving) {
         response.setContentLength(4);
         auto& os = response.send();
         int num = 0;
@@ -217,15 +220,12 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     }
 
     std::shared_ptr<std::atomic_int> wait_flag(new std::atomic_int(1));
-    data.wait_flag = wait_flag;
+    data->wait_flag = wait_flag;
 
     // queue request
     {
         lock_t l(m_mutex);
-        Record rec;
-        rec.type = MessageType::Get;
-        rec.get_data = data;
-        m_recv_history.push_back(rec);
+        m_recv_history.emplace_back(data);
     }
 
     // wait for data arrive (or timeout)
@@ -240,16 +240,16 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     {
         lock_t l(m_mutex);
 
-        int num = (int)m_serve_data.size();
+        int num = (int)m_host_meshes.size();
         size_t len = 4;
         for (int i = 0; i < num; ++i) {
-            len += m_serve_data[i]->getSerializeSize();
+            len += m_host_meshes[i]->getSerializeSize();
         }
         response.setContentLength(len);
         auto& os = response.send();
         os.write((char*)&num, 4);
         for (int i = 0; i < num; ++i) {
-            m_serve_data[i]->serialize(os);
+            m_host_meshes[i]->serialize(os);
         }
     }
 }

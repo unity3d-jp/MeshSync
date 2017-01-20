@@ -32,16 +32,8 @@ msAPI void  msServerStop(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::MessageData& data) {
-        if (auto* get = dynamic_cast<ms::GetData*>(&data)) {
-            handler(ms::MessageType::Get, get);
-        }
-        else if (auto* del = dynamic_cast<ms::DeleteData*>(&data)) {
-            handler(ms::MessageType::Delete, del);
-        }
-        else if (auto* mesh = dynamic_cast<ms::MeshData*>(&data)) {
-            handler(ms::MessageType::Mesh, mesh);
-        }
+    return server->processMessages([handler](ms::MessageType type, ms::MessageData& data) {
+        handler(type, &data);
     });
 }
 
@@ -170,6 +162,22 @@ msAPI void msMeshWriteIndices(ms::MeshData *_this, const int *v, int size)
     _this->indices.resize(size);
     memcpy(_this->indices.data(), v, sizeof(int) * size);
     _this->flags.has_indices = 1;
+    _this->flags.visible = 1;
+}
+msAPI void msMeshWriteSubmeshTriangles(ms::MeshData *_this, const int *v, int size, int materialID)
+{
+    {
+        size_t pos = _this->indices.size();
+        _this->indices.resize(pos + size);
+        memcpy(_this->indices.data() + pos, v, sizeof(int) * size);
+    }
+    {
+        size_t pos = _this->materialIDs.size();
+        _this->materialIDs.resize(pos + size / 3);
+        std::fill_n(_this->materialIDs.data() + pos, size / 3, materialID);
+    }
+    _this->flags.has_indices = 1;
+    _this->flags.has_materialIDs = 1;
     _this->flags.visible = 1;
 }
 msAPI ms::SplitData* msMeshGetSplit(ms::MeshData *_this, int i)

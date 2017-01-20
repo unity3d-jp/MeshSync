@@ -51,7 +51,7 @@ namespace UTJ
 
         public struct GetData
         {
-            IntPtr _this;
+            internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern GetFlags msGetGetFlags(IntPtr _this);
 
             public static explicit operator GetData(IntPtr v)
@@ -66,7 +66,7 @@ namespace UTJ
 
         public struct DeleteData
         {
-            IntPtr _this;
+            internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msDeleteGetPath(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msDeleteGetID(IntPtr _this);
 
@@ -150,7 +150,7 @@ namespace UTJ
 
         public struct MeshData
         {
-            IntPtr _this;
+            internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
             [DllImport("MeshSyncServer")] static extern int msMeshGetID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMeshSetID(IntPtr _this, int v);
@@ -171,6 +171,7 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshWriteUV(IntPtr _this, Vector2[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr _this, int[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr _this, int[] v, int size, int materialID);
             [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern void msMeshGetTransform(IntPtr _this, ref TransformData dst);
             [DllImport("MeshSyncServer")] static extern void msMeshSetTransform(IntPtr _this, ref TransformData v);
@@ -289,11 +290,15 @@ namespace UTJ
             {
                 return msMeshGetSplit(_this, i);
             }
+            public void WriteSubmeshTriangles(int[] indices, int materialID)
+            {
+                msMeshWriteSubmeshTriangles(_this, indices, indices.Length, materialID);
+            }
         };
 
         public struct SplitData
         {
-            IntPtr _this;
+            internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr _this);
@@ -360,7 +365,7 @@ namespace UTJ
 
         public struct SubmeshData
         {
-            IntPtr _this;
+            internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSubmeshReadIndices(IntPtr _this, int[] dst);
@@ -445,6 +450,7 @@ namespace UTJ
             return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
         }
 
+        [Serializable]
         public class Record
         {
             public GameObject go;
@@ -470,21 +476,16 @@ namespace UTJ
         #region fields
         [SerializeField] int m_port = 8080;
         [SerializeField] bool m_genLightmapUV = false;
-        [SerializeField] Material[] m_materials;
+        [SerializeField] Material[] m_materialList;
 
         IntPtr m_server;
         msMessageHandler m_handler;
-
-        Vector3[] m_points;
-        Vector3[] m_normals;
-        Vector4[] m_tangents;
-        Vector2[] m_uv;
-        int[] m_indices;
         bool m_requestRestart = false;
         bool m_requestReassignMaterials = false;
 
         Dictionary<string, Record> m_recvedObjects = new Dictionary<string, Record>();
         Dictionary<int, Record> m_sentObjects = new Dictionary<int, Record>();
+        Dictionary<Material, int> m_materialTable = new Dictionary<Material, int>();
         #endregion
 
 
@@ -619,12 +620,15 @@ namespace UTJ
             if(rec == null)
             {
                 var t = FindObjectByPath(null, path, true, ref createdNewMesh);
-                rec = new Record
+                if(t != null)
                 {
-                    go = t.gameObject,
-                    recved = true,
-                };
-                m_recvedObjects[path] = rec;
+                    rec = new Record
+                    {
+                        go = t.gameObject,
+                        recved = true,
+                    };
+                    m_recvedObjects[path] = rec;
+                }
             }
             if (rec == null) { return; }
 
@@ -659,22 +663,22 @@ namespace UTJ
             var materialIDs = GetMaterialIDs(data, ref maxMaterialID);
             bool materialsUpdated = rec.recved && (rec.materialIDs == null || !rec.CompareMaterialIDs(materialIDs));
             rec.materialIDs = materialIDs;
-            if(m_materials == null || maxMaterialID + 1 > m_materials.Length)
+            if(m_materialList == null || maxMaterialID + 1 > m_materialList.Length)
             {
                 var tmp = new Material[maxMaterialID + 1];
-                if(m_materials != null)
+                if(m_materialList != null)
                 {
-                    Array.Copy(m_materials, tmp, Math.Min(m_materials.Length, maxMaterialID));
-#if UNITY_EDITOR
-                    for (int i = m_materials.Length; i < tmp.Length; ++i)
-                    {
-                        var mat = Instantiate(GetDefaultMaterial());
-                        mat.name = "DefaultMaterial";
-                        tmp[i] = mat;
-                    }
-#endif
+                    Array.Copy(m_materialList, tmp, Math.Min(m_materialList.Length, maxMaterialID));
                 }
-                m_materials = tmp;
+#if UNITY_EDITOR
+                for (int i = m_materialList != null ? m_materialList.Length : 0; i < tmp.Length; ++i)
+                {
+                    var mat = Instantiate(GetDefaultMaterial());
+                    mat.name = "DefaultMaterial";
+                    tmp[i] = mat;
+                }
+#endif
+                m_materialList = tmp;
             }
 
             var flags = data.flags;
@@ -776,7 +780,6 @@ namespace UTJ
             }
         }
 
-
         void AssignMaterials(Record rec)
         {
             if(rec.go == null || !rec.edited) { return; }
@@ -788,7 +791,7 @@ namespace UTJ
                 mlist[i] = new Material[mids[i].Length];
                 for (int j = 0; j < mids[i].Length; ++j)
                 {
-                    mlist[i][j] = m_materials[mids[i][j]];
+                    mlist[i][j] = m_materialList[mids[i][j]];
                 }
             }
 
@@ -814,6 +817,15 @@ namespace UTJ
             }
         }
 
+        int GetMaterialID(Material mat)
+        {
+            if(mat == null) { return 0; }
+            if(!m_materialTable.ContainsKey(mat))
+            {
+                m_materialTable[mat] = m_materialTable.Count + 1;
+            }
+            return m_materialTable[mat];
+        }
 
         Transform FindObjectByPath(Transform parent, string path)
         {
@@ -921,6 +933,7 @@ namespace UTJ
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);
             SceneView.RepaintAll();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 #endif
         }
 
@@ -986,7 +999,7 @@ namespace UTJ
                 return false;
             }
 
-            CaptureMesh(ref dst, mesh, null, flags);
+            CaptureMesh(ref dst, mesh, null, flags, mr.sharedMaterials);
             return true;
         }
 
@@ -1007,13 +1020,13 @@ namespace UTJ
                         Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                         return false;
                     }
-                    CaptureMesh(ref dst, mesh, cloth, flags);
+                    CaptureMesh(ref dst, mesh, cloth, flags, smr.sharedMaterials);
                 }
                 else
                 {
                     var mesh = new Mesh();
                     smr.BakeMesh(mesh);
-                    CaptureMesh(ref dst, mesh, null, flags);
+                    CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
                 }
             }
             else
@@ -1025,7 +1038,7 @@ namespace UTJ
                     Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                     return false;
                 }
-                CaptureMesh(ref dst, mesh, null, flags);
+                CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
             }
             return true;
         }
@@ -1040,7 +1053,7 @@ namespace UTJ
             data.world2local = trans.worldToLocalMatrix;
         }
 
-        void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags)
+        void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials)
         {
             bool use_cloth = cloth != null;
 
@@ -1062,7 +1075,20 @@ namespace UTJ
             }
             if (flags.getIndices)
             {
-                data.indices = mesh.triangles;
+                if(materials == null || materials.Length == 0)
+                {
+                    data.indices = mesh.triangles;
+                }
+                else
+                {
+                    int n = mesh.subMeshCount;
+                    for (int i = 0; i < n; ++i)
+                    {
+                        var indices = mesh.GetIndices(i);
+                        int mid = i < materials.Length ? GetMaterialID(materials[i]) : 0;
+                        data.WriteSubmeshTriangles(indices, mid);
+                    }
+                }
             }
         }
 
