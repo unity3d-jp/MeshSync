@@ -404,15 +404,15 @@ namespace UTJ
             }
         }
 
-        [DllImport("MeshSyncServer")] public static extern IntPtr msServerStart(ref ServerSettings settings);
-        [DllImport("MeshSyncServer")] public static extern void msServerStop(IntPtr sv);
+        [DllImport("MeshSyncServer")] static extern IntPtr msServerStart(ref ServerSettings settings);
+        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr sv);
 
-        public delegate void msMessageHandler(EventType type, IntPtr data);
-        [DllImport("MeshSyncServer")] public static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
+        delegate void msMessageHandler(EventType type, IntPtr data);
+        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
 
-        [DllImport("MeshSyncServer")] public static extern void msServerBeginServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] public static extern void msServerEndServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] public static extern void msServerAddServeData(IntPtr sv, EventType et, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
+        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
+        [DllImport("MeshSyncServer")] static extern void msServerAddServeData(IntPtr sv, EventType et, MeshData data);
         
         static int[][] GetMaterialIDs(MeshData mdata, ref int maxID)
         {
@@ -474,8 +474,8 @@ namespace UTJ
 
 
         #region fields
-        [SerializeField] int m_port = 8080;
-        [SerializeField] bool m_genLightmapUV = false;
+        [SerializeField] int m_serverPort = 8080;
+        [SerializeField] string m_assetPath = "Assets/MeshSyncAssets";
         [SerializeField] Material[] m_materialList;
 
         IntPtr m_server;
@@ -496,7 +496,7 @@ namespace UTJ
             StopServer();
 
             var settings = ServerSettings.default_value;
-            settings.port = (ushort)m_port;
+            settings.port = (ushort)m_serverPort;
             m_server = msServerStart(ref settings);
             m_handler = OnServerEvent;
 #if UNITY_EDITOR
@@ -649,7 +649,7 @@ namespace UTJ
                 target.gameObject.SetActive(false);
                 for (int i = 0; ; ++i)
                 {
-                    var t = FindObjectByPath(null, path + "/Submesh[" + i + "]");
+                    var t = FindObjectByPath(null, path + "/[" + i + "]");
                     if (t == null) { break; }
                     t.gameObject.SetActive(false);
                 }
@@ -697,13 +697,14 @@ namespace UTJ
                 var t = target;
                 if (i > 0)
                 {
-                    t = FindObjectByPath(null, path + "/Submesh[" + i + "]", true, ref createdNewMesh);
+                    t = FindObjectByPath(null, path + "/[" + i + "]", true, ref createdNewMesh);
                     t.gameObject.SetActive(true);
                 }
 
-                var mesh = GetOrAddMeshComponents(t.gameObject);
-                if (!mesh.isReadable) { return; }
-                mesh.Clear();
+                var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
+                if(mfilter == null) { return; }
+                var mesh = new Mesh();
+                mesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
 
                 var split = data.GetSplit(i);
                 if (split.numPoints > 0 && split.numIndices > 0)
@@ -739,17 +740,15 @@ namespace UTJ
                             mesh.SetIndices(submesh.indices, MeshTopology.Triangles, smi);
                         }
                     }
-#if UNITY_EDITOR
-                    if (m_genLightmapUV) Unwrapping.GenerateSecondaryUVSet(mesh);
-#endif
-                    mesh.UploadMeshData(false);
+                    mesh.UploadMeshData(true);
+                    mfilter.sharedMesh = mesh;
                 }
             }
 
             int num_splits = Math.Max(1, data.numSplits);
             for (int i = num_splits; ; ++i)
             {
-                var t = FindObjectByPath(null, path + "/Submesh[" + i + "]");
+                var t = FindObjectByPath(null, path + "/[" + i + "]");
                 if (t == null) { break; }
                 DestroyImmediate(t.gameObject);
             }
@@ -804,8 +803,7 @@ namespace UTJ
                 }
                 else
                 {
-
-                    var t = rec.go.transform.FindChild("/Submesh[" + i + "]");
+                    var t = rec.go.transform.FindChild("[" + i + "]");
                     if (t == null) { break; }
                     r = t.GetComponent<Renderer>();
                 }
@@ -901,31 +899,26 @@ namespace UTJ
         }
 #endif
 
-        Mesh GetOrAddMeshComponents(GameObject go)
+        MeshFilter GetOrAddMeshComponents(GameObject go, bool isSplit)
         {
             var smr = go.GetComponent<SkinnedMeshRenderer>();
             if (smr != null)
             {
-                return smr.sharedMesh;
+                return null;
             }
 
             var mfilter = go.GetComponent<MeshFilter>();
             if (mfilter == null)
             {
                 mfilter = go.AddComponent<MeshFilter>();
-                var mesh = new Mesh();
-                mesh.name = go.name;
-                mfilter.sharedMesh = mesh;
-                mesh.MarkDynamic();
-
                 var renderer = go.AddComponent<MeshRenderer>();
-                if (go.name.StartsWith("Submesh"))
+                if (isSplit)
                 {
                     var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
                     renderer.sharedMaterials = parent.sharedMaterials;
                 }
             }
-            return mfilter.sharedMesh;
+            return mfilter;
         }
 
         void ForceRepaint()
@@ -1092,6 +1085,71 @@ namespace UTJ
             }
         }
 
+#if UNITY_EDITOR
+        public void GenerateLightmapUV(GameObject go)
+        {
+            if (go == null) { return; }
+            var mf = go.GetComponent<MeshFilter>();
+            if (mf != null)
+            {
+                var mesh = mf.sharedMesh;
+                if (mesh != null)
+                {
+                    Unwrapping.GenerateSecondaryUVSet(mesh);
+                }
+            }
+            for (int i = 1; ; ++i)
+            {
+                var t = go.transform.FindChild("[" + i + "]");
+                if (t == null) { break; }
+                GenerateLightmapUV(t.gameObject);
+            }
+        }
+        public void GenerateLightmapUV()
+        {
+            foreach (var kvp in m_recvedObjects)
+            {
+                GenerateLightmapUV(kvp.Value.go);
+            }
+            foreach (var kvp in m_sentObjects)
+            {
+                if(kvp.Value.edited)
+                    GenerateLightmapUV(kvp.Value.go);
+            }
+        }
+
+        public void ExportMeshesToAsset(GameObject go)
+        {
+            if(go == null) { return; }
+            AssetDatabase.CreateFolder(".", m_assetPath);
+            var mf = go.GetComponent<MeshFilter>();
+            if (mf != null && mf.sharedMesh != null)
+            {
+                try
+                {
+                    AssetDatabase.CreateAsset(mf.sharedMesh, m_assetPath + "/" + mf.sharedMesh.name + ".asset");
+                }
+                catch(Exception e)
+                {
+                }
+
+                for(int i=1; ; ++i)
+                {
+                    var t = go.transform.FindChild("[" + i + "]");
+                    if(t == null) { break; }
+                    ExportMeshesToAsset(t.gameObject);
+                }
+            }
+        }
+        public void ExportMeshesToAsset()
+        {
+            foreach (var kvp in m_recvedObjects)
+            {
+                ExportMeshesToAsset(kvp.Value.go);
+            }
+
+        }
+#endif
 
 
 #if UNITY_EDITOR
