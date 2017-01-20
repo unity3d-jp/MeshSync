@@ -11,7 +11,7 @@ using UnityEditor;
 namespace UTJ
 {
     [ExecuteInEditMode]
-    public class MeshSyncServer : MonoBehaviour
+    public class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region internal
 #if UNITY_EDITOR
@@ -483,14 +483,59 @@ namespace UTJ
         bool m_requestRestart = false;
         bool m_requestReassignMaterials = false;
 
-        Dictionary<string, Record> m_recvedObjects = new Dictionary<string, Record>();
-        Dictionary<int, Record> m_sentObjects = new Dictionary<int, Record>();
-        Dictionary<Material, int> m_materialTable = new Dictionary<Material, int>();
+        Dictionary<string, Record> m_clientMeshes = new Dictionary<string, Record>();
+        Dictionary<int, Record> m_hostMeshes = new Dictionary<int, Record>();
+        Dictionary<Material, int> m_materialIDTable = new Dictionary<Material, int>();
+        Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
+
+        [HideInInspector][SerializeField] string[] m_clientMeshes_keys;
+        [HideInInspector][SerializeField] Record[] m_clientMeshes_values;
+        [HideInInspector][SerializeField] int[] m_hostMeshes_keys;
+        [HideInInspector][SerializeField] Record[] m_hostMeshes_values;
+        [HideInInspector][SerializeField] Material[] m_materialIDTable_keys;
+        [HideInInspector][SerializeField] int[] m_materialIDTable_values;
+        [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
+        [HideInInspector][SerializeField] int[] m_objIDTable_values;
         #endregion
 
-
-
         #region impl
+        void SerializeDictionary<K,V>(Dictionary<K,V> dic, K[] keys, V[] values)
+        {
+            keys = dic.Keys.ToArray();
+            values = dic.Values.ToArray();
+        }
+        void DeserializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values)
+        {
+            if (keys != null && values != null && keys.Length == values.Length)
+            {
+                int n = keys.Length;
+                for (int i = 0; i < n; ++i)
+                {
+                    dic[keys[i]] = values[i];
+                }
+            }
+            keys = null;
+            values = null;
+
+        }
+
+        public void OnBeforeSerialize()
+        {
+            SerializeDictionary(m_clientMeshes, m_clientMeshes_keys, m_clientMeshes_values);
+            SerializeDictionary(m_hostMeshes, m_hostMeshes_keys, m_hostMeshes_values);
+            SerializeDictionary(m_materialIDTable, m_materialIDTable_keys, m_materialIDTable_values);
+            SerializeDictionary(m_objIDTable, m_objIDTable_keys, m_objIDTable_values);
+        }
+        public void OnAfterDeserialize()
+        {
+            DeserializeDictionary(m_clientMeshes, ref m_clientMeshes_keys, ref m_clientMeshes_values);
+            DeserializeDictionary(m_hostMeshes, ref m_hostMeshes_keys, ref m_hostMeshes_values);
+            DeserializeDictionary(m_materialIDTable, ref m_materialIDTable_keys, ref m_materialIDTable_values);
+            DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+        }
+
+
+
         void StartServer()
         {
             StopServer();
@@ -570,23 +615,23 @@ namespace UTJ
             var id = data.id;
             var path = data.path;
 
-            if (id != 0 && m_sentObjects.ContainsKey(id))
+            if (id != 0 && m_hostMeshes.ContainsKey(id))
             {
-                var rec = m_sentObjects[id];
+                var rec = m_hostMeshes[id];
                 if (rec.go != null)
                 {
                     DestroyImmediate(rec.go);
                 }
-                m_sentObjects.Remove(id);
+                m_hostMeshes.Remove(id);
             }
-            else if (m_recvedObjects.ContainsKey(path))
+            else if (m_clientMeshes.ContainsKey(path))
             {
-                var rec = m_recvedObjects[path];
+                var rec = m_clientMeshes[path];
                 if (rec.go != null)
                 {
                     DestroyImmediate(rec.go);
                 }
-                m_recvedObjects.Remove(path);
+                m_clientMeshes.Remove(path);
             }
 
             //Debug.Log("MeshSyncServer: Delete " + path);
@@ -599,21 +644,22 @@ namespace UTJ
 
             // find or create target object
             Record rec = null;
-            if(data.id !=0 && m_sentObjects.ContainsKey(data.id))
+            if(data.id !=0 && m_hostMeshes.ContainsKey(data.id))
             {
-                rec = m_sentObjects[data.id];
+                rec = m_hostMeshes[data.id];
                 if(rec.go == null)
                 {
-                    m_sentObjects.Remove(data.id);
+                    m_hostMeshes.Remove(data.id);
                     rec = null;
                 }
             }
-            else if(m_recvedObjects.ContainsKey(path))
+            else if(m_clientMeshes.ContainsKey(path))
             {
-                rec = m_recvedObjects[path];
+                rec = m_clientMeshes[path];
                 if (rec.go == null)
                 {
-                    m_recvedObjects.Remove(path);
+                    m_clientMeshes.Remove(path);
+                    rec = null;
                 }
             }
 
@@ -627,7 +673,7 @@ namespace UTJ
                         go = t.gameObject,
                         recved = true,
                     };
-                    m_recvedObjects[path] = rec;
+                    m_clientMeshes[path] = rec;
                 }
             }
             if (rec == null) { return; }
@@ -728,7 +774,6 @@ namespace UTJ
 
                     if (split.numSubmeshes == 0)
                     {
-                        mesh.subMeshCount = 1;
                         mesh.SetIndices(split.indices, MeshTopology.Triangles, 0);
                     }
                     else
@@ -740,7 +785,6 @@ namespace UTJ
                             mesh.SetIndices(submesh.indices, MeshTopology.Triangles, smi);
                         }
                     }
-                    mesh.UploadMeshData(true);
                     mfilter.sharedMesh = mesh;
                 }
             }
@@ -769,11 +813,11 @@ namespace UTJ
 
         void ReassignMaterials()
         {
-            foreach (var rec in m_recvedObjects)
+            foreach (var rec in m_clientMeshes)
             {
                 AssignMaterials(rec.Value);
             }
-            foreach (var rec in m_sentObjects)
+            foreach (var rec in m_hostMeshes)
             {
                 AssignMaterials(rec.Value);
             }
@@ -817,12 +861,21 @@ namespace UTJ
 
         int GetMaterialID(Material mat)
         {
-            if(mat == null) { return 0; }
-            if(!m_materialTable.ContainsKey(mat))
+            if(mat == null) { return -1; }
+            if(!m_materialIDTable.ContainsKey(mat))
             {
-                m_materialTable[mat] = m_materialTable.Count + 1;
+                m_materialIDTable[mat] = m_materialIDTable.Count;
             }
-            return m_materialTable[mat];
+            return m_materialIDTable[mat];
+        }
+        int GetObjectlID(GameObject go)
+        {
+            if (go == null) { return 0; }
+            if (!m_objIDTable.ContainsKey(go))
+            {
+                m_objIDTable[go] = m_objIDTable.Count + 1;
+            }
+            return m_objIDTable[go];
         }
 
         Transform FindObjectByPath(Transform parent, string path)
@@ -959,7 +1012,7 @@ namespace UTJ
 
             if (ret)
             {
-                dst.id = renderer.gameObject.GetInstanceID();
+                dst.id = GetObjectlID(renderer.gameObject);
                 if (flags.getTransform)
                 {
                     var tdata = default(TransformData);
@@ -967,10 +1020,9 @@ namespace UTJ
                     dst.transform = tdata;
                 }
 
-                int id = renderer.gameObject.GetInstanceID();
-                if(!m_sentObjects.ContainsKey(id))
+                if(!m_hostMeshes.ContainsKey(dst.id))
                 {
-                    m_sentObjects[id] = new Record
+                    m_hostMeshes[dst.id] = new Record
                     {
                         go = renderer.gameObject,
                     };
@@ -1107,11 +1159,11 @@ namespace UTJ
         }
         public void GenerateLightmapUV()
         {
-            foreach (var kvp in m_recvedObjects)
+            foreach (var kvp in m_clientMeshes)
             {
                 GenerateLightmapUV(kvp.Value.go);
             }
-            foreach (var kvp in m_sentObjects)
+            foreach (var kvp in m_hostMeshes)
             {
                 if(kvp.Value.edited)
                     GenerateLightmapUV(kvp.Value.go);
@@ -1129,7 +1181,7 @@ namespace UTJ
                 {
                     AssetDatabase.CreateAsset(mf.sharedMesh, m_assetPath + "/" + mf.sharedMesh.name + ".asset");
                 }
-                catch(Exception e)
+                catch(Exception)
                 {
                 }
 
@@ -1143,7 +1195,7 @@ namespace UTJ
         }
         public void ExportMeshesToAsset()
         {
-            foreach (var kvp in m_recvedObjects)
+            foreach (var kvp in m_clientMeshes)
             {
                 ExportMeshesToAsset(kvp.Value.go);
             }
