@@ -41,12 +41,9 @@ namespace UTJ
             public bool getTangents { get { return (flags & 0x8) != 0; } }
             public bool getUV { get { return (flags & 0x10) != 0; } }
             public bool getIndices { get { return (flags & 0x20) != 0; } }
-            public bool getBones { get { return (flags & 0x40) != 0; } }
-            public bool swapHandedness { get { return (flags & 0x80) != 0; } }
-            public bool swapFaces { get { return (flags & 0x100) != 0; } }
-            public bool bakeSkin { get { return (flags & 0x200) != 0; } }
-            public bool applyLocal2world { get { return (flags & 0x400) != 0; } }
-            public bool applyWorld2local { get { return (flags & 0x800) != 0; } }
+            public bool getMaterialIDs { get { return (flags & 0x40) != 0; } }
+            public bool getBones { get { return (flags & 0x80) != 0; } }
+            public bool bakeSkin { get { return (flags & 0x100) != 0; } }
         }
 
         public struct GetData
@@ -490,7 +487,7 @@ namespace UTJ
         #region fields
         [SerializeField] int m_serverPort = 8080;
         [SerializeField] string m_assetPath = "Assets/MeshSyncAssets";
-        [SerializeField] Material[] m_materialList;
+        [SerializeField] List<Material> m_materialList = new List<Material>();
 
         IntPtr m_server;
         msMessageHandler m_handler;
@@ -724,22 +721,15 @@ namespace UTJ
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
             int maxMaterialID = rec.maxMaterialID;
-            if(m_materialList == null || maxMaterialID + 1 > m_materialList.Length)
+            while (m_materialList.Count < maxMaterialID + 1)
             {
-                var tmp = new Material[maxMaterialID + 1];
-                if(m_materialList != null)
-                {
-                    Array.Copy(m_materialList, tmp, Math.Min(m_materialList.Length, maxMaterialID));
-                }
 #if UNITY_EDITOR
-                for (int i = m_materialList != null ? m_materialList.Length : 0; i < tmp.Length; ++i)
-                {
-                    var mat = Instantiate(GetDefaultMaterial());
-                    mat.name = "DefaultMaterial";
-                    tmp[i] = mat;
-                }
+                var tmp = Instantiate(GetDefaultMaterial());
+                tmp.name = "DefaultMaterial";
+                m_materialList.Add(tmp);
+#else
+                m_materialList.Add(null);
 #endif
-                m_materialList = tmp;
             }
 
             var flags = data.flags;
@@ -875,21 +865,49 @@ namespace UTJ
 
         int GetMaterialID(Material mat)
         {
-            if(mat == null) { return -1; }
-            if(!m_materialIDTable.ContainsKey(mat))
+            if(mat == null) { return 0; }
+
+            int ret;
+            if(m_materialIDTable.ContainsKey(mat))
             {
-                m_materialIDTable[mat] = m_materialIDTable.Count;
+                ret = m_materialIDTable[mat];
             }
-            return m_materialIDTable[mat];
+            else
+            {
+                ret = m_materialIDTable.Count + 1;
+                m_materialIDTable[mat] = ret;
+            }
+
+            while (m_materialList.Count < ret + 1)
+            {
+#if UNITY_EDITOR
+                var tmp = Instantiate(GetDefaultMaterial());
+                tmp.name = "DefaultMaterial";
+                m_materialList.Add(tmp);
+#else
+                m_materialList.Add(null);
+#endif
+            }
+            m_materialList[ret] = mat;
+
+            return ret;
         }
+
         int GetObjectlID(GameObject go)
         {
             if (go == null) { return 0; }
-            if (!m_objIDTable.ContainsKey(go))
+
+            int ret;
+            if (m_objIDTable.ContainsKey(go))
             {
-                m_objIDTable[go] = m_objIDTable.Count + 1;
+                ret = m_objIDTable[go];
             }
-            return m_objIDTable[go];
+            else
+            {
+                ret = m_objIDTable.Count + 1;
+                m_objIDTable[go] = ret;
+            }
+            return ret;
         }
 
         Transform FindObjectByPath(Transform parent, string path)
@@ -1127,7 +1145,7 @@ namespace UTJ
             }
             if (flags.getIndices)
             {
-                if(materials == null || materials.Length == 0)
+                if(!flags.getMaterialIDs || materials == null || materials.Length == 0)
                 {
                     data.indices = mesh.triangles;
                 }

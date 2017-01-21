@@ -123,6 +123,7 @@ void MQSync::importMeshes(MQDocument doc)
     gd.flags.get_indices = 1;
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
+    gd.flags.get_materialIDs = 1;
     gd.flags.swap_handedness = 1;
     gd.flags.apply_local2world = 1;
     gd.flags.bake_skin = 1;
@@ -132,6 +133,14 @@ void MQSync::importMeshes(MQDocument doc)
     auto ret = client.send(gd);
     for (auto& data : ret) {
         auto& mdata = *data;
+
+        if (!mdata.materialIDs.empty()) {
+            size_t nfaces = mdata.indices.size() / 3;
+            // make it -1-based
+            for (int& mid : mdata.materialIDs) {
+                mid -= 1;
+            }
+        }
 
         char name[MaxNameBuffer];
         sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id);

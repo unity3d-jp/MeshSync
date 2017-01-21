@@ -47,10 +47,11 @@ struct GetFlags
     uint32_t get_tangents : 1;
     uint32_t get_uv : 1;
     uint32_t get_indices : 1;
+    uint32_t get_materialIDs : 1;
     uint32_t get_bones : 1;
+    uint32_t bake_skin : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
-    uint32_t bake_skin : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
     uint32_t invert_v : 1;
