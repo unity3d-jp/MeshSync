@@ -175,6 +175,8 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern void msMeshGetTransform(IntPtr _this, ref TransformData dst);
             [DllImport("MeshSyncServer")] static extern void msMeshSetTransform(IntPtr _this, ref TransformData v);
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumSubmeshes(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern SubmeshData msMeshGetSubmesh(IntPtr _this, int i);
 
 
             public static MeshData Create()
@@ -286,6 +288,7 @@ namespace UTJ
                     msMeshSetTransform(_this, ref value);
                 }
             }
+
             public SplitData GetSplit(int i)
             {
                 return msMeshGetSplit(_this, i);
@@ -293,6 +296,12 @@ namespace UTJ
             public void WriteSubmeshTriangles(int[] indices, int materialID)
             {
                 msMeshWriteSubmeshTriangles(_this, indices, indices.Length, materialID);
+            }
+
+            public int numSubmeshes { get { return msMeshGetNumSubmeshes(_this); } }
+            public SubmeshData GetSubmesh(int i)
+            {
+                return msMeshGetSubmesh(_this, i);
             }
         };
 
@@ -413,26 +422,6 @@ namespace UTJ
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerAddServeData(IntPtr sv, EventType et, MeshData data);
-        
-        static int[][] GetMaterialIDs(MeshData mdata, ref int maxID)
-        {
-            maxID = 0;
-            int[][] ret = new int[mdata.numSplits][];
-            for (int si = 0; si < ret.Length; ++si)
-            {
-                var split = mdata.GetSplit(si);
-                var ids = new int[split.numSubmeshes];
-                ret[si] = ids;
-                for (int smi = 0; smi < split.numSubmeshes; ++smi)
-                {
-                    int mid = split.GetSubmesh(smi).materialID;
-                    ids[smi] = mid;
-                    maxID = Math.Max(maxID, mid);
-                }
-            }
-
-            return ret;
-        }
 
         static void SwitchBits(ref int flags, bool f, int bit)
         {
@@ -454,18 +443,43 @@ namespace UTJ
         public class Record
         {
             public GameObject go;
-            public int[][] materialIDs;
+            public Mesh origMesh;
+            public int[] materialIDs = new int[0];
+            public int[] submeshCounts = new int[0];
             public bool recved = false;
             public bool edited = false;
 
-            public bool CompareMaterialIDs(int[][] v)
+            // return true if modified
+            public bool BuildMaterialData(MeshData md)
             {
-                if(materialIDs.Length != v.Length) { return false; }
-                for(int i=0; i< materialIDs.Length; ++i)
+                int num_submeshes = md.numSubmeshes;
+                if(num_submeshes == 0) { return false; }
+
+                var mids = new int[num_submeshes];
+                for (int i = 0; i < num_submeshes; ++i)
                 {
-                    if(!materialIDs[i].SequenceEqual(v[i])) { return false; }
+                    mids[i] = md.GetSubmesh(i).materialID;
                 }
-                return false;
+
+                int num_splits = md.numSplits;
+                var scs = new int[num_splits];
+                for (int i = 0; i < num_splits; ++i)
+                {
+                    scs[i] = md.GetSplit(i).numSubmeshes;
+                }
+
+                bool ret = !materialIDs.SequenceEqual(mids) || !submeshCounts.SequenceEqual(scs);
+                materialIDs = mids;
+                submeshCounts = scs;
+                return ret;
+            }
+
+            public int maxMaterialID
+            {
+                get
+                {
+                    return materialIDs.Length > 0 ? materialIDs.Max() : 0;
+                }
             }
         }
 
@@ -499,7 +513,7 @@ namespace UTJ
         #endregion
 
         #region impl
-        void SerializeDictionary<K,V>(Dictionary<K,V> dic, K[] keys, V[] values)
+        void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
         {
             keys = dic.Keys.ToArray();
             values = dic.Values.ToArray();
@@ -521,10 +535,10 @@ namespace UTJ
 
         public void OnBeforeSerialize()
         {
-            SerializeDictionary(m_clientMeshes, m_clientMeshes_keys, m_clientMeshes_values);
-            SerializeDictionary(m_hostMeshes, m_hostMeshes_keys, m_hostMeshes_values);
-            SerializeDictionary(m_materialIDTable, m_materialIDTable_keys, m_materialIDTable_values);
-            SerializeDictionary(m_objIDTable, m_objIDTable_keys, m_objIDTable_values);
+            SerializeDictionary(m_clientMeshes, ref m_clientMeshes_keys, ref m_clientMeshes_values);
+            SerializeDictionary(m_hostMeshes, ref m_hostMeshes_keys, ref m_hostMeshes_values);
+            SerializeDictionary(m_materialIDTable, ref m_materialIDTable_keys, ref m_materialIDTable_values);
+            SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
         public void OnAfterDeserialize()
         {
@@ -607,6 +621,9 @@ namespace UTJ
             }
             msServerEndServe(m_server);
 
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+#endif
             //Debug.Log("MeshSyncServer: Get");
         }
 
@@ -705,10 +722,8 @@ namespace UTJ
 
 
             // allocate material list
-            int maxMaterialID = 0;
-            var materialIDs = GetMaterialIDs(data, ref maxMaterialID);
-            bool materialsUpdated = rec.recved && (rec.materialIDs == null || !rec.CompareMaterialIDs(materialIDs));
-            rec.materialIDs = materialIDs;
+            bool materialsUpdated = rec.BuildMaterialData(data);
+            int maxMaterialID = rec.maxMaterialID;
             if(m_materialList == null || maxMaterialID + 1 > m_materialList.Length)
             {
                 var tmp = new Material[maxMaterialID + 1];
@@ -827,18 +842,11 @@ namespace UTJ
         {
             if(rec.go == null || !rec.edited) { return; }
 
-            var mids = rec.materialIDs;
-            var mlist = new Material[mids.Length][];
-            for (int i = 0; i < mids.Length; ++i)
-            {
-                mlist[i] = new Material[mids[i].Length];
-                for (int j = 0; j < mids[i].Length; ++j)
-                {
-                    mlist[i][j] = m_materialList[mids[i][j]];
-                }
-            }
+            var materialIDs = rec.materialIDs;
+            var submeshCounts = rec.submeshCounts;
 
-            for (int i = 0; i < mlist.Length; ++i)
+            int mi = 0;
+            for (int i = 0; i < submeshCounts.Length; ++i)
             {
                 Renderer r = null;
                 if (i == 0)
@@ -852,9 +860,15 @@ namespace UTJ
                     r = t.GetComponent<Renderer>();
                 }
 
+                var materials = new Material[submeshCounts[i]];
+                for (int j = 0; j < submeshCounts[i]; ++j)
+                {
+                    materials[j] = m_materialList[materialIDs[mi++]];
+                }
+
                 if (r != null)
                 {
-                    r.sharedMaterials = mlist[i];
+                    r.sharedMaterials = materials;
                 }
             }
         }
@@ -999,15 +1013,16 @@ namespace UTJ
         bool ServeData(Renderer renderer, GetFlags flags)
         {
             bool ret = false;
+            Mesh origMesh = null;
 
             var dst = MeshData.Create();
             if (renderer.GetType() == typeof(MeshRenderer))
             {
-                ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, flags);
+                ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, flags, ref origMesh);
             }
             else if (renderer.GetType() == typeof(SkinnedMeshRenderer))
             {
-                ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, flags);
+                ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, flags, ref origMesh);
             }
 
             if (ret)
@@ -1025,6 +1040,7 @@ namespace UTJ
                     m_hostMeshes[dst.id] = new Record
                     {
                         go = renderer.gameObject,
+                        origMesh = origMesh,
                     };
                 }
 
@@ -1034,9 +1050,9 @@ namespace UTJ
             return ret;
         }
 
-        bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetFlags flags)
+        bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetFlags flags, ref Mesh mesh)
         {
-            var mesh = mr.GetComponent<MeshFilter>().sharedMesh;
+            mesh = mr.GetComponent<MeshFilter>().sharedMesh;
             if (mesh == null) return false;
             if (!mesh.isReadable)
             {
@@ -1048,41 +1064,32 @@ namespace UTJ
             return true;
         }
 
-        bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetFlags flags)
+        bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetFlags flags, ref Mesh mesh)
         {
+            mesh = smr.sharedMesh;
+            if (mesh == null) return false;
+            if (!flags.bakeSkin && !mesh.isReadable)
+            {
+                Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
+                return false;
+            }
+
             if (flags.bakeSkin)
             {
                 Cloth cloth = smr.GetComponent<Cloth>();
                 if (cloth != null)
                 {
-                    var mesh = smr.sharedMesh;
-                    if (mesh == null)
-                    {
-                        return false;
-                    }
-                    if (!mesh.isReadable)
-                    {
-                        Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
-                        return false;
-                    }
                     CaptureMesh(ref dst, mesh, cloth, flags, smr.sharedMaterials);
                 }
                 else
                 {
-                    var mesh = new Mesh();
-                    smr.BakeMesh(mesh);
-                    CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
+                    var tmp = new Mesh();
+                    smr.BakeMesh(tmp);
+                    CaptureMesh(ref dst, tmp, null, flags, smr.sharedMaterials);
                 }
             }
             else
             {
-                var mesh = smr.sharedMesh;
-                if (mesh == null) return false;
-                if (!mesh.isReadable)
-                {
-                    Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
-                    return false;
-                }
                 CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
             }
             return true;

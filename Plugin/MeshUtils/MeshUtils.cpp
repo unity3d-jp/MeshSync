@@ -561,6 +561,7 @@ void TopologyRefiner::swapNewData(RawVector<float3>& p, RawVector<float3>& n, Ra
 
 void TopologyRefiner::buildConnection()
 {
+    // skip if already built
     if (v2f_counts.size() == points.size()) { return; }
 
     size_t num_faces = counts.size();

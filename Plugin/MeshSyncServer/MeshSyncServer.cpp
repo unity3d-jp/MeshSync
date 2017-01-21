@@ -193,6 +193,14 @@ msAPI void msMeshSetTransform(ms::MeshData *_this, const ms::Transform *v)
     _this->transform = *v;
     _this->flags.has_transform = 1;
 }
+msAPI int msMeshGetNumSubmeshes(ms::MeshData *_this)
+{
+    return (int)_this->submeshes.size();
+}
+msAPI ms::SubmeshData* msMeshGetSubmesh(ms::MeshData *_this, int i)
+{
+    return &_this->submeshes[i];
+}
 
 
 msAPI int msSplitGetNumPoints(ms::SplitData *_this)
