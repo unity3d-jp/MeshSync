@@ -30,6 +30,7 @@ namespace UTJ
             Get,
             Delete,
             Mesh,
+            Screenshot,
         }
 
         public struct GetFlags
@@ -419,6 +420,7 @@ namespace UTJ
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerAddServeData(IntPtr sv, EventType et, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);
 
         static void SwitchBits(ref int flags, bool f, int bit)
         {
@@ -493,6 +495,7 @@ namespace UTJ
         msMessageHandler m_handler;
         bool m_requestRestart = false;
         bool m_requestReassignMaterials = false;
+        bool m_captureScreenshotInProgress = false;
 
         Dictionary<string, Record> m_clientMeshes = new Dictionary<string, Record>();
         Dictionary<int, Record> m_hostMeshes = new Dictionary<int, Record>();
@@ -554,7 +557,7 @@ namespace UTJ
             var settings = ServerSettings.default_value;
             settings.port = (ushort)m_serverPort;
             m_server = msServerStart(ref settings);
-            m_handler = OnServerEvent;
+            m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
 #endif
@@ -585,6 +588,11 @@ namespace UTJ
                 ReassignMaterials();
                 ForceRepaint();
             }
+            if(m_captureScreenshotInProgress)
+            {
+                m_captureScreenshotInProgress = false;
+                msServerSetScreenshotFilePath(m_server, "screenshot.png");
+            }
 
             if (msServerProcessMessages(m_server, m_handler) > 0)
             {
@@ -592,7 +600,7 @@ namespace UTJ
             }
         }
 
-        void OnServerEvent(EventType type, IntPtr data)
+        void OnServerMessage(EventType type, IntPtr data)
         {
             switch (type)
             {
@@ -604,6 +612,9 @@ namespace UTJ
                     break;
                 case EventType.Mesh:
                     OnRecvMesh((MeshData)data);
+                    break;
+                case EventType.Screenshot:
+                    OnRecvScreenshot(data);
                     break;
             }
         }
@@ -1160,6 +1171,14 @@ namespace UTJ
                     }
                 }
             }
+        }
+
+        void OnRecvScreenshot(IntPtr data)
+        {
+            Application.CaptureScreenshot("screenshot.png");
+            // actual capture will be done at end of frame. not done immediately.
+            // just set flag now.
+            m_captureScreenshotInProgress = true;
         }
 
 #if UNITY_EDITOR

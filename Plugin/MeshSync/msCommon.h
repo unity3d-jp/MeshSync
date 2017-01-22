@@ -10,12 +10,20 @@
 
 namespace ms {
 
+void LogImpl(const char *fmt, ...);
+
+#define msLogInfo(...)    ::ms::LogImpl("MeshSync info: " __VA_ARGS__)
+#define msLogWarning(...) ::ms::LogImpl("MeshSync warning: " __VA_ARGS__)
+#define msLogError(...)   ::ms::LogImpl("MeshSync error: " __VA_ARGS__)
+
+
 enum class MessageType
 {
     Unknown,
     Get,
     Delete,
     Mesh,
+    Screenshot,
 };
 
 enum class SenderType
@@ -65,9 +73,20 @@ public:
     std::shared_ptr<std::atomic_int> wait_flag;
 
     GetData();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+
+class ScreenshotData : public MessageData
+{
+public:
+    std::shared_ptr<std::atomic_int> wait_flag;
+
+    ScreenshotData();
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 };
 
 
@@ -81,9 +100,9 @@ public:
     int id = 0;
 
     DeleteData();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 };
 
 
@@ -183,9 +202,9 @@ public:
 
     MeshData();
     void clear();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 
     const char* getName() const;
     void refine();

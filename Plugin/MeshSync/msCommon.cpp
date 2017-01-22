@@ -96,6 +96,20 @@ inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 
 
 
+static void LogImpl(const char *fmt, va_list args)
+{
+    char buf[1024];
+    snprintf(buf, sizeof(buf), fmt, args);
+    ::OutputDebugStringA(buf);
+}
+void LogImpl(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    LogImpl(fmt, args);
+    va_end(args);
+}
+
 
 MessageData::~MessageData()
 {
@@ -121,6 +135,11 @@ void GetData::deserialize(std::istream& is)
     read(is, flags);
     read(is, scale);
 }
+
+ScreenshotData::ScreenshotData() {}
+uint32_t ScreenshotData::getSerializeSize() const { return 0; }
+void ScreenshotData::serialize(std::ostream& ) const {}
+void ScreenshotData::deserialize(std::istream& ) {}
 
 
 DeleteData::DeleteData()

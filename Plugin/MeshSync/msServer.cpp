@@ -74,6 +74,36 @@ void Server::recvMesh(const Body& body)
     }
 }
 
+int Server::processMessages(const MessageHandler& handler)
+{
+    lock_t l(m_mutex);
+    for (auto& p : m_recv_history) {
+        if (auto *get = dynamic_cast<GetData*>(p.get())) {
+            m_current_get_request = get;
+            handler(MessageType::Get, *p);
+            m_current_get_request = nullptr;
+        }
+        else if (auto *del = dynamic_cast<DeleteData*>(p.get())) {
+            handler(MessageType::Delete, *p);
+            m_client_meshes.erase(del->path);
+
+        }
+        else if (auto *mesh = dynamic_cast<MeshData*>(p.get())) {
+            handler(MessageType::Mesh, *p);
+        }
+        else if (auto *shot = dynamic_cast<ScreenshotData*>(p.get())) {
+            m_current_screenshot_request = shot;
+            handler(MessageType::Screenshot, *p);
+            m_current_screenshot_request = false;
+        }
+    }
+
+    int ret = (int)m_recv_history.size();
+    m_recv_history.clear();
+    return ret;
+}
+
+
 static void RespondText(HTTPServerResponse &response, const std::string& message)
 {
     response.setContentType("text/plain");
@@ -110,8 +140,12 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
         }
         RespondText(response, "ok");
     }
+    else if (uri == "/screenshot") {
+        m_server->respondScreenshot(request, response);
+    }
     else {
-        RespondText(response, "unknown request");
+        response.setStatusAndReason(HTTPResponse::HTTP_NOT_FOUND);
+        response.send();
     }
 }
 
@@ -177,10 +211,19 @@ void Server::setServe(bool v)
 
 void Server::beginServe()
 {
+    if (!m_current_get_request) {
+        msLogError("Server::beginServeMesh(): m_current_get_request is null\n");
+        return;
+    }
     m_host_meshes.clear();
 }
 void Server::endServe()
 {
+    if (!m_current_get_request) {
+        msLogError("Server::endServeMesh(): m_current_get_request is null\n");
+        return;
+    }
+
     auto& request = *m_current_get_request;
     MeshRefineSettings mrs;
     mrs.flags.swap_faces = request.flags.swap_faces;
@@ -202,7 +245,24 @@ void Server::endServe()
 }
 void Server::addServeData(MeshData *data)
 {
+    if (!m_current_get_request) {
+        msLogError("Server::addServeMeshData(): m_current_get_request is null\n");
+        return;
+    }
     m_host_meshes.emplace_back(data);
+}
+
+
+void Server::setScrrenshotFilePath(const std::string path)
+{
+    if (!m_current_screenshot_request) {
+        msLogError("Server::setServeScrrenshotFile(): m_current_screenshot_request is null\n");
+        return;
+    }
+    m_screenshot_file_path = path;
+    if (m_current_screenshot_request->wait_flag) {
+        *m_current_screenshot_request->wait_flag = 0;
+    }
 }
 
 void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response)
@@ -211,6 +271,7 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     auto *data = new GetData();
     data->deserialize(is);
 
+    response.setContentType("application/octet-stream");
     if (!m_serving) {
         response.setContentLength(4);
         auto& os = response.send();
@@ -252,6 +313,39 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
             m_host_meshes[i]->serialize(os);
         }
     }
+}
+
+void Server::respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response)
+{
+    auto& is = request.stream();
+    auto *data = new ScreenshotData();
+    data->deserialize(is);
+
+    if (!m_serving) {
+        response.setContentLength(0);
+        return;
+    }
+
+
+    std::shared_ptr<std::atomic_int> wait_flag(new std::atomic_int(1));
+    data->wait_flag = wait_flag;
+
+    // queue request
+    {
+        lock_t l(m_mutex);
+        m_recv_history.emplace_back(data);
+    }
+
+    // wait for data arrive (or timeout)
+    for (int i = 0; i < 300; ++i) {
+        if (*wait_flag == 0) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // serve data
+    response.sendFile(m_screenshot_file_path, "image/png");
 }
 
 } // namespace ms

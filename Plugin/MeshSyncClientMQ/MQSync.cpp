@@ -135,7 +135,6 @@ void MQSync::importMeshes(MQDocument doc)
         auto& mdata = *data;
 
         if (!mdata.materialIDs.empty()) {
-            size_t nfaces = mdata.indices.size() / 3;
             // make it -1-based
             for (int& mid : mdata.materialIDs) {
                 mid -= 1;
