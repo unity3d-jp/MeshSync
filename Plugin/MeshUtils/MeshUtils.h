@@ -308,7 +308,7 @@ inline void TriangulateWithIndices(
     }
 }
 
-struct TopologyRefiner
+struct MeshRefiner
 {
     struct Submesh
     {

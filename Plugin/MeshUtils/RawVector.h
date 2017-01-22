@@ -138,13 +138,27 @@ public:
         resize(std::distance(first, last));
         std::copy(first, last, begin());
     }
+    void assign(const_pointer first, const_pointer last)
+    {
+        resize(std::distance(first, last));
+        // sadly, memcpy() can way faster than std::copy()
+        memcpy(m_data, first, sizeof(value_type) * m_size);
+    }
 
     template<class ForwardIter>
     void insert(iterator pos, ForwardIter first, ForwardIter last)
     {
-        size_t s = std::distance(begin(), pos);
-        resize(s + std::distance(first, last));
-        std::copy(first, last, begin() + s);
+        size_t d = std::distance(begin(), pos);
+        size_t s = std::distance(first, last);
+        resize(d + s);
+        std::copy(first, last, begin() + pos);
+    }
+    void insert(iterator pos, const_pointer first, const_pointer last)
+    {
+        size_t d = std::distance(begin(), pos);
+        size_t s = std::distance(first, last);
+        resize(d + s);
+        memcpy(m_data + d, first, sizeof(value_type) * s);
     }
 
     void insert(iterator pos, const_reference v)

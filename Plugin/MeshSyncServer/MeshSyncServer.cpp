@@ -32,7 +32,7 @@ msAPI void  msServerStop(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::MessageType type, const ms::MessageData& data) {
+    return server->processMessages([handler](ms::MessageType type, const ms::Message& data) {
         handler(type, &data);
     });
 }
@@ -47,15 +47,10 @@ msAPI void msServerEndServe(ms::Server *server)
     if (!server) { return; }
     server->endServe();
 }
-msAPI void msServerAddServeData(ms::Server *server, ms::MessageType type, void *data)
+msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
-    switch (type) {
-    case ms::MessageType::Mesh:
-    {
-        server->addServeData((ms::MeshData*)data);
-    }
-    }
+    server->addServeData(data);
 }
 
 
@@ -66,118 +61,141 @@ msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
 }
 
 
-msAPI ms::GetFlags msGetGetFlags(ms::GetData *_this)
+msAPI int msSetGetNumMeshes(ms::SetMessage *_this)
+{
+    return (int)_this->scene.meshes.size();
+}
+msAPI ms::Mesh* msSetGetMeshData(ms::SetMessage *_this, int i)
+{
+    return _this->scene.meshes[i].get();
+}
+msAPI int msSetGetNumTransforms(ms::SetMessage *_this)
+{
+    return (int)_this->scene.transforms.size();
+}
+msAPI ms::Transform* msSetGetTransformData(ms::SetMessage *_this, int i)
+{
+    return _this->scene.transforms[i].get();
+}
+msAPI int msSetGetNumCameras(ms::SetMessage *_this)
+{
+    return (int)_this->scene.cameras.size();
+}
+msAPI ms::Camera* msSetGetCameraData(ms::SetMessage *_this, int i)
+{
+    return _this->scene.cameras[i].get();
+}
+
+
+msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {
     return _this->flags;
 }
 
-msAPI const char* msDeleteGetPath(ms::DeleteData *_this)
+msAPI int msDeleteGetNumTargets(ms::DeleteMessage *_this)
 {
-    return _this->path.c_str();
+    return (int)_this->targets.size();
 }
-msAPI int msDeleteGetID(ms::DeleteData *_this)
+msAPI const char* msDeleteGetPath(ms::DeleteMessage *_this, int i)
 {
-    return _this->id;
+    return _this->targets[i].path.c_str();
+}
+msAPI int msDeleteGetID(ms::DeleteMessage *_this, int i)
+{
+    return _this->targets[i].id;
 }
 
 
-msAPI ms::MeshData* msMeshCreate()
+msAPI ms::Mesh* msMeshCreate()
 {
-    return new ms::MeshData();
+    return new ms::Mesh();
 }
-msAPI int msMeshGetID(ms::MeshData *_this)
+msAPI int msMeshGetID(ms::Mesh *_this)
 {
     return _this->id;
 }
-msAPI void msMeshSetID(ms::MeshData *_this, int v)
+msAPI void msMeshSetID(ms::Mesh *_this, int v)
 {
     _this->id = v;
 }
-msAPI ms::MeshDataFlags msMeshGetFlags(ms::MeshData *_this)
+msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *_this)
 {
     return _this->flags;
 }
-msAPI void msMeshSetFlags(ms::MeshData *_this, ms::MeshDataFlags v)
+msAPI void msMeshSetFlags(ms::Mesh *_this, ms::MeshDataFlags v)
 {
     _this->flags = v;
 }
-msAPI const char* msMeshGetPath(ms::MeshData *_this)
+msAPI const char* msMeshGetPath(ms::Mesh *_this)
 {
     return _this->path.c_str();
 }
-msAPI void msMeshSetPath(ms::MeshData *_this, const char *v)
+msAPI void msMeshSetPath(ms::Mesh *_this, const char *v)
 {
     _this->path = v;
 }
-msAPI int msMeshGetNumPoints(ms::MeshData *_this)
+msAPI int msMeshGetNumPoints(ms::Mesh *_this)
 {
     return (int)_this->points.size();
 }
-msAPI int msMeshGetNumIndices(ms::MeshData *_this)
+msAPI int msMeshGetNumIndices(ms::Mesh *_this)
 {
     return (int)_this->indices.size();
 }
-msAPI int msMeshGetNumSplits(ms::MeshData *_this)
+msAPI int msMeshGetNumSplits(ms::Mesh *_this)
 {
     return (int)_this->splits.size();
 }
-msAPI void msMeshReadPoints(ms::MeshData *_this, float3 *dst)
+msAPI void msMeshReadPoints(ms::Mesh *_this, float3 *dst)
 {
     memcpy(dst, _this->points.data(), sizeof(float3) * _this->points.size());
 }
-msAPI void msMeshWritePoints(ms::MeshData *_this, const float3 *v, int size)
+msAPI void msMeshWritePoints(ms::Mesh *_this, const float3 *v, int size)
 {
-    _this->points.resize(size);
-    memcpy(_this->points.data(), v, sizeof(float3) * size);
+    _this->points.assign(v, v + size);
     _this->flags.has_points = 1;
 }
-msAPI void msMeshReadNormals(ms::MeshData *_this, float3 *dst)
+msAPI void msMeshReadNormals(ms::Mesh *_this, float3 *dst)
 {
     memcpy(dst, _this->normals.data(), sizeof(float3) * _this->normals.size());
 }
-msAPI void msMeshWriteNormals(ms::MeshData *_this, const float3 *v, int size)
+msAPI void msMeshWriteNormals(ms::Mesh *_this, const float3 *v, int size)
 {
-    _this->normals.resize(size);
-    memcpy(_this->normals.data(), v, sizeof(float3) * size);
+    _this->normals.assign(v, v + size);
     _this->flags.has_normals = 1;
 }
-msAPI void msMeshReadTangents(ms::MeshData *_this, float4 *dst)
+msAPI void msMeshReadTangents(ms::Mesh *_this, float4 *dst)
 {
     memcpy(dst, _this->tangents.data(), sizeof(float4) * _this->tangents.size());
 }
-msAPI void msMeshWriteTangents(ms::MeshData *_this, const float4 *v, int size)
+msAPI void msMeshWriteTangents(ms::Mesh *_this, const float4 *v, int size)
 {
-    _this->tangents.resize(size);
-    memcpy(_this->tangents.data(), v, sizeof(float4) * size);
+    _this->tangents.assign(v, v + size);
     _this->flags.has_tangents = 1;
 }
-msAPI void msMeshReadUV(ms::MeshData *_this, float2 *dst)
+msAPI void msMeshReadUV(ms::Mesh *_this, float2 *dst)
 {
     memcpy(dst, _this->uv.data(), sizeof(float2) * _this->uv.size());
 }
-msAPI void msMeshWriteUV(ms::MeshData *_this, const float2 *v, int size)
+msAPI void msMeshWriteUV(ms::Mesh *_this, const float2 *v, int size)
 {
-    _this->uv.resize(size);
-    memcpy(_this->uv.data(), v, sizeof(float2) * size);
+    _this->uv.assign(v, v + size);
     _this->flags.has_uv = 1;
 }
-msAPI void msMeshReadIndices(ms::MeshData *_this, int *dst)
+msAPI void msMeshReadIndices(ms::Mesh *_this, int *dst)
 {
     memcpy(dst, _this->indices.data(), sizeof(int) * _this->indices.size());
 }
-msAPI void msMeshWriteIndices(ms::MeshData *_this, const int *v, int size)
+msAPI void msMeshWriteIndices(ms::Mesh *_this, const int *v, int size)
 {
-    _this->indices.resize(size);
-    memcpy(_this->indices.data(), v, sizeof(int) * size);
+    _this->indices.assign(v, v + size);
     _this->flags.has_indices = 1;
     _this->flags.visible = 1;
 }
-msAPI void msMeshWriteSubmeshTriangles(ms::MeshData *_this, const int *v, int size, int materialID)
+msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *_this, const int *v, int size, int materialID)
 {
     {
-        size_t pos = _this->indices.size();
-        _this->indices.resize(pos + size);
-        memcpy(_this->indices.data() + pos, v, sizeof(int) * size);
+        _this->indices.insert(_this->indices.end(), v, v + size);
     }
     {
         size_t pos = _this->materialIDs.size();
@@ -188,26 +206,59 @@ msAPI void msMeshWriteSubmeshTriangles(ms::MeshData *_this, const int *v, int si
     _this->flags.has_materialIDs = 1;
     _this->flags.visible = 1;
 }
-msAPI ms::SplitData* msMeshGetSplit(ms::MeshData *_this, int i)
+msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *_this, int i)
 {
     return &_this->splits[i];
 }
-msAPI void msMeshGetTransform(ms::MeshData *_this, ms::Transform *dst)
+msAPI void msMeshGetTransform(ms::Mesh *_this, ms::TRS *dst)
 {
     *dst = _this->transform;
 }
-msAPI void msMeshSetTransform(ms::MeshData *_this, const ms::Transform *v)
+msAPI void msMeshSetTransform(ms::Mesh *_this, const ms::TRS *v)
 {
     _this->transform = *v;
-    _this->flags.has_transform = 1;
 }
-msAPI int msMeshGetNumSubmeshes(ms::MeshData *_this)
+msAPI int msMeshGetNumSubmeshes(ms::Mesh *_this)
 {
     return (int)_this->submeshes.size();
 }
-msAPI ms::SubmeshData* msMeshGetSubmesh(ms::MeshData *_this, int i)
+msAPI ms::SubmeshData* msMeshGetSubmesh(ms::Mesh *_this, int i)
 {
     return &_this->submeshes[i];
+}
+
+msAPI void msMeshWriteWeights4(ms::Mesh *_this, const ms::Weights4 *v, int size)
+{
+    _this->bones_par_vertex = 4;
+    _this->bone_weights.resize(size * 4);
+    _this->bone_indices.resize(size * 4);
+    for (int i = 0; i < size; ++i) {
+        memcpy(&_this->bone_weights[i * 4], v[i].weight, sizeof(float) * 4);
+        memcpy(&_this->bone_indices[i * 4], v[i].indices, sizeof(int) * 4);
+    }
+}
+msAPI void msMeshSetBone(ms::Mesh *_this, const char *v, int i)
+{
+    if (i + 1 >= _this->bones.size()) {
+        _this->bones.resize(i + 1);
+    }
+    _this->bones[i] = v;
+}
+msAPI void msMeshWriteBindPoses(ms::Mesh *_this, const float4x4 *v, int size)
+{
+    _this->bindposes.assign(v, v + size);
+}
+msAPI void msMeshSetLocal2World(ms::Mesh *_this, const float4x4 *v)
+{
+    _this->refine_settings.local2world = *v;
+}
+msAPI void msMeshSetWorld2Local(ms::Mesh *_this, const float4x4 *v)
+{
+    _this->refine_settings.world2local = *v;
+}
+msAPI int msMeshGetBakeSkin(ms::Mesh *_this)
+{
+    return _this->refine_settings.flags.bake_skin;
 }
 
 

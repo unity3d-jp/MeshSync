@@ -70,7 +70,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
 
     int nobj = doc->GetObjectCount();
     while ((int)m_client_meshes.size() < nobj) {
-        m_client_meshes.emplace_back(new ms::MeshData());
+        m_client_meshes.emplace_back(new ms::Mesh());
     }
 
     // gather mesh data
@@ -82,9 +82,11 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     m_future_send = std::async(std::launch::async, [this, nobj]() {
         ms::Client client(m_settings);
 
-        // send mesh
-        concurrency::parallel_for(0, nobj, [this, &client](int i) {
-            client.send(*m_client_meshes[i]);
+        // send mesh one by one to Unity can respond quickly
+        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&client](ms::MeshPtr& mesh) {
+            ms::SetMessage set;
+            set.scene.meshes = { mesh };
+            client.send(set);
         });
 
         // detect deleted objects and send delete message
@@ -96,42 +98,48 @@ void MQSync::sendMesh(MQDocument doc, bool force)
                 m_exist_record[m_client_meshes[i]->path] = true;
             }
         }
+        ms::DeleteMessage del;
         for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
             if (!i->second) {
-                ms::DeleteData del;
-                del.path = i->first;
-                ExtractID(del.path.c_str(), del.id);
-
-                client.send(del);
+                int id = 0;
+                ExtractID(i->first.c_str(), id);
+                del.targets.push_back({ i->first , id });
                 m_exist_record.erase(i++);
             }
             else {
                 ++i;
             }
         }
+        if (!del.targets.empty()) {
+            client.send(del);
+        }
     });
 
 }
 
-void MQSync::importMeshes(MQDocument doc)
+bool MQSync::importMeshes(MQDocument doc)
 {
     waitAsyncSend();
 
     ms::Client client(m_settings);
-    ms::GetData gd;
+    ms::GetMessage gd;
     gd.flags.get_transform = 1;
     gd.flags.get_indices = 1;
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
     gd.flags.get_materialIDs = 1;
-    gd.flags.swap_handedness = 1;
-    gd.flags.apply_local2world = 1;
-    gd.flags.bake_skin = 1;
-    gd.flags.invert_v = 1;
-    gd.scale = 1.0f / m_scale_factor;
+    gd.refine_settings.flags.swap_handedness = 1;
+    gd.refine_settings.flags.apply_local2world = 1;
+    gd.refine_settings.flags.bake_skin = 1;
+    gd.refine_settings.flags.invert_v = 1;
+    gd.refine_settings.scale_factor = 1.0f / m_scale_factor;
 
     auto ret = client.send(gd);
-    for (auto& data : ret) {
+    if (!ret) {
+        return false;
+    }
+
+    for (auto& data : ret->meshes) {
         auto& mdata = *data;
 
         if (!mdata.materialIDs.empty()) {
@@ -152,6 +160,7 @@ void MQSync::importMeshes(MQDocument doc)
 
         m_host_meshes[mdata.id] = data;
     }
+    return true;
 }
 
 bool MQSync::isAsyncSendInProgress()
@@ -185,7 +194,7 @@ MQObject MQSync::findMQObject(MQDocument doc, const char *name)
     return nullptr;
 }
 
-MQObject MQSync::createObject(const ms::MeshData& data, const char *name)
+MQObject MQSync::createObject(const ms::Mesh& data, const char *name)
 {
     auto ret = MQ_CreateObject();
 
@@ -227,9 +236,8 @@ MQObject MQSync::createObject(const ms::MeshData& data, const char *name)
     return ret;
 }
 
-void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
+void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
-    dst.sender = ms::SenderType::Metasequoia;
     if (!obj) {
         dst.clear();
         return;
@@ -247,7 +255,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
     dst.flags.has_materialIDs = 1;
-    dst.flags.has_transform = 1;
     dst.flags.has_refine_settings = 1;
 
     dst.refine_settings.scale_factor = m_scale_factor;
@@ -279,8 +286,8 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& dst)
                 if (ite != m_host_meshes.end()) {
                     dst.id = id;
                     dst.refine_settings.flags.apply_world2local = 1;
-                    dst.transform.local2world = ite->second->transform.local2world;
-                    dst.transform.world2local = ite->second->transform.world2local;
+                    dst.refine_settings.local2world = ite->second->refine_settings.local2world;
+                    dst.refine_settings.world2local = ite->second->refine_settings.world2local;
                 }
             }
         }

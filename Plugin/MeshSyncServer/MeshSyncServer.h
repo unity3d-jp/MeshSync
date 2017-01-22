@@ -15,6 +15,6 @@ msAPI int           msServerProcessMessages(ms::Server *server, msMessageHandler
 
 msAPI void          msServerBeginServe(ms::Server *server);
 msAPI void          msServerEndServe(ms::Server *server);
-msAPI void          msServerAddServeData(ms::Server *server, ms::MessageType type, void *data);
+msAPI void          msServerServeMesh(ms::Server *server, ms::Mesh *data);
 
 msAPI void          msServerSetScreenshotFilePath(ms::Server *server, const char *path);

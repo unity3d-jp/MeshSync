@@ -14,20 +14,17 @@ public:
     void clear();
     void flushPendingRequests(MQDocument doc);
     void sendMesh(MQDocument doc, bool force = false);
-    void importMeshes(MQDocument doc);
+    bool importMeshes(MQDocument doc);
 
 private:
-    using MeshPtr = std::shared_ptr<ms::MeshData>;
-    using Meshes = std::vector<MeshPtr>;
-
     bool isAsyncSendInProgress();
     void waitAsyncSend();
     MQObject findMQObject(MQDocument doc, const char *name);
-    MQObject createObject(const ms::MeshData& data, const char *name);
-    void extractMeshData(MQDocument doc, MQObject obj, ms::MeshData& data);
+    MQObject createObject(const ms::Mesh& data, const char *name);
+    void extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& data);
 
-    using ClientMeshes = std::vector<MeshPtr>;
-    using HostMeshes = std::map<int, MeshPtr>;
+    using ClientMeshes = std::vector<ms::MeshPtr>;
+    using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
 
     ms::ClientSettings m_settings;

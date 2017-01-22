@@ -21,6 +21,28 @@ struct ssize_impl<std::string>
 {
     uint32_t operator()(const std::string& v) { return uint32_t(4 + v.size()); }
 };
+template<class T>
+struct ssize_impl<std::vector<T>>
+{
+    uint32_t operator()(const std::vector<T>& v) {
+        uint32_t ret = 4;
+        for (const auto& e  :v) {
+            ret += ssize_impl<T>()(e);
+        }
+        return ret;
+    }
+};
+template<class T>
+struct ssize_impl<std::vector<std::shared_ptr<T>>>
+{
+    uint32_t operator()(const std::vector<std::shared_ptr<T>>& v) {
+        uint32_t ret = 4;
+        for (const auto& e : v) {
+            ret += e->getSerializeSize();
+        }
+        return ret;
+    }
+};
 
 template<class T>
 inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
@@ -52,6 +74,30 @@ struct write_impl<std::string>
         auto size = (uint32_t)v.size();
         os.write((const char*)&size, 4);
         os.write((const char*)v.data(), size);
+    }
+};
+template<class T>
+struct write_impl<std::vector<T>>
+{
+    void operator()(std::ostream& os, const std::vector<T>& v)
+    {
+        auto size = (uint32_t)v.size();
+        os.write((const char*)&size, 4);
+        for (const auto& e : v) {
+            write_impl<T>()(os, e);
+        }
+    }
+};
+template<class T>
+struct write_impl<std::vector<std::shared_ptr<T>>>
+{
+    void operator()(std::ostream& os, const std::vector<std::shared_ptr<T>>& v)
+    {
+        auto size = (uint32_t)v.size();
+        os.write((const char*)&size, 4);
+        for (const auto& e : v) {
+            e->serialize(os);
+        }
     }
 };
 template<class T>
@@ -90,6 +136,33 @@ struct read_impl<std::string>
     }
 };
 template<class T>
+struct read_impl<std::vector<T>>
+{
+    void operator()(std::istream& is, std::vector<T>& v)
+    {
+        uint32_t size = 0;
+        is.read((char*)&size, 4);
+        v.resize(size);
+        for (auto& e : v) {
+            read_impl<T>()(is, e);
+        }
+    }
+};
+template<class T>
+struct read_impl<std::vector<std::shared_ptr<T>>>
+{
+    void operator()(std::istream& is, std::vector<std::shared_ptr<T>>& v)
+    {
+        uint32_t size = 0;
+        is.read((char*)&size, 4);
+        v.resize(size);
+        for (auto& e : v) {
+            e.reset(new T);
+            e->deserialize(is);
+        }
+    }
+};
+template<class T>
 inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 
 } // namespace
@@ -111,124 +184,238 @@ void LogImpl(const char *fmt, ...)
 }
 
 
-MessageData::~MessageData()
+
+
+Message::~Message()
 {
 }
 
-GetData::GetData()
+GetMessage::GetMessage()
 {
 }
-uint32_t GetData::getSerializeSize() const
+uint32_t GetMessage::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(flags);
-    ret += ssize(scale);
+    ret += ssize(refine_settings);
     return ret;
 }
-void GetData::serialize(std::ostream& os) const
+void GetMessage::serialize(std::ostream& os) const
 {
     write(os, flags);
-    write(os, scale);
+    write(os, refine_settings);
 }
-void GetData::deserialize(std::istream& is)
+void GetMessage::deserialize(std::istream& is)
 {
     read(is, flags);
-    read(is, scale);
+    read(is, refine_settings);
 }
 
-ScreenshotData::ScreenshotData() {}
-uint32_t ScreenshotData::getSerializeSize() const { return 0; }
-void ScreenshotData::serialize(std::ostream& ) const {}
-void ScreenshotData::deserialize(std::istream& ) {}
 
-
-DeleteData::DeleteData()
+SetMessage::SetMessage()
 {
 }
-uint32_t DeleteData::getSerializeSize() const
+uint32_t SetMessage::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(path);
-    ret += ssize(id);
+    ret += scene.getSerializeSize();
     return ret;
 }
-void DeleteData::serialize(std::ostream& os) const
+void SetMessage::serialize(std::ostream& os) const
 {
-    write(os, path);
-    write(os, id);
+    scene.serialize(os);
 }
-void DeleteData::deserialize(std::istream& is)
+void SetMessage::deserialize(std::istream& is)
 {
-    read(is, path);
+    scene.deserialize(is);
+}
+
+
+ScreenshotMessage::ScreenshotMessage() {}
+uint32_t ScreenshotMessage::getSerializeSize() const { return 0; }
+void ScreenshotMessage::serialize(std::ostream& ) const {}
+void ScreenshotMessage::deserialize(std::istream& ) {}
+
+
+DeleteMessage::DeleteMessage()
+{
+}
+uint32_t DeleteMessage::getSerializeSize() const
+{
+    uint32_t ret = 4;
+    for(auto& i : targets) {
+        ret += ssize(i.path);
+        ret += ssize(i.id);
+    }
+    return ret;
+}
+void DeleteMessage::serialize(std::ostream& os) const
+{
+    int n = (int)targets.size();
+    write(os, n);
+    for (auto& i : targets) {
+        write(os, i.path);
+        write(os, i.id);
+    }
+}
+void DeleteMessage::deserialize(std::istream& is)
+{
+    int n = 0;
+    read(is, n);
+    targets.resize(n);
+    for (auto& i : targets) {
+        read(is, i.path);
+        read(is, i.id);
+    }
+}
+
+
+
+uint32_t SceneEntity::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(id);
+    ret += ssize(path);
+    return ret;
+}
+void SceneEntity::serialize(std::ostream& os) const
+{
+    write(os, id);
+    write(os, path);
+}
+void SceneEntity::deserialize(std::istream& is)
+{
     read(is, id);
+    read(is, path);
+}
+
+
+uint32_t Transform::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(transform);
+    return ret;
+}
+void Transform::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+    write(os, transform);
+}
+void Transform::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+    read(is, transform);
+}
+
+
+uint32_t Camera::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(fov);
+    return ret;
+}
+void Camera::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+    write(os, fov);
+}
+void Camera::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+    read(is, fov);
 }
 
 
 
 #define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs)
+#define EachBoneArray(Body)  Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
-MeshData::MeshData()
+Mesh::Mesh()
 {
 }
 
-void MeshData::clear()
+void Mesh::clear()
 {
-    sender = SenderType::Unknown;
     id = 0;
     path.clear();
     flags = {0};
+
+    transform = TRS();
+    refine_settings = MeshRefineSettings();
+
 #define Body(A) A.clear();
     EachArray(Body);
+
+    bones_par_vertex = 0;
+    EachBoneArray(Body);
 #undef Body
-    transform = Transform();
-    refine_settings = MeshRefineSettings();
+
     submeshes.clear();
     splits.clear();
+    weights4.clear();
 }
 
-uint32_t MeshData::getSerializeSize() const
+uint32_t Mesh::getSerializeSize() const
 {
-    uint32_t ret = 0;
-    ret += ssize(sender);
-    ret += ssize(id);
-    ret += ssize(path);
+    uint32_t ret = super::getSerializeSize();
     ret += ssize(flags);
+
+    if (flags.has_refine_settings) ret += ssize(refine_settings);
+
 #define Body(A) if(flags.has_##A) ret += ssize(A);
     EachArray(Body);
 #undef Body
-    if (flags.has_transform) ret += ssize(transform);
-    if (flags.has_refine_settings) ret += ssize(refine_settings);
+
+    if (flags.has_bones) {
+        ret += ssize(bones_par_vertex);
+#define Body(A) ret += ssize(A);
+        EachBoneArray(Body);
+#undef Body
+    }
+
     return ret;
 }
 
-void MeshData::serialize(std::ostream& os) const
+void Mesh::serialize(std::ostream& os) const
 {
-    write(os, sender);
-    write(os, id);
-    write(os, path);
+    super::serialize(os);
     write(os, flags);
+
+    if (flags.has_refine_settings) write(os, refine_settings);
+
 #define Body(A) if(flags.has_##A) write(os, A);
     EachArray(Body);
 #undef Body
-    if (flags.has_transform) write(os, transform);
-    if (flags.has_refine_settings) write(os, refine_settings);
+
+    if (flags.has_bones) {
+        write(os, bones_par_vertex);
+#define Body(A) write(os, A);
+        EachBoneArray(Body);
+#undef Body
+    }
 }
 
-void MeshData::deserialize(std::istream& is)
+void Mesh::deserialize(std::istream& is)
 {
     clear();
-    read(is, sender);
-    read(is, id);
-    read(is, path);
+    super::deserialize(is);
     read(is, flags);
+
+    if (flags.has_refine_settings) read(is, refine_settings);
+
 #define Body(A) if(flags.has_##A) read(is, A);
     EachArray(Body);
 #undef Body
-    if (flags.has_transform) read(is, transform);
-    if (flags.has_refine_settings) read(is, refine_settings);
+
+    if (flags.has_bones) {
+        read(is, bones_par_vertex);
+#define Body(A) read(is, A);
+        EachBoneArray(Body);
+#undef Body
+    }
 }
 
-const char* MeshData::getName() const
+const char* Mesh::getName() const
 {
     size_t name_pos = path.find_last_of('/');
     if (name_pos != std::string::npos) { ++name_pos; }
@@ -236,9 +423,9 @@ const char* MeshData::getName() const
     return path.c_str() + name_pos;
 }
 
-static tls<mu::TopologyRefiner> g_refiner;
+static tls<mu::MeshRefiner> g_refiner;
 
-void MeshData::refine()
+void Mesh::refine()
 {
     if (refine_settings.flags.invert_v) {
         mu::InvertV(uv.data(), uv.size());
@@ -260,7 +447,7 @@ void MeshData::refine()
     }
 
     if (refine_settings.flags.apply_local2world) {
-        applyTransform(transform.local2world);
+        applyTransform(refine_settings.local2world);
     }
     if (refine_settings.scale_factor != 1.0f) {
         mu::Scale(points.data(), refine_settings.scale_factor, points.size());
@@ -271,7 +458,7 @@ void MeshData::refine()
         transform.position.x *= -1.0f;
     }
     if (refine_settings.flags.apply_world2local) {
-        applyTransform(transform.world2local);
+        applyTransform(refine_settings.world2local);
     }
 
     auto& refiner = g_refiner.local();
@@ -367,7 +554,7 @@ void MeshData::refine()
     flags.has_indices = !indices.empty();
 }
 
-void MeshData::applyMirror(const float3 & plane_n, float plane_d)
+void Mesh::applyMirror(const float3 & plane_n, float plane_d)
 {
     size_t num_points = points.size();
     size_t num_faces = counts.size();
@@ -388,12 +575,35 @@ void MeshData::applyMirror(const float3 & plane_n, float plane_d)
 }
 
 
-void MeshData::applyTransform(const float4x4& m)
+void Mesh::applyTransform(const float4x4& m)
 {
     for (auto& v : points) { v = applyTRS(m, v); }
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
 }
+
+
+uint32_t Scene::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(meshes);
+    ret += ssize(transforms);
+    ret += ssize(cameras);
+    return ret;
+}
+void Scene::serialize(std::ostream& os) const
+{
+    write(os, meshes);
+    write(os, transforms);
+    write(os, cameras);
+}
+void Scene::deserialize(std::istream& is)
+{
+    read(is, meshes);
+    read(is, transforms);
+    read(is, cameras);
+}
+
 
 
 } // namespace ms

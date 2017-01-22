@@ -16,15 +16,9 @@ class Client
 public:
     Client(const ClientSettings& settings);
 
-    using MeshPtr = std::shared_ptr<MeshData>;
-    using Meshes = std::vector<MeshPtr>;
-    Meshes send(const GetData& gdata);
-
-    bool send(const DeleteData& data);
-    bool send(const DeleteData * const data[], int num);
-
-    bool send(const MeshData& data);
-    bool send(const MeshData * const data[], int num);
+    ScenePtr send(const GetMessage& mes);
+    bool send(const SetMessage& mes);
+    bool send(const DeleteMessage& mes);
 
 private:
     ClientSettings m_settings;

@@ -11,12 +11,58 @@ Client::Client(const ClientSettings & settings)
 {
 }
 
-bool Client::send(const DeleteData& data)
+ScenePtr Client::send(const GetMessage& mes)
 {
-    const DeleteData *a[] = { &data };
-    return send(a, 1);
+    ScenePtr ret;
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+        session.setTimeout(5000 * 1000);
+
+        {
+            HTTPRequest request{ HTTPRequest::HTTP_POST, "get" };
+            request.setContentType("application/octet-stream");
+            request.setContentLength(mes.getSerializeSize());
+            auto& os = session.sendRequest(request);
+            mes.serialize(os);
+        }
+
+        {
+            HTTPResponse response;
+            auto& is = session.receiveResponse(response);
+            ret.reset(new Scene());
+            ret->deserialize(is);
+        }
+    }
+    catch (...) {
+    }
+    return ret;
 }
-bool Client::send(const DeleteData * const data[], int num)
+
+bool Client::send(const SetMessage& mes)
+{
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+        session.setTimeout(m_settings.timeout_ms * 1000);
+
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "set" };
+        request.setContentType("application/octet-stream");
+
+        request.setContentLength(mes.getSerializeSize());
+        auto& os = session.sendRequest(request);
+        mes.serialize(os);
+
+        HTTPResponse response;
+        auto& rs = session.receiveResponse(response);
+        std::ostringstream ostr;
+        StreamCopier::copyStream(rs, ostr);
+        return true;
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+bool Client::send(const DeleteMessage& mes)
 {
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
@@ -25,17 +71,9 @@ bool Client::send(const DeleteData * const data[], int num)
         HTTPRequest request{ HTTPRequest::HTTP_POST, "delete" };
         request.setContentType("application/octet-stream");
 
-        size_t len = 4;
-        for (int i = 0; i < num; ++i) {
-            len += data[i]->getSerializeSize();
-        }
-
-        request.setContentLength(len);
+        request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
-        os.write((char*)&num, 4);
-        for (int i = 0; i < num; ++i) {
-            data[i]->serialize(os);
-        }
+        mes.serialize(os);
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
@@ -46,76 +84,6 @@ bool Client::send(const DeleteData * const data[], int num)
     catch (...) {
         return false;
     }
-}
-
-bool Client::send(const MeshData& data)
-{
-    const MeshData *a[] = {&data};
-    return send(a, 1);
-}
-
-bool Client::send(const MeshData * const data[], int num)
-{
-    try {
-        HTTPClientSession session{ m_settings.server, m_settings.port };
-        session.setTimeout(m_settings.timeout_ms * 1000);
-
-        HTTPRequest request{ HTTPRequest::HTTP_POST, "mesh" };
-        request.setContentType("application/octet-stream");
-
-        size_t len = 4;
-        for (int i = 0; i < num; ++i) {
-            len += data[i]->getSerializeSize();
-        }
-
-        request.setContentLength(len);
-        auto& os = session.sendRequest(request);
-        os.write((char*)&num, 4);
-        for (int i = 0; i < num; ++i) {
-            data[i]->serialize(os);
-        }
-
-        HTTPResponse response;
-        auto& rs = session.receiveResponse(response);
-        std::ostringstream ostr;
-        StreamCopier::copyStream(rs, ostr);
-        return true;
-    }
-    catch (...) {
-        return false;
-    }
-}
-
-Client::Meshes Client::send(const GetData& gdata)
-{
-    Meshes ret;
-    try {
-        HTTPClientSession session{ m_settings.server, m_settings.port };
-        session.setTimeout(5000 * 1000);
-
-        HTTPRequest request{ HTTPRequest::HTTP_POST, "get" };
-        request.setContentType("application/octet-stream");
-
-        {
-            request.setContentLength(gdata.getSerializeSize());
-            auto& os = session.sendRequest(request);
-            gdata.serialize(os);
-        }
-
-        HTTPResponse response;
-        auto& is = session.receiveResponse(response);
-
-        int num_data = 0;
-        is.read((char*)&num_data, 4);
-        for (int i = 0; i < num_data; ++i) {
-            auto tmp = new MeshData();
-            tmp->deserialize(is);
-            ret.emplace_back(tmp);
-        }
-    }
-    catch (...) {
-    }
-    return ret;
 }
 
 } // namespace ms

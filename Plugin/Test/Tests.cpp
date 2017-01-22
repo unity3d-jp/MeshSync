@@ -12,24 +12,26 @@ void Test_Sync(bool create_server)
     }
 
     {
-        ms::MeshData data;
-        data.path = "/Root/Child";
-        data.points = {
+        auto mesh = new ms::Mesh();
+        mesh->path = "/Root/Child";
+        mesh->points = {
             { -1.0f, 0.0f, -1.0f },
             { -1.0f, 0.0f,  1.0f },
             {  1.0f, 0.0f,  1.0f },
             {  1.0f, 0.0f, -1.0f },
         };
-        data.indices = { 0, 1, 2, 0, 2, 3 };
+        mesh->indices = { 0, 1, 2, 0, 2, 3 };
 
         ms::Client client(ms::ClientSettings{});
-        client.send(data);
+        ms::SetMessage mes;
+        mes.scene.meshes.emplace_back(mesh);
+        client.send(mes);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     if (create_server) {
-        server->processMessages([](ms::MessageType type, const ms::MessageData& data) {
+        server->processMessages([](ms::MessageType type, const ms::Message& mes) {
             printf("break here\n");
         });
     }
@@ -39,10 +41,11 @@ void Test_Get()
 {
     ms::Client client(ms::ClientSettings{});
 
-    ms::GetData gdata;
-    auto data = client.send(gdata);
-    for(auto& a : data) {
-        printf("");
+    ms::GetMessage gdata;
+    if (auto data = client.send(gdata)) {
+        for (auto& a : data->meshes) {
+            printf("");
+        }
     }
 }
 
@@ -76,7 +79,7 @@ void Test_GenNormals()
         uv_flattened[i] = uv[indices[i]];
     }
 
-    mu::TopologyRefiner refiner;
+    mu::MeshRefiner refiner;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv_flattened;
     refiner.split_unit = 8;

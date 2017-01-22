@@ -24,37 +24,36 @@ namespace UTJ
         }
 #endif
 
-        public enum EventType
+        public enum MessageType
         {
             Unknown,
             Get,
+            Set,
             Delete,
-            Mesh,
             Screenshot,
         }
 
         public struct GetFlags
         {
             public int flags;
-            public bool getTransform { get { return (flags & 0x1) != 0; } }
-            public bool getPoints { get { return (flags & 0x2) != 0; } }
-            public bool getNormals { get { return (flags & 0x4) != 0; } }
-            public bool getTangents { get { return (flags & 0x8) != 0; } }
-            public bool getUV { get { return (flags & 0x10) != 0; } }
-            public bool getIndices { get { return (flags & 0x20) != 0; } }
-            public bool getMaterialIDs { get { return (flags & 0x40) != 0; } }
-            public bool getBones { get { return (flags & 0x80) != 0; } }
-            public bool bakeSkin { get { return (flags & 0x100) != 0; } }
+            public bool getTransform { get { return (flags & (1 << 0)) != 0; } }
+            public bool getPoints { get { return (flags & (1 << 1)) != 0; } }
+            public bool getNormals { get { return (flags & (1 << 2)) != 0; } }
+            public bool getTangents { get { return (flags & (1 << 3)) != 0; } }
+            public bool getUV { get { return (flags & (1 << 4)) != 0; } }
+            public bool getIndices { get { return (flags & (1 << 5)) != 0; } }
+            public bool getMaterialIDs { get { return (flags & (1 << 6)) != 0; } }
+            public bool getBones { get { return (flags & (1 << 7)) != 0; } }
         }
 
-        public struct GetData
+        public struct GetMessage
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern GetFlags msGetGetFlags(IntPtr _this);
 
-            public static explicit operator GetData(IntPtr v)
+            public static explicit operator GetMessage(IntPtr v)
             {
-                GetData ret;
+                GetMessage ret;
                 ret._this = v;
                 return ret;
             }
@@ -62,21 +61,50 @@ namespace UTJ
             public GetFlags flags { get { return msGetGetFlags(_this); } }
         }
 
-        public struct DeleteData
+        public struct SetMessage
         {
             internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern IntPtr msDeleteGetPath(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msDeleteGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msSetGetNumMeshes(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MeshData msSetGetMeshData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSetGetNumTransforms(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TransformData msSetGetTransformData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSetGetNumCameras(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern CameraData msSetGetCameraData(IntPtr _this, int i);
 
-            public static explicit operator DeleteData(IntPtr v)
+            public static explicit operator SetMessage(IntPtr v)
             {
-                DeleteData ret;
+                SetMessage ret;
                 ret._this = v;
                 return ret;
             }
 
-            public string path { get { return S(msDeleteGetPath(_this)); } }
-            public int id { get { return msDeleteGetID(_this); } }
+            public int numMeshes { get { return msSetGetNumMeshes(_this); } }
+            public int numTransforms { get { return msSetGetNumTransforms(_this); } }
+            public int numCameras { get { return msSetGetNumCameras(_this); } }
+
+            public MeshData GetMesh(int i) { return msSetGetMeshData(_this, i); }
+            public TransformData GetTransform(int i) { return msSetGetTransformData(_this, i); }
+            public CameraData GetCamera(int i) { return msSetGetCameraData(_this, i); }
+        }
+
+
+        public struct DeleteMessage
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern int msDeleteGetNumTargets(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msDeleteGetPath(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msDeleteGetID(IntPtr _this, int i);
+
+            public static explicit operator DeleteMessage(IntPtr v)
+            {
+                DeleteMessage ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public int numTargets { get { return msDeleteGetNumTargets(_this); } }
+            public string GetPath(int i) { return S(msDeleteGetPath(_this, i)); }
+            public int GetID(int i) { return msDeleteGetID(_this, i); }
         }
 
 
@@ -85,66 +113,75 @@ namespace UTJ
             public int flags;
             public bool visible
             {
-                get { return (flags & 0x1) != 0; }
-                set { SwitchBits(ref flags, value, 0x1); }
-            }
-            public bool hasIndices
-            {
-                get { return (flags & 0x2) != 0; }
-                set { SwitchBits(ref flags, value, 0x2); }
-            }
-            public bool hasCounts
-            {
-                get { return (flags & 0x4) != 0; }
-                set { SwitchBits(ref flags, value, 0x4); }
-            }
-            public bool hasPoints
-            {
-                get { return (flags & 0x8) != 0; }
-                set { SwitchBits(ref flags, value, 0x8); }
-            }
-            public bool hasNormals
-            {
-                get { return (flags & 0x10) != 0; }
-                set { SwitchBits(ref flags, value, 0x10); }
-            }
-            public bool hasTangents
-            {
-                get { return (flags & 0x20) != 0; }
-                set { SwitchBits(ref flags, value, 0x20); }
-            }
-            public bool hasUV
-            {
-                get { return (flags & 0x40) != 0; }
-                set { SwitchBits(ref flags, value, 0x40); }
-            }
-            public bool hasMaterialIDs
-            {
-                get { return (flags & 0x80) != 0; }
-                set { SwitchBits(ref flags, value, 0x80); }
-            }
-            public bool hasTransform
-            {
-                get { return (flags & 0x100) != 0; }
-                set { SwitchBits(ref flags, value, 0x100); }
+                get { return (flags & (1 << 0)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 0)); }
             }
             public bool hasRefineSettings
             {
-                get { return (flags & 0x200) != 0; }
-                set { SwitchBits(ref flags, value, 0x200); }
+                get { return (flags & (1 << 1)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 1)); }
+            }
+            public bool hasIndices
+            {
+                get { return (flags & (1 << 2)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 2)); }
+            }
+            public bool hasCounts
+            {
+                get { return (flags & (1 << 3)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 3)); }
+            }
+            public bool hasPoints
+            {
+                get { return (flags & (1 << 4)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 4)); }
+            }
+            public bool hasNormals
+            {
+                get { return (flags & (1 << 5)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 5)); }
+            }
+            public bool hasTangents
+            {
+                get { return (flags & (1 << 6)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 6)); }
+            }
+            public bool hasUV
+            {
+                get { return (flags & (1 << 7)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 7)); }
+            }
+            public bool hasMaterialIDs
+            {
+                get { return (flags & (1 << 8)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 8)); }
+            }
+            public bool hasBones
+            {
+                get { return (flags & (1 << 9)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 9)); }
             }
         };
 
-
-        public struct TransformData
+        public struct TRS
         {
             public Vector3 position;
             public Quaternion rotation;
             public Vector3 rotation_eularZXY;
             public Vector3 scale;
-            public Matrix4x4 local2world;
-            public Matrix4x4 world2local;
         };
+
+        public struct TransformData
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
+        }
+
+        public struct CameraData
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
+        }
 
         public struct MeshData
         {
@@ -170,9 +207,17 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr _this, int[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr _this, int[] v, int size, int materialID);
+
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteWeights4(IntPtr _this, BoneWeight[] weights, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetBone(IntPtr _this, string v, int i);
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteBindPoses(IntPtr _this, Matrix4x4[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetLocal2World(IntPtr _this, ref Matrix4x4 v);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetWorld2Local(IntPtr _this, ref Matrix4x4 v);
+            [DllImport("MeshSyncServer")] static extern int msMeshGetBakeSkin(IntPtr _this);
+
             [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern void msMeshGetTransform(IntPtr _this, ref TransformData dst);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetTransform(IntPtr _this, ref TransformData v);
+            [DllImport("MeshSyncServer")] static extern void msMeshGetTransform(IntPtr _this, ref TRS dst);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetTransform(IntPtr _this, ref TRS v);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumSubmeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern SubmeshData msMeshGetSubmesh(IntPtr _this, int i);
 
@@ -273,11 +318,11 @@ namespace UTJ
                     msMeshWriteIndices(_this, value, value.Length);
                 }
             }
-            public TransformData transform
+            public TRS trs
             {
                 get
                 {
-                    var ret = default(TransformData);
+                    var ret = default(TRS);
                     msMeshGetTransform(_this, ref ret);
                     return ret;
                 }
@@ -286,6 +331,9 @@ namespace UTJ
                     msMeshSetTransform(_this, ref value);
                 }
             }
+            public Matrix4x4 local2world { set { msMeshSetLocal2World(_this, ref value); } }
+            public Matrix4x4 world2local { set { msMeshSetWorld2Local(_this, ref value); } }
+            public bool bakeSkin { get { return msMeshGetBakeSkin(_this) != 0; } }
 
             public SplitData GetSplit(int i)
             {
@@ -414,12 +462,12 @@ namespace UTJ
         [DllImport("MeshSyncServer")] static extern IntPtr msServerStart(ref ServerSettings settings);
         [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr sv);
 
-        delegate void msMessageHandler(EventType type, IntPtr data);
+        delegate void msMessageHandler(MessageType type, IntPtr data);
         [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
 
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern void msServerAddServeData(IntPtr sv, EventType et, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr sv, MeshData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);
 
         static void SwitchBits(ref int flags, bool f, int bit)
@@ -600,26 +648,26 @@ namespace UTJ
             }
         }
 
-        void OnServerMessage(EventType type, IntPtr data)
+        void OnServerMessage(MessageType type, IntPtr data)
         {
             switch (type)
             {
-                case EventType.Get:
-                    OnRecvGet((GetData)data);
+                case MessageType.Get:
+                    OnRecvGet((GetMessage)data);
                     break;
-                case EventType.Delete:
-                    OnRecvDelete((DeleteData)data);
+                case MessageType.Set:
+                    OnRecvSet((SetMessage)data);
                     break;
-                case EventType.Mesh:
-                    OnRecvMesh((MeshData)data);
+                case MessageType.Delete:
+                    OnRecvDelete((DeleteMessage)data);
                     break;
-                case EventType.Screenshot:
+                case MessageType.Screenshot:
                     OnRecvScreenshot(data);
                     break;
             }
         }
 
-        void OnRecvGet(GetData data)
+        void OnRecvGet(GetMessage data)
         {
 
             msServerBeginServe(m_server);
@@ -635,34 +683,49 @@ namespace UTJ
             //Debug.Log("MeshSyncServer: Get");
         }
 
-        void OnRecvDelete(DeleteData data)
+        void OnRecvDelete(DeleteMessage data)
         {
-            var id = data.id;
-            var path = data.path;
+            int numTargets = data.numTargets;
+            for (int i = 0; i < numTargets; ++i)
+            {
+                var id = data.GetID(i);
+                var path = data.GetPath(i);
 
-            if (id != 0 && m_hostMeshes.ContainsKey(id))
-            {
-                var rec = m_hostMeshes[id];
-                if (rec.go != null)
+                if (id != 0 && m_hostMeshes.ContainsKey(id))
                 {
-                    DestroyImmediate(rec.go);
+                    var rec = m_hostMeshes[id];
+                    if (rec.go != null)
+                    {
+                        DestroyImmediate(rec.go);
+                    }
+                    m_hostMeshes.Remove(id);
                 }
-                m_hostMeshes.Remove(id);
-            }
-            else if (m_clientMeshes.ContainsKey(path))
-            {
-                var rec = m_clientMeshes[path];
-                if (rec.go != null)
+                else if (m_clientMeshes.ContainsKey(path))
                 {
-                    DestroyImmediate(rec.go);
+                    var rec = m_clientMeshes[path];
+                    if (rec.go != null)
+                    {
+                        DestroyImmediate(rec.go);
+                    }
+                    m_clientMeshes.Remove(path);
                 }
-                m_clientMeshes.Remove(path);
             }
 
             //Debug.Log("MeshSyncServer: Delete " + path);
         }
 
-        void OnRecvMesh(MeshData data)
+        void OnRecvSet(SetMessage mes)
+        {
+            int numMeshes = mes.numMeshes;
+            int numTransforms = mes.numTransforms;
+            int numCameras = mes.numCameras;
+            for (int i = 0; i < numMeshes; ++i)
+            {
+                UpdateMesh(mes.GetMesh(i));
+            }
+        }
+
+        void UpdateMesh(MeshData data)
         {
             var path = data.path;
             bool createdNewMesh = false;
@@ -746,11 +809,11 @@ namespace UTJ
             var flags = data.flags;
 
             // update transform
-            if (flags.hasTransform)
             {
-                target.localPosition = data.transform.position;
-                target.localRotation = data.transform.rotation;
-                target.localScale = data.transform.scale;
+                var trs = data.trs;
+                target.localPosition = trs.position;
+                target.localRotation = trs.rotation;
+                target.localScale = trs.scale;
             }
 
             // update mesh
@@ -1059,12 +1122,18 @@ namespace UTJ
                 dst.id = GetObjectlID(renderer.gameObject);
                 if (flags.getTransform)
                 {
-                    var tdata = default(TransformData);
-                    CaptureTransform(ref tdata, renderer.GetComponent<Transform>());
-                    dst.transform = tdata;
+                    var trans = renderer.GetComponent<Transform>();
+                    var tdata = default(TRS);
+                    tdata.position = trans.localPosition;
+                    tdata.rotation = trans.localRotation;
+                    tdata.rotation_eularZXY = trans.localEulerAngles;
+                    tdata.scale = trans.localScale;
+                    dst.trs = tdata;
+                    dst.local2world = trans.localToWorldMatrix;
+                    dst.world2local = trans.worldToLocalMatrix;
                 }
 
-                if(!m_hostMeshes.ContainsKey(dst.id))
+                if (!m_hostMeshes.ContainsKey(dst.id))
                 {
                     m_hostMeshes[dst.id] = new Record
                     {
@@ -1074,7 +1143,7 @@ namespace UTJ
                 }
 
                 dst.path = GetPath(renderer.GetComponent<Transform>());
-                msServerAddServeData(m_server, EventType.Mesh, dst);
+                msServerServeMesh(m_server, dst);
             }
             return ret;
         }
@@ -1097,13 +1166,13 @@ namespace UTJ
         {
             mesh = smr.sharedMesh;
             if (mesh == null) return false;
-            if (!flags.bakeSkin && !mesh.isReadable)
+            if (!dst.bakeSkin && !mesh.isReadable)
             {
                 Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                 return false;
             }
 
-            if (flags.bakeSkin)
+            if (dst.bakeSkin)
             {
                 Cloth cloth = smr.GetComponent<Cloth>();
                 if (cloth != null)
@@ -1122,16 +1191,6 @@ namespace UTJ
                 CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
             }
             return true;
-        }
-
-        void CaptureTransform(ref TransformData data, Transform trans)
-        {
-            data.position = trans.localPosition;
-            data.rotation = trans.localRotation;
-            data.rotation_eularZXY = trans.localEulerAngles;
-            data.scale = trans.localScale;
-            data.local2world = trans.localToWorldMatrix;
-            data.world2local = trans.worldToLocalMatrix;
         }
 
         void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials)

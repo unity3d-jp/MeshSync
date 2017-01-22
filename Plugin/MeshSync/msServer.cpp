@@ -29,48 +29,44 @@ private:
 
 
 
-using MeshDataPtr = std::shared_ptr<MeshData>;
-tls<MeshDataPtr> g_tmp_mesh;
 
 RequestHandler::RequestHandler(Server *server)
     : m_server(server)
 {
 }
 
-template<class Body>
-void Server::recvDelete(const Body& body)
+void Server::recvSet(std::istream& is)
 {
-    auto *tmp = new DeleteData();
-    body(*tmp);
-    if(m_serving) {
-        lock_t l(m_mutex);
-        m_recv_history.emplace_back(tmp);
-    }
-}
-
-template<class Body>
-void Server::recvMesh(const Body& body)
-{
-    auto& tmesh_ptr = g_tmp_mesh.local();
-    if (!tmesh_ptr) {
-        tmesh_ptr.reset(new MeshData());
-    }
-
-    auto& tmesh = *tmesh_ptr;
-    body(tmesh);
-    if (m_serving && !tmesh.path.empty()) {
-        tmesh.refine_settings.flags.triangulate = 1;
-        tmesh.refine_settings.flags.split = 1;
-        tmesh.refine_settings.flags.optimize_topology = 1;
-        tmesh.refine_settings.split_unit = 65000;
-        tmesh.refine();
+    auto mes = std::shared_ptr<SetMessage>(new SetMessage());
+    mes->deserialize(is);
+    if (m_serving) {
+        concurrency::parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [](MeshPtr& pmesh) {
+            auto& mesh = *pmesh;
+            mesh.refine_settings.flags.triangulate = 1;
+            mesh.refine_settings.flags.split = 1;
+            mesh.refine_settings.flags.optimize_topology = 1;
+            mesh.refine_settings.split_unit = 65000;
+            mesh.refine();
+        });
 
         {
             lock_t l(m_mutex);
-            auto& dst = m_client_meshes[tmesh.path];
-            std::swap(tmesh_ptr, dst);
-            m_recv_history.push_back(dst);
+            for (auto& pmesh : mes->scene.meshes) {
+                auto& dst = m_client_meshes[pmesh->path];
+                dst = pmesh;
+            }
+            m_recv_history.emplace_back(mes);
         }
+    }
+}
+
+void Server::recvDelete(std::istream& is)
+{
+    auto mes = std::shared_ptr<DeleteMessage>(new DeleteMessage());
+    mes->deserialize(is);
+    if(m_serving) {
+        lock_t l(m_mutex);
+        m_recv_history.emplace_back(mes);
     }
 }
 
@@ -78,20 +74,21 @@ int Server::processMessages(const MessageHandler& handler)
 {
     lock_t l(m_mutex);
     for (auto& p : m_recv_history) {
-        if (auto *get = dynamic_cast<GetData*>(p.get())) {
+        if (auto *get = dynamic_cast<GetMessage*>(p.get())) {
             m_current_get_request = get;
             handler(MessageType::Get, *p);
             m_current_get_request = nullptr;
         }
-        else if (auto *del = dynamic_cast<DeleteData*>(p.get())) {
+        else if (auto *post = dynamic_cast<SetMessage*>(p.get())) {
+            handler(MessageType::Post, *post);
+        }
+        else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
             handler(MessageType::Delete, *p);
-            m_client_meshes.erase(del->path);
-
+            for (auto& id : del->targets) {
+                m_client_meshes.erase(id.path);
+            }
         }
-        else if (auto *mesh = dynamic_cast<MeshData*>(p.get())) {
-            handler(MessageType::Mesh, *p);
-        }
-        else if (auto *shot = dynamic_cast<ScreenshotData*>(p.get())) {
+        else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
             m_current_screenshot_request = shot;
             handler(MessageType::Screenshot, *p);
         }
@@ -117,26 +114,12 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
     if (uri == "get") {
         m_server->respondGet(request, response);
     }
-    else if (uri == "delete") {
-        auto& is = request.stream();
-        int num = 0;
-        is.read((char*)&num, 4);
-        for (int i = 0; i < num; ++i) {
-            m_server->recvDelete([this, &is](DeleteData& tmp) {
-                tmp.deserialize(is);
-            });
-        }
+    else if (uri == "set") {
+        m_server->recvSet(request.stream());
         RespondText(response, "ok");
     }
-    else if(uri == "mesh") {
-        auto& is = request.stream();
-        int num = 0;
-        is.read((char*)&num, 4);
-        for (int i = 0; i < num; ++i) {
-            m_server->recvMesh([&is](MeshData& tmp) {
-                tmp.deserialize(is);
-            });
-        }
+    else if (uri == "delete") {
+        m_server->recvDelete(request.stream());
         RespondText(response, "ok");
     }
     else if (uri == "/screenshot") {
@@ -224,16 +207,10 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    MeshRefineSettings mrs;
-    mrs.flags.swap_faces = request.flags.swap_faces;
-    mrs.flags.swap_handedness = request.flags.swap_handedness;
-    mrs.flags.apply_local2world = request.flags.apply_local2world;
-    mrs.flags.invert_v = request.flags.invert_v;
-    mrs.scale_factor = request.scale;
+    MeshRefineSettings mrs = request.refine_settings;
 
     concurrency::parallel_for_each(m_host_meshes.begin(), m_host_meshes.end(), [&mrs](MeshPtr& p) {
-        if (auto data = static_cast<MeshData*>(p.get())) {
-            data->sender = SenderType::Unity;
+        if (auto data = static_cast<Mesh*>(p.get())) {
             data->refine_settings = mrs;
             data->refine();
         }
@@ -242,7 +219,7 @@ void Server::endServe()
         *request.wait_flag = 0;
     }
 }
-void Server::addServeData(MeshData *data)
+void Server::addServeData(Mesh *data)
 {
     if (!m_current_get_request) {
         msLogError("Server::addServeMeshData(): m_current_get_request is null\n");
@@ -265,7 +242,7 @@ void Server::setScrrenshotFilePath(const std::string path)
 void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     auto& is = request.stream();
-    auto *data = new GetData();
+    auto *data = new GetMessage();
     data->deserialize(is);
 
     response.setContentType("application/octet-stream");
@@ -315,7 +292,7 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
 void Server::respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response)
 {
     auto& is = request.stream();
-    auto *data = new ScreenshotData();
+    auto *data = new ScreenshotMessage();
     data->deserialize(is);
 
     if (!m_serving) {

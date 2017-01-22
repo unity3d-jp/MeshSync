@@ -1,7 +1,6 @@
 #pragma once
 
 #include "msCommon.h"
-#include "MeshUtils/tls.h"
 
 namespace Poco {
     namespace Net {
@@ -32,40 +31,33 @@ public:
 
     ServerSettings& getSettings();
 
-    // Body: [](DeleteData& data) -> void
-    template<class Body>
-    void recvDelete(const Body& body);
 
-
-    // Body: [](MeshData& data) -> void
-    template<class Body>
-    void recvMesh(const Body& body);
-
-    using MessageHandler = std::function<void(MessageType type, const MessageData& data)>;
+    using MessageHandler = std::function<void(MessageType type, const Message& data)>;
     int processMessages(const MessageHandler& handler);
 
     void setServe(bool v);
 
     void beginServe();
     void endServe();
-    void addServeData(MeshData *data);
+    void addServeData(Mesh *data);
 
     void setScrrenshotFilePath(const std::string path);
 
 public:
+    void recvDelete(std::istream& is);
+    void recvSet(std::istream& is);
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
 private:
-    using GetPtr    = std::shared_ptr<GetData>;
-    using DeletePtr = std::shared_ptr<DeleteData>;
-    using MeshPtr   = std::shared_ptr<MeshData>;
+    using GetPtr    = std::shared_ptr<GetMessage>;
+    using DeletePtr = std::shared_ptr<DeleteMessage>;
     using ClientMeshes = std::map<std::string, MeshPtr>;
     using HostMeshes = std::vector<MeshPtr>;
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
 
-    using MessagePtr = std::shared_ptr<MessageData>;
+    using MessagePtr = std::shared_ptr<Message>;
     using History = std::vector<MessagePtr>;
 
     bool m_serving = true;
@@ -76,8 +68,8 @@ private:
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
     History m_recv_history;
-    GetData *m_current_get_request = nullptr;
-    ScreenshotData *m_current_screenshot_request = nullptr;
+    GetMessage *m_current_get_request = nullptr;
+    ScreenshotMessage *m_current_screenshot_request = nullptr;
     std::string m_screenshot_file_path;
 };
 

@@ -115,7 +115,7 @@ bool GenerateNormals(
     return true;
 }
 
-void TopologyRefiner::prepare(
+void MeshRefiner::prepare(
     const IArray<int>& counts_, const IArray<int>& indices_, const IArray<float3>& points_)
 {
     counts = counts_;
@@ -164,7 +164,7 @@ void TopologyRefiner::prepare(
 
 }
 
-void TopologyRefiner::genNormals()
+void MeshRefiner::genNormals()
 {
     normals_tmp.resize(points.size());
     normals_tmp.zeroclear();
@@ -187,7 +187,7 @@ void TopologyRefiner::genNormals()
     normals = normals_tmp;
 }
 
-void TopologyRefiner::genNormals(float smooth_angle)
+void MeshRefiner::genNormals(float smooth_angle)
 {
     if (v2f_counts.empty()) { buildConnection(); }
 
@@ -241,13 +241,13 @@ void TopologyRefiner::genNormals(float smooth_angle)
     normals = normals_tmp;
 }
 
-void TopologyRefiner::genTangents()
+void MeshRefiner::genTangents()
 {
     tangents_tmp.resize(std::max<size_t>(normals.size(), uv.size()));
     mu::GenerateTangents(tangents_tmp, points, normals, uv, counts, offsets, indices);
 }
 
-bool TopologyRefiner::refine(bool optimize)
+bool MeshRefiner::refine(bool optimize)
 {
     return optimize ? refineWithOptimization() : refineDumb();
 }
@@ -255,7 +255,7 @@ bool TopologyRefiner::refine(bool optimize)
 
 
 
-bool TopologyRefiner::genSubmesh(const IArray<int>& materialIDs)
+bool MeshRefiner::genSubmesh(const IArray<int>& materialIDs)
 {
     if (materialIDs.size() != counts.size()) {
         return false;
@@ -314,7 +314,7 @@ bool TopologyRefiner::genSubmesh(const IArray<int>& materialIDs)
     return true;
 }
 
-bool TopologyRefiner::refineDumb()
+bool MeshRefiner::refineDumb()
 {
     int num_indices = (int)indices.size();
     bool flattened = false;
@@ -380,7 +380,7 @@ bool TopologyRefiner::refineDumb()
 
 
 template<class Body>
-void TopologyRefiner::doRefine(const Body& body)
+void MeshRefiner::doRefine(const Body& body)
 {
     buildConnection();
 
@@ -461,7 +461,7 @@ void TopologyRefiner::doRefine(const Body& body)
     }
 }
 
-bool TopologyRefiner::refineWithOptimization()
+bool MeshRefiner::refineWithOptimization()
 {
     int num_points = (int)points.size();
     int num_indices = (int)indices.size();
@@ -543,7 +543,7 @@ bool TopologyRefiner::refineWithOptimization()
     return true;
 }
 
-void TopologyRefiner::swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx)
+void MeshRefiner::swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx)
 {
     if (!new_points.empty()) { p.swap(new_points); }
 
@@ -559,7 +559,7 @@ void TopologyRefiner::swapNewData(RawVector<float3>& p, RawVector<float3>& n, Ra
     else if (!new_indices_triangulated.empty()) { idx.swap(new_indices_triangulated); }
 }
 
-void TopologyRefiner::buildConnection()
+void MeshRefiner::buildConnection()
 {
     // skip if already built
     if (v2f_counts.size() == points.size()) { return; }
@@ -610,7 +610,7 @@ void TopologyRefiner::buildConnection()
     }
 }
 
-int TopologyRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u)
+int MeshRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
@@ -632,7 +632,7 @@ int TopologyRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& 
     return 0;
 }
 
-int TopologyRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u)
+int MeshRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
@@ -652,7 +652,7 @@ int TopologyRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n
     return 0;
 }
 
-int TopologyRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
+int MeshRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
@@ -671,7 +671,7 @@ int TopologyRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
     return 0;
 }
 
-int TopologyRefiner::findOrAddVertexPU(int vi, const float3& p, const float2& u)
+int MeshRefiner::findOrAddVertexPU(int vi, const float3& p, const float2& u)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
