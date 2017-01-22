@@ -29,7 +29,7 @@ void Test_Sync(bool create_server)
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     if (create_server) {
-        server->processMessages([](ms::MessageType type, ms::MessageData& data) {
+        server->processMessages([](ms::MessageType type, const ms::MessageData& data) {
             printf("break here\n");
         });
     }

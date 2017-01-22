@@ -32,7 +32,7 @@ msAPI void  msServerStop(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::MessageType type, ms::MessageData& data) {
+    return server->processMessages([handler](ms::MessageType type, const ms::MessageData& data) {
         handler(type, &data);
     });
 }
@@ -57,6 +57,14 @@ msAPI void msServerAddServeData(ms::Server *server, ms::MessageType type, void *
     }
     }
 }
+
+
+msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
+{
+    if (!server) { return; }
+    server->setScrrenshotFilePath(path);
+}
+
 
 msAPI ms::GetFlags msGetGetFlags(ms::GetData *_this)
 {

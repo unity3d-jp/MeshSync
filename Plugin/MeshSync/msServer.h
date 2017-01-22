@@ -41,39 +41,20 @@ public:
     template<class Body>
     void recvMesh(const Body& body);
 
-    // Body: [](MessageType type, const MessageData& data) -> void
-    template<class Body>
-    int processMessages(const Body& body)
-    {
-        lock_t l(m_mutex);
-        for (auto& p : m_recv_history) {
-            if (auto *get = dynamic_cast<GetData*>(p.get())) {
-                m_current_get_request = get;
-                body(MessageType::Get, *p);
-                m_current_get_request = nullptr;
-            }
-            else if (auto *del = dynamic_cast<DeleteData*>(p.get())) {
-                body(MessageType::Delete, *p);
-                m_client_meshes.erase(del->path);
-
-            }
-            else if (auto *mesh = dynamic_cast<MeshData*>(p.get())) {
-                body(MessageType::Mesh, *p);
-            }
-        }
-
-        int ret = (int)m_recv_history.size();
-        m_recv_history.clear();
-        return ret;
-    }
+    using MessageHandler = std::function<void(MessageType type, const MessageData& data)>;
+    int processMessages(const MessageHandler& handler);
 
     void setServe(bool v);
+
     void beginServe();
     void endServe();
     void addServeData(MeshData *data);
 
+    void setScrrenshotFilePath(const std::string path);
+
 public:
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
 private:
     using GetPtr    = std::shared_ptr<GetData>;
@@ -96,6 +77,8 @@ private:
     HostMeshes m_host_meshes;
     History m_recv_history;
     GetData *m_current_get_request = nullptr;
+    ScreenshotData *m_current_screenshot_request = nullptr;
+    std::string m_screenshot_file_path;
 };
 
 } // namespace ms
