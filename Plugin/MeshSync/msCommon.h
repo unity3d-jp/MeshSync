@@ -82,6 +82,7 @@ struct MeshDataFlags
     uint32_t has_uv : 1;
     uint32_t has_materialIDs : 1;
     uint32_t has_bones : 1;
+    uint32_t has_npoints : 1;
 };
 
 struct MeshRefineFlags
@@ -153,6 +154,7 @@ public:
     RawVector<int>    counts;
     RawVector<int>    indices;
     RawVector<int>    materialIDs;
+    RawVector<float3> npoints; // points for normal calculation
 
     // bone data
     int bones_par_vertex = 0;

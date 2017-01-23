@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "MQSync.h"
 
-#define MaxNameBuffer 1024
+#define MaxNameBuffer 128
 
 static inline std::string BuildPath(MQDocument doc, MQObject obj)
 {
@@ -68,19 +68,69 @@ void MQSync::sendMesh(MQDocument doc, bool force)
 
     m_pending_send_meshes = false;
 
-
     int nobj = doc->GetObjectCount();
-    while ((int)m_client_meshes.size() < nobj) {
+
+    // build relations
+    m_obj_for_normals.clear();
+    m_relations.clear();
+    for (int i = 0; i < nobj; ++i) {
+        auto obj = doc->GetObject(i);
+        if (!obj) { continue; }
+
+        char name[MaxNameBuffer];
+        obj->GetName(name, sizeof(name));
+
+        if (auto pos_normal = std::strstr(name, ":normal")) {
+            m_obj_for_normals.push_back(obj);
+        }
+        else {
+            auto rel = Relation();
+            rel.obj = obj;
+            m_relations.push_back(rel);
+        }
+    }
+    for (auto nobj : m_obj_for_normals) {
+        char nname[MaxNameBuffer];
+        nobj->GetName(nname, sizeof(nname));
+        *std::strstr(nname, ":normal") = '\0';
+
+        for (auto& rel : m_relations) {
+            char name[MaxNameBuffer];
+            rel.obj->GetName(name, sizeof(name));
+            if (strcmp(nname, name) == 0) {
+                rel.normal = nobj;
+                break;
+            }
+        }
+    }
+
+    while ((int)m_client_meshes.size() < m_relations.size()) {
         m_client_meshes.emplace_back(new ms::Mesh());
+    }
+    for (size_t i = 0; i < m_relations.size(); ++i) {
+        m_relations[i].data = m_client_meshes[i];
     }
 
     // gather mesh data
-    concurrency::parallel_for(0, nobj, [this, doc](int i) {
-        extractMeshData(doc, doc->GetObject(i), *m_client_meshes[i]);
+    concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
+        rel.data->clear();
+        rel.data->path = BuildPath(doc, rel.obj);
+
+        bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
+        rel.data->flags.visible = visible;
+        if (!visible) {
+            // not send actual contents if not visible
+            return;
+        }
+
+        extractMeshData(doc, rel.obj, *rel.data);
+        if (rel.normal) {
+            copyPointsForNormalCalculation(doc, rel.normal, *rel.data);
+        }
     });
 
     // kick async send
-    m_future_send = std::async(std::launch::async, [this, nobj]() {
+    m_future_send = std::async(std::launch::async, [this]() {
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
@@ -88,10 +138,10 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         scene_settings.scale_factor = m_scale_factor;
 
         // send mesh one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
+        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.meshes = { mesh };
+            set.scene.meshes = { rel.data };
             client.send(set);
         });
 
@@ -99,9 +149,9 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         for (auto& e : m_exist_record) {
             e.second = false;
         }
-        for (int i = 0; i < nobj; ++i) {
-            if (!m_client_meshes[i]->path.empty()) {
-                m_exist_record[m_client_meshes[i]->path] = true;
+        for (auto& rel : m_relations) {
+            if (!rel.data->path.empty()) {
+                m_exist_record[rel.data->path] = true;
             }
         }
         ms::DeleteMessage del;
@@ -244,18 +294,6 @@ MQObject MQSync::createObject(const ms::Mesh& data, const char *name)
 
 void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
-    if (!obj) {
-        dst.clear();
-        return;
-    }
-
-    dst.path = BuildPath(doc, obj);
-    dst.flags.visible = obj->GetVisible();
-    if (!dst.flags.visible) {
-        // not send actual contents if not visible
-        return;
-    }
-
     dst.flags.has_points = 1;
     dst.flags.has_uv = 1;
     dst.flags.has_counts = 1;
@@ -263,8 +301,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     dst.flags.has_materialIDs = 1;
     dst.flags.has_refine_settings = 1;
 
-    dst.refine_settings.scale_factor = m_scale_factor;
-    dst.refine_settings.flags.swap_handedness = 1;
     dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
     dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     dst.refine_settings.flags.gen_tangents = 1;
@@ -345,4 +381,12 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     for (int& mid : dst.materialIDs) {
         mid += 1;
     }
+}
+
+void MQSync::copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& dst)
+{
+    int npoints = obj->GetVertexCount();
+    dst.npoints.resize(npoints);
+    obj->GetVertexArray((MQPoint*)dst.npoints.data());
+    dst.flags.has_npoints = 1;
 }

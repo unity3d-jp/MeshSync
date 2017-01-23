@@ -336,6 +336,7 @@ struct MeshRefiner
     IArray<float3> points;
     IArray<float3> normals;
     IArray<float2> uv;
+    IArray<float3> npoints; // points for notmal calculation
 
     RawVector<Submesh> submeshes;
     RawVector<Split> splits;

@@ -349,7 +349,7 @@ void Camera::deserialize(std::istream& is)
 
 
 
-#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs)
+#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
 #define EachBoneProperty(Body) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
@@ -476,6 +476,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
     if (mrs.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
+        if (npoints.data()) {
+            mu::InvertX(npoints.data(), npoints.size());
+        }
         transform.position.x *= -1.0f;
     }
     if (mrs.flags.apply_world2local) {
@@ -488,6 +491,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.split_unit = mrs.split_unit;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
+    if (npoints.data() && points.size() == npoints.size()) {
+        refiner.npoints = npoints;
+    }
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
@@ -587,6 +593,12 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d)
     mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
         IntrusiveArray<int>{counts.data(), num_faces}, IntrusiveArray<int>{indices.data(), num_indices}, (int)num_points);
 
+    if (npoints.data()) {
+        npoints.resize(num_points * 2);
+        mu::MirrorPoints(npoints.data() + num_points,
+            IntrusiveArray<float3>{npoints.data(), num_points}, plane_n, plane_d);
+    }
+
     if (uv.data()) {
         size_t num_uv = uv.size();
         uv.resize(num_uv * 2);
@@ -601,6 +613,7 @@ void Mesh::applyTransform(const float4x4& m)
     for (auto& v : points) { v = applyTRS(m, v); }
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
+    for (auto& v : npoints) { v = applyTRS(m, v); }
 }
 
 
