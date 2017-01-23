@@ -344,6 +344,27 @@ namespace UTJ
                 msMeshWriteSubmeshTriangles(_this, indices, indices.Length, materialID);
             }
 
+            public BoneWeight[] boneWeights
+            {
+                set { msMeshWriteWeights4(_this, value, value.Length); }
+            }
+            public Matrix4x4[] bindposes
+            {
+                set { msMeshWriteBindPoses(_this, value, value.Length); }
+            }
+            public Transform[] bones
+            {
+                set
+                {
+                    int n = value.Length;
+                    for(int i=0; i<n; ++i)
+                    {
+                        string path = BuildPath(value[i]);
+                        msMeshSetBone(_this, path, i);
+                    }
+                }
+            }
+
             public int numSubmeshes { get { return msMeshGetNumSubmeshes(_this); } }
             public SubmeshData GetSubmesh(int i)
             {
@@ -711,18 +732,30 @@ namespace UTJ
                 }
             }
 
-            //Debug.Log("MeshSyncServer: Delete " + path);
+            //Debug.Log("MeshSyncServer: Delete");
         }
 
         void OnRecvSet(SetMessage mes)
         {
             int numMeshes = mes.numMeshes;
-            int numTransforms = mes.numTransforms;
-            int numCameras = mes.numCameras;
             for (int i = 0; i < numMeshes; ++i)
             {
                 UpdateMesh(mes.GetMesh(i));
             }
+
+            int numTransforms = mes.numTransforms;
+            for (int i = 0; i < numTransforms; ++i)
+            {
+                UpdateTransform(mes.GetTransform(i));
+            }
+
+            int numCameras = mes.numCameras;
+            for (int i = 0; i < numCameras; ++i)
+            {
+                UpdateCamera(mes.GetCamera(i));
+            }
+
+            //Debug.Log("MeshSyncServer: Set");
         }
 
         void UpdateMesh(MeshData data)
@@ -886,8 +919,16 @@ namespace UTJ
 #if UNITY_EDITOR
             EditorUtility.SetDirty(target.gameObject);
 #endif
+        }
 
-            //Debug.Log("MeshSyncServer: Mesh " + path);
+        void UpdateTransform(TransformData data)
+        {
+            // todo
+        }
+
+        void UpdateCamera(CameraData data)
+        {
+            // todo 
         }
 
         void ReassignMaterials()
@@ -1089,12 +1130,12 @@ namespace UTJ
 #endif
         }
 
-        string GetPath(Transform t)
+        static string BuildPath(Transform t)
         {
             var parent = t.parent;
             if (parent != null)
             {
-                return GetPath(parent) + "/" + t.name;
+                return BuildPath(parent) + "/" + t.name;
             }
             else
             {
@@ -1142,7 +1183,7 @@ namespace UTJ
                     };
                 }
 
-                dst.path = GetPath(renderer.GetComponent<Transform>());
+                dst.path = BuildPath(renderer.GetComponent<Transform>());
                 msServerServeMesh(m_server, dst);
             }
             return ret;
@@ -1190,6 +1231,10 @@ namespace UTJ
             {
                 CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
             }
+            if(flags.getBones)
+            {
+                dst.bones = smr.bones;
+            }
             return true;
         }
 
@@ -1229,6 +1274,11 @@ namespace UTJ
                         data.WriteSubmeshTriangles(indices, mid);
                     }
                 }
+            }
+            if (flags.getBones)
+            {
+                data.boneWeights = mesh.boneWeights;
+                data.bindposes = mesh.bindposes;
             }
         }
 

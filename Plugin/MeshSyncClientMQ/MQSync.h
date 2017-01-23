@@ -28,7 +28,7 @@ private:
     using ExistRecords = std::map<std::string, bool>;
 
     ms::ClientSettings m_settings;
-    float m_scale_factor = 0.005f;
+    float m_scale_factor = 200.0f;
     bool m_auto_sync = false;
 
     ClientMeshes m_client_meshes;

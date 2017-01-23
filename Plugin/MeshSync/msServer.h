@@ -66,8 +66,9 @@ private:
     std::mutex m_mutex;
 
     ClientMeshes m_client_meshes;
-    HostMeshes m_host_meshes;
     History m_recv_history;
+
+    ScenePtr m_host_scene;
     GetMessage *m_current_get_request = nullptr;
     ScreenshotMessage *m_current_screenshot_request = nullptr;
     std::string m_screenshot_file_path;

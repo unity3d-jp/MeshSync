@@ -98,7 +98,7 @@ struct MeshRefineFlags
     uint32_t apply_world2local : 1;
     uint32_t bake_skin : 1;
 
-    // Metasequoia - equivalent
+    // for Metasequoia
     uint32_t invert_v : 1;
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
@@ -174,16 +174,29 @@ public:
     void deserialize(std::istream& is);
 
     const char* getName() const;
-    void refine();
+    void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d);
     void applyTransform(const float4x4& t);
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 
 
+enum class Handedness
+{
+    Left,
+    Right,
+};
+
+struct SceneSettings
+{
+    Handedness handedness = Handedness::Left;
+    float scale_factor = 1.0f;
+};
+
 struct Scene
 {
 public:
+    SceneSettings settings;
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
     std::vector<CameraPtr> cameras;
@@ -244,6 +257,7 @@ class GetMessage : public Message
 {
 public:
     GetFlags flags = {0};
+    SceneSettings scene_settings;
     MeshRefineSettings refine_settings;
 
     // non-serializable

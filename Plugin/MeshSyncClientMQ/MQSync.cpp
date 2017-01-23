@@ -68,6 +68,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
 
     m_pending_send_meshes = false;
 
+
     int nobj = doc->GetObjectCount();
     while ((int)m_client_meshes.size() < nobj) {
         m_client_meshes.emplace_back(new ms::Mesh());
@@ -82,9 +83,14 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     m_future_send = std::async(std::launch::async, [this, nobj]() {
         ms::Client client(m_settings);
 
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = m_scale_factor;
+
         // send mesh one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&client](ms::MeshPtr& mesh) {
+        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
             ms::SetMessage set;
+            set.scene.settings = scene_settings;
             set.scene.meshes = { mesh };
             client.send(set);
         });
@@ -128,11 +134,11 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
     gd.flags.get_materialIDs = 1;
-    gd.refine_settings.flags.swap_handedness = 1;
+    gd.scene_settings.handedness = ms::Handedness::Right;
+    gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
     gd.refine_settings.flags.bake_skin = 1;
     gd.refine_settings.flags.invert_v = 1;
-    gd.refine_settings.scale_factor = 1.0f / m_scale_factor;
 
     auto ret = client.send(gd);
     if (!ret) {

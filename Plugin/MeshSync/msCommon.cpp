@@ -165,6 +165,25 @@ struct read_impl<std::vector<std::shared_ptr<T>>>
 template<class T>
 inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 
+
+template<class T>
+struct clear_impl
+{
+    void operator()(T& v) { v = {}; }
+};
+template<class T>
+struct clear_impl<RawVector<T>>
+{
+    void operator()(RawVector<T>& v) { v.clear(); }
+};
+template<class T>
+struct clear_impl<std::vector<T>>
+{
+    void operator()(std::vector<T>& v) { v.clear(); }
+};
+template<class T>
+inline void vclear(T& v) { return clear_impl<T>()(v); }
+
 } // namespace
 
 
@@ -197,17 +216,20 @@ uint32_t GetMessage::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(flags);
+    ret += ssize(scene_settings);
     ret += ssize(refine_settings);
     return ret;
 }
 void GetMessage::serialize(std::ostream& os) const
 {
     write(os, flags);
+    write(os, scene_settings);
     write(os, refine_settings);
 }
 void GetMessage::deserialize(std::istream& is)
 {
     read(is, flags);
+    read(is, scene_settings);
     read(is, refine_settings);
 }
 
@@ -327,8 +349,8 @@ void Camera::deserialize(std::istream& is)
 
 
 
-#define EachArray(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs)
-#define EachBoneArray(Body)  Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
+#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs)
+#define EachBoneProperty(Body) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
 {
@@ -343,11 +365,9 @@ void Mesh::clear()
     transform = TRS();
     refine_settings = MeshRefineSettings();
 
-#define Body(A) A.clear();
-    EachArray(Body);
-
-    bones_par_vertex = 0;
-    EachBoneArray(Body);
+#define Body(A) vclear(A);
+    EachVertexProperty(Body);
+    EachBoneProperty(Body);
 #undef Body
 
     submeshes.clear();
@@ -363,13 +383,12 @@ uint32_t Mesh::getSerializeSize() const
     if (flags.has_refine_settings) ret += ssize(refine_settings);
 
 #define Body(A) if(flags.has_##A) ret += ssize(A);
-    EachArray(Body);
+    EachVertexProperty(Body);
 #undef Body
 
     if (flags.has_bones) {
-        ret += ssize(bones_par_vertex);
 #define Body(A) ret += ssize(A);
-        EachBoneArray(Body);
+        EachBoneProperty(Body);
 #undef Body
     }
 
@@ -384,13 +403,12 @@ void Mesh::serialize(std::ostream& os) const
     if (flags.has_refine_settings) write(os, refine_settings);
 
 #define Body(A) if(flags.has_##A) write(os, A);
-    EachArray(Body);
+    EachVertexProperty(Body);
 #undef Body
 
     if (flags.has_bones) {
-        write(os, bones_par_vertex);
 #define Body(A) write(os, A);
-        EachBoneArray(Body);
+        EachBoneProperty(Body);
 #undef Body
     }
 }
@@ -404,16 +422,19 @@ void Mesh::deserialize(std::istream& is)
     if (flags.has_refine_settings) read(is, refine_settings);
 
 #define Body(A) if(flags.has_##A) read(is, A);
-    EachArray(Body);
+    EachVertexProperty(Body);
 #undef Body
 
     if (flags.has_bones) {
-        read(is, bones_par_vertex);
 #define Body(A) read(is, A);
-        EachBoneArray(Body);
+        EachBoneProperty(Body);
 #undef Body
     }
 }
+
+#undef EachVertexProperty
+#undef EachBoneProperty
+
 
 const char* Mesh::getName() const
 {
@@ -425,54 +446,54 @@ const char* Mesh::getName() const
 
 static tls<mu::MeshRefiner> g_refiner;
 
-void Mesh::refine()
+void Mesh::refine(const MeshRefineSettings& mrs)
 {
-    if (refine_settings.flags.invert_v) {
+    if (mrs.flags.invert_v) {
         mu::InvertV(uv.data(), uv.size());
     }
-    if (refine_settings.flags.mirror_x) {
+    if (mrs.flags.mirror_x) {
         float3 plane_n = apply_rotation(transform.rotation, { 1.0f, 0.0f, 0.0f });
         float plane_d = dot(plane_n, transform.position);
         applyMirror(plane_n, plane_d);
     }
-    if (refine_settings.flags.mirror_y) {
+    if (mrs.flags.mirror_y) {
         float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 1.0f, 0.0f });
         float plane_d = dot(plane_n, transform.position);
         applyMirror(plane_n, plane_d);
     }
-    if (refine_settings.flags.mirror_z) {
+    if (mrs.flags.mirror_z) {
         float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 0.0f, 1.0f });
         float plane_d = dot(plane_n, transform.position);
         applyMirror(plane_n, plane_d);
     }
 
-    if (refine_settings.flags.apply_local2world) {
-        applyTransform(refine_settings.local2world);
+    if (mrs.flags.apply_local2world) {
+        applyTransform(mrs.local2world);
     }
-    if (refine_settings.scale_factor != 1.0f) {
-        mu::Scale(points.data(), refine_settings.scale_factor, points.size());
-        transform.position *= refine_settings.scale_factor;
+    if (mrs.scale_factor != 1.0f) {
+        mu::Scale(points.data(), mrs.scale_factor, points.size());
+        transform.position *= mrs.scale_factor;
     }
-    if (refine_settings.flags.swap_handedness) {
+    if (mrs.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
         transform.position.x *= -1.0f;
     }
-    if (refine_settings.flags.apply_world2local) {
-        applyTransform(refine_settings.world2local);
+    if (mrs.flags.apply_world2local) {
+        applyTransform(mrs.world2local);
     }
 
     auto& refiner = g_refiner.local();
     refiner.triangulate = refiner.triangulate;
-    refiner.swap_faces = refine_settings.flags.swap_faces;
-    refiner.split_unit = refine_settings.split_unit;
+    refiner.swap_faces = mrs.flags.swap_faces;
+    refiner.split_unit = mrs.split_unit;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
 
     // normals
-    if (refine_settings.flags.gen_normals_with_smooth_angle) {
-        refiner.genNormals(refine_settings.smooth_angle);
+    if (mrs.flags.gen_normals_with_smooth_angle) {
+        refiner.genNormals(mrs.smooth_angle);
     }
-    else if (refine_settings.flags.gen_normals) {
+    else if (mrs.flags.gen_normals) {
         refiner.genNormals();
     }
     else {
@@ -480,18 +501,18 @@ void Mesh::refine()
     }
 
     // tangents
-    bool gen_tangents = refine_settings.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
+    bool gen_tangents = mrs.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
     if (gen_tangents) {
         refiner.genTangents();
     }
 
     // refine topology
     bool refine_topology =
-        refine_settings.flags.triangulate ||
-        (refine_settings.split_unit && points.size() > refine_settings.split_unit) ||
+        mrs.flags.triangulate ||
+        (mrs.split_unit && points.size() > mrs.split_unit) ||
         (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()));
     if(refine_topology) {
-        refiner.refine(refine_settings.flags.optimize_topology);
+        refiner.refine(mrs.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
         refiner.swapNewData(points, normals, tangents, uv, indices);
 
@@ -586,6 +607,7 @@ void Mesh::applyTransform(const float4x4& m)
 uint32_t Scene::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += ssize(settings);
     ret += ssize(meshes);
     ret += ssize(transforms);
     ret += ssize(cameras);
@@ -593,12 +615,14 @@ uint32_t Scene::getSerializeSize() const
 }
 void Scene::serialize(std::ostream& os) const
 {
+    write(os, settings);
     write(os, meshes);
     write(os, transforms);
     write(os, cameras);
 }
 void Scene::deserialize(std::istream& is)
 {
+    read(is, settings);
     read(is, meshes);
     read(is, transforms);
     read(is, cameras);

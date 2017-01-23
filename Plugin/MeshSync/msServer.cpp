@@ -40,13 +40,15 @@ void Server::recvSet(std::istream& is)
     auto mes = std::shared_ptr<SetMessage>(new SetMessage());
     mes->deserialize(is);
     if (m_serving) {
-        concurrency::parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [](MeshPtr& pmesh) {
+        concurrency::parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [&mes](MeshPtr& pmesh) {
             auto& mesh = *pmesh;
+            mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
+            mesh.refine_settings.flags.swap_handedness = mes->scene.settings.handedness == Handedness::Right;
             mesh.refine_settings.flags.triangulate = 1;
             mesh.refine_settings.flags.split = 1;
             mesh.refine_settings.flags.optimize_topology = 1;
             mesh.refine_settings.split_unit = 65000;
-            mesh.refine();
+            mesh.refine(mesh.refine_settings);
         });
 
         {
@@ -197,7 +199,7 @@ void Server::beginServe()
         msLogError("Server::beginServeMesh(): m_current_get_request is null\n");
         return;
     }
-    m_host_meshes.clear();
+    m_host_scene.reset(new Scene());
 }
 void Server::endServe()
 {
@@ -205,14 +207,20 @@ void Server::endServe()
         msLogError("Server::endServeMesh(): m_current_get_request is null\n");
         return;
     }
+    if (!m_host_scene) {
+        msLogError("Server::endServeMesh(): m_host_scene is null\n");
+        return;
+    }
 
     auto& request = *m_current_get_request;
     MeshRefineSettings mrs = request.refine_settings;
+    mrs.scale_factor = request.scene_settings.scale_factor;
+    mrs.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
 
-    concurrency::parallel_for_each(m_host_meshes.begin(), m_host_meshes.end(), [&mrs](MeshPtr& p) {
+    m_host_scene->settings = request.scene_settings;
+    concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&mrs](MeshPtr& p) {
         if (auto data = static_cast<Mesh*>(p.get())) {
-            data->refine_settings = mrs;
-            data->refine();
+            data->refine(mrs);
         }
     });
     if (request.wait_flag) {
@@ -221,11 +229,12 @@ void Server::endServe()
 }
 void Server::addServeData(Mesh *data)
 {
-    if (!m_current_get_request) {
-        msLogError("Server::addServeMeshData(): m_current_get_request is null\n");
+    if (!m_host_scene) {
+        msLogError("Server::endServeMesh(): m_host_scene is null\n");
         return;
     }
-    m_host_meshes.emplace_back(data);
+
+    m_host_scene->meshes.emplace_back(data);
 }
 
 
@@ -274,18 +283,8 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     // serve data
     {
         lock_t l(m_mutex);
-
-        int num = (int)m_host_meshes.size();
-        size_t len = 4;
-        for (int i = 0; i < num; ++i) {
-            len += m_host_meshes[i]->getSerializeSize();
-        }
-        response.setContentLength(len);
-        auto& os = response.send();
-        os.write((char*)&num, 4);
-        for (int i = 0; i < num; ++i) {
-            m_host_meshes[i]->serialize(os);
-        }
+        response.setContentLength(m_host_scene->getSerializeSize());
+        m_host_scene->serialize(response.send());
     }
 }
 
