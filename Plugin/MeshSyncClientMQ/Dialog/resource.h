@@ -10,9 +10,11 @@
 #define IDC_BUTTON_SYNC                 1004
 #define IDC_BUTTON2                     1005
 #define IDC_BUTTON_IMPORT               1005
-#define IDC_EDIT_SERVER2                1006
 #define IDC_EDIT_SCALEFACTOR            1006
 #define IDC_STATIC_SCALEFACTOR          1007
+#define IDC_STATIC_IMPORT_SETTINGS      1008
+#define IDC_CHECK_BAKE_SKIN             1009
+#define IDC_CHECK_BAKE_CLOTH            1010
 
 // Next default values for new objects
 // 

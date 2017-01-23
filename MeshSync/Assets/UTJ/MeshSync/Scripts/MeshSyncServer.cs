@@ -50,6 +50,8 @@ namespace UTJ
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern GetFlags msGetGetFlags(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msGetGetBakeSkin(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msGetGetBakeCloth(IntPtr _this);
 
             public static explicit operator GetMessage(IntPtr v)
             {
@@ -59,6 +61,8 @@ namespace UTJ
             }
 
             public GetFlags flags { get { return msGetGetFlags(_this); } }
+            public bool bakeSkin { get { return msGetGetBakeSkin(_this) != 0; } }
+            public bool bakeCloth { get { return msGetGetBakeCloth(_this) != 0; } }
         }
 
         public struct SetMessage
@@ -213,7 +217,6 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshWriteBindPoses(IntPtr _this, Matrix4x4[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshSetLocal2World(IntPtr _this, ref Matrix4x4 v);
             [DllImport("MeshSyncServer")] static extern void msMeshSetWorld2Local(IntPtr _this, ref Matrix4x4 v);
-            [DllImport("MeshSyncServer")] static extern int msMeshGetBakeSkin(IntPtr _this);
 
             [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern void msMeshGetTransform(IntPtr _this, ref TRS dst);
@@ -333,7 +336,6 @@ namespace UTJ
             }
             public Matrix4x4 local2world { set { msMeshSetLocal2World(_this, ref value); } }
             public Matrix4x4 world2local { set { msMeshSetWorld2Local(_this, ref value); } }
-            public bool bakeSkin { get { return msMeshGetBakeSkin(_this) != 0; } }
 
             public SplitData GetSplit(int i)
             {
@@ -688,13 +690,13 @@ namespace UTJ
             }
         }
 
-        void OnRecvGet(GetMessage data)
+        void OnRecvGet(GetMessage mes)
         {
 
             msServerBeginServe(m_server);
             foreach (var mr in FindObjectsOfType<Renderer>())
             {
-                ServeData(mr, data.flags);
+                ServeData(mr, mes);
             }
             msServerEndServe(m_server);
 
@@ -704,13 +706,13 @@ namespace UTJ
             //Debug.Log("MeshSyncServer: Get");
         }
 
-        void OnRecvDelete(DeleteMessage data)
+        void OnRecvDelete(DeleteMessage mes)
         {
-            int numTargets = data.numTargets;
+            int numTargets = mes.numTargets;
             for (int i = 0; i < numTargets; ++i)
             {
-                var id = data.GetID(i);
-                var path = data.GetPath(i);
+                var id = mes.GetID(i);
+                var path = mes.GetPath(i);
 
                 if (id != 0 && m_hostMeshes.ContainsKey(id))
                 {
@@ -800,9 +802,15 @@ namespace UTJ
             if (rec == null) { return; }
 
 
-            // currently editing skinned mesh is not supported
-            if (rec.go.GetComponent<SkinnedMeshRenderer>() != null)
+            // currently editing skinned mesh is limited to no-topology-update
+            var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
+            if (smr != null)
             {
+                var newmesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
+                if(newmesh != null)
+                {
+                    smr.sharedMesh = newmesh;
+                }
                 return;
             }
 
@@ -861,42 +869,12 @@ namespace UTJ
 
                 var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
                 if(mfilter == null) { return; }
-                var mesh = new Mesh();
-                mesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
 
                 var split = data.GetSplit(i);
                 if (split.numPoints > 0 && split.numIndices > 0)
                 {
-                    if (flags.hasPoints)
-                    {
-                        mesh.vertices = split.points;
-                    }
-                    if (flags.hasNormals)
-                    {
-                        mesh.normals = split.normals;
-                    }
-                    if (flags.hasTangents)
-                    {
-                        mesh.tangents = split.tangents;
-                    }
-                    if (flags.hasUV)
-                    {
-                        mesh.uv = split.uv;
-                    }
-
-                    if (split.numSubmeshes == 0)
-                    {
-                        mesh.SetIndices(split.indices, MeshTopology.Triangles, 0);
-                    }
-                    else
-                    {
-                        mesh.subMeshCount = split.numSubmeshes;
-                        for (int smi = 0; smi < split.numSubmeshes; ++smi)
-                        {
-                            var submesh = split.GetSubmesh(smi);
-                            mesh.SetIndices(submesh.indices, MeshTopology.Triangles, smi);
-                        }
-                    }
+                    var mesh = CreateEditedMesh(data, split);
+                    mesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
                     mfilter.sharedMesh = mesh;
                 }
             }
@@ -919,6 +897,51 @@ namespace UTJ
 #if UNITY_EDITOR
             EditorUtility.SetDirty(target.gameObject);
 #endif
+        }
+
+        Mesh CreateEditedMesh(MeshData data, SplitData split, bool noTopologyUpdate = false, Mesh prev = null)
+        {
+            if(noTopologyUpdate)
+            {
+                if(data.numPoints != prev.vertexCount) { return null; }
+            }
+
+            var mesh = noTopologyUpdate ? Instantiate<Mesh>(prev) : new Mesh();
+            var flags = data.flags;
+            if (flags.hasPoints)
+            {
+                mesh.vertices = split.points;
+            }
+            if (flags.hasNormals)
+            {
+                mesh.normals = split.normals;
+            }
+            if (flags.hasTangents)
+            {
+                mesh.tangents = split.tangents;
+            }
+            if (flags.hasUV)
+            {
+                mesh.uv = split.uv;
+            }
+
+            if(!noTopologyUpdate)
+            {
+                if (split.numSubmeshes == 0)
+                {
+                    mesh.SetIndices(split.indices, MeshTopology.Triangles, 0);
+                }
+                else
+                {
+                    mesh.subMeshCount = split.numSubmeshes;
+                    for (int smi = 0; smi < split.numSubmeshes; ++smi)
+                    {
+                        var submesh = split.GetSubmesh(smi);
+                        mesh.SetIndices(submesh.indices, MeshTopology.Triangles, smi);
+                    }
+                }
+            }
+            return mesh;
         }
 
         void UpdateTransform(TransformData data)
@@ -1143,7 +1166,7 @@ namespace UTJ
             }
         }
 
-        bool ServeData(Renderer renderer, GetFlags flags)
+        bool ServeData(Renderer renderer, GetMessage mes)
         {
             bool ret = false;
             Mesh origMesh = null;
@@ -1151,17 +1174,17 @@ namespace UTJ
             var dst = MeshData.Create();
             if (renderer.GetType() == typeof(MeshRenderer))
             {
-                ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, flags, ref origMesh);
+                ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, mes, ref origMesh);
             }
             else if (renderer.GetType() == typeof(SkinnedMeshRenderer))
             {
-                ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, flags, ref origMesh);
+                ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, mes, ref origMesh);
             }
 
             if (ret)
             {
                 dst.id = GetObjectlID(renderer.gameObject);
-                if (flags.getTransform)
+                if (mes.flags.getTransform)
                 {
                     var trans = renderer.GetComponent<Transform>();
                     var tdata = default(TRS);
@@ -1189,7 +1212,7 @@ namespace UTJ
             return ret;
         }
 
-        bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetFlags flags, ref Mesh mesh)
+        bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh)
         {
             mesh = mr.GetComponent<MeshFilter>().sharedMesh;
             if (mesh == null) return false;
@@ -1199,39 +1222,36 @@ namespace UTJ
                 return false;
             }
 
-            CaptureMesh(ref dst, mesh, null, flags, mr.sharedMaterials);
+            CaptureMesh(ref dst, mesh, null, mes.flags, mr.sharedMaterials);
             return true;
         }
 
-        bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetFlags flags, ref Mesh mesh)
+        bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetMessage mes, ref Mesh mesh)
         {
             mesh = smr.sharedMesh;
             if (mesh == null) return false;
-            if (!dst.bakeSkin && !mesh.isReadable)
+            if (!mes.bakeSkin && !mesh.isReadable)
             {
                 Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
                 return false;
             }
 
-            if (dst.bakeSkin)
+            Cloth cloth = smr.GetComponent<Cloth>();
+            if(cloth != null && mes.bakeCloth)
             {
-                Cloth cloth = smr.GetComponent<Cloth>();
-                if (cloth != null)
-                {
-                    CaptureMesh(ref dst, mesh, cloth, flags, smr.sharedMaterials);
-                }
-                else
-                {
-                    var tmp = new Mesh();
-                    smr.BakeMesh(tmp);
-                    CaptureMesh(ref dst, tmp, null, flags, smr.sharedMaterials);
-                }
+                CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
+            }
+            if (mes.bakeSkin)
+            {
+                var tmp = new Mesh();
+                smr.BakeMesh(tmp);
+                CaptureMesh(ref dst, tmp, null, mes.flags, smr.sharedMaterials);
             }
             else
             {
-                CaptureMesh(ref dst, mesh, null, flags, smr.sharedMaterials);
+                CaptureMesh(ref dst, mesh, null, mes.flags, smr.sharedMaterials);
             }
-            if(flags.getBones)
+            if(mes.flags.getBones)
             {
                 dst.bones = smr.bones;
             }
@@ -1357,6 +1377,11 @@ namespace UTJ
                 if (kvp.Value.edited)
                     ExportMeshes(kvp.Value.go);
             }
+        }
+
+        public void ReplaceMeshes()
+        {
+            //EditorUtility.CopySerialized(animClip, outputAnimClip);
         }
 #endif
 

@@ -62,6 +62,11 @@ void Server::recvSet(std::istream& is)
     }
 }
 
+GetMessage* Server::getCurrentGetRequest()
+{
+    return m_current_get_request;
+}
+
 void Server::recvDelete(std::istream& is)
 {
     auto mes = std::shared_ptr<DeleteMessage>(new DeleteMessage());
@@ -219,9 +224,11 @@ void Server::endServe()
 
     m_host_scene->settings = request.scene_settings;
     concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&mrs](MeshPtr& p) {
-        if (auto data = static_cast<Mesh*>(p.get())) {
-            data->refine(mrs);
-        }
+        auto& mesh = *p;
+        mesh.flags.has_refine_settings = 1;
+        mesh.refine_settings.flags = mrs.flags;
+        mesh.refine_settings.scale_factor = mrs.scale_factor;
+        mesh.refine(mesh.refine_settings);
     });
     if (request.wait_flag) {
         *request.wait_flag = 0;

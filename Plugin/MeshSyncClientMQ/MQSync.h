@@ -10,6 +10,8 @@ public:
     ms::ClientSettings& getClientSettings();
     float& getScaleFactor();
     bool& getAutoSync();
+    bool& getBakeSkin();
+    bool& getBakeCloth();
 
     void clear();
     void flushPendingRequests(MQDocument doc);
@@ -38,6 +40,9 @@ private:
     ms::ClientSettings m_settings;
     float m_scale_factor = 200.0f;
     bool m_auto_sync = false;
+
+    bool m_bake_skin = false;
+    bool m_bake_cloth = false;
 
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;

@@ -98,6 +98,7 @@ struct MeshRefineFlags
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
     uint32_t bake_skin : 1;
+    uint32_t bake_cloth : 1;
 
     // for Metasequoia
     uint32_t invert_v : 1;

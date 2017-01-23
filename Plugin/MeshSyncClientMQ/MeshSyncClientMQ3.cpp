@@ -271,6 +271,14 @@ bool& GetAutoSync(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getAutoSync();
 }
+bool& GetBakeSkin(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getSync().getBakeSkin();
+}
+bool& GetBakeCloth(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getSync().getBakeCloth();
+}
 float& GetScaleFactor(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getScaleFactor();

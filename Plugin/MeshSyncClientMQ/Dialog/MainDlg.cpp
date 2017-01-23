@@ -11,6 +11,8 @@ std::string& GetServer(MeshSyncClientPlugin *plugin);
 uint16_t& GetPort(MeshSyncClientPlugin *plugin);
 float& GetScaleFactor(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
+bool& GetBakeSkin(MeshSyncClientPlugin *plugin);
+bool& GetBakeCloth(MeshSyncClientPlugin *plugin);
 void Send(MeshSyncClientPlugin *plugin);
 void Import(MeshSyncClientPlugin *plugin);
 void CloseWindow(MeshSyncClientPlugin *plugin);
@@ -49,6 +51,8 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_port.Attach(GetDlgItem(IDC_EDIT_PORT));
     m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));
+    m_check_bake_skin.Attach(GetDlgItem(IDC_CHECK_BAKE_SKIN));
+    m_check_bake_cloth.Attach(GetDlgItem(IDC_CHECK_BAKE_CLOTH));
 
     char buf[256];
     m_edit_server.SetWindowText(GetServer(m_plugin).c_str());
@@ -57,6 +61,8 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     sprintf(buf, "%.3f", GetScaleFactor(m_plugin));
     m_edit_scale.SetWindowText(buf);
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
+    m_check_bake_skin.SetCheck(GetBakeSkin(m_plugin));
+    m_check_bake_cloth.SetCheck(GetBakeCloth(m_plugin));
 
     return TRUE;
 }
@@ -127,6 +133,16 @@ LRESULT CMainDlg::OnBnClickedButtonSync(WORD /*wNotifyCode*/, WORD /*wID*/, HWND
     return 0;
 }
 
+LRESULT CMainDlg::OnBnClickedCheckBakeSkin(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    GetBakeSkin(m_plugin) = m_check_bake_skin.GetCheck() != 0;
+    return 0;
+}
+LRESULT CMainDlg::OnBnClickedCheckBakeCloth(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    GetBakeCloth(m_plugin) = m_check_bake_cloth.GetCheck() != 0;
+    return 0;
+}
 
 LRESULT CMainDlg::OnBnClickedButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {

@@ -476,9 +476,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
     if (mrs.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
-        if (npoints.data()) {
-            mu::InvertX(npoints.data(), npoints.size());
-        }
+        mu::InvertX(npoints.data(), npoints.size());
         transform.position.x *= -1.0f;
     }
     if (mrs.flags.apply_world2local) {

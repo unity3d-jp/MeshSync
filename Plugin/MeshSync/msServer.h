@@ -44,6 +44,7 @@ public:
     void setScrrenshotFilePath(const std::string path);
 
 public:
+    GetMessage* getCurrentGetRequest();
     void recvDelete(std::istream& is);
     void recvSet(std::istream& is);
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);

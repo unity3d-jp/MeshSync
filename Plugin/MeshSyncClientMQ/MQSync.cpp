@@ -40,6 +40,8 @@ MQSync::~MQSync()
 ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
 float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
+bool& MQSync::getBakeSkin() { return m_bake_skin; }
+bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 
 void MQSync::clear()
 {
@@ -187,8 +189,9 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
-    gd.refine_settings.flags.bake_skin = 1;
     gd.refine_settings.flags.invert_v = 1;
+    gd.refine_settings.flags.bake_skin = m_bake_skin;
+    gd.refine_settings.flags.bake_cloth = m_bake_cloth;
 
     auto ret = client.send(gd);
     if (!ret) {

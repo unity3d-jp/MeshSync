@@ -60,6 +60,14 @@ msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
     server->setScrrenshotFilePath(path);
 }
 
+msAPI int msGetGetBakeSkin(ms::GetMessage *_this)
+{
+    return _this->refine_settings.flags.bake_skin;
+}
+msAPI int msGetGetBakeCloth(ms::GetMessage *_this)
+{
+    return _this->refine_settings.flags.bake_cloth;
+}
 
 msAPI int msSetGetNumMeshes(ms::SetMessage *_this)
 {
@@ -255,10 +263,6 @@ msAPI void msMeshSetLocal2World(ms::Mesh *_this, const float4x4 *v)
 msAPI void msMeshSetWorld2Local(ms::Mesh *_this, const float4x4 *v)
 {
     _this->refine_settings.world2local = *v;
-}
-msAPI int msMeshGetBakeSkin(ms::Mesh *_this)
-{
-    return _this->refine_settings.flags.bake_skin;
 }
 
 
