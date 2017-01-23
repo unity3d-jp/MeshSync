@@ -198,6 +198,11 @@ bool MQSync::importMeshes(MQDocument doc)
         return false;
     }
 
+    while (doc->GetMaterialCount() < ret->settings.num_materials) {
+        doc->AddMaterial(MQ_CreateMaterial());
+    }
+    
+
     for (auto& data : ret->meshes) {
         auto& mdata = *data;
 
@@ -266,6 +271,7 @@ MQObject MQSync::createObject(const ms::Mesh& data, const char *name)
         data.transform.rotation_eularZXY.x,
         data.transform.rotation_eularZXY.z);
     ret->SetRotation(rotation);
+    ret->SetSmoothAngle(data.refine_settings.smooth_angle);
 
     for (auto& p : data.points) {
         ret->AddVertex((MQPoint&)p);

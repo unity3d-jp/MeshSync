@@ -15,6 +15,8 @@ public:
     BOOL OnScaleChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncClicked(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnBakeSkinChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnBakeClothChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnImportClicked(MQWidgetBase *sender, MQDocument doc);
 
 private:
@@ -23,6 +25,8 @@ private:
     MQEdit *m_edit_scale = nullptr;
     MQCheckBox *m_check_autosync = nullptr;
     MQButton *m_button_sync = nullptr;
+    MQCheckBox *m_check_bake_skin = nullptr;
+    MQCheckBox *m_check_bake_cloth = nullptr;
     MQButton *m_button_import = nullptr;
 
     MeshSyncClientPlugin *m_plugin = nullptr;

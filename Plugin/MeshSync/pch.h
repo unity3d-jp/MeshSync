@@ -27,6 +27,7 @@
 #include <numeric>
 #include <mutex>
 #include <atomic>
+#include <algorithm>
 
 #include <ppl.h>
 

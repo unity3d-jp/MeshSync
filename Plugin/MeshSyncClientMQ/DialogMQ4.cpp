@@ -54,8 +54,22 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
     m_button_sync = CreateButton(frame, L"Manual Sync");
     m_button_sync->AddClickEvent(this, &SettingsDlg::OnSyncClicked);
 
-    m_button_import = CreateButton(frame, L"Import Unity Scene");
-    m_button_import->AddClickEvent(this, &SettingsDlg::OnImportClicked);
+    {
+        MQFrame *vf = CreateVerticalFrame(this);
+
+        CreateLabel(vf, L"Import Settings");
+
+        m_check_bake_skin = CreateCheckBox(vf, L"Bake SKin");
+        m_check_bake_skin->SetChecked(m_plugin->getSync().getBakeSkin());
+        m_check_bake_skin->AddChangedEvent(this, &SettingsDlg::OnBakeSkinChange);
+
+        m_check_bake_cloth = CreateCheckBox(vf, L"Bake Cloth");
+        m_check_bake_cloth->SetChecked(m_plugin->getSync().getBakeCloth());
+        m_check_bake_cloth->AddChangedEvent(this, &SettingsDlg::OnBakeClothChange);
+
+        m_button_import = CreateButton(vf, L"Import Unity Scene");
+        m_button_import->AddClickEvent(this, &SettingsDlg::OnImportClicked);
+    }
 
     this->AddHideEvent(this, &SettingsDlg::OnHide);
 }
@@ -99,6 +113,17 @@ BOOL SettingsDlg::OnAutoSyncChange(MQWidgetBase * sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncClicked(MQWidgetBase * sender, MQDocument doc)
 {
     m_plugin->Send();
+    return 0;
+}
+
+BOOL SettingsDlg::OnBakeSkinChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getBakeSkin() = m_check_bake_skin->GetChecked();
+    return 0;
+}
+BOOL SettingsDlg::OnBakeClothChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getBakeCloth() = m_check_bake_cloth->GetChecked();
     return 0;
 }
 

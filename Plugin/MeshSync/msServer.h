@@ -39,12 +39,12 @@ public:
 
     void beginServe();
     void endServe();
-    void addServeData(Mesh *data);
 
     void setScrrenshotFilePath(const std::string path);
 
 public:
     GetMessage* getCurrentGetRequest();
+    Scene* getHostScene();
     void recvDelete(std::istream& is);
     void recvSet(std::istream& is);
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);

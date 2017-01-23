@@ -67,6 +67,11 @@ GetMessage* Server::getCurrentGetRequest()
     return m_current_get_request;
 }
 
+Scene * Server::getHostScene()
+{
+    return m_host_scene.get();
+}
+
 void Server::recvDelete(std::istream& is)
 {
     auto mes = std::shared_ptr<DeleteMessage>(new DeleteMessage());
@@ -222,26 +227,19 @@ void Server::endServe()
     mrs.scale_factor = request.scene_settings.scale_factor;
     mrs.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
 
+    std::swap(m_host_scene->settings.num_materials, request.scene_settings.num_materials);
     m_host_scene->settings = request.scene_settings;
     concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&mrs](MeshPtr& p) {
         auto& mesh = *p;
         mesh.flags.has_refine_settings = 1;
         mesh.refine_settings.flags = mrs.flags;
         mesh.refine_settings.scale_factor = mrs.scale_factor;
+        mesh.refine_settings.smooth_angle = 180.0f;
         mesh.refine(mesh.refine_settings);
     });
     if (request.wait_flag) {
         *request.wait_flag = 0;
     }
-}
-void Server::addServeData(Mesh *data)
-{
-    if (!m_host_scene) {
-        msLogError("Server::endServeMesh(): m_host_scene is null\n");
-        return;
-    }
-
-    m_host_scene->meshes.emplace_back(data);
 }
 
 

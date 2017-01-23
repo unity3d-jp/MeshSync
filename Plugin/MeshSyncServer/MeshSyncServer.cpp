@@ -50,7 +50,12 @@ msAPI void msServerEndServe(ms::Server *server)
 msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
-    server->addServeData(data);
+    server->getHostScene()->meshes.emplace_back(data);
+}
+msAPI void msServerSetNumMaterials(ms::Server *server, int n)
+{
+    if (!server) { return; }
+    server->getHostScene()->settings.num_materials = n;
 }
 
 

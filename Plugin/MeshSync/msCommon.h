@@ -194,6 +194,7 @@ struct SceneSettings
 {
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;
+    int num_materials = 0;
 };
 
 struct Scene
