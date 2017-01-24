@@ -515,10 +515,10 @@ namespace UTJ
         {
             public GameObject go;
             public Mesh origMesh;
+            public Mesh editMesh;
             public int[] materialIDs = new int[0];
             public int[] submeshCounts = new int[0];
             public bool recved = false;
-            public bool edited = false;
 
             // return true if modified
             public bool BuildMaterialData(MeshData md)
@@ -560,7 +560,7 @@ namespace UTJ
 
         #region fields
         [SerializeField] int m_serverPort = 8080;
-        [SerializeField] string m_assetPath = "Assets/MeshSyncAssets";
+        [SerializeField] string m_assetExportPath = "Assets/MeshSyncAssets";
         [SerializeField] List<Material> m_materialList = new List<Material>();
 
         IntPtr m_server;
@@ -808,16 +808,15 @@ namespace UTJ
             var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
             if (smr != null)
             {
-                var newmesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
-                if(newmesh != null)
+                rec.editMesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
+                if(rec.editMesh != null)
                 {
-                    smr.sharedMesh = newmesh;
+                    smr.sharedMesh = rec.editMesh;
                 }
                 return;
             }
 
             var target = rec.go.GetComponent<Transform>();
-            rec.edited = true;
 
 
             // if object is not visible, just disable and return
@@ -875,9 +874,9 @@ namespace UTJ
                 var split = data.GetSplit(i);
                 if (split.numPoints > 0 && split.numIndices > 0)
                 {
-                    var mesh = CreateEditedMesh(data, split);
-                    mesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
-                    mfilter.sharedMesh = mesh;
+                    rec.editMesh = CreateEditedMesh(data, split);
+                    rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
+                    mfilter.sharedMesh = rec.editMesh;
                 }
             }
 
@@ -970,7 +969,7 @@ namespace UTJ
 
         void AssignMaterials(Record rec)
         {
-            if(rec.go == null || !rec.edited) { return; }
+            if(rec.go == null) { return; }
 
             var materialIDs = rec.materialIDs;
             var submeshCounts = rec.submeshCounts;
@@ -1340,7 +1339,7 @@ namespace UTJ
             }
             foreach (var kvp in m_hostMeshes)
             {
-                if(kvp.Value.edited)
+                if(kvp.Value.editMesh != null)
                     GenerateLightmapUV(kvp.Value.go);
             }
         }
@@ -1348,13 +1347,13 @@ namespace UTJ
         public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
-            AssetDatabase.CreateFolder(".", m_assetPath);
+            AssetDatabase.CreateFolder(".", m_assetExportPath);
             var mf = go.GetComponent<MeshFilter>();
             if (mf != null && mf.sharedMesh != null)
             {
                 try
                 {
-                    AssetDatabase.CreateAsset(mf.sharedMesh, m_assetPath + "/" + mf.sharedMesh.name + ".asset");
+                    AssetDatabase.CreateAsset(mf.sharedMesh, m_assetExportPath + "/" + mf.sharedMesh.name + ".asset");
                 }
                 catch(Exception)
                 {
@@ -1370,20 +1369,41 @@ namespace UTJ
         }
         public void ExportMeshes()
         {
+            // export client meshes
             foreach (var kvp in m_clientMeshes)
             {
-                ExportMeshes(kvp.Value.go);
+                if(kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
+                if (kvp.Value.editMesh != null)
+                {
+                    ExportMeshes(kvp.Value.go);
+                    kvp.Value.editMesh = null;
+                }
             }
+
+            // replace existing meshes
+            int n = 0;
             foreach (var kvp in m_hostMeshes)
             {
-                if (kvp.Value.edited)
-                    ExportMeshes(kvp.Value.go);
-            }
-        }
+                if (kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
+                if (kvp.Value.editMesh != null)
+                {
+                    kvp.Value.origMesh.Clear(); // make editor can recognize mesh has modified by CopySerialized()
+                    EditorUtility.CopySerialized(kvp.Value.editMesh, kvp.Value.origMesh);
+                    kvp.Value.editMesh = null;
 
-        public void ReplaceMeshes()
-        {
-            //EditorUtility.CopySerialized(animClip, outputAnimClip);
+                    var mf = kvp.Value.go.GetComponent<MeshFilter>();
+                    if(mf != null) { mf.sharedMesh = kvp.Value.origMesh; }
+
+                    var smr = kvp.Value.go.GetComponent<SkinnedMeshRenderer>();
+                    if (smr != null) { smr.sharedMesh = kvp.Value.origMesh; }
+
+                    ++n;
+                }
+            }
+            if (n > 0)
+            {
+                AssetDatabase.SaveAssets();
+            }
         }
 #endif
 

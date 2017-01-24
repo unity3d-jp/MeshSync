@@ -27,13 +27,6 @@ namespace UTJ
             {
                 t.ExportMeshes();
             }
-
-            EditorGUILayout.Space();
-
-            if (GUILayout.Button("Replace Meshes"))
-            {
-                t.ReplaceMeshes();
-            }
         }
     }
 }
