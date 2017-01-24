@@ -71,6 +71,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     m_pending_send_meshes = false;
 
     int nobj = doc->GetObjectCount();
+    int nmat = doc->GetMaterialCount();
 
     // build relations
     m_obj_for_normals.clear();
@@ -132,12 +133,13 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     });
 
     // kick async send
-    m_future_send = std::async(std::launch::async, [this]() {
+    m_future_send = std::async(std::launch::async, [this, nmat]() {
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
         scene_settings.handedness = ms::Handedness::Right;
         scene_settings.scale_factor = m_scale_factor;
+        scene_settings.num_materials = nmat;
 
         // send mesh one by one to Unity can respond quickly
         concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {

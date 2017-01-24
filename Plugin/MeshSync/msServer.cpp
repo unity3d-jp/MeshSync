@@ -210,6 +210,11 @@ void Server::beginServe()
         return;
     }
     m_host_scene.reset(new Scene());
+
+    auto& request = *m_current_get_request;
+    request.refine_settings.scale_factor = request.scene_settings.scale_factor;
+    request.refine_settings.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
+    m_host_scene->settings = request.scene_settings;
 }
 void Server::endServe()
 {
@@ -223,17 +228,11 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    MeshRefineSettings mrs = request.refine_settings;
-    mrs.scale_factor = request.scene_settings.scale_factor;
-    mrs.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
-
-    std::swap(m_host_scene->settings.num_materials, request.scene_settings.num_materials);
-    m_host_scene->settings = request.scene_settings;
-    concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&mrs](MeshPtr& p) {
+    concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
         auto& mesh = *p;
         mesh.flags.has_refine_settings = 1;
-        mesh.refine_settings.flags = mrs.flags;
-        mesh.refine_settings.scale_factor = mrs.scale_factor;
+        mesh.refine_settings.flags = request.refine_settings.flags;
+        mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
         mesh.refine_settings.smooth_angle = 180.0f;
         mesh.refine(mesh.refine_settings);
     });
@@ -288,8 +287,14 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     // serve data
     {
         lock_t l(m_mutex);
-        response.setContentLength(m_host_scene->getSerializeSize());
-        m_host_scene->serialize(response.send());
+        if (m_host_scene) {
+            response.setContentLength(m_host_scene->getSerializeSize());
+            m_host_scene->serialize(response.send());
+        }
+        else {
+            response.setContentLength(0);
+            response.send();
+        }
     }
 }
 

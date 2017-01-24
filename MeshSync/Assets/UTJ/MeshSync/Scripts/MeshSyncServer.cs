@@ -1441,5 +1441,12 @@ namespace UTJ
             PollServerEvents();
         }
         #endregion
+
+        void ErrorOnStandaloneBuild()
+        {
+            // error on standalone build - on purpose.
+            // this plugin is intended to use only on editor. if you really want to use on runtime. comment out next line.
+            EditorUtility.SetDirty(this);
+        }
     }
 }
