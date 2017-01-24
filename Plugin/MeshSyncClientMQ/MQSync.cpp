@@ -118,6 +118,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
         rel.data->clear();
         rel.data->path = BuildPath(doc, rel.obj);
+        ExtractID(rel.data->path.c_str(), rel.data->id);
 
         bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
         rel.data->flags.visible = visible;
@@ -332,17 +333,12 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.transform.position = (const float3&)obj->GetTranslation();
         dst.transform.rotation = rot;
         dst.transform.scale = (const float3&)obj->GetScaling();
-        {
-            int id;
-            if (ExtractID(dst.path.c_str(), id)) {
-                auto ite = m_host_meshes.find(id);
-                if (ite != m_host_meshes.end()) {
-                    dst.id = id;
-                    dst.refine_settings.flags.apply_world2local = 1;
-                    dst.refine_settings.local2world = ite->second->refine_settings.local2world;
-                    dst.refine_settings.world2local = ite->second->refine_settings.world2local;
-                }
-            }
+
+        auto ite = m_host_meshes.find(dst.id);
+        if (ite != m_host_meshes.end()) {
+            dst.refine_settings.flags.apply_world2local = 1;
+            dst.refine_settings.local2world = ite->second->refine_settings.local2world;
+            dst.refine_settings.world2local = ite->second->refine_settings.world2local;
         }
     }
 

@@ -21,6 +21,7 @@ namespace UTJ
             var go = new GameObject();
             go.name = "MeshSyncServer";
             go.AddComponent<MeshSyncServer>();
+            Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
         }
 #endif
 
@@ -560,8 +561,9 @@ namespace UTJ
 
         #region fields
         [SerializeField] int m_serverPort = 8080;
-        [SerializeField] string m_assetExportPath = "Assets/MeshSyncAssets";
         [SerializeField] List<Material> m_materialList = new List<Material>();
+        [SerializeField] string m_assetExportPath = "Assets/MeshSyncAssets";
+        [SerializeField] bool m_logging = true;
 
         IntPtr m_server;
         msMessageHandler m_handler;
@@ -703,7 +705,7 @@ namespace UTJ
             msServerEndServe(m_server);
 
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
+            Undo.RecordObject(this, "MeshSyncServer");
 #endif
             //Debug.Log("MeshSyncServer: Get");
         }
@@ -804,20 +806,7 @@ namespace UTJ
             if (rec == null) { return; }
 
 
-            // currently editing skinned mesh is limited to no-topology-update
-            var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
-            if (smr != null)
-            {
-                rec.editMesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
-                if(rec.editMesh != null)
-                {
-                    smr.sharedMesh = rec.editMesh;
-                }
-                return;
-            }
-
             var target = rec.go.GetComponent<Transform>();
-
 
             // if object is not visible, just disable and return
             if (!data.flags.visible)
@@ -832,6 +821,7 @@ namespace UTJ
                 return;
             }
             target.gameObject.SetActive(true);
+
 
 
             // allocate material list
@@ -858,36 +848,57 @@ namespace UTJ
                 target.localScale = trs.scale;
             }
 
-            // update mesh
-            for (int i = 0; i < data.numSplits; ++i)
+            var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
+            if (smr != null)
             {
-                var t = target;
-                if (i > 0)
+                // update skinned mesh - only when topology is not changed
+                rec.editMesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
+                if(rec.editMesh == null)
                 {
-                    t = FindObjectByPath(null, path + "/[" + i + "]", true, ref createdNewMesh);
-                    t.gameObject.SetActive(true);
+                    if(m_logging)
+                    {
+                        Debug.Log("edit for " + rec.origMesh.name + " is ignored. currently changing topology of skinned meshes is not supported.");
+                    }
                 }
-
-                var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
-                if(mfilter == null) { return; }
-
-                var split = data.GetSplit(i);
-                if (split.numPoints > 0 && split.numIndices > 0)
+                else
                 {
-                    rec.editMesh = CreateEditedMesh(data, split);
-                    rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
-                    mfilter.sharedMesh = rec.editMesh;
+                    smr.sharedMesh = rec.editMesh;
+                    rec.go.SetActive(false); // 
+                    rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
                 }
             }
-
-            int num_splits = Math.Max(1, data.numSplits);
-            for (int i = num_splits; ; ++i)
+            else
             {
-                var t = FindObjectByPath(null, path + "/[" + i + "]");
-                if (t == null) { break; }
-                DestroyImmediate(t.gameObject);
-            }
+                // update mesh
+                for (int i = 0; i < data.numSplits; ++i)
+                {
+                    var t = target;
+                    if (i > 0)
+                    {
+                        t = FindObjectByPath(null, path + "/[" + i + "]", true, ref createdNewMesh);
+                        t.gameObject.SetActive(true);
+                    }
 
+                    var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
+                    if (mfilter == null) { return; }
+
+                    var split = data.GetSplit(i);
+                    if (split.numPoints > 0 && split.numIndices > 0)
+                    {
+                        rec.editMesh = CreateEditedMesh(data, split);
+                        rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
+                        mfilter.sharedMesh = rec.editMesh;
+                    }
+                }
+
+                int num_splits = Math.Max(1, data.numSplits);
+                for (int i = num_splits; ; ++i)
+                {
+                    var t = FindObjectByPath(null, path + "/[" + i + "]");
+                    if (t == null) { break; }
+                    DestroyImmediate(t.gameObject);
+                }
+            }
 
             // assign materials if needed
             if (materialsUpdated)
@@ -942,6 +953,7 @@ namespace UTJ
                     }
                 }
             }
+            mesh.RecalculateBounds();
             return mesh;
         }
 
@@ -1198,14 +1210,13 @@ namespace UTJ
                     dst.world2local = trans.worldToLocalMatrix;
                 }
 
-                if (!m_hostMeshes.ContainsKey(dst.id))
+                if(!m_hostMeshes.ContainsKey(dst.id))
                 {
-                    m_hostMeshes[dst.id] = new Record
-                    {
-                        go = renderer.gameObject,
-                        origMesh = origMesh,
-                    };
+                    m_hostMeshes[dst.id] = new Record();
                 }
+                var rec = m_hostMeshes[dst.id];
+                rec.go = renderer.gameObject;
+                rec.origMesh = origMesh;
 
                 dst.path = BuildPath(renderer.GetComponent<Transform>());
                 msServerServeMesh(m_server, dst);
@@ -1351,15 +1362,14 @@ namespace UTJ
             var mf = go.GetComponent<MeshFilter>();
             if (mf != null && mf.sharedMesh != null)
             {
-                try
+                var path = m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
+                AssetDatabase.CreateAsset(mf.sharedMesh, path);
+                if (m_logging)
                 {
-                    AssetDatabase.CreateAsset(mf.sharedMesh, m_assetExportPath + "/" + mf.sharedMesh.name + ".asset");
-                }
-                catch(Exception)
-                {
+                    Debug.Log("exported mesh " + path);
                 }
 
-                for(int i=1; ; ++i)
+                for (int i=1; ; ++i)
                 {
                     var t = go.transform.FindChild("[" + i + "]");
                     if(t == null) { break; }
@@ -1396,6 +1406,11 @@ namespace UTJ
 
                     var smr = kvp.Value.go.GetComponent<SkinnedMeshRenderer>();
                     if (smr != null) { smr.sharedMesh = kvp.Value.origMesh; }
+
+                    if (m_logging)
+                    {
+                        Debug.Log("updated mesh " + kvp.Value.origMesh.name);
+                    }
 
                     ++n;
                 }
