@@ -451,21 +451,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.invert_v) {
         mu::InvertV(uv.data(), uv.size());
     }
-    if (mrs.flags.mirror_x) {
-        float3 plane_n = apply_rotation(transform.rotation, { 1.0f, 0.0f, 0.0f });
-        float plane_d = dot(plane_n, transform.position);
-        applyMirror(plane_n, plane_d);
-    }
-    if (mrs.flags.mirror_y) {
-        float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 1.0f, 0.0f });
-        float plane_d = dot(plane_n, transform.position);
-        applyMirror(plane_n, plane_d);
-    }
-    if (mrs.flags.mirror_z) {
-        float3 plane_n = apply_rotation(transform.rotation, { 0.0f, 0.0f, 1.0f });
-        float plane_d = dot(plane_n, transform.position);
-        applyMirror(plane_n, plane_d);
-    }
 
     if (mrs.flags.apply_local2world) {
         applyTransform(mrs.local2world);
@@ -478,6 +463,22 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         mu::InvertX(points.data(), points.size());
         mu::InvertX(npoints.data(), npoints.size());
         transform.position.x *= -1.0f;
+        transform.rotation = swap_handedness(transform.rotation);
+    }
+    if (mrs.flags.mirror_x) {
+        float3 plane_n = { 1.0f, 0.0f, 0.0f };
+        float plane_d = 0.0f;
+        applyMirror(plane_n, plane_d);
+    }
+    if (mrs.flags.mirror_y) {
+        float3 plane_n = { 0.0f, 1.0f, 0.0f };
+        float plane_d = 0.0f;
+        applyMirror(plane_n, plane_d);
+    }
+    if (mrs.flags.mirror_z) {
+        float3 plane_n = { 0.0f, 0.0f, 1.0f };
+        float plane_d = 0.0f;
+        applyMirror(plane_n, plane_d);
     }
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);
@@ -596,11 +597,15 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d)
         mu::MirrorPoints(npoints.data() + num_points,
             IntrusiveArray<float3>{npoints.data(), num_points}, plane_n, plane_d);
     }
-
     if (uv.data()) {
-        size_t num_uv = uv.size();
-        uv.resize(num_uv * 2);
-        memcpy(uv.data() + num_uv, uv.data(), sizeof(float2) * num_uv);
+        size_t n = uv.size();
+        uv.resize(n * 2);
+        memcpy(uv.data() + n, uv.data(), sizeof(float2) * n);
+    }
+    if (materialIDs.data()) {
+        size_t n = materialIDs.size();
+        materialIDs.resize(n * 2);
+        memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(float2) * n);
     }
     // todo: normals, tangents
 }

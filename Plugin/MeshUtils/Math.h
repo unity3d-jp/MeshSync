@@ -119,6 +119,10 @@ inline float3 operator+(const float3& l, const float3& r)
 {
     return{ l.x + r.x, l.y + r.y, l.z + r.z };
 }
+inline float3 operator-(const float3& v)
+{
+    return{-v.x, -v.y, -v.z};
+}
 inline float3 operator-(const float3& l, const float3& r)
 {
     return{ l.x - r.x, l.y - r.y, l.z - r.z };
@@ -224,6 +228,57 @@ inline float4 operator*(const float4x4& m, const float4& v)
         m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2] + m[3][2] * v[3],
         m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + m[3][3] * v[3],
     };
+}
+
+inline float4x4 operator*(const float4x4 &a, const float4x4 &b)
+{
+    float4x4 c;
+    register const float *ap = &a[0][0];
+    register const float *bp = &b[0][0];
+    register       float *cp = &c[0][0];
+
+    register float a0, a1, a2, a3;
+
+    a0 = ap[0];
+    a1 = ap[1];
+    a2 = ap[2];
+    a3 = ap[3];
+
+    cp[0] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
+    cp[1] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
+    cp[2] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
+    cp[3] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+
+    a0 = ap[4];
+    a1 = ap[5];
+    a2 = ap[6];
+    a3 = ap[7];
+
+    cp[4] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
+    cp[5] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
+    cp[6] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
+    cp[7] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+
+    a0 = ap[8];
+    a1 = ap[9];
+    a2 = ap[10];
+    a3 = ap[11];
+
+    cp[8] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
+    cp[9] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
+    cp[10] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
+    cp[11] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+
+    a0 = ap[12];
+    a1 = ap[13];
+    a2 = ap[14];
+    a3 = ap[15];
+
+    cp[12] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
+    cp[13] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
+    cp[14] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
+    cp[15] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+    return c;
 }
 
 inline float3 applyTRS(const float4x4& m, const float3& v)
@@ -408,22 +463,104 @@ inline float4x4 swap_handedness(const float4x4& m)
 
 inline float3x3 to_float3x3(const quatf& q)
 {
-    return {
-        1.0f-2.0f*q.y*q.y - 2.0f*q.z*q.z, 2.0f*q.x*q.y - 2.0f*q.z*q.w,        2.0f*q.x*q.y + 2.0f*q.z*q.w,
-        2.0f*q.x*q.z + 2.0f*q.y*q.w,      1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z, 2.0f*q.y*q.z - 2.0f*q.x*q.w,
-        2.0f*q.x*q.z - 2.0f*q.y*q.w,      2.0f*q.y*q.z + 2.0f*q.x*q.w,        1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y,
-    };
+    return {{
+        {1.0f-2.0f*q.y*q.y - 2.0f*q.z*q.z, 2.0f*q.x*q.y - 2.0f*q.z*q.w,        2.0f*q.x*q.z + 2.0f*q.y*q.w,      },
+        {2.0f*q.x*q.y + 2.0f*q.z*q.w,      1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z, 2.0f*q.y*q.z - 2.0f*q.x*q.w,      },
+        {2.0f*q.x*q.z - 2.0f*q.y*q.w,      2.0f*q.y*q.z + 2.0f*q.x*q.w,        1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y}
+    }};
 }
 inline float4x4 to_float4x4(const quatf& q)
 {
-    return {
-        1.0f-2.0f*q.y*q.y - 2.0f*q.z*q.z, 2.0f*q.x*q.y - 2.0f*q.z*q.w,        2.0f*q.x*q.y + 2.0f*q.z*q.w,        0.0,
-        2.0f*q.x*q.z + 2.0f*q.y*q.w,      1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z, 2.0f*q.y*q.z - 2.0f*q.x*q.w,        0.0,
-        2.0f*q.x*q.z - 2.0f*q.y*q.w,      2.0f*q.y*q.z + 2.0f*q.x*q.w,        1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y, 0.0,
-        0.0,                              0.0,                                0.0,                                1.0
-    };
+    return {{
+        {1.0f-2.0f*q.y*q.y - 2.0f*q.z*q.z, 2.0f*q.x*q.y - 2.0f*q.z*q.w,        2.0f*q.x*q.z + 2.0f*q.y*q.w,        0.0},
+        {2.0f*q.x*q.y + 2.0f*q.z*q.w,      1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z, 2.0f*q.y*q.z - 2.0f*q.x*q.w,        0.0},
+        {2.0f*q.x*q.z - 2.0f*q.y*q.w,      2.0f*q.y*q.z + 2.0f*q.x*q.w,        1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y, 0.0},
+        {0.0,                              0.0,                                0.0,                                1.0}
+    }};
 }
 
+inline float4x4 translate(const float3& t)
+{
+    return {{
+        { 1.0f, 0.0f, 0.0f, t.x },
+        { 0.0f, 1.0f, 0.0f, t.y },
+        { 0.0f, 0.0f, 1.0f, t.z },
+        { 0.0f, 0.0f, 0.0f, 1.0f }
+    } };
+}
+
+inline float4x4 scale(const float3& t)
+{
+    return{ {
+        {  t.x, 0.0f, 0.0f, 0.0f },
+        { 0.0f,  t.y, 0.0f, 0.0f },
+        { 0.0f, 0.0f,  t.z, 0.0f },
+        { 0.0f, 0.0f, 0.0f, 1.0f }
+    } };
+}
+
+inline float4x4 invert(const float4x4& x)
+{
+    float4x4 s = {
+        x[1][1] * x[2][2] - x[2][1] * x[1][2],
+        x[2][1] * x[0][2] - x[0][1] * x[2][2],
+        x[0][1] * x[1][2] - x[1][1] * x[0][2],
+        0,
+
+        x[2][0] * x[1][2] - x[1][0] * x[2][2],
+        x[0][0] * x[2][2] - x[2][0] * x[0][2],
+        x[1][0] * x[0][2] - x[0][0] * x[1][2],
+        0,
+
+        x[1][0] * x[2][1] - x[2][0] * x[1][1],
+        x[2][0] * x[0][1] - x[0][0] * x[2][1],
+        x[0][0] * x[1][1] - x[1][0] * x[0][1],
+        0,
+
+        0,
+        0,
+        0,
+        1,
+    };
+
+    auto r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
+
+    if (std::abs(r) >= 1)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                s[i][j] /= r;
+            }
+        }
+    }
+    else
+    {
+        auto mr = std::abs(r) / std::numeric_limits<float>::min();
+
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                if (mr > std::abs(s[i][j]))
+                {
+                    s[i][j] /= r;
+                }
+                else
+                {
+                    // error
+                    return float4x4::identity();
+                }
+            }
+        }
+    }
+
+    s[3][0] = -x[3][0] * s[0][0] - x[3][1] * s[1][0] - x[3][2] * s[2][0];
+    s[3][1] = -x[3][0] * s[0][1] - x[3][1] * s[1][1] - x[3][2] * s[2][1];
+    s[3][2] = -x[3][0] * s[0][2] - x[3][1] * s[1][2] - x[3][2] * s[2][2];
+    return s;
+}
 
 template<class T>
 inline quatf to_quat_impl(const T& m)
