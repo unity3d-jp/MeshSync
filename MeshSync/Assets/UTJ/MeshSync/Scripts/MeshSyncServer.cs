@@ -1197,20 +1197,21 @@ namespace UTJ
             if (ret)
             {
                 dst.id = GetObjectlID(renderer.gameObject);
+                var trans = renderer.GetComponent<Transform>();
+                var parent = trans.parent;
                 if (mes.flags.getTransform)
                 {
-                    var trans = renderer.GetComponent<Transform>();
                     var tdata = default(TRS);
                     tdata.position = trans.localPosition;
                     tdata.rotation = trans.localRotation;
                     tdata.rotation_eularZXY = trans.localEulerAngles;
                     tdata.scale = trans.localScale;
                     dst.trs = tdata;
-                    dst.local2world = trans.localToWorldMatrix;
-                    dst.world2local = trans.worldToLocalMatrix;
                 }
+                dst.local2world = trans.localToWorldMatrix;
+                dst.world2local = parent != null ? parent.worldToLocalMatrix : Matrix4x4.identity;
 
-                if(!m_hostMeshes.ContainsKey(dst.id))
+                if (!m_hostMeshes.ContainsKey(dst.id))
                 {
                     m_hostMeshes[dst.id] = new Record();
                 }

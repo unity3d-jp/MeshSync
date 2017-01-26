@@ -335,13 +335,11 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.transform.scale = (const float3&)obj->GetScaling();
 
         dst.refine_settings.flags.apply_world2local = 1;
+        dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
 
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
-            dst.refine_settings.world2local = ite->second->refine_settings.world2local;
-        }
-        else {
-            dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
+            dst.refine_settings.world2local = ite->second->refine_settings.world2local * dst.refine_settings.world2local;
         }
     }
 

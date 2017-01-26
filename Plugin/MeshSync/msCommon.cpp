@@ -455,15 +455,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.apply_local2world) {
         applyTransform(mrs.local2world);
     }
-    if (mrs.scale_factor != 1.0f) {
-        mu::Scale(points.data(), mrs.scale_factor, points.size());
-        transform.position *= mrs.scale_factor;
-    }
-    if (mrs.flags.swap_handedness) {
-        mu::InvertX(points.data(), points.size());
-        mu::InvertX(npoints.data(), npoints.size());
-        transform.position.x *= -1.0f;
-        transform.rotation = swap_handedness(transform.rotation);
+    if (mrs.flags.apply_world2local) {
+        applyTransform(mrs.world2local);
     }
     if (mrs.flags.mirror_x) {
         float3 plane_n = { 1.0f, 0.0f, 0.0f };
@@ -480,8 +473,15 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         float plane_d = 0.0f;
         applyMirror(plane_n, plane_d);
     }
-    if (mrs.flags.apply_world2local) {
-        applyTransform(mrs.world2local);
+    if (mrs.scale_factor != 1.0f) {
+        mu::Scale(points.data(), mrs.scale_factor, points.size());
+        transform.position *= mrs.scale_factor;
+    }
+    if (mrs.flags.swap_handedness) {
+        mu::InvertX(points.data(), points.size());
+        mu::InvertX(npoints.data(), npoints.size());
+        transform.position.x *= -1.0f;
+        transform.rotation = swap_handedness(transform.rotation);
     }
 
     auto& refiner = g_refiner.local();
@@ -605,7 +605,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d)
     if (materialIDs.data()) {
         size_t n = materialIDs.size();
         materialIDs.resize(n * 2);
-        memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(float2) * n);
+        memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
     }
     // todo: normals, tangents
 }
