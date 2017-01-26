@@ -8,11 +8,11 @@ Unity は 5.4 以上 (64bit Windows)、メタセコイアは 3 系と 4.5.6 以�
 
 ## 使い方
 - Unity 側
- - [このパッケージ](https://github.com/i-saint/MeshSync/releases/download/0.7.0/MeshSync.unitypackage) をプロジェクトにインポートします。
+ - [このパッケージ](https://github.com/i-saint/MeshSync/releases/download/0.7.1/MeshSync.unitypackage) をプロジェクトにインポートします。
  - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
  - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 - メタセコイア側
- - [このプラグイン](https://github.com/i-saint/MeshSync/releases/download/0.7.0/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
+ - [このプラグイン](https://github.com/i-saint/MeshSync/releases/download/0.7.1/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
  - パネル -> Unity Mesh Sync を開き、"Auto Sync" をチェックします。
  - Auto Sync がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
   - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートします。
