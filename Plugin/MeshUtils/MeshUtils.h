@@ -224,16 +224,25 @@ template<class VertexT> void Interleave_Generic(VertexT *dst, const typename Ver
 // impl
 // ------------------------------------------------------------
 
-template<class DstArray, class SrcArray, class IndexArray>
-inline void CopyWithIndices(DstArray& dst, const SrcArray& src, const IndexArray& indices, size_t beg, size_t end)
+template<class T>
+inline void CopyWithIndices(T *dst, const T *src, const IArray<int> indices, size_t beg, size_t end)
 {
-    if (src.empty()) { return; }
+    if (!dst || !src) { return; }
 
     size_t size = end - beg;
-    dst.resize(size);
-
     for (int i = 0; i < (int)size; ++i) {
         dst[i] = src[indices[beg + i]];
+    }
+}
+
+template<class T>
+inline void CopyWithIndices(T *dst, const T *src, const IArray<int> indices)
+{
+    if (!dst || !src) { return; }
+
+    size_t size = indices.size();
+    for (int i = 0; i < (int)size; ++i) {
+        dst[i] = src[indices[i]];
     }
 }
 
@@ -420,8 +429,7 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
 }
 
 
-template<class Points>
-inline void MirrorPoints(float3 *dst, const Points& src, float3 plane_n, float plane_d)
+inline void MirrorPoints(float3 *dst, const IArray<float3>& src, float3 plane_n, float plane_d)
 {
     if (!dst || !src.data()) { return; }
 
@@ -432,9 +440,19 @@ inline void MirrorPoints(float3 *dst, const Points& src, float3 plane_n, float p
         dst[i] = p - (plane_n * (d  * 2.0f));
     }
 }
+inline void MirrorPoints(float3 *dst, const IArray<float3>& src, const IArray<int>& index, float3 plane_n, float plane_d)
+{
+    if (!dst || !src.data()) { return; }
 
-template<class IntArray>
-inline void MirrorTopology(int *dst_counts, int *dst_indices, const IntArray& counts, const IntArray& indices, int offset)
+    auto n = index.size();
+    for (size_t i = 0; i < n; ++i) {
+        auto& p = src[index[i]];
+        float d = dot(plane_n, p) - plane_d;
+        dst[i] = p - (plane_n * (d  * 2.0f));
+    }
+}
+
+inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>& counts, const IArray<int>& indices, int offset)
 {
     if (!dst_counts || !dst_indices) { return; }
 
@@ -443,6 +461,20 @@ inline void MirrorTopology(int *dst_counts, int *dst_indices, const IntArray& co
     for (int count : counts) {
         for (int ci = 0; ci < count; ++ci) {
             dst_indices[i + ci] = offset + indices[i + (count - ci - 1)];
+        }
+        i += count;
+    }
+}
+
+inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>& counts, const IArray<int>& indices, const IArray<int>& indirect)
+{
+    if (!dst_counts || !dst_indices) { return; }
+
+    memcpy(dst_counts, counts.data(), sizeof(int) * counts.size());
+    size_t i = 0;
+    for (int count : counts) {
+        for (int ci = 0; ci < count; ++ci) {
+            dst_indices[i + ci] = indirect[indices[i + (count - ci - 1)]];
         }
         i += count;
     }

@@ -105,6 +105,9 @@ struct MeshRefineFlags
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
     uint32_t mirror_z : 1;
+    uint32_t mirror_x_weld : 1;
+    uint32_t mirror_y_weld : 1;
+    uint32_t mirror_z_weld : 1;
 };
 
 struct MeshRefineSettings
@@ -178,7 +181,7 @@ public:
 
     const char* getName() const;
     void refine(const MeshRefineSettings& mrs);
-    void applyMirror(const float3& plane_n, float plane_d);
+    void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 };
 using MeshPtr = std::shared_ptr<Mesh>;

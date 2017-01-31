@@ -322,6 +322,11 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.refine_settings.flags.mirror_x = (axis & MQOBJECT_MIRROR_AXIS_X) ? 1 : 0;
         dst.refine_settings.flags.mirror_y = (axis & MQOBJECT_MIRROR_AXIS_Y) ? 1 : 0;
         dst.refine_settings.flags.mirror_z = (axis & MQOBJECT_MIRROR_AXIS_Z) ? 1 : 0;
+        if (obj->GetMirrorType() == MQOBJECT_MIRROR_JOIN) {
+            dst.refine_settings.flags.mirror_x_weld = dst.refine_settings.flags.mirror_x;
+            dst.refine_settings.flags.mirror_y_weld = dst.refine_settings.flags.mirror_y;
+            dst.refine_settings.flags.mirror_z_weld = dst.refine_settings.flags.mirror_z;
+        }
     }
 
     // transform

@@ -328,15 +328,18 @@ bool MeshRefiner::refineDumb()
         (int)uv.size() == num_indices)
     {
         {
-            mu::CopyWithIndices(new_points, points, indices, 0, num_indices);
+            new_points.resize(num_indices);
+            mu::CopyWithIndices(new_points.data(), points.data(), indices);
             points = new_points;
         }
         if (!normals.empty() && (int)normals.size() != num_indices) {
-            mu::CopyWithIndices(new_normals, normals, indices, 0, num_indices);
+            new_normals.resize(num_indices);
+            mu::CopyWithIndices(new_normals.data(), normals.data(), indices);
             normals = new_normals;
         }
         if (!uv.empty() && (int)uv.size() != num_indices) {
-            mu::CopyWithIndices(new_uv, uv, indices, 0, num_indices);
+            new_uv.resize(num_indices);
+            mu::CopyWithIndices(new_uv.data(), uv.data(), indices);
             uv = new_uv;
         }
         flattened = true;
