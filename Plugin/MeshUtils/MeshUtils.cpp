@@ -787,7 +787,7 @@ bool GenerateTangents(
     iface.m_getNumVerticesOfFace = TSpaceContext::getCount;
     iface.m_getPosition = points.size()  == indices.size() ? TSpaceContext::getPositionFlattened : TSpaceContext::getPosition;
     iface.m_getNormal   = normals.size() == indices.size() ? TSpaceContext::getNormalFlattened : TSpaceContext::getNormal;
-    iface.m_getTexCoord = uv.size()      == indices.size() ? TSpaceContext::getTexCoord : TSpaceContext::getTexCoordFlattened;
+    iface.m_getTexCoord = uv.size()      == indices.size() ? TSpaceContext::getTexCoordFlattened : TSpaceContext::getTexCoord;
     iface.m_setTSpace   = dst.size()     == indices.size() ? TSpaceContext::setTangentFlattened : TSpaceContext::setTangent;
 
     SMikkTSpaceContext tctx;
