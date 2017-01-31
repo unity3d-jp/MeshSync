@@ -27,6 +27,30 @@ static inline bool ExtractID(const char *name, int& id)
 }
 
 
+void MQCameraData::get(MQScene scene)
+{
+    position = (const float3&)scene->GetCameraPosition();
+    look_target = (const float3&)scene->GetLookAtPosition();
+    angle = (const float3&)scene->GetCameraAngle();
+    rotation_center = (const float3&)scene->GetRotationCenter();
+    fov = scene->GetFOV();
+}
+
+bool MQCameraData::operator==(const MQCameraData& v) const
+{
+    return position == v.position &&
+        look_target == v.look_target &&
+        angle == v.angle &&
+        rotation_center == v.rotation_center &&
+        fov == v.fov;
+}
+
+bool MQCameraData::operator!=(const MQCameraData& v) const
+{
+    return !(*this == v);
+}
+
+
 
 MQSync::MQSync()
 {
@@ -60,7 +84,10 @@ void MQSync::flushPendingRequests(MQDocument doc)
 
 void MQSync::sendMesh(MQDocument doc, bool force)
 {
-    if (!force && !m_auto_sync) { return; }
+    if (!force)
+    {
+        if (!m_auto_sync) { return; }
+    }
 
     // just return if previous request is in progress. responsiveness is highest priority.
     if (isAsyncSendInProgress()) {
@@ -402,4 +429,21 @@ void MQSync::copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Me
     dst.npoints.resize(npoints);
     obj->GetVertexArray((MQPoint*)dst.npoints.data());
     dst.flags.has_npoints = 1;
+}
+
+bool MQSync::syncCameras(MQDocument doc)
+{
+    bool ret = false;
+    for (int i = 0; i < 4; ++i) {
+        auto scene = doc->GetScene(i);
+        if (!scene) { break; }
+
+        MQCameraData cd;
+        cd.get(scene);
+        if (m_cameras[i] != cd) {
+            ret = true;
+            m_cameras[i] = cd;
+        }
+    }
+    return ret;
 }

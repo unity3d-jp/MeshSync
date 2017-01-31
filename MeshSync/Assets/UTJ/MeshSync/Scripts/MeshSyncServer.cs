@@ -723,7 +723,12 @@ namespace UTJ
                     var rec = m_hostMeshes[id];
                     if (rec.go != null)
                     {
+#if UNITY_EDITOR
+                        Undo.DestroyObjectImmediate(rec.go);
+                        Undo.RecordObject(this, "MeshSyncServer");
+#else
                         DestroyImmediate(rec.go);
+#endif
                     }
                     m_hostMeshes.Remove(id);
                 }
@@ -732,7 +737,12 @@ namespace UTJ
                     var rec = m_clientMeshes[path];
                     if (rec.go != null)
                     {
+#if UNITY_EDITOR
+                        Undo.DestroyObjectImmediate(rec.go);
+                        Undo.RecordObject(this, "MeshSyncServer");
+#else
                         DestroyImmediate(rec.go);
+#endif
                     }
                     m_clientMeshes.Remove(path);
                 }
@@ -907,7 +917,7 @@ namespace UTJ
             }
 
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(target.gameObject);
+            Undo.RecordObject(this, "MeshSyncServer");
 #endif
         }
 
@@ -1111,6 +1121,9 @@ namespace UTJ
             if (createIfNotExist && ret == null)
             {
                 var go = new GameObject();
+#if UNITY_EDITOR
+                Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
+#endif
                 go.name = name;
                 ret = go.GetComponent<Transform>();
                 if (parent != null)

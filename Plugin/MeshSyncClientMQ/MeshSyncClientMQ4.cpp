@@ -258,7 +258,6 @@ void MeshSyncClientPlugin::OnUpdateMaterialList(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateScene(MQDocument doc, MQScene scene)
 {
-    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------

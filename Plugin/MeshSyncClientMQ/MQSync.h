@@ -2,6 +2,19 @@
 
 #include "MeshSync/msClient.h"
 
+struct MQCameraData
+{
+    float3 position = float3::zero();
+    float3 look_target = float3::zero();
+    float3 angle = float3::zero();
+    float3 rotation_center = float3::zero();
+    float fov = 30.0f;
+
+    void get(MQScene scene);
+    bool operator==(const MQCameraData& v) const;
+    bool operator!=(const MQCameraData& v) const;
+};
+
 struct MQSync
 {
 public:
@@ -25,6 +38,7 @@ private:
     MQObject createObject(const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& data);
     void copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& data);
+    bool syncCameras(MQDocument doc); // true if anything changed
 
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
@@ -52,4 +66,6 @@ private:
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
     bool m_pending_send_meshes = false;
+
+    MQCameraData m_cameras[4];
 };
