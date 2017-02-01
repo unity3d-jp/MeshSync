@@ -461,17 +461,17 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.mirror_x) {
         float3 plane_n = { 1.0f, 0.0f, 0.0f };
         float plane_d = 0.0f;
-        applyMirror(plane_n, plane_d, mrs.flags.mirror_x_weld);
+        applyMirror(plane_n, plane_d, true);
     }
     if (mrs.flags.mirror_y) {
         float3 plane_n = { 0.0f, 1.0f, 0.0f };
         float plane_d = 0.0f;
-        applyMirror(plane_n, plane_d, mrs.flags.mirror_y_weld);
+        applyMirror(plane_n, plane_d, true);
     }
     if (mrs.flags.mirror_z) {
         float3 plane_n = { 0.0f, 0.0f, 1.0f };
         float plane_d = 0.0f;
-        applyMirror(plane_n, plane_d, mrs.flags.mirror_z_weld);
+        applyMirror(plane_n, plane_d, true);
     }
     if (mrs.scale_factor != 1.0f) {
         mu::Scale(points.data(), mrs.scale_factor, points.size());

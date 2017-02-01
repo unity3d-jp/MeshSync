@@ -1,4 +1,5 @@
 # MeshSync
+[English](https://translate.google.com/translate?sl=ja&tl=en&u=https://github.com/unity3d-jp/MeshSync/) (by Google Translate)
 
 モデリングツール [メタセコイア](http://www.metaseq.net/) 上の編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
 また、Unity のシーンをそのままメタセコイアに取り込むこともできます。気になった点をその場で確認したい場合や、Unity をモデリングの補助に使うといった用途がに使えます。
@@ -8,11 +9,11 @@ Unity は 5.4 以上 (64bit Windows)、メタセコイアは 3 系と 4.5.6 以�
 
 ## 使い方
 - Unity 側
- - [このパッケージ](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.2/MeshSync.unitypackage) をプロジェクトにインポートします。
+ - [このパッケージ](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.3/MeshSync.unitypackage) をプロジェクトにインポートします。
  - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
  - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 - メタセコイア側
- - [このプラグイン](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.2/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
+ - [このプラグイン](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.3/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
  - パネル -> Unity Mesh Sync を開き、"Auto Sync" をチェックします。
  - Auto Sync がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
   - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートします。
