@@ -1,3 +1,4 @@
+[![MeshSync demo](https://img.youtube.com/vi/vawI9BJ9AUY/0.jpg)](https://www.youtube.com/watch?v=vawI9BJ9AUY)
 # MeshSync
 [English](https://translate.google.com/translate?sl=ja&tl=en&u=https://github.com/unity3d-jp/MeshSync/) (by Google Translate)
 
