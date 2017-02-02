@@ -323,5 +323,7 @@ public:
 };
 
 
+std::string ToUTF8(const char *src);
+std::string ToANSI(const char *src);
 
 } // namespace ms

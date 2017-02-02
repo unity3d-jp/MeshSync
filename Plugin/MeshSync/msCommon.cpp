@@ -202,6 +202,38 @@ void LogImpl(const char *fmt, ...)
     va_end(args);
 }
 
+std::string ToUTF8(const char *src)
+{
+    // to UTF-16
+    const int wsize = ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, nullptr, 0);
+    std::wstring ws;
+    ws.resize(wsize);
+    ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
+
+    // to UTF-8
+    const int u8size = ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
+    std::string u8s;
+    u8s.resize(u8size);
+    ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
+    return u8s;
+}
+
+std::string ToANSI(const char *src)
+{
+    // to UTF-16
+    const int wsize = ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, nullptr, 0);
+    std::wstring ws;
+    ws.resize(wsize);
+    ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
+
+    // to ANSI
+    const int u8size = ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
+    std::string u8s;
+    u8s.resize(u8size);
+    ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
+    return u8s;
+}
+
 
 
 

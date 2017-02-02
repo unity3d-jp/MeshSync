@@ -144,7 +144,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     // gather mesh data
     concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
         rel.data->clear();
-        rel.data->path = BuildPath(doc, rel.obj);
+        rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
         ExtractID(rel.data->path.c_str(), rel.data->id);
 
         bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
@@ -244,7 +244,7 @@ bool MQSync::importMeshes(MQDocument doc)
         }
 
         char name[MaxNameBuffer];
-        sprintf(name, "%s [id:%08x]", mdata.getName(), mdata.id);
+        sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
 
         if (auto obj = findMQObject(doc, name)) {
             doc->DeleteObject(doc->GetObjectIndex(obj));
