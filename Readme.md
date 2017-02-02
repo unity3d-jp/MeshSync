@@ -1,6 +1,6 @@
 [![MeshSync demo](https://img.youtube.com/vi/vawI9BJ9AUY/0.jpg)](https://www.youtube.com/watch?v=vawI9BJ9AUY)
 # MeshSync
-[English](https://translate.google.com/translate?sl=ja&tl=en&u=https://github.com/unity3d-jp/MeshSync/) (by Google Translate)
+[English](Readme.en.md)
 
 モデリングツール [メタセコイア](http://www.metaseq.net/) 上の編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
 また、Unity のシーンをそのままメタセコイアに取り込むこともできます。気になった点をその場で確認したい場合や、Unity をモデリングの補助に使うといった用途がに使えます。
@@ -25,7 +25,7 @@ Unity は 5.4 以上 (64bit Windows)、メタセコイアは 3 系と 4.5.6 以�
 
 ### 対応している機能、していない機能
 - ミラーリング、スムーシングは Unity にも反映されます。
- - ただし、ミラーリングには若干挙動の違いがあります。"左右を接続した鏡面" は距離 0 の頂点しか接続されません。
+ - ただし、ミラーリングの "左右を接続した鏡面" は非サポートです。
 - メタセコイアで非表示のオブジェクトは Unity でも非表示になります。非表示のオブジェクトはメッシュの内容は送られないので、シーン内にオブジェクトが増えて同期が重くなってきた場合適切に非表示にすることで同期も速くなるはずです。
 - マテリアルは Unity には反映されませんが、マテリアル ID に応じて適切にサブメッシュに分割されます。
 - サブディビジョンやメタボールはフリーズするまで Unity には反映されません。
