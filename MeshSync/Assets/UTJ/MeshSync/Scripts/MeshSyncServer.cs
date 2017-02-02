@@ -893,12 +893,9 @@ namespace UTJ
                     if (mfilter == null) { return; }
 
                     var split = data.GetSplit(i);
-                    if (split.numPoints > 0 && split.numIndices > 0)
-                    {
-                        rec.editMesh = CreateEditedMesh(data, split);
-                        rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
-                        mfilter.sharedMesh = rec.editMesh;
-                    }
+                    rec.editMesh = CreateEditedMesh(data, split);
+                    rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
+                    mfilter.sharedMesh = rec.editMesh;
                 }
 
                 int num_splits = Math.Max(1, data.numSplits);
@@ -947,7 +944,7 @@ namespace UTJ
                 mesh.uv = split.uv;
             }
 
-            if(!noTopologyUpdate)
+            if(!noTopologyUpdate && flags.hasIndices)
             {
                 if (split.numSubmeshes == 0)
                 {
