@@ -31,6 +31,7 @@ namespace UTJ
             Get,
             Set,
             Delete,
+            Fence,
             Screenshot,
         }
 
@@ -222,6 +223,8 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
             [DllImport("MeshSyncServer")] static extern int msMeshGetID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMeshSetID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMeshGetIndex(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetIndex(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetFlags(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMeshSetFlags(IntPtr _this, MeshDataFlags v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetPath(IntPtr _this);
@@ -270,6 +273,11 @@ namespace UTJ
             {
                 get { return msMeshGetID(_this); }
                 set { msMeshSetID(_this, value); }
+            }
+            public int index
+            {
+                get { return msMeshGetIndex(_this); }
+                set { msMeshSetIndex(_this, value); }
             }
             public MeshDataFlags flags
             {
@@ -542,6 +550,7 @@ namespace UTJ
         [Serializable]
         public class Record
         {
+            public int index;
             public GameObject go;
             public Mesh origMesh;
             public Mesh editMesh;
@@ -603,7 +612,7 @@ namespace UTJ
 
         IntPtr m_server;
         msMessageHandler m_handler;
-        bool m_requestRestart = false;
+        bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
 
         Dictionary<string, Record> m_clientMeshes = new Dictionary<string, Record>();
@@ -687,12 +696,12 @@ namespace UTJ
 
         void PollServerEvents()
         {
-            if(m_requestRestart)
+            if(m_requestRestartServer)
             {
-                m_requestRestart = false;
+                m_requestRestartServer = false;
                 StartServer();
             }
-            if(m_captureScreenshotInProgress)
+            if (m_captureScreenshotInProgress)
             {
                 m_captureScreenshotInProgress = false;
                 msServerSetScreenshotFilePath(m_server, "screenshot.png");
@@ -716,6 +725,9 @@ namespace UTJ
                     break;
                 case MessageType.Delete:
                     OnRecvDelete((DeleteMessage)data);
+                    break;
+                case MessageType.Fence:
+                    OnRecvFence(data);
                     break;
                 case MessageType.Screenshot:
                     OnRecvScreenshot(data);
@@ -781,6 +793,11 @@ namespace UTJ
             //Debug.Log("MeshSyncServer: Delete");
         }
 
+        void OnRecvFence(IntPtr mes)
+        {
+            SortObjects();
+        }
+
         void OnRecvSet(SetMessage mes)
         {
 #if UNITY_EDITOR
@@ -788,7 +805,11 @@ namespace UTJ
 #endif
 
             // sync materials
-            UpdateMaterials(mes);
+            int numMaterials = mes.numMaterials;
+            if(numMaterials > 0)
+            {
+                UpdateMaterials(mes);
+            }
 
             // sync meshes
             int numMeshes = mes.numMeshes;
@@ -810,13 +831,13 @@ namespace UTJ
             {
                 UpdateCamera(mes.GetCamera(i));
             }
+
             //Debug.Log("MeshSyncServer: Set");
         }
 
         void UpdateMaterials(SetMessage mes)
         {
             int numMaterials = mes.numMaterials;
-            if(numMaterials == 0) { return; }
 
             bool needsUpdate = false;
             if(m_materialList.Count != numMaterials)
@@ -907,6 +928,7 @@ namespace UTJ
                 }
             }
             if (rec == null) { return; }
+            rec.index = data.index;
 
 
             var target = rec.go.GetComponent<Transform>();
@@ -1041,6 +1063,18 @@ namespace UTJ
             return mesh;
         }
 
+        void SortObjects()
+        {
+            var rec = m_clientMeshes.Values.OrderBy(v => v.index);
+            foreach(var r in rec)
+            {
+                if(r.go != null)
+                {
+                    r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
+                }
+            }
+        }
+
         void UpdateTransform(TransformData data)
         {
             // todo
@@ -1084,37 +1118,47 @@ namespace UTJ
                     if (t == null) { break; }
                     r = t.GetComponent<Renderer>();
                 }
+                if( r== null) { continue; }
 
                 int submeshCount = submeshCounts[i];
                 var prev = r.sharedMaterials;
                 var materials = new Material[submeshCount];
+                bool changed = false;
 
                 for (int j = 0; j < submeshCount; ++j)
                 {
+                    if (j < prev.Length && prev[j] != null)
+                    {
+                        materials[j] = prev[j];
+                    }
+
                     var mid = materialIDs[mi++];
                     if(mid >= 0 && mid < m_materialList.Count)
                     {
-                        materials[j] = m_materialList[mid].material;
+                        if(materials[j] != m_materialList[mid].material)
+                        {
+                            materials[j] = m_materialList[mid].material;
+                            changed = true;
+                        }
                     }
                     else
                     {
-                        if(j < prev.Length && prev[j] != null)
-                        {
-                            materials[j] = prev[j];
-                        }
-                        else
-                        {
+                        if(materials[j] == null) {
 #if UNITY_EDITOR
                             var tmp = Instantiate(GetDefaultMaterial());
                             tmp.name = "DefaultMaterial";
                             materials[j] = tmp;
+                            changed = true;
 #endif
                         }
                     }
                 }
 
-                if (r != null)
+                if(changed)
                 {
+//#if UNITY_EDITOR
+//                    Undo.RecordObject(r, "Update Materials");
+//#endif
                     r.sharedMaterials = materials;
                 }
             }
@@ -1527,10 +1571,10 @@ namespace UTJ
             foreach(var kvp in m_clientMeshes)
             {
                 var rec = kvp.Value;
-                if (rec.go)
+                if (rec.go != null && rec.go.activeInHierarchy)
                 {
                     var mr = rec.go.GetComponent<MeshRenderer>();
-                    if(mr == null) { continue; }
+                    if(mr == null || rec.submeshCounts.Length == 0) { continue; }
 
                     var materials = mr.sharedMaterials;
                     int n = Math.Min(materials.Length, rec.submeshCounts[0]);
@@ -1584,7 +1628,7 @@ namespace UTJ
 
         void OnValidate()
         {
-            m_requestRestart = true;
+            m_requestRestartServer = true;
         }
 #endif
 

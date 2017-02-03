@@ -291,12 +291,6 @@ void SetMessage::deserialize(std::istream& is)
 }
 
 
-ScreenshotMessage::ScreenshotMessage() {}
-uint32_t ScreenshotMessage::getSerializeSize() const { return 0; }
-void ScreenshotMessage::serialize(std::ostream& ) const {}
-void ScreenshotMessage::deserialize(std::istream& ) {}
-
-
 DeleteMessage::DeleteMessage()
 {
 }
@@ -330,24 +324,39 @@ void DeleteMessage::deserialize(std::istream& is)
 }
 
 
+FenceMessage::~FenceMessage() {}
+uint32_t FenceMessage::getSerializeSize() const { return 0; }
+void FenceMessage::serialize(std::ostream&) const {}
+void FenceMessage::deserialize(std::istream&) {}
+
+
+ScreenshotMessage::ScreenshotMessage() {}
+uint32_t ScreenshotMessage::getSerializeSize() const { return 0; }
+void ScreenshotMessage::serialize(std::ostream&) const {}
+void ScreenshotMessage::deserialize(std::istream&) {}
+
 
 uint32_t SceneEntity::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(id);
+    ret += ssize(index);
     ret += ssize(path);
     return ret;
 }
 void SceneEntity::serialize(std::ostream& os) const
 {
     write(os, id);
+    write(os, index);
     write(os, path);
 }
 void SceneEntity::deserialize(std::istream& is)
 {
     read(is, id);
+    read(is, index);
     read(is, path);
 }
+
 
 uint32_t Material::getSerializeSize() const
 {

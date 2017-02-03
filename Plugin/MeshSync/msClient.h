@@ -19,6 +19,7 @@ public:
     ScenePtr send(const GetMessage& mes);
     bool send(const SetMessage& mes);
     bool send(const DeleteMessage& mes);
+    bool send(const FenceMessage& mes);
 
 private:
     ClientSettings m_settings;

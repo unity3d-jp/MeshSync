@@ -37,6 +37,7 @@ RequestHandler::RequestHandler(Server *server)
 
 void Server::recvSet(std::istream& is)
 {
+    beginRecvRequest();
     auto mes = std::shared_ptr<SetMessage>(new SetMessage());
     mes->deserialize(is);
     if (m_serving) {
@@ -60,6 +61,7 @@ void Server::recvSet(std::istream& is)
             m_recv_history.emplace_back(mes);
         }
     }
+    endRecvRequest();
 }
 
 GetMessage* Server::getCurrentGetRequest()
@@ -72,11 +74,41 @@ Scene * Server::getHostScene()
     return m_host_scene.get();
 }
 
+int Server::beginRecvRequest()
+{
+    return m_request_count++;
+}
+int Server::endRecvRequest()
+{
+    return --m_request_count;
+}
+
 void Server::recvDelete(std::istream& is)
 {
+    beginRecvRequest();
     auto mes = std::shared_ptr<DeleteMessage>(new DeleteMessage());
     mes->deserialize(is);
     if(m_serving) {
+        lock_t l(m_mutex);
+        m_recv_history.emplace_back(mes);
+    }
+    endRecvRequest();
+}
+
+void Server::recvFence(std::istream & is)
+{
+    auto mes = std::shared_ptr<FenceMessage>(new FenceMessage());
+    mes->deserialize(is);
+
+    // wait for complete (or timeout) queuing set and delete messages
+    for (int i = 0; i < 500; ++i) {
+        if (m_request_count.load() == 0) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    if (m_serving) {
         lock_t l(m_mutex);
         m_recv_history.emplace_back(mes);
     }
@@ -99,6 +131,9 @@ int Server::processMessages(const MessageHandler& handler)
             for (auto& id : del->targets) {
                 m_client_meshes.erase(id.path);
             }
+        }
+        else if (dynamic_cast<FenceMessage*>(p.get())) {
+            handler(MessageType::Fence, *p);
         }
         else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
             m_current_screenshot_request = shot;
@@ -132,6 +167,10 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
     }
     else if (uri == "delete") {
         m_server->recvDelete(request.stream());
+        RespondText(response, "ok");
+    }
+    else if (uri == "fence") {
+        m_server->recvFence(request.stream());
         RespondText(response, "ok");
     }
     else if (uri == "/screenshot") {

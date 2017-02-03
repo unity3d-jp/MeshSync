@@ -164,6 +164,14 @@ msAPI void msMeshSetID(ms::Mesh *_this, int v)
 {
     _this->id = v;
 }
+msAPI int msMeshGetIndex(ms::Mesh *_this)
+{
+    return _this->index;
+}
+msAPI void msMeshSetIndex(ms::Mesh *_this, int v)
+{
+    _this->index = v;
+}
 msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *_this)
 {
     return _this->flags;

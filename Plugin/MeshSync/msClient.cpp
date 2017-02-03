@@ -86,4 +86,28 @@ bool Client::send(const DeleteMessage& mes)
     }
 }
 
+bool Client::send(const FenceMessage & mes)
+{
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+        session.setTimeout(m_settings.timeout_ms * 1000);
+
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "fence" };
+        request.setContentType("application/octet-stream");
+
+        request.setContentLength(mes.getSerializeSize());
+        auto& os = session.sendRequest(request);
+        mes.serialize(os);
+
+        HTTPResponse response;
+        auto& rs = session.receiveResponse(response);
+        std::ostringstream ostr;
+        StreamCopier::copyStream(rs, ostr);
+        return true;
+    }
+    catch (...) {
+        return false;
+    }
+}
+
 } // namespace ms

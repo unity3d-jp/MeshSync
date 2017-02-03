@@ -25,6 +25,7 @@ class SceneEntity
 {
 public:
     int id = 0;
+    int index = 0;
     std::string path;
 
     uint32_t getSerializeSize() const;
@@ -235,6 +236,7 @@ enum class MessageType
     Get,
     Post,
     Delete,
+    Fence,
     Screenshot,
 };
 
@@ -313,6 +315,16 @@ public:
     std::vector<Identifier> targets;
 
     DeleteMessage();
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+
+
+class FenceMessage : public Message
+{
+public:
+    ~FenceMessage() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;

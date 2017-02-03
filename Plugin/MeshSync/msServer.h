@@ -45,7 +45,10 @@ public:
 public:
     GetMessage* getCurrentGetRequest();
     Scene* getHostScene();
+    int beginRecvRequest();
+    int endRecvRequest();
     void recvDelete(std::istream& is);
+    void recvFence(std::istream& is);
     void recvSet(std::istream& is);
     void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
@@ -65,6 +68,7 @@ private:
     ServerSettings m_settings;
     HTTPServerPtr m_server;
     std::mutex m_mutex;
+    std::atomic_int m_request_count{0};
 
     ClientMeshes m_client_meshes;
     History m_recv_history;

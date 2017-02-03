@@ -138,6 +138,7 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     }
     for (size_t i = 0; i < m_relations.size(); ++i) {
         m_relations[i].data = m_client_meshes[i];
+        m_relations[i].data->index = (int)i;
     }
 
     // gather mesh data
@@ -226,6 +227,12 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         }
         if (!del.targets.empty()) {
             client.send(del);
+        }
+
+        // notify end of scene
+        {
+            ms::FenceMessage fence;
+            client.send(fence);
         }
     });
 
