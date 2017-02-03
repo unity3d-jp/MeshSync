@@ -161,9 +161,9 @@ void MQSync::sendMesh(MQDocument doc, bool force)
 
 
     // gather material data
-    std::vector<ms::Material> materials;
     int nmat = doc->GetMaterialCount();
-    materials.reserve(nmat);
+    m_materials.clear();
+    m_materials.reserve(nmat);
     for (int i = 0; i < nmat; ++i) {
         auto src = doc->GetMaterial(i);
         if (!src) { continue; }
@@ -176,12 +176,12 @@ void MQSync::sendMesh(MQDocument doc, bool force)
             dst.name = ms::ToUTF8(name);
         }
         (float3&)dst.color = (const float3&)src->GetColor();
-        materials.push_back(dst);
+        m_materials.push_back(dst);
     }
 
 
     // kick async send
-    m_future_send = std::async(std::launch::async, [this, materials]() {
+    m_future_send = std::async(std::launch::async, [this]() {
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
@@ -191,12 +191,12 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         // send materials
         {
             ms::SetMessage set;
-            set.scene.materials = materials;
+            set.scene.materials = m_materials;
             client.send(set);
         }
 
         // send meshes one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client, &materials](Relation& rel) {
+        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { rel.data };

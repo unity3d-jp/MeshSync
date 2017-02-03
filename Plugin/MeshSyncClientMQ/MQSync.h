@@ -43,6 +43,7 @@ private:
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
+    using Materials = std::vector<ms::Material>;
 
     struct Relation
     {
@@ -60,6 +61,7 @@ private:
 
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
+    Materials m_materials;
 
     std::vector<MQObject> m_obj_for_normals;
     std::vector<Relation> m_relations;

@@ -12,6 +12,33 @@ struct ssize_impl
     uint32_t operator()(const T&) { return sizeof(T); }
 };
 template<class T>
+struct write_impl
+{
+    void operator()(std::ostream& os, const T& v)
+    {
+        os.write((const char*)&v, sizeof(T));
+    }
+};
+template<class T>
+struct read_impl
+{
+    void operator()(std::istream& is, T& v)
+    {
+        is.read((char*)&v, sizeof(T));
+    }
+};
+
+#define DefSpecialize(T)\
+    template<> struct ssize_impl<T> { uint32_t operator()(const T& v) { return v.getSerializeSize(); } };\
+    template<> struct write_impl<T> { void operator()(std::ostream& os, const T& v) { return v.serialize(os); } };\
+    template<> struct read_impl<T>  { void operator()(std::istream& is, T& v) { return v.deserialize(is); } };\
+
+DefSpecialize(Material)
+
+#undef DefSpecialize
+
+
+template<class T>
 struct ssize_impl<RawVector<T>>
 {
     uint32_t operator()(const RawVector<T>& v) { return uint32_t(4 + sizeof(T) * v.size()); }
@@ -44,18 +71,7 @@ struct ssize_impl<std::vector<std::shared_ptr<T>>>
     }
 };
 
-template<class T>
-inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
 
-
-template<class T>
-struct write_impl
-{
-    void operator()(std::ostream& os, const T& v)
-    {
-        os.write((const char*)&v, sizeof(T));
-    }
-};
 template<class T>
 struct write_impl<RawVector<T>>
 {
@@ -100,19 +116,9 @@ struct write_impl<std::vector<std::shared_ptr<T>>>
         }
     }
 };
-template<class T>
-inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
 
 
 
-template<class T>
-struct read_impl
-{
-    void operator()(std::istream& is, T& v)
-    {
-        is.read((char*)&v, sizeof(T));
-    }
-};
 template<class T>
 struct read_impl<RawVector<T>>
 {
@@ -162,8 +168,6 @@ struct read_impl<std::vector<std::shared_ptr<T>>>
         }
     }
 };
-template<class T>
-inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 
 
 template<class T>
@@ -181,18 +185,13 @@ struct clear_impl<std::vector<T>>
 {
     void operator()(std::vector<T>& v) { v.clear(); }
 };
-template<class T>
-inline void vclear(T& v) { return clear_impl<T>()(v); }
 
+
+template<class T> inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
+template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
+template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
+template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
 } // namespace
-
-#define DefSpecialize(T)\
-namespace {\
-    template<> inline uint32_t ssize(const T& v) { return v.getSerializeSize(); }\
-    template<> inline void write(std::ostream& os, const T& v) { return v.serialize(os); }\
-    template<> inline void read(std::istream& is, T& v) { return v.deserialize(is); }\
-}\
-
 
 
 static void LogImpl(const char *fmt, va_list args)
@@ -370,7 +369,6 @@ void Material::deserialize(std::istream& is)
     read(is, name);
     read(is, color);
 }
-DefSpecialize(Material)
 
 
 uint32_t Transform::getSerializeSize() const
