@@ -36,6 +36,7 @@ struct float4
     bool operator==(const float4& v) const { return x == v.x && y == v.y && z == v.z && w == v.w; }
     bool operator!=(const float4& v) const { return !((*this) == v); }
     static float4 zero() { return{ 0.0f, 0.0f, 0.0f, 0.0f }; }
+    static float4 one() { return{ 1.0f, 1.0f, 1.0f, 1.0f }; }
 };
 struct quatf
 {

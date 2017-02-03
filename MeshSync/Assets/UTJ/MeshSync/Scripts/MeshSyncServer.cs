@@ -75,6 +75,8 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern TransformData msSetGetTransformData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSetGetNumCameras(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern CameraData msSetGetCameraData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSetGetNumMaterials(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MaterialData msSetGetMaterialData(IntPtr _this, int i);
 
             public static explicit operator SetMessage(IntPtr v)
             {
@@ -86,10 +88,12 @@ namespace UTJ
             public int numMeshes { get { return msSetGetNumMeshes(_this); } }
             public int numTransforms { get { return msSetGetNumTransforms(_this); } }
             public int numCameras { get { return msSetGetNumCameras(_this); } }
+            public int numMaterials { get { return msSetGetNumMaterials(_this); } }
 
             public MeshData GetMesh(int i) { return msSetGetMeshData(_this, i); }
             public TransformData GetTransform(int i) { return msSetGetTransformData(_this, i); }
             public CameraData GetCamera(int i) { return msSetGetCameraData(_this, i); }
+            public MaterialData GetMaterial(int i) { return msSetGetMaterialData(_this, i); }
         }
 
 
@@ -175,6 +179,30 @@ namespace UTJ
             public Vector3 rotation_eularZXY;
             public Vector3 scale;
         };
+
+        public struct MaterialData
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
+
+            public int id {
+                get { return msMaterialGetID(_this); }
+                set { msMaterialSetID(_this, value); }
+            }
+            public string name {
+                get { return S(msMaterialGetName(_this)); }
+                set { msMaterialSetName(_this, value); }
+            }
+            public Color color {
+                get { return msMaterialGetColor(_this); }
+                set { msMaterialSetColor(_this, ref value); }
+            }
+        }
 
         public struct TransformData
         {
@@ -555,13 +583,21 @@ namespace UTJ
             }
         }
 
+        [Serializable]
+        public class MaterialHolder
+        {
+            public int id;
+            public string name;
+            public Color color = Color.white;
+            public Material material;
+        }
 
         #endregion
 
 
         #region fields
         [SerializeField] int m_serverPort = 8080;
-        [SerializeField] List<Material> m_materialList = new List<Material>();
+        [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "Assets/MeshSyncAssets";
         [SerializeField] bool m_logging = true;
 
@@ -573,17 +609,18 @@ namespace UTJ
 
         Dictionary<string, Record> m_clientMeshes = new Dictionary<string, Record>();
         Dictionary<int, Record> m_hostMeshes = new Dictionary<int, Record>();
-        Dictionary<Material, int> m_materialIDTable = new Dictionary<Material, int>();
         Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
 
         [HideInInspector][SerializeField] string[] m_clientMeshes_keys;
         [HideInInspector][SerializeField] Record[] m_clientMeshes_values;
         [HideInInspector][SerializeField] int[] m_hostMeshes_keys;
         [HideInInspector][SerializeField] Record[] m_hostMeshes_values;
-        [HideInInspector][SerializeField] Material[] m_materialIDTable_keys;
-        [HideInInspector][SerializeField] int[] m_materialIDTable_values;
         [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector][SerializeField] int[] m_objIDTable_values;
+        #endregion
+
+        #region properties
+        public List<MaterialHolder> materialData { get { return m_materialList; } }
         #endregion
 
         #region impl
@@ -611,14 +648,12 @@ namespace UTJ
         {
             SerializeDictionary(m_clientMeshes, ref m_clientMeshes_keys, ref m_clientMeshes_values);
             SerializeDictionary(m_hostMeshes, ref m_hostMeshes_keys, ref m_hostMeshes_values);
-            SerializeDictionary(m_materialIDTable, ref m_materialIDTable_keys, ref m_materialIDTable_values);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
         public void OnAfterDeserialize()
         {
             DeserializeDictionary(m_clientMeshes, ref m_clientMeshes_keys, ref m_clientMeshes_values);
             DeserializeDictionary(m_hostMeshes, ref m_hostMeshes_keys, ref m_hostMeshes_values);
-            DeserializeDictionary(m_materialIDTable, ref m_materialIDTable_keys, ref m_materialIDTable_values);
             DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
 
@@ -753,18 +788,24 @@ namespace UTJ
 
         void OnRecvSet(SetMessage mes)
         {
+            // sync materials
+            UpdateMaterials(mes);
+
+            // sync meshes
             int numMeshes = mes.numMeshes;
             for (int i = 0; i < numMeshes; ++i)
             {
                 UpdateMesh(mes.GetMesh(i));
             }
 
+            // sync bones
             int numTransforms = mes.numTransforms;
             for (int i = 0; i < numTransforms; ++i)
             {
                 UpdateTransform(mes.GetTransform(i));
             }
 
+            // sync cameras
             int numCameras = mes.numCameras;
             for (int i = 0; i < numCameras; ++i)
             {
@@ -772,6 +813,61 @@ namespace UTJ
             }
 
             //Debug.Log("MeshSyncServer: Set");
+        }
+
+        void UpdateMaterials(SetMessage mes)
+        {
+            int numMaterials = mes.numMaterials;
+            if(numMaterials == 0) { return; }
+
+            bool needsUpdate = false;
+            if(m_materialList.Count != numMaterials)
+            {
+                needsUpdate = true;
+            }
+            else
+            {
+                for (int i = 0; i < numMaterials; ++i)
+                {
+                    var src = mes.GetMaterial(i);
+                    var dst = m_materialList[i];
+                    if(src.id != dst.id || src.name != dst.name || src.color != dst.color)
+                    {
+                        needsUpdate = true;
+                        break;
+                    }
+                }
+            }
+            if(!needsUpdate) { return; }
+
+            var newlist = new List<MaterialHolder>();
+            for (int i = 0; i < numMaterials; ++i)
+            {
+                var src = mes.GetMaterial(i);
+                var id = src.id;
+                var dst = m_materialList.Find(a => a.id == id);
+                if (dst == null)
+                {
+                    dst = new MaterialHolder();
+                    dst.id = id;
+#if UNITY_EDITOR
+                    var tmp = Instantiate(GetDefaultMaterial());
+                    tmp.name = src.name;
+                    tmp.color = src.color;
+                    dst.material = tmp;
+#endif
+                }
+                dst.name = src.name;
+                dst.color = src.color;
+                if (dst.material.name == src.name)
+                {
+                    dst.material.color = dst.color;
+                }
+                newlist.Add(dst);
+            }
+            m_materialList = newlist;
+
+            ReassignMaterials();
         }
 
         void UpdateMesh(MeshData data)
@@ -836,18 +932,6 @@ namespace UTJ
 
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
-            int maxMaterialID = rec.maxMaterialID;
-            while (m_materialList.Count < maxMaterialID + 1)
-            {
-#if UNITY_EDITOR
-                var tmp = Instantiate(GetDefaultMaterial());
-                tmp.name = "DefaultMaterial";
-                m_materialList.Add(tmp);
-#else
-                m_materialList.Add(null);
-#endif
-            }
-
             var flags = data.flags;
 
             // update transform
@@ -974,7 +1058,7 @@ namespace UTJ
             // todo 
         }
 
-        void ReassignMaterials()
+        public void ReassignMaterials()
         {
             foreach (var rec in m_clientMeshes)
             {
@@ -1011,7 +1095,19 @@ namespace UTJ
                 var materials = new Material[submeshCounts[i]];
                 for (int j = 0; j < submeshCounts[i]; ++j)
                 {
-                    materials[j] = m_materialList[materialIDs[mi++]];
+                    var mid = materialIDs[mi++];
+                    if(mid >= 0 && mid < m_materialList.Count)
+                    {
+                        materials[j] = m_materialList[mid].material;
+                    }
+                    else
+                    {
+#if UNITY_EDITOR
+                        var tmp = Instantiate(GetDefaultMaterial());
+                        tmp.name = "DefaultMaterial";
+                        materials[j] = tmp;
+#endif
+                    }
                 }
 
                 if (r != null)
@@ -1021,33 +1117,24 @@ namespace UTJ
             }
         }
 
-        int GetMaterialID(Material mat)
+        int GetMaterialIndex(Material mat)
         {
-            if(mat == null) { return 0; }
+            if(mat == null) { return -1; }
 
-            int ret;
-            if(m_materialIDTable.ContainsKey(mat))
+            for (int i = 0; i < m_materialList.Count; ++i)
             {
-                ret = m_materialIDTable[mat];
-            }
-            else
-            {
-                ret = m_materialIDTable.Count + 1;
-                m_materialIDTable[mat] = ret;
+                if(m_materialList[i].material == mat)
+                {
+                    return i;
+                }
             }
 
-            while (m_materialList.Count < ret + 1)
-            {
-#if UNITY_EDITOR
-                var tmp = Instantiate(GetDefaultMaterial());
-                tmp.name = "DefaultMaterial";
-                m_materialList.Add(tmp);
-#else
-                m_materialList.Add(null);
-#endif
-            }
-            m_materialList[ret] = mat;
-
+            int ret = m_materialList.Count;
+            var tmp = new MaterialHolder();
+            tmp.name = mat.name;
+            tmp.material = mat;
+            tmp.id = ret + 1;
+            m_materialList.Add(tmp);
             return ret;
         }
 
@@ -1313,7 +1400,7 @@ namespace UTJ
                     for (int i = 0; i < n; ++i)
                     {
                         var indices = mesh.GetIndices(i);
-                        int mid = i < materials.Length ? GetMaterialID(materials[i]) : 0;
+                        int mid = i < materials.Length ? GetMaterialIndex(materials[i]) : 0;
                         data.WriteSubmeshTriangles(indices, mid);
                     }
                 }

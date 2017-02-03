@@ -55,7 +55,7 @@ msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 msAPI void msServerSetNumMaterials(ms::Server *server, int n)
 {
     if (!server) { return; }
-    server->getHostScene()->settings.num_materials = n;
+    server->getHostScene()->materials.resize(n);
 }
 
 
@@ -97,6 +97,39 @@ msAPI int msSetGetNumCameras(ms::SetMessage *_this)
 msAPI ms::Camera* msSetGetCameraData(ms::SetMessage *_this, int i)
 {
     return _this->scene.cameras[i].get();
+}
+msAPI int msSetGetNumMaterials(ms::SetMessage *_this)
+{
+    return (int)_this->scene.materials.size();
+}
+msAPI ms::Material* msSetGetMaterialData(ms::SetMessage *_this, int i)
+{
+    return &_this->scene.materials[i];
+}
+
+msAPI int msMaterialGetID(ms::Material *_this)
+{
+    return _this->id;
+}
+msAPI void msMaterialSetID(ms::Material *_this, int v)
+{
+    _this->id = v;
+}
+msAPI const char* msMaterialGetName(ms::Material *_this)
+{
+    return _this->name.c_str();
+}
+msAPI void msMaterialSetName(ms::Material *_this, const char *v)
+{
+    _this->name = v;
+}
+msAPI float4 msMaterialGetColor(ms::Material *_this)
+{
+    return _this->color;
+}
+msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
+{
+    _this->color = *v;
 }
 
 

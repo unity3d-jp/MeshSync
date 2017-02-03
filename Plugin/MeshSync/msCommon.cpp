@@ -186,6 +186,13 @@ inline void vclear(T& v) { return clear_impl<T>()(v); }
 
 } // namespace
 
+#define DefSpecialize(T)\
+namespace {\
+    template<> inline uint32_t ssize(const T& v) { return v.getSerializeSize(); }\
+    template<> inline void write(std::ostream& os, const T& v) { return v.serialize(os); }\
+    template<> inline void read(std::istream& is, T& v) { return v.deserialize(is); }\
+}\
+
 
 
 static void LogImpl(const char *fmt, va_list args)
@@ -342,6 +349,28 @@ void SceneEntity::deserialize(std::istream& is)
     read(is, id);
     read(is, path);
 }
+
+uint32_t Material::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(id);
+    ret += ssize(name);
+    ret += ssize(color);
+    return ret;
+}
+void Material::serialize(std::ostream& os) const
+{
+    write(os, id);
+    write(os, name);
+    write(os, color);
+}
+void Material::deserialize(std::istream& is)
+{
+    read(is, id);
+    read(is, name);
+    read(is, color);
+}
+DefSpecialize(Material)
 
 
 uint32_t Transform::getSerializeSize() const
@@ -703,6 +732,7 @@ uint32_t Scene::getSerializeSize() const
     ret += ssize(meshes);
     ret += ssize(transforms);
     ret += ssize(cameras);
+    ret += ssize(materials);
     return ret;
 }
 void Scene::serialize(std::ostream& os) const
@@ -711,6 +741,7 @@ void Scene::serialize(std::ostream& os) const
     write(os, meshes);
     write(os, transforms);
     write(os, cameras);
+    write(os, materials);
 }
 void Scene::deserialize(std::istream& is)
 {
@@ -718,6 +749,7 @@ void Scene::deserialize(std::istream& is)
     read(is, meshes);
     read(is, transforms);
     read(is, cameras);
+    read(is, materials);
 }
 
 

@@ -98,7 +98,6 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     m_pending_send_meshes = false;
 
     int nobj = doc->GetObjectCount();
-    int nmat = doc->GetMaterialCount();
 
     // build relations
     m_obj_for_normals.clear();
@@ -160,17 +159,44 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         }
     });
 
+
+    // gather material data
+    std::vector<ms::Material> materials;
+    int nmat = doc->GetMaterialCount();
+    materials.reserve(nmat);
+    for (int i = 0; i < nmat; ++i) {
+        auto src = doc->GetMaterial(i);
+        if (!src) { continue; }
+
+        ms::Material dst;
+        dst.id = src->GetUniqueID();
+        {
+            char name[128];
+            src->GetName(name, sizeof(name));
+            dst.name = ms::ToUTF8(name);
+        }
+        (float3&)dst.color = (const float3&)src->GetColor();
+        materials.push_back(dst);
+    }
+
+
     // kick async send
-    m_future_send = std::async(std::launch::async, [this, nmat]() {
+    m_future_send = std::async(std::launch::async, [this, materials]() {
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
         scene_settings.handedness = ms::Handedness::Right;
         scene_settings.scale_factor = m_scale_factor;
-        scene_settings.num_materials = nmat;
 
-        // send mesh one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
+        // send materials
+        {
+            ms::SetMessage set;
+            set.scene.materials = materials;
+            client.send(set);
+        }
+
+        // send meshes one by one to Unity can respond quickly
+        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client, &materials](Relation& rel) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { rel.data };
@@ -228,20 +254,13 @@ bool MQSync::importMeshes(MQDocument doc)
         return false;
     }
 
-    while (doc->GetMaterialCount() < ret->settings.num_materials) {
+    while (doc->GetMaterialCount() < (int)ret->materials.size()) {
         doc->AddMaterial(MQ_CreateMaterial());
     }
     
 
     for (auto& data : ret->meshes) {
         auto& mdata = *data;
-
-        if (!mdata.materialIDs.empty()) {
-            // make it -1-based
-            for (int& mid : mdata.materialIDs) {
-                mid -= 1;
-            }
-        }
 
         char name[MaxNameBuffer];
         sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
@@ -416,11 +435,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     dst.counts.erase(
         std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
         dst.counts.end());
-
-    // Metasequoia uses -1 as invalid material. +1 to make it zero-based
-    for (int& mid : dst.materialIDs) {
-        mid += 1;
-    }
 }
 
 void MQSync::copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& dst)

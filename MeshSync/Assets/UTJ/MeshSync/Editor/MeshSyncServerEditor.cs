@@ -16,6 +16,30 @@ namespace UTJ
 
             EditorGUILayout.Space();
 
+            {
+                GUILayout.Label("Material List", EditorStyles.boldLabel);
+                foreach (var md in t.materialData)
+                {
+                    var rect = EditorGUILayout.BeginHorizontal();
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
+                    EditorGUILayout.LabelField("", GUILayout.Width(16));
+                    EditorGUILayout.LabelField(md.name, GUILayout.Width(80));
+                    {
+                        var tmp = EditorGUILayout.ObjectField(md.material, typeof(Material), true) as Material;
+                        if(tmp != md.material)
+                        {
+                            Undo.RecordObject(t, "MeshSyncServer");
+                            md.material = tmp;
+                            t.ReassignMaterials();
+                        }
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+
+            EditorGUILayout.Space();
+
             if (GUILayout.Button("Generate Lightmap UV"))
             {
                 t.GenerateLightmapUV();

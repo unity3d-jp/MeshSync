@@ -280,7 +280,7 @@ bool MeshRefiner::genSubmesh(const IArray<int>& materialIDs)
 
         // count triangle indices
         for (int fi = 0; fi < split.num_faces; ++fi) {
-            int mid = materialIDs[offset_faces + fi];
+            int mid = materialIDs[offset_faces + fi] + 1;
             while (mid >= (int)sm.size()) {
                 int id = (int)sm.size();
                 sm.push_back({});
@@ -296,7 +296,7 @@ bool MeshRefiner::genSubmesh(const IArray<int>& materialIDs)
 
         // copy triangles
         for (int fi = 0; fi < split.num_faces; ++fi) {
-            int mid = materialIDs[offset_faces + fi];
+            int mid = materialIDs[offset_faces + fi] + 1;
             int count = counts[offset_faces + fi];
             int nidx = (count - 2) * 3;
             for (int i = 0; i < nidx; ++i) {

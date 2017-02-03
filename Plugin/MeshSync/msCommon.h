@@ -41,6 +41,17 @@ struct TRS
     float3   scale = float3::one();
 };
 
+struct Material
+{
+    int id = 0;
+    std::string name;
+    float4 color = float4::one();
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+
 
 class Transform : public SceneEntity
 {
@@ -197,7 +208,6 @@ struct SceneSettings
 {
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;
-    int num_materials = 0;
 };
 
 struct Scene
@@ -207,6 +217,7 @@ public:
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
     std::vector<CameraPtr> cameras;
+    std::vector<Material> materials;
 
 public:
     uint32_t getSerializeSize() const;
