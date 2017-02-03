@@ -54,6 +54,7 @@ namespace UTJ
                         Undo.RecordObject(t, "MeshSyncServer");
                         md.material = tmp;
                         t.ReassignMaterials();
+                        t.ForceRepaint();
                     }
                 }
 

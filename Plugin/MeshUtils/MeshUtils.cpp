@@ -280,11 +280,11 @@ bool MeshRefiner::genSubmesh(const IArray<int>& materialIDs)
 
         // count triangle indices
         for (int fi = 0; fi < split.num_faces; ++fi) {
-            int mid = materialIDs[offset_faces + fi] + 1;
+            int mid = materialIDs[offset_faces + fi] + 1; // -1 == no material. adjust to it
             while (mid >= (int)sm.size()) {
                 int id = (int)sm.size();
                 sm.push_back({});
-                sm.back().materialID = id;
+                sm.back().materialID = id - 1;
             }
             sm[mid].num_indices_tri += (counts[fi] - 2) * 3;
         }

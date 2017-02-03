@@ -604,7 +604,6 @@ namespace UTJ
         IntPtr m_server;
         msMessageHandler m_handler;
         bool m_requestRestart = false;
-        bool m_requestReassignMaterials = false;
         bool m_captureScreenshotInProgress = false;
 
         Dictionary<string, Record> m_clientMeshes = new Dictionary<string, Record>();
@@ -669,6 +668,7 @@ namespace UTJ
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
+            SceneView.onSceneGUIDelegate += OnSceneViewGUI;
 #endif
         }
 
@@ -678,6 +678,7 @@ namespace UTJ
             {
 #if UNITY_EDITOR
                 EditorApplication.update -= PollServerEvents;
+                SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
 #endif
                 msServerStop(m_server);
                 m_server = IntPtr.Zero;
@@ -690,12 +691,6 @@ namespace UTJ
             {
                 m_requestRestart = false;
                 StartServer();
-            }
-            if(m_requestReassignMaterials)
-            {
-                m_requestReassignMaterials = false;
-                ReassignMaterials();
-                ForceRepaint();
             }
             if(m_captureScreenshotInProgress)
             {
@@ -788,6 +783,10 @@ namespace UTJ
 
         void OnRecvSet(SetMessage mes)
         {
+#if UNITY_EDITOR
+            Undo.RecordObject(this, "MeshSyncServer");
+#endif
+
             // sync materials
             UpdateMaterials(mes);
 
@@ -811,7 +810,6 @@ namespace UTJ
             {
                 UpdateCamera(mes.GetCamera(i));
             }
-
             //Debug.Log("MeshSyncServer: Set");
         }
 
@@ -866,7 +864,6 @@ namespace UTJ
                 newlist.Add(dst);
             }
             m_materialList = newlist;
-
             ReassignMaterials();
         }
 
@@ -996,10 +993,6 @@ namespace UTJ
             {
                 AssignMaterials(rec);
             }
-
-#if UNITY_EDITOR
-            Undo.RecordObject(this, "MeshSyncServer");
-#endif
         }
 
         Mesh CreateEditedMesh(MeshData data, SplitData split, bool noTopologyUpdate = false, Mesh prev = null)
@@ -1092,8 +1085,11 @@ namespace UTJ
                     r = t.GetComponent<Renderer>();
                 }
 
-                var materials = new Material[submeshCounts[i]];
-                for (int j = 0; j < submeshCounts[i]; ++j)
+                int submeshCount = submeshCounts[i];
+                var prev = r.sharedMaterials;
+                var materials = new Material[submeshCount];
+
+                for (int j = 0; j < submeshCount; ++j)
                 {
                     var mid = materialIDs[mi++];
                     if(mid >= 0 && mid < m_materialList.Count)
@@ -1102,11 +1098,18 @@ namespace UTJ
                     }
                     else
                     {
+                        if(j < prev.Length && prev[j] != null)
+                        {
+                            materials[j] = prev[j];
+                        }
+                        else
+                        {
 #if UNITY_EDITOR
-                        var tmp = Instantiate(GetDefaultMaterial());
-                        tmp.name = "DefaultMaterial";
-                        materials[j] = tmp;
+                            var tmp = Instantiate(GetDefaultMaterial());
+                            tmp.name = "DefaultMaterial";
+                            materials[j] = tmp;
 #endif
+                        }
                     }
                 }
 
@@ -1254,10 +1257,9 @@ namespace UTJ
             return mfilter;
         }
 
-        void ForceRepaint()
+        public void ForceRepaint()
         {
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
             SceneView.RepaintAll();
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 #endif
@@ -1518,6 +1520,53 @@ namespace UTJ
                 AssetDatabase.SaveAssets();
             }
         }
+
+        void CheckMaterialAssignedViaEditor()
+        {
+            bool changed = false;
+            foreach(var kvp in m_clientMeshes)
+            {
+                var rec = kvp.Value;
+                if (rec.go)
+                {
+                    var mr = rec.go.GetComponent<MeshRenderer>();
+                    if(mr == null) { continue; }
+
+                    var materials = mr.sharedMaterials;
+                    int n = Math.Min(materials.Length, rec.submeshCounts[0]);
+                    for (int i = 0; i < n; ++i)
+                    {
+                        int midx = rec.materialIDs[i];
+                        if(midx < 0 || midx >= m_materialList.Count) { continue; }
+
+                        if(materials[i] != m_materialList[midx].material)
+                        {
+                            m_materialList[midx].material = materials[i];
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+                if(changed) { break; }
+            }
+
+            if(changed)
+            {
+                ReassignMaterials();
+                ForceRepaint();
+            }
+        }
+
+        void OnSceneViewGUI(SceneView sceneView)
+        {
+            if (Event.current.type == EventType.DragExited)
+            {
+                if (Event.current.button == 0)
+                {
+                    CheckMaterialAssignedViaEditor();
+                }
+            }
+        }
 #endif
 
 
@@ -1536,7 +1585,6 @@ namespace UTJ
         void OnValidate()
         {
             m_requestRestart = true;
-            m_requestReassignMaterials = true;
         }
 #endif
 
