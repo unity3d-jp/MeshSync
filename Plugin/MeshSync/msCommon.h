@@ -20,6 +20,7 @@ void LogImpl(const char *fmt, ...);
 #define msLogWarning(...) ::ms::LogImpl("MeshSync warning: " __VA_ARGS__)
 #define msLogError(...)   ::ms::LogImpl("MeshSync error: " __VA_ARGS__)
 
+extern const int ProtocolVersion;
 
 class SceneEntity
 {
@@ -59,6 +60,7 @@ class Transform : public SceneEntity
 using super = SceneEntity;
 public:
     TRS transform;
+    TRS transform_global;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
@@ -237,6 +239,7 @@ enum class MessageType
     Post,
     Delete,
     Fence,
+    Text,
     Screenshot,
 };
 
@@ -253,9 +256,9 @@ class Message
 {
 public:
     virtual ~Message();
-    virtual uint32_t getSerializeSize() const = 0;
-    virtual void serialize(std::ostream& os) const = 0;
-    virtual void deserialize(std::istream& is) = 0;
+    virtual uint32_t getSerializeSize() const;
+    virtual void serialize(std::ostream& os) const;
+    virtual bool deserialize(std::istream& is);
 };
 
 
@@ -275,6 +278,7 @@ struct GetFlags
 
 class GetMessage : public Message
 {
+using super = Message;
 public:
     GetFlags flags = {0};
     SceneSettings scene_settings;
@@ -287,12 +291,13 @@ public:
     GetMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
+    bool deserialize(std::istream& is) override;
 };
 
 
 class SetMessage : public Message
 {
+using super = Message;
 public:
     Scene scene;
 
@@ -300,39 +305,68 @@ public:
     SetMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
+    bool deserialize(std::istream& is) override;
 };
 
 
 class DeleteMessage : public Message
 {
+using super = Message;
 public:
     struct Identifier
     {
         std::string path;
         int id;
+
+        uint32_t getSerializeSize() const;
+        void serialize(std::ostream& os) const;
+        void deserialize(std::istream& is);
     };
     std::vector<Identifier> targets;
 
     DeleteMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
+    bool deserialize(std::istream& is) override;
 };
 
 
 class FenceMessage : public Message
 {
+using super = Message;
 public:
     ~FenceMessage() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
+    bool deserialize(std::istream& is) override;
+};
+
+
+class TextMessage : public Message
+{
+using super = Message;
+public:
+    enum class Type
+    {
+        Normal,
+        Warning,
+        Error,
+    };
+
+    ~TextMessage() override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    bool deserialize(std::istream& is) override;
+
+public:
+    std::string text;
+    Type type = Type::Normal;
 };
 
 
 class ScreenshotMessage : public Message
 {
+using super = Message;
 public:
 
     // non-serializable
@@ -342,7 +376,7 @@ public:
     ScreenshotMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
+    bool deserialize(std::istream& is) override;
 };
 
 

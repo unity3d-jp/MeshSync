@@ -6,6 +6,14 @@ namespace ms {
 
 using namespace Poco::Net;
 
+static void RespondText(HTTPServerResponse &response, const std::string& message)
+{
+    response.setContentType("text/plain");
+    response.setContentLength(message.size());
+    std::ostream &ostr = response.send();
+    ostr.write(message.c_str(), message.size());
+}
+
 
 class RequestHandler : public HTTPRequestHandler
 {
@@ -35,9 +43,11 @@ RequestHandler::RequestHandler(Server *server)
 {
 }
 
-void Server::recvSet(std::istream& is)
+void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    beginRecvRequest();
+    auto& is = request.stream();
+
+    RecvRequestScope scope(this);
     auto mes = std::shared_ptr<SetMessage>(new SetMessage());
     mes->deserialize(is);
     if (m_serving) {
@@ -61,7 +71,8 @@ void Server::recvSet(std::istream& is)
             m_recv_history.emplace_back(mes);
         }
     }
-    endRecvRequest();
+
+    RespondText(response, "ok");
 }
 
 GetMessage* Server::getCurrentGetRequest()
@@ -83,20 +94,31 @@ int Server::endRecvRequest()
     return --m_request_count;
 }
 
-void Server::recvDelete(std::istream& is)
+void Server::pushMessage(Message *v)
 {
-    beginRecvRequest();
+    lock_t l(m_mutex);
+    m_recv_history.emplace_back(v);
+}
+
+void Server::recvDelete(HTTPServerRequest &request, HTTPServerResponse &response)
+{
+    auto& is = request.stream();
+
+    RecvRequestScope scope(this);
     auto mes = std::shared_ptr<DeleteMessage>(new DeleteMessage());
     mes->deserialize(is);
     if(m_serving) {
         lock_t l(m_mutex);
         m_recv_history.emplace_back(mes);
     }
-    endRecvRequest();
+
+    RespondText(response, "ok");
 }
 
-void Server::recvFence(std::istream & is)
+void Server::recvFence(HTTPServerRequest &request, HTTPServerResponse &response)
 {
+    auto& is = request.stream();
+
     auto mes = std::shared_ptr<FenceMessage>(new FenceMessage());
     mes->deserialize(is);
 
@@ -112,6 +134,34 @@ void Server::recvFence(std::istream & is)
         lock_t l(m_mutex);
         m_recv_history.emplace_back(mes);
     }
+
+    RespondText(response, "ok");
+}
+
+void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
+{
+    auto& is = request.stream();
+
+    auto mes = std::shared_ptr<TextMessage>(new TextMessage());
+
+    if (request.getMethod() == HTTPServerRequest::HTTP_GET) {
+        auto& uri = request.getURI();
+        auto pos = uri.find("t=");
+        if (pos != std::string::npos) {
+            Poco::URI::decode(&uri[pos + 2], mes->text, true);
+        }
+    }
+    else if (request.getMethod() == HTTPServerRequest::HTTP_PUT) {
+        mes->text.resize(request.getContentLength());
+        is.read(&mes->text[0], mes->text.size());
+    }
+
+    if (m_serving && !mes->text.empty()) {
+        lock_t l(m_mutex);
+        m_recv_history.emplace_back(mes);
+    }
+
+    RespondText(response, "ok");
 }
 
 int Server::processMessages(const MessageHandler& handler)
@@ -135,6 +185,9 @@ int Server::processMessages(const MessageHandler& handler)
         else if (dynamic_cast<FenceMessage*>(p.get())) {
             handler(MessageType::Fence, *p);
         }
+        else if (dynamic_cast<TextMessage*>(p.get())) {
+            handler(MessageType::Text, *p);
+        }
         else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
             m_current_screenshot_request = shot;
             handler(MessageType::Screenshot, *p);
@@ -147,34 +200,26 @@ int Server::processMessages(const MessageHandler& handler)
 }
 
 
-static void RespondText(HTTPServerResponse &response, const std::string& message)
-{
-    response.setContentType("text/plain");
-    response.setContentLength(message.size());
-    std::ostream &ostr = response.send();
-    ostr.write(message.c_str(), message.size());
-}
-
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     auto& uri = request.getURI();
     if (uri == "get") {
-        m_server->respondGet(request, response);
+        m_server->recvGet(request, response);
     }
     else if (uri == "set") {
-        m_server->recvSet(request.stream());
-        RespondText(response, "ok");
+        m_server->recvSet(request, response);
     }
     else if (uri == "delete") {
-        m_server->recvDelete(request.stream());
-        RespondText(response, "ok");
+        m_server->recvDelete(request, response);
     }
     else if (uri == "fence") {
-        m_server->recvFence(request.stream());
-        RespondText(response, "ok");
+        m_server->recvFence(request, response);
     }
-    else if (uri == "/screenshot") {
-        m_server->respondScreenshot(request, response);
+    else if (uri.find("/text") != std::string::npos) {
+        m_server->recvText(request, response);
+    }
+    else if (uri.find("/screenshot") != std::string::npos) {
+        m_server->recvScreenshot(request, response);
     }
     else {
         response.setStatusAndReason(HTTPResponse::HTTP_NOT_FOUND);
@@ -291,7 +336,7 @@ void Server::setScrrenshotFilePath(const std::string path)
     }
 }
 
-void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response)
+void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     auto& is = request.stream();
     auto *data = new GetMessage();
@@ -337,7 +382,7 @@ void Server::respondGet(HTTPServerRequest &request, HTTPServerResponse &response
     }
 }
 
-void Server::respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response)
+void Server::recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response)
 {
     auto& is = request.stream();
     auto *data = new ScreenshotMessage();

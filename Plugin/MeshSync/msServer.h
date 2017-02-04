@@ -47,11 +47,20 @@ public:
     Scene* getHostScene();
     int beginRecvRequest();
     int endRecvRequest();
-    void recvDelete(std::istream& is);
-    void recvFence(std::istream& is);
-    void recvSet(std::istream& is);
-    void respondGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void respondScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void pushMessage(Message *v);
+    void recvDelete(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void recvFence(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void recvText(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void recvSet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void recvGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+
+    struct RecvRequestScope
+    {
+        RecvRequestScope(Server *v) : m_server(v) { m_server->beginRecvRequest(); }
+        ~RecvRequestScope() { m_server->endRecvRequest(); }
+        Server *m_server = nullptr;
+    };
 
 private:
     using GetPtr    = std::shared_ptr<GetMessage>;
@@ -60,7 +69,6 @@ private:
     using HostMeshes = std::vector<MeshPtr>;
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
-
     using MessagePtr = std::shared_ptr<Message>;
     using History = std::vector<MessagePtr>;
 

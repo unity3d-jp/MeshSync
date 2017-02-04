@@ -151,6 +151,15 @@ msAPI int msDeleteGetID(ms::DeleteMessage *_this, int i)
     return _this->targets[i].id;
 }
 
+msAPI const char* msTextGetText(ms::TextMessage *_text)
+{
+    return _text->text.c_str();
+}
+msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_text)
+{
+    return _text->type;
+}
+
 
 msAPI ms::Mesh* msMeshCreate()
 {
