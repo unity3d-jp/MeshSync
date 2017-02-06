@@ -225,6 +225,11 @@ namespace UTJ
                 get { return (flags & (1 << 9)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 9)); }
             }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 10)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 10)); }
+            }
         };
 
         public struct TRS
@@ -412,6 +417,7 @@ namespace UTJ
                     msMeshWriteIndices(_this, value, value.Length);
                 }
             }
+
             public TRS trs
             {
                 get
@@ -425,6 +431,7 @@ namespace UTJ
                     msMeshSetTransform(_this, ref value);
                 }
             }
+
             public Matrix4x4 local2world { set { msMeshSetLocal2World(_this, ref value); } }
             public Matrix4x4 world2local { set { msMeshSetWorld2Local(_this, ref value); } }
 

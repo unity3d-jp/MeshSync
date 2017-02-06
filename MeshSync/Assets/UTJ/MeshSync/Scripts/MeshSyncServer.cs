@@ -59,17 +59,22 @@ namespace UTJ
         }
         void DeserializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values)
         {
-            if (keys != null && values != null && keys.Length == values.Length)
+            try
             {
-                int n = keys.Length;
-                for (int i = 0; i < n; ++i)
+                if (keys != null && values != null && keys.Length == values.Length)
                 {
-                    dic[keys[i]] = values[i];
+                    int n = keys.Length;
+                    for (int i = 0; i < n; ++i)
+                    {
+                        dic[keys[i]] = values[i];
+                    }
                 }
+            }
+            catch (Exception)
+            {
             }
             keys = null;
             values = null;
-
         }
 
         public void OnBeforeSerialize()
@@ -385,7 +390,7 @@ namespace UTJ
             var flags = data.flags;
 
             // update transform
-            {
+            if(data.flags.applyTRS) {
                 var trs = data.trs;
                 target.localPosition = trs.position;
                 target.localRotation = trs.rotation;
@@ -772,18 +777,17 @@ namespace UTJ
             {
                 dst.id = GetObjectlID(renderer.gameObject);
                 var trans = renderer.GetComponent<Transform>();
-                var parent = trans.parent;
                 if (mes.flags.getTransform)
                 {
-                    var tdata = default(TRS);
-                    tdata.position = trans.localPosition;
-                    tdata.rotation = trans.localRotation;
-                    tdata.rotation_eularZXY = trans.localEulerAngles;
-                    tdata.scale = trans.localScale;
-                    dst.trs = tdata;
+                    var trs = default(TRS);
+                    trs.position = trans.localPosition;
+                    trs.rotation = trans.localRotation;
+                    trs.rotation_eularZXY = trans.localEulerAngles;
+                    trs.scale = trans.localScale;
+                    dst.trs = trs;
                 }
                 dst.local2world = trans.localToWorldMatrix;
-                dst.world2local = parent != null ? parent.worldToLocalMatrix : Matrix4x4.identity;
+                dst.world2local = trans.worldToLocalMatrix;
 
                 if (!m_hostMeshes.ContainsKey(dst.id))
                 {

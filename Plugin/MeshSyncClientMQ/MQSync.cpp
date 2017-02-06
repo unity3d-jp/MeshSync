@@ -212,28 +212,31 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         });
 
         // detect deleted objects and send delete message
-        for (auto& e : m_exist_record) {
-            e.second = false;
-        }
-        for (auto& rel : m_relations) {
-            if (!rel.data->path.empty()) {
-                m_exist_record[rel.data->path] = true;
+        {
+            for (auto& e : m_exist_record) {
+                e.second = false;
             }
-        }
-        ms::DeleteMessage del;
-        for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
-            if (!i->second) {
-                int id = 0;
-                ExtractID(i->first.c_str(), id);
-                del.targets.push_back({ i->first , id });
-                m_exist_record.erase(i++);
+            for (auto& rel : m_relations) {
+                if (!rel.data->path.empty()) {
+                    m_exist_record[rel.data->path] = true;
+                }
             }
-            else {
-                ++i;
+
+            ms::DeleteMessage del;
+            for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
+                if (!i->second) {
+                    int id = 0;
+                    ExtractID(i->first.c_str(), id);
+                    del.targets.push_back({ i->first , id });
+                    m_exist_record.erase(i++);
+                }
+                else {
+                    ++i;
+                }
             }
-        }
-        if (!del.targets.empty()) {
-            client.send(del);
+            if (!del.targets.empty()) {
+                client.send(del);
+            }
         }
 
         // notify scene end
@@ -328,13 +331,14 @@ MQObject MQSync::createObject(const ms::Mesh& data, const char *name)
 
     ret->SetName(name);
 
-    ret->SetTranslation((MQPoint&)(data.transform.position));
-    ret->SetScaling((MQPoint&)data.transform.scale);
-    auto rotation = MQAngle(
-        data.transform.rotation_eularZXY.y,
-        data.transform.rotation_eularZXY.x,
-        data.transform.rotation_eularZXY.z);
-    ret->SetRotation(rotation);
+    //// gave up to import transform
+    //ret->SetTranslation((MQPoint&)(data.transform.position));
+    //ret->SetScaling((MQPoint&)data.transform.scale);
+    //auto rotation = MQAngle(
+    //    data.transform.rotation_eularZXY.y,
+    //    data.transform.rotation_eularZXY.x,
+    //    data.transform.rotation_eularZXY.z);
+    //ret->SetRotation(rotation);
     ret->SetSmoothAngle(data.refine_settings.smooth_angle);
 
     for (auto& p : data.points) {
@@ -396,6 +400,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         auto eular = float3{ ang.pitch, ang.head, ang.bank } * mu::Deg2Rad;
         quatf rot = rotateZXY(eular);
 
+        dst.flags.apply_trs = 1;
         dst.transform.position = (const float3&)obj->GetTranslation();
         dst.transform.rotation = rot;
         dst.transform.scale = (const float3&)obj->GetScaling();
@@ -405,7 +410,8 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
-            dst.refine_settings.world2local = ite->second->refine_settings.world2local * dst.refine_settings.world2local;
+            dst.refine_settings.world2local = ite->second->refine_settings.world2local;
+            dst.flags.apply_trs = 0;
         }
     }
 

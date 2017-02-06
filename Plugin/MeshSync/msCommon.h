@@ -60,7 +60,6 @@ class Transform : public SceneEntity
 using super = SceneEntity;
 public:
     TRS transform;
-    TRS transform_global;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
@@ -97,6 +96,7 @@ struct MeshDataFlags
     uint32_t has_materialIDs : 1;
     uint32_t has_bones : 1;
     uint32_t has_npoints : 1;
+    uint32_t apply_trs : 1;
 };
 
 struct MeshRefineFlags

@@ -441,20 +441,17 @@ uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += ssize(transform);
-    ret += ssize(transform_global);
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, transform);
-    write(os, transform_global);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, transform);
-    read(is, transform_global);
 }
 
 
@@ -583,9 +580,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.apply_local2world) {
         applyTransform(mrs.local2world);
     }
-    if (mrs.flags.apply_world2local) {
-        applyTransform(mrs.world2local);
-    }
     if (mrs.flags.mirror_x) {
         float3 plane_n = { 1.0f, 0.0f, 0.0f };
         float plane_d = 0.0f;
@@ -610,6 +604,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         mu::InvertX(npoints.data(), npoints.size());
         transform.position.x *= -1.0f;
         transform.rotation = swap_handedness(transform.rotation);
+    }
+    if (mrs.flags.apply_world2local) {
+        applyTransform(mrs.world2local);
     }
 
     auto& refiner = g_refiner.local();

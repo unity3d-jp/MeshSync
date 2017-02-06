@@ -286,6 +286,7 @@ msAPI void msMeshSetTransform(ms::Mesh *_this, const ms::TRS *v)
 {
     _this->transform = *v;
 }
+
 msAPI int msMeshGetNumSubmeshes(ms::Mesh *_this)
 {
     return (int)_this->submeshes.size();
