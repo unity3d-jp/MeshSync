@@ -10,11 +10,11 @@ It is compatible with Unity 5.4 and above (64-bit Windows) and Metasequoia versi
 
 ## How to Use
 - In Unity
- - Import [this package](https: //github.com/unity3d-jp/MeshSync/releases/download/0.7.3/MeshSync.unitypackage) to your project.
+ - Import [this package](https: //github.com/unity3d-jp/MeshSync/releases/download/0.7.4/MeshSync.unitypackage) to your project.
  - Create a server object by going to the menu and selecting GameObject, then MeshSync, and Create Server.
  - This server object will take care of syncing. You cannot sync without this in the scene.
 - In Metasequoia
- - Install [this plugin](https: //github.com/unity3d-jp/MeshSync/releases/download/0.7.3/UnityMeshSync.for.Metasequoia.zip ). The plugin type is STATION.
+ - Install [this plugin](https: //github.com/unity3d-jp/MeshSync/releases/download/0.7.4/UnityMeshSync.for.Metasequoia.zip ). The plugin type is STATION.
  Open Unity Mesh Sync from the panel, and select Auto Sync.
  Edits are automatically reflected in Unity while Auto Sync is enabled. You can manually reflect edits by pressing the Manual Sync button, even if Auto Sync is disabled.
   - Press Import Unity Scene to import the scene you currently have open in Unity.
@@ -33,8 +33,8 @@ You can sync even if you have two separate machines running Metasequoia and Unit
 - There are also some limits to editing a Skinned Mesh in a scene imported from Unity. You cannot edit the weight or make changes to the topology. The tool can only reflect the movement of vertices and edits to normal vectors (explained below).
 
 ### Transcribing Normal Vectors
- Only normal vectors are transcribed in Unity when an object in Metasequoia with ì:normalî in the name is recognized as an object for transcribing normal vectors.  
- For example, if you have objects named ìHogeî and ìHoge:normalî in Metasequoia, only ìHogeî will be generated in Unity, and its normal vectors will become a part of ìHoge:normalî in Metasequoia.  
+ Only normal vectors are transcribed in Unity when an object in Metasequoia with ‚Äú:normal‚Äù in the name is recognized as an object for transcribing normal vectors.  
+ For example, if you have objects named ‚ÄúHoge‚Äù and ‚ÄúHoge:normal‚Äù in Metasequoia, only ‚ÄúHoge‚Äù will be generated in Unity, and its normal vectors will become a part of ‚ÄúHoge:normal‚Äù in Metasequoia.  
  For Objects for normal vectors, the corresponding objects and the topology need to be the same (there needs to be an equal number of vertices and indices). Otherwise, they will be ignored.  
 ! [normal editing](doc/normal_editing.png)
 
