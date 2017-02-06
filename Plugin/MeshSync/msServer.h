@@ -28,9 +28,7 @@ public:
 
     bool start();
     void stop();
-
     ServerSettings& getSettings();
-
 
     using MessageHandler = std::function<void(MessageType type, const Message& data)>;
     int processMessages(const MessageHandler& handler);
@@ -48,10 +46,10 @@ public:
     Scene* getHostScene();
     void queueMessage(const MessagePtr& v);
     void queueVersionNotMatchedMessage();
+    void recvSet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvDelete(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvFence(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvText(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvSet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 

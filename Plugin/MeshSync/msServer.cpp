@@ -106,6 +106,143 @@ HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServer
 }
 
 
+
+
+Server::Server(const ServerSettings& settings)
+    : m_settings(settings)
+{
+}
+
+Server::~Server()
+{
+    stop();
+}
+
+bool Server::start()
+{
+    if (!m_server) {
+        auto* params = new Poco::Net::HTTPServerParams;
+        params->setMaxQueued(m_settings.max_queue);
+        params->setMaxThreads(m_settings.max_threads);
+        params->setThreadIdleTime(Poco::Timespan(3, 0));
+
+        try {
+            Poco::Net::ServerSocket svs(m_settings.port);
+            m_server.reset(new Poco::Net::HTTPServer(new RequestHandlerFactory(this), svs, params));
+            m_server->start();
+        }
+        catch (Poco::IOException &e) {
+            printf("%s\n", e.what());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Server::stop()
+{
+    m_server.reset();
+}
+
+ServerSettings& Server::getSettings()
+{
+    return m_settings;
+}
+
+int Server::processMessages(const MessageHandler& handler)
+{
+    lock_t l(m_mutex);
+    for (auto& p : m_recv_history) {
+        if (auto *get = dynamic_cast<GetMessage*>(p.get())) {
+            m_current_get_request = get;
+            handler(MessageType::Get, *p);
+            m_current_get_request = nullptr;
+        }
+        else if (auto *post = dynamic_cast<SetMessage*>(p.get())) {
+            handler(MessageType::Set, *post);
+        }
+        else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
+            handler(MessageType::Delete, *p);
+            for (auto& id : del->targets) {
+                m_client_meshes.erase(id.path);
+            }
+        }
+        else if (dynamic_cast<FenceMessage*>(p.get())) {
+            handler(MessageType::Fence, *p);
+        }
+        else if (dynamic_cast<TextMessage*>(p.get())) {
+            handler(MessageType::Text, *p);
+        }
+        else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
+            m_current_screenshot_request = shot;
+            handler(MessageType::Screenshot, *p);
+        }
+    }
+
+    int ret = (int)m_recv_history.size();
+    m_recv_history.clear();
+    return ret;
+}
+
+void Server::setServe(bool v)
+{
+    m_serving = v;
+}
+bool Server::isServing() const
+{
+    return m_serving;
+}
+
+void Server::beginServe()
+{
+    if (!m_current_get_request) {
+        msLogError("Server::beginServeMesh(): m_current_get_request is null\n");
+        return;
+    }
+    m_host_scene.reset(new Scene());
+
+    auto& request = *m_current_get_request;
+    request.refine_settings.scale_factor = request.scene_settings.scale_factor;
+    request.refine_settings.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
+    m_host_scene->settings = request.scene_settings;
+}
+
+void Server::endServe()
+{
+    if (!m_current_get_request) {
+        msLogError("Server::endServeMesh(): m_current_get_request is null\n");
+        return;
+    }
+    if (!m_host_scene) {
+        msLogError("Server::endServeMesh(): m_host_scene is null\n");
+        return;
+    }
+
+    auto& request = *m_current_get_request;
+    concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
+        auto& mesh = *p;
+        mesh.flags.has_refine_settings = 1;
+        mesh.refine_settings.flags = request.refine_settings.flags;
+        mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
+        mesh.refine_settings.smooth_angle = 180.0f;
+        mesh.refine(mesh.refine_settings);
+    });
+    if (request.wait_flag) {
+        *request.wait_flag = 0;
+    }
+}
+
+void Server::setScrrenshotFilePath(const std::string path)
+{
+    if (m_current_screenshot_request) {
+        m_screenshot_file_path = path;
+        if (m_current_screenshot_request->wait_flag) {
+            *m_current_screenshot_request->wait_flag = 0;
+        }
+    }
+}
+
 void Server::queueVersionNotMatchedMessage()
 {
     lock_t l(m_mutex);
@@ -113,6 +250,22 @@ void Server::queueVersionNotMatchedMessage()
     txt->type = TextMessage::Type::Error;
     txt->text = "protocol version not matched";
     m_recv_history.emplace_back(txt);
+}
+
+GetMessage* Server::getCurrentGetRequest()
+{
+    return m_current_get_request;
+}
+
+Scene* Server::getHostScene()
+{
+    return m_host_scene.get();
+}
+
+void Server::queueMessage(const MessagePtr& v)
+{
+    lock_t l(m_mutex);
+    m_recv_history.push_back(v);
 }
 
 
@@ -146,22 +299,6 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         m_recv_history.emplace_back(mes);
     }
     RespondText(response, "ok");
-}
-
-GetMessage* Server::getCurrentGetRequest()
-{
-    return m_current_get_request;
-}
-
-Scene * Server::getHostScene()
-{
-    return m_host_scene.get();
-}
-
-void Server::queueMessage(const MessagePtr& v)
-{
-    lock_t l(m_mutex);
-    m_recv_history.push_back(v);
 }
 
 void Server::recvDelete(HTTPServerRequest &request, HTTPServerResponse &response)
@@ -244,145 +381,6 @@ void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
     }
     else {
         RespondText(response, "");
-    }
-}
-
-int Server::processMessages(const MessageHandler& handler)
-{
-    lock_t l(m_mutex);
-    for (auto& p : m_recv_history) {
-        if (auto *get = dynamic_cast<GetMessage*>(p.get())) {
-            m_current_get_request = get;
-            handler(MessageType::Get, *p);
-            m_current_get_request = nullptr;
-        }
-        else if (auto *post = dynamic_cast<SetMessage*>(p.get())) {
-            handler(MessageType::Post, *post);
-        }
-        else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
-            handler(MessageType::Delete, *p);
-            for (auto& id : del->targets) {
-                m_client_meshes.erase(id.path);
-            }
-        }
-        else if (dynamic_cast<FenceMessage*>(p.get())) {
-            handler(MessageType::Fence, *p);
-        }
-        else if (dynamic_cast<TextMessage*>(p.get())) {
-            handler(MessageType::Text, *p);
-        }
-        else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
-            m_current_screenshot_request = shot;
-            handler(MessageType::Screenshot, *p);
-        }
-    }
-
-    int ret = (int)m_recv_history.size();
-    m_recv_history.clear();
-    return ret;
-}
-
-
-
-
-Server::Server(const ServerSettings& settings)
-    : m_settings(settings)
-{
-}
-
-Server::~Server()
-{
-    stop();
-}
-
-bool Server::start()
-{
-    if (!m_server) {
-        auto* params = new Poco::Net::HTTPServerParams;
-        params->setMaxQueued(m_settings.max_queue);
-        params->setMaxThreads(m_settings.max_threads);
-        params->setThreadIdleTime(Poco::Timespan(3, 0));
-
-        try {
-            Poco::Net::ServerSocket svs(m_settings.port);
-            m_server.reset(new Poco::Net::HTTPServer(new RequestHandlerFactory(this), svs, params));
-            m_server->start();
-        }
-        catch (Poco::IOException &e) {
-            printf("%s\n", e.what());
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void Server::stop()
-{
-    m_server.reset();
-}
-
-ServerSettings& Server::getSettings()
-{
-    return m_settings;
-}
-
-
-void Server::setServe(bool v)
-{
-    m_serving = v;
-}
-bool Server::isServing() const
-{
-    return m_serving;
-}
-
-void Server::beginServe()
-{
-    if (!m_current_get_request) {
-        msLogError("Server::beginServeMesh(): m_current_get_request is null\n");
-        return;
-    }
-    m_host_scene.reset(new Scene());
-
-    auto& request = *m_current_get_request;
-    request.refine_settings.scale_factor = request.scene_settings.scale_factor;
-    request.refine_settings.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
-    m_host_scene->settings = request.scene_settings;
-}
-void Server::endServe()
-{
-    if (!m_current_get_request) {
-        msLogError("Server::endServeMesh(): m_current_get_request is null\n");
-        return;
-    }
-    if (!m_host_scene) {
-        msLogError("Server::endServeMesh(): m_host_scene is null\n");
-        return;
-    }
-
-    auto& request = *m_current_get_request;
-    concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
-        auto& mesh = *p;
-        mesh.flags.has_refine_settings = 1;
-        mesh.refine_settings.flags = request.refine_settings.flags;
-        mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
-        mesh.refine_settings.smooth_angle = 180.0f;
-        mesh.refine(mesh.refine_settings);
-    });
-    if (request.wait_flag) {
-        *request.wait_flag = 0;
-    }
-}
-
-
-void Server::setScrrenshotFilePath(const std::string path)
-{
-    if (m_current_screenshot_request) {
-        m_screenshot_file_path = path;
-        if (m_current_screenshot_request->wait_flag) {
-            *m_current_screenshot_request->wait_flag = 0;
-        }
     }
 }
 

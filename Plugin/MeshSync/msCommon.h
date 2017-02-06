@@ -236,7 +236,7 @@ enum class MessageType
 {
     Unknown,
     Get,
-    Post,
+    Set,
     Delete,
     Fence,
     Text,
