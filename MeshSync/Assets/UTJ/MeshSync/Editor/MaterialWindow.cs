@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace UTJ
 {
-    class MQMaterialWindow : EditorWindow
+    class MaterialWindow : EditorWindow
     {
         public static void Open(MeshSyncServer server)
         {
-            var window = (MQMaterialWindow)EditorWindow.GetWindow(typeof(MQMaterialWindow));
-            window.titleContent = new GUIContent("MQ Materials");
+            var window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
+            window.titleContent = new GUIContent("Material List");
             window.m_server = server;
             window.Show();
         }
