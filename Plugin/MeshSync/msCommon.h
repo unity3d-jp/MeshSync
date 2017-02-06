@@ -260,6 +260,7 @@ public:
     virtual void serialize(std::ostream& os) const;
     virtual bool deserialize(std::istream& is);
 };
+using MessagePtr = std::shared_ptr<Message>;
 
 
 struct GetFlags
@@ -335,6 +336,15 @@ class FenceMessage : public Message
 {
 using super = Message;
 public:
+    enum class FenceType
+    {
+        Unknown,
+        SceneBegin,
+        SceneEnd,
+    };
+
+    FenceType type = FenceType::Unknown;
+
     ~FenceMessage() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;

@@ -14,6 +14,29 @@ static void RespondText(HTTPServerResponse &response, const std::string& message
     ostr.write(message.c_str(), message.size());
 }
 
+static void RespondTextForm(HTTPServerResponse &response, const std::string& message = "")
+{
+    std::string body =
+        "<!DOCTYPE html>"
+        "<html>"
+            "<meta charset=\"UTF-8\">"
+            "<title>MeshSync Server</title>"
+            "<body>";
+    body += message;
+    body +=
+                "<form action=\"/text\" method=\"post\">"
+                    "Message: <input type=\"text\" name=\"t\"><br>"
+                    "<input type=\"submit\" value=\"Submit\">"
+                "</form>"
+            "</body>"
+        "</html>";
+
+    response.setContentType("text/html");
+    response.setContentLength(body.size());
+    std::ostream &ostr = response.send();
+    ostr.write(body.c_str(), body.size());
+}
+
 
 class RequestHandler : public HTTPRequestHandler
 {
@@ -36,42 +59,92 @@ private:
 };
 
 
-
-
 RequestHandler::RequestHandler(Server *server)
     : m_server(server)
 {
 }
 
-void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
+void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    auto& is = request.stream();
-
-    RecvRequestScope scope(this);
-    auto mes = std::shared_ptr<SetMessage>(new SetMessage());
-    mes->deserialize(is);
-    if (m_serving) {
-        concurrency::parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [&mes](MeshPtr& pmesh) {
-            auto& mesh = *pmesh;
-            mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-            mesh.refine_settings.flags.swap_handedness = mes->scene.settings.handedness == Handedness::Right;
-            mesh.refine_settings.flags.triangulate = 1;
-            mesh.refine_settings.flags.split = 1;
-            mesh.refine_settings.flags.optimize_topology = 1;
-            mesh.refine_settings.split_unit = 65000;
-            mesh.refine(mesh.refine_settings);
-        });
-
-        {
-            lock_t l(m_mutex);
-            for (auto& pmesh : mes->scene.meshes) {
-                auto& dst = m_client_meshes[pmesh->path];
-                dst = pmesh;
-            }
-            m_recv_history.emplace_back(mes);
-        }
+    if (!m_server->isServing()) {
+        RespondText(response, "");
+        return;
     }
 
+    auto& uri = request.getURI();
+    if (uri == "get") {
+        m_server->recvGet(request, response);
+    }
+    else if (uri == "set") {
+        m_server->recvSet(request, response);
+    }
+    else if (uri == "delete") {
+        m_server->recvDelete(request, response);
+    }
+    else if (uri == "fence") {
+        m_server->recvFence(request, response);
+    }
+    else if (uri == "text" || uri.find("/text") != std::string::npos) {
+        m_server->recvText(request, response);
+    }
+    else if (uri.find("/screenshot") != std::string::npos) {
+        m_server->recvScreenshot(request, response);
+    }
+    else {
+        RespondTextForm(response);
+    }
+}
+
+RequestHandlerFactory::RequestHandlerFactory(Server *server)
+    : m_server(server)
+{
+}
+
+HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest&)
+{
+    return new RequestHandler(m_server);
+}
+
+
+void Server::queueVersionNotMatchedMessage()
+{
+    lock_t l(m_mutex);
+    auto txt = new TextMessage();
+    txt->type = TextMessage::Type::Error;
+    txt->text = "protocol version not matched";
+    m_recv_history.emplace_back(txt);
+}
+
+
+void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
+{
+    RecvSceneScope scope(this);
+
+    auto mes = std::shared_ptr<SetMessage>(new SetMessage());
+    if (!mes->deserialize(request.stream())) {
+        queueVersionNotMatchedMessage();
+        RespondText(response, "");
+        return;
+    }
+
+    concurrency::parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [&mes](MeshPtr& pmesh) {
+        auto& mesh = *pmesh;
+        mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
+        mesh.refine_settings.flags.swap_handedness = mes->scene.settings.handedness == Handedness::Right;
+        mesh.refine_settings.flags.triangulate = 1;
+        mesh.refine_settings.flags.split = 1;
+        mesh.refine_settings.flags.optimize_topology = 1;
+        mesh.refine_settings.split_unit = 65000;
+        mesh.refine(mesh.refine_settings);
+    });
+    {
+        lock_t l(m_mutex);
+        for (auto& pmesh : mes->scene.meshes) {
+            auto& dst = m_client_meshes[pmesh->path];
+            dst = pmesh;
+        }
+        m_recv_history.emplace_back(mes);
+    }
     RespondText(response, "ok");
 }
 
@@ -85,83 +158,93 @@ Scene * Server::getHostScene()
     return m_host_scene.get();
 }
 
-int Server::beginRecvRequest()
-{
-    return m_request_count++;
-}
-int Server::endRecvRequest()
-{
-    return --m_request_count;
-}
-
-void Server::pushMessage(Message *v)
+void Server::queueMessage(const MessagePtr& v)
 {
     lock_t l(m_mutex);
-    m_recv_history.emplace_back(v);
+    m_recv_history.push_back(v);
 }
 
 void Server::recvDelete(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    auto& is = request.stream();
+    RecvSceneScope scope(this);
 
-    RecvRequestScope scope(this);
     auto mes = std::shared_ptr<DeleteMessage>(new DeleteMessage());
-    mes->deserialize(is);
-    if(m_serving) {
-        lock_t l(m_mutex);
-        m_recv_history.emplace_back(mes);
+    if (!mes->deserialize(request.stream())) {
+        queueVersionNotMatchedMessage();
+        RespondText(response, "");
+        return;
     }
-
+    queueMessage(mes);
     RespondText(response, "ok");
 }
 
 void Server::recvFence(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    auto& is = request.stream();
-
     auto mes = std::shared_ptr<FenceMessage>(new FenceMessage());
-    mes->deserialize(is);
+    if (!mes->deserialize(request.stream())) {
+        queueVersionNotMatchedMessage();
+        RespondText(response, "");
+        return;
+    }
 
-    // wait for complete (or timeout) queuing set and delete messages
-    for (int i = 0; i < 500; ++i) {
-        if (m_request_count.load() == 0) {
-            break;
+    if (mes->type == FenceMessage::FenceType::SceneBegin) {
+        ++m_request_count;
+    }
+    else if (mes->type == FenceMessage::FenceType::SceneEnd) {
+        --m_request_count;
+
+        // wait for complete (or timeout) queuing set and delete messages
+        for (int i = 0; i < 500; ++i) {
+            if (m_request_count.load() == 0) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-
-    if (m_serving) {
-        lock_t l(m_mutex);
-        m_recv_history.emplace_back(mes);
-    }
-
+    queueMessage(mes);
     RespondText(response, "ok");
 }
 
 void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    auto& is = request.stream();
+    bool respond_form = false;
 
     auto mes = std::shared_ptr<TextMessage>(new TextMessage());
-
-    if (request.getMethod() == HTTPServerRequest::HTTP_GET) {
+    if (request.getURI() == "text") {
+        mes->deserialize(request.stream());
+    }
+    else if (request.getMethod() == HTTPServerRequest::HTTP_GET) {
         auto& uri = request.getURI();
         auto pos = uri.find("t=");
         if (pos != std::string::npos) {
             Poco::URI::decode(&uri[pos + 2], mes->text, true);
         }
+        respond_form = true;
     }
-    else if (request.getMethod() == HTTPServerRequest::HTTP_PUT) {
-        mes->text.resize(request.getContentLength());
-        is.read(&mes->text[0], mes->text.size());
+    else if (request.getMethod() == HTTPServerRequest::HTTP_POST) {
+        std::string data;
+        data.resize((size_t)request.getContentLength());
+        request.stream().read(&data[0], data.size());
+
+        auto pos = data.find("t=");
+        if (pos != std::string::npos) {
+            Poco::URI::decode(&data[pos + 2], mes->text, true);
+        }
+        else {
+            mes->text = data;
+        }
+        respond_form = true;
     }
 
-    if (m_serving && !mes->text.empty()) {
-        lock_t l(m_mutex);
-        m_recv_history.emplace_back(mes);
+    if (!mes->text.empty()) {
+        queueMessage(mes);
     }
-
-    RespondText(response, "ok");
+    if (respond_form) {
+        RespondTextForm(response);
+    }
+    else {
+        RespondText(response, "");
+    }
 }
 
 int Server::processMessages(const MessageHandler& handler)
@@ -199,43 +282,6 @@ int Server::processMessages(const MessageHandler& handler)
     return ret;
 }
 
-
-void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
-{
-    auto& uri = request.getURI();
-    if (uri == "get") {
-        m_server->recvGet(request, response);
-    }
-    else if (uri == "set") {
-        m_server->recvSet(request, response);
-    }
-    else if (uri == "delete") {
-        m_server->recvDelete(request, response);
-    }
-    else if (uri == "fence") {
-        m_server->recvFence(request, response);
-    }
-    else if (uri.find("/text") != std::string::npos) {
-        m_server->recvText(request, response);
-    }
-    else if (uri.find("/screenshot") != std::string::npos) {
-        m_server->recvScreenshot(request, response);
-    }
-    else {
-        response.setStatusAndReason(HTTPResponse::HTTP_NOT_FOUND);
-        response.send();
-    }
-}
-
-RequestHandlerFactory::RequestHandlerFactory(Server *server)
-    : m_server(server)
-{
-}
-
-HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest&)
-{
-    return new RequestHandler(m_server);
-}
 
 
 
@@ -285,6 +331,10 @@ ServerSettings& Server::getSettings()
 void Server::setServe(bool v)
 {
     m_serving = v;
+}
+bool Server::isServing() const
+{
+    return m_serving;
 }
 
 void Server::beginServe()
@@ -338,31 +388,20 @@ void Server::setScrrenshotFilePath(const std::string path)
 
 void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    auto& is = request.stream();
-    auto *data = new GetMessage();
-    data->deserialize(is);
-
-    response.setContentType("application/octet-stream");
-    if (!m_serving) {
-        response.setContentLength(4);
-        auto& os = response.send();
-        int num = 0;
-        os.write((char*)&num, 4);
+    auto mes = std::shared_ptr<GetMessage>(new GetMessage());
+    if (!mes->deserialize(request.stream())) {
+        queueVersionNotMatchedMessage();
+        RespondText(response, "");
         return;
     }
-
-    std::shared_ptr<std::atomic_int> wait_flag(new std::atomic_int(1));
-    data->wait_flag = wait_flag;
+    mes->wait_flag.reset(new std::atomic_int(1));
 
     // queue request
-    {
-        lock_t l(m_mutex);
-        m_recv_history.emplace_back(data);
-    }
+    queueMessage(mes);
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
-        if (*wait_flag == 0) {
+        if (*mes->wait_flag == 0) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -372,6 +411,7 @@ void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
     {
         lock_t l(m_mutex);
         if (m_host_scene) {
+            response.setContentType("application/octet-stream");
             response.setContentLength(m_host_scene->getSerializeSize());
             m_host_scene->serialize(response.send());
         }
@@ -382,30 +422,18 @@ void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
     }
 }
 
-void Server::recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response)
+void Server::recvScreenshot(HTTPServerRequest &request, HTTPServerResponse &response)
 {
-    auto& is = request.stream();
-    auto *data = new ScreenshotMessage();
-    data->deserialize(is);
-
-    if (!m_serving) {
-        response.setContentLength(0);
-        return;
-    }
-
-
-    std::shared_ptr<std::atomic_int> wait_flag(new std::atomic_int(1));
-    data->wait_flag = wait_flag;
+    auto mes = std::shared_ptr<ScreenshotMessage>(new ScreenshotMessage());
+    mes->deserialize(request.stream());
+    mes->wait_flag.reset(new std::atomic_int(1));
 
     // queue request
-    {
-        lock_t l(m_mutex);
-        m_recv_history.emplace_back(data);
-    }
+    queueMessage(mes);
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
-        if (*wait_flag == 0) {
+        if (*mes->wait_flag == 0) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

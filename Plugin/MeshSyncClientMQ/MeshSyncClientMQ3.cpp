@@ -157,6 +157,7 @@ BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
+    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -165,7 +166,6 @@ void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnObjectModified(MQDocument doc)
 {
-    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -182,7 +182,6 @@ void MeshSyncClientPlugin::OnObjectSelected(MQDocument doc)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateObjectList(MQDocument doc)
 {
-    m_sync.sendMesh(doc);
 }
 
 //---------------------------------------------------------------------------

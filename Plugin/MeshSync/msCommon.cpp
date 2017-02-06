@@ -348,9 +348,22 @@ bool DeleteMessage::deserialize(std::istream& is)
 
 
 FenceMessage::~FenceMessage() {}
-uint32_t FenceMessage::getSerializeSize() const { return super::getSerializeSize(); }
-void FenceMessage::serialize(std::ostream& os) const { super::serialize(os); }
-bool FenceMessage::deserialize(std::istream& is) { return super::deserialize(is); }
+uint32_t FenceMessage::getSerializeSize() const
+{
+    return super::getSerializeSize()
+        + ssize(type);
+}
+void FenceMessage::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+    write(os, type);
+}
+bool FenceMessage::deserialize(std::istream& is)
+{
+    if (!super::deserialize(is)) { return false; }
+    read(is, type);
+    return true;
+}
 
 TextMessage::~TextMessage() {}
 uint32_t TextMessage::getSerializeSize() const

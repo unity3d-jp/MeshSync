@@ -36,6 +36,7 @@ public:
     int processMessages(const MessageHandler& handler);
 
     void setServe(bool v);
+    bool isServing() const;
 
     void beginServe();
     void endServe();
@@ -45,9 +46,8 @@ public:
 public:
     GetMessage* getCurrentGetRequest();
     Scene* getHostScene();
-    int beginRecvRequest();
-    int endRecvRequest();
-    void pushMessage(Message *v);
+    void queueMessage(const MessagePtr& v);
+    void queueVersionNotMatchedMessage();
     void recvDelete(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvFence(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvText(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
@@ -55,10 +55,10 @@ public:
     void recvGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
-    struct RecvRequestScope
+    struct RecvSceneScope
     {
-        RecvRequestScope(Server *v) : m_server(v) { m_server->beginRecvRequest(); }
-        ~RecvRequestScope() { m_server->endRecvRequest(); }
+        RecvSceneScope(Server *v) : m_server(v) { ++m_server->m_request_count; }
+        ~RecvSceneScope() { --m_server->m_request_count; }
         Server *m_server = nullptr;
     };
 
@@ -69,7 +69,6 @@ private:
     using HostMeshes = std::vector<MeshPtr>;
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
-    using MessagePtr = std::shared_ptr<Message>;
     using History = std::vector<MessagePtr>;
 
     bool m_serving = true;

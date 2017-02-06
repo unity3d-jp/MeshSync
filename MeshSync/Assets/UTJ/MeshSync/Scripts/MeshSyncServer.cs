@@ -147,7 +147,7 @@ namespace UTJ
                     OnRecvDelete((DeleteMessage)data);
                     break;
                 case MessageType.Fence:
-                    OnRecvFence(data);
+                    OnRecvFence((FenceMessage)data);
                     break;
                 case MessageType.Text:
                     OnRecvText((TextMessage)data);
@@ -216,9 +216,12 @@ namespace UTJ
             //Debug.Log("MeshSyncServer: Delete");
         }
 
-        void OnRecvFence(IntPtr mes)
+        void OnRecvFence(FenceMessage mes)
         {
-            SortObjects();
+            if(mes.type == FenceMessage.FenceType.SceneEnd)
+            {
+                SortObjects();
+            }
         }
 
         void OnRecvText(TextMessage mes)

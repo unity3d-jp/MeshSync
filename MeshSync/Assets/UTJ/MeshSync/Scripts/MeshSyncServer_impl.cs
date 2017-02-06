@@ -105,6 +105,29 @@ namespace UTJ
             public string GetPath(int i) { return S(msDeleteGetPath(_this, i)); }
             public int GetID(int i) { return msDeleteGetID(_this, i); }
         }
+        
+
+        public struct FenceMessage
+        {
+            public enum FenceType
+            {
+                Unknown,
+                SceneBegin,
+                SceneEnd,
+            }
+
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern FenceType msFenceGetType(IntPtr _this);
+
+            public static explicit operator FenceMessage(IntPtr v)
+            {
+                FenceMessage ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public FenceType type { get { return msFenceGetType(_this); } }
+        }
 
 
         public struct TextMessage

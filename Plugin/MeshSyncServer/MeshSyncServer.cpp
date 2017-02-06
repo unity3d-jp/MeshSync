@@ -151,13 +151,18 @@ msAPI int msDeleteGetID(ms::DeleteMessage *_this, int i)
     return _this->targets[i].id;
 }
 
-msAPI const char* msTextGetText(ms::TextMessage *_text)
+msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *_this)
 {
-    return _text->text.c_str();
+    return _this->type;
 }
-msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_text)
+
+msAPI const char* msTextGetText(ms::TextMessage *_this)
 {
-    return _text->type;
+    return _this->text.c_str();
+}
+msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_this)
+{
+    return _this->type;
 }
 
 

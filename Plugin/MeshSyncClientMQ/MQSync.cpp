@@ -189,6 +189,13 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         scene_settings.handedness = ms::Handedness::Right;
         scene_settings.scale_factor = m_scale_factor;
 
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
+        }
+
         // send materials
         {
             ms::SetMessage set;
@@ -229,9 +236,10 @@ void MQSync::sendMesh(MQDocument doc, bool force)
             client.send(del);
         }
 
-        // notify end of scene
+        // notify scene end
         {
             ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
             client.send(fence);
         }
     });
