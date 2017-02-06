@@ -167,7 +167,13 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     m_materials.reserve(nmat);
     for (int i = 0; i < nmat; ++i) {
         auto src = doc->GetMaterial(i);
-        if (!src) { continue; }
+        if (!src) {
+            // add dummy material to keep material index
+            ms::Material dst;
+            dst.id = -1;
+            m_materials.push_back(dst);
+            continue;
+        }
 
         ms::Material dst;
         dst.id = src->GetUniqueID();
@@ -331,14 +337,8 @@ MQObject MQSync::createObject(const ms::Mesh& data, const char *name)
 
     ret->SetName(name);
 
-    //// gave up to import transform
-    //ret->SetTranslation((MQPoint&)(data.transform.position));
-    //ret->SetScaling((MQPoint&)data.transform.scale);
-    //auto rotation = MQAngle(
-    //    data.transform.rotation_eularZXY.y,
-    //    data.transform.rotation_eularZXY.x,
-    //    data.transform.rotation_eularZXY.z);
-    //ret->SetRotation(rotation);
+    // gave up importing transform
+
     ret->SetSmoothAngle(data.refine_settings.smooth_angle);
 
     for (auto& p : data.points) {
