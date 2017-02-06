@@ -43,6 +43,8 @@ namespace UTJ
         {
             foreach (var md in t.materialData)
             {
+                if(md.id < 0) { continue; }
+
                 var rect = EditorGUILayout.BeginHorizontal();
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
                 EditorGUILayout.LabelField("", GUILayout.Width(16));
