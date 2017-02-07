@@ -260,11 +260,11 @@ bool MeshRefiner::refine(bool optimize)
 
 bool MeshRefiner::genSubmesh(const IArray<int>& materialIDs)
 {
+    submeshes.clear();
+
     if (materialIDs.size() != counts.size()) {
         return false;
     }
-
-    submeshes.clear();
 
     new_indices_submeshes.resize(new_indices_triangulated.size());
     const int *faces_to_read = new_indices_triangulated.data();

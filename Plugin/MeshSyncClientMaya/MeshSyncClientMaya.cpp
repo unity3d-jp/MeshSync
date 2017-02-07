@@ -153,6 +153,20 @@ bool MeshSyncClientMaya::isAsyncSendInProgress() const
     return false;
 }
 
+
+
+bool IsVisible(MFnDagNode& dag)
+{
+    if (dag.isIntermediateObject()) {
+        return false;
+    }
+
+    MPlug vis = dag.findPlug("visibility");
+    bool visible = false;
+    vis.getValue(visible);
+    return visible;
+}
+
 void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
 {
     MFnMesh src_mesh(src);
@@ -174,6 +188,7 @@ void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
     dst.clear();
     dst.path = path.fullPathName().asChar();
 
+    dst.flags.visible = IsVisible(src_mesh);
     dst.flags.has_points = 1;
     dst.flags.has_normals = 1;
     dst.flags.has_counts = 1;
@@ -201,6 +216,7 @@ void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
                 dst.indices.push_back(iv);
                 dst.normals.push_back((const mu::float3&)normals[in]);
             }
+            it_poly.next();
         }
     }
 
@@ -211,13 +227,13 @@ void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
         MItMeshPolygon it_poly(src);
         while (!it_poly.isDone()) {
             int count = it_poly.polygonVertexCount();
-            dst.counts.push_back(count);
             for (int i = 0; i < count; ++i) {
                 int iu;
                 it_poly.getUVIndex(i, iu, &uvsets[0]);
 
                 dst.uv.push_back(mu::float2{ u[iu], v[iu] });
             }
+            it_poly.next();
         }
     }
 }
