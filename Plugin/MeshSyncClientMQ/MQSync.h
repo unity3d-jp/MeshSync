@@ -2,6 +2,8 @@
 
 #include "MeshSync/msClient.h"
 
+using namespace mu;
+
 struct MQCameraData
 {
     float3 position = float3::zero();

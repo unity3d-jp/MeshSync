@@ -8,6 +8,11 @@
 #endif // muEnableHalf
 
 #define muDefaultEpsilon 0.00001f
+#define muMath_AddNamespace
+
+#ifdef muMath_AddNamespace
+namespace mu {
+#endif
 
 struct float2
 {
@@ -621,3 +626,7 @@ inline quatf to_quat(const float4x4& m)
 {
     return to_quat_impl(m);
 }
+
+#ifdef muMath_AddNamespace
+} // namespace mu
+#endif

@@ -14,6 +14,7 @@
 
 
 namespace ms {
+using namespace mu;
 
 void LogImpl(const char *fmt, ...);
 #define msLogInfo(...)    ::ms::LogImpl("MeshSync info: " __VA_ARGS__)

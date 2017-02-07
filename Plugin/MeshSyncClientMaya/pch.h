@@ -15,17 +15,19 @@
 
 #include <ppl.h>
 
-#include "maya/MQuaternion.h"
-#include "maya/MEulerRotation.h"
-#include "maya/MIntArray.h"
-#include "maya/MFloatArray.h"
-#include "maya/MStringArray.h"
-#include "maya/MObjectArray.h"
-#include "maya/MItDag.h"
-#include "maya/MItMeshPolygon.h"
-#include "maya/MFnMesh.h"
-#include "maya/MFnTransform.h"
-#include "maya/MFnIkJoint.h"
+#include "MeshSync/msClient.h"
+
+#include <maya/MFloatArray.h>
+#include <maya/MPointArray.h>
+#include <maya/MFloatVectorArray.h>
+#include <maya/MSceneMessage.h>
+#include <maya/MFnData.h>
+#include <maya/MItDag.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MFnMesh.h>
+#include <maya/MFnIkJoint.h>
+#include <maya/MFnPlugin.h>
 
 #ifdef _WIN32
     #define NOMINMAX
