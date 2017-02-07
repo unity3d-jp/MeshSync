@@ -2,6 +2,8 @@
 #include "MeshSync/msServer.h"
 #include "MeshSyncServer.h"
 
+using namespace mu;
+
 static std::map<uint16_t, ms::Server*> g_servers;
 
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)

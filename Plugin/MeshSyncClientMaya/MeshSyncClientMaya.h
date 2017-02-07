@@ -7,10 +7,10 @@ public:
     ~MeshSyncClientMaya();
 
     void onSceneUpdate();
+    void sendMeshes();
 
 private:
     bool isAsyncSendInProgress() const;
-    void gatherMeshData();
     void gatherMeshData(ms::Mesh& dst, MObject src);
 
 private:
@@ -22,8 +22,10 @@ private:
     MObject m_obj;
     MFnPlugin m_iplugin;
     MCallbackId m_cid_sceneupdate;
+    bool m_auto_sync = true;
 
     ms::ClientSettings m_client_settings;
+    float m_scale_factor = 1.0f;
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
     Materials m_materials;

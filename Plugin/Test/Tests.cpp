@@ -2,6 +2,8 @@
 #include "MeshSync/msServer.h"
 #include "MeshSync/msClient.h"
 
+using namespace mu;
+
 void Test_Sync(bool create_server)
 {
     std::unique_ptr<ms::Server> server;

@@ -17,8 +17,9 @@
 
 #include "MeshSync/msClient.h"
 
+#include <maya/MDagPath.h>
 #include <maya/MFloatArray.h>
-#include <maya/MPointArray.h>
+#include <maya/MFloatPointArray.h>
 #include <maya/MFloatVectorArray.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MFnData.h>
