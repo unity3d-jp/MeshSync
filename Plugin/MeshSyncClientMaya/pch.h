@@ -13,7 +13,19 @@
 #include <mutex>
 #include <memory>
 
-#include <ppl.h>
+#ifdef _WIN32
+    #define msMaya_UsePPL
+#else 
+    #define msMaya_UseTBB
+#endif
+
+#ifdef msMaya_UsePPL
+    #include <ppl.h>
+#endif
+#ifdef msMaya_UseTBB
+    #include <tbb.h>
+    namespace concurrency = tbb;
+#endif
 
 #include "MeshSync/msClient.h"
 
@@ -29,15 +41,3 @@
 #include <maya/MFnMesh.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnPlugin.h>
-
-#ifdef _WIN32
-    #define NOMINMAX
-    #include <windows.h>
-#else 
-    #include <dlfcn.h>
-    #ifdef __APPLE__
-        #include <mach-o/dyld.h>
-    #else
-        #include <link.h>
-    #endif
-#endif

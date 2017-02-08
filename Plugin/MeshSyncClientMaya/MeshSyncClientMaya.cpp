@@ -7,6 +7,19 @@
 #endif
 
 
+inline bool IsVisible(MFnDagNode& dag)
+{
+    if (dag.isIntermediateObject()) {
+        return false;
+    }
+
+    auto vis = dag.findPlug("visibility");
+    bool visible = false;
+    vis.getValue(visible);
+    return visible;
+}
+
+
 std::unique_ptr<MeshSyncClientMaya> g_plugin;
 
 static void OnSceneUpdate(void *_this)
@@ -155,18 +168,6 @@ bool MeshSyncClientMaya::isAsyncSendInProgress() const
 
 
 
-bool IsVisible(MFnDagNode& dag)
-{
-    if (dag.isIntermediateObject()) {
-        return false;
-    }
-
-    MPlug vis = dag.findPlug("visibility");
-    bool visible = false;
-    vis.getValue(visible);
-    return visible;
-}
-
 void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
 {
     MFnMesh src_mesh(src);
@@ -189,6 +190,8 @@ void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
     dst.path = path.fullPathName().asChar();
 
     dst.flags.visible = IsVisible(src_mesh);
+    if (!dst.flags.visible) { return; }
+
     dst.flags.has_points = 1;
     dst.flags.has_normals = 1;
     dst.flags.has_counts = 1;
