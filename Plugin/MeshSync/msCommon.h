@@ -69,6 +69,32 @@ public:
 using TransformPtr = std::shared_ptr<Transform>;
 
 
+class Joint : public Transform
+{
+using super = Transform;
+public:
+    float4x4 bindpose;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+using JointPtr = std::shared_ptr<Joint>;
+
+
+class Reference : public Transform
+{
+using super = Transform;
+public:
+    std::string identifier;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+using ReferencePtr = std::shared_ptr<Reference>;
+
+
 class Camera : public Transform
 {
 using super = Transform;
@@ -220,6 +246,8 @@ public:
     SceneSettings settings;
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
+    std::vector<JointPtr> joints;
+    std::vector<ReferencePtr> references;
     std::vector<CameraPtr> cameras;
     std::vector<Material> materials;
 

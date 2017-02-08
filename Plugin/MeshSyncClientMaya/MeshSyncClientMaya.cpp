@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #pragma comment(lib, "Foundation.lib")
 #pragma comment(lib, "OpenMaya.lib")
+#pragma comment(lib, "OpenMayaAnim.lib")
 #endif
 
 
@@ -68,6 +69,24 @@ void MeshSyncClientMaya::sendMeshes()
         return;
     }
     m_pending_send_meshes = false;
+
+    // gather material data
+    {
+        m_materials.clear();
+
+        MItDependencyNodes it(MFn::kLambert);
+        while (!it.isDone()) {
+            MFnLambertShader fn(it.item());
+
+            ms::Material tmp;
+            tmp.name = fn.name().asChar();
+            tmp.color = (const mu::float4&)fn.color();
+            tmp.id = getMaterialID(fn.uuid());
+            m_materials.push_back(tmp);
+
+            it.next();
+        }
+    }
 
     // gather mesh data
     {
@@ -168,6 +187,19 @@ bool MeshSyncClientMaya::isAsyncSendInProgress() const
 
 
 
+int MeshSyncClientMaya::getMaterialID(MUuid uid)
+{
+    auto i = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
+    if (i != m_material_id_table.end()) {
+        return (int)std::distance(m_material_id_table.begin(), i);
+    }
+    else {
+        int id = (int)m_material_id_table.size();
+        m_material_id_table.push_back(uid);
+        return id;
+    }
+}
+
 void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
 {
     MFnMesh src_mesh(src);
@@ -237,6 +269,103 @@ void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
                 dst.uv.push_back(mu::float2{ u[iu], v[iu] });
             }
             it_poly.next();
+        }
+    }
+
+
+    // get materialv data
+    {
+        MObjectArray shaders;
+        MIntArray indices;
+        src_mesh.getConnectedShaders(0, shaders, indices);
+        for (uint32_t si = 0; si < shaders.length(); si++)
+        {
+            MFnDependencyNode shader_group(shaders[si]);
+            MPlug shader_plug = shader_group.findPlug("surfaceShader");
+            MPlugArray connections;
+            shader_plug.connectedTo(connections, true, false);
+            for (uint32_t ci = 0; ci < connections.length(); ci++)
+            {
+                if (connections[ci].node().hasFn(MFn::kLambert))
+                {
+                    MFnLambertShader lambert(connections[ci].node());
+                    int id = getMaterialID(lambert.uuid());
+                }
+            }
+        }
+    }
+
+    // get skinning data
+
+    {
+        m_joints.clear();
+
+        MPlug in_mesh;
+        MPlugArray dependencies;
+        MFnDependencyNode node(src);
+
+        in_mesh = node.findPlug("inMesh");
+        in_mesh.connectedTo(dependencies, true, false);
+
+        auto num_dependencies = dependencies.length();
+        for (uint32_t idp = 0; idp < num_dependencies; idp++)
+        {
+            MFnDependencyNode node(dependencies[idp].node());
+
+            if (node.typeName() == "skinCluster")
+            {
+                MFnSkinCluster skin_cluster(dependencies[idp].node());
+                MDagPathArray joint_paths;
+                auto num_joints = skin_cluster.influenceObjects(joint_paths);
+                auto num_meshes = skin_cluster.numOutputConnections();
+
+                // get bindposes
+                MPlug plug_bindprematrix = skin_cluster.findPlug("bindPreMatrix");
+                for (uint32_t ij = 0; ij < num_joints; ij++)
+                {
+                    auto joint = new ms::Joint();
+                    m_joints.emplace_back(joint);
+                    joint->path = joint_paths[ij].partialPathName().asChar();
+
+                    auto ijoint = skin_cluster.indexForInfluenceObject(joint_paths[ij], nullptr);
+                    MPlug plug_matrix = plug_bindprematrix.elementByLogicalIndex(ijoint);
+
+                    MObject matrix_obj;
+                    plug_matrix.getValue(matrix_obj);
+                    MFnMatrixData matrix_data(matrix_obj);
+                    MMatrix bindpose = matrix_data.matrix();
+                    for (int ir = 0; ir < 4; ++ir) {
+                        joint->bindpose[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
+                    }
+                }
+
+                // get weights
+                for (uint32_t im = 0; im < num_meshes; im++)
+                {
+                    auto index = skin_cluster.indexForOutputConnection(im);
+
+                    MDagPath mesh_path;
+                    skin_cluster.getPathAtIndex(index, mesh_path);
+
+                    MItGeometry it_geom(mesh_path);
+                    while (!it_geom.isDone())
+                    {
+                        MObject component = it_geom.component();
+                        MFloatArray weights;
+                        unsigned int influence_count;
+                        skin_cluster.getWeights(mesh_path, component, weights, influence_count);
+
+                        for (uint32_t iw = 0; iw < influence_count; iw++)
+                        {
+                            if (weights[iw] > 0.0001f) {
+                                // 
+                            }
+                        }
+
+                        it_geom.next();
+                    }
+                }
+            }
         }
     }
 }

@@ -242,7 +242,7 @@ std::string ToANSI(const char *src)
 
 
 
-const int ProtocolVersion = 100;
+const int ProtocolVersion = 101;
 
 Message::~Message()
 {
@@ -452,6 +452,42 @@ void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, transform);
+}
+
+
+uint32_t Joint::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(bindpose);
+    return ret;
+}
+void Joint::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+    write(os, bindpose);
+}
+void Joint::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+    read(is, bindpose);
+}
+
+
+uint32_t Reference::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(identifier);
+    return ret;
+}
+void Reference::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+    write(os, identifier);
+}
+void Reference::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+    read(is, identifier);
 }
 
 
@@ -795,6 +831,8 @@ uint32_t Scene::getSerializeSize() const
     ret += ssize(settings);
     ret += ssize(meshes);
     ret += ssize(transforms);
+    ret += ssize(joints);
+    ret += ssize(references);
     ret += ssize(cameras);
     ret += ssize(materials);
     return ret;
@@ -804,6 +842,8 @@ void Scene::serialize(std::ostream& os) const
     write(os, settings);
     write(os, meshes);
     write(os, transforms);
+    write(os, joints);
+    write(os, references);
     write(os, cameras);
     write(os, materials);
 }
@@ -812,6 +852,8 @@ void Scene::deserialize(std::istream& is)
     read(is, settings);
     read(is, meshes);
     read(is, transforms);
+    read(is, joints);
+    read(is, references);
     read(is, cameras);
     read(is, materials);
 }
