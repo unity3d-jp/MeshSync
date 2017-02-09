@@ -1,5 +1,6 @@
 #pragma once
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -30,6 +31,7 @@
 #include "MeshSync/msClient.h"
 
 #include <maya/MDagPath.h>
+#include <maya/MUintArray.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFloatPointArray.h>
 #include <maya/MFloatVectorArray.h>
@@ -51,3 +53,13 @@
 #include <maya/MFnLambertShader.h>
 #include <maya/MFnSkinCluster.h> 
 #include <maya/MFnPlugin.h>
+#include <maya/MGlobal.h>
+#include <maya/MSelectionList.h>
+#include <maya/MDagMessage.h>
+#include <maya/MNodeMessage.h>
+#include <maya/MPolyMessage.h>
+
+#ifdef _WIN32
+    #define NOMINMAX
+    #include <windows.h>
+#endif
