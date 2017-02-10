@@ -23,6 +23,63 @@ inline bool IsVisible(MFnDagNode& dag)
 
 std::unique_ptr<MeshSyncClientMaya> g_plugin;
 
+
+
+class CmdSettings : public MPxCommand
+{
+    virtual MStatus doIt(const MArgList&)
+    {
+
+    }
+    static const char* name()
+    {
+        return "UnityMeshSync_Settings";
+    }
+    static MSyntax newSyntax()
+    {
+        MSyntax syntax;
+        syntax.addFlag("-a", "-address", MSyntax::kString);
+        syntax.addFlag("-p", "-port", MSyntax::kLong);
+        syntax.addFlag("-m", "-mode", MSyntax::kString);
+        return syntax;
+    }
+};
+
+class CmdSync : public MPxCommand
+{
+    virtual MStatus doIt(const MArgList&)
+    {
+        g_plugin->sendMeshes();
+    }
+    static const char* name()
+    {
+        return "UnityMeshSync_Sync";
+    }
+    static MSyntax newSyntax()
+    {
+        MSyntax syntax;
+        syntax.addFlag("-m", "-mode", MSyntax::kString);
+        return syntax;
+    }
+};
+
+class CmdImport : public MPxCommand
+{
+    virtual MStatus doIt(const MArgList&)
+    {
+        g_plugin->importMeshes();
+    }
+    static const char* name()
+    {
+        return "UnityMeshSync_Import";
+    }
+    static MSyntax newSyntax()
+    {
+        return MSyntax();
+    }
+};
+
+
 static void OnSceneUpdate(void *_this)
 {
     reinterpret_cast<MeshSyncClientMaya*>(_this)->onSceneUpdate();
@@ -245,6 +302,10 @@ void MeshSyncClientMaya::sendMeshes()
             client.send(fence);
         }
     });
+}
+
+void MeshSyncClientMaya::importMeshes()
+{
 }
 
 bool MeshSyncClientMaya::isAsyncSendInProgress() const

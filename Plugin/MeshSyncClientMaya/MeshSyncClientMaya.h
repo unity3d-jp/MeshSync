@@ -3,11 +3,19 @@
 class MeshSyncClientMaya
 {
 public:
+    enum class TargetScope
+    {
+        Unknown,
+        Selection,
+        All,
+    };
+
     MeshSyncClientMaya(MObject obj);
     ~MeshSyncClientMaya();
 
     void onSceneUpdate();
     void sendMeshes();
+    void importMeshes();
 
 private:
     bool isAsyncSendInProgress() const;
@@ -27,6 +35,10 @@ private:
     bool m_auto_sync = true;
 
     std::vector<MUuid> m_material_id_table;
+    std::vector<MUuid> m_object_id_table;
+    std::vector<MObject> m_mtransforms;
+    std::vector<MObject> m_mmeshes;
+    std::vector<MObject> m_mjoints;
 
     ms::ClientSettings m_client_settings;
     float m_scale_factor = 1.0f;
