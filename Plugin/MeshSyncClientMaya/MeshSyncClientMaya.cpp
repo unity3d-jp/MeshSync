@@ -27,35 +27,65 @@ std::unique_ptr<MeshSyncClientMaya> g_plugin;
 
 class CmdSettings : public MPxCommand
 {
-    virtual MStatus doIt(const MArgList&)
+public:
+    virtual MStatus doIt(const MArgList& args)
     {
-
+        MArgParser parser(syntax(), args);
+        {
+            MString addr;
+            if (parser.getCommandArgument(0, addr) == MStatus::kSuccess) {
+                g_plugin->setServerAddress(addr.asChar());
+            }
+        }
+        {
+            int port;
+            if (parser.getCommandArgument(1, port) == MStatus::kSuccess) {
+                g_plugin->setServerPort((uint16_t)port);
+            }
+        }
+        {
+            int v;
+            if (parser.getCommandArgument(2, v) == MStatus::kSuccess) {
+                g_plugin->setAutoSync(v != 0);
+            }
+        }
+        return MStatus::kSuccess;
+    }
+    static void* create()
+    {
+        return new CmdSettings();
     }
     static const char* name()
     {
         return "UnityMeshSync_Settings";
     }
-    static MSyntax newSyntax()
+    static MSyntax syntax()
     {
         MSyntax syntax;
         syntax.addFlag("-a", "-address", MSyntax::kString);
         syntax.addFlag("-p", "-port", MSyntax::kLong);
-        syntax.addFlag("-m", "-mode", MSyntax::kString);
+        syntax.addFlag("-s", "-autosync", MSyntax::kLong);
         return syntax;
     }
 };
 
 class CmdSync : public MPxCommand
 {
+public:
     virtual MStatus doIt(const MArgList&)
     {
-        g_plugin->sendMeshes();
+        g_plugin->sendScene();
+        return MStatus::kSuccess;
+    }
+    static void* create()
+    {
+        return new CmdSync();
     }
     static const char* name()
     {
         return "UnityMeshSync_Sync";
     }
-    static MSyntax newSyntax()
+    static MSyntax syntax()
     {
         MSyntax syntax;
         syntax.addFlag("-m", "-mode", MSyntax::kString);
@@ -65,19 +95,27 @@ class CmdSync : public MPxCommand
 
 class CmdImport : public MPxCommand
 {
+public:
     virtual MStatus doIt(const MArgList&)
     {
-        g_plugin->importMeshes();
+        g_plugin->importScene();
+        return MStatus::kSuccess;
+    }
+    static void* create()
+    {
+        return new CmdImport();
     }
     static const char* name()
     {
         return "UnityMeshSync_Import";
     }
-    static MSyntax newSyntax()
+    static MSyntax syntax()
     {
         return MSyntax();
     }
 };
+
+#define EachCommand(Body) Body(CmdSettings) Body(CmdSync) Body(CmdImport)
 
 
 static void OnSceneUpdate(void *_this)
@@ -87,14 +125,13 @@ static void OnSceneUpdate(void *_this)
 static void* OnSyncCommand()
 {
     if (g_plugin) {
-        g_plugin->sendMeshes();
+        g_plugin->sendScene();
     }
     return nullptr;
 }
 
-std::vector<MCallbackId> g_callback_ids;
 
-void DbgOnChangeAttr(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData)
+void DbgOnChangeMesh(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData)
 {
     if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
 
@@ -102,77 +139,30 @@ void DbgOnChangeAttr(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& oth
     sprintf(buf, "DbgOnChangeAttr(): %d %s -> %s\n", msg, plug.name().asChar(), otherPlug.name().asChar());
     OutputDebugStringA(buf);
 }
-void DbgOnChangeDag(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void* clientData)
+void OnChangeDag(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void* clientData)
 {
     char buf[1024];
     sprintf(buf, "DbgOnChangeDag(): %d\n", msg);
     OutputDebugStringA(buf);
 }
-void DbgOnChangeTransform(MObject& obj, MDagMessage::MatrixModifiedFlags& flags, void *clientData)
+void OnChangeTransform(MObject& obj, MDagMessage::MatrixModifiedFlags& flags, void *clientData)
 {
     char buf[1024];
     sprintf(buf, "DbgOnChangeTransform(): %d\n", flags);
     OutputDebugStringA(buf);
 }
 
-static void* DbgDumpAttributes()
-{
-    MStatus stat;
-    MSelectionList list;
-    MGlobal::getActiveSelectionList(list);
-
-    {
-        auto id = MDagMessage::addAllDagChangesCallback(DbgOnChangeDag, &g_plugin, &stat);
-        g_callback_ids.push_back(id);
-    }
-
-    for (unsigned int i = 0; i < list.length(); i++)
-    {
-        MObject node;
-        list.getDependNode(i, node);
-
-        if(node.hasFn(MFn::kTransform)) {
-            MFnTransform trans = node;
-            MDagPath path = MDagPath::getAPathTo(trans.child(0));
-            auto id = MDagMessage::addWorldMatrixModifiedCallback(path, DbgOnChangeTransform, &g_plugin, &stat);
-            g_callback_ids.push_back(id);
-        }
-        {
-            MDagPath path;
-            if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
-                if (path.extendToShape() == MS::kSuccess) {
-                    auto shape = path.node();
-                    auto id = MNodeMessage::addAttributeChangedCallback(shape, DbgOnChangeAttr, &g_plugin, &stat);
-                    g_callback_ids.push_back(id);
-                }
-            }
-        }
-
-
-    }
-    return nullptr;
-}
-
-static void DbgCleanup()
-{
-    for (auto& cid : g_callback_ids) {
-        MMessage::removeCallback(cid);
-    }
-}
-
-
-
-#define msMayaCmdSync "UnityMeshSync_Sync"
-#define msMayaCmdDbgDump "UnityMeshSync_DbgDump"
-
 
 MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
     , m_iplugin(obj, "Unity Technologies", "0.8.0")
 {
-    m_iplugin.registerCommand(msMayaCmdSync, OnSyncCommand);
-    m_iplugin.registerCommand(msMayaCmdDbgDump, DbgDumpAttributes);
-    m_cid_sceneupdate = MSceneMessage::addCallback(MSceneMessage::kSceneUpdate, OnSceneUpdate, this);
+#define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create);
+    EachCommand(Body)
+#undef Body
+
+    MStatus stat;
+    m_cids.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, &g_plugin, &stat));
 }
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
@@ -180,20 +170,124 @@ MeshSyncClientMaya::~MeshSyncClientMaya()
     if (m_future_send.valid()) {
         m_future_send.wait_for(std::chrono::milliseconds(5000));
     }
-    m_iplugin.deregisterCommand(msMayaCmdDbgDump);
-    m_iplugin.deregisterCommand(msMayaCmdSync);
-    MSceneMessage::removeCallback(m_cid_sceneupdate);
-    DbgCleanup();
+
+    removeCallbacks();
+#define Body(CmdType) m_iplugin.deregisterCommand(CmdType::name());
+    EachCommand(Body)
+#undef Body
+}
+
+bool MeshSyncClientMaya::isAsyncSendInProgress() const
+{
+    if (m_future_send.valid()) {
+        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
+    }
+    return false;
+}
+
+void MeshSyncClientMaya::registerCallbacks()
+{
+    MStatus stat;
+    MSelectionList list;
+    MGlobal::getActiveSelectionList(list);
+
+    {
+        auto id = MDagMessage::addAllDagChangesCallback(OnChangeDag, &g_plugin, &stat);
+        m_cids.push_back(id);
+    }
+
+    for (unsigned int i = 0; i < list.length(); i++)
+    {
+        MObject node;
+        list.getDependNode(i, node);
+
+        if (node.hasFn(MFn::kTransform)) {
+            MFnTransform trans = node;
+            MDagPath path = MDagPath::getAPathTo(trans.child(0));
+            auto id = MDagMessage::addWorldMatrixModifiedCallback(path, OnChangeTransform, &g_plugin, &stat);
+            m_cids.push_back(id);
+        }
+        {
+            MDagPath path;
+            if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
+                if (path.extendToShape() == MS::kSuccess) {
+                    auto shape = path.node();
+                    auto id = MNodeMessage::addAttributeChangedCallback(shape, DbgOnChangeMesh, &g_plugin, &stat);
+                    m_cids.push_back(id);
+                }
+            }
+        }
+    }
+}
+
+void MeshSyncClientMaya::removeCallbacks()
+{
+    for (auto& cid : m_cids) {
+        MMessage::removeCallback(cid);
+    }
+    m_cids.clear();
+}
+
+
+int MeshSyncClientMaya::getMaterialID(MUuid uid)
+{
+    auto i = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
+    if (i != m_material_id_table.end()) {
+        return (int)std::distance(m_material_id_table.begin(), i);
+    }
+    else {
+        int id = (int)m_material_id_table.size();
+        m_material_id_table.push_back(uid);
+        return id;
+    }
+}
+
+void MeshSyncClientMaya::notifyUpdateTransform(MObject obj)
+{
+    m_mtransforms.push_back(obj);
+}
+void MeshSyncClientMaya::notifyUpdateMesh(MObject obj)
+{
+    m_mmeshes.push_back(obj);
+}
+
+void MeshSyncClientMaya::onIdle()
+{
+    if (!m_mtransforms.empty() || !m_mmeshes.empty()) {
+        for (auto& mtrans : m_mtransforms) {
+            // todo
+        }
+        for (auto& mmesh : m_mmeshes) {
+            // todo
+        }
+        m_mtransforms.clear();
+        m_mmeshes.clear();
+    }
 }
 
 void MeshSyncClientMaya::onSceneUpdate()
 {
     if (m_auto_sync) {
-        sendMeshes();
+        sendScene();
     }
 }
 
-void MeshSyncClientMaya::sendMeshes()
+void MeshSyncClientMaya::setServerAddress(const char * v)
+{
+    m_client_settings.server = v;
+}
+
+void MeshSyncClientMaya::setServerPort(uint16_t v)
+{
+    m_client_settings.port = v;
+}
+
+void MeshSyncClientMaya::setAutoSync(bool v)
+{
+    m_auto_sync = v;
+}
+
+void MeshSyncClientMaya::sendScene()
 {
     if (isAsyncSendInProgress()) {
         m_pending_send_meshes = true;
@@ -230,108 +324,25 @@ void MeshSyncClientMaya::sendMeshes()
             if (!fn.isIntermediateObject()) {
                 auto mesh = new ms::Mesh();
                 m_client_meshes.emplace_back(mesh);
-                gatherMeshData(*mesh, fn.object());
+                extractMeshData(*mesh, fn.object());
             }
 
             it.next();
         }
     }
 
-    // kick async send
-    m_future_send = std::async(std::launch::async, [this]() {
-        ms::Client client(m_client_settings);
-
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = m_scale_factor;
-
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send materials
-        {
-            ms::SetMessage set;
-            set.scene.materials = m_materials;
-            client.send(set);
-        }
-
-        // send meshes one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.meshes = { mesh };
-            client.send(set);
-        });
-
-        // detect deleted objects and send delete message
-        {
-            for (auto& e : m_exist_record) {
-                e.second = false;
-            }
-            for (auto& mesh : m_client_meshes) {
-                if (!mesh->path.empty()) {
-                    m_exist_record[mesh->path] = true;
-                }
-            }
-
-            ms::DeleteMessage del;
-            for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
-                if (!i->second) {
-                    int id = 0;
-                    //ExtractID(i->first.c_str(), id);
-                    del.targets.push_back({ i->first , id });
-                    m_exist_record.erase(i++);
-                }
-                else {
-                    ++i;
-                }
-            }
-            if (!del.targets.empty()) {
-                client.send(del);
-            }
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+    kickAsyncSend();
 }
 
-void MeshSyncClientMaya::importMeshes()
+void MeshSyncClientMaya::sendSelected()
 {
 }
 
-bool MeshSyncClientMaya::isAsyncSendInProgress() const
+void MeshSyncClientMaya::importScene()
 {
-    if (m_future_send.valid()) {
-        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
-    }
-    return false;
 }
 
-
-
-int MeshSyncClientMaya::getMaterialID(MUuid uid)
-{
-    auto i = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
-    if (i != m_material_id_table.end()) {
-        return (int)std::distance(m_material_id_table.begin(), i);
-    }
-    else {
-        int id = (int)m_material_id_table.size();
-        m_material_id_table.push_back(uid);
-        return id;
-    }
-}
-
-void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
+void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 {
     MFnMesh src_mesh(src);
     MFnTransform src_trs(src);
@@ -496,6 +507,74 @@ void MeshSyncClientMaya::gatherMeshData(ms::Mesh& dst, MObject src)
             }
         }
     }
+}
+
+void MeshSyncClientMaya::kickAsyncSend()
+{
+    m_future_send = std::async(std::launch::async, [this]() {
+        ms::Client client(m_client_settings);
+
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = m_scale_factor;
+
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
+        }
+
+        // send materials
+        {
+            ms::SetMessage set;
+            set.scene.materials = m_materials;
+            client.send(set);
+        }
+
+        // send meshes one by one to Unity can respond quickly
+        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.meshes = { mesh };
+            client.send(set);
+        });
+
+        // detect deleted objects and send delete message
+        {
+            for (auto& e : m_exist_record) {
+                e.second = false;
+            }
+            for (auto& mesh : m_client_meshes) {
+                if (!mesh->path.empty()) {
+                    m_exist_record[mesh->path] = true;
+                }
+            }
+
+            ms::DeleteMessage del;
+            for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
+                if (!i->second) {
+                    int id = 0;
+                    //ExtractID(i->first.c_str(), id);
+                    del.targets.push_back({ i->first , id });
+                    m_exist_record.erase(i++);
+                }
+                else {
+                    ++i;
+                }
+            }
+            if (!del.targets.empty()) {
+                client.send(del);
+            }
+        }
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
+        }
+    });
 }
 
 

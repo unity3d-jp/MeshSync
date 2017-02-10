@@ -13,14 +13,26 @@ public:
     MeshSyncClientMaya(MObject obj);
     ~MeshSyncClientMaya();
 
+    void onIdle();
     void onSceneUpdate();
-    void sendMeshes();
-    void importMeshes();
+
+    void setServerAddress(const char *v);
+    void setServerPort(uint16_t v);
+    void setAutoSync(bool v);
+
+    void notifyUpdateTransform(MObject obj);
+    void notifyUpdateMesh(MObject obj);
+    void sendScene();
+    void sendSelected();
+    void importScene();
 
 private:
     bool isAsyncSendInProgress() const;
+    void registerCallbacks();
+    void removeCallbacks();
     int getMaterialID(MUuid uid);
-    void gatherMeshData(ms::Mesh& dst, MObject src);
+    void extractMeshData(ms::Mesh& dst, MObject src);
+    void kickAsyncSend();
 
 private:
     using ClientMeshes = std::vector<ms::MeshPtr>;
@@ -31,14 +43,13 @@ private:
 
     MObject m_obj;
     MFnPlugin m_iplugin;
-    MCallbackId m_cid_sceneupdate;
     bool m_auto_sync = true;
 
+    std::vector<MCallbackId> m_cids;
     std::vector<MUuid> m_material_id_table;
     std::vector<MUuid> m_object_id_table;
     std::vector<MObject> m_mtransforms;
     std::vector<MObject> m_mmeshes;
-    std::vector<MObject> m_mjoints;
 
     ms::ClientSettings m_client_settings;
     float m_scale_factor = 1.0f;
