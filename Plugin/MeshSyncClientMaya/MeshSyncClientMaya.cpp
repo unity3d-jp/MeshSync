@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "MeshSyncClientMaya.h"
+#include "Commands.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "Foundation.lib")
@@ -21,137 +22,30 @@ inline bool IsVisible(MFnDagNode& dag)
 }
 
 
-std::unique_ptr<MeshSyncClientMaya> g_plugin;
-
-
-
-class CmdSettings : public MPxCommand
+static void OnChangeDag(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void *_this)
 {
-public:
-    virtual MStatus doIt(const MArgList& args)
-    {
-        MArgParser parser(syntax(), args);
-        {
-            MString addr;
-            if (parser.getCommandArgument(0, addr) == MStatus::kSuccess) {
-                g_plugin->setServerAddress(addr.asChar());
-            }
-        }
-        {
-            int port;
-            if (parser.getCommandArgument(1, port) == MStatus::kSuccess) {
-                g_plugin->setServerPort((uint16_t)port);
-            }
-        }
-        {
-            int v;
-            if (parser.getCommandArgument(2, v) == MStatus::kSuccess) {
-                g_plugin->setAutoSync(v != 0);
-            }
-        }
-        return MStatus::kSuccess;
-    }
-    static void* create()
-    {
-        return new CmdSettings();
-    }
-    static const char* name()
-    {
-        return "UnityMeshSync_Settings";
-    }
-    static MSyntax syntax()
-    {
-        MSyntax syntax;
-        syntax.addFlag("-a", "-address", MSyntax::kString);
-        syntax.addFlag("-p", "-port", MSyntax::kLong);
-        syntax.addFlag("-s", "-autosync", MSyntax::kLong);
-        return syntax;
-    }
-};
-
-class CmdSync : public MPxCommand
-{
-public:
-    virtual MStatus doIt(const MArgList&)
-    {
-        g_plugin->sendScene();
-        return MStatus::kSuccess;
-    }
-    static void* create()
-    {
-        return new CmdSync();
-    }
-    static const char* name()
-    {
-        return "UnityMeshSync_Sync";
-    }
-    static MSyntax syntax()
-    {
-        MSyntax syntax;
-        syntax.addFlag("-m", "-mode", MSyntax::kString);
-        return syntax;
-    }
-};
-
-class CmdImport : public MPxCommand
-{
-public:
-    virtual MStatus doIt(const MArgList&)
-    {
-        g_plugin->importScene();
-        return MStatus::kSuccess;
-    }
-    static void* create()
-    {
-        return new CmdImport();
-    }
-    static const char* name()
-    {
-        return "UnityMeshSync_Import";
-    }
-    static MSyntax syntax()
-    {
-        return MSyntax();
-    }
-};
-
-#define EachCommand(Body) Body(CmdSettings) Body(CmdSync) Body(CmdImport)
-
-
-static void OnSceneUpdate(void *_this)
-{
-    reinterpret_cast<MeshSyncClientMaya*>(_this)->onSceneUpdate();
-}
-static void* OnSyncCommand()
-{
-    if (g_plugin) {
-        g_plugin->sendScene();
-    }
-    return nullptr;
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyDAGChanged();
 }
 
+static void OnChangeTransform(MObject& obj, MDagMessage::MatrixModifiedFlags& flags, void *_this)
+{
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateTransform(obj);
+}
 
-void DbgOnChangeMesh(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData)
+static void OnChangeMesh(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
-
-    char buf[1024];
-    sprintf(buf, "DbgOnChangeAttr(): %d %s -> %s\n", msg, plug.name().asChar(), otherPlug.name().asChar());
-    OutputDebugStringA(buf);
-}
-void OnChangeDag(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void* clientData)
-{
-    char buf[1024];
-    sprintf(buf, "DbgOnChangeDag(): %d\n", msg);
-    OutputDebugStringA(buf);
-}
-void OnChangeTransform(MObject& obj, MDagMessage::MatrixModifiedFlags& flags, void *clientData)
-{
-    char buf[1024];
-    sprintf(buf, "DbgOnChangeTransform(): %d\n", flags);
-    OutputDebugStringA(buf);
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateMesh(plug.node());
 }
 
+
+static std::unique_ptr<MeshSyncClientMaya> g_plugin;
+
+
+MeshSyncClientMaya& MeshSyncClientMaya::getInstance()
+{
+    return *g_plugin;
+}
 
 MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
@@ -160,15 +54,12 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
 #define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create);
     EachCommand(Body)
 #undef Body
-
-    MStatus stat;
-    m_cids.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, &g_plugin, &stat));
 }
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
 {
     if (m_future_send.valid()) {
-        m_future_send.wait_for(std::chrono::milliseconds(5000));
+        m_future_send.wait_for(std::chrono::milliseconds(m_timeout_ms));
     }
 
     removeCallbacks();
@@ -187,15 +78,15 @@ bool MeshSyncClientMaya::isAsyncSendInProgress() const
 
 void MeshSyncClientMaya::registerCallbacks()
 {
+    removeCallbacks();
+
     MStatus stat;
     MSelectionList list;
     MGlobal::getActiveSelectionList(list);
 
     {
-        auto id = MDagMessage::addAllDagChangesCallback(OnChangeDag, &g_plugin, &stat);
-        m_cids.push_back(id);
+        m_cids.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, this, &stat));
     }
-
     for (unsigned int i = 0; i < list.length(); i++)
     {
         MObject node;
@@ -204,17 +95,14 @@ void MeshSyncClientMaya::registerCallbacks()
         if (node.hasFn(MFn::kTransform)) {
             MFnTransform trans = node;
             MDagPath path = MDagPath::getAPathTo(trans.child(0));
-            auto id = MDagMessage::addWorldMatrixModifiedCallback(path, OnChangeTransform, &g_plugin, &stat);
-            m_cids.push_back(id);
+            m_cids.push_back(MDagMessage::addWorldMatrixModifiedCallback(path, OnChangeTransform, this, &stat));
         }
-        {
-            MDagPath path;
-            if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
-                if (path.extendToShape() == MS::kSuccess) {
-                    auto shape = path.node();
-                    auto id = MNodeMessage::addAttributeChangedCallback(shape, DbgOnChangeMesh, &g_plugin, &stat);
-                    m_cids.push_back(id);
-                }
+
+        MDagPath path;
+        if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
+            if (path.extendToShape() == MS::kSuccess) {
+                auto shape = path.node();
+                m_cids.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
             }
         }
     }
@@ -242,6 +130,10 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
     }
 }
 
+void MeshSyncClientMaya::notifyDAGChanged()
+{
+}
+
 void MeshSyncClientMaya::notifyUpdateTransform(MObject obj)
 {
     m_mtransforms.push_back(obj);
@@ -254,6 +146,14 @@ void MeshSyncClientMaya::notifyUpdateMesh(MObject obj)
 void MeshSyncClientMaya::onIdle()
 {
     if (!m_mtransforms.empty() || !m_mmeshes.empty()) {
+        auto pless = [](MObject& a, MObject& b) { return (void*&)a < (void*&)b; };
+        auto pequal = [](MObject& a, MObject& b) { return (void*&)a == (void*&)b; };
+
+        std::sort(m_mtransforms.begin(), m_mtransforms.end(), pless);
+        m_mtransforms.erase(std::unique(m_mtransforms.begin(), m_mtransforms.end(), pequal), m_mtransforms.end());
+        std::sort(m_mmeshes.begin(), m_mmeshes.end(), pless);
+        m_mmeshes.erase(std::unique(m_mmeshes.begin(), m_mmeshes.end(), pequal), m_mmeshes.end());
+
         for (auto& mtrans : m_mtransforms) {
             // todo
         }
@@ -415,7 +315,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
 
-    // get materialv data
+    // get material data
     {
         MObjectArray shaders;
         MIntArray indices;

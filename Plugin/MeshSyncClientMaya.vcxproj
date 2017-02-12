@@ -14,10 +14,12 @@
     <ClCompile Include="MeshSyncClientMaya/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya\Commands.cpp" />
     <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMaya/pch.h" />
+    <ClInclude Include="MeshSyncClientMaya\Commands.h" />
     <ClInclude Include="MeshSyncClientMaya\MeshSyncClientMaya.h" />
   </ItemGroup>
   <ItemGroup>

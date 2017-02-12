@@ -7,12 +7,18 @@
     <ClCompile Include="MeshSyncClientMaya/pch.cpp">
       <Filter>MeshSyncClientMaya</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya\Commands.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMaya/pch.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
     <ClInclude Include="MeshSyncClientMaya\MeshSyncClientMaya.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMaya\Commands.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
   </ItemGroup>

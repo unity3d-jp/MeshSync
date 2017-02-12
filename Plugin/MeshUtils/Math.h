@@ -108,6 +108,14 @@ inline bool near_equal(const quatf& a, const quatf& b, float e = muDefaultEpsilo
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e) && near_equal(a.w, b.w, e);
 }
+inline bool near_equal(const float3x3& a, const float3x3& b, float e = muDefaultEpsilon)
+{
+    return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e) && near_equal(a[2], b[2], e);
+}
+inline bool near_equal(const float4x4& a, const float4x4& b, float e = muDefaultEpsilon)
+{
+    return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e) && near_equal(a[2], b[2], e) && near_equal(a[3], b[3], e);
+}
 
 template<class Int>
 inline Int ceildiv(Int v, Int d)
@@ -451,19 +459,19 @@ inline quatf swap_handedness(const quatf& q)
 inline float3x3 swap_handedness(const float3x3& m)
 {
     return{ {
-        { m[0].x, m[0].z, m[0].y },
-        { m[2].x, m[2].z, m[2].y },
-        { m[1].x, m[1].z, m[1].y },
+        { m[0].x,-m[0].y,-m[0].z },
+        {-m[1].x, m[1].y, m[1].z },
+        {-m[2].x, m[2].y, m[2].z },
     } };
 }
 
 inline float4x4 swap_handedness(const float4x4& m)
 {
     return{ {
-        { m[0].x, m[0].z, m[0].y, m[0].w },
-        { m[2].x, m[2].z, m[2].y, m[2].w },
-        { m[1].x, m[1].z, m[1].y, m[1].w },
-        {-m[3].x, m[3].z, m[3].y, m[3].w },
+        { m[0].x,-m[0].y,-m[0].z, m[0].w },
+        {-m[1].x, m[1].y, m[1].z, m[1].w },
+        {-m[2].x, m[2].y, m[2].z, m[2].w },
+        {-m[3].x, m[3].y, m[3].z, m[3].w },
     } };
 }
 

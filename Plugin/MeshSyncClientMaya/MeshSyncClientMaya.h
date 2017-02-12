@@ -9,6 +9,7 @@ public:
         Selection,
         All,
     };
+    static MeshSyncClientMaya& getInstance();
 
     MeshSyncClientMaya(MObject obj);
     ~MeshSyncClientMaya();
@@ -20,6 +21,7 @@ public:
     void setServerPort(uint16_t v);
     void setAutoSync(bool v);
 
+    void notifyDAGChanged();
     void notifyUpdateTransform(MObject obj);
     void notifyUpdateMesh(MObject obj);
     void sendScene();
@@ -44,6 +46,7 @@ private:
     MObject m_obj;
     MFnPlugin m_iplugin;
     bool m_auto_sync = true;
+    int m_timeout_ms = 5000;
 
     std::vector<MCallbackId> m_cids;
     std::vector<MUuid> m_material_id_table;
