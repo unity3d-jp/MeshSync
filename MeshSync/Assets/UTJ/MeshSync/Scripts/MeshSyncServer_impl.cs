@@ -311,6 +311,7 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshSetBonePath(IntPtr _this, string v, int i);
             [DllImport("MeshSyncServer")] static extern void msMeshReadBindPoses(IntPtr _this, Matrix4x4[] v);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteBindPoses(IntPtr _this, Matrix4x4[] v, int size);
+
             [DllImport("MeshSyncServer")] static extern void msMeshSetLocal2World(IntPtr _this, ref Matrix4x4 v);
             [DllImport("MeshSyncServer")] static extern void msMeshSetWorld2Local(IntPtr _this, ref Matrix4x4 v);
 
@@ -469,6 +470,12 @@ namespace UTJ
             }
             public Matrix4x4[] bindposes
             {
+                get
+                {
+                    var ret = new Matrix4x4[numBones];
+                    msMeshReadBindPoses(_this, ret);
+                    return ret;
+                }
                 set { msMeshWriteBindPoses(_this, value, value.Length); }
             }
             public void SetBonePaths(Transform[] bones)
@@ -504,11 +511,12 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadPoints(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadNormals(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadTangents(IntPtr _this, Vector4[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadUV(IntPtr _this, Vector2[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadPoints(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadNormals(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadTangents(IntPtr _this, Vector4[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadUV(IntPtr _this, Vector2[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadWeights4(IntPtr _this, BoneWeight[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr _this, int i);
 
             public int numPoints { get { return msSplitGetNumPoints(_this); } }
@@ -550,6 +558,15 @@ namespace UTJ
                     return ret;
                 }
             }
+            public BoneWeight[] boneWeights
+            {
+                get
+                {
+                    var ret = new BoneWeight[numPoints];
+                    msSplitReadWeights4(_this, ret);
+                    return ret;
+                }
+            }
             public int[] indices
             {
                 get
@@ -570,7 +587,7 @@ namespace UTJ
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSubmeshReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, int[] dst);
 
             public int numIndices { get { return msSubmeshGetNumIndices(_this); } }
             public int materialID { get { return msSubmeshGetMaterialID(_this); } }

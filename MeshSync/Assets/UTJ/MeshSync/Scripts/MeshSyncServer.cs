@@ -384,7 +384,6 @@ namespace UTJ
             target.gameObject.SetActive(true);
 
 
-
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
             var flags = data.flags;
@@ -397,14 +396,16 @@ namespace UTJ
                 target.localScale = trs.scale;
             }
 
+            bool skinned = data.numBones > 0;
+
             var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
-            if (smr != null)
+            if (smr != null && !rec.recved && !skinned)
             {
                 // update skinned mesh - only when topology is not changed
                 rec.editMesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
-                if(rec.editMesh == null)
+                if (rec.editMesh == null)
                 {
-                    if(m_logging)
+                    if (m_logging)
                     {
                         Debug.Log("edit for " + rec.origMesh.name + " is ignored. currently changing topology of skinned meshes is not supported.");
                     }
@@ -412,8 +413,6 @@ namespace UTJ
                 else
                 {
                     smr.sharedMesh = rec.editMesh;
-                    rec.go.SetActive(false); // 
-                    rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
                 }
             }
             else
@@ -428,13 +427,27 @@ namespace UTJ
                         t.gameObject.SetActive(true);
                     }
 
-                    var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
-                    if (mfilter == null) { return; }
-
                     var split = data.GetSplit(i);
                     rec.editMesh = CreateEditedMesh(data, split);
                     rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
-                    mfilter.sharedMesh = rec.editMesh;
+
+                    if (skinned)
+                    {
+                        smr = GetOrAddSkinnedMeshComponents(t.gameObject, i > 0);
+                        if(smr != null)
+                        {
+                            smr.sharedMesh = rec.editMesh;
+                            smr.bones = GetOrCreateBones(data);
+                        }
+                    }
+                    else
+                    {
+                        var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
+                        if (mfilter != null)
+                        {
+                            mfilter.sharedMesh = rec.editMesh;
+                        }
+                    }
                 }
 
                 int num_splits = Math.Max(1, data.numSplits);
@@ -446,11 +459,28 @@ namespace UTJ
                 }
             }
 
+            if (skinned)
+            {
+                rec.go.SetActive(false); // 
+                rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
+            }
+
             // assign materials if needed
             if (materialsUpdated)
             {
                 AssignMaterials(rec);
             }
+        }
+
+        Transform[] GetOrCreateBones(MeshData data)
+        {
+            var paths = data.GetBonePaths();
+            var ret = new Transform[data.numBones];
+            for (int i = 0; i < ret.Length; ++i)
+            {
+                ret[i] = FindObjectByPath(null, paths[i]);
+            }
+            return ret;
         }
 
         Mesh CreateEditedMesh(MeshData data, SplitData split, bool noTopologyUpdate = false, Mesh prev = null)
@@ -477,6 +507,11 @@ namespace UTJ
             if (flags.hasUV)
             {
                 mesh.uv = split.uv;
+            }
+            if (flags.hasBones)
+            {
+                mesh.boneWeights = split.boneWeights;
+                mesh.bindposes = data.bindposes;
             }
 
             if(!noTopologyUpdate && flags.hasIndices)
@@ -735,6 +770,33 @@ namespace UTJ
                 }
             }
             return mfilter;
+        }
+
+        SkinnedMeshRenderer GetOrAddSkinnedMeshComponents(GameObject go, bool isSplit)
+        {
+            var smr = go.GetComponent<SkinnedMeshRenderer>();
+            if (smr == null)
+            {
+                smr = go.AddComponent<SkinnedMeshRenderer>();
+                {
+                    // destroy mesh components if exist
+                    var mfilter = go.GetComponent<MeshFilter>();
+                    var mr = go.AddComponent<MeshRenderer>();
+                    if (mfilter != null && mr != null)
+                    {
+                        smr.materials = mr.materials;
+                        DestroyImmediate(mfilter);
+                        DestroyImmediate(mr);
+                    }
+                }
+                if (isSplit)
+                {
+                    var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
+                    smr.sharedMaterials = parent.sharedMaterials;
+                }
+            }
+
+            return smr;
         }
 
         public void ForceRepaint()
@@ -1105,7 +1167,7 @@ namespace UTJ
 #endif
             PollServerEvents();
         }
-        #endregion
+#endregion
 
         void ErrorOnStandaloneBuild()
         {

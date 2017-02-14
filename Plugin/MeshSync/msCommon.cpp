@@ -650,6 +650,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);
     }
+    if (mrs.flags.normalize_weights && !bone_weights.empty()) {
+        normalizeWeights();
+    }
 
     auto& refiner = g_refiner.local();
     refiner.triangulate = refiner.triangulate;
@@ -657,6 +660,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.split_unit = mrs.split_unit;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
+    refiner.weights4 = weights4;
     if (npoints.data() && points.size() == npoints.size()) {
         refiner.npoints = npoints;
     }
@@ -686,7 +690,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if(refine_topology) {
         refiner.refine(mrs.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
-        refiner.swapNewData(points, normals, tangents, uv, indices);
+        refiner.swapNewData(points, normals, tangents, uv, weights4, indices);
 
         splits.clear();
         int *sub_indices = indices.data();
@@ -708,6 +712,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             }
             if (!tangents.empty()) {
                 sub.tangents.reset(&tangents[offset_vertices], split.num_vertices);
+            }
+            if (!weights4.empty()) {
+                sub.weights4.reset(&weights4[offset_vertices], split.num_vertices);
             }
             offset_vertices += split.num_vertices;
             splits.push_back(sub);
@@ -737,7 +744,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         }
     }
     else {
-        refiner.swapNewData(points, normals, tangents, uv, indices);
+        refiner.swapNewData(points, normals, tangents, uv, weights4, indices);
     }
 
     flags.has_points = !points.empty();
@@ -828,6 +835,11 @@ void Mesh::applyTransform(const float4x4& m)
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
     for (auto& v : npoints) { v = applyTRS(m, v); }
+}
+
+void Mesh::normalizeWeights()
+{
+    // todo
 }
 
 

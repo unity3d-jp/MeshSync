@@ -141,7 +141,6 @@ struct MeshRefineFlags
     uint32_t bake_skin : 1;
     uint32_t bake_cloth : 1;
 
-    // for Metasequoia
     uint32_t invert_v : 1;
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
@@ -149,6 +148,8 @@ struct MeshRefineFlags
     uint32_t mirror_x_weld : 1;
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
+
+    uint32_t normalize_weights : 1;
 };
 
 struct MeshRefineSettings
@@ -157,17 +158,10 @@ struct MeshRefineSettings
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f;
     int split_unit = 65000;
+    int max_bones_par_vertices = 4;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
 };
-
-template<int N>
-struct Weights
-{
-    float   weight[N] = {};
-    int     indices[N] = {};
-};
-using Weights4 = Weights<4>;
 
 struct SubmeshData
 {
@@ -182,6 +176,7 @@ struct SplitData
     IArray<float4> tangents;
     IArray<float2> uv;
     IArray<int> indices;
+    IArray<Weights4> weights4;
     IArray<SubmeshData> submeshes;
 };
 
@@ -224,6 +219,7 @@ public:
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
+    void normalizeWeights();
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 

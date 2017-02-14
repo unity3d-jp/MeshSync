@@ -11,6 +11,14 @@ namespace mu {
 extern const float PI;
 extern const float Deg2Rad;
 
+template<int N>
+struct Weights
+{
+    float   weights[N] = {};
+    int     indices[N] = {};
+};
+using Weights4 = Weights<4>;
+
 #ifdef muEnableHalf
 void FloatToHalf(half *dst, const float *src, size_t num);
 void HalfToFloat(float *dst, const half *src, size_t num);
@@ -345,7 +353,8 @@ struct MeshRefiner
     IArray<float3> points;
     IArray<float3> normals;
     IArray<float2> uv;
-    IArray<float3> npoints; // points for notmal calculation
+    IArray<Weights4> weights4;
+    IArray<float3> npoints; // points for normal calculation
 
     RawVector<Submesh> submeshes;
     RawVector<Split> splits;
@@ -365,6 +374,7 @@ private:
     RawVector<float3> new_normals;
     RawVector<float4> new_tangents;
     RawVector<float2> new_uv;
+    RawVector<Weights4> new_weights4;
     RawVector<int>    new_indices;
     RawVector<int>    new_indices_triangulated;
     RawVector<int>    new_indices_submeshes;
@@ -382,7 +392,7 @@ public:
     // should be called after refine(), and only valid for triangulated meshes
     bool genSubmesh(const IArray<int>& materialIDs);
 
-    void swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<int>& idx);
+    void swapNewData(RawVector<float3>& p, RawVector<float3>& n, RawVector<float4>& t, RawVector<float2>& u, RawVector<Weights4>& w, RawVector<int>& idx);
 
 private:
     bool refineDumb();
