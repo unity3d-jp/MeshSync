@@ -24,15 +24,16 @@ public:
     void notifyDAGChanged();
     void notifyUpdateTransform(MObject obj);
     void notifyUpdateMesh(MObject obj);
-    void sendScene();
-    void sendSelected();
-    void importScene();
+    void sendScene(TargetScope scope = TargetScope::All);
+    bool importScene();
 
 private:
     bool isAsyncSendInProgress() const;
+    void waitAsyncSend();
     void registerCallbacks();
     void removeCallbacks();
     int getMaterialID(MUuid uid);
+    void extractTransformData(ms::Transform& dst, MObject src);
     void extractMeshData(ms::Mesh& dst, MObject src);
     void kickAsyncSend();
 
@@ -63,4 +64,7 @@ private:
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
     bool m_pending_send_meshes = false;
+
+    bool m_bake_skin = false;
+    bool m_bake_cloth = false;
 };

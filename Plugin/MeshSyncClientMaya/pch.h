@@ -37,21 +37,23 @@
 #include <maya/MFloatVectorArray.h>
 #include <maya/MMatrix.h>
 #include <maya/MMatrixArray.h>
+#include <maya/MQuaternion.h>
 #include <maya/MPlugArray.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MUuid.h>
 #include <maya/MSceneMessage.h>
-#include <maya/MFnData.h>
-#include <maya/MFnMatrixData.h>
 #include <maya/MItDag.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItGeometry.h>
+#include <maya/MFnData.h>
+#include <maya/MFnMatrixData.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnLambertShader.h>
 #include <maya/MFnSkinCluster.h> 
+#include <maya/MFnTransform.h> 
 #include <maya/MFnPlugin.h>
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
@@ -66,4 +68,5 @@
 #ifdef _WIN32
     #define NOMINMAX
     #include <windows.h>
+    #undef GetMessage
 #endif

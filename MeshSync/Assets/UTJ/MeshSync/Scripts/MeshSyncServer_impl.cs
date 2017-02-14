@@ -303,8 +303,13 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr _this, int[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr _this, int[] v, int size, int materialID);
 
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumWeights4(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadWeights4(IntPtr _this, BoneWeight[] weights);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteWeights4(IntPtr _this, BoneWeight[] weights, int size);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetBone(IntPtr _this, string v, int i);
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumBones(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetBonePath(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetBonePath(IntPtr _this, string v, int i);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadBindPoses(IntPtr _this, Matrix4x4[] v);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteBindPoses(IntPtr _this, Matrix4x4[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshSetLocal2World(IntPtr _this, ref Matrix4x4 v);
             [DllImport("MeshSyncServer")] static extern void msMeshSetWorld2Local(IntPtr _this, ref Matrix4x4 v);
@@ -444,25 +449,46 @@ namespace UTJ
                 msMeshWriteSubmeshTriangles(_this, indices, indices.Length, materialID);
             }
 
+            public int numBoneWeights
+            {
+                get { return msMeshGetNumWeights4(_this); }
+            }
             public BoneWeight[] boneWeights
             {
+                get {
+                    var ret = new BoneWeight[numBoneWeights];
+                    msMeshReadWeights4(_this, ret);
+                    return ret;
+                }
                 set { msMeshWriteWeights4(_this, value, value.Length); }
+            }
+
+            public int numBones
+            {
+                get { return msMeshGetNumBones(_this); }
             }
             public Matrix4x4[] bindposes
             {
                 set { msMeshWriteBindPoses(_this, value, value.Length); }
             }
-            public Transform[] bones
+            public void SetBonePaths(Transform[] bones)
             {
-                set
+                int n = bones.Length;
+                for (int i = 0; i < n; ++i)
                 {
-                    int n = value.Length;
-                    for(int i=0; i<n; ++i)
-                    {
-                        string path = BuildPath(value[i]);
-                        msMeshSetBone(_this, path, i);
-                    }
+                    string path = BuildPath(bones[i]);
+                    msMeshSetBonePath(_this, path, i);
                 }
+            }
+            public string[] GetBonePaths()
+            {
+                int n = numBones;
+                var ret = new string[n];
+                for (int i = 0; i < n; ++i)
+                {
+                    ret[i] = S(msMeshGetBonePath(_this, i));
+                }
+                return ret;
             }
 
             public int numSubmeshes { get { return msMeshGetNumSubmeshes(_this); } }

@@ -58,11 +58,18 @@ const char* CmdSync::name()
 MSyntax CmdSync::syntax()
 {
     MSyntax syntax;
-    syntax.addFlag("-m", "-mode", MSyntax::kString);
+    syntax.addFlag("-s", "-scope", MSyntax::kString);
     return syntax;
 }
-MStatus CmdSync::doIt(const MArgList&)
+MStatus CmdSync::doIt(const MArgList& args)
 {
+    MArgParser parser(syntax(), args);
+    {
+        MString mode;
+        if (parser.getCommandArgument(0, mode) == MStatus::kSuccess) {
+            MeshSyncClientMaya::getInstance().setServerAddress(mode.asChar());
+        }
+    }
     MeshSyncClientMaya::getInstance().sendScene();
     return MStatus::kSuccess;
 }

@@ -821,6 +821,7 @@ namespace UTJ
         {
             mesh = smr.sharedMesh;
             if (mesh == null) return false;
+
             if (!mes.bakeSkin && !mesh.isReadable)
             {
                 Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
@@ -832,6 +833,7 @@ namespace UTJ
             {
                 CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
             }
+
             if (mes.bakeSkin)
             {
                 var tmp = new Mesh();
@@ -841,10 +843,13 @@ namespace UTJ
             else
             {
                 CaptureMesh(ref dst, mesh, null, mes.flags, smr.sharedMaterials);
-            }
-            if(mes.flags.getBones)
-            {
-                dst.bones = smr.bones;
+
+                if (mes.flags.getBones)
+                {
+                    dst.SetBonePaths(smr.bones);
+                    dst.bindposes = mesh.bindposes;
+                    dst.boneWeights = mesh.boneWeights;
+                }
             }
             return true;
         }

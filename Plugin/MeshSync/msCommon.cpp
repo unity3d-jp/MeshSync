@@ -634,12 +634,18 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.scale_factor != 1.0f) {
         mu::Scale(points.data(), mrs.scale_factor, points.size());
         transform.position *= mrs.scale_factor;
+        for (auto& bp : bindposes) {
+            (float3&)bp[3] *= mrs.scale_factor;
+        }
     }
     if (mrs.flags.swap_handedness) {
         mu::InvertX(points.data(), points.size());
         mu::InvertX(npoints.data(), npoints.size());
         transform.position.x *= -1.0f;
         transform.rotation = swap_handedness(transform.rotation);
+        for (auto& bp : bindposes) {
+            bp = swap_handedness(bp);
+        }
     }
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);

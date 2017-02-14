@@ -58,10 +58,7 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
 {
-    if (m_future_send.valid()) {
-        m_future_send.wait_for(std::chrono::milliseconds(m_timeout_ms));
-    }
-
+    waitAsyncSend();
     removeCallbacks();
 #define Body(CmdType) m_iplugin.deregisterCommand(CmdType::name());
     EachCommand(Body)
@@ -76,6 +73,13 @@ bool MeshSyncClientMaya::isAsyncSendInProgress() const
     return false;
 }
 
+void MeshSyncClientMaya::waitAsyncSend()
+{
+    if (m_future_send.valid()) {
+        m_future_send.wait_for(std::chrono::milliseconds(m_timeout_ms));
+    }
+}
+
 void MeshSyncClientMaya::registerCallbacks()
 {
     removeCallbacks();
@@ -87,7 +91,7 @@ void MeshSyncClientMaya::registerCallbacks()
     {
         m_cids.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, this, &stat));
     }
-    for (unsigned int i = 0; i < list.length(); i++)
+    for (uint32_t i = 0; i < list.length(); i++)
     {
         MObject node;
         list.getDependNode(i, node);
@@ -187,17 +191,13 @@ void MeshSyncClientMaya::setAutoSync(bool v)
     m_auto_sync = v;
 }
 
-void MeshSyncClientMaya::sendScene()
+void MeshSyncClientMaya::sendScene(TargetScope scope)
 {
     if (isAsyncSendInProgress()) {
         m_pending_send_meshes = true;
         return;
     }
     m_pending_send_meshes = false;
-
-    m_materials.clear();
-    m_joints.clear();
-    m_client_meshes.clear();
 
     // gather material data
     {
@@ -217,7 +217,8 @@ void MeshSyncClientMaya::sendScene()
     }
 
     // gather mesh data
-    {
+    if(scope == TargetScope::All) {
+        // all meshes
         MItDag it(MItDag::kDepthFirst, MFn::kMesh);
         while (!it.isDone()) {
             MFnMesh fn(it.item());
@@ -230,22 +231,83 @@ void MeshSyncClientMaya::sendScene()
             it.next();
         }
     }
+    else if (scope == TargetScope::Selection) {
+        // selected meshes
+        MStatus stat;
+        MSelectionList list;
+        MGlobal::getActiveSelectionList(list);
+
+        for (uint32_t i = 0; i < list.length(); i++)
+        {
+            MObject node;
+            list.getDependNode(i, node);
+
+            MDagPath path;
+            if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
+                if (path.extendToShape() == MS::kSuccess) {
+                    auto shape = path.node();
+                    auto mesh = new ms::Mesh();
+                    m_client_meshes.emplace_back(mesh);
+                    extractTransformData(*mesh, node);
+                    extractMeshData(*mesh, path.node());
+                }
+            }
+        }
+    }
 
     kickAsyncSend();
 }
 
-void MeshSyncClientMaya::sendSelected()
+bool MeshSyncClientMaya::importScene()
 {
+    waitAsyncSend();
+
+    ms::Client client(m_client_settings);
+    ms::GetMessage gd;
+    gd.flags.get_transform = 1;
+    gd.flags.get_indices = 1;
+    gd.flags.get_points = 1;
+    gd.flags.get_uv = 1;
+    gd.flags.get_materialIDs = 1;
+    gd.scene_settings.handedness = ms::Handedness::Right;
+    gd.scene_settings.scale_factor = m_scale_factor;
+    gd.refine_settings.flags.apply_local2world = 1;
+    gd.refine_settings.flags.invert_v = 1;
+    gd.refine_settings.flags.bake_skin = m_bake_skin;
+    gd.refine_settings.flags.bake_cloth = m_bake_cloth;
+
+    auto ret = client.send(gd);
+    if (!ret) {
+        return false;
+    }
+
+    // todo: create materials
+
+    // todo: create mesh objects
+
+    return true;
 }
 
-void MeshSyncClientMaya::importScene()
+void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
+    MFnTransform src_trs(src);
+
+    MStatus stat;
+    MVector pos;
+    MQuaternion rot;
+    double scale[3];
+
+    pos = src_trs.getTranslation(MSpace::kObject, &stat);
+    stat = src_trs.getRotation(rot, MSpace::kObject);
+    stat = src_trs.getScale(scale);
+    dst.transform.position = { (float)pos[0], (float)pos[1], (float)pos[2] };
+    dst.transform.rotation = { (float)rot[0], (float)rot[1], (float)rot[2], (float)rot[3] };
+    dst.transform.scale = { (float)scale[0], (float)scale[1], (float)scale[2] };
 }
 
 void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 {
     MFnMesh src_mesh(src);
-    MFnTransform src_trs(src);
 
     MDagPath path;
     MFloatPointArray points;
@@ -273,6 +335,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     //dst.flags.has_materialIDs = 1;
     dst.flags.has_refine_settings = 1;
     dst.refine_settings.flags.gen_tangents = 1;
+    dst.refine_settings.flags.swap_handedness = 1;
 
     {
         auto len = points.length();
@@ -320,16 +383,13 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         MObjectArray shaders;
         MIntArray indices;
         src_mesh.getConnectedShaders(0, shaders, indices);
-        for (uint32_t si = 0; si < shaders.length(); si++)
-        {
+        for (uint32_t si = 0; si < shaders.length(); si++) {
             MFnDependencyNode shader_group(shaders[si]);
             MPlug shader_plug = shader_group.findPlug("surfaceShader");
             MPlugArray connections;
             shader_plug.connectedTo(connections, true, false);
-            for (uint32_t ci = 0; ci < connections.length(); ci++)
-            {
-                if (connections[ci].node().hasFn(MFn::kLambert))
-                {
+            for (uint32_t ci = 0; ci < connections.length(); ci++) {
+                if (connections[ci].node().hasFn(MFn::kLambert)) {
                     MFnLambertShader lambert(connections[ci].node());
                     int id = getMaterialID(lambert.uuid());
                 }
@@ -347,20 +407,16 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         in_mesh.connectedTo(dependencies, true, false);
 
         auto num_dependencies = dependencies.length();
-        for (uint32_t idp = 0; idp < num_dependencies; idp++)
-        {
+        for (uint32_t idp = 0; idp < num_dependencies; idp++) {
             MFnDependencyNode node(dependencies[idp].node());
-
-            if (node.typeName() == "skinCluster")
-            {
+            if (node.typeName() == "skinCluster") {
                 MFnSkinCluster skin_cluster(dependencies[idp].node());
                 MDagPathArray joint_paths;
 
                 // get bindposes
                 MPlug plug_bindprematrix = skin_cluster.findPlug("bindPreMatrix");
                 auto num_joints = skin_cluster.influenceObjects(joint_paths);
-                for (uint32_t ij = 0; ij < num_joints; ij++)
-                {
+                for (uint32_t ij = 0; ij < num_joints; ij++) {
                     auto joint = new ms::Joint();
                     m_joints.emplace_back(joint);
                     joint->path = joint_paths[ij].partialPathName().asChar();
@@ -379,26 +435,21 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
                 // get weights
                 auto num_meshes = skin_cluster.numOutputConnections();
-                for (uint32_t im = 0; im < num_meshes; im++)
-                {
+                for (uint32_t im = 0; im < num_meshes; im++) {
                     auto index = skin_cluster.indexForOutputConnection(im);
 
                     MDagPath mesh_path;
                     skin_cluster.getPathAtIndex(index, mesh_path);
 
                     MItGeometry it_geom(mesh_path);
-                    while (!it_geom.isDone())
-                    {
+                    while (!it_geom.isDone()) {
                         MObject component = it_geom.component();
                         MFloatArray weights;
-                        unsigned int influence_count;
+                        uint32_t influence_count;
                         skin_cluster.getWeights(mesh_path, component, weights, influence_count);
 
-                        for (uint32_t iw = 0; iw < influence_count; iw++)
-                        {
-                            if (weights[iw] > 0.0001f) {
-                                // 
-                            }
+                        for (uint32_t ij = 0; ij < influence_count; ij++) {
+                            dst.bone_weights.push_back(weights[ij]);
                         }
 
                         it_geom.next();
@@ -474,6 +525,10 @@ void MeshSyncClientMaya::kickAsyncSend()
             fence.type = ms::FenceMessage::FenceType::SceneEnd;
             client.send(fence);
         }
+
+        m_materials.clear();
+        m_joints.clear();
+        m_client_meshes.clear();
     });
 }
 

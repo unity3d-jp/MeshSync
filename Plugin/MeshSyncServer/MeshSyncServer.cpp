@@ -298,6 +298,25 @@ msAPI ms::SubmeshData* msMeshGetSubmesh(ms::Mesh *_this, int i)
     return &_this->submeshes[i];
 }
 
+msAPI int msMeshGetNumWeights4(ms::Mesh *_this)
+{
+    if (_this->bones_par_vertex != 4) {
+        return 0;
+    }
+    return (int)_this->bone_weights.size() / _this->bones_par_vertex;
+}
+msAPI void msMeshReadWeights4(ms::Mesh *_this, ms::Weights4 *v)
+{
+    if (_this->bones_par_vertex != 4) {
+        return;
+    }
+    int bpv = _this->bones_par_vertex;
+    int num_weights4 = (int)_this->bone_weights.size() / 4;
+    for (int i = 0; i < num_weights4; ++i) {
+        memcpy(v[i].weight, &_this->bone_weights[i * 4], sizeof(float) * 4);
+        memcpy(v[i].indices, &_this->bone_indices[i * 4], sizeof(int) * 4);
+    }
+}
 msAPI void msMeshWriteWeights4(ms::Mesh *_this, const ms::Weights4 *v, int size)
 {
     _this->bones_par_vertex = 4;
@@ -308,12 +327,24 @@ msAPI void msMeshWriteWeights4(ms::Mesh *_this, const ms::Weights4 *v, int size)
         memcpy(&_this->bone_indices[i * 4], v[i].indices, sizeof(int) * 4);
     }
 }
-msAPI void msMeshSetBone(ms::Mesh *_this, const char *v, int i)
+msAPI int msMeshGetNumBones(ms::Mesh *_this)
+{
+    return (int)_this->bones.size();
+}
+msAPI const char* msMeshGetBonePath(ms::Mesh *_this, int i)
+{
+    return _this->bones[i].c_str();
+}
+msAPI void msMeshSetBonePath(ms::Mesh *_this, const char *v, int i)
 {
     if (i + 1 >= _this->bones.size()) {
         _this->bones.resize(i + 1);
     }
     _this->bones[i] = v;
+}
+msAPI void msMeshReadBindPoses(ms::Mesh *_this, float4x4 *v)
+{
+    _this->bindposes.copy_to(v);
 }
 msAPI void msMeshWriteBindPoses(ms::Mesh *_this, const float4x4 *v, int size)
 {
