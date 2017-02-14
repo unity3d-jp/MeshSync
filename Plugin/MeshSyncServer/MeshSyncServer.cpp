@@ -76,37 +76,9 @@ msAPI int msGetGetBakeCloth(ms::GetMessage *_this)
     return _this->refine_settings.flags.bake_cloth;
 }
 
-msAPI int msSetGetNumMeshes(ms::SetMessage *_this)
+msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 {
-    return (int)_this->scene.meshes.size();
-}
-msAPI ms::Mesh* msSetGetMeshData(ms::SetMessage *_this, int i)
-{
-    return _this->scene.meshes[i].get();
-}
-msAPI int msSetGetNumTransforms(ms::SetMessage *_this)
-{
-    return (int)_this->scene.transforms.size();
-}
-msAPI ms::Transform* msSetGetTransformData(ms::SetMessage *_this, int i)
-{
-    return _this->scene.transforms[i].get();
-}
-msAPI int msSetGetNumCameras(ms::SetMessage *_this)
-{
-    return (int)_this->scene.cameras.size();
-}
-msAPI ms::Camera* msSetGetCameraData(ms::SetMessage *_this, int i)
-{
-    return _this->scene.cameras[i].get();
-}
-msAPI int msSetGetNumMaterials(ms::SetMessage *_this)
-{
-    return (int)_this->scene.materials.size();
-}
-msAPI ms::Material* msSetGetMaterialData(ms::SetMessage *_this, int i)
-{
-    return &_this->scene.materials[i];
+    return &_this->scene;
 }
 
 msAPI int msMaterialGetID(ms::Material *_this)
@@ -167,6 +139,32 @@ msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_this)
     return _this->type;
 }
 
+
+msAPI ms::Transform* msTransformCreate()
+{
+    return new ms::Transform();
+}
+msAPI void msTransformGetTRS(ms::Transform *_this, ms::TRS *dst)
+{
+    *dst = _this->transform;
+}
+msAPI void msTransformSetTRS(ms::Transform *_this, const ms::TRS *v)
+{
+    _this->transform = *v;
+}
+
+msAPI ms::Bone* msBoneCreate()
+{
+    return new ms::Bone();
+}
+msAPI void msBoneGetBindpose(ms::Bone *_this, float4x4 *dst)
+{
+    *dst = _this->bindpose;
+}
+msAPI void msBoneSetBindpose(ms::Bone *_this, const float4x4 *v)
+{
+    _this->bindpose = *v;
+}
 
 msAPI ms::Mesh* msMeshCreate()
 {
@@ -280,14 +278,6 @@ msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *_this, int i)
 {
     return &_this->splits[i];
 }
-msAPI void msMeshGetTransform(ms::Mesh *_this, ms::TRS *dst)
-{
-    *dst = _this->transform;
-}
-msAPI void msMeshSetTransform(ms::Mesh *_this, const ms::TRS *v)
-{
-    _this->transform = *v;
-}
 
 msAPI int msMeshGetNumSubmeshes(ms::Mesh *_this)
 {
@@ -385,7 +375,6 @@ msAPI ms::SubmeshData* msSplitGetSubmesh(ms::SplitData *_this, int i)
     return &_this->submeshes[i];
 }
 
-
 msAPI int msSubmeshGetNumIndices(ms::SubmeshData *_this)
 {
     return (int)_this->indices.size();
@@ -397,4 +386,46 @@ msAPI int msSubmeshGetMaterialID(ms::SubmeshData *_this)
 msAPI void msSubmeshReadIndices(ms::SubmeshData *_this, int *dst)
 {
     _this->indices.copy_to(dst);
+}
+
+
+msAPI int msSceneGetNumMeshes(ms::Scene *_this)
+{
+    return (int)_this->meshes.size();
+}
+msAPI ms::Mesh* msSceneGetMeshData(ms::Scene *_this, int i)
+{
+    return _this->meshes[i].get();
+}
+msAPI int msSceneGetNumTransforms(ms::Scene *_this)
+{
+    return (int)_this->transforms.size();
+}
+msAPI ms::Transform* msSceneGetTransformData(ms::Scene *_this, int i)
+{
+    return _this->transforms[i].get();
+}
+msAPI int msSceneGetNumBones(ms::Scene *_this)
+{
+    return (int)_this->bones.size();
+}
+msAPI ms::Bone* msSceneGetBoneData(ms::Scene *_this, int i)
+{
+    return _this->bones[i].get();
+}
+msAPI int msSceneGetNumCameras(ms::Scene *_this)
+{
+    return (int)_this->cameras.size();
+}
+msAPI ms::Camera* msSceneGetCameraData(ms::Scene *_this, int i)
+{
+    return _this->cameras[i].get();
+}
+msAPI int msSceneGetNumMaterials(ms::Scene *_this)
+{
+    return (int)_this->materials.size();
+}
+msAPI ms::Material* msSceneGetMaterialData(ms::Scene *_this, int i)
+{
+    return &_this->materials[i];
 }

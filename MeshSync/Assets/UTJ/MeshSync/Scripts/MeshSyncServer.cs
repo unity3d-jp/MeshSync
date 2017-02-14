@@ -239,41 +239,41 @@ namespace UTJ
 #if UNITY_EDITOR
             Undo.RecordObject(this, "MeshSyncServer");
 #endif
-
+            var scene = mes.scene;
             // sync materials
-            int numMaterials = mes.numMaterials;
+            int numMaterials = scene.numMaterials;
             if(numMaterials > 0)
             {
-                UpdateMaterials(mes);
+                UpdateMaterials(scene);
             }
 
             // sync meshes
-            int numMeshes = mes.numMeshes;
+            int numMeshes = scene.numMeshes;
             for (int i = 0; i < numMeshes; ++i)
             {
-                UpdateMesh(mes.GetMesh(i));
+                UpdateMesh(scene.GetMesh(i));
             }
 
             // sync bones
-            int numTransforms = mes.numTransforms;
+            int numTransforms = scene.numTransforms;
             for (int i = 0; i < numTransforms; ++i)
             {
-                UpdateTransform(mes.GetTransform(i));
+                UpdateTransform(scene.GetTransform(i));
             }
 
             // sync cameras
-            int numCameras = mes.numCameras;
+            int numCameras = scene.numCameras;
             for (int i = 0; i < numCameras; ++i)
             {
-                UpdateCamera(mes.GetCamera(i));
+                UpdateCamera(scene.GetCamera(i));
             }
 
             //Debug.Log("MeshSyncServer: Set");
         }
 
-        void UpdateMaterials(SetMessage mes)
+        void UpdateMaterials(SceneData scene)
         {
-            int numMaterials = mes.numMaterials;
+            int numMaterials = scene.numMaterials;
 
             bool needsUpdate = false;
             if(m_materialList.Count != numMaterials)
@@ -284,7 +284,7 @@ namespace UTJ
             {
                 for (int i = 0; i < numMaterials; ++i)
                 {
-                    var src = mes.GetMaterial(i);
+                    var src = scene.GetMaterial(i);
                     var dst = m_materialList[i];
                     if(src.id != dst.id || src.name != dst.name || src.color != dst.color)
                     {
@@ -298,7 +298,7 @@ namespace UTJ
             var newlist = new List<MaterialHolder>();
             for (int i = 0; i < numMaterials; ++i)
             {
-                var src = mes.GetMaterial(i);
+                var src = scene.GetMaterial(i);
                 var id = src.id;
                 var dst = m_materialList.Find(a => a.id == id);
                 if (dst == null)

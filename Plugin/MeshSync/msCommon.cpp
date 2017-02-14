@@ -455,18 +455,18 @@ void Transform::deserialize(std::istream& is)
 }
 
 
-uint32_t Joint::getSerializeSize() const
+uint32_t Bone::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += ssize(bindpose);
     return ret;
 }
-void Joint::serialize(std::ostream& os) const
+void Bone::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, bindpose);
 }
-void Joint::deserialize(std::istream& is)
+void Bone::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, bindpose);
@@ -839,7 +839,43 @@ void Mesh::applyTransform(const float4x4& m)
 
 void Mesh::normalizeWeights()
 {
-    // todo
+    if (bone_indices.size() != bone_weights.size()) {
+        msLogError("Mesh::normalizeWeights(): should not be here\n");
+        return;
+    }
+
+    int bpv4 = std::min<int>(4, bones_par_vertex);
+    int num_weights4 = (int)bone_indices.size() / bones_par_vertex;
+    weights4.resize(num_weights4);
+    weights4.zeroclear();
+
+    int *order = (int*)alloca(sizeof(int) * bones_par_vertex);
+    for (int wi = 0; wi < num_weights4; ++wi) {
+        auto *bindices = &bone_indices[bones_par_vertex * wi];
+        auto *bweights = &bone_weights[bones_par_vertex * wi];
+        auto compare = [&](int a, int b) { return bweights[a] < bweights[b]; };
+
+        // sort order
+        std::iota(order, order + bones_par_vertex, 0);
+        std::nth_element(order, order + bpv4, order + bones_par_vertex, compare);
+        std::sort(order, order + bpv4, compare);
+
+        // copy (up to) 4 elements
+        auto& w4 = weights4[wi];
+        float w = 0.0f;
+        for (int oi = 0; oi < bpv4; ++oi) {
+            int o = order[oi];
+            w4.indices[oi] = bindices[o];
+            w4.weights[oi] = bweights[o];
+            w += bweights[o];
+        }
+
+        // normalize weights
+        float rcpw = 1.0f / w;
+        for (int oi = 0; oi < bpv4; ++oi) {
+            w4.weights[oi] *= rcpw;
+        }
+    }
 }
 
 
@@ -849,7 +885,7 @@ uint32_t Scene::getSerializeSize() const
     ret += ssize(settings);
     ret += ssize(meshes);
     ret += ssize(transforms);
-    ret += ssize(joints);
+    ret += ssize(bones);
     ret += ssize(references);
     ret += ssize(cameras);
     ret += ssize(materials);
@@ -860,7 +896,7 @@ void Scene::serialize(std::ostream& os) const
     write(os, settings);
     write(os, meshes);
     write(os, transforms);
-    write(os, joints);
+    write(os, bones);
     write(os, references);
     write(os, cameras);
     write(os, materials);
@@ -870,7 +906,7 @@ void Scene::deserialize(std::istream& is)
     read(is, settings);
     read(is, meshes);
     read(is, transforms);
-    read(is, joints);
+    read(is, bones);
     read(is, references);
     read(is, cameras);
     read(is, materials);

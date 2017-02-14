@@ -417,9 +417,9 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 MPlug plug_bindprematrix = skin_cluster.findPlug("bindPreMatrix");
                 auto num_joints = skin_cluster.influenceObjects(joint_paths);
                 for (uint32_t ij = 0; ij < num_joints; ij++) {
-                    auto joint = new ms::Joint();
-                    m_joints.emplace_back(joint);
-                    joint->path = joint_paths[ij].partialPathName().asChar();
+                    auto bone = new ms::Bone();
+                    m_bones.emplace_back(bone);
+                    bone->path = joint_paths[ij].partialPathName().asChar();
 
                     auto ijoint = skin_cluster.indexForInfluenceObject(joint_paths[ij], nullptr);
                     MPlug plug_matrix = plug_bindprematrix.elementByLogicalIndex(ijoint);
@@ -429,7 +429,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     MFnMatrixData matrix_data(matrix_obj);
                     MMatrix bindpose = matrix_data.matrix();
                     for (int ir = 0; ir < 4; ++ir) {
-                        joint->bindpose[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
+                        bone->bindpose[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
                     }
                 }
 
@@ -527,7 +527,7 @@ void MeshSyncClientMaya::kickAsyncSend()
         }
 
         m_materials.clear();
-        m_joints.clear();
+        m_bones.clear();
         m_client_meshes.clear();
     });
 }

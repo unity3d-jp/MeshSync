@@ -69,7 +69,7 @@ public:
 using TransformPtr = std::shared_ptr<Transform>;
 
 
-class Joint : public Transform
+class Bone : public Transform
 {
 using super = Transform;
 public:
@@ -79,7 +79,7 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
-using JointPtr = std::shared_ptr<Joint>;
+using BonePtr = std::shared_ptr<Bone>;
 
 
 class Reference : public Transform
@@ -242,7 +242,7 @@ public:
     SceneSettings settings;
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
-    std::vector<JointPtr> joints;
+    std::vector<BonePtr> bones;
     std::vector<ReferencePtr> references;
     std::vector<CameraPtr> cameras;
     std::vector<Material> materials;

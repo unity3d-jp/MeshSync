@@ -42,7 +42,7 @@ private:
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::Material>;
-    using Joints = std::vector<ms::JointPtr>;
+    using Bones = std::vector<ms::BonePtr>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
@@ -59,7 +59,7 @@ private:
     float m_scale_factor = 1.0f;
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
-    Joints m_joints;
+    Bones m_bones;
     Materials m_materials;
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
