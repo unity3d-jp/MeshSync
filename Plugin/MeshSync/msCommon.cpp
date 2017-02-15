@@ -478,7 +478,7 @@ void Camera::deserialize(std::istream& is)
 
 
 #define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
-#define EachBoneProperty(Body) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
+#define EachBoneProperty(Body) Body(bones_per_vertex) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
 {

@@ -26,9 +26,8 @@ public:
 
     void onIdle();
     void onSelectionChanged();
-    void onSceneUpdate();
+    void onSceneUpdated();
 
-    void notifyDAGChanged();
     void notifyUpdateTransform(MObject obj);
     void notifyUpdateMesh(MObject obj);
     void sendUpdatedObjects();

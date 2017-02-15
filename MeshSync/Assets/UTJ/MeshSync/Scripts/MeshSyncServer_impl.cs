@@ -59,7 +59,7 @@ namespace UTJ
         public struct SetMessage
         {
             internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern SceneData msSetGetScene(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern SceneData msSetGetSceneData(IntPtr _this);
 
             public static explicit operator SetMessage(IntPtr v)
             {
@@ -70,7 +70,7 @@ namespace UTJ
 
             public SceneData scene
             {
-                get { return msSetGetScene(_this); }
+                get { return msSetGetSceneData(_this); }
             }
         }
 

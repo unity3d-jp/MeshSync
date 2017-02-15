@@ -848,12 +848,11 @@ bool GenerateWeightsN(RawVector<Weights<N>> dst, IArray<int> bone_indices, IArra
         for (int wi = 0; wi < num_weightsN; ++wi) {
             auto *bindices = &bone_indices[bones_per_vertex * wi];
             auto *bweights = &bone_weights[bones_per_vertex * wi];
-            auto compare = [&](int a, int b) { return bweights[a] < bweights[b]; };
 
             // sort order
             std::iota(order, order + bones_per_vertex, 0);
-            std::nth_element(order, order + N, order + bones_per_vertex, compare);
-            std::sort(order, order + N, compare);
+            std::nth_element(order, order + N, order + bones_per_vertex,
+                [&](int a, int b) { return bweights[a] > bweights[b]; });
 
             // copy (up to) N elements
             auto& w4 = dst[wi];

@@ -34,18 +34,18 @@ global proc umsOnEditServerPort()
     string $ret = `UnityMeshSync_Settings -port $port`;
 }
 
-global proc umsOnEditAutoSync()
+global  proc umsOnEditAutoSync()
 {
     int $autosync = `checkBox -q -value CHECKBOX_AUTOSYNC`;
     string $ret = `UnityMeshSync_Settings -autosync $autosync`;
 }
 
-proc umsOnManualSync()
+global proc umsOnManualSync()
 {
     string $ret = `UnityMeshSync_Sync`;
 }
 
-proc umsOnImport()
+global proc umsOnImport()
 {
     string $ret = `UnityMeshSync_Import`;
 }

@@ -439,7 +439,13 @@ namespace UTJ
                         if(smr != null)
                         {
                             smr.sharedMesh = rec.editMesh;
-                            smr.bones = GetOrCreateBones(data);
+
+                            var bones = GetOrCreateBones(data);
+                            if(bones.Length > 0)
+                            {
+                                smr.bones = bones;
+                                smr.rootBone = bones[0];
+                            }
                         }
                     }
                     else
