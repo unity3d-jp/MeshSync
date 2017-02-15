@@ -819,7 +819,7 @@ bool GenerateTangents(
 
 
 template<int N>
-bool GenerateWeightsN(RawVector<Weights<N>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex)
+bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex)
 {
     if (bone_indices.size() != bone_weights.size()) {
         return false;
@@ -873,8 +873,8 @@ bool GenerateWeightsN(RawVector<Weights<N>> dst, IArray<int> bone_indices, IArra
     }
     return true;
 }
-template bool GenerateWeightsN(RawVector<Weights<4>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
-template bool GenerateWeightsN(RawVector<Weights<8>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
+template bool GenerateWeightsN(RawVector<Weights<4>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
+template bool GenerateWeightsN(RawVector<Weights<8>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
 
 
 

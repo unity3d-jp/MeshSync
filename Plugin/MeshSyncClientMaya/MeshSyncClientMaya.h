@@ -73,6 +73,7 @@ private:
     Transforms m_client_transforms;
     HostMeshes m_host_meshes;
     Materials m_materials;
+    std::vector<std::string> m_deleted;
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
     bool m_pending_send_meshes = false;

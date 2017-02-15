@@ -42,7 +42,7 @@ bool GenerateTangents(
     const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices);
 
 template<int N>
-bool GenerateWeightsN(RawVector<Weights<N>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
+bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
 
 
 // vertex interleave

@@ -8,13 +8,19 @@
 #pragma comment(lib, "OpenMayaAnim.lib")
 #endif
 
-
-static bool IsVisible(MFnDagNode& dag)
+template<class Body>
+static void EachChild(MObject node, const Body& body)
 {
-    if (dag.isIntermediateObject()) {
-        return false;
+    MFnDagNode fn = node;
+    auto num_children = fn.childCount();
+    for (uint32_t i = 0; i < num_children; ++i) {
+        body(fn.child(i));
     }
+}
 
+static bool IsVisible(MObject node)
+{
+    MFnDagNode dag = node;
     auto vis = dag.findPlug("visibility");
     bool visible = false;
     vis.getValue(visible);
@@ -27,11 +33,57 @@ static std::string GetPath(MDagPath path)
     std::replace(ret.begin(), ret.end(), '|', '/');
     return ret;
 }
-
-static std::string GetPath(MObject obj)
+static std::string GetPath(MObject node)
 {
-    return GetPath(MDagPath::getAPathTo(obj));
+    return GetPath(MDagPath::getAPathTo(node));
 }
+
+static MObject GetTransform(MDagPath path)
+{
+    return path.transform();
+}
+static MObject GetTransform(MObject node)
+{
+    return GetTransform(MDagPath::getAPathTo(node));
+}
+
+static MObject FindSkinCluster(MObject node)
+{
+    MItDependencyGraph it(node, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
+    if (!it.isDone()) {
+        return it.currentItem();
+    }
+    return MObject();
+}
+
+static MObject FindMesh(MObject node)
+{
+    MObject ret;
+    EachChild(node, [&](MObject child) {
+        if (child.hasFn(MFn::kMesh)) {
+            MFnMesh fn = child;
+            if (!fn.isIntermediateObject()) {
+                ret = child;
+            }
+        }
+    });
+    return ret;
+}
+
+static MObject FindOrigMesh(MObject node)
+{
+    MObject ret;
+    EachChild(node, [&](MObject child) {
+        if (child.hasFn(MFn::kMesh)) {
+            MFnMesh fn = child;
+            if (ret.isNull() || fn.isIntermediateObject()) {
+                ret = child;
+            }
+        }
+    });
+    return ret;
+}
+
 
 
 static void OnIdle(void *_this)
@@ -195,11 +247,11 @@ void MeshSyncClientMaya::notifyUpdateTransform(MObject obj)
     }
 }
 
-void MeshSyncClientMaya::notifyUpdateMesh(MObject obj)
+void MeshSyncClientMaya::notifyUpdateMesh(MObject node)
 {
     mscTrace("MeshSyncClientMaya::notifyUpdateMesh()\n");
     if (m_auto_sync) {
-        m_mmeshes.push_back(obj);
+        m_mmeshes.push_back(GetTransform(node));
     }
 }
 
@@ -224,6 +276,38 @@ void MeshSyncClientMaya::onSelectionChanged()
 void MeshSyncClientMaya::onSceneUpdated()
 {
     mscTrace("MeshSyncClientMaya::onSceneUpdate()\n");
+
+
+    // detect deleted objects
+    {
+        for (auto& e : m_exist_record) {
+            e.second = false;
+        }
+
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kMesh);
+            while (!it.isDone()) {
+                auto node = it.item();
+                MFnMesh fn(node);
+                if (!fn.isIntermediateObject()) {
+                    m_exist_record[GetPath(GetTransform(node))] = true;
+                }
+
+                it.next();
+            }
+        }
+
+        for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
+            if (!i->second) {
+                m_deleted.push_back(i->first);
+                m_exist_record.erase(i++);
+            }
+            else {
+                ++i;
+            }
+        }
+    }
+
     if (m_auto_sync) {
         m_pending_send_meshes = true;
     }
@@ -299,11 +383,12 @@ void MeshSyncClientMaya::sendScene(TargetScope scope)
         // all meshes
         MItDag it(MItDag::kDepthFirst, MFn::kMesh);
         while (!it.isDone()) {
-            MFnMesh fn(it.item());
+            auto node = it.item();
+            MFnMesh fn(node);
             if (!fn.isIntermediateObject()) {
                 auto mesh = new ms::Mesh();
                 m_client_meshes.emplace_back(mesh);
-                extractMeshData(*mesh, fn.object());
+                extractMeshData(*mesh, GetTransform(node));
             }
 
             it.next();
@@ -325,7 +410,7 @@ void MeshSyncClientMaya::sendScene(TargetScope scope)
                     auto shape = path.node();
                     auto mesh = new ms::Mesh();
                     m_client_meshes.emplace_back(mesh);
-                    extractMeshData(*mesh, path.node());
+                    extractMeshData(*mesh, node);
                 }
             }
         }
@@ -403,10 +488,9 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 {
     dst.clear();
 
-    MFnMesh src_mesh(src);
-    extractTransformData(dst, src_mesh.parent(0));
+    extractTransformData(dst, src);
 
-    dst.flags.visible = IsVisible(src_mesh);
+    dst.flags.visible = IsVisible(src);
     if (!dst.flags.visible) { return; }
 
     dst.flags.has_points = 1;
@@ -416,13 +500,18 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.flags.has_materialIDs = 1;
     dst.flags.has_refine_settings = 1;
     dst.refine_settings.flags.gen_tangents = 1;
-    dst.refine_settings.flags.swap_handedness = 1;
+    dst.refine_settings.flags.swap_faces = 1;
     dst.refine_settings.flags.generate_weights4 = 1;
+
+    MFnMesh fn_mesh = FindMesh(src);
+    MFnMesh fn_mesh_orig = FindOrigMesh(src);
+    MFnSkinCluster fn_skin = FindSkinCluster(fn_mesh.object());
+    if (fn_mesh.object().isNull()) { return; }
 
     // get points
     {
         MFloatPointArray points;
-        src_mesh.getPoints(points);
+        fn_mesh_orig.getPoints(points);
 
         auto len = points.length();
         for (uint32_t i = 0; i < len; ++i) {
@@ -433,7 +522,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get normals and faces
     {
         MFloatVectorArray normals;
-        src_mesh.getNormals(normals);
+        fn_mesh_orig.getNormals(normals);
 
         MItMeshPolygon it_poly(src);
         while (!it_poly.isDone()) {
@@ -453,14 +542,14 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get uv
     {
         MStringArray uvsets;
-        src_mesh.getUVSetNames(uvsets);
+        fn_mesh_orig.getUVSetNames(uvsets);
 
-        if (uvsets.length() > 0 && src_mesh.numUVs(uvsets[0]) > 0) {
+        if (uvsets.length() > 0 && fn_mesh_orig.numUVs(uvsets[0]) > 0) {
             dst.flags.has_uv = 1;
 
             MFloatArray u;
             MFloatArray v;
-            src_mesh.getUVs(u, v, &uvsets[0]);
+            fn_mesh_orig.getUVs(u, v, &uvsets[0]);
 
             MItMeshPolygon it_poly(src);
             while (!it_poly.isDone()) {
@@ -482,7 +571,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         int mid = -1;
         MObjectArray shaders;
         MIntArray indices;
-        src_mesh.getConnectedShaders(0, shaders, indices);
+        fn_mesh.getConnectedShaders(0, shaders, indices);
         for (uint32_t si = 0; si < shaders.length(); si++) {
             MFnDependencyNode shader_group(shaders[si]);
             MPlug shader_plug = shader_group.findPlug("surfaceShader");
@@ -499,72 +588,58 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
     // get skinning data
-    {
-        MPlug in_mesh;
-        MPlugArray dependencies;
-        MFnDependencyNode node(src);
+    if(!fn_skin.object().isNull()) {
 
-        in_mesh = node.findPlug("inMesh");
-        in_mesh.connectedTo(dependencies, true, false);
+        // get bone data
+        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix");
+        MDagPathArray joint_paths;
+        auto num_joints = fn_skin.influenceObjects(joint_paths);
 
-        auto num_dependencies = dependencies.length();
-        for (uint32_t idp = 0; idp < num_dependencies; idp++) {
-            MFnDependencyNode node(dependencies[idp].node());
-            if (node.typeName() == "skinCluster") {
-                MFnSkinCluster skin_cluster(dependencies[idp].node());
-                MDagPathArray joint_paths;
+        dst.flags.has_bones = 1;
+        dst.bones_per_vertex = num_joints;
+        dst.bones.resize(num_joints);
+        dst.bindposes.resize(num_joints);
 
-                // get bone data
-                MPlug plug_bindprematrix = skin_cluster.findPlug("bindPreMatrix");
-                auto num_joints = skin_cluster.influenceObjects(joint_paths);
+        for (uint32_t ij = 0; ij < num_joints; ij++) {
+            auto bone = new ms::Transform();
+            m_client_transforms.emplace_back(bone);
+            extractTransformData(*bone, joint_paths[ij].node());
+            dst.bones[ij] = bone->path;
 
-                dst.flags.has_bones = 1;
-                dst.bones_per_vertex = num_joints;
-                dst.bones.resize(num_joints);
-                dst.bindposes.resize(num_joints);
+            auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
+            MPlug plug_matrix = plug_bindprematrix.elementByLogicalIndex(ijoint);
 
-                for (uint32_t ij = 0; ij < num_joints; ij++) {
-                    auto bone = new ms::Transform();
-                    m_client_transforms.emplace_back(bone);
-                    extractTransformData(*bone, joint_paths[ij].node());
-                    dst.bones[ij] = bone->path;
+            MObject matrix_obj;
+            plug_matrix.getValue(matrix_obj);
+            MFnMatrixData matrix_data(matrix_obj);
+            MMatrix bindpose = matrix_data.matrix();
+            auto& dst_bp = dst.bindposes[ij];
+            for (int ir = 0; ir < 4; ++ir) {
+                dst_bp[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
+            }
+        }
 
-                    auto ijoint = skin_cluster.indexForInfluenceObject(joint_paths[ij], nullptr);
-                    MPlug plug_matrix = plug_bindprematrix.elementByLogicalIndex(ijoint);
+        // get weights
+        auto num_meshes = fn_skin.numOutputConnections();
+        for (uint32_t im = 0; im < num_meshes; im++) {
+            auto index = fn_skin.indexForOutputConnection(im);
 
-                    MObject matrix_obj;
-                    plug_matrix.getValue(matrix_obj);
-                    MFnMatrixData matrix_data(matrix_obj);
-                    MMatrix bindpose = matrix_data.matrix();
-                    auto& dst_bp = dst.bindposes[ij];
-                    for (int ir = 0; ir < 4; ++ir) {
-                        dst_bp[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
-                    }
+            MDagPath mesh_path;
+            fn_skin.getPathAtIndex(index, mesh_path);
+
+            MItGeometry it_geom(mesh_path);
+            while (!it_geom.isDone()) {
+                MObject component = it_geom.component();
+                MFloatArray weights;
+                uint32_t influence_count;
+                fn_skin.getWeights(mesh_path, component, weights, influence_count);
+
+                for (uint32_t ij = 0; ij < influence_count; ij++) {
+                    dst.bone_indices.push_back(ij);
+                    dst.bone_weights.push_back(weights[ij]);
                 }
 
-                // get weights
-                auto num_meshes = skin_cluster.numOutputConnections();
-                for (uint32_t im = 0; im < num_meshes; im++) {
-                    auto index = skin_cluster.indexForOutputConnection(im);
-
-                    MDagPath mesh_path;
-                    skin_cluster.getPathAtIndex(index, mesh_path);
-
-                    MItGeometry it_geom(mesh_path);
-                    while (!it_geom.isDone()) {
-                        MObject component = it_geom.component();
-                        MFloatArray weights;
-                        uint32_t influence_count;
-                        skin_cluster.getWeights(mesh_path, component, weights, influence_count);
-
-                        for (uint32_t ij = 0; ij < influence_count; ij++) {
-                            dst.bone_indices.push_back(ij);
-                            dst.bone_weights.push_back(weights[ij]);
-                        }
-
-                        it_geom.next();
-                    }
-                }
+                it_geom.next();
             }
         }
     }
@@ -602,32 +677,14 @@ void MeshSyncClientMaya::kickAsyncSend()
             client.send(set);
         });
 
-        // detect deleted objects and send delete message
-        {
-            for (auto& e : m_exist_record) {
-                e.second = false;
-            }
-            for (auto& mesh : m_client_meshes) {
-                if (!mesh->path.empty()) {
-                    m_exist_record[mesh->path] = true;
-                }
-            }
-
+        // send delete message
+        if(!m_deleted.empty()) {
             ms::DeleteMessage del;
-            for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
-                if (!i->second) {
-                    int id = 0;
-                    //ExtractID(i->first.c_str(), id);
-                    del.targets.push_back({ i->first , id });
-                    m_exist_record.erase(i++);
-                }
-                else {
-                    ++i;
-                }
+            del.targets.resize(m_deleted.size());
+            for (size_t i = 0; i < m_deleted.size(); ++i) {
+                del.targets[i].path = m_deleted[i];
             }
-            if (!del.targets.empty()) {
-                client.send(del);
-            }
+            client.send(del);
         }
 
         // notify scene end

@@ -48,6 +48,7 @@
 #include <maya/MItMeshVertex.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItDependencyNodes.h>
+#include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
 #include <maya/MFnData.h>
 #include <maya/MFnMatrixData.h>

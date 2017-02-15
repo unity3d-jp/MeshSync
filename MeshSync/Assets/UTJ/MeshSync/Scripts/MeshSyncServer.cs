@@ -799,18 +799,24 @@ namespace UTJ
             var smr = go.GetComponent<SkinnedMeshRenderer>();
             if (smr == null)
             {
-                smr = go.AddComponent<SkinnedMeshRenderer>();
+                // destroy mesh components if exist
                 {
-                    // destroy mesh components if exist
-                    var mfilter = go.GetComponent<MeshFilter>();
-                    var mr = go.AddComponent<MeshRenderer>();
-                    if (mfilter != null && mr != null)
+                    var mr = go.GetComponent<MeshRenderer>();
+                    if (mr != null)
                     {
                         smr.materials = mr.materials;
-                        DestroyImmediate(mfilter);
                         DestroyImmediate(mr);
                     }
                 }
+                {
+                    var mfilter = go.GetComponent<MeshFilter>();
+                    if (mfilter != null)
+                    {
+                        DestroyImmediate(mfilter);
+                    }
+                }
+
+                smr = go.AddComponent<SkinnedMeshRenderer>();
                 if (isSplit)
                 {
                     var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();

@@ -663,28 +663,28 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         int *sub_indices = indices.data();
         int offset_vertices = 0;
         for (auto& split : refiner.splits) {
-            auto sub = SplitData();
+            auto sp = SplitData();
 
-            sub.indices.reset(sub_indices, split.num_indices_triangulated);
+            sp.indices.reset(sub_indices, split.num_indices_triangulated);
             sub_indices += split.num_indices_triangulated;
 
             if (!points.empty()) {
-                sub.points.reset(&points[offset_vertices], split.num_vertices);
+                sp.points.reset(&points[offset_vertices], split.num_vertices);
             }
             if (!normals.empty()) {
-                sub.normals.reset(&normals[offset_vertices], split.num_vertices);
+                sp.normals.reset(&normals[offset_vertices], split.num_vertices);
             }
             if (!uv.empty()) {
-                sub.uv.reset(&uv[offset_vertices], split.num_vertices);
+                sp.uv.reset(&uv[offset_vertices], split.num_vertices);
             }
             if (!tangents.empty()) {
-                sub.tangents.reset(&tangents[offset_vertices], split.num_vertices);
+                sp.tangents.reset(&tangents[offset_vertices], split.num_vertices);
             }
             if (!weights4.empty()) {
-                sub.weights4.reset(&weights4[offset_vertices], split.num_vertices);
+                sp.weights4.reset(&weights4[offset_vertices], split.num_vertices);
             }
             offset_vertices += split.num_vertices;
-            splits.push_back(sub);
+            splits.push_back(sp);
         }
 
         // setup submeshes
