@@ -66,6 +66,9 @@ public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    void swapHandedness();
+    void applyScaleFactor(float scale);
 };
 using TransformPtr = std::shared_ptr<Transform>;
 

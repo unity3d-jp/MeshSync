@@ -457,6 +457,17 @@ void Transform::deserialize(std::istream& is)
     read(is, reference);
 }
 
+void Transform::swapHandedness()
+{
+    transform.position.x *= -1.0f;
+    transform.rotation = swap_handedness(transform.rotation);
+}
+
+void Transform::applyScaleFactor(float scale)
+{
+    transform.position *= scale;
+}
+
 
 uint32_t Camera::getSerializeSize() const
 {
@@ -599,17 +610,17 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         applyMirror(plane_n, plane_d, true);
     }
     if (mrs.scale_factor != 1.0f) {
+        Transform::applyScaleFactor(mrs.scale_factor);
         mu::Scale(points.data(), mrs.scale_factor, points.size());
-        transform.position *= mrs.scale_factor;
         for (auto& bp : bindposes) {
             (float3&)bp[3] *= mrs.scale_factor;
         }
     }
     if (mrs.flags.swap_handedness) {
+        Transform::swapHandedness();
         mu::InvertX(points.data(), points.size());
         mu::InvertX(npoints.data(), npoints.size());
-        transform.position.x *= -1.0f;
-        transform.rotation = swap_handedness(transform.rotation);
+        mu::InvertX(normals.data(), normals.size());
         for (auto& bp : bindposes) {
             bp = swap_handedness(bp);
         }

@@ -476,8 +476,8 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 
     dst.path = GetPath(src);
 
-    pos = src_trs.getTranslation(MSpace::kObject, &stat);
-    stat = src_trs.getRotation(rot, MSpace::kObject);
+    pos = src_trs.getTranslation(MSpace::kTransform, &stat);
+    stat = src_trs.getRotation(rot, MSpace::kTransform);
     stat = src_trs.getScale(scale);
     dst.transform.position = { (float)pos[0], (float)pos[1], (float)pos[2] };
     dst.transform.rotation = { (float)rot[0], (float)rot[1], (float)rot[2], (float)rot[3] };
@@ -664,9 +664,13 @@ void MeshSyncClientMaya::kickAsyncSend()
         // send materials & transforms
         {
             ms::SetMessage set;
+            set.scene.settings = scene_settings;
             set.scene.materials = m_materials;
             set.scene.transforms = m_client_transforms;
             client.send(set);
+
+            m_materials.clear();
+            m_client_transforms.clear();
         }
 
         // send meshes one by one to Unity can respond quickly
@@ -676,6 +680,7 @@ void MeshSyncClientMaya::kickAsyncSend()
             set.scene.meshes = { mesh };
             client.send(set);
         });
+        m_client_meshes.clear();
 
         // send delete message
         if(!m_deleted.empty()) {
@@ -685,6 +690,7 @@ void MeshSyncClientMaya::kickAsyncSend()
                 del.targets[i].path = m_deleted[i];
             }
             client.send(del);
+            m_deleted.clear();
         }
 
         // notify scene end
@@ -693,10 +699,6 @@ void MeshSyncClientMaya::kickAsyncSend()
             fence.type = ms::FenceMessage::FenceType::SceneEnd;
             client.send(fence);
         }
-
-        m_materials.clear();
-        m_client_transforms.clear();
-        m_client_meshes.clear();
     });
 }
 

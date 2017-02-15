@@ -290,6 +290,15 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         mesh.refine_settings.split_unit = 65000;
         mesh.refine(mesh.refine_settings);
     });
+    for (auto& trans : mes->scene.transforms) {
+        if (mes->scene.settings.handedness == Handedness::Right) {
+            trans->swapHandedness();
+        }
+        if (mes->scene.settings.scale_factor != 1.0f) {
+            trans->applyScaleFactor(1.0f / mes->scene.settings.scale_factor);
+        }
+    }
+
     {
         lock_t l(m_mutex);
         for (auto& pmesh : mes->scene.meshes) {
