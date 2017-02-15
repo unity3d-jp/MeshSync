@@ -816,6 +816,69 @@ bool GenerateTangents(
     return genTangSpaceDefault(&tctx) != 0;
 }
 
+
+
+template<int N>
+bool GenerateWeightsN(RawVector<Weights<N>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex)
+{
+    if (bone_indices.size() != bone_weights.size()) {
+        return false;
+    }
+
+    int num_weightsN = (int)bone_indices.size() / bones_per_vertex;
+    dst.resize(num_weightsN);
+
+    if (bones_per_vertex <= N) {
+        dst.zeroclear();
+        int bpvN = std::min<int>(N, bones_per_vertex);
+        for (int wi = 0; wi < num_weightsN; ++wi) {
+            auto *bindices = &bone_indices[bones_per_vertex * wi];
+            auto *bweights = &bone_weights[bones_per_vertex * wi];
+
+            // copy (up to) N elements
+            auto& w4 = dst[wi];
+            for (int oi = 0; oi < bpvN; ++oi) {
+                w4.indices[oi] = bindices[oi];
+                w4.weights[oi] = bweights[oi];
+            }
+        }
+    }
+    else {
+        int *order = (int*)alloca(sizeof(int) * bones_per_vertex);
+        for (int wi = 0; wi < num_weightsN; ++wi) {
+            auto *bindices = &bone_indices[bones_per_vertex * wi];
+            auto *bweights = &bone_weights[bones_per_vertex * wi];
+            auto compare = [&](int a, int b) { return bweights[a] < bweights[b]; };
+
+            // sort order
+            std::iota(order, order + bones_per_vertex, 0);
+            std::nth_element(order, order + N, order + bones_per_vertex, compare);
+            std::sort(order, order + N, compare);
+
+            // copy (up to) N elements
+            auto& w4 = dst[wi];
+            float w = 0.0f;
+            for (int oi = 0; oi < N; ++oi) {
+                int o = order[oi];
+                w4.indices[oi] = bindices[o];
+                w4.weights[oi] = bweights[o];
+                w += bweights[o];
+            }
+
+            // normalize weights
+            float rcpw = 1.0f / w;
+            for (int oi = 0; oi < N; ++oi) {
+                w4.weights[oi] *= rcpw;
+            }
+        }
+    }
+    return true;
+}
+template bool GenerateWeightsN(RawVector<Weights<4>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
+template bool GenerateWeightsN(RawVector<Weights<8>> dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
+
+
+
 template<class VertexT> static inline void InterleaveImpl(VertexT *dst, const typename VertexT::arrays_t& src, size_t i);
 
 template<> inline void InterleaveImpl(vertex_v3n3 *dst, const vertex_v3n3::arrays_t& src, size_t i)

@@ -61,38 +61,13 @@ class Transform : public SceneEntity
 using super = SceneEntity;
 public:
     TRS transform;
+    std::string reference;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
 using TransformPtr = std::shared_ptr<Transform>;
-
-
-class Bone : public Transform
-{
-using super = Transform;
-public:
-    float4x4 bindpose;
-
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-};
-using BonePtr = std::shared_ptr<Bone>;
-
-
-class Reference : public Transform
-{
-using super = Transform;
-public:
-    std::string identifier;
-
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-};
-using ReferencePtr = std::shared_ptr<Reference>;
 
 
 class Camera : public Transform
@@ -149,7 +124,7 @@ struct MeshRefineFlags
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
 
-    uint32_t normalize_weights : 1;
+    uint32_t generate_weights4 : 1;
 };
 
 struct MeshRefineSettings
@@ -197,7 +172,7 @@ public:
     RawVector<float3> npoints; // points for normal calculation
 
     // bone data
-    int bones_par_vertex = 0;
+    int bones_per_vertex = 0;
     RawVector<float> bone_weights;
     RawVector<int> bone_indices;
     std::vector<std::string> bones;
@@ -219,7 +194,7 @@ public:
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
-    void normalizeWeights();
+    void generateWeights4();
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 
@@ -242,8 +217,6 @@ public:
     SceneSettings settings;
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
-    std::vector<BonePtr> bones;
-    std::vector<ReferencePtr> references;
     std::vector<CameraPtr> cameras;
     std::vector<Material> materials;
 

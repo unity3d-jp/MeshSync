@@ -144,6 +144,30 @@ msAPI ms::Transform* msTransformCreate()
 {
     return new ms::Transform();
 }
+msAPI int msTransformGetID(ms::Transform *_this)
+{
+    return _this->id;
+}
+msAPI void msTransformSetID(ms::Transform *_this, int v)
+{
+    _this->id = v;
+}
+msAPI int msTransformGetIndex(ms::Transform *_this)
+{
+    return _this->index;
+}
+msAPI void msTransformSetIndex(ms::Transform *_this, int v)
+{
+    _this->index = v;
+}
+msAPI const char* msTransformGetPath(ms::Transform *_this)
+{
+    return _this->path.c_str();
+}
+msAPI void msTransformSetPath(ms::Transform *_this, const char *v)
+{
+    _this->path = v;
+}
 msAPI void msTransformGetTRS(ms::Transform *_this, ms::TRS *dst)
 {
     *dst = _this->transform;
@@ -152,39 +176,32 @@ msAPI void msTransformSetTRS(ms::Transform *_this, const ms::TRS *v)
 {
     _this->transform = *v;
 }
+msAPI const char* msTransformGetReference(ms::Transform *_this)
+{
+    return _this->reference.c_str();
+}
+msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
+{
+    _this->reference = *v;
+}
 
-msAPI ms::Bone* msBoneCreate()
+msAPI ms::Camera* msCameraCreate()
 {
-    return new ms::Bone();
+    return new ms::Camera();
 }
-msAPI void msBoneGetBindpose(ms::Bone *_this, float4x4 *dst)
+msAPI float msCameraGetFov(ms::Camera *_this)
 {
-    *dst = _this->bindpose;
+    return _this->fov;
 }
-msAPI void msBoneSetBindpose(ms::Bone *_this, const float4x4 *v)
+msAPI void msCameraSetFov(ms::Camera *_this, float v)
 {
-    _this->bindpose = *v;
+    _this->fov = v;
 }
+
 
 msAPI ms::Mesh* msMeshCreate()
 {
     return new ms::Mesh();
-}
-msAPI int msMeshGetID(ms::Mesh *_this)
-{
-    return _this->id;
-}
-msAPI void msMeshSetID(ms::Mesh *_this, int v)
-{
-    _this->id = v;
-}
-msAPI int msMeshGetIndex(ms::Mesh *_this)
-{
-    return _this->index;
-}
-msAPI void msMeshSetIndex(ms::Mesh *_this, int v)
-{
-    _this->index = v;
 }
 msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *_this)
 {
@@ -193,14 +210,6 @@ msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *_this)
 msAPI void msMeshSetFlags(ms::Mesh *_this, ms::MeshDataFlags v)
 {
     _this->flags = v;
-}
-msAPI const char* msMeshGetPath(ms::Mesh *_this)
-{
-    return _this->path.c_str();
-}
-msAPI void msMeshSetPath(ms::Mesh *_this, const char *v)
-{
-    _this->path = v;
 }
 msAPI int msMeshGetNumPoints(ms::Mesh *_this)
 {
@@ -404,14 +413,6 @@ msAPI int msSceneGetNumTransforms(ms::Scene *_this)
 msAPI ms::Transform* msSceneGetTransformData(ms::Scene *_this, int i)
 {
     return _this->transforms[i].get();
-}
-msAPI int msSceneGetNumBones(ms::Scene *_this)
-{
-    return (int)_this->bones.size();
-}
-msAPI ms::Bone* msSceneGetBoneData(ms::Scene *_this, int i)
-{
-    return _this->bones[i].get();
 }
 msAPI int msSceneGetNumCameras(ms::Scene *_this)
 {

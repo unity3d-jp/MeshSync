@@ -247,14 +247,7 @@ namespace UTJ
                 UpdateMaterials(scene);
             }
 
-            // sync meshes
-            int numMeshes = scene.numMeshes;
-            for (int i = 0; i < numMeshes; ++i)
-            {
-                UpdateMesh(scene.GetMesh(i));
-            }
-
-            // sync bones
+            // sync transforms
             int numTransforms = scene.numTransforms;
             for (int i = 0; i < numTransforms; ++i)
             {
@@ -266,6 +259,13 @@ namespace UTJ
             for (int i = 0; i < numCameras; ++i)
             {
                 UpdateCamera(scene.GetCamera(i));
+            }
+
+            // sync meshes
+            int numMeshes = scene.numMeshes;
+            for (int i = 0; i < numMeshes; ++i)
+            {
+                UpdateMesh(scene.GetMesh(i));
             }
 
             //Debug.Log("MeshSyncServer: Set");
@@ -326,17 +326,19 @@ namespace UTJ
 
         void UpdateMesh(MeshData data)
         {
-            var path = data.path;
+            var data_trans = data.transform;
+            var data_id = data_trans.id;
+            var path = data_trans.path;
             bool createdNewMesh = false;
 
             // find or create target object
             Record rec = null;
-            if(data.id !=0 && m_hostMeshes.ContainsKey(data.id))
+            if(data_id != 0 && m_hostMeshes.ContainsKey(data_id))
             {
-                rec = m_hostMeshes[data.id];
+                rec = m_hostMeshes[data_id];
                 if(rec.go == null)
                 {
-                    m_hostMeshes.Remove(data.id);
+                    m_hostMeshes.Remove(data_id);
                     rec = null;
                 }
             }
@@ -364,7 +366,7 @@ namespace UTJ
                 }
             }
             if (rec == null) { return; }
-            rec.index = data.index;
+            rec.index = data_trans.index;
 
 
             var target = rec.go.GetComponent<Transform>();
@@ -390,7 +392,7 @@ namespace UTJ
 
             // update transform
             if(data.flags.applyTRS) {
-                var trs = data.trs;
+                var trs = data_trans.trs;
                 target.localPosition = trs.position;
                 target.localRotation = trs.rotation;
                 target.localScale = trs.scale;
@@ -546,14 +548,28 @@ namespace UTJ
             }
         }
 
-        void UpdateTransform(TransformData data)
+        Transform UpdateTransform(TransformData data)
         {
-            // todo
+            bool created = false;
+            var trans = FindObjectByPath(null, data.path, true, ref created);
+
+            var trs = data.trs;
+            trans.localPosition = trs.position;
+            trans.localRotation = trs.rotation;
+            trans.localScale = trs.scale;
+            return trans;
         }
 
-        void UpdateCamera(CameraData data)
+        Camera UpdateCamera(CameraData data)
         {
-            // todo 
+            var trans = UpdateTransform(data.transform);
+            var cam = trans.GetComponent<Camera>();
+            if(cam == null)
+            {
+                cam = trans.gameObject.AddComponent<Camera>();
+            }
+            cam.fieldOfView = data.fov;
+            return cam;
         }
 
         public void ReassignMaterials()
@@ -837,7 +853,8 @@ namespace UTJ
 
             if (ret)
             {
-                dst.id = GetObjectlID(renderer.gameObject);
+                var dst_trans = dst.transform;
+                dst_trans.id = GetObjectlID(renderer.gameObject);
                 var trans = renderer.GetComponent<Transform>();
                 if (mes.flags.getTransform)
                 {
@@ -846,20 +863,20 @@ namespace UTJ
                     trs.rotation = trans.localRotation;
                     trs.rotation_eularZXY = trans.localEulerAngles;
                     trs.scale = trans.localScale;
-                    dst.trs = trs;
+                    dst_trans.trs = trs;
                 }
                 dst.local2world = trans.localToWorldMatrix;
                 dst.world2local = trans.worldToLocalMatrix;
 
-                if (!m_hostMeshes.ContainsKey(dst.id))
+                if (!m_hostMeshes.ContainsKey(dst_trans.id))
                 {
-                    m_hostMeshes[dst.id] = new Record();
+                    m_hostMeshes[dst_trans.id] = new Record();
                 }
-                var rec = m_hostMeshes[dst.id];
+                var rec = m_hostMeshes[dst_trans.id];
                 rec.go = renderer.gameObject;
                 rec.origMesh = origMesh;
 
-                dst.path = BuildPath(renderer.GetComponent<Transform>());
+                dst_trans.path = BuildPath(renderer.GetComponent<Transform>());
                 msServerServeMesh(m_server, dst);
             }
             return ret;

@@ -42,7 +42,7 @@ private:
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::Material>;
-    using Bones = std::vector<ms::BonePtr>;
+    using Bones = std::vector<ms::TransformPtr>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;

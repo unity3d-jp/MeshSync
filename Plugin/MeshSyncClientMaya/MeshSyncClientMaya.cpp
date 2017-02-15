@@ -336,6 +336,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.flags.has_refine_settings = 1;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_handedness = 1;
+    dst.refine_settings.flags.generate_weights4 = 1;
 
     {
         auto len = points.length();
@@ -416,8 +417,9 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 // get bindposes
                 MPlug plug_bindprematrix = skin_cluster.findPlug("bindPreMatrix");
                 auto num_joints = skin_cluster.influenceObjects(joint_paths);
+                dst.bindposes.resize(num_joints);
                 for (uint32_t ij = 0; ij < num_joints; ij++) {
-                    auto bone = new ms::Bone();
+                    auto bone = new ms::Transform();
                     m_bones.emplace_back(bone);
                     bone->path = joint_paths[ij].partialPathName().asChar();
 
@@ -428,8 +430,9 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     plug_matrix.getValue(matrix_obj);
                     MFnMatrixData matrix_data(matrix_obj);
                     MMatrix bindpose = matrix_data.matrix();
+                    auto& dst_bp = dst.bindposes[ij];
                     for (int ir = 0; ir < 4; ++ir) {
-                        bone->bindpose[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
+                        dst_bp[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
                     }
                 }
 

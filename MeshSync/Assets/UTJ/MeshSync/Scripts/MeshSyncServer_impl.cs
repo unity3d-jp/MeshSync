@@ -256,8 +256,16 @@ namespace UTJ
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
+            [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetIndex(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetPath(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetPath(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern void msTransformGetTRS(IntPtr _this, ref TRS dst);
             [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
 
             public static explicit operator TransformData(IntPtr v)
             {
@@ -271,40 +279,20 @@ namespace UTJ
                 return msTransformCreate();
             }
 
-            public TRS trs
+            public int id
             {
-                get
-                {
-                    var ret = default(TRS);
-                    msTransformGetTRS(_this, ref ret);
-                    return ret;
-                }
-                set
-                {
-                    msTransformSetTRS(_this, ref value);
-                }
+                get { return msTransformGetID(_this); }
+                set { msTransformSetID(_this, value); }
             }
-        }
-
-        public struct BoneData
-        {
-            internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern BoneData msBoneCreate();
-            [DllImport("MeshSyncServer")] static extern void msTransformGetTRS(IntPtr _this, ref TRS dst);
-            [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
-            [DllImport("MeshSyncServer")] static extern void msBoneGetBindpose(IntPtr _this, ref Matrix4x4 dst);
-            [DllImport("MeshSyncServer")] static extern void msBoneSetBindpose(IntPtr _this, ref Matrix4x4 v);
-
-            public static explicit operator BoneData(IntPtr v)
+            public int index
             {
-                BoneData ret;
-                ret._this = v;
-                return ret;
+                get { return msTransformGetIndex(_this); }
+                set { msTransformSetIndex(_this, value); }
             }
-
-            public static BoneData Create()
+            public string path
             {
-                return msBoneCreate();
+                get { return S(msTransformGetPath(_this)); }
+                set { msTransformSetPath(_this, value); }
             }
 
             public TRS trs
@@ -321,18 +309,10 @@ namespace UTJ
                 }
             }
 
-            public Matrix4x4 bindpose
+            public string reference
             {
-                get
-                {
-                    var ret = default(Matrix4x4);
-                    msBoneGetBindpose(_this, ref ret);
-                    return ret;
-                }
-                set
-                {
-                    msBoneSetBindpose(_this, ref value);
-                }
+                get { return S(msTransformGetReference(_this)); }
+                set { msTransformSetReference(_this, value); }
             }
         }
 
@@ -340,23 +320,40 @@ namespace UTJ
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
+            [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetFov(IntPtr _this, float v);
+
+            public static explicit operator CameraData(IntPtr v)
+            {
+                CameraData ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public static CameraData Create()
+            {
+                return msCameraCreate();
+            }
+
+            public TransformData transform
+            {
+                get { return (TransformData)_this; }
+            }
+
+            public float fov
+            {
+                get { return msCameraGetFov(_this); }
+                set { msCameraSetFov(_this, value); }
+            }
         }
 
         public struct MeshData
         {
             internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern void msTransformGetTRS(IntPtr _this, ref TRS dst);
-            [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
 
             [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
-            [DllImport("MeshSyncServer")] static extern int msMeshGetID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetID(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int msMeshGetIndex(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetIndex(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetFlags(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMeshSetFlags(IntPtr _this, MeshDataFlags v);
-            [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetPath(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetPath(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumSplits(IntPtr _this);
@@ -393,20 +390,6 @@ namespace UTJ
                 return msMeshCreate();
             }
 
-            public TRS trs
-            {
-                get
-                {
-                    var ret = default(TRS);
-                    msTransformGetTRS(_this, ref ret);
-                    return ret;
-                }
-                set
-                {
-                    msTransformSetTRS(_this, ref value);
-                }
-            }
-
             public static explicit operator MeshData(IntPtr v)
             {
                 MeshData ret;
@@ -414,25 +397,15 @@ namespace UTJ
                 return ret;
             }
 
-            public int id
+            public TransformData transform
             {
-                get { return msMeshGetID(_this); }
-                set { msMeshSetID(_this, value); }
+                get { return (TransformData)_this; }
             }
-            public int index
-            {
-                get { return msMeshGetIndex(_this); }
-                set { msMeshSetIndex(_this, value); }
-            }
+
             public MeshDataFlags flags
             {
                 get { return msMeshGetFlags(_this); }
                 set { msMeshSetFlags(_this, value); }
-            }
-            public string path
-            {
-                get { return S(msMeshGetPath(_this)); }
-                set { msMeshSetPath(_this, value); }
             }
 
             public int numPoints { get { return msMeshGetNumPoints(_this); } }
@@ -675,8 +648,6 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumTransforms(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern TransformData msSceneGetTransformData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumBones(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern BoneData msSceneGetBoneData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumCameras(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern CameraData msSceneGetCameraData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
@@ -684,13 +655,11 @@ namespace UTJ
 
             public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
             public int numTransforms { get { return msSceneGetNumTransforms(_this); } }
-            public int numBones { get { return msSceneGetNumBones(_this); } }
             public int numCameras { get { return msSceneGetNumCameras(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
 
             public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
             public TransformData GetTransform(int i) { return msSceneGetTransformData(_this, i); }
-            public BoneData GetBone(int i) { return msSceneGetBoneData(_this, i); }
             public CameraData GetCamera(int i) { return msSceneGetCameraData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
         }
