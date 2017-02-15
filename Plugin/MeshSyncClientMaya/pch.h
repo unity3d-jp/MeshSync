@@ -30,6 +30,8 @@
 
 #include "MeshSync/msClient.h"
 
+#include <maya/MGlobal.h>
+#include <maya/MSelectionList.h>
 #include <maya/MDagPath.h>
 #include <maya/MUintArray.h>
 #include <maya/MFloatArray.h>
@@ -41,8 +43,8 @@
 #include <maya/MPlugArray.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MUuid.h>
-#include <maya/MSceneMessage.h>
 #include <maya/MItDag.h>
+#include <maya/MItSelectionList.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItDependencyNodes.h>
@@ -55,8 +57,8 @@
 #include <maya/MFnSkinCluster.h> 
 #include <maya/MFnTransform.h> 
 #include <maya/MFnPlugin.h>
-#include <maya/MGlobal.h>
-#include <maya/MSelectionList.h>
+#include <maya/MEventMessage.h>
+#include <maya/MSceneMessage.h>
 #include <maya/MDagMessage.h>
 #include <maya/MNodeMessage.h>
 #include <maya/MPolyMessage.h>

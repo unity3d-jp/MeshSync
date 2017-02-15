@@ -194,17 +194,17 @@ template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
 } // namespace
 
 
-static void LogImpl(const char *fmt, va_list args)
+static void LogImpl2(const char *fmt, va_list args)
 {
     char buf[1024];
-    snprintf(buf, sizeof(buf), fmt, args);
+    vsnprintf(buf, sizeof(buf), fmt, args);
     ::OutputDebugStringA(buf);
 }
 void LogImpl(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    LogImpl(fmt, args);
+    LogImpl2(fmt, args);
     va_end(args);
 }
 

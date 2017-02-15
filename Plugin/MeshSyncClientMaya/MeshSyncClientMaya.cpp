@@ -22,6 +22,11 @@ inline bool IsVisible(MFnDagNode& dag)
 }
 
 
+static void OnSelectionChanged(void *_this)
+{
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->onSelectionChanged();
+}
+
 static void OnChangeDag(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void *_this)
 {
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyDAGChanged();
@@ -54,12 +59,15 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
 #define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create);
     EachCommand(Body)
 #undef Body
+
+    registerGlobalCallbacks();
 }
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
 {
     waitAsyncSend();
-    removeCallbacks();
+    removeSelectionCallbacks();
+    removeGlobalCallbacks();
 #define Body(CmdType) m_iplugin.deregisterCommand(CmdType::name());
     EachCommand(Body)
 #undef Body
@@ -80,44 +88,55 @@ void MeshSyncClientMaya::waitAsyncSend()
     }
 }
 
-void MeshSyncClientMaya::registerCallbacks()
+void MeshSyncClientMaya::registerGlobalCallbacks()
 {
-    removeCallbacks();
+    MStatus stat;
+    m_cids_global.push_back(MEventMessage::addEventCallback("SelectionChanged", OnSelectionChanged, this, &stat));
+    m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, this, &stat));
+}
 
+void MeshSyncClientMaya::registerSelectionCallbacks()
+{
     MStatus stat;
     MSelectionList list;
     MGlobal::getActiveSelectionList(list);
 
-    {
-        m_cids.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, this, &stat));
-    }
     for (uint32_t i = 0; i < list.length(); i++)
     {
         MObject node;
         list.getDependNode(i, node);
 
         if (node.hasFn(MFn::kTransform)) {
-            MFnTransform trans = node;
-            MDagPath path = MDagPath::getAPathTo(trans.child(0));
-            m_cids.push_back(MDagMessage::addWorldMatrixModifiedCallback(path, OnChangeTransform, this, &stat));
+            MDagPath path = MDagPath::getAPathTo(node);
+            mscTrace("tracking %s\n", path.fullPathName().asChar());
+            m_cids_selection.push_back(MDagMessage::addWorldMatrixModifiedCallback(path, OnChangeTransform, this, &stat));
         }
 
         MDagPath path;
         if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
             if (path.extendToShape() == MS::kSuccess) {
                 auto shape = path.node();
-                m_cids.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
+                mscTrace("tracking %s\n", path.fullPathName().asChar());
+                m_cids_selection.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
             }
         }
     }
 }
 
-void MeshSyncClientMaya::removeCallbacks()
+void MeshSyncClientMaya::removeGlobalCallbacks()
 {
-    for (auto& cid : m_cids) {
+    for (auto& cid : m_cids_global) {
         MMessage::removeCallback(cid);
     }
-    m_cids.clear();
+    m_cids_global.clear();
+}
+
+void MeshSyncClientMaya::removeSelectionCallbacks()
+{
+    for (auto& cid : m_cids_selection) {
+        MMessage::removeCallback(cid);
+    }
+    m_cids_selection.clear();
 }
 
 
@@ -128,8 +147,23 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
         return (int)std::distance(m_material_id_table.begin(), i);
     }
     else {
+        mscTrace("MeshSyncClientMaya::getMaterialID(): new ID\n");
         int id = (int)m_material_id_table.size();
         m_material_id_table.push_back(uid);
+        return id;
+    }
+}
+
+int MeshSyncClientMaya::getObjectID(MUuid uid)
+{
+    auto i = std::find(m_object_id_table.begin(), m_object_id_table.end(), uid);
+    if (i != m_object_id_table.end()) {
+        return (int)std::distance(m_object_id_table.begin(), i);
+    }
+    else {
+        mscTrace("MeshSyncClientMaya::getObjectID() new ID\n");
+        int id = (int)m_object_id_table.size();
+        m_object_id_table.push_back(uid);
         return id;
     }
 }
@@ -140,37 +174,36 @@ void MeshSyncClientMaya::notifyDAGChanged()
 
 void MeshSyncClientMaya::notifyUpdateTransform(MObject obj)
 {
-    m_mtransforms.push_back(obj);
+    mscTrace("MeshSyncClientMaya::notifyUpdateTransform()\n");
+    if (m_auto_sync) {
+        m_mtransforms.push_back(obj);
+    }
 }
+
 void MeshSyncClientMaya::notifyUpdateMesh(MObject obj)
 {
-    m_mmeshes.push_back(obj);
+    mscTrace("MeshSyncClientMaya::notifyUpdateMesh()\n");
+    if (m_auto_sync) {
+        m_mmeshes.push_back(obj);
+    }
 }
 
 void MeshSyncClientMaya::onIdle()
 {
-    if (!m_mtransforms.empty() || !m_mmeshes.empty()) {
-        auto pless = [](MObject& a, MObject& b) { return (void*&)a < (void*&)b; };
-        auto pequal = [](MObject& a, MObject& b) { return (void*&)a == (void*&)b; };
+    //mscTrace("MeshSyncClientMaya::onIdle()\n");
+    sendUpdatedObjects();
+}
 
-        std::sort(m_mtransforms.begin(), m_mtransforms.end(), pless);
-        m_mtransforms.erase(std::unique(m_mtransforms.begin(), m_mtransforms.end(), pequal), m_mtransforms.end());
-        std::sort(m_mmeshes.begin(), m_mmeshes.end(), pless);
-        m_mmeshes.erase(std::unique(m_mmeshes.begin(), m_mmeshes.end(), pequal), m_mmeshes.end());
-
-        for (auto& mtrans : m_mtransforms) {
-            // todo
-        }
-        for (auto& mmesh : m_mmeshes) {
-            // todo
-        }
-        m_mtransforms.clear();
-        m_mmeshes.clear();
-    }
+void MeshSyncClientMaya::onSelectionChanged()
+{
+    mscTrace("MeshSyncClientMaya::onSelectionChanged()\n");
+    removeSelectionCallbacks();
+    registerSelectionCallbacks();
 }
 
 void MeshSyncClientMaya::onSceneUpdate()
 {
+    mscTrace("MeshSyncClientMaya::onSceneUpdate()\n");
     if (m_auto_sync) {
         sendScene();
     }
@@ -191,6 +224,42 @@ void MeshSyncClientMaya::setAutoSync(bool v)
     m_auto_sync = v;
 }
 
+void MeshSyncClientMaya::sendUpdatedObjects()
+{
+    if (!m_mtransforms.empty() || !m_mmeshes.empty()) {
+        mscTrace("MeshSyncClientMaya::sendUpdatedObjects()\n");
+
+        auto pless = [](MObject& a, MObject& b) { return (void*&)a < (void*&)b; };
+        auto pequal = [](MObject& a, MObject& b) { return (void*&)a == (void*&)b; };
+
+        std::sort(m_mtransforms.begin(), m_mtransforms.end(), pless);
+        m_mtransforms.erase(std::unique(m_mtransforms.begin(), m_mtransforms.end(), pequal), m_mtransforms.end());
+        std::sort(m_mmeshes.begin(), m_mmeshes.end(), pless);
+        m_mmeshes.erase(std::unique(m_mmeshes.begin(), m_mmeshes.end(), pequal), m_mmeshes.end());
+
+        // gather material data
+        extractAllMaterialData();
+
+        for (auto& mtrans : m_mtransforms) {
+            if (mtrans.hasFn(MFn::kJoint) || mtrans.hasFn(MFn::kMesh)) {
+                auto trans = new ms::Transform();
+                m_client_transforms.emplace_back(trans);
+                extractTransformData(*trans, mtrans);
+            }
+        }
+        for (auto& mmesh : m_mmeshes) {
+            auto mesh = new ms::Mesh();
+            m_client_meshes.emplace_back(mesh);
+            extractMeshData(*mesh, mmesh);
+        }
+
+        m_mtransforms.clear();
+        m_mmeshes.clear();
+
+        kickAsyncSend();
+    }
+}
+
 void MeshSyncClientMaya::sendScene(TargetScope scope)
 {
     if (isAsyncSendInProgress()) {
@@ -199,22 +268,12 @@ void MeshSyncClientMaya::sendScene(TargetScope scope)
     }
     m_pending_send_meshes = false;
 
+    mscTrace("MeshSyncClientMaya::sendScene()\n");
+    m_mtransforms.clear();
+    m_mmeshes.clear();
+
     // gather material data
-    {
-
-        MItDependencyNodes it(MFn::kLambert);
-        while (!it.isDone()) {
-            MFnLambertShader fn(it.item());
-
-            ms::Material tmp;
-            tmp.name = fn.name().asChar();
-            tmp.color = (const mu::float4&)fn.color();
-            tmp.id = getMaterialID(fn.uuid());
-            m_materials.push_back(tmp);
-
-            it.next();
-        }
-    }
+    extractAllMaterialData();
 
     // gather mesh data
     if(scope == TargetScope::All) {
@@ -237,8 +296,7 @@ void MeshSyncClientMaya::sendScene(TargetScope scope)
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
 
-        for (uint32_t i = 0; i < list.length(); i++)
-        {
+        for (uint32_t i = 0; i < list.length(); i++) {
             MObject node;
             list.getDependNode(i, node);
 
@@ -286,6 +344,22 @@ bool MeshSyncClientMaya::importScene()
     // todo: create mesh objects
 
     return true;
+}
+
+void MeshSyncClientMaya::extractAllMaterialData()
+{
+    MItDependencyNodes it(MFn::kLambert);
+    while (!it.isDone()) {
+        MFnLambertShader fn(it.item());
+
+        ms::Material tmp;
+        tmp.name = fn.name().asChar();
+        tmp.color = (const mu::float4&)fn.color();
+        tmp.id = getMaterialID(fn.uuid());
+        m_materials.push_back(tmp);
+
+        it.next();
+    }
 }
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
@@ -420,7 +494,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 dst.bindposes.resize(num_joints);
                 for (uint32_t ij = 0; ij < num_joints; ij++) {
                     auto bone = new ms::Transform();
-                    m_bones.emplace_back(bone);
+                    m_client_transforms.emplace_back(bone);
                     bone->path = joint_paths[ij].partialPathName().asChar();
 
                     auto ijoint = skin_cluster.indexForInfluenceObject(joint_paths[ij], nullptr);
@@ -530,7 +604,7 @@ void MeshSyncClientMaya::kickAsyncSend()
         }
 
         m_materials.clear();
-        m_bones.clear();
+        m_client_transforms.clear();
         m_client_meshes.clear();
     });
 }

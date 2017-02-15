@@ -13,7 +13,7 @@ global proc UnityMeshSync_GUI()
             intField -v 8080 -w 60  -cc "umsOnEditServerPort" INTFIELD_PORT;
         setParent ..;
         separator -h 10 -w 300;
-        checkBox -label "Auto Sync" -v 1 -cc "umsOnEditAutoSync" CHECKBOX_AUTOSYNC;
+        checkBox -label "Auto Sync" -v 0 -cc "umsOnEditAutoSync" CHECKBOX_AUTOSYNC;
         button -l "Manual Sync" -w 100 -c "umsOnManualSync" BUTTON_MANUALSYNC;
         separator -h 10 -w 300;
         button -l "Import Unity Scene" -w 100 -c "umsOnImport" BUTTON_IMPORT;
@@ -22,30 +22,30 @@ global proc UnityMeshSync_GUI()
     showWindow $Window;
 }
 
-proc umsOnEditServerAddress()
+global proc umsOnEditServerAddress()
 {
     string $addr = `textField -q -text TEXTFIELD_ADDRESS`;
-    `UnityMeshSync_Settings -a $addr`;
+    string $ret = `UnityMeshSync_Settings -address $addr`;
 }
 
-proc umsOnEditServerPort()
+global proc umsOnEditServerPort()
 {
     int $port = `intField -q -value INTFIELD_PORT`;
-    `UnityMeshSync_Settings -p $port`;
+    string $ret = `UnityMeshSync_Settings -port $port`;
 }
 
-proc umsOnEditAutoSync()
+global proc umsOnEditAutoSync()
 {
-    int $mode = `checkBox -q -value CHECKBOX_AUTOSYNC`;
-    `UnityMeshSync_Settings -m $mode`;
+    int $autosync = `checkBox -q -value CHECKBOX_AUTOSYNC`;
+    string $ret = `UnityMeshSync_Settings -autosync $autosync`;
 }
 
 proc umsOnManualSync()
 {
-    `UnityMeshSync_Sync`;
+    string $ret = `UnityMeshSync_Sync`;
 }
 
 proc umsOnImport()
 {
-    `UnityMeshSync_Import`;
+    string $ret = `UnityMeshSync_Import`;
 }

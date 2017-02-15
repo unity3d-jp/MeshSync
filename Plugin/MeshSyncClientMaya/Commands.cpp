@@ -12,35 +12,17 @@ const char* CmdSettings::name()
 {
     return "UnityMeshSync_Settings";
 }
-
-MSyntax CmdSettings::syntax()
-{
-    MSyntax syntax;
-    syntax.addFlag("-a", "-address", MSyntax::kString);
-    syntax.addFlag("-p", "-port", MSyntax::kLong);
-    syntax.addFlag("-s", "-autosync", MSyntax::kLong);
-    return syntax;
-}
-
 MStatus CmdSettings::doIt(const MArgList& args)
 {
-    MArgParser parser(syntax(), args);
-    {
-        MString addr;
-        if (parser.getCommandArgument(0, addr) == MStatus::kSuccess) {
-            MeshSyncClientMaya::getInstance().setServerAddress(addr.asChar());
+    for (uint32_t i = 0; i < args.length(); ++i) {
+        if (args.asString(i) == MString("-address")) {
+            MeshSyncClientMaya::getInstance().setServerAddress(args.asString(++i).asChar());
         }
-    }
-    {
-        int port;
-        if (parser.getCommandArgument(1, port) == MStatus::kSuccess) {
-            MeshSyncClientMaya::getInstance().setServerPort((uint16_t)port);
+        else if (args.asString(i) == MString("-port")) {
+            MeshSyncClientMaya::getInstance().setServerPort((uint16_t)args.asInt(++i));
         }
-    }
-    {
-        int v;
-        if (parser.getCommandArgument(2, v) == MStatus::kSuccess) {
-            MeshSyncClientMaya::getInstance().setAutoSync(v != 0);
+        else if (args.asString(i) == MString("-autosync")) {
+            MeshSyncClientMaya::getInstance().setAutoSync(args.asInt(++i) != 0);
         }
     }
     return MStatus::kSuccess;
@@ -55,22 +37,18 @@ const char* CmdSync::name()
 {
     return "UnityMeshSync_Sync";
 }
-MSyntax CmdSync::syntax()
-{
-    MSyntax syntax;
-    syntax.addFlag("-s", "-scope", MSyntax::kString);
-    return syntax;
-}
 MStatus CmdSync::doIt(const MArgList& args)
 {
-    MArgParser parser(syntax(), args);
-    {
-        MString mode;
-        if (parser.getCommandArgument(0, mode) == MStatus::kSuccess) {
-            MeshSyncClientMaya::getInstance().setServerAddress(mode.asChar());
+    auto scope = MeshSyncClientMaya::TargetScope::All;
+    for (uint32_t i = 0; i < args.length(); ++i) {
+        if (args.asString(i) == MString("-scope")) {
+            auto s = args.asString(i++);
+            if (s == MString("selection")) {
+                scope = MeshSyncClientMaya::TargetScope::Selection;
+            }
         }
     }
-    MeshSyncClientMaya::getInstance().sendScene();
+    MeshSyncClientMaya::getInstance().sendScene(scope);
     return MStatus::kSuccess;
 }
 
@@ -82,10 +60,6 @@ void* CmdImport::create()
 const char* CmdImport::name()
 {
     return "UnityMeshSync_Import";
-}
-MSyntax CmdImport::syntax()
-{
-    return MSyntax();
 }
 MStatus CmdImport::doIt(const MArgList&)
 {
