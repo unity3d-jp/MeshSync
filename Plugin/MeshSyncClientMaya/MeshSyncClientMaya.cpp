@@ -167,16 +167,20 @@ int MeshSyncClientMaya::getObjectID(MUuid uid)
 void MeshSyncClientMaya::notifyUpdateTransform(MObject obj)
 {
     mscTrace("MeshSyncClientMaya::notifyUpdateTransform()\n");
-    if (m_auto_sync) {
-        m_mtransforms.push_back(obj);
+    if (m_auto_sync && obj.hasFn(MFn::kTransform)) {
+        if (std::find(m_mtransforms.begin(), m_mtransforms.end(), obj) == m_mtransforms.end()) {
+            m_mtransforms.push_back(obj);
+        }
     }
 }
 
-void MeshSyncClientMaya::notifyUpdateMesh(MObject node)
+void MeshSyncClientMaya::notifyUpdateMesh(MObject obj)
 {
     mscTrace("MeshSyncClientMaya::notifyUpdateMesh()\n");
-    if (m_auto_sync) {
-        m_mmeshes.push_back(GetTransform(node));
+    if (m_auto_sync && obj.hasFn(MFn::kMesh)) {
+        if (std::find(m_mmeshes.begin(), m_mmeshes.end(), obj) == m_mmeshes.end()) {
+            m_mmeshes.push_back(GetTransform(obj));
+        }
     }
 }
 
@@ -439,8 +443,22 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getPoints(points);
 
         auto len = points.length();
+        dst.points.resize(len);
         for (uint32_t i = 0; i < len; ++i) {
-            dst.points.push_back((const mu::float3&)points[i]);
+            dst.points[i] = (const mu::float3&)points[i];
+        }
+
+        if (!fn_skin.object().isNull()) {
+            auto plug_pnts = fn_mesh.findPlug("pnts");
+            auto pnts_len = std::min<uint32_t>(len, plug_pnts.numElements());
+            for (uint32_t i = 0; i < pnts_len; ++i) {
+                MPlug p3 = plug_pnts.elementByPhysicalIndex(i);
+                mu::float3 v;
+                p3.child(0).getValue(v.x);
+                p3.child(1).getValue(v.y);
+                p3.child(2).getValue(v.z);
+                dst.points[i] += v;
+            }
         }
     }
 
@@ -449,7 +467,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         MFloatVectorArray normals;
         fn_src_mesh.getNormals(normals);
 
-        MItMeshPolygon it_poly(src);
+        MItMeshPolygon it_poly(fn_src_mesh.object());
         while (!it_poly.isDone()) {
             int count = it_poly.polygonVertexCount();
             dst.counts.push_back(count);
@@ -476,7 +494,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             MFloatArray v;
             fn_src_mesh.getUVs(u, v, &uvsets[0]);
 
-            MItMeshPolygon it_poly(src);
+            MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
