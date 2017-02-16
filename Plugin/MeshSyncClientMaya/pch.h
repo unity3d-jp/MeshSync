@@ -63,6 +63,7 @@
 #include <maya/MDagMessage.h>
 #include <maya/MNodeMessage.h>
 #include <maya/MPolyMessage.h>
+#include <maya/MTimerMessage.h>
 #include <maya/MPxCommand.h>
 #include <maya/MSyntax.h>
 #include <maya/MArgList.h>

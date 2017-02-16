@@ -24,23 +24,23 @@ public:
     void setServerPort(uint16_t v);
     void setAutoSync(bool v);
 
-    void onIdle();
+    void update();
     void onSelectionChanged();
     void onSceneUpdated();
 
     void notifyUpdateTransform(MObject obj);
     void notifyUpdateMesh(MObject obj);
-    void sendUpdatedObjects();
-    void sendScene(TargetScope scope = TargetScope::All);
+    bool sendUpdatedObjects();
+    bool sendScene(TargetScope scope = TargetScope::All);
     bool importScene();
 
 private:
     bool isAsyncSendInProgress() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
-    void registerSelectionCallbacks();
+    void registerNodeCallbacks(TargetScope scope = TargetScope::All);
     void removeGlobalCallbacks();
-    void removeSelectionCallbacks();
+    void removeNodeCallbacks();
     int getMaterialID(MUuid uid);
     int getObjectID(MUuid uid);
     void extractAllMaterialData();
@@ -61,7 +61,7 @@ private:
     int m_timeout_ms = 5000;
 
     std::vector<MCallbackId> m_cids_global;
-    std::vector<MCallbackId> m_cids_selection;
+    std::vector<MCallbackId> m_cids_node;
     std::vector<MUuid> m_material_id_table;
     std::vector<MUuid> m_object_id_table;
     std::vector<MObject> m_mtransforms;
@@ -76,7 +76,8 @@ private:
     std::vector<std::string> m_deleted;
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
-    bool m_pending_send_meshes = false;
+    bool m_pending_send_scene = false;
+    bool m_scene_updated = false;
 
     bool m_bake_skin = false;
     bool m_bake_cloth = false;
