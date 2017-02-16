@@ -1,4 +1,5 @@
 ﻿#include "pch.h"
+#include "MayaUtils.h"
 #include "MeshSyncClientMaya.h"
 #include "Commands.h"
 
@@ -7,82 +8,6 @@
 #pragma comment(lib, "OpenMaya.lib")
 #pragma comment(lib, "OpenMayaAnim.lib")
 #endif
-
-template<class Body>
-static void EachChild(MObject node, const Body& body)
-{
-    MFnDagNode fn = node;
-    auto num_children = fn.childCount();
-    for (uint32_t i = 0; i < num_children; ++i) {
-        body(fn.child(i));
-    }
-}
-
-static bool IsVisible(MObject node)
-{
-    MFnDagNode dag = node;
-    auto vis = dag.findPlug("visibility");
-    bool visible = false;
-    vis.getValue(visible);
-    return visible;
-}
-
-static std::string GetPath(MDagPath path)
-{
-    std::string ret = path.fullPathName().asChar();
-    std::replace(ret.begin(), ret.end(), '|', '/');
-    return ret;
-}
-static std::string GetPath(MObject node)
-{
-    return GetPath(MDagPath::getAPathTo(node));
-}
-
-static MObject GetTransform(MDagPath path)
-{
-    return path.transform();
-}
-static MObject GetTransform(MObject node)
-{
-    return GetTransform(MDagPath::getAPathTo(node));
-}
-
-static MObject FindSkinCluster(MObject node)
-{
-    MItDependencyGraph it(node, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
-    if (!it.isDone()) {
-        return it.currentItem();
-    }
-    return MObject();
-}
-
-static MObject FindMesh(MObject node)
-{
-    MObject ret;
-    EachChild(node, [&](MObject child) {
-        if (child.hasFn(MFn::kMesh)) {
-            MFnMesh fn = child;
-            if (!fn.isIntermediateObject()) {
-                ret = child;
-            }
-        }
-    });
-    return ret;
-}
-
-static MObject FindOrigMesh(MObject node)
-{
-    MObject ret;
-    EachChild(node, [&](MObject child) {
-        if (child.hasFn(MFn::kMesh)) {
-            MFnMesh fn = child;
-            if (ret.isNull() || fn.isIntermediateObject()) {
-                ret = child;
-            }
-        }
-    });
-    return ret;
-}
 
 
 
@@ -475,13 +400,12 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     double scale[3];
 
     dst.path = GetPath(src);
-
     pos = src_trs.getTranslation(MSpace::kTransform, &stat);
     stat = src_trs.getRotation(rot, MSpace::kTransform);
     stat = src_trs.getScale(scale);
-    dst.transform.position = { (float)pos[0], (float)pos[1], (float)pos[2] };
-    dst.transform.rotation = { (float)rot[0], (float)rot[1], (float)rot[2], (float)rot[3] };
-    dst.transform.scale = { (float)scale[0], (float)scale[1], (float)scale[2] };
+    dst.transform.position.assign(&pos[0]);
+    dst.transform.rotation.assign(&rot[0]);
+    dst.transform.scale.assign(scale);
 }
 
 void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
@@ -499,19 +423,20 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.flags.has_indices = 1;
     dst.flags.has_materialIDs = 1;
     dst.flags.has_refine_settings = 1;
+    dst.flags.apply_trs = 1;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
     dst.refine_settings.flags.generate_weights4 = 1;
 
     MFnMesh fn_mesh = FindMesh(src);
-    MFnMesh fn_mesh_orig = FindOrigMesh(src);
-    MFnSkinCluster fn_skin = FindSkinCluster(fn_mesh.object());
     if (fn_mesh.object().isNull()) { return; }
+    MFnSkinCluster fn_skin = FindSkinCluster(fn_mesh.object());
+    MFnMesh fn_src_mesh = fn_skin.object().isNull() ? fn_mesh.object() : FindOrigMesh(src);
 
     // get points
     {
         MFloatPointArray points;
-        fn_mesh_orig.getPoints(points);
+        fn_src_mesh.getPoints(points);
 
         auto len = points.length();
         for (uint32_t i = 0; i < len; ++i) {
@@ -522,7 +447,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get normals and faces
     {
         MFloatVectorArray normals;
-        fn_mesh_orig.getNormals(normals);
+        fn_src_mesh.getNormals(normals);
 
         MItMeshPolygon it_poly(src);
         while (!it_poly.isDone()) {
@@ -542,14 +467,14 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get uv
     {
         MStringArray uvsets;
-        fn_mesh_orig.getUVSetNames(uvsets);
+        fn_src_mesh.getUVSetNames(uvsets);
 
-        if (uvsets.length() > 0 && fn_mesh_orig.numUVs(uvsets[0]) > 0) {
+        if (uvsets.length() > 0 && fn_src_mesh.numUVs(uvsets[0]) > 0) {
             dst.flags.has_uv = 1;
 
             MFloatArray u;
             MFloatArray v;
-            fn_mesh_orig.getUVs(u, v, &uvsets[0]);
+            fn_src_mesh.getUVs(u, v, &uvsets[0]);
 
             MItMeshPolygon it_poly(src);
             while (!it_poly.isDone()) {
@@ -573,15 +498,10 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         MIntArray indices;
         fn_mesh.getConnectedShaders(0, shaders, indices);
         for (uint32_t si = 0; si < shaders.length(); si++) {
-            MFnDependencyNode shader_group(shaders[si]);
-            MPlug shader_plug = shader_group.findPlug("surfaceShader");
-            MPlugArray connections;
-            shader_plug.connectedTo(connections, true, false);
-            for (uint32_t ci = 0; ci < connections.length(); ci++) {
-                if (connections[ci].node().hasFn(MFn::kLambert)) {
-                    MFnLambertShader lambert(connections[ci].node());
-                    mid = getMaterialID(lambert.uuid());
-                }
+            MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
+            if (!it.isDone()) {
+                MFnLambertShader lambert(it.currentItem());
+                mid = getMaterialID(lambert.uuid());
             }
         }
         dst.materialIDs.resize(dst.counts.size(), mid);
@@ -606,17 +526,11 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             extractTransformData(*bone, joint_paths[ij].node());
             dst.bones[ij] = bone->path;
 
-            auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
-            MPlug plug_matrix = plug_bindprematrix.elementByLogicalIndex(ijoint);
-
             MObject matrix_obj;
-            plug_matrix.getValue(matrix_obj);
-            MFnMatrixData matrix_data(matrix_obj);
-            MMatrix bindpose = matrix_data.matrix();
-            auto& dst_bp = dst.bindposes[ij];
-            for (int ir = 0; ir < 4; ++ir) {
-                dst_bp[ir] = { (float)bindpose[ir][0], (float)bindpose[ir][1], (float)bindpose[ir][2], (float)bindpose[ir][3] };
-            }
+            auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
+            plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
+            MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
+            dst.bindposes[ij].assign(bindpose[0]);
         }
 
         // get weights

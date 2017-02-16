@@ -21,7 +21,18 @@ struct float2
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const float2& v) const { return x == v.x && y == v.y; }
     bool operator!=(const float2& v) const { return !((*this)==v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1] };
+    }
+
     static float2 zero() { return{ 0.0f, 0.0f }; }
+    static float2 one() { return{ 1.0f, 1.0f }; }
 };
 struct float3
 {
@@ -30,6 +41,16 @@ struct float3
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const float3& v) const { return x == v.x && y == v.y && z == v.z; }
     bool operator!=(const float3& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1], v[2] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1], (float)v[2] };
+    }
+
     static float3 zero() { return{ 0.0f, 0.0f, 0.0f }; }
     static float3 one() { return{ 1.0f, 1.0f, 1.0f }; }
 };
@@ -40,6 +61,16 @@ struct float4
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const float4& v) const { return x == v.x && y == v.y && z == v.z && w == v.w; }
     bool operator!=(const float4& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1], v[2], v[3] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1], (float)v[2], (float)v[3] };
+    }
+
     static float4 zero() { return{ 0.0f, 0.0f, 0.0f, 0.0f }; }
     static float4 one() { return{ 1.0f, 1.0f, 1.0f, 1.0f }; }
 };
@@ -50,6 +81,16 @@ struct quatf
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const quatf& v) const { return x == v.x && y == v.y && z == v.z && w == v.w; }
     bool operator!=(const quatf& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1], v[2], v[3] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1], (float)v[2], (float)v[3] };
+    }
+
     static quatf identity() { return{ 0.0f, 0.0f, 0.0f, 1.0f }; }
 };
 
@@ -60,6 +101,20 @@ struct float3x3
     const float3& operator[](int i) const { return m[i]; }
     bool operator==(const float3x3& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
     bool operator!=(const float3x3& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        memcpy(this, v, sizeof(*this));
+    }
+    void assign(const double *v)
+    {
+        *this = { {
+            { (float)v[0], (float)v[1], (float)v[2] },
+            { (float)v[3], (float)v[4], (float)v[5] },
+            { (float)v[6], (float)v[7], (float)v[8] }
+        } };
+    }
+
     static float3x3 identity()
     {
         return{ {
@@ -76,6 +131,21 @@ struct float4x4
     const float4& operator[](int i) const { return m[i]; }
     bool operator==(const float4x4& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
     bool operator!=(const float4x4& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        memcpy(this, v, sizeof(*this));
+    }
+    void assign(const double *v)
+    {
+        *this = { {
+            { (float)v[0], (float)v[1], (float)v[2], (float)v[3] },
+            { (float)v[4], (float)v[5], (float)v[6], (float)v[7] },
+            { (float)v[8], (float)v[9], (float)v[10],(float)v[11]},
+            { (float)v[12],(float)v[13],(float)v[14],(float)v[15]}
+        } };
+    }
+
     static float4x4 identity()
     {
         return{ {
@@ -247,11 +317,10 @@ inline float4 operator*(const float4x4& m, const float4& v)
 inline float4x4 operator*(const float4x4 &a, const float4x4 &b)
 {
     float4x4 c;
-    register const float *ap = &a[0][0];
-    register const float *bp = &b[0][0];
-    register       float *cp = &c[0][0];
-
-    register float a0, a1, a2, a3;
+    const float *ap = &a[0][0];
+    const float *bp = &b[0][0];
+          float *cp = &c[0][0];
+    float a0, a1, a2, a3;
 
     a0 = ap[0];
     a1 = ap[1];

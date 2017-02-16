@@ -213,10 +213,15 @@ namespace UTJ
                 get { return (flags & (1 << 9)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 9)); }
             }
-            public bool applyTRS
+            public bool hasNPoints
             {
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
+            }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 11)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 11)); }
             }
         };
 
