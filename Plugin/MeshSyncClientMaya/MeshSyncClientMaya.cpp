@@ -538,20 +538,30 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
 
-    // get material data
+    // get face material id
     {
-        int mid = -1;
+        std::vector<int> mids;
         MObjectArray shaders;
         MIntArray indices;
         fn_mesh.getConnectedShaders(0, shaders, indices);
+        mids.resize(shaders.length(), -1);
         for (uint32_t si = 0; si < shaders.length(); si++) {
             MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
             if (!it.isDone()) {
                 MFnLambertShader lambert(it.currentItem());
-                mid = getMaterialID(lambert.uuid());
+                mids[si] = getMaterialID(lambert.uuid());
             }
         }
-        dst.materialIDs.resize(dst.counts.size(), mid);
+
+        if (mids.size() == 1) {
+            dst.materialIDs.resize(indices.length(), mids[0]);
+        }
+        else {
+            dst.materialIDs.resize(indices.length());
+            for (uint32_t i = 0; i < indices.length(); ++i) {
+                dst.materialIDs[i] = mids[indices[i]];
+            }
+        }
     }
 
     // get skinning data
