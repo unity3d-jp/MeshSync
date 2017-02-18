@@ -51,6 +51,7 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
 #include <maya/MFnData.h>
+#include <maya/MFnSet.h>
 #include <maya/MFnMatrixData.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnIkJoint.h>

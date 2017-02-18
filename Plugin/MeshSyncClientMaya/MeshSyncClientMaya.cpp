@@ -128,7 +128,7 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
             MFnMesh fn(shape);
             if (!fn.isIntermediateObject()) {
                 auto trans = GetTransform(shape);
-                mscTrace("tracking mesh %s\n", MDagPath::getAPathTo(trans).fullPathName().asChar());
+                mscTrace("tracking mesh %s\n", GetDagPath(trans).fullPathName().asChar());
                 m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
                 m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
             }
@@ -360,14 +360,12 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
             MObject node;
             list.getDependNode(i, node);
 
-            MDagPath path;
-            if (MDagPath::getAPathTo(node, path) == MS::kSuccess) {
-                if (path.extendToShape() == MS::kSuccess) {
-                    auto shape = path.node();
-                    auto mesh = new ms::Mesh();
-                    m_client_meshes.emplace_back(mesh);
-                    extractMeshData(*mesh, node);
-                }
+            auto path = GetDagPath(node);
+            if (path.extendToShape() == MS::kSuccess) {
+                auto shape = path.node();
+                auto mesh = new ms::Mesh();
+                m_client_meshes.emplace_back(mesh);
+                extractMeshData(*mesh, node);
             }
         }
     }
@@ -464,6 +462,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     if (fn_mesh.object().isNull()) { return; }
     MFnSkinCluster fn_skin = FindSkinCluster(fn_mesh.object());
     MFnMesh fn_src_mesh = fn_skin.object().isNull() ? fn_mesh.object() : FindOrigMesh(src);
+    int skinned_index = fn_skin.object().isNull() ? 0 : fn_skin.indexForOutputShape(fn_mesh.object());
 
     // get points
     {
@@ -476,19 +475,35 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             dst.points[i] = (const mu::float3&)points[i];
         }
 
-        // todo: apply tweak
-        //if (!fn_skin.object().isNull()) {
-        //    auto plug_pnts = fn_mesh.findPlug("pnts");
-        //    auto pnts_len = std::min<uint32_t>(len, plug_pnts.numElements());
-        //    for (uint32_t i = 0; i < pnts_len; ++i) {
-        //        MPlug p3 = plug_pnts.elementByPhysicalIndex(i);
-        //        mu::float3 v;
-        //        p3.child(0).getValue(v.x);
-        //        p3.child(1).getValue(v.y);
-        //        p3.child(2).getValue(v.z);
-        //        dst.points[i] += v;
-        //    }
-        //}
+        // apply tweak if exists
+        if (!fn_skin.object().isNull()) {
+            MObject tweak;
+            {
+                MItDependencyGraph it(fn_mesh.object(), MFn::kTweak, MItDependencyGraph::kUpstream);
+                if (!it.isDone()) {
+                    tweak = it.currentItem();
+                }
+            }
+            if (!tweak.isNull()) {
+                MFnDependencyNode fn_tweak = tweak;
+                auto plug_vlist = fn_tweak.findPlug("vlist");
+                if (!plug_vlist.isNull() && plug_vlist.isArray() && plug_vlist.numElements() > 0) {
+                    auto plug_vertex = plug_vlist.elementByPhysicalIndex(skinned_index).child(0);
+                    if (!plug_vertex.isNull() && plug_vertex.isArray()) {
+                        auto vertices_len = plug_vertex.numElements();
+                        for (uint32_t vi = 0; vi < vertices_len; ++vi) {
+                            MPlug p3 = plug_vertex.elementByPhysicalIndex(vi);
+                            int li = p3.logicalIndex();
+                            mu::float3 v;
+                            p3.child(0).getValue(v.x);
+                            p3.child(1).getValue(v.y);
+                            p3.child(2).getValue(v.z);
+                            dst.points[li] += v;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // get normals and faces
@@ -591,27 +606,20 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
 
         // get weights
-        auto num_meshes = fn_skin.numOutputConnections();
-        for (uint32_t im = 0; im < num_meshes; im++) {
-            auto index = fn_skin.indexForOutputConnection(im);
+        MDagPath mesh_path = GetDagPath(fn_mesh.object());
+        MItGeometry it_geom(mesh_path);
+        while (!it_geom.isDone()) {
+            MObject component = it_geom.component();
+            MFloatArray weights;
+            uint32_t influence_count;
+            fn_skin.getWeights(mesh_path, component, weights, influence_count);
 
-            MDagPath mesh_path;
-            fn_skin.getPathAtIndex(index, mesh_path);
-
-            MItGeometry it_geom(mesh_path);
-            while (!it_geom.isDone()) {
-                MObject component = it_geom.component();
-                MFloatArray weights;
-                uint32_t influence_count;
-                fn_skin.getWeights(mesh_path, component, weights, influence_count);
-
-                for (uint32_t ij = 0; ij < influence_count; ij++) {
-                    dst.bone_indices.push_back(ij);
-                    dst.bone_weights.push_back(weights[ij]);
-                }
-
-                it_geom.next();
+            for (uint32_t ij = 0; ij < influence_count; ij++) {
+                dst.bone_indices.push_back(ij);
+                dst.bone_weights.push_back(weights[ij]);
             }
+
+            it_geom.next();
         }
     }
 }

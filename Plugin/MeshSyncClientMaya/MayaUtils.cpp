@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MayaUtils.h"
+#include "MeshSyncClientMaya.h"
 
 template<class Body>
 static void EachChild(MObject node, const Body& body)
@@ -28,7 +29,12 @@ std::string GetPath(MDagPath path)
 }
 std::string GetPath(MObject node)
 {
-    return GetPath(MDagPath::getAPathTo(node));
+    return GetPath(GetDagPath(node));
+}
+
+MDagPath GetDagPath(MObject node)
+{
+    return MDagPath::getAPathTo(node);
 }
 
 MObject GetTransform(MDagPath path)
@@ -37,7 +43,19 @@ MObject GetTransform(MDagPath path)
 }
 MObject GetTransform(MObject node)
 {
-    return GetTransform(MDagPath::getAPathTo(node));
+    return GetTransform(GetDagPath(node));
+}
+
+MObject FindMesh(MObject node)
+{
+    auto path = GetDagPath(node);
+    if (path.extendToShape() == MS::kSuccess) {
+        auto shape = path.node();
+        if (shape.hasFn(MFn::kMesh)) {
+            return shape;
+        }
+    }
+    return MObject();
 }
 
 MObject FindSkinCluster(MObject node)
@@ -49,18 +67,6 @@ MObject FindSkinCluster(MObject node)
     MItDependencyGraph it(node, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         return it.currentItem();
-    }
-    return MObject();
-}
-
-MObject FindMesh(MObject node)
-{
-    auto path = MDagPath::getAPathTo(node);
-    if (path.extendToShape() == MS::kSuccess) {
-        auto shape = path.node();
-        if (shape.hasFn(MFn::kMesh)) {
-            return shape;
-        }
     }
     return MObject();
 }
@@ -77,4 +83,61 @@ MObject FindOrigMesh(MObject node)
         }
     });
     return ret;
+}
+
+MObject FindInputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
+{
+    MObjectArray geoms;
+    gf.getInputGeometry(geoms);
+    for (uint32_t i = 0; i < geoms.length(); ++i) {
+        auto geom = geoms[i];
+        mscTrace("FindInputMesh(): %s & %s\n", GetDagPath(geom).fullPathName().asChar(), path.fullPathName().asChar());
+        if (geom.hasFn(MFn::kMesh) && GetDagPath(geom) == path) {
+            return geom;
+        }
+    }
+    return MObject();
+}
+
+MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
+{
+    MObjectArray geoms;
+    gf.getOutputGeometry(geoms);
+    for (uint32_t i = 0; i < geoms.length(); ++i) {
+        auto geom = geoms[i];
+        if (geom.hasFn(MFn::kMesh) && GetDagPath(geom) == path) {
+            return geom;
+        }
+    }
+
+    return MObject();
+}
+
+
+static void DumpPlugInfo(MPlug plug, std::string indent)
+{
+    char array_info[64] = "";
+    if (plug.isArray()) {
+        sprintf(array_info, "[%d]", plug.numElements());
+    }
+    mscTrace("%splug %s%s\n", indent.c_str(), plug.name().asChar(), array_info);
+    if (plug.isCompound()) {
+        auto indent2 = indent + " ";
+        uint32_t nc = plug.numChildren();
+        if (plug.isArray()) {
+            for (uint32_t i = 0; i < nc; ++i) {
+                DumpPlugInfo(plug.elementByPhysicalIndex(0).child(i), indent2);
+            }
+        }
+        else {
+            for (uint32_t i = 0; i < nc; ++i) {
+                DumpPlugInfo(plug.child(i), indent2);
+            }
+        }
+    }
+}
+
+void DumpPlugInfo(MPlug plug)
+{
+    DumpPlugInfo(plug, "");
 }
