@@ -42,6 +42,8 @@ struct TRS
     quatf    rotation = quatf::identity();
     float3   rotation_eularZXY = float3::zero();
     float3   scale = float3::one();
+
+    float4x4 toMatrix() const;
 };
 
 struct Material
@@ -127,7 +129,7 @@ struct MeshRefineFlags
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
 
-    uint32_t generate_weights4 : 1;
+    uint32_t gen_weights4 : 1;
 };
 
 struct MeshRefineSettings

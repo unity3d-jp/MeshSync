@@ -363,6 +363,11 @@ inline float4x4 operator*(const float4x4 &a, const float4x4 &b)
     cp[15] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
     return c;
 }
+inline float4x4& operator*=(float4x4& a, const float4x4 &b)
+{
+    a = a * b;
+    return a;
+}
 
 inline float3 applyTRS(const float4x4& m, const float3& v)
 {
@@ -565,10 +570,10 @@ inline float4x4 to_float4x4(const quatf& q)
 inline float4x4 translate(const float3& t)
 {
     return {{
-        { 1.0f, 0.0f, 0.0f, t.x },
-        { 0.0f, 1.0f, 0.0f, t.y },
-        { 0.0f, 0.0f, 1.0f, t.z },
-        { 0.0f, 0.0f, 0.0f, 1.0f }
+        { 1.0f, 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        {  t.x,  t.y,  t.z, 1.0f }
     } };
 }
 
@@ -580,6 +585,14 @@ inline float4x4 scale(const float3& t)
         { 0.0f, 0.0f,  t.z, 0.0f },
         { 0.0f, 0.0f, 0.0f, 1.0f }
     } };
+}
+
+inline float4x4 transform(const float3& t, const quatf& r, const float3& s)
+{
+    auto ret = scale(s);
+    ret *= to_float4x4(r);
+    ret *= translate(t);
+    return ret;
 }
 
 inline float4x4 invert(const float4x4& x)

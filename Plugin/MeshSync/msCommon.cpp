@@ -437,6 +437,12 @@ void Material::deserialize(std::istream& is)
 }
 
 
+
+float4x4 TRS::toMatrix() const
+{
+    return ms::transform(position, rotation, scale);
+}
+
 uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
@@ -628,7 +634,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);
     }
-    if (mrs.flags.generate_weights4 && !bone_weights.empty()) {
+    if (mrs.flags.gen_weights4 && !bone_weights.empty()) {
         generateWeights4();
     }
 
@@ -849,7 +855,6 @@ void Scene::deserialize(std::istream& is)
     read(is, cameras);
     read(is, materials);
 }
-
 
 
 } // namespace ms

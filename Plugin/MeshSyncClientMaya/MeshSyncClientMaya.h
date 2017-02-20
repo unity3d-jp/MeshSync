@@ -28,8 +28,8 @@ public:
     void onSelectionChanged();
     void onSceneUpdated();
 
-    void notifyUpdateTransform(MObject obj);
-    void notifyUpdateMesh(MObject obj);
+    void notifyUpdateTransform(MObject obj, bool force = false);
+    void notifyUpdateMesh(MObject obj, bool force = false);
     bool sendUpdatedObjects();
     bool sendScene(TargetScope scope = TargetScope::All);
     bool importScene();
@@ -75,6 +75,7 @@ private:
     Materials m_materials;
     std::vector<std::string> m_deleted;
     ExistRecords m_exist_record;
+    std::mutex m_mutex_extract_mesh;
     std::future<void> m_future_send;
     bool m_pending_send_scene = false;
     bool m_scene_updated = false;
