@@ -51,6 +51,7 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
 #include <maya/MFnData.h>
+#include <maya/MFnAnimCurve.h>
 #include <maya/MFnSet.h>
 #include <maya/MFnMatrixData.h>
 #include <maya/MFnMesh.h>
@@ -59,6 +60,7 @@
 #include <maya/MFnSkinCluster.h> 
 #include <maya/MFnTransform.h> 
 #include <maya/MFnPlugin.h>
+#include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MEventMessage.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MDagMessage.h>
@@ -69,6 +71,7 @@
 #include <maya/MSyntax.h>
 #include <maya/MArgList.h>
 #include <maya/MArgParser.h>
+#include <maya/MAnimUtil.h>
 
 #ifdef _WIN32
     #define NOMINMAX

@@ -426,6 +426,10 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     dst.transform.position.assign(&pos[0]);
     dst.transform.rotation.assign(&rot[0]);
     dst.transform.scale.assign(scale);
+
+    if (m_export_animations) {
+        // todo
+    }
 }
 
 void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
@@ -450,9 +454,18 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
     MFnMesh fn_mesh = FindMesh(src);
     if (fn_mesh.object().isNull()) { return; }
+    MFnBlendShapeDeformer fn_blendshape = FindBlendShape(fn_mesh.object());
     MFnSkinCluster fn_skin = FindSkinCluster(fn_mesh.object());
-    MFnMesh fn_src_mesh = fn_skin.object().isNull() ? fn_mesh.object() : FindOrigMesh(src);
-    int skinned_index = fn_skin.object().isNull() ? 0 : fn_skin.indexForOutputShape(fn_mesh.object());
+    MFnMesh fn_src_mesh = fn_mesh.object();
+    int skin_index = 0;
+
+    if (m_export_skinning) {
+        fn_skin.setObject(FindSkinCluster(fn_mesh.object()));
+        if (!fn_skin.object().isNull()) {
+            fn_src_mesh.setObject(FindOrigMesh(src));
+            skin_index = fn_skin.indexForOutputShape(fn_mesh.object());
+        }
+    }
 
     // get points
     {
@@ -463,36 +476,6 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         dst.points.resize(len);
         for (uint32_t i = 0; i < len; ++i) {
             dst.points[i] = (const mu::float3&)points[i];
-        }
-
-        // apply tweak if exists
-        if (!fn_skin.object().isNull()) {
-            MObject tweak;
-            {
-                MItDependencyGraph it(fn_skin.object(), MFn::kTweak, MItDependencyGraph::kUpstream);
-                if (!it.isDone()) {
-                    tweak = it.currentItem();
-                }
-            }
-            if (!tweak.isNull()) {
-                MFnDependencyNode fn_tweak = tweak;
-                auto plug_vlist = fn_tweak.findPlug("vlist");
-                if (!plug_vlist.isNull() && plug_vlist.isArray() && plug_vlist.numElements() > 0) {
-                    auto plug_vertex = plug_vlist.elementByPhysicalIndex(skinned_index).child(0);
-                    if (!plug_vertex.isNull() && plug_vertex.isArray()) {
-                        auto vertices_len = plug_vertex.numElements();
-                        for (uint32_t vi = 0; vi < vertices_len; ++vi) {
-                            MPlug p3 = plug_vertex.elementByPhysicalIndex(vi);
-                            int li = p3.logicalIndex();
-                            mu::float3 v;
-                            p3.child(0).getValue(v.x);
-                            p3.child(1).getValue(v.y);
-                            p3.child(2).getValue(v.z);
-                            dst.points[li] += v;
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -616,6 +599,66 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             }
 
             it_geom.next();
+        }
+
+        // handling tweaks
+        if (m_apply_tweak) {
+
+            // vertex tweak
+            {
+                MObject tweak;
+                MItDependencyGraph it(fn_skin.object(), MFn::kTweak, MItDependencyGraph::kUpstream);
+                if (!it.isDone()) {
+                    tweak = it.currentItem();
+                }
+                if (!tweak.isNull()) {
+                    MFnDependencyNode fn_tweak = tweak;
+                    auto plug_vlist = fn_tweak.findPlug("vlist");
+                    if (plug_vlist.isArray() && plug_vlist.numElements() > skin_index) {
+                        auto plug_vertex = plug_vlist.elementByPhysicalIndex(skin_index).child(0);
+                        if (plug_vertex.isArray()) {
+                            auto vertices_len = plug_vertex.numElements();
+                            for (uint32_t vi = 0; vi < vertices_len; ++vi) {
+                                MPlug p3 = plug_vertex.elementByPhysicalIndex(vi);
+                                int li = p3.logicalIndex();
+                                mu::float3 v;
+                                p3.child(0).getValue(v.x);
+                                p3.child(1).getValue(v.y);
+                                p3.child(2).getValue(v.z);
+                                dst.points[li] += v;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // uv tweak
+            {
+                MObject tweak;
+                MItDependencyGraph it(fn_skin.object(), MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
+                if (!it.isDone()) {
+                    tweak = it.currentItem();
+                }
+                if (!tweak.isNull()) {
+                    MFnDependencyNode fn_tweak = tweak;
+                    auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
+                    auto plug_uv = fn_tweak.findPlug("uvTweak");
+                    if (plug_uv.isArray() && plug_uv.numElements() > skin_index) {
+                        auto plug_vertex = plug_uv.elementByPhysicalIndex(skin_index).child(0);
+                        if (plug_vertex.isArray()) {
+                            auto vertices_len = plug_vertex.numElements();
+                            for (uint32_t vi = 0; vi < vertices_len; ++vi) {
+                                MPlug p2 = plug_vertex.elementByPhysicalIndex(vi);
+                                int li = p2.logicalIndex();
+                                mu::float2 v;
+                                p2.child(0).getValue(v.x);
+                                p2.child(1).getValue(v.y);
+                                dst.uv[li] += v;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

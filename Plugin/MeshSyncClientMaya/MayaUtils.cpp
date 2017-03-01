@@ -71,6 +71,19 @@ MObject FindSkinCluster(MObject node)
     return MObject();
 }
 
+MObject FindBlendShape(MObject node)
+{
+    if (!node.hasFn(MFn::kMesh)) {
+        node = FindMesh(GetTransform(node));
+    }
+
+    MItDependencyGraph it(node, MFn::kBlendShape, MItDependencyGraph::kUpstream);
+    if (!it.isDone()) {
+        return it.currentItem();
+    }
+    return MObject();
+}
+
 MObject FindOrigMesh(MObject node)
 {
     MObject ret;

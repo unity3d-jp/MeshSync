@@ -58,6 +58,10 @@ private:
     MObject m_obj;
     MFnPlugin m_iplugin;
     bool m_auto_sync = true;
+    bool m_export_skinning = true;
+    bool m_apply_tweak = true;
+    bool m_export_animations = true;
+    bool m_export_blend_shapes = true;
     int m_timeout_ms = 5000;
 
     std::vector<MCallbackId> m_cids_global;

@@ -447,6 +447,7 @@ uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += ssize(transform);
+    ret += ssize(rot_type);
     ret += ssize(reference);
     return ret;
 }
@@ -454,12 +455,14 @@ void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, transform);
+    write(os, rot_type);
     write(os, reference);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, transform);
+    read(is, rot_type);
     read(is, reference);
 }
 
