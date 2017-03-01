@@ -410,6 +410,25 @@ void MeshSyncClientMaya::extractAllMaterialData()
     }
 }
 
+template<class T>
+static void ConvertAnimation(RawVector<ms::AnimationKey<T>>& dst, MObject curve)
+{
+    if (!curve.hasFn(MFn::kAnimCurve)) {
+        return;
+    }
+    MFnAnimCurve fn_curve(curve);
+    auto num_keys = fn_curve.numKeys();
+    if (num_keys <= 1) {
+        return;
+    }
+
+    // todo
+    for (uint32_t i = 0; i < num_keys; ++i) {
+        fn_curve.time(i);
+        fn_curve.value(i);
+    }
+}
+
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
     MFnTransform src_trs(src);
@@ -428,13 +447,58 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     dst.transform.scale.assign(scale);
 
     if (src.hasFn(MFn::kJoint)) {
-        if (JointGetSegmentScaleCompensate(src)) {
-            dst.transform.scale /= JointGetInverseScale(src);
+        mu::float3 inverse_scale;
+        if (JointGetSegmentScaleCompensate(src) && JointGetInverseScale(src, inverse_scale)) {
+            dst.transform.scale /= inverse_scale;
         }
     }
 
-    if (m_export_animations) {
-        // todo
+    if (m_export_animations && MAnimUtil::isAnimated(src)) {
+#define Def(Target) [](ms::TransformAnimation& anim, MObject& mo) { ConvertAnimation(Target, mo); }
+        static std::tuple<std::string, std::function<void(ms::TransformAnimation& anim, MObject& mo)>> curve_converter[] = {
+            { ".translateX", Def(anim.translation.x) },
+            { ".translateY", Def(anim.translation.y) },
+            { ".translateZ", Def(anim.translation.z) },
+            { ".scaleX", Def(anim.scale.x) },
+            { ".scaleY", Def(anim.scale.y) },
+            { ".scaleZ", Def(anim.scale.z) },
+            { ".rotateX", Def(anim.rotation.x) },
+            { ".rotateY", Def(anim.rotation.y) },
+            { ".rotateZ", Def(anim.rotation.z) },
+            { ".rotateW", Def(anim.rotation.w) },
+            { ".visibility", Def(anim.visibility) },
+        };
+#undef Def
+
+        bool hasTime = false;
+        double startTime = 0.0;
+        double endTime = 0.0;
+        bool hasUnitless = false;
+        double startUnitless = 0.0;
+        double endUnitless = 0.0;
+
+        MPlugArray plugs;
+        MAnimUtil::findAnimatedPlugs(src, plugs);
+        auto num_plugs = plugs.length();
+        if (num_plugs > 0) {
+            dst.animation.reset(new ms::TransformAnimation());
+        }
+        for (uint32_t pi = 0; pi < num_plugs; ++pi) {
+            auto plug = plugs[pi];
+            MObjectArray animation;
+            if (!MAnimUtil::findAnimation(plug, animation)) {
+                continue;
+            }
+
+            std::string name = plug.name().asChar();
+            for (auto i = std::begin(curve_converter); i != std::end(curve_converter); ++i) {
+                if (name.find(std::get<0>(*i)) != std::string::npos) {
+                    // all target curves have only 1 element
+                    std::get<1>(*i)(*dst.animation, animation[0]);
+                    break;
+                }
+            }
+        }
     }
 }
 

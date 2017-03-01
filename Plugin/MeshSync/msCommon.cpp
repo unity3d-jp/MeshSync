@@ -415,6 +415,33 @@ void SceneEntity::deserialize(std::istream& is)
 }
 
 
+uint32_t TransformAnimation::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(translation.x) + ssize(translation.y) + ssize(translation.z);
+    ret += ssize(rotation.x) + ssize(rotation.y) + ssize(rotation.z) + ssize(rotation.w);
+    ret += ssize(scale.x) + ssize(scale.y) + ssize(scale.z);
+    ret += ssize(visibility);
+    return ret;
+}
+
+void TransformAnimation::serialize(std::ostream & os) const
+{
+    write(os, translation.x); write(os, translation.y); write(os, translation.z);
+    write(os, rotation.x); write(os, rotation.y); write(os, rotation.z); write(os, rotation.w);
+    write(os, scale.x); write(os, scale.y); write(os, scale.z);
+    write(os, visibility);
+}
+
+void TransformAnimation::deserialize(std::istream & is)
+{
+    read(is, translation.x); read(is, translation.y); read(is, translation.z);
+    read(is, rotation.x); read(is, rotation.y); read(is, rotation.z); read(is, rotation.w);
+    read(is, scale.x); read(is, scale.y); read(is, scale.z);
+    read(is, visibility);
+}
+
+
 uint32_t Material::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -867,6 +894,5 @@ void Scene::deserialize(std::istream& is)
     read(is, cameras);
     read(is, materials);
 }
-
 
 } // namespace ms

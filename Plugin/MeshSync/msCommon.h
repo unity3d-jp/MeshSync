@@ -56,21 +56,16 @@ struct AnimationKey
 
 struct TransformAnimation
 {
-    struct {
-        RawVector<AnimationKey<float>> x, y, z;
-    } translation;
-    struct {
-        RawVector<AnimationKey<float>> x, y, z, w;
-    } rotation;
-    struct {
-        RawVector<AnimationKey<float>> x, y, z;
-    } scale;
+    struct { RawVector<AnimationKey<float>> x, y, z; } translation;
+    struct { RawVector<AnimationKey<float>> x, y, z, w; } rotation;
+    struct { RawVector<AnimationKey<float>> x, y, z; } scale;
     RawVector<AnimationKey<bool>> visibility;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
+using TransformAnimationPtr = std::shared_ptr<TransformAnimation>;
 
 struct Material
 {
@@ -101,6 +96,8 @@ public:
     TRS transform;
     RotationType rot_type;
     std::string reference;
+    TransformAnimationPtr animation;
+
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;

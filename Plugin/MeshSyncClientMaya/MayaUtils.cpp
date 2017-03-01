@@ -133,15 +133,18 @@ bool JointGetSegmentScaleCompensate(MObject joint)
     return plug.asBool();
 }
 
-mu::float3 JointGetInverseScale(MObject joint)
+bool JointGetInverseScale(MObject joint, mu::float3& dst)
 {
     const MFnIkJoint fn_joint = joint;
     auto plug = fn_joint.findPlug("inverseScale");
-    return mu::float3{
+    if (plug.isNull()) { return false; }
+
+    dst = mu::float3{
         (float)plug.child(0).asDouble(),
         (float)plug.child(1).asDouble(),
         (float)plug.child(2).asDouble()
     };
+    return true;
 }
 
 
