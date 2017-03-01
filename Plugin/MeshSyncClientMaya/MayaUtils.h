@@ -15,4 +15,7 @@ MObject FindOrigMesh(MObject node);
 MObject FindInputMesh(const MFnGeometryFilter& gf, const MDagPath& path);
 MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path);
 
+bool JointGetSegmentScaleCompensate(MObject joint);
+mu::float3 JointGetInverseScale(MObject joint);
+
 void DumpPlugInfo(MPlug plug);

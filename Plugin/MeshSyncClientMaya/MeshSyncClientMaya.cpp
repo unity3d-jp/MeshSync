@@ -427,6 +427,12 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     dst.transform.rotation.assign(&rot[0]);
     dst.transform.scale.assign(scale);
 
+    if (src.hasFn(MFn::kJoint)) {
+        if (JointGetSegmentScaleCompensate(src)) {
+            dst.transform.scale /= JointGetInverseScale(src);
+        }
+    }
+
     if (m_export_animations) {
         // todo
     }
@@ -614,7 +620,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 if (!tweak.isNull()) {
                     MFnDependencyNode fn_tweak = tweak;
                     auto plug_vlist = fn_tweak.findPlug("vlist");
-                    if (plug_vlist.isArray() && plug_vlist.numElements() > skin_index) {
+                    if (plug_vlist.isArray() && (int)plug_vlist.numElements() > skin_index) {
                         auto plug_vertex = plug_vlist.elementByPhysicalIndex(skin_index).child(0);
                         if (plug_vertex.isArray()) {
                             auto vertices_len = plug_vertex.numElements();
@@ -643,7 +649,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     MFnDependencyNode fn_tweak = tweak;
                     auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
                     auto plug_uv = fn_tweak.findPlug("uvTweak");
-                    if (plug_uv.isArray() && plug_uv.numElements() > skin_index) {
+                    if (plug_uv.isArray() && (int)plug_uv.numElements() > skin_index) {
                         auto plug_vertex = plug_uv.elementByPhysicalIndex(skin_index).child(0);
                         if (plug_vertex.isArray()) {
                             auto vertices_len = plug_vertex.numElements();

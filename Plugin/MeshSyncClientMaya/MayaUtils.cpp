@@ -126,6 +126,24 @@ MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
     return MObject();
 }
 
+bool JointGetSegmentScaleCompensate(MObject joint)
+{
+    const MFnIkJoint fn_joint = joint;
+    auto plug = fn_joint.findPlug("segmentScaleCompensate");
+    return plug.asBool();
+}
+
+mu::float3 JointGetInverseScale(MObject joint)
+{
+    const MFnIkJoint fn_joint = joint;
+    auto plug = fn_joint.findPlug("inverseScale");
+    return mu::float3{
+        (float)plug.child(0).asDouble(),
+        (float)plug.child(1).asDouble(),
+        (float)plug.child(2).asDouble()
+    };
+}
+
 
 static void DumpPlugInfo(MPlug plug, std::string indent)
 {
