@@ -804,8 +804,17 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool welding)
             mu::MirrorPoints(&npoints[num_points], IArray<float3>{npoints.data(), num_points}, copylist, plane_n, plane_d);
         }
         if (uv.data()) {
-            uv.resize(points.size());
-            mu::CopyWithIndices(&uv[num_points], &uv[0], copylist);
+            if (uv.size() == num_points) {
+                uv.resize(points.size());
+                mu::CopyWithIndices(&uv[num_points], &uv[0], copylist);
+            }
+            else if (uv.size() == num_indices) {
+                uv.resize(indices.size());
+                auto dst = &uv[num_indices];
+                mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
+                    dst[idx] = uv[ridx];
+                });
+            }
         }
         if (materialIDs.data()) {
             size_t n = materialIDs.size();
