@@ -224,6 +224,39 @@ template<class VertexT> void Interleave_Generic(VertexT *dst, const typename Ver
 // impl
 // ------------------------------------------------------------
 
+// Body: [](int face_index, int vertex_index) -> void
+template<class Body>
+inline void EnumerateFaceIndices(const IArray<int> counts, const Body& body)
+{
+    int num_faces = (int)counts.size();
+    int i = 0;
+    for (int fi = 0; fi < num_faces; ++fi) {
+        int count = counts[fi];
+        for (int ci = 0; ci < count; ++ci) {
+            int index = i + ci;
+            body(fi, index);
+        }
+        i += count;
+    }
+}
+
+// Body: [](int face_index, int vertex_index, int reverse_vertex_index) -> void
+template<class Body>
+inline void EnumerateReverseFaceIndices(const IArray<int> counts, const Body& body)
+{
+    int num_faces = (int)counts.size();
+    int i = 0;
+    for (int fi = 0; fi < num_faces; ++fi) {
+        int count = counts[fi];
+        for (int ci = 0; ci < count; ++ci) {
+            int index = i + ci;
+            int rindex = i + (count - ci - 1);
+            body(fi, index, rindex);
+        }
+        i += count;
+    }
+}
+
 template<class T>
 inline void CopyWithIndices(T *dst, const T *src, const IArray<int> indices, size_t beg, size_t end)
 {
@@ -457,13 +490,9 @@ inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>&
     if (!dst_counts || !dst_indices) { return; }
 
     memcpy(dst_counts, counts.data(), sizeof(int) * counts.size());
-    size_t i = 0;
-    for (int count : counts) {
-        for (int ci = 0; ci < count; ++ci) {
-            dst_indices[i + ci] = offset + indices[i + (count - ci - 1)];
-        }
-        i += count;
-    }
+    EnumerateReverseFaceIndices(counts, [&](int, int idx, int ridx) {
+        dst_indices[idx] = offset + indices[ridx];
+    });
 }
 
 inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>& counts, const IArray<int>& indices, const IArray<int>& indirect)
@@ -471,13 +500,9 @@ inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>&
     if (!dst_counts || !dst_indices) { return; }
 
     memcpy(dst_counts, counts.data(), sizeof(int) * counts.size());
-    size_t i = 0;
-    for (int count : counts) {
-        for (int ci = 0; ci < count; ++ci) {
-            dst_indices[i + ci] = indirect[indices[i + (count - ci - 1)]];
-        }
-        i += count;
-    }
+    EnumerateReverseFaceIndices(counts, [&](int, int idx, int ridx) {
+        dst_indices[idx] = indirect[indices[ridx]];
+    });
 }
 
 } // namespace mu
