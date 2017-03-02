@@ -421,9 +421,41 @@ namespace UTJ
                 var ret = new AnimationCurve();
                 foreach(var k in src)
                 {
-                    var i = ret.AddKey(new Keyframe(k.time, k.value));
+                    ret.AddKey(new Keyframe(k.time, k.value));
+                }
+                for (int i = 0; i < src.Length; ++i)
+                {
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
                 }
                 return ret;
+            }
+            public void SetupAnimationClip(AnimationClip clip, string path)
+            {
+                var tx = ToAnimatinCurve(translateX);
+                var ty = ToAnimatinCurve(translateY);
+                var tz = ToAnimatinCurve(translateZ);
+                var rx = ToAnimatinCurve(rotationX);
+                var ry = ToAnimatinCurve(rotationY);
+                var rz = ToAnimatinCurve(rotationZ);
+                var sx = ToAnimatinCurve(scaleX);
+                var sy = ToAnimatinCurve(scaleY);
+                var sz = ToAnimatinCurve(scaleZ);
+
+                var ttrans = typeof(Transform);
+                if (tx.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", tx);
+                if (ty.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", ty);
+                if (tz.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", tz);
+                if (rx.length > 0) clip.SetCurve(path, ttrans, "m_LocalEulerAngles.x", rx);
+                if (ry.length > 0) clip.SetCurve(path, ttrans, "m_LocalEulerAngles.y", ry);
+                if (rz.length > 0) clip.SetCurve(path, ttrans, "m_LocalEulerAngles.z", rz);
+                //if (rx.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", rx);
+                //if (ry.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", ry);
+                //if (rz.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", rz);
+                if (sx.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", sx);
+                if (sy.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", sy);
+                if (sz.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", sz);
+
             }
         }
 

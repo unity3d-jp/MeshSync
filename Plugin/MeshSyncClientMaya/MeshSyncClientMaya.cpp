@@ -422,7 +422,8 @@ static void ConvertAnimation(RawVector<ms::Keyframe>& dst, MObject curve)
     }
 
     // time sampling
-    const float time_resolution = 1.0f / 30.0f;
+    const float time_resolution = 5.0f / 30.0f;
+    //const float time_resolution = 1.0f / 30.0f;
     float time_begin = ToSeconds(fn_curve.time(0));
     float time_end = ToSeconds(fn_curve.time(num_keys - 1));
     float time_range = time_end - time_begin;
@@ -446,6 +447,14 @@ static void ConvertAnimation(RawVector<ms::Keyframe>& dst, MObject curve)
         if (constant) {
             dst.clear();
         }
+    }
+
+    // 
+    if (fn_curve.animCurveType() == MFnAnimCurve::kAnimCurveTA) {
+        for (auto& v : dst) {
+            v.value *= mu::Rad2Deg;
+        }
+
     }
 
     //// tangents

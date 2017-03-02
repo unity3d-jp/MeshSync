@@ -593,27 +593,7 @@ namespace UTJ
 
                 if (clip != null)
                 {
-                    var tx = AnimationData.ToAnimatinCurve(anim.translateX);
-                    var ty = AnimationData.ToAnimatinCurve(anim.translateY);
-                    var tz = AnimationData.ToAnimatinCurve(anim.translateZ);
-                    var rx = AnimationData.ToAnimatinCurve(anim.rotationX);
-                    var ry = AnimationData.ToAnimatinCurve(anim.rotationY);
-                    var rz = AnimationData.ToAnimatinCurve(anim.rotationZ);
-                    var sx = AnimationData.ToAnimatinCurve(anim.scaleX);
-                    var sy = AnimationData.ToAnimatinCurve(anim.scaleY);
-                    var sz = AnimationData.ToAnimatinCurve(anim.scaleZ);
-
-                    var ttrans = typeof(Transform);
-                    var path = data.path;
-                    if (tx.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", tx);
-                    if (ty.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", ty);
-                    if (tz.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", tz);
-                    if (rx.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", rx);
-                    if (ry.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", ry);
-                    if (rz.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", rz);
-                    if (sx.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", sx);
-                    if (sy.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", sy);
-                    if (sz.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", sz);
+                    anim.SetupAnimationClip(clip, data.path);
                 }
 
             }
