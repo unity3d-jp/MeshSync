@@ -477,6 +477,15 @@ void Animation::deserialize(std::istream & is)
     read(is, visibility);
 }
 
+bool Animation::empty() const
+{
+    return
+        translation.x.empty() && translation.y.empty() && translation.z.empty() &&
+        rotation.x.empty() && rotation.y.empty() && rotation.z.empty() &&
+        scale.x.empty() && scale.y.empty() && scale.z.empty() &&
+        visibility.empty();
+}
+
 
 uint32_t Material::getSerializeSize() const
 {

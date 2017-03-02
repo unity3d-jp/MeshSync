@@ -46,28 +46,26 @@ struct TRS
     float4x4 toMatrix() const;
 };
 
-struct AnimationKey
+struct Keyframe
 {
     float time = 0.0f;
-    mu::float2 in_tangent = mu::float2::zero();
-    mu::float2 out_tangent = mu::float2::zero();
-};
-template<class T>
-struct TAnimationKey : AnimationKey
-{
-    T value = 0.0f;
+    float value = 0.0f;
+    //mu::float2 in_tangent = mu::float2::zero();
+    //mu::float2 out_tangent = mu::float2::zero();
 };
 
 struct Animation
 {
-    struct { RawVector<TAnimationKey<float>> x, y, z; } translation;
-    struct { RawVector<TAnimationKey<float>> x, y, z, w; } rotation;
-    struct { RawVector<TAnimationKey<float>> x, y, z; } scale;
-    RawVector<TAnimationKey<bool>> visibility;
+    struct { RawVector<Keyframe> x, y, z; } translation;
+    struct { RawVector<Keyframe> x, y, z, w; } rotation;
+    struct { RawVector<Keyframe> x, y, z; } scale;
+    RawVector<Keyframe> visibility;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    bool empty() const;
 };
 using AnimationPtr = std::shared_ptr<Animation>;
 

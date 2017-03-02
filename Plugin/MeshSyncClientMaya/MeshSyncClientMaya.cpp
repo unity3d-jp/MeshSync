@@ -410,8 +410,7 @@ void MeshSyncClientMaya::extractAllMaterialData()
     }
 }
 
-template<class T>
-static void ConvertAnimation(RawVector<ms::TAnimationKey<T>>& dst, MObject curve)
+static void ConvertAnimation(RawVector<ms::Keyframe>& dst, MObject curve)
 {
     if (!curve.hasFn(MFn::kAnimCurve)) {
         return;
@@ -422,16 +421,44 @@ static void ConvertAnimation(RawVector<ms::TAnimationKey<T>>& dst, MObject curve
         return;
     }
 
-    for (uint32_t i = 0; i < num_keys; ++i) {
-        ms::TAnimationKey<T> key;
-        MTime time = fn_curve.time(i);
-        time.setUnit(MTime::kSeconds);
-        key.time = (float)time.value();
-        key.value = (T)fn_curve.value(i);
-        fn_curve.getTangent(i, key.in_tangent.x, key.in_tangent.y, true);
-        fn_curve.getTangent(i, key.out_tangent.x, key.out_tangent.y, false);
+    // time sampling
+    const float time_resolution = 1.0f / 30.0f;
+    float time_begin = ToSeconds(fn_curve.time(0));
+    float time_end = ToSeconds(fn_curve.time(num_keys - 1));
+    float time_range = time_end - time_begin;
+    for (float t = time_begin; t < time_end; t += time_resolution) {
+        ms::Keyframe key;
+        key.time = t;
+        key.value = (float)fn_curve.evaluate(ToMTime(t));
         dst.push_back(key);
     }
+
+    // clear if curve is constant
+    {
+        bool constant = true;
+        auto& t = dst.front();
+        for (auto& v : dst) {
+            if (!mu::near_equal(t.value, v.value)) {
+                constant = false;
+                break;
+            }
+        }
+        if (constant) {
+            dst.clear();
+        }
+    }
+
+    //// tangents
+    //for (uint32_t i = 0; i < num_keys; ++i) {
+    //    ms::Keyframe key;
+    //    MTime time = fn_curve.time(i);
+    //    time.setUnit(MTime::kSeconds);
+    //    key.time = ToSeconds(fn_curve.time(i));
+    //    key.value = (float)fn_curve.value(i);
+    //    fn_curve.getTangent(i, key.in_tangent.x, key.in_tangent.y, true);
+    //    fn_curve.getTangent(i, key.out_tangent.x, key.out_tangent.y, false);
+    //    dst.push_back(key);
+    //}
 }
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
@@ -503,6 +530,9 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
                     break;
                 }
             }
+        }
+        if (dst.animation->empty()) {
+            dst.animation.reset();
         }
     }
 }

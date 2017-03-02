@@ -257,36 +257,31 @@ namespace UTJ
             }
         }
 
-        public struct AnimKeyData
+        public struct KeyframeData
         {
             internal IntPtr _this;
 
-            [DllImport("MeshSyncServer")] static extern float msAnimKeyGetTime(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msAnimKeyGetFloatValue(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern bool msAnimKeyGetBoolValue(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern Vector2 msAnimKeyGetInTangent(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern Vector2 msAnimKeyGetOutTangent(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msKeyframeGetTime(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msKeyframeGetValue(IntPtr _this);
+            //[DllImport("MeshSyncServer")] static extern Vector2 msKeyframeGetInTangent(IntPtr _this);
+            //[DllImport("MeshSyncServer")] static extern Vector2 msKeyframeGetOutTangent(IntPtr _this);
 
             public float time
             {
-                get { return msAnimKeyGetTime(_this); }
+                get { return msKeyframeGetTime(_this); }
             }
-            public Vector2 inTangent
+            public float value
             {
-                get { return msAnimKeyGetInTangent(_this); }
+                get { return msKeyframeGetValue(_this); }
             }
-            public Vector2 outTangent
-            {
-                get { return msAnimKeyGetOutTangent(_this); }
-            }
-            public float floatValue
-            {
-                get { return msAnimKeyGetFloatValue(_this); }
-            }
-            public bool boolValue
-            {
-                get { return msAnimKeyGetBoolValue(_this); }
-            }
+            //public Vector2 inTangent
+            //{
+            //    get { return msKeyframeGetInTangent(_this); }
+            //}
+            //public Vector2 outTangent
+            //{
+            //    get { return msKeyframeGetOutTangent(_this); }
+            //}
         }
 
         public struct AnimationData
@@ -296,23 +291,26 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationXKeys(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationYKeys(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationZKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetTranslationXKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetTranslationYKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetTranslationZKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetTranslationXKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetTranslationYKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetTranslationZKey(IntPtr _this, int i);
 
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationXKeys(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationYKeys(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationZKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetRotationXKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetRotationYKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetRotationZKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetRotationXKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetRotationYKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetRotationZKey(IntPtr _this, int i);
 
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleXKeys(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleYKeys(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleZKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetScaleXKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetScaleYKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern AnimKeyData msAnimationGetScaleZKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetScaleXKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetScaleYKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetScaleZKey(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumVisibilityKeys(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetVisibilityKey(IntPtr _this, int i);
 
             public static explicit operator AnimationData(IntPtr v)
             {
@@ -325,88 +323,107 @@ namespace UTJ
                 return v._this != IntPtr.Zero;
             }
 
-            AnimKeyData[] translateX
+            KeyframeData[] translateX
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumTranslationXKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumTranslationXKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationXKey(_this, i); }
                     return ret;
                 }
             }
-            AnimKeyData[] translateY
+            KeyframeData[] translateY
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumTranslationYKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumTranslationYKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationYKey(_this, i); }
                     return ret;
                 }
             }
-            AnimKeyData[] translateZ
+            KeyframeData[] translateZ
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumTranslationZKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumTranslationZKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationZKey(_this, i); }
                     return ret;
                 }
             }
 
-            AnimKeyData[] rotationX
+            KeyframeData[] rotationX
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumRotationXKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumRotationXKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationXKey(_this, i); }
                     return ret;
                 }
             }
-            AnimKeyData[] rotationY
+            KeyframeData[] rotationY
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumRotationYKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumRotationYKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationYKey(_this, i); }
                     return ret;
                 }
             }
-            AnimKeyData[] rotationZ
+            KeyframeData[] rotationZ
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumRotationZKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumRotationZKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationZKey(_this, i); }
                     return ret;
                 }
             }
 
-            AnimKeyData[] scaleX
+            KeyframeData[] scaleX
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumScaleXKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumScaleXKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleXKey(_this, i); }
                     return ret;
                 }
             }
-            AnimKeyData[] scaleY
+            KeyframeData[] scaleY
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumScaleYKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumScaleYKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleYKey(_this, i); }
                     return ret;
                 }
             }
-            AnimKeyData[] scaleZ
+            KeyframeData[] scaleZ
             {
                 get
                 {
-                    var ret = new AnimKeyData[msAnimationGetNumScaleZKeys(_this)];
+                    var ret = new KeyframeData[msAnimationGetNumScaleZKeys(_this)];
                     for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleZKey(_this, i); }
                     return ret;
                 }
+            }
+            KeyframeData[] visibility
+            {
+                get
+                {
+                    var ret = new KeyframeData[msAnimationGetNumVisibilityKeys(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityKey(_this, i); }
+                    return ret;
+                }
+            }
+
+            static AnimationCurve ConvertToAnimatinCurve(KeyframeData[] src)
+            {
+                var ret = new AnimationCurve();
+                foreach(var k in src)
+                {
+                    var i = ret.AddKey(new Keyframe(k.time, k.value));
+                }
+                return ret;
             }
         }
 

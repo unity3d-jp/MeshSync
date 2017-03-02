@@ -147,6 +147,20 @@ bool JointGetInverseScale(MObject joint, mu::float3& dst)
     return true;
 }
 
+float ToSeconds(MTime t)
+{
+    t.setUnit(MTime::kSeconds);
+    return (float)t.value();
+}
+
+MTime ToMTime(float seconds)
+{
+    MTime ret;
+    ret.setUnit(MTime::kSeconds);
+    ret.setValue(seconds);
+    return ret;
+}
+
 
 static void DumpPlugInfo(MPlug plug, std::string indent)
 {
