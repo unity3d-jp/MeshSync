@@ -46,26 +46,30 @@ struct TRS
     float4x4 toMatrix() const;
 };
 
-template<class T>
 struct AnimationKey
 {
-    T time = 0.0f;
-    float value = 0.0f;
-    float tangent = 0.0f;
+    float time = 0.0f;
+    mu::float2 in_tangent = mu::float2::zero();
+    mu::float2 out_tangent = mu::float2::zero();
+};
+template<class T>
+struct TAnimationKey : AnimationKey
+{
+    T value = 0.0f;
 };
 
-struct TransformAnimation
+struct Animation
 {
-    struct { RawVector<AnimationKey<float>> x, y, z; } translation;
-    struct { RawVector<AnimationKey<float>> x, y, z, w; } rotation;
-    struct { RawVector<AnimationKey<float>> x, y, z; } scale;
-    RawVector<AnimationKey<bool>> visibility;
+    struct { RawVector<TAnimationKey<float>> x, y, z; } translation;
+    struct { RawVector<TAnimationKey<float>> x, y, z, w; } rotation;
+    struct { RawVector<TAnimationKey<float>> x, y, z; } scale;
+    RawVector<TAnimationKey<bool>> visibility;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
-using TransformAnimationPtr = std::shared_ptr<TransformAnimation>;
+using AnimationPtr = std::shared_ptr<Animation>;
 
 struct Material
 {
@@ -96,7 +100,7 @@ public:
     TRS transform;
     RotationType rot_type;
     std::string reference;
-    TransformAnimationPtr animation;
+    AnimationPtr animation;
 
 
     uint32_t getSerializeSize() const;

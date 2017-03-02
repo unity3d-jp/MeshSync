@@ -106,6 +106,32 @@ msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
     _this->color = *v;
 }
 
+msAPI float   msAnimKeyGetTime(ms::AnimationKey *_this) { return _this->time; }
+msAPI float2  msAnimKeyGetInTangent(ms::AnimationKey *_this) { return _this->in_tangent; }
+msAPI float2  msAnimKeyGetOutTangent(ms::AnimationKey *_this) { return _this->out_tangent; }
+msAPI float   msAnimKeyGetFloatValue(ms::TAnimationKey<float> *_this) { return _this->value; }
+msAPI bool    msAnimKeyGetBoolValue(ms::TAnimationKey<bool> *_this) { return _this->value; }
+
+msAPI int               msAnimationGetNumTranslationXKeys(ms::Animation *_this)     { return _this ? (int)_this->translation.x.size() : 0; }
+msAPI int               msAnimationGetNumTranslationYKeys(ms::Animation *_this)     { return _this ? (int)_this->translation.y.size() : 0; }
+msAPI int               msAnimationGetNumTranslationZKeys(ms::Animation *_this)     { return _this ? (int)_this->translation.z.size() : 0; }
+msAPI ms::AnimationKey* msAnimationGetTranslationXKey(ms::Animation *_this, int i)  { return &_this->translation.x[i]; }
+msAPI ms::AnimationKey* msAnimationGetTranslationYKey(ms::Animation *_this, int i)  { return &_this->translation.y[i]; }
+msAPI ms::AnimationKey* msAnimationGetTranslationZKey(ms::Animation *_this, int i)  { return &_this->translation.z[i]; }
+
+msAPI int               msAnimationGetNumRotationXKeys(ms::Animation *_this)        { return _this ? (int)_this->rotation.x.size() : 0; }
+msAPI int               msAnimationGetNumRotationYKeys(ms::Animation *_this)        { return _this ? (int)_this->rotation.y.size() : 0; }
+msAPI int               msAnimationGetNumRotationZKeys(ms::Animation *_this)        { return _this ? (int)_this->rotation.z.size() : 0; }
+msAPI ms::AnimationKey* msAnimationGetRotationXKey(ms::Animation *_this, int i)     { return &_this->rotation.x[i]; }
+msAPI ms::AnimationKey* msAnimationGetRotationYKey(ms::Animation *_this, int i)     { return &_this->rotation.y[i]; }
+msAPI ms::AnimationKey* msAnimationGetRotationZKey(ms::Animation *_this, int i)     { return &_this->rotation.z[i]; }
+
+msAPI int               msAnimationGetNumScaleXKeys(ms::Animation *_this)           { return _this ? (int)_this->scale.x.size() : 0; }
+msAPI int               msAnimationGetNumScaleYKeys(ms::Animation *_this)           { return _this ? (int)_this->scale.y.size() : 0; }
+msAPI int               msAnimationGetNumScaleZKeys(ms::Animation *_this)           { return _this ? (int)_this->scale.z.size() : 0; }
+msAPI ms::AnimationKey* msAnimationGetScaleXKey(ms::Animation *_this, int i)        { return &_this->scale.x[i]; }
+msAPI ms::AnimationKey* msAnimationGetScaleYKey(ms::Animation *_this, int i)        { return &_this->scale.y[i]; }
+msAPI ms::AnimationKey* msAnimationGetScaleZKey(ms::Animation *_this, int i)        { return &_this->scale.z[i]; }
 
 msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {
@@ -183,6 +209,10 @@ msAPI const char* msTransformGetReference(ms::Transform *_this)
 msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
 {
     _this->reference = *v;
+}
+msAPI ms::Animation* msTransformGetAnimation(ms::Transform *_this)
+{
+    return _this->animation.get();
 }
 
 msAPI ms::Camera* msCameraCreate()

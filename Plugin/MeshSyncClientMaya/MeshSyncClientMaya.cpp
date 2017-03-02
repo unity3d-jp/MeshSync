@@ -411,7 +411,7 @@ void MeshSyncClientMaya::extractAllMaterialData()
 }
 
 template<class T>
-static void ConvertAnimation(RawVector<ms::AnimationKey<T>>& dst, MObject curve)
+static void ConvertAnimation(RawVector<ms::TAnimationKey<T>>& dst, MObject curve)
 {
     if (!curve.hasFn(MFn::kAnimCurve)) {
         return;
@@ -422,10 +422,15 @@ static void ConvertAnimation(RawVector<ms::AnimationKey<T>>& dst, MObject curve)
         return;
     }
 
-    // todo
     for (uint32_t i = 0; i < num_keys; ++i) {
-        fn_curve.time(i);
-        fn_curve.value(i);
+        ms::TAnimationKey<T> key;
+        MTime time = fn_curve.time(i);
+        time.setUnit(MTime::kSeconds);
+        key.time = (float)time.value();
+        key.value = (T)fn_curve.value(i);
+        fn_curve.getTangent(i, key.in_tangent.x, key.in_tangent.y, true);
+        fn_curve.getTangent(i, key.out_tangent.x, key.out_tangent.y, false);
+        dst.push_back(key);
     }
 }
 
@@ -454,8 +459,8 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     }
 
     if (m_export_animations && MAnimUtil::isAnimated(src)) {
-#define Def(Target) [](ms::TransformAnimation& anim, MObject& mo) { ConvertAnimation(Target, mo); }
-        static std::tuple<std::string, std::function<void(ms::TransformAnimation& anim, MObject& mo)>> curve_converter[] = {
+#define Def(Target) [](ms::Animation& anim, MObject& mo) { ConvertAnimation(Target, mo); }
+        static std::tuple<std::string, std::function<void(ms::Animation& anim, MObject& mo)>> curve_converter[] = {
             { ".translateX", Def(anim.translation.x) },
             { ".translateY", Def(anim.translation.y) },
             { ".translateZ", Def(anim.translation.z) },
@@ -481,7 +486,7 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
         MAnimUtil::findAnimatedPlugs(src, plugs);
         auto num_plugs = plugs.length();
         if (num_plugs > 0) {
-            dst.animation.reset(new ms::TransformAnimation());
+            dst.animation.reset(new ms::Animation());
         }
         for (uint32_t pi = 0; pi < num_plugs; ++pi) {
             auto plug = plugs[pi];

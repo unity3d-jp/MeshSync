@@ -60,6 +60,13 @@ struct ssize_impl<std::vector<T>>
     }
 };
 template<class T>
+struct ssize_impl<std::shared_ptr<T>>
+{
+    uint32_t operator()(const std::shared_ptr<T>& v) {
+        return 4 + (v ? v->getSerializeSize() : 0);
+    }
+};
+template<class T>
 struct ssize_impl<std::vector<std::shared_ptr<T>>>
 {
     uint32_t operator()(const std::vector<std::shared_ptr<T>>& v) {
@@ -101,6 +108,22 @@ struct write_impl<std::vector<T>>
         os.write((const char*)&size, 4);
         for (const auto& e : v) {
             write_impl<T>()(os, e);
+        }
+    }
+};
+template<class T>
+struct write_impl<std::shared_ptr<T>>
+{
+    void operator()(std::ostream& os, const std::shared_ptr<T>& v)
+    {
+        if (v) {
+            uint32_t size = v->getSerializeSize();
+            os.write((const char*)&size, 4);
+            v->serialize(os);
+        }
+        else {
+            uint32_t size = 0;
+            os.write((const char*)&size, 4);
         }
     }
 };
@@ -151,6 +174,19 @@ struct read_impl<std::vector<T>>
         v.resize(size);
         for (auto& e : v) {
             read_impl<T>()(is, e);
+        }
+    }
+};
+template<class T>
+struct read_impl<std::shared_ptr<T>>
+{
+    void operator()(std::istream& is, std::shared_ptr<T>& v)
+    {
+        uint32_t size = 0;
+        is.read((char*)&size, 4);
+        if (size > 0) {
+            v.reset(new T());
+            v->deserialize(is);
         }
     }
 };
@@ -415,7 +451,7 @@ void SceneEntity::deserialize(std::istream& is)
 }
 
 
-uint32_t TransformAnimation::getSerializeSize() const
+uint32_t Animation::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(translation.x) + ssize(translation.y) + ssize(translation.z);
@@ -425,7 +461,7 @@ uint32_t TransformAnimation::getSerializeSize() const
     return ret;
 }
 
-void TransformAnimation::serialize(std::ostream & os) const
+void Animation::serialize(std::ostream & os) const
 {
     write(os, translation.x); write(os, translation.y); write(os, translation.z);
     write(os, rotation.x); write(os, rotation.y); write(os, rotation.z); write(os, rotation.w);
@@ -433,7 +469,7 @@ void TransformAnimation::serialize(std::ostream & os) const
     write(os, visibility);
 }
 
-void TransformAnimation::deserialize(std::istream & is)
+void Animation::deserialize(std::istream & is)
 {
     read(is, translation.x); read(is, translation.y); read(is, translation.z);
     read(is, rotation.x); read(is, rotation.y); read(is, rotation.z); read(is, rotation.w);
@@ -476,6 +512,7 @@ uint32_t Transform::getSerializeSize() const
     ret += ssize(transform);
     ret += ssize(rot_type);
     ret += ssize(reference);
+    ret += ssize(animation);
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
@@ -484,6 +521,7 @@ void Transform::serialize(std::ostream& os) const
     write(os, transform);
     write(os, rot_type);
     write(os, reference);
+    write(os, animation);
 }
 void Transform::deserialize(std::istream& is)
 {
@@ -491,6 +529,7 @@ void Transform::deserialize(std::istream& is)
     read(is, transform);
     read(is, rot_type);
     read(is, reference);
+    read(is, animation);
 }
 
 void Transform::swapHandedness()
