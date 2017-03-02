@@ -323,7 +323,7 @@ namespace UTJ
                 return v._this != IntPtr.Zero;
             }
 
-            KeyframeData[] translateX
+            public KeyframeData[] translateX
             {
                 get
                 {
@@ -332,7 +332,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] translateY
+            public KeyframeData[] translateY
             {
                 get
                 {
@@ -341,7 +341,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] translateZ
+            public KeyframeData[] translateZ
             {
                 get
                 {
@@ -351,7 +351,7 @@ namespace UTJ
                 }
             }
 
-            KeyframeData[] rotationX
+            public KeyframeData[] rotationX
             {
                 get
                 {
@@ -360,7 +360,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] rotationY
+            public KeyframeData[] rotationY
             {
                 get
                 {
@@ -369,7 +369,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] rotationZ
+            public KeyframeData[] rotationZ
             {
                 get
                 {
@@ -379,7 +379,7 @@ namespace UTJ
                 }
             }
 
-            KeyframeData[] scaleX
+            public KeyframeData[] scaleX
             {
                 get
                 {
@@ -388,7 +388,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] scaleY
+            public KeyframeData[] scaleY
             {
                 get
                 {
@@ -397,7 +397,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] scaleZ
+            public KeyframeData[] scaleZ
             {
                 get
                 {
@@ -406,7 +406,7 @@ namespace UTJ
                     return ret;
                 }
             }
-            KeyframeData[] visibility
+            public KeyframeData[] visibility
             {
                 get
                 {
@@ -416,7 +416,7 @@ namespace UTJ
                 }
             }
 
-            static AnimationCurve ConvertToAnimatinCurve(KeyframeData[] src)
+            public static AnimationCurve ToAnimatinCurve(KeyframeData[] src)
             {
                 var ret = new AnimationCurve();
                 foreach(var k in src)
