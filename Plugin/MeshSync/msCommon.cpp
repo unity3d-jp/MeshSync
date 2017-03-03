@@ -454,36 +454,32 @@ void SceneEntity::deserialize(std::istream& is)
 uint32_t Animation::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(translation.x) + ssize(translation.y) + ssize(translation.z);
-    ret += ssize(rotation.x) + ssize(rotation.y) + ssize(rotation.z) + ssize(rotation.w);
-    ret += ssize(scale.x) + ssize(scale.y) + ssize(scale.z);
+    ret += ssize(translation);
+    ret += ssize(rotation);
+    ret += ssize(scale);
     ret += ssize(visibility);
     return ret;
 }
 
 void Animation::serialize(std::ostream & os) const
 {
-    write(os, translation.x); write(os, translation.y); write(os, translation.z);
-    write(os, rotation.x); write(os, rotation.y); write(os, rotation.z); write(os, rotation.w);
-    write(os, scale.x); write(os, scale.y); write(os, scale.z);
+    write(os, translation);
+    write(os, rotation);
+    write(os, scale);
     write(os, visibility);
 }
 
 void Animation::deserialize(std::istream & is)
 {
-    read(is, translation.x); read(is, translation.y); read(is, translation.z);
-    read(is, rotation.x); read(is, rotation.y); read(is, rotation.z); read(is, rotation.w);
-    read(is, scale.x); read(is, scale.y); read(is, scale.z);
+    read(is, translation);
+    read(is, rotation);
+    read(is, scale);
     read(is, visibility);
 }
 
 bool Animation::empty() const
 {
-    return
-        translation.x.empty() && translation.y.empty() && translation.z.empty() &&
-        rotation.x.empty() && rotation.y.empty() && rotation.z.empty() &&
-        scale.x.empty() && scale.y.empty() && scale.z.empty() &&
-        visibility.empty();
+    return translation.empty() && rotation.empty() && scale.empty() && visibility.empty();
 }
 
 
@@ -545,6 +541,15 @@ void Transform::swapHandedness()
 {
     transform.position.x *= -1.0f;
     transform.rotation = swap_handedness(transform.rotation);
+
+    if (animation) {
+        for (auto& tvp : animation->translation) {
+            tvp.value.x *= -1.0f;
+        }
+        for (auto& tvp : animation->rotation) {
+            tvp.value = swap_handedness(tvp.value);
+        }
+    }
 }
 
 void Transform::applyScaleFactor(float scale)

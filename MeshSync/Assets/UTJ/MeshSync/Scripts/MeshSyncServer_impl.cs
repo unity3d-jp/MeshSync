@@ -257,60 +257,25 @@ namespace UTJ
             }
         }
 
-        public struct KeyframeData
-        {
-            internal IntPtr _this;
-
-            [DllImport("MeshSyncServer")] static extern float msKeyframeGetTime(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msKeyframeGetValue(IntPtr _this);
-            //[DllImport("MeshSyncServer")] static extern Vector2 msKeyframeGetInTangent(IntPtr _this);
-            //[DllImport("MeshSyncServer")] static extern Vector2 msKeyframeGetOutTangent(IntPtr _this);
-
-            public float time
-            {
-                get { return msKeyframeGetTime(_this); }
-            }
-            public float value
-            {
-                get { return msKeyframeGetValue(_this); }
-            }
-            //public Vector2 inTangent
-            //{
-            //    get { return msKeyframeGetInTangent(_this); }
-            //}
-            //public Vector2 outTangent
-            //{
-            //    get { return msKeyframeGetOutTangent(_this); }
-            //}
-        }
-
         public struct AnimationData
         {
             internal IntPtr _this;
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationXKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationYKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationZKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetTranslationXKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetTranslationYKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetTranslationZKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetTranslationTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Vector3 msAnimationGetTranslationValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationXKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationYKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationZKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetRotationXKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetRotationYKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetRotationZKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetRotationTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Quaternion msAnimationGetRotationValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleXKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleYKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleZKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetScaleXKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetScaleYKey(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetScaleZKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetScaleTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Vector3 msAnimationGetScaleValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumVisibilityKeys(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern KeyframeData msAnimationGetVisibilityKey(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumVisibilitySamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetVisibilityTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern bool msAnimationGetVisibilityValue(IntPtr _this, int i);
 
             public static explicit operator AnimationData(IntPtr v)
             {
@@ -323,139 +288,187 @@ namespace UTJ
                 return v._this != IntPtr.Zero;
             }
 
-            public KeyframeData[] translateX
+            public float[] translateTimes
             {
                 get
                 {
-                    var ret = new KeyframeData[msAnimationGetNumTranslationXKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationXKey(_this, i); }
+                    var ret = new float[msAnimationGetNumTranslationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationTime(_this, i); }
                     return ret;
                 }
             }
-            public KeyframeData[] translateY
+            public Vector3[] translateValues
             {
                 get
                 {
-                    var ret = new KeyframeData[msAnimationGetNumTranslationYKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationYKey(_this, i); }
-                    return ret;
-                }
-            }
-            public KeyframeData[] translateZ
-            {
-                get
-                {
-                    var ret = new KeyframeData[msAnimationGetNumTranslationZKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationZKey(_this, i); }
+                    var ret = new Vector3[msAnimationGetNumTranslationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationValue(_this, i); }
                     return ret;
                 }
             }
 
-            public KeyframeData[] rotationX
+            public float[] rotationTimes
             {
                 get
                 {
-                    var ret = new KeyframeData[msAnimationGetNumRotationXKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationXKey(_this, i); }
+                    var ret = new float[msAnimationGetNumRotationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationTime(_this, i); }
                     return ret;
                 }
             }
-            public KeyframeData[] rotationY
+            public Quaternion[] rotationValues
             {
                 get
                 {
-                    var ret = new KeyframeData[msAnimationGetNumRotationYKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationYKey(_this, i); }
-                    return ret;
-                }
-            }
-            public KeyframeData[] rotationZ
-            {
-                get
-                {
-                    var ret = new KeyframeData[msAnimationGetNumRotationZKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationZKey(_this, i); }
+                    var ret = new Quaternion[msAnimationGetNumRotationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationValue(_this, i); }
                     return ret;
                 }
             }
 
-            public KeyframeData[] scaleX
+            public float[] scaleTimes
             {
                 get
                 {
-                    var ret = new KeyframeData[msAnimationGetNumScaleXKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleXKey(_this, i); }
+                    var ret = new float[msAnimationGetNumScaleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleTime(_this, i); }
                     return ret;
                 }
             }
-            public KeyframeData[] scaleY
+            public Vector3[] scaleValues
             {
                 get
                 {
-                    var ret = new KeyframeData[msAnimationGetNumScaleYKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleYKey(_this, i); }
-                    return ret;
-                }
-            }
-            public KeyframeData[] scaleZ
-            {
-                get
-                {
-                    var ret = new KeyframeData[msAnimationGetNumScaleZKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleZKey(_this, i); }
-                    return ret;
-                }
-            }
-            public KeyframeData[] visibility
-            {
-                get
-                {
-                    var ret = new KeyframeData[msAnimationGetNumVisibilityKeys(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityKey(_this, i); }
+                    var ret = new Vector3[msAnimationGetNumScaleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleValue(_this, i); }
                     return ret;
                 }
             }
 
-            public static AnimationCurve ToAnimatinCurve(KeyframeData[] src)
+            public float[] visibilityTimes
             {
-                var ret = new AnimationCurve();
-                foreach(var k in src)
+                get
                 {
-                    ret.AddKey(new Keyframe(k.time, k.value));
+                    var ret = new float[msAnimationGetNumVisibilitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityTime(_this, i); }
+                    return ret;
                 }
-                for (int i = 0; i < src.Length; ++i)
+            }
+            public bool[] visibilityValues
+            {
+                get
                 {
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                    var ret = new bool[msAnimationGetNumVisibilitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce = true)
+            {
+                var ret = new AnimationCurve[3] {
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                };
+                if(times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret[0].AddKey(new Keyframe(t, v.x));
+                    ret[1].AddKey(new Keyframe(t, v.y));
+                    ret[2].AddKey(new Keyframe(t, v.z));
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                }
+                if(reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret[0]);
+                    AnimationCurveKeyReducer.DoReduction(ret[1]);
+                    AnimationCurveKeyReducer.DoReduction(ret[2]);
                 }
                 return ret;
             }
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce = true)
+            {
+                var ret = new AnimationCurve[4] {
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                };
+                if (times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret[0].AddKey(new Keyframe(t, v.x));
+                    ret[1].AddKey(new Keyframe(t, v.y));
+                    ret[2].AddKey(new Keyframe(t, v.z));
+                    ret[3].AddKey(new Keyframe(t, v.w));
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                }
+                if (reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret[0]);
+                    AnimationCurveKeyReducer.DoReduction(ret[1]);
+                    AnimationCurveKeyReducer.DoReduction(ret[2]);
+                    AnimationCurveKeyReducer.DoReduction(ret[3]);
+                }
+                return ret;
+            }
+            public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce = true)
+            {
+                var ret = new AnimationCurve();
+                if (times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret.AddKey(new Keyframe(t, v ? 0.0f : 1.0f));
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                }
+                if (reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret);
+                }
+                return ret;
+            }
+
             public void SetupAnimationClip(AnimationClip clip, string path)
             {
-                var tx = ToAnimatinCurve(translateX);
-                var ty = ToAnimatinCurve(translateY);
-                var tz = ToAnimatinCurve(translateZ);
-                var rx = ToAnimatinCurve(rotationX);
-                var ry = ToAnimatinCurve(rotationY);
-                var rz = ToAnimatinCurve(rotationZ);
-                var sx = ToAnimatinCurve(scaleX);
-                var sy = ToAnimatinCurve(scaleY);
-                var sz = ToAnimatinCurve(scaleZ);
+                var t = ToAnimatinCurve(translateTimes, translateValues);
+                var r = ToAnimatinCurve(rotationTimes, rotationValues);
+                var s = ToAnimatinCurve(scaleTimes, scaleValues);
+                var v = ToAnimatinCurve(visibilityTimes, visibilityValues);
 
                 var ttrans = typeof(Transform);
-                if (tx.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", tx);
-                if (ty.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", ty);
-                if (tz.length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", tz);
-                if (rx.length > 0) clip.SetCurve(path, ttrans, "m_LocalEulerAngles.x", rx);
-                if (ry.length > 0) clip.SetCurve(path, ttrans, "m_LocalEulerAngles.y", ry);
-                if (rz.length > 0) clip.SetCurve(path, ttrans, "m_LocalEulerAngles.z", rz);
-                //if (rx.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", rx);
-                //if (ry.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", ry);
-                //if (rz.length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", rz);
-                if (sx.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", sx);
-                if (sy.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", sy);
-                if (sz.length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", sz);
-
+                if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
+                if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
+                if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
+                if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
+                if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
+                if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
+                if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
+                if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
+                if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
+                if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
             }
         }
 
@@ -982,6 +995,66 @@ namespace UTJ
             public Material material;
         }
 
+
+
+        // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
+        public class AnimationCurveKeyReducer
+        {
+            static public void DoReduction(AnimationCurve in_curve, float eps = 0.01f)
+            {
+                if (in_curve.keys.Length <= 2) return;
+
+                var del_indexes = GetDeleteKeyIndex(in_curve.keys, eps).ToArray();
+                foreach (var del_idx in del_indexes.Reverse()) in_curve.RemoveKey(del_idx);
+            }
+
+            static IEnumerable<int> GetDeleteKeyIndex(Keyframe[] keys, float eps)
+            {
+                for (int s_idx = 0, i = 1; i < keys.Length - 1; i++)
+                {
+                    if (IsInterpolationValue(keys[s_idx], keys[i + 1], keys[i], eps))
+                    {
+                        yield return i;
+                    }
+                    else
+                    {
+                        s_idx = i;
+                    }
+                }
+            }
+
+            static bool IsInterpolationValue(Keyframe key1, Keyframe key2, Keyframe comp, float eps)
+            {
+                var val1 = GetValueFromTime(key1, key2, comp.time);
+
+                if (eps < System.Math.Abs(comp.value - val1)) return false;
+
+                var time = key1.time + (comp.time - key1.time) * 0.5f;
+                val1 = GetValueFromTime(key1, comp, time);
+                var val2 = GetValueFromTime(key1, key2, time);
+
+                return (System.Math.Abs(val2 - val1) <= eps) ? true : false;
+            }
+
+            static float GetValueFromTime(Keyframe key1, Keyframe key2, float time)
+            {
+                float t;
+                float a, b, c;
+                float kd, vd;
+
+                if (key1.outTangent == Mathf.Infinity) return key1.value;
+
+                kd = key2.time - key1.time;
+                vd = key2.value - key1.value;
+                t = (time - key1.time) / kd;
+
+                a = -2 * vd + kd * (key1.outTangent + key2.inTangent);
+                b = 3 * vd - kd * (2 * key1.outTangent + key2.inTangent);
+                c = kd * key1.outTangent;
+
+                return key1.value + t * (t * (a * t + b) + c);
+            }
+        }
         #endregion
     }
 }

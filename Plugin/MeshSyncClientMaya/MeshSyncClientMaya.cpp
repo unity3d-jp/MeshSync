@@ -284,6 +284,18 @@ void MeshSyncClientMaya::setAutoSync(bool v)
 {
     m_auto_sync = v;
 }
+void MeshSyncClientMaya::setSyncAnimations(bool v)
+{
+    m_sync_animations = v;
+}
+void MeshSyncClientMaya::setAnimationSPS(int v)
+{
+    m_animation_samples_per_seconds = v;
+}
+void MeshSyncClientMaya::setSyncBlendShapes(bool v)
+{
+    m_sync_blend_shapes = v;
+}
 
 bool MeshSyncClientMaya::sendUpdatedObjects()
 {
@@ -410,64 +422,166 @@ void MeshSyncClientMaya::extractAllMaterialData()
     }
 }
 
-static void ConvertAnimation(RawVector<ms::Keyframe>& dst, MObject curve)
+
+static void DeternineTimeRange(float& time_begin, float& time_end, MFnAnimCurve& curve)
 {
-    if (!curve.hasFn(MFn::kAnimCurve)) {
-        return;
-    }
-    MFnAnimCurve fn_curve(curve);
-    auto num_keys = fn_curve.numKeys();
-    if (num_keys <= 1) {
-        return;
-    }
+    if (curve.object().isNull()) { return; }
 
-    // time sampling
-    const float time_resolution = 5.0f / 30.0f;
-    //const float time_resolution = 1.0f / 30.0f;
-    float time_begin = ToSeconds(fn_curve.time(0));
-    float time_end = ToSeconds(fn_curve.time(num_keys - 1));
-    float time_range = time_end - time_begin;
-    for (float t = time_begin; t < time_end; t += time_resolution) {
-        ms::Keyframe key;
-        key.time = t;
-        key.value = (float)fn_curve.evaluate(ToMTime(t));
-        dst.push_back(key);
-    }
+    int num_keys = curve.numKeys();
+    if (num_keys == 0) { return; }
 
-    // clear if curve is constant
+    float t1 = ToSeconds(curve.time(0));
+    float t2 = ToSeconds(curve.time(num_keys > 0 ? num_keys - 1 : 0));
+    if (std::isnan(time_begin)) {
+        time_begin = t1;
+        time_end = t2;
+    }
+    else {
+        time_begin = std::min(time_begin, t1);
+        time_end = std::max(time_end, t2);
+    }
+};
+
+static void GatherTimes(RawVector<float>& dst, MFnAnimCurve& curve) {
+    if (curve.object().isNull()) { return; }
+
+    int num_keys = curve.numKeys();
+    size_t pos = dst.size();
+    dst.resize(pos + num_keys);
+    for (int i = 0; i < num_keys; ++i) {
+        dst[pos + i] = ToSeconds(curve.time(i));
+    }
+};
+
+template<class ValueType, class Body>
+static void GatherSamples(RawVector<ms::TVP<ValueType>>& dst, MFnAnimCurve& curve, float time_begin, const Body& body)
+{
+    if (curve.object().isNull()) { return; }
+
+    size_t n = dst.size();
+    for (size_t i = 0; i < n; ++i) {
+        auto& tvp = dst[i];
+        double value = curve.evaluate(ToMTime(tvp.time + time_begin));
+        body(tvp.value, value);
+    }
+}
+
+static void ConvertAnimationFloat3(
+    const mu::float3& default_value,
+    RawVector<ms::TVP<mu::float3>>& dst,
+    MPlug& px, MPlug& py, MPlug& pz,
+    int samples_per_seconds)
+{
+    if (px.isNull() && py.isNull() && pz.isNull()) { return; }
+
+    MFnAnimCurve acx, acy, acz;
     {
-        bool constant = true;
-        auto& t = dst.front();
-        for (auto& v : dst) {
-            if (!mu::near_equal(t.value, v.value)) {
-                constant = false;
-                break;
-            }
+        MObjectArray atx, aty, atz;
+        MAnimUtil::findAnimation(px, atx);
+        MAnimUtil::findAnimation(py, aty);
+        MAnimUtil::findAnimation(pz, atz);
+        if (atx.length() == 0 && aty.length() == 0 && atz.length() == 0) { return; }
+        if (atx.length() > 0) acx.setObject(atx[0]);
+        if (aty.length() > 0) acy.setObject(aty[0]);
+        if (atz.length() > 0) acz.setObject(atz[0]);
+    }
+
+    const float time_resolution = 1.0f / (float)samples_per_seconds;
+    float time_begin = std::numeric_limits<float>::quiet_NaN();
+    float time_end = std::numeric_limits<float>::quiet_NaN();
+    float time_range = 0.0f;
+
+    // build time range
+    DeternineTimeRange(time_begin, time_end, acx);
+    DeternineTimeRange(time_begin, time_end, acy);
+    DeternineTimeRange(time_begin, time_end, acz);
+    time_range = time_end - time_begin;
+
+    // build time samples
+    {
+        RawVector<float> keyframe_times;
+        RawVector<float> timesample_times;
+
+        GatherTimes(keyframe_times, acx);
+        GatherTimes(keyframe_times, acy);
+        GatherTimes(keyframe_times, acz);
+        std::sort(keyframe_times.begin(), keyframe_times.end());
+        keyframe_times.erase(std::unique(keyframe_times.begin(), keyframe_times.end()), keyframe_times.end());
+
+        int num_samples = int(time_range / time_resolution);
+        timesample_times.resize(num_samples);
+        for (int i = 0; i < num_samples; ++i) {
+            timesample_times[i] = (time_resolution * i);
         }
-        if (constant) {
-            dst.clear();
+
+        RawVector<float> times;
+        times.resize(keyframe_times.size() + timesample_times.size());
+        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
+        times.erase(std::unique(times.begin(), times.end()), times.end());
+
+        dst.resize(times.size(), {0.0f, default_value});
+        for (size_t i = 0; i < dst.size(); ++i) {
+            dst[i].time = times[i];
         }
     }
 
-    // 
-    if (fn_curve.animCurveType() == MFnAnimCurve::kAnimCurveTA) {
-        for (auto& v : dst) {
-            v.value *= mu::Rad2Deg;
-        }
+    // get samples
+    GatherSamples(dst, acx, time_begin, [](mu::float3& v, double s) { v.x = (float)s; });
+    GatherSamples(dst, acy, time_begin, [](mu::float3& v, double s) { v.y = (float)s; });
+    GatherSamples(dst, acz, time_begin, [](mu::float3& v, double s) { v.z = (float)s; });
+}
 
+static void ConvertAnimationBool(
+    bool default_value,
+    RawVector<ms::TVP<bool>>& dst,
+    MPlug& pb,
+    int samples_per_seconds)
+{
+    if (pb.isNull()) { return; }
+
+    MFnAnimCurve acb;
+    {
+        MObjectArray atb;
+        MAnimUtil::findAnimation(pb, atb);
+        if (atb.length() == 0) { return; }
+        if (atb.length() > 0) acb.setObject(atb[0]);
     }
 
-    //// tangents
-    //for (uint32_t i = 0; i < num_keys; ++i) {
-    //    ms::Keyframe key;
-    //    MTime time = fn_curve.time(i);
-    //    time.setUnit(MTime::kSeconds);
-    //    key.time = ToSeconds(fn_curve.time(i));
-    //    key.value = (float)fn_curve.value(i);
-    //    fn_curve.getTangent(i, key.in_tangent.x, key.in_tangent.y, true);
-    //    fn_curve.getTangent(i, key.out_tangent.x, key.out_tangent.y, false);
-    //    dst.push_back(key);
-    //}
+    const float time_resolution = 1.0f / (float)samples_per_seconds;
+    float time_begin = std::numeric_limits<float>::quiet_NaN();
+    float time_end = std::numeric_limits<float>::quiet_NaN();
+    float time_range = 0.0f;
+
+    // build time range
+    DeternineTimeRange(time_begin, time_end, acb);
+    time_range = time_end - time_begin;
+
+    // build time samples
+    {
+        RawVector<float> keyframe_times;
+        RawVector<float> timesample_times;
+
+        GatherTimes(keyframe_times, acb);
+
+        int num_samples = int(time_range / time_resolution);
+        timesample_times.resize(num_samples);
+        for (int i = 0; i < num_samples; ++i) {
+            timesample_times[i] = (time_resolution * i);
+        }
+
+        RawVector<float> times;
+        times.resize(keyframe_times.size() + timesample_times.size());
+        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
+        times.erase(std::unique(times.begin(), times.end()), times.end());
+
+        dst.resize(times.size(), { 0.0f, default_value });
+        for (size_t i = 0; i < dst.size(); ++i) {
+            dst[i].time = times[i];
+        }
+    }
+
+    // get samples
+    GatherSamples(dst, acb, time_begin, [](bool& v, double s) { v = s != 0.0; });
 }
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
@@ -487,6 +601,7 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     dst.transform.rotation.assign(&rot[0]);
     dst.transform.scale.assign(scale);
 
+    // handle joint's segment scale compensate
     if (src.hasFn(MFn::kJoint)) {
         mu::float3 inverse_scale;
         if (JointGetSegmentScaleCompensate(src) && JointGetInverseScale(src, inverse_scale)) {
@@ -494,36 +609,21 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
         }
     }
 
-    if (m_export_animations && MAnimUtil::isAnimated(src)) {
-#define Def(Target) [](ms::Animation& anim, MObject& mo) { ConvertAnimation(Target, mo); }
-        static std::tuple<std::string, std::function<void(ms::Animation& anim, MObject& mo)>> curve_converter[] = {
-            { ".translateX", Def(anim.translation.x) },
-            { ".translateY", Def(anim.translation.y) },
-            { ".translateZ", Def(anim.translation.z) },
-            { ".scaleX", Def(anim.scale.x) },
-            { ".scaleY", Def(anim.scale.y) },
-            { ".scaleZ", Def(anim.scale.z) },
-            { ".rotateX", Def(anim.rotation.x) },
-            { ".rotateY", Def(anim.rotation.y) },
-            { ".rotateZ", Def(anim.rotation.z) },
-            { ".rotateW", Def(anim.rotation.w) },
-            { ".visibility", Def(anim.visibility) },
-        };
-#undef Def
+    // handle animation
+    if (m_sync_animations && MAnimUtil::isAnimated(src)) {
+        extractTransformAnimationData(dst, src);
+    }
+}
 
-        bool hasTime = false;
-        double startTime = 0.0;
-        double endTime = 0.0;
-        bool hasUnitless = false;
-        double startUnitless = 0.0;
-        double endUnitless = 0.0;
-
+void MeshSyncClientMaya::extractTransformAnimationData(ms::Transform& dst, MObject src)
+{
+    MPlug ptx, pty, ptz, prx, pry, prz, psx, psy, psz, pvis;
+    {
+        // get TRS & visibility animation plugs
         MPlugArray plugs;
         MAnimUtil::findAnimatedPlugs(src, plugs);
         auto num_plugs = plugs.length();
-        if (num_plugs > 0) {
-            dst.animation.reset(new ms::Animation());
-        }
+        int found = 0;
         for (uint32_t pi = 0; pi < num_plugs; ++pi) {
             auto plug = plugs[pi];
             MObjectArray animation;
@@ -532,17 +632,63 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             }
 
             std::string name = plug.name().asChar();
-            for (auto i = std::begin(curve_converter); i != std::end(curve_converter); ++i) {
-                if (name.find(std::get<0>(*i)) != std::string::npos) {
-                    // all target curves have only 1 element
-                    std::get<1>(*i)(*dst.animation, animation[0]);
-                    break;
-                }
+#define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
+            Case(".translateX", ptx);
+            Case(".translateY", pty);
+            Case(".translateZ", ptz);
+            Case(".scaleX", psx);
+            Case(".scaleY", psy);
+            Case(".scaleZ", psz);
+            Case(".rotateX", prx);
+            Case(".rotateY", pry);
+            Case(".rotateZ", prz);
+            Case(".visibility", pvis);
+#undef Case
+        }
+
+        // skip if no animation plugs are found
+        if (found == 0) { return; }
+    }
+
+    dst.animation.reset(new ms::Animation());
+    auto& anim = *dst.animation;
+
+    // build time-sampled animation data
+    ConvertAnimationBool(false, anim.visibility, pvis, m_animation_samples_per_seconds);
+    ConvertAnimationFloat3(dst.transform.position, anim.translation, ptx, pty, ptz, m_animation_samples_per_seconds);
+    ConvertAnimationFloat3(dst.transform.scale, anim.scale, psx, psy, psz, m_animation_samples_per_seconds);
+    {
+        // build rotation animation data (eular angles) and convert to quaternion
+        RawVector<ms::TVP<mu::float3>> eular;
+        ConvertAnimationFloat3(mu::float3::zero(), eular, prx, pry, prz, m_animation_samples_per_seconds);
+
+        if (!eular.empty()) {
+            anim.rotation.resize(eular.size());
+            size_t n = eular.size();
+
+#define Case(Order)\
+    case MTransformationMatrix::k##Order:\
+        for (size_t i = 0; i < n; ++i) {\
+            anim.rotation[i].time = eular[i].time;\
+            anim.rotation[i].value = mu::rotate##Order(eular[i].value);\
+        }\
+        break;
+
+            MFnTransform fn_trans = src;
+            switch (fn_trans.rotationOrder()) {
+            Case(XYZ);
+            Case(YZX);
+            Case(ZXY);
+            Case(XZY);
+            Case(YXZ);
+            Case(ZYX);
             }
+#undef Case
         }
-        if (dst.animation->empty()) {
-            dst.animation.reset();
-        }
+    }
+
+    if (dst.animation->empty()) {
+        dst.animation.reset();
     }
 }
 

@@ -106,34 +106,21 @@ msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
     _this->color = *v;
 }
 
-msAPI float   msKeyframeGetTime(ms::Keyframe *_this) { return _this->time; }
-//msAPI float2  msKeyframeGetInTangent(ms::Keyframe *_this) { return _this->in_tangent; }
-//msAPI float2  msKeyframeGetOutTangent(ms::Keyframe *_this) { return _this->out_tangent; }
-msAPI float   msKeyframeGetValue(ms::Keyframe *_this) { return _this->value; }
+msAPI int           msAnimationGetNumTranslationSamples(ms::Animation *_this)   { return _this ? (int)_this->translation.size() : 0; }
+msAPI float         msAnimationGetTranslationTime(ms::Animation *_this, int i)  { return _this->translation[i].time; }
+msAPI mu::float3    msAnimationGetTranslationValue(ms::Animation *_this, int i) { return _this->translation[i].value; }
 
-msAPI int           msAnimationGetNumTranslationXKeys(ms::Animation *_this)     { return _this ? (int)_this->translation.x.size() : 0; }
-msAPI int           msAnimationGetNumTranslationYKeys(ms::Animation *_this)     { return _this ? (int)_this->translation.y.size() : 0; }
-msAPI int           msAnimationGetNumTranslationZKeys(ms::Animation *_this)     { return _this ? (int)_this->translation.z.size() : 0; }
-msAPI ms::Keyframe* msAnimationGetTranslationXKey(ms::Animation *_this, int i)  { return &_this->translation.x[i]; }
-msAPI ms::Keyframe* msAnimationGetTranslationYKey(ms::Animation *_this, int i)  { return &_this->translation.y[i]; }
-msAPI ms::Keyframe* msAnimationGetTranslationZKey(ms::Animation *_this, int i)  { return &_this->translation.z[i]; }
+msAPI int           msAnimationGetNumRotationSamples(ms::Animation *_this)  { return _this ? (int)_this->rotation.size() : 0; }
+msAPI float         msAnimationGetRotationTime(ms::Animation *_this, int i) { return _this->rotation[i].time; }
+msAPI mu::quatf     msAnimationGetRotationValue(ms::Animation *_this, int i){ return _this->rotation[i].value; }
 
-msAPI int           msAnimationGetNumRotationXKeys(ms::Animation *_this)        { return _this ? (int)_this->rotation.x.size() : 0; }
-msAPI int           msAnimationGetNumRotationYKeys(ms::Animation *_this)        { return _this ? (int)_this->rotation.y.size() : 0; }
-msAPI int           msAnimationGetNumRotationZKeys(ms::Animation *_this)        { return _this ? (int)_this->rotation.z.size() : 0; }
-msAPI ms::Keyframe* msAnimationGetRotationXKey(ms::Animation *_this, int i)     { return &_this->rotation.x[i]; }
-msAPI ms::Keyframe* msAnimationGetRotationYKey(ms::Animation *_this, int i)     { return &_this->rotation.y[i]; }
-msAPI ms::Keyframe* msAnimationGetRotationZKey(ms::Animation *_this, int i)     { return &_this->rotation.z[i]; }
+msAPI int           msAnimationGetNumScaleSamples(ms::Animation *_this)     { return _this ? (int)_this->scale.size() : 0; }
+msAPI float         msAnimationGetScaleTime(ms::Animation *_this, int i)    { return _this->scale[i].time; }
+msAPI mu::float3    msAnimationGetScaleValue(ms::Animation *_this, int i)   { return _this->scale[i].value; }
 
-msAPI int           msAnimationGetNumScaleXKeys(ms::Animation *_this)           { return _this ? (int)_this->scale.x.size() : 0; }
-msAPI int           msAnimationGetNumScaleYKeys(ms::Animation *_this)           { return _this ? (int)_this->scale.y.size() : 0; }
-msAPI int           msAnimationGetNumScaleZKeys(ms::Animation *_this)           { return _this ? (int)_this->scale.z.size() : 0; }
-msAPI ms::Keyframe* msAnimationGetScaleXKey(ms::Animation *_this, int i)        { return &_this->scale.x[i]; }
-msAPI ms::Keyframe* msAnimationGetScaleYKey(ms::Animation *_this, int i)        { return &_this->scale.y[i]; }
-msAPI ms::Keyframe* msAnimationGetScaleZKey(ms::Animation *_this, int i)        { return &_this->scale.z[i]; }
-
-msAPI int           msAnimationGetNumVisibilityKeys(ms::Animation *_this)       { return _this ? (int)_this->visibility.size() : 0; }
-msAPI ms::Keyframe* msAnimationGetVisibilityKey(ms::Animation *_this, int i)    { return &_this->visibility[i]; }
+msAPI int           msAnimationGetNumVisibilitySamples(ms::Animation *_this)       { return _this ? (int)_this->visibility.size() : 0; }
+msAPI float         msAnimationGetVisibilityTime(ms::Animation *_this, int i)   { return _this->visibility[i].time; }
+msAPI bool          msAnimationGetVisibilityValue(ms::Animation *_this, int i)    { return _this->visibility[i].value; }
 
 msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {

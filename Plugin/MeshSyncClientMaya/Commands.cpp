@@ -24,6 +24,15 @@ MStatus CmdSettings::doIt(const MArgList& args)
         else if (args.asString(i) == MString("-autosync")) {
             MeshSyncClientMaya::getInstance().setAutoSync(args.asInt(++i) != 0);
         }
+        else if (args.asString(i) == MString("-sync_animations")) {
+            MeshSyncClientMaya::getInstance().setSyncAnimations(args.asInt(++i) != 0);
+        }
+        else if (args.asString(i) == MString("-animation_sps")) {
+            MeshSyncClientMaya::getInstance().setAnimationSPS(args.asInt(++i) != 0);
+        }
+        else if (args.asString(i) == MString("-sync_blendshapes")) {
+            MeshSyncClientMaya::getInstance().setSyncBlendShapes(args.asInt(++i) != 0);
+        }
     }
     return MStatus::kSuccess;
 }

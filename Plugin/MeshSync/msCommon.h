@@ -46,20 +46,20 @@ struct TRS
     float4x4 toMatrix() const;
 };
 
-struct Keyframe
+// time-value pair
+template<class T>
+struct TVP
 {
-    float time = 0.0f;
-    float value = 0.0f;
-    //mu::float2 in_tangent = mu::float2::zero();
-    //mu::float2 out_tangent = mu::float2::zero();
+    float time;
+    T value;
 };
 
 struct Animation
 {
-    struct { RawVector<Keyframe> x, y, z; } translation;
-    struct { RawVector<Keyframe> x, y, z, w; } rotation;
-    struct { RawVector<Keyframe> x, y, z; } scale;
-    RawVector<Keyframe> visibility;
+    RawVector<TVP<float3>> translation;
+    RawVector<TVP<quatf>> rotation;
+    RawVector<TVP<float3>> scale;
+    RawVector<TVP<bool>> visibility;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;

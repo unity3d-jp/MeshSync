@@ -23,6 +23,9 @@ public:
     void setServerAddress(const char *v);
     void setServerPort(uint16_t v);
     void setAutoSync(bool v);
+    void setSyncAnimations(bool v);
+    void setAnimationSPS(int v);
+    void setSyncBlendShapes(bool v);
 
     void update();
     void onSelectionChanged();
@@ -45,6 +48,7 @@ private:
     int getObjectID(MUuid uid);
     void extractAllMaterialData();
     void extractTransformData(ms::Transform& dst, MObject src);
+    void extractTransformAnimationData(ms::Transform& dst, MObject src);
     void extractMeshData(ms::Mesh& dst, MObject src);
     void kickAsyncSend();
 
@@ -57,12 +61,13 @@ private:
 
     MObject m_obj;
     MFnPlugin m_iplugin;
-    bool m_auto_sync = true;
+    bool m_auto_sync = false;
     bool m_export_skinning = true;
     bool m_apply_tweak = true;
-    bool m_export_animations = true;
-    bool m_export_blend_shapes = true;
+    bool m_sync_animations = true;
+    bool m_sync_blend_shapes = true;
     int m_timeout_ms = 5000;
+    int m_animation_samples_per_seconds = 10;
 
     std::vector<MCallbackId> m_cids_global;
     std::vector<MCallbackId> m_cids_node;
