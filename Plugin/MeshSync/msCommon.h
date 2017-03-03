@@ -85,20 +85,9 @@ class Transform : public SceneEntity
 {
 using super = SceneEntity;
 public:
-    enum class RotationType {
-        XYZ,
-        YZX,
-        ZXY,
-        XZY,
-        YXZ,
-        ZYX,
-        Quaternion,
-    };
-
     TRS transform;
-    RotationType rot_type;
-    std::string reference;
     AnimationPtr animation;
+    std::string reference;
 
 
     uint32_t getSerializeSize() const;
@@ -138,6 +127,7 @@ struct MeshDataFlags
     uint32_t has_uv : 1;
     uint32_t has_materialIDs : 1;
     uint32_t has_bones : 1;
+    uint32_t has_blendshapes : 1;
     uint32_t has_npoints : 1;
     uint32_t apply_trs : 1;
 };
@@ -196,6 +186,20 @@ struct SplitData
     IArray<SubmeshData> submeshes;
 };
 
+struct BlendshapeData
+{
+    std::string name;
+    float weight = 0.0f;
+    RawVector<float3> points;
+    RawVector<float3> normals;
+    RawVector<float2> uv;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+using BlendshapeDataPtr = std::shared_ptr<BlendshapeData>;
+
 class Mesh : public Transform
 {
 using super = Transform;
@@ -218,6 +222,9 @@ public:
     RawVector<int> bone_indices;
     std::vector<std::string> bones;
     RawVector<float4x4> bindposes;
+
+    // blendshape data
+    BlendshapeDataPtr blendshape;
 
     // not serialized
     RawVector<SubmeshData> submeshes;

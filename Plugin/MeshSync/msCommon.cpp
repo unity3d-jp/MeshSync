@@ -63,7 +63,7 @@ template<class T>
 struct ssize_impl<std::shared_ptr<T>>
 {
     uint32_t operator()(const std::shared_ptr<T>& v) {
-        return 4 + (v ? v->getSerializeSize() : 0);
+        return v->getSerializeSize();
     }
 };
 template<class T>
@@ -116,15 +116,7 @@ struct write_impl<std::shared_ptr<T>>
 {
     void operator()(std::ostream& os, const std::shared_ptr<T>& v)
     {
-        if (v) {
-            uint32_t size = v->getSerializeSize();
-            os.write((const char*)&size, 4);
-            v->serialize(os);
-        }
-        else {
-            uint32_t size = 0;
-            os.write((const char*)&size, 4);
-        }
+        v->serialize(os);
     }
 };
 template<class T>
@@ -182,12 +174,8 @@ struct read_impl<std::shared_ptr<T>>
 {
     void operator()(std::istream& is, std::shared_ptr<T>& v)
     {
-        uint32_t size = 0;
-        is.read((char*)&size, 4);
-        if (size > 0) {
-            v.reset(new T());
-            v->deserialize(is);
-        }
+        v.reset(new T());
+        v->deserialize(is);
     }
 };
 template<class T>
@@ -511,30 +499,40 @@ float4x4 TRS::toMatrix() const
     return ms::transform(position, rotation, scale);
 }
 
+struct TransformDataFlags
+{
+    uint32_t has_animation : 1;
+};
+
 uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
+    ret += sizeof(TransformDataFlags);
     ret += ssize(transform);
-    ret += ssize(rot_type);
+    if (animation) { ret += ssize(animation); }
     ret += ssize(reference);
-    ret += ssize(animation);
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
+
+    TransformDataFlags flags = {};
+    flags.has_animation = animation ? 1 : 0;
+    write(os, flags);
     write(os, transform);
-    write(os, rot_type);
+    if (flags.has_animation) { write(os, animation); }
     write(os, reference);
-    write(os, animation);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
+
+    TransformDataFlags flags;
+    read(is, flags);
     read(is, transform);
-    read(is, rot_type);
+    if(flags.has_animation) { read(is, animation); }
     read(is, reference);
-    read(is, animation);
 }
 
 void Transform::swapHandedness()
@@ -573,6 +571,34 @@ void Camera::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, fov);
+}
+
+
+uint32_t BlendshapeData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(name);
+    ret += ssize(weight);
+    ret += ssize(points);
+    ret += ssize(normals);
+    ret += ssize(uv);
+    return ret;
+}
+void BlendshapeData::serialize(std::ostream& os) const
+{
+    write(os, name);
+    write(os, weight);
+    write(os, points);
+    write(os, normals);
+    write(os, uv);
+}
+void BlendshapeData::deserialize(std::istream& is)
+{
+    read(is, name);
+    read(is, weight);
+    read(is, points);
+    read(is, normals);
+    read(is, uv);
 }
 
 
@@ -619,7 +645,9 @@ uint32_t Mesh::getSerializeSize() const
         EachBoneProperty(Body);
 #undef Body
     }
-
+    if (flags.has_blendshapes) {
+        ret += ssize(blendshape);
+    }
     return ret;
 }
 
@@ -639,6 +667,9 @@ void Mesh::serialize(std::ostream& os) const
         EachBoneProperty(Body);
 #undef Body
     }
+    if (flags.has_blendshapes) {
+        write(os, blendshape);
+    }
 }
 
 void Mesh::deserialize(std::istream& is)
@@ -657,6 +688,9 @@ void Mesh::deserialize(std::istream& is)
 #define Body(A) read(is, A);
         EachBoneProperty(Body);
 #undef Body
+    }
+    if (flags.has_blendshapes) {
+        read(is, blendshape);
     }
 }
 
