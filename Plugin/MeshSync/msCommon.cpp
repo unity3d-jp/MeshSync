@@ -581,7 +581,7 @@ uint32_t BlendshapeData::getSerializeSize() const
     ret += ssize(weight);
     ret += ssize(points);
     ret += ssize(normals);
-    ret += ssize(uv);
+    ret += ssize(tangents);
     return ret;
 }
 void BlendshapeData::serialize(std::ostream& os) const
@@ -590,7 +590,7 @@ void BlendshapeData::serialize(std::ostream& os) const
     write(os, weight);
     write(os, points);
     write(os, normals);
-    write(os, uv);
+    write(os, tangents);
 }
 void BlendshapeData::deserialize(std::istream& is)
 {
@@ -598,7 +598,7 @@ void BlendshapeData::deserialize(std::istream& is)
     read(is, weight);
     read(is, points);
     read(is, normals);
-    read(is, uv);
+    read(is, tangents);
 }
 
 

@@ -581,7 +581,7 @@ static void ConvertAnimationBool(
     }
 
     // get samples
-    GatherSamples(dst, acb, time_begin, [](bool& v, double s) { v = s != 0.0; });
+    GatherSamples(dst, acb, time_begin, [](bool& v, double s) { v = s > 0.0; });
 }
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)

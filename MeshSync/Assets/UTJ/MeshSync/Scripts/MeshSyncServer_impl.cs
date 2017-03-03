@@ -280,7 +280,7 @@ namespace UTJ
 
             [DllImport("MeshSyncServer")] static extern int msAnimationGetNumVisibilitySamples(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msAnimationGetVisibilityTime(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern bool msAnimationGetVisibilityValue(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern byte msAnimationGetVisibilityValue(IntPtr _this, int i);
 
             public static explicit operator AnimationData(IntPtr v)
             {
@@ -364,7 +364,7 @@ namespace UTJ
                 get
                 {
                     var ret = new bool[msAnimationGetNumVisibilitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityValue(_this, i); }
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityValue(_this, i) != 0; }
                     return ret;
                 }
             }
@@ -446,8 +446,8 @@ namespace UTJ
                     var t = times[i];
                     var v = values[i];
                     ret.AddKey(new Keyframe(t, v ? 0.0f : 1.0f));
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
                 }
                 if (reduce)
                 {
@@ -464,6 +464,7 @@ namespace UTJ
                 var v = ToAnimatinCurve(visibilityTimes, visibilityValues);
 
                 var ttrans = typeof(Transform);
+                var tgo = typeof(GameObject);
                 if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
                 if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
                 if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
@@ -474,6 +475,7 @@ namespace UTJ
                 if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
                 if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
                 if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
+                if (v.length > 0) clip.SetCurve(path, tgo, "m_IsActive", v);
             }
         }
 
@@ -616,6 +618,10 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumSubmeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern SubmeshData msMeshGetSubmesh(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapeTargets(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr _this, int i);
+
 
             public static MeshData Create()
             {
@@ -774,6 +780,12 @@ namespace UTJ
             {
                 return msMeshGetSubmesh(_this, i);
             }
+
+            public int numBlendShapeTargets { get { return msMeshGetNumBlendShapeTargets(_this); } }
+            public BlendShapeData GetBlendShapeData(int i)
+            {
+                return msMeshGetBlendShapeData(_this, i);
+            }
         };
 
         public struct SplitData
@@ -872,6 +884,66 @@ namespace UTJ
                 }
             }
         }
+
+        public struct BlendShapeData
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumPoints(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msBlendShapeHasNormals(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msBlendShapeHasTangents(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, Vector3[] dst);
+
+            public string name
+            {
+                get { return S(msBlendShapeGetName(_this)); }
+            }
+            public float weight
+            {
+                get { return msBlendShapeGetWeight(_this); }
+            }
+            public bool hasNormals
+            {
+                get { return msBlendShapeHasNormals(_this) != 0; }
+            }
+            public bool hasTangents
+            {
+                get { return msBlendShapeHasTangents(_this) != 0; }
+            }
+            public Vector3[] points
+            {
+                get
+                {
+                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
+                    msBlendShapeReadPoints(_this, ret);
+                    return ret;
+                }
+            }
+            public Vector3[] normals
+            {
+                get
+                {
+                    if(!hasNormals) { return new Vector3[0]; }
+                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
+                    msBlendShapeReadNormals(_this, ret);
+                    return ret;
+                }
+            }
+            public Vector3[] tangents
+            {
+                get
+                {
+                    if (!hasTangents) { return new Vector3[0]; }
+                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
+                    msBlendShapeReadTangents(_this, ret);
+                    return ret;
+                }
+            }
+        }
+
 
         public struct SceneData
         {
@@ -1005,7 +1077,7 @@ namespace UTJ
         // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
         public class AnimationCurveKeyReducer
         {
-            static public void DoReduction(AnimationCurve in_curve, float eps = 0.01f)
+            static public void DoReduction(AnimationCurve in_curve, float eps = 0.001f)
             {
                 if (in_curve.keys.Length <= 2) return;
 

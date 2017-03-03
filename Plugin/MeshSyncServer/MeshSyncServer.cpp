@@ -352,6 +352,15 @@ msAPI void msMeshWriteBindPoses(ms::Mesh *_this, const float4x4 *v, int size)
     _this->bindposes.assign(v, v + size);
 }
 
+msAPI int msMeshGetNumBlendShapeTargets(ms::Mesh *_this)
+{
+    return (int)_this->blendshape.size();
+}
+msAPI ms::BlendshapeData* msMeshGetBlendShapeData(ms::Mesh *_this, int i)
+{
+    return _this->blendshape[i].get();
+}
+
 msAPI void msMeshSetLocal2World(ms::Mesh *_this, const float4x4 *v)
 {
     _this->refine_settings.local2world = *v;
@@ -414,6 +423,39 @@ msAPI int msSubmeshGetMaterialID(ms::SubmeshData *_this)
 msAPI void msSubmeshReadIndices(ms::SubmeshData *_this, int *dst)
 {
     _this->indices.copy_to(dst);
+}
+
+msAPI const char* msBlendShapeGetName(ms::BlendshapeData *_this)
+{
+    return _this ? _this->name.c_str() : "";
+}
+msAPI float msBlendShapeGetWeight(ms::BlendshapeData *_this)
+{
+    return _this ? _this->weight : 0.0f;
+}
+msAPI int msBlendShapeGetNumPoints(ms::BlendshapeData *_this)
+{
+    return _this ? (int)_this->points.size() : 0;
+}
+msAPI bool msBlendShapeHasNormals(ms::BlendshapeData *_this)
+{
+    return _this ? !_this->normals.empty() : false;
+}
+msAPI bool msBlendShapeHasTangents(ms::BlendshapeData *_this)
+{
+    return _this ? !_this->tangents.empty() : false;
+}
+msAPI void msBlendShapeReadPoints(ms::BlendshapeData *_this, float3 *dst)
+{
+    if (_this) _this->points.copy_to(dst);
+}
+msAPI void msBlendShapeReadNormals(ms::BlendshapeData *_this, float3 *dst)
+{
+    if (_this) _this->normals.copy_to(dst);
+}
+msAPI void msBlendShapeReadTangents(ms::BlendshapeData *_this, float3 *dst)
+{
+    if (_this) _this->tangents.copy_to(dst);
 }
 
 

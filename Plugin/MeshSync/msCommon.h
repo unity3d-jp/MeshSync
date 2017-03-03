@@ -192,7 +192,7 @@ struct BlendshapeData
     float weight = 0.0f;
     RawVector<float3> points;
     RawVector<float3> normals;
-    RawVector<float2> uv;
+    RawVector<float3> tangents;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
@@ -224,7 +224,7 @@ public:
     RawVector<float4x4> bindposes;
 
     // blendshape data
-    BlendshapeDataPtr blendshape;
+    std::vector<BlendshapeDataPtr> blendshape;
 
     // not serialized
     RawVector<SubmeshData> submeshes;
