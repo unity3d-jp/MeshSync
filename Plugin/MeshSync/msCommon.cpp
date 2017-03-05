@@ -603,7 +603,7 @@ void BlendshapeData::deserialize(std::istream& is)
 
 
 
-#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
+#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
 #define EachBoneProperty(Body) Body(bones_per_vertex) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
@@ -761,6 +761,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.split_unit = mrs.split_unit;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
+    refiner.colors = colors;
     refiner.weights4 = weights4;
     if (npoints.data() && points.size() == npoints.size()) {
         refiner.npoints = npoints;
@@ -791,7 +792,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if(refine_topology) {
         refiner.refine(mrs.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
-        refiner.swapNewData(points, normals, tangents, uv, weights4, indices);
+        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
 
         splits.clear();
         int *sub_indices = indices.data();
@@ -808,11 +809,14 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             if (!normals.empty()) {
                 sp.normals.reset(&normals[offset_vertices], split.num_vertices);
             }
+            if (!tangents.empty()) {
+                sp.tangents.reset(&tangents[offset_vertices], split.num_vertices);
+            }
             if (!uv.empty()) {
                 sp.uv.reset(&uv[offset_vertices], split.num_vertices);
             }
-            if (!tangents.empty()) {
-                sp.tangents.reset(&tangents[offset_vertices], split.num_vertices);
+            if (!colors.empty()) {
+                sp.colors.reset(&colors[offset_vertices], split.num_vertices);
             }
             if (!weights4.empty()) {
                 sp.weights4.reset(&weights4[offset_vertices], split.num_vertices);
@@ -845,7 +849,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         }
     }
     else {
-        refiner.swapNewData(points, normals, tangents, uv, weights4, indices);
+        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
     }
 
     flags.has_points = !points.empty();

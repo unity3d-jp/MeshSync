@@ -81,6 +81,11 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
     return &_this->scene;
 }
 
+
+msAPI ms::Material* msMaterialCreate()
+{
+    return new ms::Material();
+}
 msAPI int msMaterialGetID(ms::Material *_this)
 {
     return _this->id;
@@ -248,8 +253,10 @@ msAPI void msMeshReadPoints(ms::Mesh *_this, float3 *dst)
 }
 msAPI void msMeshWritePoints(ms::Mesh *_this, const float3 *v, int size)
 {
-    _this->points.assign(v, v + size);
-    _this->flags.has_points = 1;
+    if (size > 0) {
+        _this->points.assign(v, v + size);
+        _this->flags.has_points = 1;
+    }
 }
 msAPI void msMeshReadNormals(ms::Mesh *_this, float3 *dst)
 {
@@ -257,8 +264,10 @@ msAPI void msMeshReadNormals(ms::Mesh *_this, float3 *dst)
 }
 msAPI void msMeshWriteNormals(ms::Mesh *_this, const float3 *v, int size)
 {
-    _this->normals.assign(v, v + size);
-    _this->flags.has_normals = 1;
+    if (size > 0) {
+        _this->normals.assign(v, v + size);
+        _this->flags.has_normals = 1;
+    }
 }
 msAPI void msMeshReadTangents(ms::Mesh *_this, float4 *dst)
 {
@@ -266,8 +275,10 @@ msAPI void msMeshReadTangents(ms::Mesh *_this, float4 *dst)
 }
 msAPI void msMeshWriteTangents(ms::Mesh *_this, const float4 *v, int size)
 {
-    _this->tangents.assign(v, v + size);
-    _this->flags.has_tangents = 1;
+    if (size > 0) {
+        _this->tangents.assign(v, v + size);
+        _this->flags.has_tangents = 1;
+    }
 }
 msAPI void msMeshReadUV(ms::Mesh *_this, float2 *dst)
 {
@@ -275,8 +286,21 @@ msAPI void msMeshReadUV(ms::Mesh *_this, float2 *dst)
 }
 msAPI void msMeshWriteUV(ms::Mesh *_this, const float2 *v, int size)
 {
-    _this->uv.assign(v, v + size);
-    _this->flags.has_uv = 1;
+    if (size > 0) {
+        _this->uv.assign(v, v + size);
+        _this->flags.has_uv = 1;
+    }
+}
+msAPI void msMeshReadColors(ms::Mesh *_this, float4 *dst)
+{
+    _this->colors.copy_to(dst);
+}
+msAPI void msMeshWriteColors(ms::Mesh *_this, const float4 *v, int size)
+{
+    if (size > 0) {
+        _this->colors.assign(v, v + size);
+        _this->flags.has_colors = 1;
+    }
 }
 msAPI void msMeshReadIndices(ms::Mesh *_this, int *dst)
 {
@@ -284,23 +308,21 @@ msAPI void msMeshReadIndices(ms::Mesh *_this, int *dst)
 }
 msAPI void msMeshWriteIndices(ms::Mesh *_this, const int *v, int size)
 {
-    _this->indices.assign(v, v + size);
-    _this->flags.has_indices = 1;
-    _this->flags.visible = 1;
+    if (size > 0) {
+        _this->indices.assign(v, v + size);
+        _this->flags.has_indices = 1;
+        _this->flags.visible = 1;
+    }
 }
 msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *_this, const int *v, int size, int materialID)
 {
-    {
+    if (size > 0) {
         _this->indices.insert(_this->indices.end(), v, v + size);
+        _this->materialIDs.resize(_this->materialIDs.size() + (size / 3), materialID);
+        _this->flags.has_indices = 1;
+        _this->flags.has_materialIDs = 1;
+        _this->flags.visible = 1;
     }
-    {
-        size_t pos = _this->materialIDs.size();
-        _this->materialIDs.resize(pos + size / 3);
-        std::fill_n(_this->materialIDs.data() + pos, size / 3, materialID);
-    }
-    _this->flags.has_indices = 1;
-    _this->flags.has_materialIDs = 1;
-    _this->flags.visible = 1;
 }
 msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *_this, int i)
 {
@@ -398,6 +420,10 @@ msAPI void msSplitReadTangents(ms::SplitData *_this, float4 *dst)
 msAPI void msSplitReadUV(ms::SplitData *_this, float2 *dst)
 {
     _this->uv.copy_to(dst);
+}
+msAPI void msSplitReadColors(ms::SplitData *_this, float4 *dst)
+{
+    _this->colors.copy_to(dst);
 }
 msAPI void msSplitReadWeights4(ms::SplitData *_this, ms::Weights4 *dst)
 {

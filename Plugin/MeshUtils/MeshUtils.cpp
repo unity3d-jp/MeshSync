@@ -562,6 +562,7 @@ void MeshRefiner::swapNewData(
     RawVector<float3>& n,
     RawVector<float4>& t,
     RawVector<float2>& u,
+    RawVector<float4>& c,
     RawVector<Weights4>& w,
     RawVector<int>& idx)
 {
@@ -574,6 +575,7 @@ void MeshRefiner::swapNewData(
     else if (!tangents_tmp.empty()) { t.swap(tangents_tmp); }
 
     if (!new_uv.empty()) { u.swap(new_uv); }
+    if (!new_colors.empty()) { c.swap(new_colors); }
     if (!new_weights4.empty()) { w.swap(new_weights4); }
 
     if (!new_indices_submeshes.empty()) { idx.swap(new_indices_submeshes); }
@@ -647,6 +649,7 @@ int MeshRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, c
             new_normals.push_back(n);
             new_tangents.push_back(t);
             new_uv.push_back(u);
+            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
@@ -668,6 +671,7 @@ int MeshRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n, co
             new_points.push_back(p);
             new_normals.push_back(n);
             new_uv.push_back(u);
+            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
@@ -688,6 +692,7 @@ int MeshRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_normals.push_back(n);
+            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
@@ -708,6 +713,7 @@ int MeshRefiner::findOrAddVertexPU(int vi, const float3& p, const float2& u)
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_uv.push_back(u);
+            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }

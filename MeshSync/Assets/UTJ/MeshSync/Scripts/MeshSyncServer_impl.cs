@@ -32,9 +32,10 @@ namespace UTJ
             public bool getNormals { get { return (flags & (1 << 2)) != 0; } }
             public bool getTangents { get { return (flags & (1 << 3)) != 0; } }
             public bool getUV { get { return (flags & (1 << 4)) != 0; } }
-            public bool getIndices { get { return (flags & (1 << 5)) != 0; } }
-            public bool getMaterialIDs { get { return (flags & (1 << 6)) != 0; } }
-            public bool getBones { get { return (flags & (1 << 7)) != 0; } }
+            public bool getColors { get { return (flags & (1 << 5)) != 0; } }
+            public bool getIndices { get { return (flags & (1 << 6)) != 0; } }
+            public bool getMaterialIDs { get { return (flags & (1 << 7)) != 0; } }
+            public bool getBones { get { return (flags & (1 << 8)) != 0; } }
         }
 
         public struct GetMessage
@@ -203,30 +204,35 @@ namespace UTJ
                 get { return (flags & (1 << 7)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 7)); }
             }
-            public bool hasMaterialIDs
+            public bool hasColors
             {
                 get { return (flags & (1 << 8)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 8)); }
             }
-            public bool hasBones
+            public bool hasMaterialIDs
             {
                 get { return (flags & (1 << 9)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 9)); }
             }
-            public bool hasBlendshapes
+            public bool hasBones
             {
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
             }
-            public bool hasNPoints
+            public bool hasBlendshapes
             {
                 get { return (flags & (1 << 11)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 11)); }
             }
-            public bool applyTRS
+            public bool hasNPoints
             {
                 get { return (flags & (1 << 12)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 12)); }
+            }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 13)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 13)); }
             }
         };
 
@@ -241,12 +247,15 @@ namespace UTJ
         public struct MaterialData
         {
             internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern MaterialData msMaterialCreate();
             [DllImport("MeshSyncServer")] static extern int msMaterialGetID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
+
+            public static MaterialData Create() { return msMaterialCreate(); }
 
             public int id {
                 get { return msMaterialGetID(_this); }
@@ -599,6 +608,8 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshWriteTangents(IntPtr _this, Vector4[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadUV(IntPtr _this, Vector2[] dst);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteUV(IntPtr _this, Vector2[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadColors(IntPtr _this, Color[] dst);
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteColors(IntPtr _this, Color[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr _this, int[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr _this, int[] v, int size, int materialID);
@@ -653,6 +664,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasPoints) { return new Vector3[0]; }
                     var ret = new Vector3[numPoints];
                     msMeshReadPoints(_this, ret);
                     return ret;
@@ -666,6 +678,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasNormals) { return new Vector3[0]; }
                     var ret = new Vector3[numPoints];
                     msMeshReadNormals(_this, ret);
                     return ret;
@@ -679,6 +692,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasTangents) { return new Vector4[0]; }
                     var ret = new Vector4[numPoints];
                     msMeshReadTangents(_this, ret);
                     return ret;
@@ -692,6 +706,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasUV) { return new Vector2[0]; }
                     var ret = new Vector2[numPoints];
                     msMeshReadUV(_this, ret);
                     return ret;
@@ -701,10 +716,25 @@ namespace UTJ
                     msMeshWriteUV(_this, value, value.Length);
                 }
             }
+            public Color[] colors
+            {
+                get
+                {
+                    if (!flags.hasColors) { return new Color[0]; }
+                    var ret = new Color[numPoints];
+                    msMeshReadColors(_this, ret);
+                    return ret;
+                }
+                set
+                {
+                    msMeshWriteColors(_this, value, value.Length);
+                }
+            }
             public int[] indices
             {
                 get
                 {
+                    if (!flags.hasIndices) { return new int[0]; }
                     var ret = new int[numIndices];
                     msMeshReadIndices(_this, ret);
                     return ret;
@@ -798,6 +828,7 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msSplitReadNormals(IntPtr _this, Vector3[] dst);
             [DllImport("MeshSyncServer")] static extern void msSplitReadTangents(IntPtr _this, Vector4[] dst);
             [DllImport("MeshSyncServer")] static extern void msSplitReadUV(IntPtr _this, Vector2[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadColors(IntPtr _this, Color[] dst);
             [DllImport("MeshSyncServer")] static extern void msSplitReadWeights4(IntPtr _this, BoneWeight[] dst);
             [DllImport("MeshSyncServer")] static extern void msSplitReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr _this, int i);
@@ -838,6 +869,15 @@ namespace UTJ
                 {
                     var ret = new Vector2[numPoints];
                     msSplitReadUV(_this, ret);
+                    return ret;
+                }
+            }
+            public Color[] colors
+            {
+                get
+                {
+                    var ret = new Color[numPoints];
+                    msSplitReadColors(_this, ret);
                     return ret;
                 }
             }

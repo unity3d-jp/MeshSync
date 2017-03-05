@@ -79,6 +79,7 @@ struct Material
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
+using MaterialPtr = std::shared_ptr<Material>;
 
 
 class Transform : public SceneEntity
@@ -125,6 +126,7 @@ struct MeshDataFlags
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv : 1;
+    uint32_t has_colors : 1;
     uint32_t has_materialIDs : 1;
     uint32_t has_bones : 1;
     uint32_t has_blendshapes : 1;
@@ -181,6 +183,7 @@ struct SplitData
     IArray<float3> normals;
     IArray<float4> tangents;
     IArray<float2> uv;
+    IArray<float4> colors;
     IArray<int> indices;
     IArray<Weights4> weights4;
     IArray<SubmeshData> submeshes;
@@ -211,6 +214,7 @@ public:
     RawVector<float3> normals;
     RawVector<float4> tangents;
     RawVector<float2> uv;
+    RawVector<float4> colors;
     RawVector<int>    counts;
     RawVector<int>    indices;
     RawVector<int>    materialIDs;
@@ -316,6 +320,7 @@ struct GetFlags
     uint32_t get_normals : 1;
     uint32_t get_tangents : 1;
     uint32_t get_uv : 1;
+    uint32_t get_colors : 1;
     uint32_t get_indices : 1;
     uint32_t get_materialIDs : 1;
     uint32_t get_bones : 1;

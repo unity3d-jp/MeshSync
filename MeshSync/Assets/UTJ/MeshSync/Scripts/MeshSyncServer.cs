@@ -516,6 +516,10 @@ namespace UTJ
             {
                 mesh.uv = split.uv;
             }
+            if (flags.hasColors)
+            {
+                mesh.colors = split.colors;
+            }
             if (flags.hasBones)
             {
                 mesh.boneWeights = split.boneWeights;
