@@ -247,6 +247,10 @@ std::string ToUTF8(const char *src)
     ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
     return u8s;
 }
+std::string ToUTF8(const std::string& src)
+{
+    return ToUTF8(src.c_str());
+}
 
 std::string ToANSI(const char *src)
 {
@@ -262,6 +266,10 @@ std::string ToANSI(const char *src)
     u8s.resize(u8size);
     ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
     return u8s;
+}
+std::string ToANSI(const std::string& src)
+{
+    return ToANSI(src.c_str());
 }
 
 
@@ -436,6 +444,14 @@ void SceneEntity::deserialize(std::istream& is)
     read(is, id);
     read(is, index);
     read(is, path);
+}
+
+const char* SceneEntity::getName() const
+{
+    size_t name_pos = path.find_last_of('/');
+    if (name_pos != std::string::npos) { ++name_pos; }
+    else { name_pos = 0; }
+    return path.c_str() + name_pos;
 }
 
 
@@ -697,14 +713,6 @@ void Mesh::deserialize(std::istream& is)
 #undef EachVertexProperty
 #undef EachBoneProperty
 
-
-const char* Mesh::getName() const
-{
-    size_t name_pos = path.find_last_of('/');
-    if (name_pos != std::string::npos) { ++name_pos; }
-    else { name_pos = 0; }
-    return path.c_str() + name_pos;
-}
 
 static tls<mu::MeshRefiner> g_refiner;
 

@@ -33,6 +33,8 @@ public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    const char* getName() const; // get name (leaf) from path
 };
 
 
@@ -242,7 +244,6 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
-    const char* getName() const;
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
@@ -442,6 +443,8 @@ public:
 
 
 std::string ToUTF8(const char *src);
+std::string ToUTF8(const std::string& src);
 std::string ToANSI(const char *src);
+std::string ToANSI(const std::string& src);
 
 } // namespace ms

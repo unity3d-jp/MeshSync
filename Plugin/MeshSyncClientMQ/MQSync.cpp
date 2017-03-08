@@ -278,21 +278,42 @@ bool MQSync::importMeshes(MQDocument doc)
         return false;
     }
 
-    while (doc->GetMaterialCount() < (int)ret->materials.size()) {
-        doc->AddMaterial(MQ_CreateMaterial());
+    // import materials
+    {
+        // create unique name list as Metasequoia doesn't accept multiple same names
+        std::vector<std::string> names;
+        names.reserve(ret->materials.size());
+        for (int i = 0; i < (int)ret->materials.size(); ++i) {
+            auto name = ret->materials[i]->name;
+            while (std::find(names.begin(), names.end(), name) != names.end()) {
+                name += '_';
+            }
+            names.push_back(name);
+        }
+
+        while (doc->GetMaterialCount() < (int)ret->materials.size()) {
+            doc->AddMaterial(MQ_CreateMaterial());
+        }
+        for (int i = 0; i < (int)ret->materials.size(); ++i) {
+            auto dst = doc->GetMaterial(i);
+            dst->SetName(ms::ToANSI(names[i]).c_str());
+            dst->SetColor((const MQColor&)ret->materials[i]->color);
+        }
+
     }
     
-
+    // import meshes
     for (auto& data : ret->meshes) {
         auto& mdata = *data;
 
+        // create name that includes ID
         char name[MaxNameBuffer];
         sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
 
-        if (auto obj = findMQObject(doc, name)) {
+        if (auto obj = findMesh(doc, name)) {
             doc->DeleteObject(doc->GetObjectIndex(obj));
         }
-        auto obj = createObject(mdata, name);
+        auto obj = createMesh(mdata, name);
         doc->AddObject(obj);
 
         m_host_meshes[mdata.id] = data;
@@ -315,7 +336,7 @@ void MQSync::waitAsyncSend()
     }
 }
 
-MQObject MQSync::findMQObject(MQDocument doc, const char *name)
+MQObject MQSync::findMesh(MQDocument doc, const char *name)
 {
     int nobj = doc->GetObjectCount();
     for (int i = 0; i < nobj; ++i) {
@@ -331,7 +352,7 @@ MQObject MQSync::findMQObject(MQDocument doc, const char *name)
     return nullptr;
 }
 
-MQObject MQSync::createObject(const ms::Mesh& data, const char *name)
+MQObject MQSync::createMesh(const ms::Mesh& data, const char *name)
 {
     auto ret = MQ_CreateObject();
 
