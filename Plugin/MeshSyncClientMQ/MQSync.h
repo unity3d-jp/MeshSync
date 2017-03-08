@@ -7,6 +7,13 @@ using namespace mu;
 struct MQSync
 {
 public:
+    enum {
+        kMeshes = 0x1,
+        kMaterials = 0x2,
+        kCamera = 0x4,
+        kAll = kMeshes | kMaterials | kCamera,
+    };
+
     MQSync();
     ~MQSync();
     ms::ClientSettings& getClientSettings();
@@ -18,7 +25,7 @@ public:
 
     void clear();
     void flushPendingRequests(MQDocument doc);
-    void sendMesh(MQDocument doc, bool force = false);
+    void sendScene(MQDocument doc, bool force = false, int flags = kAll);
     bool importMeshes(MQDocument doc);
 
 private:

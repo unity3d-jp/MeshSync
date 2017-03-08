@@ -45,6 +45,8 @@ bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 
 void MQSync::clear()
 {
+    m_obj_for_normals.clear();
+    m_relations.clear();
     m_client_meshes.clear();
     m_host_meshes.clear();
     m_materials.clear();
@@ -56,15 +58,16 @@ void MQSync::clear()
 void MQSync::flushPendingRequests(MQDocument doc)
 {
     if (m_pending_send_meshes) {
-        sendMesh(doc, true);
+        sendScene(doc, true);
     }
 }
 
-void MQSync::sendMesh(MQDocument doc, bool force)
+void MQSync::sendScene(MQDocument doc, bool force, int flags)
 {
     if (!force)
     {
         if (!m_auto_sync) { return; }
+        if (flags == kCamera && !m_sync_camera) { return; }
     }
 
     // just return if previous request is in progress. responsiveness is highest priority.
@@ -74,104 +77,110 @@ void MQSync::sendMesh(MQDocument doc, bool force)
     }
 
     m_pending_send_meshes = false;
-
-    int nobj = doc->GetObjectCount();
-
-    // build relations
     m_obj_for_normals.clear();
     m_relations.clear();
-    for (int i = 0; i < nobj; ++i) {
-        auto obj = doc->GetObject(i);
-        if (!obj) { continue; }
+    m_materials.clear();
+    m_cameras.clear();
 
-        char name[MaxNameBuffer];
-        obj->GetName(name, sizeof(name));
 
-        if (auto pos_normal = std::strstr(name, ":normal")) {
-            m_obj_for_normals.push_back(obj);
-        }
-        else {
-            auto rel = Relation();
-            rel.obj = obj;
-            m_relations.push_back(rel);
-        }
-    }
-    for (auto nobj : m_obj_for_normals) {
-        char nname[MaxNameBuffer];
-        nobj->GetName(nname, sizeof(nname));
-        *std::strstr(nname, ":normal") = '\0';
+    if ((flags & kMeshes) != 0) {
+        int nobj = doc->GetObjectCount();
 
-        for (auto& rel : m_relations) {
+        // build relations
+        for (int i = 0; i < nobj; ++i) {
+            auto obj = doc->GetObject(i);
+            if (!obj) { continue; }
+
             char name[MaxNameBuffer];
-            rel.obj->GetName(name, sizeof(name));
-            if (strcmp(nname, name) == 0) {
-                rel.normal = nobj;
-                break;
+            obj->GetName(name, sizeof(name));
+
+            if (auto pos_normal = std::strstr(name, ":normal")) {
+                m_obj_for_normals.push_back(obj);
+            }
+            else {
+                auto rel = Relation();
+                rel.obj = obj;
+                m_relations.push_back(rel);
             }
         }
-    }
+        for (auto nobj : m_obj_for_normals) {
+            char nname[MaxNameBuffer];
+            nobj->GetName(nname, sizeof(nname));
+            *std::strstr(nname, ":normal") = '\0';
 
-    while ((int)m_client_meshes.size() < m_relations.size()) {
-        m_client_meshes.emplace_back(new ms::Mesh());
-    }
-    for (size_t i = 0; i < m_relations.size(); ++i) {
-        m_relations[i].data = m_client_meshes[i];
-        m_relations[i].data->index = (int)i;
-    }
-
-    // gather mesh data
-    concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
-        rel.data->clear();
-        rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
-        ExtractID(rel.data->path.c_str(), rel.data->id);
-
-        bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
-        rel.data->flags.visible = visible;
-        if (!visible) {
-            // not send actual contents if not visible
-            return;
+            for (auto& rel : m_relations) {
+                char name[MaxNameBuffer];
+                rel.obj->GetName(name, sizeof(name));
+                if (strcmp(nname, name) == 0) {
+                    rel.normal = nobj;
+                    break;
+                }
+            }
         }
 
-        extractMeshData(doc, rel.obj, *rel.data);
-        if (rel.normal) {
-            copyPointsForNormalCalculation(doc, rel.normal, *rel.data);
+        while ((int)m_client_meshes.size() < m_relations.size()) {
+            m_client_meshes.emplace_back(new ms::Mesh());
         }
-    });
+        for (size_t i = 0; i < m_relations.size(); ++i) {
+            m_relations[i].data = m_client_meshes[i];
+            m_relations[i].data->index = (int)i;
+        }
 
+        // gather mesh data
+        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
+            rel.data->clear();
+            rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
+            ExtractID(rel.data->path.c_str(), rel.data->id);
 
-    // gather material data
-    int nmat = doc->GetMaterialCount();
-    m_materials.clear();
-    m_materials.reserve(nmat);
-    for (int i = 0; i < nmat; ++i) {
-        auto src = doc->GetMaterial(i);
-        if (!src) {
-            // add dummy material to keep material index
+            bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
+            rel.data->flags.visible = visible;
+            if (!visible) {
+                // not send actual contents if not visible
+                return;
+            }
+
+            extractMeshData(doc, rel.obj, *rel.data);
+            if (rel.normal) {
+                copyPointsForNormalCalculation(doc, rel.normal, *rel.data);
+            }
+        });
+    }
+
+    if ((flags & kMaterials) != 0) {
+        // gather material data
+        int nmat = doc->GetMaterialCount();
+        m_materials.reserve(nmat);
+        for (int i = 0; i < nmat; ++i) {
+            auto src = doc->GetMaterial(i);
+            if (!src) {
+                // add dummy material to keep material index
+                auto dst = new ms::Material();
+                dst->id = -1;
+                m_materials.emplace_back(dst);
+                continue;
+            }
+
             auto dst = new ms::Material();
-            dst->id = -1;
+            dst->id = src->GetUniqueID();
+            {
+                char name[128];
+                src->GetName(name, sizeof(name));
+                dst->name = ms::ToUTF8(name);
+            }
+            (float3&)dst->color = (const float3&)src->GetColor();
             m_materials.emplace_back(dst);
-            continue;
         }
-
-        auto dst = new ms::Material();
-        dst->id = src->GetUniqueID();
-        {
-            char name[128];
-            src->GetName(name, sizeof(name));
-            dst->name = ms::ToUTF8(name);
-        }
-        (float3&)dst->color = (const float3&)src->GetColor();
-        m_materials.emplace_back(dst);
     }
 
-    // gather camera data
-    m_cameras.clear();
-    if (m_sync_camera) {
-        if(auto scene = doc->GetScene(0)) {
-            auto data = new ms::Camera();
-            data->path = "/Main Camera";
-            extractCameraData(doc, scene, *data);
-            m_cameras.emplace_back(data);
+    if ((flags & kCamera) != 0) {
+        // gather camera data
+        if (m_sync_camera) {
+            if (auto scene = doc->GetScene(0)) {
+                auto data = new ms::Camera();
+                data->path = "/Main Camera";
+                extractCameraData(doc, scene, *data);
+                m_cameras.emplace_back(data);
+            }
         }
     }
 
@@ -528,7 +537,7 @@ void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
     dst.transform.position = (const float3&)scene->GetCameraPosition();
     {
         auto ang = scene->GetCameraAngle();
-        auto eular = float3{ ang.pitch, ang.head, ang.bank } * mu::Deg2Rad;
+        auto eular = float3{ ang.pitch, -ang.head+180.0f, ang.bank } * mu::Deg2Rad;
         dst.transform.rotation_eularZXY = eular;
         dst.transform.rotation = rotateZXY(eular);
     }
