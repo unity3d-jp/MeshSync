@@ -110,7 +110,7 @@ int MeshSyncClientPlugin::OnReceiveUserMessage(MQDocument doc, DWORD src_product
 void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
     m_sync.flushPendingRequests(doc);
-    m_sync.sendScene(doc, false, MQSync::kCamera);
+    m_sync.sendCamera(doc);
 }
 
 
@@ -120,7 +120,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
-    m_sync.sendScene(doc);
+    m_sync.sendMeshes(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    m_sync.sendScene(doc);
+    m_sync.sendMeshes(doc);
     return TRUE;
 }
 
@@ -148,7 +148,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    m_sync.sendScene(doc);
+    m_sync.sendMeshes(doc);
     return TRUE;
 }
 
@@ -158,7 +158,7 @@ BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
-    m_sync.sendScene(doc);
+    m_sync.sendMeshes(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -248,7 +248,8 @@ void MeshSyncClientPlugin::Import()
 
 bool MeshSyncClientPlugin::SendImpl(MQDocument doc)
 {
-    m_sync.sendScene(doc, true);
+    m_sync.sendMeshes(doc, true);
+    m_sync.sendCamera(doc, true);
     return true;
 }
 

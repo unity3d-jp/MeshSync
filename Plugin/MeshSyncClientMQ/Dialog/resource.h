@@ -15,6 +15,7 @@
 #define IDC_STATIC_IMPORT_SETTINGS      1008
 #define IDC_CHECK_BAKE_SKIN             1009
 #define IDC_CHECK_BAKE_CLOTH            1010
+#define IDC_CHECK_CAMERA                1011
 
 // Next default values for new objects
 // 

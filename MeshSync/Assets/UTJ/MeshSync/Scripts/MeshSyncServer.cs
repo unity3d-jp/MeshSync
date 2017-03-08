@@ -271,7 +271,21 @@ namespace UTJ
                 UpdateMesh(scene.GetMesh(i));
             }
 
+            GC.Collect();
+
             //Debug.Log("MeshSyncServer: Set");
+        }
+
+        void DestroyIfNotAsset(UnityEngine.Object obj)
+        {
+            if(obj != null
+#if UNITY_EDITOR
+                && AssetDatabase.GetAssetPath(obj) == ""
+#endif
+                )
+            {
+                DestroyImmediate(obj, false);
+            }
         }
 
         void UpdateMaterials(SceneData scene)
@@ -417,7 +431,9 @@ namespace UTJ
                 }
                 else
                 {
+                    var old = smr.sharedMesh;
                     smr.sharedMesh = rec.editMesh;
+                    DestroyIfNotAsset(old);
                 }
             }
             else
@@ -441,7 +457,9 @@ namespace UTJ
                         smr = GetOrAddSkinnedMeshComponents(t.gameObject, i > 0);
                         if(smr != null)
                         {
+                            var old = smr.sharedMesh;
                             smr.sharedMesh = rec.editMesh;
+                            DestroyIfNotAsset(old);
 
                             var bones = GetOrCreateBones(data);
                             if(bones.Length > 0)
@@ -456,7 +474,9 @@ namespace UTJ
                         var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
                         if (mfilter != null)
                         {
+                            var old = mfilter.sharedMesh;
                             mfilter.sharedMesh = rec.editMesh;
+                            DestroyIfNotAsset(old);
                         }
                     }
                 }
@@ -546,6 +566,7 @@ namespace UTJ
                 }
             }
             mesh.RecalculateBounds();
+            mesh.UploadMeshData(false);
             return mesh;
         }
 

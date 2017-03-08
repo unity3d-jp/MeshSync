@@ -33,7 +33,12 @@ MQSync::MQSync()
 
 MQSync::~MQSync()
 {
-    waitAsyncSend();
+    if (m_future_meshes.valid()) {
+        m_future_meshes.get();
+    }
+    if (m_future_camera.valid()) {
+        m_future_camera.get();
+    }
 }
 
 ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
@@ -50,7 +55,7 @@ void MQSync::clear()
     m_client_meshes.clear();
     m_host_meshes.clear();
     m_materials.clear();
-    m_cameras.clear();
+    m_camera.reset();
     m_exist_record.clear();
     m_pending_send_meshes = false;
 }
@@ -58,20 +63,21 @@ void MQSync::clear()
 void MQSync::flushPendingRequests(MQDocument doc)
 {
     if (m_pending_send_meshes) {
-        sendScene(doc, true);
+        sendMeshes(doc, true);
     }
 }
 
-void MQSync::sendScene(MQDocument doc, bool force, int flags)
+void MQSync::sendMeshes(MQDocument doc, bool force)
 {
     if (!force)
     {
         if (!m_auto_sync) { return; }
-        if (flags == kCamera && !m_sync_camera) { return; }
     }
 
     // just return if previous request is in progress. responsiveness is highest priority.
-    if (isAsyncSendInProgress()) {
+    if (m_future_meshes.valid() &&
+        m_future_meshes.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+    {
         m_pending_send_meshes = true;
         return;
     }
@@ -80,10 +86,9 @@ void MQSync::sendScene(MQDocument doc, bool force, int flags)
     m_obj_for_normals.clear();
     m_relations.clear();
     m_materials.clear();
-    m_cameras.clear();
 
 
-    if ((flags & kMeshes) != 0) {
+    {
         int nobj = doc->GetObjectCount();
 
         // build relations
@@ -146,7 +151,7 @@ void MQSync::sendScene(MQDocument doc, bool force, int flags)
         });
     }
 
-    if ((flags & kMaterials) != 0) {
+    {
         // gather material data
         int nmat = doc->GetMaterialCount();
         m_materials.reserve(nmat);
@@ -172,21 +177,9 @@ void MQSync::sendScene(MQDocument doc, bool force, int flags)
         }
     }
 
-    if ((flags & kCamera) != 0) {
-        // gather camera data
-        if (m_sync_camera) {
-            if (auto scene = doc->GetScene(0)) {
-                auto data = new ms::Camera();
-                data->path = "/Main Camera";
-                extractCameraData(doc, scene, *data);
-                m_cameras.emplace_back(data);
-            }
-        }
-    }
-
 
     // kick async send
-    m_future_send = std::async(std::launch::async, [this]() {
+    m_future_meshes = std::async(std::launch::async, [this]() {
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
@@ -205,20 +198,19 @@ void MQSync::sendScene(MQDocument doc, bool force, int flags)
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.materials = m_materials;
-            set.scene.cameras = m_cameras;
             client.send(set);
         }
 
-        // send meshes one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.meshes = { rel.data };
-            client.send(set);
-        });
-
-        // detect deleted objects and send delete message
         {
+            // send meshes one by one to Unity can respond quickly
+            concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
+                ms::SetMessage set;
+                set.scene.settings = scene_settings;
+                set.scene.meshes = { rel.data };
+                client.send(set);
+            });
+
+            // detect deleted objects and send delete message
             for (auto& e : m_exist_record) {
                 e.second = false;
             }
@@ -252,13 +244,67 @@ void MQSync::sendScene(MQDocument doc, bool force, int flags)
             client.send(fence);
         }
     });
-
 }
+
+void MQSync::sendCamera(MQDocument doc, bool force)
+{
+    if (!force)
+    {
+        if (!m_auto_sync) { return; }
+    }
+    if (!m_sync_camera) { return; }
+
+    // just return if previous request is in progress
+    if (m_future_camera.valid() &&
+        m_future_camera.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+    {
+        return;
+    }
+
+    // gather camera data
+    if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
+        if (!m_camera) {
+            m_camera.reset(new ms::Camera());
+            m_camera->path = "/Main Camera";
+            m_camera->near_plane *= m_scale_factor;
+            m_camera->far_plane *= m_scale_factor;
+        }
+        auto prev_pos = m_camera->transform.position;
+        auto prev_rot = m_camera->transform.rotation;
+        auto prev_fov = m_camera->fov;
+
+        extractCameraData(doc, scene, *m_camera);
+
+        if (m_camera->transform.position == prev_pos &&
+            m_camera->transform.rotation == prev_rot &&
+            m_camera->fov == prev_fov)
+        {
+            // no need to send
+            return;
+        }
+    }
+
+    // kick async send
+    m_future_camera = std::async(std::launch::async, [this]() {
+        ms::Client client(m_settings);
+
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = m_scale_factor;
+
+        // send cameras and materials
+        {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.cameras = { m_camera };
+            client.send(set);
+        }
+    });
+}
+
 
 bool MQSync::importMeshes(MQDocument doc)
 {
-    waitAsyncSend();
-
     ms::Client client(m_settings);
     ms::GetMessage gd;
     gd.flags.get_transform = 1;
@@ -319,21 +365,6 @@ bool MQSync::importMeshes(MQDocument doc)
         m_host_meshes[mdata.id] = data;
     }
     return true;
-}
-
-bool MQSync::isAsyncSendInProgress()
-{
-    if (m_future_send.valid()) {
-        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
-    }
-    return false;
-}
-
-void MQSync::waitAsyncSend()
-{
-    if (m_future_send.valid()) {
-        m_future_send.get();
-    }
 }
 
 MQObject MQSync::findMesh(MQDocument doc, const char *name)
@@ -537,11 +568,17 @@ void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
     dst.transform.position = (const float3&)scene->GetCameraPosition();
     {
         auto ang = scene->GetCameraAngle();
-        auto eular = float3{ ang.pitch, -ang.head+180.0f, ang.bank } * mu::Deg2Rad;
+        auto eular = float3{
+            ang.pitch,
+            -ang.head + 180.0f, // I can't explain why this modification is needed...
+            ang.bank
+        } * mu::Deg2Rad;
         dst.transform.rotation_eularZXY = eular;
         dst.transform.rotation = rotateZXY(eular);
     }
     dst.fov = scene->GetFOV() * mu::Rad2Deg;
+#if MQPLUGIN_VERSION >= 0x450
     dst.near_plane = scene->GetFrontClip();
     dst.far_plane = scene->GetBackClip();
+#endif
 }

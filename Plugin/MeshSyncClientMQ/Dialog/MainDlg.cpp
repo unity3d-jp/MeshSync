@@ -51,6 +51,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_server.Attach(GetDlgItem(IDC_EDIT_SERVER));
     m_edit_port.Attach(GetDlgItem(IDC_EDIT_PORT));
     m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
+    m_check_camera.Attach(GetDlgItem(IDC_CHECK_CAMERA));
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));
     m_check_bake_skin.Attach(GetDlgItem(IDC_CHECK_BAKE_SKIN));
     m_check_bake_cloth.Attach(GetDlgItem(IDC_CHECK_BAKE_CLOTH));
@@ -61,6 +62,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_port.SetWindowText(buf);
     sprintf(buf, "%.3f", GetScaleFactor(m_plugin));
     m_edit_scale.SetWindowText(buf);
+    m_check_camera.SetCheck(GetSyncCamera(m_plugin));
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
     m_check_bake_skin.SetCheck(GetBakeSkin(m_plugin));
     m_check_bake_cloth.SetCheck(GetBakeCloth(m_plugin));
@@ -120,6 +122,12 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
     return 0;
 }
 
+LRESULT CMainDlg::OnBnClickedCheckCamera(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    GetSyncCamera(m_plugin) = m_check_camera.GetCheck() != 0;
+
+    return 0;
+}
 
 LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
