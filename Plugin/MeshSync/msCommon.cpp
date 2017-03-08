@@ -576,17 +576,30 @@ uint32_t Camera::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += ssize(fov);
+    ret += ssize(near_plane);
+    ret += ssize(far_plane);
     return ret;
 }
 void Camera::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, fov);
+    write(os, near_plane);
+    write(os, far_plane);
 }
 void Camera::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, fov);
+    read(is, near_plane);
+    read(is, far_plane);
+}
+
+void Camera::applyScaleFactor(float scale)
+{
+    super::applyScaleFactor(scale);
+    near_plane *= scale;
+    far_plane *= scale;
 }
 
 
@@ -713,6 +726,25 @@ void Mesh::deserialize(std::istream& is)
 #undef EachVertexProperty
 #undef EachBoneProperty
 
+void Mesh::swapHandedness()
+{
+    super::swapHandedness();
+    mu::InvertX(points.data(), points.size());
+    mu::InvertX(npoints.data(), npoints.size());
+    mu::InvertX(normals.data(), normals.size());
+    for (auto& bp : bindposes) {
+        bp = swap_handedness(bp);
+    }
+}
+
+void Mesh::applyScaleFactor(float scale)
+{
+    super::applyScaleFactor(scale);
+    mu::Scale(points.data(), scale, points.size());
+    for (auto& bp : bindposes) {
+        (float3&)bp[3] *= scale;
+    }
+}
 
 static tls<mu::MeshRefiner> g_refiner;
 
@@ -741,20 +773,10 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         applyMirror(plane_n, plane_d, true);
     }
     if (mrs.scale_factor != 1.0f) {
-        Transform::applyScaleFactor(mrs.scale_factor);
-        mu::Scale(points.data(), mrs.scale_factor, points.size());
-        for (auto& bp : bindposes) {
-            (float3&)bp[3] *= mrs.scale_factor;
-        }
+        applyScaleFactor(mrs.scale_factor);
     }
     if (mrs.flags.swap_handedness) {
-        Transform::swapHandedness();
-        mu::InvertX(points.data(), points.size());
-        mu::InvertX(npoints.data(), npoints.size());
-        mu::InvertX(normals.data(), normals.size());
-        for (auto& bp : bindposes) {
-            bp = swap_handedness(bp);
-        }
+        swapHandedness();
     }
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);

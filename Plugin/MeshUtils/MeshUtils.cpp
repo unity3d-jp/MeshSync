@@ -125,6 +125,7 @@ void MeshRefiner::prepare(
     npoints = points_;
     normals.reset(nullptr, 0);
     uv.reset(nullptr, 0);
+    colors.reset(nullptr, 0);
     weights4.reset(nullptr, 0);
 
     submeshes.clear();
@@ -143,6 +144,7 @@ void MeshRefiner::prepare(
     new_points.clear();
     new_normals.clear();
     new_uv.clear();
+    new_colors.clear();
     new_weights4.clear();
     new_indices.clear();
     new_indices_triangulated.clear();
@@ -344,6 +346,11 @@ bool MeshRefiner::refineDumb()
             new_uv.resize(num_indices);
             mu::CopyWithIndices(new_uv.data(), uv.data(), indices);
             uv = new_uv;
+        }
+        if (!colors.empty() && (int)colors.size() != num_indices) {
+            new_colors.resize(num_indices);
+            mu::CopyWithIndices(new_colors.data(), colors.data(), indices);
+            colors = colors;
         }
         if (!weights4.empty() && (int)weights4.size() != num_indices) {
             new_weights4.resize(num_indices);

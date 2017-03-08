@@ -27,31 +27,6 @@ static inline bool ExtractID(const char *name, int& id)
 }
 
 
-void MQCameraData::get(MQScene scene)
-{
-    position = (const float3&)scene->GetCameraPosition();
-    look_target = (const float3&)scene->GetLookAtPosition();
-    angle = (const float3&)scene->GetCameraAngle();
-    rotation_center = (const float3&)scene->GetRotationCenter();
-    fov = scene->GetFOV();
-}
-
-bool MQCameraData::operator==(const MQCameraData& v) const
-{
-    return position == v.position &&
-        look_target == v.look_target &&
-        angle == v.angle &&
-        rotation_center == v.rotation_center &&
-        fov == v.fov;
-}
-
-bool MQCameraData::operator!=(const MQCameraData& v) const
-{
-    return !(*this == v);
-}
-
-
-
 MQSync::MQSync()
 {
 }
@@ -64,6 +39,7 @@ MQSync::~MQSync()
 ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
 float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
+bool& MQSync::getSyncCamera() { return m_sync_camera; }
 bool& MQSync::getBakeSkin() { return m_bake_skin; }
 bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 
@@ -71,6 +47,8 @@ void MQSync::clear()
 {
     m_client_meshes.clear();
     m_host_meshes.clear();
+    m_materials.clear();
+    m_cameras.clear();
     m_exist_record.clear();
     m_pending_send_meshes = false;
 }
@@ -186,6 +164,17 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         m_materials.emplace_back(dst);
     }
 
+    // gather camera data
+    m_cameras.clear();
+    if (m_sync_camera) {
+        if(auto scene = doc->GetScene(0)) {
+            auto data = new ms::Camera();
+            data->path = "/Main Camera";
+            extractCameraData(doc, scene, *data);
+            m_cameras.emplace_back(data);
+        }
+    }
+
 
     // kick async send
     m_future_send = std::async(std::launch::async, [this]() {
@@ -202,10 +191,12 @@ void MQSync::sendMesh(MQDocument doc, bool force)
             client.send(fence);
         }
 
-        // send materials
+        // send cameras and materials
         {
             ms::SetMessage set;
+            set.scene.settings = scene_settings;
             set.scene.materials = m_materials;
+            set.scene.cameras = m_cameras;
             client.send(set);
         }
 
@@ -515,7 +506,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         }
     }
 
-    // remove line and points
+    // remove lines and points
     dst.materialIDs.erase(
         std::remove(dst.materialIDs.begin(), dst.materialIDs.end(), -2),
         dst.materialIDs.end());
@@ -532,19 +523,16 @@ void MQSync::copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Me
     dst.flags.has_npoints = 1;
 }
 
-bool MQSync::syncCameras(MQDocument doc)
+void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
-    bool ret = false;
-    for (int i = 0; i < 4; ++i) {
-        auto scene = doc->GetScene(i);
-        if (!scene) { break; }
-
-        MQCameraData cd;
-        cd.get(scene);
-        if (m_cameras[i] != cd) {
-            ret = true;
-            m_cameras[i] = cd;
-        }
+    dst.transform.position = (const float3&)scene->GetCameraPosition();
+    {
+        auto ang = scene->GetCameraAngle();
+        auto eular = float3{ ang.pitch, ang.head, ang.bank } * mu::Deg2Rad;
+        dst.transform.rotation_eularZXY = eular;
+        dst.transform.rotation = rotateZXY(eular);
     }
-    return ret;
+    dst.fov = scene->GetFOV() * mu::Rad2Deg;
+    dst.near_plane = scene->GetFrontClip();
+    dst.far_plane = scene->GetBackClip();
 }

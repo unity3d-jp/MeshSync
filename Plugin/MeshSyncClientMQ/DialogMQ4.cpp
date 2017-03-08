@@ -47,6 +47,10 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_edit_scale->AddChangedEvent(this, &SettingsDlg::OnScaleChange);
     }
 
+    m_check_camera = CreateCheckBox(frame, L"Sync Camera");
+    m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
+    m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
+
     m_check_autosync = CreateCheckBox(frame, L"Auto Sync");
     m_check_autosync->SetChecked(m_plugin->getSync().getAutoSync());
     m_check_autosync->AddChangedEvent(this, &SettingsDlg::OnAutoSyncChange);
@@ -59,7 +63,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
 
         CreateLabel(vf, L"Import Settings");
 
-        m_check_bake_skin = CreateCheckBox(vf, L"Bake SKin");
+        m_check_bake_skin = CreateCheckBox(vf, L"Bake Skin");
         m_check_bake_skin->SetChecked(m_plugin->getSync().getBakeSkin());
         m_check_bake_skin->AddChangedEvent(this, &SettingsDlg::OnBakeSkinChange);
 
@@ -101,6 +105,12 @@ BOOL SettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
     if (f != 0.0) {
         m_plugin->getSync().getScaleFactor() = (float)f;
     }
+    return 0;
+}
+
+BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
+{
+    m_plugin->getSync().getSyncCamera() = m_check_camera->GetChecked();
     return 0;
 }
 

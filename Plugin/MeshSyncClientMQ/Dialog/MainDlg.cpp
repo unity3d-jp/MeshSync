@@ -11,6 +11,7 @@ std::string& GetServer(MeshSyncClientPlugin *plugin);
 uint16_t& GetPort(MeshSyncClientPlugin *plugin);
 float& GetScaleFactor(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
+bool& GetSyncCamera(MeshSyncClientPlugin *plugin);
 bool& GetBakeSkin(MeshSyncClientPlugin *plugin);
 bool& GetBakeCloth(MeshSyncClientPlugin *plugin);
 void Send(MeshSyncClientPlugin *plugin);

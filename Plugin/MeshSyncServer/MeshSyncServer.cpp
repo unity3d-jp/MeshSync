@@ -221,6 +221,22 @@ msAPI void msCameraSetFov(ms::Camera *_this, float v)
 {
     _this->fov = v;
 }
+msAPI float msCameraGetNearPlane(ms::Camera *_this)
+{
+    return _this->near_plane;
+}
+msAPI void msCameraSetNearPlane(ms::Camera *_this, float v)
+{
+    _this->near_plane = v;
+}
+msAPI float msCameraGetFarPlane(ms::Camera *_this)
+{
+    return _this->far_plane;
+}
+msAPI void msCameraSetFarPlane(ms::Camera *_this, float v)
+{
+    _this->far_plane = v;
+}
 
 
 msAPI ms::Mesh* msMeshCreate()

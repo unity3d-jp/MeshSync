@@ -4,19 +4,6 @@
 
 using namespace mu;
 
-struct MQCameraData
-{
-    float3 position = float3::zero();
-    float3 look_target = float3::zero();
-    float3 angle = float3::zero();
-    float3 rotation_center = float3::zero();
-    float fov = 30.0f;
-
-    void get(MQScene scene);
-    bool operator==(const MQCameraData& v) const;
-    bool operator!=(const MQCameraData& v) const;
-};
-
 struct MQSync
 {
 public:
@@ -25,6 +12,7 @@ public:
     ms::ClientSettings& getClientSettings();
     float& getScaleFactor();
     bool& getAutoSync();
+    bool& getSyncCamera();
     bool& getBakeSkin();
     bool& getBakeCloth();
 
@@ -38,14 +26,15 @@ private:
     void waitAsyncSend();
     MQObject findMesh(MQDocument doc, const char *name);
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
-    void extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& data);
+    void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
     void copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& data);
-    bool syncCameras(MQDocument doc); // true if anything changed
+    void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
 
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::MaterialPtr>;
+    using Cameras = std::vector<ms::CameraPtr>;
 
     struct Relation
     {
@@ -65,12 +54,12 @@ private:
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
     Materials m_materials;
+    Cameras m_cameras;
+
 
     std::vector<MQObject> m_obj_for_normals;
     std::vector<Relation> m_relations;
     ExistRecords m_exist_record;
     std::future<void> m_future_send;
     bool m_pending_send_meshes = false;
-
-    MQCameraData m_cameras[4];
 };

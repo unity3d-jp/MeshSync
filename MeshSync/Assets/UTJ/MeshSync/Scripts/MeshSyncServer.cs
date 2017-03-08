@@ -565,6 +565,7 @@ namespace UTJ
         {
             bool created = false;
             var trans = FindObjectByPath(null, data.path, true, ref created);
+            if (trans == null) { return null; }
 
             var trs = data.trs;
             trans.localPosition = trs.position;
@@ -611,12 +612,16 @@ namespace UTJ
         Camera UpdateCamera(CameraData data)
         {
             var trans = UpdateTransform(data.transform);
+            if (trans == null) { return null; }
+
             var cam = trans.GetComponent<Camera>();
             if(cam == null)
             {
                 cam = trans.gameObject.AddComponent<Camera>();
             }
             cam.fieldOfView = data.fov;
+            cam.nearClipPlane = data.nearClipPlane;
+            cam.farClipPlane = data.farClipPlane;
             return cam;
         }
 

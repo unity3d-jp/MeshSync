@@ -565,6 +565,10 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
             [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msCameraSetFov(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msCameraGetNearPlane(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetNearPlane(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msCameraGetFarPlane(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetFarPlane(IntPtr _this, float v);
 
             public static explicit operator CameraData(IntPtr v)
             {
@@ -587,6 +591,16 @@ namespace UTJ
             {
                 get { return msCameraGetFov(_this); }
                 set { msCameraSetFov(_this, value); }
+            }
+            public float nearClipPlane
+            {
+                get { return msCameraGetNearPlane(_this); }
+                set { msCameraSetNearPlane(_this, value); }
+            }
+            public float farClipPlane
+            {
+                get { return msCameraGetFarPlane(_this); }
+                set { msCameraSetFarPlane(_this, value); }
             }
         }
 

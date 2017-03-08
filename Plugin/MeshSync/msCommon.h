@@ -97,8 +97,8 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
-    void swapHandedness();
-    void applyScaleFactor(float scale);
+    virtual void swapHandedness();
+    virtual void applyScaleFactor(float scale);
 };
 using TransformPtr = std::shared_ptr<Transform>;
 
@@ -108,10 +108,14 @@ class Camera : public Transform
 using super = Transform;
 public:
     float fov = 30.0f;
+    float near_plane = 0.3f;
+    float far_plane = 1000.0f;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    void applyScaleFactor(float scale) override;
 };
 using CameraPtr = std::shared_ptr<Camera>;
 
@@ -243,6 +247,9 @@ public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    void swapHandedness() override;
+    void applyScaleFactor(float scale) override;
 
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);

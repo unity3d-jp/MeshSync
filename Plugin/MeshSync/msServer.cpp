@@ -298,6 +298,14 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
             trans->applyScaleFactor(1.0f / mes->scene.settings.scale_factor);
         }
     }
+    for (auto& trans : mes->scene.cameras) {
+        if (mes->scene.settings.handedness == Handedness::Right) {
+            trans->swapHandedness();
+        }
+        if (mes->scene.settings.scale_factor != 1.0f) {
+            trans->applyScaleFactor(1.0f / mes->scene.settings.scale_factor);
+        }
+    }
 
     {
         lock_t l(m_mutex);

@@ -270,6 +270,10 @@ bool& GetAutoSync(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getAutoSync();
 }
+bool& GetSyncCamera(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getSync().getSyncCamera();
+}
 bool& GetBakeSkin(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getBakeSkin();
