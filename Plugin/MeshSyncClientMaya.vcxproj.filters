@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya/pch.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya\Commands.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya\MayaUtils.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MeshSyncClientMaya/pch.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMaya\MeshSyncClientMaya.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMaya\Commands.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMaya\MayaUtils.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MeshSyncClientMaya">
+      <UniqueIdentifier>{77e44a4c-abc2-4ace-8009-a6152e70ffdc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

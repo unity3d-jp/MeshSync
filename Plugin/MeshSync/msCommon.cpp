@@ -60,6 +60,13 @@ struct ssize_impl<std::vector<T>>
     }
 };
 template<class T>
+struct ssize_impl<std::shared_ptr<T>>
+{
+    uint32_t operator()(const std::shared_ptr<T>& v) {
+        return v->getSerializeSize();
+    }
+};
+template<class T>
 struct ssize_impl<std::vector<std::shared_ptr<T>>>
 {
     uint32_t operator()(const std::vector<std::shared_ptr<T>>& v) {
@@ -102,6 +109,14 @@ struct write_impl<std::vector<T>>
         for (const auto& e : v) {
             write_impl<T>()(os, e);
         }
+    }
+};
+template<class T>
+struct write_impl<std::shared_ptr<T>>
+{
+    void operator()(std::ostream& os, const std::shared_ptr<T>& v)
+    {
+        v->serialize(os);
     }
 };
 template<class T>
@@ -155,6 +170,15 @@ struct read_impl<std::vector<T>>
     }
 };
 template<class T>
+struct read_impl<std::shared_ptr<T>>
+{
+    void operator()(std::istream& is, std::shared_ptr<T>& v)
+    {
+        v.reset(new T());
+        v->deserialize(is);
+    }
+};
+template<class T>
 struct read_impl<std::vector<std::shared_ptr<T>>>
 {
     void operator()(std::istream& is, std::vector<std::shared_ptr<T>>& v)
@@ -194,17 +218,17 @@ template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
 } // namespace
 
 
-static void LogImpl(const char *fmt, va_list args)
+static void LogImpl2(const char *fmt, va_list args)
 {
     char buf[1024];
-    snprintf(buf, sizeof(buf), fmt, args);
+    vsnprintf(buf, sizeof(buf), fmt, args);
     ::OutputDebugStringA(buf);
 }
 void LogImpl(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    LogImpl(fmt, args);
+    LogImpl2(fmt, args);
     va_end(args);
 }
 
@@ -242,7 +266,7 @@ std::string ToANSI(const char *src)
 
 
 
-const int ProtocolVersion = 100;
+const int ProtocolVersion = 101;
 
 Message::~Message()
 {
@@ -415,6 +439,38 @@ void SceneEntity::deserialize(std::istream& is)
 }
 
 
+uint32_t Animation::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(translation);
+    ret += ssize(rotation);
+    ret += ssize(scale);
+    ret += ssize(visibility);
+    return ret;
+}
+
+void Animation::serialize(std::ostream & os) const
+{
+    write(os, translation);
+    write(os, rotation);
+    write(os, scale);
+    write(os, visibility);
+}
+
+void Animation::deserialize(std::istream & is)
+{
+    read(is, translation);
+    read(is, rotation);
+    read(is, scale);
+    read(is, visibility);
+}
+
+bool Animation::empty() const
+{
+    return translation.empty() && rotation.empty() && scale.empty() && visibility.empty();
+}
+
+
 uint32_t Material::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -437,21 +493,66 @@ void Material::deserialize(std::istream& is)
 }
 
 
+
+float4x4 TRS::toMatrix() const
+{
+    return ms::transform(position, rotation, scale);
+}
+
+struct TransformDataFlags
+{
+    uint32_t has_animation : 1;
+};
+
 uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
+    ret += sizeof(TransformDataFlags);
     ret += ssize(transform);
+    if (animation) { ret += ssize(animation); }
+    ret += ssize(reference);
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
+
+    TransformDataFlags flags = {};
+    flags.has_animation = animation ? 1 : 0;
+    write(os, flags);
     write(os, transform);
+    if (flags.has_animation) { write(os, animation); }
+    write(os, reference);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
+
+    TransformDataFlags flags;
+    read(is, flags);
     read(is, transform);
+    if(flags.has_animation) { read(is, animation); }
+    read(is, reference);
+}
+
+void Transform::swapHandedness()
+{
+    transform.position.x *= -1.0f;
+    transform.rotation = swap_handedness(transform.rotation);
+
+    if (animation) {
+        for (auto& tvp : animation->translation) {
+            tvp.value.x *= -1.0f;
+        }
+        for (auto& tvp : animation->rotation) {
+            tvp.value = swap_handedness(tvp.value);
+        }
+    }
+}
+
+void Transform::applyScaleFactor(float scale)
+{
+    transform.position *= scale;
 }
 
 
@@ -473,9 +574,37 @@ void Camera::deserialize(std::istream& is)
 }
 
 
+uint32_t BlendshapeData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(name);
+    ret += ssize(weight);
+    ret += ssize(points);
+    ret += ssize(normals);
+    ret += ssize(tangents);
+    return ret;
+}
+void BlendshapeData::serialize(std::ostream& os) const
+{
+    write(os, name);
+    write(os, weight);
+    write(os, points);
+    write(os, normals);
+    write(os, tangents);
+}
+void BlendshapeData::deserialize(std::istream& is)
+{
+    read(is, name);
+    read(is, weight);
+    read(is, points);
+    read(is, normals);
+    read(is, tangents);
+}
 
-#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
-#define EachBoneProperty(Body) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
+
+
+#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
+#define EachBoneProperty(Body) Body(bones_per_vertex) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
 {
@@ -516,7 +645,9 @@ uint32_t Mesh::getSerializeSize() const
         EachBoneProperty(Body);
 #undef Body
     }
-
+    if (flags.has_blendshapes) {
+        ret += ssize(blendshape);
+    }
     return ret;
 }
 
@@ -536,6 +667,9 @@ void Mesh::serialize(std::ostream& os) const
         EachBoneProperty(Body);
 #undef Body
     }
+    if (flags.has_blendshapes) {
+        write(os, blendshape);
+    }
 }
 
 void Mesh::deserialize(std::istream& is)
@@ -554,6 +688,9 @@ void Mesh::deserialize(std::istream& is)
 #define Body(A) read(is, A);
         EachBoneProperty(Body);
 #undef Body
+    }
+    if (flags.has_blendshapes) {
+        read(is, blendshape);
     }
 }
 
@@ -596,17 +733,26 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         applyMirror(plane_n, plane_d, true);
     }
     if (mrs.scale_factor != 1.0f) {
+        Transform::applyScaleFactor(mrs.scale_factor);
         mu::Scale(points.data(), mrs.scale_factor, points.size());
-        transform.position *= mrs.scale_factor;
+        for (auto& bp : bindposes) {
+            (float3&)bp[3] *= mrs.scale_factor;
+        }
     }
     if (mrs.flags.swap_handedness) {
+        Transform::swapHandedness();
         mu::InvertX(points.data(), points.size());
         mu::InvertX(npoints.data(), npoints.size());
-        transform.position.x *= -1.0f;
-        transform.rotation = swap_handedness(transform.rotation);
+        mu::InvertX(normals.data(), normals.size());
+        for (auto& bp : bindposes) {
+            bp = swap_handedness(bp);
+        }
     }
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);
+    }
+    if (mrs.flags.gen_weights4 && !bone_weights.empty()) {
+        generateWeights4();
     }
 
     auto& refiner = g_refiner.local();
@@ -615,6 +761,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.split_unit = mrs.split_unit;
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
+    refiner.colors = colors;
+    refiner.weights4 = weights4;
     if (npoints.data() && points.size() == npoints.size()) {
         refiner.npoints = npoints;
     }
@@ -644,31 +792,37 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if(refine_topology) {
         refiner.refine(mrs.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
-        refiner.swapNewData(points, normals, tangents, uv, indices);
+        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
 
         splits.clear();
         int *sub_indices = indices.data();
         int offset_vertices = 0;
         for (auto& split : refiner.splits) {
-            auto sub = SplitData();
+            auto sp = SplitData();
 
-            sub.indices.reset(sub_indices, split.num_indices_triangulated);
+            sp.indices.reset(sub_indices, split.num_indices_triangulated);
             sub_indices += split.num_indices_triangulated;
 
             if (!points.empty()) {
-                sub.points.reset(&points[offset_vertices], split.num_vertices);
+                sp.points.reset(&points[offset_vertices], split.num_vertices);
             }
             if (!normals.empty()) {
-                sub.normals.reset(&normals[offset_vertices], split.num_vertices);
-            }
-            if (!uv.empty()) {
-                sub.uv.reset(&uv[offset_vertices], split.num_vertices);
+                sp.normals.reset(&normals[offset_vertices], split.num_vertices);
             }
             if (!tangents.empty()) {
-                sub.tangents.reset(&tangents[offset_vertices], split.num_vertices);
+                sp.tangents.reset(&tangents[offset_vertices], split.num_vertices);
+            }
+            if (!uv.empty()) {
+                sp.uv.reset(&uv[offset_vertices], split.num_vertices);
+            }
+            if (!colors.empty()) {
+                sp.colors.reset(&colors[offset_vertices], split.num_vertices);
+            }
+            if (!weights4.empty()) {
+                sp.weights4.reset(&weights4[offset_vertices], split.num_vertices);
             }
             offset_vertices += split.num_vertices;
-            splits.push_back(sub);
+            splits.push_back(sp);
         }
 
         // setup submeshes
@@ -695,7 +849,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         }
     }
     else {
-        refiner.swapNewData(points, normals, tangents, uv, indices);
+        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
     }
 
     flags.has_points = !points.empty();
@@ -797,6 +951,13 @@ void Mesh::applyTransform(const float4x4& m)
     for (auto& v : npoints) { v = applyTRS(m, v); }
 }
 
+void Mesh::generateWeights4()
+{
+    if (!GenerateWeightsN(weights4, bone_indices, bone_weights, bones_per_vertex)) {
+        msLogError("Mesh::normalizeWeights(): should not be here\n");
+    }
+}
+
 
 uint32_t Scene::getSerializeSize() const
 {
@@ -824,7 +985,5 @@ void Scene::deserialize(std::istream& is)
     read(is, cameras);
     read(is, materials);
 }
-
-
 
 } // namespace ms

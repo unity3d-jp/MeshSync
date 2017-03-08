@@ -19,9 +19,9 @@ namespace UTJ
 
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("Open Material Panel"))
+            if (GUILayout.Button("Open Material Window"))
             {
-                MQMaterialWindow.Open(t);
+                MaterialWindow.Open(t);
             }
 
             EditorGUILayout.Space();

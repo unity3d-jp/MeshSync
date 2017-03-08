@@ -8,6 +8,11 @@
 #endif // muEnableHalf
 
 #define muDefaultEpsilon 0.00001f
+#define muMath_AddNamespace
+
+#ifdef muMath_AddNamespace
+namespace mu {
+#endif
 
 struct float2
 {
@@ -16,7 +21,18 @@ struct float2
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const float2& v) const { return x == v.x && y == v.y; }
     bool operator!=(const float2& v) const { return !((*this)==v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1] };
+    }
+
     static float2 zero() { return{ 0.0f, 0.0f }; }
+    static float2 one() { return{ 1.0f, 1.0f }; }
 };
 struct float3
 {
@@ -25,6 +41,16 @@ struct float3
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const float3& v) const { return x == v.x && y == v.y && z == v.z; }
     bool operator!=(const float3& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1], v[2] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1], (float)v[2] };
+    }
+
     static float3 zero() { return{ 0.0f, 0.0f, 0.0f }; }
     static float3 one() { return{ 1.0f, 1.0f, 1.0f }; }
 };
@@ -35,6 +61,16 @@ struct float4
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const float4& v) const { return x == v.x && y == v.y && z == v.z && w == v.w; }
     bool operator!=(const float4& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1], v[2], v[3] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1], (float)v[2], (float)v[3] };
+    }
+
     static float4 zero() { return{ 0.0f, 0.0f, 0.0f, 0.0f }; }
     static float4 one() { return{ 1.0f, 1.0f, 1.0f, 1.0f }; }
 };
@@ -45,6 +81,16 @@ struct quatf
     const float& operator[](int i) const { return ((float*)this)[i]; }
     bool operator==(const quatf& v) const { return x == v.x && y == v.y && z == v.z && w == v.w; }
     bool operator!=(const quatf& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        *this = { v[0], v[1], v[2], v[3] };
+    }
+    void assign(const double *v)
+    {
+        *this = { (float)v[0], (float)v[1], (float)v[2], (float)v[3] };
+    }
+
     static quatf identity() { return{ 0.0f, 0.0f, 0.0f, 1.0f }; }
 };
 
@@ -55,6 +101,20 @@ struct float3x3
     const float3& operator[](int i) const { return m[i]; }
     bool operator==(const float3x3& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
     bool operator!=(const float3x3& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        memcpy(this, v, sizeof(*this));
+    }
+    void assign(const double *v)
+    {
+        *this = { {
+            { (float)v[0], (float)v[1], (float)v[2] },
+            { (float)v[3], (float)v[4], (float)v[5] },
+            { (float)v[6], (float)v[7], (float)v[8] }
+        } };
+    }
+
     static float3x3 identity()
     {
         return{ {
@@ -71,6 +131,21 @@ struct float4x4
     const float4& operator[](int i) const { return m[i]; }
     bool operator==(const float4x4& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
     bool operator!=(const float4x4& v) const { return !((*this) == v); }
+
+    void assign(const float *v)
+    {
+        memcpy(this, v, sizeof(*this));
+    }
+    void assign(const double *v)
+    {
+        *this = { {
+            { (float)v[0], (float)v[1], (float)v[2], (float)v[3] },
+            { (float)v[4], (float)v[5], (float)v[6], (float)v[7] },
+            { (float)v[8], (float)v[9], (float)v[10],(float)v[11]},
+            { (float)v[12],(float)v[13],(float)v[14],(float)v[15]}
+        } };
+    }
+
     static float4x4 identity()
     {
         return{ {
@@ -103,6 +178,14 @@ inline bool near_equal(const quatf& a, const quatf& b, float e = muDefaultEpsilo
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e) && near_equal(a.w, b.w, e);
 }
+inline bool near_equal(const float3x3& a, const float3x3& b, float e = muDefaultEpsilon)
+{
+    return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e) && near_equal(a[2], b[2], e);
+}
+inline bool near_equal(const float4x4& a, const float4x4& b, float e = muDefaultEpsilon)
+{
+    return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e) && near_equal(a[2], b[2], e) && near_equal(a[3], b[3], e);
+}
 
 template<class Int>
 inline Int ceildiv(Int v, Int d)
@@ -111,9 +194,64 @@ inline Int ceildiv(Int v, Int d)
 }
 
 
+inline float2 operator+(const float2& l, const float2& r)
+{
+    return{ l.x + r.x, l.y + r.y };
+}
+inline float2 operator-(const float2& v)
+{
+    return{ -v.x, -v.y };
+}
+inline float2 operator-(const float2& l, const float2& r)
+{
+    return{ l.x - r.x, l.y - r.y };
+}
 inline float2 operator*(const float2& l, float r)
 {
-    return{ l.x*r, l.y*r };
+    return{ l.x * r, l.y * r };
+}
+inline float2 operator*(const float2& l, const float2& r)
+{
+    return{ l.x * r.x, l.y * r.y };
+}
+inline float2 operator/(const float2& l, float r)
+{
+    return{ l.x / r, l.y / r };
+}
+inline float2 operator/(const float2& l, const float2& r)
+{
+    return{ l.x / r.x, l.y / r.y };
+}
+
+inline float2& operator+=(float2& l, const float2& r)
+{
+    l = l + r;
+    return l;
+}
+inline float2& operator-=(float2& l, const float2& r)
+{
+    l = l - r;
+    return l;
+}
+inline float2& operator*=(float2& l, float r)
+{
+    l = l * r;
+    return l;
+}
+inline float2& operator*=(float2& l, const float2& r)
+{
+    l = l * r;
+    return l;
+}
+inline float2& operator/=(float2& l, float r)
+{
+    l = l / r;
+    return l;
+}
+inline float2& operator/=(float2& l, const float2& r)
+{
+    l = l / r;
+    return l;
 }
 
 inline float3 operator+(const float3& l, const float3& r)
@@ -145,9 +283,46 @@ inline float3 operator/(const float3& l, const float3& r)
     return{ l.x / r.x, l.y / r.y, l.z / r.z };
 }
 
+inline float3& operator+=(float3& l, const float3& r)
+{
+    l = l + r;
+    return l;
+}
+inline float3& operator-=(float3& l, const float3& r)
+{
+    l = l - r;
+    return l;
+}
+inline float3& operator*=(float3& l, float r)
+{
+    l = l * r;
+    return l;
+}
+inline float3& operator*=(float3& l, const float3& r)
+{
+    l = l * r;
+    return l;
+}
+inline float3& operator/=(float3& l, float r)
+{
+    l = l / r;
+    return l;
+}
+inline float3& operator/=(float3& l, const float3& r)
+{
+    l = l / r;
+    return l;
+}
+
+
 inline float4 operator*(const float4& l, float r)
 {
     return{ l.x*r, l.y*r, l.z*r, l.w*r };
+}
+inline float4& operator*=(float4& l, float r)
+{
+    l = l * r;
+    return l;
 }
 
 inline quatf operator*(const quatf& l, float r)
@@ -163,35 +338,6 @@ inline quatf operator*(const quatf& l, const quatf& r)
         l.w*r.z + l.z*r.w + l.x*r.y - l.y*r.x,
         l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z,
     };
-}
-
-
-inline float2& operator*=(float2& l, float r)
-{
-    l = l * r;
-    return l;
-}
-
-inline float3& operator+=(float3& l, const float3& r)
-{
-    l = l + r;
-    return l;
-}
-inline float3& operator*=(float3& l, float r)
-{
-    l = l * r;
-    return l;
-}
-inline float3& operator*=(float3& l, const float3& r)
-{
-    l = l * r;
-    return l;
-}
-
-inline float4& operator*=(float4& l, float r)
-{
-    l = l * r;
-    return l;
 }
 
 inline quatf& operator*=(quatf& l, float r)
@@ -234,11 +380,10 @@ inline float4 operator*(const float4x4& m, const float4& v)
 inline float4x4 operator*(const float4x4 &a, const float4x4 &b)
 {
     float4x4 c;
-    register const float *ap = &a[0][0];
-    register const float *bp = &b[0][0];
-    register       float *cp = &c[0][0];
-
-    register float a0, a1, a2, a3;
+    const float *ap = &a[0][0];
+    const float *bp = &b[0][0];
+          float *cp = &c[0][0];
+    float a0, a1, a2, a3;
 
     a0 = ap[0];
     a1 = ap[1];
@@ -280,6 +425,11 @@ inline float4x4 operator*(const float4x4 &a, const float4x4 &b)
     cp[14] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
     cp[15] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
     return c;
+}
+inline float4x4& operator*=(float4x4& a, const float4x4 &b)
+{
+    a = a * b;
+    return a;
 }
 
 inline float3 applyTRS(const float4x4& m, const float3& v)
@@ -446,19 +596,19 @@ inline quatf swap_handedness(const quatf& q)
 inline float3x3 swap_handedness(const float3x3& m)
 {
     return{ {
-        { m[0].x, m[0].z, m[0].y },
-        { m[2].x, m[2].z, m[2].y },
-        { m[1].x, m[1].z, m[1].y },
+        { m[0].x,-m[0].y,-m[0].z },
+        {-m[1].x, m[1].y, m[1].z },
+        {-m[2].x, m[2].y, m[2].z },
     } };
 }
 
 inline float4x4 swap_handedness(const float4x4& m)
 {
     return{ {
-        { m[0].x, m[0].z, m[0].y, m[0].w },
-        { m[2].x, m[2].z, m[2].y, m[2].w },
-        { m[1].x, m[1].z, m[1].y, m[1].w },
-        {-m[3].x, m[3].z, m[3].y, m[3].w },
+        { m[0].x,-m[0].y,-m[0].z, m[0].w },
+        {-m[1].x, m[1].y, m[1].z, m[1].w },
+        {-m[2].x, m[2].y, m[2].z, m[2].w },
+        {-m[3].x, m[3].y, m[3].z, m[3].w },
     } };
 }
 
@@ -483,10 +633,10 @@ inline float4x4 to_float4x4(const quatf& q)
 inline float4x4 translate(const float3& t)
 {
     return {{
-        { 1.0f, 0.0f, 0.0f, t.x },
-        { 0.0f, 1.0f, 0.0f, t.y },
-        { 0.0f, 0.0f, 1.0f, t.z },
-        { 0.0f, 0.0f, 0.0f, 1.0f }
+        { 1.0f, 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        {  t.x,  t.y,  t.z, 1.0f }
     } };
 }
 
@@ -498,6 +648,14 @@ inline float4x4 scale(const float3& t)
         { 0.0f, 0.0f,  t.z, 0.0f },
         { 0.0f, 0.0f, 0.0f, 1.0f }
     } };
+}
+
+inline float4x4 transform(const float3& t, const quatf& r, const float3& s)
+{
+    auto ret = scale(s);
+    ret *= to_float4x4(r);
+    ret *= translate(t);
+    return ret;
 }
 
 inline float4x4 invert(const float4x4& x)
@@ -621,3 +779,7 @@ inline quatf to_quat(const float4x4& m)
 {
     return to_quat_impl(m);
 }
+
+#ifdef muMath_AddNamespace
+} // namespace mu
+#endif

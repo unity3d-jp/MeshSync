@@ -169,9 +169,12 @@ namespace UTJ
             msServerBeginServe(m_server);
             foreach (var mr in FindObjectsOfType<Renderer>())
             {
-                ServeData(mr, mes);
+                ServeMesh(mr, mes);
             }
-            msServerSetNumMaterials(m_server, m_materialList.Count);
+            foreach(var mat in m_materialList)
+            {
+                ServeMaterial(mat.material, mes);
+            }
             msServerEndServe(m_server);
 
 #if UNITY_EDITOR
@@ -239,41 +242,41 @@ namespace UTJ
 #if UNITY_EDITOR
             Undo.RecordObject(this, "MeshSyncServer");
 #endif
-
+            var scene = mes.scene;
             // sync materials
-            int numMaterials = mes.numMaterials;
+            int numMaterials = scene.numMaterials;
             if(numMaterials > 0)
             {
-                UpdateMaterials(mes);
+                UpdateMaterials(scene);
             }
 
-            // sync meshes
-            int numMeshes = mes.numMeshes;
-            for (int i = 0; i < numMeshes; ++i)
-            {
-                UpdateMesh(mes.GetMesh(i));
-            }
-
-            // sync bones
-            int numTransforms = mes.numTransforms;
+            // sync transforms
+            int numTransforms = scene.numTransforms;
             for (int i = 0; i < numTransforms; ++i)
             {
-                UpdateTransform(mes.GetTransform(i));
+                UpdateTransform(scene.GetTransform(i));
             }
 
             // sync cameras
-            int numCameras = mes.numCameras;
+            int numCameras = scene.numCameras;
             for (int i = 0; i < numCameras; ++i)
             {
-                UpdateCamera(mes.GetCamera(i));
+                UpdateCamera(scene.GetCamera(i));
+            }
+
+            // sync meshes
+            int numMeshes = scene.numMeshes;
+            for (int i = 0; i < numMeshes; ++i)
+            {
+                UpdateMesh(scene.GetMesh(i));
             }
 
             //Debug.Log("MeshSyncServer: Set");
         }
 
-        void UpdateMaterials(SetMessage mes)
+        void UpdateMaterials(SceneData scene)
         {
-            int numMaterials = mes.numMaterials;
+            int numMaterials = scene.numMaterials;
 
             bool needsUpdate = false;
             if(m_materialList.Count != numMaterials)
@@ -284,7 +287,7 @@ namespace UTJ
             {
                 for (int i = 0; i < numMaterials; ++i)
                 {
-                    var src = mes.GetMaterial(i);
+                    var src = scene.GetMaterial(i);
                     var dst = m_materialList[i];
                     if(src.id != dst.id || src.name != dst.name || src.color != dst.color)
                     {
@@ -298,7 +301,7 @@ namespace UTJ
             var newlist = new List<MaterialHolder>();
             for (int i = 0; i < numMaterials; ++i)
             {
-                var src = mes.GetMaterial(i);
+                var src = scene.GetMaterial(i);
                 var id = src.id;
                 var dst = m_materialList.Find(a => a.id == id);
                 if (dst == null)
@@ -326,17 +329,19 @@ namespace UTJ
 
         void UpdateMesh(MeshData data)
         {
-            var path = data.path;
+            var data_trans = data.transform;
+            var data_id = data_trans.id;
+            var path = data_trans.path;
             bool createdNewMesh = false;
 
             // find or create target object
             Record rec = null;
-            if(data.id !=0 && m_hostMeshes.ContainsKey(data.id))
+            if(data_id != 0 && m_hostMeshes.ContainsKey(data_id))
             {
-                rec = m_hostMeshes[data.id];
+                rec = m_hostMeshes[data_id];
                 if(rec.go == null)
                 {
-                    m_hostMeshes.Remove(data.id);
+                    m_hostMeshes.Remove(data_id);
                     rec = null;
                 }
             }
@@ -364,7 +369,7 @@ namespace UTJ
                 }
             }
             if (rec == null) { return; }
-            rec.index = data.index;
+            rec.index = data_trans.index;
 
 
             var target = rec.go.GetComponent<Transform>();
@@ -384,27 +389,28 @@ namespace UTJ
             target.gameObject.SetActive(true);
 
 
-
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
             var flags = data.flags;
 
             // update transform
             if(data.flags.applyTRS) {
-                var trs = data.trs;
+                var trs = data_trans.trs;
                 target.localPosition = trs.position;
                 target.localRotation = trs.rotation;
                 target.localScale = trs.scale;
             }
 
+            bool skinned = data.numBones > 0;
+
             var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
-            if (smr != null)
+            if (smr != null && !rec.recved && !skinned)
             {
                 // update skinned mesh - only when topology is not changed
                 rec.editMesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
-                if(rec.editMesh == null)
+                if (rec.editMesh == null)
                 {
-                    if(m_logging)
+                    if (m_logging)
                     {
                         Debug.Log("edit for " + rec.origMesh.name + " is ignored. currently changing topology of skinned meshes is not supported.");
                     }
@@ -412,8 +418,6 @@ namespace UTJ
                 else
                 {
                     smr.sharedMesh = rec.editMesh;
-                    rec.go.SetActive(false); // 
-                    rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
                 }
             }
             else
@@ -428,13 +432,33 @@ namespace UTJ
                         t.gameObject.SetActive(true);
                     }
 
-                    var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
-                    if (mfilter == null) { return; }
-
                     var split = data.GetSplit(i);
                     rec.editMesh = CreateEditedMesh(data, split);
                     rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
-                    mfilter.sharedMesh = rec.editMesh;
+
+                    if (skinned)
+                    {
+                        smr = GetOrAddSkinnedMeshComponents(t.gameObject, i > 0);
+                        if(smr != null)
+                        {
+                            smr.sharedMesh = rec.editMesh;
+
+                            var bones = GetOrCreateBones(data);
+                            if(bones.Length > 0)
+                            {
+                                smr.bones = bones;
+                                smr.rootBone = bones[0];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
+                        if (mfilter != null)
+                        {
+                            mfilter.sharedMesh = rec.editMesh;
+                        }
+                    }
                 }
 
                 int num_splits = Math.Max(1, data.numSplits);
@@ -446,11 +470,28 @@ namespace UTJ
                 }
             }
 
+            if (skinned)
+            {
+                rec.go.SetActive(false); // 
+                rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
+            }
+
             // assign materials if needed
             if (materialsUpdated)
             {
                 AssignMaterials(rec);
             }
+        }
+
+        Transform[] GetOrCreateBones(MeshData data)
+        {
+            var paths = data.GetBonePaths();
+            var ret = new Transform[data.numBones];
+            for (int i = 0; i < ret.Length; ++i)
+            {
+                ret[i] = FindObjectByPath(null, paths[i]);
+            }
+            return ret;
         }
 
         Mesh CreateEditedMesh(MeshData data, SplitData split, bool noTopologyUpdate = false, Mesh prev = null)
@@ -477,6 +518,15 @@ namespace UTJ
             if (flags.hasUV)
             {
                 mesh.uv = split.uv;
+            }
+            if (flags.hasColors)
+            {
+                mesh.colors = split.colors;
+            }
+            if (flags.hasBones)
+            {
+                mesh.boneWeights = split.boneWeights;
+                mesh.bindposes = data.bindposes;
             }
 
             if(!noTopologyUpdate && flags.hasIndices)
@@ -511,14 +561,63 @@ namespace UTJ
             }
         }
 
-        void UpdateTransform(TransformData data)
+        Transform UpdateTransform(TransformData data)
         {
-            // todo
+            bool created = false;
+            var trans = FindObjectByPath(null, data.path, true, ref created);
+
+            var trs = data.trs;
+            trans.localPosition = trs.position;
+            trans.localRotation = trs.rotation;
+            trans.localScale = trs.scale;
+
+            var anim = data.animation;
+            if(anim)
+            {
+                Transform root = trans;
+                Animator animator = null;
+                AnimationClip clip = null;
+
+                while(root.parent != null)
+                {
+                    root = root.parent;
+                }
+
+                // get or create animator
+                animator = root.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    clip = animator.runtimeAnimatorController.animationClips[0];
+                }
+                else
+                {
+                    animator = root.gameObject.AddComponent<Animator>();
+                    clip = new AnimationClip();
+                    var assetName = "Test";
+                    AssetDatabase.CreateAsset(clip, "Assets/" + assetName + ".anim");
+                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip("Assets/" + assetName + ".controller", clip);
+                }
+
+                if (clip != null)
+                {
+                    anim.SetupAnimationClip(clip, data.path);
+                }
+
+            }
+
+            return trans;
         }
 
-        void UpdateCamera(CameraData data)
+        Camera UpdateCamera(CameraData data)
         {
-            // todo 
+            var trans = UpdateTransform(data.transform);
+            var cam = trans.GetComponent<Camera>();
+            if(cam == null)
+            {
+                cam = trans.gameObject.AddComponent<Camera>();
+            }
+            cam.fieldOfView = data.fov;
+            return cam;
         }
 
         public void ReassignMaterials()
@@ -737,6 +836,39 @@ namespace UTJ
             return mfilter;
         }
 
+        SkinnedMeshRenderer GetOrAddSkinnedMeshComponents(GameObject go, bool isSplit)
+        {
+            var smr = go.GetComponent<SkinnedMeshRenderer>();
+            if (smr == null)
+            {
+                // destroy mesh components if exist
+                {
+                    var mr = go.GetComponent<MeshRenderer>();
+                    if (mr != null)
+                    {
+                        smr.materials = mr.materials;
+                        DestroyImmediate(mr);
+                    }
+                }
+                {
+                    var mfilter = go.GetComponent<MeshFilter>();
+                    if (mfilter != null)
+                    {
+                        DestroyImmediate(mfilter);
+                    }
+                }
+
+                smr = go.AddComponent<SkinnedMeshRenderer>();
+                if (isSplit)
+                {
+                    var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
+                    smr.sharedMaterials = parent.sharedMaterials;
+                }
+            }
+
+            return smr;
+        }
+
         public void ForceRepaint()
         {
 #if UNITY_EDITOR
@@ -758,7 +890,7 @@ namespace UTJ
             }
         }
 
-        bool ServeData(Renderer renderer, GetMessage mes)
+        bool ServeMesh(Renderer renderer, GetMessage mes)
         {
             bool ret = false;
             Mesh origMesh = null;
@@ -775,7 +907,8 @@ namespace UTJ
 
             if (ret)
             {
-                dst.id = GetObjectlID(renderer.gameObject);
+                var dst_trans = dst.transform;
+                dst_trans.id = GetObjectlID(renderer.gameObject);
                 var trans = renderer.GetComponent<Transform>();
                 if (mes.flags.getTransform)
                 {
@@ -784,23 +917,31 @@ namespace UTJ
                     trs.rotation = trans.localRotation;
                     trs.rotation_eularZXY = trans.localEulerAngles;
                     trs.scale = trans.localScale;
-                    dst.trs = trs;
+                    dst_trans.trs = trs;
                 }
                 dst.local2world = trans.localToWorldMatrix;
                 dst.world2local = trans.worldToLocalMatrix;
 
-                if (!m_hostMeshes.ContainsKey(dst.id))
+                if (!m_hostMeshes.ContainsKey(dst_trans.id))
                 {
-                    m_hostMeshes[dst.id] = new Record();
+                    m_hostMeshes[dst_trans.id] = new Record();
                 }
-                var rec = m_hostMeshes[dst.id];
+                var rec = m_hostMeshes[dst_trans.id];
                 rec.go = renderer.gameObject;
                 rec.origMesh = origMesh;
 
-                dst.path = BuildPath(renderer.GetComponent<Transform>());
+                dst_trans.path = BuildPath(renderer.GetComponent<Transform>());
                 msServerServeMesh(m_server, dst);
             }
             return ret;
+        }
+        bool ServeMaterial(Material mat, GetMessage mes)
+        {
+            var data = MaterialData.Create();
+            data.name = mat.name;
+            data.color = mat.color;
+            msServerServeMaterial(m_server, data);
+            return true;
         }
 
         bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh)
@@ -821,6 +962,7 @@ namespace UTJ
         {
             mesh = smr.sharedMesh;
             if (mesh == null) return false;
+
             if (!mes.bakeSkin && !mesh.isReadable)
             {
                 Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
@@ -832,6 +974,7 @@ namespace UTJ
             {
                 CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
             }
+
             if (mes.bakeSkin)
             {
                 var tmp = new Mesh();
@@ -841,10 +984,13 @@ namespace UTJ
             else
             {
                 CaptureMesh(ref dst, mesh, null, mes.flags, smr.sharedMaterials);
-            }
-            if(mes.flags.getBones)
-            {
-                dst.bones = smr.bones;
+
+                if (mes.flags.getBones)
+                {
+                    dst.SetBonePaths(smr.bones);
+                    dst.bindposes = mesh.bindposes;
+                    dst.boneWeights = mesh.boneWeights;
+                }
             }
             return true;
         }
@@ -1100,7 +1246,7 @@ namespace UTJ
 #endif
             PollServerEvents();
         }
-        #endregion
+#endregion
 
         void ErrorOnStandaloneBuild()
         {

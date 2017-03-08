@@ -2,6 +2,8 @@
 #include "MeshSync/msServer.h"
 #include "MeshSync/msClient.h"
 
+using namespace mu;
+
 void Test_Sync(bool create_server)
 {
     std::unique_ptr<ms::Server> server;
@@ -89,9 +91,26 @@ void Test_GenNormals()
     refiner.genSubmesh(materialIDs);
 }
 
+void MatrixSwapHandedness()
+{
+    quatf rot1 = rotate(normalize(float3{0.15f, 0.3f, 0.6f}), 60.0f);
+    quatf rot2 = swap_handedness(rot1);
+    float4x4 mat1 = to_float4x4(rot1);
+    float4x4 mat2 = to_float4x4(rot2);
+    float4x4 mat3 = swap_handedness(mat1);
+    float4x4 imat1 = invert(mat1);
+    float4x4 imat2 = invert(mat2);
+    float4x4 imat3 = swap_handedness(imat1);
+
+    bool r1 = near_equal(mat2, mat3);
+    bool r2 = near_equal(imat2, imat3);
+    printf("");
+}
+
 int main(int argc, char *argv[])
 {
     //Test_Sync(false);
     //Test_Get();
-    Test_GenNormals();
+    //Test_GenNormals();
+    MatrixSwapHandedness();
 }

@@ -32,9 +32,10 @@ namespace UTJ
             public bool getNormals { get { return (flags & (1 << 2)) != 0; } }
             public bool getTangents { get { return (flags & (1 << 3)) != 0; } }
             public bool getUV { get { return (flags & (1 << 4)) != 0; } }
-            public bool getIndices { get { return (flags & (1 << 5)) != 0; } }
-            public bool getMaterialIDs { get { return (flags & (1 << 6)) != 0; } }
-            public bool getBones { get { return (flags & (1 << 7)) != 0; } }
+            public bool getColors { get { return (flags & (1 << 5)) != 0; } }
+            public bool getIndices { get { return (flags & (1 << 6)) != 0; } }
+            public bool getMaterialIDs { get { return (flags & (1 << 7)) != 0; } }
+            public bool getBones { get { return (flags & (1 << 8)) != 0; } }
         }
 
         public struct GetMessage
@@ -59,14 +60,7 @@ namespace UTJ
         public struct SetMessage
         {
             internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern int msSetGetNumMeshes(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern MeshData msSetGetMeshData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSetGetNumTransforms(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern TransformData msSetGetTransformData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSetGetNumCameras(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern CameraData msSetGetCameraData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSetGetNumMaterials(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern MaterialData msSetGetMaterialData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern SceneData msSetGetSceneData(IntPtr _this);
 
             public static explicit operator SetMessage(IntPtr v)
             {
@@ -75,15 +69,10 @@ namespace UTJ
                 return ret;
             }
 
-            public int numMeshes { get { return msSetGetNumMeshes(_this); } }
-            public int numTransforms { get { return msSetGetNumTransforms(_this); } }
-            public int numCameras { get { return msSetGetNumCameras(_this); } }
-            public int numMaterials { get { return msSetGetNumMaterials(_this); } }
-
-            public MeshData GetMesh(int i) { return msSetGetMeshData(_this, i); }
-            public TransformData GetTransform(int i) { return msSetGetTransformData(_this, i); }
-            public CameraData GetCamera(int i) { return msSetGetCameraData(_this, i); }
-            public MaterialData GetMaterial(int i) { return msSetGetMaterialData(_this, i); }
+            public SceneData scene
+            {
+                get { return msSetGetSceneData(_this); }
+            }
         }
 
 
@@ -215,20 +204,35 @@ namespace UTJ
                 get { return (flags & (1 << 7)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 7)); }
             }
-            public bool hasMaterialIDs
+            public bool hasColors
             {
                 get { return (flags & (1 << 8)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 8)); }
             }
-            public bool hasBones
+            public bool hasMaterialIDs
             {
                 get { return (flags & (1 << 9)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 9)); }
             }
-            public bool applyTRS
+            public bool hasBones
             {
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
+            }
+            public bool hasBlendshapes
+            {
+                get { return (flags & (1 << 11)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 11)); }
+            }
+            public bool hasNPoints
+            {
+                get { return (flags & (1 << 12)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 12)); }
+            }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 13)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 13)); }
             }
         };
 
@@ -243,12 +247,15 @@ namespace UTJ
         public struct MaterialData
         {
             internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern MaterialData msMaterialCreate();
             [DllImport("MeshSyncServer")] static extern int msMaterialGetID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
+
+            public static MaterialData Create() { return msMaterialCreate(); }
 
             public int id {
                 get { return msMaterialGetID(_this); }
@@ -264,30 +271,332 @@ namespace UTJ
             }
         }
 
+        public struct AnimationData
+        {
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetTranslationTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Vector3 msAnimationGetTranslationValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetRotationTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Quaternion msAnimationGetRotationValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetScaleTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Vector3 msAnimationGetScaleValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumVisibilitySamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msAnimationGetVisibilityTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern byte msAnimationGetVisibilityValue(IntPtr _this, int i);
+
+            public static explicit operator AnimationData(IntPtr v)
+            {
+                AnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(AnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+            public float[] translateTimes
+            {
+                get
+                {
+                    var ret = new float[msAnimationGetNumTranslationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationTime(_this, i); }
+                    return ret;
+                }
+            }
+            public Vector3[] translateValues
+            {
+                get
+                {
+                    var ret = new Vector3[msAnimationGetNumTranslationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] rotationTimes
+            {
+                get
+                {
+                    var ret = new float[msAnimationGetNumRotationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationTime(_this, i); }
+                    return ret;
+                }
+            }
+            public Quaternion[] rotationValues
+            {
+                get
+                {
+                    var ret = new Quaternion[msAnimationGetNumRotationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] scaleTimes
+            {
+                get
+                {
+                    var ret = new float[msAnimationGetNumScaleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleTime(_this, i); }
+                    return ret;
+                }
+            }
+            public Vector3[] scaleValues
+            {
+                get
+                {
+                    var ret = new Vector3[msAnimationGetNumScaleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] visibilityTimes
+            {
+                get
+                {
+                    var ret = new float[msAnimationGetNumVisibilitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityTime(_this, i); }
+                    return ret;
+                }
+            }
+            public bool[] visibilityValues
+            {
+                get
+                {
+                    var ret = new bool[msAnimationGetNumVisibilitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityValue(_this, i) != 0; }
+                    return ret;
+                }
+            }
+
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce = true)
+            {
+                var ret = new AnimationCurve[3] {
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                };
+                if(times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret[0].AddKey(new Keyframe(t, v.x));
+                    ret[1].AddKey(new Keyframe(t, v.y));
+                    ret[2].AddKey(new Keyframe(t, v.z));
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                }
+                if(reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret[0]);
+                    AnimationCurveKeyReducer.DoReduction(ret[1]);
+                    AnimationCurveKeyReducer.DoReduction(ret[2]);
+                }
+                return ret;
+            }
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce = true)
+            {
+                var ret = new AnimationCurve[4] {
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                };
+                if (times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret[0].AddKey(new Keyframe(t, v.x));
+                    ret[1].AddKey(new Keyframe(t, v.y));
+                    ret[2].AddKey(new Keyframe(t, v.z));
+                    ret[3].AddKey(new Keyframe(t, v.w));
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                }
+                if (reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret[0]);
+                    AnimationCurveKeyReducer.DoReduction(ret[1]);
+                    AnimationCurveKeyReducer.DoReduction(ret[2]);
+                    AnimationCurveKeyReducer.DoReduction(ret[3]);
+                }
+                return ret;
+            }
+            public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce = true)
+            {
+                var ret = new AnimationCurve();
+                if (times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret.AddKey(new Keyframe(t, v ? 0.0f : 1.0f));
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+                }
+                if (reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret);
+                }
+                return ret;
+            }
+
+            public void SetupAnimationClip(AnimationClip clip, string path)
+            {
+                var t = ToAnimatinCurve(translateTimes, translateValues);
+                var r = ToAnimatinCurve(rotationTimes, rotationValues);
+                var s = ToAnimatinCurve(scaleTimes, scaleValues);
+                var v = ToAnimatinCurve(visibilityTimes, visibilityValues);
+
+                var ttrans = typeof(Transform);
+                var tgo = typeof(GameObject);
+                if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
+                if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
+                if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
+                if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
+                if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
+                if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
+                if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
+                if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
+                if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
+                if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
+                if (v.length > 0) clip.SetCurve(path, tgo, "m_IsActive", v);
+            }
+        }
+
+
         public struct TransformData
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
+            [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetIndex(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetPath(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetPath(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern void msTransformGetTRS(IntPtr _this, ref TRS dst);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern AnimationData msTransformGetAnimation(IntPtr _this);
+
+            public static explicit operator TransformData(IntPtr v)
+            {
+                TransformData ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public static TransformData Create()
+            {
+                return msTransformCreate();
+            }
+
+            public int id
+            {
+                get { return msTransformGetID(_this); }
+                set { msTransformSetID(_this, value); }
+            }
+            public int index
+            {
+                get { return msTransformGetIndex(_this); }
+                set { msTransformSetIndex(_this, value); }
+            }
+            public string path
+            {
+                get { return S(msTransformGetPath(_this)); }
+                set { msTransformSetPath(_this, value); }
+            }
+
+            public TRS trs
+            {
+                get
+                {
+                    var ret = default(TRS);
+                    msTransformGetTRS(_this, ref ret);
+                    return ret;
+                }
+                set
+                {
+                    msTransformSetTRS(_this, ref value);
+                }
+            }
+
+            public string reference
+            {
+                get { return S(msTransformGetReference(_this)); }
+                set { msTransformSetReference(_this, value); }
+            }
+
+            public AnimationData animation
+            {
+                get { return msTransformGetAnimation(_this); }
+            }
         }
 
         public struct CameraData
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
+            [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetFov(IntPtr _this, float v);
+
+            public static explicit operator CameraData(IntPtr v)
+            {
+                CameraData ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public static CameraData Create()
+            {
+                return msCameraCreate();
+            }
+
+            public TransformData transform
+            {
+                get { return (TransformData)_this; }
+            }
+
+            public float fov
+            {
+                get { return msCameraGetFov(_this); }
+                set { msCameraSetFov(_this, value); }
+            }
         }
 
         public struct MeshData
         {
             internal IntPtr _this;
+
             [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
-            [DllImport("MeshSyncServer")] static extern int msMeshGetID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetID(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int msMeshGetIndex(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetIndex(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetFlags(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMeshSetFlags(IntPtr _this, MeshDataFlags v);
-            [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetPath(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetPath(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumSplits(IntPtr _this);
@@ -299,21 +608,30 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msMeshWriteTangents(IntPtr _this, Vector4[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadUV(IntPtr _this, Vector2[] dst);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteUV(IntPtr _this, Vector2[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadColors(IntPtr _this, Color[] dst);
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteColors(IntPtr _this, Color[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr _this, int[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr _this, int[] v, int size, int materialID);
 
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumWeights4(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadWeights4(IntPtr _this, BoneWeight[] weights);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteWeights4(IntPtr _this, BoneWeight[] weights, int size);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetBone(IntPtr _this, string v, int i);
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumBones(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetBonePath(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetBonePath(IntPtr _this, string v, int i);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadBindPoses(IntPtr _this, Matrix4x4[] v);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteBindPoses(IntPtr _this, Matrix4x4[] v, int size);
+
             [DllImport("MeshSyncServer")] static extern void msMeshSetLocal2World(IntPtr _this, ref Matrix4x4 v);
             [DllImport("MeshSyncServer")] static extern void msMeshSetWorld2Local(IntPtr _this, ref Matrix4x4 v);
 
             [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern void msMeshGetTransform(IntPtr _this, ref TRS dst);
-            [DllImport("MeshSyncServer")] static extern void msMeshSetTransform(IntPtr _this, ref TRS v);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumSubmeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern SubmeshData msMeshGetSubmesh(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapeTargets(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr _this, int i);
 
 
             public static MeshData Create()
@@ -328,25 +646,15 @@ namespace UTJ
                 return ret;
             }
 
-            public int id
+            public TransformData transform
             {
-                get { return msMeshGetID(_this); }
-                set { msMeshSetID(_this, value); }
+                get { return (TransformData)_this; }
             }
-            public int index
-            {
-                get { return msMeshGetIndex(_this); }
-                set { msMeshSetIndex(_this, value); }
-            }
+
             public MeshDataFlags flags
             {
                 get { return msMeshGetFlags(_this); }
                 set { msMeshSetFlags(_this, value); }
-            }
-            public string path
-            {
-                get { return S(msMeshGetPath(_this)); }
-                set { msMeshSetPath(_this, value); }
             }
 
             public int numPoints { get { return msMeshGetNumPoints(_this); } }
@@ -356,6 +664,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasPoints) { return new Vector3[0]; }
                     var ret = new Vector3[numPoints];
                     msMeshReadPoints(_this, ret);
                     return ret;
@@ -369,6 +678,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasNormals) { return new Vector3[0]; }
                     var ret = new Vector3[numPoints];
                     msMeshReadNormals(_this, ret);
                     return ret;
@@ -382,6 +692,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasTangents) { return new Vector4[0]; }
                     var ret = new Vector4[numPoints];
                     msMeshReadTangents(_this, ret);
                     return ret;
@@ -395,6 +706,7 @@ namespace UTJ
             {
                 get
                 {
+                    if (!flags.hasUV) { return new Vector2[0]; }
                     var ret = new Vector2[numPoints];
                     msMeshReadUV(_this, ret);
                     return ret;
@@ -404,10 +716,25 @@ namespace UTJ
                     msMeshWriteUV(_this, value, value.Length);
                 }
             }
+            public Color[] colors
+            {
+                get
+                {
+                    if (!flags.hasColors) { return new Color[0]; }
+                    var ret = new Color[numPoints];
+                    msMeshReadColors(_this, ret);
+                    return ret;
+                }
+                set
+                {
+                    msMeshWriteColors(_this, value, value.Length);
+                }
+            }
             public int[] indices
             {
                 get
                 {
+                    if (!flags.hasIndices) { return new int[0]; }
                     var ret = new int[numIndices];
                     msMeshReadIndices(_this, ret);
                     return ret;
@@ -415,20 +742,6 @@ namespace UTJ
                 set
                 {
                     msMeshWriteIndices(_this, value, value.Length);
-                }
-            }
-
-            public TRS trs
-            {
-                get
-                {
-                    var ret = default(TRS);
-                    msMeshGetTransform(_this, ref ret);
-                    return ret;
-                }
-                set
-                {
-                    msMeshSetTransform(_this, ref value);
                 }
             }
 
@@ -444,31 +757,64 @@ namespace UTJ
                 msMeshWriteSubmeshTriangles(_this, indices, indices.Length, materialID);
             }
 
+            public int numBoneWeights
+            {
+                get { return msMeshGetNumWeights4(_this); }
+            }
             public BoneWeight[] boneWeights
             {
+                get {
+                    var ret = new BoneWeight[numBoneWeights];
+                    msMeshReadWeights4(_this, ret);
+                    return ret;
+                }
                 set { msMeshWriteWeights4(_this, value, value.Length); }
+            }
+
+            public int numBones
+            {
+                get { return msMeshGetNumBones(_this); }
             }
             public Matrix4x4[] bindposes
             {
+                get
+                {
+                    var ret = new Matrix4x4[numBones];
+                    msMeshReadBindPoses(_this, ret);
+                    return ret;
+                }
                 set { msMeshWriteBindPoses(_this, value, value.Length); }
             }
-            public Transform[] bones
+            public void SetBonePaths(Transform[] bones)
             {
-                set
+                int n = bones.Length;
+                for (int i = 0; i < n; ++i)
                 {
-                    int n = value.Length;
-                    for(int i=0; i<n; ++i)
-                    {
-                        string path = BuildPath(value[i]);
-                        msMeshSetBone(_this, path, i);
-                    }
+                    string path = BuildPath(bones[i]);
+                    msMeshSetBonePath(_this, path, i);
                 }
+            }
+            public string[] GetBonePaths()
+            {
+                int n = numBones;
+                var ret = new string[n];
+                for (int i = 0; i < n; ++i)
+                {
+                    ret[i] = S(msMeshGetBonePath(_this, i));
+                }
+                return ret;
             }
 
             public int numSubmeshes { get { return msMeshGetNumSubmeshes(_this); } }
             public SubmeshData GetSubmesh(int i)
             {
                 return msMeshGetSubmesh(_this, i);
+            }
+
+            public int numBlendShapeTargets { get { return msMeshGetNumBlendShapeTargets(_this); } }
+            public BlendShapeData GetBlendShapeData(int i)
+            {
+                return msMeshGetBlendShapeData(_this, i);
             }
         };
 
@@ -478,11 +824,13 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadPoints(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadNormals(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadTangents(IntPtr _this, Vector4[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadUV(IntPtr _this, Vector2[] dst);
-            [DllImport("MeshSyncServer")] static extern int msSplitReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadPoints(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadNormals(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadTangents(IntPtr _this, Vector4[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadUV(IntPtr _this, Vector2[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadColors(IntPtr _this, Color[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadWeights4(IntPtr _this, BoneWeight[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSplitReadIndices(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr _this, int i);
 
             public int numPoints { get { return msSplitGetNumPoints(_this); } }
@@ -524,6 +872,24 @@ namespace UTJ
                     return ret;
                 }
             }
+            public Color[] colors
+            {
+                get
+                {
+                    var ret = new Color[numPoints];
+                    msSplitReadColors(_this, ret);
+                    return ret;
+                }
+            }
+            public BoneWeight[] boneWeights
+            {
+                get
+                {
+                    var ret = new BoneWeight[numPoints];
+                    msSplitReadWeights4(_this, ret);
+                    return ret;
+                }
+            }
             public int[] indices
             {
                 get
@@ -544,7 +910,7 @@ namespace UTJ
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSubmeshReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, int[] dst);
 
             public int numIndices { get { return msSubmeshGetNumIndices(_this); } }
             public int materialID { get { return msSubmeshGetMaterialID(_this); } }
@@ -558,6 +924,90 @@ namespace UTJ
                 }
             }
         }
+
+        public struct BlendShapeData
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumPoints(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msBlendShapeHasNormals(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msBlendShapeHasTangents(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, Vector3[] dst);
+
+            public string name
+            {
+                get { return S(msBlendShapeGetName(_this)); }
+            }
+            public float weight
+            {
+                get { return msBlendShapeGetWeight(_this); }
+            }
+            public bool hasNormals
+            {
+                get { return msBlendShapeHasNormals(_this) != 0; }
+            }
+            public bool hasTangents
+            {
+                get { return msBlendShapeHasTangents(_this) != 0; }
+            }
+            public Vector3[] points
+            {
+                get
+                {
+                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
+                    msBlendShapeReadPoints(_this, ret);
+                    return ret;
+                }
+            }
+            public Vector3[] normals
+            {
+                get
+                {
+                    if(!hasNormals) { return new Vector3[0]; }
+                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
+                    msBlendShapeReadNormals(_this, ret);
+                    return ret;
+                }
+            }
+            public Vector3[] tangents
+            {
+                get
+                {
+                    if (!hasTangents) { return new Vector3[0]; }
+                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
+                    msBlendShapeReadTangents(_this, ret);
+                    return ret;
+                }
+            }
+        }
+
+
+        public struct SceneData
+        {
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumMeshes(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumTransforms(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TransformData msSceneGetTransformData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumCameras(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern CameraData msSceneGetCameraData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
+
+            public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
+            public int numTransforms { get { return msSceneGetNumTransforms(_this); } }
+            public int numCameras { get { return msSceneGetNumCameras(_this); } }
+            public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
+
+            public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
+            public TransformData GetTransform(int i) { return msSceneGetTransformData(_this, i); }
+            public CameraData GetCamera(int i) { return msSceneGetCameraData(_this, i); }
+            public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
+        }
+
 
 
         public struct ServerSettings
@@ -589,7 +1039,7 @@ namespace UTJ
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr sv, MeshData data);
-        [DllImport("MeshSyncServer")] static extern void msServerSetNumMaterials(IntPtr sv, int n);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr sv, MaterialData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);
 
         static void SwitchBits(ref int flags, bool f, int bit)
@@ -662,6 +1112,66 @@ namespace UTJ
             public Material material;
         }
 
+
+
+        // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
+        public class AnimationCurveKeyReducer
+        {
+            static public void DoReduction(AnimationCurve in_curve, float eps = 0.001f)
+            {
+                if (in_curve.keys.Length <= 2) return;
+
+                var del_indexes = GetDeleteKeyIndex(in_curve.keys, eps).ToArray();
+                foreach (var del_idx in del_indexes.Reverse()) in_curve.RemoveKey(del_idx);
+            }
+
+            static IEnumerable<int> GetDeleteKeyIndex(Keyframe[] keys, float eps)
+            {
+                for (int s_idx = 0, i = 1; i < keys.Length - 1; i++)
+                {
+                    if (IsInterpolationValue(keys[s_idx], keys[i + 1], keys[i], eps))
+                    {
+                        yield return i;
+                    }
+                    else
+                    {
+                        s_idx = i;
+                    }
+                }
+            }
+
+            static bool IsInterpolationValue(Keyframe key1, Keyframe key2, Keyframe comp, float eps)
+            {
+                var val1 = GetValueFromTime(key1, key2, comp.time);
+
+                if (eps < System.Math.Abs(comp.value - val1)) return false;
+
+                var time = key1.time + (comp.time - key1.time) * 0.5f;
+                val1 = GetValueFromTime(key1, comp, time);
+                var val2 = GetValueFromTime(key1, key2, time);
+
+                return (System.Math.Abs(val2 - val1) <= eps) ? true : false;
+            }
+
+            static float GetValueFromTime(Keyframe key1, Keyframe key2, float time)
+            {
+                float t;
+                float a, b, c;
+                float kd, vd;
+
+                if (key1.outTangent == Mathf.Infinity) return key1.value;
+
+                kd = key2.time - key1.time;
+                vd = key2.value - key1.value;
+                t = (time - key1.time) / kd;
+
+                a = -2 * vd + kd * (key1.outTangent + key2.inTangent);
+                b = 3 * vd - kd * (2 * key1.outTangent + key2.inTangent);
+                c = kd * key1.outTangent;
+
+                return key1.value + t * (t * (a * t + b) + c);
+            }
+        }
         #endregion
     }
 }

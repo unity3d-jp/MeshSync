@@ -14,6 +14,7 @@
 
 
 namespace ms {
+using namespace mu;
 
 void LogImpl(const char *fmt, ...);
 #define msLogInfo(...)    ::ms::LogImpl("MeshSync info: " __VA_ARGS__)
@@ -41,7 +42,32 @@ struct TRS
     quatf    rotation = quatf::identity();
     float3   rotation_eularZXY = float3::zero();
     float3   scale = float3::one();
+
+    float4x4 toMatrix() const;
 };
+
+// time-value pair
+template<class T>
+struct TVP
+{
+    float time;
+    T value;
+};
+
+struct Animation
+{
+    RawVector<TVP<float3>> translation;
+    RawVector<TVP<quatf>> rotation;
+    RawVector<TVP<float3>> scale;
+    RawVector<TVP<bool>> visibility;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+
+    bool empty() const;
+};
+using AnimationPtr = std::shared_ptr<Animation>;
 
 struct Material
 {
@@ -53,6 +79,7 @@ struct Material
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
+using MaterialPtr = std::shared_ptr<Material>;
 
 
 class Transform : public SceneEntity
@@ -60,10 +87,16 @@ class Transform : public SceneEntity
 using super = SceneEntity;
 public:
     TRS transform;
+    AnimationPtr animation;
+    std::string reference;
+
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    void swapHandedness();
+    void applyScaleFactor(float scale);
 };
 using TransformPtr = std::shared_ptr<Transform>;
 
@@ -93,8 +126,10 @@ struct MeshDataFlags
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv : 1;
+    uint32_t has_colors : 1;
     uint32_t has_materialIDs : 1;
     uint32_t has_bones : 1;
+    uint32_t has_blendshapes : 1;
     uint32_t has_npoints : 1;
     uint32_t apply_trs : 1;
 };
@@ -114,7 +149,6 @@ struct MeshRefineFlags
     uint32_t bake_skin : 1;
     uint32_t bake_cloth : 1;
 
-    // for Metasequoia
     uint32_t invert_v : 1;
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
@@ -122,6 +156,8 @@ struct MeshRefineFlags
     uint32_t mirror_x_weld : 1;
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
+
+    uint32_t gen_weights4 : 1;
 };
 
 struct MeshRefineSettings
@@ -130,17 +166,10 @@ struct MeshRefineSettings
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f;
     int split_unit = 65000;
+    int max_bones_par_vertices = 4;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
 };
-
-template<int N>
-struct Weights
-{
-    float   weight[N] = {};
-    int     indices[N] = {};
-};
-using Weights4 = Weights<4>;
 
 struct SubmeshData
 {
@@ -154,9 +183,25 @@ struct SplitData
     IArray<float3> normals;
     IArray<float4> tangents;
     IArray<float2> uv;
+    IArray<float4> colors;
     IArray<int> indices;
+    IArray<Weights4> weights4;
     IArray<SubmeshData> submeshes;
 };
+
+struct BlendshapeData
+{
+    std::string name;
+    float weight = 0.0f;
+    RawVector<float3> points;
+    RawVector<float3> normals;
+    RawVector<float3> tangents;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+using BlendshapeDataPtr = std::shared_ptr<BlendshapeData>;
 
 class Mesh : public Transform
 {
@@ -169,17 +214,21 @@ public:
     RawVector<float3> normals;
     RawVector<float4> tangents;
     RawVector<float2> uv;
+    RawVector<float4> colors;
     RawVector<int>    counts;
     RawVector<int>    indices;
     RawVector<int>    materialIDs;
     RawVector<float3> npoints; // points for normal calculation
 
     // bone data
-    int bones_par_vertex = 0;
+    int bones_per_vertex = 0;
     RawVector<float> bone_weights;
     RawVector<int> bone_indices;
     std::vector<std::string> bones;
     RawVector<float4x4> bindposes;
+
+    // blendshape data
+    std::vector<BlendshapeDataPtr> blendshape;
 
     // not serialized
     RawVector<SubmeshData> submeshes;
@@ -197,6 +246,7 @@ public:
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
+    void generateWeights4();
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 
@@ -220,7 +270,7 @@ public:
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
     std::vector<CameraPtr> cameras;
-    std::vector<Material> materials;
+    std::vector<MaterialPtr> materials;
 
 public:
     uint32_t getSerializeSize() const;
@@ -270,6 +320,7 @@ struct GetFlags
     uint32_t get_normals : 1;
     uint32_t get_tangents : 1;
     uint32_t get_uv : 1;
+    uint32_t get_colors : 1;
     uint32_t get_indices : 1;
     uint32_t get_materialIDs : 1;
     uint32_t get_bones : 1;
