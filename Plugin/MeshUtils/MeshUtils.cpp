@@ -480,29 +480,74 @@ bool MeshRefiner::refineWithOptimization()
     int num_indices = (int)indices.size();
     int num_normals = (int)normals.size();
     int num_uv = (int)uv.size();
+    int num_colors = (int)colors.size();
 
     if (!uv.empty()) {
         if (!normals.empty()) {
             if (!tangents_tmp.empty()) {
-                if (num_normals == num_indices && num_uv == num_indices) {
-                    doRefine([this](int vi, int i) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents_tmp[i], uv[i]);
-                    });
+                if (!colors.empty()) {
+                    if (num_normals == num_indices && num_uv == num_indices && num_colors == num_indices) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[i], tangents_tmp[i], uv[i], colors[i]);
+                        });
+                    }
+                    else if (num_normals == num_indices && num_uv == num_indices && num_colors == num_points) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[i], tangents_tmp[i], uv[i], colors[vi]);
+                        });
+                    }
+                    else if (num_normals == num_indices && num_uv == num_points && num_colors == num_indices) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[i], tangents_tmp[i], uv[vi], colors[i]);
+                        });
+                    }
+                    else if (num_normals == num_indices && num_uv == num_points && num_colors == num_points) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[i], tangents_tmp[i], uv[vi], colors[vi]);
+                        });
+                    }
+                    else if (num_normals == num_points && num_uv == num_indices && num_colors == num_indices) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[vi], tangents_tmp[i], uv[i], colors[i]);
+                        });
+                    }
+                    else if (num_normals == num_points && num_uv == num_indices && num_colors == num_points) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[vi], tangents_tmp[i], uv[i], colors[vi]);
+                        });
+                    }
+                    else if (num_normals == num_points && num_uv == num_points && num_colors == num_indices) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[vi], tangents_tmp[vi], uv[vi], colors[i]);
+                        });
+                    }
+                    else if (num_normals == num_points && num_uv == num_points && num_colors == num_points) {
+                        doRefine([this](int vi, int) {
+                            return findOrAddVertexPNTUC(vi, points[vi], normals[vi], tangents_tmp[vi], uv[vi], colors[vi]);
+                        });
+                    }
                 }
-                else if (num_normals == num_indices && num_uv == num_points) {
-                    doRefine([this](int vi, int i) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents_tmp[i], uv[vi]);
-                    });
-                }
-                else if (num_normals == num_points && num_uv == num_indices) {
-                    doRefine([this](int vi, int i) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents_tmp[i], uv[i]);
-                    });
-                }
-                else if (num_normals == num_points && num_uv == num_points) {
-                    doRefine([this](int vi, int) {
-                        return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents_tmp[vi], uv[vi]);
-                    });
+                else {
+                    if (num_normals == num_indices && num_uv == num_indices) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents_tmp[i], uv[i]);
+                        });
+                    }
+                    else if (num_normals == num_indices && num_uv == num_points) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTU(vi, points[vi], normals[i], tangents_tmp[i], uv[vi]);
+                        });
+                    }
+                    else if (num_normals == num_points && num_uv == num_indices) {
+                        doRefine([this](int vi, int i) {
+                            return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents_tmp[i], uv[i]);
+                        });
+                    }
+                    else if (num_normals == num_points && num_uv == num_points) {
+                        doRefine([this](int vi, int) {
+                            return findOrAddVertexPNTU(vi, points[vi], normals[vi], tangents_tmp[vi], uv[vi]);
+                        });
+                    }
                 }
             }
             else {
@@ -633,13 +678,36 @@ void MeshRefiner::buildConnection()
     }
 }
 
-int MeshRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u)
+int MeshRefiner::findOrAddVertexPNTUC(int vi, const float3& p, const float3& n, const float4& t, const float2& u, const float4& c)
 {
     int offset = v2f_offsets[vi];
     int count = v2f_counts[vi];
     for (int ci = 0; ci < count; ++ci) {
         int& ni = old2new[shared_indices[offset + ci]];
         // tangent can be omitted as it is generated by point, normal and uv
+        if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n) && near_equal(new_uv[ni], u) && near_equal(new_colors[ni], c)) {
+            return ni;
+        }
+        else if (ni == -1) {
+            ni = (int)new_points.size();
+            new_points.push_back(p);
+            new_normals.push_back(n);
+            new_tangents.push_back(t);
+            new_uv.push_back(u);
+            new_colors.push_back(c);
+            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
+            return ni;
+        }
+    }
+    return 0;
+}
+
+int MeshRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u)
+{
+    int offset = v2f_offsets[vi];
+    int count = v2f_counts[vi];
+    for (int ci = 0; ci < count; ++ci) {
+        int& ni = old2new[shared_indices[offset + ci]];
         if (ni != -1 && near_equal(new_points[ni], p) && near_equal(new_normals[ni], n) && near_equal(new_uv[ni], u)) {
             return ni;
         }
@@ -649,7 +717,6 @@ int MeshRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, c
             new_normals.push_back(n);
             new_tangents.push_back(t);
             new_uv.push_back(u);
-            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
@@ -671,7 +738,6 @@ int MeshRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n, co
             new_points.push_back(p);
             new_normals.push_back(n);
             new_uv.push_back(u);
-            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
@@ -692,7 +758,6 @@ int MeshRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_normals.push_back(n);
-            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
@@ -713,7 +778,6 @@ int MeshRefiner::findOrAddVertexPU(int vi, const float3& p, const float2& u)
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_uv.push_back(u);
-            if (!colors.empty()) { new_colors.push_back(colors[vi]); }
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }

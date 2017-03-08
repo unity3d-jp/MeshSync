@@ -299,7 +299,6 @@ bool MQSync::importMeshes(MQDocument doc)
             dst->SetName(ms::ToANSI(names[i]).c_str());
             dst->SetColor((const MQColor&)ret->materials[i]->color);
         }
-
     }
     
     // import meshes
@@ -467,6 +466,43 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
             indices += c;
             uv += c;
+        }
+    }
+
+    // copy vertex colors if needed
+    {
+        bool copy_vertex_color = false;
+
+        auto mids = dst.materialIDs;
+        mids.erase(std::unique(mids.begin(), mids.end()), mids.end());
+        for (int mid : mids) {
+            if (mid >= 0) {
+                if (doc->GetMaterial(mid)->GetVertexColor() != MQMATERIAL_VERTEXCOLOR_DISABLE) {
+                    copy_vertex_color = true;
+                    break;
+                }
+            }
+        }
+
+        if (copy_vertex_color) {
+            dst.colors.resize(nindices);
+            dst.flags.has_colors = 1;
+
+            auto *colors = dst.colors.data();
+            for (int fi = 0; fi < nfaces; ++fi) {
+                int count = dst.counts[fi];
+                if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                    for (int ci = 0; ci < count; ++ci) {
+                        auto color = obj->GetFaceVertexColor(fi, ci);
+                        *(colors++) = {
+                            (float)(color >> 24) / 255.0f,
+                            (float)((color & 0xff0000) >> 16) / 255.0f,
+                            (float)((color & 0xff00) >> 8) / 255.0f,
+                            (float)(color & 0xff) / 255.0f,
+                        };
+                    }
+                }
+            }
         }
     }
 

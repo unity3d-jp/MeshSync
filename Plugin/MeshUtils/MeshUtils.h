@@ -445,6 +445,7 @@ private:
     void buildConnection();
 
     template<class Body> void doRefine(const Body& body);
+    int findOrAddVertexPNTUC(int vi, const float3& p, const float3& n, const float4& t, const float2& u, const float4& c);
     int findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u);
     int findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u);
     int findOrAddVertexPN(int vi, const float3& p, const float3& n);

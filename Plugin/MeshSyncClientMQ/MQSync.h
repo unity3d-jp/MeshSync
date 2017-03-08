@@ -57,6 +57,7 @@ private:
     ms::ClientSettings m_settings;
     float m_scale_factor = 200.0f;
     bool m_auto_sync = false;
+    bool m_sync_camera = false;
 
     bool m_bake_skin = false;
     bool m_bake_cloth = false;
