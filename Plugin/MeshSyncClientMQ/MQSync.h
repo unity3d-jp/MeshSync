@@ -45,7 +45,7 @@ private:
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
-    using Materials = std::vector<ms::Material>;
+    using Materials = std::vector<ms::MaterialPtr>;
 
     struct Relation
     {

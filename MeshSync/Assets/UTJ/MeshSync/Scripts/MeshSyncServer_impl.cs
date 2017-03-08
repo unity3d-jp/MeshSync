@@ -1039,7 +1039,7 @@ namespace UTJ
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr sv, MeshData data);
-        [DllImport("MeshSyncServer")] static extern void msServerSetNumMaterials(IntPtr sv, int n);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr sv, MaterialData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);
 
         static void SwitchBits(ref int flags, bool f, int bit)

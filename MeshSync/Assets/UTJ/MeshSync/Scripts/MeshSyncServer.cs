@@ -169,9 +169,12 @@ namespace UTJ
             msServerBeginServe(m_server);
             foreach (var mr in FindObjectsOfType<Renderer>())
             {
-                ServeData(mr, mes);
+                ServeMesh(mr, mes);
             }
-            msServerSetNumMaterials(m_server, m_materialList.Count);
+            foreach(var mat in m_materialList)
+            {
+                ServeMaterial(mat.material, mes);
+            }
             msServerEndServe(m_server);
 
 #if UNITY_EDITOR
@@ -887,7 +890,7 @@ namespace UTJ
             }
         }
 
-        bool ServeData(Renderer renderer, GetMessage mes)
+        bool ServeMesh(Renderer renderer, GetMessage mes)
         {
             bool ret = false;
             Mesh origMesh = null;
@@ -931,6 +934,14 @@ namespace UTJ
                 msServerServeMesh(m_server, dst);
             }
             return ret;
+        }
+        bool ServeMaterial(Material mat, GetMessage mes)
+        {
+            var data = MaterialData.Create();
+            data.name = mat.name;
+            data.color = mat.color;
+            msServerServeMaterial(m_server, data);
+            return true;
         }
 
         bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh)

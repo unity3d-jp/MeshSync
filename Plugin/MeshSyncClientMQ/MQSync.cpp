@@ -169,21 +169,21 @@ void MQSync::sendMesh(MQDocument doc, bool force)
         auto src = doc->GetMaterial(i);
         if (!src) {
             // add dummy material to keep material index
-            ms::Material dst;
-            dst.id = -1;
-            m_materials.push_back(dst);
+            auto dst = new ms::Material();
+            dst->id = -1;
+            m_materials.emplace_back(dst);
             continue;
         }
 
-        ms::Material dst;
-        dst.id = src->GetUniqueID();
+        auto dst = new ms::Material();
+        dst->id = src->GetUniqueID();
         {
             char name[128];
             src->GetName(name, sizeof(name));
-            dst.name = ms::ToUTF8(name);
+            dst->name = ms::ToUTF8(name);
         }
-        (float3&)dst.color = (const float3&)src->GetColor();
-        m_materials.push_back(dst);
+        (float3&)dst->color = (const float3&)src->GetColor();
+        m_materials.emplace_back(dst);
     }
 
 

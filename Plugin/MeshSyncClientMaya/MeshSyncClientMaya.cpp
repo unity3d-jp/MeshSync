@@ -412,11 +412,11 @@ void MeshSyncClientMaya::extractAllMaterialData()
     while (!it.isDone()) {
         MFnLambertShader fn(it.item());
 
-        ms::Material tmp;
-        tmp.name = fn.name().asChar();
-        tmp.color = (const mu::float4&)fn.color();
-        tmp.id = getMaterialID(fn.uuid());
-        m_materials.push_back(tmp);
+        auto tmp = new ms::Material();
+        tmp->name = fn.name().asChar();
+        tmp->color = (const mu::float4&)fn.color();
+        tmp->id = getMaterialID(fn.uuid());
+        m_materials.emplace_back(tmp);
 
         it.next();
     }

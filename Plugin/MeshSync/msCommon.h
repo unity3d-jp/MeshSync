@@ -270,7 +270,7 @@ public:
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
     std::vector<CameraPtr> cameras;
-    std::vector<Material> materials;
+    std::vector<MaterialPtr> materials;
 
 public:
     uint32_t getSerializeSize() const;

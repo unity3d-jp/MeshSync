@@ -54,10 +54,10 @@ msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
     if (!server) { return; }
     server->getHostScene()->meshes.emplace_back(data);
 }
-msAPI void msServerSetNumMaterials(ms::Server *server, int n)
+msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
 {
     if (!server) { return; }
-    server->getHostScene()->materials.resize(n);
+    server->getHostScene()->materials.emplace_back(data);
 }
 
 
@@ -515,5 +515,5 @@ msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 }
 msAPI ms::Material* msSceneGetMaterialData(ms::Scene *_this, int i)
 {
-    return &_this->materials[i];
+    return _this->materials[i].get();
 }
