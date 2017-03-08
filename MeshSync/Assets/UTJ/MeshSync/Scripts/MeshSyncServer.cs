@@ -587,6 +587,9 @@ namespace UTJ
             bool created = false;
             var trans = FindObjectByPath(null, data.path, true, ref created);
             if (trans == null) { return null; }
+#if UNITY_EDITOR
+            Undo.RecordObject(trans, "MeshSync");
+#endif
 
             var trs = data.trs;
             trans.localPosition = trs.position;

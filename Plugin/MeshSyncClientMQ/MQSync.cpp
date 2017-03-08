@@ -275,7 +275,8 @@ void MQSync::sendCamera(MQDocument doc, bool force)
 
         extractCameraData(doc, scene, *m_camera);
 
-        if (m_camera->transform.position == prev_pos &&
+        if (!force &&
+            m_camera->transform.position == prev_pos &&
             m_camera->transform.rotation == prev_rot &&
             m_camera->fov == prev_fov)
         {
