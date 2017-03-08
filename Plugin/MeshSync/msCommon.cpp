@@ -867,86 +867,74 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     flags.has_indices = !indices.empty();
 }
 
-void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool welding)
+void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 {
     size_t num_points = points.size();
     size_t num_faces = counts.size();
     size_t num_indices = indices.size();
-    if (!welding) {
-        points.resize(num_points * 2);
-        mu::MirrorPoints(points.data() + num_points, IArray<float3>{points.data(), num_points}, plane_n, plane_d);
 
-        counts.resize(num_faces * 2);
-        indices.resize(num_indices * 2);
-        mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
-            IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, (int)num_points);
+    RawVector<int> indirect(num_points);
+    RawVector<int> copylist;
+    copylist.reserve(num_points);
+    {
+        // welding
+        int idx = 0;
+        for (size_t pi = 0; pi < num_points; ++pi) {
+            auto& p = points[pi];
+            float d = dot(plane_n, p) - plane_d;
+            if (near_equal(d, 0.0f)) {
+                indirect[pi] = (int)pi;
+            }
+            else {
+                copylist.push_back((int)pi);
+                indirect[pi] = (int)num_points + idx++;
+            }
 
-        if (npoints.data()) {
-            npoints.resize(num_points * 2);
-            mu::MirrorPoints(npoints.data() + num_points,
-                IArray<float3>{npoints.data(), num_points}, plane_n, plane_d);
-        }
-        if (uv.data()) {
-            size_t n = uv.size();
-            uv.resize(n * 2);
-            memcpy(uv.data() + n, uv.data(), sizeof(float2) * n);
-        }
-        if (materialIDs.data()) {
-            size_t n = materialIDs.size();
-            materialIDs.resize(n * 2);
-            memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
         }
     }
-    else {
-        RawVector<int> indirect(num_points);
-        RawVector<int> copylist;
-        copylist.reserve(num_points);
-        {
-            int idx = 0;
-            for (size_t pi = 0; pi < num_points; ++pi) {
-                auto& p = points[pi];
-                float d = dot(plane_n, p) - plane_d;
-                if (near_equal(d, 0.0f)) {
-                    indirect[pi] = (int)pi;
-                }
-                else {
-                    copylist.push_back((int)pi);
-                    indirect[pi] = (int)num_points + idx++;
-                }
 
-            }
-        }
+    points.resize(num_points + copylist.size());
+    mu::MirrorPoints(points.data() + num_points, IArray<float3>{points.data(), num_points}, copylist, plane_n, plane_d);
 
-        points.resize(num_points + copylist.size());
-        mu::MirrorPoints(points.data() + num_points, IArray<float3>{points.data(), num_points}, copylist, plane_n, plane_d);
+    counts.resize(num_faces * 2);
+    indices.resize(num_indices * 2);
+    mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
+        IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, IArray<int>{indirect.data(), indirect.size()});
 
-        counts.resize(num_faces * 2);
-        indices.resize(num_indices * 2);
-        mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
-            IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, IArray<int>{indirect.data(), indirect.size()});
-
-        if (npoints.data()) {
-            npoints.resize(points.size());
-            mu::MirrorPoints(&npoints[num_points], IArray<float3>{npoints.data(), num_points}, copylist, plane_n, plane_d);
+    if (npoints.data()) {
+        npoints.resize(points.size());
+        mu::MirrorPoints(&npoints[num_points], IArray<float3>{npoints.data(), num_points}, copylist, plane_n, plane_d);
+    }
+    if (uv.data()) {
+        if (uv.size() == num_points) {
+            uv.resize(points.size());
+            mu::CopyWithIndices(&uv[num_points], &uv[0], copylist);
         }
-        if (uv.data()) {
-            if (uv.size() == num_points) {
-                uv.resize(points.size());
-                mu::CopyWithIndices(&uv[num_points], &uv[0], copylist);
-            }
-            else if (uv.size() == num_indices) {
-                uv.resize(indices.size());
-                auto dst = &uv[num_indices];
-                mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
-                    dst[idx] = uv[ridx];
-                });
-            }
+        else if (uv.size() == num_indices) {
+            uv.resize(indices.size());
+            auto dst = &uv[num_indices];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
+                dst[idx] = uv[ridx];
+            });
         }
-        if (materialIDs.data()) {
-            size_t n = materialIDs.size();
-            materialIDs.resize(n * 2);
-            memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
+    }
+    if (colors.data()) {
+        if (colors.size() == num_points) {
+            colors.resize(points.size());
+            mu::CopyWithIndices(&colors[num_points], &colors[0], copylist);
         }
+        else if (colors.size() == num_indices) {
+            colors.resize(indices.size());
+            auto dst = &colors[num_indices];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
+                dst[idx] = colors[ridx];
+            });
+        }
+    }
+    if (materialIDs.data()) {
+        size_t n = materialIDs.size();
+        materialIDs.resize(n * 2);
+        memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
     }
 }
 
