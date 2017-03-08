@@ -265,6 +265,7 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.flags.get_indices = 1;
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
+    gd.flags.get_colors = 1;
     gd.flags.get_materialIDs = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
@@ -312,7 +313,7 @@ bool MQSync::importMeshes(MQDocument doc)
         if (auto obj = findMesh(doc, name)) {
             doc->DeleteObject(doc->GetObjectIndex(obj));
         }
-        auto obj = createMesh(mdata, name);
+        auto obj = createMesh(doc, mdata, name);
         doc->AddObject(obj);
 
         m_host_meshes[mdata.id] = data;
@@ -351,7 +352,7 @@ MQObject MQSync::findMesh(MQDocument doc, const char *name)
     return nullptr;
 }
 
-MQObject MQSync::createMesh(const ms::Mesh& data, const char *name)
+MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *name)
 {
     auto ret = MQ_CreateObject();
 
@@ -378,6 +379,22 @@ MQObject MQSync::createMesh(const ms::Mesh& data, const char *name)
             uv[1] = data.uv[data.indices[i * 3 + 1]];
             uv[2] = data.uv[data.indices[i * 3 + 2]];
             ret->SetFaceCoordinateArray((int)i, (MQCoordinate*)uv);
+        }
+    }
+    if (!data.colors.empty()) {
+        size_t nfaces = data.indices.size() / 3;
+        for (size_t i = 0; i < nfaces; ++i) {
+            ret->SetFaceVertexColor((int)i, 0, mu::Float4ToColor32(data.colors[data.indices[i * 3 + 0]]));
+            ret->SetFaceVertexColor((int)i, 1, mu::Float4ToColor32(data.colors[data.indices[i * 3 + 1]]));
+            ret->SetFaceVertexColor((int)i, 2, mu::Float4ToColor32(data.colors[data.indices[i * 3 + 2]]));
+        }
+        // enable vertex color flag on assigned materials
+        auto mids = data.materialIDs;
+        mids.erase(std::unique(mids.begin(), mids.end()), mids.end());
+        for (auto mid : mids) {
+            if (mid >= 0) {
+                doc->GetMaterial(mid)->SetVertexColor(MQMATERIAL_VERTEXCOLOR_DIFFUSE);
+            }
         }
     }
     if (!data.materialIDs.empty()) {
@@ -483,23 +500,15 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
                 }
             }
         }
-
         if (copy_vertex_color) {
             dst.colors.resize(nindices);
             dst.flags.has_colors = 1;
-
             auto *colors = dst.colors.data();
             for (int fi = 0; fi < nfaces; ++fi) {
                 int count = dst.counts[fi];
                 if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
                     for (int ci = 0; ci < count; ++ci) {
-                        auto color = obj->GetFaceVertexColor(fi, ci);
-                        *(colors++) = {
-                            (float)(color >> 24) / 255.0f,
-                            (float)((color & 0xff0000) >> 16) / 255.0f,
-                            (float)((color & 0xff00) >> 8) / 255.0f,
-                            (float)(color & 0xff) / 255.0f,
-                        };
+                        *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
                     }
                 }
             }

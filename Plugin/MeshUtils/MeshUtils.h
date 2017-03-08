@@ -528,4 +528,24 @@ inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>&
     });
 }
 
+
+inline float4 Color32ToFloat4(uint32_t c)
+{
+    return{
+        (float)(c & 0xff) / 255.0f,
+        (float)((c & 0xff00) >> 8) / 255.0f,
+        (float)((c & 0xff0000) >> 16) / 255.0f,
+        (float)(c >> 24) / 255.0f,
+    };
+}
+inline uint32_t Float4ToColor32(const float4& c)
+{
+    return
+        (int)(c.x * 255.0f) |
+        ((int)(c.y * 255.0f) << 8) |
+        ((int)(c.z * 255.0f) << 16) |
+        ((int)(c.w * 255.0f) << 24);
+}
+
+
 } // namespace mu

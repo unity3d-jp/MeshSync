@@ -939,7 +939,7 @@ namespace UTJ
         {
             var data = MaterialData.Create();
             data.name = mat.name;
-            data.color = mat.color;
+            data.color = mat.HasProperty("_Color") ? mat.color : Color.white;
             msServerServeMaterial(m_server, data);
             return true;
         }
@@ -1014,6 +1014,10 @@ namespace UTJ
             if (flags.getUV)
             {
                 data.uv = mesh.uv;
+            }
+            if (flags.getColors)
+            {
+                data.colors = mesh.colors;
             }
             if (flags.getIndices)
             {

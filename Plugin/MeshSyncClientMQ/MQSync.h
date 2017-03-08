@@ -37,7 +37,7 @@ private:
     bool isAsyncSendInProgress();
     void waitAsyncSend();
     MQObject findMesh(MQDocument doc, const char *name);
-    MQObject createMesh(const ms::Mesh& data, const char *name);
+    MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& data);
     void copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& data);
     bool syncCameras(MQDocument doc); // true if anything changed
