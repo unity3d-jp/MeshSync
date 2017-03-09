@@ -42,6 +42,7 @@ MQSync::~MQSync()
 }
 
 ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
+std::string& MQSync::getHostCameraPath() { return m_host_camera_path; }
 float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
 bool& MQSync::getSyncCamera() { return m_sync_camera; }
@@ -265,7 +266,6 @@ void MQSync::sendCamera(MQDocument doc, bool force)
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
         if (!m_camera) {
             m_camera.reset(new ms::Camera());
-            m_camera->path = "/Main Camera";
             m_camera->near_plane *= m_scale_factor;
             m_camera->far_plane *= m_scale_factor;
         }
@@ -273,6 +273,7 @@ void MQSync::sendCamera(MQDocument doc, bool force)
         auto prev_rot = m_camera->transform.rotation;
         auto prev_fov = m_camera->fov;
 
+        m_camera->path = m_host_camera_path;
         extractCameraData(doc, scene, *m_camera);
 
         if (!force &&

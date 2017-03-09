@@ -746,8 +746,6 @@ void Mesh::applyScaleFactor(float scale)
     }
 }
 
-static tls<mu::MeshRefiner> g_refiner;
-
 void Mesh::refine(const MeshRefineSettings& mrs)
 {
     if (mrs.flags.invert_v) {
@@ -785,7 +783,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         generateWeights4();
     }
 
-    auto& refiner = g_refiner.local();
+    mu::MeshRefiner refiner;
     refiner.triangulate = refiner.triangulate;
     refiner.swap_faces = mrs.flags.swap_faces;
     refiner.split_unit = mrs.split_unit;

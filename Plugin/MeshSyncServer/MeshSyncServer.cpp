@@ -4,23 +4,23 @@
 
 using namespace mu;
 
-static std::map<uint16_t, ms::Server*> g_servers;
+using ServerPtr = std::shared_ptr<ms::Server>;
+static std::map<uint16_t, ServerPtr> g_servers;
 
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
     if (!settings) { return nullptr; }
 
-    ms::Server *ret = g_servers[settings->port];
-    if (!ret) {
-        ret = new ms::Server(*settings);
-        ret->start();
-        g_servers[settings->port] = ret;
+    auto& server = g_servers[settings->port];
+    if (!server) {
+        server.reset(new ms::Server(*settings));
+        server->start();
     }
     else {
-        ret->setServe(true);
-        ret->getSettings() = *settings;
+        server->setServe(true);
+        server->getSettings() = *settings;
     }
-    return ret;
+    return server.get();
 }
 
 msAPI void  msServerStop(ms::Server *server)

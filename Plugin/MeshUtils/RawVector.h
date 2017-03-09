@@ -40,6 +40,7 @@ public:
     ~RawVector()
     {
         clear();
+        shrink_to_fit();
     }
 
     bool empty() const { return m_size == 0; }
@@ -85,13 +86,13 @@ public:
 
     void shrink_to_fit()
     {
-        if (m_size == m_capacity) {
-            // nothing to do
-            return;
-        }
-        else if (m_size == 0) {
+        if (m_size == 0) {
             deallocate(m_data, m_size);
             m_size = m_capacity = 0;
+        }
+        else if (m_size == m_capacity) {
+            // nothing to do
+            return;
         }
         else {
             size_t newsize = sizeof(T) * m_size;

@@ -4,19 +4,13 @@
 
 using namespace mu;
 
-struct MQSync
+class MQSync
 {
 public:
-    enum {
-        kMeshes = 0x1,
-        kMaterials = 0x2,
-        kCamera = 0x4,
-        kAll = kMeshes | kMaterials | kCamera,
-    };
-
     MQSync();
     ~MQSync();
     ms::ClientSettings& getClientSettings();
+    std::string& getHostCameraPath();
     float& getScaleFactor();
     bool& getAutoSync();
     bool& getSyncCamera();
@@ -50,6 +44,7 @@ private:
 
     ms::ClientSettings m_settings;
     float m_scale_factor = 200.0f;
+    std::string m_host_camera_path = "/Main Camera";
     bool m_auto_sync = false;
     bool m_sync_camera = false;
 
@@ -60,7 +55,6 @@ private:
     HostMeshes m_host_meshes;
     Materials m_materials;
     ms::CameraPtr m_camera;
-
 
     std::vector<MQObject> m_obj_for_normals;
     std::vector<Relation> m_relations;
