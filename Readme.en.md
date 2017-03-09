@@ -10,11 +10,11 @@ It is compatible with Unity 5.4 and above (64-bit Windows) and Metasequoia versi
 
 ## How to Use
 - In Unity
- - Import [this package](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.6/MeshSync.unitypackage) to your project.
+ - Import [this package](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.7/MeshSync.unitypackage) to your project.
  - Create a server object by going to the menu and selecting GameObject, then MeshSync, and Create Server.
  - This server object will take care of syncing. You cannot sync without this in the scene.
 - In Metasequoia
- - Install [this plugin](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.6/UnityMeshSync.for.Metasequoia.zip). The plugin type is STATION.
+ - Install [this plugin](https://github.com/unity3d-jp/MeshSync/releases/download/0.7.7/UnityMeshSync.for.Metasequoia.zip). The plugin type is STATION.
  Open Unity Mesh Sync from the panel, and select Auto Sync.
  Edits are automatically reflected in Unity while Auto Sync is enabled. You can manually reflect edits by pressing the Manual Sync button, even if Auto Sync is disabled.
   - Press Import Unity Scene to import the scene you currently have open in Unity.
