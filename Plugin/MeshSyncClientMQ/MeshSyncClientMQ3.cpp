@@ -272,6 +272,10 @@ bool& GetAutoSync(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getAutoSync();
 }
+bool& GetSyncVertexColor(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getSync().getSyncVertexColor();
+}
 bool& GetSyncCamera(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getSyncCamera();

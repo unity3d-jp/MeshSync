@@ -45,6 +45,7 @@ ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
 std::string& MQSync::getHostCameraPath() { return m_host_camera_path; }
 float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
+bool & MQSync::getSyncVertexColor() { return m_sync_vertex_color; }
 bool& MQSync::getSyncCamera() { return m_sync_camera; }
 bool& MQSync::getBakeSkin() { return m_bake_skin; }
 bool& MQSync::getBakeCloth() { return m_bake_cloth; }
@@ -520,29 +521,15 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     }
 
     // copy vertex colors if needed
-    {
-        bool copy_vertex_color = false;
-
-        auto mids = dst.materialIDs;
-        mids.erase(std::unique(mids.begin(), mids.end()), mids.end());
-        for (int mid : mids) {
-            if (mid >= 0) {
-                if (doc->GetMaterial(mid)->GetVertexColor() != MQMATERIAL_VERTEXCOLOR_DISABLE) {
-                    copy_vertex_color = true;
-                    break;
-                }
-            }
-        }
-        if (copy_vertex_color) {
-            dst.colors.resize(nindices);
-            dst.flags.has_colors = 1;
-            auto *colors = dst.colors.data();
-            for (int fi = 0; fi < nfaces; ++fi) {
-                int count = dst.counts[fi];
-                if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
-                    for (int ci = 0; ci < count; ++ci) {
-                        *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
-                    }
+    if (m_sync_vertex_color) {
+        dst.colors.resize(nindices);
+        dst.flags.has_colors = 1;
+        auto *colors = dst.colors.data();
+        for (int fi = 0; fi < nfaces; ++fi) {
+            int count = dst.counts[fi];
+            if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                for (int ci = 0; ci < count; ++ci) {
+                    *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
                 }
             }
         }

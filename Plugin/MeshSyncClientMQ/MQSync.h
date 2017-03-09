@@ -13,6 +13,7 @@ public:
     std::string& getHostCameraPath();
     float& getScaleFactor();
     bool& getAutoSync();
+    bool& getSyncVertexColor();
     bool& getSyncCamera();
     bool& getBakeSkin();
     bool& getBakeCloth();
@@ -46,6 +47,7 @@ private:
     float m_scale_factor = 200.0f;
     std::string m_host_camera_path = "/Main Camera";
     bool m_auto_sync = false;
+    bool m_sync_vertex_color = false;
     bool m_sync_camera = false;
 
     bool m_bake_skin = false;

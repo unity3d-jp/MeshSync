@@ -22,10 +22,13 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
     SetOutSpace(0.4);
 
     wchar_t buf[128];
+    double margin = 0.3;
 
-    MQFrame *frame = CreateVerticalFrame(this);
     {
-        MQFrame *hf = CreateHorizontalFrame(frame);
+        MQFrame *vf = CreateVerticalFrame(this);
+        vf->SetOutSpace(margin);
+
+        MQFrame *hf = CreateHorizontalFrame(vf);
         CreateLabel(hf, L"Server : Port");
         m_edit_server = CreateEdit(hf);
         m_edit_server->SetText(L(m_plugin->getSync().getClientSettings().server));
@@ -36,10 +39,9 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_edit_port->SetNumeric(MQEdit::NUMERIC_INT);
         m_edit_port->SetText(buf);
         m_edit_port->AddChangedEvent(this, &SettingsDlg::OnPortChange);
-    }
-    {
+
         swprintf(buf, L"%.3f", m_plugin->getSync().getScaleFactor());
-        MQFrame *hf = CreateHorizontalFrame(frame);
+        hf = CreateHorizontalFrame(vf);
         CreateLabel(hf, L"Scale Factor");
         m_edit_scale = CreateEdit(hf);
         m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
@@ -47,19 +49,34 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_edit_scale->AddChangedEvent(this, &SettingsDlg::OnScaleChange);
     }
 
-    m_check_camera = CreateCheckBox(frame, L"Sync Camera");
-    m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
-    m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
+    {
+        MQFrame *vf = CreateVerticalFrame(this);
+        vf->SetOutSpace(margin);
 
-    m_check_autosync = CreateCheckBox(frame, L"Auto Sync");
-    m_check_autosync->SetChecked(m_plugin->getSync().getAutoSync());
-    m_check_autosync->AddChangedEvent(this, &SettingsDlg::OnAutoSyncChange);
+        m_check_vcolor = CreateCheckBox(vf, L"Sync Vertex Color");
+        m_check_vcolor->SetChecked(m_plugin->getSync().getSyncVertexColor());
+        m_check_vcolor->AddChangedEvent(this, &SettingsDlg::OnSyncVertexColorChange);
 
-    m_button_sync = CreateButton(frame, L"Manual Sync");
-    m_button_sync->AddClickEvent(this, &SettingsDlg::OnSyncClicked);
+        m_check_camera = CreateCheckBox(vf, L"Sync Camera");
+        m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
+        m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
+    }
 
     {
         MQFrame *vf = CreateVerticalFrame(this);
+        vf->SetOutSpace(margin);
+
+        m_check_autosync = CreateCheckBox(vf, L"Auto Sync");
+        m_check_autosync->SetChecked(m_plugin->getSync().getAutoSync());
+        m_check_autosync->AddChangedEvent(this, &SettingsDlg::OnAutoSyncChange);
+
+        m_button_sync = CreateButton(vf, L"Manual Sync");
+        m_button_sync->AddClickEvent(this, &SettingsDlg::OnSyncClicked);
+    }
+
+    {
+        MQFrame *vf = CreateVerticalFrame(this);
+        vf->SetOutSpace(margin);
 
         CreateLabel(vf, L"Import Settings");
 
@@ -105,6 +122,12 @@ BOOL SettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
     if (f != 0.0) {
         m_plugin->getSync().getScaleFactor() = (float)f;
     }
+    return 0;
+}
+
+BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getSyncVertexColor() = m_check_vcolor->GetChecked();
     return 0;
 }
 
