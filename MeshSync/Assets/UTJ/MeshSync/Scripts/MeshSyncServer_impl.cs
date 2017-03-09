@@ -394,12 +394,14 @@ namespace UTJ
                     ret[0].AddKey(new Keyframe(t, v.x));
                     ret[1].AddKey(new Keyframe(t, v.y));
                     ret[2].AddKey(new Keyframe(t, v.z));
+#if UNITY_EDITOR
                     AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+#endif
                 }
                 if(reduce)
                 {
@@ -427,6 +429,7 @@ namespace UTJ
                     ret[1].AddKey(new Keyframe(t, v.y));
                     ret[2].AddKey(new Keyframe(t, v.z));
                     ret[3].AddKey(new Keyframe(t, v.w));
+#if UNITY_EDITOR
                     AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
@@ -435,6 +438,7 @@ namespace UTJ
                     AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
                     AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+#endif
                 }
                 if (reduce)
                 {
@@ -455,8 +459,10 @@ namespace UTJ
                     var t = times[i];
                     var v = values[i];
                     ret.AddKey(new Keyframe(t, v ? 0.0f : 1.0f));
+#if UNITY_EDITOR
                     AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
                     AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+#endif
                 }
                 if (reduce)
                 {

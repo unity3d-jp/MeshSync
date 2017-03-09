@@ -616,11 +616,13 @@ namespace UTJ
                 }
                 else
                 {
+#if UNITY_EDITOR
                     animator = root.gameObject.AddComponent<Animator>();
                     clip = new AnimationClip();
                     var assetName = "Test";
                     AssetDatabase.CreateAsset(clip, "Assets/" + assetName + ".anim");
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip("Assets/" + assetName + ".controller", clip);
+#endif
                 }
 
                 if (clip != null)
