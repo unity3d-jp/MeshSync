@@ -2,11 +2,13 @@
 {
     Properties
     {
+        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Int) = 5
+        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Int) = 10
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+        Tags{ "RenderType" = "Transparent" "Queue" = "Transparent" }
+        Blend[_SrcBlend][_DstBlend]
 
         Pass
         {
@@ -36,7 +38,7 @@
                 return o;
             }
             
-            fixed4 frag (v2f i) : SV_Target
+            float4 frag (v2f i) : SV_Target
             {
                 return i.color;
             }
