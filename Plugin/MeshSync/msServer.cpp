@@ -150,6 +150,11 @@ ServerSettings& Server::getSettings()
     return m_settings;
 }
 
+int Server::getNumMessages() const
+{
+    return (int)m_recv_history.size();
+}
+
 int Server::processMessages(const MessageHandler& handler)
 {
     lock_t l(m_mutex);

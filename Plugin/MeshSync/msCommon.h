@@ -267,8 +267,13 @@ enum class Handedness
 
 struct SceneSettings
 {
+    std::string name = "Untitled";
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
 };
 
 struct Scene

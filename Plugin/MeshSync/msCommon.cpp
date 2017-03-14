@@ -274,7 +274,7 @@ std::string ToANSI(const std::string& src)
 
 
 
-const int ProtocolVersion = 101;
+const int ProtocolVersion = 102;
 
 Message::~Message()
 {
@@ -974,11 +974,31 @@ void Mesh::generateWeights4()
     }
 }
 
+uint32_t SceneSettings::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(name);
+    ret += ssize(handedness);
+    ret += ssize(scale_factor);
+    return ret;
+}
+void SceneSettings::serialize(std::ostream& os) const
+{
+    write(os, name);
+    write(os, handedness);
+    write(os, scale_factor);
+}
+void SceneSettings::deserialize(std::istream& is)
+{
+    read(is, name);
+    read(is, handedness);
+    read(is, scale_factor);
+}
 
 uint32_t Scene::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(settings);
+    ret += settings.getSerializeSize();
     ret += ssize(meshes);
     ret += ssize(transforms);
     ret += ssize(cameras);
@@ -987,7 +1007,7 @@ uint32_t Scene::getSerializeSize() const
 }
 void Scene::serialize(std::ostream& os) const
 {
-    write(os, settings);
+    settings.serialize(os);
     write(os, meshes);
     write(os, transforms);
     write(os, cameras);
@@ -995,7 +1015,7 @@ void Scene::serialize(std::ostream& os) const
 }
 void Scene::deserialize(std::istream& is)
 {
-    read(is, settings);
+    settings.deserialize(is);
     read(is, meshes);
     read(is, transforms);
     read(is, cameras);

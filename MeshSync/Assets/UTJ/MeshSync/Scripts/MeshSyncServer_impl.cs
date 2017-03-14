@@ -378,7 +378,7 @@ namespace UTJ
                 }
             }
 
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce = true)
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce)
             {
                 var ret = new AnimationCurve[3] {
                     new AnimationCurve(),
@@ -411,7 +411,7 @@ namespace UTJ
                 }
                 return ret;
             }
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce = true)
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce)
             {
                 var ret = new AnimationCurve[4] {
                     new AnimationCurve(),
@@ -449,7 +449,7 @@ namespace UTJ
                 }
                 return ret;
             }
-            public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce = true)
+            public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce)
             {
                 var ret = new AnimationCurve();
                 if (times.Length == 0) { return ret; }
@@ -471,12 +471,12 @@ namespace UTJ
                 return ret;
             }
 
-            public void SetupAnimationClip(AnimationClip clip, string path)
+            public void ExportClips(AnimationClip clip, string path, bool reduce = false)
             {
-                var t = ToAnimatinCurve(translateTimes, translateValues);
-                var r = ToAnimatinCurve(rotationTimes, rotationValues);
-                var s = ToAnimatinCurve(scaleTimes, scaleValues);
-                var v = ToAnimatinCurve(visibilityTimes, visibilityValues);
+                var t = ToAnimatinCurve(translateTimes, translateValues, reduce);
+                var r = ToAnimatinCurve(rotationTimes, rotationValues, reduce);
+                var s = ToAnimatinCurve(scaleTimes, scaleValues, reduce);
+                var v = ToAnimatinCurve(visibilityTimes, visibilityValues, reduce);
 
                 var ttrans = typeof(Transform);
                 var tgo = typeof(GameObject);
@@ -1008,6 +1008,7 @@ namespace UTJ
         public struct SceneData
         {
             internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumTransforms(IntPtr _this);
@@ -1017,6 +1018,7 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
 
+            public string name { get { return S(msSceneGetName(_this)); } }
             public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
             public int numTransforms { get { return msSceneGetNumTransforms(_this); } }
             public int numCameras { get { return msSceneGetNumCameras(_this); } }
@@ -1054,6 +1056,7 @@ namespace UTJ
         [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr sv);
 
         delegate void msMessageHandler(MessageType type, IntPtr data);
+        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
 
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);

@@ -16,7 +16,7 @@ namespace UTJ
         #region fields
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-        [SerializeField] string m_assetExportPath = "Assets/MeshSyncAssets";
+        [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] bool m_logging = true;
 
         IntPtr m_server;
@@ -132,8 +132,9 @@ namespace UTJ
                 msServerSetScreenshotFilePath(m_server, "screenshot.png");
             }
 
-            if (msServerProcessMessages(m_server, m_handler) > 0)
+            if (msServerGetNumMessages(m_server) > 0)
             {
+                msServerProcessMessages(m_server, m_handler);
                 ForceRepaint();
             }
         }
@@ -243,37 +244,53 @@ namespace UTJ
             Undo.RecordObject(this, "MeshSyncServer");
 #endif
             var scene = mes.scene;
+
             // sync materials
-            int numMaterials = scene.numMaterials;
-            if(numMaterials > 0)
+            try
             {
-                UpdateMaterials(scene);
+                int numMaterials = scene.numMaterials;
+                if (numMaterials > 0)
+                {
+                    UpdateMaterials(scene);
+                }
             }
+            catch (Exception e) { Debug.Log(e); }
 
             // sync transforms
-            int numTransforms = scene.numTransforms;
-            for (int i = 0; i < numTransforms; ++i)
+            try
             {
-                UpdateTransform(scene.GetTransform(i));
+                int numTransforms = scene.numTransforms;
+                for (int i = 0; i < numTransforms; ++i)
+                {
+                    UpdateTransform(scene.GetTransform(i));
+                }
             }
+            catch (Exception e) { Debug.Log(e); }
 
             // sync cameras
-            int numCameras = scene.numCameras;
-            for (int i = 0; i < numCameras; ++i)
+            try
             {
-                UpdateCamera(scene.GetCamera(i));
+                int numCameras = scene.numCameras;
+                for (int i = 0; i < numCameras; ++i)
+                {
+                    UpdateCamera(scene.GetCamera(i));
+                }
+
             }
+            catch (Exception e) { Debug.Log(e); }
 
             // sync meshes
-            int numMeshes = scene.numMeshes;
-            for (int i = 0; i < numMeshes; ++i)
+            try
             {
-                UpdateMesh(scene.GetMesh(i));
+                int numMeshes = scene.numMeshes;
+                for (int i = 0; i < numMeshes; ++i)
+                {
+                    UpdateMesh(scene.GetMesh(i));
+                }
             }
+            catch (Exception e) { Debug.Log(e); }
 
             GC.Collect();
-
-            //Debug.Log("MeshSyncServer: Set");
         }
 
         void DestroyIfNotAsset(UnityEngine.Object obj)
@@ -582,6 +599,18 @@ namespace UTJ
             }
         }
 
+        void CreateAsset(UnityEngine.Object obj, string path)
+        {
+#if UNITY_EDITOR
+            string assetDir = "Assets/" + m_assetExportPath;
+            if (!AssetDatabase.IsValidFolder(assetDir))
+            {
+                AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+            }
+            AssetDatabase.CreateAsset(obj, path);
+#endif
+        }
+
         Transform UpdateTransform(TransformData data)
         {
             bool created = false;
@@ -591,46 +620,59 @@ namespace UTJ
             Undo.RecordObject(trans, "MeshSync");
 #endif
 
+            // import TRS
             var trs = data.trs;
             trans.localPosition = trs.position;
             trans.localRotation = trs.rotation;
             trans.localScale = trs.scale;
 
-            var anim = data.animation;
-            if(anim)
+#if UNITY_EDITOR
+            var animData = data.animation;
+            if(animData)
             {
+                // import TRS animation
                 Transform root = trans;
                 Animator animator = null;
                 AnimationClip clip = null;
+                var assetPath = "Assets/" + m_assetExportPath + "/" + root.name;
 
-                while(root.parent != null)
+                // find or create animator & animation clip
+                while (root.parent != null)
                 {
                     root = root.parent;
                 }
-
-                // get or create animator
                 animator = root.GetComponent<Animator>();
-                if (animator != null)
+                if(animator == null)
                 {
-                    clip = animator.runtimeAnimatorController.animationClips[0];
+                    animator = root.gameObject.AddComponent<Animator>();
                 }
                 else
                 {
-#if UNITY_EDITOR
-                    animator = root.gameObject.AddComponent<Animator>();
-                    clip = new AnimationClip();
-                    var assetName = "Test";
-                    AssetDatabase.CreateAsset(clip, "Assets/" + assetName + ".anim");
-                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip("Assets/" + assetName + ".controller", clip);
-#endif
+                    if (animator.runtimeAnimatorController != null)
+                    {
+                        var clips = animator.runtimeAnimatorController.animationClips;
+                        if(clips != null && clips.Length > 0)
+                        {
+                            clip = animator.runtimeAnimatorController.animationClips[0];
+                        }
+                    }
                 }
 
-                if (clip != null)
+                if (clip == null)
                 {
-                    anim.SetupAnimationClip(clip, data.path);
+                    clip = new AnimationClip();
+                    CreateAsset(clip, assetPath + ".anim");
+                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
                 }
 
+                var animPath = data.path.Replace("/" + root.name, "");
+                if(animPath.Length > 0 && animPath[0] == '/')
+                {
+                    animPath = animPath.Remove(0, 1);
+                }
+                animData.ExportClips(clip, animPath, false);
             }
+#endif
 
             return trans;
         }
@@ -1118,12 +1160,12 @@ namespace UTJ
         public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
-            AssetDatabase.CreateFolder(".", m_assetExportPath);
+            AssetDatabase.CreateFolder("Assets", m_assetExportPath);
             var mf = go.GetComponent<MeshFilter>();
             if (mf != null && mf.sharedMesh != null)
             {
-                var path = m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
-                AssetDatabase.CreateAsset(mf.sharedMesh, path);
+                var path = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
+                CreateAsset(mf.sharedMesh, path);
                 if (m_logging)
                 {
                     Debug.Log("exported mesh " + path);

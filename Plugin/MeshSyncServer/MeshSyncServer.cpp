@@ -31,6 +31,11 @@ msAPI void  msServerStop(ms::Server *server)
     }
 }
 
+msAPI int msServerGetNumMessages(ms::Server *server)
+{
+    return server ? server->getNumMessages() : 0;
+}
+
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
@@ -501,6 +506,10 @@ msAPI void msBlendShapeReadTangents(ms::BlendshapeData *_this, float3 *dst)
 }
 
 
+msAPI const char* msSceneGetName(ms::Scene *_this)
+{
+    return _this->settings.name.c_str();
+}
 msAPI int msSceneGetNumMeshes(ms::Scene *_this)
 {
     return (int)_this->meshes.size();
