@@ -37,6 +37,7 @@
 #include <maya/MFloatArray.h>
 #include <maya/MFloatPointArray.h>
 #include <maya/MFloatVectorArray.h>
+#include <maya/MPointArray.h>
 #include <maya/MMatrix.h>
 #include <maya/MMatrixArray.h>
 #include <maya/MQuaternion.h>
@@ -54,6 +55,7 @@
 #include <maya/MFnAnimCurve.h>
 #include <maya/MFnSet.h>
 #include <maya/MFnMatrixData.h>
+#include <maya/MFnPointArrayData.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnLambertShader.h>

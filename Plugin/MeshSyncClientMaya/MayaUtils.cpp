@@ -164,21 +164,25 @@ MTime ToMTime(float seconds)
 
 static void DumpPlugInfo(MPlug plug, std::string indent)
 {
+    uint32_t num_elements = 0;
+    uint32_t num_children= 0;
+
     char array_info[64] = "";
     if (plug.isArray()) {
-        sprintf(array_info, "[%d]", plug.numElements());
+        num_elements = plug.numElements();
+        sprintf(array_info, "[%d]", num_elements);
     }
     mscTrace("%splug %s%s\n", indent.c_str(), plug.name().asChar(), array_info);
     if (plug.isCompound()) {
         auto indent2 = indent + " ";
-        uint32_t nc = plug.numChildren();
+        num_children = plug.numChildren();
         if (plug.isArray()) {
-            for (uint32_t i = 0; i < nc; ++i) {
+            for (uint32_t i = 0; i < num_children; ++i) {
                 DumpPlugInfo(plug.elementByPhysicalIndex(0).child(i), indent2);
             }
         }
         else {
-            for (uint32_t i = 0; i < nc; ++i) {
+            for (uint32_t i = 0; i < num_children; ++i) {
                 DumpPlugInfo(plug.child(i), indent2);
             }
         }
@@ -188,4 +192,5 @@ static void DumpPlugInfo(MPlug plug, std::string indent)
 void DumpPlugInfo(MPlug plug)
 {
     DumpPlugInfo(plug, "");
+    mscTrace("\n");
 }

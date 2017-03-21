@@ -812,6 +812,63 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
     }
 
+    // get blendshape data
+    if (!fn_blendshape.object().isNull()) {
+        auto num_weights = fn_blendshape.numWeights();
+        dst.blendshape.resize(num_weights);
+
+        auto plug_inputTargets = fn_blendshape.findPlug("inputTarget");
+        auto plug_inputTargetGroups = plug_inputTargets.elementByPhysicalIndex(0).child(0);
+        auto plug_inputTargetItem = plug_inputTargetGroups.elementByPhysicalIndex(0).child(0).elementByPhysicalIndex(0);
+        auto plug_inputGeomTarget = plug_inputTargetItem.child(0);
+        auto plug_inputRelativePointsTarget = plug_inputTargetItem.child(1);
+        DumpPlugInfo(plug_inputTargets);
+        DumpPlugInfo(plug_inputTargetGroups);
+        DumpPlugInfo(plug_inputTargetItem);
+        DumpPlugInfo(plug_inputRelativePointsTarget);
+
+        if (plug_inputGeomTarget.isConnected()) {
+            auto data = plug_inputGeomTarget.asMObject();
+            MFnMesh tmesh = data;
+            auto t = data.apiTypeStr();
+        }
+        else {
+            MObject data;
+            plug_inputRelativePointsTarget.getValue(data);
+            MFnPointArrayData pad = data;
+            MPointArray pts;
+            pad.copyTo(pts);
+            auto len = pts.length();
+        }
+
+        MObjectArray bases;
+        fn_blendshape.getBaseObjects(bases);
+        auto num_bases = bases.length();
+        for (uint32_t bi = 0; bi < num_bases; ++bi) {
+            MFnDependencyNode fn = bases[bi];
+            std::string name = fn.name().asChar();
+            printf("%s\n", name.c_str());
+        }
+
+        for (uint32_t wi = 0; wi < num_weights; ++wi) {
+            auto bs = new ms::BlendshapeData();
+            bs->points.resize(dst.points.size());
+            dst.blendshape[wi].reset(bs);
+
+            MObjectArray targets;
+            fn_blendshape.getTargets(bases[0], wi, targets);
+            auto num_targets = targets.length();
+            for (uint32_t ti = 0; ti < targets.length(); ++ti) {
+                MItGeometry gi = targets[ti];
+                while (!gi.isDone()) {
+                    auto idx = gi.index();
+                    auto p = gi.position();
+                    bs->points[idx] = (ms::float3&)p;
+                }
+            }
+        }
+    }
+
     // get skinning data
     if(!fn_skin.object().isNull()) {
         // request bake TRS
