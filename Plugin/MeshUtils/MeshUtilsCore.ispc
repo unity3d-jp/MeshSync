@@ -211,7 +211,7 @@ export void Normalize(
 }
 
 
-export void Lerp(uniform float dst[], uniform float src1[], uniform float src2[], uniform float w, uniform const int num)
+export void Lerp(uniform float dst[], uniform const float src1[], uniform const float src2[], uniform const int num, uniform float w)
 {
     uniform float iw = 1.0f - w;
     foreach(i=0 ... num) {
@@ -304,8 +304,8 @@ export uniform float3 Max(uniform const float3 src[], uniform const int num)
 }
 
 export void MinMax(
-    uniform float3& dst_min, uniform float3& dst_max,
-    uniform const float3 src[], uniform const int num)
+    uniform const float3 src[], uniform const int num,
+    uniform float3& dst_min, uniform float3& dst_max)
 {
     if(num == 0) { return; }
 

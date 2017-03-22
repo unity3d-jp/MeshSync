@@ -77,6 +77,64 @@ void Normalize_Generic(float3 *dst, size_t num)
     }
 }
 
+void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, float w)
+{
+    const float iw = 1.0f - w;
+    for (size_t i = 0; i < num; ++i) {
+        dst[i] = src1[i] * w + src2[i] * iw;
+    }
+}
+
+float3 Min_Generic(const float3 *src, size_t num)
+{
+    float3 ret = src[0];
+    for (size_t i = 1; i < num; ++i) {
+        ret[0] = std::min<float>(ret[0], src[i][0]);
+        ret[1] = std::min<float>(ret[1], src[i][1]);
+        ret[2] = std::min<float>(ret[2], src[i][2]);
+    }
+    return ret;
+}
+
+float3 Max_Generic(const float3 *src, size_t num)
+{
+    float3 ret = src[0];
+    for (size_t i = 1; i < num; ++i) {
+        ret[0] = std::max<float>(ret[0], src[i][0]);
+        ret[1] = std::max<float>(ret[1], src[i][1]);
+        ret[2] = std::max<float>(ret[2], src[i][2]);
+    }
+    return ret;
+}
+
+void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
+{
+    if (num == 0) { return; }
+    float3 rmin = src[0];
+    float3 rmax = src[0];
+    for (size_t i = 1; i < num; ++i) {
+        rmin[0] = std::min<float>(rmin[0], src[i][0]);
+        rmin[1] = std::min<float>(rmin[1], src[i][1]);
+        rmin[2] = std::min<float>(rmin[2], src[i][2]);
+
+        rmax[0] = std::max<float>(rmax[0], src[i][0]);
+        rmax[1] = std::max<float>(rmax[1], src[i][1]);
+        rmax[2] = std::max<float>(rmax[2], src[i][2]);
+    }
+    dst_min = rmin;
+    dst_max = rmax;
+}
+
+bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps)
+{
+    for (size_t i = 0; i < num; ++i) {
+        if (!near_equal(src1[i], src2[i], eps)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
@@ -145,6 +203,30 @@ void GenerateNormals_ISPC(
 
     ispc::Normalize((ispc::float3*)dst, (int)num_points);
 }
+
+void Lerp_ISPC(float *dst, const float *src1, const float *src2, size_t num, float w)
+{
+    ispc::Lerp(dst, src1, src2, (int)num, w);
+}
+float3 Min_ISPC(const float3 *src, size_t num)
+{
+    auto ret = ispc::Min((ispc::float3*)src, (int)num);
+    return (const float3&)ret;
+}
+float3 Max_ISPC(const float3 *src, size_t num)
+{
+    auto ret = ispc::Max((ispc::float3*)src, (int)num);
+    return (const float3&)ret;
+}
+void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
+{
+    if (num == 0) { return; }
+    ispc::MinMax((ispc::float3*)src, (int)num, (ispc::float3&)dst_min, (ispc::float3&)dst_max);
+}
+bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
+{
+    return ispc::NearEqual(src1, src2, (int)num, eps);
+}
 #endif
 
 
@@ -193,5 +275,48 @@ void Normalize(float3 *dst, size_t num)
 {
     Forward(Normalize, dst, num);
 }
+
+void Lerp(float *dst, const float *src1, const float *src2, size_t num, float w)
+{
+    Forward(Lerp, dst, src1, src2, num, w);
+}
+void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w)
+{
+    Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 2, w);
+}
+void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w)
+{
+    Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 3, w);
+}
+
+float3 Min(const float3 *p, size_t num)
+{
+    return Forward(Min, p, num);
+}
+
+float3 Max(const float3 *p, size_t num)
+{
+    return Forward(Max, p, num);
+}
+
+void MinMax(const float3 *p, size_t num, float3& dst_min, float3& dst_max)
+{
+    Forward(MinMax, p, num, dst_min, dst_max);
+}
+
+bool NearEqual(const float *src1, const float *src2, size_t num, float eps)
+{
+    return Forward(NearEqual, src1, src2, num, eps);
+}
+bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps)
+{
+    return NearEqual((const float*)src1, (const float*)src2, num * 2, eps);
+}
+bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps)
+{
+    return NearEqual((const float*)src1, (const float*)src2, num * 3, eps);
+}
+
+#undef Forward
 
 } // namespace mu
