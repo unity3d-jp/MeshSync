@@ -53,23 +53,6 @@ void Scale_Generic(float3 *dst, float s, size_t num)
     }
 }
 
-void ComputeBounds_Generic(const float3 *p, size_t num, float3& omin, float3& omax)
-{
-    if (num == 0) { return; }
-    float3 rmin = p[0], rmax = p[0];
-    for (size_t i = 1; i < num; ++i) {
-        auto _ = p[i];
-        rmin.x = std::min<float>(rmin.x, _.x);
-        rmin.y = std::min<float>(rmin.y, _.y);
-        rmin.z = std::min<float>(rmin.z, _.z);
-        rmax.x = std::max<float>(rmax.x, _.x);
-        rmax.y = std::max<float>(rmax.y, _.y);
-        rmax.z = std::max<float>(rmax.z, _.z);
-    }
-    omin = rmin;
-    omax = rmax;
-}
-
 void Normalize_Generic(float3 *dst, size_t num)
 {
     for (size_t i = 0; i < num; ++i) {
@@ -168,12 +151,6 @@ void Scale_ISPC(float3 *dst, float s, size_t num)
     ispc::ScaleF((float*)dst, s, (int)num * 3);
 }
 
-void ComputeBounds_ISPC(const float3 *p, size_t num, float3& omin, float3& omax)
-{
-    if (num == 0) { return; }
-    ispc::ComputeBounds((ispc::float3*)p, (int)num, (ispc::float3&)omin, (ispc::float3&)omax);
-}
-
 void Normalize_ISPC(float3 *dst, size_t num)
 {
     ispc::Normalize((ispc::float3*)dst, (int)num);
@@ -264,11 +241,6 @@ void Scale(float *dst, float s, size_t num)
 void Scale(float3 *dst, float s, size_t num)
 {
     Forward(Scale, dst, s, num);
-}
-
-void ComputeBounds(const float3 *p, size_t num, float3& omin, float3& omax)
-{
-    Forward(ComputeBounds, p, num, omin, omax);
 }
 
 void Normalize(float3 *dst, size_t num)

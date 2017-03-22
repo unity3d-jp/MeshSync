@@ -2,6 +2,9 @@
 #include "msCommon.h"
 #include "MeshUtils/tls.h"
 
+static const int msProtocolVersion = 103;
+
+
 namespace ms {
 namespace {
 
@@ -274,24 +277,22 @@ std::string ToANSI(const std::string& src)
 
 
 
-const int ProtocolVersion = 102;
-
 Message::~Message()
 {
 }
 uint32_t Message::getSerializeSize() const
 {
-    return ssize(ProtocolVersion);
+    return ssize(msProtocolVersion);
 }
 void Message::serialize(std::ostream& os) const
 {
-    write(os, ProtocolVersion);
+    write(os, msProtocolVersion);
 }
 bool Message::deserialize(std::istream& is)
 {
     int pv = 0;
     read(is, pv);
-    return pv == ProtocolVersion;
+    return pv == msProtocolVersion;
 }
 
 GetMessage::GetMessage()
@@ -600,6 +601,41 @@ void Camera::applyScaleFactor(float scale)
     super::applyScaleFactor(scale);
     near_plane *= scale;
     far_plane *= scale;
+}
+
+
+uint32_t Light::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(type);
+    ret += ssize(shadow_type);
+    ret += ssize(color);
+    ret += ssize(intensity);
+    ret += ssize(range);
+    ret += ssize(spot_angle);
+    return ret;
+}
+
+void Light::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, type);
+    write(os, shadow_type);
+    write(os, color);
+    write(os, intensity);
+    write(os, range);
+    write(os, spot_angle);
+}
+
+void Light::deserialize(std::istream & is)
+{
+    super::deserialize(is);
+    read(is, type);
+    read(is, shadow_type);
+    read(is, color);
+    read(is, intensity);
+    read(is, range);
+    read(is, spot_angle);
 }
 
 
@@ -1002,6 +1038,7 @@ uint32_t Scene::getSerializeSize() const
     ret += ssize(meshes);
     ret += ssize(transforms);
     ret += ssize(cameras);
+    ret += ssize(lights);
     ret += ssize(materials);
     return ret;
 }
@@ -1011,6 +1048,7 @@ void Scene::serialize(std::ostream& os) const
     write(os, meshes);
     write(os, transforms);
     write(os, cameras);
+    write(os, lights);
     write(os, materials);
 }
 void Scene::deserialize(std::istream& is)
@@ -1019,6 +1057,7 @@ void Scene::deserialize(std::istream& is)
     read(is, meshes);
     read(is, transforms);
     read(is, cameras);
+    read(is, lights);
     read(is, materials);
 }
 

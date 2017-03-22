@@ -243,6 +243,59 @@ msAPI void msCameraSetFarPlane(ms::Camera *_this, float v)
     _this->far_plane = v;
 }
 
+msAPI ms::Light* msLightCreate()
+{
+    return new ms::Light();
+}
+msAPI ms::Light::Type msLightGetType(ms::Light *_this)
+{
+    return _this->type;
+}
+msAPI void msLightSetType(ms::Light *_this, ms::Light::Type v)
+{
+    _this->type = v;
+}
+msAPI ms::Light::ShadowType msLightGetShadowType(ms::Light *_this)
+{
+    return _this->shadow_type;
+}
+msAPI void msLightSetShadowType(ms::Light *_this, ms::Light::ShadowType v)
+{
+    _this->shadow_type = v;
+}
+msAPI float4 msLightGetColor(ms::Light *_this)
+{
+    return _this->color;
+}
+msAPI void msLightSetColor(ms::Light *_this, float4 v)
+{
+    _this->color = v;
+}
+msAPI float msLightGetIntensity(ms::Light *_this)
+{
+    return _this->intensity;
+}
+msAPI void msLightSetIntensity(ms::Light *_this, float v)
+{
+    _this->intensity = v;
+}
+msAPI float msLightGetRange(ms::Light *_this)
+{
+    return _this->range;
+}
+msAPI void msLightSetRange(ms::Light *_this, float v)
+{
+    _this->range = v;
+}
+msAPI float msLightGetSpotAngle(ms::Light *_this)
+{
+    return _this->spot_angle;
+}
+msAPI void msLightSetSpotAngle(ms::Light *_this, float v)
+{
+    _this->spot_angle = v;
+}
+
 
 msAPI ms::Mesh* msMeshCreate()
 {
@@ -533,6 +586,14 @@ msAPI int msSceneGetNumCameras(ms::Scene *_this)
 msAPI ms::Camera* msSceneGetCameraData(ms::Scene *_this, int i)
 {
     return _this->cameras[i].get();
+}
+msAPI int msSceneGetNumLights(ms::Scene *_this)
+{
+    return (int)_this->lights.size();
+}
+msAPI ms::Light* msSceneGetLightData(ms::Scene *_this, int i)
+{
+    return _this->lights[i].get();
 }
 msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 {

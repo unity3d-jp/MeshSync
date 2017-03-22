@@ -21,6 +21,7 @@ struct Weights
     int     indices[N] = {};
 };
 using Weights4 = Weights<4>;
+using Weights8 = Weights<8>;
 
 // size of dst must be num_points
 bool GenerateNormals(
@@ -33,9 +34,6 @@ bool GenerateTangents(
 
 template<int N>
 bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
-
-template<class DstArray, class SrcArray>
-void CopyWithIndices(DstArray& dst, const SrcArray& src, const SrcArray& indices, size_t beg, size_t end);
 
 
 

@@ -120,6 +120,40 @@ public:
 using CameraPtr = std::shared_ptr<Camera>;
 
 
+class Light : public Transform
+{
+using super = Transform;
+public:
+    enum class Type
+    {
+        Unknown,
+        Directional,
+        Point,
+        Spot,
+        Area,
+    };
+    enum class ShadowType
+    {
+        Unknown,
+        NoShadow,
+        HardShadow,
+        SoftShadow,
+    };
+
+    Type type = Type::Directional;
+    ShadowType shadow_type = ShadowType::Unknown;
+    float4 color = float4::one();
+    float intensity = 10.0f;
+    float range = 10.0f;
+    float spot_angle = 30.0f; // for spot light
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+using LightPtr = std::shared_ptr<Light>;
+
+
 // Mesh
 
 struct MeshDataFlags
@@ -283,6 +317,7 @@ public:
     std::vector<MeshPtr> meshes;
     std::vector<TransformPtr> transforms;
     std::vector<CameraPtr> cameras;
+    std::vector<LightPtr> lights;
     std::vector<MaterialPtr> materials;
 
 public:
