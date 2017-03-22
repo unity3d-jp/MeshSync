@@ -116,21 +116,50 @@ msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
     _this->color = *v;
 }
 
-msAPI int           msAnimationGetNumTranslationSamples(ms::Animation *_this)   { return _this ? (int)_this->translation.size() : 0; }
-msAPI float         msAnimationGetTranslationTime(ms::Animation *_this, int i)  { return _this->translation[i].time; }
-msAPI mu::float3    msAnimationGetTranslationValue(ms::Animation *_this, int i) { return _this->translation[i].value; }
+msAPI int       msTransformAGetNumTranslationSamples(ms::TransformAnimation *_this) { return _this ? (int)_this->translation.size() : 0; }
+msAPI float     msTransformAGetTranslationTime(ms::TransformAnimation *_this, int i) { return _this->translation[i].time; }
+msAPI float3    msTransformAGetTranslationValue(ms::TransformAnimation *_this, int i) { return _this->translation[i].value; }
 
-msAPI int           msAnimationGetNumRotationSamples(ms::Animation *_this)  { return _this ? (int)_this->rotation.size() : 0; }
-msAPI float         msAnimationGetRotationTime(ms::Animation *_this, int i) { return _this->rotation[i].time; }
-msAPI mu::quatf     msAnimationGetRotationValue(ms::Animation *_this, int i){ return _this->rotation[i].value; }
+msAPI int       msTransformAGetNumRotationSamples(ms::TransformAnimation *_this) { return _this ? (int)_this->rotation.size() : 0; }
+msAPI float     msTransformAGetRotationTime(ms::TransformAnimation *_this, int i) { return _this->rotation[i].time; }
+msAPI quatf     msTransformAGetRotationValue(ms::TransformAnimation *_this, int i) { return _this->rotation[i].value; }
 
-msAPI int           msAnimationGetNumScaleSamples(ms::Animation *_this)     { return _this ? (int)_this->scale.size() : 0; }
-msAPI float         msAnimationGetScaleTime(ms::Animation *_this, int i)    { return _this->scale[i].time; }
-msAPI mu::float3    msAnimationGetScaleValue(ms::Animation *_this, int i)   { return _this->scale[i].value; }
+msAPI int       msTransformAGetNumScaleSamples(ms::TransformAnimation *_this) { return _this ? (int)_this->scale.size() : 0; }
+msAPI float     msTransformAGetScaleTime(ms::TransformAnimation *_this, int i) { return _this->scale[i].time; }
+msAPI float3    msTransformAGetScaleValue(ms::TransformAnimation *_this, int i) { return _this->scale[i].value; }
 
-msAPI int           msAnimationGetNumVisibilitySamples(ms::Animation *_this)       { return _this ? (int)_this->visibility.size() : 0; }
-msAPI float         msAnimationGetVisibilityTime(ms::Animation *_this, int i)   { return _this->visibility[i].time; }
-msAPI bool          msAnimationGetVisibilityValue(ms::Animation *_this, int i)    { return _this->visibility[i].value; }
+msAPI int       msTransformAGetNumVisibilitySamples(ms::TransformAnimation *_this) { return _this ? (int)_this->visibility.size() : 0; }
+msAPI float     msTransformAGetVisibilityTime(ms::TransformAnimation *_this, int i) { return _this->visibility[i].time; }
+msAPI bool      msTransformAGetVisibilityValue(ms::TransformAnimation *_this, int i) { return _this->visibility[i].value; }
+
+msAPI int       msCameraAGetNumFovSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->fov.size() : 0; }
+msAPI float     msCameraAGetFovTime(ms::CameraAnimation *_this, int i) { return _this->fov[i].time; }
+msAPI float     msCameraAGetFovValue(ms::CameraAnimation *_this, int i) { return _this->fov[i].value; }
+
+msAPI int       msCameraAGetNumNearSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->near_plane.size() : 0; }
+msAPI float     msCameraAGetNearTime(ms::CameraAnimation *_this, int i) { return _this->near_plane[i].time; }
+msAPI float     msCameraAGetNearValue(ms::CameraAnimation *_this, int i) { return _this->near_plane[i].value; }
+
+msAPI int       msCameraAGetNumFarSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->far_plane.size() : 0; }
+msAPI float     msCameraAGetFarTime(ms::CameraAnimation *_this, int i) { return _this->far_plane[i].time; }
+msAPI float     msCameraAGetFarValue(ms::CameraAnimation *_this, int i) { return _this->far_plane[i].value; }
+
+msAPI int       msLightAGetNumColorSamples(ms::LightAnimation *_this) { return _this ? (int)_this->color.size() : 0; }
+msAPI float     msLightAGetColorTime(ms::LightAnimation *_this, int i) { return _this->color[i].time; }
+msAPI float4    msLightAGetColorValue(ms::LightAnimation *_this, int i) { return _this->color[i].value; }
+
+msAPI int       msLightAGetNumIntensitySamples(ms::LightAnimation *_this) { return _this ? (int)_this->intensity.size() : 0; }
+msAPI float     msLightAGetIntensityTime(ms::LightAnimation *_this, int i) { return _this->intensity[i].time; }
+msAPI float     msLightAGetIntensityValue(ms::LightAnimation *_this, int i) { return _this->intensity[i].value; }
+
+msAPI int       msLightAGetNumRangeSamples(ms::LightAnimation *_this) { return _this ? (int)_this->range.size() : 0; }
+msAPI float     msLightAGetRangeTime(ms::LightAnimation *_this, int i) { return _this->range[i].time; }
+msAPI float     msLightAGetRangeValue(ms::LightAnimation *_this, int i) { return _this->range[i].value; }
+
+msAPI int       msLightAGetNumSpotAngleSamples(ms::LightAnimation *_this) { return _this ? (int)_this->spot_angle.size() : 0; }
+msAPI float     msLightAGetSpotAngleTime(ms::LightAnimation *_this, int i) { return _this->spot_angle[i].time; }
+msAPI float     msLightAGetSpotAngleValue(ms::LightAnimation *_this, int i) { return _this->spot_angle[i].value; }
+
 
 msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {

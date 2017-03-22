@@ -650,8 +650,8 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Transform& dst, MObje
         if (found == 0) { return; }
     }
 
-    dst.animation.reset(new ms::Animation());
-    auto& anim = *dst.animation;
+    dst.createAnimation();
+    auto& anim = static_cast<ms::TransformAnimation&>(*dst.animation);
 
     // build time-sampled animation data
     ConvertAnimationBool(false, anim.visibility, pvis, m_animation_samples_per_seconds);

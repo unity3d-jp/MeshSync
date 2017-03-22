@@ -275,21 +275,21 @@ namespace UTJ
         {
             internal IntPtr _this;
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumTranslationSamples(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msAnimationGetTranslationTime(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern Vector3 msAnimationGetTranslationValue(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msTransformAGetNumTranslationSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msTransformAGetTranslationTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetTranslationValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumRotationSamples(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msAnimationGetRotationTime(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern Quaternion msAnimationGetRotationValue(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msTransformAGetNumRotationSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msTransformAGetRotationTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Quaternion msTransformAGetRotationValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumScaleSamples(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msAnimationGetScaleTime(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern Vector3 msAnimationGetScaleValue(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msTransformAGetNumScaleSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msTransformAGetScaleTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetScaleValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msAnimationGetNumVisibilitySamples(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msAnimationGetVisibilityTime(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern byte msAnimationGetVisibilityValue(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibilitySamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibilityTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibilityValue(IntPtr _this, int i);
 
             public static explicit operator AnimationData(IntPtr v)
             {
@@ -306,8 +306,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new float[msAnimationGetNumTranslationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationTime(_this, i); }
+                    var ret = new float[msTransformAGetNumTranslationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetTranslationTime(_this, i); }
                     return ret;
                 }
             }
@@ -315,8 +315,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new Vector3[msAnimationGetNumTranslationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetTranslationValue(_this, i); }
+                    var ret = new Vector3[msTransformAGetNumTranslationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetTranslationValue(_this, i); }
                     return ret;
                 }
             }
@@ -325,8 +325,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new float[msAnimationGetNumRotationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationTime(_this, i); }
+                    var ret = new float[msTransformAGetNumRotationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetRotationTime(_this, i); }
                     return ret;
                 }
             }
@@ -334,8 +334,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new Quaternion[msAnimationGetNumRotationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetRotationValue(_this, i); }
+                    var ret = new Quaternion[msTransformAGetNumRotationSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetRotationValue(_this, i); }
                     return ret;
                 }
             }
@@ -344,8 +344,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new float[msAnimationGetNumScaleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleTime(_this, i); }
+                    var ret = new float[msTransformAGetNumScaleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetScaleTime(_this, i); }
                     return ret;
                 }
             }
@@ -353,8 +353,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new Vector3[msAnimationGetNumScaleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetScaleValue(_this, i); }
+                    var ret = new Vector3[msTransformAGetNumScaleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetScaleValue(_this, i); }
                     return ret;
                 }
             }
@@ -363,8 +363,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new float[msAnimationGetNumVisibilitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityTime(_this, i); }
+                    var ret = new float[msTransformAGetNumVisibilitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibilityTime(_this, i); }
                     return ret;
                 }
             }
@@ -372,8 +372,8 @@ namespace UTJ
             {
                 get
                 {
-                    var ret = new bool[msAnimationGetNumVisibilitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msAnimationGetVisibilityValue(_this, i) != 0; }
+                    var ret = new bool[msTransformAGetNumVisibilitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibilityValue(_this, i) != 0; }
                     return ret;
                 }
             }

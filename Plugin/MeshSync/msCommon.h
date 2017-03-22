@@ -56,18 +56,15 @@ struct TVP
     T value;
 };
 
-struct Animation
+class Animation
 {
-    RawVector<TVP<float3>> translation;
-    RawVector<TVP<quatf>> rotation;
-    RawVector<TVP<float3>> scale;
-    RawVector<TVP<bool>> visibility;
+public:
+    virtual ~Animation();
+    virtual uint32_t getSerializeSize() const;
+    virtual void serialize(std::ostream& os) const;
+    virtual void deserialize(std::istream& is);
 
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-
-    bool empty() const;
+    virtual bool empty() const;
 };
 using AnimationPtr = std::shared_ptr<Animation>;
 
@@ -97,10 +94,26 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
+    virtual void createAnimation();
     virtual void swapHandedness();
     virtual void applyScaleFactor(float scale);
 };
 using TransformPtr = std::shared_ptr<Transform>;
+
+class TransformAnimation : public Animation
+{
+public:
+    RawVector<TVP<float3>>  translation;
+    RawVector<TVP<quatf>>   rotation;
+    RawVector<TVP<float3>>  scale;
+    RawVector<TVP<bool>>    visibility;
+
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+
+    bool empty() const override;
+};
 
 
 class Camera : public Transform
@@ -115,9 +128,25 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 
+    void createAnimation() override;
     void applyScaleFactor(float scale) override;
 };
 using CameraPtr = std::shared_ptr<Camera>;
+
+class CameraAnimation : public Animation
+{
+using super = Animation;
+public:
+    RawVector<TVP<float>>   fov;
+    RawVector<TVP<float>>   near_plane;
+    RawVector<TVP<float>>   far_plane;
+
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+
+    bool empty() const override;
+};
 
 
 class Light : public Transform
@@ -150,8 +179,27 @@ public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    void createAnimation() override;
+    void applyScaleFactor(float scale) override;
 };
 using LightPtr = std::shared_ptr<Light>;
+
+class LightAnimation : public Animation
+{
+using super = Animation;
+public:
+    RawVector<TVP<float4>>  color;
+    RawVector<TVP<float>>   intensity;
+    RawVector<TVP<float>>   range;
+    RawVector<TVP<float>>   spot_angle; // for spot light
+
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+
+    bool empty() const override;
+};
 
 
 // Mesh

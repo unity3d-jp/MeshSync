@@ -455,36 +455,26 @@ const char* SceneEntity::getName() const
     return path.c_str() + name_pos;
 }
 
+Animation::~Animation()
+{
+}
 
 uint32_t Animation::getSerializeSize() const
 {
-    uint32_t ret = 0;
-    ret += ssize(translation);
-    ret += ssize(rotation);
-    ret += ssize(scale);
-    ret += ssize(visibility);
-    return ret;
+    return 0;
 }
 
-void Animation::serialize(std::ostream & os) const
+void Animation::serialize(std::ostream &) const
 {
-    write(os, translation);
-    write(os, rotation);
-    write(os, scale);
-    write(os, visibility);
 }
 
-void Animation::deserialize(std::istream & is)
+void Animation::deserialize(std::istream &)
 {
-    read(is, translation);
-    read(is, rotation);
-    read(is, scale);
-    read(is, visibility);
 }
 
 bool Animation::empty() const
 {
-    return translation.empty() && rotation.empty() && scale.empty() && visibility.empty();
+    return true;
 }
 
 
@@ -552,16 +542,22 @@ void Transform::deserialize(std::istream& is)
     read(is, reference);
 }
 
+void Transform::createAnimation()
+{
+    animation.reset(new TransformAnimation());
+}
+
 void Transform::swapHandedness()
 {
     transform.position.x *= -1.0f;
     transform.rotation = swap_handedness(transform.rotation);
 
     if (animation) {
-        for (auto& tvp : animation->translation) {
+        auto tanim = static_cast<TransformAnimation&>(*animation);
+        for (auto& tvp : tanim.translation) {
             tvp.value.x *= -1.0f;
         }
-        for (auto& tvp : animation->rotation) {
+        for (auto& tvp : tanim.rotation) {
             tvp.value = swap_handedness(tvp.value);
         }
     }
@@ -571,6 +567,38 @@ void Transform::applyScaleFactor(float scale)
 {
     transform.position *= scale;
 }
+
+uint32_t TransformAnimation::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(translation);
+    ret += ssize(rotation);
+    ret += ssize(scale);
+    ret += ssize(visibility);
+    return ret;
+}
+
+void TransformAnimation::serialize(std::ostream & os) const
+{
+    write(os, translation);
+    write(os, rotation);
+    write(os, scale);
+    write(os, visibility);
+}
+
+void TransformAnimation::deserialize(std::istream & is)
+{
+    read(is, translation);
+    read(is, rotation);
+    read(is, scale);
+    read(is, visibility);
+}
+
+bool TransformAnimation::empty() const
+{
+    return translation.empty() && rotation.empty() && scale.empty() && visibility.empty();
+}
+
 
 
 uint32_t Camera::getSerializeSize() const
@@ -596,11 +624,45 @@ void Camera::deserialize(std::istream& is)
     read(is, far_plane);
 }
 
+void Camera::createAnimation()
+{
+    animation.reset(new CameraAnimation());
+}
+
 void Camera::applyScaleFactor(float scale)
 {
     super::applyScaleFactor(scale);
     near_plane *= scale;
     far_plane *= scale;
+}
+
+uint32_t CameraAnimation::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(fov);
+    ret += ssize(near_plane);
+    ret += ssize(far_plane);
+    return ret;
+}
+
+void CameraAnimation::serialize(std::ostream & os) const
+{
+    write(os, fov);
+    write(os, near_plane);
+    write(os, far_plane);
+}
+
+void CameraAnimation::deserialize(std::istream & is)
+{
+    read(is, fov);
+    read(is, near_plane);
+    read(is, far_plane);
+}
+
+bool CameraAnimation::empty() const
+{
+    return super::empty() &&
+        fov.empty() && near_plane.empty() && far_plane.empty();
 }
 
 
@@ -636,6 +698,49 @@ void Light::deserialize(std::istream & is)
     read(is, intensity);
     read(is, range);
     read(is, spot_angle);
+}
+
+void Light::createAnimation()
+{
+    animation.reset(new LightAnimation());
+}
+
+void Light::applyScaleFactor(float scale)
+{
+    super::applyScaleFactor(scale);
+    range *= scale;
+}
+
+uint32_t LightAnimation::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(color);
+    ret += ssize(intensity);
+    ret += ssize(range);
+    ret += ssize(spot_angle);
+    return ret;
+}
+
+void LightAnimation::serialize(std::ostream & os) const
+{
+    write(os, color);
+    write(os, intensity);
+    write(os, range);
+    write(os, spot_angle);
+}
+
+void LightAnimation::deserialize(std::istream & is)
+{
+    read(is, color);
+    read(is, intensity);
+    read(is, range);
+    read(is, spot_angle);
+}
+
+bool LightAnimation::empty() const
+{
+    return super::empty() &&
+        color.empty() && intensity.empty() && range.empty() && spot_angle.empty();
 }
 
 
