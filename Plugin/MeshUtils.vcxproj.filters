@@ -25,6 +25,15 @@
     <ClInclude Include="MeshUtils\Math.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\SIMD.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils\Vertex.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils\MeshRefiner.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
@@ -42,6 +51,15 @@
       <Filter>MeshUtils</Filter>
     </ClCompile>
     <ClCompile Include="MeshUtils\Allocator.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshUtils\Vertex.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshUtils\SIMD.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshUtils\MeshRefiner.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
   </ItemGroup>

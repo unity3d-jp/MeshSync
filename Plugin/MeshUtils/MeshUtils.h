@@ -5,6 +5,8 @@
 #include "Math.h"
 #include "RawVector.h"
 #include "IntrusiveArray.h"
+#include "SIMD.h"
+#include "Vertex.h"
 
 namespace mu {
 
@@ -20,19 +22,6 @@ struct Weights
 };
 using Weights4 = Weights<4>;
 
-#ifdef muEnableHalf
-void FloatToHalf(half *dst, const float *src, size_t num);
-void HalfToFloat(float *dst, const half *src, size_t num);
-#endif // muEnableHalf
-
-void InvertX(float3 *dst, size_t num);
-void InvertX(float4 *dst, size_t num);
-void InvertV(float2 *dst, size_t num);
-void Scale(float *dst, float s, size_t num);
-void Scale(float3 *dst, float s, size_t num);
-void ComputeBounds(const float3 *p, size_t num, float3& o_min, float3& o_max);
-void Normalize(float3 *dst, size_t num);
-
 // size of dst must be num_points
 bool GenerateNormals(
     IArray<float3> dst, const IArray<float3> points,
@@ -45,190 +34,9 @@ bool GenerateTangents(
 template<int N>
 bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
 
-
-// vertex interleave
-
-enum class VertexFormat
-{
-    Unknown,
-    V3N3,
-    V3N3C4,
-    V3N3U2,
-    V3N3C4U2,
-    V3N3U2T4,
-    V3N3C4U2T4,
-};
-
-struct vertex_v3n3;
-struct vertex_v3n3_arrays;
-struct vertex_v3n3c4;
-struct vertex_v3n3c4_arrays;
-struct vertex_v3n3u2;
-struct vertex_v3n3u2_arrays;
-struct vertex_v3n3c4u2;
-struct vertex_v3n3c4u2_arrays;
-struct vertex_v3n3u2t4;
-struct vertex_v3n3u2t4_arrays;
-struct vertex_v3n3c4u2t4;
-struct vertex_v3n3c4u2t4_arrays;
-
-#define DefTraits(T, ID)\
-    static const VertexFormat tid = VertexFormat::ID;\
-    using vertex_t = T;\
-    using arrays_t = T##_arrays;
-
-
-struct vertex_v3n3_arrays
-{
-    DefTraits(vertex_v3n3, V3N3)
-    const float3 *points;
-    const float3 *normals;
-};
-struct vertex_v3n3
-{
-    DefTraits(vertex_v3n3, V3N3)
-    float3 p;
-    float3 n;
-};
-
-struct vertex_v3n3c4_arrays
-{
-    DefTraits(vertex_v3n3c4, V3N3C4)
-    const float3 *points;
-    const float3 *normals;
-    const float4 *colors;
-};
-struct vertex_v3n3c4
-{
-    DefTraits(vertex_v3n3c4, V3N3C4)
-    float3 p;
-    float3 n;
-    float4 c;
-};
-
-
-struct vertex_v3n3u2_arrays
-{
-    DefTraits(vertex_v3n3u2, V3N3U2)
-    const float3 *points;
-    const float3 *normals;
-    const float2 *uvs;
-};
-struct vertex_v3n3u2
-{
-    DefTraits(vertex_v3n3u2, V3N3U2)
-    float3 p;
-    float3 n;
-    float2 u;
-};
-
-struct vertex_v3n3c4u2_arrays
-{
-    DefTraits(vertex_v3n3c4u2, V3N3C4U2)
-    const float3 *points;
-    const float3 *normals;
-    const float4 *colors;
-    const float2 *uvs;
-};
-struct vertex_v3n3c4u2
-{
-    DefTraits(vertex_v3n3c4u2, V3N3C4U2)
-    float3 p;
-    float3 n;
-    float4 c;
-    float2 u;
-};
-
-struct vertex_v3n3u2t4_arrays
-{
-    DefTraits(vertex_v3n3u2t4, V3N3U2T4)
-    const float3 *points;
-    const float3 *normals;
-    const float2 *uvs;
-    const float4 *tangents;
-};
-struct vertex_v3n3u2t4
-{
-    DefTraits(vertex_v3n3u2t4, V3N3U2T4)
-    float3 p;
-    float3 n;
-    float2 u;
-    float4 t;
-};
-
-struct vertex_v3n3c4u2t4_arrays
-{
-    DefTraits(vertex_v3n3u2t4, V3N3C4U2T4)
-    const float3 *points;
-    const float3 *normals;
-    const float4 *colors;
-    const float2 *uvs;
-    const float4 *tangents;
-};
-struct vertex_v3n3c4u2t4
-{
-    DefTraits(vertex_v3n3c4u2t4, V3N3C4U2T4)
-    float3 p;
-    float3 n;
-    float4 c;
-    float2 u;
-    float4 t;
-};
-#undef DefTraits
-
-VertexFormat GuessVertexFormat(
-    const float3 *points,
-    const float3 *normals,
-    const float4 *colors,
-    const float2 *uvs,
-    const float4 *tangents
-);
-
-size_t GetVertexSize(VertexFormat format);
-
-void Interleave(void *dst, VertexFormat format, size_t num,
-    const float3 *points,
-    const float3 *normals,
-    const float4 *colors,
-    const float2 *uvs,
-    const float4 *tangents
-);
-
-template<class VertexT>
-void TInterleave(VertexT *dst, const typename VertexT::arrays_t& src, size_t num);
-
 template<class DstArray, class SrcArray>
 void CopyWithIndices(DstArray& dst, const SrcArray& src, const SrcArray& indices, size_t beg, size_t end);
 
-
-
-// ------------------------------------------------------------
-// internal
-// ------------------------------------------------------------
-#ifdef muEnableHalf
-void FloatToHalf_Generic(half *dst, const float *src, size_t num);
-void FloatToHalf_ISPC(half *dst, const float *src, size_t num);
-void HalfToFloat_Generic(float *dst, const half *src, size_t num);
-void HalfToFloat_ISPC(float *dst, const half *src, size_t num);
-#endif // muEnableHalf
-
-void InvertX_Generic(float3 *dst, size_t num);
-void InvertX_ISPC(float3 *dst, size_t num);
-void InvertX_Generic(float4 *dst, size_t num);
-void InvertX_ISPC(float4 *dst, size_t num);
-
-void Scale_Generic(float *dst, float s, size_t num);
-void Scale_Generic(float3 *dst, float s, size_t num);
-void Scale_ISPC(float *dst, float s, size_t num);
-void Scale_ISPC(float3 *dst, float s, size_t num);
-
-void ComputeBounds_Generic(const float3 *p, size_t num, float3& o_min, float3& o_max);
-void ComputeBounds_ISPC(const float3 *p, size_t num, float3& o_min, float3& o_max);
-
-void Normalize_Generic(float3 *dst, size_t num);
-void Normalize_ISPC(float3 *dst, size_t num);
-
-template<class VertexT> void Interleave_Generic(VertexT *dst, const typename VertexT::source_t& src, size_t num);
 
 
 // ------------------------------------------------------------
@@ -361,96 +169,7 @@ inline void TriangulateWithIndices(
     }
 }
 
-struct MeshRefiner
-{
-    struct Submesh
-    {
-        int num_indices_tri = 0;
-        int materialID = 0;
-        int* faces_to_write = nullptr;
-    };
 
-    struct Split
-    {
-        int num_faces = 0;
-        int num_vertices = 0;
-        int num_indices = 0;
-        int num_indices_triangulated = 0;
-        int num_submeshes = 0;
-    };
-
-
-    int split_unit = 0; // 0 == no split
-    bool triangulate = true;
-    bool swap_faces = false;
-
-    IArray<int> counts;
-    IArray<int> indices;
-    IArray<float3> points;
-    IArray<float3> normals;
-    IArray<float2> uv;
-    IArray<float4> colors;
-    IArray<Weights4> weights4;
-    IArray<float3> npoints; // points for normal calculation
-
-    RawVector<Submesh> submeshes;
-    RawVector<Split> splits;
-
-private:
-    RawVector<int> counts_tmp;
-    RawVector<int> offsets;
-    RawVector<int> v2f_counts;
-    RawVector<int> v2f_offsets;
-    RawVector<int> shared_faces;
-    RawVector<int> shared_indices;
-    RawVector<float3> face_normals;
-    RawVector<float3> normals_tmp;
-    RawVector<float4> tangents_tmp;
-
-    RawVector<float3> new_points;
-    RawVector<float3> new_normals;
-    RawVector<float4> new_tangents;
-    RawVector<float2> new_uv;
-    RawVector<float4> new_colors;
-    RawVector<Weights4> new_weights4;
-    RawVector<int>    new_indices;
-    RawVector<int>    new_indices_triangulated;
-    RawVector<int>    new_indices_submeshes;
-    RawVector<int>    old2new;
-    int num_indices_tri = 0;
-
-public:
-    void prepare(const IArray<int>& counts, const IArray<int>& indices, const IArray<float3>& points);
-    void genNormals();
-    void genNormals(float smooth_angle);
-    void genTangents();
-
-    bool refine(bool optimize);
-
-    // should be called after refine(), and only valid for triangulated meshes
-    bool genSubmesh(const IArray<int>& materialIDs);
-
-    void swapNewData(
-        RawVector<float3>& p,
-        RawVector<float3>& n,
-        RawVector<float4>& t,
-        RawVector<float2>& u,
-        RawVector<float4>& c,
-        RawVector<Weights4>& w,
-        RawVector<int>& idx);
-
-private:
-    bool refineDumb();
-    bool refineWithOptimization();
-    void buildConnection();
-
-    template<class Body> void doRefine(const Body& body);
-    int findOrAddVertexPNTUC(int vi, const float3& p, const float3& n, const float4& t, const float2& u, const float4& c);
-    int findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u);
-    int findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u);
-    int findOrAddVertexPN(int vi, const float3& p, const float3& n);
-    int findOrAddVertexPU(int vi, const float3& p, const float2& u);
-};
 
 template<class IndexArray, class SplitMeshHandler>
 inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHandler& handler)
@@ -547,5 +266,6 @@ inline uint32_t Float4ToColor32(const float4& c)
         ((int)(c.w * 255.0f) << 24);
 }
 
-
 } // namespace mu
+
+#include "MeshRefiner.h"
