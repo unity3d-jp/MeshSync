@@ -670,7 +670,7 @@ namespace UTJ
                 {
                     animPath = animPath.Remove(0, 1);
                 }
-                animData.ExportClips(clip, animPath, false);
+                animData.ExportToClip(clip, animPath, false);
             }
 #endif
 

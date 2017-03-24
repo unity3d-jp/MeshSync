@@ -116,6 +116,10 @@ msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
     _this->color = *v;
 }
 
+msAPI ms::TransformAnimation* msAnimationAsTransform(ms::Animation *_this) { return dynamic_cast<ms::TransformAnimation*>(_this); }
+msAPI ms::CameraAnimation* msAnimationAsCamera(ms::Animation *_this) { return dynamic_cast<ms::CameraAnimation*>(_this); }
+msAPI ms::LightAnimation* msAnimationAsLight(ms::Animation *_this) { return dynamic_cast<ms::LightAnimation*>(_this); }
+
 msAPI int       msTransformAGetNumTranslationSamples(ms::TransformAnimation *_this) { return _this ? (int)_this->translation.size() : 0; }
 msAPI float     msTransformAGetTranslationTime(ms::TransformAnimation *_this, int i) { return _this->translation[i].time; }
 msAPI float3    msTransformAGetTranslationValue(ms::TransformAnimation *_this, int i) { return _this->translation[i].value; }

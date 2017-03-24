@@ -538,7 +538,10 @@ void Transform::deserialize(std::istream& is)
     TransformDataFlags flags;
     read(is, flags);
     read(is, transform);
-    if(flags.has_animation) { read(is, animation); }
+    if(flags.has_animation) {
+        createAnimation();
+        animation->deserialize(is);
+    }
     read(is, reference);
 }
 

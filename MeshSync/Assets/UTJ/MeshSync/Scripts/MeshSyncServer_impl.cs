@@ -271,7 +271,7 @@ namespace UTJ
             }
         }
 
-        public struct AnimationData
+        public struct TransformAnimationData
         {
             internal IntPtr _this;
 
@@ -291,13 +291,13 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibilityTime(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibilityValue(IntPtr _this, int i);
 
-            public static explicit operator AnimationData(IntPtr v)
+            public static explicit operator TransformAnimationData(IntPtr v)
             {
-                AnimationData ret;
+                TransformAnimationData ret;
                 ret._this = v;
                 return ret;
             }
-            public static implicit operator bool(AnimationData v)
+            public static implicit operator bool(TransformAnimationData v)
             {
                 return v._this != IntPtr.Zero;
             }
@@ -378,6 +378,310 @@ namespace UTJ
                 }
             }
 
+            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+            {
+                var t = AnimationData.ToAnimatinCurve(translateTimes, translateValues, reduce);
+                var r = AnimationData.ToAnimatinCurve(rotationTimes, rotationValues, reduce);
+                var s = AnimationData.ToAnimatinCurve(scaleTimes, scaleValues, reduce);
+                var v = AnimationData.ToAnimatinCurve(visibilityTimes, visibilityValues, reduce);
+
+                var ttrans = typeof(Transform);
+                var tgo = typeof(GameObject);
+                if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
+                if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
+                if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
+                if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
+                if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
+                if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
+                if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
+                if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
+                if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
+                if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
+                if (v.length > 0) clip.SetCurve(path, tgo, "m_IsActive", v);
+            }
+        }
+
+        public struct CameraAnimationData
+        {
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFovSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFovTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFovValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumNearSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetNearTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetNearValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFarSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFarTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFarValue(IntPtr _this, int i);
+
+            public static explicit operator CameraAnimationData(IntPtr v)
+            {
+                CameraAnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(CameraAnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+            public float[] fovTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumFovSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFovTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] fovValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumFovSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFovValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] nearPlaneTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumNearSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetNearTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] nearPlaneValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumNearSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetNearValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] farPlaneTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumFarSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFarTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] farPlaneValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumFarSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFarValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+            {
+                var fov = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
+                var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
+                var far = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
+
+                // todo
+                //var ttrans = typeof(Camera);
+                //if (fov.length > 0) clip.SetCurve(path, ttrans, "m_fov.x", fov);
+                //if (near.length > 0) clip.SetCurve(path, ttrans, "m_nearPlane.y", near);
+                //if (far.length > 0) clip.SetCurve(path, ttrans, "m_farPlane.z", far);
+            }
+        }
+
+        public struct LightAnimationData
+        {
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern int msLightAGetNumColorSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetColorTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Color msLightAGetColorValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msLightAGetNumIntensitySamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetIntensityTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetIntensityValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msLightAGetNumRangeSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetRangeTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetRangeValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msLightAGetNumSpotAngleSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleValue(IntPtr _this, int i);
+
+
+            public static explicit operator LightAnimationData(IntPtr v)
+            {
+                LightAnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(LightAnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+
+            public float[] colorTimes
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumColorSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetColorTime(_this, i); }
+                    return ret;
+                }
+            }
+            public Color[] colorValues
+            {
+                get
+                {
+                    var ret = new Color[msLightAGetNumColorSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetColorValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] intensityTimes
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumIntensitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetIntensityTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] intensityValues
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumIntensitySamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetIntensityValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] rangeTimes
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumRangeSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetRangeTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] rangeValues
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumRangeSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetRangeValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] spotAngleTimes
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumSpotAngleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetSpotAngleTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] spotAngleValues
+            {
+                get
+                {
+                    var ret = new float[msLightAGetNumSpotAngleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetSpotAngleValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+            {
+                var color = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
+                var intensity = AnimationData.ToAnimatinCurve(intensityTimes, intensityValues, reduce);
+                var range = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
+                var spot = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
+
+                //// todo
+                //var ttrans = typeof(Light);
+                //if (color[0].length > 0) clip.SetCurve(path, ttrans, "m_color.r", color[0]);
+                //if (color[1].length > 0) clip.SetCurve(path, ttrans, "m_color.g", color[1]);
+                //if (color[2].length > 0) clip.SetCurve(path, ttrans, "m_color.b", color[2]);
+                //if (color[3].length > 0) clip.SetCurve(path, ttrans, "m_color.a", color[3]);
+                //if (intensity.length > 0) clip.SetCurve(path, ttrans, "m_intensity.y", intensity);
+                //if (range.length > 0) clip.SetCurve(path, ttrans, "m_range.z", range);
+                //if (spot.length > 0) clip.SetCurve(path, ttrans, "m_spotAngle.z", spot);
+            }
+        }
+
+
+
+        public struct AnimationData
+        {
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern TransformAnimationData msAnimationAsTransform(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern CameraAnimationData msAnimationAsCamera(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern LightAnimationData msAnimationAsLight(IntPtr _this);
+
+
+            public static explicit operator AnimationData(IntPtr v)
+            {
+                AnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(AnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+            public TransformAnimationData transform
+            {
+                get { return msAnimationAsTransform(_this); }
+            }
+
+            public CameraAnimationData camera
+            {
+                get { return msAnimationAsCamera(_this); }
+            }
+
+            public LightAnimationData light
+            {
+                get { return msAnimationAsLight(_this); }
+            }
+
+            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+            {
+                {
+                    var tmp = transform;
+                    if (tmp) { tmp.ExportToClip(clip, path, reduce); }
+                }
+                {
+                    var tmp = camera;
+                    if (tmp) { tmp.ExportToClip(clip, path, reduce); }
+                }
+                {
+                    var tmp = light;
+                    if (tmp) { tmp.ExportToClip(clip, path, reduce); }
+                }
+            }
+
+
+
             public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce)
             {
                 var ret = new AnimationCurve[3] {
@@ -411,6 +715,7 @@ namespace UTJ
                 }
                 return ret;
             }
+
             public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce)
             {
                 var ret = new AnimationCurve[4] {
@@ -449,6 +754,68 @@ namespace UTJ
                 }
                 return ret;
             }
+
+            public static AnimationCurve[] ToAnimatinCurve(float[] times, Color[] values, bool reduce)
+            {
+                var ret = new AnimationCurve[4] {
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                    new AnimationCurve(),
+                };
+                if (times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret[0].AddKey(new Keyframe(t, v.r));
+                    ret[1].AddKey(new Keyframe(t, v.g));
+                    ret[2].AddKey(new Keyframe(t, v.b));
+                    ret[3].AddKey(new Keyframe(t, v.a));
+#if UNITY_EDITOR
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+#endif
+                }
+                if (reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret[0]);
+                    AnimationCurveKeyReducer.DoReduction(ret[1]);
+                    AnimationCurveKeyReducer.DoReduction(ret[2]);
+                    AnimationCurveKeyReducer.DoReduction(ret[3]);
+                }
+                return ret;
+            }
+
+            public static AnimationCurve ToAnimatinCurve(float[] times, float[] values, bool reduce)
+            {
+                var ret = new AnimationCurve();
+                if (times.Length == 0) { return ret; }
+
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    var t = times[i];
+                    var v = values[i];
+                    ret.AddKey(new Keyframe(t, v));
+#if UNITY_EDITOR
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+#endif
+                }
+                if (reduce)
+                {
+                    AnimationCurveKeyReducer.DoReduction(ret);
+                }
+                return ret;
+            }
+
             public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce)
             {
                 var ret = new AnimationCurve();
@@ -469,28 +836,6 @@ namespace UTJ
                     AnimationCurveKeyReducer.DoReduction(ret);
                 }
                 return ret;
-            }
-
-            public void ExportClips(AnimationClip clip, string path, bool reduce = false)
-            {
-                var t = ToAnimatinCurve(translateTimes, translateValues, reduce);
-                var r = ToAnimatinCurve(rotationTimes, rotationValues, reduce);
-                var s = ToAnimatinCurve(scaleTimes, scaleValues, reduce);
-                var v = ToAnimatinCurve(visibilityTimes, visibilityValues, reduce);
-
-                var ttrans = typeof(Transform);
-                var tgo = typeof(GameObject);
-                if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
-                if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
-                if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
-                if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
-                if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
-                if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
-                if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
-                if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
-                if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
-                if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
-                if (v.length > 0) clip.SetCurve(path, tgo, "m_IsActive", v);
             }
         }
 
