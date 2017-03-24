@@ -303,14 +303,6 @@ msAPI void msLightSetType(ms::Light *_this, ms::Light::Type v)
 {
     _this->type = v;
 }
-msAPI ms::Light::ShadowType msLightGetShadowType(ms::Light *_this)
-{
-    return _this->shadow_type;
-}
-msAPI void msLightSetShadowType(ms::Light *_this, ms::Light::ShadowType v)
-{
-    _this->shadow_type = v;
-}
 msAPI float4 msLightGetColor(ms::Light *_this)
 {
     return _this->color;

@@ -673,7 +673,6 @@ uint32_t Light::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += ssize(type);
-    ret += ssize(shadow_type);
     ret += ssize(color);
     ret += ssize(intensity);
     ret += ssize(range);
@@ -685,7 +684,6 @@ void Light::serialize(std::ostream & os) const
 {
     super::serialize(os);
     write(os, type);
-    write(os, shadow_type);
     write(os, color);
     write(os, intensity);
     write(os, range);
@@ -696,7 +694,6 @@ void Light::deserialize(std::istream & is)
 {
     super::deserialize(is);
     read(is, type);
-    read(is, shadow_type);
     read(is, color);
     read(is, intensity);
     read(is, range);

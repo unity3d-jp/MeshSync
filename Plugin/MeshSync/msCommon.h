@@ -155,24 +155,15 @@ using super = Transform;
 public:
     enum class Type
     {
-        Unknown,
+        Spot,
         Directional,
         Point,
-        Spot,
         Area,
-    };
-    enum class ShadowType
-    {
-        Unknown,
-        NoShadow,
-        HardShadow,
-        SoftShadow,
     };
 
     Type type = Type::Directional;
-    ShadowType shadow_type = ShadowType::Unknown;
     float4 color = float4::one();
-    float intensity = 10.0f;
+    float intensity = 1.0f;
     float range = 10.0f;
     float spot_angle = 30.0f; // for spot light
 

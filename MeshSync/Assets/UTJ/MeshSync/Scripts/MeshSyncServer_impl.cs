@@ -955,30 +955,11 @@ namespace UTJ
 
         public struct LightData
         {
-            public enum Type
-            {
-                Unknown,
-                Directional,
-                Point,
-                Spot,
-                Area,
-            }
-            public enum ShadowType
-            {
-                Unknown,
-                NoShadow,
-                HardShadow,
-                SoftShadow,
-            }
-
-
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
-            [DllImport("MeshSyncServer")] static extern Type msLightGetType(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr _this, Type v);
-            [DllImport("MeshSyncServer")] static extern ShadowType msLightGetShadowType(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msLightSetShadowType(IntPtr _this, ShadowType v);
+            [DllImport("MeshSyncServer")] static extern LightType msLightGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr _this, LightType v);
             [DllImport("MeshSyncServer")] static extern Color msLightGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msLightSetColor(IntPtr _this, Color v);
             [DllImport("MeshSyncServer")] static extern float msLightGetIntensity(IntPtr _this);
@@ -1000,15 +981,15 @@ namespace UTJ
                 return msLightCreate();
             }
 
-            public Type type
+            public TransformData transform
+            {
+                get { return (TransformData)_this; }
+            }
+
+            public LightType type
             {
                 get { return msLightGetType(_this); }
                 set { msLightSetType(_this, value); }
-            }
-            public ShadowType shadowType
-            {
-                get { return msLightGetShadowType(_this); }
-                set { msLightSetShadowType(_this, value); }
             }
             public Color color
             {

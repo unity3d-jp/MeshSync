@@ -279,6 +279,18 @@ namespace UTJ
             }
             catch (Exception e) { Debug.Log(e); }
 
+            // sync lights
+            try
+            {
+                int numLights = scene.numLights;
+                for (int i = 0; i < numLights; ++i)
+                {
+                    UpdateLight(scene.GetLight(i));
+                }
+
+            }
+            catch (Exception e) { Debug.Log(e); }
+
             // sync meshes
             try
             {
@@ -691,6 +703,25 @@ namespace UTJ
             cam.nearClipPlane = data.nearClipPlane;
             cam.farClipPlane = data.farClipPlane;
             return cam;
+        }
+
+        Light UpdateLight(LightData data)
+        {
+            var trans = UpdateTransform(data.transform);
+            if (trans == null) { return null; }
+
+            var lt = trans.GetComponent<Light>();
+            if (lt == null)
+            {
+                lt = trans.gameObject.AddComponent<Light>();
+            }
+
+            lt.type = data.type;
+            lt.color = data.color;
+            lt.intensity = data.intensity;
+            lt.range = data.range;
+            lt.spotAngle = data.spotAngle;
+            return lt;
         }
 
         public void ReassignMaterials()
