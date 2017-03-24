@@ -491,11 +491,10 @@ namespace UTJ
                 var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
                 var far = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
 
-                // todo
-                //var ttrans = typeof(Camera);
-                //if (fov.length > 0) clip.SetCurve(path, ttrans, "m_fov.x", fov);
-                //if (near.length > 0) clip.SetCurve(path, ttrans, "m_nearPlane.y", near);
-                //if (far.length > 0) clip.SetCurve(path, ttrans, "m_farPlane.z", far);
+                var tcam = typeof(Camera);
+                if (fov.length > 0) clip.SetCurve(path, tcam, "field of view", fov);
+                if (near.length > 0) clip.SetCurve(path, tcam, "near clip plane", near);
+                if (far.length > 0) clip.SetCurve(path, tcam, "far clip plane", far);
             }
         }
 
@@ -615,15 +614,14 @@ namespace UTJ
                 var range = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
                 var spot = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
 
-                //// todo
-                //var ttrans = typeof(Light);
-                //if (color[0].length > 0) clip.SetCurve(path, ttrans, "m_color.r", color[0]);
-                //if (color[1].length > 0) clip.SetCurve(path, ttrans, "m_color.g", color[1]);
-                //if (color[2].length > 0) clip.SetCurve(path, ttrans, "m_color.b", color[2]);
-                //if (color[3].length > 0) clip.SetCurve(path, ttrans, "m_color.a", color[3]);
-                //if (intensity.length > 0) clip.SetCurve(path, ttrans, "m_intensity.y", intensity);
-                //if (range.length > 0) clip.SetCurve(path, ttrans, "m_range.z", range);
-                //if (spot.length > 0) clip.SetCurve(path, ttrans, "m_spotAngle.z", spot);
+                var tlight = typeof(Light);
+                if (color[0].length > 0) clip.SetCurve(path, tlight, "m_Color.r", color[0]);
+                if (color[1].length > 0) clip.SetCurve(path, tlight, "m_Color.g", color[1]);
+                if (color[2].length > 0) clip.SetCurve(path, tlight, "m_Color.b", color[2]);
+                if (color[3].length > 0) clip.SetCurve(path, tlight, "m_Color.a", color[3]);
+                if (intensity.length > 0) clip.SetCurve(path, tlight, "m_Intensity", intensity);
+                if (range.length > 0) clip.SetCurve(path, tlight, "m_Range", range);
+                if (spot.length > 0) clip.SetCurve(path, tlight, "m_SpotAngle", spot);
             }
         }
 
@@ -952,6 +950,85 @@ namespace UTJ
             {
                 get { return msCameraGetFarPlane(_this); }
                 set { msCameraSetFarPlane(_this, value); }
+            }
+        }
+
+        public struct LightData
+        {
+            public enum Type
+            {
+                Unknown,
+                Directional,
+                Point,
+                Spot,
+                Area,
+            }
+            public enum ShadowType
+            {
+                Unknown,
+                NoShadow,
+                HardShadow,
+                SoftShadow,
+            }
+
+
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
+            [DllImport("MeshSyncServer")] static extern Type msLightGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr _this, Type v);
+            [DllImport("MeshSyncServer")] static extern ShadowType msLightGetShadowType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetShadowType(IntPtr _this, ShadowType v);
+            [DllImport("MeshSyncServer")] static extern Color msLightGetColor(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetColor(IntPtr _this, Color v);
+            [DllImport("MeshSyncServer")] static extern float msLightGetIntensity(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetIntensity(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msLightGetRange(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetRange(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msLightGetSpotAngle(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msLightSetSpotAngle(IntPtr _this, float v);
+
+            public static explicit operator LightData(IntPtr v)
+            {
+                LightData ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public static LightData Create()
+            {
+                return msLightCreate();
+            }
+
+            public Type type
+            {
+                get { return msLightGetType(_this); }
+                set { msLightSetType(_this, value); }
+            }
+            public ShadowType shadowType
+            {
+                get { return msLightGetShadowType(_this); }
+                set { msLightSetShadowType(_this, value); }
+            }
+            public Color color
+            {
+                get { return msLightGetColor(_this); }
+                set { msLightSetColor(_this, value); }
+            }
+            public float intensity
+            {
+                get { return msLightGetIntensity(_this); }
+                set { msLightSetIntensity(_this, value); }
+            }
+            public float range
+            {
+                get { return msLightGetRange(_this); }
+                set { msLightSetRange(_this, value); }
+            }
+            public float spotAngle
+            {
+                get { return msLightGetSpotAngle(_this); }
+                set { msLightSetSpotAngle(_this, value); }
             }
         }
 
@@ -1354,24 +1431,28 @@ namespace UTJ
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumMeshes(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumTransforms(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern TransformData msSceneGetTransformData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumCameras(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern CameraData msSceneGetCameraData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumLights(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern LightData msSceneGetLightData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumMeshes(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
 
             public string name { get { return S(msSceneGetName(_this)); } }
-            public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
             public int numTransforms { get { return msSceneGetNumTransforms(_this); } }
             public int numCameras { get { return msSceneGetNumCameras(_this); } }
+            public int numLights { get { return msSceneGetNumLights(_this); } }
+            public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
 
-            public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
             public TransformData GetTransform(int i) { return msSceneGetTransformData(_this, i); }
             public CameraData GetCamera(int i) { return msSceneGetCameraData(_this, i); }
+            public LightData GetLight(int i) { return msSceneGetLightData(_this, i); }
+            public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
         }
 
@@ -1406,6 +1487,9 @@ namespace UTJ
 
         [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
         [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr sv, TransformData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr sv, CameraData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr sv, LightData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr sv, MeshData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr sv, MaterialData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);

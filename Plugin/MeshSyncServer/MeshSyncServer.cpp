@@ -54,6 +54,21 @@ msAPI void msServerEndServe(ms::Server *server)
     if (!server) { return; }
     server->endServe();
 }
+msAPI void msServerServeTransform(ms::Server *server, ms::Transform *data)
+{
+    if (!server) { return; }
+    server->getHostScene()->transforms.emplace_back(data);
+}
+msAPI void msServerServeCamera(ms::Server *server, ms::Camera *data)
+{
+    if (!server) { return; }
+    server->getHostScene()->cameras.emplace_back(data);
+}
+msAPI void msServerServeLight(ms::Server *server, ms::Light *data)
+{
+    if (!server) { return; }
+    server->getHostScene()->lights.emplace_back(data);
+}
 msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
