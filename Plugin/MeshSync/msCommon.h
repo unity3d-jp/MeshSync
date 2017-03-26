@@ -160,6 +160,10 @@ public:
     RawVector<TVP<float>>   fov;
     RawVector<TVP<float>>   near_plane;
     RawVector<TVP<float>>   far_plane;
+    RawVector<TVP<float>>   horizontal_aperture;
+    RawVector<TVP<float>>   vertical_aperture;
+    RawVector<TVP<float>>   focal_length;
+    RawVector<TVP<float>>   focus_distance;
 
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;

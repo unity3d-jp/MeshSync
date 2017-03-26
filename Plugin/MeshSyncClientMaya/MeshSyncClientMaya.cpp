@@ -553,6 +553,59 @@ static void GatherSamples(RawVector<ms::TVP<ValueType>>& dst, MFnAnimCurve& curv
     }
 }
 
+static void ConvertAnimationFloat(
+    float default_value,
+    RawVector<ms::TVP<float>>& dst,
+    MPlug& pb,
+    int samples_per_seconds)
+{
+    if (pb.isNull()) { return; }
+
+    MFnAnimCurve acb;
+    {
+        MObjectArray atb;
+        MAnimUtil::findAnimation(pb, atb);
+        if (atb.length() == 0) { return; }
+        if (atb.length() > 0) acb.setObject(atb[0]);
+    }
+
+    const float time_resolution = 1.0f / (float)samples_per_seconds;
+    float time_begin = std::numeric_limits<float>::quiet_NaN();
+    float time_end = std::numeric_limits<float>::quiet_NaN();
+    float time_range = 0.0f;
+
+    // build time range
+    DeternineTimeRange(time_begin, time_end, acb);
+    time_range = time_end - time_begin;
+
+    // build time samples
+    {
+        RawVector<float> keyframe_times;
+        RawVector<float> timesample_times;
+
+        GatherTimes(keyframe_times, acb);
+
+        int num_samples = int(time_range / time_resolution);
+        timesample_times.resize(num_samples);
+        for (int i = 0; i < num_samples; ++i) {
+            timesample_times[i] = (time_resolution * i);
+        }
+
+        RawVector<float> times;
+        times.resize(keyframe_times.size() + timesample_times.size());
+        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
+        times.erase(std::unique(times.begin(), times.end()), times.end());
+
+        dst.resize(times.size(), { 0.0f, default_value });
+        for (size_t i = 0; i < dst.size(); ++i) {
+            dst[i].time = times[i];
+        }
+    }
+
+    // get samples
+    GatherSamples(dst, acb, time_begin, [](float& v, double s) { v = (float)s; });
+}
+
 static void ConvertAnimationFloat3(
     const mu::float3& default_value,
     RawVector<ms::TVP<mu::float3>>& dst,
@@ -618,6 +671,76 @@ static void ConvertAnimationFloat3(
     GatherSamples(dst, acz, time_begin, [](mu::float3& v, double s) { v.z = (float)s; });
 }
 
+static void ConvertAnimationFloat4(
+    const mu::float4& default_value,
+    RawVector<ms::TVP<mu::float4>>& dst,
+    MPlug& px, MPlug& py, MPlug& pz, MPlug& pw,
+    int samples_per_seconds)
+{
+    if (px.isNull() && py.isNull() && pz.isNull()) { return; }
+
+    MFnAnimCurve acx, acy, acz, acw;
+    {
+        MObjectArray atx, aty, atz, atw;
+        MAnimUtil::findAnimation(px, atx);
+        MAnimUtil::findAnimation(py, aty);
+        MAnimUtil::findAnimation(pz, atz);
+        MAnimUtil::findAnimation(pw, atw);
+        if (atx.length() == 0 && aty.length() == 0 && atz.length() == 0 && atw.length() == 0) { return; }
+        if (atx.length() > 0) acx.setObject(atx[0]);
+        if (aty.length() > 0) acy.setObject(aty[0]);
+        if (atz.length() > 0) acz.setObject(atz[0]);
+        if (atw.length() > 0) acw.setObject(atw[0]);
+    }
+
+    const float time_resolution = 1.0f / (float)samples_per_seconds;
+    float time_begin = std::numeric_limits<float>::quiet_NaN();
+    float time_end = std::numeric_limits<float>::quiet_NaN();
+    float time_range = 0.0f;
+
+    // build time range
+    DeternineTimeRange(time_begin, time_end, acx);
+    DeternineTimeRange(time_begin, time_end, acy);
+    DeternineTimeRange(time_begin, time_end, acz);
+    DeternineTimeRange(time_begin, time_end, acw);
+    time_range = time_end - time_begin;
+
+    // build time samples
+    {
+        RawVector<float> keyframe_times;
+        RawVector<float> timesample_times;
+
+        GatherTimes(keyframe_times, acx);
+        GatherTimes(keyframe_times, acy);
+        GatherTimes(keyframe_times, acz);
+        GatherTimes(keyframe_times, acw);
+        std::sort(keyframe_times.begin(), keyframe_times.end());
+        keyframe_times.erase(std::unique(keyframe_times.begin(), keyframe_times.end()), keyframe_times.end());
+
+        int num_samples = int(time_range / time_resolution);
+        timesample_times.resize(num_samples);
+        for (int i = 0; i < num_samples; ++i) {
+            timesample_times[i] = (time_resolution * i);
+        }
+
+        RawVector<float> times;
+        times.resize(keyframe_times.size() + timesample_times.size());
+        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
+        times.erase(std::unique(times.begin(), times.end()), times.end());
+
+        dst.resize(times.size(), { 0.0f, default_value });
+        for (size_t i = 0; i < dst.size(); ++i) {
+            dst[i].time = times[i];
+        }
+    }
+
+    // get samples
+    GatherSamples(dst, acx, time_begin, [](mu::float4& v, double s) { v.x = (float)s; });
+    GatherSamples(dst, acy, time_begin, [](mu::float4& v, double s) { v.y = (float)s; });
+    GatherSamples(dst, acz, time_begin, [](mu::float4& v, double s) { v.z = (float)s; });
+    GatherSamples(dst, acw, time_begin, [](mu::float4& v, double s) { v.w = (float)s; });
+}
+
 static void ConvertAnimationBool(
     bool default_value,
     RawVector<ms::TVP<bool>>& dst,
@@ -673,7 +796,7 @@ static void ConvertAnimationBool(
 
 bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
-    MFnTransform src_trs(src);
+    MFnTransform mtrans(src);
 
     MStatus stat;
     MVector pos;
@@ -681,9 +804,9 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     double scale[3];
 
     dst.path = GetPath(src);
-    pos = src_trs.getTranslation(MSpace::kTransform, &stat);
-    stat = src_trs.getRotation(rot, MSpace::kTransform);
-    stat = src_trs.getScale(scale);
+    pos = mtrans.getTranslation(MSpace::kTransform, &stat);
+    stat = mtrans.getRotation(rot, MSpace::kTransform);
+    stat = mtrans.getScale(scale);
     dst.transform.position.assign(&pos[0]);
     dst.transform.rotation.assign(&rot[0]);
     dst.transform.scale.assign(scale);
@@ -698,12 +821,12 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 
     // handle animation
     if (m_sync_animations && MAnimUtil::isAnimated(src)) {
-        MPlug ptx, pty, ptz, prx, pry, prz, psx, psy, psz, pvis;
-
         // get TRS & visibility animation plugs
         MPlugArray plugs;
         MAnimUtil::findAnimatedPlugs(src, plugs);
         auto num_plugs = plugs.length();
+
+        MPlug ptx, pty, ptz, prx, pry, prz, psx, psy, psz, pvis;
         int found = 0;
         for (uint32_t pi = 0; pi < num_plugs; ++pi) {
             auto plug = plugs[pi];
@@ -796,11 +919,48 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
     if (m_sync_animations && MAnimUtil::isAnimated(shape)) {
         MPlugArray plugs;
         MAnimUtil::findAnimatedPlugs(shape, plugs);
+        auto num_plugs = plugs.length();
 
-        // todo
+        MPlug pnplane, pfplane, phaperture, pvaperture, pflen, pfdist;
+        int found = 0;
+        for (uint32_t pi = 0; pi < num_plugs; ++pi) {
+            auto plug = plugs[pi];
+            MObjectArray animation;
+            if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
 
-        dst.createAnimation();
-        auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
+            std::string name = plug.name().asChar();
+#define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
+            Case(".nearClipPlane", pnplane);
+            Case(".farClipPlane", pfplane);
+            Case(".horizontalFilmAperture", phaperture);
+            Case(".verticalFilmAperture", pvaperture);
+            Case(".focalLength", pflen);
+            Case(".focusDistance", pfdist);
+#undef Case
+        }
+
+        // skip if no animation plugs are found
+        if (found > 0) {
+            dst.createAnimation();
+            auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
+
+            // build time-sampled animation data
+            ConvertAnimationFloat(0.0f, anim.near_plane, pnplane, m_animation_samples_per_seconds);
+            ConvertAnimationFloat(0.0f, anim.far_plane, pfplane, m_animation_samples_per_seconds);
+            ConvertAnimationFloat(0.0f, anim.horizontal_aperture, phaperture, m_animation_samples_per_seconds);
+            ConvertAnimationFloat(0.0f, anim.vertical_aperture, pvaperture, m_animation_samples_per_seconds);
+            ConvertAnimationFloat(0.0f, anim.focal_length, pflen, m_animation_samples_per_seconds);
+            ConvertAnimationFloat(0.0f, anim.focus_distance, pfdist, m_animation_samples_per_seconds);
+
+            // fov needs calculate by myself...
+            if (!anim.focal_length.empty() || !anim.horizontal_aperture.empty()) {
+                // todo
+            }
+
+            if (dst.animation->empty()) {
+                dst.animation.reset();
+            }
+        }
     }
     return true;
 }
@@ -836,9 +996,37 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
     if (m_sync_animations && MAnimUtil::isAnimated(shape)) {
         MPlugArray plugs;
         MAnimUtil::findAnimatedPlugs(shape, plugs);
+        auto num_plugs = plugs.length();
 
-        dst.createAnimation();
-        auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
+        MPlug pcolr, pcolg, pcolb, pcola, pint;
+        int found = 0;
+        for (uint32_t pi = 0; pi < num_plugs; ++pi) {
+            auto plug = plugs[pi];
+            MObjectArray animation;
+            if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
+
+            std::string name = plug.name().asChar();
+#define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
+            Case(".colorR", pcolr);
+            Case(".colorG", pcolg);
+            Case(".colorB", pcolb);
+            Case(".intensity", pint);
+#undef Case
+        }
+
+        // skip if no animation plugs are found
+        if (found > 0) {
+            dst.createAnimation();
+            auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
+
+            // build time-sampled animation data
+            ConvertAnimationFloat4(ms::float4::one(), anim.color, pcolr, pcolg, pcolb, pcola, m_animation_samples_per_seconds);
+            ConvertAnimationFloat(0.0f, anim.intensity, pint, m_animation_samples_per_seconds);
+
+            if (dst.animation->empty()) {
+                dst.animation.reset();
+            }
+        }
     }
     return true;
 }

@@ -416,6 +416,22 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFarSamples(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msCameraAGetFarTime(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern float msCameraAGetFarValue(IntPtr _this, int i);
+            
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumHApertureSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetHApertureTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetHApertureValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumVApertureSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetVApertureTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetVApertureValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocalLengthSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFocalLengthTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFocalLengthValue(IntPtr _this, int i);
+
+            [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocusDistanceSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceValue(IntPtr _this, int i);
 
             public static explicit operator CameraAnimationData(IntPtr v)
             {
@@ -485,6 +501,81 @@ namespace UTJ
                 }
             }
 
+            public float[] horizontalApertureTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumHApertureSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetHApertureTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] horizontalApertureValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumHApertureSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetHApertureValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] verticalApertureTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetVApertureTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] verticalApertureValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetVApertureValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] focalLengthTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumFocalLengthSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocalLengthTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] focalLengthValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocalLengthValue(_this, i); }
+                    return ret;
+                }
+            }
+
+            public float[] focusDistanceTimes
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumFocusDistanceSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocusDistanceTime(_this, i); }
+                    return ret;
+                }
+            }
+            public float[] focusDistanceValues
+            {
+                get
+                {
+                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocusDistanceValue(_this, i); }
+                    return ret;
+                }
+            }
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
                 var fov = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
@@ -912,12 +1003,23 @@ namespace UTJ
         {
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
+            [DllImport("MeshSyncServer")] static extern byte msCameraIsOrtho(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetOrtho(IntPtr _this, byte v);
             [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msCameraSetFov(IntPtr _this, float v);
             [DllImport("MeshSyncServer")] static extern float msCameraGetNearPlane(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msCameraSetNearPlane(IntPtr _this, float v);
             [DllImport("MeshSyncServer")] static extern float msCameraGetFarPlane(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msCameraSetFarPlane(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msCameraGetHorizontalAperture(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetHorizontalAperture(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msCameraGetVerticalAperture(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetVerticalAperture(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msCameraGetFocalLength(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetFocalLength(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msCameraGetFocusDistance(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msCameraSetFocusDistance(IntPtr _this, float v);
+
 
             public static explicit operator CameraData(IntPtr v)
             {
@@ -936,6 +1038,11 @@ namespace UTJ
                 get { return (TransformData)_this; }
             }
 
+            public bool orthographic
+            {
+                get { return msCameraIsOrtho(_this) != 0; }
+                set { msCameraSetOrtho(_this, (byte)(value ? 1 : 0)); }
+            }
             public float fov
             {
                 get { return msCameraGetFov(_this); }
@@ -950,6 +1057,26 @@ namespace UTJ
             {
                 get { return msCameraGetFarPlane(_this); }
                 set { msCameraSetFarPlane(_this, value); }
+            }
+            public float horizontalAperture
+            {
+                get { return msCameraGetHorizontalAperture(_this); }
+                set { msCameraSetHorizontalAperture(_this, value); }
+            }
+            public float verticalAperture
+            {
+                get { return msCameraGetVerticalAperture(_this); }
+                set { msCameraSetVerticalAperture(_this, value); }
+            }
+            public float focalLength
+            {
+                get { return msCameraGetFocalLength(_this); }
+                set { msCameraSetFocalLength(_this, value); }
+            }
+            public float focusDistance
+            {
+                get { return msCameraGetFocusDistance(_this); }
+                set { msCameraSetFocusDistance(_this, value); }
             }
         }
 

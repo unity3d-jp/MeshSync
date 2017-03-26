@@ -699,6 +699,7 @@ namespace UTJ
             {
                 cam = trans.gameObject.AddComponent<Camera>();
             }
+            cam.orthographic = data.orthographic;
             cam.fieldOfView = data.fov;
             cam.nearClipPlane = data.nearClipPlane;
             cam.farClipPlane = data.farClipPlane;

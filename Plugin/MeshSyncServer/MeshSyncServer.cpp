@@ -163,6 +163,22 @@ msAPI int       msCameraAGetNumFarSamples(ms::CameraAnimation *_this) { return _
 msAPI float     msCameraAGetFarTime(ms::CameraAnimation *_this, int i) { return _this->far_plane[i].time; }
 msAPI float     msCameraAGetFarValue(ms::CameraAnimation *_this, int i) { return _this->far_plane[i].value; }
 
+msAPI int       msCameraAGetNumHApertureSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->horizontal_aperture.size() : 0; }
+msAPI float     msCameraAGetHApertureTime(ms::CameraAnimation *_this, int i) { return _this->horizontal_aperture[i].time; }
+msAPI float     msCameraAGetHApertureValue(ms::CameraAnimation *_this, int i) { return _this->horizontal_aperture[i].value; }
+
+msAPI int       msCameraAGetNumVApertureSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->vertical_aperture.size() : 0; }
+msAPI float     msCameraAGetVApertureTime(ms::CameraAnimation *_this, int i) { return _this->vertical_aperture[i].time; }
+msAPI float     msCameraAGetVApertureValue(ms::CameraAnimation *_this, int i) { return _this->vertical_aperture[i].value; }
+
+msAPI int       msCameraAGetNumFocalLengthSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->focal_length.size() : 0; }
+msAPI float     msCameraAGetFocalLengthTime(ms::CameraAnimation *_this, int i) { return _this->focal_length[i].time; }
+msAPI float     msCameraAGetFocalLengthValue(ms::CameraAnimation *_this, int i) { return _this->focal_length[i].value; }
+
+msAPI int       msCameraAGetNumFocusDistanceSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->focus_distance.size() : 0; }
+msAPI float     msCameraAGetFocusDistanceTime(ms::CameraAnimation *_this, int i) { return _this->focus_distance[i].time; }
+msAPI float     msCameraAGetFocusDistanceValue(ms::CameraAnimation *_this, int i) { return _this->focus_distance[i].value; }
+
 msAPI int       msLightAGetNumColorSamples(ms::LightAnimation *_this) { return _this ? (int)_this->color.size() : 0; }
 msAPI float     msLightAGetColorTime(ms::LightAnimation *_this, int i) { return _this->color[i].time; }
 msAPI float4    msLightAGetColorValue(ms::LightAnimation *_this, int i) { return _this->color[i].value; }
@@ -266,6 +282,14 @@ msAPI ms::Camera* msCameraCreate()
 {
     return new ms::Camera();
 }
+msAPI bool msCameraIsOrtho(ms::Camera *_this)
+{
+    return _this->is_ortho;
+}
+msAPI void msCameraSetOrtho(ms::Camera *_this, bool v)
+{
+    _this->is_ortho = v;
+}
 msAPI float msCameraGetFov(ms::Camera *_this)
 {
     return _this->fov;
@@ -289,6 +313,38 @@ msAPI float msCameraGetFarPlane(ms::Camera *_this)
 msAPI void msCameraSetFarPlane(ms::Camera *_this, float v)
 {
     _this->far_plane = v;
+}
+msAPI float msCameraGetHorizontalAperture(ms::Camera *_this)
+{
+    return _this->horizontal_aperture;
+}
+msAPI void msCameraSetHorizontalAperture(ms::Camera *_this, float v)
+{
+    _this->horizontal_aperture = v;
+}
+msAPI float msCameraGetVerticalAperture(ms::Camera *_this)
+{
+    return _this->vertical_aperture;
+}
+msAPI void msCameraSetVerticalAperture(ms::Camera *_this, float v)
+{
+    _this->vertical_aperture = v;
+}
+msAPI float msCameraGetFocalLength(ms::Camera *_this)
+{
+    return _this->focal_length;
+}
+msAPI void msCameraSetFocalLength(ms::Camera *_this, float v)
+{
+    _this->focal_length = v;
+}
+msAPI float msCameraGetFocusDistance(ms::Camera *_this)
+{
+    return _this->focus_distance;
+}
+msAPI void msCameraSetFocusDistance(ms::Camera *_this, float v)
+{
+    _this->focus_distance = v;
 }
 
 msAPI ms::Light* msLightCreate()
