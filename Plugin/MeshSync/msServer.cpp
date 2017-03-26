@@ -295,21 +295,16 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         mesh.refine_settings.split_unit = 65000;
         mesh.refine(mesh.refine_settings);
     });
-    for (auto& trans : mes->scene.transforms) {
-        if (mes->scene.settings.handedness == Handedness::Right) {
-            trans->swapHandedness();
-        }
-        if (mes->scene.settings.scale_factor != 1.0f) {
-            trans->applyScaleFactor(1.0f / mes->scene.settings.scale_factor);
-        }
+    if (mes->scene.settings.handedness == Handedness::Right) {
+        for (auto& obj : mes->scene.transforms) { obj->swapHandedness(); }
+        for (auto& obj : mes->scene.cameras) { obj->swapHandedness(); }
+        for (auto& obj : mes->scene.lights) { obj->swapHandedness(); }
     }
-    for (auto& trans : mes->scene.cameras) {
-        if (mes->scene.settings.handedness == Handedness::Right) {
-            trans->swapHandedness();
-        }
-        if (mes->scene.settings.scale_factor != 1.0f) {
-            trans->applyScaleFactor(1.0f / mes->scene.settings.scale_factor);
-        }
+    if (mes->scene.settings.scale_factor != 1.0f) {
+        float scale = 1.0f / mes->scene.settings.scale_factor;
+        for (auto& obj : mes->scene.transforms) { obj->applyScaleFactor(scale); }
+        for (auto& obj : mes->scene.cameras) { obj->applyScaleFactor(scale); }
+        for (auto& obj : mes->scene.lights) { obj->applyScaleFactor(scale); }
     }
 
     {

@@ -46,6 +46,13 @@ MObject GetTransform(MObject node)
     return GetTransform(GetDagPath(node));
 }
 
+MObject GetShape(MObject node)
+{
+    auto path = GetDagPath(node);
+    path.extendToShape();
+    return path.node();
+}
+
 MObject FindMesh(MObject node)
 {
     auto path = GetDagPath(node);

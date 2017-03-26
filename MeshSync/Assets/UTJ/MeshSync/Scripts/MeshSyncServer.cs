@@ -719,8 +719,8 @@ namespace UTJ
             lt.type = data.type;
             lt.color = data.color;
             lt.intensity = data.intensity;
-            lt.range = data.range;
-            lt.spotAngle = data.spotAngle;
+            if (data.range > 0.0f) { lt.range = data.range; }
+            if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
             return lt;
         }
 

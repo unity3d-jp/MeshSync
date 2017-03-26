@@ -23,16 +23,27 @@ void LogImpl(const char *fmt, ...);
 
 extern const int ProtocolVersion;
 
-class SceneEntity
+class Entity
 {
 public:
+    enum class TypeID
+    {
+        Unknown,
+        Transform,
+        Camera,
+        Light,
+        Mesh,
+    };
+
     int id = 0;
     int index = 0;
     std::string path;
 
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    virtual ~Entity();
+    virtual TypeID getTypeID() const;
+    virtual uint32_t getSerializeSize() const;
+    virtual void serialize(std::ostream& os) const;
+    virtual void deserialize(std::istream& is);
 
     const char* getName() const; // get name (leaf) from path
 };
@@ -81,18 +92,19 @@ struct Material
 using MaterialPtr = std::shared_ptr<Material>;
 
 
-class Transform : public SceneEntity
+class Transform : public Entity
 {
-using super = SceneEntity;
+using super = Entity;
 public:
     TRS transform;
     AnimationPtr animation;
     std::string reference;
 
 
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    TypeID getTypeID() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 
     virtual void createAnimation();
     virtual void swapHandedness();
@@ -120,13 +132,21 @@ class Camera : public Transform
 {
 using super = Transform;
 public:
+    bool is_ortho = false;
     float fov = 30.0f;
     float near_plane = 0.3f;
     float far_plane = 1000.0f;
 
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    // for physical camera
+    float vertical_aperture = 0.0f;
+    float horizontal_aperture = 0.0f;
+    float focal_length = 0.0f;
+    float focus_distance = 0.0f;
+
+    TypeID getTypeID() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 
     void createAnimation() override;
     void applyScaleFactor(float scale) override;
@@ -164,12 +184,13 @@ public:
     Type type = Type::Directional;
     float4 color = float4::one();
     float intensity = 1.0f;
-    float range = 10.0f;
+    float range = 0.0f;
     float spot_angle = 30.0f; // for spot light
 
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    TypeID getTypeID() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 
     void createAnimation() override;
     void applyScaleFactor(float scale) override;
@@ -317,9 +338,10 @@ public:
 public:
     Mesh();
     void clear();
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    TypeID getTypeID() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
 
     void swapHandedness() override;
     void applyScaleFactor(float scale) override;

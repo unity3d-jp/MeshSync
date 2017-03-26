@@ -426,7 +426,16 @@ void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os)
 bool ScreenshotMessage::deserialize(std::istream& is) { return super::deserialize(is); }
 
 
-uint32_t SceneEntity::getSerializeSize() const
+Entity::~Entity()
+{
+}
+
+Entity::TypeID Entity::getTypeID() const
+{
+    return TypeID::Unknown;
+}
+
+uint32_t Entity::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(id);
@@ -434,20 +443,20 @@ uint32_t SceneEntity::getSerializeSize() const
     ret += ssize(path);
     return ret;
 }
-void SceneEntity::serialize(std::ostream& os) const
+void Entity::serialize(std::ostream& os) const
 {
     write(os, id);
     write(os, index);
     write(os, path);
 }
-void SceneEntity::deserialize(std::istream& is)
+void Entity::deserialize(std::istream& is)
 {
     read(is, id);
     read(is, index);
     read(is, path);
 }
 
-const char* SceneEntity::getName() const
+const char* Entity::getName() const
 {
     size_t name_pos = path.find_last_of('/');
     if (name_pos != std::string::npos) { ++name_pos; }
@@ -511,6 +520,11 @@ struct TransformDataFlags
     uint32_t has_animation : 1;
 };
 
+Entity::TypeID Transform::getTypeID() const
+{
+    return TypeID::Transform;
+}
+
 uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
@@ -547,7 +561,9 @@ void Transform::deserialize(std::istream& is)
 
 void Transform::createAnimation()
 {
-    animation.reset(new TransformAnimation());
+    if (!animation) {
+        animation.reset(new TransformAnimation());
+    }
 }
 
 void Transform::swapHandedness()
@@ -604,32 +620,54 @@ bool TransformAnimation::empty() const
 
 
 
+Entity::TypeID Camera::getTypeID() const
+{
+    return TypeID::Camera;
+}
+
 uint32_t Camera::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
+    ret += ssize(is_ortho);
     ret += ssize(fov);
     ret += ssize(near_plane);
     ret += ssize(far_plane);
+    ret += ssize(vertical_aperture);
+    ret += ssize(horizontal_aperture);
+    ret += ssize(focal_length);
+    ret += ssize(focus_distance);
     return ret;
 }
 void Camera::serialize(std::ostream& os) const
 {
     super::serialize(os);
+    write(os, is_ortho);
     write(os, fov);
     write(os, near_plane);
     write(os, far_plane);
+    write(os, vertical_aperture);
+    write(os, horizontal_aperture);
+    write(os, focal_length);
+    write(os, focus_distance);
 }
 void Camera::deserialize(std::istream& is)
 {
     super::deserialize(is);
+    read(is, is_ortho);
     read(is, fov);
     read(is, near_plane);
     read(is, far_plane);
+    read(is, vertical_aperture);
+    read(is, horizontal_aperture);
+    read(is, focal_length);
+    read(is, focus_distance);
 }
 
 void Camera::createAnimation()
 {
-    animation.reset(new CameraAnimation());
+    if (!animation) {
+        animation.reset(new CameraAnimation());
+    }
 }
 
 void Camera::applyScaleFactor(float scale)
@@ -669,6 +707,11 @@ bool CameraAnimation::empty() const
 }
 
 
+Entity::TypeID Light::getTypeID() const
+{
+    return TypeID::Light;
+}
+
 uint32_t Light::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
@@ -702,7 +745,9 @@ void Light::deserialize(std::istream & is)
 
 void Light::createAnimation()
 {
-    animation.reset(new LightAnimation());
+    if (!animation) {
+        animation.reset(new LightAnimation());
+    }
 }
 
 void Light::applyScaleFactor(float scale)
@@ -797,6 +842,11 @@ void Mesh::clear()
     submeshes.clear();
     splits.clear();
     weights4.clear();
+}
+
+Entity::TypeID Mesh::getTypeID() const
+{
+    return TypeID::Mesh;
 }
 
 uint32_t Mesh::getSerializeSize() const

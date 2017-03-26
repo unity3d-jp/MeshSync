@@ -7,6 +7,7 @@ MDagPath GetDagPath(MObject node);
 bool IsVisible(MObject node);
 MObject GetTransform(MDagPath path);
 MObject GetTransform(MObject node);
+MObject GetShape(MObject node);
 
 MObject FindMesh(MObject node);
 MObject FindSkinCluster(MObject node);

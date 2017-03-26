@@ -32,6 +32,18 @@ static void OnChangeTransform(MNodeMessage::AttributeMessage msg, MPlug& plug, M
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateTransform(plug.node());
 }
 
+static void OnChangeCamera(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+{
+    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateCamera(plug.node());
+}
+
+static void OnChangeLight(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+{
+    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateLight(plug.node());
+}
+
 static void OnChangeMesh(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateMesh(plug.node());
@@ -122,17 +134,52 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
         }
     }
     else {
-        MItDag it(MItDag::kDepthFirst, MFn::kMesh);
-        while (!it.isDone()) {
-            auto shape = it.item();
-            MFnMesh fn(shape);
-            if (!fn.isIntermediateObject()) {
-                auto trans = GetTransform(shape);
-                mscTrace("tracking mesh %s\n", GetDagPath(trans).fullPathName().asChar());
-                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
-                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
+        // track  meshes
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kMesh);
+            while (!it.isDone()) {
+                auto shape = it.item();
+                MFnMesh fn(shape);
+                if (!fn.isIntermediateObject()) {
+                    auto trans = GetTransform(shape);
+                    mscTrace("tracking mesh %s\n", GetDagPath(trans).fullPathName().asChar());
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
+                }
+                it.next();
             }
-            it.next();
+        }
+
+        // track cameras
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kCamera);
+            while (!it.isDone()) {
+                auto shape = it.item();
+                MFnCamera fn(shape);
+                if (!fn.isIntermediateObject()) {
+                    auto trans = GetTransform(shape);
+                    mscTrace("tracking camera %s\n", GetDagPath(trans).fullPathName().asChar());
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeCamera, this, &stat));
+                }
+                it.next();
+            }
+        }
+
+        // track lights
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kLight);
+            while (!it.isDone()) {
+                auto shape = it.item();
+                MFnLight fn(shape);
+                if (!fn.isIntermediateObject()) {
+                    auto trans = GetTransform(shape);
+                    mscTrace("tracking light %s\n", GetDagPath(trans).fullPathName().asChar());
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeLight, this, &stat));
+                }
+                it.next();
+            }
         }
     }
 }
@@ -192,9 +239,31 @@ void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
     }
 }
 
+void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
+{
+    if ((force || m_auto_sync) && m_export_cameras && shape.hasFn(MFn::kCamera)) {
+        auto node = GetTransform(shape);
+        if (std::find(m_mcameras.begin(), m_mcameras.end(), node) == m_mcameras.end()) {
+            mscTrace("MeshSyncClientMaya::notifyUpdateCamera()\n");
+            m_mcameras.push_back(node);
+        }
+    }
+}
+
+void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
+{
+    if ((force || m_auto_sync) && m_export_lights && shape.hasFn(MFn::kLight)) {
+        auto node = GetTransform(shape);
+        if (std::find(m_mlights.begin(), m_mlights.end(), node) == m_mlights.end()) {
+            mscTrace("MeshSyncClientMaya::notifyUpdateLight()\n");
+            m_mlights.push_back(node);
+        }
+    }
+}
+
 void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
 {
-    if ((force || m_auto_sync) && shape.hasFn(MFn::kMesh)) {
+    if ((force || m_auto_sync) && m_export_meshes && shape.hasFn(MFn::kMesh)) {
         auto node = GetTransform(shape);
         if (std::find(m_mmeshes.begin(), m_mmeshes.end(), node) == m_mmeshes.end()) {
             mscTrace("MeshSyncClientMaya::notifyUpdateMesh()\n");
@@ -307,19 +376,37 @@ bool MeshSyncClientMaya::sendUpdatedObjects()
         extractAllMaterialData();
     }
     for (auto& mmesh : m_mmeshes) {
-        auto mesh = new ms::Mesh();
-        m_client_meshes.emplace_back(mesh);
-        extractMeshData(*mesh, mmesh);
+        auto mesh = ms::MeshPtr(new ms::Mesh());
+        if (extractMeshData(*mesh, mmesh)) {
+            m_client_meshes.emplace_back(mesh);
+        }
+    }
+
+    for (auto& mcam : m_mcameras) {
+        auto dst = ms::CameraPtr(new ms::Camera());
+        if (extractCameraData(*dst, mcam)) {
+            m_client_cameras.emplace_back(dst);
+        }
+    }
+
+    for (auto& mlight : m_mlights) {
+        auto dst = ms::LightPtr(new ms::Light());
+        if (extractLightData(*dst, mlight)) {
+            m_client_lights.emplace_back(dst);
+        }
     }
 
     // transforms must be latter as extractMeshData() maybe add joints to m_mtransforms
     for (auto& mtrans : m_mtransforms) {
-        auto trans = new ms::Transform();
-        m_client_transforms.emplace_back(trans);
-        extractTransformData(*trans, mtrans);
+        auto dst = ms::TransformPtr(new ms::Transform());
+        if (extractTransformData(*dst, mtrans)) {
+            m_client_transforms.emplace_back(dst);
+        }
     }
 
     m_mtransforms.clear();
+    m_mcameras.clear();
+    m_mlights.clear();
     m_mmeshes.clear();
 
     kickAsyncSend();
@@ -416,7 +503,7 @@ void MeshSyncClientMaya::extractAllMaterialData()
         tmp->name = fn.name().asChar();
         tmp->color = (const mu::float4&)fn.color();
         tmp->id = getMaterialID(fn.uuid());
-        m_materials.emplace_back(tmp);
+        m_client_materials.emplace_back(tmp);
 
         it.next();
     }
@@ -584,7 +671,7 @@ static void ConvertAnimationBool(
     GatherSamples(dst, acb, time_begin, [](bool& v, double s) { v = s > 0.0; });
 }
 
-void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
+bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
     MFnTransform src_trs(src);
 
@@ -611,14 +698,8 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 
     // handle animation
     if (m_sync_animations && MAnimUtil::isAnimated(src)) {
-        extractTransformAnimationData(dst, src);
-    }
-}
+        MPlug ptx, pty, ptz, prx, pry, prz, psx, psy, psz, pvis;
 
-void MeshSyncClientMaya::extractTransformAnimationData(ms::Transform& dst, MObject src)
-{
-    MPlug ptx, pty, ptz, prx, pry, prz, psx, psy, psz, pvis;
-    {
         // get TRS & visibility animation plugs
         MPlugArray plugs;
         MAnimUtil::findAnimatedPlugs(src, plugs);
@@ -627,9 +708,7 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Transform& dst, MObje
         for (uint32_t pi = 0; pi < num_plugs; ++pi) {
             auto plug = plugs[pi];
             MObjectArray animation;
-            if (!MAnimUtil::findAnimation(plug, animation)) {
-                continue;
-            }
+            if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
 
             std::string name = plug.name().asChar();
 #define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
@@ -647,24 +726,22 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Transform& dst, MObje
         }
 
         // skip if no animation plugs are found
-        if (found == 0) { return; }
-    }
+        if (found > 0) {
+            dst.createAnimation();
+            auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
 
-    dst.createAnimation();
-    auto& anim = static_cast<ms::TransformAnimation&>(*dst.animation);
+            // build time-sampled animation data
+            ConvertAnimationBool(false, anim.visibility, pvis, m_animation_samples_per_seconds);
+            ConvertAnimationFloat3(dst.transform.position, anim.translation, ptx, pty, ptz, m_animation_samples_per_seconds);
+            ConvertAnimationFloat3(dst.transform.scale, anim.scale, psx, psy, psz, m_animation_samples_per_seconds);
+            {
+                // build rotation animation data (eular angles) and convert to quaternion
+                RawVector<ms::TVP<mu::float3>> eular;
+                ConvertAnimationFloat3(mu::float3::zero(), eular, prx, pry, prz, m_animation_samples_per_seconds);
 
-    // build time-sampled animation data
-    ConvertAnimationBool(false, anim.visibility, pvis, m_animation_samples_per_seconds);
-    ConvertAnimationFloat3(dst.transform.position, anim.translation, ptx, pty, ptz, m_animation_samples_per_seconds);
-    ConvertAnimationFloat3(dst.transform.scale, anim.scale, psx, psy, psz, m_animation_samples_per_seconds);
-    {
-        // build rotation animation data (eular angles) and convert to quaternion
-        RawVector<ms::TVP<mu::float3>> eular;
-        ConvertAnimationFloat3(mu::float3::zero(), eular, prx, pry, prz, m_animation_samples_per_seconds);
-
-        if (!eular.empty()) {
-            anim.rotation.resize(eular.size());
-            size_t n = eular.size();
+                if (!eular.empty()) {
+                    anim.rotation.resize(eular.size());
+                    size_t n = eular.size();
 
 #define Case(Order)\
     case MTransformationMatrix::k##Order:\
@@ -674,32 +751,112 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Transform& dst, MObje
         }\
         break;
 
-            MFnTransform fn_trans = src;
-            switch (fn_trans.rotationOrder()) {
-            Case(XYZ);
-            Case(YZX);
-            Case(ZXY);
-            Case(XZY);
-            Case(YXZ);
-            Case(ZYX);
-            }
+                    MFnTransform mtrans = src;
+                    switch (mtrans.rotationOrder()) {
+                        Case(XYZ);
+                        Case(YZX);
+                        Case(ZXY);
+                        Case(XZY);
+                        Case(YXZ);
+                        Case(ZYX);
+                    }
 #undef Case
+                }
+            }
+
+            if (dst.animation->empty()) {
+                dst.animation.reset();
+            }
         }
     }
-
-    if (dst.animation->empty()) {
-        dst.animation.reset();
-    }
+    return true;
 }
 
-void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
+bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
+{
+    if (!extractTransformData(dst, src)) { return false; }
+
+    auto shape = GetShape(src);
+    if (!shape.hasFn(MFn::kCamera)) {
+        return false;
+    }
+
+    MFnCamera mcam = shape;
+    dst.is_ortho = mcam.isOrtho();
+    dst.near_plane = (float)mcam.nearClippingPlane();
+    dst.far_plane = (float)mcam.farClippingPlane();
+    dst.fov = (float)mcam.horizontalFieldOfView();
+
+    dst.horizontal_aperture = (float)mcam.horizontalFilmAperture();
+    dst.vertical_aperture = (float)mcam.verticalFilmAperture();
+    dst.focal_length = (float)mcam.focalLength();
+    dst.focus_distance = (float)mcam.focusDistance();
+
+    // handle animation
+    if (m_sync_animations && MAnimUtil::isAnimated(shape)) {
+        MPlugArray plugs;
+        MAnimUtil::findAnimatedPlugs(shape, plugs);
+
+        // todo
+
+        dst.createAnimation();
+        auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
+    }
+    return true;
+}
+
+bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
+{
+    if (!extractTransformData(dst, src)) { return false; }
+
+    auto shape = GetShape(src);
+    if (shape.hasFn(MFn::kSpotLight)) {
+        MFnSpotLight mlight = shape;
+        dst.type = ms::Light::Type::Spot;
+        dst.spot_angle = (float)mlight.coneAngle();
+    }
+    else if (shape.hasFn(MFn::kDirectionalLight)) {
+        MFnDirectionalLight mlight = shape;
+        dst.type = ms::Light::Type::Directional;
+    }
+    else if (shape.hasFn(MFn::kPointLight)) {
+        MFnPointLight mlight = shape;
+        dst.type = ms::Light::Type::Point;
+    }
+    else {
+        return false;
+    }
+
+    MFnLight mlight = shape;
+    auto color = mlight.color();
+    dst.color = { color.r, color.g, color.b, color.a };
+    dst.intensity = mlight.intensity();
+
+    // handle animation
+    if (m_sync_animations && MAnimUtil::isAnimated(shape)) {
+        MPlugArray plugs;
+        MAnimUtil::findAnimatedPlugs(shape, plugs);
+
+        dst.createAnimation();
+        auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
+    }
+    return true;
+}
+
+
+bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 {
     dst.clear();
 
-    extractTransformData(dst, src);
+    if (!extractTransformData(dst, src)) { return false; }
 
     dst.flags.visible = IsVisible(src);
-    if (!dst.flags.visible) { return; }
+    if (!dst.flags.visible) { return true; }
+
+    auto shape = GetShape(src);
+    if (!shape.hasFn(MFn::kMesh)) { return false; }
+
+    MFnMesh mmesh = shape;
 
     dst.flags.has_points = 1;
     dst.flags.has_normals = 1;
@@ -712,18 +869,16 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.refine_settings.flags.swap_faces = 1;
     dst.refine_settings.flags.gen_weights4 = 1;
 
-    MFnMesh fn_mesh = FindMesh(src);
-    if (fn_mesh.object().isNull()) { return; }
-    MFnBlendShapeDeformer fn_blendshape = FindBlendShape(fn_mesh.object());
-    MFnSkinCluster fn_skin = FindSkinCluster(fn_mesh.object());
-    MFnMesh fn_src_mesh = fn_mesh.object();
+    MFnBlendShapeDeformer fn_blendshape = FindBlendShape(mmesh.object());
+    MFnSkinCluster fn_skin = FindSkinCluster(mmesh.object());
+    MFnMesh fn_src_mesh = mmesh.object();
     int skin_index = 0;
 
     if (m_export_skinning) {
-        fn_skin.setObject(FindSkinCluster(fn_mesh.object()));
+        fn_skin.setObject(FindSkinCluster(mmesh.object()));
         if (!fn_skin.object().isNull()) {
             fn_src_mesh.setObject(FindOrigMesh(src));
-            skin_index = fn_skin.indexForOutputShape(fn_mesh.object());
+            skin_index = fn_skin.indexForOutputShape(mmesh.object());
         }
     }
 
@@ -791,7 +946,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         std::vector<int> mids;
         MObjectArray shaders;
         MIntArray indices;
-        fn_mesh.getConnectedShaders(0, shaders, indices);
+        mmesh.getConnectedShaders(0, shaders, indices);
         mids.resize(shaders.length(), -1);
         for (uint32_t si = 0; si < shaders.length(); si++) {
             MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
@@ -902,7 +1057,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
 
         // get weights
-        MDagPath mesh_path = GetDagPath(fn_mesh.object());
+        MDagPath mesh_path = GetDagPath(mmesh.object());
         MItGeometry it_geom(mesh_path);
         while (!it_geom.isDone()) {
             MObject component = it_geom.component();
@@ -978,6 +1133,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             }
         }
     }
+    return true;
 }
 
 void MeshSyncClientMaya::kickAsyncSend()
@@ -997,16 +1153,20 @@ void MeshSyncClientMaya::kickAsyncSend()
             client.send(fence);
         }
 
-        // send materials & transforms
+        // send scene data (except meshes)
         {
             ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.materials = m_materials;
-            set.scene.transforms = m_client_transforms;
+            set.scene.settings  = scene_settings;
+            set.scene.transforms= m_client_transforms;
+            set.scene.cameras   = m_client_cameras;
+            set.scene.lights    = m_client_lights;
+            set.scene.materials = m_client_materials;
             client.send(set);
 
-            m_materials.clear();
             m_client_transforms.clear();
+            m_client_cameras.clear();
+            m_client_lights.clear();
+            m_client_materials.clear();
         }
 
         // send meshes one by one to Unity can respond quickly
