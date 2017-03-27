@@ -530,8 +530,8 @@ uint32_t Transform::getSerializeSize() const
     uint32_t ret = super::getSerializeSize();
     ret += sizeof(TransformDataFlags);
     ret += ssize(transform);
+    ret += ssize(visible);
     if (animation) { ret += ssize(animation); }
-    ret += ssize(reference);
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
@@ -542,8 +542,8 @@ void Transform::serialize(std::ostream& os) const
     flags.has_animation = animation ? 1 : 0;
     write(os, flags);
     write(os, transform);
+    write(os, visible);
     if (flags.has_animation) { write(os, animation); }
-    write(os, reference);
 }
 void Transform::deserialize(std::istream& is)
 {
@@ -552,11 +552,11 @@ void Transform::deserialize(std::istream& is)
     TransformDataFlags flags;
     read(is, flags);
     read(is, transform);
+    read(is, visible);
     if(flags.has_animation) {
         createAnimation();
         animation->deserialize(is);
     }
-    read(is, reference);
 }
 
 void Transform::createAnimation()
@@ -572,11 +572,11 @@ void Transform::swapHandedness()
     transform.rotation = swap_handedness(transform.rotation);
 
     if (animation) {
-        auto tanim = static_cast<TransformAnimation&>(*animation);
-        for (auto& tvp : tanim.translation) {
+        auto& anim = static_cast<TransformAnimation&>(*animation);
+        for (auto& tvp : anim.translation) {
             tvp.value.x *= -1.0f;
         }
-        for (auto& tvp : tanim.rotation) {
+        for (auto& tvp : anim.rotation) {
             tvp.value = swap_handedness(tvp.value);
         }
     }
@@ -593,7 +593,7 @@ uint32_t TransformAnimation::getSerializeSize() const
     ret += ssize(translation);
     ret += ssize(rotation);
     ret += ssize(scale);
-    ret += ssize(visibility);
+    ret += ssize(visible);
     return ret;
 }
 
@@ -602,7 +602,7 @@ void TransformAnimation::serialize(std::ostream & os) const
     write(os, translation);
     write(os, rotation);
     write(os, scale);
-    write(os, visibility);
+    write(os, visible);
 }
 
 void TransformAnimation::deserialize(std::istream & is)
@@ -610,12 +610,12 @@ void TransformAnimation::deserialize(std::istream & is)
     read(is, translation);
     read(is, rotation);
     read(is, scale);
-    read(is, visibility);
+    read(is, visible);
 }
 
 bool TransformAnimation::empty() const
 {
-    return translation.empty() && rotation.empty() && scale.empty() && visibility.empty();
+    return translation.empty() && rotation.empty() && scale.empty() && visible.empty();
 }
 
 
@@ -948,6 +948,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.apply_local2world) {
         applyTransform(mrs.local2world);
     }
+    if (mrs.flags.apply_world2local) {
+        applyTransform(mrs.world2local);
+    }
     if (mrs.flags.mirror_x) {
         float3 plane_n = { 1.0f, 0.0f, 0.0f };
         float plane_d = 0.0f;
@@ -968,9 +971,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
     if (mrs.flags.swap_handedness) {
         swapHandedness();
-    }
-    if (mrs.flags.apply_world2local) {
-        applyTransform(mrs.world2local);
     }
     if (mrs.flags.gen_weights4 && !bone_weights.empty()) {
         generateWeights4();

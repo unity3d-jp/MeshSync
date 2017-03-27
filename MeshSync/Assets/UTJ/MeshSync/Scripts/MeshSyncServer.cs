@@ -416,33 +416,31 @@ namespace UTJ
 
 
             var target = rec.go.GetComponent<Transform>();
+            var go = target.gameObject;
 
-            // if object is not visible, just disable and return
-            if (!data.flags.visible)
+            // update transform
+            if (data.flags.applyTRS)
             {
-                target.gameObject.SetActive(false);
-                for (int i = 0; ; ++i)
-                {
-                    var t = FindObjectByPath(null, path + "/[" + i + "]");
-                    if (t == null) { break; }
-                    t.gameObject.SetActive(false);
-                }
-                return;
+                UpdateTransform(data_trans);
             }
-            target.gameObject.SetActive(true);
+            else
+            {
+                // if object is not visible, just disable and return
+                if (!data_trans.visible)
+                {
+                    if (go.activeSelf) go.SetActive(false);
+                }
+                else
+                {
+                    if (!go.activeSelf) go.SetActive(true);
+                }
+            }
+            if (!go.activeInHierarchy) { return; }
 
 
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
             var flags = data.flags;
-
-            // update transform
-            if(data.flags.applyTRS) {
-                var trs = data_trans.trs;
-                target.localPosition = trs.position;
-                target.localRotation = trs.rotation;
-                target.localScale = trs.scale;
-            }
 
             bool skinned = data.numBones > 0;
 
@@ -628,6 +626,7 @@ namespace UTJ
             bool created = false;
             var trans = FindObjectByPath(null, data.path, true, ref created);
             if (trans == null) { return null; }
+            var go = trans.gameObject;
 #if UNITY_EDITOR
             Undo.RecordObject(trans, "MeshSync");
 #endif
@@ -637,6 +636,15 @@ namespace UTJ
             trans.localPosition = trs.position;
             trans.localRotation = trs.rotation;
             trans.localScale = trs.scale;
+
+            if (!data.visible)
+            {
+                if(go.activeSelf) go.SetActive(false);
+            }
+            else
+            {
+                if (!go.activeSelf) go.SetActive(true);
+            }
 
 #if UNITY_EDITOR
             var animData = data.animation;

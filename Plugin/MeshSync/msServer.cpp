@@ -164,8 +164,8 @@ int Server::processMessages(const MessageHandler& handler)
             handler(MessageType::Get, *p);
             m_current_get_request = nullptr;
         }
-        else if (auto *post = dynamic_cast<SetMessage*>(p.get())) {
-            handler(MessageType::Set, *post);
+        else if (auto *set = dynamic_cast<SetMessage*>(p.get())) {
+            handler(MessageType::Set, *set);
         }
         else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
             handler(MessageType::Delete, *p);

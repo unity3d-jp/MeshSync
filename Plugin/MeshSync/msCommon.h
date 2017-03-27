@@ -97,8 +97,8 @@ class Transform : public Entity
 using super = Entity;
 public:
     TRS transform;
+    bool visible = true;
     AnimationPtr animation;
-    std::string reference;
 
 
     TypeID getTypeID() const override;
@@ -118,7 +118,7 @@ public:
     RawVector<TVP<float3>>  translation;
     RawVector<TVP<quatf>>   rotation;
     RawVector<TVP<float3>>  scale;
-    RawVector<TVP<bool>>    visibility;
+    RawVector<TVP<bool>>    visible;
 
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -222,7 +222,6 @@ public:
 
 struct MeshDataFlags
 {
-    uint32_t visible : 1;
     uint32_t has_refine_settings : 1;
     uint32_t has_indices : 1;
     uint32_t has_counts : 1;

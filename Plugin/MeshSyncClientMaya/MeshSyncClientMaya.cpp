@@ -505,8 +505,6 @@ bool MeshSyncClientMaya::importScene()
     gd.flags.get_materialIDs = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
-    gd.refine_settings.flags.apply_local2world = 1;
-    gd.refine_settings.flags.invert_v = 1;
     gd.refine_settings.flags.bake_skin = m_bake_skin;
     gd.refine_settings.flags.bake_cloth = m_bake_cloth;
 
@@ -599,7 +597,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 
             // build time-sampled animation data
             int sps = m_animation_samples_per_seconds;
-            ConvertAnimationBool(anim.visibility, true, pvis, sps);
+            ConvertAnimationBool(anim.visible, true, pvis, sps);
             ConvertAnimationFloat3(anim.translation, dst.transform.position, ptx, pty, ptz, sps);
             ConvertAnimationFloat3(anim.scale, dst.transform.scale, psx, psy, psz, sps);
             {
@@ -832,8 +830,8 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
     if (!extractTransformData(dst, src)) { return false; }
 
-    dst.flags.visible = IsVisible(src);
-    if (!dst.flags.visible) { return true; }
+    dst.visible = IsVisible(src);
+    if (!dst.visible) { return true; }
 
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return false; }

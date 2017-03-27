@@ -140,7 +140,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             ExtractID(rel.data->path.c_str(), rel.data->id);
 
             bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
-            rel.data->flags.visible = visible;
+            rel.data->visible = visible;
             if (!visible) {
                 // not send actual contents if not visible
                 return;
@@ -467,22 +467,22 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
     // transform
     {
-        auto ang = obj->GetRotation();
-        auto eular = float3{ ang.pitch, ang.head, ang.bank } * mu::Deg2Rad;
-        quatf rot = rotateZXY(eular);
-
-        dst.flags.apply_trs = 1;
-        dst.transform.position = (const float3&)obj->GetTranslation();
-        dst.transform.rotation = rot;
-        dst.transform.scale = (const float3&)obj->GetScaling();
-
         dst.refine_settings.flags.apply_world2local = 1;
-        dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
-
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
             dst.flags.apply_trs = 0;
+        }
+        else {
+            auto ang = obj->GetRotation();
+            auto eular = float3{ ang.pitch, ang.head, ang.bank } * mu::Deg2Rad;
+            quatf rot = rotateZXY(eular);
+
+            dst.flags.apply_trs = 1;
+            dst.transform.position = (const float3&)obj->GetTranslation();
+            dst.transform.rotation = rot;
+            dst.transform.scale = (const float3&)obj->GetScaling();
+            dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
         }
     }
 

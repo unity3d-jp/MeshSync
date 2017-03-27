@@ -164,75 +164,70 @@ namespace UTJ
         public struct MeshDataFlags
         {
             public int flags;
-            public bool visible
+            public bool hasRefineSettings
             {
                 get { return (flags & (1 << 0)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 0)); }
             }
-            public bool hasRefineSettings
+            public bool hasIndices
             {
                 get { return (flags & (1 << 1)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 1)); }
             }
-            public bool hasIndices
+            public bool hasCounts
             {
                 get { return (flags & (1 << 2)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 2)); }
             }
-            public bool hasCounts
+            public bool hasPoints
             {
                 get { return (flags & (1 << 3)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 3)); }
             }
-            public bool hasPoints
+            public bool hasNormals
             {
                 get { return (flags & (1 << 4)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 4)); }
             }
-            public bool hasNormals
+            public bool hasTangents
             {
                 get { return (flags & (1 << 5)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 5)); }
             }
-            public bool hasTangents
+            public bool hasUV
             {
                 get { return (flags & (1 << 6)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 6)); }
             }
-            public bool hasUV
+            public bool hasColors
             {
                 get { return (flags & (1 << 7)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 7)); }
             }
-            public bool hasColors
+            public bool hasMaterialIDs
             {
                 get { return (flags & (1 << 8)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 8)); }
             }
-            public bool hasMaterialIDs
+            public bool hasBones
             {
                 get { return (flags & (1 << 9)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 9)); }
             }
-            public bool hasBones
+            public bool hasBlendshapes
             {
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
             }
-            public bool hasBlendshapes
+            public bool hasNPoints
             {
                 get { return (flags & (1 << 11)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 11)); }
             }
-            public bool hasNPoints
+            public bool applyTRS
             {
                 get { return (flags & (1 << 12)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 12)); }
-            }
-            public bool applyTRS
-            {
-                get { return (flags & (1 << 13)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 13)); }
             }
         };
 
@@ -287,9 +282,9 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern float msTransformAGetScaleTime(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetScaleValue(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibilitySamples(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibilityTime(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibilityValue(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibleSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibleTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibleValue(IntPtr _this, int i);
 
             public static explicit operator TransformAnimationData(IntPtr v)
             {
@@ -359,21 +354,21 @@ namespace UTJ
                 }
             }
 
-            public float[] visibilityTimes
+            public float[] visibleTimes
             {
                 get
                 {
-                    var ret = new float[msTransformAGetNumVisibilitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibilityTime(_this, i); }
+                    var ret = new float[msTransformAGetNumVisibleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibleTime(_this, i); }
                     return ret;
                 }
             }
-            public bool[] visibilityValues
+            public bool[] visibleValues
             {
                 get
                 {
-                    var ret = new bool[msTransformAGetNumVisibilitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibilityValue(_this, i) != 0; }
+                    var ret = new bool[msTransformAGetNumVisibleSamples(_this)];
+                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibleValue(_this, i) != 0; }
                     return ret;
                 }
             }
@@ -383,7 +378,7 @@ namespace UTJ
                 var t = AnimationData.ToAnimatinCurve(translateTimes, translateValues, reduce);
                 var r = AnimationData.ToAnimatinCurve(rotationTimes, rotationValues, reduce);
                 var s = AnimationData.ToAnimatinCurve(scaleTimes, scaleValues, reduce);
-                var v = AnimationData.ToAnimatinCurve(visibilityTimes, visibilityValues, reduce);
+                var v = AnimationData.ToAnimatinCurve(visibleTimes, visibleValues, reduce);
 
                 var ttrans = typeof(Transform);
                 var tgo = typeof(GameObject);
@@ -941,8 +936,8 @@ namespace UTJ
             [DllImport("MeshSyncServer")] static extern void msTransformSetPath(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern void msTransformGetTRS(IntPtr _this, ref TRS dst);
             [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
-            [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern byte msTransformGetVisible(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetVisible(IntPtr _this, byte v);
             [DllImport("MeshSyncServer")] static extern AnimationData msTransformGetAnimation(IntPtr _this);
 
             public static explicit operator TransformData(IntPtr v)
@@ -987,10 +982,10 @@ namespace UTJ
                 }
             }
 
-            public string reference
+            public bool visible
             {
-                get { return S(msTransformGetReference(_this)); }
-                set { msTransformSetReference(_this, value); }
+                get { return msTransformGetVisible(_this) != 0; }
+                set { msTransformSetVisible(_this, (byte)(value ? 1 : 0)); }
             }
 
             public AnimationData animation

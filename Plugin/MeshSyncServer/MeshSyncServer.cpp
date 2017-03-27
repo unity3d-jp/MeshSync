@@ -147,9 +147,9 @@ msAPI int       msTransformAGetNumScaleSamples(ms::TransformAnimation *_this) { 
 msAPI float     msTransformAGetScaleTime(ms::TransformAnimation *_this, int i) { return _this->scale[i].time; }
 msAPI float3    msTransformAGetScaleValue(ms::TransformAnimation *_this, int i) { return _this->scale[i].value; }
 
-msAPI int       msTransformAGetNumVisibilitySamples(ms::TransformAnimation *_this) { return _this ? (int)_this->visibility.size() : 0; }
-msAPI float     msTransformAGetVisibilityTime(ms::TransformAnimation *_this, int i) { return _this->visibility[i].time; }
-msAPI bool      msTransformAGetVisibilityValue(ms::TransformAnimation *_this, int i) { return _this->visibility[i].value; }
+msAPI int       msTransformAGetNumVisibleSamples(ms::TransformAnimation *_this) { return _this ? (int)_this->visible.size() : 0; }
+msAPI float     msTransformAGetVisibleTime(ms::TransformAnimation *_this, int i) { return _this->visible[i].time; }
+msAPI bool      msTransformAGetVisibleValue(ms::TransformAnimation *_this, int i) { return _this->visible[i].value; }
 
 msAPI int       msCameraAGetNumFovSamples(ms::CameraAnimation *_this) { return _this ? (int)_this->fov.size() : 0; }
 msAPI float     msCameraAGetFovTime(ms::CameraAnimation *_this, int i) { return _this->fov[i].time; }
@@ -265,13 +265,13 @@ msAPI void msTransformSetTRS(ms::Transform *_this, const ms::TRS *v)
 {
     _this->transform = *v;
 }
-msAPI const char* msTransformGetReference(ms::Transform *_this)
+msAPI bool msTransformGetVisible(ms::Transform *_this)
 {
-    return _this->reference.c_str();
+    return _this->visible;
 }
-msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
+msAPI void msTransformSetVisible(ms::Transform *_this, bool v)
 {
-    _this->reference = *v;
+    _this->visible = v;
 }
 msAPI ms::Animation* msTransformGetAnimation(ms::Transform *_this)
 {
@@ -481,7 +481,6 @@ msAPI void msMeshWriteIndices(ms::Mesh *_this, const int *v, int size)
     if (size > 0) {
         _this->indices.assign(v, v + size);
         _this->flags.has_indices = 1;
-        _this->flags.visible = 1;
     }
 }
 msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *_this, const int *v, int size, int materialID)
@@ -491,7 +490,6 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *_this, const int *v, int size, 
         _this->materialIDs.resize(_this->materialIDs.size() + (size / 3), materialID);
         _this->flags.has_indices = 1;
         _this->flags.has_materialIDs = 1;
-        _this->flags.visible = 1;
     }
 }
 msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *_this, int i)
