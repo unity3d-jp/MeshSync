@@ -471,6 +471,16 @@ inline float3 apply_rotation(const quatf& q, const float3& p)
     return p + (a * q.w + b) * 2.0f;
 }
 
+inline quatf inverse(const quatf& v)
+{
+    return{ -v.x, -v.y, -v.z, v.w };
+}
+
+inline quatf flipY(const quatf& v)
+{
+    return v * quatf{0.0f, 1.0f, 0.0f, 0.0f};
+}
+
 inline quatf rotateX(float angle)
 {
     float c = std::cos(angle * 0.5f);
