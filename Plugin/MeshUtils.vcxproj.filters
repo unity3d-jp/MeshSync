@@ -62,6 +62,9 @@
     <ClCompile Include="MeshUtils\MeshRefiner.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshUtils\Math.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">

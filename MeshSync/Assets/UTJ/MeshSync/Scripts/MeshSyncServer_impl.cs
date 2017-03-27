@@ -894,8 +894,8 @@ namespace UTJ
                     var v = values[i];
                     ret.AddKey(new Keyframe(t, v));
 #if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
 #endif
                 }
                 if (reduce)

@@ -14,6 +14,10 @@
 namespace mu {
 #endif
 
+extern const float PI;
+extern const float Deg2Rad;
+extern const float Rad2Deg;
+
 struct float2
 {
     float x, y;
@@ -778,6 +782,19 @@ inline quatf to_quat(const float3x3& m)
 inline quatf to_quat(const float4x4& m)
 {
     return to_quat_impl(m);
+}
+
+// aperture and focal_length must be millimeter. return fov in degree
+inline float compute_fov(float aperture, float focal_length)
+{
+    return 2.0f * atanf(aperture / (2.0f * focal_length)) * Rad2Deg;
+}
+
+// aperture: millimeter
+// fov: degree
+inline float compute_focal_length(float aperture, float fov)
+{
+    return aperture / std::tan(fov * Deg2Rad / 2.0f) / 2.0f;
 }
 
 #ifdef muMath_AddNamespace

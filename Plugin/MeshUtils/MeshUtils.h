@@ -10,10 +10,6 @@
 
 namespace mu {
 
-extern const float PI;
-extern const float Deg2Rad;
-extern const float Rad2Deg;
-
 template<int N>
 struct Weights
 {

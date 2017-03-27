@@ -688,6 +688,7 @@ uint32_t CameraAnimation::getSerializeSize() const
 
 void CameraAnimation::serialize(std::ostream & os) const
 {
+    super::serialize(os);
     write(os, fov);
     write(os, near_plane);
     write(os, far_plane);
@@ -695,6 +696,7 @@ void CameraAnimation::serialize(std::ostream & os) const
 
 void CameraAnimation::deserialize(std::istream & is)
 {
+    super::deserialize(is);
     read(is, fov);
     read(is, near_plane);
     read(is, far_plane);

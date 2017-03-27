@@ -33,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshUtils\Allocator.cpp" />
+    <ClCompile Include="MeshUtils\Math.cpp" />
     <ClCompile Include="MeshUtils\MeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\mikktspace.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

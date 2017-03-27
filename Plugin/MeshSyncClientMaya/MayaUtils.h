@@ -1,5 +1,7 @@
 #pragma  once
 
+#define InchToMillimeter 25.4f
+
 std::string GetPath(MDagPath path);
 std::string GetPath(MObject node);
 

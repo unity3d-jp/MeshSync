@@ -153,9 +153,9 @@ public:
 };
 using CameraPtr = std::shared_ptr<Camera>;
 
-class CameraAnimation : public Animation
+class CameraAnimation : public TransformAnimation
 {
-using super = Animation;
+using super = TransformAnimation;
 public:
     RawVector<TVP<float>>   fov;
     RawVector<TVP<float>>   near_plane;
@@ -201,9 +201,9 @@ public:
 };
 using LightPtr = std::shared_ptr<Light>;
 
-class LightAnimation : public Animation
+class LightAnimation : public TransformAnimation
 {
-using super = Animation;
+using super = TransformAnimation;
 public:
     RawVector<TVP<float4>>  color;
     RawVector<TVP<float>>   intensity;

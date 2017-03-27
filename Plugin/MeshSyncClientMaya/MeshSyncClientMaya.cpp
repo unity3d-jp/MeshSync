@@ -368,7 +368,8 @@ void MeshSyncClientMaya::setSyncBlendShapes(bool v)
 
 bool MeshSyncClientMaya::sendUpdatedObjects()
 {
-    if (isAsyncSendInProgress() || (m_mtransforms.empty() && m_mmeshes.empty())) {
+    if (isAsyncSendInProgress() ||
+        (m_mtransforms.empty() && m_mcameras.empty() && m_mlights.empty() && m_mmeshes.empty())) {
         return false;
     }
 
@@ -426,16 +427,44 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
     m_mmeshes.clear();
 
     if(scope == TargetScope::All) {
-        // all meshes
-        MItDag it(MItDag::kDepthFirst, MFn::kMesh);
-        while (!it.isDone()) {
-            auto shape = it.item();
-            MFnMesh fn(shape);
-            if (!fn.isIntermediateObject()) {
-                notifyUpdateMesh(shape, true);
-            }
+        // meshes
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kMesh);
+            while (!it.isDone()) {
+                auto shape = it.item();
+                MFnMesh fn(shape);
+                if (!fn.isIntermediateObject()) {
+                    notifyUpdateMesh(shape, true);
+                }
 
-            it.next();
+                it.next();
+            }
+        }
+
+        // cameras
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kCamera);
+            while (!it.isDone()) {
+                auto shape = it.item();
+                MFnCamera fn(shape);
+                if (!fn.isIntermediateObject()) {
+                    notifyUpdateCamera(shape, true);
+                }
+                it.next();
+            }
+        }
+
+        // lights
+        {
+            MItDag it(MItDag::kDepthFirst, MFn::kLight);
+            while (!it.isDone()) {
+                auto shape = it.item();
+                MFnLight fn(shape);
+                if (!fn.isIntermediateObject()) {
+                    notifyUpdateLight(shape, true);
+                }
+                it.next();
+            }
         }
     }
     else if (scope == TargetScope::Selection) {
@@ -540,17 +569,28 @@ static void GatherTimes(RawVector<float>& dst, MFnAnimCurve& curve) {
     }
 };
 
-template<class ValueType, class Body>
-static void GatherSamples(RawVector<ms::TVP<ValueType>>& dst, MFnAnimCurve& curve, float time_begin, const Body& body)
+template<class ValueType, class Assign>
+static void GatherSamples(RawVector<ms::TVP<ValueType>>& dst, MFnAnimCurve& curve, float time_offset, const Assign& assign)
 {
     if (curve.object().isNull()) { return; }
 
     size_t n = dst.size();
     for (size_t i = 0; i < n; ++i) {
         auto& tvp = dst[i];
-        double value = curve.evaluate(ToMTime(tvp.time + time_begin));
-        body(tvp.value, value);
+        double value = curve.evaluate(ToMTime(tvp.time + time_offset));
+        assign(tvp.value, value);
     }
+}
+
+static bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src)
+{
+    MObjectArray atb;
+    MAnimUtil::findAnimation(src, atb);
+    if (atb.length() > 0) {
+        dst.setObject(atb[0]);
+        return true;
+    }
+    return false;
 }
 
 static void ConvertAnimationFloat(
@@ -562,12 +602,7 @@ static void ConvertAnimationFloat(
     if (pb.isNull()) { return; }
 
     MFnAnimCurve acb;
-    {
-        MObjectArray atb;
-        MAnimUtil::findAnimation(pb, atb);
-        if (atb.length() == 0) { return; }
-        if (atb.length() > 0) acb.setObject(atb[0]);
-    }
+    if(!GetAnimationCurve(acb, pb)) { return; }
 
     const float time_resolution = 1.0f / (float)samples_per_seconds;
     float time_begin = std::numeric_limits<float>::quiet_NaN();
@@ -615,15 +650,11 @@ static void ConvertAnimationFloat3(
     if (px.isNull() && py.isNull() && pz.isNull()) { return; }
 
     MFnAnimCurve acx, acy, acz;
+    if (!GetAnimationCurve(acx, px) &&
+        !GetAnimationCurve(acy, py) &&
+        !GetAnimationCurve(acz, pz))
     {
-        MObjectArray atx, aty, atz;
-        MAnimUtil::findAnimation(px, atx);
-        MAnimUtil::findAnimation(py, aty);
-        MAnimUtil::findAnimation(pz, atz);
-        if (atx.length() == 0 && aty.length() == 0 && atz.length() == 0) { return; }
-        if (atx.length() > 0) acx.setObject(atx[0]);
-        if (aty.length() > 0) acy.setObject(aty[0]);
-        if (atz.length() > 0) acz.setObject(atz[0]);
+        return;
     }
 
     const float time_resolution = 1.0f / (float)samples_per_seconds;
@@ -680,17 +711,12 @@ static void ConvertAnimationFloat4(
     if (px.isNull() && py.isNull() && pz.isNull()) { return; }
 
     MFnAnimCurve acx, acy, acz, acw;
+    if (!GetAnimationCurve(acx, px) &&
+        !GetAnimationCurve(acy, py) &&
+        !GetAnimationCurve(acz, pz) &&
+        !GetAnimationCurve(acw, pw))
     {
-        MObjectArray atx, aty, atz, atw;
-        MAnimUtil::findAnimation(px, atx);
-        MAnimUtil::findAnimation(py, aty);
-        MAnimUtil::findAnimation(pz, atz);
-        MAnimUtil::findAnimation(pw, atw);
-        if (atx.length() == 0 && aty.length() == 0 && atz.length() == 0 && atw.length() == 0) { return; }
-        if (atx.length() > 0) acx.setObject(atx[0]);
-        if (aty.length() > 0) acy.setObject(aty[0]);
-        if (atz.length() > 0) acz.setObject(atz[0]);
-        if (atw.length() > 0) acw.setObject(atw[0]);
+        return;
     }
 
     const float time_resolution = 1.0f / (float)samples_per_seconds;
@@ -750,12 +776,7 @@ static void ConvertAnimationBool(
     if (pb.isNull()) { return; }
 
     MFnAnimCurve acb;
-    {
-        MObjectArray atb;
-        MAnimUtil::findAnimation(pb, atb);
-        if (atb.length() == 0) { return; }
-        if (atb.length() > 0) acb.setObject(atb[0]);
-    }
+    if (!GetAnimationCurve(acb, pb)) { return; }
 
     const float time_resolution = 1.0f / (float)samples_per_seconds;
     float time_begin = std::numeric_limits<float>::quiet_NaN();
@@ -854,13 +875,14 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            ConvertAnimationBool(false, anim.visibility, pvis, m_animation_samples_per_seconds);
-            ConvertAnimationFloat3(dst.transform.position, anim.translation, ptx, pty, ptz, m_animation_samples_per_seconds);
-            ConvertAnimationFloat3(dst.transform.scale, anim.scale, psx, psy, psz, m_animation_samples_per_seconds);
+            int sps = m_animation_samples_per_seconds;
+            ConvertAnimationBool(false, anim.visibility, pvis, sps);
+            ConvertAnimationFloat3(dst.transform.position, anim.translation, ptx, pty, ptz, sps);
+            ConvertAnimationFloat3(dst.transform.scale, anim.scale, psx, psy, psz, sps);
             {
                 // build rotation animation data (eular angles) and convert to quaternion
                 RawVector<ms::TVP<mu::float3>> eular;
-                ConvertAnimationFloat3(mu::float3::zero(), eular, prx, pry, prz, m_animation_samples_per_seconds);
+                ConvertAnimationFloat3(mu::float3::zero(), eular, prx, pry, prz, sps);
 
                 if (!eular.empty()) {
                     anim.rotation.resize(eular.size());
@@ -908,10 +930,10 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
     dst.is_ortho = mcam.isOrtho();
     dst.near_plane = (float)mcam.nearClippingPlane();
     dst.far_plane = (float)mcam.farClippingPlane();
-    dst.fov = (float)mcam.horizontalFieldOfView();
+    dst.fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
 
-    dst.horizontal_aperture = (float)mcam.horizontalFilmAperture();
-    dst.vertical_aperture = (float)mcam.verticalFilmAperture();
+    dst.horizontal_aperture = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
+    dst.vertical_aperture = (float)mcam.verticalFilmAperture() * InchToMillimeter;
     dst.focal_length = (float)mcam.focalLength();
     dst.focus_distance = (float)mcam.focusDistance();
 
@@ -945,12 +967,17 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
             auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            ConvertAnimationFloat(0.0f, anim.near_plane, pnplane, m_animation_samples_per_seconds);
-            ConvertAnimationFloat(0.0f, anim.far_plane, pfplane, m_animation_samples_per_seconds);
-            ConvertAnimationFloat(0.0f, anim.horizontal_aperture, phaperture, m_animation_samples_per_seconds);
-            ConvertAnimationFloat(0.0f, anim.vertical_aperture, pvaperture, m_animation_samples_per_seconds);
-            ConvertAnimationFloat(0.0f, anim.focal_length, pflen, m_animation_samples_per_seconds);
-            ConvertAnimationFloat(0.0f, anim.focus_distance, pfdist, m_animation_samples_per_seconds);
+            int sps = m_animation_samples_per_seconds;
+            ConvertAnimationFloat(0.0f, anim.near_plane, pnplane, sps);
+            ConvertAnimationFloat(0.0f, anim.far_plane, pfplane, sps);
+            ConvertAnimationFloat(0.0f, anim.horizontal_aperture, phaperture, sps);
+            ConvertAnimationFloat(0.0f, anim.vertical_aperture, pvaperture, sps);
+            ConvertAnimationFloat(0.0f, anim.focal_length, pflen, sps);
+            ConvertAnimationFloat(0.0f, anim.focus_distance, pfdist, sps);
+
+            // convert inch to millimeter
+            for (auto& v : anim.horizontal_aperture) { v.value *= InchToMillimeter; }
+            for (auto& v : anim.vertical_aperture) { v.value *= InchToMillimeter; }
 
             // fov needs calculate by myself...
             if (!anim.focal_length.empty() || !anim.horizontal_aperture.empty()) {
@@ -1020,8 +1047,9 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
             auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            ConvertAnimationFloat4(ms::float4::one(), anim.color, pcolr, pcolg, pcolb, pcola, m_animation_samples_per_seconds);
-            ConvertAnimationFloat(0.0f, anim.intensity, pint, m_animation_samples_per_seconds);
+            int sps = m_animation_samples_per_seconds;
+            ConvertAnimationFloat4(ms::float4::one(), anim.color, pcolr, pcolg, pcolb, pcola, sps);
+            ConvertAnimationFloat(0.0f, anim.intensity, pint, sps);
 
             if (dst.animation->empty()) {
                 dst.animation.reset();
