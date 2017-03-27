@@ -24,3 +24,25 @@ float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
 
 void DumpPlugInfo(MPlug plug);
+
+
+template<class T> T* ptr(T& v) { return (T*)&(int&)v; }
+
+bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src);
+RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cvs, int samples_per_seconds);
+
+void ConvertAnimationBool(
+    RawVector<ms::TVP<bool>>& dst,
+    bool default_value, MPlug& pb, int samples_per_seconds);
+
+void ConvertAnimationFloat(
+    RawVector<ms::TVP<float>>& dst,
+    float default_value, MPlug& pb, int samples_per_seconds);
+
+void ConvertAnimationFloat3(
+    RawVector<ms::TVP<mu::float3>>& dst,
+    const mu::float3& default_value, MPlug& px, MPlug& py, MPlug& pz, int samples_per_seconds);
+
+void ConvertAnimationFloat4(
+    RawVector<ms::TVP<mu::float4>>& dst,
+    const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int samples_per_seconds);

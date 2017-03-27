@@ -478,7 +478,7 @@ inline quatf inverse(const quatf& v)
 
 inline quatf flipY(const quatf& v)
 {
-    return v * quatf{0.0f, 1.0f, 0.0f, 0.0f};
+    return{ -v.z, v.w, v.x, -v.y, };
 }
 
 inline quatf rotateX(float angle)

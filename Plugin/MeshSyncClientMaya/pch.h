@@ -13,6 +13,7 @@
 #include <future>
 #include <mutex>
 #include <memory>
+#include <cassert>
 
 #ifdef _WIN32
     #define msMaya_UsePPL

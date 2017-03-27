@@ -21,6 +21,10 @@ public:
     {
         operator=(v);
     }
+    RawVector(RawVector&& v)
+    {
+        v.swap(*this);
+    }
     RawVector(std::initializer_list<T> v)
     {
         operator=(v);
@@ -29,6 +33,11 @@ public:
     RawVector& operator=(const RawVector& v)
     {
         assign(v.begin(), v.end());
+        return *this;
+    }
+    RawVector& operator=(RawVector&& v)
+    {
+        v.swap(*this);
         return *this;
     }
     RawVector& operator=(std::initializer_list<T> v)

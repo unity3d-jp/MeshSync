@@ -538,279 +538,6 @@ void MeshSyncClientMaya::extractAllMaterialData()
     }
 }
 
-
-static void DeternineTimeRange(float& time_begin, float& time_end, MFnAnimCurve& curve)
-{
-    if (curve.object().isNull()) { return; }
-
-    int num_keys = curve.numKeys();
-    if (num_keys == 0) { return; }
-
-    float t1 = ToSeconds(curve.time(0));
-    float t2 = ToSeconds(curve.time(num_keys > 0 ? num_keys - 1 : 0));
-    if (std::isnan(time_begin)) {
-        time_begin = t1;
-        time_end = t2;
-    }
-    else {
-        time_begin = std::min(time_begin, t1);
-        time_end = std::max(time_end, t2);
-    }
-};
-
-static void GatherTimes(RawVector<float>& dst, MFnAnimCurve& curve) {
-    if (curve.object().isNull()) { return; }
-
-    int num_keys = curve.numKeys();
-    size_t pos = dst.size();
-    dst.resize(pos + num_keys);
-    for (int i = 0; i < num_keys; ++i) {
-        dst[pos + i] = ToSeconds(curve.time(i));
-    }
-};
-
-template<class ValueType, class Assign>
-static void GatherSamples(RawVector<ms::TVP<ValueType>>& dst, MFnAnimCurve& curve, float time_offset, const Assign& assign)
-{
-    if (curve.object().isNull()) { return; }
-
-    size_t n = dst.size();
-    for (size_t i = 0; i < n; ++i) {
-        auto& tvp = dst[i];
-        double value = curve.evaluate(ToMTime(tvp.time + time_offset));
-        assign(tvp.value, value);
-    }
-}
-
-static bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src)
-{
-    MObjectArray atb;
-    MAnimUtil::findAnimation(src, atb);
-    if (atb.length() > 0) {
-        dst.setObject(atb[0]);
-        return true;
-    }
-    return false;
-}
-
-static void ConvertAnimationFloat(
-    float default_value,
-    RawVector<ms::TVP<float>>& dst,
-    MPlug& pb,
-    int samples_per_seconds)
-{
-    if (pb.isNull()) { return; }
-
-    MFnAnimCurve acb;
-    if(!GetAnimationCurve(acb, pb)) { return; }
-
-    const float time_resolution = 1.0f / (float)samples_per_seconds;
-    float time_begin = std::numeric_limits<float>::quiet_NaN();
-    float time_end = std::numeric_limits<float>::quiet_NaN();
-    float time_range = 0.0f;
-
-    // build time range
-    DeternineTimeRange(time_begin, time_end, acb);
-    time_range = time_end - time_begin;
-
-    // build time samples
-    {
-        RawVector<float> keyframe_times;
-        RawVector<float> timesample_times;
-
-        GatherTimes(keyframe_times, acb);
-
-        int num_samples = int(time_range / time_resolution);
-        timesample_times.resize(num_samples);
-        for (int i = 0; i < num_samples; ++i) {
-            timesample_times[i] = (time_resolution * i);
-        }
-
-        RawVector<float> times;
-        times.resize(keyframe_times.size() + timesample_times.size());
-        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
-        times.erase(std::unique(times.begin(), times.end()), times.end());
-
-        dst.resize(times.size(), { 0.0f, default_value });
-        for (size_t i = 0; i < dst.size(); ++i) {
-            dst[i].time = times[i];
-        }
-    }
-
-    // get samples
-    GatherSamples(dst, acb, time_begin, [](float& v, double s) { v = (float)s; });
-}
-
-static void ConvertAnimationFloat3(
-    const mu::float3& default_value,
-    RawVector<ms::TVP<mu::float3>>& dst,
-    MPlug& px, MPlug& py, MPlug& pz,
-    int samples_per_seconds)
-{
-    if (px.isNull() && py.isNull() && pz.isNull()) { return; }
-
-    MFnAnimCurve acx, acy, acz;
-    int num_valid_curves = 0;
-    if (GetAnimationCurve(acx, px)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acy, py)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acz, pz)) { ++num_valid_curves; }
-    if (num_valid_curves == 0) { return; }
-
-    const float time_resolution = 1.0f / (float)samples_per_seconds;
-    float time_begin = std::numeric_limits<float>::quiet_NaN();
-    float time_end = std::numeric_limits<float>::quiet_NaN();
-    float time_range = 0.0f;
-
-    // build time range
-    DeternineTimeRange(time_begin, time_end, acx);
-    DeternineTimeRange(time_begin, time_end, acy);
-    DeternineTimeRange(time_begin, time_end, acz);
-    time_range = time_end - time_begin;
-
-    // build time samples
-    {
-        RawVector<float> keyframe_times;
-        RawVector<float> timesample_times;
-
-        GatherTimes(keyframe_times, acx);
-        GatherTimes(keyframe_times, acy);
-        GatherTimes(keyframe_times, acz);
-        std::sort(keyframe_times.begin(), keyframe_times.end());
-        keyframe_times.erase(std::unique(keyframe_times.begin(), keyframe_times.end()), keyframe_times.end());
-
-        int num_samples = int(time_range / time_resolution);
-        timesample_times.resize(num_samples);
-        for (int i = 0; i < num_samples; ++i) {
-            timesample_times[i] = (time_resolution * i);
-        }
-
-        RawVector<float> times;
-        times.resize(keyframe_times.size() + timesample_times.size());
-        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
-        times.erase(std::unique(times.begin(), times.end()), times.end());
-
-        dst.resize(times.size(), {0.0f, default_value});
-        for (size_t i = 0; i < dst.size(); ++i) {
-            dst[i].time = times[i];
-        }
-    }
-
-    // get samples
-    GatherSamples(dst, acx, time_begin, [](mu::float3& v, double s) { v.x = (float)s; });
-    GatherSamples(dst, acy, time_begin, [](mu::float3& v, double s) { v.y = (float)s; });
-    GatherSamples(dst, acz, time_begin, [](mu::float3& v, double s) { v.z = (float)s; });
-}
-
-static void ConvertAnimationFloat4(
-    const mu::float4& default_value,
-    RawVector<ms::TVP<mu::float4>>& dst,
-    MPlug& px, MPlug& py, MPlug& pz, MPlug& pw,
-    int samples_per_seconds)
-{
-    MFnAnimCurve acx, acy, acz, acw;
-    int num_valid_curves = 0;
-    if (GetAnimationCurve(acx, px)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acy, py)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acz, pz)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acw, pw)) { ++num_valid_curves; }
-    if (num_valid_curves == 0) { return; }
-
-    const float time_resolution = 1.0f / (float)samples_per_seconds;
-    float time_begin = std::numeric_limits<float>::quiet_NaN();
-    float time_end = std::numeric_limits<float>::quiet_NaN();
-    float time_range = 0.0f;
-
-    // build time range
-    DeternineTimeRange(time_begin, time_end, acx);
-    DeternineTimeRange(time_begin, time_end, acy);
-    DeternineTimeRange(time_begin, time_end, acz);
-    DeternineTimeRange(time_begin, time_end, acw);
-    time_range = time_end - time_begin;
-
-    // build time samples
-    {
-        RawVector<float> keyframe_times;
-        RawVector<float> timesample_times;
-
-        GatherTimes(keyframe_times, acx);
-        GatherTimes(keyframe_times, acy);
-        GatherTimes(keyframe_times, acz);
-        GatherTimes(keyframe_times, acw);
-        std::sort(keyframe_times.begin(), keyframe_times.end());
-        keyframe_times.erase(std::unique(keyframe_times.begin(), keyframe_times.end()), keyframe_times.end());
-
-        int num_samples = int(time_range / time_resolution);
-        timesample_times.resize(num_samples);
-        for (int i = 0; i < num_samples; ++i) {
-            timesample_times[i] = (time_resolution * i);
-        }
-
-        RawVector<float> times;
-        times.resize(keyframe_times.size() + timesample_times.size());
-        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
-        times.erase(std::unique(times.begin(), times.end()), times.end());
-
-        dst.resize(times.size(), { 0.0f, default_value });
-        for (size_t i = 0; i < dst.size(); ++i) {
-            dst[i].time = times[i];
-        }
-    }
-
-    // get samples
-    GatherSamples(dst, acx, time_begin, [](mu::float4& v, double s) { v.x = (float)s; });
-    GatherSamples(dst, acy, time_begin, [](mu::float4& v, double s) { v.y = (float)s; });
-    GatherSamples(dst, acz, time_begin, [](mu::float4& v, double s) { v.z = (float)s; });
-    GatherSamples(dst, acw, time_begin, [](mu::float4& v, double s) { v.w = (float)s; });
-}
-
-static void ConvertAnimationBool(
-    bool default_value,
-    RawVector<ms::TVP<bool>>& dst,
-    MPlug& pb,
-    int samples_per_seconds)
-{
-    if (pb.isNull()) { return; }
-
-    MFnAnimCurve acb;
-    if (!GetAnimationCurve(acb, pb)) { return; }
-
-    const float time_resolution = 1.0f / (float)samples_per_seconds;
-    float time_begin = std::numeric_limits<float>::quiet_NaN();
-    float time_end = std::numeric_limits<float>::quiet_NaN();
-    float time_range = 0.0f;
-
-    // build time range
-    DeternineTimeRange(time_begin, time_end, acb);
-    time_range = time_end - time_begin;
-
-    // build time samples
-    {
-        RawVector<float> keyframe_times;
-        RawVector<float> timesample_times;
-
-        GatherTimes(keyframe_times, acb);
-
-        int num_samples = int(time_range / time_resolution);
-        timesample_times.resize(num_samples);
-        for (int i = 0; i < num_samples; ++i) {
-            timesample_times[i] = (time_resolution * i);
-        }
-
-        RawVector<float> times;
-        times.resize(keyframe_times.size() + timesample_times.size());
-        std::merge(keyframe_times.begin(), keyframe_times.end(), timesample_times.begin(), timesample_times.end(), times.begin());
-        times.erase(std::unique(times.begin(), times.end()), times.end());
-
-        dst.resize(times.size(), { 0.0f, default_value });
-        for (size_t i = 0; i < dst.size(); ++i) {
-            dst[i].time = times[i];
-        }
-    }
-
-    // get samples
-    GatherSamples(dst, acb, time_begin, [](bool& v, double s) { v = s > 0.0; });
-}
-
 bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
     MFnTransform mtrans(src);
@@ -872,13 +599,13 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 
             // build time-sampled animation data
             int sps = m_animation_samples_per_seconds;
-            ConvertAnimationBool(true, anim.visibility, pvis, sps);
-            ConvertAnimationFloat3(dst.transform.position, anim.translation, ptx, pty, ptz, sps);
-            ConvertAnimationFloat3(dst.transform.scale, anim.scale, psx, psy, psz, sps);
+            ConvertAnimationBool(anim.visibility, true, pvis, sps);
+            ConvertAnimationFloat3(anim.translation, dst.transform.position, ptx, pty, ptz, sps);
+            ConvertAnimationFloat3(anim.scale, dst.transform.scale, psx, psy, psz, sps);
             {
                 // build rotation animation data (eular angles) and convert to quaternion
                 RawVector<ms::TVP<mu::float3>> eular;
-                ConvertAnimationFloat3(mu::float3::zero(), eular, prx, pry, prz, sps);
+                ConvertAnimationFloat3(eular, mu::float3::zero(), prx, pry, prz, sps);
 
                 if (!eular.empty()) {
                     anim.rotation.resize(eular.size());
@@ -927,7 +654,7 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
     dst.is_ortho = mcam.isOrtho();
     dst.near_plane = (float)mcam.nearClippingPlane();
     dst.far_plane = (float)mcam.farClippingPlane();
-    dst.fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
+    dst.fov = (float)mcam.horizontalFieldOfView() * ms::Rad2Deg;
 
     dst.horizontal_aperture = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
     dst.vertical_aperture = (float)mcam.verticalFilmAperture() * InchToMillimeter;
@@ -965,12 +692,12 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 
             // build time-sampled animation data
             int sps = m_animation_samples_per_seconds;
-            ConvertAnimationFloat(dst.near_plane, anim.near_plane, pnplane, sps);
-            ConvertAnimationFloat(dst.far_plane, anim.far_plane, pfplane, sps);
-            ConvertAnimationFloat(dst.horizontal_aperture, anim.horizontal_aperture, phaperture, sps);
-            ConvertAnimationFloat(dst.vertical_aperture, anim.vertical_aperture, pvaperture, sps);
-            ConvertAnimationFloat(dst.focal_length, anim.focal_length, pflen, sps);
-            ConvertAnimationFloat(dst.focus_distance, anim.focus_distance, pfdist, sps);
+            ConvertAnimationFloat(anim.near_plane, dst.near_plane, pnplane, sps);
+            ConvertAnimationFloat(anim.far_plane, dst.far_plane, pfplane, sps);
+            ConvertAnimationFloat(anim.horizontal_aperture, dst.horizontal_aperture, phaperture, sps);
+            ConvertAnimationFloat(anim.vertical_aperture, dst.vertical_aperture, pvaperture, sps);
+            ConvertAnimationFloat(anim.focal_length, dst.focal_length, pflen, sps);
+            ConvertAnimationFloat(anim.focus_distance, dst.focus_distance, pfdist, sps);
 
             // convert inch to millimeter
             for (auto& v : anim.horizontal_aperture) { v.value *= InchToMillimeter; }
@@ -978,7 +705,40 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 
             // fov needs calculate by myself...
             if (!anim.focal_length.empty() || !anim.horizontal_aperture.empty()) {
-                // todo
+                MFnAnimCurve fcv, acv;
+                GetAnimationCurve(fcv, pflen);
+                GetAnimationCurve(acv, phaperture);
+
+                auto time_samples = BuildTimeSamples({ ptr(fcv), ptr(acv) }, sps);
+                auto num_samples = time_samples.size();
+                anim.fov.resize(num_samples);
+                if(!fcv.object().isNull() && acv.object().isNull()) {
+                    for (size_t i = 0; i < num_samples; ++i) {
+                        auto& tvp = anim.fov[i];
+                        tvp.time = time_samples[i];
+                        tvp.value = mu::compute_fov(
+                            dst.horizontal_aperture,
+                            (float)fcv.evaluate(ToMTime(time_samples[i])));
+                    }
+                }
+                else if (fcv.object().isNull() && !acv.object().isNull()) {
+                    for (size_t i = 0; i < num_samples; ++i) {
+                        auto& tvp = anim.fov[i];
+                        tvp.time = time_samples[i];
+                        tvp.value = mu::compute_fov(
+                            (float)acv.evaluate(ToMTime(time_samples[i])),
+                            dst.focal_length);
+                    }
+                }
+                else if (!fcv.object().isNull() && !acv.object().isNull()) {
+                    for (size_t i = 0; i < num_samples; ++i) {
+                        auto& tvp = anim.fov[i];
+                        tvp.time = time_samples[i];
+                        tvp.value = mu::compute_fov(
+                            (float)acv.evaluate(ToMTime(time_samples[i])),
+                            (float)fcv.evaluate(ToMTime(time_samples[i])));
+                    }
+                }
             }
 
             if (dst.animation->empty()) {
@@ -1050,8 +810,8 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 
             // build time-sampled animation data
             int sps = m_animation_samples_per_seconds;
-            ConvertAnimationFloat4(dst.color, anim.color, pcolr, pcolg, pcolb, pcola, sps);
-            ConvertAnimationFloat(dst.intensity, anim.intensity, pint, sps);
+            ConvertAnimationFloat4(anim.color, dst.color, pcolr, pcolg, pcolb, pcola, sps);
+            ConvertAnimationFloat(anim.intensity, dst.intensity, pint, sps);
 
             if (dst.animation->empty()) {
                 dst.animation.reset();
