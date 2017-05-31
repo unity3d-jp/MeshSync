@@ -604,12 +604,10 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 #define Epsilon 0.0001f
 
 export uniform int RayTrianglesIntersection(
-    uniform const float3 pos_[], uniform const float3 dir_[],
+    uniform const float3& pos, uniform const float3& dir,
     uniform const float3 vertices[], uniform const int num_triangles,
     uniform int result[])
 {
-    uniform float3 pos = *pos_;
-    uniform float3 dir = *dir_;
     uniform int total_hit = 0;
 
     // SIMD pass
@@ -688,12 +686,10 @@ export uniform int RayTrianglesIntersection(
 }
 
 export uniform int RayTrianglesIntersectionIndexed(
-    uniform const float3 pos_[], uniform const float3 dir_[],
+    uniform const float3& pos, uniform const float3& dir,
     uniform const float3 vertices[], uniform const int indices[], uniform const int num_triangles,
     uniform int result[])
 {
-    uniform float3 pos = *pos_;
-    uniform float3 dir = *dir_;
     uniform int total_hit = 0;
 
     // SIMD pass
@@ -746,6 +742,82 @@ export uniform int RayTrianglesIntersectionIndexed(
         uniform float3 p3 = vertices[indices[ti * 3 + 2]];
 
         uniform bool hit = false;
+        uniform float3 e1 = p2 - p1;
+        uniform float3 e2 = p3 - p1;
+        uniform float3 p = cross(dir, e2);
+        uniform float det = dot(e1, p);
+        uniform float invDet = 1.0f / det;
+        uniform float3 t = pos - p1;
+        uniform float u = dot(t, p) * invDet;
+        uniform float3 q = cross(t, e1);
+        uniform float v = dot(dir, q) * invDet;
+
+        if (u >= 0 && u <= 1 &&
+            v >= 0 && u + v <= 1 &&
+            (dot(e2, q) * invDet) > Epsilon)
+        {
+            hit = true;
+        }
+
+        if(hit) {
+            result[total_hit++] = ti;
+        }
+    }
+
+    return total_hit;
+}
+
+export uniform int RayTrianglesIntersectionSoA(
+    uniform const float3& pos, uniform const float3& dir,
+    uniform const float v1x[], uniform const float v1y[], uniform const float v1z[],
+    uniform const float v2x[], uniform const float v2y[], uniform const float v2z[],
+    uniform const float v3x[], uniform const float v3y[], uniform const float v3z[],
+    uniform const int num_triangles,
+    uniform int result[])
+{
+    uniform int total_hit = 0;
+
+    // SIMD pass
+    uniform int num_triangles_simd = num_triangles & ~(C - 1);
+    for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
+        float3 p1 = {v1x[bi+I], v1y[bi+I], v1z[bi+I]};
+        float3 p2 = {v2x[bi+I], v2y[bi+I], v2z[bi+I]};
+        float3 p3 = {v3x[bi+I], v3y[bi+I], v3z[bi+I]};
+
+        int hit = false;
+        float3 e1 = p2 - p1;
+        float3 e2 = p3 - p1;
+        float3 p = cross(dir, e2);
+        float det = dot(e1, p);
+        float invDet = 1.0f / det;
+        float3 t = pos - p1;
+        float u = dot(t, p) * invDet;
+        float3 q = cross(t, e1);
+        float v = dot(dir, q) * invDet;
+
+        if (u >= 0 && u <= 1 &&
+            v >= 0 && u + v <= 1 &&
+            (dot(e2, q) * invDet) > Epsilon)
+        {
+            hit = true;
+        }
+
+        uniform int hita[C];
+        packed_store_active(hita, hit);
+        for(uniform int i = 0; i < C; ++i) {
+            if(hita[i]) {
+                result[total_hit++] = bi + i;
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for(uniform int ti = num_triangles_simd; ti < num_triangles; ++ti) {
+        uniform float3 p1 = {v1x[ti], v1y[ti], v1z[ti]};
+        uniform float3 p2 = {v2x[ti], v2y[ti], v2z[ti]};
+        uniform float3 p3 = {v3x[ti], v3y[ti], v3z[ti]};
+
+        uniform int hit = false;
         uniform float3 e1 = p2 - p1;
         uniform float3 e2 = p3 - p1;
         uniform float3 p = cross(dir, e2);

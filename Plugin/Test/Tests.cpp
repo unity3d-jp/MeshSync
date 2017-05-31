@@ -120,11 +120,12 @@ void RayTrianglesIntersectionTest()
 {
     RawVector<float3> vertices;
     RawVector<float3> vertices_flattened;
+    RawVector<float> v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z;
     RawVector<int> indices;
     RawVector<int> hit;
 
-    const int seg = 1000;
-    const int num_try = 1;
+    const int seg = 200;
+    const int num_try = 50;
 
     vertices.resize(seg * seg);
     for (int yi = 0; yi < seg; ++yi) {
@@ -147,9 +148,21 @@ void RayTrianglesIntersectionTest()
         }
     }
 
+    int num_triangles = indices.size() / 3;
     vertices_flattened.resize(indices.size());
-    for (int i = 0; i < indices.size(); ++i) {
-        vertices_flattened[i] = vertices[indices[i]];
+    v1x.resize(num_triangles); v1y.resize(num_triangles); v1z.resize(num_triangles);
+    v2x.resize(num_triangles); v2y.resize(num_triangles); v2z.resize(num_triangles);
+    v3x.resize(num_triangles); v3y.resize(num_triangles); v3z.resize(num_triangles);
+    for (int ti = 0; ti < num_triangles; ++ti) {
+        auto p1 = vertices[indices[ti * 3 + 0]];
+        auto p2 = vertices[indices[ti * 3 + 1]];
+        auto p3 = vertices[indices[ti * 3 + 2]];
+        vertices_flattened[ti * 3 + 0] = p1;
+        vertices_flattened[ti * 3 + 1] = p2;
+        vertices_flattened[ti * 3 + 2] = p3;
+        v1x[ti] = p1.x; v1y[ti] = p1.y; v1z[ti] = p1.z;
+        v2x[ti] = p2.x; v2y[ti] = p2.y; v2z[ti] = p2.z;
+        v3x[ti] = p3.x; v3y[ti] = p3.y; v3z[ti] = p3.z;
     }
 
     float3 ray_pos = { 0.0f, 1.0f, 0.0f };
@@ -204,12 +217,40 @@ void RayTrianglesIntersectionTest()
 
     print();
 
-    printf("    %f : %f\n    %f : %f\n",
+    auto s5_begin = now();
+    for (int i = 0; i < num_try; ++i) {
+        hit.resize(indices.size() / 3);
+        int num_hits = RayTrianglesIntersection_Generic(ray_pos, ray_dir,
+            v1x.data(), v1y.data(), v1z.data(),
+            v2x.data(), v2y.data(), v2z.data(),
+            v3x.data(), v3y.data(), v3z.data(), vertices_flattened.size() / 3, hit.data());
+        hit.resize(num_hits);
+    }
+    auto s5_end = now();
+
+    print();
+
+    auto s6_begin = now();
+    for (int i = 0; i < num_try; ++i) {
+        hit.resize(indices.size() / 3);
+        int num_hits = RayTrianglesIntersection_ISPC(ray_pos, ray_dir,
+            v1x.data(), v1y.data(), v1z.data(),
+            v2x.data(), v2y.data(), v2z.data(),
+            v3x.data(), v3y.data(), v3z.data(), vertices_flattened.size() / 3, hit.data());
+        hit.resize(num_hits);
+    }
+    auto s6_end = now();
+
+    print();
+
+    printf("    %f : %f\n    %f : %f\n    %f : %f\n",
         float(s1_end - s1_begin) / 1000000.0f,
         float(s2_end - s2_begin) / 1000000.0f,
         float(s3_end - s3_begin) / 1000000.0f,
-        float(s4_end - s4_begin) / 1000000.0f);
-
+        float(s4_end - s4_begin) / 1000000.0f,
+        float(s5_end - s5_begin) / 1000000.0f,
+        float(s6_end - s6_begin) / 1000000.0f);
+    printf("\n");
 }
 
 int main(int argc, char *argv[])

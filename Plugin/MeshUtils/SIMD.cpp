@@ -140,6 +140,25 @@ int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *verti
     }
     return num_hits;
 }
+int RayTrianglesIntersection_Generic(float3 pos, float3 dir,
+    const float *v1x, const float *v1y, const float *v1z,
+    const float *v2x, const float *v2y, const float *v2z,
+    const float *v3x, const float *v3y, const float *v3z,
+    int num_triangles, int *hit)
+{
+    int num_hits = 0;
+    float2 uv;
+    for (int i = 0; i < num_triangles; ++i) {
+        if (ray_triangle_intersection(pos, dir,
+            { v1x[i], v1y[i], v1z[i] },
+            { v2x[i], v2y[i], v2z[i] },
+            { v3x[i], v3y[i], v3z[i] }, uv))
+        {
+            hit[num_hits++] = i;
+        }
+    }
+    return num_hits;
+}
 
 
 #ifdef muEnableISPC
@@ -230,11 +249,19 @@ bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
 
 int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit)
 {
-    return ispc::RayTrianglesIntersection((ispc::float3*)&pos, (ispc::float3*)&dir, (ispc::float3*)vertices, num_triangles, (int32_t*)hit);
+    return ispc::RayTrianglesIntersection((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, num_triangles, (int32_t*)hit);
 }
 int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
 {
-    return ispc::RayTrianglesIntersectionIndexed((ispc::float3*)&pos, (ispc::float3*)&dir, (ispc::float3*)vertices, indices, num_triangles, (int32_t*)hit);
+    return ispc::RayTrianglesIntersectionIndexed((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, indices, num_triangles, (int32_t*)hit);
+}
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
+    const float *v1x, const float *v1y, const float *v1z,
+    const float *v2x, const float *v2y, const float *v2z,
+    const float *v3x, const float *v3y, const float *v3z,
+    int num_triangles, int *hit)
+{
+    return ispc::RayTrianglesIntersectionSoA((ispc::float3&)pos, (ispc::float3&)dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, (int32_t*)hit);
 }
 
 #endif
@@ -326,10 +353,17 @@ int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int
 {
     return Forward(RayTrianglesIntersection, pos, dir, vertices, num_triangles, hit);
 }
-
 int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
 {
     return Forward(RayTrianglesIntersection, pos, dir, vertices, indices, num_triangles, hit);
+}
+int RayTrianglesIntersection(float3 pos, float3 dir,
+    const float *v1x, const float *v1y, const float *v1z,
+    const float *v2x, const float *v2y, const float *v2z,
+    const float *v3x, const float *v3y, const float *v3z,
+    int num_triangles, int *hit)
+{
+    return Forward(RayTrianglesIntersection, pos, dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, hit);
 }
 
 #undef Forward
