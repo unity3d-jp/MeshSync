@@ -107,10 +107,53 @@ void MatrixSwapHandedness()
     printf("");
 }
 
+void RayTrianglesIntersectionTest()
+{
+    RawVector<float3> vertices; 
+    RawVector<int> indices;
+    RawVector<int> hit;
+
+    const int seg = 10;
+
+    vertices.resize(seg * seg);
+    for (int yi = 0; yi < seg; ++yi) {
+        for (int xi = 0; xi < seg; ++xi) {
+            float3 v = { xi - (float)seg*0.5f, 0.0f, yi - (float)seg*0.5f};
+            vertices[yi * seg + xi] = v;
+        }
+    }
+
+    indices.resize((seg - 1) * (seg - 1) * 6);
+    for (int yi = 0; yi < seg - 1; ++yi) {
+        for (int xi = 0; xi < seg - 1; ++xi) {
+            int i = yi * (seg - 1) + xi;
+            indices[i * 6 + 0] = seg* yi + xi;
+            indices[i * 6 + 1] = seg* (yi + 1) + xi;
+            indices[i * 6 + 2] = seg* (yi + 1) + (xi + 1);
+            indices[i * 6 + 3] = seg* yi + xi;
+            indices[i * 6 + 4] = seg* (yi + 1) + (xi + 1);
+            indices[i * 6 + 5] = seg * yi + (xi + 1);
+        }
+    }
+
+    float3 ray_pos = { 0.0f, 1.0f, 0.0f };
+    float3 ray_dir = { 0.0f, -1.0f, 0.0f };
+
+    hit.resize(indices.size() / 3);
+    int num_hits = RayTrianglesIntersection(ray_pos, ray_dir, vertices.data(), indices.data(), indices.size() / 3, hit.data());
+    hit.resize(num_hits);
+    printf("RayTrianglesIntersectionTest: ");
+    for (int h : hit) {
+        printf("%d ", h);
+    }
+    printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
     //Test_Sync(false);
     //Test_Get();
     //Test_GenNormals();
-    MatrixSwapHandedness();
+    //MatrixSwapHandedness();
+    RayTrianglesIntersectionTest();
 }

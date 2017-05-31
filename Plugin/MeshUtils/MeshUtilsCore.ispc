@@ -1,5 +1,4 @@
 #define C programCount
-#define C3 (programCount*3)
 #define I programIndex
 
 typedef unsigned int16 half;
@@ -308,4 +307,394 @@ export uniform bool NearEqual(
         tdiff = max(tdiff, abs(src1[i] - src2[i]));
     }
     return reduce_max(tdiff) < eps;
+}
+
+
+
+
+
+
+
+static inline float2 operator+(float2 a, float2 b) { float2 r = { a.x + b.x, a.y + b.y }; return r; }
+static inline float2 operator-(float2 a, float2 b) { float2 r = { a.x - b.x, a.y - b.y }; return r; }
+static inline float2 operator*(float2 a, float2 b) { float2 r = { a.x * b.x, a.y * b.y }; return r; }
+static inline float2 operator/(float2 a, float2 b) { float2 r = { a.x / b.x, a.y / b.y }; return r; }
+static inline float2 operator+(float2 a, float b) { float2 r = { a.x + b, a.y + b }; return r; }
+static inline float2 operator-(float2 a, float b) { float2 r = { a.x - b, a.y - b }; return r; }
+static inline float2 operator*(float2 a, float b) { float2 r = { a.x * b, a.y * b }; return r; }
+static inline float2 operator/(float2 a, float b) { float2 r = { a.x / b, a.y / b }; return r; }
+static inline float2 operator+(float a, float2 b) { float2 r = { a + b.x, a + b.y }; return r; }
+static inline float2 operator-(float a, float2 b) { float2 r = { a - b.x, a - b.y }; return r; }
+static inline float2 operator*(float a, float2 b) { float2 r = { a * b.x, a * b.y }; return r; }
+static inline float2 operator/(float a, float2 b) { float2 r = { a / b.x, a / b.y }; return r; }
+
+static inline float3 operator+(float3 a, float3 b) { float3 r = { a.x + b.x, a.y + b.y, a.z + b.z }; return r; }
+static inline float3 operator-(float3 a, float3 b) { float3 r = { a.x - b.x, a.y - b.y, a.z - b.z }; return r; }
+static inline float3 operator*(float3 a, float3 b) { float3 r = { a.x * b.x, a.y * b.y, a.z * b.z }; return r; }
+static inline float3 operator/(float3 a, float3 b) { float3 r = { a.x / b.x, a.y / b.y, a.z / b.z }; return r; }
+static inline float3 operator+(float3 a, float b) { float3 r = { a.x + b, a.y + b, a.z + b }; return r; }
+static inline float3 operator-(float3 a, float b) { float3 r = { a.x - b, a.y - b, a.z - b }; return r; }
+static inline float3 operator*(float3 a, float b) { float3 r = { a.x * b, a.y * b, a.z * b }; return r; }
+static inline float3 operator/(float3 a, float b) { float3 r = { a.x / b, a.y / b, a.z / b }; return r; }
+static inline float3 operator+(float a, float3 b) { float3 r = { a + b.x, a + b.y, a + b.z }; return r; }
+static inline float3 operator-(float a, float3 b) { float3 r = { a - b.x, a - b.y, a - b.z }; return r; }
+static inline float3 operator*(float a, float3 b) { float3 r = { a * b.x, a * b.y, a * b.z }; return r; }
+static inline float3 operator/(float a, float3 b) { float3 r = { a / b.x, a / b.y, a / b.z }; return r; }
+
+static inline uniform float2 operator+(uniform float2 a, uniform float2 b) { uniform float2 r = { a.x + b.x, a.y + b.y }; return r; }
+static inline uniform float2 operator-(uniform float2 a, uniform float2 b) { uniform float2 r = { a.x - b.x, a.y - b.y }; return r; }
+static inline uniform float2 operator*(uniform float2 a, uniform float2 b) { uniform float2 r = { a.x * b.x, a.y * b.y }; return r; }
+static inline uniform float2 operator/(uniform float2 a, uniform float2 b) { uniform float2 r = { a.x / b.x, a.y / b.y }; return r; }
+static inline uniform float2 operator+(uniform float2 a, uniform float b) { uniform float2 r = { a.x + b, a.y + b }; return r; }
+static inline uniform float2 operator-(uniform float2 a, uniform float b) { uniform float2 r = { a.x - b, a.y - b }; return r; }
+static inline uniform float2 operator*(uniform float2 a, uniform float b) { uniform float2 r = { a.x * b, a.y * b }; return r; }
+static inline uniform float2 operator/(uniform float2 a, uniform float b) { uniform float2 r = { a.x / b, a.y / b }; return r; }
+static inline uniform float2 operator+(uniform float a, uniform float2 b) { uniform float2 r = { a + b.x, a + b.y }; return r; }
+static inline uniform float2 operator-(uniform float a, uniform float2 b) { uniform float2 r = { a - b.x, a - b.y }; return r; }
+static inline uniform float2 operator*(uniform float a, uniform float2 b) { uniform float2 r = { a * b.x, a * b.y }; return r; }
+static inline uniform float2 operator/(uniform float a, uniform float2 b) { uniform float2 r = { a / b.x, a / b.y }; return r; }
+
+static inline uniform float3 operator+(uniform float3 a, uniform float3 b) { uniform float3 r = { a.x + b.x, a.y + b.y, a.z + b.z }; return r; }
+static inline uniform float3 operator-(uniform float3 a, uniform float3 b) { uniform float3 r = { a.x - b.x, a.y - b.y, a.z - b.z }; return r; }
+static inline uniform float3 operator*(uniform float3 a, uniform float3 b) { uniform float3 r = { a.x * b.x, a.y * b.y, a.z * b.z }; return r; }
+static inline uniform float3 operator/(uniform float3 a, uniform float3 b) { uniform float3 r = { a.x / b.x, a.y / b.y, a.z / b.z }; return r; }
+static inline uniform float3 operator+(uniform float3 a, uniform float b) { uniform float3 r = { a.x + b, a.y + b, a.z + b }; return r; }
+static inline uniform float3 operator-(uniform float3 a, uniform float b) { uniform float3 r = { a.x - b, a.y - b, a.z - b }; return r; }
+static inline uniform float3 operator*(uniform float3 a, uniform float b) { uniform float3 r = { a.x * b, a.y * b, a.z * b }; return r; }
+static inline uniform float3 operator/(uniform float3 a, uniform float b) { uniform float3 r = { a.x / b, a.y / b, a.z / b }; return r; }
+static inline uniform float3 operator+(uniform float a, uniform float3 b) { uniform float3 r = { a + b.x, a + b.y, a + b.z }; return r; }
+static inline uniform float3 operator-(uniform float a, uniform float3 b) { uniform float3 r = { a - b.x, a - b.y, a - b.z }; return r; }
+static inline uniform float3 operator*(uniform float a, uniform float3 b) { uniform float3 r = { a * b.x, a * b.y, a * b.z }; return r; }
+static inline uniform float3 operator/(uniform float a, uniform float3 b) { uniform float3 r = { a / b.x, a / b.y, a / b.z }; return r; }
+
+static inline uniform float2 reduce_add(float2 v)
+{
+    uniform float2 r = { reduce_add(v.x), reduce_add(v.y) };
+    return r;
+}
+static inline uniform float3 reduce_add(float3 v)
+{
+    uniform float3 r = {reduce_add(v.x), reduce_add(v.y), reduce_add(v.z)};
+    return r;
+}
+
+static inline float mod(float a, float b)
+{
+    return a - b * floor(a / b);
+}
+static inline uniform float mod(uniform float a, uniform float b)
+{
+    return a - b * floor(a / b);
+}
+
+static inline float frac(float a)
+{
+    return mod(a, 1.0);
+}
+static inline uniform float frac(uniform float a)
+{
+    return mod(a, 1.0);
+}
+
+
+#define define_vmath1(f)\
+    static inline float2 f(float2 a)\
+    {\
+        float2 r = { f(a.x), f(a.y) };\
+        return r;\
+    }\
+    static inline uniform float2 f(uniform float2 a)\
+    {\
+        uniform float2 r = { f(a.x), f(a.y) };\
+        return r;\
+    }\
+    static inline float3 f(float3 a)\
+    {\
+        float3 r = { f(a.x), f(a.y), f(a.z) };\
+        return r;\
+    }\
+    static inline uniform float3 f(uniform float3 a)\
+    {\
+        uniform float3 r = { f(a.x), f(a.y), f(a.z) };\
+        return r;\
+    }
+
+#define define_vmath2(f)\
+    static inline float2 f(float2 a, float2 b)\
+    {\
+        float2 r = { f(a.x, b.x), f(a.y, b.y) };\
+        return r;\
+    }\
+    static inline uniform float2 f(uniform float2 a, uniform float2 b)\
+    {\
+        uniform float2 r = { f(a.x, b.x), f(a.y, b.y) };\
+        return r;\
+    }\
+    static inline float3 f(float3 a, float3 b)\
+    {\
+        float3 r = { f(a.x, b.x), f(a.y, b.y), f(a.z, b.z) };\
+        return r;\
+    }\
+    static inline uniform float3 f(uniform float3 a, uniform float3 b)\
+    {\
+        uniform float3 r = { f(a.x, b.x), f(a.y, b.y), f(a.z, b.z) };\
+        return r;\
+    }
+
+define_vmath1(abs)
+define_vmath1(round)
+define_vmath1(floor)
+define_vmath1(ceil)
+define_vmath2(min)
+define_vmath2(max)
+define_vmath1(rcp)
+define_vmath1(sqrt)
+define_vmath1(rsqrt)
+define_vmath1(sin)
+define_vmath1(cos)
+define_vmath1(tan)
+define_vmath1(asin)
+define_vmath1(acos)
+define_vmath1(atan)
+define_vmath2(atan2)
+define_vmath1(exp)
+define_vmath1(log)
+define_vmath2(pow)
+define_vmath2(mod)
+define_vmath1(frac)
+
+
+
+static inline float dot(float2 a, float2 b)
+{
+    return a.x*b.x + a.y*b.y;
+}
+static inline uniform float dot(uniform float2 a, uniform float2 b)
+{
+    return a.x*b.x + a.y*b.y;
+}
+static inline float dot(float3 a, float3 b)
+{
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+static inline uniform float dot(uniform float3 a, uniform float3 b)
+{
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+
+static inline float3 cross(float3 v0, float3 v1)
+{
+    float3 ret;
+    ret.x = v0.y*v1.z - v0.z*v1.y;
+    ret.y = v0.z*v1.x - v0.x*v1.z;
+    ret.z = v0.x*v1.y - v0.y*v1.x;
+    return ret;
+}
+static inline uniform float3 cross(uniform float3 v0, uniform float3 v1)
+{
+    uniform float3 ret;
+    ret.x = v0.y*v1.z - v0.z*v1.y;
+    ret.y = v0.z*v1.x - v0.x*v1.z;
+    ret.z = v0.x*v1.y - v0.y*v1.x;
+    return ret;
+}
+
+
+
+static inline float length_sq(float2 v)
+{
+    return dot(v, v);
+}
+static inline uniform float length_sq(uniform float2 v)
+{
+    return dot(v, v);
+}
+static inline float length_sq(float3 v)
+{
+    return dot(v, v);
+}
+static inline uniform float length_sq(uniform float3 v)
+{
+    return dot(v, v);
+}
+
+static inline float length(float2 v)
+{
+    return sqrt(length_sq(v));
+}
+static inline uniform float length(uniform float2 v)
+{
+    return sqrt(length_sq(v));
+}
+static inline float length(float3 v)
+{
+    return sqrt(length_sq(v));
+}
+static inline uniform float length(uniform float3 v)
+{
+    return sqrt(length_sq(v));
+}
+
+// somehow length_est() is slower than length()...
+static inline float length_est(float3 v)
+{
+    float t = length_sq(v);
+    return rsqrt(t)*t;
+}
+static inline uniform float length_est(uniform float3 v)
+{
+    uniform float t = length_sq(v);
+    return rsqrt(t)*t;
+}
+
+static inline float rcp_length(float2 v)
+{
+    return rsqrt(length_sq(v));
+}
+static inline uniform float rcp_length(uniform float2 v)
+{
+    return rsqrt(length_sq(v));
+}
+static inline float rcp_length(float3 v)
+{
+    return rsqrt(length_sq(v));
+}
+static inline uniform float rcp_length(uniform float3 v)
+{
+    return rsqrt(length_sq(v));
+}
+
+static inline float2 normalize(float2 v)
+{
+    return v * rsqrt(dot(v, v));
+}
+static inline uniform float2 normalize(uniform float2 v)
+{
+    return v * rsqrt(dot(v, v));
+}
+static inline float3 normalize(float3 v)
+{
+    return v * rsqrt(dot(v, v));
+}
+static inline uniform float3 normalize(uniform float3 v)
+{
+    return v * rsqrt(dot(v, v));
+}
+
+static inline float lerp(float a, float b, float t) {
+    return (1.0f-t)*a + t*b;
+}
+static inline uniform float lerp(uniform float a, uniform float b, uniform float t) {
+    return (1.0f-t)*a + t*b;
+}
+
+static inline float3 lerp(float3 a, float3 b, float t) {
+    return (1.0f-t)*a + t*b;
+}
+static inline uniform float3 lerp(uniform float3 a, uniform float3 b, uniform float t) {
+    return (1.0f-t)*a + t*b;
+}
+
+static inline float clamp_and_normalize(float v, float low, float high, float rcp_range) {
+    float r = (v - low)*rcp_range;
+    return clamp(r, 0.0f, 1.0f);
+}
+
+#define Epsilon 0.0001f
+
+export uniform int RayTrianglesIntersection(
+    uniform const float3 pos_[], uniform const float3 dir_[],
+    uniform const float3 vertices[], uniform const int indices[], uniform const int num_triangles,
+    uniform int result[])
+{
+    uniform float3 pos = *pos_;
+    uniform float3 dir = *dir_;
+    uniform int total_hit = 0;
+
+    // SIMD pass
+    uniform int num_triangles_simd = num_triangles & ~(C - 1);
+    for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
+        uniform float3 va1[C];
+        uniform float3 va2[C];
+        uniform float3 va3[C];
+        for(uniform int i = 0; i < C; ++i) {
+            uniform int ti = bi + i;
+            va1[i] = vertices[indices[ti * 3 + 0]];
+            va2[i] = vertices[indices[ti * 3 + 1]];
+            va3[i] = vertices[indices[ti * 3 + 2]];
+        }
+
+        float3 p1;
+        float3 p2;
+        float3 p3;
+        aos_to_soa3((uniform float*)&va1[0], &p1.x, &p1.y, &p1.z);
+        aos_to_soa3((uniform float*)&va2[0], &p2.x, &p2.y, &p2.z);
+        aos_to_soa3((uniform float*)&va3[0], &p3.x, &p3.y, &p3.z);
+
+        int hit = true;
+        float3 e1 = p2 - p1;
+        float3 e2 = p3 - p1;
+        float3 p = cross(dir, e2);
+        float det = dot(e1, p);
+        if (det > -Epsilon && det < Epsilon) { hit = false; }
+        float invDet = 1.0f / det;
+        float3 t = pos - p1;
+        float u = dot(t, p) * invDet;
+        if (u < 0 || u > 1) { hit = false; }
+
+        float3 q = cross(t, e1);
+        float v = dot(dir, q) * invDet;
+        if (v < 0 || u + v > 1) {  hit = false; }
+
+        if ((dot(e2, q) * invDet) > Epsilon) {
+            // hit
+        }
+        else {
+            hit = false;
+        }
+
+        uniform int hita[C];
+        packed_store_active(hita, hit);
+        for(uniform int i = 0; i < C; ++i) {
+            if(hita[i]) {
+                result[total_hit++] = bi + i;
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for(uniform int ti = num_triangles_simd; ti < num_triangles; ++ti) {
+        uniform float3 p1 = vertices[indices[ti * 3 + 0]];
+        uniform float3 p2 = vertices[indices[ti * 3 + 1]];
+        uniform float3 p3 = vertices[indices[ti * 3 + 2]];
+
+        uniform bool hit = true;
+        uniform float3 e1 = p2 - p1;
+        uniform float3 e2 = p3 - p1;
+        uniform float3 p = cross(dir, e2);
+        uniform float det = dot(e1, p);
+        if (det > -Epsilon && det < Epsilon) { hit = false; }
+        uniform float invDet = 1.0f / det;
+        uniform float3 t = pos - p1;
+        uniform float u = dot(t, p) * invDet;
+        if (u < 0 || u > 1) { hit = false; }
+
+        uniform float3 q = cross(t, e1);
+        uniform float v = dot(dir, q) * invDet;
+        if (v < 0 || u + v > 1) {  hit = false; }
+
+        if ((dot(e2, q) * invDet) > Epsilon) {
+            // hit
+        }
+        else {
+            hit = false;
+        }
+
+        if(hit) {
+            result[total_hit++] = ti;
+        }
+    }
+
+    return total_hit;
 }

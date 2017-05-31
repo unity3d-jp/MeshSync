@@ -23,6 +23,8 @@ bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muD
 bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muDefaultEpsilon);
 bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muDefaultEpsilon);
 
+int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit);
+
 
 // ------------------------------------------------------------
 // internal (for test)

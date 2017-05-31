@@ -118,6 +118,18 @@ bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float e
     return true;
 }
 
+int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
+{
+    int num_hits = 0;
+    float2 uv;
+    for (int i = 0; i < num_triangles; ++i) {
+        if (ray_triangle_intersection(pos, dir, vertices[indices[i * 3 + 0]], vertices[indices[i * 3 + 1]], vertices[indices[i * 3 + 2]], uv)) {
+            hit[num_hits++] = i;
+        }
+    }
+    return num_hits;
+}
+
 
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
@@ -204,6 +216,11 @@ bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
 {
     return ispc::NearEqual(src1, src2, (int)num, eps);
 }
+
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
+{
+    return ispc::RayTrianglesIntersection((ispc::float3*)&pos, (ispc::float3*)&dir, (ispc::float3*)vertices, indices, num_triangles, (int32_t*)hit);
+}
 #endif
 
 
@@ -289,6 +306,10 @@ bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps)
     return NearEqual((const float*)src1, (const float*)src2, num * 3, eps);
 }
 
-#undef Forward
+int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
+{
+    return Forward(RayTrianglesIntersection, pos, dir, vertices, indices, num_triangles, hit);
+}
 
+#undef Forward
 } // namespace mu
