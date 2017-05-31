@@ -23,6 +23,7 @@ bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muD
 bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muDefaultEpsilon);
 bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muDefaultEpsilon);
 
+int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit);
 int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit);
 
 
@@ -63,5 +64,10 @@ void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max
 
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps);
 bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps);
+
+int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit);
+int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit);
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit);
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit);
 
 } // namespace mu

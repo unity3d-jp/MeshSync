@@ -4,6 +4,15 @@
 
 using namespace mu;
 
+using ns = uint64_t;
+
+static ns now()
+{
+    using namespace std::chrono;
+    return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+
 void Test_Sync(bool create_server)
 {
     std::unique_ptr<ms::Server> server;
@@ -109,11 +118,13 @@ void MatrixSwapHandedness()
 
 void RayTrianglesIntersectionTest()
 {
-    RawVector<float3> vertices; 
+    RawVector<float3> vertices;
+    RawVector<float3> vertices_flattened;
     RawVector<int> indices;
     RawVector<int> hit;
 
-    const int seg = 10;
+    const int seg = 1000;
+    const int num_try = 1;
 
     vertices.resize(seg * seg);
     for (int yi = 0; yi < seg; ++yi) {
@@ -136,17 +147,69 @@ void RayTrianglesIntersectionTest()
         }
     }
 
+    vertices_flattened.resize(indices.size());
+    for (int i = 0; i < indices.size(); ++i) {
+        vertices_flattened[i] = vertices[indices[i]];
+    }
+
     float3 ray_pos = { 0.0f, 1.0f, 0.0f };
     float3 ray_dir = { 0.0f, -1.0f, 0.0f };
 
-    hit.resize(indices.size() / 3);
-    int num_hits = RayTrianglesIntersection(ray_pos, ray_dir, vertices.data(), indices.data(), indices.size() / 3, hit.data());
-    hit.resize(num_hits);
-    printf("RayTrianglesIntersectionTest: ");
-    for (int h : hit) {
-        printf("%d ", h);
+    auto print = [&hit]() {
+        printf("    hits: ");
+        for (int i = 0; i < hit.size(); ++i) {
+            printf("%d ", hit[i]);
+        }
+        printf("\n");
+    };
+    printf("RayTrianglesIntersectionTest()\n");
+
+    auto s1_begin = now();
+    for (int i = 0; i < num_try; ++i) {
+        hit.resize(indices.size() / 3);
+        int num_hits = RayTrianglesIntersection_Generic(ray_pos, ray_dir, vertices.data(), indices.data(), indices.size() / 3, hit.data());
+        hit.resize(num_hits);
     }
-    printf("\n");
+    auto s1_end = now();
+
+    print();
+
+    auto s2_begin = now();
+    for (int i = 0; i < num_try; ++i) {
+        hit.resize(indices.size() / 3);
+        int num_hits = RayTrianglesIntersection_ISPC(ray_pos, ray_dir, vertices.data(), indices.data(), indices.size() / 3, hit.data());
+        hit.resize(num_hits);
+    }
+    auto s2_end = now();
+
+    print();
+
+    auto s3_begin = now();
+    for (int i = 0; i < num_try; ++i) {
+        hit.resize(indices.size() / 3);
+        int num_hits = RayTrianglesIntersection_Generic(ray_pos, ray_dir, vertices_flattened.data(), vertices_flattened.size() / 3, hit.data());
+        hit.resize(num_hits);
+    }
+    auto s3_end = now();
+
+    print();
+
+    auto s4_begin = now();
+    for (int i = 0; i < num_try; ++i) {
+        hit.resize(indices.size() / 3);
+        int num_hits = RayTrianglesIntersection_ISPC(ray_pos, ray_dir, vertices_flattened.data(), vertices_flattened.size() / 3, hit.data());
+        hit.resize(num_hits);
+    }
+    auto s4_end = now();
+
+    print();
+
+    printf("    %f : %f\n    %f : %f\n",
+        float(s1_end - s1_begin) / 1000000.0f,
+        float(s2_end - s2_begin) / 1000000.0f,
+        float(s3_end - s3_begin) / 1000000.0f,
+        float(s4_end - s4_begin) / 1000000.0f);
+
 }
 
 int main(int argc, char *argv[])

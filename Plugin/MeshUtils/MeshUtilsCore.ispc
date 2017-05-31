@@ -605,6 +605,90 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 export uniform int RayTrianglesIntersection(
     uniform const float3 pos_[], uniform const float3 dir_[],
+    uniform const float3 vertices[], uniform const int num_triangles,
+    uniform int result[])
+{
+    uniform float3 pos = *pos_;
+    uniform float3 dir = *dir_;
+    uniform int total_hit = 0;
+
+    // SIMD pass
+    uniform int num_triangles_simd = num_triangles & ~(C - 1);
+    for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
+        uniform float3 pa1[C], pa2[C], pa3[C];
+        for(uniform int i = 0; i < C; ++i) {
+            uniform int ti = bi + i;
+            pa1[i] = vertices[ti * 3 + 0];
+            pa2[i] = vertices[ti * 3 + 1];
+            pa3[i] = vertices[ti * 3 + 2];
+        }
+
+        float3 p1, p2, p3;
+        aos_to_soa3((uniform float*)&pa1[0], &p1.x, &p1.y, &p1.z);
+        aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
+        aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
+
+        int hit = false;
+        float3 e1 = p2 - p1;
+        float3 e2 = p3 - p1;
+        float3 p = cross(dir, e2);
+        float det = dot(e1, p);
+        float invDet = 1.0f / det;
+        float3 t = pos - p1;
+        float u = dot(t, p) * invDet;
+        float3 q = cross(t, e1);
+        float v = dot(dir, q) * invDet;
+
+        if (u >= 0 && u <= 1 &&
+            v >= 0 && u + v <= 1 &&
+            (dot(e2, q) * invDet) > Epsilon)
+        {
+            hit = true;
+        }
+
+        uniform int hita[C];
+        packed_store_active(hita, hit);
+        for(uniform int i = 0; i < C; ++i) {
+            if(hita[i]) {
+                result[total_hit++] = bi + i;
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for(uniform int ti = num_triangles_simd; ti < num_triangles; ++ti) {
+        uniform float3 p1 = vertices[ti * 3 + 0];
+        uniform float3 p2 = vertices[ti * 3 + 1];
+        uniform float3 p3 = vertices[ti * 3 + 2];
+
+        uniform int hit = false;
+        uniform float3 e1 = p2 - p1;
+        uniform float3 e2 = p3 - p1;
+        uniform float3 p = cross(dir, e2);
+        uniform float det = dot(e1, p);
+        uniform float invDet = 1.0f / det;
+        uniform float3 t = pos - p1;
+        uniform float u = dot(t, p) * invDet;
+        uniform float3 q = cross(t, e1);
+        uniform float v = dot(dir, q) * invDet;
+
+        if (u >= 0 && u <= 1 &&
+            v >= 0 && u + v <= 1 &&
+            (dot(e2, q) * invDet) > Epsilon)
+        {
+            hit = true;
+        }
+
+        if(hit) {
+            result[total_hit++] = ti;
+        }
+    }
+
+    return total_hit;
+}
+
+export uniform int RayTrianglesIntersectionIndexed(
+    uniform const float3 pos_[], uniform const float3 dir_[],
     uniform const float3 vertices[], uniform const int indices[], uniform const int num_triangles,
     uniform int result[])
 {
@@ -615,43 +699,35 @@ export uniform int RayTrianglesIntersection(
     // SIMD pass
     uniform int num_triangles_simd = num_triangles & ~(C - 1);
     for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
-        uniform float3 va1[C];
-        uniform float3 va2[C];
-        uniform float3 va3[C];
+        uniform float3 pa1[C], pa2[C], pa3[C];
         for(uniform int i = 0; i < C; ++i) {
             uniform int ti = bi + i;
-            va1[i] = vertices[indices[ti * 3 + 0]];
-            va2[i] = vertices[indices[ti * 3 + 1]];
-            va3[i] = vertices[indices[ti * 3 + 2]];
+            pa1[i] = vertices[indices[ti * 3 + 0]];
+            pa2[i] = vertices[indices[ti * 3 + 1]];
+            pa3[i] = vertices[indices[ti * 3 + 2]];
         }
 
-        float3 p1;
-        float3 p2;
-        float3 p3;
-        aos_to_soa3((uniform float*)&va1[0], &p1.x, &p1.y, &p1.z);
-        aos_to_soa3((uniform float*)&va2[0], &p2.x, &p2.y, &p2.z);
-        aos_to_soa3((uniform float*)&va3[0], &p3.x, &p3.y, &p3.z);
+        float3 p1, p2, p3;
+        aos_to_soa3((uniform float*)&pa1[0], &p1.x, &p1.y, &p1.z);
+        aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
+        aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
 
-        int hit = true;
+        int hit = false;
         float3 e1 = p2 - p1;
         float3 e2 = p3 - p1;
         float3 p = cross(dir, e2);
         float det = dot(e1, p);
-        if (det > -Epsilon && det < Epsilon) { hit = false; }
         float invDet = 1.0f / det;
         float3 t = pos - p1;
         float u = dot(t, p) * invDet;
-        if (u < 0 || u > 1) { hit = false; }
-
         float3 q = cross(t, e1);
         float v = dot(dir, q) * invDet;
-        if (v < 0 || u + v > 1) {  hit = false; }
 
-        if ((dot(e2, q) * invDet) > Epsilon) {
-            // hit
-        }
-        else {
-            hit = false;
+        if (u >= 0 && u <= 1 &&
+            v >= 0 && u + v <= 1 &&
+            (dot(e2, q) * invDet) > Epsilon)
+        {
+            hit = true;
         }
 
         uniform int hita[C];
@@ -669,26 +745,22 @@ export uniform int RayTrianglesIntersection(
         uniform float3 p2 = vertices[indices[ti * 3 + 1]];
         uniform float3 p3 = vertices[indices[ti * 3 + 2]];
 
-        uniform bool hit = true;
+        uniform bool hit = false;
         uniform float3 e1 = p2 - p1;
         uniform float3 e2 = p3 - p1;
         uniform float3 p = cross(dir, e2);
         uniform float det = dot(e1, p);
-        if (det > -Epsilon && det < Epsilon) { hit = false; }
         uniform float invDet = 1.0f / det;
         uniform float3 t = pos - p1;
         uniform float u = dot(t, p) * invDet;
-        if (u < 0 || u > 1) { hit = false; }
-
         uniform float3 q = cross(t, e1);
         uniform float v = dot(dir, q) * invDet;
-        if (v < 0 || u + v > 1) {  hit = false; }
 
-        if ((dot(e2, q) * invDet) > Epsilon) {
-            // hit
-        }
-        else {
-            hit = false;
+        if (u >= 0 && u <= 1 &&
+            v >= 0 && u + v <= 1 &&
+            (dot(e2, q) * invDet) > Epsilon)
+        {
+            hit = true;
         }
 
         if(hit) {
