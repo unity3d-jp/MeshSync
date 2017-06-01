@@ -450,6 +450,16 @@ inline float dot(const float3& l, const float3& r)
     return l.x*r.x + l.y*r.y + l.z*r.z;
 }
 
+inline float length_sq(float3 v)
+{
+    return dot(v, v);
+}
+
+inline float length(float3 v)
+{
+    return sqrt(length_sq(v));
+}
+
 inline float3 normalize(const float3& l)
 {
     float d = 1.0f / std::sqrt(dot(l, l));

@@ -440,7 +440,7 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
     return ret;
 }
 
-void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
+void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool shape_only)
 {
     dst.flags.has_points = 1;
     dst.flags.has_uv = 1;
@@ -466,7 +466,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     }
 
     // transform
-    {
+    if(!shape_only) {
         dst.refine_settings.flags.apply_world2local = 1;
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
@@ -503,33 +503,47 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         }
     }
 
-    // copy indices, uv, material ID
-    dst.indices.resize(nindices);
-    dst.uv.resize(nindices);
-    dst.materialIDs.resize(nfaces);
-    auto *indices = dst.indices.data();
-    auto *uv = dst.uv.data();
-    for (int fi = 0; fi < nfaces; ++fi) {
-        int c = dst.counts[fi];
-        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
-        if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
-            obj->GetFacePointArray(fi, indices);
-            obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
-            indices += c;
-            uv += c;
+    if (shape_only) {
+        // copy indices
+        dst.indices.resize(nindices);
+        auto *indices = dst.indices.data();
+        for (int fi = 0; fi < nfaces; ++fi) {
+            int c = dst.counts[fi];
+            if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                obj->GetFacePointArray(fi, indices);
+                indices += c;
+            }
         }
     }
-
-    // copy vertex colors if needed
-    if (m_sync_vertex_color) {
-        dst.colors.resize(nindices);
-        dst.flags.has_colors = 1;
-        auto *colors = dst.colors.data();
+    else {
+        // copy indices, uv, material ID
+        dst.indices.resize(nindices);
+        dst.uv.resize(nindices);
+        dst.materialIDs.resize(nfaces);
+        auto *indices = dst.indices.data();
+        auto *uv = dst.uv.data();
         for (int fi = 0; fi < nfaces; ++fi) {
-            int count = dst.counts[fi];
-            if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
-                for (int ci = 0; ci < count; ++ci) {
-                    *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
+            int c = dst.counts[fi];
+            dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
+            if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                obj->GetFacePointArray(fi, indices);
+                obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
+                indices += c;
+                uv += c;
+            }
+        }
+
+        // copy vertex colors if needed
+        if (m_sync_vertex_color) {
+            dst.colors.resize(nindices);
+            dst.flags.has_colors = 1;
+            auto *colors = dst.colors.data();
+            for (int fi = 0; fi < nfaces; ++fi) {
+                int count = dst.counts[fi];
+                if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                    for (int ci = 0; ci < count; ++ci) {
+                        *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
+                    }
                 }
             }
         }
@@ -570,4 +584,97 @@ void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
     dst.near_plane = scene->GetFrontClip();
     dst.far_plane = scene->GetBackClip();
 #endif
+}
+
+
+static inline void GetNearest(const RawVector<int>& t, const RawVector<float>& d, int n, int& tindex, float& dist)
+{
+    float nearest = FLT_MAX;
+    int ret = -1;
+    for (int i = 0; i < n; ++i) {
+        if (d[i] < nearest) {
+            nearest = d[i];
+            ret = t[i];
+        }
+    }
+    tindex = ret;
+    dist = nearest;
+}
+
+static inline int GetNearest(mu::float3 pos, const mu::float3 (&vtx)[3])
+{
+    float d[3] = {
+        mu::length_sq(vtx[0] - pos),
+        mu::length_sq(vtx[1] - pos),
+        mu::length_sq(vtx[2] - pos),
+    };
+    if (d[0] < d[1] && d[0] < d[2]) { return 0; }
+    else if (d[1] < d[2]) { return 1; }
+    else { return 2; }
+}
+
+
+void MQSync::projectNormals(MQDocument doc, MQObject src, ms::Mesh& dst)
+{
+    ms::Mesh nmesh;
+    extractMeshData(doc, src, nmesh, true);
+
+    {
+        ms::MeshRefineSettings rs;
+        rs.flags.triangulate = true;
+        rs.flags.gen_normals = true;
+        nmesh.refine(rs);
+    }
+    {
+        ms::MeshRefineSettings rs;
+        rs.flags.gen_normals = true;
+        nmesh.refine(rs);
+    }
+
+    int num_triangles = (int)nmesh.indices.size() / 3;
+    int num_rays = (int)dst.points.size();
+
+    // make SoAnized triangles data
+    RawVector<float> soa[9];
+    for (int i = 0; i < 3; ++i) {
+        soa[i].resize(num_triangles);
+    }
+    for (int ti = 0; ti < num_triangles; ++ti) {
+        for (int i = 0; i < 3; ++i) {
+            ms::float3 p = nmesh.points[nmesh.indices[ti * 3 + i]];
+            soa[i * 3 + 0][ti] = p.x;
+            soa[i * 3 + 1][ti] = p.y;
+            soa[i * 3 + 2][ti] = p.z;
+        }
+    }
+
+    RawVector<int> hit;
+    RawVector<float> distance;
+    hit.resize(num_triangles);
+    distance.resize(num_triangles);
+
+    for (int ri = 0; ri < num_rays; ++ri) {
+        ms::float3 pos = dst.points[ri];
+        ms::float3 dir = dst.normals[ri];
+        int num_hit = ms::RayTrianglesIntersection(pos, dir,
+            soa[0].data(), soa[1].data(), soa[2].data(),
+            soa[3].data(), soa[4].data(), soa[5].data(),
+            soa[6].data(), soa[7].data(), soa[8].data(),
+            num_triangles, hit.data(), distance.data());
+
+        if (num_hit > 0) {
+            int t; float d;
+            GetNearest(hit, distance, num_hit, t, d);
+
+            mu::float3 hpos = pos + dir * d;
+            mu::float3 vtx[3] = {
+                { soa[0][t], soa[1][t], soa[2][t] },
+                { soa[3][t], soa[4][t], soa[5][t] },
+                { soa[6][t], soa[7][t], soa[8][t] },
+            };
+
+            int idx = t * 3 + GetNearest(hpos, vtx);
+            dst.normals[ri] = nmesh.normals[nmesh.indices[idx]];
+        }
+    }
 }
