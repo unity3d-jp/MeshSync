@@ -692,7 +692,7 @@ void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
             };
 
             int idx = t * 3 + GetNearest(hpos, vtx);
-            dst.normals[ri] = src.normals[src.indices[idx]];
+            dst.normals[ri] = -src.normals[src.indices[idx]];
         }
     }
 
