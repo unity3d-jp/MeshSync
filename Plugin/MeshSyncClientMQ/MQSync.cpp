@@ -92,6 +92,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
     {
         int nobj = doc->GetObjectCount();
+        int num_mesh_data = 0;
 
         // build relations
         for (int i = 0; i < nobj; ++i) {
@@ -108,6 +109,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 auto rel = Relation();
                 rel.obj = obj;
                 m_relations.push_back(rel);
+                ++num_mesh_data;
             }
         }
         for (auto nobj : m_obj_for_normals) {
@@ -119,18 +121,27 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 char name[MaxNameBuffer];
                 rel.obj->GetName(name, sizeof(name));
                 if (strcmp(nname, name) == 0) {
-                    rel.normal = nobj;
+                    rel.normal_projector = nobj;
+                    ++num_mesh_data;
                     break;
                 }
             }
         }
 
-        while ((int)m_client_meshes.size() < m_relations.size()) {
-            m_client_meshes.emplace_back(new ms::Mesh());
-        }
-        for (size_t i = 0; i < m_relations.size(); ++i) {
-            m_relations[i].data = m_client_meshes[i];
-            m_relations[i].data->index = (int)i;
+        {
+            while ((int)m_client_meshes.size() < num_mesh_data) {
+                m_client_meshes.emplace_back(new ms::Mesh());
+            }
+
+            int mi = 0;
+            for (size_t i = 0; i < m_relations.size(); ++i) {
+                auto& rel = m_relations[i];
+                rel.data = m_client_meshes[mi++];
+                rel.data->index = (int)i;
+                if (rel.normal_projector) {
+                    rel.normal_data = m_client_meshes[mi++];
+                }
+            }
         }
 
         // gather mesh data
@@ -139,7 +150,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
             ExtractID(rel.data->path.c_str(), rel.data->id);
 
-            bool visible = rel.obj->GetVisible() || (rel.normal && rel.normal->GetVisible());
+            bool visible = rel.obj->GetVisible() || (rel.normal_projector && rel.normal_projector->GetVisible());
             rel.data->visible = visible;
             if (!visible) {
                 // not send actual contents if not visible
@@ -147,8 +158,9 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             }
 
             extractMeshData(doc, rel.obj, *rel.data);
-            if (rel.normal) {
-                copyPointsForNormalCalculation(doc, rel.normal, *rel.data);
+            if (rel.normal_projector) {
+                rel.normal_data->clear();
+                extractMeshData(doc, rel.normal_projector, *rel.normal_data, true);
             }
         });
     }
@@ -182,6 +194,12 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
     // kick async send
     m_future_meshes = std::async(std::launch::async, [this]() {
+        for (auto& rel : m_relations) {
+            if (rel.normal_projector) {
+                projectNormals(*rel.normal_data, *rel.data);
+            }
+        }
+
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
@@ -614,34 +632,31 @@ static inline int GetNearest(mu::float3 pos, const mu::float3 (&vtx)[3])
 }
 
 
-void MQSync::projectNormals(MQDocument doc, MQObject src, ms::Mesh& dst)
+void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
 {
-    ms::Mesh nmesh;
-    extractMeshData(doc, src, nmesh, true);
-
     {
         ms::MeshRefineSettings rs;
         rs.flags.triangulate = true;
         rs.flags.gen_normals = true;
-        nmesh.refine(rs);
+        src.refine(rs);
     }
     {
         ms::MeshRefineSettings rs;
         rs.flags.gen_normals = true;
-        nmesh.refine(rs);
+        dst.refine(rs);
     }
 
-    int num_triangles = (int)nmesh.indices.size() / 3;
+    int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.points.size();
 
     // make SoAnized triangles data
     RawVector<float> soa[9];
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 9; ++i) {
         soa[i].resize(num_triangles);
     }
     for (int ti = 0; ti < num_triangles; ++ti) {
         for (int i = 0; i < 3; ++i) {
-            ms::float3 p = nmesh.points[nmesh.indices[ti * 3 + i]];
+            ms::float3 p = src.points[src.indices[ti * 3 + i]];
             soa[i * 3 + 0][ti] = p.x;
             soa[i * 3 + 1][ti] = p.y;
             soa[i * 3 + 2][ti] = p.z;
@@ -653,6 +668,7 @@ void MQSync::projectNormals(MQDocument doc, MQObject src, ms::Mesh& dst)
     hit.resize(num_triangles);
     distance.resize(num_triangles);
 
+    //concurrency::parallel_for(0 , num_rays, 400, [&](int ri) {
     for (int ri = 0; ri < num_rays; ++ri) {
         ms::float3 pos = dst.points[ri];
         ms::float3 dir = dst.normals[ri];
@@ -674,7 +690,10 @@ void MQSync::projectNormals(MQDocument doc, MQObject src, ms::Mesh& dst)
             };
 
             int idx = t * 3 + GetNearest(hpos, vtx);
-            dst.normals[ri] = nmesh.normals[nmesh.indices[idx]];
+            dst.normals[ri] = src.normals[src.indices[idx]];
         }
     }
+
+    dst.flags.has_normals = 1;
+    dst.refine_settings.flags.gen_normals_with_smooth_angle = 0;
 }

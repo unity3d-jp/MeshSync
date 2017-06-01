@@ -977,7 +977,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     mu::MeshRefiner refiner;
-    refiner.triangulate = refiner.triangulate;
+    refiner.triangulate = mrs.flags.triangulate;
     refiner.swap_faces = mrs.flags.swap_faces;
     refiner.split_unit = mrs.split_unit;
     refiner.prepare(counts, indices, points);
@@ -1008,7 +1008,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     // refine topology
     bool refine_topology =
         mrs.flags.triangulate ||
-        (mrs.split_unit && points.size() > mrs.split_unit) ||
+        (mrs.flags.split && points.size() > mrs.split_unit) ||
         (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()));
     if(refine_topology) {
         refiner.refine(mrs.flags.optimize_topology);

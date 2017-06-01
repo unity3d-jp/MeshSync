@@ -31,7 +31,7 @@ private:
     void copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& data);
     void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
 
-    void projectNormals(MQDocument doc, MQObject src, ms::Mesh& dst);
+    void projectNormals(ms::Mesh& src, ms::Mesh& dst);
 
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
@@ -41,8 +41,9 @@ private:
     struct Relation
     {
         ms::MeshPtr data;
+        ms::MeshPtr normal_data;
         MQObject obj = nullptr;
-        MQObject normal = nullptr;
+        MQObject normal_projector = nullptr;
     };
 
     ms::ClientSettings m_settings;
