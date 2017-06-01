@@ -808,29 +808,23 @@ inline float compute_focal_length(float aperture, float fov)
 }
 
 
-inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float2& uv)
+inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;
     float3 p = cross(dir, e2);
     float det = dot(e1, p);
-    if (det > -muDefaultEpsilon && det < muDefaultEpsilon) { return false; }
-    float invDet = 1.0f / det;
+    if (abs(det) < muDefaultEpsilon) return false;
+    float inv_det = 1.0f / det;
     float3 t = pos - p1;
-    float u = dot(t, p) * invDet;
-    if (u < 0 || u > 1) { return false; }
-
+    float u = dot(t, p) * inv_det;
+    if (u < 0 || u  > 1) return false;
     float3 q = cross(t, e1);
-    float v = dot(dir, q) * invDet;
-    if (v < 0 || u + v > 1) { return false; }
+    float v = dot(dir, q) * inv_det;
+    if (v < 0 || u + v > 1) return false;
 
-    if ((dot(e2, q) * invDet) > muDefaultEpsilon)
-    {
-        uv.x = u;
-        uv.y = v;
-        return true;
-    }
-    return false;
+    distance = dot(e2, q) * inv_det;
+    return true;
 }
 
 #ifdef muMath_AddNamespace

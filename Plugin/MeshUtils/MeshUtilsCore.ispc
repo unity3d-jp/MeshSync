@@ -603,10 +603,49 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 #define Epsilon 0.0001f
 
+bool TriangleIntersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
+{
+    float3 e1 = p2 - p1;
+    float3 e2 = p3 - p1;
+    float3 p = cross(dir, e2);
+    float det = dot(e1, p);
+    float inv_det = 1.0f / det;
+    float3 t = pos - p1;
+    float u = dot(t, p) * inv_det;
+    float3 q = cross(t, e1);
+    float v = dot(dir, q) * inv_det;
+
+    distance = dot(e2, q) * inv_det;
+    return
+        abs(det) > Epsilon &&
+        u >= 0 && u <= 1 &&
+        v >= 0 && u + v <= 1;
+}
+
+uniform bool TriangleIntersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
+{
+    uniform float3 e1 = p2 - p1;
+    uniform float3 e2 = p3 - p1;
+    uniform float3 p = cross(dir, e2);
+    uniform float det = dot(e1, p);
+    uniform float inv_det = 1.0f / det;
+    uniform float3 t = pos - p1;
+    uniform float u = dot(t, p) * inv_det;
+    uniform float3 q = cross(t, e1);
+    uniform float v = dot(dir, q) * inv_det;
+
+    distance = dot(e2, q) * inv_det;
+    return
+        abs(det) > Epsilon &&
+        u >= 0 && u <= 1 &&
+        v >= 0 && u + v <= 1;
+}
+
+
 export uniform int RayTrianglesIntersection(
     uniform const float3& pos, uniform const float3& dir,
     uniform const float3 vertices[], uniform const int num_triangles,
-    uniform int result[])
+    uniform int result[], uniform float distance[])
 {
     uniform int total_hit = 0;
 
@@ -626,29 +665,16 @@ export uniform int RayTrianglesIntersection(
         aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
         aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
 
-        int hit = false;
-        float3 e1 = p2 - p1;
-        float3 e2 = p3 - p1;
-        float3 p = cross(dir, e2);
-        float det = dot(e1, p);
-        float invDet = 1.0f / det;
-        float3 t = pos - p1;
-        float u = dot(t, p) * invDet;
-        float3 q = cross(t, e1);
-        float v = dot(dir, q) * invDet;
-
-        if (u >= 0 && u <= 1 &&
-            v >= 0 && u + v <= 1 &&
-            (dot(e2, q) * invDet) > Epsilon)
-        {
-            hit = true;
-        }
-
-        uniform int hita[C];
-        packed_store_active(hita, hit);
-        for(uniform int i = 0; i < C; ++i) {
-            if(hita[i]) {
-                result[total_hit++] = bi + i;
+        float d;
+        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        if(any(hit)) {
+            uniform int hita[C]; hita[I] = hit;
+            uniform float da[C]; da[I] = d;
+            for(uniform int i = 0; i < C; ++i) {
+                if(hita[i]) {
+                    result[total_hit] = bi + i;
+                    distance[total_hit++] = da[i];
+                }
             }
         }
     }
@@ -659,26 +685,11 @@ export uniform int RayTrianglesIntersection(
         uniform float3 p2 = vertices[ti * 3 + 1];
         uniform float3 p3 = vertices[ti * 3 + 2];
 
-        uniform int hit = false;
-        uniform float3 e1 = p2 - p1;
-        uniform float3 e2 = p3 - p1;
-        uniform float3 p = cross(dir, e2);
-        uniform float det = dot(e1, p);
-        uniform float invDet = 1.0f / det;
-        uniform float3 t = pos - p1;
-        uniform float u = dot(t, p) * invDet;
-        uniform float3 q = cross(t, e1);
-        uniform float v = dot(dir, q) * invDet;
-
-        if (u >= 0 && u <= 1 &&
-            v >= 0 && u + v <= 1 &&
-            (dot(e2, q) * invDet) > Epsilon)
-        {
-            hit = true;
-        }
-
+        uniform float d;
+        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(hit) {
-            result[total_hit++] = ti;
+            result[total_hit] = ti;
+            distance[total_hit++] = d;
         }
     }
 
@@ -688,7 +699,7 @@ export uniform int RayTrianglesIntersection(
 export uniform int RayTrianglesIntersectionIndexed(
     uniform const float3& pos, uniform const float3& dir,
     uniform const float3 vertices[], uniform const int indices[], uniform const int num_triangles,
-    uniform int result[])
+    uniform int result[], uniform float distance[])
 {
     uniform int total_hit = 0;
 
@@ -708,29 +719,16 @@ export uniform int RayTrianglesIntersectionIndexed(
         aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
         aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
 
-        int hit = false;
-        float3 e1 = p2 - p1;
-        float3 e2 = p3 - p1;
-        float3 p = cross(dir, e2);
-        float det = dot(e1, p);
-        float invDet = 1.0f / det;
-        float3 t = pos - p1;
-        float u = dot(t, p) * invDet;
-        float3 q = cross(t, e1);
-        float v = dot(dir, q) * invDet;
-
-        if (u >= 0 && u <= 1 &&
-            v >= 0 && u + v <= 1 &&
-            (dot(e2, q) * invDet) > Epsilon)
-        {
-            hit = true;
-        }
-
-        uniform int hita[C];
-        packed_store_active(hita, hit);
-        for(uniform int i = 0; i < C; ++i) {
-            if(hita[i]) {
-                result[total_hit++] = bi + i;
+        float d;
+        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        if(any(hit)) {
+            uniform int hita[C]; hita[I] = hit;
+            uniform float da[C]; da[I] = d;
+            for(uniform int i = 0; i < C; ++i) {
+                if(hita[i]) {
+                    result[total_hit] = bi + i;
+                    distance[total_hit++] = da[i];
+                }
             }
         }
     }
@@ -741,26 +739,11 @@ export uniform int RayTrianglesIntersectionIndexed(
         uniform float3 p2 = vertices[indices[ti * 3 + 1]];
         uniform float3 p3 = vertices[indices[ti * 3 + 2]];
 
-        uniform bool hit = false;
-        uniform float3 e1 = p2 - p1;
-        uniform float3 e2 = p3 - p1;
-        uniform float3 p = cross(dir, e2);
-        uniform float det = dot(e1, p);
-        uniform float invDet = 1.0f / det;
-        uniform float3 t = pos - p1;
-        uniform float u = dot(t, p) * invDet;
-        uniform float3 q = cross(t, e1);
-        uniform float v = dot(dir, q) * invDet;
-
-        if (u >= 0 && u <= 1 &&
-            v >= 0 && u + v <= 1 &&
-            (dot(e2, q) * invDet) > Epsilon)
-        {
-            hit = true;
-        }
-
+        uniform float d;
+        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(hit) {
-            result[total_hit++] = ti;
+            result[total_hit] = ti;
+            distance[total_hit++] = d;
         }
     }
 
@@ -773,7 +756,7 @@ export uniform int RayTrianglesIntersectionSoA(
     uniform const float v2x[], uniform const float v2y[], uniform const float v2z[],
     uniform const float v3x[], uniform const float v3y[], uniform const float v3z[],
     uniform const int num_triangles,
-    uniform int result[])
+    uniform int result[], uniform float distance[])
 {
     uniform int total_hit = 0;
 
@@ -784,29 +767,16 @@ export uniform int RayTrianglesIntersectionSoA(
         float3 p2 = {v2x[bi+I], v2y[bi+I], v2z[bi+I]};
         float3 p3 = {v3x[bi+I], v3y[bi+I], v3z[bi+I]};
 
-        int hit = false;
-        float3 e1 = p2 - p1;
-        float3 e2 = p3 - p1;
-        float3 p = cross(dir, e2);
-        float det = dot(e1, p);
-        float invDet = 1.0f / det;
-        float3 t = pos - p1;
-        float u = dot(t, p) * invDet;
-        float3 q = cross(t, e1);
-        float v = dot(dir, q) * invDet;
-
-        if (u >= 0 && u <= 1 &&
-            v >= 0 && u + v <= 1 &&
-            (dot(e2, q) * invDet) > Epsilon)
-        {
-            hit = true;
-        }
-
-        uniform int hita[C];
-        packed_store_active(hita, hit);
-        for(uniform int i = 0; i < C; ++i) {
-            if(hita[i]) {
-                result[total_hit++] = bi + i;
+        float d;
+        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        if(any(hit)) {
+            uniform int hita[C]; hita[I] = hit;
+            uniform float da[C]; da[I] = d;
+            for(uniform int i = 0; i < C; ++i) {
+                if(hita[i]) {
+                    result[total_hit] = bi + i;
+                    distance[total_hit++] = da[i];
+                }
             }
         }
     }
@@ -817,26 +787,11 @@ export uniform int RayTrianglesIntersectionSoA(
         uniform float3 p2 = {v2x[ti], v2y[ti], v2z[ti]};
         uniform float3 p3 = {v3x[ti], v3y[ti], v3z[ti]};
 
-        uniform int hit = false;
-        uniform float3 e1 = p2 - p1;
-        uniform float3 e2 = p3 - p1;
-        uniform float3 p = cross(dir, e2);
-        uniform float det = dot(e1, p);
-        uniform float invDet = 1.0f / det;
-        uniform float3 t = pos - p1;
-        uniform float u = dot(t, p) * invDet;
-        uniform float3 q = cross(t, e1);
-        uniform float v = dot(dir, q) * invDet;
-
-        if (u >= 0 && u <= 1 &&
-            v >= 0 && u + v <= 1 &&
-            (dot(e2, q) * invDet) > Epsilon)
-        {
-            hit = true;
-        }
-
+        uniform float d;
+        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(hit) {
-            result[total_hit++] = ti;
+            result[total_hit] = ti;
+            distance[total_hit++] = d;
         }
     }
 

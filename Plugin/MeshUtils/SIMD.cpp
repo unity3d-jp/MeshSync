@@ -118,24 +118,26 @@ bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float e
     return true;
 }
 
-int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit)
+int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
 {
     int num_hits = 0;
-    float2 uv;
     for (int i = 0; i < num_triangles; ++i) {
-        if (ray_triangle_intersection(pos, dir, vertices[i * 3 + 0], vertices[i * 3 + 1], vertices[i * 3 + 2], uv)) {
-            hit[num_hits++] = i;
+        float d;
+        if (ray_triangle_intersection(pos, dir, vertices[i * 3 + 0], vertices[i * 3 + 1], vertices[i * 3 + 2], d)) {
+            hit[num_hits] = i;
+            distance[num_hits++] = d;
         }
     }
     return num_hits;
 }
-int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
+int RayTrianglesIntersection_Generic(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit, float *distance)
 {
     int num_hits = 0;
-    float2 uv;
     for (int i = 0; i < num_triangles; ++i) {
-        if (ray_triangle_intersection(pos, dir, vertices[indices[i * 3 + 0]], vertices[indices[i * 3 + 1]], vertices[indices[i * 3 + 2]], uv)) {
-            hit[num_hits++] = i;
+        float d;
+        if (ray_triangle_intersection(pos, dir, vertices[indices[i * 3 + 0]], vertices[indices[i * 3 + 1]], vertices[indices[i * 3 + 2]], d)) {
+            hit[num_hits] = i;
+            distance[num_hits++] = d;
         }
     }
     return num_hits;
@@ -144,17 +146,18 @@ int RayTrianglesIntersection_Generic(float3 pos, float3 dir,
     const float *v1x, const float *v1y, const float *v1z,
     const float *v2x, const float *v2y, const float *v2z,
     const float *v3x, const float *v3y, const float *v3z,
-    int num_triangles, int *hit)
+    int num_triangles, int *hit, float *distance)
 {
     int num_hits = 0;
-    float2 uv;
     for (int i = 0; i < num_triangles; ++i) {
+        float d;
         if (ray_triangle_intersection(pos, dir,
             { v1x[i], v1y[i], v1z[i] },
             { v2x[i], v2y[i], v2z[i] },
-            { v3x[i], v3y[i], v3z[i] }, uv))
+            { v3x[i], v3y[i], v3z[i] }, d))
         {
-            hit[num_hits++] = i;
+            hit[num_hits] = i;
+            distance[num_hits++] = d;
         }
     }
     return num_hits;
@@ -247,21 +250,21 @@ bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
     return ispc::NearEqual(src1, src2, (int)num, eps);
 }
 
-int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit)
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
 {
-    return ispc::RayTrianglesIntersection((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, num_triangles, (int32_t*)hit);
+    return ispc::RayTrianglesIntersection((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, num_triangles, (int32_t*)hit, distance);
 }
-int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit, float *distance)
 {
-    return ispc::RayTrianglesIntersectionIndexed((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, indices, num_triangles, (int32_t*)hit);
+    return ispc::RayTrianglesIntersectionIndexed((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, indices, num_triangles, (int32_t*)hit, distance);
 }
 int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
     const float *v1x, const float *v1y, const float *v1z,
     const float *v2x, const float *v2y, const float *v2z,
     const float *v3x, const float *v3y, const float *v3z,
-    int num_triangles, int *hit)
+    int num_triangles, int *hit, float *distance)
 {
-    return ispc::RayTrianglesIntersectionSoA((ispc::float3&)pos, (ispc::float3&)dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, (int32_t*)hit);
+    return ispc::RayTrianglesIntersectionSoA((ispc::float3&)pos, (ispc::float3&)dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, (int32_t*)hit, distance);
 }
 
 #endif
@@ -349,21 +352,21 @@ bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps)
     return NearEqual((const float*)src1, (const float*)src2, num * 3, eps);
 }
 
-int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit)
+int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
 {
-    return Forward(RayTrianglesIntersection, pos, dir, vertices, num_triangles, hit);
+    return Forward(RayTrianglesIntersection, pos, dir, vertices, num_triangles, hit, distance);
 }
-int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit)
+int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit, float *distance)
 {
-    return Forward(RayTrianglesIntersection, pos, dir, vertices, indices, num_triangles, hit);
+    return Forward(RayTrianglesIntersection, pos, dir, vertices, indices, num_triangles, hit, distance);
 }
 int RayTrianglesIntersection(float3 pos, float3 dir,
     const float *v1x, const float *v1y, const float *v1z,
     const float *v2x, const float *v2y, const float *v2z,
     const float *v3x, const float *v3y, const float *v3z,
-    int num_triangles, int *hit)
+    int num_triangles, int *hit, float *distance)
 {
-    return Forward(RayTrianglesIntersection, pos, dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, hit);
+    return Forward(RayTrianglesIntersection, pos, dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, hit, distance);
 }
 
 #undef Forward
