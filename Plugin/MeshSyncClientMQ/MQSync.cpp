@@ -635,14 +635,16 @@ static inline int GetNearest(mu::float3 pos, const mu::float3 (&vtx)[3])
 void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
 {
     {
+
         ms::MeshRefineSettings rs;
-        rs.flags.triangulate = true;
-        rs.flags.gen_normals = true;
+        rs.flags.triangulate = 1;
+        rs.flags.gen_normals = 1;
         src.refine(rs);
     }
     {
         ms::MeshRefineSettings rs;
-        rs.flags.gen_normals = true;
+        rs.flags.no_reindexing = 1;
+        rs.flags.gen_normals = 1;
         dst.refine(rs);
     }
 

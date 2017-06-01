@@ -1006,10 +1006,11 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     // refine topology
-    bool refine_topology =
-        mrs.flags.triangulate ||
+    bool refine_topology = !mrs.flags.no_reindexing  && (
+         mrs.flags.triangulate ||
         (mrs.flags.split && points.size() > mrs.split_unit) ||
-        (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()));
+        (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()))
+    );
     if(refine_topology) {
         refiner.refine(mrs.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);

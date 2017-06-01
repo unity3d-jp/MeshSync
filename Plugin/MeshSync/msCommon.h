@@ -261,6 +261,8 @@ struct MeshRefineFlags
     uint32_t mirror_z_weld : 1;
 
     uint32_t gen_weights4 : 1;
+
+    uint32_t no_reindexing : 1;
 };
 
 struct MeshRefineSettings
