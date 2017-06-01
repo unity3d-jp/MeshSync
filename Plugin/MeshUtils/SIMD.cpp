@@ -166,6 +166,7 @@ int RayTrianglesIntersection_Generic(float3 pos, float3 dir,
 
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
+#include "MeshUtilsCore2.h"
 
 #ifdef muEnableHalf
 void FloatToHalf_ISPC(half *dst, const float *src, size_t num)

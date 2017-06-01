@@ -34,6 +34,9 @@
     <ClInclude Include="MeshUtils\MeshRefiner.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\ispcmath.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
@@ -70,5 +73,10 @@
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
       <Filter>MeshUtils</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="MeshUtils\MeshUtilsCore2.ispc">
+      <Filter>MeshUtils</Filter>
+    </None>
   </ItemGroup>
 </Project>

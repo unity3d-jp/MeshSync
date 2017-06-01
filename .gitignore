@@ -23,6 +23,7 @@
 
 Makefile
 
+.vs/
 _out/
 _tmp/
 External/
