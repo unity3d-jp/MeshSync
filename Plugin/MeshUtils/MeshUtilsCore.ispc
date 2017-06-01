@@ -601,7 +601,7 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
     return clamp(r, 0.0f, 1.0f);
 }
 
-#define Epsilon 0.0001f
+#define Epsilon 1e-6
 
 bool TriangleIntersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
@@ -622,6 +622,7 @@ bool TriangleIntersection(uniform float3 pos, uniform float3 dir, float3 p1, flo
         v >= 0 && u + v <= 1;
 }
 
+// uniform variant
 uniform bool TriangleIntersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
 {
     uniform float3 e1 = p2 - p1;
@@ -641,60 +642,6 @@ uniform bool TriangleIntersection(uniform float3 pos, uniform float3 dir, unifor
         v >= 0 && u + v <= 1;
 }
 
-
-export uniform int RayTrianglesIntersection(
-    uniform const float3& pos, uniform const float3& dir,
-    uniform const float3 vertices[], uniform const int num_triangles,
-    uniform int result[], uniform float distance[])
-{
-    uniform int total_hit = 0;
-
-    // SIMD pass
-    uniform int num_triangles_simd = num_triangles & ~(C - 1);
-    for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
-        uniform float3 pa1[C], pa2[C], pa3[C];
-        for(uniform int i = 0; i < C; ++i) {
-            uniform int ti = bi + i;
-            pa1[i] = vertices[ti * 3 + 0];
-            pa2[i] = vertices[ti * 3 + 1];
-            pa3[i] = vertices[ti * 3 + 2];
-        }
-
-        float3 p1, p2, p3;
-        aos_to_soa3((uniform float*)&pa1[0], &p1.x, &p1.y, &p1.z);
-        aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
-        aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
-
-        float d;
-        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
-        if(any(hit)) {
-            uniform int hita[C]; hita[I] = hit;
-            uniform float da[C]; da[I] = d;
-            for(uniform int i = 0; i < C; ++i) {
-                if(hita[i]) {
-                    result[total_hit] = bi + i;
-                    distance[total_hit++] = da[i];
-                }
-            }
-        }
-    }
-
-    // non-SIMD pass
-    for(uniform int ti = num_triangles_simd; ti < num_triangles; ++ti) {
-        uniform float3 p1 = vertices[ti * 3 + 0];
-        uniform float3 p2 = vertices[ti * 3 + 1];
-        uniform float3 p3 = vertices[ti * 3 + 2];
-
-        uniform float d;
-        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
-        if(hit) {
-            result[total_hit] = ti;
-            distance[total_hit++] = d;
-        }
-    }
-
-    return total_hit;
-}
 
 export uniform int RayTrianglesIntersectionIndexed(
     uniform const float3& pos, uniform const float3& dir,
@@ -738,6 +685,60 @@ export uniform int RayTrianglesIntersectionIndexed(
         uniform float3 p1 = vertices[indices[ti * 3 + 0]];
         uniform float3 p2 = vertices[indices[ti * 3 + 1]];
         uniform float3 p3 = vertices[indices[ti * 3 + 2]];
+
+        uniform float d;
+        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        if(hit) {
+            result[total_hit] = ti;
+            distance[total_hit++] = d;
+        }
+    }
+
+    return total_hit;
+}
+
+export uniform int RayTrianglesIntersectionArray(
+    uniform const float3& pos, uniform const float3& dir,
+    uniform const float3 vertices[], uniform const int num_triangles,
+    uniform int result[], uniform float distance[])
+{
+    uniform int total_hit = 0;
+
+    // SIMD pass
+    uniform int num_triangles_simd = num_triangles & ~(C - 1);
+    for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
+        uniform float3 pa1[C], pa2[C], pa3[C];
+        for(uniform int i = 0; i < C; ++i) {
+            uniform int ti = bi + i;
+            pa1[i] = vertices[ti * 3 + 0];
+            pa2[i] = vertices[ti * 3 + 1];
+            pa3[i] = vertices[ti * 3 + 2];
+        }
+
+        float3 p1, p2, p3;
+        aos_to_soa3((uniform float*)&pa1[0], &p1.x, &p1.y, &p1.z);
+        aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
+        aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
+
+        float d;
+        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        if(any(hit)) {
+            uniform int hita[C]; hita[I] = hit;
+            uniform float da[C]; da[I] = d;
+            for(uniform int i = 0; i < C; ++i) {
+                if(hita[i]) {
+                    result[total_hit] = bi + i;
+                    distance[total_hit++] = da[i];
+                }
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for(uniform int ti = num_triangles_simd; ti < num_triangles; ++ti) {
+        uniform float3 p1 = vertices[ti * 3 + 0];
+        uniform float3 p2 = vertices[ti * 3 + 1];
+        uniform float3 p3 = vertices[ti * 3 + 2];
 
         uniform float d;
         uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);

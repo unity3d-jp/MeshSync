@@ -125,8 +125,8 @@ void RayTrianglesIntersectionTest()
     RawVector<int> hit;
     RawVector<float> distance;
 
-    const int seg = 200;
-    const int num_try = 50;
+    const int seg = 70;
+    const int num_try = 4000;
 
     vertices.resize(seg * seg);
     for (int yi = 0; yi < seg; ++yi) {
@@ -248,10 +248,12 @@ void RayTrianglesIntersectionTest()
 
     printf(
         "    triangle count: %d\n"
-        "    RayTrianglesIntersection (indexed):   Generic %f, ISPC %f\n"
-        "    RayTrianglesIntersection (flattened): Generic %f, ISPC %f\n"
-        "    RayTrianglesIntersection (SoA):       Generic %f, ISPC %f\n",
+        "    ray count: %d\n"
+        "    RayTrianglesIntersection (indexed):   Generic %.2fms, ISPC %.2fms\n"
+        "    RayTrianglesIntersection (flattened): Generic %.2fms, ISPC %.2fms\n"
+        "    RayTrianglesIntersection (SoA):       Generic %.2fms, ISPC %.2fms\n",
         num_triangles,
+        num_try,
         float(s1_end - s1_begin) / 1000000.0f,
         float(s2_end - s2_begin) / 1000000.0f,
         float(s3_end - s3_begin) / 1000000.0f,

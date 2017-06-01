@@ -250,13 +250,13 @@ bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
     return ispc::NearEqual(src1, src2, (int)num, eps);
 }
 
-int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
-{
-    return ispc::RayTrianglesIntersection((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, num_triangles, (int32_t*)hit, distance);
-}
 int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit, float *distance)
 {
     return ispc::RayTrianglesIntersectionIndexed((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, indices, num_triangles, (int32_t*)hit, distance);
+}
+int RayTrianglesIntersection_ISPC(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
+{
+    return ispc::RayTrianglesIntersectionArray((ispc::float3&)pos, (ispc::float3&)dir, (ispc::float3*)vertices, num_triangles, (int32_t*)hit, distance);
 }
 int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
     const float *v1x, const float *v1y, const float *v1z,
@@ -352,13 +352,13 @@ bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps)
     return NearEqual((const float*)src1, (const float*)src2, num * 3, eps);
 }
 
-int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
-{
-    return Forward(RayTrianglesIntersection, pos, dir, vertices, num_triangles, hit, distance);
-}
 int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int *hit, float *distance)
 {
     return Forward(RayTrianglesIntersection, pos, dir, vertices, indices, num_triangles, hit, distance);
+}
+int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int *hit, float *distance)
+{
+    return Forward(RayTrianglesIntersection, pos, dir, vertices, num_triangles, hit, distance);
 }
 int RayTrianglesIntersection(float3 pos, float3 dir,
     const float *v1x, const float *v1y, const float *v1z,
