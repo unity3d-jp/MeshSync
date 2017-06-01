@@ -762,7 +762,7 @@ namespace UTJ
                 }
                 else
                 {
-                    var t = rec.go.transform.FindChild("[" + i + "]");
+                    var t = rec.go.transform.Find("[" + i + "]");
                     if (t == null) { break; }
                     r = t.GetComponent<Renderer>();
                 }
@@ -894,7 +894,7 @@ namespace UTJ
             }
             else
             {
-                ret = parent.FindChild(name);
+                ret = parent.Find(name);
             }
 
             if (createIfNotExist && ret == null)
@@ -1179,7 +1179,7 @@ namespace UTJ
             }
             for (int i = 1; ; ++i)
             {
-                var t = go.transform.FindChild("[" + i + "]");
+                var t = go.transform.Find("[" + i + "]");
                 if (t == null) { break; }
                 GenerateLightmapUV(t.gameObject);
             }
@@ -1213,7 +1213,7 @@ namespace UTJ
 
                 for (int i=1; ; ++i)
                 {
-                    var t = go.transform.FindChild("[" + i + "]");
+                    var t = go.transform.Find("[" + i + "]");
                     if(t == null) { break; }
                     ExportMeshes(t.gameObject);
                 }
