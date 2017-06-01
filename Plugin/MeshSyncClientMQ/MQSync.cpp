@@ -576,14 +576,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
         dst.counts.end());
 }
 
-void MQSync::copyPointsForNormalCalculation(MQDocument doc, MQObject obj, ms::Mesh& dst)
-{
-    int npoints = obj->GetVertexCount();
-    dst.npoints.resize(npoints);
-    obj->GetVertexArray((MQPoint*)dst.npoints.data());
-    dst.flags.has_npoints = 1;
-}
-
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
     dst.transform.position = (const float3&)scene->GetCameraPosition();
@@ -634,8 +626,25 @@ static inline int GetNearest(mu::float3 pos, const mu::float3 (&vtx)[3])
 
 void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
 {
-    {
+    dst.flags.has_normals = 1;
+    dst.refine_settings.flags.gen_normals_with_smooth_angle = 0;
 
+    // just copy normals if topology is identical
+    if (src.indices == dst.indices) {
+        ms::MeshRefineSettings rs;
+        rs.flags.gen_normals_with_smooth_angle = 1;
+        rs.smooth_angle = src.refine_settings.smooth_angle;
+        src.refine(rs);
+
+        size_t n = src.normals.size();
+        dst.normals.resize(n);
+        for (size_t i = 0; i < n; ++i) {
+            dst.normals[i] = src.normals[i] * -1.0f;
+        }
+        return;
+    }
+
+    {
         ms::MeshRefineSettings rs;
         rs.flags.triangulate = 1;
         rs.flags.gen_normals = 1;
@@ -695,7 +704,4 @@ void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
             dst.normals[ri] = -src.normals[src.indices[idx]];
         }
     }
-
-    dst.flags.has_normals = 1;
-    dst.refine_settings.flags.gen_normals_with_smooth_angle = 0;
 }

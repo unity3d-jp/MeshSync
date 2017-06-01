@@ -820,7 +820,7 @@ void BlendshapeData::deserialize(std::istream& is)
 
 
 
-#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs) Body(npoints)
+#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs)
 #define EachBoneProperty(Body) Body(bones_per_vertex) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
@@ -923,7 +923,6 @@ void Mesh::swapHandedness()
 {
     super::swapHandedness();
     mu::InvertX(points.data(), points.size());
-    mu::InvertX(npoints.data(), npoints.size());
     mu::InvertX(normals.data(), normals.size());
     for (auto& bp : bindposes) {
         bp = swap_handedness(bp);
@@ -984,9 +983,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.uv = uv;
     refiner.colors = colors;
     refiner.weights4 = weights4;
-    if (npoints.data() && points.size() == npoints.size()) {
-        refiner.npoints = npoints;
-    }
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
@@ -1115,10 +1111,6 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
         IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, IArray<int>{indirect.data(), indirect.size()});
 
-    if (npoints.data()) {
-        npoints.resize(points.size());
-        mu::MirrorPoints(&npoints[num_points], IArray<float3>{npoints.data(), num_points}, copylist, plane_n, plane_d);
-    }
     if (uv.data()) {
         if (uv.size() == num_points) {
             uv.resize(points.size());
@@ -1158,7 +1150,6 @@ void Mesh::applyTransform(const float4x4& m)
     for (auto& v : points) { v = applyTRS(m, v); }
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
-    for (auto& v : npoints) { v = applyTRS(m, v); }
 }
 
 void Mesh::generateWeights4()

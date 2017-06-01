@@ -617,6 +617,18 @@ inline quatf swap_handedness(const quatf& q)
     return { q.x, -q.y, -q.z, q.w };
 }
 
+inline float3x3 look(float3 dir, float3 up)
+{
+    float3 z = dir;
+    float3 x = normalize(cross(up, z));
+    float3 y = cross(z, x);
+    return{ {
+        { x.x, y.x, z.x },
+        { x.y, y.y, z.y },
+        { x.z, y.z, z.z },
+    } };
+}
+
 inline float3x3 swap_handedness(const float3x3& m)
 {
     return{ {

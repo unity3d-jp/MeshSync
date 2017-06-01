@@ -11,7 +11,6 @@ void MeshRefiner::prepare(
     counts = counts_;
     indices = indices_;
     points = points_;
-    npoints = points_;
     normals.reset(nullptr, 0);
     uv.reset(nullptr, 0);
     colors.reset(nullptr, 0);
@@ -61,7 +60,7 @@ void MeshRefiner::prepare(
 
 void MeshRefiner::genNormals()
 {
-    auto& p = npoints;
+    auto& p = points;
     normals_tmp.resize(p.size());
     normals_tmp.zeroclear();
 
@@ -87,7 +86,7 @@ void MeshRefiner::genNormals(float smooth_angle)
 {
     if (v2f_counts.empty()) { buildConnection(); }
 
-    auto& p = npoints;
+    auto& p = points;
     size_t num_indices = indices.size();
     size_t num_faces = counts.size();
     normals_tmp.resize(num_indices);

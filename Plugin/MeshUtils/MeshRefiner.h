@@ -32,7 +32,6 @@ struct MeshRefiner
     IArray<float2> uv;
     IArray<float4> colors;
     IArray<Weights4> weights4;
-    IArray<float3> npoints; // points for normal calculation
 
     RawVector<Submesh> submeshes;
     RawVector<Split> splits;
