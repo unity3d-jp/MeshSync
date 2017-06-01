@@ -653,18 +653,11 @@ export uniform int RayTrianglesIntersectionIndexed(
     // SIMD pass
     uniform int num_triangles_simd = num_triangles & ~(C - 1);
     for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
-        uniform float3 pa1[C], pa2[C], pa3[C];
-        for(uniform int i = 0; i < C; ++i) {
-            uniform int ti = bi + i;
-            pa1[i] = vertices[indices[ti * 3 + 0]];
-            pa2[i] = vertices[indices[ti * 3 + 1]];
-            pa3[i] = vertices[indices[ti * 3 + 2]];
-        }
-
         float3 p1, p2, p3;
-        aos_to_soa3((uniform float*)&pa1[0], &p1.x, &p1.y, &p1.z);
-        aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
-        aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
+        // this emits warnings but performace is acceptable.
+        p1 = vertices[indices[(bi + I) * 3  + 0]];
+        p2 = vertices[indices[(bi + I) * 3  + 1]];
+        p3 = vertices[indices[(bi + I) * 3  + 2]];
 
         float d;
         bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
@@ -707,18 +700,11 @@ export uniform int RayTrianglesIntersectionArray(
     // SIMD pass
     uniform int num_triangles_simd = num_triangles & ~(C - 1);
     for(uniform int bi=0; bi < num_triangles_simd; bi += C) {
-        uniform float3 pa1[C], pa2[C], pa3[C];
-        for(uniform int i = 0; i < C; ++i) {
-            uniform int ti = bi + i;
-            pa1[i] = vertices[ti * 3 + 0];
-            pa2[i] = vertices[ti * 3 + 1];
-            pa3[i] = vertices[ti * 3 + 2];
-        }
-
         float3 p1, p2, p3;
-        aos_to_soa3((uniform float*)&pa1[0], &p1.x, &p1.y, &p1.z);
-        aos_to_soa3((uniform float*)&pa2[0], &p2.x, &p2.y, &p2.z);
-        aos_to_soa3((uniform float*)&pa3[0], &p3.x, &p3.y, &p3.z);
+        // this emits warnings but performace is acceptable.
+        p1 = vertices[(bi + I) * 3  + 0];
+        p2 = vertices[(bi + I) * 3  + 1];
+        p3 = vertices[(bi + I) * 3  + 2];
 
         float d;
         bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
