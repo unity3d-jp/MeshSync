@@ -674,13 +674,15 @@ void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
         }
     }
 
-    RawVector<int> hit;
-    RawVector<float> distance;
-    hit.resize(num_triangles);
-    distance.resize(num_triangles);
+    static tls<RawVector<int>> s_hits;
+    static tls<RawVector<float>> s_distances;
 
-    //concurrency::parallel_for(0 , num_rays, 400, [&](int ri) {
-    for (int ri = 0; ri < num_rays; ++ri) {
+    concurrency::parallel_for(0 , num_rays, [&](int ri) {
+        auto& hit = s_hits.local();
+        auto& distance = s_distances.local();
+        hit.resize(num_triangles);
+        distance.resize(num_triangles);
+
         ms::float3 pos = dst.points[ri];
         ms::float3 dir = dst.normals[ri];
         int num_hit = ms::RayTrianglesIntersection(pos, dir,
@@ -703,5 +705,5 @@ void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
             int idx = t * 3 + GetNearest(hpos, vtx);
             dst.normals[ri] = -src.normals[src.indices[idx]];
         }
-    }
+    });
 }

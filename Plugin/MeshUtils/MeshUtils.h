@@ -7,6 +7,7 @@
 #include "IntrusiveArray.h"
 #include "SIMD.h"
 #include "Vertex.h"
+#include "tls.h"
 
 namespace mu {
 
