@@ -252,35 +252,6 @@ static inline uniform float length(uniform float3 v)
     return sqrt(length_sq(v));
 }
 
-// somehow length_est() is slower than length()...
-static inline float length_est(float3 v)
-{
-    float t = length_sq(v);
-    return rsqrt(t)*t;
-}
-static inline uniform float length_est(uniform float3 v)
-{
-    uniform float t = length_sq(v);
-    return rsqrt(t)*t;
-}
-
-static inline float rcp_length(float2 v)
-{
-    return rsqrt(length_sq(v));
-}
-static inline uniform float rcp_length(uniform float2 v)
-{
-    return rsqrt(length_sq(v));
-}
-static inline float rcp_length(float3 v)
-{
-    return rsqrt(length_sq(v));
-}
-static inline uniform float rcp_length(uniform float3 v)
-{
-    return rsqrt(length_sq(v));
-}
-
 static inline float2 normalize(float2 v)
 {
     return v * rsqrt(dot(v, v));
