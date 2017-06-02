@@ -830,7 +830,7 @@ inline float compute_focal_length(float aperture, float fov)
 }
 
 
-inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float3& result)
+inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;
@@ -845,9 +845,22 @@ inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 
     float v = dot(dir, q) * inv_det;
     if (v < 0 || u + v > 1) return false;
 
-    float d = dot(e2, q) * inv_det;
-    result = { d, u, v };
+    distance = dot(e2, q) * inv_det;
     return true;
+}
+
+// pos must be on the triangle
+template<class T>
+inline T triangle_interpolation(float3 pos, float3 p1, float3 p2, float3 p3, T x1, T x2, T x3)
+{
+    auto f1 = p1 - pos;
+    auto f2 = p2 - pos;
+    auto f3 = p3 - pos;
+    float a = 1.0f / length(cross(p1 - p2, p1 - p3));
+    float a1 = length(cross(f2, f3)) * a;
+    float a2 = length(cross(f3, f1)) * a;
+    float a3 = length(cross(f1, f2)) * a;
+    return x1 * a1 + x2 * a2 + x3 * a3;
 }
 
 #ifdef muMath_AddNamespace

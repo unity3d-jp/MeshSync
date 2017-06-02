@@ -286,10 +286,10 @@ export uniform bool NearEqual(
 export uniform int RayTrianglesIntersectionIndexed(
     uniform const float3& pos, uniform const float3& dir,
     uniform const float3 vertices[], uniform const int indices[], uniform const int num_triangles,
-    uniform int& tindex, uniform float3& result)
+    uniform int& tindex, uniform float& distance)
 {
     uniform int total_hit = 0;
-    uniform float nearest = FLT_MAX;
+    distance = FLT_MAX;
 
     // SIMD pass
     uniform int num_triangles_simd = num_triangles & ~(C - 1);
@@ -300,18 +300,17 @@ export uniform int RayTrianglesIntersectionIndexed(
         p2 = vertices[indices[(bi + I) * 3  + 1]];
         p3 = vertices[indices[(bi + I) * 3  + 2]];
 
-        float3 d;
+        float d;
         bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(any(hit)) {
             uniform int hita[C]; hita[I] = hit;
-            uniform float3 da[C]; da[I] = d;
+            uniform float da[C]; da[I] = d;
             for(uniform int i = 0; i < C; ++i) {
                 if(hita[i]) {
                     total_hit++;
-                    if(da[i].x < nearest) {
-                        nearest = da[i].x;
+                    if(da[i] < distance) {
                         tindex = bi + i;
-                        result = da[i];
+                        distance = da[i];
                     }
                 }
             }
@@ -324,14 +323,13 @@ export uniform int RayTrianglesIntersectionIndexed(
         uniform float3 p2 = vertices[indices[ti * 3 + 1]];
         uniform float3 p3 = vertices[indices[ti * 3 + 2]];
 
-        uniform float3 d;
+        uniform float d;
         uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(hit) {
             total_hit++;
-            if(d.x < nearest) {
+            if(d < distance) {
                 tindex = ti;
-                result = d;
-                nearest = d.x;
+                distance = d;
             }
         }
     }
@@ -345,10 +343,10 @@ export uniform int RayTrianglesIntersectionSoA(
     uniform const float v2x[], uniform const float v2y[], uniform const float v2z[],
     uniform const float v3x[], uniform const float v3y[], uniform const float v3z[],
     uniform const int num_triangles,
-    uniform int& tindex, uniform float3& result)
+    uniform int& tindex, uniform float& distance)
 {
     uniform int total_hit = 0;
-    uniform float nearest = FLT_MAX;
+    distance = FLT_MAX;
 
     // SIMD pass
     uniform int num_triangles_simd = num_triangles & ~(C - 1);
@@ -357,18 +355,17 @@ export uniform int RayTrianglesIntersectionSoA(
         float3 p2 = {v2x[bi+I], v2y[bi+I], v2z[bi+I]};
         float3 p3 = {v3x[bi+I], v3y[bi+I], v3z[bi+I]};
 
-        float3 d;
+        float d;
         bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(any(hit)) {
             uniform int hita[C]; hita[I] = hit;
-            uniform float3 da[C]; da[I] = d;
+            uniform float da[C]; da[I] = d;
             for(uniform int i = 0; i < C; ++i) {
                 if(hita[i]) {
                     total_hit++;
-                    if(da[i].x < nearest) {
-                        nearest = da[i].x;
+                    if(da[i] < distance) {
                         tindex = bi + i;
-                        result = da[i];
+                        distance = da[i];
                     }
                 }
             }
@@ -381,14 +378,13 @@ export uniform int RayTrianglesIntersectionSoA(
         uniform float3 p2 = {v2x[ti], v2y[ti], v2z[ti]};
         uniform float3 p3 = {v3x[ti], v3y[ti], v3z[ti]};
 
-        uniform float3 d;
+        uniform float d;
         uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
         if(hit) {
             total_hit++;
-            if(d.x < nearest) {
+            if(d < distance) {
                 tindex = ti;
-                result = d;
-                nearest = d.x;
+                distance = d;
             }
         }
     }

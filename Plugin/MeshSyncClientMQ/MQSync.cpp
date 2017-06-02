@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MQSync.h"
+#include "MeshSync/msEditing.h"
 
 #define MaxNameBuffer 128
 
@@ -196,7 +197,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     m_future_meshes = std::async(std::launch::async, [this]() {
         for (auto& rel : m_relations) {
             if (rel.normal_projector) {
-                projectNormals(*rel.normal_data, *rel.data);
+                ms::ProjectNormals(*rel.data, *rel.normal_data);
             }
         }
 
@@ -594,94 +595,4 @@ void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
     dst.near_plane = scene->GetFrontClip();
     dst.far_plane = scene->GetBackClip();
 #endif
-}
-
-
-static inline int GetNearest(mu::float3 pos, const mu::float3 (&vtx)[3])
-{
-    float d[3] = {
-        mu::length_sq(vtx[0] - pos),
-        mu::length_sq(vtx[1] - pos),
-        mu::length_sq(vtx[2] - pos),
-    };
-    if (d[0] < d[1] && d[0] < d[2]) { return 0; }
-    else if (d[1] < d[2]) { return 1; }
-    else { return 2; }
-}
-
-
-void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
-{
-    dst.flags.has_normals = 1;
-    dst.refine_settings.flags.gen_normals_with_smooth_angle = 0;
-
-    // just copy normals if topology is identical
-    if (src.indices == dst.indices) {
-        ms::MeshRefineSettings rs;
-        rs.flags.gen_normals_with_smooth_angle = 1;
-        rs.smooth_angle = src.refine_settings.smooth_angle;
-        src.refine(rs);
-
-        size_t n = src.normals.size();
-        dst.normals.resize(n);
-        for (size_t i = 0; i < n; ++i) {
-            dst.normals[i] = src.normals[i] * -1.0f;
-        }
-        return;
-    }
-
-    {
-        ms::MeshRefineSettings rs;
-        rs.flags.triangulate = 1;
-        rs.flags.gen_normals = 1;
-        src.refine(rs);
-    }
-    {
-        ms::MeshRefineSettings rs;
-        rs.flags.no_reindexing = 1;
-        rs.flags.gen_normals = 1;
-        dst.refine(rs);
-    }
-
-    int num_triangles = (int)src.indices.size() / 3;
-    int num_rays = (int)dst.points.size();
-
-    // make SoAnized triangles data
-    RawVector<float> soa[9];
-    for (int i = 0; i < 9; ++i) {
-        soa[i].resize(num_triangles);
-    }
-    for (int ti = 0; ti < num_triangles; ++ti) {
-        for (int i = 0; i < 3; ++i) {
-            ms::float3 p = src.points[src.indices[ti * 3 + i]];
-            soa[i * 3 + 0][ti] = p.x;
-            soa[i * 3 + 1][ti] = p.y;
-            soa[i * 3 + 2][ti] = p.z;
-        }
-    }
-
-    concurrency::parallel_for(0 , num_rays, [&](int ri) {
-        int t;
-        mu::float3 data;
-
-        ms::float3 pos = dst.points[ri];
-        ms::float3 dir = dst.normals[ri];
-        int num_hit = ms::RayTrianglesIntersection(pos, dir,
-            soa[0].data(), soa[1].data(), soa[2].data(),
-            soa[3].data(), soa[4].data(), soa[5].data(),
-            soa[6].data(), soa[7].data(), soa[8].data(),
-            num_triangles, t, data);
-
-        if (num_hit > 0) {
-            mu::float3 hpos = pos + dir * data.x;
-            mu::float3 vtx[3] = {
-                { soa[0][t], soa[1][t], soa[2][t] },
-                { soa[3][t], soa[4][t], soa[5][t] },
-                { soa[6][t], soa[7][t], soa[8][t] },
-            };
-
-            int idx = t * 3 + GetNearest(hpos, vtx);
-            dst.normals[ri] = -src.normals[src.indices[idx]];
-        }
-    });
 }

@@ -30,8 +30,6 @@ private:
     void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst, bool shape_only = false);
     void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
 
-    void projectNormals(ms::Mesh& src, ms::Mesh& dst);
-
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using ExistRecords = std::map<std::string, bool>;
