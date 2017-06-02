@@ -7,7 +7,7 @@
     #include "half.h"
 #endif // muEnableHalf
 
-#define muDefaultEpsilon 0.00001f
+#define muEpsilon 1e-6
 #define muMath_AddNamespace
 
 #ifdef muMath_AddNamespace
@@ -162,31 +162,31 @@ struct float4x4
 };
 
 
-inline bool near_equal(float a, float b, float epsilon = muDefaultEpsilon)
+inline bool near_equal(float a, float b, float epsilon = muEpsilon)
 {
     return std::abs(a - b) < epsilon;
 }
-inline bool near_equal(const float2& a, const float2& b, float e = muDefaultEpsilon)
+inline bool near_equal(const float2& a, const float2& b, float e = muEpsilon)
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e);
 }
-inline bool near_equal(const float3& a, const float3& b, float e = muDefaultEpsilon)
+inline bool near_equal(const float3& a, const float3& b, float e = muEpsilon)
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e);
 }
-inline bool near_equal(const float4& a, const float4& b, float e = muDefaultEpsilon)
+inline bool near_equal(const float4& a, const float4& b, float e = muEpsilon)
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e) && near_equal(a.w, b.w, e);
 }
-inline bool near_equal(const quatf& a, const quatf& b, float e = muDefaultEpsilon)
+inline bool near_equal(const quatf& a, const quatf& b, float e = muEpsilon)
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e) && near_equal(a.w, b.w, e);
 }
-inline bool near_equal(const float3x3& a, const float3x3& b, float e = muDefaultEpsilon)
+inline bool near_equal(const float3x3& a, const float3x3& b, float e = muEpsilon)
 {
     return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e) && near_equal(a[2], b[2], e);
 }
-inline bool near_equal(const float4x4& a, const float4x4& b, float e = muDefaultEpsilon)
+inline bool near_equal(const float4x4& a, const float4x4& b, float e = muEpsilon)
 {
     return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e) && near_equal(a[2], b[2], e) && near_equal(a[3], b[3], e);
 }
@@ -836,7 +836,7 @@ inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 
     float3 e2 = p3 - p1;
     float3 p = cross(dir, e2);
     float det = dot(e1, p);
-    if (abs(det) < muDefaultEpsilon) return false;
+    if (abs(det) < muEpsilon) return false;
     float inv_det = 1.0f / det;
     float3 t = pos - p1;
     float u = dot(t, p) * inv_det;

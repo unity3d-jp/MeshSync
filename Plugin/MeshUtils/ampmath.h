@@ -1,6 +1,6 @@
 #pragma once
 
-namespace amath {}
+namespace am {}
 
 #ifdef _MSC_VER
 #ifndef NOMINMAX
@@ -10,38 +10,44 @@ namespace amath {}
 #include <amp_graphics.h>
 #include <amp_math.h>
 
-namespace amath
+namespace am
 {
 using namespace concurrency;
 using namespace concurrency::graphics;
 using namespace concurrency::fast_math;
 
+inline bool device_available()
+{
+    static bool value = !Concurrency::accelerator().get_is_emulated();
+    return value;
+}
 
-#define Def1A(A,F)                                                                         \
+
+#define Def1A(A,F)                                                                  \
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 2>* = nullptr>\
-inline T A(T v) restrict(cpu, amp) {                                                \
+inline T A(T v) restrict(amp) {                                                     \
     return { F(v.x), F(v.y) };                                                      \
 }                                                                                   \
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 3>* = nullptr>\
-inline T A(T l, T r) restrict(cpu, amp) {                                           \
+inline T A(T l, T r) restrict(amp) {                                                \
     return { F(v.x), F(v.y), F(v.z) };                                              \
 }                                                                                   \
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 4>* = nullptr>\
-inline T A(T l, T r) restrict(cpu, amp) {                                           \
+inline T A(T l, T r) restrict(amp) {                                                \
     return { F(v.x), F(v.y), F(v.z), F(v.w) };                                      \
 }
 
-#define Def2A(A,F)                                                                         \
+#define Def2A(A,F)                                                                  \
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 2>* = nullptr>\
-inline T A(T a, T b) restrict(cpu, amp) {                                           \
+inline T A(T a, T b) restrict(amp) {                                                \
     return { F(a.x, b.x), F(a.y, b.y )};                                            \
 }                                                                                   \
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 3>* = nullptr>\
-inline T A(T a, T b) restrict(cpu, amp) {                                           \
+inline T A(T a, T b) restrict(amp) {                                                \
     return { F(a.x, b.x), F(a.y, b.y), F(a.z, b.z) };                               \
 }                                                                                   \
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 4>* = nullptr>\
-inline T A(T a, T b) restrict(cpu, amp) {                                           \
+inline T A(T a, T b) restrict(amp) {                                                \
     return { F(a.x, b.x), F(a.y, b.y), F(a.z, b.z), F(a.w, b.w) };                  \
 }
 
@@ -73,25 +79,25 @@ Def1(frac)
 #undef Def2
 #undef Def1
 
-inline float abs(float v) restrict(cpu, amp) { return fabs(v); }
-inline float sqrt(float v) restrict(cpu, amp) { return sqrtf(v); }
+inline float abs(float v) restrict(amp) { return fabs(v); }
+inline float sqrt(float v) restrict(amp) { return sqrtf(v); }
 inline float rsqrt(float v) restrict(amp) { return rsqrtf(v); }
 
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 2>* = nullptr>
-inline typename short_vector_traits<T>::value_type dot(T l, T r) restrict(cpu, amp) {
+inline typename short_vector_traits<T>::value_type dot(T l, T r) restrict(amp) {
     return l.x * r.x + l.y * r.y;
 }
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 3>* = nullptr>
-inline typename short_vector_traits<T>::value_type dot(T l, T r) restrict(cpu, amp) {
+inline typename short_vector_traits<T>::value_type dot(T l, T r) restrict(amp) {
     return l.x * r.x + l.y * r.y + l.z * r.z;
 }
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 4>* = nullptr>
-inline typename short_vector_traits<T>::value_type dot(T l, T r) restrict(cpu, amp) {
+inline typename short_vector_traits<T>::value_type dot(T l, T r) restrict(amp) {
     return l.x * r.x + l.y * r.y + l.z * r.z + l.w * r.w;
 }
 
 template<typename T, std::enable_if_t<short_vector_traits<T>::size == 3>* = nullptr>
-inline T cross(T l, T r) restrict(cpu, amp) {
+inline T cross(T l, T r) restrict(amp) {
     return {
         l.y * r.z - l.z * r.y,
         l.z * r.x - l.x * r.z,
@@ -99,24 +105,24 @@ inline T cross(T l, T r) restrict(cpu, amp) {
 }
 
 template<typename T>
-inline typename short_vector_traits<T>::value_type length_sq(T v) restrict(cpu, amp) {
+inline typename short_vector_traits<T>::value_type length_sq(T v) restrict(amp) {
     return dot(v, v);
 }
 
 template<typename T>
-inline typename short_vector_traits<T>::value_type length(T v) restrict(cpu, amp) {
+inline typename short_vector_traits<T>::value_type length(T v) restrict(amp) {
     return sqrt(dot(v, v));
 }
 
 template<typename T>
-inline T normalize(T v) restrict(cpu, amp) {
+inline T normalize(T v) restrict(amp) {
     return v * rsqrt(dot(v, v));
 }
 
 
 #define Epsilon 1e-6
 
-inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_3 p1, float_3 p2, float_3 p3, float& distance) restrict(cpu, amp)
+inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_3 p1, float_3 p2, float_3 p3, float& distance) restrict(amp)
 {
     float_3 e1 = p2 - p1;
     float_3 e2 = p3 - p1;
@@ -134,8 +140,9 @@ inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_3 p1, floa
     distance = dot(e2, q) * inv_det;
     return true;
 }
+
 template<class T>
-inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3, T x1, T x2, T x3) restrict(cpu, amp)
+inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3, T x1, T x2, T x3) restrict(amp)
 {
     float_3 f1 = p1 - pos;
     float_3 f2 = p2 - pos;
@@ -148,5 +155,5 @@ inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3,
 }
 
 
-} // namespace amath
+} // namespace am
 #endif // _MSC_VER

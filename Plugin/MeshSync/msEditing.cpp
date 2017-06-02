@@ -2,10 +2,19 @@
 #include "msEditing.h"
 #include "MeshUtils/ampmath.h"
 
+//#define msEnableProfiling
+
+using ns = uint64_t;
+static inline ns now()
+{
+    using namespace std::chrono;
+    return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
 
 namespace ms {
 
-void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
+void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 {
     dst.flags.has_normals = 1;
     dst.refine_settings.flags.gen_normals_with_smooth_angle = 0;
@@ -25,6 +34,11 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
         return;
     }
 
+    bool use_gpu = false;
+#ifdef _MSC_VER
+    use_gpu = am::device_available() && flags & msEF_PreferGPU;
+#endif
+
     int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.points.size();
     RawVector<float> soa[9];
@@ -37,16 +51,18 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
             rs.smooth_angle = src.refine_settings.smooth_angle;
             src.refine(rs);
 
-            // make SoAnized triangles data
-            for (int i = 0; i < 9; ++i) {
-                soa[i].resize(num_triangles);
-            }
-            for (int ti = 0; ti < num_triangles; ++ti) {
-                for (int i = 0; i < 3; ++i) {
-                    ms::float3 p = src.points[src.indices[ti * 3 + i]];
-                    soa[i * 3 + 0][ti] = p.x;
-                    soa[i * 3 + 1][ti] = p.y;
-                    soa[i * 3 + 2][ti] = p.z;
+            if (!use_gpu) {
+                // make SoAnized triangles data
+                for (int i = 0; i < 9; ++i) {
+                    soa[i].resize(num_triangles);
+                }
+                for (int ti = 0; ti < num_triangles; ++ti) {
+                    for (int i = 0; i < 3; ++i) {
+                        ms::float3 p = src.points[src.indices[ti * 3 + i]];
+                        soa[i * 3 + 0][ti] = p.x;
+                        soa[i * 3 + 1][ti] = p.y;
+                        soa[i * 3 + 2][ti] = p.z;
+                    }
                 }
             }
         },
@@ -58,11 +74,15 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
         }
     );
 
-    bool use_gpu = true;
+#ifdef msEnableProfiling
+    auto tbegin = now();
+    static int s_count;
+    if (++s_count % 2 == 0) { (int&)flags &= ~msEF_PreferGPU; }
+#endif
 
 #ifdef _MSC_VER
     if (use_gpu) {
-        using namespace amath;
+        using namespace am;
 
         array_view<const float_3> vpoints((int)src.points.size(), (const float_3*)src.points.data());
         array_view<const float_3> vnormals((int)src.normals.size(), (const float_3*)src.normals.data());
@@ -82,7 +102,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
             for (int ti = 0; ti < num_triangles; ++ti) {
                 int_3 idx = vindices[ti];
                 float d;
-                if (amath::ray_triangle_intersection(rpos, rdir,
+                if (am::ray_triangle_intersection(rpos, rdir,
                     vpoints[idx.x], vpoints[idx.y], vpoints[idx.z], d))
                 {
                     if (d < distance) {
@@ -93,7 +113,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
             }
             if (distance < FLT_MAX) {
                 int_3 idx = vindices[hit];
-                vresult[ri] = -amath::triangle_interpolation(
+                vresult[ri] = -am::triangle_interpolation(
                     rpos + rdir * distance,
                     vpoints[idx.x], vpoints[idx.y], vpoints[idx.z],
                     vnormals[idx.x], vnormals[idx.y], vnormals[idx.z]);
@@ -128,6 +148,17 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src)
             }
         });
     }
+
+#ifdef msEnableProfiling
+    auto tend = now();
+    char buf[1024];
+    sprintf(buf,
+        "ProjectNormals (%s): %d rays, %d triangles %.2fms\n",
+        use_gpu ? "GPU" : "CPU",
+        num_rays, num_triangles, float(tend - tbegin) / 1000000.0f
+    );
+    ::OutputDebugStringA(buf);
+#endif
 }
 
 } // namespace ms

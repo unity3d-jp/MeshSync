@@ -19,9 +19,9 @@ void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float
 float3 Min(const float3 *src, size_t num);
 float3 Max(const float3 *src, size_t num);
 void MinMax(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
-bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muDefaultEpsilon);
-bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muDefaultEpsilon);
-bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muDefaultEpsilon);
+bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muEpsilon);
+bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muEpsilon);
+bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muEpsilon);
 
 int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int& tindex, float& distance);
 int RayTrianglesIntersection(float3 pos, float3 dir, const float3 *vertices, int num_triangles, int& tindex, float& distance);
