@@ -44,7 +44,6 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshUtils\MeshUtils.cpp" />
-    <ClCompile Include="MeshUtils\ProjectNormals.cpp" />
     <ClCompile Include="MeshUtils\SIMD.cpp" />
     <ClCompile Include="MeshUtils\Vertex.cpp" />
   </ItemGroup>

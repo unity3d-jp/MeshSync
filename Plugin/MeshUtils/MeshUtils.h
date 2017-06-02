@@ -32,10 +32,6 @@ bool GenerateTangents(
 template<int N>
 bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
 
-void ProjectNormals(
-    const IArray<float3>& points, /*inout*/ IArray<float3>& normals, const IArray<int>& indices,
-    const IArray<float3>& ppoints, const IArray<float3>& pnormals, const IArray<int>& pindices);
-
 
 // ------------------------------------------------------------
 // impl

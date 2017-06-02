@@ -1,3 +1,4 @@
+#pragma once
 #ifdef _MSC_VER
     #define NOMINMAX
     #include <amp.h>
