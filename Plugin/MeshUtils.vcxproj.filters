@@ -37,6 +37,9 @@
     <ClInclude Include="MeshUtils\ispcmath.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\ampmath.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
@@ -68,15 +71,14 @@
     <ClCompile Include="MeshUtils\Math.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshUtils\ProjectNormals.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
       <Filter>MeshUtils</Filter>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="MeshUtils\MeshUtilsCore2.ispc">
-      <Filter>MeshUtils</Filter>
-    </None>
+    <CustomBuild Include="MeshUtils\MeshUtilsCore2.ispc" />
   </ItemGroup>
 </Project>

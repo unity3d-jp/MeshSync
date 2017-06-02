@@ -597,20 +597,6 @@ void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 }
 
 
-static inline void GetNearest(const RawVector<int>& t, const RawVector<float>& d, int n, int& tindex, float& dist)
-{
-    float nearest = FLT_MAX;
-    int ret = -1;
-    for (int i = 0; i < n; ++i) {
-        if (d[i] < nearest) {
-            nearest = d[i];
-            ret = t[i];
-        }
-    }
-    tindex = ret;
-    dist = nearest;
-}
-
 static inline int GetNearest(mu::float3 pos, const mu::float3 (&vtx)[3])
 {
     float d[3] = {
@@ -674,14 +660,9 @@ void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
         }
     }
 
-    static tls<RawVector<int>> s_hits;
-    static tls<RawVector<float>> s_distances;
-
     concurrency::parallel_for(0 , num_rays, [&](int ri) {
-        auto& hit = s_hits.local();
-        auto& distance = s_distances.local();
-        hit.resize(num_triangles);
-        distance.resize(num_triangles);
+        int t;
+        mu::float3 data;
 
         ms::float3 pos = dst.points[ri];
         ms::float3 dir = dst.normals[ri];
@@ -689,13 +670,10 @@ void MQSync::projectNormals(ms::Mesh& src, ms::Mesh& dst)
             soa[0].data(), soa[1].data(), soa[2].data(),
             soa[3].data(), soa[4].data(), soa[5].data(),
             soa[6].data(), soa[7].data(), soa[8].data(),
-            num_triangles, hit.data(), distance.data());
+            num_triangles, t, data);
 
         if (num_hit > 0) {
-            int t; float d;
-            GetNearest(hit, distance, num_hit, t, d);
-
-            mu::float3 hpos = pos + dir * d;
+            mu::float3 hpos = pos + dir * data.x;
             mu::float3 vtx[3] = {
                 { soa[0][t], soa[1][t], soa[2][t] },
                 { soa[3][t], soa[4][t], soa[5][t] },

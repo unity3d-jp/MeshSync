@@ -830,7 +830,7 @@ inline float compute_focal_length(float aperture, float fov)
 }
 
 
-inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
+inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float3& result)
 {
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;
@@ -845,7 +845,8 @@ inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 
     float v = dot(dir, q) * inv_det;
     if (v < 0 || u + v > 1) return false;
 
-    distance = dot(e2, q) * inv_det;
+    float d = dot(e2, q) * inv_det;
+    result = { d, u, v };
     return true;
 }
 

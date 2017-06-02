@@ -1,5 +1,6 @@
 #define C programCount
 #define I programIndex
+#define FLT_MAX 3.402823466e+38F
 
 typedef unsigned int16 half;
 
@@ -292,7 +293,7 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 #define Epsilon 1e-6
 
-static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
+static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float3& result)
 {
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;
@@ -304,7 +305,10 @@ static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, 
     float3 q = cross(t, e1);
     float v = dot(dir, q) * inv_det;
 
-    distance = dot(e2, q) * inv_det;
+    float d = dot(e2, q) * inv_det;
+    result.x = d;
+    result.y = u;
+    result.z = v;
     return
         abs(det) > Epsilon &&
         u >= 0 && u <= 1 &&
@@ -312,7 +316,7 @@ static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, 
 }
 
 // uniform variant
-static inline uniform bool TriangleIntersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
+static inline uniform bool TriangleIntersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float3& result)
 {
     uniform float3 e1 = p2 - p1;
     uniform float3 e2 = p3 - p1;
@@ -324,7 +328,10 @@ static inline uniform bool TriangleIntersection(uniform float3 pos, uniform floa
     uniform float3 q = cross(t, e1);
     uniform float v = dot(dir, q) * inv_det;
 
-    distance = dot(e2, q) * inv_det;
+    uniform float d = dot(e2, q) * inv_det;
+    result.x = d;
+    result.y = u;
+    result.z = v;
     return
         abs(det) > Epsilon &&
         u >= 0 && u <= 1 &&
