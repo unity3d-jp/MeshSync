@@ -4,6 +4,10 @@
     #define NOMINMAX
     #include <winsock2.h>
     #include <windows.h>
+    #include <amp.h>
+    #include <amp_graphics.h>
+    #include <amp_math.h>
+    #include <ppl.h>
     #pragma warning(disable:4996)
 #else 
     #include <dlfcn.h>
@@ -29,8 +33,6 @@
 #include <mutex>
 #include <atomic>
 #include <algorithm>
-
-#include <ppl.h>
 
 #include "MeshUtils/MeshUtils.h"
 

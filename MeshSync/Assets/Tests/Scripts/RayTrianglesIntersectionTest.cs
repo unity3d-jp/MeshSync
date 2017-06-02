@@ -91,7 +91,7 @@ public class RayTrianglesIntersectionTest : MonoBehaviour
             }
             float tend = Time.realtimeSinceStartup;
 
-            Debug.Log("test1: RayTriangleIntersection with indexed triangles\n" +
+            Debug.Log("RayTriangleIntersection with indexed triangles\n" +
                 "  time: " + (tend - tbegin) * 1000.0f +
                 "  numHits: " + numHits +
                 "  nearest: " + nearest);
@@ -121,7 +121,7 @@ public class RayTrianglesIntersectionTest : MonoBehaviour
             }
             float tend = Time.realtimeSinceStartup;
 
-            Debug.Log("test1: RayTriangleIntersection with flattened triangles\n" +
+            Debug.Log("RayTriangleIntersection with flattened triangles\n" +
                 "  time: " + (tend - tbegin) * 1000.0f +
                 "  numHits: " + numHits +
                 "  nearest: " + nearest);

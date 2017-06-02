@@ -309,7 +309,8 @@ static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, 
     return
         abs(det) > Epsilon &&
         u >= 0 && u <= 1 &&
-        v >= 0 && u + v <= 1;
+        v >= 0 && u + v <= 1 &&
+        distance > 0.0f;
 }
 
 // uniform variant
@@ -329,6 +330,7 @@ static inline uniform bool TriangleIntersection(uniform float3 pos, uniform floa
     return
         abs(det) > Epsilon &&
         u >= 0 && u <= 1 &&
-        v >= 0 && u + v <= 1;
+        v >= 0 && u + v <= 1 &&
+        distance > 0.0f;
 }
 

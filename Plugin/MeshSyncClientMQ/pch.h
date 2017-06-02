@@ -1,9 +1,20 @@
 #pragma once
+
 #ifdef _MSC_VER
+    #pragma warning(disable:4996)
     #define NOMINMAX
-    #include <amp.h>
-    #include <amp_graphics.h>
-    #include <amp_math.h>
+    #include <windows.h>
+    #include <ppl.h>
+    #ifdef GetObject
+        #undef GetObject
+    #endif
+#else 
+    #include <dlfcn.h>
+    #ifdef __APPLE__
+        #include <mach-o/dyld.h>
+    #else
+        #include <link.h>
+    #endif
 #endif
 #include <cstdio>
 #include <cstdlib>
@@ -17,25 +28,6 @@
 #include <future>
 #include <mutex>
 #include <memory>
-
-#include <ppl.h>
-
-#ifdef _WIN32
-    #define NOMINMAX
-    #include <windows.h>
-    #pragma warning(disable:4996)
-    #ifdef GetObject
-        #undef GetObject
-    #endif
-#else 
-    #include <dlfcn.h>
-    #ifdef __APPLE__
-        #include <mach-o/dyld.h>
-    #else
-        #include <link.h>
-    #endif
-#endif
-
 
 #include "MQPlugin.h"
 #include "MQBasePlugin.h"

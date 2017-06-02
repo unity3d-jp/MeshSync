@@ -138,7 +138,7 @@ inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_3 p1, floa
     if (v < 0 || u + v > 1) return false;
 
     distance = dot(e2, q) * inv_det;
-    return true;
+    return distance > 0.0f;
 }
 
 template<class T>
@@ -153,7 +153,6 @@ inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3,
     float a3 = length(cross(f1, f2)) * a;
     return x1 * a1 + x2 * a2 + x3 * a3;
 }
-
 
 } // namespace am
 #endif // _MSC_VER

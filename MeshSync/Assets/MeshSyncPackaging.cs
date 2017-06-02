@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 
 
-public class usdiPackaging
+public class MeshSyncPackaging
 {
     [MenuItem("Assets/Make MeshSync.unitypackage")]
     public static void MakePackage()

@@ -239,12 +239,14 @@ struct MeshDataFlags
 struct MeshRefineFlags
 {
     uint32_t split : 1;
+    uint32_t no_reindexing : 1;
     uint32_t triangulate : 1;
     uint32_t optimize_topology : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_faces : 1;
     uint32_t gen_normals : 1;
     uint32_t gen_normals_with_smooth_angle : 1;
+    uint32_t flip_normals : 1;
     uint32_t gen_tangents : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
@@ -260,8 +262,6 @@ struct MeshRefineFlags
     uint32_t mirror_z_weld : 1;
 
     uint32_t gen_weights4 : 1;
-
-    uint32_t no_reindexing : 1;
 };
 
 struct MeshRefineSettings

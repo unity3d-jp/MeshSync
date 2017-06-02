@@ -846,7 +846,7 @@ inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 
     if (v < 0 || u + v > 1) return false;
 
     distance = dot(e2, q) * inv_det;
-    return true;
+    return distance > 0.0f;
 }
 
 // pos must be on the triangle

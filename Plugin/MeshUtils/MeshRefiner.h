@@ -61,8 +61,8 @@ private:
 
 public:
     void prepare(const IArray<int>& counts, const IArray<int>& indices, const IArray<float3>& points);
-    void genNormals();
-    void genNormals(float smooth_angle);
+    void genNormals(bool flip);
+    void genNormalsWithSmoothAngle(float smooth_angle, bool flip);
     void genTangents();
 
     bool refine(bool optimize);

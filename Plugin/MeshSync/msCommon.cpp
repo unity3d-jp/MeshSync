@@ -985,10 +985,10 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
-        refiner.genNormals(mrs.smooth_angle);
+        refiner.genNormalsWithSmoothAngle(mrs.smooth_angle, mrs.flags.flip_normals);
     }
     else if (mrs.flags.gen_normals) {
-        refiner.genNormals();
+        refiner.genNormals(mrs.flags.flip_normals);
     }
     else {
         refiner.normals = normals;

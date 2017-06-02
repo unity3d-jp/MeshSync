@@ -58,20 +58,22 @@ void MeshRefiner::prepare(
 
 }
 
-void MeshRefiner::genNormals()
+void MeshRefiner::genNormals(bool flip)
 {
     auto& p = points;
     normals_tmp.resize(p.size());
     normals_tmp.zeroclear();
 
     size_t num_faces = counts.size();
+    int i1 = flip ? 2 : 1;
+    int i2 = flip ? 1 : 2;
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
         const int *face = &indices[offsets[fi]];
         float3 p0 = p[face[0]];
-        float3 p1 = p[face[1]];
-        float3 p2 = p[face[2]];
+        float3 p1 = p[face[i1]];
+        float3 p2 = p[face[i2]];
         float3 n = cross(p1 - p0, p2 - p0);
         for (int ci = 0; ci < count; ++ci) {
             normals_tmp[face[ci]] += n;
@@ -82,7 +84,7 @@ void MeshRefiner::genNormals()
     normals = normals_tmp;
 }
 
-void MeshRefiner::genNormals(float smooth_angle)
+void MeshRefiner::genNormalsWithSmoothAngle(float smooth_angle, bool flip)
 {
     if (v2f_counts.empty()) { buildConnection(); }
 
@@ -94,13 +96,15 @@ void MeshRefiner::genNormals(float smooth_angle)
     // gen face normals
     face_normals.resize(num_faces);
     face_normals.zeroclear();
+    int i1 = flip ? 2 : 1;
+    int i2 = flip ? 1 : 2;
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int offset = offsets[fi];
         const int *face = &indices[offset];
         float3 p0 = p[face[0]];
-        float3 p1 = p[face[1]];
-        float3 p2 = p[face[2]];
+        float3 p1 = p[face[i1]];
+        float3 p2 = p[face[i2]];
         float3 n = cross(p1 - p0, p2 - p0);
         face_normals[fi] = n;
     }

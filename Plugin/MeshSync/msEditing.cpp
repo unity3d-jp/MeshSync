@@ -23,20 +23,20 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     if (src.indices == dst.indices) {
         ms::MeshRefineSettings rs;
         rs.flags.gen_normals_with_smooth_angle = 1;
+        rs.flags.flip_normals = 1;
         rs.smooth_angle = src.refine_settings.smooth_angle;
         src.refine(rs);
-
-        size_t n = src.normals.size();
-        dst.normals.resize(n);
-        for (size_t i = 0; i < n; ++i) {
-            dst.normals[i] = src.normals[i] * -1.0f;
-        }
+        dst.normals = src.normals;
         return;
     }
 
     bool use_gpu = false;
 #ifdef _MSC_VER
     use_gpu = am::device_available() && flags & msEF_PreferGPU;
+#ifdef msEnableProfiling
+    static int s_count;
+    if (++s_count % 2 == 0) { use_gpu = false; }
+#endif
 #endif
 
     int num_triangles = (int)src.indices.size() / 3;
@@ -48,6 +48,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             ms::MeshRefineSettings rs;
             rs.flags.triangulate = 1;
             rs.flags.gen_normals_with_smooth_angle = 1;
+            rs.flags.flip_normals = 1;
             rs.smooth_angle = src.refine_settings.smooth_angle;
             src.refine(rs);
 
@@ -70,16 +71,14 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             ms::MeshRefineSettings rs;
             rs.flags.no_reindexing = 1;
             rs.flags.gen_normals = 1;
+            rs.flags.flip_normals = 1;
             dst.refine(rs);
         }
     );
 
 #ifdef msEnableProfiling
     auto tbegin = now();
-    static int s_count;
-    if (++s_count % 2 == 0) { (int&)flags &= ~msEF_PreferGPU; }
 #endif
-
 #ifdef _MSC_VER
     if (use_gpu) {
         using namespace am;
@@ -89,7 +88,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         array_view<const int_3> vindices(num_triangles, (const int_3*)src.indices.data());
         array_view<const float_3> vrpos((int)dst.points.size(), (const float_3*)dst.points.data());
         //array_view<const int> vrindices(num_triangles, (const int*)dst.indices.data());
-        array_view<float_3> vresult(num_rays, (float_3*)dst.normals.data());
+        array_view<float_3> vresult(num_rays, (float_3*)dst.normals.data()); // inout
 
         parallel_for_each(vresult.extent, [=](index<1> ri) restrict(amp)
         {
@@ -113,11 +112,10 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             }
             if (distance < FLT_MAX) {
                 int_3 idx = vindices[hit];
-                vresult[ri] = -am::triangle_interpolation(
+                vresult[ri] = am::triangle_interpolation(
                     rpos + rdir * distance,
                     vpoints[idx.x], vpoints[idx.y], vpoints[idx.z],
                     vnormals[idx.x], vnormals[idx.y], vnormals[idx.z]);
-                ;
             }
         });
         vresult.synchronize();
@@ -137,7 +135,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                 num_triangles, ti, distance);
 
             if (num_hit > 0) {
-                dst.normals[ri] = -triangle_interpolation(
+                dst.normals[ri] = triangle_interpolation(
                     rpos + rdir * distance,
                     { soa[0][ti], soa[1][ti], soa[2][ti] },
                     { soa[3][ti], soa[4][ti], soa[5][ti] },

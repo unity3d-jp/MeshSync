@@ -94,7 +94,7 @@ void Test_GenNormals()
     refiner.prepare(counts, indices, points);
     refiner.uv = uv_flattened;
     refiner.split_unit = 8;
-    refiner.genNormals(40.0f);
+    refiner.genNormalsWithSmoothAngle(40.0f, false);
     refiner.genTangents();
     refiner.refine(false);
     refiner.genSubmesh(materialIDs);
