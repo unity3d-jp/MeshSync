@@ -29,6 +29,9 @@
     namespace concurrency = tbb;
 #endif
 
+// this must be before maya includes
+#include "MeshSync/MeshSync.h"
+
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MDagPath.h>
