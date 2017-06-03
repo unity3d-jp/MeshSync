@@ -3,7 +3,7 @@
 #include "MeshUtils/ampmath.h"
 
 //#define msForceSingleThreaded
-//#define msEnableProfiling
+#define msEnableProfiling
 
 using ns = uint64_t;
 static inline ns now()
@@ -32,7 +32,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     }
 
     bool use_gpu = false;
-#ifdef _MSC_VER
+#ifdef _WIN32
     use_gpu = am::device_available() && flags & msEF_PreferGPU;
 #endif
 #ifdef msEnableProfiling
@@ -41,7 +41,8 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     if (++s_count % 2 == 0) { use_gpu = false; }
 #endif
 
-    RawVector<float> soa[9];
+    RawVector<float3> flattened[3]; // flattened vertices (faster GPU)
+    RawVector<float> soa[9]; // flattened + SoA-nized vertices (faster on CPU)
 
 #ifndef msForceSingleThreaded
     concurrency::parallel_invoke([&]()
@@ -54,9 +55,21 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             rs.smooth_angle = src.refine_settings.smooth_angle;
             src.refine(rs);
 
-            if (!use_gpu) {
-                // make SoAnized triangles data
-                int num_triangles = (int)src.indices.size() / 3;
+            // make optimal vertex data
+            int num_triangles = (int)src.indices.size() / 3;
+            if (use_gpu) {
+                // flatten
+                for (int i = 0; i < 3; ++i) {
+                    flattened[i].resize(num_triangles);
+                }
+                for (int ti = 0; ti < num_triangles; ++ti) {
+                    for (int i = 0; i < 3; ++i) {
+                        flattened[i][ti] = src.points[src.indices[ti * 3 + i]];
+                    }
+                }
+            }
+            else {
+                // flatten + SoA-nize
                 for (int i = 0; i < 9; ++i) {
                     soa[i].resize(num_triangles);
                 }
@@ -88,11 +101,13 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.normals.size();
     bool is_normal_indexed = dst.normals.size() == dst.points.size();
-#ifdef _MSC_VER
+#ifdef _WIN32
     if (use_gpu) {
         using namespace am;
 
-        array_view<const float_3> vpoints((int)src.points.size(), (const float_3*)src.points.data());
+        array_view<const float_3> vpoints1(num_triangles, (const float_3*)flattened[0].data());
+        array_view<const float_3> vpoints2(num_triangles, (const float_3*)flattened[1].data());
+        array_view<const float_3> vpoints3(num_triangles, (const float_3*)flattened[2].data());
         array_view<const float_3> vnormals((int)src.normals.size(), (const float_3*)src.normals.data());
         array_view<const int_3> vindices(num_triangles, (const int_3*)src.indices.data());
         array_view<const float_3> vrpos((int)dst.points.size(), (const float_3*)dst.points.data());
@@ -107,10 +122,9 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             int hit = 0;
 
             for (int ti = 0; ti < num_triangles; ++ti) {
-                int_3 idx = vindices[ti];
                 float d;
                 if (am::ray_triangle_intersection(rpos, rdir,
-                    vpoints[idx.x], vpoints[idx.y], vpoints[idx.z], d))
+                    vpoints1[ti], vpoints2[ti], vpoints3[ti], d))
                 {
                     if (d < distance) {
                         distance = d;
@@ -122,7 +136,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                 int_3 idx = vindices[hit];
                 vresult[ri] = am::triangle_interpolation(
                     rpos + rdir * distance,
-                    vpoints[idx.x], vpoints[idx.y], vpoints[idx.z],
+                    vpoints1[hit], vpoints2[hit], vpoints3[hit],
                     vnormals[idx.x], vnormals[idx.y], vnormals[idx.z]);
             }
         });

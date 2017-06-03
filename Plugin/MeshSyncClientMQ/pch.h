@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef _MSC_VER
+#ifdef _WIN32
     #pragma warning(disable:4996)
     #define NOMINMAX
     #include <windows.h>

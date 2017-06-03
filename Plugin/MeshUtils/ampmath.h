@@ -2,7 +2,7 @@
 
 namespace am {}
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #ifndef NOMINMAX
     #define NOMINMAX
 #endif
@@ -160,4 +160,4 @@ inline float ray_point_distance(float_3 pos, float_3 dir, float_3 p) restrict(am
 }
 
 } // namespace am
-#endif // _MSC_VER
+#endif // _WIN32
