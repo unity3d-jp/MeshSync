@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msCommon.h"
+#include "msSceneGraph.h"
 
 
 namespace ms {

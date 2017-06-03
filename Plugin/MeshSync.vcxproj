@@ -20,16 +20,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h" />
-    <ClInclude Include="MeshSync\msCommon.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
     <ClInclude Include="MeshSync\msEditing.h" />
+    <ClInclude Include="MeshSync\msSceneGraph.h" />
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSync\msClient.cpp" />
-    <ClCompile Include="MeshSync\msCommon.cpp" />
     <ClCompile Include="MeshSync\msEditing.cpp" />
+    <ClCompile Include="MeshSync\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />
     <ClCompile Include="MeshSync/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

@@ -9,19 +9,8 @@
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
 
-#ifdef GetMessage
-    #undef GetMessage
-#endif
-
 
 namespace ms {
-using namespace mu;
-
-#define msLogInfo(...)    ::mu::Print("MeshSync info: " __VA_ARGS__)
-#define msLogWarning(...) ::mu::Print("MeshSync warning: " __VA_ARGS__)
-#define msLogError(...)   ::mu::Print("MeshSync error: " __VA_ARGS__)
-
-extern const int ProtocolVersion;
 
 class Entity
 {

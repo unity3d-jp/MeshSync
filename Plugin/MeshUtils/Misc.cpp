@@ -37,6 +37,7 @@ void Print(const wchar_t *fmt, ...)
     va_end(args);
 }
 
+#ifdef _WIN32
 std::string ToUTF8(const char *src)
 {
     // to UTF-16
@@ -76,6 +77,6 @@ std::string ToANSI(const std::string& src)
 {
     return ToANSI(src.c_str());
 }
-
+#endif
 
 } // namespace mu

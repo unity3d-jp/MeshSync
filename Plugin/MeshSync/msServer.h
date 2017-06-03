@@ -1,6 +1,6 @@
 #pragma once
 
-#include "msCommon.h"
+#include "msSceneGraph.h"
 
 namespace Poco {
     namespace Net {

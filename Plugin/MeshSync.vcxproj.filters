@@ -4,9 +4,6 @@
     <ClCompile Include="MeshSync\msClient.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\msCommon.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSync\msServer.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
@@ -16,12 +13,12 @@
     <ClCompile Include="MeshSync\msEditing.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\msSceneGraph.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\msCommon.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msServer.h">
@@ -34,6 +31,9 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msConfig.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msSceneGraph.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>

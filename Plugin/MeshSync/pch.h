@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef _WIN32
+    #pragma warning(disable:4996)
     #define NOMINMAX
     #include <winsock2.h>
     #include <windows.h>
@@ -8,7 +9,7 @@
     #include <amp_graphics.h>
     #include <amp_math.h>
     #include <ppl.h>
-    #pragma warning(disable:4996)
+    #undef GetMessage
 #else 
     #include <dlfcn.h>
     #ifdef __APPLE__
