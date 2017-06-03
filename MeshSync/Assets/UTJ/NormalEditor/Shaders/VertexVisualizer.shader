@@ -1,9 +1,6 @@
 ﻿Shader "Hidden/UTJ/MeshSync/VertexVisualizer" {
     Properties {
         [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest("ZTest", Int) = 4
-        [Enum(Off, 0, On, 1)] _ZWrite("ZWrite", Float) = 0
-        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Int) = 5
-        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Int) = 10
     }
 
 CGINCLUDE
@@ -40,7 +37,7 @@ v2f vert(appdata v)
     return o;
 }
 
-half4 frag(v2f IN) : SV_Target
+half4 frag(v2f v) : SV_Target
 {
     return _Color;
 }
@@ -49,9 +46,9 @@ ENDCG
     SubShader
     {
         Tags{ "RenderType" = "Transparent" "Queue" = "Transparent" }
-        ZTest[_ZTest]
-        ZWrite[_ZWrite]
-        Blend[_SrcBlend][_DstBlend]
+        ZTest [_ZTest]
+        ZWrite OFF
+        Blend SrcAlpha OneMinusSrcAlpha
         Lighting Off
 
         Pass
