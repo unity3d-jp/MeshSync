@@ -8,6 +8,7 @@
 #include "SIMD.h"
 #include "Vertex.h"
 #include "tls.h"
+#include "Misc.h"
 
 namespace mu {
 

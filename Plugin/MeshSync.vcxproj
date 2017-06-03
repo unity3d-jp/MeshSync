@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msCommon.h" />
+    <ClInclude Include="MeshSync\msConfig.h" />
     <ClInclude Include="MeshSync\msEditing.h" />
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\pch.h" />

@@ -7,6 +7,7 @@
 #include <mutex>
 #include "MeshUtils/RawVector.h"
 #include "MeshUtils/MeshUtils.h"
+#include "msConfig.h"
 
 #ifdef GetMessage
     #undef GetMessage
@@ -16,10 +17,9 @@
 namespace ms {
 using namespace mu;
 
-void LogImpl(const char *fmt, ...);
-#define msLogInfo(...)    ::ms::LogImpl("MeshSync info: " __VA_ARGS__)
-#define msLogWarning(...) ::ms::LogImpl("MeshSync warning: " __VA_ARGS__)
-#define msLogError(...)   ::ms::LogImpl("MeshSync error: " __VA_ARGS__)
+#define msLogInfo(...)    ::mu::Print("MeshSync info: " __VA_ARGS__)
+#define msLogWarning(...) ::mu::Print("MeshSync warning: " __VA_ARGS__)
+#define msLogError(...)   ::mu::Print("MeshSync error: " __VA_ARGS__)
 
 extern const int ProtocolVersion;
 
@@ -551,11 +551,5 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
-
-
-std::string ToUTF8(const char *src);
-std::string ToUTF8(const std::string& src);
-std::string ToANSI(const char *src);
-std::string ToANSI(const std::string& src);
 
 } // namespace ms

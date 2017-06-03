@@ -2,16 +2,6 @@
 #include "msEditing.h"
 #include "MeshUtils/ampmath.h"
 
-//#define msForceSingleThreaded
-//#define msEnableProfiling
-
-using ns = uint64_t;
-static inline ns now()
-{
-    using namespace std::chrono;
-    return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
-}
-
 
 namespace ms {
 
@@ -32,18 +22,18 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     }
 
     bool use_gpu = false;
-#ifdef _WIN32
+#ifdef msEnableAMP
     use_gpu = am::device_available() && flags & msEF_PreferGPU;
 #endif
 #ifdef msEnableProfiling
-    auto tbegin = now();
+    auto tbegin = Now();
     static int s_count;
     if (++s_count % 2 == 0) { use_gpu = false; }
 #endif
 
     RawVector<float> soa[9]; // flattened + SoA-nized vertices (faster on CPU)
 
-#ifndef msForceSingleThreaded
+#ifdef msEnablePPL
     concurrency::parallel_invoke([&]()
 #endif
         {
@@ -71,7 +61,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                 }
             }
         }
-#ifndef msForceSingleThreaded
+#ifdef msEnablePPL
         , [&]()
 #endif
         {
@@ -82,14 +72,14 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             rs.smooth_angle = dst.refine_settings.smooth_angle;
             dst.refine(rs);
         }
-#ifndef msForceSingleThreaded
+#ifdef msEnablePPL
     );
 #endif
 
     int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.normals.size();
     bool is_normal_indexed = dst.normals.size() == dst.points.size();
-#ifdef _WIN32
+#ifdef msEnableAMP
     if (use_gpu) {
         using namespace am;
 
@@ -145,7 +135,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     else
 #endif
     {
-#ifndef msForceSingleThreaded
+#ifdef msEnablePPL
         concurrency::parallel_for(0, num_rays, [&](int ri)
 #else
         for (int ri = 0; ri < num_rays; ++ri)
@@ -172,20 +162,18 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     src.normals[src.indices[ti * 3 + 2]]);
             }
         }
-#ifndef msForceSingleThreaded
+#ifdef msEnablePPL
         );
 #endif
     }
 
 #ifdef msEnableProfiling
-    auto tend = now();
-    char buf[1024];
-    sprintf(buf,
+    auto tend = Now();
+    msLogInfo(
         "ProjectNormals (%s): %d rays, %d triangles %.2fms\n",
         use_gpu ? "GPU" : "CPU",
         num_rays, num_triangles, float(tend - tbegin) / 1000000.0f
     );
-    ::OutputDebugStringA(buf);
 #endif
 }
 

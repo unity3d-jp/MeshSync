@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "msCommon.h"
 
-static const int msProtocolVersion = 103;
-
 
 namespace ms {
 namespace {
@@ -218,61 +216,6 @@ template<class T> inline void write(std::ostream& os, const T& v) { return write
 template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
 } // namespace
-
-
-static void LogImpl2(const char *fmt, va_list args)
-{
-    char buf[1024];
-    vsnprintf(buf, sizeof(buf), fmt, args);
-    ::OutputDebugStringA(buf);
-}
-void LogImpl(const char *fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    LogImpl2(fmt, args);
-    va_end(args);
-}
-
-std::string ToUTF8(const char *src)
-{
-    // to UTF-16
-    const int wsize = ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, nullptr, 0);
-    std::wstring ws;
-    ws.resize(wsize);
-    ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
-
-    // to UTF-8
-    const int u8size = ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
-    std::string u8s;
-    u8s.resize(u8size);
-    ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
-    return u8s;
-}
-std::string ToUTF8(const std::string& src)
-{
-    return ToUTF8(src.c_str());
-}
-
-std::string ToANSI(const char *src)
-{
-    // to UTF-16
-    const int wsize = ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, nullptr, 0);
-    std::wstring ws;
-    ws.resize(wsize);
-    ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
-
-    // to ANSI
-    const int u8size = ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
-    std::string u8s;
-    u8s.resize(u8size);
-    ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
-    return u8s;
-}
-std::string ToANSI(const std::string& src)
-{
-    return ToANSI(src.c_str());
-}
 
 
 

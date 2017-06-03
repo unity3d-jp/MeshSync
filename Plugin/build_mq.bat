@@ -1,3 +1,9 @@
+call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat"
+
+msbuild MeshSyncClientMQ3.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
+msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
+msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+
 mkdir "UnityMeshSync for Metasequoia\Metasequoia3\Plugins\Station"
 mkdir "UnityMeshSync for Metasequoia\Metasequoia4 (32bit)\Plugins\Station"
 mkdir "UnityMeshSync for Metasequoia\Metasequoia4 (64bit)\Plugins\Station"

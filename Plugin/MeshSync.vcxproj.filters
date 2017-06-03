@@ -33,6 +33,9 @@
     <ClInclude Include="MeshSync\msEditing.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSync\msConfig.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSync">
