@@ -41,7 +41,6 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     if (++s_count % 2 == 0) { use_gpu = false; }
 #endif
 
-    RawVector<float3> flattened[3]; // flattened vertices (faster GPU)
     RawVector<float> soa[9]; // flattened + SoA-nized vertices (faster on CPU)
 
 #ifndef msForceSingleThreaded
@@ -57,18 +56,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 
             // make optimal vertex data
             int num_triangles = (int)src.indices.size() / 3;
-            if (use_gpu) {
-                // flatten
-                for (int i = 0; i < 3; ++i) {
-                    flattened[i].resize(num_triangles);
-                }
-                for (int ti = 0; ti < num_triangles; ++ti) {
-                    for (int i = 0; i < 3; ++i) {
-                        flattened[i][ti] = src.points[src.indices[ti * 3 + i]];
-                    }
-                }
-            }
-            else {
+            if (!use_gpu) {
                 // flatten + SoA-nize
                 for (int i = 0; i < 9; ++i) {
                     soa[i].resize(num_triangles);
@@ -105,15 +93,27 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     if (use_gpu) {
         using namespace am;
 
-        array_view<const float_3> vpoints1(num_triangles, (const float_3*)flattened[0].data());
-        array_view<const float_3> vpoints2(num_triangles, (const float_3*)flattened[1].data());
-        array_view<const float_3> vpoints3(num_triangles, (const float_3*)flattened[2].data());
+        array_view<const float_3> vpoints((int)src.points.size(), (float_3*)src.points.data());
+        array_view<float_3> vpoints1(num_triangles);
+        array_view<float_3> vpoints2(num_triangles);
+        array_view<float_3> vpoints3(num_triangles);
         array_view<const float_3> vnormals((int)src.normals.size(), (const float_3*)src.normals.data());
         array_view<const int_3> vindices(num_triangles, (const int_3*)src.indices.data());
+
         array_view<const float_3> vrpos((int)dst.points.size(), (const float_3*)dst.points.data());
         array_view<const int> vrindices((int)dst.indices.size(), (const int*)dst.indices.data());
         array_view<float_3> vresult(num_rays, (float_3*)dst.normals.data()); // inout
 
+        // make flattened vertex data
+        parallel_for_each(vpoints1.extent, [=](index<1> ti) restrict(amp)
+        {
+            int_3 idx = vindices[ti];
+            vpoints1[ti] = vpoints[idx.x];
+            vpoints2[ti] = vpoints[idx.y];
+            vpoints3[ti] = vpoints[idx.z];
+        });
+
+        // do projection
         parallel_for_each(vresult.extent, [=](index<1> ri) restrict(amp)
         {
             float_3 rpos = is_normal_indexed ? vrpos[ri] : vrpos[vrindices[ri]];
