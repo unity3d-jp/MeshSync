@@ -41,7 +41,6 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     if (++s_count % 2 == 0) { use_gpu = false; }
 #endif
 
-    int num_triangles = (int)src.indices.size() / 3;
     RawVector<float> soa[9];
 
 #ifndef msForceSingleThreaded
@@ -57,6 +56,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 
             if (!use_gpu) {
                 // make SoAnized triangles data
+                int num_triangles = (int)src.indices.size() / 3;
                 for (int i = 0; i < 9; ++i) {
                     soa[i].resize(num_triangles);
                 }
@@ -85,6 +85,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     );
 #endif
 
+    int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.normals.size();
     bool is_normal_indexed = dst.normals.size() == dst.points.size();
 #ifdef _MSC_VER
