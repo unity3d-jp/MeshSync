@@ -5,10 +5,12 @@
 #include <memory>
 #include <atomic>
 #include <mutex>
-#include "MeshUtils/RawVector.h"
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
 
+#ifdef GetMessage
+    #undef GetMessage
+#endif
 
 namespace ms {
 

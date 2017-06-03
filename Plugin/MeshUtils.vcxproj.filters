@@ -43,6 +43,9 @@
     <ClInclude Include="MeshUtils\Misc.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\Concurrency.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">

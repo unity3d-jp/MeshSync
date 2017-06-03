@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="MeshUtils\Allocator.h" />
     <ClInclude Include="MeshUtils\ampmath.h" />
+    <ClInclude Include="MeshUtils\Concurrency.h" />
     <ClInclude Include="MeshUtils\IntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
     <ClInclude Include="MeshUtils\Math.h" />
@@ -100,7 +101,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>muEnableISPC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -122,7 +123,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>muEnableISPC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>

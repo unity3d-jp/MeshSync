@@ -3,11 +3,6 @@
 #define msProtocolVersion 104
 //#define msEnableProfiling
 
-#ifdef _WIN32
-    #define msEnablePPL
-    #define msEnableAMP
-#endif
-
 
 namespace ms {
 using namespace mu;

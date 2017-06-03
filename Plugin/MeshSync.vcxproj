@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MeshSync\MeshSync.h" />
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
     <ClInclude Include="MeshSync\msEditing.h" />

@@ -5,8 +5,6 @@
     #define NOMINMAX
     #include <windows.h>
     #include <ppl.h>
-    #undef GetObject
-    #undef GetMessage
 #else 
     #include <dlfcn.h>
     #ifdef __APPLE__

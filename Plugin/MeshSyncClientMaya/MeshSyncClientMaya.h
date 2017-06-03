@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "MeshSync/MeshSync.h"
 
 #ifdef mscDebug
     #define mscTrace(...) ::ms::LogImpl("MeshSync trace: " __VA_ARGS__)

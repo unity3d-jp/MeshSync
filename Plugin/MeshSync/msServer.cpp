@@ -225,7 +225,7 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    concurrency::parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
+    parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
         auto& mesh = *p;
         mesh.flags.has_refine_settings = 1;
         mesh.refine_settings.flags = request.refine_settings.flags;
@@ -285,7 +285,7 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         return;
     }
 
-    concurrency::parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [&mes](MeshPtr& pmesh) {
+    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [&mes](MeshPtr& pmesh) {
         auto& mesh = *pmesh;
         mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
         mesh.refine_settings.flags.swap_handedness = mes->scene.settings.handedness == Handedness::Right;

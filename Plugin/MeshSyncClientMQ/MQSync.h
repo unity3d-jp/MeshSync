@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MeshSync/msClient.h"
+#include "MeshSync/MeshSync.h"
 
 using namespace mu;
 

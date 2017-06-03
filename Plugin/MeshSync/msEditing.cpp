@@ -22,7 +22,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     }
 
     bool use_gpu = false;
-#ifdef msEnableAMP
+#ifdef muEnableAMP
     use_gpu = am::device_available() && flags & msEF_PreferGPU;
 #endif
 #ifdef msEnableProfiling
@@ -33,10 +33,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 
     RawVector<float> soa[9]; // flattened + SoA-nized vertices (faster on CPU)
 
-#ifdef msEnablePPL
-    concurrency::parallel_invoke([&]()
-#endif
-        {
+    parallel_invoke([&]() {
             ms::MeshRefineSettings rs;
             rs.flags.triangulate = 1;
             rs.flags.gen_normals_with_smooth_angle = 1;
@@ -60,11 +57,8 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     }
                 }
             }
-        }
-#ifdef msEnablePPL
-        , [&]()
-#endif
-        {
+        },
+        [&]() {
             ms::MeshRefineSettings rs;
             rs.flags.no_reindexing = 1;
             rs.flags.gen_normals_with_smooth_angle = 1;
@@ -72,14 +66,12 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             rs.smooth_angle = dst.refine_settings.smooth_angle;
             dst.refine(rs);
         }
-#ifdef msEnablePPL
     );
-#endif
 
     int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.normals.size();
     bool is_normal_indexed = dst.normals.size() == dst.points.size();
-#ifdef msEnableAMP
+#ifdef muEnableAMP
     if (use_gpu) {
         using namespace am;
 
@@ -135,12 +127,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     else
 #endif
     {
-#ifdef msEnablePPL
-        concurrency::parallel_for(0, num_rays, [&](int ri)
-#else
-        for (int ri = 0; ri < num_rays; ++ri)
-#endif
-        {
+        parallel_for(0, num_rays, [&](int ri) {
             ms::float3 rpos = is_normal_indexed ? dst.points[ri] : dst.points[dst.indices[ri]];
             ms::float3 rdir = dst.normals[ri];
             int ti;
@@ -161,10 +148,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     src.normals[src.indices[ti * 3 + 1]],
                     src.normals[src.indices[ti * 3 + 2]]);
             }
-        }
-#ifdef msEnablePPL
-        );
-#endif
+        });
     }
 
 #ifdef msEnableProfiling

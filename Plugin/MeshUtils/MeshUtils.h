@@ -9,6 +9,7 @@
 #include "Vertex.h"
 #include "tls.h"
 #include "Misc.h"
+#include "Concurrency.h"
 
 namespace mu {
 

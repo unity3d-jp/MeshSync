@@ -29,8 +29,6 @@
     namespace concurrency = tbb;
 #endif
 
-#include "MeshSync/msClient.h"
-
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MDagPath.h>
@@ -87,5 +85,4 @@
 #ifdef _WIN32
     #define NOMINMAX
     #include <windows.h>
-    #undef GetMessage
 #endif

@@ -9,7 +9,6 @@
     #include <amp_graphics.h>
     #include <amp_math.h>
     #include <ppl.h>
-    #undef GetMessage
 #else 
     #include <dlfcn.h>
     #ifdef __APPLE__

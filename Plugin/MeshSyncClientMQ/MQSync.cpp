@@ -150,7 +150,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         }
 
         // gather mesh data
-        concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
+        parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
             rel.data->clear();
             rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
             ExtractID(rel.data->path.c_str(), rel.data->id);
@@ -228,7 +228,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         {
             // send meshes one by one to Unity can respond quickly
-            concurrency::parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
+            parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
                 set.scene.meshes = { rel.data };

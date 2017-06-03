@@ -1150,7 +1150,7 @@ void MeshSyncClientMaya::kickAsyncSend()
         }
 
         // send meshes one by one to Unity can respond quickly
-        concurrency::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
+        ms::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { mesh };
