@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "msEditing.h"
-#include "MeshUtils/ampmath.h"
+#ifdef muEnableAMP
+    #include "MeshUtils/ampmath.h"
+#endif
 
 
 namespace ms {
@@ -23,7 +25,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 
     bool use_gpu = false;
 #ifdef muEnableAMP
-    use_gpu = am::device_available() && flags & msEF_PreferGPU;
+    use_gpu = apm::device_available() && flags & msEF_PreferGPU;
 #endif
 #ifdef msEnableProfiling
     auto tbegin = Now();
@@ -73,7 +75,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     bool is_normal_indexed = dst.normals.size() == dst.points.size();
 #ifdef muEnableAMP
     if (use_gpu) {
-        using namespace am;
+        using namespace apm;
 
         array_view<const float_3> vpoints((int)src.points.size(), (float_3*)src.points.data());
         array_view<float_4> vpoints1(num_triangles); // flattened vertices
@@ -105,7 +107,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 
             for (int ti = 0; ti < num_triangles; ++ti) {
                 float d;
-                if (am::ray_triangle_intersection(rpos, rdir,
+                if (apm::ray_triangle_intersection(rpos, rdir,
                     vpoints1[ti], vpoints2[ti], vpoints3[ti], d))
                 {
                     if (d < distance) {
@@ -117,7 +119,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 
             if (distance < FLT_MAX) {
                 int_3 idx = vindices[hit];
-                float_3 result = am::triangle_interpolation(
+                float_3 result = apm::triangle_interpolation(
                     rpos + rdir * distance,
                     vpoints1[hit], vpoints2[hit], vpoints3[hit],
                     vnormals[idx.x], vnormals[idx.y], vnormals[idx.z]);

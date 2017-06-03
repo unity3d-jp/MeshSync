@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="MeshUtils\Allocator.h" />
     <ClInclude Include="MeshUtils\ampmath.h" />
+    <ClInclude Include="MeshUtils\ampmath_impl.h" />
     <ClInclude Include="MeshUtils\Concurrency.h" />
     <ClInclude Include="MeshUtils\IntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
