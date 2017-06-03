@@ -2,6 +2,7 @@
 #include "msEditing.h"
 #include "MeshUtils/ampmath.h"
 
+//#define msForceSingleThreaded
 //#define msEnableProfiling
 
 using ns = uint64_t;
@@ -33,18 +34,21 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     bool use_gpu = false;
 #ifdef _MSC_VER
     use_gpu = am::device_available() && flags & msEF_PreferGPU;
+#endif
 #ifdef msEnableProfiling
+    auto tbegin = now();
     static int s_count;
     if (++s_count % 2 == 0) { use_gpu = false; }
-#endif
 #endif
 
     int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.points.size();
     RawVector<float> soa[9];
 
-    concurrency::parallel_invoke(
-        [&]() {
+#ifndef msForceSingleThreaded
+    concurrency::parallel_invoke([&]()
+#endif
+        {
             ms::MeshRefineSettings rs;
             rs.flags.triangulate = 1;
             rs.flags.gen_normals_with_smooth_angle = 1;
@@ -66,19 +70,21 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     }
                 }
             }
-        },
-        [&]() {
+        }
+#ifndef msForceSingleThreaded
+        , [&]()
+#endif
+        {
             ms::MeshRefineSettings rs;
             rs.flags.no_reindexing = 1;
             rs.flags.gen_normals = 1;
             rs.flags.flip_normals = 1;
             dst.refine(rs);
         }
+#ifndef msForceSingleThreaded
     );
-
-#ifdef msEnableProfiling
-    auto tbegin = now();
 #endif
+
 #ifdef _MSC_VER
     if (use_gpu) {
         using namespace am;
@@ -123,7 +129,12 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
     else
 #endif
     {
-        concurrency::parallel_for(0, num_rays, [&](int ri) {
+#ifndef msForceSingleThreaded
+        concurrency::parallel_for(0, num_rays, [&](int ri)
+#else
+        for (int ri = 0; ri < num_rays; ++ri)
+#endif
+        {
             ms::float3 rpos = dst.points[ri];
             ms::float3 rdir = dst.normals[ri];
             int ti;
@@ -144,7 +155,10 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     src.normals[src.indices[ti * 3 + 1]],
                     src.normals[src.indices[ti * 3 + 2]]);
             }
-        });
+        }
+#ifndef msForceSingleThreaded
+        );
+#endif
     }
 
 #ifdef msEnableProfiling

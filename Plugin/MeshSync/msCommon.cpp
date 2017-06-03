@@ -984,7 +984,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.weights4 = weights4;
 
     // normals
-    if (mrs.flags.gen_normals_with_smooth_angle) {
+    if (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle < 180.0f) {
         refiner.genNormalsWithSmoothAngle(mrs.smooth_angle, mrs.flags.flip_normals);
     }
     else if (mrs.flags.gen_normals) {
