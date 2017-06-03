@@ -114,12 +114,14 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     }
                 }
             }
+
             if (distance < FLT_MAX) {
                 int_3 idx = vindices[hit];
-                vresult[ri] = am::triangle_interpolation(
+                float_3 result = am::triangle_interpolation(
                     rpos + rdir * distance,
                     vpoints1[hit], vpoints2[hit], vpoints3[hit],
                     vnormals[idx.x], vnormals[idx.y], vnormals[idx.z]);
+                vresult[ri] = normalize(result);
             }
         });
         vresult.synchronize();
@@ -128,8 +130,8 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 #endif
     {
         parallel_for(0, num_rays, [&](int ri) {
-            ms::float3 rpos = is_normal_indexed ? dst.points[ri] : dst.points[dst.indices[ri]];
-            ms::float3 rdir = dst.normals[ri];
+            float3 rpos = is_normal_indexed ? dst.points[ri] : dst.points[dst.indices[ri]];
+            float3 rdir = dst.normals[ri];
             int ti;
             float distance;
             int num_hit = ms::RayTrianglesIntersection(rpos, rdir,
@@ -139,7 +141,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                 num_triangles, ti, distance);
 
             if (num_hit > 0) {
-                dst.normals[ri] = triangle_interpolation(
+                float3 result = triangle_interpolation(
                     rpos + rdir * distance,
                     { soa[0][ti], soa[1][ti], soa[2][ti] },
                     { soa[3][ti], soa[4][ti], soa[5][ti] },
@@ -147,6 +149,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
                     src.normals[src.indices[ti * 3 + 0]],
                     src.normals[src.indices[ti * 3 + 1]],
                     src.normals[src.indices[ti * 3 + 2]]);
+                dst.normals[ri] = normalize(result);
             }
         });
     }
