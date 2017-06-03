@@ -3,7 +3,7 @@
 #include "MeshUtils/ampmath.h"
 
 //#define msForceSingleThreaded
-#define msEnableProfiling
+//#define msEnableProfiling
 
 using ns = uint64_t;
 static inline ns now()
@@ -94,9 +94,9 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         using namespace am;
 
         array_view<const float_3> vpoints((int)src.points.size(), (float_3*)src.points.data());
-        array_view<float_3> vpoints1(num_triangles);
-        array_view<float_3> vpoints2(num_triangles);
-        array_view<float_3> vpoints3(num_triangles);
+        array_view<float_4> vpoints1(num_triangles); // flattened vertices
+        array_view<float_4> vpoints2(num_triangles); // note: float_4 is a bit faster than float_3 to access
+        array_view<float_4> vpoints3(num_triangles); // 
         array_view<const float_3> vnormals((int)src.normals.size(), (const float_3*)src.normals.data());
         array_view<const int_3> vindices(num_triangles, (const int_3*)src.indices.data());
 
@@ -108,9 +108,9 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         parallel_for_each(vpoints1.extent, [=](index<1> ti) restrict(amp)
         {
             int_3 idx = vindices[ti];
-            vpoints1[ti] = vpoints[idx.x];
-            vpoints2[ti] = vpoints[idx.y];
-            vpoints3[ti] = vpoints[idx.z];
+            (float_3&)vpoints1[ti] = vpoints[idx.x];
+            (float_3&)vpoints2[ti] = vpoints[idx.y];
+            (float_3&)vpoints3[ti] = vpoints[idx.z];
         });
 
         // do projection

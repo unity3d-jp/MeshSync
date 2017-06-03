@@ -140,8 +140,15 @@ inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_3 p1, floa
     distance = dot(e2, q) * inv_det;
     return distance > 0.0f;
 }
+inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_4 p1, float_4 p2, float_4 p3, float& distance) restrict(amp)
+{
+    return ray_triangle_intersection(pos, dir,
+        { p1.x, p1.y, p1.z },
+        { p2.x, p2.y, p2.z },
+        { p3.x, p3.y, p3.z }, distance);
+}
 
-template<class T>
+template<typename T>
 inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3, T x1, T x2, T x3) restrict(amp)
 {
     float_3 f1 = p1 - pos;
@@ -152,6 +159,15 @@ inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3,
     float a2 = length(cross(f3, f1)) * a;
     float a3 = length(cross(f1, f2)) * a;
     return x1 * a1 + x2 * a2 + x3 * a3;
+}
+template<typename T>
+inline T triangle_interpolation(float_3 pos, float_4 p1, float_4 p2, float_4 p3, T x1, T x2, T x3) restrict(amp)
+{
+    return triangle_interpolation(pos,
+        { p1.x, p1.y, p1.z },
+        { p2.x, p2.y, p2.z },
+        { p3.x, p3.y, p3.z },
+        x1, x2, x3);
 }
 
 inline float ray_point_distance(float_3 pos, float_3 dir, float_3 p) restrict(amp)
