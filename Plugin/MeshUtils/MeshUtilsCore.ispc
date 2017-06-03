@@ -301,7 +301,7 @@ export uniform int RayTrianglesIntersectionIndexed(
         p3 = vertices[indices[(bi + I) * 3  + 2]];
 
         float d;
-        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        bool hit = triangle_interpolation(pos, dir, p1, p2, p3, d);
         if(any(hit)) {
             uniform int hita[C]; hita[I] = hit;
             uniform float da[C]; da[I] = d;
@@ -324,7 +324,7 @@ export uniform int RayTrianglesIntersectionIndexed(
         uniform float3 p3 = vertices[indices[ti * 3 + 2]];
 
         uniform float d;
-        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        uniform bool hit = triangle_interpolation(pos, dir, p1, p2, p3, d);
         if(hit) {
             total_hit++;
             if(d < distance) {
@@ -356,7 +356,7 @@ export uniform int RayTrianglesIntersectionSoA(
         float3 p3 = {v3x[bi+I], v3y[bi+I], v3z[bi+I]};
 
         float d;
-        bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        bool hit = triangle_interpolation(pos, dir, p1, p2, p3, d);
         if(any(hit)) {
             uniform int hita[C]; hita[I] = hit;
             uniform float da[C]; da[I] = d;
@@ -379,7 +379,7 @@ export uniform int RayTrianglesIntersectionSoA(
         uniform float3 p3 = {v3x[ti], v3y[ti], v3z[ti]};
 
         uniform float d;
-        uniform bool hit = TriangleIntersection(pos, dir, p1, p2, p3, d);
+        uniform bool hit = triangle_interpolation(pos, dir, p1, p2, p3, d);
         if(hit) {
             total_hit++;
             if(d < distance) {

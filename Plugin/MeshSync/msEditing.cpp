@@ -42,7 +42,6 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 #endif
 
     int num_triangles = (int)src.indices.size() / 3;
-    int num_rays = (int)dst.points.size();
     RawVector<float> soa[9];
 
 #ifndef msForceSingleThreaded
@@ -77,14 +76,17 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         {
             ms::MeshRefineSettings rs;
             rs.flags.no_reindexing = 1;
-            rs.flags.gen_normals = 1;
+            rs.flags.gen_normals_with_smooth_angle = 1;
             rs.flags.flip_normals = 1;
+            rs.smooth_angle = dst.refine_settings.smooth_angle;
             dst.refine(rs);
         }
 #ifndef msForceSingleThreaded
     );
 #endif
 
+    int num_rays = (int)dst.normals.size();
+    bool is_normal_indexed = dst.normals.size() == dst.points.size();
 #ifdef _MSC_VER
     if (use_gpu) {
         using namespace am;
@@ -93,13 +95,12 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         array_view<const float_3> vnormals((int)src.normals.size(), (const float_3*)src.normals.data());
         array_view<const int_3> vindices(num_triangles, (const int_3*)src.indices.data());
         array_view<const float_3> vrpos((int)dst.points.size(), (const float_3*)dst.points.data());
-        //array_view<const int> vrindices(num_triangles, (const int*)dst.indices.data());
+        array_view<const int> vrindices((int)dst.indices.size(), (const int*)dst.indices.data());
         array_view<float_3> vresult(num_rays, (float_3*)dst.normals.data()); // inout
 
         parallel_for_each(vresult.extent, [=](index<1> ri) restrict(amp)
         {
-            //float_3 rpos = vrpos[vrindices[ri]];
-            float_3 rpos = vrpos[ri];
+            float_3 rpos = is_normal_indexed ? vrpos[ri] : vrpos[vrindices[ri]];
             float_3 rdir = vresult[ri];
             float distance = FLT_MAX;
             int hit = 0;
@@ -135,7 +136,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         for (int ri = 0; ri < num_rays; ++ri)
 #endif
         {
-            ms::float3 rpos = dst.points[ri];
+            ms::float3 rpos = is_normal_indexed ? dst.points[ri] : dst.points[dst.indices[ri]];
             ms::float3 rdir = dst.normals[ri];
             int ti;
             float distance;

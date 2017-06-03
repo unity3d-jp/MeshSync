@@ -34,11 +34,15 @@ MQSync::MQSync()
 
 MQSync::~MQSync()
 {
-    if (m_future_meshes.valid()) {
-        m_future_meshes.get();
+    try {
+        if (m_future_meshes.valid()) {
+            m_future_meshes.get();
+        }
+        if (m_future_camera.valid()) {
+            m_future_camera.get();
+        }
     }
-    if (m_future_camera.valid()) {
-        m_future_camera.get();
+    catch (...) {
     }
 }
 

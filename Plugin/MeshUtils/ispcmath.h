@@ -293,7 +293,7 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 #define Epsilon 1e-6
 
-static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
+static inline bool triangle_interpolation(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;
@@ -314,7 +314,7 @@ static inline bool TriangleIntersection(uniform float3 pos, uniform float3 dir, 
 }
 
 // uniform variant
-static inline uniform bool TriangleIntersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
+static inline uniform bool triangle_interpolation(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
 {
     uniform float3 e1 = p2 - p1;
     uniform float3 e2 = p3 - p1;
@@ -334,3 +334,13 @@ static inline uniform bool TriangleIntersection(uniform float3 pos, uniform floa
         distance > 0.0f;
 }
 
+
+static inline float ray_point_distance(float3 pos, float3 dir, float3 p)
+{
+    return length(cross(dir, p - pos));
+}
+
+static inline uniform float ray_point_distance(uniform float3 pos, uniform float3 dir, uniform float3 p)
+{
+    return length(cross(dir, p - pos));
+}

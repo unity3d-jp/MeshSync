@@ -154,5 +154,10 @@ inline T triangle_interpolation(float_3 pos, float_3 p1, float_3 p2, float_3 p3,
     return x1 * a1 + x2 * a2 + x3 * a3;
 }
 
+inline float ray_point_distance(float_3 pos, float_3 dir, float_3 p) restrict(amp)
+{
+    return length(cross(dir, p - pos));
+}
+
 } // namespace am
 #endif // _MSC_VER

@@ -863,6 +863,11 @@ inline T triangle_interpolation(float3 pos, float3 p1, float3 p2, float3 p3, T x
     return x1 * a1 + x2 * a2 + x3 * a3;
 }
 
+inline float ray_point_distance(float3 pos, float3 dir, float3 p)
+{
+    return length(cross(dir, p - pos));
+}
+
 #ifdef muMath_AddNamespace
 } // namespace mu
 #endif
