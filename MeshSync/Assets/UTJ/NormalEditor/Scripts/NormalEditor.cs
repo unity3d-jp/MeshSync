@@ -28,6 +28,7 @@ public class NormalEditor : MonoBehaviour
     [SerializeField] Material m_material;
     [SerializeField] Vector3[] m_points;
     [SerializeField] Vector3[] m_normals;
+    [SerializeField] Vector3[] m_editNormals;
     [SerializeField] Vector4[] m_tangents;
     [SerializeField] float[] m_selection;
 
@@ -37,6 +38,8 @@ public class NormalEditor : MonoBehaviour
     ComputeBuffer m_cbTangents;
     ComputeBuffer m_cbSelection;
     CommandBuffer m_cmdDraw;
+    Quaternion m_rot = Quaternion.identity;
+    bool m_rotating = false;
 
 
     public Mesh mesh { get { return m_meshTarget; } }
@@ -97,6 +100,7 @@ public class NormalEditor : MonoBehaviour
             m_meshTarget = GetComponent<MeshFilter>().sharedMesh;
             m_points = m_meshTarget.vertices;
             m_normals = m_meshTarget.normals;
+            m_editNormals = m_normals;
             m_tangents = m_meshTarget.tangents;
             m_selection = new float[m_points.Length];
             ReleaseComputeBuffers();
@@ -135,6 +139,8 @@ public class NormalEditor : MonoBehaviour
             m_cmdDraw = new CommandBuffer();
             m_cmdDraw.name = "NormalEditor";
         }
+
+        m_rot = Quaternion.identity;
     }
 
     void ReleaseComputeBuffers()
@@ -193,6 +199,53 @@ public class NormalEditor : MonoBehaviour
 
     public void OnSceneGUI()
     {
+        {
+            int numSelected = 0;
+            Vector3 center = Vector3.zero;
+            Vector3 average = Vector3.zero;
+
+            int numPoints = m_points.Length;
+            for (int i = 0; i < numPoints; ++i)
+            {
+                float s = m_selection[i];
+                if (s > 0.0f)
+                {
+                    center += m_points[i];
+                    average += m_normals[i];
+                    ++numSelected;
+                }
+            }
+
+            if(numSelected > 0)
+            {
+                center /= numSelected;
+                m_rot = Quaternion.LookRotation(average.normalized);
+
+                EditorGUI.BeginChangeCheck();
+                m_rot = Handles.RotationHandle(m_rot, center);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    m_rotating = true;
+                    //Undo.RecordObject(target, "Rotated RotateAt Point");
+
+                    for (int i = 0; i < numPoints; ++i)
+                    {
+                        float s = m_selection[i];
+                        if (s > 0.0f)
+                        {
+                            m_editNormals[i] = m_rot * Vector3.forward;
+                        }
+                    }
+                    m_rot = Quaternion.identity;
+
+                    m_meshTarget.normals = m_editNormals;
+                    m_cbNormals.SetData(m_editNormals);
+                }
+            }
+        }
+
+
+
         int id = GUIUtility.GetControlID(FocusType.Passive);
 
         Event e = Event.current;
