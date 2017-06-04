@@ -62,8 +62,10 @@ public class NormalEditor : MonoBehaviour
     ComputeBuffer m_cbTangents;
     ComputeBuffer m_cbSelection;
     CommandBuffer m_cmdDraw;
-    Quaternion m_rot = Quaternion.identity;
-    bool m_rotating = false;
+    int m_numSelected = 0;
+    Vector3 m_selectionPos;
+    Vector3 m_selectionNormal;
+    Quaternion m_selectionRot;
 
 
     public Mesh mesh { get { return m_meshTarget; } }
@@ -165,7 +167,7 @@ public class NormalEditor : MonoBehaviour
             m_cmdDraw.name = "NormalEditor";
         }
 
-        m_rot = Quaternion.identity;
+        m_selectionRot = Quaternion.identity;
     }
 
     void ReleaseComputeBuffers()
@@ -225,56 +227,69 @@ public class NormalEditor : MonoBehaviour
     public void OnSceneGUI()
     {
         {
-            int numSelected = 0;
-            Vector3 center = Vector3.zero;
-            Vector3 average = Vector3.zero;
-
-            int numPoints = m_points.Length;
-            for (int i = 0; i < numPoints; ++i)
+            if(m_numSelected > 0)
             {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    center += m_points[i];
-                    average += m_normals[i];
-                    ++numSelected;
-                }
-            }
+                int numPoints = m_points.Length;
 
-            if(numSelected > 0)
-            {
-                if (m_editMode == EditMode.Rotate)
+                if (m_editMode == EditMode.Translate)
                 {
-
-                }
-                else if (m_editMode == EditMode.Rotate)
-                {
-                    center /= numSelected;
-                    m_rot = Quaternion.LookRotation(average.normalized);
-
                     EditorGUI.BeginChangeCheck();
-                    m_rot = Handles.RotationHandle(m_rot, center);
+                    var pos = Handles.PositionHandle(m_selectionPos, m_selectionRot);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        m_rotating = true;
-                        //Undo.RecordObject(target, "Rotated RotateAt Point");
-
+                        var move = pos - m_selectionPos;
                         for (int i = 0; i < numPoints; ++i)
                         {
                             float s = m_selection[i];
                             if (s > 0.0f)
                             {
-                                m_editNormals[i] = m_rot * Vector3.forward;
+                                m_editNormals[i] = (m_editNormals[i] + move * s).normalized;
                             }
                         }
-                        m_rot = Quaternion.identity;
+                        ApplyNewNormals();
+                    }
 
-                        m_meshTarget.normals = m_editNormals;
-                        m_cbNormals.SetData(m_editNormals);
+                }
+                else if (m_editMode == EditMode.Rotate)
+                {
+                    EditorGUI.BeginChangeCheck();
+                    m_selectionRot = Handles.RotationHandle(m_selectionRot, m_selectionPos);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        for (int i = 0; i < numPoints; ++i)
+                        {
+                            float s = m_selection[i];
+                            if (s > 0.0f)
+                            {
+                                m_editNormals[i] = (m_editNormals[i] + m_selectionRot * Vector3.forward * s).normalized;
+                            }
+                        }
+                        m_selectionRot = Quaternion.identity;
+
+                        ApplyNewNormals();
                     }
                 }
                 else if (m_editMode == EditMode.Scale)
                 {
+                    EditorGUI.BeginChangeCheck();
+                    var scale = Handles.ScaleHandle(Vector3.one, m_selectionPos, m_selectionRot, HandleUtility.GetHandleSize(m_selectionPos));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        //scale = m_selectionRot * scale;
+                        for (int i = 0; i < numPoints; ++i)
+                        {
+                            float s = m_selection[i];
+                            if (s > 0.0f)
+                            {
+                                var dir = (m_points[i] - m_selectionPos).normalized;
+                                dir.x *= scale.x;
+                                dir.y *= scale.y;
+                                dir.z *= scale.z;
+                                m_editNormals[i] = (m_editNormals[i] + dir * s).normalized;
+                            }
+                        }
+                        ApplyNewNormals();
+                    }
                 }
             }
         }
@@ -291,7 +306,7 @@ public class NormalEditor : MonoBehaviour
             if (e.button == 0)
             {
                 var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-                if (m_editMode == EditMode.Select)
+                if (m_editMode != EditMode.Equalize)
                 {
                     if (!e.shift)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
@@ -312,11 +327,40 @@ public class NormalEditor : MonoBehaviour
                             used = true;
                         }
                     }
+
+                    float st = 0.0f;
+                    m_numSelected = 0;
+                    m_selectionPos = Vector3.zero;
+                    m_selectionNormal = Vector3.zero;
+                    int numPoints = m_points.Length;
+                    for (int i = 0; i < numPoints; ++i)
+                    {
+                        float s = m_selection[i];
+                        if (s > 0.0f)
+                        {
+                            m_selectionPos += m_points[i] * s;
+                            m_selectionNormal += m_normals[i] * s;
+                            ++m_numSelected;
+                            st += s;
+                        }
+                    }
+                    if (m_numSelected > 0)
+                    {
+                        m_selectionPos /= st;
+                        m_selectionNormal /= st;
+                        m_selectionNormal = m_selectionNormal.normalized;
+                        m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
+                    }
+
                     m_cbSelection.SetData(m_selection);
                 }
                 else if (m_editMode == EditMode.Equalize)
                 {
-                    Equalize(ray, m_softRadius, m_softPow, m_softStrength);
+                    if (Equalize(ray, m_softRadius, m_softPow, m_softStrength))
+                    {
+                        ApplyNewNormals();
+                        used = true;
+                    }
                 }
             }
 
@@ -338,9 +382,13 @@ public class NormalEditor : MonoBehaviour
     }
 
 
-    public void ApplyNewNormals()
+    public void ApplyNewNormals(bool upload = true)
     {
+        m_normals = m_editNormals;
         m_meshTarget.normals = m_normals;
+        m_cbNormals.SetData(m_normals);
+        if (upload)
+            m_meshTarget.UploadMeshData(false);
     }
 
     int GetMouseVertex(Event e, bool allowBackface = false)
@@ -389,18 +437,17 @@ public class NormalEditor : MonoBehaviour
     public bool Equalize(Ray ray, float radius, float pow, float strength)
     {
         Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-        bool ret = neEqualize(ray.origin, ray.direction,
-            m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_editNormals, ref trans) > 0;
-        m_normals = m_editNormals;
-        m_cbNormals.SetData(m_normals);
-        return ret;
+        if(neEqualize(ray.origin, ray.direction,
+            m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_editNormals, ref trans) > 0)
+        {
+            return true;
+        }
+        return false;
     }
 
     public void Mirroring(Plane plane)
     {
         neMirroring(m_points, m_points.Length, plane.normal, plane.distance, 0.001f, m_editNormals);
-        m_normals = m_editNormals;
-        m_cbNormals.SetData(m_normals);
     }
 
 
