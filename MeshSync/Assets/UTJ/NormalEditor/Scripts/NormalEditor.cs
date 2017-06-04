@@ -193,17 +193,34 @@ public class NormalEditor : MonoBehaviour
 
     public void OnSceneGUI()
     {
+        int id = GUIUtility.GetControlID(FocusType.Passive);
 
         Event e = Event.current;
-        if (e.type == EventType.MouseDown && e.button == 0)
+        var type = e.GetTypeForControl(id);
+        if (type == EventType.MouseDown || type == EventType.MouseDrag)
         {
-            System.Array.Clear(m_selection, 0, m_selection.Length);
-
-            int sel = GetMouseVertex(e);
-            if(sel != -1)
+            if (e.button == 0)
             {
-                m_selection[sel] = 1.0f;
-                m_cbSelection.SetData(m_selection);
+                if (!e.shift)
+                    System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                int sel = GetMouseVertex(e);
+                if (sel != -1)
+                {
+                    m_selection[sel] = 1.0f;
+                    m_cbSelection.SetData(m_selection);
+                }
+                if (type == EventType.MouseDown)
+                    GUIUtility.hotControl = id;
+                e.Use();
+            }
+        }
+        else if (type == EventType.MouseUp)
+        {
+            if (GUIUtility.hotControl == id && e.button == 0)
+            {
+                GUIUtility.hotControl = 0;
+                e.Use();
             }
         }
     }
@@ -216,12 +233,11 @@ public class NormalEditor : MonoBehaviour
 
     int GetMouseVertex(Event e, bool allowBackface = false)
     {
-        // No cloth manipulation Tool enabled -> don't interact with vertices.
         if (Tools.current != Tool.None)
             return -1;
 
         Ray mouseRay = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-        float minDistance = 1000;
+        float minDistance = float.MaxValue;
         int found = -1;
         Quaternion rotation = GetComponent<Transform>().rotation;
         for (int i = 0; i < m_points.Length; i++)
