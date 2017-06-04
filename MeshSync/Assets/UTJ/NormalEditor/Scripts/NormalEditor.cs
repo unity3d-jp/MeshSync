@@ -10,17 +10,21 @@ using UnityEditor;
 public class NormalEditor : MonoBehaviour
 {
 #if UNITY_EDITOR
-    [SerializeField] float m_vertexSize = 0.005f;
-    [SerializeField] float m_normalSize = 0.15f;
-    [SerializeField] Color m_vertexColor = Color.blue;
+    [SerializeField] bool m_showVertices = true;
+    [SerializeField] bool m_showNormals = true;
+    [SerializeField] bool m_showTangents = false;
+
+    [SerializeField] float m_vertexSize = 0.01f;
+    [SerializeField] float m_normalSize = 0.10f;
+    [SerializeField] float m_tangentSize = 0.075f;
+    [SerializeField] Color m_vertexColor = new Color(0.25f, 0.25f, 0.8f, 0.75f);
     [SerializeField] Color m_normalColor = Color.yellow;
     [SerializeField] Color m_tangentColor = Color.cyan;
 
     [SerializeField] Mesh m_meshTarget;
     [SerializeField] Mesh m_meshCube;
     [SerializeField] Mesh m_meshLine;
-    [SerializeField] Material m_matVertices;
-    [SerializeField] Material m_matNormals;
+    [SerializeField] Material m_material;
     [SerializeField] List<Vector3> m_points = new List<Vector3>();
     [SerializeField] List<Vector3> m_normals = new List<Vector3>();
     [SerializeField] List<Vector4> m_tangents = new List<Vector4>();
@@ -79,15 +83,10 @@ public class NormalEditor : MonoBehaviour
             m_meshLine.SetIndices(new int[2] { 0, 1 }, MeshTopology.Lines, 0);
         }
 
-        if (m_matVertices == null)
+        if (m_material == null)
         {
-            m_matVertices = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/VertexVisualizer.shader"));
+            m_material = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/NormalVisualizer.shader"));
         }
-        if (m_matNormals == null)
-        {
-            m_matNormals = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/NormalVisualizer.shader"));
-        }
-
 
         if (m_meshTarget == null ||
             m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount)
@@ -125,13 +124,6 @@ public class NormalEditor : MonoBehaviour
         {
             m_cmdDraw = new CommandBuffer();
             m_cmdDraw.name = "NormalEditor";
-            m_cmdDraw.Clear();
-            if (m_points.Count > 0)
-                m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVertices, 0, m_cbArg);
-            if (m_normals.Count > 0)
-                m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matNormals, 0, m_cbArg);
-            if (m_tangents.Count > 0)
-                m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matNormals, 1, m_cbArg);
         }
     }
 
@@ -160,30 +152,29 @@ public class NormalEditor : MonoBehaviour
         SetupResources();
     }
 
-    void LateUpdate()
+    private void OnDrawGizmosSelected()
     {
         var trans = GetComponent<Transform>();
-        var bounds = new Bounds(trans.position, Vector3.one * 100.0f);
+        var matrix = trans.localToWorldMatrix;
 
-        m_matVertices.SetMatrix("_Transform", trans.localToWorldMatrix);
-        m_matVertices.SetFloat("_Size", m_vertexSize);
-        m_matVertices.SetColor("_Color", m_vertexColor);
-        if (m_cbPoints != null) m_matVertices.SetBuffer("_Points", m_cbPoints);
+        m_material.SetMatrix("_Transform", matrix);
+        m_material.SetFloat("_VertexSize", m_vertexSize);
+        m_material.SetFloat("_NormalSize", m_normalSize);
+        m_material.SetFloat("_TangentSize", m_tangentSize);
+        m_material.SetColor("_VertexColor", m_vertexColor);
+        m_material.SetColor("_NormalColor", m_normalColor);
+        m_material.SetColor("_TangentColor", m_tangentColor);
+        if (m_cbPoints != null) m_material.SetBuffer("_Points", m_cbPoints);
+        if (m_cbNormals != null) m_material.SetBuffer("_Normals", m_cbNormals);
+        if (m_cbTangents != null) m_material.SetBuffer("_Tangents", m_cbTangents);
 
-        m_matNormals.SetMatrix("_Transform", trans.localToWorldMatrix);
-        m_matNormals.SetFloat("_Size", m_normalSize);
-        m_matNormals.SetColor("_NormalColor", m_normalColor);
-        m_matNormals.SetColor("_TangentColor", m_tangentColor);
-        if (m_cbPoints != null) m_matNormals.SetBuffer("_Points", m_cbPoints);
-        if (m_cbNormals != null) m_matNormals.SetBuffer("_Normals", m_cbNormals);
-        if (m_cbTangents != null) m_matNormals.SetBuffer("_Tangents", m_cbTangents);
-
-        //Graphics.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVertices, bounds, m_cbArg);
-
-    }
-
-    private void OnDrawGizmos()
-    {
+        m_cmdDraw.Clear();
+        if (m_showVertices && m_points.Count > 0)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_material, 0, m_cbArg);
+        if (m_showTangents && m_tangents.Count > 0)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 2, m_cbArg);
+        if (m_showNormals && m_normals.Count > 0)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 1, m_cbArg);
         Graphics.ExecuteCommandBuffer(m_cmdDraw);
     }
 
