@@ -7,8 +7,8 @@ CGINCLUDE
 #include "UnityCG.cginc"
 
 float _Size;
-half4 _NormalColor;
-half4 _TangentColor;
+float4 _NormalColor;
+float4 _TangentColor;
 float4x4 _Transform;
 StructuredBuffer<float3> _Points;
 StructuredBuffer<float3> _Normals;
@@ -17,7 +17,8 @@ StructuredBuffer<float4> _Tangents;
 struct appdata
 {
     float4 vertex : POSITION;
-    UNITY_VERTEX_INPUT_INSTANCE_ID
+    float4 uv : TEXCOORD0;
+    uint instanceID : SV_InstanceID;
 };
 
 struct v2f
@@ -28,17 +29,14 @@ struct v2f
 
 v2f vert_normals(appdata v)
 {
-    UNITY_SETUP_INSTANCE_ID(v);
-
     float4 vertex = v.vertex;
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-    vertex.xyz += _Points[unity_InstanceID] + _Normals[unity_InstanceID] * _Size;
-#endif
+    vertex.xyz += _Points[v.instanceID] + _Normals[v.instanceID] * v.uv.x * _Size;
     vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
 
     v2f o;
     o.vertex = vertex;
     o.color = _NormalColor;
+    o.color.a = 1.0 - v.uv.x;
     return o;
 }
 
@@ -47,14 +45,13 @@ v2f vert_tangents(appdata v)
     UNITY_SETUP_INSTANCE_ID(v);
 
     float4 vertex = v.vertex;
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-    vertex.xyz += _Points[unity_InstanceID] + _Tangents[unity_InstanceID].xyz * _Size;
-#endif
+    vertex.xyz += _Points[v.instanceID] + _Tangents[v.instanceID].xyz * v.uv.x * _Size;
     vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
 
     v2f o;
     o.vertex = vertex;
     o.color = _TangentColor;
+    o.color.a = 1.0 - v.uv.x;
     return o;
 }
 
@@ -66,7 +63,7 @@ ENDCG
 
     SubShader
     {
-        Tags{ "RenderType" = "Transparent" "Queue" = "Transparent" }
+        Tags{ "RenderType" = "Transparent" "Queue" = "Transparent+101" }
         ZTest[_ZTest]
         ZWrite Off
         Blend SrcAlpha OneMinusSrcAlpha

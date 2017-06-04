@@ -6,7 +6,7 @@
 CGINCLUDE
 #include "UnityCG.cginc"
 
-half4 _Color;
+float4 _Color;
 float _Size;
 float4x4 _Transform;
 StructuredBuffer<float3> _Points;
@@ -14,7 +14,7 @@ StructuredBuffer<float3> _Points;
 struct appdata
 {
     float4 vertex : POSITION;
-    UNITY_VERTEX_INPUT_INSTANCE_ID
+    uint instanceID : SV_InstanceID;
 };
 
 struct v2f
@@ -24,12 +24,12 @@ struct v2f
 
 v2f vert(appdata v)
 {
-    UNITY_SETUP_INSTANCE_ID(v);
+    float3 pos = _Points[v.instanceID];
 
     float4 vertex = v.vertex;
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-    vertex.xyz += _Points[unity_InstanceID];
-#endif
+    vertex.xyz *= _Size;
+    vertex.xyz *= abs(UnityObjectToViewPos(pos).z);
+    vertex.xyz += pos;
     vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
 
     v2f o;
@@ -45,7 +45,7 @@ ENDCG
 
     SubShader
     {
-        Tags{ "RenderType" = "Transparent" "Queue" = "Transparent" }
+        Tags{ "RenderType" = "Transparent" "Queue" = "Transparent+100" }
         ZTest [_ZTest]
         ZWrite OFF
         Blend SrcAlpha OneMinusSrcAlpha

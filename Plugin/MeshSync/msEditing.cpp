@@ -70,6 +70,10 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
         }
     );
 
+#ifdef msEnableProfiling
+    auto tendgennormal = Now();
+#endif
+
     int num_triangles = (int)src.indices.size() / 3;
     int num_rays = (int)dst.normals.size();
     bool is_normal_indexed = dst.normals.size() == dst.points.size();
@@ -159,9 +163,11 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
 #ifdef msEnableProfiling
     auto tend = Now();
     msLogInfo(
-        "ProjectNormals (%s): %d rays, %d triangles %.2fms\n",
+        "ProjectNormals (%s): %d rays, %d triangles, %.2fms (%.2fms for setup)\n",
         use_gpu ? "GPU" : "CPU",
-        num_rays, num_triangles, float(tend - tbegin) / 1000000.0f
+        num_rays, num_triangles,
+        float(tend - tbegin) / 1000000.0f,
+        float(tendgennormal - tbegin) / 1000000.0f
     );
 #endif
 }
