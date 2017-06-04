@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSync/msServer.h"
+#include "MeshSync/MeshSync.h"
 #include "MeshSyncServer.h"
 
 using namespace mu;
