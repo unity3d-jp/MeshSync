@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
@@ -10,6 +12,27 @@ using UnityEditor;
 public class NormalEditor : MonoBehaviour
 {
 #if UNITY_EDITOR
+    public enum EditMode
+    {
+        Select,
+        Translate,
+        Rotate,
+        Scale,
+        Equalize,
+    }
+    public enum SelectMode
+    {
+        Normal,
+        Soft,
+        //Lasso,
+    }
+
+    [SerializeField] EditMode m_editMode = EditMode.Select;
+    [SerializeField] SelectMode m_selectMode = SelectMode.Normal;
+    [SerializeField] float m_softRadius = 0.2f;
+    [SerializeField] float m_softPow = 0.5f;
+    [SerializeField] float m_softStrength = 1.0f;
+
     [SerializeField] bool m_showVertices = true;
     [SerializeField] bool m_showNormals = true;
     [SerializeField] bool m_showTangents = false;
@@ -30,6 +53,7 @@ public class NormalEditor : MonoBehaviour
     [SerializeField] Vector3[] m_normals;
     [SerializeField] Vector3[] m_editNormals;
     [SerializeField] Vector4[] m_tangents;
+    [SerializeField] int[] m_triangles;
     [SerializeField] float[] m_selection;
 
     ComputeBuffer m_cbArg;
@@ -102,6 +126,7 @@ public class NormalEditor : MonoBehaviour
             m_normals = m_meshTarget.normals;
             m_editNormals = m_normals;
             m_tangents = m_meshTarget.tangents;
+            m_triangles = m_meshTarget.triangles;
             m_selection = new float[m_points.Length];
             ReleaseComputeBuffers();
         }
@@ -218,28 +243,38 @@ public class NormalEditor : MonoBehaviour
 
             if(numSelected > 0)
             {
-                center /= numSelected;
-                m_rot = Quaternion.LookRotation(average.normalized);
-
-                EditorGUI.BeginChangeCheck();
-                m_rot = Handles.RotationHandle(m_rot, center);
-                if (EditorGUI.EndChangeCheck())
+                if (m_editMode == EditMode.Rotate)
                 {
-                    m_rotating = true;
-                    //Undo.RecordObject(target, "Rotated RotateAt Point");
 
-                    for (int i = 0; i < numPoints; ++i)
+                }
+                else if (m_editMode == EditMode.Rotate)
+                {
+                    center /= numSelected;
+                    m_rot = Quaternion.LookRotation(average.normalized);
+
+                    EditorGUI.BeginChangeCheck();
+                    m_rot = Handles.RotationHandle(m_rot, center);
+                    if (EditorGUI.EndChangeCheck())
                     {
-                        float s = m_selection[i];
-                        if (s > 0.0f)
-                        {
-                            m_editNormals[i] = m_rot * Vector3.forward;
-                        }
-                    }
-                    m_rot = Quaternion.identity;
+                        m_rotating = true;
+                        //Undo.RecordObject(target, "Rotated RotateAt Point");
 
-                    m_meshTarget.normals = m_editNormals;
-                    m_cbNormals.SetData(m_editNormals);
+                        for (int i = 0; i < numPoints; ++i)
+                        {
+                            float s = m_selection[i];
+                            if (s > 0.0f)
+                            {
+                                m_editNormals[i] = m_rot * Vector3.forward;
+                            }
+                        }
+                        m_rot = Quaternion.identity;
+
+                        m_meshTarget.normals = m_editNormals;
+                        m_cbNormals.SetData(m_editNormals);
+                    }
+                }
+                else if (m_editMode == EditMode.Scale)
+                {
                 }
             }
         }
@@ -252,17 +287,41 @@ public class NormalEditor : MonoBehaviour
         var type = e.GetTypeForControl(id);
         if (type == EventType.MouseDown || type == EventType.MouseDrag)
         {
+            bool used = false;
             if (e.button == 0)
             {
-                if (!e.shift)
-                    System.Array.Clear(m_selection, 0, m_selection.Length);
-
-                int sel = GetMouseVertex(e);
-                if (sel != -1)
+                var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+                if (m_editMode == EditMode.Select)
                 {
-                    m_selection[sel] = 1.0f;
+                    if (!e.shift)
+                        System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                    if (m_selectMode == SelectMode.Normal)
+                    {
+                        int sel = GetMouseVertex(e);
+                        if (sel != -1)
+                        {
+                            m_selection[sel] = 1.0f;
+                            used = true;
+                        }
+                    }
+                    else if (m_selectMode == SelectMode.Soft)
+                    {
+                        if(SoftSelection(ray, m_softRadius, m_softPow, m_softStrength))
+                        {
+                            used = true;
+                        }
+                    }
                     m_cbSelection.SetData(m_selection);
                 }
+                else if (m_editMode == EditMode.Equalize)
+                {
+                    Equalize(ray, m_softRadius, m_softPow, m_softStrength);
+                }
+            }
+
+            if(used)
+            {
                 if (type == EventType.MouseDown)
                     GUIUtility.hotControl = id;
                 e.Use();
@@ -286,8 +345,11 @@ public class NormalEditor : MonoBehaviour
 
     int GetMouseVertex(Event e, bool allowBackface = false)
     {
-        if (Tools.current != Tool.None)
-            return -1;
+        //if (Tools.current != Tool.None)
+        //{
+        //    Debug.Log(Tools.current);
+        //    return -1;
+        //}
 
         Ray mouseRay = HandleUtility.GUIPointToWorldRay(e.mousePosition);
         float minDistance = float.MaxValue;
@@ -306,6 +368,56 @@ public class NormalEditor : MonoBehaviour
         }
         return found;
     }
+
+
+    public bool Raycast(Ray ray, ref int ti, ref float distance)
+    {
+        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+        bool ret = neRaycast(ray.origin, ray.direction,
+            m_points, m_triangles, m_triangles.Length / 3, ref ti, ref distance, ref trans) > 0;
+        return ret;
+    }
+
+    public bool SoftSelection(Ray ray, float radius, float pow, float strength)
+    {
+        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+        bool ret = neSoftSelection(ray.origin, ray.direction,
+            m_points, m_triangles, m_points.Length, m_triangles.Length/3, radius, pow, strength, m_selection, ref trans) > 0;
+        return ret;
+    }
+
+    public bool Equalize(Ray ray, float radius, float pow, float strength)
+    {
+        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+        bool ret = neEqualize(ray.origin, ray.direction,
+            m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_editNormals, ref trans) > 0;
+        m_normals = m_editNormals;
+        m_cbNormals.SetData(m_normals);
+        return ret;
+    }
+
+    public void Mirroring(Plane plane)
+    {
+        neMirroring(m_points, m_points.Length, plane.normal, plane.distance, 0.001f, m_editNormals);
+        m_normals = m_editNormals;
+        m_cbNormals.SetData(m_normals);
+    }
+
+
+    [DllImport("MeshSyncServer")] static extern int neRaycast(
+        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
+        ref int tindex, ref float distance, ref Matrix4x4 trans);
+
+    [DllImport("MeshSyncServer")] static extern int neSoftSelection(
+        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
+        float radius, float strength, float pow, float[] seletion, ref Matrix4x4 trans);
+
+    [DllImport("MeshSyncServer")] static extern int neEqualize(
+        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
+        float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
+
+    [DllImport("MeshSyncServer")] static extern void neMirroring(
+        Vector3[] vertices, int num_vertices, Vector3 pn, float pd, float eps, Vector3[] normals);
 
 #endif
 }
