@@ -4,14 +4,23 @@
 
 using namespace mu;
 
-using ns = uint64_t;
-
-static ns now()
+void Test_Indexed()
 {
-    using namespace std::chrono;
-    return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
-}
+    std::vector<uint16_t> indices16 = { 0,1,0,2,1,3,2 };
+    std::vector<uint32_t> indices32 = { 0,1,2,1,2,3 };
+    std::vector<float> values = { 0.0f, 10.0f, 20.0f, 30.0f };
 
+    IIArray<uint16_t, float> iia1 = { indices16, values };
+    IIArray<uint32_t, float> iia2 = { indices32, values };
+
+    printf("iia1: ");
+    for(auto& v : iia1) { printf("%.f ", v); }
+    printf("\n");
+
+    printf("iia2: ");
+    for (auto& v : iia2) { printf("%.f ", v); }
+    printf("\n");
+}
 
 void Test_Sync(bool create_server)
 {
@@ -177,59 +186,59 @@ void RayTrianglesIntersectionTest()
     };
     printf("RayTrianglesIntersectionTest()\n");
 
-    auto s1_begin = now();
+    auto s1_begin = Now();
     for (int i = 0; i < num_try; ++i) {
         num_hits = RayTrianglesIntersection_Generic(ray_pos, ray_dir, vertices.data(),
             indices.data(), num_triangles, tindex, distance);
     }
-    auto s1_end = now();
+    auto s1_end = Now();
 
     print();
 
-    auto s2_begin = now();
+    auto s2_begin = Now();
     for (int i = 0; i < num_try; ++i) {
         num_hits = RayTrianglesIntersection_ISPC(ray_pos, ray_dir, vertices.data(),
             indices.data(), num_triangles, tindex, distance);
     }
-    auto s2_end = now();
+    auto s2_end = Now();
 
     print();
 
-    auto s3_begin = now();
+    auto s3_begin = Now();
     for (int i = 0; i < num_try; ++i) {
         num_hits = RayTrianglesIntersection_Generic(ray_pos, ray_dir, vertices_flattened.data(), num_triangles, tindex, distance);
     }
-    auto s3_end = now();
+    auto s3_end = Now();
 
     print();
 
-    auto s4_begin = now();
+    auto s4_begin = Now();
     for (int i = 0; i < num_try; ++i) {
         num_hits = RayTrianglesIntersection_ISPC(ray_pos, ray_dir, vertices_flattened.data(), num_triangles, tindex, distance);
     }
-    auto s4_end = now();
+    auto s4_end = Now();
 
     print();
 
-    auto s5_begin = now();
+    auto s5_begin = Now();
     for (int i = 0; i < num_try; ++i) {
         num_hits = RayTrianglesIntersection_Generic(ray_pos, ray_dir,
             v1x.data(), v1y.data(), v1z.data(),
             v2x.data(), v2y.data(), v2z.data(),
             v3x.data(), v3y.data(), v3z.data(), num_triangles, tindex, distance);
     }
-    auto s5_end = now();
+    auto s5_end = Now();
 
     print();
 
-    auto s6_begin = now();
+    auto s6_begin = Now();
     for (int i = 0; i < num_try; ++i) {
         num_hits = RayTrianglesIntersection_ISPC(ray_pos, ray_dir,
             v1x.data(), v1y.data(), v1z.data(),
             v2x.data(), v2y.data(), v2z.data(),
             v3x.data(), v3y.data(), v3z.data(), num_triangles, tindex, distance);
     }
-    auto s6_end = now();
+    auto s6_end = Now();
 
     print();
 
@@ -252,6 +261,7 @@ void RayTrianglesIntersectionTest()
 
 int main(int argc, char *argv[])
 {
+    //Test_Indexed();
     //Test_Sync(false);
     //Test_Get();
     //Test_GenNormals();

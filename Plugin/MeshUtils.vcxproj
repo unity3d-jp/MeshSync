@@ -25,6 +25,7 @@
     <ClInclude Include="MeshUtils\Concurrency.h" />
     <ClInclude Include="MeshUtils\IntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
+    <ClInclude Include="MeshUtils\iterator.h" />
     <ClInclude Include="MeshUtils\Math.h" />
     <ClInclude Include="MeshUtils\MeshRefiner.h" />
     <ClInclude Include="MeshUtils\mikktspace.h" />
