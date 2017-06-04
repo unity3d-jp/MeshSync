@@ -12,6 +12,11 @@ public class NormalEditorEditor : Editor
         Undo.undoRedoPerformed += ApplyNewNormals;
     }
 
+    void OnSceneGUI()
+    {
+        (target as NormalEditor).OnSceneGUI();
+    }
+
     public override void OnInspectorGUI()
     {
         EditorGUI.BeginChangeCheck();

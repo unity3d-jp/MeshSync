@@ -10,12 +10,14 @@ float _VertexSize;
 float _NormalSize;
 float _TangentSize;
 float4 _VertexColor;
+float4 _VertexColor2;
 float4 _NormalColor;
 float4 _TangentColor;
 float4x4 _Transform;
 StructuredBuffer<float3> _Points;
 StructuredBuffer<float3> _Normals;
 StructuredBuffer<float4> _Tangents;
+StructuredBuffer<float> _Selection;
 
 struct appdata
 {
@@ -42,7 +44,7 @@ v2f vert_vertices(appdata v)
 
     v2f o;
     o.vertex = vertex;
-    o.color = _VertexColor;
+    o.color = lerp(_VertexColor, _VertexColor2, _Selection[v.instanceID]);
     return o;
 }
 
