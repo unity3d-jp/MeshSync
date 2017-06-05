@@ -39,10 +39,10 @@ public class NormalEditor : MonoBehaviour
         None,
         RightToLeft,
         LeftToRight,
-        FrontToBack,
-        BackToFront,
-        TopToBottom,
-        BottomToTop,
+        ForwardToBack,
+        BackToForward,
+        UpToDown,
+        DownToUp,
     }
 
     [Serializable]
@@ -57,7 +57,7 @@ public class NormalEditor : MonoBehaviour
     EditMode m_editMode = EditMode.Select;
     BrushMode m_brushMode = BrushMode.Equalize;
     SelectMode m_selectMode = SelectMode.Soft;
-    MirrorMode m_mirroMode = MirrorMode.None;
+    MirrorMode m_mirrorMode = MirrorMode.None;
     float m_brushRadius = 0.2f;
     float m_brushPow = 0.5f;
     float m_brushStrength = 1.0f;
@@ -128,12 +128,12 @@ public class NormalEditor : MonoBehaviour
 
     public MirrorMode mirroMode
     {
-        get { return m_mirroMode; }
+        get { return m_mirrorMode; }
         set {
-            if(value != m_mirroMode)
+            if(value != m_mirrorMode)
             {
                 m_mirrorRelation = null;
-                m_mirroMode = value;
+                m_mirrorMode = value;
             }
         }
     }
@@ -265,6 +265,7 @@ public class NormalEditor : MonoBehaviour
             m_baseNormals = null;
             m_tangents = null;
             m_triangles = null;
+            m_mirrorRelation = null;
             m_selection = null;
             ReleaseComputeBuffers();
         }
@@ -490,7 +491,7 @@ public class NormalEditor : MonoBehaviour
                     switch (m_brushMode)
                     {
                         case BrushMode.Equalize:
-                            if (ApplyEqualizeRaycast(ray, m_brushRadius, m_brushPow, m_brushStrength))
+                            if (ApplyEqualizeBrush(ray, m_brushRadius, m_brushPow, m_brushStrength))
                                 used = true;
                             break;
                     }
@@ -612,12 +613,13 @@ public class NormalEditor : MonoBehaviour
 
     }
 
-    public bool ApplyEqualizeRaycast(Ray ray, float radius, float pow, float strength)
+    public bool ApplyEqualizeBrush(Ray ray, float radius, float pow, float strength)
     {
         Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
         if (neEqualizeRaycast(ray.origin, ray.direction,
             m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_normals, ref trans) > 0)
         {
+            ApplyMirroring();
             ApplyNewNormals();
             return true;
         }
@@ -675,14 +677,45 @@ public class NormalEditor : MonoBehaviour
         return ret;
     }
 
-    public void ApplyMirroring(Plane plane)
+    public void ApplyMirroring()
     {
-        //if (m_mirrorRelation == null || m_mirrorRelation.Length != m_normals.Length)
-        //{
-        //    m_mirrorRelation = new int[m_normals.Length];
-        //    neBuildMirroringRelation(m_points, m_points.Length, plane.normal, plane.distance, 0.001f, m_mirrorRelation);
-        //}
-        //neApplyMirroring(m_mirrorRelation, m_normals.Length, m_normals);
+        if (m_mirrorMode == MirrorMode.None) return;
+
+        Vector3 planeNormal = Vector3.up;
+        switch (m_mirrorMode)
+        {
+            case MirrorMode.RightToLeft:
+                planeNormal = Vector3.left;
+                break;
+            case MirrorMode.LeftToRight:
+                planeNormal = Vector3.right;
+                break;
+            case MirrorMode.ForwardToBack:
+                planeNormal = Vector3.back;
+                break;
+            case MirrorMode.BackToForward:
+                planeNormal = Vector3.forward;
+                break;
+            case MirrorMode.UpToDown:
+                planeNormal = Vector3.down;
+                break;
+            case MirrorMode.DownToUp:
+                planeNormal = Vector3.up;
+                break;
+        }
+
+        if (m_mirrorRelation == null)
+        {
+            m_mirrorRelation = new int[m_normals.Length];
+            if (neBuildMirroringRelation(m_points, m_points.Length, planeNormal, 0.001f, m_mirrorRelation) == 0)
+            {
+                Debug.LogWarning("NormalEditor: this mesh seems not symmetrical");
+                m_mirrorRelation = null;
+                m_mirrorMode = MirrorMode.None;
+                return;
+            }
+        }
+        neApplyMirroring(m_mirrorRelation, m_normals.Length, planeNormal, m_normals);
     }
 
 
@@ -707,10 +740,10 @@ public class NormalEditor : MonoBehaviour
         float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
 
     [DllImport("MeshSyncServer")] static extern int neBuildMirroringRelation(
-        Vector3[] vertices, int num_vertices, Vector3 plane_normal, float plane_distance, float epsilon, int[] relation);
+        Vector3[] vertices, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);
 
     [DllImport("MeshSyncServer")] static extern void neApplyMirroring(
-        int[] relation, int num_vertices, Vector3[] normals);
+        int[] relation, int num_vertices, Vector3 plane_normal, Vector3[] normals);
 
 #endif
 }

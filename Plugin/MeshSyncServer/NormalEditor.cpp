@@ -135,21 +135,21 @@ neAPI int neEqualizeRaycast(
 
 neAPI int neBuildMirroringRelation(
     const float3 *vertices, int num_vertices,
-    float3 plane_normal, float plane_distance, float epsilon, int *relation)
+    float3 plane_normal, float epsilon, int *relation)
 {
-    RawVector<float> distances;
-    distances.resize(num_vertices);
+    RawVector<float> distances; distances.resize(num_vertices);
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        distances[vi] = dot(vertices[vi], plane_normal);
+    }
 
     int ret = 0;
     for (int vi = 0; vi < num_vertices; ++vi) {
-        distances[vi] = dot(vertices[vi], plane_normal) - plane_distance;
-    }
-    for (int vi = 0; vi < num_vertices; ++vi) {
         int rel = -1;
-        float d = distances[vi];
-        if (d < 0.0f) {
+        float d1 = distances[vi];
+        if (d1 < 0.0f) {
             for (int i = 0; i < num_vertices; ++i) {
-                if (i != vi && near_equal(d, -distances[i], epsilon)) {
+                float d2 = distances[i];
+                if (d2 > 0.0f && near_equal(vertices[vi], vertices[i] - plane_normal * (d2 * 2.0f))) {
                     rel = i;
                     ++ret;
                     break;
@@ -161,11 +161,12 @@ neAPI int neBuildMirroringRelation(
     return ret;
 }
 
-neAPI void neApplyMirroring(const int *relation, int num_vertices, float3 *normals)
+neAPI void neApplyMirroring(const int *relation, int num_vertices, float3 plane_normal, float3 *normals)
 {
     for (int vi = 0; vi < num_vertices; ++vi) {
         if (relation[vi] != -1) {
-            normals[relation[vi]] = normals[vi];
+            float d = dot(plane_normal, normals[vi]);
+            normals[relation[vi]] = normals[vi] - (plane_normal * (d * 2.0f));
         }
     }
 }
