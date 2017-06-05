@@ -613,6 +613,9 @@ public partial class NormalEditor : MonoBehaviour
 
     public bool BakeToTexture(int width, int height, string path)
     {
+        if (path == null || path.Length == 0)
+            return false;
+
         var rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBHalf);
         rt.Create();
 
