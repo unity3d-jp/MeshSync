@@ -39,6 +39,7 @@ public class NormalEditorEditor : Editor
         m_target.showVertices = EditorGUILayout.Toggle("Show Vertices", m_target.showVertices);
         m_target.showNormals = EditorGUILayout.Toggle("Show Normals", m_target.showNormals);
         m_target.showTangents = EditorGUILayout.Toggle("Show Tangents", m_target.showTangents);
+        m_target.showBinormals = EditorGUILayout.Toggle("Show Binormals", m_target.showBinormals);
 
         EditorGUILayout.Space();
 
@@ -46,13 +47,21 @@ public class NormalEditorEditor : Editor
         m_target.vertexColor2 = EditorGUILayout.ColorField("Vertex Color (Selected)", m_target.vertexColor2);
         m_target.normalColor = EditorGUILayout.ColorField("Normal Color", m_target.normalColor);
         m_target.tangentColor = EditorGUILayout.ColorField("Tangent Color", m_target.tangentColor);
+        m_target.binormalColor = EditorGUILayout.ColorField("Binormal Color", m_target.binormalColor);
 
-        if(EditorGUI.EndChangeCheck())
+        if (EditorGUI.EndChangeCheck())
         {
             SceneView.RepaintAll();
         }
 
         EditorGUILayout.Space();
+
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Reset Normals"))
+            m_target.ResetNormals();
+        if (GUILayout.Button("Recalculate Tangents"))
+            m_target.RecalculateTangents();
+        GUILayout.EndHorizontal();
 
     }
 

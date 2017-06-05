@@ -66,13 +66,16 @@ public class NormalEditor : MonoBehaviour
     bool m_showVertices = true;
     bool m_showNormals = true;
     bool m_showTangents = false;
+    bool m_showBinormals = false;
     float m_vertexSize = 0.01f;
     float m_normalSize = 0.10f;
     float m_tangentSize = 0.075f;
+    float m_binormalSize = 0.06f;
     Color m_vertexColor = new Color(0.15f, 0.15f, 0.4f, 0.75f);
     Color m_vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
     Color m_normalColor = Color.yellow;
     Color m_tangentColor = Color.cyan;
+    Color m_binormalColor = Color.green;
 
     // internal resources
     [SerializeField] Mesh m_meshTarget;
@@ -91,6 +94,7 @@ public class NormalEditor : MonoBehaviour
     Vector3[] m_normals;
     Vector3[] m_baseNormals;
     Vector4[] m_tangents;
+    Vector4[] m_baseTangents;
     int[] m_triangles;
     int[] m_mirrorRelation;
     float[] m_selection;
@@ -134,6 +138,8 @@ public class NormalEditor : MonoBehaviour
             {
                 m_mirrorRelation = null;
                 m_mirrorMode = value;
+                ApplyMirroring();
+                PushUndo();
             }
         }
     }
@@ -168,6 +174,12 @@ public class NormalEditor : MonoBehaviour
         get { return m_showTangents; }
         set { m_showTangents = value; }
     }
+    public bool showBinormals
+    {
+        get { return m_showBinormals; }
+        set { m_showBinormals = value; }
+    }
+
     public float vertexSize
     {
         get { return m_vertexSize; }
@@ -183,6 +195,12 @@ public class NormalEditor : MonoBehaviour
         get { return m_tangentSize; }
         set { m_tangentSize = value; }
     }
+    public float binormalSize
+    {
+        get { return m_binormalSize; }
+        set { m_binormalSize = value; }
+    }
+
     public Color vertexColor
     {
         get { return m_vertexColor; }
@@ -202,6 +220,11 @@ public class NormalEditor : MonoBehaviour
     {
         get { return m_tangentColor; }
         set { m_tangentColor = value; }
+    }
+    public Color binormalColor
+    {
+        get { return m_binormalColor; }
+        set { m_binormalColor = value; }
     }
 
 
@@ -273,6 +296,10 @@ public class NormalEditor : MonoBehaviour
         {
             m_points = m_meshTarget.vertices;
             m_normals = m_meshTarget.normals;
+            m_meshTarget.RecalculateNormals();
+            m_baseNormals = m_meshTarget.normals;
+            m_meshTarget.normals = m_normals;
+
             m_tangents = m_meshTarget.tangents;
             m_triangles = m_meshTarget.triangles;
             m_selection = new float[m_points.Length];
@@ -349,10 +376,12 @@ public class NormalEditor : MonoBehaviour
         m_material.SetFloat("_VertexSize", m_vertexSize);
         m_material.SetFloat("_NormalSize", m_normalSize);
         m_material.SetFloat("_TangentSize", m_tangentSize);
+        m_material.SetFloat("_BinormalSize", m_binormalSize);
         m_material.SetColor("_VertexColor", m_vertexColor);
         m_material.SetColor("_VertexColor2", m_vertexColor2);
         m_material.SetColor("_NormalColor", m_normalColor);
         m_material.SetColor("_TangentColor", m_tangentColor);
+        m_material.SetColor("_BinormalColor", m_binormalColor);
         if (m_cbPoints != null) m_material.SetBuffer("_Points", m_cbPoints);
         if (m_cbNormals != null) m_material.SetBuffer("_Normals", m_cbNormals);
         if (m_cbTangents != null) m_material.SetBuffer("_Tangents", m_cbTangents);
@@ -366,6 +395,8 @@ public class NormalEditor : MonoBehaviour
         m_cmdDraw.Clear();
         if (m_showVertices && m_points != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_material, 0, m_cbArg);
+        if (m_showBinormals && m_tangents != null)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 3, m_cbArg);
         if (m_showTangents && m_tangents != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 2, m_cbArg);
         if (m_showNormals && m_normals != null)
@@ -514,6 +545,10 @@ public class NormalEditor : MonoBehaviour
                 e.Use();
             }
         }
+        else if(type == EventType.KeyDown || type == EventType.KeyUp)
+        {
+
+        }
     }
 
 
@@ -561,7 +596,8 @@ public class NormalEditor : MonoBehaviour
                     m_normals[i] = Vector3.Lerp(m_normals[i], m_clipboard, s).normalized;
                 }
             }
-            ApplyNewNormals();
+            ApplyMirroring();
+            UpdateNormals();
         }
     }
 
@@ -575,7 +611,8 @@ public class NormalEditor : MonoBehaviour
                 m_normals[i] = (m_normals[i] + move * s).normalized;
             }
         }
-        ApplyNewNormals();
+        ApplyMirroring();
+        UpdateNormals();
     }
 
     public void ApplyRotation(Quaternion rot, Vector3 pivot)
@@ -588,7 +625,8 @@ public class NormalEditor : MonoBehaviour
                 m_normals[i] = Vector3.Lerp(m_normals[i], rot * m_normals[i], s).normalized;
             }
         }
-        ApplyNewNormals();
+        ApplyMirroring();
+        UpdateNormals();
     }
 
     public void ApplyScale(Vector3 size, Vector3 pivot, Quaternion rot)
@@ -605,7 +643,8 @@ public class NormalEditor : MonoBehaviour
                 m_normals[i] = (m_normals[i] + dir * s).normalized;
             }
         }
-        ApplyNewNormals();
+        ApplyMirroring();
+        UpdateNormals();
     }
 
     public void ApplyEqualize(float strength)
@@ -620,7 +659,7 @@ public class NormalEditor : MonoBehaviour
             m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_normals, ref trans) > 0)
         {
             ApplyMirroring();
-            ApplyNewNormals();
+            UpdateNormals();
             return true;
         }
         return false;
@@ -636,10 +675,10 @@ public class NormalEditor : MonoBehaviour
     public void OnUndoRedo()
     {
         m_normals = m_history.normals;
-        ApplyNewNormals();
+        UpdateNormals();
     }
 
-    public void ApplyNewNormals(bool upload = true)
+    public void UpdateNormals(bool upload = true)
     {
         if (m_cbNormals != null)
             m_cbNormals.SetData(m_normals);
@@ -650,6 +689,23 @@ public class NormalEditor : MonoBehaviour
             if (upload)
                 m_meshTarget.UploadMeshData(false);
         }
+    }
+
+    public void ResetNormals()
+    {
+        m_meshTarget.RecalculateNormals();
+        m_normals = m_meshTarget.normals;
+        UpdateNormals();
+        PushUndo();
+    }
+
+    public void RecalculateTangents()
+    {
+        m_meshTarget.RecalculateTangents();
+        m_tangents = m_meshTarget.tangents;
+        if(m_cbTangents == null)
+            m_cbTangents = new ComputeBuffer(m_tangents.Length, 16);
+        m_cbTangents.SetData(m_tangents);
     }
 
 

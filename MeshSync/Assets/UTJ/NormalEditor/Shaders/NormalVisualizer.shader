@@ -9,10 +9,15 @@ CGINCLUDE
 float _VertexSize;
 float _NormalSize;
 float _TangentSize;
+float _BinormalSize;
+
 float4 _VertexColor;
 float4 _VertexColor2;
 float4 _NormalColor;
 float4 _TangentColor;
+float4 _BinormalColor;
+int _OnlySelected = 0;
+
 float4x4 _Transform;
 StructuredBuffer<float3> _Points;
 StructuredBuffer<float3> _Normals;
@@ -36,6 +41,7 @@ v2f vert_vertices(appdata v)
 {
     float3 pos = _Points[v.instanceID];
 
+    float s = _Selection[v.instanceID];
     float4 vertex = v.vertex;
     vertex.xyz *= _VertexSize;
     vertex.xyz *= abs(UnityObjectToViewPos(pos).z);
@@ -44,14 +50,15 @@ v2f vert_vertices(appdata v)
 
     v2f o;
     o.vertex = vertex;
-    o.color = lerp(_VertexColor, _VertexColor2, _Selection[v.instanceID]);
+    o.color = lerp(_VertexColor, _VertexColor2, s);
     return o;
 }
 
 v2f vert_normals(appdata v)
 {
+    float s = _OnlySelected ? _Selection[v.instanceID] : 1.0f;
     float4 vertex = v.vertex;
-    vertex.xyz += _Points[v.instanceID] + _Normals[v.instanceID] * v.uv.x * _NormalSize;
+    vertex.xyz += _Points[v.instanceID] + _Normals[v.instanceID] * v.uv.x * _NormalSize * s;
     vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
 
     v2f o;
@@ -63,15 +70,29 @@ v2f vert_normals(appdata v)
 
 v2f vert_tangents(appdata v)
 {
-    UNITY_SETUP_INSTANCE_ID(v);
-
+    float s = _OnlySelected ? _Selection[v.instanceID] : 1.0f;
     float4 vertex = v.vertex;
-    vertex.xyz += _Points[v.instanceID] + _Tangents[v.instanceID].xyz * v.uv.x * _TangentSize;
+    vertex.xyz += _Points[v.instanceID] + _Tangents[v.instanceID].xyz * v.uv.x * _TangentSize * s;
     vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
 
     v2f o;
     o.vertex = vertex;
     o.color = _TangentColor;
+    o.color.a = 1.0 - v.uv.x;
+    return o;
+}
+
+v2f vert_binormals(appdata v)
+{
+    float s = _OnlySelected ? _Selection[v.instanceID] : 1.0f;
+    float4 vertex = v.vertex;
+    float3 binormal = normalize(cross(_Normals[v.instanceID], _Tangents[v.instanceID].xyz) * _Tangents[v.instanceID].w);
+    vertex.xyz += _Points[v.instanceID] + binormal.xyz * v.uv.x * _BinormalSize * s;
+    vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
+
+    v2f o;
+    o.vertex = vertex;
+    o.color = _BinormalColor;
     o.color.a = 1.0 - v.uv.x;
     return o;
 }
@@ -118,5 +139,14 @@ ENDCG
             #pragma target 4.5
             ENDCG
         }
-    }
+
+        // pass 3: visualize binormals
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert_binormals
+            #pragma fragment frag
+            #pragma target 4.5
+            ENDCG
+        }    }
 }
