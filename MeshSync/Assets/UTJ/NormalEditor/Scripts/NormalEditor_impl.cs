@@ -256,8 +256,18 @@ public partial class NormalEditor : MonoBehaviour
 
     public bool SelectRect(Vector2 r1, Vector2 r2)
     {
-        // todo
-        return false;
+        var cam = SceneView.lastActiveSceneView.camera;
+        if (cam == null) { return false; }
+
+        var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * GetComponent<Transform>().localToWorldMatrix;
+        r1.x = r1.x / cam.pixelWidth * 2.0f - 1.0f;
+        r2.x = r2.x / cam.pixelWidth * 2.0f - 1.0f;
+        r1.y = (1.0f - r1.y / cam.pixelHeight) * 2.0f - 1.0f;
+        r2.y = (1.0f - r2.y / cam.pixelHeight) * 2.0f - 1.0f;
+        bool ret = neRectSelection(m_points, m_points.Length, m_selection, ref mvp,
+            new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y)),
+            new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y))) > 0;
+        return ret;
     }
 
 
@@ -412,6 +422,10 @@ public partial class NormalEditor : MonoBehaviour
     [DllImport("MeshSyncServer")] static extern int neHardSelection(
         Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
         float radius, float strength, float[] seletion, ref Matrix4x4 trans);
+
+    [DllImport("MeshSyncServer")] static extern int neRectSelection(
+        Vector3[] vertices, int num_vertices, float[] seletion,
+        ref Matrix4x4 mvp, Vector2 rmin, Vector2 rmax);
 
     [DllImport("MeshSyncServer")] static extern int neEqualize(
         int num_vertices, int num_triangles,

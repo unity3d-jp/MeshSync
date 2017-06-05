@@ -76,6 +76,30 @@ neAPI int neHardSelection(
     return 0;
 }
 
+neAPI int neRectSelection(
+    const float3 *vertices, int num_vertices, float *seletion,
+    const float4x4 *mvp_, float2 rmin, float2 rmax)
+{
+    float4x4 mvp = *mvp_;
+
+    std::atomic_int ret{ 0 };
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        float4 vp = { vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
+        vp = mvp * vp;
+        float2 sp = { vp.x / vp.w ,vp.y / vp.w };
+        if (sp.x >= rmin.x && sp.x <= rmax.x &&
+            sp.y >= rmin.y && sp.y <= rmax.y)
+        {
+            seletion[vi] = 1.0f;
+            ++ret;
+        }
+        else {
+            seletion[vi] = 0.0f;
+        }
+    }
+    return ret;
+}
+
 neAPI int neEqualize(const float *selection, int num_vertices, float strength, float3 *normals)
 {
     RawVector<int> inside;

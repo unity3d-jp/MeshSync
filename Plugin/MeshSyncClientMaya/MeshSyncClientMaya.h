@@ -2,7 +2,7 @@
 #include "MeshSync/MeshSync.h"
 
 #ifdef mscDebug
-    #define mscTrace(...) ::ms::LogImpl("MeshSync trace: " __VA_ARGS__)
+    #define mscTrace(...) ::mu::Print("MeshSync trace: " __VA_ARGS__)
 #else
     #define mscTrace(...)
 #endif
