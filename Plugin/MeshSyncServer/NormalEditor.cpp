@@ -49,7 +49,28 @@ neAPI int neSoftSelection(
     return 0;
 }
 
-neAPI int neEqualize(
+neAPI int neEqualize(const float *selection, int num_vertices, float strength, float3 *normals)
+{
+    RawVector<int> inside;
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        if (selection[vi] > 0.0f) {
+            inside.push_back(vi);
+        }
+    }
+
+    float3 average = float3::zero();
+    for (int vi : inside) {
+        average += normals[vi] * selection[vi];
+    }
+    average = normalize(average);
+    for (int vi : inside) {
+        float s = selection[vi] * strength;
+        normals[vi] = normalize(normals[vi] + average * s);
+    }
+    return (int)inside.size();
+}
+
+neAPI int neEqualizeRaycast(
     const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
     float radius, float pow, float strength, float3 *normals,
     const float4x4 *trans)
@@ -84,24 +105,40 @@ neAPI int neEqualize(
     return 0;
 }
 
-neAPI void neMirroring(
+
+neAPI int neBuildMirroringRelation(
     const float3 *vertices, int num_vertices,
-    float3 plane_normal, float plane_distance, float epsilon, float3 *normals)
+    float3 plane_normal, float plane_distance, float epsilon, int *relation)
 {
     RawVector<float> distances;
     distances.resize(num_vertices);
 
+    int ret = 0;
     for (int vi = 0; vi < num_vertices; ++vi) {
         distances[vi] = dot(vertices[vi], plane_normal) - plane_distance;
     }
     for (int vi = 0; vi < num_vertices; ++vi) {
+        int rel = -1;
         float d = distances[vi];
         if (d < 0.0f) {
             for (int i = 0; i < num_vertices; ++i) {
-                if (near_equal(d, -distances[i], epsilon)) {
-                    normals[vi] = normals[i];
+                if (i != vi && near_equal(d, -distances[i], epsilon)) {
+                    rel = i;
+                    ++ret;
+                    break;
                 }
             }
+        }
+        relation[vi] = rel;
+    }
+    return ret;
+}
+
+neAPI void neApplyMirroring(const int *relation, int num_vertices, float3 *normals)
+{
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        if (relation[vi] != -1) {
+            normals[relation[vi]] = normals[vi];
         }
     }
 }

@@ -9,34 +9,29 @@ public class NormalEditorEditor : Editor
     void OnEnable()
     {
         m_target = target as NormalEditor;
-        Undo.undoRedoPerformed += ApplyNewNormals;
+        Undo.undoRedoPerformed += OnUndoRedo;
     }
 
     void OnSceneGUI()
     {
-        (target as NormalEditor).OnSceneGUI();
+        m_target.OnSceneGUI();
     }
 
     public override void OnInspectorGUI()
     {
-        EditorGUI.BeginChangeCheck();
         DrawDefaultInspector();
-        if (EditorGUI.EndChangeCheck())
-        {
-            ApplyNewNormals();
-        }
     }
 
-    void ApplyNewNormals()
+    void OnUndoRedo()
     {
         if (!Application.isPlaying)
         {
-            m_target.ApplyNewNormals();
+            m_target.OnUndoRedo();
         }
     }
 
     void OnDisable()
     {
-        Undo.undoRedoPerformed -= ApplyNewNormals;
+        Undo.undoRedoPerformed -= OnUndoRedo;
     }
 }
