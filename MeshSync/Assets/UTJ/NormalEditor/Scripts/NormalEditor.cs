@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
@@ -15,20 +16,21 @@ public class NormalEditor : MonoBehaviour
     public enum EditMode
     {
         Select,
-        Translate,
+        Brush,
+        Move,
         Rotate,
         Scale,
-        Equalize,
     }
-    public enum BlushMode
+    public enum BrushMode
     {
+        Equalize,
         Add,
         Scale,
-        Equalize,
     }
     public enum SelectMode
     {
-        Normal,
+        Single,
+        Hard,
         Soft,
         //Lasso,
     }
@@ -43,20 +45,22 @@ public class NormalEditor : MonoBehaviour
         BottomToTop,
     }
 
+    [Serializable]
     class History
     {
+        public int count = 0;
         public Vector3[] normals;
     }
 
 
     // edit options
     EditMode m_editMode = EditMode.Select;
-    SelectMode m_selectMode = SelectMode.Normal;
+    BrushMode m_brushMode = BrushMode.Equalize;
+    SelectMode m_selectMode = SelectMode.Soft;
     MirrorMode m_mirroMode = MirrorMode.None;
     float m_brushRadius = 0.2f;
     float m_brushPow = 0.5f;
     float m_brushStrength = 1.0f;
-    int m_maxUndo = 100;
 
     // display options
     bool m_showVertices = true;
@@ -71,23 +75,10 @@ public class NormalEditor : MonoBehaviour
     Color m_tangentColor = Color.cyan;
 
     // internal resources
-    [HideInInspector, SerializeField] Mesh m_meshTarget;
-    [HideInInspector, SerializeField] Mesh m_meshCube;
-    [HideInInspector, SerializeField] Mesh m_meshLine;
-    [HideInInspector, SerializeField] Material m_material;
-
-    Dictionary<int, History> m_history = new Dictionary<int, History>();
-    [HideInInspector, SerializeField] int m_undoPos;
-    bool m_recordNextOperation = false;
-
-    Vector3[] m_points;
-    Vector3[] m_normals;
-    Vector3[] m_baseNormals;
-    Vector3[] m_undoNormals;
-    Vector4[] m_tangents;
-    int[] m_triangles;
-    int[] m_mirrorRelation;
-    float[] m_selection;
+    [SerializeField] Mesh m_meshTarget;
+    [SerializeField] Mesh m_meshCube;
+    [SerializeField] Mesh m_meshLine;
+    [SerializeField] Material m_material;
 
     ComputeBuffer m_cbArg;
     ComputeBuffer m_cbPoints;
@@ -96,14 +87,24 @@ public class NormalEditor : MonoBehaviour
     ComputeBuffer m_cbSelection;
     CommandBuffer m_cmdDraw;
 
-    MirrorMode m_mirroModePrev = MirrorMode.None;
+    Vector3[] m_points;
+    Vector3[] m_normals;
+    Vector3[] m_baseNormals;
+    Vector4[] m_tangents;
+    int[] m_triangles;
+    int[] m_mirrorRelation;
+    float[] m_selection;
+
     int m_numSelected = 0;
     Vector3 m_selectionPos;
     Vector3 m_selectionNormal;
     Quaternion m_selectionRot;
     Vector3 m_clipboard = Vector3.up;
     Vector3 m_rayPos;
-    Vector3 m_pivot;
+    Vector3 m_pivotPos;
+    Quaternion m_pivotRot;
+
+    [SerializeField] History m_history = new History();
 
 
     public Mesh mesh { get { return m_meshTarget; } }
@@ -113,6 +114,11 @@ public class NormalEditor : MonoBehaviour
     {
         get { return m_editMode; }
         set { m_editMode = value; }
+    }
+    public BrushMode brushMode
+    {
+        get { return m_brushMode; }
+        set { m_brushMode = value; }
     }
     public SelectMode selectMode
     {
@@ -145,11 +151,6 @@ public class NormalEditor : MonoBehaviour
     {
         get { return m_brushStrength; }
         set { m_brushStrength = value; }
-    }
-    public int maxUndo
-    {
-        get { return m_maxUndo; }
-        set { m_maxUndo = Mathf.Max(value, 0); }
     }
 
     public bool showVertices
@@ -274,6 +275,7 @@ public class NormalEditor : MonoBehaviour
             m_tangents = m_meshTarget.tangents;
             m_triangles = m_meshTarget.triangles;
             m_selection = new float[m_points.Length];
+            PushUndo();
         }
 
         if (m_cbPoints == null && m_points != null)
@@ -303,13 +305,6 @@ public class NormalEditor : MonoBehaviour
             m_cbArg = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
             m_cbArg.SetData(new uint[5] { m_meshCube.GetIndexCount(0), (uint)m_points.Length, 0, 0, 0 });
         }
-
-        if (m_cmdDraw == null)
-        {
-            m_cmdDraw = new CommandBuffer();
-            m_cmdDraw.name = "NormalEditor";
-        }
-
     }
 
     void ReleaseComputeBuffers()
@@ -340,6 +335,12 @@ public class NormalEditor : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
+        if(m_material == null || m_meshCube == null || m_meshLine == null)
+        {
+            Debug.LogWarning("NormalEditor: Some resources are missing.\n");
+            return;
+        }
+
         var trans = GetComponent<Transform>();
         var matrix = trans.localToWorldMatrix;
 
@@ -356,12 +357,17 @@ public class NormalEditor : MonoBehaviour
         if (m_cbTangents != null) m_material.SetBuffer("_Tangents", m_cbTangents);
         if (m_cbSelection != null) m_material.SetBuffer("_Selection", m_cbSelection);
 
+        if (m_cmdDraw == null)
+        {
+            m_cmdDraw = new CommandBuffer();
+            m_cmdDraw.name = "NormalEditor";
+        }
         m_cmdDraw.Clear();
-        if (m_showVertices && m_points.Length > 0)
+        if (m_showVertices && m_points != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_material, 0, m_cbArg);
-        if (m_showTangents && m_tangents.Length > 0)
+        if (m_showTangents && m_tangents != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 2, m_cbArg);
-        if (m_showNormals && m_normals.Length > 0)
+        if (m_showNormals && m_normals != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 1, m_cbArg);
         Graphics.ExecuteCommandBuffer(m_cmdDraw);
     }
@@ -373,64 +379,38 @@ public class NormalEditor : MonoBehaviour
             {
                 int numPoints = m_points.Length;
 
-                if (m_editMode == EditMode.Translate)
+                if (m_editMode == EditMode.Move)
                 {
                     EditorGUI.BeginChangeCheck();
-                    var pos = Handles.PositionHandle(m_pivot, m_selectionRot);
+                    var pos = Handles.PositionHandle(m_pivotPos, m_selectionRot);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        var move = pos - m_pivot;
-                        for (int i = 0; i < numPoints; ++i)
-                        {
-                            float s = m_selection[i];
-                            if (s > 0.0f)
-                            {
-                                m_normals[i] = (m_normals[i] + move * s).normalized;
-                            }
-                        }
-                        ApplyNewNormals();
+                        var move = pos - m_pivotPos;
+                        ApplyMove(move);
+                        PushUndo();
                     }
 
                 }
                 else if (m_editMode == EditMode.Rotate)
                 {
                     EditorGUI.BeginChangeCheck();
-                    m_selectionRot = Handles.RotationHandle(m_selectionRot, m_pivot);
+                    var rot = Handles.RotationHandle(m_selectionRot, m_pivotPos);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        for (int i = 0; i < numPoints; ++i)
-                        {
-                            float s = m_selection[i];
-                            if (s > 0.0f)
-                            {
-                                m_normals[i] = (m_normals[i] + m_selectionRot * Vector3.forward * s).normalized;
-                            }
-                        }
-                        m_selectionRot = Quaternion.identity;
-
-                        ApplyNewNormals();
+                        var diff = Quaternion.Inverse(m_selectionRot) * rot;
+                        ApplyRotation(diff, m_pivotPos);
+                        PushUndo();
                     }
                 }
                 else if (m_editMode == EditMode.Scale)
                 {
                     EditorGUI.BeginChangeCheck();
-                    var scale = Handles.ScaleHandle(Vector3.one, m_pivot, m_selectionRot, HandleUtility.GetHandleSize(m_pivot));
+                    var scale = Handles.ScaleHandle(Vector3.one, m_pivotPos, m_selectionRot, HandleUtility.GetHandleSize(m_pivotPos));
                     if (EditorGUI.EndChangeCheck())
                     {
-                        //scale = m_selectionRot * scale;
-                        for (int i = 0; i < numPoints; ++i)
-                        {
-                            float s = m_selection[i];
-                            if (s > 0.0f)
-                            {
-                                var dir = (m_points[i] - m_pivot).normalized;
-                                dir.x *= scale.x;
-                                dir.y *= scale.y;
-                                dir.z *= scale.z;
-                                m_normals[i] = (m_normals[i] + dir * s).normalized;
-                            }
-                        }
-                        ApplyNewNormals();
+                        var size = scale - Vector3.one;
+                        ApplyScale(size, m_pivotPos, m_pivotRot);
+                        PushUndo();
                     }
                 }
             }
@@ -444,21 +424,16 @@ public class NormalEditor : MonoBehaviour
         var type = e.GetTypeForControl(id);
         if (type == EventType.MouseDown || type == EventType.MouseDrag || type == EventType.MouseUp)
         {
-            if (type == EventType.MouseDown)
-                m_undoNormals = (Vector3[])m_normals.Clone();
-            if (type == EventType.MouseUp)
-                m_recordNextOperation = true;
-
             bool used = false;
             if (e.button == 0)
             {
                 var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-                if (m_editMode != EditMode.Equalize)
+                if (m_editMode != EditMode.Brush)
                 {
                     if (!e.shift)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
-                    if (m_selectMode == SelectMode.Normal)
+                    if (m_selectMode == SelectMode.Single)
                     {
                         int sel = GetMouseVertex(e);
                         if (sel != -1)
@@ -470,6 +445,13 @@ public class NormalEditor : MonoBehaviour
                     else if (m_selectMode == SelectMode.Soft)
                     {
                         if(SoftSelection(ray, m_brushRadius, m_brushPow, m_brushStrength))
+                        {
+                            used = true;
+                        }
+                    }
+                    else if(m_selectMode == SelectMode.Hard)
+                    {
+                        if (HardSelection(ray, m_brushRadius, m_brushStrength))
                         {
                             used = true;
                         }
@@ -497,35 +479,36 @@ public class NormalEditor : MonoBehaviour
                         m_selectionNormal /= st;
                         m_selectionNormal = m_selectionNormal.normalized;
                         m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
-                        m_pivot = m_selectionPos;
+                        m_pivotPos = m_selectionPos;
+                        m_pivotRot = m_selectionRot;
                     }
 
                     m_cbSelection.SetData(m_selection);
                 }
-                else if (m_editMode == EditMode.Equalize)
+                else if (m_editMode == EditMode.Brush)
                 {
-                    if (ApplyEqualizeRaycast(ray, m_brushRadius, m_brushPow, m_brushStrength))
+                    switch (m_brushMode)
                     {
-                        used = true;
+                        case BrushMode.Equalize:
+                            if (ApplyEqualizeRaycast(ray, m_brushRadius, m_brushPow, m_brushStrength))
+                                used = true;
+                            break;
                     }
+                    if (type == EventType.MouseUp && used)
+                        PushUndo();
                 }
             }
-            m_recordNextOperation = false;
 
             if (used)
             {
                 if (type == EventType.MouseDown)
                 {
                     GUIUtility.hotControl = id;
-
                 }
                 else if (type == EventType.MouseUp)
                 {
                     if (GUIUtility.hotControl == id && e.button == 0)
-                    {
                         GUIUtility.hotControl = 0;
-                        e.Use();
-                    }
                 }
                 e.Use();
             }
@@ -581,19 +564,47 @@ public class NormalEditor : MonoBehaviour
         }
     }
 
-    public void ApplyTranslation(Vector3 move)
+    public void ApplyMove(Vector3 move)
     {
-
+        for (int i = 0; i < m_selection.Length; ++i)
+        {
+            float s = m_selection[i];
+            if (s > 0.0f)
+            {
+                m_normals[i] = (m_normals[i] + move * s).normalized;
+            }
+        }
+        ApplyNewNormals();
     }
 
     public void ApplyRotation(Quaternion rot, Vector3 pivot)
     {
-
+        for (int i = 0; i < m_selection.Length; ++i)
+        {
+            float s = m_selection[i];
+            if (s > 0.0f)
+            {
+                m_normals[i] = Vector3.Lerp(m_normals[i], rot * m_normals[i], s).normalized;
+            }
+        }
+        ApplyNewNormals();
     }
 
-    public void ApplyScale(Vector3 scale, Vector3 pivot, Quaternion rot)
+    public void ApplyScale(Vector3 size, Vector3 pivot, Quaternion rot)
     {
-
+        for (int i = 0; i < m_selection.Length; ++i)
+        {
+            float s = m_selection[i];
+            if (s > 0.0f)
+            {
+                var dir = (m_points[i] - pivot).normalized;
+                dir.x *= size.x;
+                dir.y *= size.y;
+                dir.z *= size.z;
+                m_normals[i] = (m_normals[i] + dir * s).normalized;
+            }
+        }
+        ApplyNewNormals();
     }
 
     public void ApplyEqualize(float strength)
@@ -613,38 +624,20 @@ public class NormalEditor : MonoBehaviour
         return false;
     }
 
-    public void ApplyNewNormals(bool upload = true)
+    public void PushUndo()
     {
-        if (m_recordNextOperation)
-        {
-            m_recordNextOperation = false;
-
-            Undo.RecordObject(this, "NormalEditor");
-            m_history[m_undoPos++] = new History { normals = m_undoNormals };
-            if (m_maxUndo >= 0 && m_history.Count > m_maxUndo)
-            {
-                foreach (var k in m_history.Keys)
-                {
-                    m_history.Remove(k);
-                    if (m_history.Count <= m_maxUndo)
-                        break;
-                }
-            }
-        }
-
-        ApplyNewNormalsInternal(upload);
+        Undo.RecordObject(this, "NormalEditor");
+        m_history.count++;
+        m_history.normals = (Vector3[])m_normals.Clone();
     }
 
     public void OnUndoRedo()
     {
-        if (m_history.ContainsKey(m_undoPos))
-        {
-            m_normals = m_history[m_undoPos].normals;
-            ApplyNewNormalsInternal();
-        }
+        m_normals = m_history.normals;
+        ApplyNewNormals();
     }
 
-    void ApplyNewNormalsInternal(bool upload = true)
+    public void ApplyNewNormals(bool upload = true)
     {
         if (m_cbNormals != null)
             m_cbNormals.SetData(m_normals);
@@ -674,6 +667,14 @@ public class NormalEditor : MonoBehaviour
         return ret;
     }
 
+    public bool HardSelection(Ray ray, float radius, float strength)
+    {
+        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+        bool ret = neHardSelection(ray.origin, ray.direction,
+            m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, m_selection, ref trans) > 0;
+        return ret;
+    }
+
     public void ApplyMirroring(Plane plane)
     {
         //if (m_mirrorRelation == null || m_mirrorRelation.Length != m_normals.Length)
@@ -692,6 +693,10 @@ public class NormalEditor : MonoBehaviour
     [DllImport("MeshSyncServer")] static extern int neSoftSelection(
         Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
         float radius, float strength, float pow, float[] seletion, ref Matrix4x4 trans);
+    
+    [DllImport("MeshSyncServer")] static extern int neHardSelection(
+        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
+        float radius, float strength, float[] seletion, ref Matrix4x4 trans);
 
     [DllImport("MeshSyncServer")] static extern int neEqualize(
         int num_vertices, int num_triangles,

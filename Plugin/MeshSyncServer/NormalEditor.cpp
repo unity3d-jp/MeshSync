@@ -49,6 +49,33 @@ neAPI int neSoftSelection(
     return 0;
 }
 
+neAPI int neHardSelection(
+    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
+    float radius, float strength, float *seletion,
+    const float4x4 *trans)
+{
+    float4x4 itrans = invert(*trans);
+    float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
+    float3 rdir = normalize((const float3&)(itrans * float4{ dir.x, dir.y, dir.z, 0.0f }));
+
+    int ti;
+    float distance;
+    if (RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, ti, distance)) {
+        int num = 0;
+        float3 hpos = rpos + rdir * distance;
+        float rq = radius * radius;
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            float lensq = length_sq(vertices[vi] - hpos);
+            if (lensq <= rq) {
+                seletion[vi] = std::min<float>(seletion[vi] + strength, 1.0f);
+                ++num;
+            }
+        }
+        return num;
+    }
+    return 0;
+}
+
 neAPI int neEqualize(const float *selection, int num_vertices, float strength, float3 *normals)
 {
     RawVector<int> inside;

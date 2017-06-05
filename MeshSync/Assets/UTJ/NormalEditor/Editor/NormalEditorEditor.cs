@@ -24,6 +24,7 @@ public class NormalEditorEditor : Editor
         EditorGUI.BeginChangeCheck();
 
         m_target.editMode = (NormalEditor.EditMode)EditorGUILayout.EnumPopup("Edit Mode", m_target.editMode);
+        m_target.brushMode = (NormalEditor.BrushMode)EditorGUILayout.EnumPopup("Brush Mode", m_target.brushMode);
         m_target.selectMode = (NormalEditor.SelectMode)EditorGUILayout.EnumPopup("Select Mode", m_target.selectMode);
         m_target.mirroMode = (NormalEditor.MirrorMode)EditorGUILayout.EnumPopup("Mirror Mode", m_target.mirroMode);
 
@@ -53,7 +54,6 @@ public class NormalEditorEditor : Editor
 
         EditorGUILayout.Space();
 
-        m_target.maxUndo = EditorGUILayout.IntField("Max Undo", m_target.maxUndo);
     }
 
     void OnUndoRedo()
@@ -61,6 +61,7 @@ public class NormalEditorEditor : Editor
         if (!Application.isPlaying)
         {
             m_target.OnUndoRedo();
+            SceneView.RepaintAll();
         }
     }
 
