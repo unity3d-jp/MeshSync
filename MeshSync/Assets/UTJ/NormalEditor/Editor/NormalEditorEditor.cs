@@ -6,10 +6,15 @@ using System.Collections;
 public class NormalEditorEditor : Editor
 {
     NormalEditor m_target;
+    AnimationCurve m_brushStrength = new AnimationCurve();
+
     void OnEnable()
     {
         m_target = target as NormalEditor;
-        Undo.undoRedoPerformed += OnUndoRedo;
+    }
+
+    void OnDisable()
+    {
     }
 
     void OnSceneGUI()
@@ -19,7 +24,7 @@ public class NormalEditorEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        DrawDefaultInspector();
+        //DrawDefaultInspector();
 
         EditorGUI.BeginChangeCheck();
 
@@ -30,9 +35,10 @@ public class NormalEditorEditor : Editor
 
         EditorGUILayout.Space();
 
-        m_target.brushRadius = EditorGUILayout.FloatField("Brush Radius", m_target.brushRadius);
-        m_target.brushPow = EditorGUILayout.FloatField("Brush Pow", m_target.brushPow);
-        m_target.brushStrength = EditorGUILayout.FloatField("Brush Strength", m_target.brushStrength);
+        m_target.brushRadius = EditorGUILayout.Slider("Brush Radius", m_target.brushRadius, 0.01f, 1.0f);
+        m_target.brushStrength = EditorGUILayout.Slider("Brush Strength", m_target.brushStrength, 0.01f, 1.0f);
+        m_target.brushPow = EditorGUILayout.Slider("Brush Pow", m_target.brushPow, 0.01f, 1.0f);
+        EditorGUILayout.CurveField(m_brushStrength);
 
         EditorGUILayout.Space();
 
@@ -49,10 +55,20 @@ public class NormalEditorEditor : Editor
         m_target.tangentColor = EditorGUILayout.ColorField("Tangent Color", m_target.tangentColor);
         m_target.binormalColor = EditorGUILayout.ColorField("Binormal Color", m_target.binormalColor);
 
-        if (EditorGUI.EndChangeCheck())
+        EditorGUILayout.Space();
+
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Select All"))
         {
-            SceneView.RepaintAll();
+            if (m_target.SelectAll())
+                m_target.UpdateSelection();
         }
+        if (GUILayout.Button("Select None"))
+        {
+            if (m_target.SelectNone())
+                m_target.UpdateSelection();
+        }
+        GUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
 
@@ -63,19 +79,16 @@ public class NormalEditorEditor : Editor
             m_target.RecalculateTangents();
         GUILayout.EndHorizontal();
 
-    }
+        EditorGUILayout.Space();
 
-    void OnUndoRedo()
-    {
-        if (!Application.isPlaying)
+        if (GUILayout.Button("Export .obj file"))
         {
-            m_target.OnUndoRedo();
-            SceneView.RepaintAll();
+            string path = EditorUtility.SaveFilePanel("Export .obj file", "", m_target.name, "obj");
+            if(path.Length > 0)
+                ObjExporter.DoExport(m_target.gameObject, true, path);
         }
-    }
 
-    void OnDisable()
-    {
-        Undo.undoRedoPerformed -= OnUndoRedo;
+        if (EditorGUI.EndChangeCheck())
+            SceneView.RepaintAll();
     }
 }

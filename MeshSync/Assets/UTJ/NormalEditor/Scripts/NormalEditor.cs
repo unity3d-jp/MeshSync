@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
@@ -32,6 +32,7 @@ public class NormalEditor : MonoBehaviour
         Single,
         Hard,
         Soft,
+        Rect,
         //Lasso,
     }
     public enum MirrorMode
@@ -107,6 +108,8 @@ public class NormalEditor : MonoBehaviour
     Vector3 m_rayPos;
     Vector3 m_pivotPos;
     Quaternion m_pivotRot;
+    Vector2 m_dragStartPoint;
+    Vector2 m_dragEndPoint;
 
     [SerializeField] History m_history = new History();
 
@@ -348,60 +351,19 @@ public class NormalEditor : MonoBehaviour
 
     void OnEnable()
     {
+        Undo.undoRedoPerformed += OnUndoRedo;
         SetupResources();
     }
 
     void OnDisable()
     {
         ReleaseComputeBuffers();
+        Undo.undoRedoPerformed -= OnUndoRedo;
     }
 
     void Reset()
     {
         SetupResources();
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        if(m_material == null || m_meshCube == null || m_meshLine == null)
-        {
-            Debug.LogWarning("NormalEditor: Some resources are missing.\n");
-            return;
-        }
-
-        var trans = GetComponent<Transform>();
-        var matrix = trans.localToWorldMatrix;
-
-        m_material.SetMatrix("_Transform", matrix);
-        m_material.SetFloat("_VertexSize", m_vertexSize);
-        m_material.SetFloat("_NormalSize", m_normalSize);
-        m_material.SetFloat("_TangentSize", m_tangentSize);
-        m_material.SetFloat("_BinormalSize", m_binormalSize);
-        m_material.SetColor("_VertexColor", m_vertexColor);
-        m_material.SetColor("_VertexColor2", m_vertexColor2);
-        m_material.SetColor("_NormalColor", m_normalColor);
-        m_material.SetColor("_TangentColor", m_tangentColor);
-        m_material.SetColor("_BinormalColor", m_binormalColor);
-        if (m_cbPoints != null) m_material.SetBuffer("_Points", m_cbPoints);
-        if (m_cbNormals != null) m_material.SetBuffer("_Normals", m_cbNormals);
-        if (m_cbTangents != null) m_material.SetBuffer("_Tangents", m_cbTangents);
-        if (m_cbSelection != null) m_material.SetBuffer("_Selection", m_cbSelection);
-
-        if (m_cmdDraw == null)
-        {
-            m_cmdDraw = new CommandBuffer();
-            m_cmdDraw.name = "NormalEditor";
-        }
-        m_cmdDraw.Clear();
-        if (m_showVertices && m_points != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_material, 0, m_cbArg);
-        if (m_showBinormals && m_tangents != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 3, m_cbArg);
-        if (m_showTangents && m_tangents != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 2, m_cbArg);
-        if (m_showNormals && m_normals != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 1, m_cbArg);
-        Graphics.ExecuteCommandBuffer(m_cmdDraw);
     }
 
     public void OnSceneGUI()
@@ -474,6 +436,13 @@ public class NormalEditor : MonoBehaviour
                             used = true;
                         }
                     }
+                    else if (m_selectMode == SelectMode.Hard)
+                    {
+                        if (HardSelection(ray, m_brushRadius, m_brushStrength))
+                        {
+                            used = true;
+                        }
+                    }
                     else if (m_selectMode == SelectMode.Soft)
                     {
                         if(SoftSelection(ray, m_brushRadius, m_brushPow, m_brushStrength))
@@ -481,41 +450,26 @@ public class NormalEditor : MonoBehaviour
                             used = true;
                         }
                     }
-                    else if(m_selectMode == SelectMode.Hard)
+                    else if (m_selectMode == SelectMode.Rect)
                     {
-                        if (HardSelection(ray, m_brushRadius, m_brushStrength))
+                        if (type == EventType.MouseDown)
                         {
+                            m_dragStartPoint = m_dragEndPoint = e.mousePosition;
+                            used = true;
+                        }
+                        else if (type == EventType.MouseDrag || type == EventType.MouseUp)
+                        {
+                            m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
+                            if (type == EventType.MouseUp)
+                            {
+                                RectSelection(m_dragStartPoint, m_dragEndPoint);
+                                m_dragStartPoint = m_dragEndPoint = Vector2.zero;
+                            }
                             used = true;
                         }
                     }
 
-                    float st = 0.0f;
-                    m_numSelected = 0;
-                    m_selectionPos = Vector3.zero;
-                    m_selectionNormal = Vector3.zero;
-                    int numPoints = m_points.Length;
-                    for (int i = 0; i < numPoints; ++i)
-                    {
-                        float s = m_selection[i];
-                        if (s > 0.0f)
-                        {
-                            m_selectionPos += m_points[i] * s;
-                            m_selectionNormal += m_normals[i] * s;
-                            ++m_numSelected;
-                            st += s;
-                        }
-                    }
-                    if (m_numSelected > 0)
-                    {
-                        m_selectionPos /= st;
-                        m_selectionNormal /= st;
-                        m_selectionNormal = m_selectionNormal.normalized;
-                        m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
-                        m_pivotPos = m_selectionPos;
-                        m_pivotRot = m_selectionRot;
-                    }
-
-                    m_cbSelection.SetData(m_selection);
+                    UpdateSelection();
                 }
                 else if (m_editMode == EditMode.Brush)
                 {
@@ -549,6 +503,10 @@ public class NormalEditor : MonoBehaviour
         {
 
         }
+
+
+        if (Event.current.type == EventType.Repaint)
+            OnRepaint();
     }
 
 
@@ -674,8 +632,11 @@ public class NormalEditor : MonoBehaviour
 
     public void OnUndoRedo()
     {
-        m_normals = m_history.normals;
-        UpdateNormals();
+        if(m_history.normals.Length > 0)
+        {
+            m_normals = m_history.normals;
+            UpdateNormals();
+        }
     }
 
     public void UpdateNormals(bool upload = true)
@@ -689,6 +650,37 @@ public class NormalEditor : MonoBehaviour
             if (upload)
                 m_meshTarget.UploadMeshData(false);
         }
+    }
+
+    public void UpdateSelection()
+    {
+        float st = 0.0f;
+        m_numSelected = 0;
+        m_selectionPos = Vector3.zero;
+        m_selectionNormal = Vector3.zero;
+        int numPoints = m_points.Length;
+        for (int i = 0; i < numPoints; ++i)
+        {
+            float s = m_selection[i];
+            if (s > 0.0f)
+            {
+                m_selectionPos += m_points[i] * s;
+                m_selectionNormal += m_normals[i] * s;
+                ++m_numSelected;
+                st += s;
+            }
+        }
+        if (m_numSelected > 0)
+        {
+            m_selectionPos /= st;
+            m_selectionNormal /= st;
+            m_selectionNormal = m_selectionNormal.normalized;
+            m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
+            m_pivotPos = m_selectionPos;
+            m_pivotRot = m_selectionRot;
+        }
+
+        m_cbSelection.SetData(m_selection);
     }
 
     public void ResetNormals()
@@ -717,6 +709,19 @@ public class NormalEditor : MonoBehaviour
         return ret;
     }
 
+    public bool SelectAll()
+    {
+        for (int i = 0; i < m_selection.Length; ++i)
+            m_selection[i] = 1.0f;
+        return m_selection.Length > 0;
+    }
+
+    public bool SelectNone()
+    {
+        System.Array.Clear(m_selection, 0, m_selection.Length);
+        return m_selection.Length > 0;
+    }
+
     public bool SoftSelection(Ray ray, float radius, float pow, float strength)
     {
         Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
@@ -731,6 +736,11 @@ public class NormalEditor : MonoBehaviour
         bool ret = neHardSelection(ray.origin, ray.direction,
             m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, m_selection, ref trans) > 0;
         return ret;
+    }
+
+    public bool RectSelection(Vector2 r1, Vector2 r2)
+    {
+        return false;
     }
 
     public void ApplyMirroring()
@@ -774,6 +784,78 @@ public class NormalEditor : MonoBehaviour
         neApplyMirroring(m_mirrorRelation, m_normals.Length, planeNormal, m_normals);
     }
 
+
+    void OnDrawGizmosSelected()
+    {
+        if (m_material == null || m_meshCube == null || m_meshLine == null)
+        {
+            Debug.LogWarning("NormalEditor: Some resources are missing.\n");
+            return;
+        }
+
+        var trans = GetComponent<Transform>();
+        var matrix = trans.localToWorldMatrix;
+
+        m_material.SetMatrix("_Transform", matrix);
+        m_material.SetFloat("_VertexSize", m_vertexSize);
+        m_material.SetFloat("_NormalSize", m_normalSize);
+        m_material.SetFloat("_TangentSize", m_tangentSize);
+        m_material.SetFloat("_BinormalSize", m_binormalSize);
+        m_material.SetColor("_VertexColor", m_vertexColor);
+        m_material.SetColor("_VertexColor2", m_vertexColor2);
+        m_material.SetColor("_NormalColor", m_normalColor);
+        m_material.SetColor("_TangentColor", m_tangentColor);
+        m_material.SetColor("_BinormalColor", m_binormalColor);
+        if (m_cbPoints != null) m_material.SetBuffer("_Points", m_cbPoints);
+        if (m_cbNormals != null) m_material.SetBuffer("_Normals", m_cbNormals);
+        if (m_cbTangents != null) m_material.SetBuffer("_Tangents", m_cbTangents);
+        if (m_cbSelection != null) m_material.SetBuffer("_Selection", m_cbSelection);
+
+        if (m_cmdDraw == null)
+        {
+            m_cmdDraw = new CommandBuffer();
+            m_cmdDraw.name = "NormalEditor";
+        }
+        m_cmdDraw.Clear();
+        if (m_showVertices && m_points != null)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_material, 0, m_cbArg);
+        if (m_showBinormals && m_tangents != null)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 3, m_cbArg);
+        if (m_showTangents && m_tangents != null)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 2, m_cbArg);
+        if (m_showNormals && m_normals != null)
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 1, m_cbArg);
+        Graphics.ExecuteCommandBuffer(m_cmdDraw);
+    }
+
+
+    static Rect FromToRect(Vector2 start, Vector2 end)
+    {
+        Rect r = new Rect(start.x, start.y, end.x - start.x, end.y - start.y);
+        if (r.width < 0)
+        {
+            r.x += r.width;
+            r.width = -r.width;
+        }
+        if (r.height < 0)
+        {
+            r.y += r.height;
+            r.height = -r.height;
+        }
+        return r;
+    }
+
+    void OnRepaint()
+    {
+        if (m_selectMode == SelectMode.Rect)
+        {
+            var selectionRect = typeof(EditorStyles).GetProperty("selectionRect", BindingFlags.NonPublic | BindingFlags.Static);
+            var style = (GUIStyle)selectionRect.GetValue(null, null);
+            Handles.BeginGUI();
+            style.Draw(FromToRect(m_dragStartPoint, m_dragEndPoint), GUIContent.none, false, false, false, false);
+            Handles.EndGUI();
+        }
+    }
 
     [DllImport("MeshSyncServer")] static extern int neRaycast(
         Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
