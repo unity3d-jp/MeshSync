@@ -50,34 +50,34 @@ public class NormalEditor : MonoBehaviour
 
 
     // edit options
-    [NonSerialized] EditMode m_editMode = EditMode.Select;
-    [SerializeField] SelectMode m_selectMode = SelectMode.Normal;
-    [SerializeField] MirrorMode m_mirroMode = MirrorMode.None;
-    [SerializeField] float m_softRadius = 0.2f;
-    [SerializeField] float m_softPow = 0.5f;
-    [SerializeField] float m_softStrength = 1.0f;
-    [SerializeField] int m_maxUndo = 100;
+    EditMode m_editMode = EditMode.Select;
+    SelectMode m_selectMode = SelectMode.Normal;
+    MirrorMode m_mirroMode = MirrorMode.None;
+    float m_brushRadius = 0.2f;
+    float m_brushPow = 0.5f;
+    float m_brushStrength = 1.0f;
+    int m_maxUndo = 100;
 
     // display options
-    [SerializeField] bool m_showVertices = true;
-    [SerializeField] bool m_showNormals = true;
-    [SerializeField] bool m_showTangents = false;
-    [SerializeField] float m_vertexSize = 0.01f;
-    [SerializeField] float m_normalSize = 0.10f;
-    [SerializeField] float m_tangentSize = 0.075f;
-    [SerializeField] Color m_vertexColor = new Color(0.15f, 0.15f, 0.4f, 0.75f);
-    [SerializeField] Color m_vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
-    [SerializeField] Color m_normalColor = Color.yellow;
-    [SerializeField] Color m_tangentColor = Color.cyan;
+    bool m_showVertices = true;
+    bool m_showNormals = true;
+    bool m_showTangents = false;
+    float m_vertexSize = 0.01f;
+    float m_normalSize = 0.10f;
+    float m_tangentSize = 0.075f;
+    Color m_vertexColor = new Color(0.15f, 0.15f, 0.4f, 0.75f);
+    Color m_vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
+    Color m_normalColor = Color.yellow;
+    Color m_tangentColor = Color.cyan;
 
     // internal resources
-    [SerializeField] Mesh m_meshTarget;
-    [SerializeField] Mesh m_meshCube;
-    [SerializeField] Mesh m_meshLine;
-    [SerializeField] Material m_material;
+    [HideInInspector, SerializeField] Mesh m_meshTarget;
+    [HideInInspector, SerializeField] Mesh m_meshCube;
+    [HideInInspector, SerializeField] Mesh m_meshLine;
+    [HideInInspector, SerializeField] Material m_material;
 
-    List<History> m_history = new List<History>();
-    [SerializeField] int m_undoPos;
+    Dictionary<int, History> m_history = new Dictionary<int, History>();
+    [HideInInspector, SerializeField] int m_undoPos;
     bool m_recordNextOperation = false;
 
     Vector3[] m_points;
@@ -107,6 +107,103 @@ public class NormalEditor : MonoBehaviour
 
 
     public Mesh mesh { get { return m_meshTarget; } }
+
+
+    public EditMode editMode
+    {
+        get { return m_editMode; }
+        set { m_editMode = value; }
+    }
+    public SelectMode selectMode
+    {
+        get { return m_selectMode; }
+        set { m_selectMode = value; }
+    }
+
+    public MirrorMode mirroMode
+    {
+        get { return m_mirroMode; }
+        set {
+            if(value != m_mirroMode)
+            {
+                m_mirrorRelation = null;
+                m_mirroMode = value;
+            }
+        }
+    }
+    public float brushRadius
+    {
+        get { return m_brushRadius; }
+        set { m_brushRadius = value; }
+    }
+    public float brushPow
+    {
+        get { return m_brushPow; }
+        set { m_brushPow = value; }
+    }
+    public float brushStrength
+    {
+        get { return m_brushStrength; }
+        set { m_brushStrength = value; }
+    }
+    public int maxUndo
+    {
+        get { return m_maxUndo; }
+        set { m_maxUndo = Mathf.Max(value, 0); }
+    }
+
+    public bool showVertices
+    {
+        get { return m_showVertices; }
+        set { m_showVertices = value; }
+    }
+    public bool showNormals
+    {
+        get { return m_showNormals; }
+        set { m_showNormals = value; }
+    }
+    public bool showTangents
+    {
+        get { return m_showTangents; }
+        set { m_showTangents = value; }
+    }
+    public float vertexSize
+    {
+        get { return m_vertexSize; }
+        set { m_vertexSize = value; }
+    }
+    public float normalSize
+    {
+        get { return m_normalSize; }
+        set { m_normalSize = value; }
+    }
+    public float tangentSize
+    {
+        get { return m_tangentSize; }
+        set { m_tangentSize = value; }
+    }
+    public Color vertexColor
+    {
+        get { return m_vertexColor; }
+        set { m_vertexColor = value; }
+    }
+    public Color vertexColor2
+    {
+        get { return m_vertexColor2; }
+        set { m_vertexColor2 = value; }
+    }
+    public Color normalColor
+    {
+        get { return m_normalColor; }
+        set { m_normalColor = value; }
+    }
+    public Color tangentColor
+    {
+        get { return m_tangentColor; }
+        set { m_tangentColor = value; }
+    }
+
+
 
 
     void SetupResources()
@@ -179,29 +276,29 @@ public class NormalEditor : MonoBehaviour
             m_selection = new float[m_points.Length];
         }
 
-        if (m_cbPoints == null && m_points.Length > 0)
+        if (m_cbPoints == null && m_points != null)
         {
             m_cbPoints = new ComputeBuffer(m_points.Length, 12);
             m_cbPoints.SetData(m_points);
         }
-        if (m_cbNormals == null && m_normals.Length > 0)
+        if (m_cbNormals == null && m_normals != null)
         {
             m_cbNormals = new ComputeBuffer(m_normals.Length, 12);
             m_cbNormals.SetData(m_normals);
         }
-        if (m_cbTangents == null && m_tangents.Length > 0)
+        if (m_cbTangents == null && m_tangents != null)
         {
             m_cbTangents = new ComputeBuffer(m_tangents.Length, 16);
             m_cbTangents.SetData(m_tangents);
         }
-        if (m_cbSelection == null && m_selection.Length > 0)
+        if (m_cbSelection == null && m_selection != null)
         {
             m_cbSelection = new ComputeBuffer(m_selection.Length, 4);
             m_cbSelection.SetData(m_selection);
         }
 
 
-        if (m_cbArg == null && m_points.Length > 0)
+        if (m_cbArg == null && m_points != null)
         {
             m_cbArg = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
             m_cbArg.SetData(new uint[5] { m_meshCube.GetIndexCount(0), (uint)m_points.Length, 0, 0, 0 });
@@ -372,7 +469,7 @@ public class NormalEditor : MonoBehaviour
                     }
                     else if (m_selectMode == SelectMode.Soft)
                     {
-                        if(SoftSelection(ray, m_softRadius, m_softPow, m_softStrength))
+                        if(SoftSelection(ray, m_brushRadius, m_brushPow, m_brushStrength))
                         {
                             used = true;
                         }
@@ -407,7 +504,7 @@ public class NormalEditor : MonoBehaviour
                 }
                 else if (m_editMode == EditMode.Equalize)
                 {
-                    if (ApplyEqualizeRaycast(ray, m_softRadius, m_softPow, m_softStrength))
+                    if (ApplyEqualizeRaycast(ray, m_brushRadius, m_brushPow, m_brushStrength))
                     {
                         used = true;
                     }
@@ -523,10 +620,16 @@ public class NormalEditor : MonoBehaviour
             m_recordNextOperation = false;
 
             Undo.RecordObject(this, "NormalEditor");
-            m_undoPos = m_history.Count;
-            m_history.Add(new History { normals = m_undoNormals });
-            while (m_history.Count > 0 && m_history.Count > m_maxUndo)
-                m_history.RemoveAt(0);
+            m_history[m_undoPos++] = new History { normals = m_undoNormals };
+            if (m_maxUndo >= 0 && m_history.Count > m_maxUndo)
+            {
+                foreach (var k in m_history.Keys)
+                {
+                    m_history.Remove(k);
+                    if (m_history.Count <= m_maxUndo)
+                        break;
+                }
+            }
         }
 
         ApplyNewNormalsInternal(upload);
@@ -534,7 +637,7 @@ public class NormalEditor : MonoBehaviour
 
     public void OnUndoRedo()
     {
-        if (m_undoPos >= 0 && m_undoPos < m_history.Count)
+        if (m_history.ContainsKey(m_undoPos))
         {
             m_normals = m_history[m_undoPos].normals;
             ApplyNewNormalsInternal();
@@ -543,10 +646,15 @@ public class NormalEditor : MonoBehaviour
 
     void ApplyNewNormalsInternal(bool upload = true)
     {
-        m_meshTarget.normals = m_normals;
-        m_cbNormals.SetData(m_normals);
-        if (upload)
-            m_meshTarget.UploadMeshData(false);
+        if (m_cbNormals != null)
+            m_cbNormals.SetData(m_normals);
+
+        if (m_meshTarget != null)
+        {
+            m_meshTarget.normals = m_normals;
+            if (upload)
+                m_meshTarget.UploadMeshData(false);
+        }
     }
 
 
