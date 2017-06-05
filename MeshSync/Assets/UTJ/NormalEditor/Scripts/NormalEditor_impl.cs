@@ -182,7 +182,9 @@ public partial class NormalEditor : MonoBehaviour
             m_selectionNormal /= st;
             m_selectionNormal = m_selectionNormal.normalized;
             m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
-            m_pivotPos = m_selectionPos;
+
+            var trans = GetComponent<Transform>();
+            m_pivotPos = m_selectionPos + trans.position;
             m_pivotRot = m_selectionRot;
         }
 

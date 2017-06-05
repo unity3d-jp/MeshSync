@@ -20,9 +20,6 @@ struct v2f
 StructuredBuffer<float3> _BaseNormals;
 StructuredBuffer<float4> _BaseTangents;
 
-sampler2D _NormalMap;
-RWStructuredBuffer<float3> _DstNormals;
-
 float3 ToBaseTangentSpace(uint vid, float3 n)
 {
     float3 base_normal = _BaseNormals[vid];
@@ -59,17 +56,6 @@ v2f vert_uv(appdata v)
     return o;
 }
 
-v2f vert_write(appdata v)
-{
-    float3 n = tex2Dlod(_NormalMap, float4(v.uv.xy, 0, 0)).xyz * 2.0 - 1.0;
-    _DstNormals[v.vertexID] = ToTangentSpace(v.vertexID, n);
-
-    v2f o;
-    o.normal = 0.0;
-    o.vertex = 0.0;
-    return o;
-}
-
 float4 frag(v2f i) : SV_Target
 {
     return i.normal;
@@ -97,18 +83,6 @@ ENDCG
 
             CGPROGRAM
             #pragma vertex vert_uv
-            #pragma fragment frag
-            #pragma target 4.5
-            ENDCG
-        }
-
-        // pass 2: bake normal map to vertices
-        Pass
-        {
-            ColorMask 0
-
-            CGPROGRAM
-            #pragma vertex vert_write
             #pragma fragment frag
             #pragma target 4.5
             ENDCG

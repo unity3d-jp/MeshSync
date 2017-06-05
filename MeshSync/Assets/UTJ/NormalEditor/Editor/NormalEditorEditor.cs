@@ -22,6 +22,8 @@ public class NormalEditorEditor : Editor
     int m_bakeWith = 1024;
     int m_bakeHeight = 1024;
 
+    Texture m_bakeSource;
+
 
     void OnEnable()
     {
@@ -148,6 +150,11 @@ public class NormalEditorEditor : Editor
         if (m_foldBakeFromTexture)
         {
             EditorGUI.indentLevel++;
+            m_bakeSource = EditorGUILayout.ObjectField("Source Texture", m_bakeSource, typeof(Texture), true) as Texture;
+            if (GUILayout.Button("Bake"))
+            {
+                m_target.BakeFromTexture(m_bakeSource);
+            }
             EditorGUI.indentLevel--;
         }
 

@@ -85,6 +85,7 @@ public partial class NormalEditor : MonoBehaviour
     [SerializeField] Mesh m_meshLine;
     [SerializeField] Material m_matVisualize;
     [SerializeField] Material m_matBake;
+    [SerializeField] ComputeShader m_csBakeFromMap;
 
     ComputeBuffer m_cbArg;
     ComputeBuffer m_cbPoints;
@@ -289,6 +290,8 @@ public partial class NormalEditor : MonoBehaviour
             m_matVisualize = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/NormalVisualizer.shader"));
         if (m_matBake == null)
             m_matBake = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/BakeNormalMap.shader"));
+        if (m_csBakeFromMap == null)
+            m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/UTJ/NormalEditor/Shaders/BakeFromMap.compute");
 
         if (m_meshTarget == null ||
             m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount)
@@ -587,7 +590,8 @@ public partial class NormalEditor : MonoBehaviour
         }
         m_cmdDraw.Clear();
         if(m_showTangentSpaceNormals)
-            m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matBake, 0, 0);
+            for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+                m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matBake, si, 0);
         if (m_showVertices && m_points != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVisualize, 0, m_cbArg);
         if (m_showBinormals && m_tangents != null)
@@ -616,15 +620,19 @@ public partial class NormalEditor : MonoBehaviour
         if (path == null || path.Length == 0)
             return false;
 
+        m_matBake.SetBuffer("_BaseNormals", m_cbBaseNormals);
+        m_matBake.SetBuffer("_BaseTangents", m_cbBaseTangents);
+
         var rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBHalf);
+        var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBAHalf, false);
         rt.Create();
 
         m_cmdDraw.Clear();
         m_cmdDraw.SetRenderTarget(rt);
-        m_cmdDraw.DrawMesh(m_meshTarget, Matrix4x4.identity, m_matBake, 0, 1);
+        for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+            m_cmdDraw.DrawMesh(m_meshTarget, Matrix4x4.identity, m_matBake, si, 1);
         Graphics.ExecuteCommandBuffer(m_cmdDraw);
 
-        var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBAHalf, false);
         RenderTexture.active = rt;
         tex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
         tex.Apply();
@@ -637,8 +645,40 @@ public partial class NormalEditor : MonoBehaviour
 
 
         DestroyImmediate(tex);
-        rt.Release();
         DestroyImmediate(rt);
+
+        return true;
+    }
+
+    public bool BakeFromTexture(Texture tex)
+    {
+        if (tex == null)
+            return false;
+
+        bool packed = false;
+        {
+            var path = AssetDatabase.GetAssetPath(tex);
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if(importer != null)
+                packed = importer.textureType == TextureImporterType.NormalMap;
+        }
+
+        var cbUV = new ComputeBuffer(m_normals.Length, 8);
+        cbUV.SetData(m_meshTarget.uv);
+
+        m_csBakeFromMap.SetInt("_Packed", packed ? 1 : 0);
+        m_csBakeFromMap.SetTexture(0, "_NormalMap", tex);
+        m_csBakeFromMap.SetBuffer(0, "_UV", cbUV);
+        m_csBakeFromMap.SetBuffer(0, "_Normals", m_cbBaseNormals);
+        m_csBakeFromMap.SetBuffer(0, "_Tangents", m_cbBaseTangents);
+        m_csBakeFromMap.SetBuffer(0, "_Dst", m_cbNormals);
+        m_csBakeFromMap.Dispatch(0, m_normals.Length, 1, 1);
+
+        m_cbNormals.GetData(m_normals);
+        cbUV.Dispose();
+
+        UpdateNormals();
+        PushUndo();
 
         return true;
     }
