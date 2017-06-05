@@ -1,4 +1,4 @@
-﻿Shader "Hidden/UTJ/MeshSync/NormalVisualizer" {
+﻿Shader "Hidden/NormalVisualizer" {
     Properties {
         [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest("ZTest", Int) = 4
     }

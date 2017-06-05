@@ -10,7 +10,7 @@ using UnityEditor;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(MeshRenderer))]
-public class NormalEditor : MonoBehaviour
+public partial class NormalEditor : MonoBehaviour
 {
 #if UNITY_EDITOR
     public enum EditMode
@@ -68,7 +68,7 @@ public class NormalEditor : MonoBehaviour
     bool m_showNormals = true;
     bool m_showTangents = false;
     bool m_showBinormals = false;
-    float m_vertexSize = 0.01f;
+    float m_vertexSize = 0.0075f;
     float m_normalSize = 0.10f;
     float m_tangentSize = 0.075f;
     float m_binormalSize = 0.06f;
@@ -82,13 +82,16 @@ public class NormalEditor : MonoBehaviour
     [SerializeField] Mesh m_meshTarget;
     [SerializeField] Mesh m_meshCube;
     [SerializeField] Mesh m_meshLine;
-    [SerializeField] Material m_material;
+    [SerializeField] Material m_matVisualize;
+    [SerializeField] Material m_matBake;
 
     ComputeBuffer m_cbArg;
     ComputeBuffer m_cbPoints;
     ComputeBuffer m_cbNormals;
     ComputeBuffer m_cbTangents;
     ComputeBuffer m_cbSelection;
+    ComputeBuffer m_cbBaseNormals;
+    ComputeBuffer m_cbBaseTangents;
     CommandBuffer m_cmdDraw;
 
     Vector3[] m_points;
@@ -232,7 +235,6 @@ public class NormalEditor : MonoBehaviour
 
 
 
-
     void SetupResources()
     {
         if (m_meshCube == null)
@@ -277,10 +279,10 @@ public class NormalEditor : MonoBehaviour
             m_meshLine.SetIndices(new int[2] { 0, 1 }, MeshTopology.Lines, 0);
         }
 
-        if (m_material == null)
-        {
-            m_material = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/NormalVisualizer.shader"));
-        }
+        if (m_matVisualize == null)
+            m_matVisualize = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/NormalVisualizer.shader"));
+        if (m_matBake == null)
+            m_matBake = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/BakeNormalMap.shader"));
 
         if (m_meshTarget == null ||
             m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount)
@@ -298,15 +300,35 @@ public class NormalEditor : MonoBehaviour
         if (m_points == null && m_meshTarget != null)
         {
             m_points = m_meshTarget.vertices;
+
             m_normals = m_meshTarget.normals;
-            m_meshTarget.RecalculateNormals();
-            m_baseNormals = m_meshTarget.normals;
-            m_meshTarget.normals = m_normals;
+            if(m_normals.Length == 0)
+            {
+                m_meshTarget.RecalculateNormals();
+                m_baseNormals = m_normals = m_meshTarget.normals;
+            }
+            else
+            {
+                m_meshTarget.RecalculateNormals();
+                m_baseNormals = m_meshTarget.normals;
+                m_meshTarget.normals = m_normals;
+            }
 
             m_tangents = m_meshTarget.tangents;
+            if(m_tangents.Length == 0)
+            {
+                m_meshTarget.RecalculateNormals();
+                m_baseTangents = m_tangents = m_meshTarget.tangents;
+            }
+            else
+            {
+                m_meshTarget.RecalculateNormals();
+                m_baseTangents = m_meshTarget.tangents;
+                m_meshTarget.tangents = m_tangents;
+            }
+
             m_triangles = m_meshTarget.triangles;
             m_selection = new float[m_points.Length];
-            PushUndo();
         }
 
         if (m_cbPoints == null && m_points != null)
@@ -318,11 +340,15 @@ public class NormalEditor : MonoBehaviour
         {
             m_cbNormals = new ComputeBuffer(m_normals.Length, 12);
             m_cbNormals.SetData(m_normals);
+            m_cbBaseNormals = new ComputeBuffer(m_baseNormals.Length, 12);
+            m_cbBaseNormals.SetData(m_baseNormals);
         }
         if (m_cbTangents == null && m_tangents != null)
         {
             m_cbTangents = new ComputeBuffer(m_tangents.Length, 16);
             m_cbTangents.SetData(m_tangents);
+            m_cbBaseTangents = new ComputeBuffer(m_baseTangents.Length, 16);
+            m_cbBaseTangents.SetData(m_baseTangents);
         }
         if (m_cbSelection == null && m_selection != null)
         {
@@ -330,12 +356,14 @@ public class NormalEditor : MonoBehaviour
             m_cbSelection.SetData(m_selection);
         }
 
-
         if (m_cbArg == null && m_points != null)
         {
             m_cbArg = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
             m_cbArg.SetData(new uint[5] { m_meshCube.GetIndexCount(0), (uint)m_points.Length, 0, 0, 0 });
         }
+
+        UpdateNormals();
+        PushUndo();
     }
 
     void ReleaseComputeBuffers()
@@ -345,6 +373,8 @@ public class NormalEditor : MonoBehaviour
         if (m_cbNormals != null) { m_cbNormals.Release(); m_cbNormals = null; }
         if (m_cbTangents != null) { m_cbTangents.Release(); m_cbTangents = null; }
         if (m_cbSelection != null) { m_cbSelection.Release(); m_cbSelection = null; }
+        if (m_cbBaseNormals != null) { m_cbBaseNormals.Release(); m_cbBaseNormals = null; }
+        if (m_cbBaseTangents != null) { m_cbBaseTangents.Release(); m_cbBaseTangents = null; }
         if (m_cmdDraw != null) { m_cmdDraw.Release(); m_cmdDraw = null; }
     }
 
@@ -418,7 +448,7 @@ public class NormalEditor : MonoBehaviour
         var type = e.GetTypeForControl(id);
         if (type == EventType.MouseDown || type == EventType.MouseDrag || type == EventType.MouseUp)
         {
-            bool used = false;
+            bool handled = false;
             if (e.button == 0)
             {
                 var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
@@ -433,21 +463,21 @@ public class NormalEditor : MonoBehaviour
                         if (sel != -1)
                         {
                             m_selection[sel] = 1.0f;
-                            used = true;
+                            handled = true;
                         }
                     }
                     else if (m_selectMode == SelectMode.Hard)
                     {
-                        if (HardSelection(ray, m_brushRadius, m_brushStrength))
+                        if (SelectHard(ray, m_brushRadius, m_brushStrength))
                         {
-                            used = true;
+                            handled = true;
                         }
                     }
                     else if (m_selectMode == SelectMode.Soft)
                     {
-                        if(SoftSelection(ray, m_brushRadius, m_brushPow, m_brushStrength))
+                        if (SelectSoft(ray, m_brushRadius, m_brushPow, m_brushStrength))
                         {
-                            used = true;
+                            handled = true;
                         }
                     }
                     else if (m_selectMode == SelectMode.Rect)
@@ -455,17 +485,20 @@ public class NormalEditor : MonoBehaviour
                         if (type == EventType.MouseDown)
                         {
                             m_dragStartPoint = m_dragEndPoint = e.mousePosition;
-                            used = true;
+                            handled = true;
                         }
                         else if (type == EventType.MouseDrag || type == EventType.MouseUp)
                         {
                             m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
+                            handled = true;
                             if (type == EventType.MouseUp)
                             {
-                                RectSelection(m_dragStartPoint, m_dragEndPoint);
+                                if (!SelectRect(m_dragStartPoint, m_dragEndPoint))
+                                {
+                                    Selection.activeGameObject = null;
+                                }
                                 m_dragStartPoint = m_dragEndPoint = Vector2.zero;
                             }
-                            used = true;
                         }
                     }
 
@@ -477,15 +510,15 @@ public class NormalEditor : MonoBehaviour
                     {
                         case BrushMode.Equalize:
                             if (ApplyEqualizeBrush(ray, m_brushRadius, m_brushPow, m_brushStrength))
-                                used = true;
+                                handled = true;
                             break;
                     }
-                    if (type == EventType.MouseUp && used)
+                    if (type == EventType.MouseUp && handled)
                         PushUndo();
                 }
             }
 
-            if (used)
+            if (handled)
             {
                 if (type == EventType.MouseDown)
                 {
@@ -510,284 +543,9 @@ public class NormalEditor : MonoBehaviour
     }
 
 
-
-    int GetMouseVertex(Event e, bool allowBackface = false)
-    {
-        //if (Tools.current != Tool.None)
-        //{
-        //    Debug.Log(Tools.current);
-        //    return -1;
-        //}
-
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-        float minDistance = float.MaxValue;
-        int found = -1;
-        Quaternion rotation = GetComponent<Transform>().rotation;
-        for (int i = 0; i < m_points.Length; i++)
-        {
-            Vector3 dir = m_points[i] - mouseRay.origin;
-            float sqrDistance = Vector3.Cross(dir, mouseRay.direction).sqrMagnitude;
-            bool forwardFacing = Vector3.Dot(rotation * m_normals[i], Camera.current.transform.forward) <= 0;
-            if ((forwardFacing || allowBackface) && sqrDistance < minDistance && sqrDistance < 0.05f * 0.05f)
-            {
-                minDistance = sqrDistance;
-                found = i;
-            }
-        }
-        return found;
-    }
-
-
-    public void SetClipboard(Vector3 v)
-    {
-        m_clipboard = v;
-    }
-    public void ApplyPaste()
-    {
-        if (m_numSelected > 0)
-        {
-            for (int i = 0; i < m_points.Length; i++)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    m_normals[i] = Vector3.Lerp(m_normals[i], m_clipboard, s).normalized;
-                }
-            }
-            ApplyMirroring();
-            UpdateNormals();
-        }
-    }
-
-    public void ApplyMove(Vector3 move)
-    {
-        for (int i = 0; i < m_selection.Length; ++i)
-        {
-            float s = m_selection[i];
-            if (s > 0.0f)
-            {
-                m_normals[i] = (m_normals[i] + move * s).normalized;
-            }
-        }
-        ApplyMirroring();
-        UpdateNormals();
-    }
-
-    public void ApplyRotation(Quaternion rot, Vector3 pivot)
-    {
-        for (int i = 0; i < m_selection.Length; ++i)
-        {
-            float s = m_selection[i];
-            if (s > 0.0f)
-            {
-                m_normals[i] = Vector3.Lerp(m_normals[i], rot * m_normals[i], s).normalized;
-            }
-        }
-        ApplyMirroring();
-        UpdateNormals();
-    }
-
-    public void ApplyScale(Vector3 size, Vector3 pivot, Quaternion rot)
-    {
-        for (int i = 0; i < m_selection.Length; ++i)
-        {
-            float s = m_selection[i];
-            if (s > 0.0f)
-            {
-                var dir = (m_points[i] - pivot).normalized;
-                dir.x *= size.x;
-                dir.y *= size.y;
-                dir.z *= size.z;
-                m_normals[i] = (m_normals[i] + dir * s).normalized;
-            }
-        }
-        ApplyMirroring();
-        UpdateNormals();
-    }
-
-    public void ApplyEqualize(float strength)
-    {
-
-    }
-
-    public bool ApplyEqualizeBrush(Ray ray, float radius, float pow, float strength)
-    {
-        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-        if (neEqualizeRaycast(ray.origin, ray.direction,
-            m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_normals, ref trans) > 0)
-        {
-            ApplyMirroring();
-            UpdateNormals();
-            return true;
-        }
-        return false;
-    }
-
-    public void PushUndo()
-    {
-        Undo.RecordObject(this, "NormalEditor");
-        m_history.count++;
-        m_history.normals = (Vector3[])m_normals.Clone();
-    }
-
-    public void OnUndoRedo()
-    {
-        if(m_history.normals.Length > 0)
-        {
-            m_normals = m_history.normals;
-            UpdateNormals();
-        }
-    }
-
-    public void UpdateNormals(bool upload = true)
-    {
-        if (m_cbNormals != null)
-            m_cbNormals.SetData(m_normals);
-
-        if (m_meshTarget != null)
-        {
-            m_meshTarget.normals = m_normals;
-            if (upload)
-                m_meshTarget.UploadMeshData(false);
-        }
-    }
-
-    public void UpdateSelection()
-    {
-        float st = 0.0f;
-        m_numSelected = 0;
-        m_selectionPos = Vector3.zero;
-        m_selectionNormal = Vector3.zero;
-        int numPoints = m_points.Length;
-        for (int i = 0; i < numPoints; ++i)
-        {
-            float s = m_selection[i];
-            if (s > 0.0f)
-            {
-                m_selectionPos += m_points[i] * s;
-                m_selectionNormal += m_normals[i] * s;
-                ++m_numSelected;
-                st += s;
-            }
-        }
-        if (m_numSelected > 0)
-        {
-            m_selectionPos /= st;
-            m_selectionNormal /= st;
-            m_selectionNormal = m_selectionNormal.normalized;
-            m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
-            m_pivotPos = m_selectionPos;
-            m_pivotRot = m_selectionRot;
-        }
-
-        m_cbSelection.SetData(m_selection);
-    }
-
-    public void ResetNormals()
-    {
-        m_meshTarget.RecalculateNormals();
-        m_normals = m_meshTarget.normals;
-        UpdateNormals();
-        PushUndo();
-    }
-
-    public void RecalculateTangents()
-    {
-        m_meshTarget.RecalculateTangents();
-        m_tangents = m_meshTarget.tangents;
-        if(m_cbTangents == null)
-            m_cbTangents = new ComputeBuffer(m_tangents.Length, 16);
-        m_cbTangents.SetData(m_tangents);
-    }
-
-
-    public bool Raycast(Ray ray, ref int ti, ref float distance)
-    {
-        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-        bool ret = neRaycast(ray.origin, ray.direction,
-            m_points, m_triangles, m_triangles.Length / 3, ref ti, ref distance, ref trans) > 0;
-        return ret;
-    }
-
-    public bool SelectAll()
-    {
-        for (int i = 0; i < m_selection.Length; ++i)
-            m_selection[i] = 1.0f;
-        return m_selection.Length > 0;
-    }
-
-    public bool SelectNone()
-    {
-        System.Array.Clear(m_selection, 0, m_selection.Length);
-        return m_selection.Length > 0;
-    }
-
-    public bool SoftSelection(Ray ray, float radius, float pow, float strength)
-    {
-        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-        bool ret = neSoftSelection(ray.origin, ray.direction,
-            m_points, m_triangles, m_points.Length, m_triangles.Length/3, radius, pow, strength, m_selection, ref trans) > 0;
-        return ret;
-    }
-
-    public bool HardSelection(Ray ray, float radius, float strength)
-    {
-        Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-        bool ret = neHardSelection(ray.origin, ray.direction,
-            m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, m_selection, ref trans) > 0;
-        return ret;
-    }
-
-    public bool RectSelection(Vector2 r1, Vector2 r2)
-    {
-        return false;
-    }
-
-    public void ApplyMirroring()
-    {
-        if (m_mirrorMode == MirrorMode.None) return;
-
-        Vector3 planeNormal = Vector3.up;
-        switch (m_mirrorMode)
-        {
-            case MirrorMode.RightToLeft:
-                planeNormal = Vector3.left;
-                break;
-            case MirrorMode.LeftToRight:
-                planeNormal = Vector3.right;
-                break;
-            case MirrorMode.ForwardToBack:
-                planeNormal = Vector3.back;
-                break;
-            case MirrorMode.BackToForward:
-                planeNormal = Vector3.forward;
-                break;
-            case MirrorMode.UpToDown:
-                planeNormal = Vector3.down;
-                break;
-            case MirrorMode.DownToUp:
-                planeNormal = Vector3.up;
-                break;
-        }
-
-        if (m_mirrorRelation == null)
-        {
-            m_mirrorRelation = new int[m_normals.Length];
-            if (neBuildMirroringRelation(m_points, m_points.Length, planeNormal, 0.001f, m_mirrorRelation) == 0)
-            {
-                Debug.LogWarning("NormalEditor: this mesh seems not symmetrical");
-                m_mirrorRelation = null;
-                m_mirrorMode = MirrorMode.None;
-                return;
-            }
-        }
-        neApplyMirroring(m_mirrorRelation, m_normals.Length, planeNormal, m_normals);
-    }
-
-
     void OnDrawGizmosSelected()
     {
-        if (m_material == null || m_meshCube == null || m_meshLine == null)
+        if (m_matVisualize == null || m_meshCube == null || m_meshLine == null)
         {
             Debug.LogWarning("NormalEditor: Some resources are missing.\n");
             return;
@@ -796,20 +554,20 @@ public class NormalEditor : MonoBehaviour
         var trans = GetComponent<Transform>();
         var matrix = trans.localToWorldMatrix;
 
-        m_material.SetMatrix("_Transform", matrix);
-        m_material.SetFloat("_VertexSize", m_vertexSize);
-        m_material.SetFloat("_NormalSize", m_normalSize);
-        m_material.SetFloat("_TangentSize", m_tangentSize);
-        m_material.SetFloat("_BinormalSize", m_binormalSize);
-        m_material.SetColor("_VertexColor", m_vertexColor);
-        m_material.SetColor("_VertexColor2", m_vertexColor2);
-        m_material.SetColor("_NormalColor", m_normalColor);
-        m_material.SetColor("_TangentColor", m_tangentColor);
-        m_material.SetColor("_BinormalColor", m_binormalColor);
-        if (m_cbPoints != null) m_material.SetBuffer("_Points", m_cbPoints);
-        if (m_cbNormals != null) m_material.SetBuffer("_Normals", m_cbNormals);
-        if (m_cbTangents != null) m_material.SetBuffer("_Tangents", m_cbTangents);
-        if (m_cbSelection != null) m_material.SetBuffer("_Selection", m_cbSelection);
+        m_matVisualize.SetMatrix("_Transform", matrix);
+        m_matVisualize.SetFloat("_VertexSize", m_vertexSize);
+        m_matVisualize.SetFloat("_NormalSize", m_normalSize);
+        m_matVisualize.SetFloat("_TangentSize", m_tangentSize);
+        m_matVisualize.SetFloat("_BinormalSize", m_binormalSize);
+        m_matVisualize.SetColor("_VertexColor", m_vertexColor);
+        m_matVisualize.SetColor("_VertexColor2", m_vertexColor2);
+        m_matVisualize.SetColor("_NormalColor", m_normalColor);
+        m_matVisualize.SetColor("_TangentColor", m_tangentColor);
+        m_matVisualize.SetColor("_BinormalColor", m_binormalColor);
+        if (m_cbPoints != null) m_matVisualize.SetBuffer("_Points", m_cbPoints);
+        if (m_cbNormals != null) m_matVisualize.SetBuffer("_Normals", m_cbNormals);
+        if (m_cbTangents != null) m_matVisualize.SetBuffer("_Tangents", m_cbTangents);
+        if (m_cbSelection != null) m_matVisualize.SetBuffer("_Selection", m_cbSelection);
 
         if (m_cmdDraw == null)
         {
@@ -818,31 +576,14 @@ public class NormalEditor : MonoBehaviour
         }
         m_cmdDraw.Clear();
         if (m_showVertices && m_points != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_material, 0, m_cbArg);
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVisualize, 0, m_cbArg);
         if (m_showBinormals && m_tangents != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 3, m_cbArg);
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matVisualize, 3, m_cbArg);
         if (m_showTangents && m_tangents != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 2, m_cbArg);
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matVisualize, 2, m_cbArg);
         if (m_showNormals && m_normals != null)
-            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_material, 1, m_cbArg);
+            m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matVisualize, 1, m_cbArg);
         Graphics.ExecuteCommandBuffer(m_cmdDraw);
-    }
-
-
-    static Rect FromToRect(Vector2 start, Vector2 end)
-    {
-        Rect r = new Rect(start.x, start.y, end.x - start.x, end.y - start.y);
-        if (r.width < 0)
-        {
-            r.x += r.width;
-            r.width = -r.width;
-        }
-        if (r.height < 0)
-        {
-            r.y += r.height;
-            r.height = -r.height;
-        }
-        return r;
     }
 
     void OnRepaint()
@@ -857,31 +598,6 @@ public class NormalEditor : MonoBehaviour
         }
     }
 
-    [DllImport("MeshSyncServer")] static extern int neRaycast(
-        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
-        ref int tindex, ref float distance, ref Matrix4x4 trans);
-
-    [DllImport("MeshSyncServer")] static extern int neSoftSelection(
-        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-        float radius, float strength, float pow, float[] seletion, ref Matrix4x4 trans);
-    
-    [DllImport("MeshSyncServer")] static extern int neHardSelection(
-        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-        float radius, float strength, float[] seletion, ref Matrix4x4 trans);
-
-    [DllImport("MeshSyncServer")] static extern int neEqualize(
-        int num_vertices, int num_triangles,
-        float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
-
-    [DllImport("MeshSyncServer")] static extern int neEqualizeRaycast(
-        Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-        float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
-
-    [DllImport("MeshSyncServer")] static extern int neBuildMirroringRelation(
-        Vector3[] vertices, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);
-
-    [DllImport("MeshSyncServer")] static extern void neApplyMirroring(
-        int[] relation, int num_vertices, Vector3 plane_normal, Vector3[] normals);
 
 #endif
 }

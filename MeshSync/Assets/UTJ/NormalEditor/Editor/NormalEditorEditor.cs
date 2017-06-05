@@ -6,7 +6,6 @@ using System.Collections;
 public class NormalEditorEditor : Editor
 {
     NormalEditor m_target;
-    AnimationCurve m_brushStrength = new AnimationCurve();
 
     void OnEnable()
     {
@@ -38,7 +37,6 @@ public class NormalEditorEditor : Editor
         m_target.brushRadius = EditorGUILayout.Slider("Brush Radius", m_target.brushRadius, 0.01f, 1.0f);
         m_target.brushStrength = EditorGUILayout.Slider("Brush Strength", m_target.brushStrength, 0.01f, 1.0f);
         m_target.brushPow = EditorGUILayout.Slider("Brush Pow", m_target.brushPow, 0.01f, 1.0f);
-        EditorGUILayout.CurveField(m_brushStrength);
 
         EditorGUILayout.Space();
 
