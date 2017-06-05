@@ -319,6 +319,87 @@ public partial class NormalEditor : MonoBehaviour
         return r;
     }
 
+    public void ResetDisplayOptions()
+    {
+        m_vertexSize = 0.0075f;
+        m_normalSize = 0.10f;
+        m_tangentSize = 0.075f;
+        m_binormalSize = 0.06f;
+        m_vertexColor = new Color(0.15f, 0.15f, 0.4f, 0.75f);
+        m_vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
+        m_normalColor = Color.yellow;
+        m_tangentColor = Color.cyan;
+        m_binormalColor = Color.green;
+    }
+
+    public bool BakeToTexture(int width, int height, string path)
+    {
+        if (path == null || path.Length == 0)
+            return false;
+
+        m_matBake.SetBuffer("_BaseNormals", m_cbBaseNormals);
+        m_matBake.SetBuffer("_BaseTangents", m_cbBaseTangents);
+
+        var rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBHalf);
+        var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBAHalf, false);
+        rt.Create();
+
+        m_cmdDraw.Clear();
+        m_cmdDraw.SetRenderTarget(rt);
+        for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+            m_cmdDraw.DrawMesh(m_meshTarget, Matrix4x4.identity, m_matBake, si, 1);
+        Graphics.ExecuteCommandBuffer(m_cmdDraw);
+
+        RenderTexture.active = rt;
+        tex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
+        tex.Apply();
+        RenderTexture.active = null;
+
+        if (path.EndsWith(".png"))
+            System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+        else
+            System.IO.File.WriteAllBytes(path, tex.EncodeToEXR());
+
+
+        DestroyImmediate(tex);
+        DestroyImmediate(rt);
+
+        return true;
+    }
+
+    public bool BakeFromTexture(Texture tex)
+    {
+        if (tex == null)
+            return false;
+
+        bool packed = false;
+        {
+            var path = AssetDatabase.GetAssetPath(tex);
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null)
+                packed = importer.textureType == TextureImporterType.NormalMap;
+        }
+
+        var cbUV = new ComputeBuffer(m_normals.Length, 8);
+        cbUV.SetData(m_meshTarget.uv);
+
+        m_csBakeFromMap.SetInt("_Packed", packed ? 1 : 0);
+        m_csBakeFromMap.SetTexture(0, "_NormalMap", tex);
+        m_csBakeFromMap.SetBuffer(0, "_UV", cbUV);
+        m_csBakeFromMap.SetBuffer(0, "_Normals", m_cbBaseNormals);
+        m_csBakeFromMap.SetBuffer(0, "_Tangents", m_cbBaseTangents);
+        m_csBakeFromMap.SetBuffer(0, "_Dst", m_cbNormals);
+        m_csBakeFromMap.Dispatch(0, m_normals.Length, 1, 1);
+
+        m_cbNormals.GetData(m_normals);
+        cbUV.Dispose();
+
+        UpdateNormals();
+        PushUndo();
+
+        return true;
+    }
+
 
     [DllImport("MeshSyncServer")] static extern int neRaycast(
         Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
