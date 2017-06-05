@@ -68,6 +68,7 @@ public partial class NormalEditor : MonoBehaviour
     bool m_showNormals = true;
     bool m_showTangents = false;
     bool m_showBinormals = false;
+    bool m_showTangentSpaceNormals = false;
     float m_vertexSize = 0.0075f;
     float m_normalSize = 0.10f;
     float m_tangentSize = 0.075f;
@@ -184,6 +185,11 @@ public partial class NormalEditor : MonoBehaviour
     {
         get { return m_showBinormals; }
         set { m_showBinormals = value; }
+    }
+    public bool showTangentSpaceNormals
+    {
+        get { return m_showTangentSpaceNormals; }
+        set { m_showTangentSpaceNormals = value; }
     }
 
     public float vertexSize
@@ -568,6 +574,11 @@ public partial class NormalEditor : MonoBehaviour
         if (m_cbNormals != null) m_matVisualize.SetBuffer("_Normals", m_cbNormals);
         if (m_cbTangents != null) m_matVisualize.SetBuffer("_Tangents", m_cbTangents);
         if (m_cbSelection != null) m_matVisualize.SetBuffer("_Selection", m_cbSelection);
+        if (m_showTangentSpaceNormals)
+        {
+            if (m_cbBaseNormals != null) m_matBake.SetBuffer("_BaseNormals", m_cbBaseNormals);
+            if (m_cbBaseTangents != null) m_matBake.SetBuffer("_BaseTangents", m_cbBaseTangents);
+        }
 
         if (m_cmdDraw == null)
         {
@@ -575,6 +586,8 @@ public partial class NormalEditor : MonoBehaviour
             m_cmdDraw.name = "NormalEditor";
         }
         m_cmdDraw.Clear();
+        if(m_showTangentSpaceNormals)
+            m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matBake, 0, 0);
         if (m_showVertices && m_points != null)
             m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVisualize, 0, m_cbArg);
         if (m_showBinormals && m_tangents != null)
@@ -598,6 +611,34 @@ public partial class NormalEditor : MonoBehaviour
         }
     }
 
+    public bool BakeToTexture(int width, int height, string path)
+    {
+        var rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBHalf);
+        rt.Create();
+
+        m_cmdDraw.Clear();
+        m_cmdDraw.SetRenderTarget(rt);
+        m_cmdDraw.DrawMesh(m_meshTarget, Matrix4x4.identity, m_matBake, 0, 1);
+        Graphics.ExecuteCommandBuffer(m_cmdDraw);
+
+        var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBAHalf, false);
+        RenderTexture.active = rt;
+        tex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0, false);
+        tex.Apply();
+        RenderTexture.active = null;
+
+        if (path.EndsWith(".png"))
+            System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+        else
+            System.IO.File.WriteAllBytes(path, tex.EncodeToEXR());
+
+
+        DestroyImmediate(tex);
+        rt.Release();
+        DestroyImmediate(rt);
+
+        return true;
+    }
 
 #endif
 }

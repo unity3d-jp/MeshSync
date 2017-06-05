@@ -7,6 +7,10 @@ public class NormalEditorEditor : Editor
 {
     NormalEditor m_target;
 
+    int m_with = 1024;
+    int m_height = 1024;
+
+
     void OnEnable()
     {
         m_target = target as NormalEditor;
@@ -40,10 +44,12 @@ public class NormalEditorEditor : Editor
 
         EditorGUILayout.Space();
 
-        m_target.showVertices = EditorGUILayout.Toggle("Show Vertices", m_target.showVertices);
-        m_target.showNormals = EditorGUILayout.Toggle("Show Normals", m_target.showNormals);
-        m_target.showTangents = EditorGUILayout.Toggle("Show Tangents", m_target.showTangents);
-        m_target.showBinormals = EditorGUILayout.Toggle("Show Binormals", m_target.showBinormals);
+        EditorGUILayout.LabelField("Visualize");
+        m_target.showVertices = EditorGUILayout.Toggle("Vertices", m_target.showVertices);
+        m_target.showNormals = EditorGUILayout.Toggle("Normals", m_target.showNormals);
+        m_target.showTangents = EditorGUILayout.Toggle("Tangents", m_target.showTangents);
+        m_target.showBinormals = EditorGUILayout.Toggle("Binormals", m_target.showBinormals);
+        m_target.showTangentSpaceNormals = EditorGUILayout.Toggle("Tangent Space Normals", m_target.showTangentSpaceNormals);
 
         EditorGUILayout.Space();
 
@@ -79,13 +85,34 @@ public class NormalEditorEditor : Editor
 
         EditorGUILayout.Space();
 
+        GUILayout.BeginHorizontal();
         if (GUILayout.Button("Export .obj file"))
         {
             string path = EditorUtility.SaveFilePanel("Export .obj file", "", m_target.name, "obj");
             if(path.Length > 0)
                 ObjExporter.DoExport(m_target.gameObject, true, path);
         }
+        GUILayout.EndHorizontal();
 
+        EditorGUILayout.Space();
+
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Bake to .png"))
+        {
+            string path = EditorUtility.SaveFilePanel("Export .png file", "", m_target.name + "_normal", "png");
+            m_target.BakeToTexture(m_with, m_height, path);
+        }
+        if (GUILayout.Button("Bake to .exr"))
+        {
+            string path = EditorUtility.SaveFilePanel("Export .exr file", "", m_target.name + "_normal", "exr");
+            m_target.BakeToTexture(m_with, m_height, path);
+        }
+        GUILayout.EndHorizontal();
+        m_with = EditorGUILayout.IntField("Width", m_with);
+        m_height = EditorGUILayout.IntField("Height", m_height);
+
+
+        // BakeToTexture
         if (EditorGUI.EndChangeCheck())
             SceneView.RepaintAll();
     }
