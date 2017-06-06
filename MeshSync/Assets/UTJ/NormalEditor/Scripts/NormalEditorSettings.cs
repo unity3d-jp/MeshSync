@@ -47,11 +47,13 @@ namespace UTJ.HumbleNormalEditor
         public bool foldDisplayOptions = false;
         public bool foldExport = true;
         public bool foldBakeToTexture = true;
-        public bool foldBakeFromTexture = true;
+        public bool foldBakeToVertexColor = true;
+        public bool foldLoadTexture = true;
 
         public ImageFormat bakeFormat = ImageFormat.PNG;
         public int bakeWidth = 1024;
         public int bakeHeight = 1024;
+        public bool bakeVertexColor01 = true;
 
         public Texture bakeSource;
 

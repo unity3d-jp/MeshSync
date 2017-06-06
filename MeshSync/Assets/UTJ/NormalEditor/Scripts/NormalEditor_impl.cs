@@ -407,7 +407,21 @@ namespace UTJ.HumbleNormalEditor
             return true;
         }
 
-        public bool BakeFromTexture(Texture tex)
+        public bool BakeToVertexColor()
+        {
+            var color = new Color[m_normals.Length];
+            for (int i = 0; i < m_normals.Length; ++i)
+            {
+                color[i].r = m_normals[i].x * 0.5f + 0.5f;
+                color[i].g = m_normals[i].y * 0.5f + 0.5f;
+                color[i].b = m_normals[i].z * 0.5f + 0.5f;
+                color[i].a = 1.0f;
+            }
+            m_meshTarget.colors = color;
+            return true;
+        }
+
+        public bool LoadTexture(Texture tex)
         {
             if (tex == null)
                 return false;
@@ -437,6 +451,23 @@ namespace UTJ.HumbleNormalEditor
             UpdateNormals();
             PushUndo();
 
+            return true;
+        }
+
+        public bool LoadVertexColor()
+        {
+            var color = m_meshTarget.colors;
+            if (color.Length != m_normals.Length)
+                return false;
+
+            for (int i = 0; i < color.Length; ++i)
+            {
+                m_normals[i].x = color[i].r * 2.0f - 1.0f;
+                m_normals[i].y = color[i].g * 2.0f - 1.0f;
+                m_normals[i].z = color[i].b * 2.0f - 1.0f;
+            }
+            UpdateNormals();
+            PushUndo();
             return true;
         }
 

@@ -20,54 +20,53 @@ public class ObjExporterScript
     }
  
  
-    public static string MeshToString(MeshFilter mf, Transform t) 
-    {	
-        Vector3 s = t.localScale;
-        Vector3 p = t.localPosition;
-        Quaternion r = t.localRotation;
- 
- 
-        int numVertices = 0;
-        Mesh mesh = mf.sharedMesh;
+    public static string MeshToString(Mesh mesh, Material[] mats, Transform t) 
+    {
         if (!mesh)
-        {
             return "####Error####";
+
+        var points = mesh.vertices;
+        var normals = mesh.normals;
+        var uv = mesh.uv;
+
+        if (t != null)
+        {
+            Quaternion r = t.localRotation;
+            for (int i = 0; i < points.Length; ++i)
+                points[i] = t.TransformPoint(points[i]);
+            for (int i = 0; i < normals.Length; ++i)
+                normals[i] = r * normals[i];
         }
-        Material[] mats = mf.GetComponent<Renderer>().sharedMaterials;
- 
+
         StringBuilder sb = new StringBuilder();
- 
-        foreach(Vector3 vv in mesh.vertices)
-        {
-            Vector3 v = t.TransformPoint(vv);
-            numVertices++;
-            sb.Append(string.Format("v {0} {1} {2}\n",v.x,v.y,-v.z));
-        }
+
+        foreach(Vector3 v in points)
+            sb.Append(string.Format("v {0} {1} {2}\n", v.x, v.y, -v.z));
         sb.Append("\n");
-        foreach(Vector3 nn in mesh.normals) 
-        {
-            Vector3 v = r * nn;
-            sb.Append(string.Format("vn {0} {1} {2}\n",-v.x,-v.y,v.z));
-        }
+        foreach(Vector3 n in normals)
+            sb.Append(string.Format("vn {0} {1} {2}\n", -n.x, -n.y, n.z));
         sb.Append("\n");
-        foreach (Vector3 v in mesh.uv)
-        {
-            sb.Append(string.Format("vt {0} {1}\n",v.x,v.y));
-        }
-        for (int material = 0; material < mesh.subMeshCount; material++)
+        foreach (Vector3 u in uv)
+            sb.Append(string.Format("vt {0} {1}\n", u.x, u.y));
+
+        for (int sm = 0; sm < mesh.subMeshCount; sm++)
         {
             sb.Append("\n");
-            sb.Append("usemtl ").Append(mats[material].name).Append("\n");
-            sb.Append("usemap ").Append(mats[material].name).Append("\n");
- 
-            int[] triangles = mesh.GetTriangles(material);
-            for (int i=0;i<triangles.Length;i+=3) {
+            if (mats != null && sm < mats.Length)
+            {
+                sb.Append("usemtl ").Append(mats[sm].name).Append("\n");
+                sb.Append("usemap ").Append(mats[sm].name).Append("\n");
+            }
+
+            int[] triangles = mesh.GetTriangles(sm);
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
                 sb.Append(string.Format("f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}\n", 
                     triangles[i]+1+StartIndex, triangles[i+1]+1+StartIndex, triangles[i+2]+1+StartIndex));
             }
         }
  
-        StartIndex += numVertices;
+        StartIndex += points.Length;
         return sb.ToString();
     }
 }
@@ -90,9 +89,7 @@ public class ObjExporter
         t.position = Vector3.zero;
  
         if (!makeSubmeshes)
-        {
             meshString.Append("g ").Append(t.name).Append("\n");
-        }
         meshString.Append(processTransform(t, makeSubmeshes));
  
         WriteToFile(meshString.ToString(), path);
@@ -112,29 +109,38 @@ public class ObjExporter
                         + "\n");
  
         if (makeSubmeshes)
-        {
             meshString.Append("g ").Append(t.name).Append("\n");
-        }
- 
-        MeshFilter mf = t.GetComponent<MeshFilter>();
-        if (mf)
+
+        Mesh mesh = null;
+        Material[] materials = null;
         {
-            meshString.Append(ObjExporterScript.MeshToString(mf, t));
+            var mf = t.GetComponent<MeshFilter>();
+            if (mf != null)
+                mesh = mf.sharedMesh;
+            else
+            {
+                var smi = t.GetComponent<SkinnedMeshRenderer>();
+                if (smi != null)
+                    mesh = smi.sharedMesh;
+            }
+
+            var renderer = t.GetComponent<Renderer>();
+            if (renderer != null)
+                materials = renderer.sharedMaterials;
         }
- 
-        for(int i = 0; i < t.childCount; i++)
-        {
+
+        if (mesh != null)
+            meshString.Append(ObjExporterScript.MeshToString(mesh, materials, t));
+
+        for (int i = 0; i < t.childCount; i++)
             meshString.Append(processTransform(t.GetChild(i), makeSubmeshes));
-        }
- 
+
         return meshString.ToString();
     }
  
     static void WriteToFile(string s, string filename)
     {
-        using (StreamWriter sw = new StreamWriter(filename)) 
-        {
+        using (StreamWriter sw = new StreamWriter(filename))
             sw.Write(s);
-        }
     }
 }
