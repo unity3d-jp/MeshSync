@@ -76,7 +76,11 @@ public class NormalEditorEditor : Editor
 
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Reset Normals"))
-            m_target.ResetNormals();
+            m_target.ResetNormals(false);
+        if (GUILayout.Button("Reset Normals (Selected)"))
+            m_target.ResetNormals(true);
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
         if (GUILayout.Button("Recalculate Tangents"))
             m_target.RecalculateTangents();
         GUILayout.EndHorizontal();

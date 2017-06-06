@@ -19,6 +19,7 @@ public partial class NormalEditor : MonoBehaviour
         Brush,
         Move,
         Rotate,
+        RotateByPivot,
         Scale,
     }
     public enum BrushMode
@@ -461,7 +462,7 @@ public partial class NormalEditor : MonoBehaviour
                 ApplyMove(diff * 3.0f);
             }
         }
-        else if (m_numSelected > 0 && m_editMode == EditMode.Rotate)
+        else if (m_numSelected > 0 && (m_editMode == EditMode.Rotate || m_editMode == EditMode.RotateByPivot))
         {
             if (et == EventType.MouseDown)
                 m_prevRot = Quaternion.identity;
@@ -473,7 +474,10 @@ public partial class NormalEditor : MonoBehaviour
                 m_apllyingTransformEdit = true;
                 var diff = Quaternion.Inverse(m_prevRot) * rot;
                 m_prevRot = rot;
-                ApplyRotation(diff, m_pivotPos);
+                if (m_editMode == EditMode.Rotate)
+                    ApplyRotate(diff);
+                else if (m_editMode == EditMode.RotateByPivot)
+                    ApplyRotatePivot(diff, m_pivotPos, 20.0f);
             }
         }
         else if (m_numSelected > 0 && m_editMode == EditMode.Scale)
@@ -492,7 +496,7 @@ public partial class NormalEditor : MonoBehaviour
             }
         }
 
-        if (et != EventType.Used && m_apllyingTransformEdit)
+        if (m_apllyingTransformEdit && (et == EventType.MouseUp || et == EventType.MouseMove))
         {
             m_apllyingTransformEdit = false;
             PushUndo();

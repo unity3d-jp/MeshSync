@@ -75,7 +75,7 @@ public partial class NormalEditor : MonoBehaviour
         UpdateNormals();
     }
 
-    public void ApplyRotation(Quaternion rot, Vector3 pivot)
+    public void ApplyRotate(Quaternion rot)
     {
         for (int i = 0; i < m_selection.Length; ++i)
         {
@@ -83,6 +83,25 @@ public partial class NormalEditor : MonoBehaviour
             if (s > 0.0f)
             {
                 m_normals[i] = Vector3.Lerp(m_normals[i], rot * m_normals[i], s).normalized;
+            }
+        }
+        ApplyMirroring();
+        UpdateNormals();
+    }
+
+    public void ApplyRotatePivot(Quaternion rot, Vector3 pivot, float strength)
+    {
+        pivot = GetComponent<Transform>().worldToLocalMatrix.MultiplyPoint(pivot);
+
+        for (int i = 0; i < m_selection.Length; ++i)
+        {
+            float s = m_selection[i];
+            if (s > 0.0f)
+            {
+                var v = rot * (m_points[i] - pivot) + pivot;
+                var dir = (v - m_points[i]) * strength;
+
+                m_normals[i] = (m_normals[i] + dir * s).normalized;
             }
         }
         ApplyMirroring();
@@ -131,12 +150,18 @@ public partial class NormalEditor : MonoBehaviour
     {
         Undo.RecordObject(this, "NormalEditor");
         m_history.count++;
-        m_history.normals = (Vector3[])m_normals.Clone();
+        if (m_history.normals != null && m_history.normals.Length == m_normals.Length)
+            Array.Copy(m_normals, m_history.normals, m_normals.Length);
+        else
+            m_history.normals = (Vector3[])m_normals.Clone();
+        Undo.FlushUndoRecordObjects();
+        //Debug.Log("PushUndo(): " + m_history.count);
     }
 
     public void OnUndoRedo()
     {
-        if(m_history.normals.Length > 0)
+        //Debug.Log("OnUndoRedo(): " + m_history.count);
+        if (m_history.normals.Length > 0)
         {
             m_normals = m_history.normals;
             UpdateNormals();
@@ -200,10 +225,17 @@ public partial class NormalEditor : MonoBehaviour
         }
     }
 
-    public void ResetNormals()
+    public void ResetNormals(bool useSelection)
     {
-        m_meshTarget.RecalculateNormals();
-        m_normals = m_meshTarget.normals;
+        if(!useSelection)
+        {
+            Array.Copy(m_baseNormals, m_normals, m_normals.Length);
+        }
+        else
+        {
+            for (int i = 0; i < m_normals.Length; ++i)
+                m_normals[i] = Vector3.Lerp(m_normals[i], m_baseNormals[i], m_selection[i]).normalized;
+        }
         UpdateNormals();
         PushUndo();
     }
