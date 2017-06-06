@@ -89,8 +89,10 @@ public partial class NormalEditor : MonoBehaviour
         UpdateNormals();
     }
 
-    public void ApplyScale(Vector3 size, Vector3 pivot, Quaternion rot)
+    public void ApplyScale(Vector3 size, Vector3 pivot)
     {
+        pivot = GetComponent<Transform>().worldToLocalMatrix.MultiplyPoint(pivot);
+
         for (int i = 0; i < m_selection.Length; ++i)
         {
             float s = m_selection[i];

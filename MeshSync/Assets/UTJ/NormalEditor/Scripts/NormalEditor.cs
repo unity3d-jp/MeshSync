@@ -411,67 +411,92 @@ public partial class NormalEditor : MonoBehaviour
         SetupResources();
     }
 
+    bool m_apllyingTransformEdit = false;
+
     public void OnSceneGUI()
     {
-        {
-            if(m_numSelected > 0)
-            {
-                int numPoints = m_points.Length;
-
-                if (m_editMode == EditMode.Move)
-                {
-                    EditorGUI.BeginChangeCheck();
-                    var pos = Handles.PositionHandle(m_pivotPos, m_selectionRot);
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        var move = pos - m_pivotPos;
-                        ApplyMove(move);
-                        PushUndo();
-                    }
-
-                }
-                else if (m_editMode == EditMode.Rotate)
-                {
-                    EditorGUI.BeginChangeCheck();
-                    var rot = Handles.RotationHandle(m_selectionRot, m_pivotPos);
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        var diff = Quaternion.Inverse(m_selectionRot) * rot;
-                        ApplyRotation(diff, m_pivotPos);
-                        PushUndo();
-                    }
-                }
-                else if (m_editMode == EditMode.Scale)
-                {
-                    EditorGUI.BeginChangeCheck();
-                    var scale = Handles.ScaleHandle(Vector3.one, m_pivotPos, m_selectionRot, HandleUtility.GetHandleSize(m_pivotPos));
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        var size = scale - Vector3.one;
-                        ApplyScale(size, m_pivotPos, m_pivotRot);
-                        PushUndo();
-                    }
-                }
-            }
-        }
-
-
+        HandleEditTools();
 
         Event e = Event.current;
+        var et = e.type;
         int id = GUIUtility.GetControlID(FocusType.Passive);
-        var et = e.GetTypeForControl(id);
+        et = e.GetTypeForControl(id);
 
         if ((et == EventType.MouseDown || et == EventType.MouseDrag || et == EventType.MouseUp) && e.button == 0)
         {
             HandleMouseEvent(e, et, id);
         }
-        else if(et == EventType.KeyDown || et == EventType.KeyUp)
+
+        if(et == EventType.KeyDown || et == EventType.KeyUp)
         {
 
         }
 
         if (Event.current.type == EventType.Repaint)
             OnRepaint();
+    }
+
+
+    Vector3 m_prevMove;
+    Quaternion m_prevRot;
+    Vector3 m_prevScale;
+
+    void HandleEditTools()
+    {
+        Event e = Event.current;
+        var et = e.type;
+
+        if (m_numSelected > 0 && m_editMode == EditMode.Move)
+        {
+            if (et == EventType.MouseDown)
+                m_prevMove = m_pivotPos;
+
+            EditorGUI.BeginChangeCheck();
+            var move = Handles.PositionHandle(m_pivotPos, Quaternion.identity);
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_apllyingTransformEdit = true;
+                var diff = move - m_prevMove;
+                m_prevMove = move;
+                ApplyMove(diff * 3.0f);
+            }
+        }
+        else if (m_numSelected > 0 && m_editMode == EditMode.Rotate)
+        {
+            if (et == EventType.MouseDown)
+                m_prevRot = Quaternion.identity;
+
+            EditorGUI.BeginChangeCheck();
+            var rot = Handles.RotationHandle(Quaternion.identity, m_pivotPos);
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_apllyingTransformEdit = true;
+                var diff = Quaternion.Inverse(m_prevRot) * rot;
+                m_prevRot = rot;
+                ApplyRotation(diff, m_pivotPos);
+            }
+        }
+        else if (m_numSelected > 0 && m_editMode == EditMode.Scale)
+        {
+            if (et == EventType.MouseDown)
+                m_prevScale = Vector3.one;
+
+            EditorGUI.BeginChangeCheck();
+            var scale = Handles.ScaleHandle(Vector3.one, m_pivotPos, Quaternion.identity, HandleUtility.GetHandleSize(m_pivotPos));
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_apllyingTransformEdit = true;
+                var diff = scale - m_prevScale;
+                m_prevScale = scale;
+                ApplyScale(diff, m_pivotPos);
+            }
+        }
+
+        if (et != EventType.Used && m_apllyingTransformEdit)
+        {
+            m_apllyingTransformEdit = false;
+            PushUndo();
+        }
     }
 
     bool HandleMouseEvent(Event e, EventType et, int id)
@@ -484,7 +509,7 @@ public partial class NormalEditor : MonoBehaviour
 
             if (m_selectMode == SelectMode.Single)
             {
-                if (!e.shift)
+                if (!e.shift && !e.control)
                     System.Array.Clear(m_selection, 0, m_selection.Length);
 
                 int sel = GetMouseVertex(e);
@@ -496,7 +521,7 @@ public partial class NormalEditor : MonoBehaviour
             }
             else if (m_selectMode == SelectMode.Hard)
             {
-                if (!e.shift)
+                if (!e.shift && !e.control)
                     System.Array.Clear(m_selection, 0, m_selection.Length);
 
                 if (SelectHard(ray, m_brushRadius, m_brushStrength * selectSign))
@@ -504,7 +529,7 @@ public partial class NormalEditor : MonoBehaviour
             }
             else if (m_selectMode == SelectMode.Soft)
             {
-                if (!e.shift)
+                if (!e.shift && !e.control)
                     System.Array.Clear(m_selection, 0, m_selection.Length);
 
                 if (SelectSoft(ray, m_brushRadius, m_brushPow, m_brushStrength * selectSign))
@@ -524,7 +549,7 @@ public partial class NormalEditor : MonoBehaviour
                 }
                 else if (et == EventType.MouseUp)
                 {
-                    if (!e.shift)
+                    if (!e.shift && !e.control)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
                     m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
