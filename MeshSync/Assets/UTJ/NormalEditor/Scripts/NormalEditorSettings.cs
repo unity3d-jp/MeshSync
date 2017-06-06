@@ -28,7 +28,7 @@ namespace UTJ.HumbleNormalEditor
         public bool showNormals = true;
         public bool showTangents = false;
         public bool showBinormals = false;
-        public bool showTangentSpaceNormals = false;
+        public ModelOverlay modelOverlay = ModelOverlay.None;
         public float vertexSize;
         public float normalSize;
         public float tangentSize;

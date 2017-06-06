@@ -387,7 +387,7 @@ namespace UTJ.HumbleNormalEditor
             m_cmdDraw.Clear();
             m_cmdDraw.SetRenderTarget(rt);
             for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
-                m_cmdDraw.DrawMesh(m_meshTarget, Matrix4x4.identity, m_matBake, si, 1);
+                m_cmdDraw.DrawMesh(m_meshTarget, Matrix4x4.identity, m_matBake, si, 0);
             Graphics.ExecuteCommandBuffer(m_cmdDraw);
 
             RenderTexture.active = rt;

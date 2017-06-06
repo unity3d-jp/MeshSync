@@ -119,7 +119,8 @@ namespace UTJ.HumbleNormalEditor
                 settings.showNormals = EditorGUILayout.Toggle("Normals", settings.showNormals);
                 settings.showTangents = EditorGUILayout.Toggle("Tangents", settings.showTangents);
                 settings.showBinormals = EditorGUILayout.Toggle("Binormals", settings.showBinormals);
-                settings.showTangentSpaceNormals = EditorGUILayout.Toggle("Tangent Space Normals", settings.showTangentSpaceNormals);
+                settings.modelOverlay = (ModelOverlay)EditorGUILayout.EnumPopup("Model Overlay", settings.modelOverlay);
+
 
                 settings.foldDisplayOptions = EditorGUILayout.Foldout(settings.foldDisplayOptions, "Display Options");
                 if (settings.foldDisplayOptions)

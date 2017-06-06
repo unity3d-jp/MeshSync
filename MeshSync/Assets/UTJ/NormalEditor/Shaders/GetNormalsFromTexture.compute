@@ -1,4 +1,4 @@
-#pragma kernel BakeFromMap
+#pragma kernel GetNormalsFromTexture
 
 StructuredBuffer<float2>    _UV;
 StructuredBuffer<float3>    _Normals;
@@ -9,7 +9,7 @@ SamplerState _LinearClamp;
 int _Packed;
 
 [numthreads(1, 1, 1)]
-void BakeFromMap(uint i : SV_DispatchThreadID)
+void GetNormalsFromTexture(uint i : SV_DispatchThreadID)
 {
     float3 base_normal = _Normals[i];
     float4 base_tangent = _Tangents[i];

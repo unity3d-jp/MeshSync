@@ -29,25 +29,7 @@ float3 ToBaseTangentSpace(uint vid, float3 n)
     return normalize(mul(n, transpose(tbn)));
 }
 
-float3 ToTangentSpace(uint vid, float3 n)
-{
-    float3 base_normal = _BaseNormals[vid];
-    float4 base_tangent = _BaseTangents[vid];
-    float3 base_binormal = normalize(cross(base_normal, base_tangent.xyz) * base_tangent.w);
-    float3x3 tbn = float3x3(base_tangent.xyz, base_binormal, base_normal);
-    return normalize(mul(n, tbn));
-}
-
-v2f vert_world(appdata v)
-{
-    v2f o;
-    o.normal.rgb = ToBaseTangentSpace(v.vertexID, v.normal.xyz) * 0.5 + 0.5;
-    o.normal.a = 1.0;
-    o.vertex = UnityObjectToClipPos(v.vertex);
-    return o;
-}
-
-v2f vert_uv(appdata v)
+v2f vert(appdata v)
 {
     v2f o;
     o.normal.rgb = ToBaseTangentSpace(v.vertexID, v.normal.xyz) * 0.5 + 0.5;
@@ -67,21 +49,10 @@ ENDCG
     {
         Tags{ "RenderType" = "Transparent" "Queue" = "Transparent+1" }
 
-        // pass 0: world space
         Pass
         {
             CGPROGRAM
-            #pragma vertex vert_world
-            #pragma fragment frag
-            #pragma target 4.5
-            ENDCG
-        }
-
-        // pass 1: uv space
-        Pass
-        {
-            CGPROGRAM
-            #pragma vertex vert_uv
+            #pragma vertex vert
             #pragma fragment frag
             #pragma target 4.5
             ENDCG

@@ -53,6 +53,14 @@ namespace UTJ.HumbleNormalEditor
         EXR,
     }
 
+    public enum ModelOverlay
+    {
+        None,
+        TangentSpaceNormals,
+        VertexColor,
+    }
+
+
 
     [ExecuteInEditMode]
     [RequireComponent(typeof(MeshRenderer))]
@@ -177,11 +185,11 @@ namespace UTJ.HumbleNormalEditor
             }
 
             if (m_matVisualize == null)
-                m_matVisualize = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/NormalVisualizer.shader"));
+                m_matVisualize = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/Visualizer.shader"));
             if (m_matBake == null)
                 m_matBake = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/BakeNormalMap.shader"));
             if (m_csBakeFromMap == null)
-                m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/UTJ/NormalEditor/Shaders/BakeFromMap.compute");
+                m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/UTJ/NormalEditor/Shaders/GetNormalsFromTexture.compute");
 
             if (m_meshTarget == null ||
                 m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount)
@@ -510,10 +518,10 @@ namespace UTJ.HumbleNormalEditor
             if (m_cbNormals != null) m_matVisualize.SetBuffer("_Normals", m_cbNormals);
             if (m_cbTangents != null) m_matVisualize.SetBuffer("_Tangents", m_cbTangents);
             if (m_cbSelection != null) m_matVisualize.SetBuffer("_Selection", m_cbSelection);
-            if (m_settings.showTangentSpaceNormals)
+            if (m_settings.modelOverlay == ModelOverlay.TangentSpaceNormals)
             {
-                if (m_cbBaseNormals != null) m_matBake.SetBuffer("_BaseNormals", m_cbBaseNormals);
-                if (m_cbBaseTangents != null) m_matBake.SetBuffer("_BaseTangents", m_cbBaseTangents);
+                if (m_cbBaseNormals != null) m_matVisualize.SetBuffer("_BaseNormals", m_cbBaseNormals);
+                if (m_cbBaseTangents != null) m_matVisualize.SetBuffer("_BaseTangents", m_cbBaseTangents);
             }
 
             if (m_cmdDraw == null)
@@ -522,9 +530,12 @@ namespace UTJ.HumbleNormalEditor
                 m_cmdDraw.name = "NormalEditor";
             }
             m_cmdDraw.Clear();
-            if (m_settings.showTangentSpaceNormals)
+            if (m_settings.modelOverlay == ModelOverlay.TangentSpaceNormals)
                 for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
-                    m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matBake, si, 0);
+                    m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 4);
+            else if(m_settings.modelOverlay == ModelOverlay.VertexColor)
+                for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+                    m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 5);
             if (m_settings.showVertices && m_points != null)
                 m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVisualize, 0, m_cbArg);
             if (m_settings.showBinormals && m_tangents != null)

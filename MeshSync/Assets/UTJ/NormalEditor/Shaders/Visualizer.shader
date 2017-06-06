@@ -1,4 +1,4 @@
-﻿Shader "Hidden/NormalVisualizer" {
+﻿Shader "Hidden/HumbleNormalEditor/Visualizer" {
     Properties {
         [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest("ZTest", Int) = 4
     }
@@ -19,6 +19,8 @@ float4 _BinormalColor;
 int _OnlySelected = 0;
 
 float4x4 _Transform;
+StructuredBuffer<float3> _BaseNormals;
+StructuredBuffer<float4> _BaseTangents;
 StructuredBuffer<float3> _Points;
 StructuredBuffer<float3> _Normals;
 StructuredBuffer<float4> _Tangents;
@@ -27,7 +29,10 @@ StructuredBuffer<float> _Selection;
 struct appdata
 {
     float4 vertex : POSITION;
+    float4 normal : NORMAL;
     float4 uv : TEXCOORD0;
+    float4 color : COLOR;
+    uint vertexID : SV_VertexID;
     uint instanceID : SV_InstanceID;
 };
 
@@ -106,6 +111,34 @@ v2f vert_binormals(appdata v)
     return o;
 }
 
+
+float3 ToBaseTangentSpace(uint vid, float3 n)
+{
+    float3 base_normal = _BaseNormals[vid];
+    float4 base_tangent = _BaseTangents[vid];
+    float3 base_binormal = normalize(cross(base_normal, base_tangent.xyz) * base_tangent.w);
+    float3x3 tbn = float3x3(base_tangent.xyz, base_binormal, base_normal);
+    return normalize(mul(n, transpose(tbn)));
+}
+
+v2f vert_tangent_space_normals(appdata v)
+{
+    v2f o;
+    o.vertex = UnityObjectToClipPos(v.vertex);
+    o.color.rgb = ToBaseTangentSpace(v.vertexID, v.normal.xyz) * 0.5 + 0.5;
+    o.color.a = 1.0;
+    return o;
+}
+
+v2f vert_color(appdata v)
+{
+    v2f o;
+    o.vertex = UnityObjectToClipPos(v.vertex);
+    o.color = v.color;
+    return o;
+}
+
+
 half4 frag(v2f v) : SV_Target
 {
     return v.color;
@@ -157,5 +190,26 @@ ENDCG
             #pragma fragment frag
             #pragma target 4.5
             ENDCG
-        }    }
+        }
+
+        // pass 4: tangent space normals overlay
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert_tangent_space_normals
+            #pragma fragment frag
+            #pragma target 4.5
+            ENDCG
+        }
+
+        // pass 5: vertex color overlay
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert_color
+            #pragma fragment frag
+            #pragma target 4.5
+            ENDCG
+        }
+    }
 }
