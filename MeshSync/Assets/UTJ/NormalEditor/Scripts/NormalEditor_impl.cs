@@ -67,6 +67,8 @@ namespace UTJ.HumbleNormalEditor
 
         public void ApplyMove(Vector3 move)
         {
+            move = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(move);
+
             for (int i = 0; i < m_selection.Length; ++i)
             {
                 float s = m_selection[i];
@@ -81,6 +83,15 @@ namespace UTJ.HumbleNormalEditor
 
         public void ApplyRotate(Quaternion rot)
         {
+            {
+                var mat = GetComponent<Transform>().worldToLocalMatrix;
+                Vector3 axis = Vector3.zero;
+                float angle = 0.0f;
+                rot.ToAngleAxis(out angle, out axis);
+                axis = mat.MultiplyVector(axis);
+                rot = Quaternion.AngleAxis(angle, axis);
+            }
+
             for (int i = 0; i < m_selection.Length; ++i)
             {
                 float s = m_selection[i];
@@ -95,7 +106,15 @@ namespace UTJ.HumbleNormalEditor
 
         public void ApplyRotatePivot(Quaternion rot, Vector3 pivot, float strength)
         {
-            pivot = GetComponent<Transform>().worldToLocalMatrix.MultiplyPoint(pivot);
+            {
+                var mat = GetComponent<Transform>().worldToLocalMatrix;
+                pivot = mat.MultiplyPoint(pivot);
+                Vector3 axis = Vector3.zero;
+                float angle = 0.0f;
+                rot.ToAngleAxis(out angle, out axis);
+                axis = mat.MultiplyVector(axis);
+                rot = Quaternion.AngleAxis(angle, axis);
+            }
 
             for (int i = 0; i < m_selection.Length; ++i)
             {
