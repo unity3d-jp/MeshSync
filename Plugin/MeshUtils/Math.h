@@ -612,6 +612,16 @@ inline float3 eularZXY(const quatf& q)
     }
 }
 
+inline void to_axis_angle(const quatf& q, float3& axis, float& angle)
+{
+    angle = 2.0f * std::acos(q.w);
+    axis = {
+        q.x / std::sqrt(1.0f - q.w*q.w),
+        q.y / std::sqrt(1.0f - q.w*q.w),
+        q.z / std::sqrt(1.0f - q.w*q.w)
+    };
+}
+
 inline quatf swap_handedness(const quatf& q)
 {
     return { q.x, -q.y, -q.z, q.w };

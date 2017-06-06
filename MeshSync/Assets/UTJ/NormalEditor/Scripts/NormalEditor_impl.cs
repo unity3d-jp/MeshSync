@@ -254,7 +254,7 @@ public partial class NormalEditor : MonoBehaviour
         return ret;
     }
 
-    public bool SelectRect(Vector2 r1, Vector2 r2)
+    public bool SelectRect(Vector2 r1, Vector2 r2, float strength)
     {
         var cam = SceneView.lastActiveSceneView.camera;
         if (cam == null) { return false; }
@@ -270,9 +270,9 @@ public partial class NormalEditor : MonoBehaviour
         var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
 
         if (m_selectFrontSideOnly)
-            return neRectSelectionFrontSideOnly(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, ref mvp, ref trans, rmin, rmax, campos) > 0;
+            return neRectSelectionFrontFace(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength, ref mvp, ref trans, rmin, rmax, campos) > 0;
         else
-            return neRectSelection(m_points, m_points.Length, m_selection, ref mvp, rmin, rmax) > 0;
+            return neRectSelection(m_points, m_points.Length, m_selection, strength, ref mvp, rmin, rmax) > 0;
     }
 
 
@@ -429,10 +429,10 @@ public partial class NormalEditor : MonoBehaviour
         float radius, float strength, float[] seletion, ref Matrix4x4 trans);
 
     [DllImport("MeshSyncServer")] static extern int neRectSelection(
-        Vector3[] vertices, int num_vertices, float[] seletion,
+        Vector3[] vertices, int num_vertices, float[] seletion, float strength,
         ref Matrix4x4 mvp, Vector2 rmin, Vector2 rmax);
-    [DllImport("MeshSyncServer")] static extern int neRectSelectionFrontSideOnly(
-        Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion,
+    [DllImport("MeshSyncServer")] static extern int neRectSelectionFrontFace(
+        Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
         ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos);
 
 

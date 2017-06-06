@@ -10,10 +10,14 @@
 
 using namespace mu;
 
+inline float clamp01(float v)
+{
+    return std::max<float>(std::min<float>(v, 1.0f), 0.0f);
+}
+
 neAPI int neRaycast(
     const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_triangles,
-    int *tindex, float *distance,
-    const float4x4 *trans)
+    int *tindex, float *distance, const float4x4 *trans)
 {
     float4x4 itrans = invert(*trans);
     float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
@@ -23,8 +27,7 @@ neAPI int neRaycast(
 
 neAPI int neSoftSelection(
     const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float pow, float strength, float *seletion,
-    const float4x4 *trans)
+    float radius, float pow, float strength, float *seletion, const float4x4 *trans)
 {
     float4x4 itrans = invert(*trans);
     float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
@@ -40,7 +43,7 @@ neAPI int neSoftSelection(
             float lensq = length_sq(vertices[vi] - hpos);
             if (lensq <= rq) {
                 float s = std::pow(1.0f - std::sqrt(lensq) / radius, pow) * strength;
-                seletion[vi] = std::min<float>(seletion[vi] + s, 1.0f);
+                seletion[vi] = clamp01(seletion[vi] + s);
                 ++num;
             }
         }
@@ -67,7 +70,7 @@ neAPI int neHardSelection(
         for (int vi = 0; vi < num_vertices; ++vi) {
             float lensq = length_sq(vertices[vi] - hpos);
             if (lensq <= rq) {
-                seletion[vi] = std::min<float>(seletion[vi] + strength, 1.0f);
+                seletion[vi] = clamp01(seletion[vi] + strength);
                 ++num;
             }
         }
@@ -77,7 +80,7 @@ neAPI int neHardSelection(
 }
 
 neAPI int neRectSelection(
-    const float3 *vertices, int num_vertices, float *seletion,
+    const float3 *vertices, int num_vertices, float *seletion, float strength,
     const float4x4 *mvp_, float2 rmin, float2 rmax)
 {
     float4x4 mvp = *mvp_;
@@ -89,18 +92,15 @@ neAPI int neRectSelection(
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
             sp.y >= rmin.y && sp.y <= rmax.y)
         {
-            seletion[vi] = 1.0f;
+            seletion[vi] = clamp01(seletion[vi] + strength);
             ++ret;
-        }
-        else {
-            seletion[vi] = 0.0f;
         }
     }
     return ret;
 }
 
-neAPI int neRectSelectionFrontSideOnly(
-    const float3 *vertices, const int *indices, int num_vertices, int num_triangles, float *seletion,
+neAPI int neRectSelectionFrontFace(
+    const float3 *vertices, const int *indices, int num_vertices, int num_triangles, float *seletion, float strength,
     const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos)
 {
     float4x4 mvp = *mvp_;
@@ -108,8 +108,6 @@ neAPI int neRectSelectionFrontSideOnly(
 
     std::atomic_int ret{ 0 };
     for (int vi = 0; vi < num_vertices; ++vi) {
-        float s = 0.0f;
-
         float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
         float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
@@ -122,12 +120,11 @@ neAPI int neRectSelectionFrontSideOnly(
             if (neRaycast(campos, dir, vertices, indices, num_triangles, &ti, &distance, trans_)) {
                 float3 hitpos = campos + dir * distance;
                 if (length(vpos - hitpos) < 0.01f) {
-                    s = 1.0f;
+                    seletion[vi] = clamp01(seletion[vi] + strength);
                     ++ret;
                 }
             }
         }
-        seletion[vi] = s;
     }
     return ret;
 }

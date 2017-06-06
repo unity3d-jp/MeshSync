@@ -457,104 +457,115 @@ public partial class NormalEditor : MonoBehaviour
 
 
 
-        int id = GUIUtility.GetControlID(FocusType.Passive);
-
         Event e = Event.current;
-        var type = e.GetTypeForControl(id);
-        if (type == EventType.MouseDown || type == EventType.MouseDrag || type == EventType.MouseUp)
+        int id = GUIUtility.GetControlID(FocusType.Passive);
+        var et = e.GetTypeForControl(id);
+
+        if ((et == EventType.MouseDown || et == EventType.MouseDrag || et == EventType.MouseUp) && e.button == 0)
         {
-            bool handled = false;
-            if (e.button == 0)
-            {
-                var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-                if (m_editMode != EditMode.Brush)
-                {
-                    if (!e.shift && type == EventType.MouseUp)
-                        System.Array.Clear(m_selection, 0, m_selection.Length);
-
-                    if (m_selectMode == SelectMode.Single)
-                    {
-                        int sel = GetMouseVertex(e);
-                        if (sel != -1)
-                        {
-                            m_selection[sel] = 1.0f;
-                            handled = true;
-                        }
-                    }
-                    else if (m_selectMode == SelectMode.Hard)
-                    {
-                        if (SelectHard(ray, m_brushRadius, m_brushStrength))
-                        {
-                            handled = true;
-                        }
-                    }
-                    else if (m_selectMode == SelectMode.Soft)
-                    {
-                        if (SelectSoft(ray, m_brushRadius, m_brushPow, m_brushStrength))
-                        {
-                            handled = true;
-                        }
-                    }
-                    else if (m_selectMode == SelectMode.Rect)
-                    {
-                        if (type == EventType.MouseDown)
-                        {
-                            m_dragStartPoint = m_dragEndPoint = e.mousePosition;
-                            handled = true;
-                        }
-                        else if (type == EventType.MouseDrag || type == EventType.MouseUp)
-                        {
-                            m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
-                            handled = true;
-                            if (type == EventType.MouseUp)
-                            {
-                                if (!SelectRect(m_dragStartPoint, m_dragEndPoint))
-                                {
-                                    Selection.activeGameObject = null;
-                                }
-                                m_dragStartPoint = m_dragEndPoint = Vector2.zero;
-                            }
-                        }
-                    }
-
-                    UpdateSelection();
-                }
-                else if (m_editMode == EditMode.Brush)
-                {
-                    switch (m_brushMode)
-                    {
-                        case BrushMode.Equalize:
-                            if (ApplyEqualizeBrush(ray, m_brushRadius, m_brushPow, m_brushStrength))
-                                handled = true;
-                            break;
-                    }
-                    if (type == EventType.MouseUp && handled)
-                        PushUndo();
-                }
-            }
-
-            if (handled)
-            {
-                if (type == EventType.MouseDown)
-                {
-                    GUIUtility.hotControl = id;
-                }
-                else if (type == EventType.MouseUp)
-                {
-                    if (GUIUtility.hotControl == id && e.button == 0)
-                        GUIUtility.hotControl = 0;
-                }
-                e.Use();
-            }
+            HandleMouseEvent(e, et, id);
         }
-        else if(type == EventType.KeyDown || type == EventType.KeyUp)
+        else if(et == EventType.KeyDown || et == EventType.KeyUp)
         {
 
         }
-
 
         if (Event.current.type == EventType.Repaint)
             OnRepaint();
+    }
+
+    bool HandleMouseEvent(Event e, EventType et, int id)
+    {
+        bool handled = false;
+        var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+        if (m_editMode != EditMode.Brush)
+        {
+            float selectSign = e.control ? -1.0f : 1.0f;
+
+            if (m_selectMode == SelectMode.Single)
+            {
+                if (!e.shift)
+                    System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                int sel = GetMouseVertex(e);
+                if (sel != -1)
+                {
+                    m_selection[sel] = 1.0f;
+                    handled = true;
+                }
+            }
+            else if (m_selectMode == SelectMode.Hard)
+            {
+                if (!e.shift)
+                    System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                if (SelectHard(ray, m_brushRadius, m_brushStrength * selectSign))
+                    handled = true;
+            }
+            else if (m_selectMode == SelectMode.Soft)
+            {
+                if (!e.shift)
+                    System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                if (SelectSoft(ray, m_brushRadius, m_brushPow, m_brushStrength * selectSign))
+                    handled = true;
+            }
+            else if (m_selectMode == SelectMode.Rect)
+            {
+                if (et == EventType.MouseDown)
+                {
+                    m_dragStartPoint = m_dragEndPoint = e.mousePosition;
+                    handled = true;
+                }
+                else if (et == EventType.MouseDrag)
+                {
+                    m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
+                    handled = true;
+                }
+                else if (et == EventType.MouseUp)
+                {
+                    if (!e.shift)
+                        System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                    m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
+                    handled = true;
+
+                    if (!SelectRect(m_dragStartPoint, m_dragEndPoint, selectSign))
+                    {
+                        Selection.activeGameObject = null;
+                    }
+                    m_dragStartPoint = m_dragEndPoint = Vector2.zero;
+                }
+            }
+
+            UpdateSelection();
+        }
+        else if (m_editMode == EditMode.Brush)
+        {
+            switch (m_brushMode)
+            {
+                case BrushMode.Equalize:
+                    if (ApplyEqualizeBrush(ray, m_brushRadius, m_brushPow, m_brushStrength))
+                        handled = true;
+                    break;
+            }
+            if (et == EventType.MouseUp && handled)
+                PushUndo();
+        }
+        if (handled)
+        {
+            if (et == EventType.MouseDown)
+            {
+                GUIUtility.hotControl = id;
+            }
+            else if (et == EventType.MouseUp)
+            {
+                if (GUIUtility.hotControl == id && e.button == 0)
+                    GUIUtility.hotControl = 0;
+            }
+            e.Use();
+        }
+        return handled;
     }
 
 
