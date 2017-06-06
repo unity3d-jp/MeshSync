@@ -112,6 +112,15 @@ v2f vert_binormals(appdata v)
 }
 
 
+v2f vert_local_space_normals(appdata v)
+{
+    v2f o;
+    o.vertex = UnityObjectToClipPos(v.vertex);
+    o.color.rgb = v.normal.xyz * 0.5 + 0.5;
+    o.color.a = 1.0;
+    return o;
+}
+
 float3 ToBaseTangentSpace(uint vid, float3 n)
 {
     float3 base_normal = _BaseNormals[vid];
@@ -191,8 +200,18 @@ ENDCG
             #pragma target 4.5
             ENDCG
         }
+            
+        // pass 4: local space normals overlay
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert_local_space_normals
+            #pragma fragment frag
+            #pragma target 4.5
+            ENDCG
+        }
 
-        // pass 4: tangent space normals overlay
+        // pass 5: tangent space normals overlay
         Pass
         {
             CGPROGRAM
@@ -202,7 +221,7 @@ ENDCG
             ENDCG
         }
 
-        // pass 5: vertex color overlay
+        // pass 6: vertex color overlay
         Pass
         {
             CGPROGRAM

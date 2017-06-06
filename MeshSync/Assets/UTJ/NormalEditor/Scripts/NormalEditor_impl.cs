@@ -209,13 +209,14 @@ namespace UTJ.HumbleNormalEditor
 
             if (m_numSelected > 0)
             {
-                m_selectionPos /= st;
-                m_selectionNormal /= st;
-                m_selectionNormal = m_selectionNormal.normalized;
-                m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
-
                 var trans = GetComponent<Transform>();
-                m_pivotPos = m_selectionPos + trans.position;
+                var matrix = trans.localToWorldMatrix;
+
+                m_selectionPos /= st;
+                m_selectionPos = matrix.MultiplyPoint(m_selectionPos);
+                m_selectionNormal = matrix.MultiplyVector(m_selectionNormal).normalized;
+                m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
+                m_pivotPos = m_selectionPos;
                 m_pivotRot = m_selectionRot;
             }
 

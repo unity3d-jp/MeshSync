@@ -10,44 +10,70 @@
 
 using namespace mu;
 
-inline float clamp01(float v)
+inline static float clamp01(float v)
 {
     return std::max<float>(std::min<float>(v, 1.0f), 0.0f);
+}
+
+inline static float3 mul(const float4x4& t, const float3& p)
+{
+    return (const float3&)(t * float4{ p.x, p.y, p.z, 0.0f });
+}
+inline static float3 mul_t(const float4x4& t, const float3& p)
+{
+    return (const float3&)(t * float4{ p.x, p.y, p.z, 1.0f });
+}
+
+inline static int Raycast(
+    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_triangles, const float4x4& trans,
+    int& tindex, float& distance)
+{
+    float4x4 itrans = invert(trans);
+    float3 rpos = mul_t(itrans, pos);
+    float3 rdir = normalize(mul(itrans, dir));
+    float d;
+    int hit = RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, tindex, d);
+    if (hit) {
+        float3 hpos = rpos + rdir * d;
+        distance = length(mul_t(trans, hpos) - pos);
+    }
+    return hit;
+}
+
+template<class Body>
+inline static int SelectInside(float3 pos, float radius, const float3 *vertices, int num_vertices, const float4x4& trans, const Body& body)
+{
+    int ret = 0;
+    float rq = radius * radius;
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        float dsq = length_sq(mul_t(trans, vertices[vi]) - pos);
+        if (dsq <= rq) {
+            body(vi, std::sqrt(dsq));
+            ++ret;
+        }
+    }
+    return ret;
 }
 
 neAPI int neRaycast(
     const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_triangles,
     int *tindex, float *distance, const float4x4 *trans)
 {
-    float4x4 itrans = invert(*trans);
-    float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
-    float3 rdir = normalize((const float3&)(itrans * float4{ dir.x, dir.y, dir.z, 0.0f }));
-    return RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, *tindex, *distance);
+    return Raycast(pos, dir, vertices, indices, num_triangles, *trans, *tindex, *distance);
 }
 
 neAPI int neSoftSelection(
     const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
     float radius, float pow, float strength, float *seletion, const float4x4 *trans)
 {
-    float4x4 itrans = invert(*trans);
-    float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
-    float3 rdir = normalize((const float3&)(itrans * float4{ dir.x, dir.y, dir.z, 0.0f }));
-
     int ti;
     float distance;
-    if (RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, ti, distance)) {
-        int num = 0;
-        float3 hpos = rpos + rdir * distance;
-        float rq = radius * radius;
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            float lensq = length_sq(vertices[vi] - hpos);
-            if (lensq <= rq) {
-                float s = std::pow(1.0f - std::sqrt(lensq) / radius, pow) * strength;
-                seletion[vi] = clamp01(seletion[vi] + s);
-                ++num;
-            }
-        }
-        return num;
+    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
+        float3 hpos = pos + dir * distance;
+        return SelectInside(hpos, radius, vertices, num_vertices, *trans,[&](int vi, float d) {
+            float s = std::pow(1.0f - d / radius, pow) * strength;
+            seletion[vi] = clamp01(seletion[vi] + s);
+        });
     }
     return 0;
 }
@@ -57,24 +83,13 @@ neAPI int neHardSelection(
     float radius, float strength, float *seletion,
     const float4x4 *trans)
 {
-    float4x4 itrans = invert(*trans);
-    float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
-    float3 rdir = normalize((const float3&)(itrans * float4{ dir.x, dir.y, dir.z, 0.0f }));
-
     int ti;
     float distance;
-    if (RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, ti, distance)) {
-        int num = 0;
-        float3 hpos = rpos + rdir * distance;
-        float rq = radius * radius;
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            float lensq = length_sq(vertices[vi] - hpos);
-            if (lensq <= rq) {
-                seletion[vi] = clamp01(seletion[vi] + strength);
-                ++num;
-            }
-        }
-        return num;
+    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
+        float3 hpos = pos + dir * distance;
+        return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
+            seletion[vi] = clamp01(seletion[vi] + strength);
+        });
     }
     return 0;
 }
@@ -155,30 +170,24 @@ neAPI int neEqualizeRaycast(
     float radius, float pow, float strength, float3 *normals,
     const float4x4 *trans)
 {
-    float4x4 itrans = invert(*trans);
-    float3 rpos = (const float3&)(itrans * float4{ pos.x, pos.y, pos.z, 1.0f });
-    float3 rdir = normalize((const float3&)(itrans * float4{ dir.x, dir.y, dir.z, 0.0f }));
-
     int ti;
     float distance;
-    if (RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, ti, distance)) {
-        float3 hpos = rpos + rdir * distance;
-        float rq = radius * radius;
-        RawVector<int> inside;
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            if (length_sq(vertices[vi] - hpos) <= rq) {
-                inside.push_back(vi);
-            }
-        }
+    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
+        float3 hpos = pos + dir * distance;
+
+        RawVector<std::pair<int, float>> inside;
+        SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
+            inside.push_back({ vi, d });
+        });
 
         float3 average = float3::zero();
-        for (int vi : inside) {
-            average += normals[vi];
+        for (auto& p : inside) {
+            average += normals[p.first];
         }
         average = normalize(average);
-        for (int vi : inside) {
-            float s = std::pow(1.0f - length(vertices[vi] - hpos) / radius, pow) * strength;
-            normals[vi] = normalize(normals[vi] + average * s);
+        for (auto& p : inside) {
+            float s = std::pow(1.0f - p.second / radius, pow) * strength;
+            normals[p.first] = normalize(normals[p.first] + average * s);
         }
         return (int)inside.size();
     }

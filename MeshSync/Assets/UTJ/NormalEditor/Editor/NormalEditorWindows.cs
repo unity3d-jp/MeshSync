@@ -119,7 +119,7 @@ namespace UTJ.HumbleNormalEditor
                 settings.showNormals = EditorGUILayout.Toggle("Normals", settings.showNormals);
                 settings.showTangents = EditorGUILayout.Toggle("Tangents", settings.showTangents);
                 settings.showBinormals = EditorGUILayout.Toggle("Binormals", settings.showBinormals);
-                settings.modelOverlay = (ModelOverlay)EditorGUILayout.EnumPopup("Model Overlay", settings.modelOverlay);
+                settings.modelOverlay = (ModelOverlay)EditorGUILayout.EnumPopup("Overlay", settings.modelOverlay);
 
 
                 settings.foldDisplayOptions = EditorGUILayout.Foldout(settings.foldDisplayOptions, "Display Options");
@@ -196,7 +196,7 @@ namespace UTJ.HumbleNormalEditor
 
             EditorGUILayout.Space();
 
-            settings.foldLoadTexture = EditorGUILayout.Foldout(settings.foldLoadTexture, "Load Texture");
+            settings.foldLoadTexture = EditorGUILayout.Foldout(settings.foldLoadTexture, "Normal Map To Vertex Normal");
             if (settings.foldLoadTexture)
             {
                 EditorGUI.indentLevel++;

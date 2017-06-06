@@ -56,6 +56,7 @@ namespace UTJ.HumbleNormalEditor
     public enum ModelOverlay
     {
         None,
+        LocalSpaceNormals,
         TangentSpaceNormals,
         VertexColor,
     }
@@ -518,11 +519,8 @@ namespace UTJ.HumbleNormalEditor
             if (m_cbNormals != null) m_matVisualize.SetBuffer("_Normals", m_cbNormals);
             if (m_cbTangents != null) m_matVisualize.SetBuffer("_Tangents", m_cbTangents);
             if (m_cbSelection != null) m_matVisualize.SetBuffer("_Selection", m_cbSelection);
-            if (m_settings.modelOverlay == ModelOverlay.TangentSpaceNormals)
-            {
-                if (m_cbBaseNormals != null) m_matVisualize.SetBuffer("_BaseNormals", m_cbBaseNormals);
-                if (m_cbBaseTangents != null) m_matVisualize.SetBuffer("_BaseTangents", m_cbBaseTangents);
-            }
+            if (m_cbBaseNormals != null) m_matVisualize.SetBuffer("_BaseNormals", m_cbBaseNormals);
+            if (m_cbBaseTangents != null) m_matVisualize.SetBuffer("_BaseTangents", m_cbBaseTangents);
 
             if (m_cmdDraw == null)
             {
@@ -530,12 +528,22 @@ namespace UTJ.HumbleNormalEditor
                 m_cmdDraw.name = "NormalEditor";
             }
             m_cmdDraw.Clear();
-            if (m_settings.modelOverlay == ModelOverlay.TangentSpaceNormals)
-                for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
-                    m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 4);
-            else if(m_settings.modelOverlay == ModelOverlay.VertexColor)
-                for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
-                    m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 5);
+
+            switch (m_settings.modelOverlay)
+            {
+                case ModelOverlay.LocalSpaceNormals:
+                    for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+                        m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 4);
+                    break;
+                case ModelOverlay.TangentSpaceNormals:
+                    for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+                        m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 5);
+                    break;
+                case ModelOverlay.VertexColor:
+                    for (int si = 0; si < m_meshTarget.subMeshCount; ++si)
+                        m_cmdDraw.DrawMesh(m_meshTarget, matrix, m_matVisualize, si, 6);
+                    break;
+            }
             if (m_settings.showVertices && m_points != null)
                 m_cmdDraw.DrawMeshInstancedIndirect(m_meshCube, 0, m_matVisualize, 0, m_cbArg);
             if (m_settings.showBinormals && m_tangents != null)
