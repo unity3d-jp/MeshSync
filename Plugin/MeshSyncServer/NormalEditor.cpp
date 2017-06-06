@@ -84,9 +84,8 @@ neAPI int neRectSelection(
 
     std::atomic_int ret{ 0 };
     for (int vi = 0; vi < num_vertices; ++vi) {
-        float4 vp = { vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
-        vp = mvp * vp;
-        float2 sp = { vp.x / vp.w ,vp.y / vp.w };
+        float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
+        float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
             sp.y >= rmin.y && sp.y <= rmax.y)
         {
@@ -96,6 +95,39 @@ neAPI int neRectSelection(
         else {
             seletion[vi] = 0.0f;
         }
+    }
+    return ret;
+}
+
+neAPI int neRectSelectionFrontSideOnly(
+    const float3 *vertices, const int *indices, int num_vertices, int num_triangles, float *seletion,
+    const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos)
+{
+    float4x4 mvp = *mvp_;
+    float4x4 trans = *trans_;
+
+    std::atomic_int ret{ 0 };
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        float s = 0.0f;
+
+        float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
+        float2 sp = float2{ vp.x, vp.y } / vp.w;
+        if (sp.x >= rmin.x && sp.x <= rmax.x &&
+            sp.y >= rmin.y && sp.y <= rmax.y)
+        {
+            float3 vpos = (float3&)(trans * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f });
+            float3 dir = normalize(vpos - campos);
+            int ti;
+            float distance;
+            if (neRaycast(campos, dir, vertices, indices, num_triangles, &ti, &distance, trans_)) {
+                float3 hitpos = campos + dir * distance;
+                if (length(vpos - hitpos) < 0.01f) {
+                    s = 1.0f;
+                    ++ret;
+                }
+            }
+        }
+        seletion[vi] = s;
     }
     return ret;
 }

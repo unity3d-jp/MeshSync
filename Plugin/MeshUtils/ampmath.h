@@ -10,7 +10,7 @@ namespace am {}
 #include <amp_math.h>
 
 #ifndef amEpsilon
-    #define amEpsilon 1e-6
+    #define amEpsilon 1e-6f
 #endif
 
 

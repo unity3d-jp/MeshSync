@@ -259,15 +259,20 @@ public partial class NormalEditor : MonoBehaviour
         var cam = SceneView.lastActiveSceneView.camera;
         if (cam == null) { return false; }
 
-        var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * GetComponent<Transform>().localToWorldMatrix;
+        var campos = cam.GetComponent<Transform>().position;
+        var trans = GetComponent<Transform>().localToWorldMatrix;
+        var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
         r1.x = r1.x / cam.pixelWidth * 2.0f - 1.0f;
         r2.x = r2.x / cam.pixelWidth * 2.0f - 1.0f;
         r1.y = (1.0f - r1.y / cam.pixelHeight) * 2.0f - 1.0f;
         r2.y = (1.0f - r2.y / cam.pixelHeight) * 2.0f - 1.0f;
-        bool ret = neRectSelection(m_points, m_points.Length, m_selection, ref mvp,
-            new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y)),
-            new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y))) > 0;
-        return ret;
+        var rmin = new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y));
+        var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
+
+        if (m_selectFrontSideOnly)
+            return neRectSelectionFrontSideOnly(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, ref mvp, ref trans, rmin, rmax, campos) > 0;
+        else
+            return neRectSelection(m_points, m_points.Length, m_selection, ref mvp, rmin, rmax) > 0;
     }
 
 
@@ -426,6 +431,10 @@ public partial class NormalEditor : MonoBehaviour
     [DllImport("MeshSyncServer")] static extern int neRectSelection(
         Vector3[] vertices, int num_vertices, float[] seletion,
         ref Matrix4x4 mvp, Vector2 rmin, Vector2 rmax);
+    [DllImport("MeshSyncServer")] static extern int neRectSelectionFrontSideOnly(
+        Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion,
+        ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos);
+
 
     [DllImport("MeshSyncServer")] static extern int neEqualize(
         int num_vertices, int num_triangles,

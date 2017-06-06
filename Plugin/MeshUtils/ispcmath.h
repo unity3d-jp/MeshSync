@@ -291,7 +291,7 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 
 
-#define Epsilon 1e-6
+#define isEpsilon 1e-6f
 
 static inline bool triangle_interpolation(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
@@ -307,10 +307,10 @@ static inline bool triangle_interpolation(uniform float3 pos, uniform float3 dir
 
     distance = dot(e2, q) * inv_det;
     return
-        abs(det) > Epsilon &&
-        u >= 0 && u <= 1 &&
-        v >= 0 && u + v <= 1 &&
-        distance > 0.0f;
+        abs(det) > isEpsilon &&
+        u > -isEpsilon && u < 1+isEpsilon &&
+        v > -isEpsilon && u + v < 1+isEpsilon &&
+        distance >= 0.0f;
 }
 
 // uniform variant
@@ -328,10 +328,10 @@ static inline uniform bool triangle_interpolation(uniform float3 pos, uniform fl
 
     distance = dot(e2, q) * inv_det;
     return
-        abs(det) > Epsilon &&
-        u >= 0 && u <= 1 &&
-        v >= 0 && u + v <= 1 &&
-        distance > 0.0f;
+        abs(det) > isEpsilon &&
+        u > -isEpsilon && u < 1+isEpsilon &&
+        v > -isEpsilon && u + v < 1+isEpsilon &&
+        distance >= 0.0f;
 }
 
 

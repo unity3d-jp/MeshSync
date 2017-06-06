@@ -7,7 +7,7 @@
     #include "half.h"
 #endif // muEnableHalf
 
-#define muEpsilon 1e-6
+#define muEpsilon 1e-6f
 #define muMath_AddNamespace
 
 #ifdef muMath_AddNamespace
@@ -840,13 +840,13 @@ inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 
     float inv_det = 1.0f / det;
     float3 t = pos - p1;
     float u = dot(t, p) * inv_det;
-    if (u < 0 || u  > 1) return false;
+    if (u < -muEpsilon || u  > 1 + muEpsilon) return false;
     float3 q = cross(t, e1);
     float v = dot(dir, q) * inv_det;
-    if (v < 0 || u + v > 1) return false;
+    if (v < -muEpsilon || u + v > 1 + muEpsilon) return false;
 
     distance = dot(e2, q) * inv_det;
-    return distance > 0.0f;
+    return distance >= 0.0f;
 }
 
 // pos must be on the triangle

@@ -59,6 +59,7 @@ public partial class NormalEditor : MonoBehaviour
     BrushMode m_brushMode = BrushMode.Equalize;
     SelectMode m_selectMode = SelectMode.Soft;
     MirrorMode m_mirrorMode = MirrorMode.None;
+    bool m_selectFrontSideOnly = true;
     float m_brushRadius = 0.2f;
     float m_brushPow = 0.5f;
     float m_brushStrength = 1.0f;
@@ -150,6 +151,11 @@ public partial class NormalEditor : MonoBehaviour
                 PushUndo();
             }
         }
+    }
+    public bool selectFrontSideOnly
+    {
+        get { return m_selectFrontSideOnly; }
+        set { m_selectFrontSideOnly = value; }
     }
     public float brushRadius
     {
@@ -463,7 +469,7 @@ public partial class NormalEditor : MonoBehaviour
                 var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
                 if (m_editMode != EditMode.Brush)
                 {
-                    if (!e.shift)
+                    if (!e.shift && type == EventType.MouseUp)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
                     if (m_selectMode == SelectMode.Single)

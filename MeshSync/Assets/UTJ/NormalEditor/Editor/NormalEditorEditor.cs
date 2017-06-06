@@ -52,6 +52,7 @@ public class NormalEditorEditor : Editor
 
         EditorGUILayout.Space();
 
+        m_target.selectFrontSideOnly = EditorGUILayout.Toggle("Select Front Side Only", m_target.selectFrontSideOnly);
         m_target.brushRadius = EditorGUILayout.Slider("Brush Radius", m_target.brushRadius, 0.01f, 1.0f);
         m_target.brushStrength = EditorGUILayout.Slider("Brush Strength", m_target.brushStrength, 0.01f, 1.0f);
         m_target.brushPow = EditorGUILayout.Slider("Brush Pow", m_target.brushPow, 0.01f, 1.0f);
