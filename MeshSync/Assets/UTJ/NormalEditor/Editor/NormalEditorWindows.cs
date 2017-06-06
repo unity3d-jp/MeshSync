@@ -223,7 +223,8 @@ namespace UTJ.HumbleNormalEditor
                 {
                     string path = EditorUtility.SaveFilePanel("Export .obj file", "", editor.name, "obj");
                     if (path.Length > 0)
-                        ObjExporter.DoExport(editor.gameObject, true, path);
+                        ObjExporter.Export(editor.gameObject, path,
+                            new ObjExporter.Settings { includeChildren=false, applyTransform=false,});
                 }
                 GUILayout.EndHorizontal();
 
