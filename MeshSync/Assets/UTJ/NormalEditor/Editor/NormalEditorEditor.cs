@@ -2,199 +2,227 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 
-[CustomEditor(typeof(NormalEditor))]
-public class NormalEditorEditor : Editor
+namespace UTJ.HumbleNormalEditor
 {
-    public enum ImageFormat
+    [CustomEditor(typeof(NormalEditor))]
+    public class NormalEditorEditor : Editor
     {
-        PNG,
-        EXR,
-    }
-
-    NormalEditor m_target;
-    bool m_foldDisplay = true;
-    bool m_foldDisplayOptions;
-    bool m_foldExport = true;
-    bool m_foldBakeToTexture = true;
-    bool m_foldBakeFromTexture = true;
-
-    ImageFormat m_bakeFormat = ImageFormat.PNG;
-    int m_bakeWith = 1024;
-    int m_bakeHeight = 1024;
-
-    Texture m_bakeSource;
+        NormalEditor m_target;
 
 
-    void OnEnable()
-    {
-        m_target = target as NormalEditor;
-    }
-
-    void OnDisable()
-    {
-    }
-
-    void OnSceneGUI()
-    {
-        m_target.OnSceneGUI();
-    }
-
-    public override void OnInspectorGUI()
-    {
-        //DrawDefaultInspector();
-
-        EditorGUI.BeginChangeCheck();
-
-        m_target.editMode = (NormalEditor.EditMode)EditorGUILayout.EnumPopup("Edit Mode", m_target.editMode);
-        m_target.brushMode = (NormalEditor.BrushMode)EditorGUILayout.EnumPopup("Brush Mode", m_target.brushMode);
-        m_target.selectMode = (NormalEditor.SelectMode)EditorGUILayout.EnumPopup("Select Mode", m_target.selectMode);
-        m_target.mirroMode = (NormalEditor.MirrorMode)EditorGUILayout.EnumPopup("Mirror Mode", m_target.mirroMode);
-
-        EditorGUILayout.Space();
-
-        m_target.selectFrontSideOnly = EditorGUILayout.Toggle("Select Front Side Only", m_target.selectFrontSideOnly);
-        m_target.brushRadius = EditorGUILayout.Slider("Brush Radius", m_target.brushRadius, 0.01f, 1.0f);
-        m_target.brushStrength = EditorGUILayout.Slider("Brush Strength", m_target.brushStrength, 0.01f, 1.0f);
-        m_target.brushPow = EditorGUILayout.Slider("Brush Pow", m_target.brushPow, 0.01f, 1.0f);
-
-        EditorGUILayout.Space();
-
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Select All"))
+        void OnEnable()
         {
-            if (m_target.SelectAll())
-                m_target.UpdateSelection();
+            m_target = target as NormalEditor;
         }
-        if (GUILayout.Button("Select None"))
+
+        void OnDisable()
         {
-            if (m_target.SelectNone())
-                m_target.UpdateSelection();
         }
-        GUILayout.EndHorizontal();
 
-        EditorGUILayout.Space();
-
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Reset Normals"))
-            m_target.ResetNormals(false);
-        if (GUILayout.Button("Reset Normals (Selected)"))
-            m_target.ResetNormals(true);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Recalculate Tangents"))
-            m_target.RecalculateTangents();
-        GUILayout.EndHorizontal();
-
-        EditorGUILayout.Space();
-
-        m_foldDisplay = EditorGUILayout.Foldout(m_foldDisplay, "Display");
-        if(m_foldDisplay)
+        void OnSceneGUI()
         {
-            EditorGUI.indentLevel++;
-            m_target.showVertices = EditorGUILayout.Toggle("Vertices", m_target.showVertices);
-            m_target.showNormals = EditorGUILayout.Toggle("Normals", m_target.showNormals);
-            m_target.showTangents = EditorGUILayout.Toggle("Tangents", m_target.showTangents);
-            m_target.showBinormals = EditorGUILayout.Toggle("Binormals", m_target.showBinormals);
-            m_target.showTangentSpaceNormals = EditorGUILayout.Toggle("Tangent Space Normals", m_target.showTangentSpaceNormals);
+            m_target.OnSceneGUI();
+        }
 
-            m_foldDisplayOptions = EditorGUILayout.Foldout(m_foldDisplayOptions, "Display Options");
-            if (m_foldDisplayOptions)
+        public override void OnInspectorGUI()
+        {
+            //DrawDefaultInspector();
+
+            var settings = m_target.settings;
+
+            EditorGUI.BeginChangeCheck();
+
+            settings.editMode = (EditMode)EditorGUILayout.EnumPopup("Edit Mode", settings.editMode);
+            settings.brushMode = (BrushMode)EditorGUILayout.EnumPopup("Brush Mode", settings.brushMode);
+            settings.selectMode = (SelectMode)EditorGUILayout.EnumPopup("Select Mode", settings.selectMode);
+            settings.mirrorMode = (MirrorMode)EditorGUILayout.EnumPopup("Mirror Mode", settings.mirrorMode);
+
+            EditorGUILayout.Space();
+
+            settings.selectFrontSideOnly = EditorGUILayout.Toggle("Select Front Side Only", settings.selectFrontSideOnly);
+            settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
+            settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, 0.01f, 1.0f);
+            settings.brushPow = EditorGUILayout.Slider("Brush Pow", settings.brushPow, 0.01f, 1.0f);
+
+            EditorGUILayout.Space();
+
+
+            settings.foldSelection = EditorGUILayout.Foldout(settings.foldSelection, "Selection");
+            if (settings.foldSelection)
             {
                 EditorGUI.indentLevel++;
-
-                m_target.vertexSize = EditorGUILayout.Slider("Vertex Size", m_target.vertexSize, 0.0f, 0.05f);
-                m_target.normalSize = EditorGUILayout.Slider("Normal Size", m_target.normalSize, 0.0f, 1.00f);
-                m_target.tangentSize = EditorGUILayout.Slider("Tangent Size", m_target.tangentSize, 0.0f, 1.00f);
-                m_target.binormalSize = EditorGUILayout.Slider("Binormal Size", m_target.binormalSize, 0.0f, 1.00f);
-
-                EditorGUILayout.Space();
-
-                m_target.vertexColor = EditorGUILayout.ColorField("Vertex Color", m_target.vertexColor);
-                m_target.vertexColor2 = EditorGUILayout.ColorField("Vertex Color (Selected)", m_target.vertexColor2);
-                m_target.normalColor = EditorGUILayout.ColorField("Normal Color", m_target.normalColor);
-                m_target.tangentColor = EditorGUILayout.ColorField("Tangent Color", m_target.tangentColor);
-                m_target.binormalColor = EditorGUILayout.ColorField("Binormal Color", m_target.binormalColor);
-
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(EditorGUI.indentLevel * 16);
-                if (GUILayout.Button("Reset"))
+                EditorGUILayout.LabelField("Save", GUILayout.Width(70));
+                for (int i = 0; i < 5; ++i)
                 {
-                    m_target.ResetDisplayOptions();
+                    if (GUILayout.Button((i + 1).ToString()))
+                        settings.selectionSets[i].selection = m_target.selection;
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("Load", GUILayout.Width(70));
+                for (int i = 0; i < 5; ++i)
+                {
+                    if (GUILayout.Button((i + 1).ToString()))
+                        m_target.selection = settings.selectionSets[i].selection;
                 }
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
             }
-            EditorGUI.indentLevel--;
-        }
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        m_foldExport = EditorGUILayout.Foldout(m_foldExport, "Export");
-        if(m_foldExport)
-        {
-            EditorGUI.indentLevel++;
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(EditorGUI.indentLevel * 16);
-            if (GUILayout.Button("Export .obj file"))
+            settings.foldCommands = EditorGUILayout.Foldout(settings.foldCommands, "Commands");
+            if(settings.foldCommands)
             {
-                string path = EditorUtility.SaveFilePanel("Export .obj file", "", m_target.name, "obj");
-                if (path.Length > 0)
-                    ObjExporter.DoExport(m_target.gameObject, true, path);
+                EditorGUI.indentLevel++;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * 16);
+                if (GUILayout.Button("Select All"))
+                {
+                    if (m_target.SelectAll())
+                        m_target.UpdateSelection();
+                }
+                if (GUILayout.Button("Select None"))
+                {
+                    if (m_target.SelectNone())
+                        m_target.UpdateSelection();
+                }
+                GUILayout.EndHorizontal();
+
+                EditorGUILayout.Space();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * 16);
+                if (GUILayout.Button("Reset Normals"))
+                    m_target.ResetNormals(false);
+                if (GUILayout.Button("Reset Normals (Selected)"))
+                    m_target.ResetNormals(true);
+                GUILayout.EndHorizontal();
+
+                EditorGUILayout.Space();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * 16);
+                if (GUILayout.Button("Recalculate Tangents"))
+                    m_target.RecalculateTangents();
+                GUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel--;
             }
-            GUILayout.EndHorizontal();
 
-            EditorGUI.indentLevel--;
-        }
+            EditorGUILayout.Space();
 
-
-        EditorGUILayout.Space();
-
-        m_foldBakeToTexture = EditorGUILayout.Foldout(m_foldBakeToTexture, "Bake To Texture");
-        if (m_foldBakeToTexture)
-        {
-            EditorGUI.indentLevel++;
-
-            m_bakeFormat = (ImageFormat)EditorGUILayout.EnumPopup("Format", m_bakeFormat);
-            m_bakeWith = EditorGUILayout.IntField("Width", m_bakeWith);
-            m_bakeHeight = EditorGUILayout.IntField("Height", m_bakeHeight);
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(EditorGUI.indentLevel * 16);
-            if (GUILayout.Button("Bake"))
+            settings.foldDisplay = EditorGUILayout.Foldout(settings.foldDisplay, "Display");
+            if (settings.foldDisplay)
             {
-                string path = m_bakeFormat == ImageFormat.PNG ?
-                    EditorUtility.SaveFilePanel("Export .png file", "", m_target.name + "_normal", "png") :
-                    EditorUtility.SaveFilePanel("Export .exr file", "", m_target.name + "_normal", "exr");
-                m_target.BakeToTexture(m_bakeWith, m_bakeHeight, path);
+                EditorGUI.indentLevel++;
+                settings.showVertices = EditorGUILayout.Toggle("Vertices", settings.showVertices);
+                settings.showNormals = EditorGUILayout.Toggle("Normals", settings.showNormals);
+                settings.showTangents = EditorGUILayout.Toggle("Tangents", settings.showTangents);
+                settings.showBinormals = EditorGUILayout.Toggle("Binormals", settings.showBinormals);
+                settings.showTangentSpaceNormals = EditorGUILayout.Toggle("Tangent Space Normals", settings.showTangentSpaceNormals);
+
+                settings.foldDisplayOptions = EditorGUILayout.Foldout(settings.foldDisplayOptions, "Display Options");
+                if (settings.foldDisplayOptions)
+                {
+                    EditorGUI.indentLevel++;
+
+                    settings.vertexSize = EditorGUILayout.Slider("Vertex Size", settings.vertexSize, 0.0f, 0.05f);
+                    settings.normalSize = EditorGUILayout.Slider("Normal Size", settings.normalSize, 0.0f, 1.00f);
+                    settings.tangentSize = EditorGUILayout.Slider("Tangent Size", settings.tangentSize, 0.0f, 1.00f);
+                    settings.binormalSize = EditorGUILayout.Slider("Binormal Size", settings.binormalSize, 0.0f, 1.00f);
+
+                    EditorGUILayout.Space();
+
+                    settings.vertexColor = EditorGUILayout.ColorField("Vertex Color", settings.vertexColor);
+                    settings.vertexColor2 = EditorGUILayout.ColorField("Vertex Color (Selected)", settings.vertexColor2);
+                    settings.normalColor = EditorGUILayout.ColorField("Normal Color", settings.normalColor);
+                    settings.tangentColor = EditorGUILayout.ColorField("Tangent Color", settings.tangentColor);
+                    settings.binormalColor = EditorGUILayout.ColorField("Binormal Color", settings.binormalColor);
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(EditorGUI.indentLevel * 16);
+                    if (GUILayout.Button("Reset"))
+                    {
+                        settings.ResetDisplayOptions();
+                    }
+                    GUILayout.EndHorizontal();
+                    EditorGUI.indentLevel--;
+                }
+                EditorGUI.indentLevel--;
             }
-            GUILayout.EndHorizontal();
-            EditorGUI.indentLevel--;
-        }
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space();
 
-        m_foldBakeFromTexture = EditorGUILayout.Foldout(m_foldBakeFromTexture, "Bake From Texture");
-        if (m_foldBakeFromTexture)
-        {
-            EditorGUI.indentLevel++;
-
-            m_bakeSource = EditorGUILayout.ObjectField("Source Texture", m_bakeSource, typeof(Texture), true) as Texture;
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(EditorGUI.indentLevel * 16);
-            if (GUILayout.Button("Bake"))
+            settings.foldExport = EditorGUILayout.Foldout(settings.foldExport, "Export");
+            if (settings.foldExport)
             {
-                m_target.BakeFromTexture(m_bakeSource);
+                EditorGUI.indentLevel++;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * 16);
+                if (GUILayout.Button("Export .obj file"))
+                {
+                    string path = EditorUtility.SaveFilePanel("Export .obj file", "", m_target.name, "obj");
+                    if (path.Length > 0)
+                        ObjExporter.DoExport(m_target.gameObject, true, path);
+                }
+                GUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel--;
             }
-            GUILayout.EndHorizontal();
 
-            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space();
+
+            settings.foldBakeToTexture = EditorGUILayout.Foldout(settings.foldBakeToTexture, "Bake To Texture");
+            if (settings.foldBakeToTexture)
+            {
+                EditorGUI.indentLevel++;
+
+                settings.bakeFormat = (ImageFormat)EditorGUILayout.EnumPopup("Format", settings.bakeFormat);
+                settings.bakeWidth = EditorGUILayout.IntField("Width", settings.bakeWidth);
+                settings.bakeHeight = EditorGUILayout.IntField("Height", settings.bakeHeight);
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * 16);
+                if (GUILayout.Button("Bake"))
+                {
+                    string path = settings.bakeFormat == ImageFormat.PNG ?
+                        EditorUtility.SaveFilePanel("Export .png file", "", m_target.name + "_normal", "png") :
+                        EditorUtility.SaveFilePanel("Export .exr file", "", m_target.name + "_normal", "exr");
+                    m_target.BakeToTexture(settings.bakeWidth, settings.bakeHeight, path);
+                }
+                GUILayout.EndHorizontal();
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.Space();
+
+            settings.foldBakeFromTexture = EditorGUILayout.Foldout(settings.foldBakeFromTexture, "Bake From Texture");
+            if (settings.foldBakeFromTexture)
+            {
+                EditorGUI.indentLevel++;
+
+                settings.bakeSource = EditorGUILayout.ObjectField("Source Texture", settings.bakeSource, typeof(Texture), true) as Texture;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * 16);
+                if (GUILayout.Button("Bake"))
+                {
+                    m_target.BakeFromTexture(settings.bakeSource);
+                }
+                GUILayout.EndHorizontal();
+
+                EditorGUI.indentLevel--;
+            }
+
+
+            // BakeToTexture
+            if (EditorGUI.EndChangeCheck())
+                SceneView.RepaintAll();
         }
-
-
-        // BakeToTexture
-        if (EditorGUI.EndChangeCheck())
-        SceneView.RepaintAll();
     }
 }

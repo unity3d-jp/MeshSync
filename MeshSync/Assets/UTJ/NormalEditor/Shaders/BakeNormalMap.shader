@@ -53,6 +53,7 @@ v2f vert_uv(appdata v)
     o.normal.rgb = ToBaseTangentSpace(v.vertexID, v.normal.xyz) * 0.5 + 0.5;
     o.normal.a = 1.0;
     o.vertex = float4(v.uv.xy * 2 - 1, 0.0, 1.0);
+    o.vertex.y *= -1;
     return o;
 }
 
@@ -79,8 +80,6 @@ ENDCG
         // pass 1: uv space
         Pass
         {
-            Cull Front
-
             CGPROGRAM
             #pragma vertex vert_uv
             #pragma fragment frag
