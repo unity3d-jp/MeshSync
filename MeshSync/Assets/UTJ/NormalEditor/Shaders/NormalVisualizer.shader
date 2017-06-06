@@ -39,14 +39,14 @@ struct v2f
 
 v2f vert_vertices(appdata v)
 {
-    float3 pos = _Points[v.instanceID];
+    float3 pos = (mul(_Transform, float4(_Points[v.instanceID], 1.0))).xyz;
 
     float s = _Selection[v.instanceID];
     float4 vertex = v.vertex;
     vertex.xyz *= _VertexSize;
     vertex.xyz *= abs(UnityObjectToViewPos(pos).z);
     vertex.xyz += pos;
-    vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
+    vertex = mul(UNITY_MATRIX_VP, vertex);
 
     v2f o;
     o.vertex = vertex;
@@ -56,10 +56,13 @@ v2f vert_vertices(appdata v)
 
 v2f vert_normals(appdata v)
 {
+    float3 pos = (mul(_Transform, float4(_Points[v.instanceID], 1.0))).xyz;
+    float3 dir = normalize((mul(_Transform, float4(_Normals[v.instanceID], 0.0))).xyz);
+
     float s = _OnlySelected ? _Selection[v.instanceID] : 1.0f;
     float4 vertex = v.vertex;
-    vertex.xyz += _Points[v.instanceID] + _Normals[v.instanceID] * v.uv.x * _NormalSize * s;
-    vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
+    vertex.xyz += pos + dir * v.uv.x * _NormalSize * s;
+    vertex = mul(UNITY_MATRIX_VP, vertex);
 
     v2f o;
     o.vertex = vertex;
@@ -70,10 +73,13 @@ v2f vert_normals(appdata v)
 
 v2f vert_tangents(appdata v)
 {
+    float3 pos = (mul(_Transform, float4(_Points[v.instanceID], 1.0))).xyz;
+    float3 dir = normalize((mul(_Transform, float4(_Tangents[v.instanceID].xyz, 0.0))).xyz);
+
     float s = _OnlySelected ? _Selection[v.instanceID] : 1.0f;
     float4 vertex = v.vertex;
-    vertex.xyz += _Points[v.instanceID] + _Tangents[v.instanceID].xyz * v.uv.x * _TangentSize * s;
-    vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
+    vertex.xyz += pos + dir * v.uv.x * _TangentSize * s;
+    vertex = mul(UNITY_MATRIX_VP, vertex);
 
     v2f o;
     o.vertex = vertex;
@@ -84,11 +90,14 @@ v2f vert_tangents(appdata v)
 
 v2f vert_binormals(appdata v)
 {
+    float3 pos = (mul(_Transform, float4(_Points[v.instanceID], 1.0))).xyz;
+    float3 binormal = normalize(cross(_Normals[v.instanceID], _Tangents[v.instanceID].xyz) * _Tangents[v.instanceID].w);
+    float3 dir = normalize((mul(_Transform, float4(binormal, 0.0))).xyz);
+
     float s = _OnlySelected ? _Selection[v.instanceID] : 1.0f;
     float4 vertex = v.vertex;
-    float3 binormal = normalize(cross(_Normals[v.instanceID], _Tangents[v.instanceID].xyz) * _Tangents[v.instanceID].w);
-    vertex.xyz += _Points[v.instanceID] + binormal.xyz * v.uv.x * _BinormalSize * s;
-    vertex = mul(mul(UNITY_MATRIX_VP, _Transform), vertex);
+    vertex.xyz += pos + dir * v.uv.x * _BinormalSize * s;
+    vertex = mul(UNITY_MATRIX_VP, vertex);
 
     v2f o;
     o.vertex = vertex;

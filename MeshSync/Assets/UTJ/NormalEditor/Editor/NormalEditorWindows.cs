@@ -8,6 +8,7 @@ namespace UTJ.HumbleNormalEditor
         public static bool isOpen;
         Vector2 m_scrollPos;
         NormalEditor m_target;
+        MeshRenderer m_mr;
 
         [MenuItem("Window/Normal Editor")]
         public static void Open()
@@ -251,20 +252,30 @@ namespace UTJ.HumbleNormalEditor
 
         private void OnGUI()
         {
-            if (m_target == null)
-                return;
-
-            m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
-            DrawNormalEditor(m_target);
-            EditorGUILayout.EndScrollView();
+            if (m_target != null)
+            {
+                m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
+                DrawNormalEditor(m_target);
+                EditorGUILayout.EndScrollView();
+            }
+            else if(m_mr != null)
+            {
+                if (GUILayout.Button("Add Normal Editor"))
+                {
+                    m_mr.gameObject.AddComponent<NormalEditor>();
+                    OnSelectionChange();
+                }
+            }
         }
 
         private void OnSelectionChange()
         {
+            m_target = null;
+            m_mr = null;
             if (Selection.activeGameObject != null)
             {
-                var ne = Selection.activeGameObject.GetComponent<NormalEditor>();
-                m_target = ne;
+                m_target = Selection.activeGameObject.GetComponent<NormalEditor>();
+                m_mr = Selection.activeGameObject.GetComponent<MeshRenderer>();
             }
             Repaint();
         }
