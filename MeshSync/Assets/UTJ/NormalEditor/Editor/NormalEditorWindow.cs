@@ -83,7 +83,7 @@ namespace UTJ.HumbleNormalEditor
                 }
                 if (GUILayout.Button("Clear Selection"))
                 {
-                    if (editor.SelectNone())
+                    if (editor.ClearSelection())
                         editor.UpdateSelection();
                 }
                 GUILayout.EndHorizontal();
@@ -247,11 +247,20 @@ namespace UTJ.HumbleNormalEditor
         private void OnEnable()
         {
             isOpen = true;
+            SceneView.onSceneGUIDelegate += OnSceneGUI;
         }
 
         private void OnDisable()
         {
+            SceneView.onSceneGUIDelegate -= OnSceneGUI;
             isOpen = false;
+        }
+
+        private void OnSceneGUI(SceneView sceneView)
+        {
+            int ret = m_target.OnSceneGUI();
+            if ((ret & (int)SceneGUIState.Repaint) != 0)
+                Repaint();
         }
 
         private void OnGUI()

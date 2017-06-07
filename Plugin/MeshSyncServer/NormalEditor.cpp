@@ -124,7 +124,7 @@ neAPI int neRectSelection(
         float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
         float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
-            sp.y >= rmin.y && sp.y <= rmax.y)
+            sp.y >= rmin.y && sp.y <= rmax.y && vp.z > 0.0f)
         {
             seletion[vi] = clamp01(seletion[vi] + strength);
             ++ret;
@@ -145,7 +145,7 @@ neAPI int neRectSelectionFrontFace(
         float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
         float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
-            sp.y >= rmin.y && sp.y <= rmax.y)
+            sp.y >= rmin.y && sp.y <= rmax.y && vp.z > 0.0f)
         {
             float3 vpos = (float3&)(trans * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f });
             float3 dir = normalize(vpos - campos);

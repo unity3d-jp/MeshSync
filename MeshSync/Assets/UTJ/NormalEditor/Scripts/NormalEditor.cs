@@ -62,6 +62,11 @@ namespace UTJ.HumbleNormalEditor
         VertexColor,
     }
 
+    public enum SceneGUIState
+    {
+        Repaint = 1,
+    }
+
 
 
     [ExecuteInEditMode]
@@ -307,8 +312,9 @@ namespace UTJ.HumbleNormalEditor
 
         bool m_apllyingTransformEdit = false;
 
-        public void OnSceneGUI()
+        public int OnSceneGUI()
         {
+            int ret = 0;
             HandleEditTools();
 
             Event e = Event.current;
@@ -320,14 +326,21 @@ namespace UTJ.HumbleNormalEditor
             {
                 HandleMouseEvent(e, et, id);
             }
+            if (et == EventType.ScrollWheel && e.control)
+            {
+                m_settings.brushRadius = m_settings.brushRadius + e.delta.y * 0.01f;
+                e.Use();
+                ret |= (int)SceneGUIState.Repaint;
+            }
 
             if (et == EventType.KeyDown || et == EventType.KeyUp)
             {
-
+                HandleKeyEvent(e, et, id);
             }
 
             if (Event.current.type == EventType.Repaint)
                 OnRepaint();
+            return ret;
         }
 
 
@@ -513,6 +526,23 @@ namespace UTJ.HumbleNormalEditor
             return handled;
         }
 
+        bool HandleKeyEvent(Event e, EventType et, int id)
+        {
+            bool handled = false;
+            if (e.keyCode == KeyCode.A)
+            {
+                SelectAll();
+                UpdateSelection();
+                handled = true;
+            }
+
+            if (handled)
+            {
+                e.Use();
+            }
+            return handled;
+        }
+
 
         void OnDrawGizmosSelected()
         {
@@ -581,10 +611,13 @@ namespace UTJ.HumbleNormalEditor
             if (m_settings.selectMode == SelectMode.Rect)
             {
                 var selectionRect = typeof(EditorStyles).GetProperty("selectionRect", BindingFlags.NonPublic | BindingFlags.Static);
-                var style = (GUIStyle)selectionRect.GetValue(null, null);
-                Handles.BeginGUI();
-                style.Draw(FromToRect(m_dragStartPoint, m_dragEndPoint), GUIContent.none, false, false, false, false);
-                Handles.EndGUI();
+                if (selectionRect != null)
+                {
+                    var style = (GUIStyle)selectionRect.GetValue(null, null);
+                    Handles.BeginGUI();
+                    style.Draw(FromToRect(m_dragStartPoint, m_dragEndPoint), GUIContent.none, false, false, false, false);
+                    Handles.EndGUI();
+                }
             }
         }
 

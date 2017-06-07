@@ -322,7 +322,7 @@ namespace UTJ.HumbleNormalEditor
             return m_selection.Length > 0;
         }
 
-        public bool SelectNone()
+        public bool ClearSelection()
         {
             System.Array.Clear(m_selection, 0, m_selection.Length);
             return m_selection.Length > 0;

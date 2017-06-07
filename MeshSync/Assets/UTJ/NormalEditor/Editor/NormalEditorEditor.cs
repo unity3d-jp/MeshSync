@@ -21,7 +21,12 @@ namespace UTJ.HumbleNormalEditor
 
         void OnSceneGUI()
         {
-            m_target.OnSceneGUI();
+            if (!NormalEditorWindow.isOpen)
+            {
+                int ret = m_target.OnSceneGUI();
+                if ((ret & (int)SceneGUIState.Repaint) != 0)
+                    Repaint();
+            }
         }
 
         public override void OnInspectorGUI()
