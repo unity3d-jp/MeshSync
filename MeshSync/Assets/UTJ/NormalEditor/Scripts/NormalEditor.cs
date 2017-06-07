@@ -31,9 +31,9 @@ namespace UTJ.HumbleNormalEditor
     public enum SelectMode
     {
         Single,
+        Rect,
         Hard,
         Soft,
-        Rect,
         //Lasso,
     }
 
@@ -64,7 +64,8 @@ namespace UTJ.HumbleNormalEditor
 
     public enum SceneGUIState
     {
-        Repaint = 1,
+        Repaint = 1 << 0,
+        SelectionChanged = 1 << 1,
     }
 
 

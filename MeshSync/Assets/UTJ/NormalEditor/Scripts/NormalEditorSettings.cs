@@ -15,7 +15,7 @@ namespace UTJ.HumbleNormalEditor
 
         // edit options
         public EditMode editMode = EditMode.Select;
-        public BrushMode brushMode = BrushMode.Equalize;
+        public BrushMode brushMode = BrushMode.Add;
         public SelectMode selectMode = SelectMode.Soft;
         public MirrorMode mirrorMode = MirrorMode.None;
         public bool selectFrontSideOnly = true;

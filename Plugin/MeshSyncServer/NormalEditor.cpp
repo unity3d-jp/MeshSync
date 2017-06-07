@@ -151,37 +151,49 @@ neAPI int neRectSelectionFrontFace(
             float3 dir = normalize(vpos - campos);
             int ti;
             float distance;
+            bool hit = false;
             if (neRaycast(campos, dir, vertices, indices, num_triangles, &ti, &distance, trans_)) {
                 float3 hitpos = campos + dir * distance;
                 if (length(vpos - hitpos) < 0.01f) {
-                    seletion[vi] = clamp01(seletion[vi] + strength);
-                    ++ret;
+                    hit = true;
                 }
+            }
+            else {
+                // select points on outline
+                hit = true;
+            }
+
+            if (hit) {
+                seletion[vi] = clamp01(seletion[vi] + strength);
+                ++ret;
             }
         }
     });
     return ret;
 }
 
-neAPI int neEqualize(const float *selection, int num_vertices, float strength, float3 *normals)
+neAPI void neEqualize(const float3 *vertices, const float *selection, int num_vertices, float radius, float strength, float3 *normals)
 {
-    RawVector<int> inside;
+    float rsq = radius * radius;
     for (int vi = 0; vi < num_vertices; ++vi) {
-        if (selection[vi] > 0.0f) {
-            inside.push_back(vi);
+        float s = selection ? selection[vi] : 1.0f;
+        if (s == 0.0f) { continue; }
+
+        float3 p = vertices[vi];
+        float3 en = float3::zero();
+        int n = 0;
+
+        for (int i = 0; i < num_vertices; ++i) {
+            float dsq = length_sq(vertices[i] - p);
+            if (dsq < rsq) {
+                en += normals[i];
+                ++n;
+            }
+        }
+        if (n > 0) {
+            normals[vi] = normalize(normals[vi] + normalize(en) * (strength * s));
         }
     }
-
-    float3 average = float3::zero();
-    for (int vi : inside) {
-        average += normals[vi] * selection[vi];
-    }
-    average = normalize(average);
-    for (int vi : inside) {
-        float s = selection[vi] * strength;
-        normals[vi] = normalize(normals[vi] + average * s);
-    }
-    return (int)inside.size();
 }
 
 neAPI int neAdditiveRaycast(
@@ -248,10 +260,11 @@ neAPI int neBuildMirroringRelation(
     const float3 *vertices, const float3 *normals, int num_vertices,
     float3 plane_normal, float epsilon, int *relation)
 {
-    RawVector<float> distances; distances.resize(num_vertices);
-    for (int vi = 0; vi < num_vertices; ++vi) {
-        distances[vi] = dot(vertices[vi], plane_normal);
-    }
+    RawVector<float> distances;
+    distances.resize(num_vertices);
+    parallel_for(0, num_vertices, [&](int vi) {
+        distances[vi] = plane_distance(vertices[vi], plane_normal);
+    });
 
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
@@ -278,10 +291,9 @@ neAPI int neBuildMirroringRelation(
 
 neAPI void neApplyMirroring(const int *relation, int num_vertices, float3 plane_normal, float3 *normals)
 {
-    for (int vi = 0; vi < num_vertices; ++vi) {
+    parallel_for(0, num_vertices, [&](int vi) {
         if (relation[vi] != -1) {
-            float d = dot(plane_normal, normals[vi]);
-            normals[relation[vi]] = normals[vi] - (plane_normal * (d * 2.0f));
+            normals[relation[vi]] = plane_mirror(normals[vi], plane_normal);
         }
-    }
+    });
 }

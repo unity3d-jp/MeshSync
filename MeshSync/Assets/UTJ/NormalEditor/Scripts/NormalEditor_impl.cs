@@ -365,6 +365,25 @@ namespace UTJ.HumbleNormalEditor
                 return neRectSelection(m_points, m_points.Length, m_selection, strength, ref mvp, rmin, rmax) > 0;
         }
 
+        public bool SelectPoint(Vector2 spos, float pointSize, float strength)
+        {
+            var cam = SceneView.lastActiveSceneView.camera;
+            if (cam == null) { return false; }
+
+            var campos = cam.GetComponent<Transform>().position;
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
+            spos.x = spos.x / cam.pixelWidth * 2.0f - 1.0f;
+            spos.y = (1.0f - spos.y / cam.pixelHeight) * 2.0f - 1.0f;
+            var rmin = new Vector2(spos.x - pointSize, spos.y - pointSize);
+            var rmax = new Vector2(spos.x + pointSize, spos.y + pointSize);
+
+            if (m_settings.selectFrontSideOnly)
+                return neRectSelectionFrontFace(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength, ref mvp, ref trans, rmin, rmax, campos) > 0;
+            else
+                return neRectSelection(m_points, m_points.Length, m_selection, strength, ref mvp, rmin, rmax) > 0;
+        }
+
 
         public void ApplyMirroring()
         {
