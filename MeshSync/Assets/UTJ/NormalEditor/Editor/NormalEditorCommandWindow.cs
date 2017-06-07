@@ -11,11 +11,12 @@ namespace UTJ.HumbleNormalEditor
         Transform m_pivot;
         int m_command;
 
-        Vector3 setValue;
+        Vector3 setValue = Vector3.up;
         Vector3 moveAmount;
         bool rotateUsePivot;
         Vector3 rotateAmount;
         Vector3 scaleAmount;
+        float equalizeRadius = 0.5f;
         float equalizeAmount = 1.0f;
         GameObject projector;
 
@@ -73,11 +74,8 @@ namespace UTJ.HumbleNormalEditor
                 setValue = EditorGUILayout.Vector3Field("Value", setValue);
                 if (GUILayout.Button("Set") && m_target != null)
                 {
-                    if(m_target != null)
-                    {
-                        // todo
-                        RepaintAllViews();
-                    }
+                    m_target.ApplySet(setValue);
+                    RepaintAllViews();
                 }
             }
             else if (m_command == 1)
@@ -109,10 +107,11 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (m_command == 4)
             {
+                equalizeRadius = EditorGUILayout.FloatField("Equalize Radius", equalizeRadius);
                 equalizeAmount = EditorGUILayout.FloatField("Equalize Amount", equalizeAmount);
                 if (GUILayout.Button("Equalize") && m_target != null)
                 {
-                    // todo
+                    m_target.ApplyEqualize(equalizeRadius, equalizeAmount);
                     RepaintAllViews();
                 }
             }
@@ -121,7 +120,7 @@ namespace UTJ.HumbleNormalEditor
                 projector = EditorGUILayout.ObjectField("Projector", projector, typeof(GameObject), true) as GameObject;
                 if (GUILayout.Button("Project") && m_target != null)
                 {
-                    m_target.ProjectNormals(projector);
+                    m_target.ApplyProjection(projector);
                     RepaintAllViews();
                 }
             }

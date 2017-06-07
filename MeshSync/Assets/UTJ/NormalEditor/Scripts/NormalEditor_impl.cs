@@ -65,6 +65,22 @@ namespace UTJ.HumbleNormalEditor
             }
         }
 
+        public void ApplySet(Vector3 v)
+        {
+            v = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(v).normalized;
+
+            for (int i = 0; i < m_selection.Length; ++i)
+            {
+                float s = m_selection[i];
+                if (s > 0.0f)
+                {
+                    m_normals[i] = Vector3.Lerp(m_normals[i], v, s).normalized;
+                }
+            }
+            ApplyMirroring();
+            UpdateNormals();
+        }
+
         public void ApplyMove(Vector3 move)
         {
             move = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(move);
@@ -149,10 +165,6 @@ namespace UTJ.HumbleNormalEditor
             }
             ApplyMirroring();
             UpdateNormals();
-        }
-
-        public void ApplyEqualize(float strength)
-        {
         }
 
         public bool ApplyAdditiveBrush(Ray ray, float radius, float pow, float strength, Vector3 add)
@@ -542,7 +554,16 @@ namespace UTJ.HumbleNormalEditor
             return true;
         }
 
-        public void ProjectNormals(GameObject go)
+        public void ApplyEqualize(float radius, float strength)
+        {
+            var selection = m_numSelected > 0 ? m_selection : null;
+            var mat = GetComponent<Transform>().localToWorldMatrix;
+            neEqualize(m_points, selection, m_points.Length, radius, strength, m_normals, ref mat);
+            UpdateNormals();
+            PushUndo();
+        }
+
+        public void ApplyProjection(GameObject go)
         {
             if (go == null) { return; }
 
@@ -568,10 +589,10 @@ namespace UTJ.HumbleNormalEditor
             }
 
             var ptrans = go.GetComponent<Transform>().localToWorldMatrix;
-            ProjectNormals(mesh, ptrans);
+            ApplyProjection(mesh, ptrans);
         }
 
-        public void ProjectNormals(Mesh projector, Matrix4x4 ptrans)
+        public void ApplyProjection(Mesh projector, Matrix4x4 ptrans)
         {
             var mat = GetComponent<Transform>().localToWorldMatrix;
             var ppoints = projector.vertices;
@@ -616,8 +637,7 @@ namespace UTJ.HumbleNormalEditor
 
 
         [DllImport("MeshSyncServer")] static extern int neEqualize(
-            int num_vertices, int num_triangles,
-            float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
+            Vector3[] vertices, float[] selection, int num_vertices, float radius, float strength, Vector3[] normals, ref Matrix4x4 trans);
 
         [DllImport("MeshSyncServer")] static extern int neAdditiveRaycast(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,

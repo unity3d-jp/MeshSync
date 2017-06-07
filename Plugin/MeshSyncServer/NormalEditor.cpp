@@ -172,28 +172,31 @@ neAPI int neRectSelectionFrontFace(
     return ret;
 }
 
-neAPI void neEqualize(const float3 *vertices, const float *selection, int num_vertices, float radius, float strength, float3 *normals)
+neAPI void neEqualize(
+    const float3 *vertices, const float *selection, int num_vertices, float radius, float strength, float3 *normals, const float4x4 *trans)
 {
+    RawVector<float3> tvertices;
+    tvertices.resize(num_vertices);
+    parallel_for(0, num_vertices, [&](int vi) {
+        tvertices[vi] = mul_t(*trans, vertices[vi]);
+    });
+
     float rsq = radius * radius;
-    for (int vi = 0; vi < num_vertices; ++vi) {
+    parallel_for(0, num_vertices, [&](int vi) {
         float s = selection ? selection[vi] : 1.0f;
-        if (s == 0.0f) { continue; }
+        if (s == 0.0f) { return; }
 
-        float3 p = vertices[vi];
-        float3 en = float3::zero();
-        int n = 0;
-
+        float3 p = tvertices[vi];
+        float3 average = float3::zero();
         for (int i = 0; i < num_vertices; ++i) {
-            float dsq = length_sq(vertices[i] - p);
-            if (dsq < rsq) {
-                en += normals[i];
-                ++n;
+            float dsq = length_sq(tvertices[i] - p);
+            if (dsq <= rsq) {
+                average += normals[i];
             }
         }
-        if (n > 0) {
-            normals[vi] = normalize(normals[vi] + normalize(en) * (strength * s));
-        }
-    }
+        average = normalize(average);
+        normals[vi] = normalize(normals[vi] + average * (strength * s));
+    });
 }
 
 neAPI int neAdditiveRaycast(
