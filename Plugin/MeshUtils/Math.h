@@ -445,6 +445,10 @@ inline float3 applyTRS(const float4x4& m, const float3& v)
     };
 }
 
+inline float  lerp(float  a, float  b, float t) { return a*(1.0f - t) + b*t; }
+inline float2 lerp(float2 a, float2 b, float t) { return a*(1.0f - t) + b*t; }
+inline float3 lerp(float3 a, float3 b, float t) { return a*(1.0f - t) + b*t; }
+
 inline float dot(const float3& l, const float3& r)
 {
     return l.x*r.x + l.y*r.y + l.z*r.z;

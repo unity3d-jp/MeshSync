@@ -153,14 +153,39 @@ namespace UTJ.HumbleNormalEditor
 
         public void ApplyEqualize(float strength)
         {
+        }
 
+        public bool ApplyAdditiveBrush(Ray ray, float radius, float pow, float strength, Vector3 add)
+        {
+            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+            if (neAdditiveRaycast(ray.origin, ray.direction,
+                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, add, m_normals, ref trans) > 0)
+            {
+                ApplyMirroring();
+                UpdateNormals();
+                return true;
+            }
+            return false;
+        }
+
+        public bool ApplyResetBrush(Ray ray, float radius, float pow, float strength)
+        {
+            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+            if (neLerpRaycast(ray.origin, ray.direction,
+                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, m_baseNormals, m_normals, ref trans) > 0)
+            {
+                ApplyMirroring();
+                UpdateNormals();
+                return true;
+            }
+            return false;
         }
 
         public bool ApplyEqualizeBrush(Ray ray, float radius, float pow, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
             if (neEqualizeRaycast(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, pow, strength, m_normals, ref trans) > 0)
+                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, m_normals, ref trans) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -280,6 +305,13 @@ namespace UTJ.HumbleNormalEditor
             bool ret = neRaycast(ray.origin, ray.direction,
                 m_points, m_triangles, m_triangles.Length / 3, ref ti, ref distance, ref trans) > 0;
             return ret;
+        }
+
+        public bool PickNormal(Ray ray, ref Vector3 result)
+        {
+            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+            return nePickNormal(ray.origin, ray.direction,
+                m_points, m_normals, m_triangles, m_triangles.Length / 3, ref trans, ref result) > 0;
         }
 
 
@@ -496,6 +528,10 @@ namespace UTJ.HumbleNormalEditor
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
             ref int tindex, ref float distance, ref Matrix4x4 trans);
 
+        [DllImport("MeshSyncServer")] static extern int nePickNormal(
+            Vector3 pos, Vector3 dir, Vector3[] vertices, Vector3[] normals, int[] indices, int num_triangles,
+            ref Matrix4x4 trans, ref Vector3 result);
+
         [DllImport("MeshSyncServer")] static extern int neSoftSelection(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
             float radius, float strength, float pow, float[] seletion, ref Matrix4x4 trans);
@@ -515,6 +551,14 @@ namespace UTJ.HumbleNormalEditor
         [DllImport("MeshSyncServer")] static extern int neEqualize(
             int num_vertices, int num_triangles,
             float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
+
+        [DllImport("MeshSyncServer")] static extern int neAdditiveRaycast(
+            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
+            float radius, float strength, float pow, Vector3 additive, Vector3[] normals, ref Matrix4x4 trans);
+
+        [DllImport("MeshSyncServer")] static extern int neLerpRaycast(
+            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
+            float radius, float strength, float pow, Vector3[] bnormal, Vector3[] normals, ref Matrix4x4 trans);
 
         [DllImport("MeshSyncServer")] static extern int neEqualizeRaycast(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,

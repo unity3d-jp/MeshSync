@@ -57,6 +57,7 @@ namespace UTJ.HumbleNormalEditor
 
         public Texture bakeSource;
 
+        public Vector3 primary = Vector3.up;
         public SelectionSet[] selectionSets = new SelectionSet[5] {
             new SelectionSet(),
             new SelectionSet(),

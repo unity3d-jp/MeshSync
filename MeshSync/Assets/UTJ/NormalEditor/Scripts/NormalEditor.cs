@@ -14,6 +14,7 @@ namespace UTJ.HumbleNormalEditor
     {
         Select,
         Brush,
+        Pick,
         Move,
         Rotate,
         RotateByPivot,
@@ -22,9 +23,9 @@ namespace UTJ.HumbleNormalEditor
 
     public enum BrushMode
     {
-        Equalize,
         Add,
-        Scale,
+        Reset,
+        Equalize,
     }
 
     public enum SelectMode
@@ -402,7 +403,37 @@ namespace UTJ.HumbleNormalEditor
 
             bool handled = false;
             var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-            if (editMode != EditMode.Brush)
+
+            if (editMode == EditMode.Pick)
+            {
+                var ret = Vector3.zero;
+                if (PickNormal(ray, ref ret))
+                {
+                    m_settings.primary = ret;
+                    handled = true;
+                }
+            }
+            else if (editMode == EditMode.Brush)
+            {
+                switch (m_settings.brushMode)
+                {
+                    case BrushMode.Add:
+                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength, m_settings.primary))
+                            handled = true;
+                        break;
+                    case BrushMode.Reset:
+                        if (ApplyResetBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength))
+                            handled = true;
+                        break;
+                    case BrushMode.Equalize:
+                        if (ApplyEqualizeBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength))
+                            handled = true;
+                        break;
+                }
+                if (et == EventType.MouseUp && handled)
+                    PushUndo();
+            }
+            else
             {
                 var selectMode = m_settings.selectMode;
                 float selectSign = e.control ? -1.0f : 1.0f;
@@ -465,18 +496,7 @@ namespace UTJ.HumbleNormalEditor
 
                 UpdateSelection();
             }
-            else if (editMode == EditMode.Brush)
-            {
-                switch (m_settings.brushMode)
-                {
-                    case BrushMode.Equalize:
-                        if (ApplyEqualizeBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength))
-                            handled = true;
-                        break;
-                }
-                if (et == EventType.MouseUp && handled)
-                    PushUndo();
-            }
+
             if (handled)
             {
                 if (et == EventType.MouseDown)
