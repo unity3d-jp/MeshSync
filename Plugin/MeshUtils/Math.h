@@ -7,7 +7,7 @@
     #include "half.h"
 #endif // muEnableHalf
 
-#define muEpsilon 1e-6f
+#define muEpsilon 1e-4f
 #define muMath_AddNamespace
 
 #ifdef muMath_AddNamespace
@@ -846,18 +846,20 @@ inline float compute_focal_length(float aperture, float fov)
 
 inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
+    const float eps = 0.01f;
+
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;
     float3 p = cross(dir, e2);
     float det = dot(e1, p);
-    if (abs(det) < muEpsilon) return false;
+    if (abs(det) < eps) return false;
     float inv_det = 1.0f / det;
     float3 t = pos - p1;
     float u = dot(t, p) * inv_det;
-    if (u < -muEpsilon || u  > 1 + muEpsilon) return false;
+    if (u < -eps || u  > 1 + eps) return false;
     float3 q = cross(t, e1);
     float v = dot(dir, q) * inv_det;
-    if (v < -muEpsilon || u + v > 1 + muEpsilon) return false;
+    if (v < -eps || u + v > 1 + eps) return false;
 
     distance = dot(e2, q) * inv_det;
     return distance >= 0.0f;

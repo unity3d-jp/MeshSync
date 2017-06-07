@@ -535,6 +535,7 @@ namespace UTJ.HumbleNormalEditor
             m_matVisualize.SetColor("_NormalColor", m_settings.normalColor);
             m_matVisualize.SetColor("_TangentColor", m_settings.tangentColor);
             m_matVisualize.SetColor("_BinormalColor", m_settings.binormalColor);
+            m_matVisualize.SetInt("_OnlySelected", settings.showSelectedOnly ? 1 : 0);
             if (m_cbPoints != null) m_matVisualize.SetBuffer("_Points", m_cbPoints);
             if (m_cbNormals != null) m_matVisualize.SetBuffer("_Normals", m_cbNormals);
             if (m_cbTangents != null) m_matVisualize.SetBuffer("_Tangents", m_cbTangents);

@@ -9,10 +9,6 @@ namespace am {}
 #include <amp_graphics.h>
 #include <amp_math.h>
 
-#ifndef amEpsilon
-    #define amEpsilon 1e-6f
-#endif
-
 
 // fast math
 namespace apm {

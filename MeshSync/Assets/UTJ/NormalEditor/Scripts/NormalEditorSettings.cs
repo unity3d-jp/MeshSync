@@ -28,6 +28,7 @@ namespace UTJ.HumbleNormalEditor
         public bool showNormals = true;
         public bool showTangents = false;
         public bool showBinormals = false;
+        public bool showSelectedOnly = false;
         public ModelOverlay modelOverlay = ModelOverlay.None;
         public float vertexSize;
         public float normalSize;

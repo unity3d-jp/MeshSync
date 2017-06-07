@@ -105,18 +105,20 @@ inline T normalize(T v) restrict(amp) {
 
 inline bool ray_triangle_intersection(float_3 pos, float_3 dir, float_3 p1, float_3 p2, float_3 p3, float& distance) restrict(amp)
 {
+    const float eps = 0.01f;
+
     float_3 e1 = p2 - p1;
     float_3 e2 = p3 - p1;
     float_3 p = cross(dir, e2);
     float det = dot(e1, p);
-    if (abs(det) < amEpsilon) return false;
+    if (abs(det) < eps) return false;
     float inv_det = 1.0f / det;
     float_3 t = pos - p1;
     float u = dot(t, p) * inv_det;
-    if (u < -amEpsilon || u  > 1+amEpsilon) return false;
+    if (u < -eps || u  > 1+ eps) return false;
     float_3 q = cross(t, e1);
     float v = dot(dir, q) * inv_det;
-    if (v < -amEpsilon || u + v > 1+amEpsilon) return false;
+    if (v < -eps || u + v > 1+ eps) return false;
 
     distance = dot(e2, q) * inv_det;
     return distance >= 0.0f;

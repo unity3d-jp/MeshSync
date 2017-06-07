@@ -119,6 +119,10 @@ namespace UTJ.HumbleNormalEditor
                 settings.showNormals = EditorGUILayout.Toggle("Normals", settings.showNormals);
                 settings.showTangents = EditorGUILayout.Toggle("Tangents", settings.showTangents);
                 settings.showBinormals = EditorGUILayout.Toggle("Binormals", settings.showBinormals);
+                EditorGUI.indentLevel++;
+                settings.showSelectedOnly = EditorGUILayout.Toggle("Only Selected", settings.showSelectedOnly);
+                EditorGUI.indentLevel--;
+
                 settings.modelOverlay = (ModelOverlay)EditorGUILayout.EnumPopup("Overlay", settings.modelOverlay);
 
 
@@ -139,7 +143,6 @@ namespace UTJ.HumbleNormalEditor
                     settings.normalColor = EditorGUILayout.ColorField("Normal Color", settings.normalColor);
                     settings.tangentColor = EditorGUILayout.ColorField("Tangent Color", settings.tangentColor);
                     settings.binormalColor = EditorGUILayout.ColorField("Binormal Color", settings.binormalColor);
-
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(EditorGUI.indentLevel * indentSize);
                     if (GUILayout.Button("Reset"))
