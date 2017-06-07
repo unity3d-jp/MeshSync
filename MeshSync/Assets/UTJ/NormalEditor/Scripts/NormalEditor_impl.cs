@@ -542,6 +542,54 @@ namespace UTJ.HumbleNormalEditor
             return true;
         }
 
+        public void ProjectNormals(GameObject go)
+        {
+            if (go == null) { return; }
+
+            Mesh mesh = null;
+            {
+                var mf = go.GetComponent<MeshFilter>();
+                if (mf != null)
+                    mesh = mf.sharedMesh;
+                else
+                {
+                    var smi = go.GetComponent<SkinnedMeshRenderer>();
+                    if (smi != null)
+                    {
+                        mesh = new Mesh();
+                        smi.BakeMesh(mesh);
+                    }
+                }
+            }
+            if (mesh == null)
+            {
+                Debug.LogWarning("ProjectNormals(): projector has no mesh!");
+                return;
+            }
+
+            var ptrans = go.GetComponent<Transform>().localToWorldMatrix;
+            ProjectNormals(mesh, ptrans);
+        }
+
+        public void ProjectNormals(Mesh projector, Matrix4x4 ptrans)
+        {
+            var mat = GetComponent<Transform>().localToWorldMatrix;
+            var ppoints = projector.vertices;
+            var prtiangles = projector.triangles;
+            var pnormals = projector.normals;
+            var selection = m_numSelected > 0 ? m_selection : null;
+            if (pnormals.Length == 0)
+            {
+                Debug.LogWarning("ProjectNormals(): projector mesh has no normals!");
+                return;
+            }
+
+            neProjectNormals(m_points, m_baseNormals, selection, m_points.Length, ref mat,
+                ppoints, pnormals, prtiangles, prtiangles.Length / 3, ref ptrans, m_normals);
+            UpdateNormals();
+            PushUndo();
+        }
+
 
         [DllImport("MeshSyncServer")] static extern int neRaycast(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
@@ -589,6 +637,10 @@ namespace UTJ.HumbleNormalEditor
         [DllImport("MeshSyncServer")] static extern void neApplyMirroring(
             int[] relation, int num_vertices, Vector3 plane_normal, Vector3[] normals);
 
+        [DllImport("MeshSyncServer")] static extern void neProjectNormals(
+            Vector3[] vertices, Vector3[] normals, float[] selection, int num_vertices, ref Matrix4x4 trans,
+            Vector3[] pvertices, Vector3[] pnormals, int[] pindices, int num_triangles, ref Matrix4x4 ptrans,
+            Vector3[] dst);
 #endif
     }
 }

@@ -297,3 +297,54 @@ neAPI void neApplyMirroring(const int *relation, int num_vertices, float3 plane_
         }
     });
 }
+
+neAPI void neProjectNormals(
+    const float3 vertices[], float3 normals[], float selection[], int num_vertices, const float4x4 *trans,
+    const float3 pvertices[], const float3 pnormals[], const int pindices[], int num_triangles, const float4x4 *ptrans,
+    float3 dst[])
+{
+    auto mat = *ptrans * invert(*trans);
+    RawVector<float> soa[9]; // flattened + SoA-nized vertices (faster on CPU)
+
+    // flatten + SoA-nize
+    {
+        for (int i = 0; i < 9; ++i) {
+            soa[i].resize(num_triangles);
+        }
+        for (int ti = 0; ti < num_triangles; ++ti) {
+            for (int i = 0; i < 3; ++i) {
+                auto p = mul_t(mat, pvertices[pindices[ti * 3 + i]]);
+                soa[i * 3 + 0][ti] = p.x;
+                soa[i * 3 + 1][ti] = p.y;
+                soa[i * 3 + 2][ti] = p.z;
+            }
+        }
+    }
+
+    parallel_for(0, num_vertices, [&](int ri) {
+        float3 rpos = vertices[ri];
+        float3 rdir = normals[ri];
+        int ti;
+        float distance;
+        int num_hit = RayTrianglesIntersection(rpos, rdir,
+            soa[0].data(), soa[1].data(), soa[2].data(),
+            soa[3].data(), soa[4].data(), soa[5].data(),
+            soa[6].data(), soa[7].data(), soa[8].data(),
+            num_triangles, ti, distance);
+
+        if (num_hit > 0) {
+            float3 result = triangle_interpolation(
+                rpos + rdir * distance,
+                { soa[0][ti], soa[1][ti], soa[2][ti] },
+                { soa[3][ti], soa[4][ti], soa[5][ti] },
+                { soa[6][ti], soa[7][ti], soa[8][ti] },
+                pnormals[pindices[ti * 3 + 0]],
+                pnormals[pindices[ti * 3 + 1]],
+                pnormals[pindices[ti * 3 + 2]]);
+
+            result = normalize(mul(mat, result));
+            float s = selection ? selection[ri] : 1.0f;
+            dst[ri] = normalize(lerp(dst[ri], result, s));
+        }
+    });
+}

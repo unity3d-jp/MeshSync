@@ -38,6 +38,11 @@ namespace UTJ.HumbleNormalEditor
             window.Show();
         }
 
+        void RepaintAllViews()
+        {
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        }
+
         private void OnEnable()
         {
             isOpen = true;
@@ -66,56 +71,66 @@ namespace UTJ.HumbleNormalEditor
             if (m_command == 0)
             {
                 setValue = EditorGUILayout.Vector3Field("Value", setValue);
-                if (GUILayout.Button("Set"))
+                if (GUILayout.Button("Set") && m_target != null)
                 {
-
+                    if(m_target != null)
+                    {
+                        // todo
+                        RepaintAllViews();
+                    }
                 }
             }
             else if (m_command == 1)
             {
                 moveAmount = EditorGUILayout.Vector3Field("Move Amount", moveAmount);
-                if (GUILayout.Button("Move"))
+                if (GUILayout.Button("Move") && m_target != null)
                 {
-
+                    m_target.ApplyMove(moveAmount);
+                    RepaintAllViews();
                 }
             }
             else if (m_command == 2)
             {
                 rotateAmount = EditorGUILayout.Vector3Field("Rotate Amount", rotateAmount);
-                if (GUILayout.Button("Rotate"))
+                if (GUILayout.Button("Rotate") && m_target != null)
                 {
-
+                    m_target.ApplyRotate(Quaternion.Euler(rotateAmount.x, rotateAmount.y, rotateAmount.z));
+                    RepaintAllViews();
                 }
             }
             else if (m_command == 3)
             {
                 scaleAmount = EditorGUILayout.Vector3Field("Scale Amount", scaleAmount);
-                if (GUILayout.Button("Scale"))
+                if (GUILayout.Button("Scale") && m_target != null && m_pivot != null)
                 {
-
+                    m_target.ApplyScale(scaleAmount, m_pivot.position);
+                    RepaintAllViews();
                 }
             }
             else if (m_command == 4)
             {
                 equalizeAmount = EditorGUILayout.FloatField("Equalize Amount", equalizeAmount);
-                if (GUILayout.Button("Equalize"))
+                if (GUILayout.Button("Equalize") && m_target != null)
                 {
-
+                    // todo
+                    RepaintAllViews();
                 }
             }
             else if (m_command == 5)
             {
                 projector = EditorGUILayout.ObjectField("Projector", projector, typeof(GameObject), true) as GameObject;
-                if (GUILayout.Button("Project"))
+                if (GUILayout.Button("Project") && m_target != null)
                 {
-
+                    m_target.ProjectNormals(projector);
+                    RepaintAllViews();
                 }
             }
             else if (m_command == 6)
             {
-                if (GUILayout.Button("Reset"))
+                if (GUILayout.Button("Reset") && m_target != null)
                 {
-
+                    m_target.ResetNormals(false);
+                    RepaintAllViews();
                 }
             }
             EditorGUILayout.EndVertical();
