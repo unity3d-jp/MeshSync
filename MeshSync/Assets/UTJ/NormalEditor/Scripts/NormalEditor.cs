@@ -153,34 +153,34 @@ namespace UTJ.HumbleNormalEditor
             {
                 float l = 0.5f;
                 var p = new Vector3[] {
-                new Vector3(-l,-l, l),
-                new Vector3( l,-l, l),
-                new Vector3( l,-l,-l),
-                new Vector3(-l,-l,-l),
+                    new Vector3(-l,-l, l),
+                    new Vector3( l,-l, l),
+                    new Vector3( l,-l,-l),
+                    new Vector3(-l,-l,-l),
 
-                new Vector3(-l, l, l),
-                new Vector3( l, l, l),
-                new Vector3( l, l,-l),
-                new Vector3(-l, l,-l),
-            };
+                    new Vector3(-l, l, l),
+                    new Vector3( l, l, l),
+                    new Vector3( l, l,-l),
+                    new Vector3(-l, l,-l),
+                };
 
                 m_meshCube = new Mesh();
                 m_meshCube.vertices = new Vector3[] {
-                p[0], p[1], p[2], p[3],
-                p[7], p[4], p[0], p[3],
-                p[4], p[5], p[1], p[0],
-                p[6], p[7], p[3], p[2],
-                p[5], p[6], p[2], p[1],
-                p[7], p[6], p[5], p[4],
-            };
+                    p[0], p[1], p[2], p[3],
+                    p[7], p[4], p[0], p[3],
+                    p[4], p[5], p[1], p[0],
+                    p[6], p[7], p[3], p[2],
+                    p[5], p[6], p[2], p[1],
+                    p[7], p[6], p[5], p[4],
+                };
                 m_meshCube.SetIndices(new int[] {
-                3, 1, 0, 3, 2, 1,
-                7, 5, 4, 7, 6, 5,
-                11, 9, 8, 11, 10, 9,
-                15, 13, 12, 15, 14, 13,
-                19, 17, 16, 19, 18, 17,
-                23, 21, 20, 23, 22, 21,
-            }, MeshTopology.Triangles, 0);
+                    3, 1, 0, 3, 2, 1,
+                    7, 5, 4, 7, 6, 5,
+                    11, 9, 8, 11, 10, 9,
+                    15, 13, 12, 15, 14, 13,
+                    19, 17, 16, 19, 18, 17,
+                    23, 21, 20, 23, 22, 21,
+                }, MeshTopology.Triangles, 0);
             }
 
             if (m_meshLine == null)
@@ -211,8 +211,11 @@ namespace UTJ.HumbleNormalEditor
                 m_selection = null;
                 ReleaseComputeBuffers();
             }
+
+            bool initialized = false;
             if (m_points == null && m_meshTarget != null)
             {
+                initialized = true;
                 m_points = m_meshTarget.vertices;
 
                 m_normals = m_meshTarget.normals;
@@ -276,8 +279,11 @@ namespace UTJ.HumbleNormalEditor
                 m_cbArg.SetData(new uint[5] { m_meshCube.GetIndexCount(0), (uint)m_points.Length, 0, 0, 0 });
             }
 
-            UpdateNormals();
-            PushUndo();
+            if (initialized)
+            {
+                UpdateNormals();
+                PushUndo();
+            }
         }
 
         void ReleaseComputeBuffers()
@@ -314,6 +320,8 @@ namespace UTJ.HumbleNormalEditor
 
         public int OnSceneGUI()
         {
+            SetupResources();
+
             int ret = 0;
             HandleEditTools();
 

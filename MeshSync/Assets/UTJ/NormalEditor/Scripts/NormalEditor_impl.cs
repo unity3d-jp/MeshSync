@@ -396,7 +396,7 @@ namespace UTJ.HumbleNormalEditor
             if (m_mirrorRelation == null)
             {
                 m_mirrorRelation = new int[m_normals.Length];
-                if (neBuildMirroringRelation(m_points, m_points.Length, planeNormal, 0.001f, m_mirrorRelation) == 0)
+                if (neBuildMirroringRelation(m_points, m_baseNormals, m_points.Length, planeNormal, 0.001f, m_mirrorRelation) == 0)
                 {
                     Debug.LogWarning("NormalEditor: this mesh seems not symmetrical");
                     m_mirrorRelation = null;
@@ -565,7 +565,7 @@ namespace UTJ.HumbleNormalEditor
             float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
 
         [DllImport("MeshSyncServer")] static extern int neBuildMirroringRelation(
-            Vector3[] vertices, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);
+            Vector3[] vertices, Vector3[] base_normals, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);
 
         [DllImport("MeshSyncServer")] static extern void neApplyMirroring(
             int[] relation, int num_vertices, Vector3 plane_normal, Vector3[] normals);

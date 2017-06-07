@@ -884,6 +884,12 @@ inline float ray_point_distance(float3 pos, float3 dir, float3 p)
     return length(cross(dir, p - pos));
 }
 
+inline float plane_distance(float3 p, float3 pn, float pd)  { return dot(p, pn) - pd; }
+inline float plane_distance(float3 p, float3 pn)            { return dot(p, pn); }
+inline float3 plane_mirror(float3 p, float3 pn, float pd)   { return p - pn * (plane_distance(p, pn, pd) * 2.0f); }
+inline float3 plane_mirror(float3 p, float3 pn)             { return p - pn * (plane_distance(p, pn) * 2.0f); }
+
+
 #ifdef muMath_AddNamespace
 } // namespace mu
 #endif

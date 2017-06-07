@@ -23,9 +23,12 @@ namespace UTJ.HumbleNormalEditor
         {
             if (!NormalEditorWindow.isOpen)
             {
-                int ret = m_target.OnSceneGUI();
-                if ((ret & (int)SceneGUIState.Repaint) != 0)
-                    Repaint();
+                if (m_target != null)
+                {
+                    int ret = m_target.OnSceneGUI();
+                    if ((ret & (int)SceneGUIState.Repaint) != 0)
+                        Repaint();
+                }
             }
         }
 

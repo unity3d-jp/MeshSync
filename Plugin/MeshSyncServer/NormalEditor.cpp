@@ -120,7 +120,7 @@ neAPI int neRectSelection(
     float4x4 mvp = *mvp_;
 
     std::atomic_int ret{ 0 };
-    for (int vi = 0; vi < num_vertices; ++vi) {
+    parallel_for(0, num_vertices, [&](int vi) {
         float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
         float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
@@ -129,7 +129,7 @@ neAPI int neRectSelection(
             seletion[vi] = clamp01(seletion[vi] + strength);
             ++ret;
         }
-    }
+    });
     return ret;
 }
 
@@ -141,7 +141,7 @@ neAPI int neRectSelectionFrontFace(
     float4x4 trans = *trans_;
 
     std::atomic_int ret{ 0 };
-    for (int vi = 0; vi < num_vertices; ++vi) {
+    parallel_for(0, num_vertices, [&](int vi) {
         float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
         float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
@@ -159,7 +159,7 @@ neAPI int neRectSelectionFrontFace(
                 }
             }
         }
-    }
+    });
     return ret;
 }
 
@@ -244,9 +244,8 @@ neAPI int neEqualizeRaycast(
     return 0;
 }
 
-
 neAPI int neBuildMirroringRelation(
-    const float3 *vertices, int num_vertices,
+    const float3 *vertices, const float3 *normals, int num_vertices,
     float3 plane_normal, float epsilon, int *relation)
 {
     RawVector<float> distances; distances.resize(num_vertices);
@@ -254,22 +253,26 @@ neAPI int neBuildMirroringRelation(
         distances[vi] = dot(vertices[vi], plane_normal);
     }
 
-    int ret = 0;
-    for (int vi = 0; vi < num_vertices; ++vi) {
+    std::atomic_int ret{ 0 };
+    parallel_for(0, num_vertices, [&](int vi) {
         int rel = -1;
         float d1 = distances[vi];
         if (d1 < 0.0f) {
             for (int i = 0; i < num_vertices; ++i) {
                 float d2 = distances[i];
                 if (d2 > 0.0f && near_equal(vertices[vi], vertices[i] - plane_normal * (d2 * 2.0f))) {
-                    rel = i;
-                    ++ret;
-                    break;
+                    float3 n1 = normals[vi];
+                    float3 n2 = plane_mirror(normals[i], plane_normal);
+                    if (dot(n1, n2) >= 0.99f) {
+                        rel = i;
+                        ++ret;
+                        break;
+                    }
                 }
             }
         }
         relation[vi] = rel;
-    }
+    });
     return ret;
 }
 
