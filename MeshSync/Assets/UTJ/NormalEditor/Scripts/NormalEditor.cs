@@ -357,7 +357,7 @@ namespace UTJ.HumbleNormalEditor
         Quaternion m_prevRot;
         Vector3 m_prevScale;
 
-        void HandleEditTools()
+        public void HandleEditTools()
         {
             var editMode = m_settings.editMode;
             Event e = Event.current;

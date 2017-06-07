@@ -42,6 +42,7 @@ namespace UTJ.HumbleNormalEditor
 
 
         // inspector states
+
         public bool foldSelection = true;
         public bool foldCommands = true;
         public bool foldDisplay = true;
@@ -57,6 +58,12 @@ namespace UTJ.HumbleNormalEditor
         public bool bakeVertexColor01 = true;
 
         public Texture bakeSource;
+
+        public bool objFlipHandedness = true;
+        public bool objFlipFaces = false;
+        public bool objApplyTransform = false;
+        public bool objMakeSubmeshes = true;
+        public bool objIncludeChildren = false;
 
         public Vector3 primary = Vector3.up;
         public SelectionSet[] selectionSets = new SelectionSet[5] {
