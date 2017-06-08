@@ -115,6 +115,7 @@ namespace UTJ.HumbleNormalEditor
         float[]     m_selection;
 
         int         m_numSelected = 0;
+        bool        m_rayHit;
         Vector3     m_rayPos;
         Vector3     m_selectionPos;
         Vector3     m_selectionNormal;
@@ -360,10 +361,9 @@ namespace UTJ.HumbleNormalEditor
 
             if(et == EventType.MouseMove)
             {
-                if(Raycast(e, ref m_rayPos))
+                m_rayHit = Raycast(e, ref m_rayPos);
+                if (m_rayHit)
                     ret |= (int)SceneGUIState.Repaint;
-                else
-                    m_rayPos = Vector3.one * 1000000.0f;
             }
 
             if (m_numSelected > 0 && editMode == EditMode.Move)
@@ -493,16 +493,6 @@ namespace UTJ.HumbleNormalEditor
                         handled = true;
                     }
                 }
-                else if (selectMode == SelectMode.Brush)
-                {
-                    if (et == EventType.MouseDown && !e.shift && !e.control)
-                        System.Array.Clear(m_selection, 0, m_selection.Length);
-
-                    //if (SelectHard(ray, m_settings.brushRadius, m_settings.brushStrength * selectSign))
-                    //    handled = true;
-                    if (SelectSoft(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength * selectSign))
-                        handled = true;
-                }
                 else if (selectMode == SelectMode.Rect)
                 {
                     if (et == EventType.MouseDown)
@@ -523,12 +513,22 @@ namespace UTJ.HumbleNormalEditor
                         m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
                         handled = true;
 
-                        if (!SelectRect(m_dragStartPoint, m_dragEndPoint, selectSign))
+                        if (!SelectRect(m_dragStartPoint, m_dragEndPoint, selectSign) && !m_rayHit)
                         {
                             Selection.activeGameObject = null;
                         }
                         m_dragStartPoint = m_dragEndPoint = Vector2.zero;
                     }
+                }
+                else if (selectMode == SelectMode.Brush)
+                {
+                    if (et == EventType.MouseDown && !e.shift && !e.control)
+                        System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                    //if (SelectHard(ray, m_settings.brushRadius, m_settings.brushStrength * selectSign))
+                    //    handled = true;
+                    if (SelectSoft(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength * selectSign))
+                        handled = true;
                 }
 
                 UpdateSelection();
@@ -593,8 +593,9 @@ namespace UTJ.HumbleNormalEditor
             m_matVisualize.SetColor("_TangentColor", m_settings.tangentColor);
             m_matVisualize.SetColor("_BinormalColor", m_settings.binormalColor);
             m_matVisualize.SetInt("_OnlySelected", m_settings.showSelectedOnly ? 1 : 0);
-            if (m_settings.editMode == EditMode.Brush ||
-                (m_settings.editMode == EditMode.Select && m_settings.selectMode == SelectMode.Brush))
+            if (m_rayHit && 
+                (m_settings.editMode == EditMode.Brush ||
+                 (m_settings.editMode == EditMode.Select && m_settings.selectMode == SelectMode.Brush)))
             {
                 m_matVisualize.SetVector("_RayPos", m_rayPos);
                 m_matVisualize.SetVector("_RayRadPow", new Vector3(m_settings.brushRadius, m_settings.brushFalloff, 0.0f));
