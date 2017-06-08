@@ -20,7 +20,7 @@ public class ObjExporter
 
     public static bool Export(GameObject go, string path, Settings settings)
     {
-        if (path == null || path.Length == 0)
+        if (path == null || path.Length == 0 || go == null)
             return false;
 
         var inst = new ObjExporter();
@@ -109,41 +109,62 @@ public class ObjExporter
         Vector3[] normals = m_settings.normals ? mesh.normals : null;
         Vector2[] uv = m_settings.uv ? mesh.uv : null;
 
-        if (m_settings.applyTransform)
+        if (m_settings.applyTransform && t != null)
         {
-            Quaternion r = t.localRotation;
-            for (int i = 0; i < points.Length; ++i)
-                points[i] = t.TransformPoint(points[i]);
-            for (int i = 0; i < normals.Length; ++i)
-                normals[i] = r * normals[i];
+            if (points != null)
+            {
+                for (int i = 0; i < points.Length; ++i)
+                    points[i] = t.TransformPoint(points[i]);
+            }
+            if (normals != null)
+            {
+                for (int i = 0; i < normals.Length; ++i)
+                    normals[i] = t.TransformVector(normals[i]);
+            }
+
         }
         if(m_settings.flipHandedness)
         {
-            for (int i = 0; i < points.Length; ++i)
-                points[i].x *= -1.0f;
-            for (int i = 0; i < normals.Length; ++i)
-                normals[i].x *= -1.0f;
+            if (points != null)
+            {
+                for (int i = 0; i < points.Length; ++i)
+                    points[i].x *= -1.0f;
+            }
+            if (normals != null)
+            {
+                for (int i = 0; i < normals.Length; ++i)
+                    normals[i].x *= -1.0f;
+            }
         }
 
         StringBuilder sb = new StringBuilder();
 
-        foreach (Vector3 v in points)
-            sb.Append(string.Format("v {0} {1} {2}\n", v.x, v.y, v.z));
-        sb.Append("\n");
-        foreach (Vector3 n in normals)
-            sb.Append(string.Format("vn {0} {1} {2}\n", n.x, n.y, n.z));
-        sb.Append("\n");
-        foreach (Vector3 u in uv)
-            sb.Append(string.Format("vt {0} {1}\n", u.x, u.y));
+        if (points != null)
+        {
+            foreach (Vector3 v in points)
+                sb.Append(string.Format("v {0} {1} {2}\n", v.x, v.y, v.z));
+            sb.Append("\n");
+        }
+        if (normals != null)
+        {
+            foreach (Vector3 n in normals)
+                sb.Append(string.Format("vn {0} {1} {2}\n", n.x, n.y, n.z));
+            sb.Append("\n");
+        }
+        if (uv != null)
+        {
+            foreach (Vector3 u in uv)
+                sb.Append(string.Format("vt {0} {1}\n", u.x, u.y));
+        }
 
         int i1 = m_settings.flipFaces ? 2 : 1;
         int i2 = m_settings.flipFaces ? 1 : 2;
         string format = "";
         {
             int numComponents = 0;
-            if (points.Length > 0) ++numComponents;
-            if (normals.Length > 0) ++numComponents;
-            if (uv.Length > 0) ++numComponents;
+            if (points != null && points.Length > 0) ++numComponents;
+            if (normals != null && normals.Length > 0) ++numComponents;
+            if (uv != null && uv.Length > 0) ++numComponents;
 
             switch (numComponents)
             {

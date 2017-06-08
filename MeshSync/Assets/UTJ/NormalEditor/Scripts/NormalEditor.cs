@@ -198,7 +198,8 @@ namespace UTJ.HumbleNormalEditor
                 m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/UTJ/NormalEditor/Shaders/GetNormalsFromTexture.compute");
 
             if (m_meshTarget == null ||
-                m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount)
+                m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount ||
+                (m_points != null && m_meshTarget.vertexCount != m_points.Length))
             {
                 m_meshTarget = GetComponent<MeshFilter>().sharedMesh;
                 m_points = null;
@@ -247,32 +248,32 @@ namespace UTJ.HumbleNormalEditor
                 m_selection = new float[m_points.Length];
             }
 
-            if (m_cbPoints == null && m_points != null)
+            if (m_cbPoints == null && m_points != null && m_points.Length > 0)
             {
                 m_cbPoints = new ComputeBuffer(m_points.Length, 12);
                 m_cbPoints.SetData(m_points);
             }
-            if (m_cbNormals == null && m_normals != null)
+            if (m_cbNormals == null && m_normals != null && m_normals.Length > 0)
             {
                 m_cbNormals = new ComputeBuffer(m_normals.Length, 12);
                 m_cbNormals.SetData(m_normals);
                 m_cbBaseNormals = new ComputeBuffer(m_baseNormals.Length, 12);
                 m_cbBaseNormals.SetData(m_baseNormals);
             }
-            if (m_cbTangents == null && m_tangents != null)
+            if (m_cbTangents == null && m_tangents != null && m_tangents.Length > 0)
             {
                 m_cbTangents = new ComputeBuffer(m_tangents.Length, 16);
                 m_cbTangents.SetData(m_tangents);
                 m_cbBaseTangents = new ComputeBuffer(m_baseTangents.Length, 16);
                 m_cbBaseTangents.SetData(m_baseTangents);
             }
-            if (m_cbSelection == null && m_selection != null)
+            if (m_cbSelection == null && m_selection != null && m_selection.Length > 0)
             {
                 m_cbSelection = new ComputeBuffer(m_selection.Length, 4);
                 m_cbSelection.SetData(m_selection);
             }
 
-            if (m_cbArg == null && m_points != null)
+            if (m_cbArg == null && m_points != null && m_points.Length > 0)
             {
                 m_cbArg = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
                 m_cbArg.SetData(new uint[5] { m_meshCube.GetIndexCount(0), (uint)m_points.Length, 0, 0, 0 });
@@ -310,6 +311,11 @@ namespace UTJ.HumbleNormalEditor
             Undo.undoRedoPerformed -= OnUndoRedo;
         }
 
+        void OnDestroy()
+        {
+            ReleaseComputeBuffers();
+        }
+
         void Reset()
         {
             SetupResources();
@@ -317,7 +323,8 @@ namespace UTJ.HumbleNormalEditor
 
         public int OnSceneGUI()
         {
-            SetupResources();
+            if (m_points == null)
+                return 0;
 
             int ret = 0;
             ret |= HandleEditTools();
