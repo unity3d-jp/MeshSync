@@ -128,7 +128,7 @@ namespace UTJ.HumbleNormalEditor
                 Vector3 axis = Vector3.zero;
                 float angle = 0.0f;
                 rot.ToAngleAxis(out angle, out axis);
-                axis = mat.MultiplyVector(axis);
+                axis = mat.MultiplyVector(axis).normalized;
                 rot = Quaternion.AngleAxis(angle, axis);
             }
 

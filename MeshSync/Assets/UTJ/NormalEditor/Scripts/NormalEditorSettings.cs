@@ -15,13 +15,16 @@ namespace UTJ.HumbleNormalEditor
 
         // edit options
         public EditMode editMode = EditMode.Select;
-        public BrushMode brushMode = BrushMode.Add;
-        public SelectMode selectMode = SelectMode.Soft;
+        public BrushMode brushMode = BrushMode.Paint;
+        public SelectMode selectMode = SelectMode.Single;
         public MirrorMode mirrorMode = MirrorMode.None;
         public bool selectFrontSideOnly = true;
+        public bool rotatePivot = false;
         public float brushRadius = 0.2f;
         public float brushPow = 0.5f;
         public float brushStrength = 1.0f;
+        public bool pickNormal = false;
+        public Color primary = new Color(0, 1, 0);
 
         // display options
         public bool showVertices = true;
@@ -65,7 +68,6 @@ namespace UTJ.HumbleNormalEditor
         public bool objMakeSubmeshes = true;
         public bool objIncludeChildren = false;
 
-        public Vector3 primary = Vector3.up;
         public SelectionSet[] selectionSets = new SelectionSet[5] {
             new SelectionSet(),
             new SelectionSet(),

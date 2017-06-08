@@ -18,10 +18,14 @@ public class ObjExporter
         public bool uv = false;
     }
 
-    public static void Export(GameObject go, string path, Settings settings)
+    public static bool Export(GameObject go, string path, Settings settings)
     {
+        if (path == null || path.Length == 0)
+            return false;
+
         var inst = new ObjExporter();
         inst.DoExport(go, path, settings);
+        return true;
     }
 
 

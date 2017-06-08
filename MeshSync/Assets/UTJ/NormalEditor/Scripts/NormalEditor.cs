@@ -14,26 +14,28 @@ namespace UTJ.HumbleNormalEditor
     {
         Select,
         Brush,
-        Pick,
+        Assign,
         Move,
         Rotate,
-        RotateByPivot,
         Scale,
+        Equalize,
+        Projection,
+        Reset,
     }
 
     public enum BrushMode
     {
-        Add,
-        Reset,
+        Paint,
+        Scale,
         Equalize,
+        Reset,
     }
 
     public enum SelectMode
     {
         Single,
         Rect,
-        Hard,
-        Soft,
+        Brush,
         //Lasso,
     }
 
@@ -378,7 +380,7 @@ namespace UTJ.HumbleNormalEditor
                     ApplyMove(diff * 3.0f);
                 }
             }
-            else if (m_numSelected > 0 && (editMode == EditMode.Rotate || editMode == EditMode.RotateByPivot))
+            else if (m_numSelected > 0 && editMode == EditMode.Rotate)
             {
                 if (et == EventType.MouseDown)
                     m_prevRot = Quaternion.identity;
@@ -390,10 +392,10 @@ namespace UTJ.HumbleNormalEditor
                     m_apllyingTransformEdit = true;
                     var diff = Quaternion.Inverse(m_prevRot) * rot;
                     m_prevRot = rot;
-                    if (editMode == EditMode.Rotate)
+                    if (m_settings.rotatePivot)
+                        ApplyRotatePivot(diff, m_pivotPos, 1.0f);
+                    else
                         ApplyRotate(diff);
-                    else if (editMode == EditMode.RotateByPivot)
-                        ApplyRotatePivot(diff, m_pivotPos, 20.0f);
                 }
             }
             else if (m_numSelected > 0 && editMode == EditMode.Scale)
@@ -419,6 +421,15 @@ namespace UTJ.HumbleNormalEditor
             }
         }
 
+        public static Color ToColor(Vector3 n)
+        {
+            return new Color(n.x * 0.5f + 0.5f, n.y * 0.5f + 0.5f, n.z * 0.5f + 0.5f, 1.0f);
+        }
+        public static Vector3 ToVector(Color n)
+        {
+            return new Vector3(n.r * 2.0f - 1.0f, n.g * 2.0f - 1.0f, n.b * 2.0f - 1.0f);
+        }
+
         bool HandleMouseEvent(Event e, EventType et, int id)
         {
             var editMode = m_settings.editMode;
@@ -426,21 +437,22 @@ namespace UTJ.HumbleNormalEditor
             bool handled = false;
             var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
 
-            if (editMode == EditMode.Pick)
+            if (editMode == EditMode.Brush && m_settings.pickNormal)
             {
                 var ret = Vector3.zero;
                 if (PickNormal(ray, ref ret))
                 {
-                    m_settings.primary = ret;
+                    m_settings.primary = ToColor(ret);
                     handled = true;
                 }
+                m_settings.pickNormal = false;
             }
             else if (editMode == EditMode.Brush)
             {
                 switch (m_settings.brushMode)
                 {
-                    case BrushMode.Add:
-                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength, m_settings.primary))
+                    case BrushMode.Paint:
+                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength, ToVector(m_settings.primary)))
                             handled = true;
                         break;
                     case BrushMode.Reset:
@@ -472,19 +484,13 @@ namespace UTJ.HumbleNormalEditor
                         handled = true;
                     }
                 }
-                else if (selectMode == SelectMode.Hard)
+                else if (selectMode == SelectMode.Brush)
                 {
                     if (!e.shift && !e.control)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
-                    if (SelectHard(ray, m_settings.brushRadius, m_settings.brushStrength * selectSign))
-                        handled = true;
-                }
-                else if (selectMode == SelectMode.Soft)
-                {
-                    if (!e.shift && !e.control)
-                        System.Array.Clear(m_selection, 0, m_selection.Length);
-
+                    //if (SelectHard(ray, m_settings.brushRadius, m_settings.brushStrength * selectSign))
+                    //    handled = true;
                     if (SelectSoft(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength * selectSign))
                         handled = true;
                 }

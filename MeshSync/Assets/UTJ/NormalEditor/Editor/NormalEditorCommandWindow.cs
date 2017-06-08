@@ -11,12 +11,11 @@ namespace UTJ.HumbleNormalEditor
         Transform m_pivot;
 
         bool foldEdit = true;
-        bool foldCommands = true;
-        bool foldInExport = true;
+        bool foldMisc = true;
+        bool foldInExport = false;
         bool foldDisplay = true;
 
-        int editIndex;
-        int commandIndex;
+        int displayIndex;
         int inexportIndex;
 
         public Vector3 setValue = Vector3.up;
@@ -44,35 +43,26 @@ namespace UTJ.HumbleNormalEditor
         }
 
 
-        static readonly string[] strEdit = new string[] {
+        static readonly int indentSize = 18;
+        static readonly int spaceSize = 5;
+        static readonly int c1Width = 100;
+
+        static readonly string[] strBrushTypes = new string[] {
             "Paint",
-            "Selection",
+            "Scale",
+            "Equalize",
+            "Reset",
+        };
+        static readonly string[] strSelectMode = new string[] {
+            "Single",
+            "Rect",
+            "Brush",
         };
 
-        void DrawEditPanel()
-        {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.BeginVertical(GUILayout.Width(18));
-            EditorGUILayout.Space();
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.BeginVertical(GUILayout.Width(100));
-            editIndex = GUILayout.SelectionGrid(editIndex, strEdit, 1);
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.BeginVertical(GUILayout.Width(10));
-            EditorGUILayout.Space();
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.BeginVertical();
-            // 
-            EditorGUILayout.EndVertical();
-            EditorGUILayout.EndHorizontal();
-        }
-
-
         static readonly string[] strCommands = new string[] {
-            "Set",
+            "Selection",
+            "Brush",
+            "Assign",
             "Move",
             "Rotate",
             "Scale",
@@ -81,34 +71,101 @@ namespace UTJ.HumbleNormalEditor
             "Reset",
         };
 
-        void DrawCommandPanel()
+        void DrawEditPanel()
         {
             var settings = m_target.settings;
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.BeginVertical(GUILayout.Width(18));
+            EditorGUILayout.BeginVertical(GUILayout.Width(indentSize));
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical(GUILayout.Width(100));
-            commandIndex = GUILayout.SelectionGrid(commandIndex, strCommands, 1);
+            EditorGUILayout.BeginVertical(GUILayout.Width(c1Width));
+            settings.editMode = (EditMode)GUILayout.SelectionGrid((int)settings.editMode, strCommands, 1);
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical(GUILayout.Width(10));
+            EditorGUILayout.BeginVertical(GUILayout.Width(spaceSize));
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical();
 
-            if (commandIndex == 0)
+            if (settings.editMode == EditMode.Select)
+            {
+                settings.selectMode = (SelectMode)GUILayout.SelectionGrid((int)settings.selectMode, strSelectMode, 3);
+                EditorGUILayout.Space();
+                if (settings.selectMode == SelectMode.Brush)
+                {
+                    settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
+                    settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, 0.01f, 1.0f);
+                    settings.brushPow = EditorGUILayout.Slider("Brush Pow", settings.brushPow, 0.01f, 1.0f);
+                }
+                else
+                {
+                    settings.selectFrontSideOnly = EditorGUILayout.Toggle("Front Side Only", settings.selectFrontSideOnly);
+                }
+                EditorGUILayout.Space();
+
+                GUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("Save", GUILayout.Width(50));
+                for (int i = 0; i < 5; ++i)
+                {
+                    if (GUILayout.Button((i + 1).ToString()))
+                        settings.selectionSets[i].selection = m_target.selection;
+                }
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("Load", GUILayout.Width(50));
+                for (int i = 0; i < 5; ++i)
+                {
+                    if (GUILayout.Button((i + 1).ToString()))
+                        m_target.selection = settings.selectionSets[i].selection;
+                }
+                GUILayout.EndHorizontal();
+
+                EditorGUILayout.Space();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(EditorGUI.indentLevel * indentSize);
+                if (GUILayout.Button("Select All"))
+                {
+                    if (m_target.SelectAll())
+                        m_target.UpdateSelection();
+                }
+                if (GUILayout.Button("Clear Selection"))
+                {
+                    if (m_target.ClearSelection())
+                        m_target.UpdateSelection();
+                }
+                GUILayout.EndHorizontal();
+            }
+            else if (settings.editMode == EditMode.Brush)
+            {
+                settings.brushMode = (BrushMode)GUILayout.SelectionGrid((int)settings.brushMode, strBrushTypes, 4);
+                EditorGUILayout.Space();
+                settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
+                settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, 0.01f, 1.0f);
+                settings.brushPow = EditorGUILayout.Slider("Brush Pow", settings.brushPow, 0.01f, 1.0f);
+                EditorGUILayout.Space();
+
+                if (settings.brushMode == BrushMode.Paint)
+                {
+                    GUILayout.BeginHorizontal();
+                    settings.pickNormal = GUILayout.Toggle(settings.pickNormal, "Pick Normal", "Button", GUILayout.Width(90));
+                    settings.primary = EditorGUILayout.ColorField(settings.primary, GUILayout.Width(35));
+                    GUILayout.EndHorizontal();
+                }
+            }
+            else if (settings.editMode == EditMode.Assign)
             {
                 setValue = EditorGUILayout.Vector3Field("Value", setValue);
-                if (GUILayout.Button("Set"))
+                if (GUILayout.Button("Assign"))
                 {
                     m_target.ApplySet(setValue);
                 }
             }
-            else if (commandIndex == 1)
+            else if (settings.editMode == EditMode.Move)
             {
                 moveAmount = EditorGUILayout.Vector3Field("Move Amount", moveAmount);
                 if (GUILayout.Button("Move"))
@@ -116,15 +173,16 @@ namespace UTJ.HumbleNormalEditor
                     m_target.ApplyMove(moveAmount);
                 }
             }
-            else if (commandIndex == 2)
+            else if (settings.editMode == EditMode.Rotate)
             {
                 rotateAmount = EditorGUILayout.Vector3Field("Rotate Amount", rotateAmount);
+                settings.rotatePivot = EditorGUILayout.Toggle("Pivot", settings.rotatePivot);
                 if (GUILayout.Button("Rotate"))
                 {
                     m_target.ApplyRotate(Quaternion.Euler(rotateAmount.x, rotateAmount.y, rotateAmount.z));
                 }
             }
-            else if (commandIndex == 3)
+            else if (settings.editMode == EditMode.Scale)
             {
                 scaleAmount = EditorGUILayout.Vector3Field("Scale Amount", scaleAmount);
                 if (GUILayout.Button("Scale") && m_pivot != null)
@@ -132,7 +190,7 @@ namespace UTJ.HumbleNormalEditor
                     m_target.ApplyScale(scaleAmount, m_pivot.position);
                 }
             }
-            else if (commandIndex == 4)
+            else if (settings.editMode == EditMode.Equalize)
             {
                 equalizeRadius = EditorGUILayout.FloatField("Equalize Radius", equalizeRadius);
                 equalizeAmount = EditorGUILayout.FloatField("Equalize Amount", equalizeAmount);
@@ -141,7 +199,7 @@ namespace UTJ.HumbleNormalEditor
                     m_target.ApplyEqualize(equalizeRadius, equalizeAmount);
                 }
             }
-            else if (commandIndex == 5)
+            else if (settings.editMode == EditMode.Projection)
             {
                 projector = EditorGUILayout.ObjectField("Projector", projector, typeof(GameObject), true) as GameObject;
                 if (GUILayout.Button("Project"))
@@ -149,7 +207,7 @@ namespace UTJ.HumbleNormalEditor
                     m_target.ApplyProjection(projector);
                 }
             }
-            else if (commandIndex == 6)
+            else if (settings.editMode == EditMode.Reset)
             {
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Reset (Selection)"))
@@ -166,10 +224,39 @@ namespace UTJ.HumbleNormalEditor
             EditorGUILayout.EndHorizontal();
         }
 
+        void DrawMiscPanel()
+        {
+            var settings = m_target.settings;
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.BeginVertical(GUILayout.Width(indentSize));
+            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.BeginVertical(GUILayout.Width(c1Width));
+            EditorGUILayout.LabelField("", GUILayout.Width(c1Width));
+            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.BeginVertical(GUILayout.Width(spaceSize));
+            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.BeginVertical();
+            {
+                settings.mirrorMode = (MirrorMode)EditorGUILayout.EnumPopup("Mirroring", settings.mirrorMode);
+                EditorGUILayout.Space();
+                if (GUILayout.Button("Recalculate Tangents"))
+                    m_target.RecalculateTangents();
+            }
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndHorizontal();
+        }
+
 
         static readonly string[] strInExport = new string[] {
             "Vertex Color",
-            "Bake To Texture",
+            "Bake Texture",
             "Load Texture",
             "Export .obj",
         };
@@ -179,15 +266,15 @@ namespace UTJ.HumbleNormalEditor
             var settings = m_target.settings;
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.BeginVertical(GUILayout.Width(18));
+            EditorGUILayout.BeginVertical(GUILayout.Width(indentSize));
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical(GUILayout.Width(100));
+            EditorGUILayout.BeginVertical(GUILayout.Width(c1Width));
             inexportIndex = GUILayout.SelectionGrid(inexportIndex, strInExport, 1);
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical(GUILayout.Width(10));
+            EditorGUILayout.BeginVertical(GUILayout.Width(spaceSize));
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
@@ -227,21 +314,21 @@ namespace UTJ.HumbleNormalEditor
             {
                 settings.objFlipHandedness = EditorGUILayout.Toggle("Flip Handedness", settings.objFlipHandedness);
                 settings.objFlipFaces = EditorGUILayout.Toggle("Flip Faces", settings.objFlipFaces);
-                settings.objApplyTransform = EditorGUILayout.Toggle("Apply Transform", settings.objApplyTransform);
                 settings.objMakeSubmeshes = EditorGUILayout.Toggle("Make Submeshes", settings.objMakeSubmeshes);
+                settings.objApplyTransform = EditorGUILayout.Toggle("Apply Transform", settings.objApplyTransform);
                 settings.objIncludeChildren = EditorGUILayout.Toggle("Include Children", settings.objIncludeChildren);
 
                 if (GUILayout.Button("Export .obj file"))
                 {
                     string path = EditorUtility.SaveFilePanel("Export .obj file", "", m_target.name, "obj");
-                    if (path.Length > 0)
-                        ObjExporter.Export(m_target.gameObject, path, new ObjExporter.Settings {
-                            flipFaces = settings.objFlipFaces,
-                            flipHandedness = settings.objFlipHandedness,
-                            includeChildren = settings.objIncludeChildren,
-                            makeSubmeshes = settings.objMakeSubmeshes,
-                            applyTransform = settings.objApplyTransform,
-                        });
+                    ObjExporter.Export(m_target.gameObject, path, new ObjExporter.Settings
+                    {
+                        flipFaces = settings.objFlipFaces,
+                        flipHandedness = settings.objFlipHandedness,
+                        includeChildren = settings.objIncludeChildren,
+                        makeSubmeshes = settings.objMakeSubmeshes,
+                        applyTransform = settings.objApplyTransform,
+                    });
                 }
 
             }
@@ -250,40 +337,42 @@ namespace UTJ.HumbleNormalEditor
         }
 
 
+        static readonly string[] strDisplay = new string[] {
+            "Display",
+            "Settings",
+        };
+
         void DrawDisplayPanel()
         {
             var settings = m_target.settings;
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.BeginVertical(GUILayout.Width(18));
+            EditorGUILayout.BeginVertical(GUILayout.Width(indentSize));
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical(GUILayout.Width(100));
-            EditorGUILayout.Space();
+            EditorGUILayout.BeginVertical(GUILayout.Width(c1Width));
+            displayIndex = GUILayout.SelectionGrid(displayIndex, strDisplay, 1);
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical(GUILayout.Width(10));
+            EditorGUILayout.BeginVertical(GUILayout.Width(spaceSize));
             EditorGUILayout.Space();
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical();
-            settings.showVertices = EditorGUILayout.Toggle("Vertices", settings.showVertices);
-            settings.showNormals = EditorGUILayout.Toggle("Normals", settings.showNormals);
-            settings.showTangents = EditorGUILayout.Toggle("Tangents", settings.showTangents);
-            settings.showBinormals = EditorGUILayout.Toggle("Binormals", settings.showBinormals);
-            EditorGUI.indentLevel++;
-            settings.showSelectedOnly = EditorGUILayout.Toggle("Only Selected", settings.showSelectedOnly);
-            EditorGUI.indentLevel--;
-
-            settings.modelOverlay = (ModelOverlay)EditorGUILayout.EnumPopup("Overlay", settings.modelOverlay);
-
-
-            settings.foldDisplayOptions = EditorGUILayout.Foldout(settings.foldDisplayOptions, "Display Options");
-            if (settings.foldDisplayOptions)
+            if (displayIndex == 0)
             {
+                settings.showVertices = EditorGUILayout.Toggle("Vertices", settings.showVertices);
+                settings.showNormals = EditorGUILayout.Toggle("Normals", settings.showNormals);
+                settings.showTangents = EditorGUILayout.Toggle("Tangents", settings.showTangents);
+                settings.showBinormals = EditorGUILayout.Toggle("Binormals", settings.showBinormals);
                 EditorGUI.indentLevel++;
-
+                settings.showSelectedOnly = EditorGUILayout.Toggle("Only Selected", settings.showSelectedOnly);
+                EditorGUI.indentLevel--;
+                settings.modelOverlay = (ModelOverlay)EditorGUILayout.EnumPopup("Overlay", settings.modelOverlay);
+            }
+            else if (displayIndex == 1)
+            {
                 settings.vertexSize = EditorGUILayout.Slider("Vertex Size", settings.vertexSize, 0.0f, 0.05f);
                 settings.normalSize = EditorGUILayout.Slider("Normal Size", settings.normalSize, 0.0f, 1.00f);
                 settings.tangentSize = EditorGUILayout.Slider("Tangent Size", settings.tangentSize, 0.0f, 1.00f);
@@ -296,14 +385,10 @@ namespace UTJ.HumbleNormalEditor
                 settings.normalColor = EditorGUILayout.ColorField("Normal Color", settings.normalColor);
                 settings.tangentColor = EditorGUILayout.ColorField("Tangent Color", settings.tangentColor);
                 settings.binormalColor = EditorGUILayout.ColorField("Binormal Color", settings.binormalColor);
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(EditorGUI.indentLevel * 18);
                 if (GUILayout.Button("Reset"))
                 {
                     settings.ResetDisplayOptions();
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
@@ -318,27 +403,27 @@ namespace UTJ.HumbleNormalEditor
             EditorGUI.BeginChangeCheck();
             m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
 
+            EditorGUILayout.Space();
+
             foldEdit = EditorGUILayout.Foldout(foldEdit, "Edit");
-            if (foldEdit)
+            if(foldEdit)
                 DrawEditPanel();
 
-            EditorGUILayout.Space();
-
-            foldCommands = EditorGUILayout.Foldout(foldCommands, "Commands");
-            if(foldCommands)
-                DrawCommandPanel();
-
-            EditorGUILayout.Space();
-
-            foldDisplay = EditorGUILayout.Foldout(foldDisplay, "Display");
-            if (foldDisplay)
-                DrawDisplayPanel();
+            foldMisc = EditorGUILayout.Foldout(foldEdit, "Misc");
+            if (foldMisc)
+                DrawMiscPanel();
 
             EditorGUILayout.Space();
 
             foldInExport = EditorGUILayout.Foldout(foldInExport, "Import / Export");
             if (foldInExport)
                 DrawInExportPanel();
+
+            EditorGUILayout.Space();
+
+            foldDisplay = EditorGUILayout.Foldout(foldDisplay, "Display");
+            if (foldDisplay)
+                DrawDisplayPanel();
 
             EditorGUILayout.EndScrollView();
             if (EditorGUI.EndChangeCheck())
