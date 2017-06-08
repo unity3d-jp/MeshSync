@@ -121,8 +121,9 @@ namespace UTJ.HumbleNormalEditor
         Vector3     m_selectionPos;
         Vector3     m_selectionNormal;
         Quaternion  m_selectionRot;
-        Vector2     m_dragStartPoint;
-        Vector2     m_dragEndPoint;
+        bool        m_rectDragging;
+        Vector2     m_rectStartPoint;
+        Vector2     m_rectEndPoint;
         List<Vector2> m_lassoPoints = new List<Vector2>();
 
         [SerializeField] History m_history = new History();
@@ -504,33 +505,41 @@ namespace UTJ.HumbleNormalEditor
                 {
                     if (et == EventType.MouseDown)
                     {
-                        m_dragStartPoint = m_dragEndPoint = e.mousePosition;
+                        m_rectDragging = true;
+                        m_rectStartPoint = m_rectEndPoint = e.mousePosition;
                         handled = true;
                     }
                     else if (et == EventType.MouseDrag)
                     {
-                        m_dragEndPoint = e.mousePosition;
+                        m_rectEndPoint = e.mousePosition;
                         handled = true;
                     }
                     else if (et == EventType.MouseUp)
                     {
+                        m_rectDragging = false;
                         if (!e.shift && !e.control)
                             System.Array.Clear(m_selection, 0, m_selection.Length);
 
-                        m_dragEndPoint = e.mousePosition;
+                        m_rectEndPoint = e.mousePosition;
                         handled = true;
 
-                        if (!SelectRect(m_dragStartPoint, m_dragEndPoint, selectSign) && !m_rayHit)
+                        if (!SelectRect(m_rectStartPoint, m_rectEndPoint, selectSign) && !m_rayHit)
                         {
                             Selection.activeGameObject = null;
                         }
-                        m_dragStartPoint = m_dragEndPoint = Vector2.zero;
+                        m_rectStartPoint = m_rectEndPoint = -Vector2.one;
                     }
                 }
                 else if (selectMode == SelectMode.Lasso)
                 {
                     if (et == EventType.MouseDown || et == EventType.MouseDrag)
                     {
+                        if(et == EventType.MouseDown)
+                        {
+                            m_lassoPoints.Clear();
+                            m_meshLasso.Clear();
+                        }
+
                         m_lassoPoints.Add(ScreenCoord11(e.mousePosition));
                         handled = true;
 
@@ -697,14 +706,14 @@ namespace UTJ.HumbleNormalEditor
 
         void OnRepaint()
         {
-            if (m_settings.selectMode == SelectMode.Rect)
+            if (m_settings.selectMode == SelectMode.Rect && m_rectDragging)
             {
                 var selectionRect = typeof(EditorStyles).GetProperty("selectionRect", BindingFlags.NonPublic | BindingFlags.Static);
                 if (selectionRect != null)
                 {
                     var style = (GUIStyle)selectionRect.GetValue(null, null);
                     Handles.BeginGUI();
-                    style.Draw(FromToRect(m_dragStartPoint, m_dragEndPoint), GUIContent.none, false, false, false, false);
+                    style.Draw(FromToRect(m_rectStartPoint, m_rectEndPoint), GUIContent.none, false, false, false, false);
                     Handles.EndGUI();
                 }
             }

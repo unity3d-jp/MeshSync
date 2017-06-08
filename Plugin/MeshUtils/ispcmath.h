@@ -293,6 +293,7 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 static inline bool ray_triangle_intersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
+    const float epsdet = 1e-10f;
     const float eps = 1e-4f;
 
     float3 e1 = p2 - p1;
@@ -307,7 +308,7 @@ static inline bool ray_triangle_intersection(uniform float3 pos, uniform float3 
 
     distance = dot(e2, q) * inv_det;
     return
-        abs(det) > eps &&
+        abs(det) > 1e-10f &&
         u > -eps && u < 1 + eps &&
         v > -eps && u + v < 1 + eps &&
         distance >= 0.0f;
@@ -316,6 +317,7 @@ static inline bool ray_triangle_intersection(uniform float3 pos, uniform float3 
 // uniform variant
 static inline uniform bool ray_triangle_intersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
 {
+    uniform const float epsdet = 1e-10f;
     uniform const float eps = 1e-4f;
 
     uniform float3 e1 = p2 - p1;
@@ -330,7 +332,7 @@ static inline uniform bool ray_triangle_intersection(uniform float3 pos, uniform
 
     distance = dot(e2, q) * inv_det;
     return
-        abs(det) > eps &&
+        abs(det) > epsdet &&
         u > -eps && u < 1 + eps &&
         v > -eps && u + v < 1 + eps &&
         distance >= 0.0f;
