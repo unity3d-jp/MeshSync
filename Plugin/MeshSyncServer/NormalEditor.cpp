@@ -20,27 +20,31 @@ inline static float clamp11(float v)
 }
 
 
-inline static float3 mul(const float4x4& t, const float3& p)
+inline static float3 mul_v(const float4x4& t, const float3& p)
 {
     return (const float3&)(t * float4{ p.x, p.y, p.z, 0.0f });
 }
-inline static float3 mul_t(const float4x4& t, const float3& p)
+inline static float3 mul_p(const float4x4& t, const float3& p)
 {
     return (const float3&)(t * float4{ p.x, p.y, p.z, 1.0f });
 }
+inline static float4 mul4(const float4x4& t, const float3& p)
+{
+    return t * float4{ p.x, p.y, p.z, 1.0f };
+}
 
 inline static int Raycast(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_triangles, const float4x4& trans,
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles, const float4x4& trans,
     int& tindex, float& distance)
 {
     float4x4 itrans = invert(trans);
-    float3 rpos = mul_t(itrans, pos);
-    float3 rdir = normalize(mul(itrans, dir));
+    float3 rpos = mul_p(itrans, pos);
+    float3 rdir = normalize(mul_v(itrans, dir));
     float d;
     int hit = RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, tindex, d);
     if (hit) {
         float3 hpos = rpos + rdir * d;
-        distance = length(mul_t(trans, hpos) - pos);
+        distance = length(mul_p(trans, hpos) - pos);
     }
     return hit;
 }
@@ -51,7 +55,7 @@ inline static int SelectInside(float3 pos, float radius, const float3 *vertices,
     int ret = 0;
     float rq = radius * radius;
     for (int vi = 0; vi < num_vertices; ++vi) {
-        float dsq = length_sq(mul_t(trans, vertices[vi]) - pos);
+        float dsq = length_sq(mul_p(trans, vertices[vi]) - pos);
         if (dsq <= rq) {
             body(vi, std::sqrt(dsq));
             ++ret;
@@ -61,19 +65,19 @@ inline static int SelectInside(float3 pos, float radius, const float3 *vertices,
 }
 
 neAPI int neRaycast(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_triangles,
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles,
     int *tindex, float *distance, const float4x4 *trans)
 {
     return Raycast(pos, dir, vertices, indices, num_triangles, *trans, *tindex, *distance);
 }
 
 neAPI int nePickNormal(
-    const float3 pos, const float3 dir, const float3 *vertices, const float3 *normals, const int *indices, int num_triangles,
+    const float3 pos, const float3 dir, const float3 vertices[], const float3 normals[], const int indices[], int num_triangles,
     const float4x4 *trans, float3 *result)
 {
     float4x4 itrans = invert(*trans);
-    float3 rpos = mul_t(itrans, pos);
-    float3 rdir = normalize(mul(itrans, dir));
+    float3 rpos = mul_p(itrans, pos);
+    float3 rdir = normalize(mul_v(itrans, dir));
     int ti;
     float d;
     int hit = RayTrianglesIntersection(rpos, rdir, vertices, indices, num_triangles, ti, d);
@@ -87,8 +91,8 @@ neAPI int nePickNormal(
 }
 
 neAPI int neSoftSelection(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float pow, float strength, float *seletion, const float4x4 *trans)
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
+    float radius, float pow, float strength, float seletion[], const float4x4 *trans)
 {
     int ti;
     float distance;
@@ -103,9 +107,8 @@ neAPI int neSoftSelection(
 }
 
 neAPI int neHardSelection(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float strength, float *seletion,
-    const float4x4 *trans)
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
+    float radius, float strength, float seletion[], const float4x4 *trans)
 {
     int ti;
     float distance;
@@ -119,7 +122,7 @@ neAPI int neHardSelection(
 }
 
 neAPI int neRectSelection(
-    const float3 *vertices, int num_vertices, float *seletion, float strength,
+    const float3 vertices[], int num_vertices, float seletion[], float strength,
     const float4x4 *mvp_, float2 rmin, float2 rmax)
 {
     float4x4 mvp = *mvp_;
@@ -139,7 +142,7 @@ neAPI int neRectSelection(
 }
 
 neAPI int neRectSelectionFrontFace(
-    const float3 *vertices, const int *indices, int num_vertices, int num_triangles, float *seletion, float strength,
+    const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos)
 {
     float4x4 mvp = *mvp_;
@@ -147,17 +150,17 @@ neAPI int neRectSelectionFrontFace(
 
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
-        float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
+        float4 vp = mul4(mvp, vertices[vi]);
         float2 sp = float2{ vp.x, vp.y } / vp.w;
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
             sp.y >= rmin.y && sp.y <= rmax.y && vp.z > 0.0f)
         {
-            float3 vpos = (float3&)(trans * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f });
+            float3 vpos = mul_p(trans, vertices[vi]);
             float3 dir = normalize(vpos - campos);
             int ti;
             float distance;
             bool hit = false;
-            if (neRaycast(campos, dir, vertices, indices, num_triangles, &ti, &distance, trans_)) {
+            if (Raycast(campos, dir, vertices, indices, num_triangles, trans, ti, distance)) {
                 float3 hitpos = campos + dir * distance;
                 if (length(vpos - hitpos) < 0.01f) {
                     hit = true;
@@ -177,13 +180,54 @@ neAPI int neRectSelectionFrontFace(
     return ret;
 }
 
+neAPI int neLassoSelection(
+    const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
+    const float4x4 *mvp_, const float4x4 *trans_, const float2 points[], int num_points, float3 campos, int frontface_only)
+{
+    float4x4 mvp = *mvp_;
+    float4x4 trans = *trans_;
+
+    std::atomic_int ret{ 0 };
+    parallel_for(0, num_vertices, [&](int vi) {
+        float4 vp = mul4(mvp, vertices[vi]);
+        float2 sp = float2{ vp.x, vp.y } / vp.w;
+        if (polygon_inside(points, num_points, sp)) {
+            bool hit = false;
+            if (frontface_only) {
+                float3 vpos = mul_p(trans, vertices[vi]);
+                float3 dir = normalize(vpos - campos);
+                int ti;
+                float distance;
+                if (Raycast(campos, dir, vertices, indices, num_triangles, trans, ti, distance)) {
+                    float3 hitpos = campos + dir * distance;
+                    if (length(vpos - hitpos) < 0.01f) {
+                        hit = true;
+                    }
+                }
+                else {
+                    // select points on outline
+                    hit = true;
+                }
+            }
+            else {
+                hit = true;
+            }
+
+            seletion[vi] = clamp01(seletion[vi] + strength);
+            ++ret;
+        }
+    });
+    return ret;
+}
+
 neAPI void neEqualize(
-    const float3 *vertices, const float *selection, int num_vertices, float radius, float strength, float3 *normals, const float4x4 *trans)
+    const float3 vertices[], const float selection[], int num_vertices,
+    float radius, float strength, float3 normals[], const float4x4 *trans)
 {
     RawVector<float3> tvertices;
     tvertices.resize(num_vertices);
     parallel_for(0, num_vertices, [&](int vi) {
-        tvertices[vi] = mul_t(*trans, vertices[vi]);
+        tvertices[vi] = mul_p(*trans, vertices[vi]);
     });
 
     float rsq = radius * radius;
@@ -205,8 +249,8 @@ neAPI void neEqualize(
 }
 
 neAPI int neAdditiveRaycast(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float strength, float pow, float3 additive, float3 *normals, const float4x4 *trans)
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
+    float radius, float strength, float pow, float3 additive, float3 normals[], const float4x4 *trans)
 {
     int ti;
     float distance;
@@ -221,8 +265,8 @@ neAPI int neAdditiveRaycast(
 }
 
 neAPI int neScaleRaycast(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float strength, float pow, float3 *normals, const float4x4 *trans)
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
+    float radius, float strength, float pow, float3 normals[], const float4x4 *trans)
 {
     auto itrans = invert(*trans);
     float rsq = radius * radius;
@@ -232,7 +276,7 @@ neAPI int neScaleRaycast(
         int ret = 0;
         float3 hpos = pos + dir * distance;
         for (int vi = 0; vi < num_vertices; ++vi) {
-            float3 p = mul_t(*trans, vertices[vi]);
+            float3 p = mul_p(*trans, vertices[vi]);
             float dsq = length_sq(p - hpos);
             if (dsq <= rsq) {
                 float d = std::sqrt(dsq);
@@ -248,8 +292,8 @@ neAPI int neScaleRaycast(
 }
 
 neAPI int neLerpRaycast(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float strength, float pow, const float3 *base, float3 *normals, const float4x4 *trans)
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
+    float radius, float strength, float pow, const float3 base[], float3 normals[], const float4x4 *trans)
 {
     int ti;
     float distance;
@@ -265,8 +309,8 @@ neAPI int neLerpRaycast(
 }
 
 neAPI int neEqualizeRaycast(
-    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
-    float radius, float strength, float pow, float3 *normals, const float4x4 *trans)
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
+    float radius, float strength, float pow, float3 normals[], const float4x4 *trans)
 {
     int ti;
     float distance;
@@ -293,8 +337,8 @@ neAPI int neEqualizeRaycast(
 }
 
 neAPI int neBuildMirroringRelation(
-    const float3 *vertices, const float3 *normals, int num_vertices,
-    float3 plane_normal, float epsilon, int *relation)
+    const float3 vertices[], const float3 normals[], int num_vertices,
+    float3 plane_normal, float epsilon, int relation[])
 {
     RawVector<float> distances;
     distances.resize(num_vertices);
@@ -325,7 +369,7 @@ neAPI int neBuildMirroringRelation(
     return ret;
 }
 
-neAPI void neApplyMirroring(const int *relation, int num_vertices, float3 plane_normal, float3 *normals)
+neAPI void neApplyMirroring(const int relation[], int num_vertices, float3 plane_normal, float3 normals[])
 {
     parallel_for(0, num_vertices, [&](int vi) {
         if (relation[vi] != -1) {
@@ -349,7 +393,7 @@ neAPI void neProjectNormals(
         }
         for (int ti = 0; ti < num_triangles; ++ti) {
             for (int i = 0; i < 3; ++i) {
-                auto p = mul_t(mat, pvertices[pindices[ti * 3 + i]]);
+                auto p = mul_p(mat, pvertices[pindices[ti * 3 + i]]);
                 soa[i * 3 + 0][ti] = p.x;
                 soa[i * 3 + 1][ti] = p.y;
                 soa[i * 3 + 2][ti] = p.z;
@@ -378,9 +422,10 @@ neAPI void neProjectNormals(
                 pnormals[pindices[ti * 3 + 1]],
                 pnormals[pindices[ti * 3 + 2]]);
 
-            result = normalize(mul(mat, result));
+            result = normalize(mul_v(mat, result));
             float s = selection ? selection[ri] : 1.0f;
             dst[ri] = normalize(lerp(dst[ri], result, s));
         }
     });
 }
+

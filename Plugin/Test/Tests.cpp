@@ -125,7 +125,7 @@ void MatrixSwapHandedness()
     printf("");
 }
 
-void RayTrianglesIntersectionTest()
+void TestRayTrianglesIntersection()
 {
     RawVector<float3> vertices;
     RawVector<float3> vertices_flattened;
@@ -184,7 +184,7 @@ void RayTrianglesIntersectionTest()
         printf("    %d hits: index %d, distance %f\n",
             num_hits, tindex, distance);
     };
-    printf("RayTrianglesIntersectionTest()\n");
+    printf("TestRayTrianglesIntersection()\n");
 
     auto s1_begin = Now();
     for (int i = 0; i < num_try; ++i) {
@@ -259,6 +259,29 @@ void RayTrianglesIntersectionTest()
     printf("\n");
 }
 
+void TestPolygonInside()
+{
+    float2 points[] {
+        float2{ 0, 0 },
+        float2{ 1, 1 },
+        float2{ 0, 2 },
+        float2{-1, 1 },
+    };
+    bool result[] = {
+        polygon_inside(points, 4,{    0,  1 }),
+        polygon_inside(points, 4,{    0,0.5f }),
+        polygon_inside(points, 4,{ 0.5f,  1 }),
+        polygon_inside(points, 4,{    1,  1 }),
+        polygon_inside(points, 4,{    0,  2 }),
+    };
+
+    printf("TestPolygonInside()");
+    for (int i = 0; i < 5; ++i) {
+        printf(" %d", (int)result[i]);
+    }
+    printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
     //Test_Indexed();
@@ -266,5 +289,6 @@ int main(int argc, char *argv[])
     //Test_Get();
     //Test_GenNormals();
     //MatrixSwapHandedness();
-    RayTrianglesIntersectionTest();
+    //TestRayTrianglesIntersection();
+    TestPolygonInside();
 }

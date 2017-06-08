@@ -889,6 +889,7 @@ inline float plane_distance(float3 p, float3 pn)            { return dot(p, pn);
 inline float3 plane_mirror(float3 p, float3 pn, float pd)   { return p - pn * (plane_distance(p, pn, pd) * 2.0f); }
 inline float3 plane_mirror(float3 p, float3 pn)             { return p - pn * (plane_distance(p, pn) * 2.0f); }
 
+bool polygon_inside(const float2 points[], int num_points, const float2 pos);
 
 #ifdef muMath_AddNamespace
 } // namespace mu
