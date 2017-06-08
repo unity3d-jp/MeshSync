@@ -92,6 +92,7 @@ namespace UTJ.HumbleNormalEditor
         [SerializeField] Mesh m_meshTarget;
         [SerializeField] Mesh m_meshCube;
         [SerializeField] Mesh m_meshLine;
+        [SerializeField] Mesh m_meshLasso;
         [SerializeField] Material m_matVisualize;
         [SerializeField] Material m_matBake;
         [SerializeField] ComputeShader m_csBakeFromMap;
@@ -190,6 +191,11 @@ namespace UTJ.HumbleNormalEditor
                 m_meshLine.vertices = new Vector3[2] { Vector3.zero, Vector3.zero };
                 m_meshLine.uv = new Vector2[2] { Vector2.zero, Vector2.one };
                 m_meshLine.SetIndices(new int[2] { 0, 1 }, MeshTopology.Lines, 0);
+            }
+
+            if (m_meshLasso == null)
+            {
+                m_meshLasso = new Mesh();
             }
 
             if (m_matVisualize == null)
@@ -527,6 +533,25 @@ namespace UTJ.HumbleNormalEditor
                     {
                         m_lassoPoints.Add(ScreenCoord11(e.mousePosition));
                         handled = true;
+
+                        m_meshLasso.Clear();
+                        if (m_lassoPoints.Count > 1)
+                        {
+                            var vertices = new Vector3[m_lassoPoints.Count];
+                            var indices = new int[(vertices.Length - 1) * 2];
+                            for (int i = 0; i < vertices.Length; ++i)
+                            {
+                                vertices[i].x = m_lassoPoints[i].x;
+                                vertices[i].y = m_lassoPoints[i].y;
+                            }
+                            for (int i = 0; i < vertices.Length - 1; ++i)
+                            {
+                                indices[i * 2 + 0] = i;
+                                indices[i * 2 + 1] = i + 1;
+                            }
+                            m_meshLasso.vertices = vertices;
+                            m_meshLasso.SetIndices(indices, MeshTopology.Lines, 0);
+                        }
                     }
                     else if (et == EventType.MouseUp)
                     {
@@ -538,7 +563,9 @@ namespace UTJ.HumbleNormalEditor
                         {
                             Selection.activeGameObject = null;
                         }
+
                         m_lassoPoints.Clear();
+                        m_meshLasso.Clear();
                     }
                 }
                 else if (selectMode == SelectMode.Brush)
@@ -663,6 +690,8 @@ namespace UTJ.HumbleNormalEditor
                 m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matVisualize, 2, m_cbArg);
             if (m_settings.showNormals && m_normals != null)
                 m_cmdDraw.DrawMeshInstancedIndirect(m_meshLine, 0, m_matVisualize, 1, m_cbArg);
+            if (m_meshLasso.vertexCount > 1)
+                m_cmdDraw.DrawMesh(m_meshLasso, Matrix4x4.identity, m_matVisualize, 0, 7);
             Graphics.ExecuteCommandBuffer(m_cmdDraw);
         }
 

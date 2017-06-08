@@ -1,7 +1,4 @@
 ﻿Shader "Hidden/HumbleNormalEditor/Visualizer" {
-    Properties {
-        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest("ZTest", Int) = 4
-    }
 
 CGINCLUDE
 #include "UnityCG.cginc"
@@ -153,6 +150,15 @@ v2f vert_color(appdata v)
     return o;
 }
 
+v2f vert_lasso(appdata v)
+{
+    v2f o;
+    o.vertex = float4(v.vertex.xy, 0.0, 1.0);
+    o.vertex.y *= -1;
+    o.color = float4(1.0, 0.0, 0.0, 1.0);
+    return o;
+}
+
 
 half4 frag(v2f v) : SV_Target
 {
@@ -163,13 +169,14 @@ ENDCG
     SubShader
     {
         Tags{ "RenderType" = "Transparent" "Queue" = "Transparent+100" }
-        ZTest[_ZTest]
         ZWrite Off
         Blend SrcAlpha OneMinusSrcAlpha
 
         // pass 0: visualize vertices
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_vertices
             #pragma fragment frag
@@ -180,6 +187,8 @@ ENDCG
         // pass 1: visualize normals
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_normals
             #pragma fragment frag
@@ -190,6 +199,8 @@ ENDCG
         // pass 2: visualize tangents
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_tangents
             #pragma fragment frag
@@ -200,6 +211,8 @@ ENDCG
         // pass 3: visualize binormals
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_binormals
             #pragma fragment frag
@@ -210,6 +223,8 @@ ENDCG
         // pass 4: local space normals overlay
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_local_space_normals
             #pragma fragment frag
@@ -220,6 +235,8 @@ ENDCG
         // pass 5: tangent space normals overlay
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_tangent_space_normals
             #pragma fragment frag
@@ -230,8 +247,22 @@ ENDCG
         // pass 6: vertex color overlay
         Pass
         {
+            ZTest LEqual
+
             CGPROGRAM
             #pragma vertex vert_color
+            #pragma fragment frag
+            #pragma target 4.5
+            ENDCG
+        }
+
+        // pass 7: lasso
+        Pass
+        {
+            ZTest Always
+
+            CGPROGRAM
+            #pragma vertex vert_lasso
             #pragma fragment frag
             #pragma target 4.5
             ENDCG
