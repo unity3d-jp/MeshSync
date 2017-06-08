@@ -364,6 +364,15 @@ namespace UTJ.HumbleNormalEditor
             return ret;
         }
 
+        public static Vector2 ScreenCoord11(Vector2 v)
+        {
+            var cam = SceneView.lastActiveSceneView.camera;
+            if (cam == null) { return v; }
+            return new Vector2(
+                v.x / cam.pixelWidth * 2.0f - 1.0f,
+                (1.0f - v.y / cam.pixelHeight) * 2.0f - 1.0f);
+        }
+
         public bool SelectRect(Vector2 r1, Vector2 r2, float strength)
         {
             var cam = SceneView.lastActiveSceneView.camera;
@@ -379,10 +388,21 @@ namespace UTJ.HumbleNormalEditor
             var rmin = new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y));
             var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
 
-            if (m_settings.selectFrontSideOnly)
-                return neRectSelectionFrontFace(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength, ref mvp, ref trans, rmin, rmax, campos) > 0;
-            else
-                return neRectSelection(m_points, m_points.Length, m_selection, strength, ref mvp, rmin, rmax) > 0;
+            return neRectSelection(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
+                ref mvp, ref trans, rmin, rmax, campos, m_settings.selectFrontSideOnly) > 0;
+        }
+
+        public bool SelectLasso(Vector2[] points, float strength)
+        {
+            var cam = SceneView.lastActiveSceneView.camera;
+            if (cam == null) { return false; }
+
+            var campos = cam.GetComponent<Transform>().position;
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
+
+            return neLassoSelection(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
+                ref mvp, ref trans, points, points.Length, campos, m_settings.selectFrontSideOnly) > 0;
         }
 
         public bool SelectPoint(Vector2 spos, float pointSize, float strength)
@@ -398,10 +418,8 @@ namespace UTJ.HumbleNormalEditor
             var rmin = new Vector2(spos.x - pointSize, spos.y - pointSize);
             var rmax = new Vector2(spos.x + pointSize, spos.y + pointSize);
 
-            if (m_settings.selectFrontSideOnly)
-                return neRectSelectionFrontFace(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength, ref mvp, ref trans, rmin, rmax, campos) > 0;
-            else
-                return neRectSelection(m_points, m_points.Length, m_selection, strength, ref mvp, rmin, rmax) > 0;
+            return neRectSelection(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
+                ref mvp, ref trans, rmin, rmax, campos, m_settings.selectFrontSideOnly) > 0;
         }
 
 
@@ -637,12 +655,12 @@ namespace UTJ.HumbleNormalEditor
             float radius, float strength, float[] seletion, ref Matrix4x4 trans);
 
         [DllImport("MeshSyncServer")] static extern int neRectSelection(
-            Vector3[] vertices, int num_vertices, float[] seletion, float strength,
-            ref Matrix4x4 mvp, Vector2 rmin, Vector2 rmax);
-        [DllImport("MeshSyncServer")] static extern int neRectSelectionFrontFace(
             Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
-            ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos);
+            ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos, bool frontfaceOnly);
 
+        [DllImport("MeshSyncServer")] static extern int neLassoSelection(
+            Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
+            ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2[] points, int num_points, Vector3 campos, bool frontfaceOnly);
 
         [DllImport("MeshSyncServer")] static extern int neEqualize(
             Vector3[] vertices, float[] selection, int num_vertices, float radius, float strength, Vector3[] normals, ref Matrix4x4 trans);

@@ -846,7 +846,7 @@ inline float compute_focal_length(float aperture, float fov)
 
 inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
-    const float eps = 0.01f;
+    const float eps = 1e-4f;
 
     float3 e1 = p2 - p1;
     float3 e2 = p3 - p1;

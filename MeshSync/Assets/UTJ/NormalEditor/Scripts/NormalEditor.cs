@@ -35,8 +35,8 @@ namespace UTJ.HumbleNormalEditor
     {
         Single,
         Rect,
+        Lasso,
         Brush,
-        //Lasso,
     }
 
     public enum MirrorMode
@@ -122,6 +122,7 @@ namespace UTJ.HumbleNormalEditor
         Quaternion  m_selectionRot;
         Vector2     m_dragStartPoint;
         Vector2     m_dragEndPoint;
+        List<Vector2> m_lassoPoints = new List<Vector2>();
 
         [SerializeField] History m_history = new History();
 
@@ -502,7 +503,7 @@ namespace UTJ.HumbleNormalEditor
                     }
                     else if (et == EventType.MouseDrag)
                     {
-                        m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
+                        m_dragEndPoint = e.mousePosition;
                         handled = true;
                     }
                     else if (et == EventType.MouseUp)
@@ -510,7 +511,7 @@ namespace UTJ.HumbleNormalEditor
                         if (!e.shift && !e.control)
                             System.Array.Clear(m_selection, 0, m_selection.Length);
 
-                        m_dragEndPoint = new Vector2(Mathf.Max(e.mousePosition.x, 0), Mathf.Max(e.mousePosition.y, 0));
+                        m_dragEndPoint = e.mousePosition;
                         handled = true;
 
                         if (!SelectRect(m_dragStartPoint, m_dragEndPoint, selectSign) && !m_rayHit)
@@ -518,6 +519,26 @@ namespace UTJ.HumbleNormalEditor
                             Selection.activeGameObject = null;
                         }
                         m_dragStartPoint = m_dragEndPoint = Vector2.zero;
+                    }
+                }
+                else if (selectMode == SelectMode.Lasso)
+                {
+                    if (et == EventType.MouseDown || et == EventType.MouseDrag)
+                    {
+                        m_lassoPoints.Add(ScreenCoord11(e.mousePosition));
+                        handled = true;
+                    }
+                    else if (et == EventType.MouseUp)
+                    {
+                        if (!e.shift && !e.control)
+                            System.Array.Clear(m_selection, 0, m_selection.Length);
+
+                        handled = true;
+                        if (!SelectLasso(m_lassoPoints.ToArray(), selectSign) && !m_rayHit)
+                        {
+                            Selection.activeGameObject = null;
+                        }
+                        m_lassoPoints.Clear();
                     }
                 }
                 else if (selectMode == SelectMode.Brush)

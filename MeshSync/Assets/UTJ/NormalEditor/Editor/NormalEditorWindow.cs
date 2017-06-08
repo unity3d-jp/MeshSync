@@ -120,6 +120,7 @@ namespace UTJ.HumbleNormalEditor
         static readonly string[] strSelectMode = new string[] {
             "Single",
             "Rect",
+            "Lasso",
             "Brush",
         };
 

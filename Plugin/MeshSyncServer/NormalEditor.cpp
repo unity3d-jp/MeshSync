@@ -34,6 +34,18 @@ inline static float4 mul4(const float4x4& t, const float3& p)
 }
 
 inline static int Raycast(
+    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles,
+    int& tindex, float& distance)
+{
+    float d;
+    int hit = RayTrianglesIntersection(pos, dir, vertices, indices, num_triangles, tindex, d);
+    if (hit) {
+        float3 hpos = pos + dir * d;
+        distance = length(hpos - pos);
+    }
+    return hit;
+}
+inline static int Raycast(
     const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles, const float4x4& trans,
     int& tindex, float& distance)
 {
@@ -122,31 +134,12 @@ neAPI int neHardSelection(
 }
 
 neAPI int neRectSelection(
-    const float3 vertices[], int num_vertices, float seletion[], float strength,
-    const float4x4 *mvp_, float2 rmin, float2 rmax)
-{
-    float4x4 mvp = *mvp_;
-
-    std::atomic_int ret{ 0 };
-    parallel_for(0, num_vertices, [&](int vi) {
-        float4 vp = mvp * float4{ vertices[vi].x, vertices[vi].y, vertices[vi].z, 1.0f };
-        float2 sp = float2{ vp.x, vp.y } / vp.w;
-        if (sp.x >= rmin.x && sp.x <= rmax.x &&
-            sp.y >= rmin.y && sp.y <= rmax.y && vp.z > 0.0f)
-        {
-            seletion[vi] = clamp01(seletion[vi] + strength);
-            ++ret;
-        }
-    });
-    return ret;
-}
-
-neAPI int neRectSelectionFrontFace(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
-    const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos)
+    const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos, int frontface_only)
 {
     float4x4 mvp = *mvp_;
     float4x4 trans = *trans_;
+    float3 lcampos = mul_p(invert(trans), campos);
 
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
@@ -155,19 +148,24 @@ neAPI int neRectSelectionFrontFace(
         if (sp.x >= rmin.x && sp.x <= rmax.x &&
             sp.y >= rmin.y && sp.y <= rmax.y && vp.z > 0.0f)
         {
-            float3 vpos = mul_p(trans, vertices[vi]);
-            float3 dir = normalize(vpos - campos);
-            int ti;
-            float distance;
             bool hit = false;
-            if (Raycast(campos, dir, vertices, indices, num_triangles, trans, ti, distance)) {
-                float3 hitpos = campos + dir * distance;
-                if (length(vpos - hitpos) < 0.01f) {
+            if (frontface_only) {
+                float3 vpos = vertices[vi];
+                float3 dir = normalize(vpos - lcampos);
+                int ti;
+                float distance;
+                if (Raycast(lcampos, dir, vertices, indices, num_triangles, ti, distance)) {
+                    float3 hitpos = lcampos + dir * distance;
+                    if (length(vpos - hitpos) < 0.01f) {
+                        hit = true;
+                    }
+                }
+                else {
+                    // select points on outline
                     hit = true;
                 }
             }
             else {
-                // select points on outline
                 hit = true;
             }
 
@@ -186,6 +184,7 @@ neAPI int neLassoSelection(
 {
     float4x4 mvp = *mvp_;
     float4x4 trans = *trans_;
+    float3 lcampos = mul_p(invert(trans), campos);
 
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
@@ -194,12 +193,12 @@ neAPI int neLassoSelection(
         if (polygon_inside(points, num_points, sp)) {
             bool hit = false;
             if (frontface_only) {
-                float3 vpos = mul_p(trans, vertices[vi]);
-                float3 dir = normalize(vpos - campos);
+                float3 vpos = vertices[vi];
+                float3 dir = normalize(vpos - lcampos);
                 int ti;
                 float distance;
-                if (Raycast(campos, dir, vertices, indices, num_triangles, trans, ti, distance)) {
-                    float3 hitpos = campos + dir * distance;
+                if (Raycast(lcampos, dir, vertices, indices, num_triangles, ti, distance)) {
+                    float3 hitpos = lcampos + dir * distance;
                     if (length(vpos - hitpos) < 0.01f) {
                         hit = true;
                     }
@@ -213,8 +212,10 @@ neAPI int neLassoSelection(
                 hit = true;
             }
 
-            seletion[vi] = clamp01(seletion[vi] + strength);
-            ++ret;
+            if (hit) {
+                seletion[vi] = clamp01(seletion[vi] + strength);
+                ++ret;
+            }
         }
     });
     return ret;
