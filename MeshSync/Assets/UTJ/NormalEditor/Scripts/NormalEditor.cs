@@ -460,7 +460,11 @@ namespace UTJ.HumbleNormalEditor
                 switch (m_settings.brushMode)
                 {
                     case BrushMode.Paint:
-                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary)))
+                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary).normalized))
+                            handled = true;
+                        break;
+                    case BrushMode.Scale:
+                        if (ApplyScaleBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
                             handled = true;
                         break;
                     case BrushMode.Reset:

@@ -202,15 +202,16 @@ namespace UTJ.HumbleNormalEditor
                 settings.brushMode = (BrushMode)GUILayout.SelectionGrid((int)settings.brushMode, strBrushTypes, 4);
                 EditorGUILayout.Space();
                 settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
-                settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, 0.01f, 1.0f);
+                settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, -1.0f, 1.0f);
                 settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.01f, 1.0f);
                 EditorGUILayout.Space();
 
                 if (settings.brushMode == BrushMode.Paint)
                 {
                     GUILayout.BeginHorizontal();
-                    settings.pickNormal = GUILayout.Toggle(settings.pickNormal, "Pick Normal", "Button", GUILayout.Width(90));
                     settings.primary = EditorGUILayout.ColorField(settings.primary, GUILayout.Width(35));
+                    settings.primary = NormalEditor.ToColor(EditorGUILayout.Vector3Field("", NormalEditor.ToVector(settings.primary)));
+                    settings.pickNormal = GUILayout.Toggle(settings.pickNormal, "Pick", "Button", GUILayout.Width(90));
                     GUILayout.EndHorizontal();
                 }
             }

@@ -149,9 +149,24 @@ namespace UTJ.HumbleNormalEditor
 
         public bool ApplyAdditiveBrush(Ray ray, float radius, float pow, float strength, Vector3 add)
         {
+            add = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(add).normalized;
+
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
             if (neAdditiveRaycast(ray.origin, ray.direction,
                 m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, add, m_normals, ref trans) > 0)
+            {
+                ApplyMirroring();
+                UpdateNormals();
+                return true;
+            }
+            return false;
+        }
+
+        public bool ApplyScaleBrush(Ray ray, float radius, float pow, float strength)
+        {
+            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+            if (neScaleRaycast(ray.origin, ray.direction,
+                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, m_normals, ref trans) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -635,6 +650,9 @@ namespace UTJ.HumbleNormalEditor
         [DllImport("MeshSyncServer")] static extern int neAdditiveRaycast(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
             float radius, float strength, float pow, Vector3 additive, Vector3[] normals, ref Matrix4x4 trans);
+        [DllImport("MeshSyncServer")] static extern int neScaleRaycast(
+            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
+            float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
 
         [DllImport("MeshSyncServer")] static extern int neLerpRaycast(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,

@@ -14,6 +14,11 @@ inline static float clamp01(float v)
 {
     return std::max<float>(std::min<float>(v, 1.0f), 0.0f);
 }
+inline static float clamp11(float v)
+{
+    return std::max<float>(std::min<float>(v, 1.0f), -1.0f);
+}
+
 
 inline static float3 mul(const float4x4& t, const float3& p)
 {
@@ -208,9 +213,36 @@ neAPI int neAdditiveRaycast(
     if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
         float3 hpos = pos + dir * distance;
         return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
-            float s = clamp01(std::pow(1.0f - d / radius, pow) * strength);
+            float s = clamp11(std::pow(1.0f - d / radius, pow) * strength);
             normals[vi] = normalize(normals[vi] + additive * s);
         });
+    }
+    return 0;
+}
+
+neAPI int neScaleRaycast(
+    const float3 pos, const float3 dir, const float3 *vertices, const int *indices, int num_vertices, int num_triangles,
+    float radius, float strength, float pow, float3 *normals, const float4x4 *trans)
+{
+    auto itrans = invert(*trans);
+    float rsq = radius * radius;
+    int ti;
+    float distance;
+    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
+        int ret = 0;
+        float3 hpos = pos + dir * distance;
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            float3 p = mul_t(*trans, vertices[vi]);
+            float dsq = length_sq(p - hpos);
+            if (dsq <= rsq) {
+                float d = std::sqrt(dsq);
+                float3 dir = normalize(p - hpos);
+                float s = clamp11(std::pow(1.0f - d / radius, pow) * strength);
+                normals[vi] = normalize(normals[vi] + dir * s);
+                ++ret;
+            }
+       }
+        return ret;
     }
     return 0;
 }
@@ -224,8 +256,9 @@ neAPI int neLerpRaycast(
     if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
         float3 hpos = pos + dir * distance;
         return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
-            float s = clamp01(std::pow(1.0f - d / radius, pow) * strength);
-            normals[vi] = normalize(lerp(normals[vi], base[vi], s));
+            float sign = strength < 0.0f ? -1.0f : 1.0f;
+            float s = clamp01(std::pow(1.0f - d / radius, pow) * abs(strength));
+            normals[vi] = normalize(lerp(normals[vi], base[vi] * sign, s));
         });
     }
     return 0;
@@ -251,7 +284,7 @@ neAPI int neEqualizeRaycast(
         }
         average = normalize(average);
         for (auto& p : inside) {
-            float s = clamp01(std::pow(1.0f - p.second / radius, pow) * strength);
+            float s = clamp11(std::pow(1.0f - p.second / radius, pow) * strength);
             normals[p.first] = normalize(normals[p.first] + average * s);
         }
         return (int)inside.size();
