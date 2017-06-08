@@ -79,16 +79,14 @@ namespace UTJ.HumbleNormalEditor
 #if UNITY_EDITOR
 
         [Serializable]
-        class History
+        class HistoryRecord
         {
-            public int count = 0;
             public Vector3[] normals;
         }
 
 
         NormalEditorSettings m_settings;
-
-
+        
         // internal resources
         [SerializeField] Mesh m_meshTarget;
         [SerializeField] Mesh m_meshCube;
@@ -126,7 +124,8 @@ namespace UTJ.HumbleNormalEditor
         Vector2 m_dragStartPoint;
         Vector2 m_dragEndPoint;
 
-        [SerializeField] History m_history = new History();
+        [SerializeField] int m_historyCount = 0;
+        Dictionary<int, HistoryRecord> m_history = new Dictionary<int, HistoryRecord>();
 
 
         public NormalEditorSettings settings { get { return m_settings; } }

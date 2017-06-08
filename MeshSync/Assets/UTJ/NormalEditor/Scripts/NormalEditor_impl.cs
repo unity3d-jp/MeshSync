@@ -104,7 +104,7 @@ namespace UTJ.HumbleNormalEditor
                 Vector3 axis = Vector3.zero;
                 float angle = 0.0f;
                 rot.ToAngleAxis(out angle, out axis);
-                axis = mat.MultiplyVector(axis);
+                axis = mat.MultiplyVector(axis).normalized;
                 rot = Quaternion.AngleAxis(angle, axis);
             }
 
@@ -139,7 +139,6 @@ namespace UTJ.HumbleNormalEditor
                 {
                     var v = rot * (m_points[i] - pivot) + pivot;
                     var dir = (v - m_points[i]) * strength;
-
                     m_normals[i] = (m_normals[i] + dir * s).normalized;
                 }
             }
@@ -206,25 +205,29 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
+
         public void PushUndo()
         {
             Undo.RecordObject(this, "NormalEditor");
-            m_history.count++;
-            if (m_history.normals != null && m_history.normals.Length == m_normals.Length)
-                Array.Copy(m_normals, m_history.normals, m_normals.Length);
-            else
-                m_history.normals = (Vector3[])m_normals.Clone();
+            m_historyCount++;
+            m_history[m_historyCount] = new HistoryRecord { normals = (Vector3[])m_normals.Clone() };
             Undo.FlushUndoRecordObjects();
-            //Debug.Log("PushUndo(): " + m_history.count);
+
+            //Debug.Log("PushUndo(): " + m_historyCount);
         }
 
         public void OnUndoRedo()
         {
-            //Debug.Log("OnUndoRedo(): " + m_history.count);
-            if (m_history.normals.Length > 0)
+            //Debug.Log("OnUndoRedo(): " + m_historyCount);
+
+            if (m_history.ContainsKey(m_historyCount))
             {
-                m_normals = m_history.normals;
-                UpdateNormals();
+                var rec = m_history[m_historyCount];
+                if(rec != null && rec.normals.Length == m_normals.Length)
+                {
+                    Array.Copy(rec.normals, m_normals, m_normals.Length);
+                    UpdateNormals();
+                }
             }
         }
 

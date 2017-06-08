@@ -163,6 +163,7 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Assign"))
                 {
                     m_target.ApplySet(setValue);
+                    m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Move)
@@ -171,6 +172,7 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Move"))
                 {
                     m_target.ApplyMove(moveAmount);
+                    m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Rotate)
@@ -180,6 +182,7 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Rotate"))
                 {
                     m_target.ApplyRotate(Quaternion.Euler(rotateAmount.x, rotateAmount.y, rotateAmount.z));
+                    m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Scale)
@@ -188,6 +191,7 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Scale") && m_pivot != null)
                 {
                     m_target.ApplyScale(scaleAmount, m_pivot.position);
+                    m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Equalize)
@@ -197,6 +201,7 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Equalize"))
                 {
                     m_target.ApplyEqualize(equalizeRadius, equalizeAmount);
+                    m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Projection)
@@ -205,6 +210,7 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Project"))
                 {
                     m_target.ApplyProjection(projector);
+                    m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Reset)
@@ -213,10 +219,12 @@ namespace UTJ.HumbleNormalEditor
                 if (GUILayout.Button("Reset (Selection)"))
                 {
                     m_target.ResetNormals(true);
+                    m_target.PushUndo();
                 }
                 else if (GUILayout.Button("Reset (All)"))
                 {
                     m_target.ResetNormals(false);
+                    m_target.PushUndo();
                 }
                 EditorGUILayout.EndHorizontal();
             }
