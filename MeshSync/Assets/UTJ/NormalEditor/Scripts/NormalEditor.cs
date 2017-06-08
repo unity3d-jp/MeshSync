@@ -78,7 +78,6 @@ namespace UTJ.HumbleNormalEditor
     {
 #if UNITY_EDITOR
 
-        [Serializable]
         class HistoryRecord
         {
             public Vector3[] normals;
@@ -104,25 +103,21 @@ namespace UTJ.HumbleNormalEditor
         ComputeBuffer m_cbBaseTangents;
         CommandBuffer m_cmdDraw;
 
-        Vector3[] m_points;
-        Vector3[] m_normals;
-        Vector3[] m_baseNormals;
-        Vector4[] m_tangents;
-        Vector4[] m_baseTangents;
-        int[] m_triangles;
-        int[] m_mirrorRelation;
-        float[] m_selection;
+        Vector3[]   m_points;
+        Vector3[]   m_normals;
+        Vector4[]   m_tangents;
+        Vector3[]   m_baseNormals;
+        Vector4[]   m_baseTangents;
+        int[]       m_triangles;
+        int[]       m_mirrorRelation;
+        float[]     m_selection;
 
-        int m_numSelected = 0;
-        Vector3 m_selectionPos;
-        Vector3 m_selectionNormal;
-        Quaternion m_selectionRot;
-        Vector3 m_clipboard = Vector3.up;
-        Vector3 m_rayPos;
-        Vector3 m_pivotPos;
-        Quaternion m_pivotRot;
-        Vector2 m_dragStartPoint;
-        Vector2 m_dragEndPoint;
+        int         m_numSelected = 0;
+        Vector3     m_selectionPos;
+        Vector3     m_selectionNormal;
+        Quaternion  m_selectionRot;
+        Vector2     m_dragStartPoint;
+        Vector2     m_dragEndPoint;
 
         [SerializeField] int m_historyCount = 0;
         Dictionary<int, HistoryRecord> m_history = new Dictionary<int, HistoryRecord>();
@@ -367,10 +362,10 @@ namespace UTJ.HumbleNormalEditor
             if (m_numSelected > 0 && editMode == EditMode.Move)
             {
                 if (et == EventType.MouseDown)
-                    m_prevMove = m_pivotPos;
+                    m_prevMove = m_settings.pivotPos;
 
                 EditorGUI.BeginChangeCheck();
-                var move = Handles.PositionHandle(m_pivotPos, Quaternion.identity);
+                var move = Handles.PositionHandle(m_settings.pivotPos, Quaternion.identity);
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_apllyingTransformEdit = true;
@@ -385,14 +380,14 @@ namespace UTJ.HumbleNormalEditor
                     m_prevRot = Quaternion.identity;
 
                 EditorGUI.BeginChangeCheck();
-                var rot = Handles.RotationHandle(Quaternion.identity, m_pivotPos);
+                var rot = Handles.RotationHandle(Quaternion.identity, m_settings.pivotPos);
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_apllyingTransformEdit = true;
                     var diff = Quaternion.Inverse(m_prevRot) * rot;
                     m_prevRot = rot;
                     if (m_settings.rotatePivot)
-                        ApplyRotatePivot(diff, m_pivotPos, 1.0f);
+                        ApplyRotatePivot(diff, m_settings.pivotPos, 1.0f);
                     else
                         ApplyRotate(diff);
                 }
@@ -403,13 +398,14 @@ namespace UTJ.HumbleNormalEditor
                     m_prevScale = Vector3.one;
 
                 EditorGUI.BeginChangeCheck();
-                var scale = Handles.ScaleHandle(Vector3.one, m_pivotPos, Quaternion.identity, HandleUtility.GetHandleSize(m_pivotPos));
+                var scale = Handles.ScaleHandle(Vector3.one, m_settings.pivotPos,
+                    m_settings.pivotRot, HandleUtility.GetHandleSize(m_settings.pivotPos));
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_apllyingTransformEdit = true;
                     var diff = scale - m_prevScale;
                     m_prevScale = scale;
-                    ApplyScale(diff, m_pivotPos);
+                    ApplyScale(diff, m_settings.pivotPos);
                 }
             }
 

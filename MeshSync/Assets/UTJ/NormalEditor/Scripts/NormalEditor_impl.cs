@@ -43,28 +43,6 @@ namespace UTJ.HumbleNormalEditor
             return found;
         }
 
-
-        public void SetClipboard(Vector3 v)
-        {
-            m_clipboard = v;
-        }
-        public void ApplyPaste()
-        {
-            if (m_numSelected > 0)
-            {
-                for (int i = 0; i < m_points.Length; i++)
-                {
-                    float s = m_selection[i];
-                    if (s > 0.0f)
-                    {
-                        m_normals[i] = Vector3.Lerp(m_normals[i], m_clipboard, s).normalized;
-                    }
-                }
-                ApplyMirroring();
-                UpdateNormals();
-            }
-        }
-
         public void ApplySet(Vector3 v)
         {
             v = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(v).normalized;
@@ -148,7 +126,9 @@ namespace UTJ.HumbleNormalEditor
 
         public void ApplyScale(Vector3 size, Vector3 pivot)
         {
-            pivot = GetComponent<Transform>().worldToLocalMatrix.MultiplyPoint(pivot);
+            var mat = GetComponent<Transform>().worldToLocalMatrix;
+            pivot = mat.MultiplyPoint(pivot);
+            size = mat.MultiplyVector(size);
 
             for (int i = 0; i < m_selection.Length; ++i)
             {
@@ -213,12 +193,12 @@ namespace UTJ.HumbleNormalEditor
             m_history[m_historyCount] = new HistoryRecord { normals = (Vector3[])m_normals.Clone() };
             Undo.FlushUndoRecordObjects();
 
-            //Debug.Log("PushUndo(): " + m_historyCount);
+            Debug.Log("PushUndo(): " + m_historyCount);
         }
 
         public void OnUndoRedo()
         {
-            //Debug.Log("OnUndoRedo(): " + m_historyCount);
+            Debug.Log("OnUndoRedo(): " + m_historyCount);
 
             if (m_history.ContainsKey(m_historyCount))
             {
@@ -275,8 +255,8 @@ namespace UTJ.HumbleNormalEditor
                 m_selectionPos = matrix.MultiplyPoint(m_selectionPos);
                 m_selectionNormal = matrix.MultiplyVector(m_selectionNormal).normalized;
                 m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
-                m_pivotPos = m_selectionPos;
-                m_pivotRot = m_selectionRot;
+                m_settings.pivotPos = m_selectionPos;
+                m_settings.pivotRot = m_selectionRot;
             }
 
             if(prevSelected == 0 && m_numSelected == 0)

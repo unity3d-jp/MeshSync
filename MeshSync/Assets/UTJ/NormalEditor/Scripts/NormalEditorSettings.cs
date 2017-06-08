@@ -46,6 +46,9 @@ namespace UTJ.HumbleNormalEditor
 
         // inspector states
 
+        public Vector3 pivotPos;
+        public Quaternion pivotRot;
+
         public bool foldSelection = true;
         public bool foldCommands = true;
         public bool foldDisplay = true;
