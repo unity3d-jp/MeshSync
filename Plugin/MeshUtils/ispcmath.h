@@ -291,7 +291,7 @@ static inline float clamp_and_normalize(float v, float low, float high, float rc
 
 
 
-static inline bool triangle_interpolation(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
+static inline bool ray_triangle_intersection(uniform float3 pos, uniform float3 dir, float3 p1, float3 p2, float3 p3, float& distance)
 {
     const float eps = 0.01f;
 
@@ -314,9 +314,9 @@ static inline bool triangle_interpolation(uniform float3 pos, uniform float3 dir
 }
 
 // uniform variant
-static inline uniform bool triangle_interpolation(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
+static inline uniform bool ray_triangle_intersection(uniform float3 pos, uniform float3 dir, uniform float3 p1, uniform float3 p2, uniform float3 p3, uniform float& distance)
 {
-    const float eps = 0.01f;
+    uniform const float eps = 0.01f;
 
     uniform float3 e1 = p2 - p1;
     uniform float3 e2 = p3 - p1;

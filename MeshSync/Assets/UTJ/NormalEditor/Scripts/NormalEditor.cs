@@ -311,19 +311,9 @@ namespace UTJ.HumbleNormalEditor
             Undo.undoRedoPerformed -= OnUndoRedo;
         }
 
-        void OnDestroy()
-        {
-            ReleaseComputeBuffers();
-        }
-
-        void Reset()
-        {
-            SetupResources();
-        }
-
         public int OnSceneGUI()
         {
-            if (m_points == null)
+            if (!isActiveAndEnabled || m_points == null)
                 return 0;
 
             int ret = 0;

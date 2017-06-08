@@ -64,13 +64,20 @@ namespace UTJ.HumbleNormalEditor
         {
             if (m_target != null)
             {
-                m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
-                DrawNormalEditor();
-                EditorGUILayout.EndScrollView();
+                if(!m_target.isActiveAndEnabled)
+                {
+                    EditorGUILayout.LabelField("(Enable " + m_target.name + " to show Normal Editor)");
+                }
+                else
+                {
+                    m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
+                    DrawNormalEditor();
+                    EditorGUILayout.EndScrollView();
+                }
             }
             else if(m_mr != null)
             {
-                if (GUILayout.Button("Add Normal Editor"))
+                if (GUILayout.Button("Add Normal Editor to " + m_mr.name))
                 {
                     m_mr.gameObject.AddComponent<NormalEditor>();
                     OnSelectionChange();
@@ -468,7 +475,7 @@ namespace UTJ.HumbleNormalEditor
 
         void DrawNormalEditor()
         {
-            if (m_target == null)
+            if (m_target == null || !m_target.isActiveAndEnabled)
                 return;
 
             EditorGUI.BeginChangeCheck();

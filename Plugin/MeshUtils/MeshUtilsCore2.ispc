@@ -21,7 +21,7 @@ export uniform int RayTrianglesIntersectionArray(
         p3 = vertices[(bi + I) * 3  + 2];
 
         float d;
-        bool hit = triangle_interpolation(pos, dir, p1, p2, p3, d);
+        bool hit = ray_triangle_intersection(pos, dir, p1, p2, p3, d);
         if(any(hit)) {
             uniform int hita[C]; hita[I] = hit;
             uniform float da[C]; da[I] = d;
@@ -44,7 +44,7 @@ export uniform int RayTrianglesIntersectionArray(
         uniform float3 p3 = vertices[ti * 3 + 2];
 
         uniform float d;
-        uniform bool hit = triangle_interpolation(pos, dir, p1, p2, p3, d);
+        uniform bool hit = ray_triangle_intersection(pos, dir, p1, p2, p3, d);
         if(hit) {
             total_hit++;
             if(d < distance) {
