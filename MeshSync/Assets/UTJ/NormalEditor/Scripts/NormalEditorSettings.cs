@@ -21,8 +21,8 @@ namespace UTJ.HumbleNormalEditor
         public bool selectFrontSideOnly = true;
         public bool rotatePivot = false;
         public float brushRadius = 0.2f;
-        public float brushPow = 0.5f;
-        public float brushStrength = 1.0f;
+        public float brushStrength = 0.2f;
+        public float brushFalloff = 0.5f;
         public bool pickNormal = false;
         public Color primary = new Color(0, 1, 0);
 
@@ -39,6 +39,7 @@ namespace UTJ.HumbleNormalEditor
         public float binormalSize;
         public Color vertexColor;
         public Color vertexColor2;
+        public Color vertexColor3;
         public Color normalColor;
         public Color tangentColor;
         public Color binormalColor;
@@ -93,6 +94,7 @@ namespace UTJ.HumbleNormalEditor
             binormalSize = 0.06f;
             vertexColor = new Color(0.15f, 0.15f, 0.4f, 0.75f);
             vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
+            vertexColor3 = new Color(0.0f, 0.4f, 1.0f, 0.0f);
             normalColor = Color.yellow;
             tangentColor = Color.cyan;
             binormalColor = Color.green;

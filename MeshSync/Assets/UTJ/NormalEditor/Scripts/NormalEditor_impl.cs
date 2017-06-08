@@ -291,6 +291,19 @@ namespace UTJ.HumbleNormalEditor
         }
 
 
+        public bool Raycast(Event e, ref Vector3 pos)
+        {
+            Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+            int ti = 0;
+            float d = 0.0f;
+            if(Raycast(ray, ref ti, ref d))
+            {
+                pos = ray.origin + ray.direction * d;
+                return true;
+            }
+            return false;
+        }
+
         public bool Raycast(Ray ray, ref int ti, ref float distance)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;

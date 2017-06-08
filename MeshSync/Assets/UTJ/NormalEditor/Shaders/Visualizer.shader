@@ -13,9 +13,12 @@ float _BinormalSize;
 
 float4 _VertexColor;
 float4 _VertexColor2;
+float4 _VertexColor3;
 float4 _NormalColor;
 float4 _TangentColor;
 float4 _BinormalColor;
+float3 _RayPos;
+float3 _RayRadPow;
 int _OnlySelected = 0;
 
 float4x4 _Transform;
@@ -56,6 +59,9 @@ v2f vert_vertices(appdata v)
     v2f o;
     o.vertex = vertex;
     o.color = lerp(_VertexColor, _VertexColor2, s);
+
+    float d = pow(clamp(1.0f - length(pos - _RayPos) / _RayRadPow.x, 0, 1), _RayRadPow.y);
+    o.color.rgb += _VertexColor3.rgb * d;
     return o;
 }
 

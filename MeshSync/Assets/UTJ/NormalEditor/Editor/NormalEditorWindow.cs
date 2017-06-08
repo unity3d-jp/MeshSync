@@ -56,7 +56,7 @@ namespace UTJ.HumbleNormalEditor
             {
                 int ret = m_target.OnSceneGUI();
                 if ((ret & (int)SceneGUIState.Repaint) != 0)
-                    Repaint();
+                    RepaintAllViews();
             }
         }
 
@@ -155,7 +155,7 @@ namespace UTJ.HumbleNormalEditor
                 {
                     settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
                     settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, 0.01f, 1.0f);
-                    settings.brushPow = EditorGUILayout.Slider("Brush Pow", settings.brushPow, 0.01f, 1.0f);
+                    settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.01f, 1.0f);
                 }
                 else
                 {
@@ -203,7 +203,7 @@ namespace UTJ.HumbleNormalEditor
                 EditorGUILayout.Space();
                 settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
                 settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, 0.01f, 1.0f);
-                settings.brushPow = EditorGUILayout.Slider("Brush Pow", settings.brushPow, 0.01f, 1.0f);
+                settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.01f, 1.0f);
                 EditorGUILayout.Space();
 
                 if (settings.brushMode == BrushMode.Paint)
@@ -451,6 +451,7 @@ namespace UTJ.HumbleNormalEditor
 
                 settings.vertexColor = EditorGUILayout.ColorField("Vertex Color", settings.vertexColor);
                 settings.vertexColor2 = EditorGUILayout.ColorField("Vertex Color (Selected)", settings.vertexColor2);
+                settings.vertexColor3 = EditorGUILayout.ColorField("Vertex Color (Highlighted)", settings.vertexColor3);
                 settings.normalColor = EditorGUILayout.ColorField("Normal Color", settings.normalColor);
                 settings.tangentColor = EditorGUILayout.ColorField("Tangent Color", settings.tangentColor);
                 settings.binormalColor = EditorGUILayout.ColorField("Binormal Color", settings.binormalColor);

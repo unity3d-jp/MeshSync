@@ -115,6 +115,7 @@ namespace UTJ.HumbleNormalEditor
         float[]     m_selection;
 
         int         m_numSelected = 0;
+        Vector3     m_rayPos;
         Vector3     m_selectionPos;
         Vector3     m_selectionNormal;
         Quaternion  m_selectionRot;
@@ -314,14 +315,12 @@ namespace UTJ.HumbleNormalEditor
             SetupResources();
         }
 
-        bool m_apllyingTransformEdit = false;
-
         public int OnSceneGUI()
         {
             SetupResources();
 
             int ret = 0;
-            HandleEditTools();
+            ret |= HandleEditTools();
 
             Event e = Event.current;
             var et = e.type;
@@ -330,7 +329,7 @@ namespace UTJ.HumbleNormalEditor
 
             if ((et == EventType.MouseDown || et == EventType.MouseDrag || et == EventType.MouseUp) && e.button == 0)
             {
-                HandleMouseEvent(e, et, id);
+                ret |= HandleMouseEvent(e, et, id);
             }
             if (et == EventType.ScrollWheel && e.control)
             {
@@ -341,7 +340,7 @@ namespace UTJ.HumbleNormalEditor
 
             if (et == EventType.KeyDown || et == EventType.KeyUp)
             {
-                HandleKeyEvent(e, et, id);
+                ret |= HandleKeyEvent(e, et, id);
             }
 
             if (Event.current.type == EventType.Repaint)
@@ -354,11 +353,21 @@ namespace UTJ.HumbleNormalEditor
         Quaternion m_prevRot;
         Vector3 m_prevScale;
 
-        public void HandleEditTools()
+        public int HandleEditTools()
         {
             var editMode = m_settings.editMode;
             Event e = Event.current;
             var et = e.type;
+            int ret = 0;
+            bool handled = false;
+
+            if(et == EventType.MouseMove)
+            {
+                if(Raycast(e, ref m_rayPos))
+                    ret |= (int)SceneGUIState.Repaint;
+                else
+                    m_rayPos = Vector3.one * 1000000.0f;
+            }
 
             if (m_numSelected > 0 && editMode == EditMode.Move)
             {
@@ -369,7 +378,7 @@ namespace UTJ.HumbleNormalEditor
                 var move = Handles.PositionHandle(m_settings.pivotPos, Quaternion.identity);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    m_apllyingTransformEdit = true;
+                    handled = true;
                     var diff = move - m_prevMove;
                     m_prevMove = move;
                     ApplyMove(diff * 3.0f);
@@ -384,7 +393,7 @@ namespace UTJ.HumbleNormalEditor
                 var rot = Handles.RotationHandle(Quaternion.identity, m_settings.pivotPos);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    m_apllyingTransformEdit = true;
+                    handled = true;
                     var diff = Quaternion.Inverse(m_prevRot) * rot;
                     m_prevRot = rot;
                     if (m_settings.rotatePivot)
@@ -403,18 +412,20 @@ namespace UTJ.HumbleNormalEditor
                     m_settings.pivotRot, HandleUtility.GetHandleSize(m_settings.pivotPos));
                 if (EditorGUI.EndChangeCheck())
                 {
-                    m_apllyingTransformEdit = true;
+                    handled = true;
                     var diff = scale - m_prevScale;
                     m_prevScale = scale;
                     ApplyScale(diff, m_settings.pivotPos);
                 }
             }
 
-            if (m_apllyingTransformEdit && (et == EventType.MouseUp || et == EventType.MouseMove))
+            if (handled)
             {
-                m_apllyingTransformEdit = false;
-                PushUndo();
+                ret |= (int)SceneGUIState.Repaint;
+                if (et == EventType.MouseUp || et == EventType.MouseMove)
+                    PushUndo();
             }
+            return ret;
         }
 
         public static Color ToColor(Vector3 n)
@@ -426,8 +437,9 @@ namespace UTJ.HumbleNormalEditor
             return new Vector3(n.r * 2.0f - 1.0f, n.g * 2.0f - 1.0f, n.b * 2.0f - 1.0f);
         }
 
-        bool HandleMouseEvent(Event e, EventType et, int id)
+        int HandleMouseEvent(Event e, EventType et, int id)
         {
+            int ret = 0;
             var editMode = m_settings.editMode;
 
             bool handled = false;
@@ -435,10 +447,10 @@ namespace UTJ.HumbleNormalEditor
 
             if (editMode == EditMode.Brush && m_settings.pickNormal)
             {
-                var ret = Vector3.zero;
-                if (PickNormal(ray, ref ret))
+                var n = Vector3.zero;
+                if (PickNormal(ray, ref n))
                 {
-                    m_settings.primary = ToColor(ret);
+                    m_settings.primary = ToColor(n);
                     handled = true;
                 }
                 m_settings.pickNormal = false;
@@ -448,15 +460,15 @@ namespace UTJ.HumbleNormalEditor
                 switch (m_settings.brushMode)
                 {
                     case BrushMode.Paint:
-                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength, ToVector(m_settings.primary)))
+                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary)))
                             handled = true;
                         break;
                     case BrushMode.Reset:
-                        if (ApplyResetBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength))
+                        if (ApplyResetBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
                             handled = true;
                         break;
                     case BrushMode.Equalize:
-                        if (ApplyEqualizeBrush(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength))
+                        if (ApplyEqualizeBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
                             handled = true;
                         break;
                 }
@@ -482,12 +494,12 @@ namespace UTJ.HumbleNormalEditor
                 }
                 else if (selectMode == SelectMode.Brush)
                 {
-                    if (!e.shift && !e.control)
+                    if (et == EventType.MouseDown && !e.shift && !e.control)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
                     //if (SelectHard(ray, m_settings.brushRadius, m_settings.brushStrength * selectSign))
                     //    handled = true;
-                    if (SelectSoft(ray, m_settings.brushRadius, m_settings.brushPow, m_settings.brushStrength * selectSign))
+                    if (SelectSoft(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength * selectSign))
                         handled = true;
                 }
                 else if (selectMode == SelectMode.Rect)
@@ -532,13 +544,15 @@ namespace UTJ.HumbleNormalEditor
                     if (GUIUtility.hotControl == id && e.button == 0)
                         GUIUtility.hotControl = 0;
                 }
+                ret |= (int)SceneGUIState.Repaint;
                 e.Use();
             }
-            return handled;
+            return ret;
         }
 
-        bool HandleKeyEvent(Event e, EventType et, int id)
+        int HandleKeyEvent(Event e, EventType et, int id)
         {
+            int ret = 0;
             bool handled = false;
             if (e.keyCode == KeyCode.A)
             {
@@ -551,7 +565,7 @@ namespace UTJ.HumbleNormalEditor
             {
                 e.Use();
             }
-            return handled;
+            return ret;
         }
 
 
@@ -573,10 +587,21 @@ namespace UTJ.HumbleNormalEditor
             m_matVisualize.SetFloat("_BinormalSize", m_settings.binormalSize);
             m_matVisualize.SetColor("_VertexColor", m_settings.vertexColor);
             m_matVisualize.SetColor("_VertexColor2", m_settings.vertexColor2);
+            m_matVisualize.SetColor("_VertexColor3", m_settings.vertexColor3);
             m_matVisualize.SetColor("_NormalColor", m_settings.normalColor);
             m_matVisualize.SetColor("_TangentColor", m_settings.tangentColor);
             m_matVisualize.SetColor("_BinormalColor", m_settings.binormalColor);
-            m_matVisualize.SetInt("_OnlySelected", settings.showSelectedOnly ? 1 : 0);
+            m_matVisualize.SetInt("_OnlySelected", m_settings.showSelectedOnly ? 1 : 0);
+            if (m_settings.editMode == EditMode.Brush ||
+                (m_settings.editMode == EditMode.Select && m_settings.selectMode == SelectMode.Brush))
+            {
+                m_matVisualize.SetVector("_RayPos", m_rayPos);
+                m_matVisualize.SetVector("_RayRadPow", new Vector3(m_settings.brushRadius, m_settings.brushFalloff, 0.0f));
+            }
+            else
+            {
+                m_matVisualize.SetVector("_RayRadPow", new Vector3(0.0f, 1.0f, 0.0f));
+            }
             if (m_cbPoints != null) m_matVisualize.SetBuffer("_Points", m_cbPoints);
             if (m_cbNormals != null) m_matVisualize.SetBuffer("_Normals", m_cbNormals);
             if (m_cbTangents != null) m_matVisualize.SetBuffer("_Tangents", m_cbTangents);
