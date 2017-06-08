@@ -126,19 +126,20 @@ namespace UTJ.HumbleNormalEditor
 
         public void ApplyScale(Vector3 size, Vector3 pivot)
         {
-            var mat = GetComponent<Transform>().worldToLocalMatrix;
-            pivot = mat.MultiplyPoint(pivot);
-            size = mat.MultiplyVector(size);
+            // scale need to calculate in world space
+            var mat = GetComponent<Transform>().localToWorldMatrix;
+            var imat = GetComponent<Transform>().worldToLocalMatrix;
 
             for (int i = 0; i < m_selection.Length; ++i)
             {
                 float s = m_selection[i];
                 if (s > 0.0f)
                 {
-                    var dir = (m_points[i] - pivot).normalized;
+                    var dir = mat.MultiplyPoint(m_points[i]) - pivot;
                     dir.x *= size.x;
                     dir.y *= size.y;
                     dir.z *= size.z;
+                    dir = imat.MultiplyVector(dir);
                     m_normals[i] = (m_normals[i] + dir * s).normalized;
                 }
             }
@@ -185,29 +186,25 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-
         public void PushUndo()
         {
             Undo.RecordObject(this, "NormalEditor");
-            m_historyCount++;
-            m_history[m_historyCount] = new HistoryRecord { normals = (Vector3[])m_normals.Clone() };
+            m_history.count++;
+            if (m_history.normals != null && m_history.normals.Length == m_normals.Length)
+                Array.Copy(m_normals, m_history.normals, m_normals.Length);
+            else
+                m_history.normals = (Vector3[])m_normals.Clone();
             Undo.FlushUndoRecordObjects();
-
-            Debug.Log("PushUndo(): " + m_historyCount);
+            //Debug.Log("PushUndo(): " + m_history.count);
         }
 
         public void OnUndoRedo()
         {
-            Debug.Log("OnUndoRedo(): " + m_historyCount);
-
-            if (m_history.ContainsKey(m_historyCount))
+            //Debug.Log("OnUndoRedo(): " + m_history.count);
+            if (m_history.normals.Length > 0)
             {
-                var rec = m_history[m_historyCount];
-                if(rec != null && rec.normals.Length == m_normals.Length)
-                {
-                    Array.Copy(rec.normals, m_normals, m_normals.Length);
-                    UpdateNormals();
-                }
+                Array.Copy(m_history.normals, m_normals, m_normals.Length);
+                UpdateNormals();
             }
         }
 
