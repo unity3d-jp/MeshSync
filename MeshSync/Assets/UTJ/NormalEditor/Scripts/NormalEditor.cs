@@ -572,6 +572,7 @@ namespace UTJ.HumbleNormalEditor
 
         void OnDrawGizmosSelected()
         {
+            SetupResources();
             if (m_matVisualize == null || m_meshCube == null || m_meshLine == null)
             {
                 Debug.LogWarning("NormalEditor: Some resources are missing.\n");
