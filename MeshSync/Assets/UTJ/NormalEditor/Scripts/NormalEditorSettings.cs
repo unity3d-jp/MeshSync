@@ -23,6 +23,8 @@ namespace UTJ.HumbleNormalEditor
         public float brushRadius = 0.2f;
         public float brushStrength = 0.2f;
         public float brushFalloff = 0.5f;
+        public float brushPinchOffset = 0.5f;
+        public float brushPinchSharpness = 1.0f;
         public bool pickNormal = false;
         public Color primary = NormalEditor.ToColor(Vector3.up);
 

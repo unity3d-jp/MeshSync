@@ -249,6 +249,11 @@ namespace UTJ.HumbleNormalEditor
                     settings.pickNormal = GUILayout.Toggle(settings.pickNormal, "Pick", "Button", GUILayout.Width(90));
                     GUILayout.EndHorizontal();
                 }
+                else if (settings.brushMode == BrushMode.Pinch)
+                {
+                    settings.brushPinchOffset = EditorGUILayout.Slider("Pinch Offset", settings.brushPinchOffset, 0.0f, 2.0f);
+                    settings.brushPinchSharpness = EditorGUILayout.Slider("Pinch Sharpness", settings.brushPinchSharpness, 0.0f, 2.0f);
+                }
             }
             else if (settings.editMode == EditMode.Assign)
             {
@@ -588,7 +593,7 @@ namespace UTJ.HumbleNormalEditor
                     switch (e.keyCode)
                     {
                         case KeyCode.Alpha1: settings.brushMode = BrushMode.Paint; break;
-                        case KeyCode.Alpha2: settings.brushMode = BrushMode.Scale; break;
+                        case KeyCode.Alpha2: settings.brushMode = BrushMode.Pinch; break;
                         case KeyCode.Alpha3: settings.brushMode = BrushMode.Equalize; break;
                         case KeyCode.Alpha4: settings.brushMode = BrushMode.Reset; break;
                     }

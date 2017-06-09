@@ -26,7 +26,7 @@ namespace UTJ.HumbleNormalEditor
     public enum BrushMode
     {
         Paint,
-        Scale,
+        Pinch,
         Equalize,
         Reset,
     }
@@ -117,6 +117,7 @@ namespace UTJ.HumbleNormalEditor
 
         int         m_numSelected = 0;
         bool        m_rayHit;
+        int         m_rayHitTriangle;
         Vector3     m_rayPos;
         Vector3     m_rayNormal;
         Vector3     m_selectionPos;
@@ -360,7 +361,7 @@ namespace UTJ.HumbleNormalEditor
 
             if(et == EventType.MouseMove || et == EventType.MouseDrag)
             {
-                m_rayHit = Raycast(e, ref m_rayPos);
+                m_rayHit = Raycast(e, ref m_rayPos, ref m_rayHitTriangle);
                 if (m_rayHit)
                     ret |= (int)SceneGUIState.Repaint;
             }
@@ -437,16 +438,13 @@ namespace UTJ.HumbleNormalEditor
         {
             int ret = 0;
             var editMode = m_settings.editMode;
-
             bool handled = false;
-            var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
 
             if (editMode == EditMode.Brush && m_settings.pickNormal)
             {
-                var n = Vector3.zero;
-                if (PickNormal(ray, ref n))
+                if (m_rayHit)
                 {
-                    m_settings.primary = ToColor(n);
+                    m_settings.primary = ToColor(PickNormal(m_rayPos, m_rayHitTriangle));
                     handled = true;
                 }
                 m_settings.pickNormal = false;
@@ -458,19 +456,21 @@ namespace UTJ.HumbleNormalEditor
                     switch (m_settings.brushMode)
                     {
                         case BrushMode.Paint:
-                            if (ApplyAdditiveBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary).normalized))
+                            if (ApplyAdditiveBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength,
+                                ToVector(m_settings.primary).normalized))
                                 ++m_brushNumPainted;
                             break;
-                        case BrushMode.Scale:
-                            if (ApplyPinchBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
-                                ++m_brushNumPainted;
-                            break;
-                        case BrushMode.Reset:
-                            if (ApplyResetBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                        case BrushMode.Pinch:
+                            if (ApplyPinchBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength,
+                                PickBaseNormal(m_rayPos, m_rayHitTriangle), m_settings.brushPinchOffset, m_settings.brushPinchSharpness))
                                 ++m_brushNumPainted;
                             break;
                         case BrushMode.Equalize:
                             if (ApplyEqualizeBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                                ++m_brushNumPainted;
+                            break;
+                        case BrushMode.Reset:
+                            if (ApplyResetBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
                                 ++m_brushNumPainted;
                             break;
                     }
