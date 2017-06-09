@@ -69,26 +69,17 @@ void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, 
     }
 }
 
-float3 Min_Generic(const float3 *src, size_t num)
+void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max)
 {
-    float3 ret = src[0];
+    if (num == 0) { return; }
+    float2 rmin = src[0];
+    float2 rmax = src[0];
     for (size_t i = 1; i < num; ++i) {
-        ret[0] = std::min<float>(ret[0], src[i][0]);
-        ret[1] = std::min<float>(ret[1], src[i][1]);
-        ret[2] = std::min<float>(ret[2], src[i][2]);
+        rmin = min(rmin, src[i]);
+        rmax = max(rmax, src[i]);
     }
-    return ret;
-}
-
-float3 Max_Generic(const float3 *src, size_t num)
-{
-    float3 ret = src[0];
-    for (size_t i = 1; i < num; ++i) {
-        ret[0] = std::max<float>(ret[0], src[i][0]);
-        ret[1] = std::max<float>(ret[1], src[i][1]);
-        ret[2] = std::max<float>(ret[2], src[i][2]);
-    }
-    return ret;
+    dst_min = rmin;
+    dst_max = rmax;
 }
 
 void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
@@ -97,13 +88,8 @@ void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_
     float3 rmin = src[0];
     float3 rmax = src[0];
     for (size_t i = 1; i < num; ++i) {
-        rmin[0] = std::min<float>(rmin[0], src[i][0]);
-        rmin[1] = std::min<float>(rmin[1], src[i][1]);
-        rmin[2] = std::min<float>(rmin[2], src[i][2]);
-
-        rmax[0] = std::max<float>(rmax[0], src[i][0]);
-        rmax[1] = std::max<float>(rmax[1], src[i][1]);
-        rmax[2] = std::max<float>(rmax[2], src[i][2]);
+        rmin = min(rmin, src[i]);
+        rmax = max(rmax, src[i]);
     }
     dst_min = rmin;
     dst_max = rmax;
@@ -180,6 +166,20 @@ int RayTrianglesIntersection_Generic(float3 pos, float3 dir,
 }
 
 
+bool PolyInside_Generic(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    return poly_inside(poly, ngon, minp, maxp, pos);
+}
+
+bool PolyInside_Generic(const float2 poly[], int ngon, const float2 pos)
+{
+    float2 minp, maxp;
+    poly_minmax(poly, ngon, minp, maxp);
+    return poly_inside(poly, ngon, minp, maxp, pos);
+}
+
+
+
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
 #include "MeshUtilsCore2.h"
@@ -247,21 +247,18 @@ void Lerp_ISPC(float *dst, const float *src1, const float *src2, size_t num, flo
 {
     ispc::Lerp(dst, src1, src2, (int)num, w);
 }
-float3 Min_ISPC(const float3 *src, size_t num)
+
+void MinMax_ISPC(const float2 *src, size_t num, float2& dst_min, float2& dst_max)
 {
-    auto ret = ispc::Min((ispc::float3*)src, (int)num);
-    return (const float3&)ret;
-}
-float3 Max_ISPC(const float3 *src, size_t num)
-{
-    auto ret = ispc::Max((ispc::float3*)src, (int)num);
-    return (const float3&)ret;
+    if (num == 0) { return; }
+    ispc::MinMax2((ispc::float2*)src, (int)num, (ispc::float2&)dst_min, (ispc::float2&)dst_max);
 }
 void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
 {
     if (num == 0) { return; }
-    ispc::MinMax((ispc::float3*)src, (int)num, (ispc::float3&)dst_min, (ispc::float3&)dst_max);
+    ispc::MinMax3((ispc::float3*)src, (int)num, (ispc::float3&)dst_min, (ispc::float3&)dst_max);
 }
+
 bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
 {
     return ispc::NearEqual(src1, src2, (int)num, eps);
@@ -287,6 +284,29 @@ int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
 {
     return ispc::RayTrianglesIntersectionSoA(
         (ispc::float3&)pos, (ispc::float3&)dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, tindex, distance);
+}
+
+
+bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    const int MaxXC = 64;
+    float xc[MaxXC];
+
+    int c = ispc::PolyInsideImpl((ispc::float2*)poly, ngon, (ispc::float2&)minp, (ispc::float2&)maxp, (ispc::float2&)pos, xc, MaxXC);
+    std::sort(xc, xc + c);
+    for (int i = 0; i < c; i += 2) {
+        if (pos.x >= xc[i] && pos.x < xc[i + 1]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 pos)
+{
+    float2 minp, maxp;
+    MinMax(poly, ngon, minp, maxp);
+    return PolyInside_ISPC(poly, ngon, minp, maxp, pos);
 }
 
 #endif
@@ -346,16 +366,10 @@ void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float
     Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 3, w);
 }
 
-float3 Min(const float3 *p, size_t num)
+void MinMax(const float2 *p, size_t num, float2& dst_min, float2& dst_max)
 {
-    return Forward(Min, p, num);
+    Forward(MinMax, p, num, dst_min, dst_max);
 }
-
-float3 Max(const float3 *p, size_t num)
-{
-    return Forward(Max, p, num);
-}
-
 void MinMax(const float3 *p, size_t num, float3& dst_min, float3& dst_max)
 {
     Forward(MinMax, p, num, dst_min, dst_max);
@@ -389,6 +403,15 @@ int RayTrianglesIntersection(float3 pos, float3 dir,
     int num_triangles, int& tindex, float& result)
 {
     return Forward(RayTrianglesIntersection, pos, dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, tindex, result);
+}
+
+bool PolyInside(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    return Forward(PolyInside, poly, ngon, minp, maxp, pos);
+}
+bool PolyInside(const float2 poly[], int ngon, const float2 pos)
+{
+    return Forward(PolyInside, poly, ngon, pos);
 }
 
 #undef Forward

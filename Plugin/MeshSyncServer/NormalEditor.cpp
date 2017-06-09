@@ -187,13 +187,13 @@ neAPI int neLassoSelection(
     float3 lcampos = mul_p(invert(trans), campos);
 
     float2 minp, maxp;
-    poly_minmax(poly, ngon, minp, maxp);
+    MinMax(poly, ngon, minp, maxp);
 
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
         float4 vp = mul4(mvp, vertices[vi]);
         float2 sp = float2{ vp.x, vp.y } / vp.w;
-        if (poly_inside_impl(poly, ngon, minp, maxp, sp)) {
+        if (PolyInside(poly, ngon, minp, maxp, sp)) {
             bool hit = false;
             if (frontface_only) {
                 float3 vpos = vertices[vi];

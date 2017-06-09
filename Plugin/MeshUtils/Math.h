@@ -906,7 +906,7 @@ inline void poly_minmax(const float2 poly[], int ngon, float2& minp, float2& max
     }
 }
 
-inline bool poly_inside_impl(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+inline bool poly_inside(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
 {
     // this should be enough for most cases
     const int MaxXC = 64;
@@ -932,7 +932,7 @@ inline bool poly_inside_impl(const float2 poly[], int ngon, const float2 minp, c
             (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
         {
             xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
-            if (c == MaxXC - 1) break;
+            if (c == MaxXC) break;
         }
     }
     std::sort(xc, xc + c);
@@ -950,20 +950,7 @@ inline bool poly_inside(const float2 poly[], int ngon, const float2 pos)
     if (ngon < 3) { return false; }
     float2 minp, maxp;
     poly_minmax(poly, ngon, minp, maxp);
-    return poly_inside_impl(poly, ngon, minp, maxp, pos);
-}
-
-template<class OnInside>
-inline void poly_inside(const float2 poly[], int ngon, const float2 pos[], int num_pos, const OnInside& on_inside)
-{
-    if (ngon < 3) { return false; }
-    float2 minp, maxp;
-    poly_minmax(poly, ngon, minp, maxp);
-    for (int i = 0; i < num_pos; ++i) {
-        if (poly_inside_impl(poly, ngon, minp, maxp, pos)) {
-            on_inside(i);
-        }
-    }
+    return poly_inside(poly, ngon, minp, maxp, pos);
 }
 
 

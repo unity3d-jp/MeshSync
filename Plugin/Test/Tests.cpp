@@ -261,24 +261,57 @@ void TestRayTrianglesIntersection()
 
 void TestPolygonInside()
 {
-    float2 points[] {
-        float2{ 0, 0 },
-        float2{ 1, 1 },
-        float2{ 0, 2 },
-        float2{-1, 1 },
-    };
-    bool result[] = {
-        poly_inside(points, 4,{    0,  1 }),
-        poly_inside(points, 4,{    0,0.5f }),
-        poly_inside(points, 4,{ 0.5f,  1 }),
-        poly_inside(points, 4,{    1,  1 }),
-        poly_inside(points, 4,{    0,  2 }),
-    };
-
-    printf("TestPolygonInside()");
-    for (int i = 0; i < 5; ++i) {
-        printf(" %d", (int)result[i]);
+    const int num_try = 100;
+    const int ngon = 80000;
+    RawVector<float2> poly;
+    poly.resize(ngon);
+    for (int i = 0; i < ngon; ++i) {
+        float a = (360.0f / ngon) * i * Deg2Rad;
+        poly[i] = { std::sin(a), std::cos(a) };
     }
+
+
+    float2 points[]{
+        float2{ 0.0f, 0.0f },
+        float2{ 0.1f, 0.1f },
+        float2{ 0.2f, 0.2f },
+        float2{ 0.3f, 0.3f },
+        float2{ 0.4f, 0.4f },
+        float2{ 0.5f, 0.5f },
+    };
+    float2 pmin, pmax;
+    int num_inside = 0;
+
+    printf("TestPolygonInside():\n");
+
+    auto s1_begin = Now();
+    num_inside = 0;
+    for (int ti = 0; ti < num_try; ++ti) {
+        MinMax_Generic(poly.data(), ngon, pmin, pmax);
+        for (int pi = 0; pi < std::size(points); ++pi) {
+            if (PolyInside_Generic(poly.data(), ngon, pmin, pmax, points[pi])) {
+                ++num_inside;
+            }
+        }
+    }
+    auto s1_end = Now();
+
+    printf("    %d (%.2fms)\n", num_inside, float(s1_end - s1_begin) / 1000000.0f);
+
+    auto s2_begin = Now();
+    num_inside = 0;
+    pmin = pmax = float2::zero();
+    for (int ti = 0; ti < num_try; ++ti) {
+        MinMax_ISPC(poly.data(), ngon, pmin, pmax);
+        for (int pi = 0; pi < std::size(points); ++pi) {
+            if (PolyInside_ISPC(poly.data(), ngon, pmin, pmax, points[pi])) {
+                ++num_inside;
+            }
+        }
+    }
+    auto s2_end = Now();
+
+    printf("    %d (%.2fms)\n", num_inside, float(s2_end - s2_begin) / 1000000.0f);
     printf("\n");
 }
 

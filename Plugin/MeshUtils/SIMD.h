@@ -16,9 +16,8 @@ void Normalize(float3 *dst, size_t num);
 void Lerp(float *dst, const float *src1, const float *src2, size_t num, float w);
 void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w);
 void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
-float3 Min(const float3 *src, size_t num);
-float3 Max(const float3 *src, size_t num);
 void MinMax(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
+void MinMax(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muEpsilon);
 bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muEpsilon);
 bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muEpsilon);
@@ -30,6 +29,9 @@ int RayTrianglesIntersection(float3 pos, float3 dir,
     const float *v2x, const float *v2y, const float *v2z,
     const float *v3x, const float *v3y, const float *v3z,
     int num_triangles, int& tindex, float& distance);
+
+bool PolyInside(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
+bool PolyInside(const float2 poly[], int ngon, const float2 pos);
 
 
 // ------------------------------------------------------------
@@ -58,12 +60,8 @@ void Normalize_ISPC(float3 *dst, size_t num);
 void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, float w);
 void Lerp_ISPC(float *dst, const float *src1, const float *src2, size_t num, float w);
 
-float3 Min_Generic(const float3 *src, size_t num);
-float3 Min_ISPC(const float3 *src, size_t num);
-
-float3 Max_Generic(const float3 *src, size_t num);
-float3 Max_ISPC(const float3 *src, size_t num);
-
+void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
+void MinMax_ISPC(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
 void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
 
@@ -84,5 +82,10 @@ int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
     const float *v2x, const float *v2y, const float *v2z,
     const float *v3x, const float *v3y, const float *v3z,
     int num_triangles, int& tindex, float& distance);
+
+bool PolyInside_Generic(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
+bool PolyInside_Generic(const float2 poly[], int ngon, const float2 pos);
+bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
+bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 pos);
 
 } // namespace mu
