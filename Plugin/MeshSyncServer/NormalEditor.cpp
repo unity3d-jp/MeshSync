@@ -160,10 +160,6 @@ neAPI int neRectSelection(
                         hit = true;
                     }
                 }
-                else {
-                    // select points on outline
-                    hit = true;
-                }
             }
             else {
                 hit = true;
@@ -205,10 +201,6 @@ neAPI int neLassoSelection(
                     if (length(vpos - hitpos) < 0.01f) {
                         hit = true;
                     }
-                }
-                else {
-                    // select points on outline
-                    hit = true;
                 }
             }
             else {

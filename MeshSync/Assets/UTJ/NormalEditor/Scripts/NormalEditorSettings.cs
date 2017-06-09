@@ -24,7 +24,7 @@ namespace UTJ.HumbleNormalEditor
         public float brushStrength = 0.2f;
         public float brushFalloff = 0.5f;
         public bool pickNormal = false;
-        public Color primary = new Color(0, 1, 0);
+        public Color primary = NormalEditor.ToColor(Vector3.up);
 
         // display options
         public bool showVertices = true;
@@ -50,14 +50,20 @@ namespace UTJ.HumbleNormalEditor
         public Vector3 pivotPos;
         public Quaternion pivotRot;
 
-        public bool foldSelection = true;
-        public bool foldCommands = true;
+        public bool foldEdit = true;
+        public bool foldMisc = true;
+        public bool foldInExport = false;
         public bool foldDisplay = true;
-        public bool foldDisplayOptions = false;
-        public bool foldExport = true;
-        public bool foldBakeToTexture = true;
-        public bool foldBakeToVertexColor = true;
-        public bool foldLoadTexture = true;
+        public int displayIndex;
+        public int inexportIndex;
+
+        public Vector3 setValue = Vector3.up;
+        public Vector3 moveAmount;
+        public Vector3 rotateAmount;
+        public Vector3 scaleAmount;
+        public float equalizeRadius = 0.5f;
+        public float equalizeAmount = 1.0f;
+        public GameObject projector;
 
         public ImageFormat bakeFormat = ImageFormat.PNG;
         public int bakeWidth = 1024;

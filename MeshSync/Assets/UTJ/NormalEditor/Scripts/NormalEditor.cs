@@ -337,17 +337,6 @@ namespace UTJ.HumbleNormalEditor
             {
                 ret |= HandleMouseEvent(e, et, id);
             }
-            if (et == EventType.ScrollWheel && e.control)
-            {
-                m_settings.brushRadius = m_settings.brushRadius + e.delta.y * 0.01f;
-                e.Use();
-                ret |= (int)SceneGUIState.Repaint;
-            }
-
-            if (et == EventType.KeyDown || et == EventType.KeyUp)
-            {
-                ret |= HandleKeyEvent(e, et, id);
-            }
 
             if (Event.current.type == EventType.Repaint)
                 OnRepaint();
@@ -603,24 +592,6 @@ namespace UTJ.HumbleNormalEditor
                         GUIUtility.hotControl = 0;
                 }
                 ret |= (int)SceneGUIState.Repaint;
-                e.Use();
-            }
-            return ret;
-        }
-
-        int HandleKeyEvent(Event e, EventType et, int id)
-        {
-            int ret = 0;
-            bool handled = false;
-            if (e.keyCode == KeyCode.A)
-            {
-                SelectAll();
-                UpdateSelection();
-                handled = true;
-            }
-
-            if (handled)
-            {
                 e.Use();
             }
             return ret;

@@ -196,7 +196,7 @@ export uniform int PolyInsideImpl(
         }
 
         bool intersect = false;
-        if(p1.y != p2.y) {
+        if (p1.y != p2.y) {
             if ((pos.y >= p1.y && pos.y < p2.y) ||
                 (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
             {
@@ -204,13 +204,14 @@ export uniform int PolyInsideImpl(
             }
         }
 
-        if(any(intersect)) {
+        if (any(intersect)) {
+            float x = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+
             uniform int intersecta[C]; intersecta[I] = intersect;
-            uniform float2 p1a[C]; p1a[I] = p1;
-            uniform float2 p2a[C]; p2a[I] = p2;
-            for(uniform int ci = 0; ci < C; ++ci) {
-                if(intersecta[ci]) {
-                    xc[c++] = (pos.y - p1a[ci].y) * (p2a[ci].x - p1a[ci].x) / (p2a[ci].y - p1a[ci].y) + p1a[ci].x;
+            uniform float xa[C]; xa[I] = x;
+            for (uniform int ci = 0; ci < C; ++ci) {
+                if (intersecta[ci]) {
+                    xc[c++] = xa[ci];
                     if (c == maxxc) return c;
                 }
             }
@@ -226,7 +227,7 @@ export uniform int PolyInsideImpl(
         uniform float2 p2 = poly[j];
 
         uniform bool intersect = false;
-        if(p1.y != p2.y) {
+        if (p1.y != p2.y) {
             if (p1.y > p2.y) {
                 uniform float2 tmp = p1;
                 p1 = p2;
@@ -239,7 +240,7 @@ export uniform int PolyInsideImpl(
             }
         }
 
-        if(intersect) {
+        if (intersect) {
             xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
             if (c == maxxc) return c;
         }
