@@ -180,17 +180,20 @@ neAPI int neRectSelection(
 
 neAPI int neLassoSelection(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
-    const float4x4 *mvp_, const float4x4 *trans_, const float2 points[], int num_points, float3 campos, int frontface_only)
+    const float4x4 *mvp_, const float4x4 *trans_, const float2 poly[], int ngon, float3 campos, int frontface_only)
 {
     float4x4 mvp = *mvp_;
     float4x4 trans = *trans_;
     float3 lcampos = mul_p(invert(trans), campos);
 
+    float2 minp, maxp;
+    poly_minmax(poly, ngon, minp, maxp);
+
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
         float4 vp = mul4(mvp, vertices[vi]);
         float2 sp = float2{ vp.x, vp.y } / vp.w;
-        if (polygon_inside(points, num_points, sp)) {
+        if (poly_inside_impl(poly, ngon, minp, maxp, sp)) {
             bool hit = false;
             if (frontface_only) {
                 float3 vpos = vertices[vi];

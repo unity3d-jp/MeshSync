@@ -445,6 +445,11 @@ inline float3 applyTRS(const float4x4& m, const float3& v)
     };
 }
 
+inline float2 min(float2 a, float2 b) { return{ std::min<float>(a.x, b.x), std::min<float>(a.y, b.y) }; }
+inline float3 min(float3 a, float3 b) { return{ std::min<float>(a.x, b.x), std::min<float>(a.y, b.y), std::min<float>(a.z, b.z) }; }
+inline float2 max(float2 a, float2 b) { return{ std::max<float>(a.x, b.x), std::max<float>(a.y, b.y) }; }
+inline float3 max(float3 a, float3 b) { return{ std::max<float>(a.x, b.x), std::max<float>(a.y, b.y), std::max<float>(a.z, b.z) }; }
+
 inline float  lerp(float  a, float  b, float t) { return a*(1.0f - t) + b*t; }
 inline float2 lerp(float2 a, float2 b, float t) { return a*(1.0f - t) + b*t; }
 inline float3 lerp(float3 a, float3 b, float t) { return a*(1.0f - t) + b*t; }
@@ -890,7 +895,78 @@ inline float plane_distance(float3 p, float3 pn)            { return dot(p, pn);
 inline float3 plane_mirror(float3 p, float3 pn, float pd)   { return p - pn * (plane_distance(p, pn, pd) * 2.0f); }
 inline float3 plane_mirror(float3 p, float3 pn)             { return p - pn * (plane_distance(p, pn) * 2.0f); }
 
-bool polygon_inside(const float2 points[], int num_points, const float2 pos);
+
+inline void poly_minmax(const float2 poly[], int ngon, float2& minp, float2& maxp)
+{
+    minp = maxp = poly[0];
+    for (int i = 1; i < ngon; i++)
+    {
+        minp = min(poly[i], minp);
+        maxp = max(poly[i], maxp);
+    }
+}
+
+inline bool poly_inside_impl(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    // this should be enough for most cases
+    const int MaxXC = 64;
+
+    if (pos.x < minp.x || pos.x > maxp.x ||
+        pos.y < minp.y || pos.y > maxp.y)
+    {
+        return false;
+    }
+
+    float xc[MaxXC];
+    int c = 0;
+    for (int i = 0; i < ngon; i++) {
+        int j = i + 1;
+        if (j == ngon) { j = 0; }
+
+        float2 p1 = poly[i];
+        float2 p2 = poly[j];
+        if (p1.y == p2.y) { continue; }
+        else if (p1.y > p2.y) { std::swap(p1, p2); }
+
+        if ((pos.y >= p1.y && pos.y < p2.y) ||
+            (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
+        {
+            xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+            if (c == MaxXC - 1) break;
+        }
+    }
+    std::sort(xc, xc + c);
+
+    for (int i = 0; i < c; i += 2) {
+        if (pos.x >= xc[i] && pos.x < xc[i + 1]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline bool poly_inside(const float2 poly[], int ngon, const float2 pos)
+{
+    if (ngon < 3) { return false; }
+    float2 minp, maxp;
+    poly_minmax(poly, ngon, minp, maxp);
+    return poly_inside_impl(poly, ngon, minp, maxp, pos);
+}
+
+template<class OnInside>
+inline void poly_inside(const float2 poly[], int ngon, const float2 pos[], int num_pos, const OnInside& on_inside)
+{
+    if (ngon < 3) { return false; }
+    float2 minp, maxp;
+    poly_minmax(poly, ngon, minp, maxp);
+    for (int i = 0; i < num_pos; ++i) {
+        if (poly_inside_impl(poly, ngon, minp, maxp, pos)) {
+            on_inside(i);
+        }
+    }
+}
+
+
 
 #ifdef muMath_AddNamespace
 } // namespace mu

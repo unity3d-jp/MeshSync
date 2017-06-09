@@ -268,11 +268,11 @@ void TestPolygonInside()
         float2{-1, 1 },
     };
     bool result[] = {
-        polygon_inside(points, 4,{    0,  1 }),
-        polygon_inside(points, 4,{    0,0.5f }),
-        polygon_inside(points, 4,{ 0.5f,  1 }),
-        polygon_inside(points, 4,{    1,  1 }),
-        polygon_inside(points, 4,{    0,  2 }),
+        poly_inside(points, 4,{    0,  1 }),
+        poly_inside(points, 4,{    0,0.5f }),
+        poly_inside(points, 4,{ 0.5f,  1 }),
+        poly_inside(points, 4,{    1,  1 }),
+        poly_inside(points, 4,{    0,  2 }),
     };
 
     printf("TestPolygonInside()");
