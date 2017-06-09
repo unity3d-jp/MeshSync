@@ -344,22 +344,6 @@ namespace UTJ.HumbleNormalEditor
             return m_selection.Length > 0;
         }
 
-        public bool SelectSoft(Ray ray, float radius, float pow, float strength)
-        {
-            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            bool ret = neSoftSelection(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length/3, radius, pow, strength, m_selection, ref trans) > 0;
-            return ret;
-        }
-
-        public bool SelectHard(Ray ray, float radius, float strength)
-        {
-            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            bool ret = neHardSelection(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, m_selection, ref trans) > 0;
-            return ret;
-        }
-
         public static Vector2 ScreenCoord11(Vector2 v)
         {
             var cam = SceneView.lastActiveSceneView.camera;
@@ -401,21 +385,10 @@ namespace UTJ.HumbleNormalEditor
                 ref mvp, ref trans, points, points.Length, campos, m_settings.selectFrontSideOnly) > 0;
         }
 
-        public bool SelectPoint(Vector2 spos, float pointSize, float strength)
+        public bool SelectSoft(Vector3 pos, float radius, float pow, float strength)
         {
-            var cam = SceneView.lastActiveSceneView.camera;
-            if (cam == null) { return false; }
-
-            var campos = cam.GetComponent<Transform>().position;
-            var trans = GetComponent<Transform>().localToWorldMatrix;
-            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
-            spos.x = spos.x / cam.pixelWidth * 2.0f - 1.0f;
-            spos.y = (1.0f - spos.y / cam.pixelHeight) * 2.0f - 1.0f;
-            var rmin = new Vector2(spos.x - pointSize, spos.y - pointSize);
-            var rmax = new Vector2(spos.x + pointSize, spos.y + pointSize);
-
-            return neRectSelection(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
-                ref mvp, ref trans, rmin, rmax, campos, m_settings.selectFrontSideOnly) > 0;
+            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+            return neSoftSelection(m_points, m_points.Length, ref trans, pos, radius, strength, pow, m_selection) > 0;
         }
 
 
@@ -643,12 +616,8 @@ namespace UTJ.HumbleNormalEditor
             ref Matrix4x4 trans, ref Vector3 result);
 
         [DllImport("MeshSyncServer")] static extern int neSoftSelection(
-            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-            float radius, float strength, float pow, float[] seletion, ref Matrix4x4 trans);
-    
-        [DllImport("MeshSyncServer")] static extern int neHardSelection(
-            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-            float radius, float strength, float[] seletion, ref Matrix4x4 trans);
+            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3 pos, float radius, float strength, float pow, float[] seletion);
 
         [DllImport("MeshSyncServer")] static extern int neRectSelection(
             Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,

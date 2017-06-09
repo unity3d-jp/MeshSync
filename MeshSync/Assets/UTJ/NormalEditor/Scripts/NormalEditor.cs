@@ -118,6 +118,7 @@ namespace UTJ.HumbleNormalEditor
         int         m_numSelected = 0;
         bool        m_rayHit;
         Vector3     m_rayPos;
+        Vector3     m_rayNormal;
         Vector3     m_selectionPos;
         Vector3     m_selectionNormal;
         Quaternion  m_selectionRot;
@@ -125,6 +126,7 @@ namespace UTJ.HumbleNormalEditor
         Vector2     m_rectStartPoint;
         Vector2     m_rectEndPoint;
         List<Vector2> m_lassoPoints = new List<Vector2>();
+        int         m_brushNumPainted = 0;
 
         [SerializeField] History m_history = new History();
 
@@ -451,26 +453,38 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (editMode == EditMode.Brush)
             {
-                if (m_rayHit)
+                if (m_rayHit && (et == EventType.MouseDown || et == EventType.MouseDrag))
                 {
                     switch (m_settings.brushMode)
                     {
                         case BrushMode.Paint:
-                            ApplyAdditiveBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary).normalized);
+                            if (ApplyAdditiveBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary).normalized))
+                                ++m_brushNumPainted;
                             break;
                         case BrushMode.Scale:
-                            ApplyPinchBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength);
+                            if (ApplyPinchBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                                ++m_brushNumPainted;
                             break;
                         case BrushMode.Reset:
-                            ApplyResetBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength);
+                            if (ApplyResetBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                                ++m_brushNumPainted;
                             break;
                         case BrushMode.Equalize:
-                            ApplyEqualizeBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength);
+                            if (ApplyEqualizeBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                                ++m_brushNumPainted;
                             break;
                     }
                     handled = true;
-                    if (et == EventType.MouseUp && handled)
+                }
+
+                if (et == EventType.MouseUp)
+                {
+                    if (m_brushNumPainted > 0)
+                    {
                         PushUndo();
+                        m_brushNumPainted = 0;
+                        handled = true;
+                    }
                 }
             }
             else
@@ -571,10 +585,11 @@ namespace UTJ.HumbleNormalEditor
                     if (et == EventType.MouseDown && !e.shift && !e.control)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
-                    //if (SelectHard(ray, m_settings.brushRadius, m_settings.brushStrength * selectSign))
-                    //    handled = true;
-                    if (SelectSoft(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength * selectSign))
-                        handled = true;
+                    if (et == EventType.MouseDown || et == EventType.MouseDrag)
+                    {
+                        if (m_rayHit && SelectSoft(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength * selectSign))
+                            handled = true;
+                    }
                 }
 
                 UpdateSelection();

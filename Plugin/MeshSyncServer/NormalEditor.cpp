@@ -128,37 +128,6 @@ neAPI int nePickNormal(
     return hit;
 }
 
-neAPI int neSoftSelection(
-    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
-    float radius, float pow, float strength, float seletion[], const float4x4 *trans)
-{
-    int ti;
-    float distance;
-    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
-        float3 hpos = pos + dir * distance;
-        return SelectInside(hpos, radius, vertices, num_vertices, *trans,[&](int vi, float d, float3 p) {
-            float s = std::pow(1.0f - d / radius, pow) * strength;
-            seletion[vi] = clamp01(seletion[vi] + s);
-        });
-    }
-    return 0;
-}
-
-neAPI int neHardSelection(
-    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
-    float radius, float strength, float seletion[], const float4x4 *trans)
-{
-    int ti;
-    float distance;
-    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
-        float3 hpos = pos + dir * distance;
-        return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
-            seletion[vi] = clamp01(seletion[vi] + strength);
-        });
-    }
-    return 0;
-}
-
 neAPI int neRectSelection(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos, int frontface_only)
@@ -242,6 +211,17 @@ neAPI int neLassoSelection(
     return ret;
 }
 
+neAPI int neSoftSelection(
+    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 pos, float radius, float strength, float pow, float selection[])
+{
+    return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
+        float s = std::pow(1.0f - d / radius, pow) * strength;
+        selection[vi] = clamp01(selection[vi] + s);
+    });
+}
+
+
 neAPI void neEqualize(
     const float3 vertices[], const float selection[], int num_vertices,
     float radius, float strength, float3 normals[], const float4x4 *trans)
@@ -324,6 +304,7 @@ neAPI int neBrushEqualize(
     return (int)inside.size();
 }
 
+
 neAPI int neBuildMirroringRelation(
     const float3 vertices[], const float3 normals[], int num_vertices,
     float3 plane_normal, float epsilon, int relation[])
@@ -365,6 +346,7 @@ neAPI void neApplyMirroring(const int relation[], int num_vertices, float3 plane
         }
     });
 }
+
 
 neAPI void neProjectNormals(
     const float3 vertices[], float3 normals[], float selection[], int num_vertices, const float4x4 *trans,

@@ -190,7 +190,7 @@ namespace UTJ.HumbleNormalEditor
                 {
                     settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
                     settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, -1.0f, 1.0f);
-                    settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.01f, 2.0f);
+                    settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.0f, 2.0f);
                 }
                 else
                 {
@@ -238,7 +238,7 @@ namespace UTJ.HumbleNormalEditor
                 EditorGUILayout.Space();
                 settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
                 settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, -1.0f, 1.0f);
-                settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.01f, 2.0f);
+                settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.0f, 2.0f);
                 EditorGUILayout.Space();
 
                 if (settings.brushMode == BrushMode.Paint)
