@@ -169,7 +169,7 @@ namespace UTJ.HumbleNormalEditor
                             tips = "Shift+LB: Add selection, Ctrl+LB: Subtract selection";
                             break;
                         case EditMode.Brush:
-                            tips = "";
+                            tips = "Shift+Wheel: Change radius, Ctrl+Wheel: Change strength, Alt+Wheel: Change falloff";
                             break;
                     }
                 }
@@ -276,7 +276,6 @@ namespace UTJ.HumbleNormalEditor
                 if (settings.rotatePivot)
                 {
                     settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
-                    settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
                 }
                 EditorGUILayout.Space();
 
@@ -595,6 +594,15 @@ namespace UTJ.HumbleNormalEditor
                     }
                     if (settings.brushMode != prevBrushMode)
                         handled = true;
+
+                    if (settings.brushMode == BrushMode.Paint)
+                    {
+                        if(e.keyCode == KeyCode.P)
+                        {
+                            settings.pickNormal = true;
+                            handled = true;
+                        }
+                    }
                 }
 
                 if (e.keyCode == KeyCode.A)
@@ -627,12 +635,12 @@ namespace UTJ.HumbleNormalEditor
                     }
                     else if (e.control)
                     {
-                        settings.brushStrength = Mathf.Clamp(settings.brushStrength + -e.delta.y * 0.01f, -1.0f, 1.0f);
+                        settings.brushStrength = Mathf.Clamp(settings.brushStrength + -e.delta.y * 0.02f, -1.0f, 1.0f);
                         handled = true;
                     }
                     else if (e.alt)
                     {
-                        settings.brushFalloff = Mathf.Clamp(settings.brushFalloff + -e.delta.y * 0.01f, 0.01f, 2.0f);
+                        settings.brushFalloff = Mathf.Clamp(settings.brushFalloff + -e.delta.y * 0.02f, 0.01f, 2.0f);
                         handled = true;
                     }
                 }

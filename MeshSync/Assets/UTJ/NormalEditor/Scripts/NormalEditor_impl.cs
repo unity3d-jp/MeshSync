@@ -147,13 +147,12 @@ namespace UTJ.HumbleNormalEditor
             UpdateNormals();
         }
 
-        public bool ApplyAdditiveBrush(Ray ray, float radius, float pow, float strength, Vector3 add)
+        public bool ApplyAdditiveBrush(Vector3 pos, float radius, float pow, float strength, Vector3 amount)
         {
-            add = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(add).normalized;
+            amount = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(amount).normalized;
 
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neAdditiveRaycast(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, add, m_normals, ref trans) > 0)
+            if (neBrushAdd(m_points, m_points.Length, ref trans, pos, radius, strength, pow, amount, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -162,11 +161,10 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-        public bool ApplyScaleBrush(Ray ray, float radius, float pow, float strength)
+        public bool ApplyPinchBrush(Vector3 pos, float radius, float pow, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neScaleRaycast(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, m_normals, ref trans) > 0)
+            if (neBrushPinch(m_points, m_points.Length, ref trans, pos, radius, strength, pow, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -175,11 +173,10 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-        public bool ApplyResetBrush(Ray ray, float radius, float pow, float strength)
+        public bool ApplyEqualizeBrush(Vector3 pos, float radius, float pow, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neLerpRaycast(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, m_baseNormals, m_normals, ref trans) > 0)
+            if (neBrushEqualize(m_points, m_points.Length, ref trans, pos, radius, strength, pow, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -188,11 +185,10 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-        public bool ApplyEqualizeBrush(Ray ray, float radius, float pow, float strength)
+        public bool ApplyResetBrush(Vector3 pos, float radius, float pow, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neEqualizeRaycast(ray.origin, ray.direction,
-                m_points, m_triangles, m_points.Length, m_triangles.Length / 3, radius, strength, pow, m_normals, ref trans) > 0)
+            if (neBrushLerp(m_points, m_points.Length, ref trans, pos, radius, strength, pow, m_baseNormals, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -665,20 +661,21 @@ namespace UTJ.HumbleNormalEditor
         [DllImport("MeshSyncServer")] static extern int neEqualize(
             Vector3[] vertices, float[] selection, int num_vertices, float radius, float strength, Vector3[] normals, ref Matrix4x4 trans);
 
-        [DllImport("MeshSyncServer")] static extern int neAdditiveRaycast(
-            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-            float radius, float strength, float pow, Vector3 additive, Vector3[] normals, ref Matrix4x4 trans);
-        [DllImport("MeshSyncServer")] static extern int neScaleRaycast(
-            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-            float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
+        [DllImport("MeshSyncServer")] static extern int neBrushAdd(
+            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3 pos, float radius, float strength, float pow, Vector3 amount, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neLerpRaycast(
-            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-            float radius, float strength, float pow, Vector3[] bnormal, Vector3[] normals, ref Matrix4x4 trans);
+        [DllImport("MeshSyncServer")] static extern int neBrushPinch(
+            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3 pos, float radius, float strength, float pow, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neEqualizeRaycast(
-            Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_vertices, int num_triangles,
-            float radius, float strength, float pow, Vector3[] normals, ref Matrix4x4 trans);
+        [DllImport("MeshSyncServer")] static extern int neBrushLerp(
+            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3 pos, float radius, float strength, float pow, Vector3[] baseNormals, Vector3[] normals);
+
+        [DllImport("MeshSyncServer")] static extern int neBrushEqualize(
+            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3 pos, float radius, float strength, float pow, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neBuildMirroringRelation(
             Vector3[] vertices, Vector3[] base_normals, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);

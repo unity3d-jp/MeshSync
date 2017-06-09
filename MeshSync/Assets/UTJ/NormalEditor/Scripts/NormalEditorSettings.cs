@@ -98,9 +98,9 @@ namespace UTJ.HumbleNormalEditor
             normalSize = 0.10f;
             tangentSize = 0.075f;
             binormalSize = 0.06f;
-            vertexColor = new Color(0.15f, 0.15f, 0.4f, 0.75f);
+            vertexColor = new Color(0.15f, 0.15f, 0.3f, 0.75f);
             vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
-            vertexColor3 = new Color(0.0f, 0.4f, 1.0f, 0.0f);
+            vertexColor3 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
             normalColor = Color.yellow;
             tangentColor = Color.cyan;
             binormalColor = Color.green;

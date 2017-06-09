@@ -356,7 +356,7 @@ namespace UTJ.HumbleNormalEditor
             int ret = 0;
             bool handled = false;
 
-            if(et == EventType.MouseMove)
+            if(et == EventType.MouseMove || et == EventType.MouseDrag)
             {
                 m_rayHit = Raycast(e, ref m_rayPos);
                 if (m_rayHit)
@@ -451,27 +451,27 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (editMode == EditMode.Brush)
             {
-                switch (m_settings.brushMode)
+                if (m_rayHit)
                 {
-                    case BrushMode.Paint:
-                        if (ApplyAdditiveBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary).normalized))
-                            handled = true;
-                        break;
-                    case BrushMode.Scale:
-                        if (ApplyScaleBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
-                            handled = true;
-                        break;
-                    case BrushMode.Reset:
-                        if (ApplyResetBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
-                            handled = true;
-                        break;
-                    case BrushMode.Equalize:
-                        if (ApplyEqualizeBrush(ray, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
-                            handled = true;
-                        break;
+                    switch (m_settings.brushMode)
+                    {
+                        case BrushMode.Paint:
+                            ApplyAdditiveBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength, ToVector(m_settings.primary).normalized);
+                            break;
+                        case BrushMode.Scale:
+                            ApplyPinchBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength);
+                            break;
+                        case BrushMode.Reset:
+                            ApplyResetBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength);
+                            break;
+                        case BrushMode.Equalize:
+                            ApplyEqualizeBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength);
+                            break;
+                    }
+                    handled = true;
+                    if (et == EventType.MouseUp && handled)
+                        PushUndo();
                 }
-                if (et == EventType.MouseUp && handled)
-                    PushUndo();
             }
             else
             {

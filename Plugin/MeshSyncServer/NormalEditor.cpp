@@ -62,19 +62,45 @@ inline static int Raycast(
 }
 
 template<class Body>
-inline static int SelectInside(float3 pos, float radius, const float3 *vertices, int num_vertices, const float4x4& trans, const Body& body)
+inline static int SelectInside(float3 pos, float radius, const float3 vertices[], int num_vertices, const float4x4& trans, const Body& body)
 {
     int ret = 0;
     float rq = radius * radius;
     for (int vi = 0; vi < num_vertices; ++vi) {
-        float dsq = length_sq(mul_p(trans, vertices[vi]) - pos);
+        float3 p = mul_p(trans, vertices[vi]);
+        float dsq = length_sq(p - pos);
         if (dsq <= rq) {
-            body(vi, std::sqrt(dsq));
+            body(vi, std::sqrt(dsq), p);
             ++ret;
         }
     }
     return ret;
 }
+
+static bool GetFurthestDistance(const float3 vertices[], const float selection[], int num_vertices, float3 pos, int &vidx, float &dist)
+{
+    float furthest_sq = FLT_MIN;
+    int vid;
+
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        if (selection[vi] > 0.0f) {
+            float dsq = length_sq(vertices[vi] - pos);
+            if (dsq > furthest_sq) {
+                furthest_sq = dsq;
+                vid = vi;
+            }
+        }
+    }
+
+    if (furthest_sq > FLT_MIN) {
+        dist = std::sqrt(furthest_sq);
+        vidx = vid;
+        return true;
+    }
+    return false;
+}
+
+
 
 neAPI int neRaycast(
     const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles,
@@ -110,7 +136,7 @@ neAPI int neSoftSelection(
     float distance;
     if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
         float3 hpos = pos + dir * distance;
-        return SelectInside(hpos, radius, vertices, num_vertices, *trans,[&](int vi, float d) {
+        return SelectInside(hpos, radius, vertices, num_vertices, *trans,[&](int vi, float d, float3 p) {
             float s = std::pow(1.0f - d / radius, pow) * strength;
             seletion[vi] = clamp01(seletion[vi] + s);
         });
@@ -126,7 +152,7 @@ neAPI int neHardSelection(
     float distance;
     if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
         float3 hpos = pos + dir * distance;
-        return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
+        return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
             seletion[vi] = clamp01(seletion[vi] + strength);
         });
     }
@@ -244,92 +270,58 @@ neAPI void neEqualize(
     });
 }
 
-neAPI int neAdditiveRaycast(
-    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
-    float radius, float strength, float pow, float3 additive, float3 normals[], const float4x4 *trans)
+neAPI int neBrushAdd(
+    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 pos, float radius, float strength, float pow, float3 amount, float3 normals[])
 {
-    int ti;
-    float distance;
-    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
-        float3 hpos = pos + dir * distance;
-        return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
-            float s = clamp11(std::pow(1.0f - d / radius, pow) * strength);
-            normals[vi] = normalize(normals[vi] + additive * s);
-        });
-    }
+    return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
+        float s = clamp11(std::pow(1.0f - d / radius, pow) * strength);
+        normals[vi] = normalize(normals[vi] + amount * s);
+    });
     return 0;
 }
 
-neAPI int neScaleRaycast(
-    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
-    float radius, float strength, float pow, float3 normals[], const float4x4 *trans)
+neAPI int neBrushPinch(
+    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 pos, float radius, float strength, float pow, float3 normals[])
 {
-    auto itrans = invert(*trans);
-    float rsq = radius * radius;
-    int ti;
-    float distance;
-    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
-        int ret = 0;
-        float3 hpos = pos + dir * distance;
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            float3 p = mul_p(*trans, vertices[vi]);
-            float dsq = length_sq(p - hpos);
-            if (dsq <= rsq) {
-                float d = std::sqrt(dsq);
-                float3 dir = normalize(p - hpos);
-                float s = clamp11(std::pow(1.0f - d / radius, pow) * strength);
-                normals[vi] = normalize(normals[vi] + dir * s);
-                ++ret;
-            }
-       }
-        return ret;
-    }
-    return 0;
+    return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
+        float3 dir = normalize(p - pos);
+        float s = clamp11(std::pow(1.0f - d / radius, pow) * strength);
+        normals[vi] = normalize(normals[vi] + dir * s);
+    });
 }
 
-neAPI int neLerpRaycast(
-    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
-    float radius, float strength, float pow, const float3 base[], float3 normals[], const float4x4 *trans)
+neAPI int neBrushLerp(
+    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 pos, float radius, float strength, float pow, const float3 base[], float3 normals[])
 {
-    int ti;
-    float distance;
-    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
-        float3 hpos = pos + dir * distance;
-        return SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
-            float sign = strength < 0.0f ? -1.0f : 1.0f;
-            float s = clamp01(std::pow(1.0f - d / radius, pow) * abs(strength));
-            normals[vi] = normalize(lerp(normals[vi], base[vi] * sign, s));
-        });
-    }
-    return 0;
+    return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
+        float sign = strength < 0.0f ? -1.0f : 1.0f;
+        float s = clamp01(std::pow(1.0f - d / radius, pow) * abs(strength));
+        normals[vi] = normalize(lerp(normals[vi], base[vi] * sign, s));
+    });
 }
 
-neAPI int neEqualizeRaycast(
-    const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_vertices, int num_triangles,
-    float radius, float strength, float pow, float3 normals[], const float4x4 *trans)
+neAPI int neBrushEqualize(
+    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 pos, float radius, float strength, float pow, float3 normals[])
 {
-    int ti;
-    float distance;
-    if (Raycast(pos, dir, vertices, indices, num_triangles, *trans, ti, distance)) {
-        float3 hpos = pos + dir * distance;
+    RawVector<std::pair<int, float>> inside;
+    SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
+        inside.push_back({ vi, d });
+    });
 
-        RawVector<std::pair<int, float>> inside;
-        SelectInside(hpos, radius, vertices, num_vertices, *trans, [&](int vi, float d) {
-            inside.push_back({ vi, d });
-        });
-
-        float3 average = float3::zero();
-        for (auto& p : inside) {
-            average += normals[p.first];
-        }
-        average = normalize(average);
-        for (auto& p : inside) {
-            float s = clamp11(std::pow(1.0f - p.second / radius, pow) * strength);
-            normals[p.first] = normalize(normals[p.first] + average * s);
-        }
-        return (int)inside.size();
+    float3 average = float3::zero();
+    for (auto& p : inside) {
+        average += normals[p.first];
     }
-    return 0;
+    average = normalize(average);
+    for (auto& p : inside) {
+        float s = clamp11(std::pow(1.0f - p.second / radius, pow) * strength);
+        normals[p.first] = normalize(normals[p.first] + average * s);
+    }
+    return (int)inside.size();
 }
 
 neAPI int neBuildMirroringRelation(
