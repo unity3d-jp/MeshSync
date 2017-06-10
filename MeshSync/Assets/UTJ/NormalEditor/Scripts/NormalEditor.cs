@@ -384,17 +384,17 @@ namespace UTJ.HumbleNormalEditor
             else if (m_numSelected > 0 && editMode == EditMode.Rotate)
             {
                 if (et == EventType.MouseDown)
-                    m_prevRot = Quaternion.identity;
+                    m_prevRot = m_settings.pivotRot;
 
                 EditorGUI.BeginChangeCheck();
-                var rot = Handles.RotationHandle(Quaternion.identity, m_settings.pivotPos);
+                var rot = Handles.RotationHandle(m_settings.pivotRot, m_settings.pivotPos);
                 if (EditorGUI.EndChangeCheck())
                 {
                     handled = true;
                     var diff = Quaternion.Inverse(m_prevRot) * rot;
                     m_prevRot = rot;
                     if (m_settings.rotatePivot)
-                        ApplyRotatePivot(diff, m_settings.pivotPos, 1.0f);
+                        ApplyRotatePivot(diff, m_settings.pivotPos, m_settings.pivotRot);
                     else
                         ApplyRotate(diff);
                 }

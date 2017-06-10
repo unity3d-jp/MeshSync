@@ -98,39 +98,18 @@ namespace UTJ.HumbleNormalEditor
             UpdateNormals();
         }
 
-        public void ApplyRotatePivot(Quaternion rot, Vector3 pivot, float strength)
+        public void ApplyRotatePivot(Quaternion amount, Vector3 pivotPos, Quaternion pivotRot)
         {
-            {
-                var mat = GetComponent<Transform>().worldToLocalMatrix;
-                pivot = mat.MultiplyPoint(pivot);
-                Vector3 axis = Vector3.zero;
-                float angle = 0.0f;
-                rot.ToAngleAxis(out angle, out axis);
-                axis = mat.MultiplyVector(axis).normalized;
-                rot = Quaternion.AngleAxis(angle, axis);
-            }
-
-            for (int i = 0; i < m_selection.Length; ++i)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    var v = rot * (m_points[i] - pivot) + pivot;
-                    var dir = (v - m_points[i]) * strength;
-                    m_normals[i] = (m_normals[i] + dir * s).normalized;
-                }
-            }
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            neRotatePivot(m_points, m_selection, m_points.Length, ref trans, amount, pivotPos, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
         public void ApplyScale(Vector3 amount, Vector3 pivotPos, Quaternion pivotRot)
         {
-            // scale need to calculate in world space
-            var mat = GetComponent<Transform>().localToWorldMatrix;
-            var imat = GetComponent<Transform>().worldToLocalMatrix;
-
-            neScale(m_points, m_selection, m_points.Length, ref mat, amount, pivotPos, pivotRot, m_normals);
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            neScale(m_points, m_selection, m_points.Length, ref trans, amount, pivotPos, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
@@ -642,6 +621,10 @@ namespace UTJ.HumbleNormalEditor
         [DllImport("MeshSyncServer")] static extern int neBrushLerp(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] baseNormals, Vector3[] normals);
+
+        [DllImport("MeshSyncServer")] static extern int neRotatePivot(
+            Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
+            Quaternion amount, Vector3 pivotPos, Quaternion pivotRot, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neScale(
             Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,

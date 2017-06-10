@@ -282,6 +282,7 @@ namespace UTJ.HumbleNormalEditor
                 if (settings.rotatePivot)
                 {
                     settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
+                    settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
                 }
                 EditorGUILayout.Space();
 
@@ -289,7 +290,7 @@ namespace UTJ.HumbleNormalEditor
                 {
                     if (settings.rotatePivot)
                         m_target.ApplyRotatePivot(
-                            Quaternion.Euler(settings.rotateAmount), settings.pivotPos, 1.0f);
+                            Quaternion.Euler(settings.rotateAmount), settings.pivotPos, settings.pivotRot);
                     else
                         m_target.ApplyRotate(Quaternion.Euler(settings.rotateAmount));
                     m_target.PushUndo();
