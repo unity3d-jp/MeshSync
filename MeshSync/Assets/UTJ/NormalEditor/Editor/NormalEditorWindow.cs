@@ -397,6 +397,7 @@ namespace UTJ.HumbleNormalEditor
             "Vertex Color",
             "Bake Texture",
             "Load Texture",
+            "Export .asset",
             "Export .obj",
         };
 
@@ -451,6 +452,27 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (settings.inexportIndex == 3)
             {
+                if (GUILayout.Button("Export .asset file"))
+                {
+                    string path = EditorUtility.SaveFilePanel("Export .asset file", "Assets", m_target.name, "asset");
+                    if (path.Length > 0)
+                    {
+                        var dataPath = Application.dataPath;
+                        if (!path.StartsWith(dataPath))
+                        {
+                            Debug.LogError("Invalid path: Path must be under " + dataPath);
+                        }
+                        else
+                        {
+                            path = path.Replace(dataPath, "Assets");
+                            AssetDatabase.CreateAsset(Instantiate(m_target.mesh), path);
+                            Debug.Log("Asset exported: " + path);
+                        }
+                    }
+                }
+            }
+            else if (settings.inexportIndex == 4)
+            {
                 settings.objFlipHandedness = EditorGUILayout.Toggle("Flip Handedness", settings.objFlipHandedness);
                 settings.objFlipFaces = EditorGUILayout.Toggle("Flip Faces", settings.objFlipFaces);
                 settings.objMakeSubmeshes = EditorGUILayout.Toggle("Make Submeshes", settings.objMakeSubmeshes);
@@ -469,7 +491,6 @@ namespace UTJ.HumbleNormalEditor
                         applyTransform = settings.objApplyTransform,
                     });
                 }
-
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
