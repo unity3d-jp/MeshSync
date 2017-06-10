@@ -481,20 +481,12 @@ inline float  lerp(float  a, float  b, float t) { return a*(1.0f - t) + b*t; }
 inline float2 lerp(float2 a, float2 b, float t) { return a*(1.0f - t) + b*t; }
 inline float3 lerp(float3 a, float3 b, float t) { return a*(1.0f - t) + b*t; }
 
-inline float dot(const float3& l, const float3& r)
-{
-    return l.x*r.x + l.y*r.y + l.z*r.z;
-}
-
-inline float length_sq(float3 v)
-{
-    return dot(v, v);
-}
-
-inline float length(float3 v)
-{
-    return sqrt(length_sq(v));
-}
+inline float dot(const float2& l, const float2& r) { return l.x*r.x + l.y*r.y; }
+inline float dot(const float3& l, const float3& r) { return l.x*r.x + l.y*r.y + l.z*r.z; }
+inline float length_sq(float2 v) { return dot(v, v); }
+inline float length_sq(float3 v) { return dot(v, v); }
+inline float length(float2 v) { return sqrt(length_sq(v)); }
+inline float length(float3 v) { return sqrt(length_sq(v)); }
 
 inline float3 normalize(const float3& l)
 {

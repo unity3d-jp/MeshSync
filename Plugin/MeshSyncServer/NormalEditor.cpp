@@ -97,7 +97,88 @@ neAPI float3 neTriangleInterpolation(
     return triangle_interpolation(lpos, p[0], p[1], p[2], n[0], n[1], n[2]);
 }
 
-neAPI int neRectSelection(
+neAPI int neSelectSingle(
+    const float3 vertices[], const float3 normals[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
+    const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos, int frontface_only)
+{
+    float4x4 mvp = *mvp_;
+    float4x4 trans = *trans_;
+    float3 lcampos = mul_p(invert(trans), campos);
+    float2 rcenter = (rmin + rmax) * 0.5f;
+
+    const int MaxInsider = 64;
+    std::pair<int, float> insider[MaxInsider];
+    int num_inside = 0;
+
+    {
+        std::atomic_int num_inside_a{ 0 };
+        parallel_for(0, num_vertices, [&](int vi) {
+            float4 vp = mul4(mvp, vertices[vi]);
+            float2 sp = float2{ vp.x, vp.y } / vp.w;
+            if (sp.x >= rmin.x && sp.x <= rmax.x &&
+                sp.y >= rmin.y && sp.y <= rmax.y && vp.z > 0.0f)
+            {
+                bool hit = false;
+                if (frontface_only) {
+                    float3 vpos = vertices[vi];
+                    float3 dir = normalize(vpos - lcampos);
+                    int ti;
+                    float distance;
+                    if (Raycast(lcampos, dir, vertices, indices, num_triangles, ti, distance)) {
+                        float3 hitpos = lcampos + dir * distance;
+                        if (length(vpos - hitpos) < 0.01f) {
+                            hit = true;
+                        }
+                    }
+                }
+                else {
+                    hit = true;
+                }
+
+                if (hit) {
+                    int ii = num_inside_a++;
+                    if (ii < MaxInsider) {
+                        insider[ii].first = vi;
+                        insider[ii].second = length(sp - rcenter);
+                    }
+                }
+            }
+        });
+        num_inside = std::min<int>(num_inside_a, MaxInsider);
+    }
+
+    if (num_inside > 0) {
+        int nearest_index = 0;
+        float nearest_distance = FLT_MAX;
+        float nearest_facing = 1.0f;
+
+        for (int ii = 0; ii < num_inside; ++ii) {
+            int vi = insider[ii].first;
+            float distance = insider[ii].second;
+            float3 dir = normalize(vertices[vi] - lcampos);
+            
+            if (near_equal(distance, nearest_distance)) {
+                float facing = dot(normals[vi], dir);
+                if (facing < nearest_facing) {
+                    nearest_index = vi;
+                    nearest_distance = distance;
+                    nearest_facing = facing;
+                }
+            }
+            else if (distance < nearest_distance) {
+                nearest_index = vi;
+                nearest_distance = distance;
+                nearest_facing = dot(normals[vi], dir);
+            }
+        }
+
+        seletion[nearest_index] = clamp01(seletion[nearest_index] + strength);
+        return 1;
+    }
+    return 0;
+}
+
+neAPI int neSelectRect(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos, int frontface_only)
 {
@@ -138,7 +219,7 @@ neAPI int neRectSelection(
     return ret;
 }
 
-neAPI int neLassoSelection(
+neAPI int neSelectLasso(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, const float2 poly[], int ngon, float3 campos, int frontface_only)
 {
@@ -180,7 +261,7 @@ neAPI int neLassoSelection(
     return ret;
 }
 
-neAPI int neSoftSelection(
+neAPI int neSelectBrush(
     const float3 vertices[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float pow, float selection[])
 {

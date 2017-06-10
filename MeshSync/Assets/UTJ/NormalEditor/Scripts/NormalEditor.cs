@@ -501,10 +501,8 @@ namespace UTJ.HumbleNormalEditor
                     if (!e.shift && !e.control)
                         System.Array.Clear(m_selection, 0, m_selection.Length);
 
-                    int sel = GetMouseVertex(e);
-                    if (sel != -1)
+                    if (SelectSingle(e, selectSign, settings.selectFrontSideOnly) || m_rayHit)
                     {
-                        m_selection[sel] = 1.0f;
                         handled = true;
                     }
                 }
@@ -530,7 +528,7 @@ namespace UTJ.HumbleNormalEditor
                         m_rectEndPoint = e.mousePosition;
                         handled = true;
 
-                        if (!SelectRect(m_rectStartPoint, m_rectEndPoint, selectSign) && !m_rayHit)
+                        if (!SelectRect(m_rectStartPoint, m_rectEndPoint, selectSign, settings.selectFrontSideOnly) && !m_rayHit)
                         {
                             Selection.activeGameObject = null;
                         }
@@ -575,7 +573,7 @@ namespace UTJ.HumbleNormalEditor
                             System.Array.Clear(m_selection, 0, m_selection.Length);
 
                         handled = true;
-                        if (!SelectLasso(m_lassoPoints.ToArray(), selectSign) && !m_rayHit)
+                        if (!SelectLasso(m_lassoPoints.ToArray(), selectSign, settings.selectFrontSideOnly) && !m_rayHit)
                         {
                             Selection.activeGameObject = null;
                         }

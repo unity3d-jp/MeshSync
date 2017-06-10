@@ -98,7 +98,7 @@ namespace UTJ.HumbleNormalEditor
 
         public void ResetDisplayOptions()
         {
-            vertexSize = 0.005f;
+            vertexSize = 0.0075f;
             normalSize = 0.10f;
             tangentSize = 0.075f;
             binormalSize = 0.06f;

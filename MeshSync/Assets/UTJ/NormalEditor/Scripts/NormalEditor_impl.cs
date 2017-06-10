@@ -17,32 +17,6 @@ namespace UTJ.HumbleNormalEditor
 #if UNITY_EDITOR
 
 
-        int GetMouseVertex(Event e, bool allowBackface = false)
-        {
-            //if (Tools.current != Tool.None)
-            //{
-            //    Debug.Log(Tools.current);
-            //    return -1;
-            //}
-
-            Ray mouseRay = HandleUtility.GUIPointToWorldRay(e.mousePosition);
-            float minDistance = float.MaxValue;
-            int found = -1;
-            Quaternion rotation = GetComponent<Transform>().rotation;
-            for (int i = 0; i < m_points.Length; i++)
-            {
-                Vector3 dir = m_points[i] - mouseRay.origin;
-                float sqrDistance = Vector3.Cross(dir, mouseRay.direction).sqrMagnitude;
-                bool forwardFacing = Vector3.Dot(rotation * m_normals[i], Camera.current.transform.forward) <= 0;
-                if ((forwardFacing || allowBackface) && sqrDistance < minDistance && sqrDistance < 0.05f * 0.05f)
-                {
-                    minDistance = sqrDistance;
-                    found = i;
-                }
-            }
-            return found;
-        }
-
         public void ApplyAssign(Vector3 v, bool local = false)
         {
             var trans = local ? Matrix4x4.identity : GetComponent<Transform>().localToWorldMatrix;
@@ -317,7 +291,15 @@ namespace UTJ.HumbleNormalEditor
                 (1.0f - v.y / cam.pixelHeight) * 2.0f - 1.0f);
         }
 
-        public bool SelectRect(Vector2 r1, Vector2 r2, float strength)
+        public bool SelectSingle(Event e, float strength, bool frontFaceOnly)
+        {
+            var center = e.mousePosition;
+            var size = new Vector2(15.0f, 15.0f);
+            var r1 = center - size;
+            var r2 = center + size;
+            return SelectSingle(r1, r2, strength, frontFaceOnly);
+        }
+        public bool SelectSingle(Vector2 r1, Vector2 r2, float strength, bool frontFaceOnly)
         {
             var cam = SceneView.lastActiveSceneView.camera;
             if (cam == null) { return false; }
@@ -332,11 +314,30 @@ namespace UTJ.HumbleNormalEditor
             var rmin = new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y));
             var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
 
-            return neRectSelection(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
-                ref mvp, ref trans, rmin, rmax, campos, m_settings.selectFrontSideOnly) > 0;
+            return neSelectSingle(m_points, m_baseNormals, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
+                ref mvp, ref trans, rmin, rmax, campos, frontFaceOnly) > 0;
         }
 
-        public bool SelectLasso(Vector2[] points, float strength)
+        public bool SelectRect(Vector2 r1, Vector2 r2, float strength, bool frontFaceOnly)
+        {
+            var cam = SceneView.lastActiveSceneView.camera;
+            if (cam == null) { return false; }
+
+            var campos = cam.GetComponent<Transform>().position;
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
+            r1.x = r1.x / cam.pixelWidth * 2.0f - 1.0f;
+            r2.x = r2.x / cam.pixelWidth * 2.0f - 1.0f;
+            r1.y = (1.0f - r1.y / cam.pixelHeight) * 2.0f - 1.0f;
+            r2.y = (1.0f - r2.y / cam.pixelHeight) * 2.0f - 1.0f;
+            var rmin = new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y));
+            var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
+
+            return neSelectRect(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
+                ref mvp, ref trans, rmin, rmax, campos, frontFaceOnly) > 0;
+        }
+
+        public bool SelectLasso(Vector2[] points, float strength, bool frontFaceOnly)
         {
             var cam = SceneView.lastActiveSceneView.camera;
             if (cam == null) { return false; }
@@ -345,14 +346,14 @@ namespace UTJ.HumbleNormalEditor
             var trans = GetComponent<Transform>().localToWorldMatrix;
             var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
 
-            return neLassoSelection(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
-                ref mvp, ref trans, points, points.Length, campos, m_settings.selectFrontSideOnly) > 0;
+            return neSelectLasso(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
+                ref mvp, ref trans, points, points.Length, campos, frontFaceOnly) > 0;
         }
 
         public bool SelectSoft(Vector3 pos, float radius, float falloff, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            return neSoftSelection(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, m_selection) > 0;
+            return neSelectBrush(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, m_selection) > 0;
         }
 
         public static Vector3 GetMirrorPlane(MirrorMode mirrorMode)
@@ -584,17 +585,21 @@ namespace UTJ.HumbleNormalEditor
             Vector3[] vertices, int[] indices, Vector3[] normals, ref Matrix4x4 trans,
             Vector3 pos, int ti);
 
-        [DllImport("MeshSyncServer")] static extern int neSoftSelection(
-            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
-            Vector3 pos, float radius, float strength, float falloff, float[] seletion);
+        [DllImport("MeshSyncServer")] static extern int neSelectSingle(
+            Vector3[] vertices, Vector3[] normals, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
+            ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos, bool frontfaceOnly);
 
-        [DllImport("MeshSyncServer")] static extern int neRectSelection(
+        [DllImport("MeshSyncServer")] static extern int neSelectRect(
             Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
             ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos, bool frontfaceOnly);
 
-        [DllImport("MeshSyncServer")] static extern int neLassoSelection(
+        [DllImport("MeshSyncServer")] static extern int neSelectLasso(
             Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
             ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2[] points, int num_points, Vector3 campos, bool frontfaceOnly);
+        
+        [DllImport("MeshSyncServer")] static extern int neSelectBrush(
+            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3 pos, float radius, float strength, float falloff, float[] seletion);
 
         [DllImport("MeshSyncServer")] static extern int neBrushAdd(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
