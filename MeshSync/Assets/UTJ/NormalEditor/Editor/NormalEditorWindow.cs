@@ -236,6 +236,7 @@ namespace UTJ.HumbleNormalEditor
             {
                 settings.brushMode = (BrushMode)GUILayout.SelectionGrid((int)settings.brushMode, strBrushTypes, 4);
                 EditorGUILayout.Space();
+                settings.brushUseSelection = EditorGUILayout.Toggle("Mask With Selection", settings.brushUseSelection);
                 settings.brushRadius = EditorGUILayout.Slider("Brush Radius", settings.brushRadius, 0.01f, 1.0f);
                 settings.brushStrength = EditorGUILayout.Slider("Brush Strength", settings.brushStrength, -1.0f, 1.0f);
                 settings.brushFalloff = EditorGUILayout.Slider("Brush Falloff", settings.brushFalloff, 0.0f, 2.0f);

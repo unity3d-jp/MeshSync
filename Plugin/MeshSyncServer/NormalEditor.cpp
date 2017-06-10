@@ -242,42 +242,49 @@ neAPI void neEqualize(
 }
 
 neAPI int neBrushAdd(
-    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, float3 amount, float3 normals[])
 {
     return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
         float s = clamp11(std::pow(1.0f - d / radius, falloff) * strength);
+        if (selection) s *= selection[vi];
+
         normals[vi] = normalize(normals[vi] + amount * s);
     });
     return 0;
 }
 
 neAPI int neBrushPinch(
-    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, float3 n, float offset, float pow, float3 normals[])
 {
     n = normalize(mul_v(*trans, n));
     return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
-        float ds = std::pow(d / radius, pow) * (radius * offset);
-        float3 dir = normalize(p - (pos - n * ds));
         float s = clamp11(std::pow(1.0f - d / radius, falloff) * strength);
+        if (selection) s *= selection[vi];
+
+        float ds = std::pow(d / radius, pow) * (radius * offset);
+        float3 dir1 = normalize(p - (pos - n * ds));
+        float3 dir = lerp(normals[vi], dir1, std::abs(s));
         normals[vi] = normalize(normals[vi] + dir * s);
     });
 }
 
 neAPI int neBrushLerp(
-    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, const float3 base[], float3 normals[])
 {
     return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
-        float sign = strength < 0.0f ? -1.0f : 1.0f;
         float s = clamp01(std::pow(1.0f - d / radius, falloff) * abs(strength));
+        if (selection) s *= selection[vi];
+
+        float sign = strength < 0.0f ? -1.0f : 1.0f;
         normals[vi] = normalize(lerp(normals[vi], base[vi] * sign, s));
     });
 }
 
 neAPI int neBrushEqualize(
-    const float3 vertices[], int num_vertices, const float4x4 *trans,
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, float3 normals[])
 {
     RawVector<std::pair<int, float>> inside;
@@ -292,6 +299,8 @@ neAPI int neBrushEqualize(
     average = normalize(average);
     for (auto& p : inside) {
         float s = clamp11(std::pow(1.0f - p.second / radius, falloff) * strength);
+        if (selection) s *= selection[p.first];
+
         normals[p.first] = normalize(normals[p.first] + average * s);
     }
     return (int)inside.size();

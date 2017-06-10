@@ -456,21 +456,21 @@ namespace UTJ.HumbleNormalEditor
                     switch (m_settings.brushMode)
                     {
                         case BrushMode.Paint:
-                            if (ApplyAdditiveBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength,
+                            if (ApplyAdditiveBrush(m_settings.brushUseSelection, m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength,
                                 ToVector(m_settings.primary).normalized))
                                 ++m_brushNumPainted;
                             break;
                         case BrushMode.Pinch:
-                            if (ApplyPinchBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength,
+                            if (ApplyPinchBrush(m_settings.brushUseSelection, m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength,
                                 PickBaseNormal(m_rayPos, m_rayHitTriangle), m_settings.brushPinchOffset, m_settings.brushPinchSharpness))
                                 ++m_brushNumPainted;
                             break;
                         case BrushMode.Equalize:
-                            if (ApplyEqualizeBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                            if (ApplyEqualizeBrush(m_settings.brushUseSelection, m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
                                 ++m_brushNumPainted;
                             break;
                         case BrushMode.Reset:
-                            if (ApplyResetBrush(m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
+                            if (ApplyResetBrush(m_settings.brushUseSelection, m_rayPos, m_settings.brushRadius, m_settings.brushFalloff, m_settings.brushStrength))
                                 ++m_brushNumPainted;
                             break;
                     }

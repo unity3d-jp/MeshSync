@@ -147,12 +147,13 @@ namespace UTJ.HumbleNormalEditor
             UpdateNormals();
         }
 
-        public bool ApplyAdditiveBrush(Vector3 pos, float radius, float falloff, float strength, Vector3 amount)
+        public bool ApplyAdditiveBrush(bool useSelection, Vector3 pos, float radius, float falloff, float strength, Vector3 amount)
         {
             amount = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(amount).normalized;
 
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neBrushAdd(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, amount, m_normals) > 0)
+            var selection = useSelection && m_numSelected > 0 ? m_selection : null;
+            if (neBrushAdd(m_points, selection, m_points.Length, ref trans, pos, radius, strength, falloff, amount, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -161,10 +162,11 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-        public bool ApplyPinchBrush(Vector3 pos, float radius, float falloff, float strength, Vector3 baseDir, float offset, float pow)
+        public bool ApplyPinchBrush(bool useSelection, Vector3 pos, float radius, float falloff, float strength, Vector3 baseDir, float offset, float pow)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neBrushPinch(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, baseDir, offset, pow, m_normals) > 0)
+            var selection = useSelection && m_numSelected > 0 ? m_selection : null;
+            if (neBrushPinch(m_points, selection, m_points.Length, ref trans, pos, radius, strength, falloff, baseDir, offset, pow, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -173,10 +175,11 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-        public bool ApplyEqualizeBrush(Vector3 pos, float radius, float falloff, float strength)
+        public bool ApplyEqualizeBrush(bool useSelection, Vector3 pos, float radius, float falloff, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neBrushEqualize(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, m_normals) > 0)
+            var selection = useSelection && m_numSelected > 0 ? m_selection : null;
+            if (neBrushEqualize(m_points, selection, m_points.Length, ref trans, pos, radius, strength, falloff, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -185,10 +188,11 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
-        public bool ApplyResetBrush(Vector3 pos, float radius, float falloff, float strength)
+        public bool ApplyResetBrush(bool useSelection, Vector3 pos, float radius, float falloff, float strength)
         {
             Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
-            if (neBrushLerp(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, m_baseNormals, m_normals) > 0)
+            var selection = useSelection && m_numSelected > 0 ? m_selection : null;
+            if (neBrushLerp(m_points, selection, m_points.Length, ref trans, pos, radius, strength, falloff, m_baseNormals, m_normals) > 0)
             {
                 ApplyMirroring();
                 UpdateNormals();
@@ -632,19 +636,19 @@ namespace UTJ.HumbleNormalEditor
             ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2[] points, int num_points, Vector3 campos, bool frontfaceOnly);
 
         [DllImport("MeshSyncServer")] static extern int neBrushAdd(
-            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3 amount, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neBrushPinch(
-            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3 baseNormal, float offset, float pow, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neBrushEqualize(
-            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neBrushLerp(
-            Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
+            Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] baseNormals, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neEqualize(

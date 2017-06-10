@@ -57,7 +57,8 @@ v2f vert_vertices(appdata v)
     o.vertex = vertex;
 
     float d = clamp(pow(clamp(1.0f - length(pos - _RayPos) / _RayRadPow.x, 0, 1), _RayRadPow.y), 0, 1);
-    o.color = lerp(lerp(_VertexColor, _VertexColor3, d), _VertexColor2, s);
+    o.color = lerp(_VertexColor, _VertexColor2, s);
+    o.color.rgb += _VertexColor3.rgb * d;
     return o;
 }
 

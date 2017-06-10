@@ -20,10 +20,11 @@ namespace UTJ.HumbleNormalEditor
         public MirrorMode mirrorMode = MirrorMode.None;
         public bool selectFrontSideOnly = true;
         public bool rotatePivot = false;
+        public bool brushUseSelection = false;
         public float brushRadius = 0.2f;
         public float brushStrength = 0.2f;
         public float brushFalloff = 0.5f;
-        public float brushPinchOffset = 0.5f;
+        public float brushPinchOffset = 0.25f;
         public float brushPinchSharpness = 1.0f;
         public bool pickNormal = false;
         public Color primary = NormalEditor.ToColor(Vector3.up);
@@ -96,13 +97,13 @@ namespace UTJ.HumbleNormalEditor
 
         public void ResetDisplayOptions()
         {
-            vertexSize = 0.0075f;
+            vertexSize = 0.005f;
             normalSize = 0.10f;
             tangentSize = 0.075f;
             binormalSize = 0.06f;
             vertexColor = new Color(0.15f, 0.15f, 0.3f, 0.75f);
             vertexColor2 = new Color(1.0f, 0.0f, 0.0f, 0.75f);
-            vertexColor3 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+            vertexColor3 = new Color(0.0f, 1.0f, 1.0f, 1.0f);
             normalColor = Color.yellow;
             tangentColor = Color.cyan;
             binormalColor = Color.green;
