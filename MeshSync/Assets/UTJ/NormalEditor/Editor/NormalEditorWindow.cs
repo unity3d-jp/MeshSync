@@ -656,7 +656,7 @@ namespace UTJ.HumbleNormalEditor
                     }
                     else if (e.alt)
                     {
-                        settings.brushFalloff = Mathf.Clamp(settings.brushFalloff + -e.delta.y * 0.02f, 0.01f, 2.0f);
+                        settings.brushFalloff = Mathf.Clamp(settings.brushFalloff + -e.delta.y * 0.02f, 0.0f, 2.0f);
                         handled = true;
                     }
                 }

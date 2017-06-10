@@ -163,7 +163,7 @@ export uniform int RayTrianglesIntersectionArray(
 
 
 export uniform int PolyInsideImpl(
-    uniform const float2 poly[], uniform int ngon, uniform float2& minp, uniform float2& maxp, uniform float2& pos,
+    uniform const float2 points[], uniform int ngon, uniform float2& minp, uniform float2& maxp, uniform float2& pos,
     uniform float xc[], uniform int maxxc)
 {
     if (pos.x < minp.x || pos.x > maxp.x ||
@@ -179,30 +179,29 @@ export uniform int PolyInsideImpl(
     for (uniform int bi = 0; bi < ngon_simd; bi += C) {
         float2 p1, p2;
         {
-            float t1 = ((uniform const float*)poly)[bi*2 + I    ];
-            float t2 = ((uniform const float*)poly)[bi*2 + C+I  ];
-            float t3 = ((uniform const float*)poly)[bi*2 + I  +2];
-            float t4 = ((uniform const float*)poly)[bi*2 + C+I+2];
-            p1.x = shuffle(t1, t2, I*2 + 0);
-            p1.y = shuffle(t1, t2, I*2 + 1);
-            p2.x = shuffle(t3, t4, I*2 + 0);
-            p2.y = shuffle(t3, t4, I*2 + 1);
+            float t1 = ((uniform const float*)points)[bi*2 + I    ];
+            float t2 = ((uniform const float*)points)[bi*2 + C+I  ];
+            float t3 = ((uniform const float*)points)[bi*2 + I  +2];
+            float t4 = ((uniform const float*)points)[bi*2 + C+I+2];
+
+            float2 tp1 = {
+                shuffle(t1, t2, I*2 + 0),
+                shuffle(t1, t2, I*2 + 1) };
+            float2 tp2 = {
+                shuffle(t3, t4, I*2 + 0),
+                shuffle(t3, t4, I*2 + 1) };
+
+            bool needs_swap = tp1.y > tp2.y;
+            p1.x = select(needs_swap, tp2.x, tp1.x);
+            p1.y = select(needs_swap, tp2.y, tp1.y);
+            p2.x = select(needs_swap, tp1.x, tp2.x);
+            p2.y = select(needs_swap, tp1.y, tp2.y);
         }
 
-        if (p1.y > p2.y) {
-            float2 tmp = p1;
-            p1 = p2;
-            p2 = tmp;
-        }
-
-        bool intersect = false;
-        if (p1.y != p2.y) {
-            if ((pos.y >= p1.y && pos.y < p2.y) ||
-                (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
-            {
-                intersect = true;
-            }
-        }
+        bool intersect =
+            (p1.y != p2.y) &&
+            ((pos.y >= p1.y && pos.y < p2.y) ||
+             (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y));
 
         if (any(intersect)) {
             float x = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
@@ -223,22 +222,18 @@ export uniform int PolyInsideImpl(
         uniform int j = i + 1;
         if (j == ngon) { j = 0; }
 
-        uniform float2 p1 = poly[i];
-        uniform float2 p2 = poly[j];
-
-        uniform bool intersect = false;
-        if (p1.y != p2.y) {
-            if (p1.y > p2.y) {
-                uniform float2 tmp = p1;
-                p1 = p2;
-                p2 = tmp;
-            }
-            if ((pos.y >= p1.y && pos.y < p2.y) ||
-                (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
-            {
-                intersect = true;
-            }
+        uniform float2 p1 = points[i];
+        uniform float2 p2 = points[j];
+        if(p1.y == p2.y) { continue; }
+        else if(p1.y > p2.y) {
+            uniform float2 tmp = p1;
+            p1 = p2;
+            p2 = tmp;
         }
+
+        uniform bool intersect =
+            (pos.y >= p1.y && pos.y < p2.y) ||
+            (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y);
 
         if (intersect) {
             xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;

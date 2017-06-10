@@ -906,10 +906,9 @@ inline void poly_minmax(const float2 poly[], int ngon, float2& minp, float2& max
     }
 }
 
-inline bool poly_inside(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+inline bool poly_inside(const float2 points[], int num_points, const float2 minp, const float2 maxp, const float2 pos)
 {
-    // this should be enough for most cases
-    const int MaxXC = 64;
+    // an implementation of even-odd rule algorithm ( https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule )
 
     if (pos.x < minp.x || pos.x > maxp.x ||
         pos.y < minp.y || pos.y > maxp.y)
@@ -917,14 +916,16 @@ inline bool poly_inside(const float2 poly[], int ngon, const float2 minp, const 
         return false;
     }
 
-    float xc[MaxXC];
+    // max x-intersections. this should be enough for most cases
+    const int MaxIntersections = 64;
+    float xc[MaxIntersections];
     int c = 0;
-    for (int i = 0; i < ngon; i++) {
+    for (int i = 0; i < num_points; i++) {
         int j = i + 1;
-        if (j == ngon) { j = 0; }
+        if (j == num_points) { j = 0; }
 
-        float2 p1 = poly[i];
-        float2 p2 = poly[j];
+        float2 p1 = points[i];
+        float2 p2 = points[j];
         if (p1.y == p2.y) { continue; }
         else if (p1.y > p2.y) { std::swap(p1, p2); }
 
@@ -932,7 +933,7 @@ inline bool poly_inside(const float2 poly[], int ngon, const float2 minp, const 
             (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
         {
             xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
-            if (c == MaxXC) break;
+            if (c == MaxIntersections) break;
         }
     }
     std::sort(xc, xc + c);
@@ -945,12 +946,12 @@ inline bool poly_inside(const float2 poly[], int ngon, const float2 minp, const 
     return false;
 }
 
-inline bool poly_inside(const float2 poly[], int ngon, const float2 pos)
+inline bool poly_inside(const float2 points[], int num_points, const float2 pos)
 {
-    if (ngon < 3) { return false; }
+    if (num_points < 3) { return false; }
     float2 minp, maxp;
-    poly_minmax(poly, ngon, minp, maxp);
-    return poly_inside(poly, ngon, minp, maxp, pos);
+    poly_minmax(points, num_points, minp, maxp);
+    return poly_inside(points, num_points, minp, maxp, pos);
 }
 
 

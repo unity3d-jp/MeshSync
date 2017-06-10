@@ -324,4 +324,7 @@ int main(int argc, char *argv[])
     //MatrixSwapHandedness();
     //TestRayTrianglesIntersection();
     TestPolygonInside();
+
+    char dummy;
+    scanf("%c", &dummy);
 }
