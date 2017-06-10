@@ -412,7 +412,7 @@ namespace UTJ.HumbleNormalEditor
                     handled = true;
                     var diff = scale - m_prevScale;
                     m_prevScale = scale;
-                    ApplyScale(diff, m_settings.pivotPos);
+                    ApplyScale(diff, m_settings.pivotPos, m_settings.pivotRot);
                 }
             }
 

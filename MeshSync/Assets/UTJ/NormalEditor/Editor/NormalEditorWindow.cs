@@ -304,7 +304,7 @@ namespace UTJ.HumbleNormalEditor
                 EditorGUILayout.Space();
                 if (GUILayout.Button("Apply Scale"))
                 {
-                    m_target.ApplyScale(settings.scaleAmount, settings.pivotPos);
+                    m_target.ApplyScale(settings.scaleAmount, settings.pivotPos, settings.pivotRot);
                     m_target.PushUndo();
                 }
             }

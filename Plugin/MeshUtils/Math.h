@@ -436,12 +436,39 @@ inline float4x4& operator*=(float4x4& a, const float4x4 &b)
     return a;
 }
 
-inline float3 applyTRS(const float4x4& m, const float3& v)
+inline static float clamp01(float v)
 {
-    return{
+    return std::max<float>(std::min<float>(v, 1.0f), 0.0f);
+}
+inline static float clamp11(float v)
+{
+    return std::max<float>(std::min<float>(v, 1.0f), -1.0f);
+}
+
+
+inline static float3 mul_v(const float4x4& m, const float3& v)
+{
+    return {
+        m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2],
+        m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2],
+        m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2],
+    };
+}
+inline static float3 mul_p(const float4x4& m, const float3& v)
+{
+    return {
         m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2] + m[3][0],
         m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2] + m[3][1],
         m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2] + m[3][2],
+    };
+}
+inline static float4 mul4(const float4x4& m, const float3& v)
+{
+    return {
+        m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2] + m[3][0],
+        m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2] + m[3][1],
+        m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2] + m[3][2],
+        m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + m[3][3],
     };
 }
 
@@ -692,22 +719,30 @@ inline float4x4 translate(const float3& t)
         { 0.0f, 1.0f, 0.0f, 0.0f },
         { 0.0f, 0.0f, 1.0f, 0.0f },
         {  t.x,  t.y,  t.z, 1.0f }
-    } };
+    }};
 }
 
-inline float4x4 scale(const float3& t)
+inline float3x3 scale33(const float3& t)
 {
-    return{ {
+    return{{
+        {  t.x, 0.0f, 0.0f },
+        { 0.0f,  t.y, 0.0f },
+        { 0.0f, 0.0f,  t.z },
+    }};
+}
+inline float4x4 scale44(const float3& t)
+{
+    return{{
         {  t.x, 0.0f, 0.0f, 0.0f },
         { 0.0f,  t.y, 0.0f, 0.0f },
         { 0.0f, 0.0f,  t.z, 0.0f },
         { 0.0f, 0.0f, 0.0f, 1.0f }
-    } };
+    }};
 }
 
 inline float4x4 transform(const float3& t, const quatf& r, const float3& s)
 {
-    auto ret = scale(s);
+    auto ret = scale44(s);
     ret *= to_float4x4(r);
     ret *= translate(t);
     return ret;

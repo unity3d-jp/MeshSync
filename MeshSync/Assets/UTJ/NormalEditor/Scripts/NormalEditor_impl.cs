@@ -124,25 +124,13 @@ namespace UTJ.HumbleNormalEditor
             UpdateNormals();
         }
 
-        public void ApplyScale(Vector3 size, Vector3 pivot)
+        public void ApplyScale(Vector3 amount, Vector3 pivotPos, Quaternion pivotRot)
         {
             // scale need to calculate in world space
             var mat = GetComponent<Transform>().localToWorldMatrix;
             var imat = GetComponent<Transform>().worldToLocalMatrix;
 
-            for (int i = 0; i < m_selection.Length; ++i)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    var dir = mat.MultiplyPoint(m_points[i]) - pivot;
-                    dir.x *= size.x;
-                    dir.y *= size.y;
-                    dir.z *= size.z;
-                    dir = imat.MultiplyVector(dir);
-                    m_normals[i] = (m_normals[i] + dir * s).normalized;
-                }
-            }
+            neScale(m_points, m_selection, m_points.Length, ref mat, amount, pivotPos, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
@@ -565,7 +553,7 @@ namespace UTJ.HumbleNormalEditor
         {
             var selection = m_numSelected > 0 ? m_selection : null;
             var mat = GetComponent<Transform>().localToWorldMatrix;
-            neEqualize(m_points, selection, m_points.Length, radius, strength, m_normals, ref mat);
+            neEqualize(m_points, selection, m_points.Length, ref mat, radius, strength, m_normals);
             UpdateNormals();
             PushUndo();
         }
@@ -655,8 +643,13 @@ namespace UTJ.HumbleNormalEditor
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] baseNormals, Vector3[] normals);
 
+        [DllImport("MeshSyncServer")] static extern int neScale(
+            Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
+            Vector3 amount, Vector3 pivotPos, Quaternion pivotRot, Vector3[] normals);
+
         [DllImport("MeshSyncServer")] static extern int neEqualize(
-            Vector3[] vertices, float[] selection, int num_vertices, float radius, float strength, Vector3[] normals, ref Matrix4x4 trans);
+            Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
+            float radius, float strength, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neBuildMirroringRelation(
             Vector3[] vertices, Vector3[] base_normals, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);

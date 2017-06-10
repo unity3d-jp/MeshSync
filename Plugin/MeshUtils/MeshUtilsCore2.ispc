@@ -3,6 +3,61 @@
 // functions that have gather/scatter operations need to be written in this compile unit.
 // (--opt=force-aligned-memory is disabled)
 
+export void MulPoints3v(uniform const float4x4& m_, uniform float3 points[], uniform int num_points)
+{
+    uniform float4x4 m = m_;
+
+    uniform int num_points_simd = num_points & ~(C - 1);
+    for (uniform int bi = 0; bi < num_points_simd; bi += C) {
+        float3 v;
+        aos_to_soa3((uniform float*)&points[bi], &v.x, &v.y, &v.z);
+
+        float3 r = {
+            m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z,
+            m.m[0].y * v.x + m.m[1].y * v.y + m.m[2].y * v.z,
+            m.m[0].z * v.x + m.m[1].z * v.y + m.m[2].z * v.z,
+        };
+        soa_to_aos3(r.x, r.y, r.z, (uniform float*)&points[bi]);
+    }
+
+    for(uniform int i = num_points_simd; i < num_points; ++i) {
+        uniform float3 v = points[i];
+        uniform float3 r = {
+            m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z,
+            m.m[0].y * v.x + m.m[1].y * v.y + m.m[2].y * v.z,
+            m.m[0].z * v.x + m.m[1].z * v.y + m.m[2].z * v.z,
+        };
+        points[i] = r;
+    }
+}
+
+export void MulPoints3p(uniform const float4x4& m_, uniform float3 points[], uniform int num_points)
+{
+    uniform float4x4 m = m_;
+
+    uniform int num_points_simd = num_points & ~(C - 1);
+    for (uniform int bi = 0; bi < num_points_simd; bi += C) {
+        float3 v;
+        aos_to_soa3((uniform float*)&points[bi], &v.x, &v.y, &v.z);
+
+        float3 r = {
+            m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z + m.m[3].x,
+            m.m[0].y * v.x + m.m[1].y * v.y + m.m[2].y * v.z + m.m[3].y,
+            m.m[0].z * v.x + m.m[1].z * v.y + m.m[2].z * v.z + m.m[3].z,
+        };
+        soa_to_aos3(r.x, r.y, r.z, (uniform float*)&points[bi]);
+    }
+
+    for(uniform int i = num_points_simd; i < num_points; ++i) {
+        uniform float3 v = points[i];
+        uniform float3 r = {
+            m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z + m.m[3].x,
+            m.m[0].y * v.x + m.m[1].y * v.y + m.m[2].y * v.z + m.m[3].y,
+            m.m[0].z * v.x + m.m[1].z * v.y + m.m[2].z * v.z + m.m[3].z,
+        };
+        points[i] = r;
+    }
+}
 
 export void MinMax3(
     uniform const float3 src[], uniform const int num,

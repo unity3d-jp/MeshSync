@@ -1094,7 +1094,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 
 void Mesh::applyTransform(const float4x4& m)
 {
-    for (auto& v : points) { v = applyTRS(m, v); }
+    for (auto& v : points) { v = mul_p(m, v); }
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
 }

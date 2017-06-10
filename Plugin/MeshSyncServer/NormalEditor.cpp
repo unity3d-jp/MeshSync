@@ -10,29 +10,6 @@
 
 using namespace mu;
 
-inline static float clamp01(float v)
-{
-    return std::max<float>(std::min<float>(v, 1.0f), 0.0f);
-}
-inline static float clamp11(float v)
-{
-    return std::max<float>(std::min<float>(v, 1.0f), -1.0f);
-}
-
-
-inline static float3 mul_v(const float4x4& t, const float3& p)
-{
-    return (const float3&)(t * float4{ p.x, p.y, p.z, 0.0f });
-}
-inline static float3 mul_p(const float4x4& t, const float3& p)
-{
-    return (const float3&)(t * float4{ p.x, p.y, p.z, 1.0f });
-}
-inline static float4 mul4(const float4x4& t, const float3& p)
-{
-    return t * float4{ p.x, p.y, p.z, 1.0f };
-}
-
 inline static int Raycast(
     const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles,
     int& tindex, float& distance)
@@ -213,9 +190,39 @@ neAPI int neSoftSelection(
 }
 
 
+neAPI void neRotatePivot(
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
+    quatf amount, float3 center, quatf rot, float3 normals[])
+{
+
+}
+
+neAPI void neScale(
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
+    float3 amount, float3 pivot_pos, quatf pivot_rot, float3 normals[])
+{
+    auto ptrans = to_float4x4(inverse(pivot_rot)) * translate(pivot_pos);
+    auto iptrans = invert(ptrans);
+    auto trans = *trans_;
+    auto itrans = invert(trans);
+
+    for (int vi = 0; vi < num_vertices; ++vi)
+    {
+        float s = selection[vi];
+        if (s == 0.0f) continue;
+
+        float3 dir = mul_p(trans, vertices[vi]);
+        dir = mul_p(iptrans, dir);
+        dir *= amount;
+        dir = mul_v(ptrans, dir);
+        dir = mul_v(itrans, dir);
+        normals[vi] = normalize(normals[vi] + dir * s);
+    }
+}
+
 neAPI void neEqualize(
-    const float3 vertices[], const float selection[], int num_vertices,
-    float radius, float strength, float3 normals[], const float4x4 *trans)
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
+    float radius, float strength, float3 normals[])
 {
     RawVector<float3> tvertices;
     tvertices.resize(num_vertices);
@@ -240,6 +247,7 @@ neAPI void neEqualize(
         normals[vi] = normalize(normals[vi] + average * (strength * s));
     });
 }
+
 
 neAPI int neBrushAdd(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
