@@ -43,57 +43,26 @@ namespace UTJ.HumbleNormalEditor
             return found;
         }
 
-        public void ApplySet(Vector3 v)
+        public void ApplyAssign(Vector3 v)
         {
-            v = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(v).normalized;
-
-            for (int i = 0; i < m_selection.Length; ++i)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    m_normals[i] = Vector3.Lerp(m_normals[i], v, s).normalized;
-                }
-            }
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            neAssign(m_selection, m_points.Length, ref trans, v, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
         public void ApplyMove(Vector3 move)
         {
-            move = GetComponent<Transform>().worldToLocalMatrix.MultiplyVector(move);
-
-            for (int i = 0; i < m_selection.Length; ++i)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    m_normals[i] = (m_normals[i] + move * s).normalized;
-                }
-            }
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            neMove(m_selection, m_points.Length, ref trans, move, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
-        public void ApplyRotate(Quaternion rot)
+        public void ApplyRotate(Quaternion amount, Quaternion pivotRot)
         {
-            {
-                var mat = GetComponent<Transform>().worldToLocalMatrix;
-                Vector3 axis = Vector3.zero;
-                float angle = 0.0f;
-                rot.ToAngleAxis(out angle, out axis);
-                axis = mat.MultiplyVector(axis).normalized;
-                rot = Quaternion.AngleAxis(angle, axis);
-            }
-
-            for (int i = 0; i < m_selection.Length; ++i)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    m_normals[i] = Vector3.Lerp(m_normals[i], rot * m_normals[i], s).normalized;
-                }
-            }
+            var trans = GetComponent<Transform>().localToWorldMatrix;
+            neRotate(m_points, m_selection, m_points.Length, ref trans, amount, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
@@ -621,6 +590,16 @@ namespace UTJ.HumbleNormalEditor
         [DllImport("MeshSyncServer")] static extern int neBrushLerp(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] baseNormals, Vector3[] normals);
+
+        [DllImport("MeshSyncServer")] static extern int neAssign(
+            float[] selection, int num_vertices, ref Matrix4x4 trans, Vector3 amount, Vector3[] normals);
+        
+        [DllImport("MeshSyncServer")] static extern int neMove(
+            float[] selection, int num_vertices, ref Matrix4x4 trans, Vector3 amount, Vector3[] normals);
+        
+        [DllImport("MeshSyncServer")] static extern int neRotate(
+            Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
+            Quaternion amount, Quaternion pivotRot, Vector3[] normals);
 
         [DllImport("MeshSyncServer")] static extern int neRotatePivot(
             Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,

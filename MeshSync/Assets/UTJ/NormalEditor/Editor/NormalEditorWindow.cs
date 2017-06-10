@@ -261,13 +261,18 @@ namespace UTJ.HumbleNormalEditor
                 settings.setValue = EditorGUILayout.Vector3Field("Value", settings.setValue);
                 if (GUILayout.Button("Assign"))
                 {
-                    m_target.ApplySet(settings.setValue);
+                    m_target.ApplyAssign(settings.setValue);
                     m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Move)
             {
                 settings.moveAmount = EditorGUILayout.Vector3Field("Move Amount", settings.moveAmount);
+                EditorGUILayout.Space();
+                settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
+                settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
+                EditorGUILayout.Space();
+
                 if (GUILayout.Button("Apply Move"))
                 {
                     m_target.ApplyMove(settings.moveAmount);
@@ -279,11 +284,8 @@ namespace UTJ.HumbleNormalEditor
                 settings.rotateAmount = EditorGUILayout.Vector3Field("Rotate Amount", settings.rotateAmount);
                 EditorGUILayout.Space();
                 settings.rotatePivot = EditorGUILayout.Toggle("Rotate Around Pivot", settings.rotatePivot);
-                if (settings.rotatePivot)
-                {
-                    settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
-                    settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
-                }
+                settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
+                settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
                 EditorGUILayout.Space();
 
                 if (GUILayout.Button("Apply Rotate"))
@@ -292,7 +294,7 @@ namespace UTJ.HumbleNormalEditor
                         m_target.ApplyRotatePivot(
                             Quaternion.Euler(settings.rotateAmount), settings.pivotPos, settings.pivotRot);
                     else
-                        m_target.ApplyRotate(Quaternion.Euler(settings.rotateAmount));
+                        m_target.ApplyRotate(Quaternion.Euler(settings.rotateAmount), settings.pivotRot);
                     m_target.PushUndo();
                 }
             }

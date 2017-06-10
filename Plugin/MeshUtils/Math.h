@@ -517,7 +517,7 @@ inline float3 apply_rotation(const quatf& q, const float3& p)
     return p + (a * q.w + b) * 2.0f;
 }
 
-inline quatf inverse(const quatf& v)
+inline quatf invert(const quatf& v)
 {
     return{ -v.x, -v.y, -v.z, v.w };
 }
@@ -748,6 +748,89 @@ inline float4x4 transform(const float3& t, const quatf& r, const float3& s)
     return ret;
 }
 
+inline float3x3 invert(const float3x3& x)
+{
+    if (x[0][2] != 0 || x[1][2] != 0 || x[2][2] != 1) {
+        float3x3 s = {
+            x[1][1] * x[2][2] - x[2][1] * x[1][2],
+            x[2][1] * x[0][2] - x[0][1] * x[2][2],
+            x[0][1] * x[1][2] - x[1][1] * x[0][2],
+
+            x[2][0] * x[1][2] - x[1][0] * x[2][2],
+            x[0][0] * x[2][2] - x[2][0] * x[0][2],
+            x[1][0] * x[0][2] - x[0][0] * x[1][2],
+
+            x[1][0] * x[2][1] - x[2][0] * x[1][1],
+            x[2][0] * x[0][1] - x[0][0] * x[2][1],
+            x[0][0] * x[1][1] - x[1][0] * x[0][1] };
+
+        float r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
+
+        if (std::abs(r) >= 1) {
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    s[i][j] /= r;
+                }
+            }
+        }
+        else {
+            float mr = std::abs(r) / std::numeric_limits<float>::min();
+
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    if (mr > std::abs(s[i][j])) {
+                        s[i][j] /= r;
+                    }
+                    else {
+                        // singular
+                        return float3x3::identity();
+                    }
+                }
+            }
+        }
+
+        return s;
+    }
+    else {
+        float3x3 s = {
+             x[1][1], -x[0][1], 0,
+            -x[1][0],  x[0][0], 0,
+                   0,        0, 1 };
+
+        float r = x[0][0] * x[1][1] - x[1][0] * x[0][1];
+
+        if (std::abs(r) >= 1) {
+            for (int i = 0; i < 2; ++i) {
+                for (int j = 0; j < 2; ++j) {
+                    s[i][j] /= r;
+                }
+            }
+        }
+        else {
+            float mr = std::abs(r) / std::numeric_limits<float>::min();
+
+            for (int i = 0; i < 2; ++i) {
+                for (int j = 0; j < 2; ++j) {
+                    if (mr > std::abs(s[i][j])) {
+                        s[i][j] /= r;
+                    }
+                    else
+                    {
+                        
+                        // singular
+                        return float3x3::identity();
+                    }
+                }
+            }
+        }
+
+        s[2][0] = -x[2][0] * s[0][0] - x[2][1] * s[1][0];
+        s[2][1] = -x[2][0] * s[0][1] - x[2][1] * s[1][1];
+
+        return s;
+    }
+}
+
 inline float4x4 invert(const float4x4& x)
 {
     float4x4 s = {
@@ -766,38 +849,27 @@ inline float4x4 invert(const float4x4& x)
         x[0][0] * x[1][1] - x[1][0] * x[0][1],
         0,
 
-        0,
-        0,
-        0,
-        1,
+        0, 0, 0, 1,
     };
 
     auto r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
 
-    if (std::abs(r) >= 1)
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
+    if (std::abs(r) >= 1) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
                 s[i][j] /= r;
             }
         }
     }
-    else
-    {
+    else {
         auto mr = std::abs(r) / std::numeric_limits<float>::min();
 
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                if (mr > std::abs(s[i][j]))
-                {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                if (mr > std::abs(s[i][j])) {
                     s[i][j] /= r;
                 }
-                else
-                {
+                else {
                     // error
                     return float4x4::identity();
                 }

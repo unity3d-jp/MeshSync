@@ -191,11 +191,71 @@ neAPI int neSoftSelection(
 }
 
 
+neAPI void neAssign(
+    const float selection[], int num_vertices, const float4x4 *trans_,
+    float3 v, float3 normals[])
+{
+    v = mul_v(invert(*trans_), v);
+    for (int vi = 0; vi < num_vertices; ++vi)
+    {
+        float s = selection[vi];
+        if (s == 0.0f) continue;
+
+        normals[vi] = normalize(lerp(normals[vi], v, s));
+    }
+}
+
+neAPI void neMove(
+    const float selection[], int num_vertices, const float4x4 *trans_,
+    float3 amount, float3 normals[])
+{
+    amount = mul_v(invert(*trans_), amount);
+    for (int vi = 0; vi < num_vertices; ++vi)
+    {
+        float s = selection[vi];
+        if (s == 0.0f) continue;
+
+        normals[vi] = normalize(normals[vi] + amount * s);
+    }
+}
+
+neAPI void neRotate(
+    const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
+    quatf amount, quatf pivot_rot, float3 normals[])
+{
+    auto ptrans = to_float3x3(invert(pivot_rot));
+    auto iptrans = invert(ptrans);
+    auto trans = *trans_;
+    auto itrans = invert(trans);
+    auto rot = to_float3x3(amount);
+
+    for (int vi = 0; vi < num_vertices; ++vi)
+    {
+        float s = selection[vi];
+        if (s == 0.0f) continue;
+
+        float3 n = normals[vi];
+        float3 dir = n;
+        dir = mul_v(trans, dir);
+        dir = iptrans * dir;
+        dir = rot * dir;
+        dir = ptrans * dir;
+        dir = mul_v(itrans, dir);
+        normals[vi] = lerp(n, dir, s);
+    }
+}
+
 neAPI void neRotatePivot(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     quatf amount, float3 pivot_pos, quatf pivot_rot, float3 normals[])
 {
-    auto ptrans = to_float4x4(inverse(pivot_rot)) * translate(pivot_pos);
+    float furthest;
+    int furthest_idx;
+    if (!GetFurthestDistance(vertices, selection, num_vertices, pivot_pos, *trans_, furthest_idx, furthest)) {
+        return;
+    }
+
+    auto ptrans = to_float4x4(invert(pivot_rot)) * translate(pivot_pos);
     auto iptrans = invert(ptrans);
     auto trans = *trans_;
     auto itrans = invert(trans);
@@ -204,12 +264,6 @@ neAPI void neRotatePivot(
     float3 axis;
     float angle;
     to_axis_angle(amount, axis, angle);
-
-    float furthest;
-    int furthest_idx;
-    if (!GetFurthestDistance(vertices, selection, num_vertices, pivot_pos, trans, furthest_idx, furthest)) {
-        return;
-    }
 
     for (int vi = 0; vi < num_vertices; ++vi)
     {
@@ -232,16 +286,16 @@ neAPI void neScale(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     float3 amount, float3 pivot_pos, quatf pivot_rot, float3 normals[])
 {
-    auto ptrans = to_float4x4(inverse(pivot_rot)) * translate(pivot_pos);
+    float furthest;
+    int furthest_idx;
+    if (!GetFurthestDistance(vertices, selection, num_vertices, pivot_pos, *trans_, furthest_idx, furthest)) {
+        return;
+    }
+
+    auto ptrans = to_float4x4(invert(pivot_rot)) * translate(pivot_pos);
     auto iptrans = invert(ptrans);
     auto trans = *trans_;
     auto itrans = invert(trans);
-
-    float furthest;
-    int furthest_idx;
-    if (!GetFurthestDistance(vertices, selection, num_vertices, pivot_pos, trans, furthest_idx, furthest)) {
-        return;
-    }
 
     for (int vi = 0; vi < num_vertices; ++vi)
     {

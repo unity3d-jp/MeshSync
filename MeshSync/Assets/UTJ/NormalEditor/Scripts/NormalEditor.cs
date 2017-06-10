@@ -372,7 +372,7 @@ namespace UTJ.HumbleNormalEditor
                     m_prevMove = m_settings.pivotPos;
 
                 EditorGUI.BeginChangeCheck();
-                var move = Handles.PositionHandle(m_settings.pivotPos, Quaternion.identity);
+                var move = Handles.PositionHandle(m_settings.pivotPos, m_settings.pivotRot);
                 if (EditorGUI.EndChangeCheck())
                 {
                     handled = true;
@@ -396,7 +396,7 @@ namespace UTJ.HumbleNormalEditor
                     if (m_settings.rotatePivot)
                         ApplyRotatePivot(diff, m_settings.pivotPos, m_settings.pivotRot);
                     else
-                        ApplyRotate(diff);
+                        ApplyRotate(diff, m_settings.pivotRot);
                 }
             }
             else if (m_numSelected > 0 && editMode == EditMode.Scale)
