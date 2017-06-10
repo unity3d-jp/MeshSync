@@ -258,16 +258,18 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (settings.editMode == EditMode.Assign)
             {
-                settings.setValue = EditorGUILayout.Vector3Field("Value", settings.setValue);
+                settings.assignValue = EditorGUILayout.Vector3Field("Value", settings.assignValue);
+                settings.assignLocal = EditorGUILayout.Toggle("Local Coordinate", settings.assignLocal);
                 if (GUILayout.Button("Assign"))
                 {
-                    m_target.ApplyAssign(settings.setValue);
+                    m_target.ApplyAssign(settings.assignValue, settings.assignLocal);
                     m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Move)
             {
                 settings.moveAmount = EditorGUILayout.Vector3Field("Move Amount", settings.moveAmount);
+                settings.assignLocal = EditorGUILayout.Toggle("Local Coordinate", settings.assignLocal);
                 EditorGUILayout.Space();
                 settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
                 settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
@@ -275,13 +277,14 @@ namespace UTJ.HumbleNormalEditor
 
                 if (GUILayout.Button("Apply Move"))
                 {
-                    m_target.ApplyMove(settings.moveAmount);
+                    m_target.ApplyMove(settings.moveAmount, settings.assignLocal);
                     m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Rotate)
             {
                 settings.rotateAmount = EditorGUILayout.Vector3Field("Rotate Amount", settings.rotateAmount);
+                settings.assignLocal = EditorGUILayout.Toggle("Local Coordinate", settings.assignLocal);
                 EditorGUILayout.Space();
                 settings.rotatePivot = EditorGUILayout.Toggle("Rotate Around Pivot", settings.rotatePivot);
                 settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
@@ -292,22 +295,23 @@ namespace UTJ.HumbleNormalEditor
                 {
                     if (settings.rotatePivot)
                         m_target.ApplyRotatePivot(
-                            Quaternion.Euler(settings.rotateAmount), settings.pivotPos, settings.pivotRot);
+                            Quaternion.Euler(settings.rotateAmount), settings.pivotPos, settings.pivotRot, settings.assignLocal);
                     else
-                        m_target.ApplyRotate(Quaternion.Euler(settings.rotateAmount), settings.pivotRot);
+                        m_target.ApplyRotate(Quaternion.Euler(settings.rotateAmount), settings.pivotRot, settings.assignLocal);
                     m_target.PushUndo();
                 }
             }
             else if (settings.editMode == EditMode.Scale)
             {
                 settings.scaleAmount = EditorGUILayout.Vector3Field("Scale Amount", settings.scaleAmount);
+                settings.assignLocal = EditorGUILayout.Toggle("Local Coordinate", settings.assignLocal);
                 EditorGUILayout.Space();
                 settings.pivotPos = EditorGUILayout.Vector3Field("Pivot Position", settings.pivotPos);
                 settings.pivotRot = Quaternion.Euler(EditorGUILayout.Vector3Field("Pivot Rotation", settings.pivotRot.eulerAngles));
                 EditorGUILayout.Space();
                 if (GUILayout.Button("Apply Scale"))
                 {
-                    m_target.ApplyScale(settings.scaleAmount, settings.pivotPos, settings.pivotRot);
+                    m_target.ApplyScale(settings.scaleAmount, settings.pivotPos, settings.pivotRot, settings.assignLocal);
                     m_target.PushUndo();
                 }
             }

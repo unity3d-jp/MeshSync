@@ -227,7 +227,7 @@ neAPI void neRotate(
     auto iptrans = invert(ptrans);
     auto trans = *trans_;
     auto itrans = invert(trans);
-    auto rot = to_float3x3(amount);
+    auto rot = to_float3x3(invert(amount));
 
     for (int vi = 0; vi < num_vertices; ++vi)
     {

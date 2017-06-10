@@ -60,10 +60,11 @@ namespace UTJ.HumbleNormalEditor
         public int displayIndex;
         public int inexportIndex;
 
-        public Vector3 setValue = Vector3.up;
-        public Vector3 moveAmount;
-        public Vector3 rotateAmount;
-        public Vector3 scaleAmount;
+        public bool     assignLocal = false;
+        public Vector3  assignValue = Vector3.up;
+        public Vector3  moveAmount;
+        public Vector3  rotateAmount;
+        public Vector3  scaleAmount;
         public float equalizeRadius = 0.5f;
         public float equalizeAmount = 1.0f;
         public GameObject projector;

@@ -43,41 +43,62 @@ namespace UTJ.HumbleNormalEditor
             return found;
         }
 
-        public void ApplyAssign(Vector3 v)
+        public void ApplyAssign(Vector3 v, bool local = false)
         {
-            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var trans = local ? Matrix4x4.identity : GetComponent<Transform>().localToWorldMatrix;
+
             neAssign(m_selection, m_points.Length, ref trans, v, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
-        public void ApplyMove(Vector3 move)
+        public void ApplyMove(Vector3 move, bool local = false)
         {
-            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var trans = local ? Matrix4x4.identity : GetComponent< Transform>().localToWorldMatrix;
+
             neMove(m_selection, m_points.Length, ref trans, move, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
-        public void ApplyRotate(Quaternion amount, Quaternion pivotRot)
+        public void ApplyRotate(Quaternion amount, Quaternion pivotRot, bool local = false)
         {
-            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var t = GetComponent<Transform>();
+            var trans = local ? Matrix4x4.identity : t.localToWorldMatrix;
+            if (local)
+            {
+                pivotRot = Quaternion.identity;
+            }
+
             neRotate(m_points, m_selection, m_points.Length, ref trans, amount, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
-        public void ApplyRotatePivot(Quaternion amount, Vector3 pivotPos, Quaternion pivotRot)
+        public void ApplyRotatePivot(Quaternion amount, Vector3 pivotPos, Quaternion pivotRot, bool local = false)
         {
-            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var t = GetComponent<Transform>();
+            var trans = local ? Matrix4x4.identity : t.localToWorldMatrix;
+            if (local)
+            {
+                pivotPos -= t.position;
+                pivotRot = Quaternion.identity;
+            }
+
             neRotatePivot(m_points, m_selection, m_points.Length, ref trans, amount, pivotPos, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();
         }
 
-        public void ApplyScale(Vector3 amount, Vector3 pivotPos, Quaternion pivotRot)
+        public void ApplyScale(Vector3 amount, Vector3 pivotPos, Quaternion pivotRot, bool local = false)
         {
-            var trans = GetComponent<Transform>().localToWorldMatrix;
+            var t = GetComponent<Transform>();
+            var trans = local ? Matrix4x4.identity : t.localToWorldMatrix;
+            if(local)
+            {
+                pivotPos -= t.position;
+                pivotRot = Quaternion.identity;
+            }
             neScale(m_points, m_selection, m_points.Length, ref trans, amount, pivotPos, pivotRot, m_normals);
             ApplyMirroring();
             UpdateNormals();

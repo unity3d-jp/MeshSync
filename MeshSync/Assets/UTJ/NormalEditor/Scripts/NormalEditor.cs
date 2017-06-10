@@ -358,6 +358,7 @@ namespace UTJ.HumbleNormalEditor
             var et = e.type;
             int ret = 0;
             bool handled = false;
+            var t = GetComponent<Transform>();
 
             if(et == EventType.MouseMove || et == EventType.MouseDrag)
             {
@@ -368,11 +369,12 @@ namespace UTJ.HumbleNormalEditor
 
             if (m_numSelected > 0 && editMode == EditMode.Move)
             {
+                var pivotRot = m_settings.assignLocal ? t.rotation : m_settings.pivotRot;
                 if (et == EventType.MouseDown)
                     m_prevMove = m_settings.pivotPos;
 
                 EditorGUI.BeginChangeCheck();
-                var move = Handles.PositionHandle(m_settings.pivotPos, m_settings.pivotRot);
+                var move = Handles.PositionHandle(m_settings.pivotPos, pivotRot);
                 if (EditorGUI.EndChangeCheck())
                 {
                     handled = true;
@@ -383,36 +385,38 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (m_numSelected > 0 && editMode == EditMode.Rotate)
             {
+                var pivotRot = m_settings.assignLocal ? t.rotation : m_settings.pivotRot;
                 if (et == EventType.MouseDown)
-                    m_prevRot = m_settings.pivotRot;
+                    m_prevRot = pivotRot;
 
                 EditorGUI.BeginChangeCheck();
-                var rot = Handles.RotationHandle(m_settings.pivotRot, m_settings.pivotPos);
+                var rot = Handles.RotationHandle(pivotRot, m_settings.pivotPos);
                 if (EditorGUI.EndChangeCheck())
                 {
                     handled = true;
                     var diff = Quaternion.Inverse(m_prevRot) * rot;
                     m_prevRot = rot;
                     if (m_settings.rotatePivot)
-                        ApplyRotatePivot(diff, m_settings.pivotPos, m_settings.pivotRot);
+                        ApplyRotatePivot(diff, m_settings.pivotPos, pivotRot);
                     else
-                        ApplyRotate(diff, m_settings.pivotRot);
+                        ApplyRotate(diff, pivotRot);
                 }
             }
             else if (m_numSelected > 0 && editMode == EditMode.Scale)
             {
+                var pivotRot = m_settings.assignLocal ? t.rotation : m_settings.pivotRot;
                 if (et == EventType.MouseDown)
                     m_prevScale = Vector3.one;
 
                 EditorGUI.BeginChangeCheck();
                 var scale = Handles.ScaleHandle(Vector3.one, m_settings.pivotPos,
-                    m_settings.pivotRot, HandleUtility.GetHandleSize(m_settings.pivotPos));
+                    pivotRot, HandleUtility.GetHandleSize(m_settings.pivotPos));
                 if (EditorGUI.EndChangeCheck())
                 {
                     handled = true;
                     var diff = scale - m_prevScale;
                     m_prevScale = scale;
-                    ApplyScale(diff, m_settings.pivotPos, m_settings.pivotRot);
+                    ApplyScale(diff, m_settings.pivotPos, pivotRot);
                 }
             }
 
