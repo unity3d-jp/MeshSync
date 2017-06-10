@@ -366,7 +366,17 @@ namespace UTJ.HumbleNormalEditor
 
             EditorGUILayout.BeginVertical();
             {
+                var mirrorMode = settings.mirrorMode;
                 settings.mirrorMode = (MirrorMode)EditorGUILayout.EnumPopup("Mirroring", settings.mirrorMode);
+                if (mirrorMode != settings.mirrorMode)
+                {
+                    if (m_target.ApplyMirroring())
+                    {
+                        m_target.UpdateNormals();
+                        m_target.PushUndo();
+                    }
+                }
+
                 EditorGUILayout.Space();
                 if (GUILayout.Button("Recalculate Tangents"))
                     m_target.RecalculateTangents();

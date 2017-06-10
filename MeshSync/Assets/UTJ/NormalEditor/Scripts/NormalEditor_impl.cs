@@ -201,6 +201,20 @@ namespace UTJ.HumbleNormalEditor
             return false;
         }
 
+        public void ResetNormals(bool useSelection)
+        {
+            if (!useSelection)
+            {
+                Array.Copy(m_baseNormals, m_normals, m_normals.Length);
+            }
+            else
+            {
+                for (int i = 0; i < m_normals.Length; ++i)
+                    m_normals[i] = Vector3.Lerp(m_normals[i], m_baseNormals[i], m_selection[i]).normalized;
+            }
+            UpdateNormals();
+        }
+
         public void PushUndo()
         {
             Undo.RecordObject(this, "NormalEditor");
@@ -216,7 +230,7 @@ namespace UTJ.HumbleNormalEditor
         public void OnUndoRedo()
         {
             //Debug.Log("OnUndoRedo(): " + m_history.count);
-            if (m_history.normals.Length > 0)
+            if (m_history.normals != null && m_normals != null && m_history.normals.Length == m_normals.Length)
             {
                 Array.Copy(m_history.normals, m_normals, m_normals.Length);
                 UpdateNormals();
@@ -279,21 +293,6 @@ namespace UTJ.HumbleNormalEditor
             {
                 m_cbSelection.SetData(m_selection);
             }
-        }
-
-        public void ResetNormals(bool useSelection)
-        {
-            if(!useSelection)
-            {
-                Array.Copy(m_baseNormals, m_normals, m_normals.Length);
-            }
-            else
-            {
-                for (int i = 0; i < m_normals.Length; ++i)
-                    m_normals[i] = Vector3.Lerp(m_normals[i], m_baseNormals[i], m_selection[i]).normalized;
-            }
-            UpdateNormals();
-            PushUndo();
         }
 
         public void RecalculateTangents()
@@ -399,46 +398,51 @@ namespace UTJ.HumbleNormalEditor
             return neSoftSelection(m_points, m_points.Length, ref trans, pos, radius, strength, falloff, m_selection) > 0;
         }
 
-
-        public void ApplyMirroring()
+        public static Vector3 GetMirrorPlane(MirrorMode mirrorMode)
         {
-            if (m_settings.mirrorMode == MirrorMode.None) return;
-
-            Vector3 planeNormal = Vector3.up;
-            switch (m_settings.mirrorMode)
+            switch (mirrorMode)
             {
-                case MirrorMode.RightToLeft:
-                    planeNormal = Vector3.left;
-                    break;
-                case MirrorMode.LeftToRight:
-                    planeNormal = Vector3.right;
-                    break;
-                case MirrorMode.ForwardToBack:
-                    planeNormal = Vector3.back;
-                    break;
-                case MirrorMode.BackToForward:
-                    planeNormal = Vector3.forward;
-                    break;
-                case MirrorMode.UpToDown:
-                    planeNormal = Vector3.down;
-                    break;
-                case MirrorMode.DownToUp:
-                    planeNormal = Vector3.up;
-                    break;
+                case MirrorMode.RightToLeft:    return Vector3.left;
+                case MirrorMode.LeftToRight:    return Vector3.right;
+                case MirrorMode.ForwardToBack:  return Vector3.back;
+                case MirrorMode.BackToForward:  return Vector3.forward;
+                case MirrorMode.UpToDown:       return Vector3.down;
+                case MirrorMode.DownToUp:       return Vector3.up;
+            }
+            return Vector3.up;
+        }
+
+        MirrorMode m_prevMirrorMode;
+
+        public bool ApplyMirroring()
+        {
+            if (m_settings.mirrorMode == MirrorMode.None) return false;
+
+            bool needsSetup = false;
+            if (m_mirrorRelation == null || m_mirrorRelation.Length != m_points.Length)
+            {
+                m_mirrorRelation = new int[m_points.Length];
+                needsSetup = true;
+            }
+            else if(m_prevMirrorMode != m_settings.mirrorMode)
+            {
+                m_prevMirrorMode = m_settings.mirrorMode;
+                needsSetup = true;
             }
 
-            if (m_mirrorRelation == null)
+            Vector3 planeNormal = GetMirrorPlane(m_settings.mirrorMode);
+            if (needsSetup)
             {
-                m_mirrorRelation = new int[m_normals.Length];
                 if (neBuildMirroringRelation(m_points, m_baseNormals, m_points.Length, planeNormal, 0.001f, m_mirrorRelation) == 0)
                 {
-                    Debug.LogWarning("NormalEditor: this mesh seems not symmetrical");
+                    Debug.LogWarning("NormalEditor: this mesh seems not symmetric");
                     m_mirrorRelation = null;
                     m_settings.mirrorMode = MirrorMode.None;
-                    return;
+                    return false;
                 }
             }
             neApplyMirroring(m_mirrorRelation, m_normals.Length, planeNormal, m_normals);
+            return true;
         }
 
 
