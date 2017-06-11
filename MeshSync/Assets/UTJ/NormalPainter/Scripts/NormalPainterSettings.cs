@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace UTJ.HumbleNormalEditor
+namespace UTJ.NormalPainter
 {
-    public class NormalEditorSettings : ScriptableObject
+    public class NormalPainterSettings : ScriptableObject
     {
         [Serializable]
         public class SelectionSet
@@ -27,7 +27,7 @@ namespace UTJ.HumbleNormalEditor
         public float brushPinchOffset = 0.25f;
         public float brushPinchSharpness = 1.0f;
         public bool pickNormal = false;
-        public Color primary = NormalEditor.ToColor(Vector3.up);
+        public Color primary = NormalPainter.ToColor(Vector3.up);
 
         // display options
         public bool showVertices = true;
@@ -91,7 +91,7 @@ namespace UTJ.HumbleNormalEditor
         };
 
 
-        public NormalEditorSettings()
+        public NormalPainterSettings()
         {
             ResetDisplayOptions();
         }

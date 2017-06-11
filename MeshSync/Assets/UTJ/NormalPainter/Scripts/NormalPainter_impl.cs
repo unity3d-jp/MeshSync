@@ -9,10 +9,10 @@ using UnityEditor;
 #endif
 
 
-namespace UTJ.HumbleNormalEditor
+namespace UTJ.NormalPainter
 {
 
-    public partial class NormalEditor : MonoBehaviour
+    public partial class NormalPainter : MonoBehaviour
     {
 #if UNITY_EDITOR
 
@@ -577,75 +577,75 @@ namespace UTJ.HumbleNormalEditor
         }
 
 
-        [DllImport("MeshSyncServer")] static extern int neRaycast(
+        [DllImport("NormalPainter")] static extern int neRaycast(
             Vector3 pos, Vector3 dir, Vector3[] vertices, int[] indices, int num_triangles,
             ref int tindex, ref float distance, ref Matrix4x4 trans);
 
-        [DllImport("MeshSyncServer")] static extern Vector3 neTriangleInterpolation(
+        [DllImport("NormalPainter")] static extern Vector3 neTriangleInterpolation(
             Vector3[] vertices, int[] indices, Vector3[] normals, ref Matrix4x4 trans,
             Vector3 pos, int ti);
 
-        [DllImport("MeshSyncServer")] static extern int neSelectSingle(
+        [DllImport("NormalPainter")] static extern int neSelectSingle(
             Vector3[] vertices, Vector3[] normals, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
             ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos, bool frontfaceOnly);
 
-        [DllImport("MeshSyncServer")] static extern int neSelectRect(
+        [DllImport("NormalPainter")] static extern int neSelectRect(
             Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
             ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2 rmin, Vector2 rmax, Vector3 campos, bool frontfaceOnly);
 
-        [DllImport("MeshSyncServer")] static extern int neSelectLasso(
+        [DllImport("NormalPainter")] static extern int neSelectLasso(
             Vector3[] vertices, int[] indices, int num_vertices, int num_triangles, float[] seletion, float strength,
             ref Matrix4x4 mvp, ref Matrix4x4 trans, Vector2[] points, int num_points, Vector3 campos, bool frontfaceOnly);
         
-        [DllImport("MeshSyncServer")] static extern int neSelectBrush(
+        [DllImport("NormalPainter")] static extern int neSelectBrush(
             Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, float[] seletion);
 
-        [DllImport("MeshSyncServer")] static extern int neBrushAdd(
+        [DllImport("NormalPainter")] static extern int neBrushAdd(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3 amount, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neBrushPinch(
+        [DllImport("NormalPainter")] static extern int neBrushPinch(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3 baseNormal, float offset, float pow, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neBrushEqualize(
+        [DllImport("NormalPainter")] static extern int neBrushEqualize(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neBrushLerp(
+        [DllImport("NormalPainter")] static extern int neBrushLerp(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, Vector3[] baseNormals, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neAssign(
+        [DllImport("NormalPainter")] static extern int neAssign(
             float[] selection, int num_vertices, ref Matrix4x4 trans, Vector3 amount, Vector3[] normals);
         
-        [DllImport("MeshSyncServer")] static extern int neMove(
+        [DllImport("NormalPainter")] static extern int neMove(
             float[] selection, int num_vertices, ref Matrix4x4 trans, Vector3 amount, Vector3[] normals);
         
-        [DllImport("MeshSyncServer")] static extern int neRotate(
+        [DllImport("NormalPainter")] static extern int neRotate(
             Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
             Quaternion amount, Quaternion pivotRot, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neRotatePivot(
+        [DllImport("NormalPainter")] static extern int neRotatePivot(
             Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
             Quaternion amount, Vector3 pivotPos, Quaternion pivotRot, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neScale(
+        [DllImport("NormalPainter")] static extern int neScale(
             Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
             Vector3 amount, Vector3 pivotPos, Quaternion pivotRot, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neEqualize(
+        [DllImport("NormalPainter")] static extern int neEqualize(
             Vector3[] vertices, float[] selection, int num_vertices, ref Matrix4x4 trans,
             float radius, float strength, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern int neBuildMirroringRelation(
+        [DllImport("NormalPainter")] static extern int neBuildMirroringRelation(
             Vector3[] vertices, Vector3[] base_normals, int num_vertices, Vector3 plane_normal, float epsilon, int[] relation);
 
-        [DllImport("MeshSyncServer")] static extern void neApplyMirroring(
+        [DllImport("NormalPainter")] static extern void neApplyMirroring(
             int[] relation, int num_vertices, Vector3 plane_normal, Vector3[] normals);
 
-        [DllImport("MeshSyncServer")] static extern void neProjectNormals(
+        [DllImport("NormalPainter")] static extern void neProjectNormals(
             Vector3[] vertices, Vector3[] normals, float[] selection, int num_vertices, ref Matrix4x4 trans,
             Vector3[] pvertices, Vector3[] pnormals, int[] pindices, int num_triangles, ref Matrix4x4 ptrans,
             Vector3[] dst);

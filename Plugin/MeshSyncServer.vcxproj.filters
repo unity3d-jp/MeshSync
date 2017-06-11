@@ -12,9 +12,6 @@
     <ClCompile Include="MeshSyncServer\pch.cpp">
       <Filter>MeshSyncServer</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncServer\NormalEditor.cpp">
-      <Filter>MeshSyncServer</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncServer\MeshSyncServer.h">

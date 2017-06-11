@@ -1,14 +1,14 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace UTJ.HumbleNormalEditor
+namespace UTJ.NormalPainter
 {
-    public class NormalEditorWindow : EditorWindow
+    public class NormalPainterWindow : EditorWindow
     {
         public static bool isOpen;
 
         Vector2 m_scrollPos;
-        NormalEditor m_target;
+        NormalPainter m_target;
         MeshRenderer m_mr;
 
 
@@ -17,11 +17,11 @@ namespace UTJ.HumbleNormalEditor
 
 
 
-        [MenuItem("Window/Normal Editor")]
+        [MenuItem("Window/Normal Painter")]
         public static void Open()
         {
-            var window = EditorWindow.GetWindow<NormalEditorWindow>();
-            window.titleContent = new GUIContent("Normal Editor");
+            var window = EditorWindow.GetWindow<NormalPainterWindow>();
+            window.titleContent = new GUIContent("Normal Painter");
             window.Show();
             window.OnSelectionChange();
         }
@@ -64,7 +64,7 @@ namespace UTJ.HumbleNormalEditor
             {
                 if (!m_target.isActiveAndEnabled)
                 {
-                    EditorGUILayout.LabelField("(Enable " + m_target.name + " to show Normal Editor)");
+                    EditorGUILayout.LabelField("(Enable " + m_target.name + " to show Normal Painter)");
                 }
                 else
                 {
@@ -73,7 +73,7 @@ namespace UTJ.HumbleNormalEditor
 
                     EditorGUILayout.BeginVertical(GUILayout.Height(windowHeight - tooltipHeight));
                     m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
-                    DrawNormalEditor();
+                    DrawNormalPainter();
                     EditorGUILayout.EndScrollView();
 
                     EditorGUILayout.LabelField(tips);
@@ -82,9 +82,9 @@ namespace UTJ.HumbleNormalEditor
             }
             else if (m_mr != null)
             {
-                if (GUILayout.Button("Add Normal Editor to " + m_mr.name))
+                if (GUILayout.Button("Add Normal Painter to " + m_mr.name))
                 {
-                    m_mr.gameObject.AddComponent<NormalEditor>();
+                    m_mr.gameObject.AddComponent<NormalPainter>();
                     OnSelectionChange();
                 }
             }
@@ -96,7 +96,7 @@ namespace UTJ.HumbleNormalEditor
             m_mr = null;
             if (Selection.activeGameObject != null)
             {
-                m_target = Selection.activeGameObject.GetComponent<NormalEditor>();
+                m_target = Selection.activeGameObject.GetComponent<NormalPainter>();
                 m_mr = Selection.activeGameObject.GetComponent<MeshRenderer>();
             }
             Repaint();
@@ -246,7 +246,7 @@ namespace UTJ.HumbleNormalEditor
                 {
                     GUILayout.BeginHorizontal();
                     settings.primary = EditorGUILayout.ColorField(settings.primary, GUILayout.Width(35));
-                    settings.primary = NormalEditor.ToColor(EditorGUILayout.Vector3Field("", NormalEditor.ToVector(settings.primary)));
+                    settings.primary = NormalPainter.ToColor(EditorGUILayout.Vector3Field("", NormalPainter.ToVector(settings.primary)));
                     settings.pickNormal = GUILayout.Toggle(settings.pickNormal, "Pick", "Button", GUILayout.Width(90));
                     GUILayout.EndHorizontal();
                 }
@@ -499,7 +499,7 @@ namespace UTJ.HumbleNormalEditor
 
         static readonly string[] strDisplay = new string[] {
             "Display",
-            "Settings",
+            "Options",
         };
 
         void DrawDisplayPanel()
@@ -556,7 +556,7 @@ namespace UTJ.HumbleNormalEditor
         }
 
 
-        void DrawNormalEditor()
+        void DrawNormalPainter()
         {
             var settings = m_target.settings;
 

@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
-#include "MeshSyncServer.h"
 
 #ifdef _WIN32
     #define neAPI extern "C" __declspec(dllexport)
@@ -111,6 +110,7 @@ neAPI int neSelectSingle(
     int num_inside = 0;
 
     {
+        // gather vertices inside rect
         std::atomic_int num_inside_a{ 0 };
         parallel_for(0, num_vertices, [&](int vi) {
             float4 vp = mul4(mvp, vertices[vi]);
@@ -148,6 +148,7 @@ neAPI int neSelectSingle(
     }
 
     if (num_inside > 0) {
+        // search nearest from center of rect
         int nearest_index = 0;
         float nearest_distance = FLT_MAX;
         float nearest_facing = 1.0f;
@@ -157,6 +158,7 @@ neAPI int neSelectSingle(
             float distance = insider[ii].second;
             float3 dir = normalize(vertices[vi] - lcampos);
             
+            // if there are vertices with identical position, pick most camera-facing one 
             if (near_equal(distance, nearest_distance)) {
                 float facing = dot(normals[vi], dir);
                 if (facing < nearest_facing) {

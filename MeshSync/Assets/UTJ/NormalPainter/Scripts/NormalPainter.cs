@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif
 
-namespace UTJ.HumbleNormalEditor
+namespace UTJ.NormalPainter
 {
     public enum EditMode
     {
@@ -74,7 +74,7 @@ namespace UTJ.HumbleNormalEditor
 
     [ExecuteInEditMode]
     [RequireComponent(typeof(MeshRenderer))]
-    public partial class NormalEditor : MonoBehaviour
+    public partial class NormalPainter : MonoBehaviour
     {
 #if UNITY_EDITOR
 
@@ -86,7 +86,7 @@ namespace UTJ.HumbleNormalEditor
         }
 
 
-        NormalEditorSettings m_settings;
+        NormalPainterSettings m_settings;
         
         // internal resources
         [SerializeField] Mesh m_meshTarget;
@@ -132,7 +132,7 @@ namespace UTJ.HumbleNormalEditor
         [SerializeField] History m_history = new History();
 
 
-        public NormalEditorSettings settings { get { return m_settings; } }
+        public NormalPainterSettings settings { get { return m_settings; } }
         public Mesh mesh { get { return m_meshTarget; } }
 
         public float[] selection
@@ -153,7 +153,7 @@ namespace UTJ.HumbleNormalEditor
         void SetupResources()
         {
             if (m_settings == null)
-                m_settings = ScriptableObject.CreateInstance<NormalEditorSettings>();
+                m_settings = ScriptableObject.CreateInstance<NormalPainterSettings>();
 
             if (m_meshCube == null)
             {
@@ -360,10 +360,11 @@ namespace UTJ.HumbleNormalEditor
             bool handled = false;
             var t = GetComponent<Transform>();
 
-            if(et == EventType.MouseMove || et == EventType.MouseDrag)
+            if (et == EventType.MouseMove || et == EventType.MouseDrag)
             {
+                bool prevRayHit = m_rayHit;
                 m_rayHit = Raycast(e, ref m_rayPos, ref m_rayHitTriangle);
-                if (m_rayHit)
+                if (m_rayHit || prevRayHit)
                     ret |= (int)SceneGUIState.Repaint;
             }
 

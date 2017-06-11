@@ -2,15 +2,15 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 
-namespace UTJ.HumbleNormalEditor
+namespace UTJ.NormalPainter
 {
-    [CustomEditor(typeof(NormalEditor))]
-    public class NormalEditorEditor : Editor
+    [CustomEditor(typeof(NormalPainter))]
+    public class NormalPainterEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             if (GUILayout.Button("Open Window"))
-                NormalEditorWindow.Open();
+                NormalPainterWindow.Open();
 
             EditorGUILayout.Space();
         }
