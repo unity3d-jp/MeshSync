@@ -285,10 +285,11 @@ namespace UTJ.NormalPainter
         public static Vector2 ScreenCoord11(Vector2 v)
         {
             var cam = SceneView.lastActiveSceneView.camera;
-            var rect = cam.pixelRect;
+            var pixelRect = cam.pixelRect;
+			var rect = cam.rect;
             return new Vector2(
-                (v.x + rect.x) / cam.pixelWidth * 2.0f - 1.0f,
-                (1.0f - (v.y + rect.y) / cam.pixelHeight) * 2.0f - 1.0f);
+				 v.x / pixelRect.width * rect.width * 2.0f - 1.0f,
+				(v.y / pixelRect.height * rect.height * 2.0f - 1.0f) * -1.0f);
         }
 
         public bool SelectSingle(Event e, float strength, bool frontFaceOnly)
