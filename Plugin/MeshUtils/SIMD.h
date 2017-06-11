@@ -85,6 +85,7 @@ int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
 
 bool PolyInside_Generic(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside_Generic(const float2 poly[], int ngon, const float2 pos);
+bool PolyInside_ISPC(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 pos);
 

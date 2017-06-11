@@ -267,10 +267,14 @@ void TestPolygonInside()
     const int num_try = 100;
     const int ngon = 80000;
     RawVector<float2> poly;
-    poly.resize(ngon);
+    RawVector<float> polyx, polyy;
+
+    poly.resize(ngon); polyx.resize(ngon); polyy.resize(ngon);
     for (int i = 0; i < ngon; ++i) {
         float a = (360.0f / ngon) * i * Deg2Rad;
         poly[i] = { std::sin(a), std::cos(a) };
+        polyx[i] = poly[i].x;
+        polyy[i] = poly[i].y;
     }
 
 
@@ -299,7 +303,7 @@ void TestPolygonInside()
     }
     auto s1_end = Now();
 
-    printf("    %d (%.2fms)\n", num_inside, float(s1_end - s1_begin) / 1000000.0f);
+    printf("    Generic: %d (%.2fms)\n", num_inside, float(s1_end - s1_begin) / 1000000.0f);
 
     auto s2_begin = Now();
     num_inside = 0;
@@ -314,7 +318,22 @@ void TestPolygonInside()
     }
     auto s2_end = Now();
 
-    printf("    %d (%.2fms)\n", num_inside, float(s2_end - s2_begin) / 1000000.0f);
+    printf("    ISPC: %d (%.2fms)\n", num_inside, float(s2_end - s2_begin) / 1000000.0f);
+
+    auto s3_begin = Now();
+    num_inside = 0;
+    pmin = pmax = float2::zero();
+    for (int ti = 0; ti < num_try; ++ti) {
+        MinMax_ISPC(poly.data(), ngon, pmin, pmax);
+        for (int pi = 0; pi < countof(points); ++pi) {
+            if (PolyInside_ISPC(polyx.data(), polyy.data(), ngon, pmin, pmax, points[pi])) {
+                ++num_inside;
+            }
+        }
+    }
+    auto s3_end = Now();
+
+    printf("    SoA ISPC: %d (%.2fms)\n", num_inside, float(s3_end - s3_begin) / 1000000.0f);
     printf("\n");
 }
 

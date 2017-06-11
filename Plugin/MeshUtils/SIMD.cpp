@@ -287,6 +287,21 @@ int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
 }
 
 
+bool PolyInside_ISPC(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    const int MaxXC = 64;
+    float xc[MaxXC];
+
+    int c = ispc::PolyInsideSoAImpl(px, py, ngon, (ispc::float2&)minp, (ispc::float2&)maxp, (ispc::float2&)pos, xc, MaxXC);
+    std::sort(xc, xc + c);
+    for (int i = 0; i < c; i += 2) {
+        if (pos.x >= xc[i] && pos.x < xc[i + 1]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool PolyInside_ISPC(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
 {
     const int MaxXC = 64;

@@ -297,3 +297,75 @@ export uniform int PolyInsideImpl(
     }
     return c;
 }
+
+export uniform int PolyInsideSoAImpl(
+    uniform const float px[], uniform const float py[], uniform int ngon, uniform float2& minp, uniform float2& maxp, uniform float2& pos,
+    uniform float xc[], uniform int maxxc)
+{
+    if (pos.x < minp.x || pos.x > maxp.x ||
+        pos.y < minp.y || pos.y > maxp.y)
+    {
+        return 0;
+    }
+
+    uniform int c = 0;
+    uniform int ngon_simd = (ngon - 1) & ~(C - 1);
+
+    // SIMD pass
+    for (uniform int bi = 0; bi < ngon_simd; bi += C) {
+        float2 p1, p2;
+        {
+            float2 tp1 = { px[bi+I+0], py[bi+I+0] };
+            float2 tp2 = { px[bi+I+1], py[bi+I+1] };
+
+            bool needs_swap = tp1.y > tp2.y;
+            p1.x = select(needs_swap, tp2.x, tp1.x);
+            p1.y = select(needs_swap, tp2.y, tp1.y);
+            p2.x = select(needs_swap, tp1.x, tp2.x);
+            p2.y = select(needs_swap, tp1.y, tp2.y);
+        }
+
+        bool intersect =
+            (p1.y != p2.y) &&
+            ((pos.y >= p1.y && pos.y < p2.y) ||
+             (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y));
+
+        if (any(intersect)) {
+            float x = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+
+            uniform int intersecta[C]; intersecta[I] = intersect;
+            uniform float xa[C]; xa[I] = x;
+            for (uniform int ci = 0; ci < C; ++ci) {
+                if (intersecta[ci]) {
+                    xc[c++] = xa[ci];
+                    if (c == maxxc) return c;
+                }
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for (uniform int i = ngon_simd; i < ngon; ++i) {
+        uniform int j = i + 1;
+        if (j == ngon) { j = 0; }
+
+        uniform float2 p1 = {px[i], py[i]};
+        uniform float2 p2 = {px[j], py[j]};
+        if(p1.y == p2.y) { continue; }
+        else if(p1.y > p2.y) {
+            uniform float2 tmp = p1;
+            p1 = p2;
+            p2 = tmp;
+        }
+
+        uniform bool intersect =
+            (pos.y >= p1.y && pos.y < p2.y) ||
+            (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y);
+
+        if (intersect) {
+            xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+            if (c == maxxc) return c;
+        }
+    }
+    return c;
+}
