@@ -9,7 +9,7 @@ namespace UTJ.NormalPainter
 
         Vector2 m_scrollPos;
         NormalPainter m_target;
-        MeshRenderer m_mr;
+        GameObject m_active;
 
 
 
@@ -80,11 +80,11 @@ namespace UTJ.NormalPainter
                     EditorGUILayout.EndVertical();
                 }
             }
-            else if (m_mr != null)
+            else if (m_active != null)
             {
-                if (GUILayout.Button("Add Normal Painter to " + m_mr.name))
+                if (GUILayout.Button("Add Normal Painter to " + m_active.name))
                 {
-                    m_mr.gameObject.AddComponent<NormalPainter>();
+                    m_active.AddComponent<NormalPainter>();
                     OnSelectionChange();
                 }
             }
@@ -93,11 +93,19 @@ namespace UTJ.NormalPainter
         private void OnSelectionChange()
         {
             m_target = null;
-            m_mr = null;
+            m_active = null;
             if (Selection.activeGameObject != null)
             {
                 m_target = Selection.activeGameObject.GetComponent<NormalPainter>();
-                m_mr = Selection.activeGameObject.GetComponent<MeshRenderer>();
+                if(m_target == null)
+                {
+                    var activeGameObject = Selection.activeGameObject;
+                    if ( Selection.activeGameObject.GetComponent<MeshRenderer>() != null ||
+                         Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>() != null)
+                    {
+                        m_active = activeGameObject;
+                    }
+                }
             }
             Repaint();
         }

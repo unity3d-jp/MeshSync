@@ -73,7 +73,6 @@ namespace UTJ.NormalPainter
 
 
     [ExecuteInEditMode]
-    [RequireComponent(typeof(MeshRenderer))]
     public partial class NormalPainter : MonoBehaviour
     {
 #if UNITY_EDITOR
@@ -149,6 +148,20 @@ namespace UTJ.NormalPainter
         }
 
 
+        Mesh GetTargetMesh()
+        {
+            Mesh ret = null;
+            {
+                var mf = GetComponent<MeshFilter>();
+                if (mf != null) { ret = mf.sharedMesh; }
+            }
+            if (ret == null)
+            {
+                var smr = GetComponent<SkinnedMeshRenderer>();
+                if(smr != null) { ret = smr.sharedMesh; }
+            }
+            return ret;
+        }
 
         void SetupResources()
         {
@@ -209,11 +222,14 @@ namespace UTJ.NormalPainter
             if (m_csBakeFromMap == null)
                 m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath("f6687b99e1b6bfc4f854f46669e84e31"));
 
+            var tmesh = GetTargetMesh();
+            if (tmesh == null) { return; }
+
             if (m_meshTarget == null ||
-                m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount ||
+                m_meshTarget.vertexCount != tmesh.vertexCount ||
                 (m_points != null && m_meshTarget.vertexCount != m_points.Length))
             {
-                m_meshTarget = GetComponent<MeshFilter>().sharedMesh;
+                m_meshTarget = tmesh;
                 m_points = null;
                 m_normals = null;
                 m_baseNormals = null;
