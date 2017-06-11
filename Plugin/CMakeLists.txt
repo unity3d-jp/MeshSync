@@ -10,16 +10,17 @@ MARK_AS_ADVANCED(FORCE ISPC)
 
 OPTION(ENABLE_ISPC "Use Intel ISPC to generate SIMDified code. It can significantly boost performance." ON)
 OPTION(ENABLE_MAYA "Build MAYA Plugin" OFF)
+OPTION(ENABLE_TESTS "Tests" OFF)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11 -Wno-deprecated -DTF_NO_GNU_EXT")
 
 IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 ELSEIF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    OPTION(USDI_ENABLE_OSX_BUNDLE "Build bundle." OFF)
+    OPTION(ENABLE_OSX_BUNDLE "Build bundle." OFF)
     SET(CMAKE_MACOSX_RPATH ON)
 
-    IF(USDI_ENABLE_OSX_BUNDLE)
+    IF(ENABLE_OSX_BUNDLE)
         SET(CMAKE_SKIP_RPATH ON)
     ELSE()
         SET(CMAKE_SKIP_RPATH OFF)
@@ -95,13 +96,14 @@ ENDIF()
 # NormalPainter
 FILE(GLOB NP_CXX_FILES NormalPainter/*.cpp)
 FILE(GLOB NP_H_FILES NormalPainter/*.h)
-IF(USDI_ENABLE_OSX_BUNDLE)
+IF(ENABLE_OSX_BUNDLE)
     ADD_LIBRARY(NormalPainter MODULE ${NP_CXX_FILES} ${NP_H_FILES})
 ELSE()
     ADD_LIBRARY(NormalPainter SHARED ${NP_CXX_FILES} ${NP_H_FILES})
 ENDIF()
 ADD_DEPENDENCIES(NormalPainter MeshUtils)
 TARGET_INCLUDE_DIRECTORIES(NormalPainter PUBLIC ./NormalPainter)
+TARGET_LINK_LIBRARIES(NormalPainter MeshUtils)
 
 
 # MeshSync
@@ -114,20 +116,21 @@ TARGET_INCLUDE_DIRECTORIES(MeshSync PUBLIC ./MeshSync)
 # MeshSyncServer
 FILE(GLOB MSS_CXX_FILES MeshSyncServer/*.cpp)
 FILE(GLOB MSS_H_FILES MeshSyncServer/*.h)
-IF(USDI_ENABLE_OSX_BUNDLE)
+IF(ENABLE_OSX_BUNDLE)
     ADD_LIBRARY(MeshSyncServer MODULE ${MSS_CXX_FILES} ${MSS_H_FILES})
 ELSE()
     ADD_LIBRARY(MeshSyncServer SHARED ${MSS_CXX_FILES} ${MSS_H_FILES})
 ENDIF()
 ADD_DEPENDENCIES(MeshSyncServer MeshUtils MeshSync)
 TARGET_INCLUDE_DIRECTORIES(MeshSyncServer PUBLIC ./MeshSyncServer)
+TARGET_LINK_LIBRARIES(MeshSyncServer MeshUtils MeshSync)
 
 
 # MeshSyncClientMaya
 IF(ENABLE_MAYA)
     FILE(GLOB MSCMAYA_CXX_FILES MeshSyncClientMaya/*.cpp)
     FILE(GLOB MSCMAYA_H_FILES MeshSyncClientMaya/*.h)
-    IF(USDI_ENABLE_OSX_BUNDLE)
+    IF(ENABLE_OSX_BUNDLE)
         ADD_LIBRARY(MeshSyncClientMaya MODULE ${MSCMAYA_CXX_FILES} ${MSCMAYA_H_FILES})
     ELSE()
         ADD_LIBRARY(MeshSyncClientMaya SHARED ${MSCMAYA_CXX_FILES} ${MSCMAYA_H_FILES})
@@ -136,3 +139,29 @@ IF(ENABLE_MAYA)
     TARGET_INCLUDE_DIRECTORIES(MeshSyncClientMaya PUBLIC ./MeshSyncClientMaya)
 ENDIF()
 
+
+IF(ENABLE_OSX_BUNDLE)
+    # deploy
+    ADD_CUSTOM_TARGET(deploy ALL
+        COMMAND rm -rf ${PLUGINS_DIR}/NormalPainter.bundle
+        COMMAND cp -r NormalPainter.bundle ${PLUGINS_DIR}
+        DEPENDS NormalPainter
+    )
+ELSE()
+    # tests
+    IF(ENABLE_TESTS)
+        FILE(GLOB Tests_CXX_FILES Test/*.cpp)
+        FILE(GLOB Tests_H_FILES Test/*.h)
+
+        ADD_EXECUTABLE(Tests ${Tests_CXX_FILES} ${Tests_H_FILES})
+        ADD_DEPENDENCIES(Tests MeshUtils)
+        TARGET_LINK_LIBRARIES(Tests MeshUtils)
+    ENDIF()
+
+    # deploy
+    ADD_CUSTOM_TARGET(deploy ALL
+        COMMAND rm -rf ${PLUGINS_DIR}/$<TARGET_FILE_NAME:NormalPainter>
+        COMMAND cp $<TARGET_FILE:NormalPainter> ${PLUGINS_DIR}
+        DEPENDS NormalPainter
+    )
+ENDIF()

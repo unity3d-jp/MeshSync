@@ -1,10 +1,11 @@
 #include "pch.h"
-#include "MeshSync/msServer.h"
-#include "MeshSync/msClient.h"
 
 using namespace mu;
 
 /*
+#include "MeshSync/msServer.h"
+#include "MeshSync/msClient.h"
+
 void Test_Sync(bool create_server)
 {
     std::unique_ptr<ms::Server> server;
@@ -290,7 +291,7 @@ void TestPolygonInside()
     num_inside = 0;
     for (int ti = 0; ti < num_try; ++ti) {
         MinMax_Generic(poly.data(), ngon, pmin, pmax);
-        for (int pi = 0; pi < std::size(points); ++pi) {
+        for (int pi = 0; pi < countof(points); ++pi) {
             if (PolyInside_Generic(poly.data(), ngon, pmin, pmax, points[pi])) {
                 ++num_inside;
             }
@@ -305,7 +306,7 @@ void TestPolygonInside()
     pmin = pmax = float2::zero();
     for (int ti = 0; ti < num_try; ++ti) {
         MinMax_ISPC(poly.data(), ngon, pmin, pmax);
-        for (int pi = 0; pi < std::size(points); ++pi) {
+        for (int pi = 0; pi < countof(points); ++pi) {
             if (PolyInside_ISPC(poly.data(), ngon, pmin, pmax, points[pi])) {
                 ++num_inside;
             }
@@ -324,7 +325,7 @@ int main(int argc, char *argv[])
     //Test_Get();
     //Test_GenNormals();
     //MatrixSwapHandedness();
-    //TestRayTrianglesIntersection();
+    TestRayTrianglesIntersection();
     TestPolygonInside();
 
     char dummy;

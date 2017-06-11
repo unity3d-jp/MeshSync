@@ -2,9 +2,9 @@
 #include "MeshSync/MeshSync.h"
 
 #ifdef _WIN32
-    #define neAPI extern "C" __declspec(dllexport)
+    #define npAPI extern "C" __declspec(dllexport)
 #else
-    #define neAPI extern "C" 
+    #define npAPI extern "C" 
 #endif
 
 using namespace mu;
@@ -79,14 +79,14 @@ static bool GetFurthestDistance(const float3 vertices[], const float selection[]
 
 
 
-neAPI int neRaycast(
+npAPI int npRaycast(
     const float3 pos, const float3 dir, const float3 vertices[], const int indices[], int num_triangles,
     int *tindex, float *distance, const float4x4 *trans)
 {
     return Raycast(pos, dir, vertices, indices, num_triangles, *trans, *tindex, *distance);
 }
 
-neAPI float3 neTriangleInterpolation(
+npAPI float3 npTriangleInterpolation(
     const float3 vertices[], const int indices[], const float3 normals[], const float4x4 *trans,
     const float3 pos, int ti)
 {
@@ -96,7 +96,7 @@ neAPI float3 neTriangleInterpolation(
     return triangle_interpolation(lpos, p[0], p[1], p[2], n[0], n[1], n[2]);
 }
 
-neAPI int neSelectSingle(
+npAPI int npSelectSingle(
     const float3 vertices[], const float3 normals[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos, int frontface_only)
 {
@@ -180,7 +180,7 @@ neAPI int neSelectSingle(
     return 0;
 }
 
-neAPI int neSelectRect(
+npAPI int npSelectRect(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, float2 rmin, float2 rmax, float3 campos, int frontface_only)
 {
@@ -221,7 +221,7 @@ neAPI int neSelectRect(
     return ret;
 }
 
-neAPI int neSelectLasso(
+npAPI int npSelectLasso(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, const float2 poly[], int ngon, float3 campos, int frontface_only)
 {
@@ -263,7 +263,7 @@ neAPI int neSelectLasso(
     return ret;
 }
 
-neAPI int neSelectBrush(
+npAPI int npSelectBrush(
     const float3 vertices[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float pow, float selection[])
 {
@@ -274,7 +274,7 @@ neAPI int neSelectBrush(
 }
 
 
-neAPI void neAssign(
+npAPI void npAssign(
     const float selection[], int num_vertices, const float4x4 *trans_,
     float3 v, float3 normals[])
 {
@@ -288,7 +288,7 @@ neAPI void neAssign(
     }
 }
 
-neAPI void neMove(
+npAPI void npMove(
     const float selection[], int num_vertices, const float4x4 *trans_,
     float3 amount, float3 normals[])
 {
@@ -302,7 +302,7 @@ neAPI void neMove(
     }
 }
 
-neAPI void neRotate(
+npAPI void npRotate(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     quatf amount, quatf pivot_rot, float3 normals[])
 {
@@ -328,7 +328,7 @@ neAPI void neRotate(
     }
 }
 
-neAPI void neRotatePivot(
+npAPI void npRotatePivot(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     quatf amount, float3 pivot_pos, quatf pivot_rot, float3 normals[])
 {
@@ -365,7 +365,7 @@ neAPI void neRotatePivot(
     }
 }
 
-neAPI void neScale(
+npAPI void npScale(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     float3 amount, float3 pivot_pos, quatf pivot_rot, float3 normals[])
 {
@@ -397,7 +397,7 @@ neAPI void neScale(
     }
 }
 
-neAPI void neEqualize(
+npAPI void npEqualize(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     float radius, float strength, float3 normals[])
 {
@@ -426,7 +426,7 @@ neAPI void neEqualize(
 }
 
 
-neAPI int neBrushAdd(
+npAPI int npBrushAdd(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, float3 amount, float3 normals[])
 {
@@ -439,7 +439,7 @@ neAPI int neBrushAdd(
     return 0;
 }
 
-neAPI int neBrushPinch(
+npAPI int npBrushPinch(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, float3 n, float offset, float pow, float3 normals[])
 {
@@ -455,7 +455,7 @@ neAPI int neBrushPinch(
     });
 }
 
-neAPI int neBrushLerp(
+npAPI int npBrushLerp(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, const float3 base[], float3 normals[])
 {
@@ -468,7 +468,7 @@ neAPI int neBrushLerp(
     });
 }
 
-neAPI int neBrushEqualize(
+npAPI int npBrushEqualize(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans,
     const float3 pos, float radius, float strength, float falloff, float3 normals[])
 {
@@ -492,7 +492,7 @@ neAPI int neBrushEqualize(
 }
 
 
-neAPI int neBuildMirroringRelation(
+npAPI int npBuildMirroringRelation(
     const float3 vertices[], const float3 normals[], int num_vertices,
     float3 plane_normal, float epsilon, int relation[])
 {
@@ -525,7 +525,7 @@ neAPI int neBuildMirroringRelation(
     return ret;
 }
 
-neAPI void neApplyMirroring(const int relation[], int num_vertices, float3 plane_normal, float3 normals[])
+npAPI void npApplyMirroring(const int relation[], int num_vertices, float3 plane_normal, float3 normals[])
 {
     parallel_for(0, num_vertices, [&](int vi) {
         if (relation[vi] != -1) {
@@ -535,7 +535,7 @@ neAPI void neApplyMirroring(const int relation[], int num_vertices, float3 plane
 }
 
 
-neAPI void neProjectNormals(
+npAPI void npProjectNormals(
     const float3 vertices[], float3 normals[], float selection[], int num_vertices, const float4x4 *trans,
     const float3 pvertices[], const float3 pnormals[], const int pindices[], int num_triangles, const float4x4 *ptrans,
     float3 dst[])

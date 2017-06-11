@@ -2,6 +2,9 @@
 
 namespace mu {
 
+template < typename T, size_t N >
+size_t countof(T(&arr)[N]) { return std::extent< T[N] >::value; }
+
 using nanosec = uint64_t;
 nanosec Now();
 
