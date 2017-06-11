@@ -166,6 +166,11 @@ int RayTrianglesIntersection_Generic(float3 pos, float3 dir,
 }
 
 
+bool PolyInside_Generic(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    return poly_inside(px, py, ngon, minp, maxp, pos);
+}
+
 bool PolyInside_Generic(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
 {
     return poly_inside(poly, ngon, minp, maxp, pos);
@@ -420,6 +425,10 @@ int RayTrianglesIntersection(float3 pos, float3 dir,
     return Forward(RayTrianglesIntersection, pos, dir, v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z, num_triangles, tindex, result);
 }
 
+bool PolyInside(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
+{
+    return Forward(PolyInside, px, py, ngon, minp, maxp, pos);
+}
 bool PolyInside(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos)
 {
     return Forward(PolyInside, poly, ngon, minp, maxp, pos);

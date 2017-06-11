@@ -1045,6 +1045,44 @@ inline bool poly_inside(const float2 points[], int num_points, const float2 minp
     return false;
 }
 
+// SoA variant
+inline bool poly_inside(const float px[], const float py[], int num_points, const float2 minp, const float2 maxp, const float2 pos)
+{
+    if (pos.x < minp.x || pos.x > maxp.x ||
+        pos.y < minp.y || pos.y > maxp.y)
+    {
+        return false;
+    }
+
+    const int MaxIntersections = 64;
+    float xc[MaxIntersections];
+    int c = 0;
+    for (int i = 0; i < num_points; i++) {
+        int j = i + 1;
+        if (j == num_points) { j = 0; }
+
+        float2 p1 = { px[i], py[i] };
+        float2 p2 = { px[j], py[j] };
+        if (p1.y == p2.y) { continue; }
+        else if (p1.y > p2.y) { std::swap(p1, p2); }
+
+        if ((pos.y >= p1.y && pos.y < p2.y) ||
+            (pos.y == maxp.y && pos.y > p1.y && pos.y <= p2.y))
+        {
+            xc[c++] = (pos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+            if (c == MaxIntersections) break;
+        }
+    }
+    std::sort(xc, xc + c);
+
+    for (int i = 0; i < c; i += 2) {
+        if (pos.x >= xc[i] && pos.x < xc[i + 1]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 inline bool poly_inside(const float2 points[], int num_points, const float2 pos)
 {
     if (num_points < 3) { return false; }

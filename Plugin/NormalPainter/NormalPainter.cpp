@@ -225,6 +225,8 @@ npAPI int npSelectLasso(
     const float3 vertices[], const int indices[], int num_vertices, int num_triangles, float seletion[], float strength,
     const float4x4 *mvp_, const float4x4 *trans_, const float2 poly[], int ngon, float3 campos, int frontface_only)
 {
+    if (ngon < 3) { return 0; }
+
     float4x4 mvp = *mvp_;
     float4x4 trans = *trans_;
     float3 lcampos = mul_p(invert(trans), campos);
@@ -232,11 +234,18 @@ npAPI int npSelectLasso(
     float2 minp, maxp;
     MinMax(poly, ngon, minp, maxp);
 
+    RawVector<float> polyx, polyy;
+    polyx.resize(ngon); polyy.resize(ngon);
+    for (int i = 0; i < ngon; ++i) {
+        polyx[i] = poly[i].x;
+        polyy[i] = poly[i].y;
+    }
+
     std::atomic_int ret{ 0 };
     parallel_for(0, num_vertices, [&](int vi) {
         float4 vp = mul4(mvp, vertices[vi]);
         float2 sp = float2{ vp.x, vp.y } / vp.w;
-        if (PolyInside(poly, ngon, minp, maxp, sp)) {
+        if (PolyInside(polyx.data(), polyy.data(), ngon, minp, maxp, sp)) {
             bool hit = false;
             if (frontface_only) {
                 float3 vpos = vertices[vi];

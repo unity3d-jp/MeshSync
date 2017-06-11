@@ -203,11 +203,11 @@ namespace UTJ.NormalPainter
             }
 
             if (m_matVisualize == null)
-                m_matVisualize = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/Visualizer.shader"));
+                m_matVisualize = new Material(AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("03871fa9be0375f4c91cb4842f15b890")));
             if (m_matBake == null)
-                m_matBake = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/UTJ/NormalEditor/Shaders/BakeNormalMap.shader"));
+                m_matBake = new Material(AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("4ddd0053dc720414b8afc76bf0a93f8e")));
             if (m_csBakeFromMap == null)
-                m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/UTJ/NormalEditor/Shaders/GetNormalsFromTexture.compute");
+                m_csBakeFromMap = AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath("f6687b99e1b6bfc4f854f46669e84e31"));
 
             if (m_meshTarget == null ||
                 m_meshTarget.vertexCount != GetComponent<MeshFilter>().sharedMesh.vertexCount ||

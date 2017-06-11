@@ -30,6 +30,7 @@ int RayTrianglesIntersection(float3 pos, float3 dir,
     const float *v3x, const float *v3y, const float *v3z,
     int num_triangles, int& tindex, float& distance);
 
+bool PolyInside(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside(const float2 poly[], int ngon, const float2 pos);
 
@@ -83,6 +84,7 @@ int RayTrianglesIntersection_ISPC(float3 pos, float3 dir,
     const float *v3x, const float *v3y, const float *v3z,
     int num_triangles, int& tindex, float& distance);
 
+bool PolyInside_Generic(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside_Generic(const float2 poly[], int ngon, const float2 minp, const float2 maxp, const float2 pos);
 bool PolyInside_Generic(const float2 poly[], int ngon, const float2 pos);
 bool PolyInside_ISPC(const float px[], const float py[], int ngon, const float2 minp, const float2 maxp, const float2 pos);

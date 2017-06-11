@@ -309,6 +309,21 @@ void TestPolygonInside()
     num_inside = 0;
     pmin = pmax = float2::zero();
     for (int ti = 0; ti < num_try; ++ti) {
+        MinMax_Generic(poly.data(), ngon, pmin, pmax);
+        for (int pi = 0; pi < countof(points); ++pi) {
+            if (PolyInside_Generic(polyx.data(), polyy.data(), ngon, pmin, pmax, points[pi])) {
+                ++num_inside;
+            }
+        }
+    }
+    auto s2_end = Now();
+
+    printf("    Generic SoA: %d (%.2fms)\n", num_inside, float(s2_end - s2_begin) / 1000000.0f);
+
+    auto s3_begin = Now();
+    num_inside = 0;
+    pmin = pmax = float2::zero();
+    for (int ti = 0; ti < num_try; ++ti) {
         MinMax_ISPC(poly.data(), ngon, pmin, pmax);
         for (int pi = 0; pi < countof(points); ++pi) {
             if (PolyInside_ISPC(poly.data(), ngon, pmin, pmax, points[pi])) {
@@ -316,11 +331,11 @@ void TestPolygonInside()
             }
         }
     }
-    auto s2_end = Now();
+    auto s3_end = Now();
 
-    printf("    ISPC: %d (%.2fms)\n", num_inside, float(s2_end - s2_begin) / 1000000.0f);
+    printf("    ISPC: %d (%.2fms)\n", num_inside, float(s3_end - s3_begin) / 1000000.0f);
 
-    auto s3_begin = Now();
+    auto s4_begin = Now();
     num_inside = 0;
     pmin = pmax = float2::zero();
     for (int ti = 0; ti < num_try; ++ti) {
@@ -331,9 +346,9 @@ void TestPolygonInside()
             }
         }
     }
-    auto s3_end = Now();
+    auto s4_end = Now();
 
-    printf("    SoA ISPC: %d (%.2fms)\n", num_inside, float(s3_end - s3_begin) / 1000000.0f);
+    printf("    ISPC SoA: %d (%.2fms)\n", num_inside, float(s4_end - s4_begin) / 1000000.0f);
     printf("\n");
 }
 
