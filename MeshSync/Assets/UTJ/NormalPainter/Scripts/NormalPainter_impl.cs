@@ -285,10 +285,10 @@ namespace UTJ.NormalPainter
         public static Vector2 ScreenCoord11(Vector2 v)
         {
             var cam = SceneView.lastActiveSceneView.camera;
-            if (cam == null) { return v; }
+            var rect = cam.pixelRect;
             return new Vector2(
-                v.x / cam.pixelWidth * 2.0f - 1.0f,
-                (1.0f - v.y / cam.pixelHeight) * 2.0f - 1.0f);
+                (v.x + rect.x) / cam.pixelWidth * 2.0f - 1.0f,
+                (1.0f - (v.y + rect.y) / cam.pixelHeight) * 2.0f - 1.0f);
         }
 
         public bool SelectSingle(Event e, float strength, bool frontFaceOnly)
@@ -306,11 +306,9 @@ namespace UTJ.NormalPainter
 
             var campos = cam.GetComponent<Transform>().position;
             var trans = GetComponent<Transform>().localToWorldMatrix;
-            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
-            r1.x = r1.x / cam.pixelWidth * 2.0f - 1.0f;
-            r2.x = r2.x / cam.pixelWidth * 2.0f - 1.0f;
-            r1.y = (1.0f - r1.y / cam.pixelHeight) * 2.0f - 1.0f;
-            r2.y = (1.0f - r2.y / cam.pixelHeight) * 2.0f - 1.0f;
+            var mvp = GL.GetGPUProjectionMatrix(cam.projectionMatrix, false) * cam.worldToCameraMatrix * trans;
+            r1 = ScreenCoord11(r1);
+            r2 = ScreenCoord11(r2);
             var rmin = new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y));
             var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
 
@@ -325,11 +323,9 @@ namespace UTJ.NormalPainter
 
             var campos = cam.GetComponent<Transform>().position;
             var trans = GetComponent<Transform>().localToWorldMatrix;
-            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
-            r1.x = r1.x / cam.pixelWidth * 2.0f - 1.0f;
-            r2.x = r2.x / cam.pixelWidth * 2.0f - 1.0f;
-            r1.y = (1.0f - r1.y / cam.pixelHeight) * 2.0f - 1.0f;
-            r2.y = (1.0f - r2.y / cam.pixelHeight) * 2.0f - 1.0f;
+            var mvp = GL.GetGPUProjectionMatrix(cam.projectionMatrix, false) * cam.worldToCameraMatrix * trans;
+            r1 = ScreenCoord11(r1);
+            r2 = ScreenCoord11(r2);
             var rmin = new Vector2(Math.Min(r1.x, r2.x), Math.Min(r1.y, r2.y));
             var rmax = new Vector2(Math.Max(r1.x, r2.x), Math.Max(r1.y, r2.y));
 
@@ -344,7 +340,7 @@ namespace UTJ.NormalPainter
 
             var campos = cam.GetComponent<Transform>().position;
             var trans = GetComponent<Transform>().localToWorldMatrix;
-            var mvp = cam.projectionMatrix * cam.worldToCameraMatrix * trans;
+            var mvp = GL.GetGPUProjectionMatrix(cam.projectionMatrix, false) * cam.worldToCameraMatrix * trans;
 
             return npSelectLasso(m_points, m_triangles, m_points.Length, m_triangles.Length / 3, m_selection, strength,
                 ref mvp, ref trans, points, points.Length, campos, frontFaceOnly) > 0;
