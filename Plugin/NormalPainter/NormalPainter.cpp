@@ -345,24 +345,28 @@ npAPI void npRotate(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     quatf amount, quatf pivot_rot, float3 normals[])
 {
-    auto ptrans = to_float3x3(invert(pivot_rot));
+    float3 axis;
+    float angle;
+    to_axis_angle(amount, axis, angle);
+    if (near_equal(angle, 0.0f) || std::isnan(angle)) {
+        return;
+    }
+
+    auto ptrans = to_float4x4(invert(pivot_rot));
     auto iptrans = invert(ptrans);
     auto trans = *trans_;
     auto itrans = invert(trans);
-    auto rot = to_float3x3(invert(amount));
+    auto rot = to_float4x4(invert(amount));
+
+    auto to_lspace = trans * iptrans * rot * ptrans * itrans;
 
     for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
         float3 n = normals[vi];
-        float3 dir = n;
-        dir = mul_v(trans, dir);
-        dir = iptrans * dir;
-        dir = rot * dir;
-        dir = ptrans * dir;
-        dir = mul_v(itrans, dir);
-        normals[vi] = lerp(n, dir, s);
+        float3 v = normalize(mul_v(to_lspace, n));
+        normals[vi] = normalize(lerp(n, v, s));
     }
 }
 
@@ -373,7 +377,6 @@ npAPI void npRotatePivot(
     float3 axis;
     float angle;
     to_axis_angle(amount, axis, angle);
-    float3 laxis = mul_v(to_float4x4(invert(pivot_rot)), axis);
     if (near_equal(angle, 0.0f) || std::isnan(angle)) {
         return;
     }
@@ -388,10 +391,10 @@ npAPI void npRotatePivot(
     auto iptrans = invert(ptrans);
     auto trans = *trans_;
     auto itrans = invert(trans);
-    auto rot = to_float3x3(amount);
 
     auto to_pspace = trans * iptrans;
     auto to_lspace = ptrans * itrans;
+    auto rot = to_float3x3(amount);
 
     for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
