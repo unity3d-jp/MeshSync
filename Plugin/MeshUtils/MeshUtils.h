@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <memory>
-#include "Math.h"
+#include "VectorMath.h"
 #include "RawVector.h"
 #include "IntrusiveArray.h"
 #include "SIMD.h"

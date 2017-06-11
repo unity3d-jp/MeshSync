@@ -9,24 +9,24 @@
     using iterator_category = std::random_access_iterator_tag;                  \
 
 
-template<class T, size_t S>
+template<class T, size_t Stride>
 struct strided_iterator_s
 {
     Boilerplate(strided_iterator_s, T);
-    static const size_t stride = S;
+    static const size_t stride = Stride;
 
     uint8_t *data;
 
     reference operator*()  { return *(T*)data; }
     pointer   operator->() { return &(T*)data; }
-    this_t  operator+(size_t v)  { return { data + S*v; }; }
-    this_t  operator-(size_t v)  { return { data + S*v; }; }
-    this_t& operator+=(size_t v) { data += S*v; return *this; }
-    this_t& operator-=(size_t v) { data -= S*v; return *this; }
-    this_t& operator++()         { data += S; return *this; }
-    this_t& operator++(int)      { data += S; return *this; }
-    this_t& operator--()         { data -= S; return *this; }
-    this_t& operator--(int)      { data -= S; return *this; }
+    this_t  operator+(size_t v)  { return data + stride*v; }
+    this_t  operator-(size_t v)  { return data + stride*v; }
+    this_t& operator+=(size_t v) { data += stride*v; return *this; }
+    this_t& operator-=(size_t v) { data -= stride*v; return *this; }
+    this_t& operator++()         { data += stride; return *this; }
+    this_t& operator++(int)      { data += stride; return *this; }
+    this_t& operator--()         { data -= stride; return *this; }
+    this_t& operator--(int)      { data -= stride; return *this; }
     bool operator==(const this_t& v) const { return data == data; }
     bool operator!=(const this_t& v) const { return data != data; }
 
@@ -42,14 +42,14 @@ struct strided_iterator
 
     reference operator*()  { return *(T*)data; }
     pointer   operator->() { return &(T*)data; }
-    this_t  operator+(size_t v)  { return { data + S*v; }; }
-    this_t  operator-(size_t v)  { return { data + S*v; }; }
-    this_t& operator+=(size_t v) { data += S*v; return *this; }
-    this_t& operator-=(size_t v) { data -= S*v; return *this; }
-    this_t& operator++()         { data += S; return *this; }
-    this_t& operator++(int)      { data += S; return *this; }
-    this_t& operator--()         { data -= S; return *this; }
-    this_t& operator--(int)      { data -= S; return *this; }
+    this_t  operator+(size_t v)  { return data + stride*v; }
+    this_t  operator-(size_t v)  { return data + stride*v; }
+    this_t& operator+=(size_t v) { data += stride*v; return *this; }
+    this_t& operator-=(size_t v) { data -= stride*v; return *this; }
+    this_t& operator++()         { data += stride; return *this; }
+    this_t& operator++(int)      { data += stride; return *this; }
+    this_t& operator--()         { data -= stride; return *this; }
+    this_t& operator--(int)      { data -= stride; return *this; }
     bool operator==(const this_t& v) const { return data == data; }
     bool operator!=(const this_t& v) const { return data != data; }
 };

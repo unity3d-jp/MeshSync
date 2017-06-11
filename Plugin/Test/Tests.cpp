@@ -4,24 +4,7 @@
 
 using namespace mu;
 
-void Test_Indexed()
-{
-    std::vector<uint16_t> indices16 = { 0,1,0,2,1,3,2 };
-    std::vector<uint32_t> indices32 = { 0,1,2,1,2,3 };
-    std::vector<float> values = { 0.0f, 10.0f, 20.0f, 30.0f };
-
-    IIArray<uint16_t, float> iia1 = { indices16, values };
-    IIArray<uint32_t, float> iia2 = { indices32, values };
-
-    printf("iia1: ");
-    for(auto& v : iia1) { printf("%.f ", v); }
-    printf("\n");
-
-    printf("iia2: ");
-    for (auto& v : iia2) { printf("%.f ", v); }
-    printf("\n");
-}
-
+/*
 void Test_Sync(bool create_server)
 {
     std::unique_ptr<ms::Server> server;
@@ -37,8 +20,8 @@ void Test_Sync(bool create_server)
         mesh->points = {
             { -1.0f, 0.0f, -1.0f },
             { -1.0f, 0.0f,  1.0f },
-            {  1.0f, 0.0f,  1.0f },
-            {  1.0f, 0.0f, -1.0f },
+            { 1.0f, 0.0f,  1.0f },
+            { 1.0f, 0.0f, -1.0f },
         };
         mesh->indices = { 0, 1, 2, 0, 2, 3 };
 
@@ -67,6 +50,25 @@ void Test_Get()
             printf("");
         }
     }
+}
+*/
+
+void Test_Indexed()
+{
+    std::vector<uint16_t> indices16 = { 0,1,0,2,1,3,2 };
+    std::vector<uint32_t> indices32 = { 0,1,2,1,2,3 };
+    std::vector<float> values = { 0.0f, 10.0f, 20.0f, 30.0f };
+
+    IIArray<uint16_t, float> iia1 = { indices16, values };
+    IIArray<uint32_t, float> iia2 = { indices32, values };
+
+    printf("iia1: ");
+    for(auto& v : iia1) { printf("%.f ", v); }
+    printf("\n");
+
+    printf("iia2: ");
+    for (auto& v : iia2) { printf("%.f ", v); }
+    printf("\n");
 }
 
 void Test_GenNormals()

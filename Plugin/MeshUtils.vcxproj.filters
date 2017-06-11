@@ -22,9 +22,6 @@
     <ClInclude Include="MeshUtils\IntrusiveArray.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
-    <ClInclude Include="MeshUtils\Math.h">
-      <Filter>MeshUtils</Filter>
-    </ClInclude>
     <ClInclude Include="MeshUtils\SIMD.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
@@ -50,6 +47,9 @@
       <Filter>MeshUtils</Filter>
     </ClInclude>
     <ClInclude Include="MeshUtils\iterator.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils\VectorMath.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,10 +80,10 @@
     <ClCompile Include="MeshUtils\MeshRefiner.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
-    <ClCompile Include="MeshUtils\Math.cpp">
+    <ClCompile Include="MeshUtils\Misc.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
-    <ClCompile Include="MeshUtils\Misc.cpp">
+    <ClCompile Include="MeshUtils\VectorMath.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
   </ItemGroup>

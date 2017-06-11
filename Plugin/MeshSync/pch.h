@@ -33,6 +33,7 @@
 #include <mutex>
 #include <atomic>
 #include <algorithm>
+#include <thread>
 
 #include "MeshUtils/MeshUtils.h"
 

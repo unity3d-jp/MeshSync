@@ -10,6 +10,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cstdarg>
+#include <cfloat>
+#include <string>
 #include <vector>
 #include <algorithm>
 #include <numeric>

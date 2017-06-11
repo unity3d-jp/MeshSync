@@ -45,19 +45,29 @@ inline void parallel_for_each(Iter begin, Iter end, const Body& body)
 #endif
 }
 
-template<class Body>
-auto invoke(const Body& body) -> decltype(body()) { return body(); }
+
+#if defined(muEnablePPL)
 
 template <class... Bodies>
-inline void parallel_invoke(Bodies... bodies)
-{
-#if defined(muEnablePPL)
-    concurrency::parallel_invoke(bodies...);
+inline void parallel_invoke(Bodies... bodies) { concurrency::parallel_invoke(bodies...); }
+
 #elif defined(muEnableTBB)
-    tbb::parallel_invoke(bodies...);
+
+template <class... Bodies>
+inline void parallel_invoke(Bodies... bodies) { tbb::parallel_invoke(bodies...); }
+
 #else
-    invoke(std::forward<Bodies>(bodies)...);
-#endif
+
+template <class Body>
+inline void parallel_invoke(const Body& body) { body(); }
+
+template<typename Body, typename... Args>
+void parallel_invoke(const Body& first, Args... args) {
+    first();
+    parallel_invoke(args...);
 }
+
+#endif
+
 } // namespace ms
 
