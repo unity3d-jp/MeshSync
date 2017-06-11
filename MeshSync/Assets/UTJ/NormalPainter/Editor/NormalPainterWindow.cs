@@ -42,8 +42,10 @@ namespace UTJ.NormalPainter
 
         private void OnSceneGUI(SceneView sceneView)
         {
-            if (m_target != null)
+            if (m_target != null && m_target.settings.editing)
             {
+                Tools.current = Tool.None;
+
                 if (HandleShortcutKeys())
                 {
                     Event.current.Use();
@@ -70,14 +72,37 @@ namespace UTJ.NormalPainter
                 {
                     var tooltipHeight = 0;
                     var windowHeight = position.height;
+                    var settings = m_target.settings;
 
-                    EditorGUILayout.BeginVertical(GUILayout.Height(windowHeight - tooltipHeight));
-                    m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
-                    DrawNormalPainter();
-                    EditorGUILayout.EndScrollView();
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUI.BeginChangeCheck();
+                    settings.editing = GUILayout.Toggle(settings.editing, EditorGUIUtility.IconContent("EditCollider"),
+                        "Button", GUILayout.Width(33), GUILayout.Height(23));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (settings.editing)
+                        {
+                            Tools.current = Tool.None;
+                        }
+                        else
+                        {
+                            Tools.current = Tool.Move;
+                        }
+                    }
+                    GUILayout.Label("Edit Normals");
+                    EditorGUILayout.EndHorizontal();
 
-                    EditorGUILayout.LabelField(tips);
-                    EditorGUILayout.EndVertical();
+
+                    if (settings.editing)
+                    {
+                        EditorGUILayout.BeginVertical(GUILayout.Height(windowHeight - tooltipHeight));
+                        m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos);
+                        DrawNormalPainter();
+                        EditorGUILayout.EndScrollView();
+
+                        EditorGUILayout.LabelField(tips);
+                        EditorGUILayout.EndVertical();
+                    }
                 }
             }
             else if (m_active != null)

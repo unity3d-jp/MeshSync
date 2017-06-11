@@ -547,7 +547,6 @@ namespace UTJ.NormalPainter
 
                         if (!SelectRect(m_rectStartPoint, m_rectEndPoint, selectSign, settings.selectFrontSideOnly) && !m_rayHit)
                         {
-                            Selection.activeGameObject = null;
                         }
                         m_rectStartPoint = m_rectEndPoint = -Vector2.one;
                     }
@@ -592,7 +591,6 @@ namespace UTJ.NormalPainter
                         handled = true;
                         if (!SelectLasso(m_lassoPoints.ToArray(), selectSign, settings.selectFrontSideOnly) && !m_rayHit)
                         {
-                            Selection.activeGameObject = null;
                         }
 
                         m_lassoPoints.Clear();
@@ -614,19 +612,20 @@ namespace UTJ.NormalPainter
                 UpdateSelection();
             }
 
+            if (et == EventType.MouseDown)
+            {
+                GUIUtility.hotControl = id;
+            }
+            else if (et == EventType.MouseUp)
+            {
+                if (GUIUtility.hotControl == id && e.button == 0)
+                    GUIUtility.hotControl = 0;
+            }
+            e.Use();
+
             if (handled)
             {
-                if (et == EventType.MouseDown)
-                {
-                    GUIUtility.hotControl = id;
-                }
-                else if (et == EventType.MouseUp)
-                {
-                    if (GUIUtility.hotControl == id && e.button == 0)
-                        GUIUtility.hotControl = 0;
-                }
                 ret |= (int)SceneGUIState.Repaint;
-                e.Use();
             }
             return ret;
         }
@@ -635,6 +634,8 @@ namespace UTJ.NormalPainter
         void OnDrawGizmosSelected()
         {
             SetupResources();
+            if(!m_settings.editing) { return; }
+
             if (m_matVisualize == null || m_meshCube == null || m_meshLine == null)
             {
                 Debug.LogWarning("NormalEditor: Some resources are missing.\n");
