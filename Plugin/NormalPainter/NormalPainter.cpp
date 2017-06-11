@@ -421,20 +421,18 @@ npAPI void npScale(
     auto trans = *trans_;
     auto itrans = invert(trans);
 
+    auto to_pspace = trans * iptrans;
+    auto to_lspace = ptrans * itrans;
+
     for (int vi = 0; vi < num_vertices; ++vi)
     {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
-        float3 lpos = mul_p(trans, vertices[vi]);
-        float d = length(lpos - pivot_pos);
-        lpos = mul_p(iptrans, lpos);
-
-        float3 dir = lpos;
-        dir = mul_v(ptrans, dir);
-        dir = mul_v(itrans, dir);
-        dir = normalize(dir) * (d / furthest) * amount;
-        normals[vi] = normalize(normals[vi] + dir * s);
+        float3 vpos = mul_p(to_pspace, vertices[vi]);
+        float d = length(vpos);
+        float3 v = mul_v(to_lspace, (vpos / d) * amount);
+        normals[vi] = normalize(normals[vi] + v * (d / furthest * s));
     }
 }
 
