@@ -320,8 +320,7 @@ npAPI void npAssign(
     float3 v, float3 normals[])
 {
     v = mul_v(invert(*trans_), v);
-    for (int vi = 0; vi < num_vertices; ++vi)
-    {
+    for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
@@ -334,8 +333,7 @@ npAPI void npMove(
     float3 amount, float3 normals[])
 {
     amount = mul_v(invert(*trans_), amount);
-    for (int vi = 0; vi < num_vertices; ++vi)
-    {
+    for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
@@ -353,8 +351,7 @@ npAPI void npRotate(
     auto itrans = invert(trans);
     auto rot = to_float3x3(invert(amount));
 
-    for (int vi = 0; vi < num_vertices; ++vi)
-    {
+    for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
@@ -373,6 +370,14 @@ npAPI void npRotatePivot(
     const float3 vertices[], const float selection[], int num_vertices, const float4x4 *trans_,
     quatf amount, float3 pivot_pos, quatf pivot_rot, float3 normals[])
 {
+    float3 axis;
+    float angle;
+    to_axis_angle(amount, axis, angle);
+    float3 laxis = mul_v(to_float4x4(invert(pivot_rot)), axis);
+    if (near_equal(angle, 0.0f) || std::isnan(angle)) {
+        return;
+    }
+
     float furthest;
     int furthest_idx;
     if (!GetFurthestDistance(vertices, selection, num_vertices, pivot_pos, *trans_, furthest_idx, furthest)) {
@@ -385,24 +390,17 @@ npAPI void npRotatePivot(
     auto itrans = invert(trans);
     auto rot = to_float3x3(amount);
 
-    float3 axis;
-    float angle;
-    to_axis_angle(amount, axis, angle);
+    auto to_pspace = trans * iptrans;
+    auto to_lspace = ptrans * itrans;
 
-    for (int vi = 0; vi < num_vertices; ++vi)
-    {
+    for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
-        float3 lpos = mul_p(trans, vertices[vi]);
-        float d = length(lpos - pivot_pos);
-        lpos = mul_p(iptrans, lpos);
-
-        float3 dir = lpos - (rot * lpos);
-        dir = mul_v(ptrans, dir);
-        dir = mul_v(itrans, dir);
-        dir = normalize(dir) * (d / furthest) * angle;
-        normals[vi] = normalize(normals[vi] + dir * s);
+        float3 vpos = mul_p(to_pspace, vertices[vi]);
+        float d = length(vpos);
+        float3 v = normalize(mul_v(to_lspace, vpos - (rot * vpos)));
+        normals[vi] = normalize(normals[vi] + v * (d / furthest * angle * s));
     }
 }
 
@@ -424,8 +422,7 @@ npAPI void npScale(
     auto to_pspace = trans * iptrans;
     auto to_lspace = ptrans * itrans;
 
-    for (int vi = 0; vi < num_vertices; ++vi)
-    {
+    for (int vi = 0; vi < num_vertices; ++vi) {
         float s = selection[vi];
         if (s == 0.0f) continue;
 
