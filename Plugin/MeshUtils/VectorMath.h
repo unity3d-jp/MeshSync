@@ -957,7 +957,7 @@ inline bool ray_triangle_intersection(float3 pos, float3 dir, float3 p1, float3 
     float3 e2 = p3 - p1;
     float3 p = cross(dir, e2);
     float det = dot(e1, p);
-    if (abs(det) < epsdet) return false;
+    if (std::abs(det) < epsdet) return false;
     float inv_det = 1.0f / det;
     float3 t = pos - p1;
     float u = dot(t, p) * inv_det;

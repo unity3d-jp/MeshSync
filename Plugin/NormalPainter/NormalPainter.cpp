@@ -469,7 +469,7 @@ npAPI int npBrushLerp(
     const float3 pos, float radius, float strength, float falloff, const float3 base[], float3 normals[])
 {
     return SelectInside(pos, radius, vertices, num_vertices, *trans, [&](int vi, float d, float3 p) {
-        float s = clamp01(std::pow(1.0f - d / radius, falloff) * abs(strength));
+        float s = clamp01(std::pow(1.0f - d / radius, falloff) * std::abs(strength));
         if (selection) s *= selection[vi];
 
         float sign = strength < 0.0f ? -1.0f : 1.0f;
