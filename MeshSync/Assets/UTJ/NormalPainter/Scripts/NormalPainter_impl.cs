@@ -185,32 +185,13 @@ namespace UTJ.NormalPainter
         {
             int prevSelected = m_numSelected;
 
-            float st = 0.0f;
-            m_numSelected = 0;
-            m_selectionPos = Vector3.zero;
-            m_selectionNormal = Vector3.zero;
-            int numPoints = m_points.Length;
+            Matrix4x4 trans = GetComponent<Transform>().localToWorldMatrix;
+            m_numSelected = npUpdateSelection(m_points, m_normals, m_selection, m_points.Length, ref trans,
+                ref m_selectionPos, ref m_selectionNormal);
 
-            for (int i = 0; i < numPoints; ++i)
-            {
-                float s = m_selection[i];
-                if (s > 0.0f)
-                {
-                    m_selectionPos += m_points[i] * s;
-                    m_selectionNormal += m_normals[i] * s;
-                    ++m_numSelected;
-                    st += s;
-                }
-            }
-
+            m_selectionRot = Quaternion.identity;
             if (m_numSelected > 0)
             {
-                var trans = GetComponent<Transform>();
-                var matrix = trans.localToWorldMatrix;
-
-                m_selectionPos /= st;
-                m_selectionPos = matrix.MultiplyPoint(m_selectionPos);
-                m_selectionNormal = matrix.MultiplyVector(m_selectionNormal).normalized;
                 m_selectionRot = Quaternion.LookRotation(m_selectionNormal);
                 m_settings.pivotPos = m_selectionPos;
                 m_settings.pivotRot = m_selectionRot;
@@ -286,10 +267,10 @@ namespace UTJ.NormalPainter
         {
             var cam = SceneView.lastActiveSceneView.camera;
             var pixelRect = cam.pixelRect;
-			var rect = cam.rect;
+            var rect = cam.rect;
             return new Vector2(
-				 v.x / pixelRect.width * rect.width * 2.0f - 1.0f,
-				(v.y / pixelRect.height * rect.height * 2.0f - 1.0f) * -1.0f);
+                    v.x / pixelRect.width * rect.width * 2.0f - 1.0f,
+                    (v.y / pixelRect.height * rect.height * 2.0f - 1.0f) * -1.0f);
         }
 
         public bool SelectSingle(Event e, float strength, bool frontFaceOnly)
@@ -597,6 +578,11 @@ namespace UTJ.NormalPainter
         [DllImport("NormalPainter")] static extern int npSelectBrush(
             Vector3[] vertices, int num_vertices, ref Matrix4x4 trans,
             Vector3 pos, float radius, float strength, float falloff, float[] seletion);
+
+        [DllImport("NormalPainter")] static extern int npUpdateSelection(
+            Vector3[] vertices, Vector3[] normals, float[] seletion, int num_vertices, ref Matrix4x4 trans,
+            ref Vector3 selection_pos, ref Vector3 selection_normal);
+
 
         [DllImport("NormalPainter")] static extern int npBrushAdd(
             Vector3[] vertices, float[] seletion, int num_vertices, ref Matrix4x4 trans,

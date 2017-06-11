@@ -282,6 +282,38 @@ npAPI int npSelectBrush(
     });
 }
 
+npAPI int npUpdateSelection(
+    const float3 vertices[], const float3 normals[], const float seletion[], int num_vertices, const float4x4 *trans,
+    float3 *selection_pos, float3 *selection_normal)
+{
+    float st = 0.0f;
+    int num_selected = 0;
+    float3 spos = float3::zero();
+    float3 snormal = float3::zero();
+    quatf srot = quatf::identity();
+
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        float s = seletion[vi];
+        if (s > 0.0f) {
+            spos += vertices[vi] * s;
+            snormal += normals[vi] * s;
+            ++num_selected;
+            st += s;
+        }
+    }
+
+    if (num_selected > 0) {
+        spos /= st;
+        spos = mul_p(*trans, spos);
+        snormal = normalize(mul_v(*trans, snormal));
+        srot = to_quat(look33(snormal, {0,1,0}));
+    }
+
+    *selection_pos = spos;
+    *selection_normal = snormal;
+    return num_selected;
+}
+
 
 npAPI void npAssign(
     const float selection[], int num_vertices, const float4x4 *trans_,
