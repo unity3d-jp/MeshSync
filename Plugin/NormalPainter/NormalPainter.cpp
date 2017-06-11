@@ -402,7 +402,9 @@ npAPI void npRotatePivot(
 
         float3 vpos = mul_p(to_pspace, vertices[vi]);
         float d = length(vpos);
-        float3 v = normalize(mul_v(to_lspace, vpos - (rot * vpos)));
+        float3 v = vpos - (rot * vpos);
+        if(near_equal(length(v), 0.0f)) { continue; }
+        v = normalize(mul_v(to_lspace, v));
         normals[vi] = normalize(normals[vi] + v * (d / furthest * angle * s));
     }
 }

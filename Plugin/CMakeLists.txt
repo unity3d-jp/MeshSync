@@ -30,7 +30,8 @@ ELSEIF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 ENDIF()
 
 SET(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MeshSync/Assets")
-SET(PLUGINS_DIR "${ASSETS_DIR}/UTJ/Plugins/x86_64")
+SET(NORMAL_PAINTER_PLUGINS_DIR "${ASSETS_DIR}/UTJ/NormalPainter/Plugins/x86_64")
+SET(MESHSYNC_PLUGINS_DIR "${ASSETS_DIR}/UTJ/MeshSync/Plugins/x86_64")
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -172,8 +173,8 @@ ENDIF()
 IF(ENABLE_OSX_BUNDLE)
     # deploy
     ADD_CUSTOM_TARGET(deploy ALL
-        COMMAND rm -rf ${PLUGINS_DIR}/NormalPainter.bundle
-        COMMAND cp -r NormalPainter.bundle ${PLUGINS_DIR}
+        COMMAND rm -rf ${NORMAL_PAINTER_PLUGINS_DIR}/NormalPainter.bundle
+        COMMAND cp -r NormalPainter.bundle ${NORMAL_PAINTER_PLUGINS_DIR}
         DEPENDS NormalPainter
     )
 ELSE()
@@ -189,8 +190,8 @@ ELSE()
 
     # deploy
     ADD_CUSTOM_TARGET(deploy ALL
-        COMMAND rm -rf ${PLUGINS_DIR}/$<TARGET_FILE_NAME:NormalPainter>
-        COMMAND cp $<TARGET_FILE:NormalPainter> ${PLUGINS_DIR}
+        COMMAND rm -rf ${NORMAL_PAINTER_PLUGINS_DIR}/$<TARGET_FILE_NAME:NormalPainter>
+        COMMAND cp $<TARGET_FILE:NormalPainter> ${NORMAL_PAINTER_PLUGINS_DIR}
         DEPENDS NormalPainter
     )
 ENDIF()
