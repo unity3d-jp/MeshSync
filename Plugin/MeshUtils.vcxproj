@@ -19,38 +19,39 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshUtils\Allocator.h" />
+    <ClInclude Include="MeshUtils\muAllocator.h" />
     <ClInclude Include="MeshUtils\ampmath.h" />
     <ClInclude Include="MeshUtils\ampmath_impl.h" />
-    <ClInclude Include="MeshUtils\Concurrency.h" />
-    <ClInclude Include="MeshUtils\IntrusiveArray.h" />
+    <ClInclude Include="MeshUtils\muConcurrency.h" />
+    <ClInclude Include="MeshUtils\muConfig.h" />
+    <ClInclude Include="MeshUtils\muIntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
-    <ClInclude Include="MeshUtils\iterator.h" />
-    <ClInclude Include="MeshUtils\MeshRefiner.h" />
+    <ClInclude Include="MeshUtils\muIterator.h" />
+    <ClInclude Include="MeshUtils\muMeshRefiner.h" />
     <ClInclude Include="MeshUtils\mikktspace.h" />
-    <ClInclude Include="MeshUtils\Misc.h" />
+    <ClInclude Include="MeshUtils\muMisc.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
-    <ClInclude Include="MeshUtils\RawVector.h" />
-    <ClInclude Include="MeshUtils\SIMD.h" />
-    <ClInclude Include="MeshUtils\tls.h" />
-    <ClInclude Include="MeshUtils\VectorMath.h" />
-    <ClInclude Include="MeshUtils\Vertex.h" />
+    <ClInclude Include="MeshUtils\muRawVector.h" />
+    <ClInclude Include="MeshUtils\muSIMD.h" />
+    <ClInclude Include="MeshUtils\muTLS.h" />
+    <ClInclude Include="MeshUtils\muMath.h" />
+    <ClInclude Include="MeshUtils\muVertex.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshUtils\Allocator.cpp" />
-    <ClCompile Include="MeshUtils\MeshRefiner.cpp" />
+    <ClCompile Include="MeshUtils\muAllocator.cpp" />
+    <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\mikktspace.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshUtils\Misc.cpp" />
+    <ClCompile Include="MeshUtils\muMisc.cpp" />
     <ClCompile Include="MeshUtils\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshUtils\MeshUtils.cpp" />
-    <ClCompile Include="MeshUtils\SIMD.cpp" />
-    <ClCompile Include="MeshUtils\VectorMath.cpp" />
-    <ClCompile Include="MeshUtils\Vertex.cpp" />
+    <ClCompile Include="MeshUtils\muSIMD.cpp" />
+    <ClCompile Include="MeshUtils\muMath.cpp" />
+    <ClCompile Include="MeshUtils\muVertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">

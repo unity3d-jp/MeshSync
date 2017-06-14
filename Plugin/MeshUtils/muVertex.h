@@ -2,6 +2,16 @@
 
 namespace mu {
 
+template<int N>
+struct Weights
+{
+    float   weights[N] = {};
+    int     indices[N] = {};
+};
+using Weights4 = Weights<4>;
+using Weights8 = Weights<8>;
+
+
 // vertex interleave
 
 enum class VertexFormat

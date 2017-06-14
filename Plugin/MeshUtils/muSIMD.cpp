@@ -1,7 +1,6 @@
 #include "pch.h"
-#include "MeshUtils.h"
-#include "Concurrency.h"
-#include "SIMD.h"
+#include "muMath.h"
+#include "muSIMD.h"
 
 namespace mu {
 

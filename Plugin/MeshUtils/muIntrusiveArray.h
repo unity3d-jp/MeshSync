@@ -1,6 +1,6 @@
 #pragma once
 
-#include "iterator.h"
+#include "muIterator.h"
 
 template<class T>
 class IntrusiveArray

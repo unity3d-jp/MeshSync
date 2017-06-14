@@ -2,25 +2,16 @@
 
 #include <vector>
 #include <memory>
-#include "VectorMath.h"
-#include "RawVector.h"
-#include "IntrusiveArray.h"
-#include "SIMD.h"
-#include "Vertex.h"
-#include "tls.h"
-#include "Misc.h"
-#include "Concurrency.h"
+#include "muMath.h"
+#include "muRawVector.h"
+#include "muIntrusiveArray.h"
+#include "muSIMD.h"
+#include "muVertex.h"
+#include "muTLS.h"
+#include "muMisc.h"
+#include "muConcurrency.h"
 
 namespace mu {
-
-template<int N>
-struct Weights
-{
-    float   weights[N] = {};
-    int     indices[N] = {};
-};
-using Weights4 = Weights<4>;
-using Weights8 = Weights<8>;
 
 // size of dst must be num_points
 bool GenerateNormals(
@@ -264,4 +255,4 @@ inline uint32_t Float4ToColor32(const float4& c)
 
 } // namespace mu
 
-#include "MeshRefiner.h"
+#include "muMeshRefiner.h"

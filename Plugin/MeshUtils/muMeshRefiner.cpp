@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "MeshUtils.h"
-#include "SIMD.h"
-#include "MeshRefiner.h"
 
 namespace mu {
 

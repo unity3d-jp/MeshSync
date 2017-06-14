@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "MeshUtils.h"
-#include "Vertex.h"
+#include "muMath.h"
+#include "muVertex.h"
 
 namespace mu {
 

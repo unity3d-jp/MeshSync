@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "VectorMath.h"
+#include "muMath.h"
 
 #ifdef muMath_AddNamespace
 namespace mu {

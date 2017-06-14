@@ -1,9 +1,6 @@
 #include "pch.h"
 #include "MeshUtils.h"
 #include "mikktspace.h"
-#include "RawVector.h"
-#include "IntrusiveArray.h"
-#include "SIMD.h"
 
 #ifdef muEnableHalf
 #ifdef _WIN32
