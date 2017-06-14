@@ -9,9 +9,7 @@ SET(ISPC "/usr/local/bin/ispc" CACHE PATH "Path to Intel ISPC")
 MARK_AS_ADVANCED(FORCE ISPC)
 
 OPTION(ENABLE_ISPC "Use Intel ISPC to generate SIMDified code. It can significantly boost performance." ON)
-OPTION(BUILD_NORMAL_PAINTER "Build NormalPainter" ON)
-OPTION(BUILD_MESHSYNC_SERVER "Build MeshSyncServer" OFF)
-OPTION(BUILD_MESHSYNC_CLIENT_MAYA "Build MeshSyncClientMAYA" OFF)
+OPTION(BUILD_MAYA_CLIENT "Build MeshSyncClientMAYA" OFF)
 OPTION(ENABLE_TESTS "Tests" OFF)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
@@ -30,8 +28,7 @@ ELSEIF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 ENDIF()
 
 SET(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../MeshSync/Assets")
-SET(NORMAL_PAINTER_PLUGINS_DIR "${ASSETS_DIR}/UTJ/NormalPainter/Plugins/x86_64")
-SET(MESHSYNC_PLUGINS_DIR "${ASSETS_DIR}/UTJ/MeshSync/Plugins/x86_64")
+SET(PLUGINS_DIR "${ASSETS_DIR}/UTJ/MeshSync/Plugins/x86_64")
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -96,58 +93,33 @@ IF(ENABLE_ISPC)
 ENDIF()
 
 
-# NormalPainter
-IF(BUILD_NORMAL_PAINTER)
-    FILE(GLOB NP_CXX_FILES NormalPainter/*.cpp)
-    FILE(GLOB NP_H_FILES NormalPainter/*.h)
-    IF(ENABLE_OSX_BUNDLE)
-        ADD_LIBRARY(NormalPainter MODULE ${NP_CXX_FILES} ${NP_H_FILES})
-    ELSE()
-        ADD_LIBRARY(NormalPainter SHARED ${NP_CXX_FILES} ${NP_H_FILES})
-    ENDIF()
-    ADD_DEPENDENCIES(NormalPainter MeshUtils)
-    TARGET_INCLUDE_DIRECTORIES(NormalPainter PUBLIC ./NormalPainter)
-    TARGET_LINK_LIBRARIES(NormalPainter MeshUtils)
-
-    IF(ENABLE_OSX_BUNDLE)
-        SET_TARGET_PROPERTIES(NormalPainter PROPERTIES BUNDLE ON)
-        SET_TARGET_PROPERTIES(NormalPainter PROPERTIES PREFIX "")
-        SET_TARGET_PROPERTIES(NormalPainter PROPERTIES SUFFIX ".bundle")
-    ENDIF()
-ENDIF()
-
-
 # MeshSync
-IF(BUILD_MESHSYNC_SERVER OR BUILD_MESHSYNC_CLIENT_MAYA)
-    FILE(GLOB MS_CXX_FILES MeshSync/*.cpp)
-    FILE(GLOB MS_H_FILES MeshSync/*.h)
-    ADD_LIBRARY(MeshSync STATIC ${MS_CXX_FILES} ${MS_H_FILES})
-    TARGET_INCLUDE_DIRECTORIES(MeshSync PUBLIC ./MeshSync)
-ENDIF()
+FILE(GLOB MS_CXX_FILES MeshSync/*.cpp)
+FILE(GLOB MS_H_FILES MeshSync/*.h)
+ADD_LIBRARY(MeshSync STATIC ${MS_CXX_FILES} ${MS_H_FILES})
+TARGET_INCLUDE_DIRECTORIES(MeshSync PUBLIC ./MeshSync)
 
 # MeshSyncServer
-IF(BUILD_MESHSYNC_SERVER)
-    FILE(GLOB MSS_CXX_FILES MeshSyncServer/*.cpp)
-    FILE(GLOB MSS_H_FILES MeshSyncServer/*.h)
-    IF(ENABLE_OSX_BUNDLE)
-        ADD_LIBRARY(MeshSyncServer MODULE ${MSS_CXX_FILES} ${MSS_H_FILES})
-    ELSE()
-        ADD_LIBRARY(MeshSyncServer SHARED ${MSS_CXX_FILES} ${MSS_H_FILES})
-    ENDIF()
-    ADD_DEPENDENCIES(MeshSyncServer MeshUtils MeshSync)
-    TARGET_INCLUDE_DIRECTORIES(MeshSyncServer PUBLIC ./MeshSyncServer)
-    TARGET_LINK_LIBRARIES(MeshSyncServer MeshUtils MeshSync)
+FILE(GLOB MSS_CXX_FILES MeshSyncServer/*.cpp)
+FILE(GLOB MSS_H_FILES MeshSyncServer/*.h)
+IF(ENABLE_OSX_BUNDLE)
+    ADD_LIBRARY(MeshSyncServer MODULE ${MSS_CXX_FILES} ${MSS_H_FILES})
+ELSE()
+    ADD_LIBRARY(MeshSyncServer SHARED ${MSS_CXX_FILES} ${MSS_H_FILES})
+ENDIF()
+ADD_DEPENDENCIES(MeshSyncServer MeshUtils MeshSync)
+TARGET_INCLUDE_DIRECTORIES(MeshSyncServer PUBLIC ./MeshSyncServer)
+TARGET_LINK_LIBRARIES(MeshSyncServer MeshUtils MeshSync)
 
-    IF(ENABLE_OSX_BUNDLE)
-        SET_TARGET_PROPERTIES(MeshSyncServer PROPERTIES BUNDLE ON)
-        SET_TARGET_PROPERTIES(MeshSyncServer PROPERTIES PREFIX "")
-        SET_TARGET_PROPERTIES(MeshSyncServer PROPERTIES SUFFIX ".bundle")
-    ENDIF()
+IF(ENABLE_OSX_BUNDLE)
+    SET_TARGET_PROPERTIES(MeshSyncServer PROPERTIES BUNDLE ON)
+    SET_TARGET_PROPERTIES(MeshSyncServer PROPERTIES PREFIX "")
+    SET_TARGET_PROPERTIES(MeshSyncServer PROPERTIES SUFFIX ".bundle")
 ENDIF()
 
 
 # MeshSyncClientMaya
-IF(BUILD_MESHSYNC_CLIENT_MAYA)
+IF(BUILD_MAYA_CLIENT)
     FILE(GLOB MSCMAYA_CXX_FILES MeshSyncClientMaya/*.cpp)
     FILE(GLOB MSCMAYA_H_FILES MeshSyncClientMaya/*.h)
     IF(ENABLE_OSX_BUNDLE)
@@ -163,16 +135,15 @@ IF(BUILD_MESHSYNC_CLIENT_MAYA)
         SET_TARGET_PROPERTIES(MeshSyncClientMaya PROPERTIES PREFIX "")
         SET_TARGET_PROPERTIES(MeshSyncClientMaya PROPERTIES SUFFIX ".bundle")
     ENDIF()
-
 ENDIF()
 
 
 IF(ENABLE_OSX_BUNDLE)
     # deploy
     ADD_CUSTOM_TARGET(deploy ALL
-        COMMAND rm -rf ${NORMAL_PAINTER_PLUGINS_DIR}/NormalPainter.bundle
-        COMMAND cp -r NormalPainter.bundle ${NORMAL_PAINTER_PLUGINS_DIR}
-        DEPENDS NormalPainter
+        COMMAND rm -rf ${PLUGINS_DIR}/MeshSyncServer.bundle
+        COMMAND cp -r MeshSyncServer.bundle ${PLUGINS_DIR}
+        DEPENDS MeshSyncServer
     )
 ELSE()
     # tests
@@ -187,8 +158,8 @@ ELSE()
 
     # deploy
     ADD_CUSTOM_TARGET(deploy ALL
-        COMMAND rm -rf ${NORMAL_PAINTER_PLUGINS_DIR}/$<TARGET_FILE_NAME:NormalPainter>
-        COMMAND cp $<TARGET_FILE:NormalPainter> ${NORMAL_PAINTER_PLUGINS_DIR}
-        DEPENDS NormalPainter
+        COMMAND rm -rf ${PLUGINS_DIR}/$<TARGET_FILE_NAME:MeshSyncServer>
+        COMMAND cp $<TARGET_FILE:MeshSyncServer> ${PLUGINS_DIR}
+        DEPENDS MeshSyncServer
     )
 ENDIF()
