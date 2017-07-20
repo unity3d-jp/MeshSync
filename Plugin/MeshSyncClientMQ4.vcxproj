@@ -82,7 +82,7 @@
   </ImportGroup>
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk4;$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
+#include <cstdarg>
 #include <string>
 #include <vector>
 #include <map>
@@ -13,5 +14,3 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
-
-#include "MeshUtils/MeshUtils.h"

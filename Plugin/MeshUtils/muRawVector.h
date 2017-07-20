@@ -4,17 +4,18 @@
 #include <initializer_list>
 #include "muAllocator.h"
 
-template<class T, size_t Alignment = 0x20>
+template<class T, int Align = 0x20>
 class RawVector
 {
 public:
-    typedef T               value_type;
-    typedef T&              reference;
-    typedef const T&        const_reference;
-    typedef T*              pointer;
-    typedef const T*        const_pointer;
-    typedef pointer         iterator;
-    typedef const_pointer   const_iterator;
+    using value_type      = T;
+    using reference       = T&;
+    using const_reference = const T&;
+    using pointer         = T*;
+    using const_pointer   = const T*;
+    using iterator        = pointer;
+    using const_iterator  = const_pointer;
+    static const int alignment = Align;
 
     RawVector() {}
     RawVector(const RawVector& v)
@@ -75,7 +76,7 @@ public:
     iterator end() { return m_data + m_size; }
     const_iterator end() const { return m_data + m_size; }
 
-    static void* allocate(size_t size) { return AlignedMalloc(size, Alignment); }
+    static void* allocate(size_t size) { return AlignedMalloc(size, alignment); }
     static void deallocate(void *addr, size_t /*size*/) { AlignedFree(addr); }
 
     void reserve(size_t s)
@@ -89,6 +90,19 @@ public:
             memcpy(newdata, m_data, oldsize);
             deallocate(m_data, oldsize);
             m_data = newdata;
+            m_capacity = s;
+        }
+    }
+
+    void reserve_discard(size_t s)
+    {
+        if (s > m_capacity) {
+            s = std::max<size_t>(s, m_size * 2);
+            size_t newsize = sizeof(T) * s;
+            size_t oldsize = sizeof(T) * m_size;
+
+            deallocate(m_data, oldsize);
+            m_data = (T*)allocate(newsize);
             m_capacity = s;
         }
     }
@@ -120,11 +134,23 @@ public:
         m_size = s;
     }
 
+    void resize_discard(size_t s)
+    {
+        reserve_discard(s);
+        m_size = s;
+    }
+
+    void resize_zeroclear(size_t s)
+    {
+        resize_discard(s);
+        zeroclear();
+    }
+
     void resize(size_t s, const T& v)
     {
         size_t pos = size();
         resize(s);
-        // std::fill() can suppress compiler's optimization...
+        // std::fill() can be significantly slower than plain copy
         for (size_t i = pos; i < s; ++i) {
             m_data[i] = v;
         }
