@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.MeshSync
 {
     class MaterialWindow : EditorWindow
     {

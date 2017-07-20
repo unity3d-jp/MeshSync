@@ -3,7 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace UTJ
+namespace UTJ.MeshSync
 {
     [CustomEditor(typeof(MeshSyncServer))]
     public class MeshSyncServerEditor : Editor
