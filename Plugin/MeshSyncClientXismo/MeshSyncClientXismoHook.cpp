@@ -17,16 +17,20 @@ struct BufferState
     void    *mapped_data = nullptr;
     GLuint  handle = 0;
     int     stride = 0;
+    bool    triangle = false;
     bool    dirty = false;
 
-    ms::Mesh send_data;
-    std::future<void> send_future;
+    ms::MeshPtr send_data;
 };
 
 struct XismoSyncContext
 {
     ms::ClientSettings settings;
+    float scale_factor = 1.0f;
+
     std::map<uint32_t, BufferState> buffers;
+    RawVector<BufferState*> buffers_to_send;
+    std::future<void> send_future;
     uint32_t current_vb = 0;
 };
 
@@ -53,21 +57,74 @@ static BufferState* GetActiveBuffer(GLenum target)
     return bid != 0 ? &g_ctx.buffers[bid] : nullptr;
 }
 
-static void SendMeshData(BufferState& buf)
+static void SendMeshes()
 {
-    auto vertices = (const vertex_t*)buf.data.data();
-    size_t num_vertices = buf.data.size() / sizeof(vertex_t);
-
-    buf.send_data.points.resize_discard(num_vertices);
-    buf.send_data.normals.resize_discard(num_vertices);
-    buf.send_data.uv.resize_discard(num_vertices);
-    buf.send_data.colors.resize_discard(num_vertices);
-    for (size_t vi = 0; vi < num_vertices; ++vi) {
-        buf.send_data.points[vi] = vertices[vi].vertex;
-        buf.send_data.normals[vi] = vertices[vi].normal;
-        buf.send_data.uv[vi] = vertices[vi].uv;
-        buf.send_data.colors[vi] = vertices[vi].color;
+    if (g_ctx.send_future.valid() && g_ctx.send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+    {
+        // previous request is not completed yet
+        return;
     }
+
+    for (auto& pair : g_ctx.buffers) {
+        auto& buf = pair.second;
+        if (buf.stride == sizeof(vertex_t) && buf.dirty && buf.triangle) {
+            g_ctx.buffers_to_send.push_back(&buf);
+        }
+    }
+    if (!g_ctx.buffers_to_send.empty()) {
+        return;
+    }
+
+    g_ctx.send_future = std::async(std::launch::async, []() {
+        ms::Client client(g_ctx.settings);
+
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = g_ctx.scale_factor;
+
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
+        }
+
+        parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](BufferState *buf) {
+            buf->dirty = false;
+
+            auto vertices = (const vertex_t*)buf->data.data();
+            size_t num_vertices = buf->data.size() / sizeof(vertex_t);
+
+            if (!buf->send_data) {
+                buf->send_data.reset(new ms::Mesh());
+            }
+            auto& mesh = *buf->send_data;
+
+            mesh.points.resize_discard(num_vertices);
+            mesh.normals.resize_discard(num_vertices);
+            mesh.uv.resize_discard(num_vertices);
+            mesh.colors.resize_discard(num_vertices);
+            for (size_t vi = 0; vi < num_vertices; ++vi) {
+                mesh.points[vi] = vertices[vi].vertex;
+                mesh.normals[vi] = vertices[vi].normal;
+                mesh.uv[vi] = vertices[vi].uv;
+                mesh.colors[vi] = vertices[vi].color;
+            }
+
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.meshes = { buf->send_data };
+            client.send(set);
+        });
+        g_ctx.buffers_to_send.clear();
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
+        }
+    });
 }
 
 
@@ -78,12 +135,12 @@ static void WINAPI glGenBuffers_hook(GLsizei n, GLuint* buffers)
 
 static void WINAPI glDeleteBuffers_hook(GLsizei n, const GLuint* buffers)
 {
+    if (g_ctx.send_future.valid()) {
+        g_ctx.send_future.wait();
+    }
     for (int i = 0; i < n; ++i) {
         auto ib = g_ctx.buffers.find(buffers[i]);
         if (ib != g_ctx.buffers.end()) {
-            if (ib->second.send_future.valid()) {
-                ib->second.send_future.wait();
-            }
             g_ctx.buffers.erase(ib);
         }
     }
@@ -147,8 +204,7 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
     if (mode == GL_TRIANGLES) {
         auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
         if (buf && buf->stride == sizeof(vertex_t) && buf->dirty) {
-            buf->dirty = false;
-            SendMeshData(*buf);
+            buf->triangle = true;
         }
     }
     _glDrawElements(mode, count, type, indices);
@@ -156,6 +212,7 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
 
 static void WINAPI glFlush_hook(void)
 {
+    SendMeshes();
     _glFlush();
 }
 
