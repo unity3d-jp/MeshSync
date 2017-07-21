@@ -11,7 +11,7 @@ struct vertex_t
     float state;
 };
 
-struct BufferState
+struct VertexData
 {
     RawVector<char> data;
     void    *mapped_data = nullptr;
@@ -26,10 +26,12 @@ struct BufferState
 struct XismoSyncContext
 {
     ms::ClientSettings settings;
-    float scale_factor = 1.0f;
+    float scale_factor = 200.0f;
 
-    std::map<uint32_t, BufferState> buffers;
-    RawVector<BufferState*> buffers_to_send;
+    std::map<uint32_t, VertexData> buffers;
+    std::vector<VertexData*> buffers_to_send;
+    std::vector<ms::MaterialPtr> materials;
+    std::vector<ms::MeshPtr> deleted;
     std::future<void> send_future;
     uint32_t current_vb = 0;
 };
@@ -48,7 +50,7 @@ static void* (*GLAPIENTRY _wglGetProcAddress)(const char* name);
 static XismoSyncContext g_ctx;
 
 
-static BufferState* GetActiveBuffer(GLenum target)
+static VertexData* GetActiveBuffer(GLenum target)
 {
     uint32_t bid = 0;
     if (target == GL_ARRAY_BUFFER) {
@@ -82,6 +84,12 @@ static void SendMeshes()
         scene_settings.handedness = ms::Handedness::Right;
         scene_settings.scale_factor = g_ctx.scale_factor;
 
+        if (g_ctx.materials.empty()) {
+            auto mat = new ms::Material();
+            mat->name = "Default Material";
+            g_ctx.materials.emplace_back(mat);
+        }
+
         // notify scene begin
         {
             ms::FenceMessage fence;
@@ -89,14 +97,29 @@ static void SendMeshes()
             client.send(fence);
         }
 
-        parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](BufferState *buf) {
+        // send material
+        {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.materials = g_ctx.materials;
+            client.send(set);
+        }
+
+        // send meshes
+        parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](VertexData *buf) {
             buf->dirty = false;
 
             auto vertices = (const vertex_t*)buf->data.data();
-            size_t num_vertices = buf->data.size() / sizeof(vertex_t);
+            int num_vertices = (int)(buf->data.size() / sizeof(vertex_t));
+            int num_triangles = num_vertices / 3;
 
             if (!buf->send_data) {
                 buf->send_data.reset(new ms::Mesh());
+
+                char name[128];
+                sprintf(name, "/xismo:[%08x]", buf->handle);
+                buf->send_data->path = name;
+                buf->send_data->id = buf->handle;
             }
             auto& mesh = *buf->send_data;
 
@@ -104,11 +127,20 @@ static void SendMeshes()
             mesh.normals.resize_discard(num_vertices);
             mesh.uv.resize_discard(num_vertices);
             mesh.colors.resize_discard(num_vertices);
-            for (size_t vi = 0; vi < num_vertices; ++vi) {
+            mesh.indices.resize_discard(num_vertices);
+            for (int vi = 0; vi < num_vertices; ++vi) {
                 mesh.points[vi] = vertices[vi].vertex;
                 mesh.normals[vi] = vertices[vi].normal;
                 mesh.uv[vi] = vertices[vi].uv;
                 mesh.colors[vi] = vertices[vi].color;
+                mesh.indices[vi] = vi;
+            }
+
+            mesh.counts.resize_discard(num_triangles);
+            mesh.materialIDs.resize_discard(num_triangles);
+            for (int ti = 0; ti < num_triangles; ++ti) {
+                mesh.counts[ti] = 3;
+                mesh.materialIDs[ti] = 0;
             }
 
             ms::SetMessage set;
@@ -117,6 +149,16 @@ static void SendMeshes()
             client.send(set);
         });
         g_ctx.buffers_to_send.clear();
+
+        // send deleted
+        if (!g_ctx.deleted.empty()) {
+            ms::DeleteMessage del;
+            for (auto& p : g_ctx.deleted) {
+                del.targets.push_back({ p->path , p->id });
+            }
+            client.send(del);
+            g_ctx.deleted.clear();
+        }
 
         // notify scene end
         {
@@ -139,9 +181,12 @@ static void WINAPI glDeleteBuffers_hook(GLsizei n, const GLuint* buffers)
         g_ctx.send_future.wait();
     }
     for (int i = 0; i < n; ++i) {
-        auto ib = g_ctx.buffers.find(buffers[i]);
-        if (ib != g_ctx.buffers.end()) {
-            g_ctx.buffers.erase(ib);
+        auto it = g_ctx.buffers.find(buffers[i]);
+        if (it != g_ctx.buffers.end()) {
+            if (it->second.send_data) {
+                g_ctx.deleted.push_back(it->second.send_data);
+            }
+            g_ctx.buffers.erase(it);
         }
     }
     _glDeleteBuffers(n, buffers);
