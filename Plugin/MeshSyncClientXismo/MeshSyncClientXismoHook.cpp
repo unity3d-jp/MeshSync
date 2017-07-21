@@ -335,7 +335,7 @@ static void* AllocateExecutableMemoryForward(size_t size, void *location)
     return ret;
 }
 
-static void* EmitJumpInstruction(void* from_, void* to_)
+static void* EmitJmpInstruction(void* from_, void* to_)
 {
     BYTE *from = (BYTE*)from_;
     BYTE *to = (BYTE*)to_;
@@ -382,7 +382,7 @@ static void* OverrideDLLExport(HMODULE module, const char *funcname, void *repla
             void *before = (void*)(ImageBase + RVAFunctions[RVANameOrdinals[i]]);
             DWORD RVAJumpTable = (DWORD)((size_t)jump_table - ImageBase);
             ForceWrite<DWORD>(RVAFunctions[RVANameOrdinals[i]], RVAJumpTable);
-            jump_table = EmitJumpInstruction(jump_table, replacement);
+            jump_table = EmitJmpInstruction(jump_table, replacement);
             return before;
         }
     }

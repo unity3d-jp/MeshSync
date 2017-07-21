@@ -3,7 +3,7 @@
 #define HookDllName "MeshSyncClientXismoHook.dll"
 #define XismoExeName "xismo.exe"
 
-bool InjectDLL(HANDLE hProcess, const std::string& dllname)
+static bool InjectDLL(HANDLE hProcess, const std::string& dllname)
 {
     SIZE_T bytesRet = 0;
     DWORD oldProtect = 0;
