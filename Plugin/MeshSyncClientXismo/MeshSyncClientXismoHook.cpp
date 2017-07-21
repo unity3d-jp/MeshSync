@@ -42,9 +42,9 @@ static PFNGLBUFFERDATAPROC      _glBufferData;
 static PFNGLMAPBUFFERPROC       _glMapBuffer;
 static PFNGLUNMAPBUFFERPROC     _glUnmapBuffer;
 static PFNGLVERTEXATTRIBPOINTERPROC _glVertexAttribPointer;
-static void* (*WINAPI _wglGetProcAddress)(const char* name);
-static void(*WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
-static void(*WINAPI _glFlush)();
+static void(*GLAPIENTRY _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
+static void(*GLAPIENTRY _glFlush)(void);
+static void* (*GLAPIENTRY _wglGetProcAddress)(const char* name);
 
 static BufferState* GetActiveBuffer(GLenum target)
 {
@@ -127,40 +127,6 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
-
-struct HookData
-{
-    const char *name;
-    void *func_hook;
-};
-static std::vector<HookData> g_hooks;
-
-static void* WINAPI wglGetProcAddress_hook(const char* name)
-{
-    if (g_hooks.empty()) {
-#define Import(name) (void*&)_##name = (void*)_wglGetProcAddress(#name); g_hooks.push_back({#name, name##_hook});
-        Import(glGenBuffers);
-        Import(glDeleteBuffers);
-        Import(glBindBuffer);
-        Import(glBufferData);
-        Import(glMapBuffer);
-        Import(glUnmapBuffer);
-        Import(glVertexAttribPointer);
-#undef Import
-    }
-
-    auto i = std::find_if(g_hooks.begin(), g_hooks.end(), [name](const HookData& h) {
-        return strcmp(h.name, name) == 0;
-    });
-
-    if (i != g_hooks.end()) {
-        return i->func_hook;
-    }
-    else {
-        return _wglGetProcAddress(name);
-    }
-}
-
 static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
 {
     if (mode == GL_TRIANGLES) {
@@ -173,10 +139,50 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
     _glDrawElements(mode, count, type, indices);
 }
 
-static void WINAPI glFlush_hook()
+static void WINAPI glFlush_hook(void)
 {
     _glFlush();
 }
+
+struct HookData
+{
+    const char *name;
+    void **hook;
+    void **orig;
+};
+
+static void* WINAPI wglGetProcAddress_hook(const char* name)
+{
+    char buf[1024];
+    sprintf(buf, "%s\n", name);
+    ::OutputDebugStringA(buf);
+
+    static HookData s_hooks[] = {
+#define Import(name) {#name, (void**)&name##_hook, (void**)&_##name}
+    Import(glGenBuffers),
+    Import(glDeleteBuffers),
+    Import(glBindBuffer),
+    Import(glBufferData),
+    Import(glMapBuffer),
+    Import(glUnmapBuffer),
+    Import(glVertexAttribPointer),
+    Import(glDrawElements),
+    Import(glFlush),
+#undef Import
+    };
+
+    for (auto& hook : s_hooks) {
+        if (strcmp(hook.name, name) == 0) {
+            auto sym = _wglGetProcAddress(name);
+            if (sym) {
+                *hook.orig = sym;
+                return hook.hook;
+            }
+        }
+    }
+    return _wglGetProcAddress(name);
+}
+
 
 
 template<class T>
