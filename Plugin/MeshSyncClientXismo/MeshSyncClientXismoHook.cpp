@@ -14,11 +14,12 @@ struct vertex_t
 struct VertexData
 {
     RawVector<char> data;
-    void    *mapped_data = nullptr;
-    GLuint  handle = 0;
-    int     stride = 0;
-    bool    triangle = false;
-    bool    dirty = false;
+    void        *mapped_data = nullptr;
+    GLuint      handle = 0;
+    int         stride = 0;
+    bool        triangle = false;
+    bool        dirty = false;
+    float4x4    transform = float4x4::identity();
 
     ms::MeshPtr send_data;
 };
@@ -26,7 +27,7 @@ struct VertexData
 struct XismoSyncContext
 {
     ms::ClientSettings settings;
-    float scale_factor = 200.0f;
+    float scale_factor = 100.0f;
 
     std::map<uint32_t, VertexData> buffers;
     std::vector<VertexData*> buffers_to_send;
@@ -34,6 +35,7 @@ struct XismoSyncContext
     std::vector<ms::MeshPtr> deleted;
     std::future<void> send_future;
     uint32_t current_vb = 0;
+    float4x4 current_transform = float4x4::identity();
 };
 
 
@@ -44,6 +46,7 @@ static PFNGLBUFFERDATAPROC      _glBufferData;
 static PFNGLMAPBUFFERPROC       _glMapBuffer;
 static PFNGLUNMAPBUFFERPROC     _glUnmapBuffer;
 static PFNGLVERTEXATTRIBPOINTERPROC _glVertexAttribPointer;
+static PFNGLPROGRAMUNIFORMMATRIX4FVPROC _glProgramUniformMatrix4fv;
 static void(*GLAPIENTRY _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
 static void(*GLAPIENTRY _glFlush)(void);
 static void* (*GLAPIENTRY _wglGetProcAddress)(const char* name);
@@ -73,7 +76,7 @@ static void SendMeshes()
             g_ctx.buffers_to_send.push_back(&buf);
         }
     }
-    if (!g_ctx.buffers_to_send.empty()) {
+    if (g_ctx.buffers_to_send.empty() && g_ctx.deleted.empty()) {
         return;
     }
 
@@ -122,6 +125,13 @@ static void SendMeshes()
                 buf->send_data->id = buf->handle;
             }
             auto& mesh = *buf->send_data;
+            mesh.flags.has_points = 1;
+            mesh.flags.has_normals = 1;
+            mesh.flags.has_uv = 1;
+            mesh.flags.has_counts = 1;
+            mesh.flags.has_indices = 1;
+            mesh.flags.has_materialIDs = 1;
+            mesh.flags.has_refine_settings = 1;
 
             mesh.points.resize_discard(num_vertices);
             mesh.normals.resize_discard(num_vertices);
@@ -244,12 +254,18 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
+static void WINAPI glProgramUniformMatrix4fv_hook(GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+{
+    _glProgramUniformMatrix4fv(program, location, count, transpose, value);
+}
+
 static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
 {
     if (mode == GL_TRIANGLES) {
         auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
         if (buf && buf->stride == sizeof(vertex_t) && buf->dirty) {
             buf->triangle = true;
+            buf->transform = g_ctx.current_transform;
         }
     }
     _glDrawElements(mode, count, type, indices);
@@ -278,6 +294,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glMapBuffer),
     Hook(glUnmapBuffer),
     Hook(glVertexAttribPointer),
+    Hook(glProgramUniformMatrix4fv),
     Hook(glDrawElements),
     Hook(glFlush),
 #undef Hook
