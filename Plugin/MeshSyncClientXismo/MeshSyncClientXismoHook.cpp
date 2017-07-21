@@ -14,19 +14,24 @@ struct vertex_t
 struct BufferState
 {
     RawVector<char> data;
-    void            *mapped_data = nullptr;
-    GLuint          handle = 0;
-    int             stride = 0;
-    bool            dirty = false;
+    void    *mapped_data = nullptr;
+    int     stride = 0;
+    bool    dirty = false;
+};
+
+struct SendContext
+{
+    ms::Mesh mesh;
+    std::future<void> future;
 };
 
 struct XismoSyncContext
 {
-    ms::ClientSettings m_settings;
+    ms::ClientSettings settings;
+    std::map<uint32_t, ms::Mesh> msmeshes;
 
     std::map<uint32_t, BufferState> buffers;
     uint32_t current_vb = 0;
-    uint32_t current_cb = 0;
 } g_ctx;
 
 
@@ -37,8 +42,9 @@ static PFNGLBUFFERDATAPROC      _glBufferData;
 static PFNGLMAPBUFFERPROC       _glMapBuffer;
 static PFNGLUNMAPBUFFERPROC     _glUnmapBuffer;
 static PFNGLVERTEXATTRIBPOINTERPROC _glVertexAttribPointer;
-static void* (* WINAPI _wglGetProcAddress)(const char* name);
-static void (* WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
+static void* (*WINAPI _wglGetProcAddress)(const char* name);
+static void(*WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
+static void(*WINAPI _glFlush)();
 
 static BufferState* GetActiveBuffer(GLenum target)
 {
@@ -46,12 +52,14 @@ static BufferState* GetActiveBuffer(GLenum target)
     if (target == GL_ARRAY_BUFFER) {
         bid = g_ctx.current_vb;
     }
-    else if (target == GL_UNIFORM_BUFFER) {
-        bid = g_ctx.current_cb;
-    }
-
     return bid != 0 ? &g_ctx.buffers[bid] : nullptr;
 }
+
+static void SendMeshData(uint32_t id, const vertex_t *vertices, size_t num_vertices)
+{
+
+}
+
 
 static void WINAPI glGenBuffers_hook(GLsizei n, GLuint* buffers)
 {
@@ -74,9 +82,6 @@ static void WINAPI glBindBuffer_hook(GLenum target, GLuint buffer)
     if (target == GL_ARRAY_BUFFER) {
         g_ctx.current_vb = buffer;
     }
-    else if (target == GL_UNIFORM_BUFFER) {
-        g_ctx.current_cb = buffer;
-    }
     _glBindBuffer(target, buffer);
 }
 
@@ -84,6 +89,9 @@ static void WINAPI glBufferData_hook(GLenum target, GLsizeiptr size, const void*
 {
     if (auto *buf = GetActiveBuffer(target)) {
         buf->data.resize_discard(size);
+        if (data) {
+            memcpy(buf->data.data(), data, buf->data.size());
+        }
     }
     _glBufferData(target, size, data, usage);
 }
@@ -156,9 +164,18 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
 static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
 {
     if (mode == GL_TRIANGLES) {
-
+        auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
+        if (buf && buf->stride == sizeof(vertex_t) && buf->dirty) {
+            buf->dirty = false;
+            SendMeshData(g_ctx.current_vb, (vertex_t*)buf->data.data(), buf->data.size() / sizeof(vertex_t));
+        }
     }
     _glDrawElements(mode, count, type, indices);
+}
+
+static void WINAPI glFlush_hook()
+{
+    _glFlush();
 }
 
 
@@ -171,7 +188,49 @@ static inline void ForceWrite(T &dst, const T &src)
     ::VirtualProtect(&dst, sizeof(T), old_flag, &old_flag);
 }
 
-static void* OverrideDLLExport(HMODULE module, const char *funcname, void *replacement)
+static void* AllocateExecutableMemoryForward(size_t size, void *location)
+{
+    static size_t base = (size_t)location;
+
+    void *ret = nullptr;
+    const size_t step = 0x10000; // 64kb
+    for (size_t i = 0; ret == nullptr; ++i) {
+        ret = ::VirtualAlloc((void*)((size_t)base + (step*i)), size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    }
+    return ret;
+}
+
+static void* EmitJumpInstruction(void* from_, void* to_)
+{
+    BYTE *from = (BYTE*)from_;
+    BYTE *to = (BYTE*)to_;
+    BYTE *jump_from = from + 5;
+    size_t distance = jump_from > to ? jump_from - to : to - jump_from;
+    if (distance <= 0x7fff0000) {
+        // 0xe9 RVA
+        from[0] = 0xe9;
+        from += 1;
+        *((DWORD*)from) = (DWORD)(to - jump_from);
+        from += sizeof(DWORD);
+    }
+    else {
+        // 0xff 0x25 RVA TargetAddr
+        from[0] = 0xff;
+        from[1] = 0x25;
+        from += 2;
+#ifdef _M_IX86
+        *((DWORD*)from) = (DWORD)(from + 4);
+#elif defined(_M_X64)
+        *((DWORD*)from) = (DWORD)0;
+#endif
+        from += 4;
+        *((DWORD_PTR*)from) = (DWORD_PTR)(to);
+        from += sizeof(DWORD_PTR);
+    }
+    return from;
+}
+
+static void* OverrideDLLExport(HMODULE module, const char *funcname, void *replacement, void *&jump_table)
 {
     if (!module) { return nullptr; }
 
@@ -191,7 +250,9 @@ static void* OverrideDLLExport(HMODULE module, const char *funcname, void *repla
         char *pName = (char*)(ImageBase + RVANames[i]);
         if (strcmp(pName, funcname) == 0) {
             void *before = (void*)(ImageBase + RVAFunctions[RVANameOrdinals[i]]);
-            ForceWrite<DWORD>(RVAFunctions[RVANameOrdinals[i]], (DWORD)replacement - ImageBase);
+            DWORD RVAJumpTable = (DWORD)((size_t)jump_table - ImageBase);
+            ForceWrite<DWORD>(RVAFunctions[RVANameOrdinals[i]], RVAJumpTable);
+            jump_table = EmitJumpInstruction(jump_table, replacement);
             return before;
         }
     }
@@ -201,9 +262,12 @@ static void* OverrideDLLExport(HMODULE module, const char *funcname, void *repla
 static void SetupHooks()
 {
     auto opengl32 = ::LoadLibraryA("opengl32.dll");
-#define Override(name) (void*&)_##name = OverrideDLLExport(opengl32, #name, name##_hook);
+    auto jumptable = AllocateExecutableMemoryForward(1024, opengl32);
+
+#define Override(name) (void*&)_##name = OverrideDLLExport(opengl32, #name, name##_hook, jumptable);
     Override(wglGetProcAddress);
     Override(glDrawElements);
+    Override(glFlush);
 #undef Override
 }
 
