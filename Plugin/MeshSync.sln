@@ -23,6 +23,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestDLL", "Test\TestDLL.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{11990C37-1C63-418F-9AB1-74076C470584}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientXismo", "MeshSyncClientXismo.vcxproj", "{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientXismoHook", "MeshSyncClientXismoHook.vcxproj", "{62680C45-269B-4751-9FBD-774481C13873}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -94,6 +98,18 @@ Global
 		{11990C37-1C63-418F-9AB1-74076C470584}.Master|x64.ActiveCfg = Master|x64
 		{11990C37-1C63-418F-9AB1-74076C470584}.Master|x64.Build.0 = Master|x64
 		{11990C37-1C63-418F-9AB1-74076C470584}.Master|x86.ActiveCfg = Master|x64
+		{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}.Debug|x64.ActiveCfg = Debug|x64
+		{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}.Debug|x64.Build.0 = Debug|x64
+		{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}.Debug|x86.ActiveCfg = Debug|x64
+		{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}.Master|x64.ActiveCfg = Master|x64
+		{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}.Master|x64.Build.0 = Master|x64
+		{FB5400AD-2B63-4C09-91EF-EB9FFD8D12F3}.Master|x86.ActiveCfg = Master|x64
+		{62680C45-269B-4751-9FBD-774481C13873}.Debug|x64.ActiveCfg = Debug|x64
+		{62680C45-269B-4751-9FBD-774481C13873}.Debug|x64.Build.0 = Debug|x64
+		{62680C45-269B-4751-9FBD-774481C13873}.Debug|x86.ActiveCfg = Debug|x64
+		{62680C45-269B-4751-9FBD-774481C13873}.Master|x64.ActiveCfg = Master|x64
+		{62680C45-269B-4751-9FBD-774481C13873}.Master|x64.Build.0 = Master|x64
+		{62680C45-269B-4751-9FBD-774481C13873}.Master|x86.ActiveCfg = Master|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
