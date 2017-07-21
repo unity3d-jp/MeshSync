@@ -25,3 +25,4 @@
 #include <future>
 #include <mutex>
 #include <memory>
+#include <GL/glew.h>

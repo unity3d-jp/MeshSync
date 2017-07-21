@@ -25,10 +25,15 @@ bool InjectDLL(HANDLE hProcess, const std::string& dllname)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmd, int show)
 {
-    std::string module_path = __argv[0];
-    auto spos = module_path.find_last_of("\\");
-    if (spos != std::string::npos) {
-        module_path.resize(spos);
+    std::string module_path;
+    {
+        char buf[2048];
+        GetModuleFileNameA(nullptr, buf, sizeof(buf));
+        module_path = buf;
+        auto spos = module_path.find_last_of("\\");
+        if (spos != std::string::npos) {
+            module_path.resize(spos);
+        }
     }
 
     std::string exe_path;
@@ -50,6 +55,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmd, int show)
         std::string hook_path;
         hook_path += module_path + "\\" + HookDllName;
 
+        //::Sleep(14000); // for debug
         InjectDLL(pi.hProcess, hook_path);
         ::ResumeThread(pi.hThread);
     }
