@@ -89,6 +89,14 @@ XismoSyncSettings& msxmGetSettings()
     return g_ctx.settings;
 }
 
+void msxmForceSetDirty()
+{
+    for (auto& pair : g_ctx.buffers) {
+        auto& buf = pair.second;
+        buf.dirty = true;
+    }
+}
+
 
 static VertexData* GetActiveBuffer(GLenum target)
 {
@@ -120,7 +128,7 @@ static void Weld(const vertex_t src[], int num_vertices, RawVector<vertex_t>& ds
     }
 }
 
-static void SendMeshes()
+void msxmSend(bool force)
 {
     if (g_ctx.send_future.valid() && g_ctx.send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
     {
@@ -130,7 +138,7 @@ static void SendMeshes()
 
     for (auto& pair : g_ctx.buffers) {
         auto& buf = pair.second;
-        if (buf.stride == sizeof(vertex_t) && buf.dirty && buf.triangle) {
+        if (buf.stride == sizeof(vertex_t) && (force || buf.dirty) && buf.triangle) {
             g_ctx.buffers_to_send.push_back(&buf);
         }
     }
@@ -202,18 +210,36 @@ static void SendMeshes()
             mesh.flags.has_refine_settings = 1;
             mesh.refine_settings.flags.swap_faces = true;
 
-            Weld(vertices, num_indices, buf->vertices_welded, mesh.indices);
-            int num_vertices = (int)buf->vertices_welded.size();
-            mesh.points.resize_discard(num_vertices);
-            mesh.normals.resize_discard(num_vertices);
-            mesh.uv.resize_discard(num_vertices);
-            mesh.colors.resize_discard(num_vertices);
-            for (int vi = 0; vi < num_vertices; ++vi) {
-                auto& v = buf->vertices_welded[vi];
-                mesh.points[vi] = v.vertex;
-                mesh.normals[vi] = v.normal;
-                mesh.uv[vi] = v.uv;
-                mesh.colors[vi] = v.color;
+            if (g_ctx.settings.weld) {
+                Weld(vertices, num_indices, buf->vertices_welded, mesh.indices);
+
+                int num_vertices = (int)buf->vertices_welded.size();
+                mesh.points.resize_discard(num_vertices);
+                mesh.normals.resize_discard(num_vertices);
+                mesh.uv.resize_discard(num_vertices);
+                mesh.colors.resize_discard(num_vertices);
+                for (int vi = 0; vi < num_vertices; ++vi) {
+                    auto& v = buf->vertices_welded[vi];
+                    mesh.points[vi] = v.vertex;
+                    mesh.normals[vi] = v.normal;
+                    mesh.uv[vi] = v.uv;
+                    mesh.colors[vi] = v.color;
+                }
+            }
+            else {
+                int num_vertices = num_indices;
+                mesh.points.resize_discard(num_vertices);
+                mesh.normals.resize_discard(num_vertices);
+                mesh.uv.resize_discard(num_vertices);
+                mesh.colors.resize_discard(num_vertices);
+                mesh.indices.resize_discard(num_vertices);
+                for (int vi = 0; vi < num_vertices; ++vi) {
+                    mesh.points[vi] = vertices[vi].vertex;
+                    mesh.normals[vi] = vertices[vi].normal;
+                    mesh.uv[vi] = vertices[vi].uv;
+                    mesh.colors[vi] = vertices[vi].color;
+                    mesh.indices[vi] = vi;
+                }
             }
 
             mesh.counts.resize_discard(num_triangles);
@@ -336,7 +362,7 @@ static void WINAPI glFlush_hook(void)
     msxmInitializeWidget();
     if (g_ctx.manual_sync_trigger || g_ctx.settings.auto_sync) {
         g_ctx.manual_sync_trigger = false;
-        SendMeshes();
+        msxmSend();
     }
     _glFlush();
 }

@@ -10,3 +10,5 @@ struct XismoSyncSettings
 
 void msxmInitializeWidget();
 XismoSyncSettings& msxmGetSettings();
+void msxmForceSetDirty();
+void msxmSend(bool force = false);
