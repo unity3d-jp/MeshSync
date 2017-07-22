@@ -122,16 +122,14 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     auto mainwindow = FindMainWindow();
     auto menubar = mainwindow->menuBar();
     if (auto *act_widgets = FindAction(menubar, "&Widget")) {
-        auto widget_menu = act_widgets->menu();
-        if (auto *act_statusbar = FindAction(widget_menu, "statusbar")) {
-            m_menu_item = new QAction("Unity Mesh Sync");
-            m_menu_item->setCheckable(true);
-            m_menu_item->setChecked(true);
+        m_menu_item = new QAction("Unity Mesh Sync");
+        m_menu_item->setCheckable(true);
+        m_menu_item->setChecked(true);
+        connect(m_menu_item, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);
 
-            auto sep = widget_menu->insertSeparator(act_statusbar);
-            widget_menu->insertAction(sep, m_menu_item);
-            connect(m_menu_item, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);
-        }
+        auto widget_menu = act_widgets->menu();
+        widget_menu->addSeparator();
+        widget_menu->addAction(m_menu_item);
     }
 }
 
@@ -173,6 +171,9 @@ void XismoSyncSettingsWidget::onToggleWelding(int v)
 void XismoSyncSettingsWidget::onToggleAutoSync(int v)
 {
     msxmGetSettings().auto_sync = v;
+    if (v) {
+        msxmSend(true);
+    }
 }
 
 void XismoSyncSettingsWidget::onClickManualSync(bool v)

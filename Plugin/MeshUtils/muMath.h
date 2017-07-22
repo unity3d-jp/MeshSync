@@ -736,6 +736,24 @@ template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>&
     return ret;
 }
 
+template<class T> inline tmat3x3<T> transpose(const tmat3x3<T>& x)
+{
+    return{{
+        { x[0][0], x[1][0], x[2][0] },
+        { x[0][1], x[1][1], x[2][1] },
+        { x[0][2], x[1][2], x[2][2] },
+    }};
+}
+template<class T> inline tmat4x4<T> transpose(const tmat4x4<T>& x)
+{
+    return{{
+        { x[0][0], x[1][0], x[2][0], x[3][0] },
+        { x[0][1], x[1][1], x[2][1], x[3][1] },
+        { x[0][2], x[1][2], x[2][2], x[3][2] },
+        { x[0][3], x[1][3], x[2][3], x[3][3] },
+    }};
+}
+
 template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
 {
     if (x[0][2] != 0 || x[1][2] != 0 || x[2][2] != 1) {
@@ -868,6 +886,28 @@ template<class T> inline tmat4x4<T> invert(const tmat4x4<T>& x)
     s[3][2] = -x[3][0] * s[0][2] - x[3][1] * s[1][2] - x[3][2] * s[2][2];
     return s;
 }
+
+template<class T>
+inline void view_to_camera_data(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
+{
+    tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
+    tvec3<T> rpos = { view[0].w, view[1].w, view[2].w };
+    pos     = transpose(view33) * -rpos;
+    forward =-(tvec3<T>&)view[2];
+    up      = (tvec3<T>&)view[1];
+    right   = (tvec3<T>&)view[0];
+}
+template<class T>
+inline void view_to_camera_data_lhs(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
+{
+    tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
+    tvec3<T> rpos = { view[3].x, view[3].y, view[3].z };
+    pos = transpose(view33) * -rpos;
+    forward = -(tvec3<T>&)view[2];
+    up = (tvec3<T>&)view[1];
+    right = (tvec3<T>&)view[0];
+}
+
 
 template<class TMat>
 inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)

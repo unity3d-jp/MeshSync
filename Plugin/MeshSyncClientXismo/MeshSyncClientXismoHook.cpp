@@ -26,13 +26,24 @@ struct vertex_t
 struct MaterialData
 {
     GLuint program = 0;
-    float4 color = float4::one();
+    float4 difuse = float4::one();
 
     bool operator==(const MaterialData& v) const
     {
-        return program == v.program && color == v.color;
+        return program == v.program && difuse == v.difuse;
     }
 };
+
+struct SendTaskData
+{
+    RawVector<char>     data;
+    GLuint              handle = 0;
+    int                 num_elements = 0;
+    float4x4            transform = float4x4::identity();
+    RawVector<vertex_t> vertices_welded;
+    ms::MeshPtr         ms_mesh;
+};
+using SendTaskPtr = std::shared_ptr<SendTaskData>;
 
 struct VertexData
 {
@@ -45,11 +56,19 @@ struct VertexData
     bool        dirty = false;
     float4x4    transform = float4x4::identity();
 
-    // data for worker thread
-    RawVector<char>     data_back;
-    int                 num_elements_back = 0;
-    RawVector<vertex_t> vertices_welded;
-    ms::MeshPtr         ms_mesh;
+    SendTaskPtr send_task;
+
+    void updateTaskData()
+    {
+        if (!send_task) {
+            send_task.reset(new SendTaskData());
+        }
+        auto& dst = *send_task;
+        dst.data = data;
+        dst.handle = handle;
+        dst.num_elements = num_elements;
+        dst.transform = transform;
+    }
 };
 
 
@@ -58,17 +77,16 @@ struct XismoSyncContext
     XismoSyncSettings settings;
 
     std::map<uint32_t, VertexData> buffers;
-    std::vector<MaterialData> materials;
 
-    std::vector<VertexData*> buffers_to_send;
+    std::vector<SendTaskPtr> send_tasks;
     std::vector<ms::MaterialPtr> materials_to_send;
-    std::vector<ms::MeshPtr> meshes_deleted;
+    std::vector<GLuint> meshes_deleted;
     std::future<void> send_future;
 
     bool manual_sync_trigger = false;
     uint32_t current_vb = 0;
     float4x4 current_transform = float4x4::identity();
-    float4 current_color = float4::one();
+    float4 current_diffuse = float4::one();
 };
 
 #pragma warning(push)
@@ -80,7 +98,8 @@ static void(*WINAPI _glBufferData) (GLenum target, GLsizeiptr size, const void* 
 static void* (*WINAPI _glMapBuffer) (GLenum target, GLenum access);
 static GLboolean(*WINAPI _glUnmapBuffer) (GLenum target);
 static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
-static void(*WINAPI _glProgramUniformMatrix4fv) (GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+static void(*WINAPI _glUniform4fv) (GLint location, GLsizei count, const GLfloat* value);
+static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 static void(*WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
 static void(*WINAPI _glFlush)(void);
 static void* (*WINAPI _wglGetProcAddress)(const char* name);
@@ -140,22 +159,26 @@ void msxmSend(bool force)
         return;
     }
 
+    std::vector<VertexData*> buffers_to_send;
     for (auto& pair : g_ctx.buffers) {
         auto& buf = pair.second;
         if (buf.stride == sizeof(vertex_t) && (force || buf.dirty) && buf.triangle) {
-            g_ctx.buffers_to_send.push_back(&buf);
+            buffers_to_send.push_back(&buf);
         }
     }
-    if (g_ctx.buffers_to_send.empty() && g_ctx.meshes_deleted.empty()) {
+    if (buffers_to_send.empty() && g_ctx.meshes_deleted.empty()) {
         return;
     }
 
     // make copy for worker thread
-    parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](VertexData *buf) {
+    parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [&](VertexData *buf) {
         buf->dirty = false;
-        buf->num_elements_back = buf->num_elements;
-        buf->data_back = buf->data;
+        buf->updateTaskData();
     });
+    g_ctx.send_tasks.resize(buffers_to_send.size());
+    for (size_t i = 0; i < buffers_to_send.size(); ++i) {
+        g_ctx.send_tasks[i] = buffers_to_send[i]->send_task;
+    }
 
     g_ctx.send_future = std::async(std::launch::async, []() {
         ms::Client client(g_ctx.settings.client_settings);
@@ -188,12 +211,12 @@ void msxmSend(bool force)
         // send deleted
         if (!g_ctx.meshes_deleted.empty()) {
             ms::DeleteMessage del;
-            for (auto& p : g_ctx.meshes_deleted) {
-                auto it = std::find_if(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [p](VertexData *v) {
-                    return v->handle == p->id;
+            for (auto h : g_ctx.meshes_deleted) {
+                auto it = std::find_if(g_ctx.send_tasks.begin(), g_ctx.send_tasks.end(), [h](SendTaskPtr& v) {
+                    return v->handle == h;
                 });
-                if (it == g_ctx.buffers_to_send.end()) {
-                    del.targets.push_back({ p->path , p->id });
+                if (it == g_ctx.send_tasks.end()) {
+                    del.targets.push_back({ "", (int)h });
                 }
             }
             if (!del.targets.empty()) {
@@ -203,21 +226,22 @@ void msxmSend(bool force)
         }
 
         // send meshes
-        parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](VertexData *buf) {
-            auto vertices = (const vertex_t*)buf->data_back.data();
+        parallel_for_each(g_ctx.send_tasks.begin(), g_ctx.send_tasks.end(), [&](SendTaskPtr& ptask) {
+            auto& task = *ptask;
+            auto vertices = (const vertex_t*)task.data.data();
             if (!vertices) { return; }
-            int num_indices = buf->num_elements_back;
+            int num_indices = task.num_elements;
             int num_triangles = num_indices / 3;
 
-            if (!buf->ms_mesh) {
-                buf->ms_mesh.reset(new ms::Mesh());
+            if (!task.ms_mesh) {
+                task.ms_mesh.reset(new ms::Mesh());
 
                 char name[128];
-                sprintf(name, "/xismo:id[%08x]", buf->handle);
-                buf->ms_mesh->path = name;
-                buf->ms_mesh->id = buf->handle;
+                sprintf(name, "/xismo:id[%08x]", task.handle);
+                task.ms_mesh->path = name;
+                task.ms_mesh->id = task.handle;
             }
-            auto& mesh = *buf->ms_mesh;
+            auto& mesh = *task.ms_mesh;
             mesh.flags.has_points = 1;
             mesh.flags.has_normals = 1;
             mesh.flags.has_uv = 1;
@@ -228,15 +252,15 @@ void msxmSend(bool force)
             mesh.refine_settings.flags.swap_faces = true;
 
             if (g_ctx.settings.weld) {
-                Weld(vertices, num_indices, buf->vertices_welded, mesh.indices);
+                Weld(vertices, num_indices, task.vertices_welded, mesh.indices);
 
-                int num_vertices = (int)buf->vertices_welded.size();
+                int num_vertices = (int)task.vertices_welded.size();
                 mesh.points.resize_discard(num_vertices);
                 mesh.normals.resize_discard(num_vertices);
                 mesh.uv.resize_discard(num_vertices);
                 mesh.colors.resize_discard(num_vertices);
                 for (int vi = 0; vi < num_vertices; ++vi) {
-                    auto& v = buf->vertices_welded[vi];
+                    auto& v = task.vertices_welded[vi];
                     mesh.points[vi] = v.vertex;
                     mesh.normals[vi] = v.normal;
                     mesh.uv[vi] = v.uv;
@@ -268,10 +292,10 @@ void msxmSend(bool force)
 
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.meshes = { buf->ms_mesh };
+            set.scene.meshes = { task.ms_mesh };
             client.send(set);
         });
-        g_ctx.buffers_to_send.clear();
+        g_ctx.send_tasks.clear();
 
         // notify scene end
         {
@@ -296,8 +320,8 @@ static void WINAPI glDeleteBuffers_hook(GLsizei n, const GLuint* buffers)
     for (int i = 0; i < n; ++i) {
         auto it = g_ctx.buffers.find(buffers[i]);
         if (it != g_ctx.buffers.end()) {
-            if (it->second.ms_mesh) {
-                g_ctx.meshes_deleted.push_back(it->second.ms_mesh);
+            if (it->second.send_task) {
+                g_ctx.meshes_deleted.push_back(it->second.handle);
             }
             g_ctx.buffers.erase(it);
         }
@@ -357,9 +381,24 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
-static void WINAPI glProgramUniformMatrix4fv_hook(GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat* value)
 {
-    _glProgramUniformMatrix4fv(program, location, count, transpose, value);
+    if (location == 3) {
+        // diffuse
+        g_ctx.current_diffuse.assign(value);
+    }
+    _glUniform4fv(location, count, value);
+}
+
+static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+{
+    float4x4 mat;
+    mat.assign(value);
+
+    float3 pos, forward, up, right;
+    view_to_camera_data_lhs(mat, pos, forward, up, right);
+
+    _glUniformMatrix4fv(location, count, transpose, value);
 }
 
 static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
@@ -402,7 +441,8 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glMapBuffer),
     Hook(glUnmapBuffer),
     Hook(glVertexAttribPointer),
-    Hook(glProgramUniformMatrix4fv),
+    Hook(glUniform4fv),
+    Hook(glUniformMatrix4fv),
     Hook(glDrawElements),
     Hook(glFlush),
 #undef Hook
