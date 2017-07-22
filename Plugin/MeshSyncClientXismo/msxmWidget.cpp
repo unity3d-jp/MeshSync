@@ -28,7 +28,6 @@ using namespace mu;
 
 class XismoSyncSettingsWidget : public QWidget
 {
-//Q_OBJECT
 using super = QWidget;
 public:
     XismoSyncSettingsWidget(QWidget *parent = nullptr);
@@ -43,7 +42,7 @@ private:
     void onMenuAction(bool v);
     void closeEvent(QCloseEvent *event) override;
 
-    QAction *m_menu = nullptr;
+    QAction *m_menu_item = nullptr;
 };
 
 
@@ -80,6 +79,9 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
 
     msxmGetSettings().auto_sync = false;
 
+
+    // setup controls
+
     auto *layout = new QGridLayout();
     int iy = 0;
 
@@ -115,18 +117,20 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     connect(bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
 
 
+    // try to add menu item (Widget -> Unity Mesh Sync)
+
     auto mainwindow = FindMainWindow();
     auto menubar = mainwindow->menuBar();
-    if (auto *act_widgets = FindAction(mainwindow->menuBar(), "&Widget")) {
+    if (auto *act_widgets = FindAction(menubar, "&Widget")) {
         auto widget_menu = act_widgets->menu();
         if (auto *act_statusbar = FindAction(widget_menu, "statusbar")) {
-            m_menu = new QAction("Unity Mesh Sync");
-            m_menu->setCheckable(true);
-            m_menu->setChecked(true);
+            m_menu_item = new QAction("Unity Mesh Sync");
+            m_menu_item->setCheckable(true);
+            m_menu_item->setChecked(true);
 
             auto sep = widget_menu->insertSeparator(act_statusbar);
-            widget_menu->insertAction(sep, m_menu);
-            connect(m_menu, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);
+            widget_menu->insertAction(sep, m_menu_item);
+            connect(m_menu_item, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);
         }
     }
 }
@@ -186,10 +190,8 @@ void XismoSyncSettingsWidget::onMenuAction(bool v)
 
 void XismoSyncSettingsWidget::closeEvent(QCloseEvent * e)
 {
-    e->ignore();
-    hide();
-    if (m_menu) {
-        m_menu->setChecked(false);
+    if (m_menu_item) {
+        m_menu_item->setChecked(false);
     }
 }
 

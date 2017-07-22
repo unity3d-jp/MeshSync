@@ -39,13 +39,17 @@ struct VertexData
     RawVector<char> data;
     void        *mapped_data = nullptr;
     GLuint      handle = 0;
+    int         num_elements = 0;
     int         stride = 0;
     bool        triangle = false;
     bool        dirty = false;
+    float4x4    transform = float4x4::identity();
 
-    float4x4            transform = float4x4::identity();
+    // data for worker thread
+    RawVector<char>     data_back;
+    int                 num_elements_back = 0;
     RawVector<vertex_t> vertices_welded;
-    ms::MeshPtr         send_data;
+    ms::MeshPtr         ms_mesh;
 };
 
 
@@ -146,6 +150,13 @@ void msxmSend(bool force)
         return;
     }
 
+    // make copy for worker thread
+    parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](VertexData *buf) {
+        buf->dirty = false;
+        buf->num_elements_back = buf->num_elements;
+        buf->data_back = buf->data;
+    });
+
     g_ctx.send_future = std::async(std::launch::async, []() {
         ms::Client client(g_ctx.settings.client_settings);
 
@@ -178,29 +189,35 @@ void msxmSend(bool force)
         if (!g_ctx.meshes_deleted.empty()) {
             ms::DeleteMessage del;
             for (auto& p : g_ctx.meshes_deleted) {
-                del.targets.push_back({ p->path , p->id });
+                auto it = std::find_if(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [p](VertexData *v) {
+                    return v->handle == p->id;
+                });
+                if (it == g_ctx.buffers_to_send.end()) {
+                    del.targets.push_back({ p->path , p->id });
+                }
             }
-            client.send(del);
+            if (!del.targets.empty()) {
+                client.send(del);
+            }
             g_ctx.meshes_deleted.clear();
         }
 
         // send meshes
         parallel_for_each(g_ctx.buffers_to_send.begin(), g_ctx.buffers_to_send.end(), [&](VertexData *buf) {
-            buf->dirty = false;
-
-            auto vertices = (const vertex_t*)buf->data.data();
-            int num_indices = (int)(buf->data.size() / sizeof(vertex_t));
+            auto vertices = (const vertex_t*)buf->data_back.data();
+            if (!vertices) { return; }
+            int num_indices = buf->num_elements_back;
             int num_triangles = num_indices / 3;
 
-            if (!buf->send_data) {
-                buf->send_data.reset(new ms::Mesh());
+            if (!buf->ms_mesh) {
+                buf->ms_mesh.reset(new ms::Mesh());
 
                 char name[128];
-                sprintf(name, "/xismo:[%08x]", buf->handle);
-                buf->send_data->path = name;
-                buf->send_data->id = buf->handle;
+                sprintf(name, "/xismo:id[%08x]", buf->handle);
+                buf->ms_mesh->path = name;
+                buf->ms_mesh->id = buf->handle;
             }
-            auto& mesh = *buf->send_data;
+            auto& mesh = *buf->ms_mesh;
             mesh.flags.has_points = 1;
             mesh.flags.has_normals = 1;
             mesh.flags.has_uv = 1;
@@ -251,7 +268,7 @@ void msxmSend(bool force)
 
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.meshes = { buf->send_data };
+            set.scene.meshes = { buf->ms_mesh };
             client.send(set);
         });
         g_ctx.buffers_to_send.clear();
@@ -279,8 +296,8 @@ static void WINAPI glDeleteBuffers_hook(GLsizei n, const GLuint* buffers)
     for (int i = 0; i < n; ++i) {
         auto it = g_ctx.buffers.find(buffers[i]);
         if (it != g_ctx.buffers.end()) {
-            if (it->second.send_data) {
-                g_ctx.meshes_deleted.push_back(it->second.send_data);
+            if (it->second.ms_mesh) {
+                g_ctx.meshes_deleted.push_back(it->second.ms_mesh);
             }
             g_ctx.buffers.erase(it);
         }
@@ -351,6 +368,7 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
         auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
         if (buf && buf->stride == sizeof(vertex_t) && buf->dirty) {
             buf->triangle = true;
+            buf->num_elements = (int)count;
             buf->transform = g_ctx.current_transform;
         }
     }
