@@ -7,6 +7,10 @@ using namespace mu;
 
 #ifdef msxmEnableQt
 #include <QApplication>
+#include <QMainWindow>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
 #include <QWidget>
 #include <QStackedWidget>
 #include <QCheckbox>
@@ -16,6 +20,7 @@ using namespace mu;
 #include <QGridLayout>
 #include <QIntValidator>
 #include <QDoubleValidator>
+#include <QCloseEvent>
 #pragma comment(lib, "Qt5Core.lib")
 #pragma comment(lib, "Qt5Gui.lib")
 #pragma comment(lib, "Qt5Widgets.lib")
@@ -35,21 +40,43 @@ private:
     void onToggleWelding(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
+    void onMenuAction(bool v);
+    void closeEvent(QCloseEvent *event) override;
 
-private:
-    QLineEdit *m_ed_server = nullptr;
-    QLineEdit *m_ed_port = nullptr;
-    QLineEdit *m_ed_scale_factor = nullptr;
-    QCheckBox *m_ck_weld = nullptr;
-    QCheckBox *m_ck_auto_sync = nullptr;
-    QPushButton *m_bu_manual_sync = nullptr;
+    QAction *m_menu = nullptr;
 };
+
+
+static QMainWindow* FindMainWindow()
+{
+    auto widgets = qApp->topLevelWidgets();
+    for (auto w : widgets) {
+        auto mw = dynamic_cast<QMainWindow*>(w);
+        if (mw) {
+            return mw;
+        }
+    }
+    return nullptr;
+}
+
+template<class MenuT>
+static QAction* FindAction(MenuT *menu, const char *name)
+{
+    if (!menu) { return nullptr; }
+    for (auto a : menu->actions()) {
+        if (a->text() == name) {
+            return a;
+        }
+    }
+    return nullptr;
+}
+
 
 XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     : super(parent)
 {
     setWindowTitle("Unity Mesh Sync");
-    setWindowFlags(Qt::SubWindow | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
     msxmGetSettings().auto_sync = false;
 
@@ -57,35 +84,51 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     int iy = 0;
 
     layout->addWidget(new QLabel("Server:Port"), iy, 0);
-    m_ed_server = new QLineEdit("localhost");
-    layout->addWidget(m_ed_server, iy, 1);
-    m_ed_port = new QLineEdit("8080");
-    m_ed_port->setValidator(new QIntValidator(0, 65535, this));
-    layout->addWidget(m_ed_port, iy++, 2);
+    auto ed_server = new QLineEdit("localhost");
+    layout->addWidget(ed_server, iy, 1);
+    auto ed_port = new QLineEdit("8080");
+    ed_port->setValidator(new QIntValidator(0, 65535, this));
+    layout->addWidget(ed_port, iy++, 2);
 
     layout->addWidget(new QLabel("Scale Factor"), iy, 0);
-    m_ed_scale_factor = new QLineEdit("100.0");
-    m_ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
-    layout->addWidget(m_ed_scale_factor, iy++, 1, 1, 2);
+    auto ed_scale_factor = new QLineEdit("100.0");
+    ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
+    layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
-    m_ck_weld = new QCheckBox("Weld Vertices");
-    m_ck_weld->setCheckState(Qt::Checked);
-    layout->addWidget(m_ck_weld, iy++, 0, 1, 3);
+    auto ck_weld = new QCheckBox("Weld Vertices");
+    ck_weld->setCheckState(Qt::Checked);
+    layout->addWidget(ck_weld, iy++, 0, 1, 3);
 
-    m_ck_auto_sync = new QCheckBox("Auto Sync");
-    layout->addWidget(m_ck_auto_sync, iy++, 0, 1, 3);
+    auto ck_auto_sync = new QCheckBox("Auto Sync");
+    layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
 
-    m_bu_manual_sync = new QPushButton("Manual Sync");
-    layout->addWidget(m_bu_manual_sync, iy++, 0, 1, 3);
+    auto bu_manual_sync = new QPushButton("Manual Sync");
+    layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
 
     setLayout(layout);
 
-    connect(m_ed_server, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditServer);
-    connect(m_ed_port, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditPort);
-    connect(m_ed_scale_factor, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditScaleFactor);
-    connect(m_ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
-    connect(m_ck_auto_sync, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleAutoSync);
-    connect(m_bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
+    connect(ed_server, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditServer);
+    connect(ed_port, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditPort);
+    connect(ed_scale_factor, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditScaleFactor);
+    connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
+    connect(ck_auto_sync, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleAutoSync);
+    connect(bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
+
+
+    auto mainwindow = FindMainWindow();
+    auto menubar = mainwindow->menuBar();
+    if (auto *act_widgets = FindAction(mainwindow->menuBar(), "&Widget")) {
+        auto widget_menu = act_widgets->menu();
+        if (auto *act_statusbar = FindAction(widget_menu, "statusbar")) {
+            m_menu = new QAction("Unity Mesh Sync");
+            m_menu->setCheckable(true);
+            m_menu->setChecked(true);
+
+            auto sep = widget_menu->insertSeparator(act_statusbar);
+            widget_menu->insertAction(sep, m_menu);
+            connect(m_menu, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);
+        }
+    }
 }
 
 void XismoSyncSettingsWidget::onEditServer(const QString& v)
@@ -133,16 +176,31 @@ void XismoSyncSettingsWidget::onClickManualSync(bool v)
     msxmSend(true);
 }
 
+void XismoSyncSettingsWidget::onMenuAction(bool v)
+{
+    if (v)
+        show();
+    else
+        hide();
+}
+
+void XismoSyncSettingsWidget::closeEvent(QCloseEvent * e)
+{
+    e->ignore();
+    hide();
+    if (m_menu) {
+        m_menu->setChecked(false);
+    }
+}
+
 static std::unique_ptr<XismoSyncSettingsWidget> g_widget;
+
 
 void msxmInitializeWidget()
 {
     if (!g_widget) {
-        auto app = dynamic_cast<QApplication*>(QApplication::instance());
-        if (app) {
-            g_widget.reset(new XismoSyncSettingsWidget());
-            g_widget->show();
-        }
+        g_widget.reset(new XismoSyncSettingsWidget());
+        g_widget->show();
     }
 }
 
