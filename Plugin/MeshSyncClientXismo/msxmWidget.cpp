@@ -49,9 +49,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     : super(parent)
 {
     setWindowTitle("Unity Mesh Sync");
-    setWindowFlags(Qt::Tool);
-    //setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
-    //setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
+    setWindowFlags(Qt::SubWindow | Qt::WindowStaysOnTopHint);
 
     msxmGetSettings().auto_sync = false;
 
@@ -68,17 +66,17 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     layout->addWidget(new QLabel("Scale Factor"), iy, 0);
     m_ed_scale_factor = new QLineEdit("100.0");
     m_ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
-    layout->addWidget(m_ed_scale_factor, iy++, 1);
+    layout->addWidget(m_ed_scale_factor, iy++, 1, 1, 2);
 
     m_ck_weld = new QCheckBox("Weld Vertices");
     m_ck_weld->setCheckState(Qt::Checked);
-    layout->addWidget(m_ck_weld, iy++, 0);
+    layout->addWidget(m_ck_weld, iy++, 0, 1, 3);
 
     m_ck_auto_sync = new QCheckBox("Auto Sync");
-    layout->addWidget(m_ck_auto_sync, iy++, 0);
+    layout->addWidget(m_ck_auto_sync, iy++, 0, 1, 3);
 
     m_bu_manual_sync = new QPushButton("Manual Sync");
-    layout->addWidget(m_bu_manual_sync, iy++, 0);
+    layout->addWidget(m_bu_manual_sync, iy++, 0, 1, 3);
 
     setLayout(layout);
 
@@ -92,8 +90,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
 
 void XismoSyncSettingsWidget::onEditServer(const QString& v)
 {
-    auto mbs = v.toLatin1();
-    msxmGetSettings().client_settings.server = mbs.data();
+    msxmGetSettings().client_settings.server = v.toStdString();
 }
 
 void XismoSyncSettingsWidget::onEditPort(const QString& v)
@@ -133,9 +130,7 @@ void XismoSyncSettingsWidget::onToggleAutoSync(int v)
 
 void XismoSyncSettingsWidget::onClickManualSync(bool v)
 {
-    if (v) {
-        msxmSend(true);
-    }
+    msxmSend(true);
 }
 
 static std::unique_ptr<XismoSyncSettingsWidget> g_widget;
