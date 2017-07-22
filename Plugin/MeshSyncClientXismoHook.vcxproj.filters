@@ -7,6 +7,9 @@
     <ClCompile Include="MeshSyncClientXismo\pch.cpp">
       <Filter>MeshSyncClientXismo</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientXismo\QtWidget.cpp">
+      <Filter>MeshSyncClientXismo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientXismo\pch.h">

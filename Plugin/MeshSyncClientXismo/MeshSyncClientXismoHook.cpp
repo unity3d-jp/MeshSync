@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSyncClientXismo.h"
+
 using namespace mu;
 
 struct vertex_t
@@ -46,10 +48,10 @@ struct VertexData
     ms::MeshPtr         send_data;
 };
 
+
 struct XismoSyncContext
 {
-    ms::ClientSettings settings;
-    float scale_factor = 100.0f;
+    XismoSyncSettings settings;
 
     std::map<uint32_t, VertexData> buffers;
     std::vector<MaterialData> materials;
@@ -59,6 +61,7 @@ struct XismoSyncContext
     std::vector<ms::MeshPtr> meshes_deleted;
     std::future<void> send_future;
 
+    bool manual_sync_trigger = false;
     uint32_t current_vb = 0;
     float4x4 current_transform = float4x4::identity();
     float4 current_color = float4::one();
@@ -80,6 +83,12 @@ static void* (*WINAPI _wglGetProcAddress)(const char* name);
 #pragma warning(pop)
 
 static XismoSyncContext g_ctx;
+
+XismoSyncSettings& msxmGetSettings()
+{
+    return g_ctx.settings;
+}
+
 
 static VertexData* GetActiveBuffer(GLenum target)
 {
@@ -130,11 +139,11 @@ static void SendMeshes()
     }
 
     g_ctx.send_future = std::async(std::launch::async, []() {
-        ms::Client client(g_ctx.settings);
+        ms::Client client(g_ctx.settings.client_settings);
 
         ms::SceneSettings scene_settings;
         scene_settings.handedness = ms::Handedness::Left;
-        scene_settings.scale_factor = g_ctx.scale_factor;
+        scene_settings.scale_factor = g_ctx.settings.scale_factor;
 
         if (g_ctx.materials_to_send.empty()) {
             auto mat = new ms::Material();
@@ -324,7 +333,11 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
 
 static void WINAPI glFlush_hook(void)
 {
-    SendMeshes();
+    msxmInitializeWidget();
+    if (g_ctx.manual_sync_trigger || g_ctx.settings.auto_sync) {
+        g_ctx.manual_sync_trigger = false;
+        SendMeshes();
+    }
     _glFlush();
 }
 
@@ -443,6 +456,8 @@ static void* OverrideDLLExport(HMODULE module, const char *funcname, void *repla
     }
     return nullptr;
 }
+
+
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
