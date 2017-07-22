@@ -9,6 +9,27 @@ struct vertex_t
     float4 color;
     float2 uv;
     float state;
+
+    bool operator==(const vertex_t& v) const
+    {
+        return
+            vertex == v.vertex &&
+            normal == v.normal &&
+            color == v.color &&
+            uv == v.uv;
+            // no need to compare state
+    }
+};
+
+struct MaterialData
+{
+    GLuint program = 0;
+    float4 color = float4::one();
+
+    bool operator==(const MaterialData& v) const
+    {
+        return program == v.program && color == v.color;
+    }
 };
 
 struct VertexData
@@ -19,9 +40,10 @@ struct VertexData
     int         stride = 0;
     bool        triangle = false;
     bool        dirty = false;
-    float4x4    transform = float4x4::identity();
 
-    ms::MeshPtr send_data;
+    float4x4            transform = float4x4::identity();
+    RawVector<vertex_t> vertices_welded;
+    ms::MeshPtr         send_data;
 };
 
 struct XismoSyncContext
@@ -30,28 +52,34 @@ struct XismoSyncContext
     float scale_factor = 100.0f;
 
     std::map<uint32_t, VertexData> buffers;
+    std::vector<MaterialData> materials;
+
     std::vector<VertexData*> buffers_to_send;
-    std::vector<ms::MaterialPtr> materials;
-    std::vector<ms::MeshPtr> deleted;
+    std::vector<ms::MaterialPtr> materials_to_send;
+    std::vector<ms::MeshPtr> meshes_deleted;
     std::future<void> send_future;
+
     uint32_t current_vb = 0;
     float4x4 current_transform = float4x4::identity();
+    float4 current_color = float4::one();
 };
 
+#pragma warning(push)
+#pragma warning(disable:4229)  
+static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
+static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
+static void(*WINAPI _glBindBuffer) (GLenum target, GLuint buffer);
+static void(*WINAPI _glBufferData) (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+static void* (*WINAPI _glMapBuffer) (GLenum target, GLenum access);
+static GLboolean(*WINAPI _glUnmapBuffer) (GLenum target);
+static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+static void(*WINAPI _glProgramUniformMatrix4fv) (GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+static void(*WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
+static void(*WINAPI _glFlush)(void);
+static void* (*WINAPI _wglGetProcAddress)(const char* name);
+#pragma warning(pop)
 
-static PFNGLGENBUFFERSPROC      _glGenBuffers;
-static PFNGLDELETEBUFFERSPROC   _glDeleteBuffers;
-static PFNGLBINDBUFFERPROC      _glBindBuffer;
-static PFNGLBUFFERDATAPROC      _glBufferData;
-static PFNGLMAPBUFFERPROC       _glMapBuffer;
-static PFNGLUNMAPBUFFERPROC     _glUnmapBuffer;
-static PFNGLVERTEXATTRIBPOINTERPROC _glVertexAttribPointer;
-static PFNGLPROGRAMUNIFORMMATRIX4FVPROC _glProgramUniformMatrix4fv;
-static void(*GLAPIENTRY _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
-static void(*GLAPIENTRY _glFlush)(void);
-static void* (*GLAPIENTRY _wglGetProcAddress)(const char* name);
 static XismoSyncContext g_ctx;
-
 
 static VertexData* GetActiveBuffer(GLenum target)
 {
@@ -60,6 +88,27 @@ static VertexData* GetActiveBuffer(GLenum target)
         bid = g_ctx.current_vb;
     }
     return bid != 0 ? &g_ctx.buffers[bid] : nullptr;
+}
+
+static void Weld(const vertex_t src[], int num_vertices, RawVector<vertex_t>& dst_vertices, RawVector<int>& dst_indices)
+{
+    dst_vertices.clear();
+    dst_vertices.reserve_discard(num_vertices / 2);
+    dst_indices.resize_discard(num_vertices);
+
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        auto tmp = src[vi];
+        auto it = std::find_if(dst_vertices.begin(), dst_vertices.end(), [&](const vertex_t& v) { return v == tmp; });
+        if (it != dst_vertices.end()) {
+            int pos = (int)std::distance(dst_vertices.begin(), it);
+            dst_indices[vi] = pos;
+        }
+        else {
+            int pos = (int)dst_vertices.size();
+            dst_indices[vi] = pos;
+            dst_vertices.push_back(tmp);
+        }
+    }
 }
 
 static void SendMeshes()
@@ -76,7 +125,7 @@ static void SendMeshes()
             g_ctx.buffers_to_send.push_back(&buf);
         }
     }
-    if (g_ctx.buffers_to_send.empty() && g_ctx.deleted.empty()) {
+    if (g_ctx.buffers_to_send.empty() && g_ctx.meshes_deleted.empty()) {
         return;
     }
 
@@ -84,13 +133,13 @@ static void SendMeshes()
         ms::Client client(g_ctx.settings);
 
         ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.handedness = ms::Handedness::Left;
         scene_settings.scale_factor = g_ctx.scale_factor;
 
-        if (g_ctx.materials.empty()) {
+        if (g_ctx.materials_to_send.empty()) {
             auto mat = new ms::Material();
             mat->name = "Default Material";
-            g_ctx.materials.emplace_back(mat);
+            g_ctx.materials_to_send.emplace_back(mat);
         }
 
         // notify scene begin
@@ -104,8 +153,18 @@ static void SendMeshes()
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.materials = g_ctx.materials;
+            set.scene.materials = g_ctx.materials_to_send;
             client.send(set);
+        }
+
+        // send deleted
+        if (!g_ctx.meshes_deleted.empty()) {
+            ms::DeleteMessage del;
+            for (auto& p : g_ctx.meshes_deleted) {
+                del.targets.push_back({ p->path , p->id });
+            }
+            client.send(del);
+            g_ctx.meshes_deleted.clear();
         }
 
         // send meshes
@@ -113,8 +172,8 @@ static void SendMeshes()
             buf->dirty = false;
 
             auto vertices = (const vertex_t*)buf->data.data();
-            int num_vertices = (int)(buf->data.size() / sizeof(vertex_t));
-            int num_triangles = num_vertices / 3;
+            int num_indices = (int)(buf->data.size() / sizeof(vertex_t));
+            int num_triangles = num_indices / 3;
 
             if (!buf->send_data) {
                 buf->send_data.reset(new ms::Mesh());
@@ -132,18 +191,20 @@ static void SendMeshes()
             mesh.flags.has_indices = 1;
             mesh.flags.has_materialIDs = 1;
             mesh.flags.has_refine_settings = 1;
+            mesh.refine_settings.flags.swap_faces = true;
 
+            Weld(vertices, num_indices, buf->vertices_welded, mesh.indices);
+            int num_vertices = (int)buf->vertices_welded.size();
             mesh.points.resize_discard(num_vertices);
             mesh.normals.resize_discard(num_vertices);
             mesh.uv.resize_discard(num_vertices);
             mesh.colors.resize_discard(num_vertices);
-            mesh.indices.resize_discard(num_vertices);
             for (int vi = 0; vi < num_vertices; ++vi) {
-                mesh.points[vi] = vertices[vi].vertex;
-                mesh.normals[vi] = vertices[vi].normal;
-                mesh.uv[vi] = vertices[vi].uv;
-                mesh.colors[vi] = vertices[vi].color;
-                mesh.indices[vi] = vi;
+                auto& v = buf->vertices_welded[vi];
+                mesh.points[vi] = v.vertex;
+                mesh.normals[vi] = v.normal;
+                mesh.uv[vi] = v.uv;
+                mesh.colors[vi] = v.color;
             }
 
             mesh.counts.resize_discard(num_triangles);
@@ -159,16 +220,6 @@ static void SendMeshes()
             client.send(set);
         });
         g_ctx.buffers_to_send.clear();
-
-        // send deleted
-        if (!g_ctx.deleted.empty()) {
-            ms::DeleteMessage del;
-            for (auto& p : g_ctx.deleted) {
-                del.targets.push_back({ p->path , p->id });
-            }
-            client.send(del);
-            g_ctx.deleted.clear();
-        }
 
         // notify scene end
         {
@@ -194,7 +245,7 @@ static void WINAPI glDeleteBuffers_hook(GLsizei n, const GLuint* buffers)
         auto it = g_ctx.buffers.find(buffers[i]);
         if (it != g_ctx.buffers.end()) {
             if (it->second.send_data) {
-                g_ctx.deleted.push_back(it->second.send_data);
+                g_ctx.meshes_deleted.push_back(it->second.send_data);
             }
             g_ctx.buffers.erase(it);
         }
@@ -330,6 +381,10 @@ static void* AllocateExecutableMemoryForward(size_t size, void *location)
     void *ret = nullptr;
     const size_t step = 0x10000; // 64kb
     for (size_t i = 0; ret == nullptr; ++i) {
+        // increment address until VirtualAlloc() succeed
+        // (MSDN says "If the memory is already reserved and is being committed, the address is rounded down to the next page boundary".
+        //  https://msdn.microsoft.com/en-us/library/windows/desktop/aa366887.aspx
+        //  but it seems VirtualAlloc() return nullptr if memory is already reserved and is being committed)
         ret = ::VirtualAlloc((void*)((size_t)base + (step*i)), size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     }
     return ret;
@@ -389,22 +444,18 @@ static void* OverrideDLLExport(HMODULE module, const char *funcname, void *repla
     return nullptr;
 }
 
-static void SetupHooks()
-{
-    auto opengl32 = ::LoadLibraryA("opengl32.dll");
-    auto jumptable = AllocateExecutableMemoryForward(1024, opengl32);
-
-#define Override(Name) (void*&)_##Name = OverrideDLLExport(opengl32, #Name, Name##_hook, jumptable);
-    Override(wglGetProcAddress);
-    Override(glDrawElements);
-    Override(glFlush);
-#undef Override
-}
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH) {
-        SetupHooks();
+        // setup hooks
+        auto opengl32 = ::LoadLibraryA("opengl32.dll");
+        auto jumptable = AllocateExecutableMemoryForward(1024, opengl32);
+
+#define Override(Name) (void*&)_##Name = OverrideDLLExport(opengl32, #Name, Name##_hook, jumptable);
+        Override(wglGetProcAddress);
+        Override(glDrawElements);
+        Override(glFlush);
+#undef Override
     }
     else if (fdwReason == DLL_PROCESS_DETACH) {
     }
