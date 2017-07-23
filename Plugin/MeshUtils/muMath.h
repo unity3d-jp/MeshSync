@@ -909,6 +909,33 @@ inline tmat4x4<T> look_at(const tvec3<T>& eye, const tvec3<T>& center, const tve
     } };
 }
 
+template<class T>
+inline void view_to_camera(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
+{
+    //tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
+    //tvec3<T> d = (tvec3<T>&)view[3];
+    //pos = view33 * -d;
+
+    auto tview = transpose(view);
+
+    auto n1 = (tvec3<T>&)tview[0];
+    auto n2 = (tvec3<T>&)tview[1];
+    auto n3 = (tvec3<T>&)tview[2];
+    auto d1 = tview[0].w;
+    auto d2 = tview[1].w;
+    auto d3 = tview[2].w;
+    auto n2n3 = cross(n2, n3);
+    auto n3n1 = cross(n3, n1);
+    auto n1n2 = cross(n1, n2);
+    auto top = (n2n3 * d1) + (n3n1 * d2) + (n1n2 * d3);
+    auto denom = dot(n1, n2n3);
+    pos = top / -denom;
+
+    forward = (tvec3<T>&)tview[2];
+    up = (tvec3<T>&)tview[1];
+    right = (tvec3<T>&)tview[0];
+}
+
 
 template<class TMat>
 inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)

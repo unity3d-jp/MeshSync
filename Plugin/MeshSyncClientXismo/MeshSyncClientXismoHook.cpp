@@ -32,6 +32,10 @@ struct MaterialData
     {
         return program == v.program && difuse == v.difuse;
     }
+    bool operator!=(const MaterialData& v) const
+    {
+        return !operator==(v);
+    }
 };
 
 struct SendTaskData
@@ -96,6 +100,7 @@ struct XismoSyncContext
     bool camera_dirty = false;
     float3 current_camera_pos = float3::zero();
     quatf current_camera_rot = quatf::identity();
+    float current_camera_fov = 60.0f;
 
     int findOrAddMaterial(const MaterialData& md);
 };
@@ -209,8 +214,11 @@ void msxmSend(bool force)
     // build material list
     {
         g_ctx.materials.clear();
-        for (auto* buf : buffers_to_send) {
-            buf->send_task->material_id = g_ctx.findOrAddMaterial(buf->material);
+        for (auto& pair : g_ctx.buffers) {
+            auto& buf = pair.second;
+            if (buf.send_task) {
+                buf.send_task->material_id = g_ctx.findOrAddMaterial(buf.material);
+            }
         }
 
         scene.materials.resize(g_ctx.materials.size());
@@ -235,6 +243,7 @@ void msxmSend(bool force)
         auto& cam = *scene.cameras.back();
         cam.transform.position = g_ctx.current_camera_pos;
         cam.transform.rotation = g_ctx.current_camera_rot;
+        cam.fov = g_ctx.current_camera_fov;
         g_ctx.camera_dirty = false;
     }
     else {
@@ -339,7 +348,7 @@ void msxmSend(bool force)
             mesh.materialIDs.resize_discard(num_triangles);
             for (int ti = 0; ti < num_triangles; ++ti) {
                 mesh.counts[ti] = 3;
-                mesh.materialIDs[ti] = 0;
+                mesh.materialIDs[ti] = task.material_id;
             }
 
             ms::SetMessage set;
@@ -442,19 +451,6 @@ static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloa
     _glUniform4fv(location, count, value);
 }
 
-template<class T>
-inline void view_to_camera(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
-{
-    tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
-    tvec3<T> d = (tvec3<T>&)view[3];
-    pos = view33 * -d;
-
-    auto tview = transpose(view);
-    forward = { -tview[2].x, tview[2].y, tview[2].z };
-    up = (tvec3<T>&)tview[1];
-    right = (tvec3<T>&)tview[0];
-}
-
 static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
     if (location == 0) {
@@ -476,6 +472,19 @@ static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLbool
 
         }
     }
+    else if (location == 1) {
+        // projection matrix
+        float4x4 mat;
+        mat.assign(value);
+        if (mat[3][0] == 0.0f && mat[3][1] == 0.0f && mat[3][2] != 0.0f) {
+            float thf = 1.0f / mat[1][1];
+            float fov = std::atan(thf) *  Rad2Deg;
+            if (fov != g_ctx.current_camera_fov) {
+                g_ctx.camera_dirty = true;
+                g_ctx.current_camera_fov = fov;
+            }
+        }
+    }
 
     _glUniformMatrix4fv(location, count, transpose, value);
 }
@@ -488,7 +497,10 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
             buf->triangle = true;
             buf->drawn = true;
             buf->num_elements = (int)count;
-            buf->material = g_ctx.current_material;
+            if (buf->material != g_ctx.current_material) {
+                buf->material = g_ctx.current_material;
+                buf->dirty = true;
+            }
             buf->transform = g_ctx.current_transform;
         }
     }
