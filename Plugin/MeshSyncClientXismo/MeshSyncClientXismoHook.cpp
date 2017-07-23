@@ -43,11 +43,13 @@ struct SendTaskData
     RawVector<char>     data;
     GLuint              handle = 0;
     int                 num_elements = 0;
-    bool                drawn = false;
+    bool                visible = true;
     int                 material_id = 0;
     float4x4            transform = float4x4::identity();
     RawVector<vertex_t> vertices_welded;
     ms::MeshPtr         ms_mesh;
+
+    void buildMSMesh();
 };
 using SendTaskPtr = std::shared_ptr<SendTaskData>;
 
@@ -61,23 +63,13 @@ struct VertexData
     bool        triangle = false;
     bool        dirty = false;
     bool        drawn = false;
+    bool        drawn_prev = false;
     MaterialData material;
     float4x4    transform = float4x4::identity();
 
     SendTaskPtr send_task;
 
-    void updateTaskData()
-    {
-        if (!send_task) {
-            send_task.reset(new SendTaskData());
-        }
-        auto& dst = *send_task;
-        dst.data = data;
-        dst.handle = handle;
-        dst.num_elements = num_elements;
-        dst.drawn = drawn;
-        dst.transform = transform;
-    }
+    void updateTaskData();
 };
 
 
@@ -182,6 +174,94 @@ static void Weld(const vertex_t src[], int num_vertices, RawVector<vertex_t>& ds
     }
 }
 
+void SendTaskData::buildMSMesh()
+{
+    auto vertices = (const vertex_t*)data.data();
+    if (!vertices) { return; }
+    int num_indices = num_elements;
+    int num_triangles = num_indices / 3;
+
+    if (!ms_mesh) {
+        ms_mesh.reset(new ms::Mesh());
+
+        char path[128];
+        sprintf(path, "/XismoMesh:ID[%08x]", handle);
+        ms_mesh->path = path;
+        ms_mesh->id = handle;
+    }
+    auto& mesh = *ms_mesh;
+    mesh.visible = visible;
+    if (!visible) {
+        return;
+    }
+
+    mesh.flags.has_points = 1;
+    mesh.flags.has_normals = 1;
+    mesh.flags.has_uv = 1;
+    mesh.flags.has_counts = 1;
+    mesh.flags.has_indices = 1;
+    mesh.flags.has_materialIDs = 1;
+    mesh.flags.has_refine_settings = 1;
+    mesh.refine_settings.flags.swap_faces = true;
+
+    if (g_ctx.settings.weld) {
+        Weld(vertices, num_indices, vertices_welded, mesh.indices);
+
+        int num_vertices = (int)vertices_welded.size();
+        mesh.points.resize_discard(num_vertices);
+        mesh.normals.resize_discard(num_vertices);
+        mesh.uv.resize_discard(num_vertices);
+        mesh.colors.resize_discard(num_vertices);
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            auto& v = vertices_welded[vi];
+            mesh.points[vi] = v.vertex;
+            mesh.normals[vi] = v.normal;
+            mesh.uv[vi] = v.uv;
+            mesh.colors[vi] = v.color;
+        }
+    }
+    else {
+        int num_vertices = num_indices;
+        mesh.points.resize_discard(num_vertices);
+        mesh.normals.resize_discard(num_vertices);
+        mesh.uv.resize_discard(num_vertices);
+        mesh.colors.resize_discard(num_vertices);
+        mesh.indices.resize_discard(num_vertices);
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            mesh.points[vi] = vertices[vi].vertex;
+            mesh.normals[vi] = vertices[vi].normal;
+            mesh.uv[vi] = vertices[vi].uv;
+            mesh.colors[vi] = vertices[vi].color;
+            mesh.indices[vi] = vi;
+        }
+    }
+
+    mesh.counts.resize_discard(num_triangles);
+    mesh.materialIDs.resize_discard(num_triangles);
+    for (int ti = 0; ti < num_triangles; ++ti) {
+        mesh.counts[ti] = 3;
+        mesh.materialIDs[ti] = material_id;
+    }
+}
+
+void VertexData::updateTaskData()
+{
+    if (!send_task) {
+        send_task.reset(new SendTaskData());
+    }
+    auto& dst = *send_task;
+    dst.data = data;
+    dst.handle = handle;
+    dst.num_elements = num_elements;
+    dst.visible = drawn;
+    dst.transform = transform;
+
+    dirty = false;
+    drawn_prev = drawn;
+    drawn = false;
+}
+
+
 void msxmSend(bool force)
 {
     if (g_ctx.send_future.valid() && g_ctx.send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
@@ -194,8 +274,10 @@ void msxmSend(bool force)
     std::vector<VertexData*> buffers_to_send;
     for (auto& pair : g_ctx.buffers) {
         auto& buf = pair.second;
-        if (buf.stride == sizeof(vertex_t) && (force || buf.dirty) && buf.triangle) {
-            buffers_to_send.push_back(&buf);
+        if (buf.stride == sizeof(vertex_t) && buf.triangle) {
+            if ((buf.dirty || force) || (buf.drawn != buf.drawn_prev)) {
+                buffers_to_send.push_back(&buf);
+            }
         }
     }
     if (buffers_to_send.empty() && g_ctx.meshes_deleted.empty() && (!g_ctx.settings.sync_camera || !g_ctx.camera_dirty)) {
@@ -205,8 +287,6 @@ void msxmSend(bool force)
     // make copy for worker thread
     parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [&](VertexData *buf) {
         buf->updateTaskData();
-        buf->dirty = false;
-        buf->drawn = false;
     });
     g_ctx.send_tasks.resize(buffers_to_send.size());
     for (size_t i = 0; i < buffers_to_send.size(); ++i) {
@@ -230,6 +310,7 @@ void msxmSend(bool force)
 
             char name[128];
             sprintf(name, "XismoMaterial:ID[%04x]", i);
+            mat->id = i;
             mat->name = name;
             mat->color = g_ctx.materials[i].difuse;
         }
@@ -279,7 +360,9 @@ void msxmSend(bool force)
                     return v->handle == h;
                 });
                 if (it == g_ctx.send_tasks.end()) {
-                    del.targets.push_back({ "", (int)h });
+                    char path[128];
+                    sprintf(path, "/XismoMesh:ID[%08x]", h);
+                    del.targets.push_back({ path, (int)h });
                 }
             }
             if (!del.targets.empty()) {
@@ -290,72 +373,11 @@ void msxmSend(bool force)
 
         // send meshes
         parallel_for_each(g_ctx.send_tasks.begin(), g_ctx.send_tasks.end(), [&](SendTaskPtr& ptask) {
-            auto& task = *ptask;
-            auto vertices = (const vertex_t*)task.data.data();
-            if (!vertices) { return; }
-            int num_indices = task.num_elements;
-            int num_triangles = num_indices / 3;
-
-            if (!task.ms_mesh) {
-                task.ms_mesh.reset(new ms::Mesh());
-
-                char name[128];
-                sprintf(name, "/XismoMesh:ID[%08x]", task.handle);
-                task.ms_mesh->path = name;
-                task.ms_mesh->id = task.handle;
-            }
-            auto& mesh = *task.ms_mesh;
-            mesh.flags.has_points = 1;
-            mesh.flags.has_normals = 1;
-            mesh.flags.has_uv = 1;
-            mesh.flags.has_counts = 1;
-            mesh.flags.has_indices = 1;
-            mesh.flags.has_materialIDs = 1;
-            mesh.flags.has_refine_settings = 1;
-            mesh.refine_settings.flags.swap_faces = true;
-
-            if (g_ctx.settings.weld) {
-                Weld(vertices, num_indices, task.vertices_welded, mesh.indices);
-
-                int num_vertices = (int)task.vertices_welded.size();
-                mesh.points.resize_discard(num_vertices);
-                mesh.normals.resize_discard(num_vertices);
-                mesh.uv.resize_discard(num_vertices);
-                mesh.colors.resize_discard(num_vertices);
-                for (int vi = 0; vi < num_vertices; ++vi) {
-                    auto& v = task.vertices_welded[vi];
-                    mesh.points[vi] = v.vertex;
-                    mesh.normals[vi] = v.normal;
-                    mesh.uv[vi] = v.uv;
-                    mesh.colors[vi] = v.color;
-                }
-            }
-            else {
-                int num_vertices = num_indices;
-                mesh.points.resize_discard(num_vertices);
-                mesh.normals.resize_discard(num_vertices);
-                mesh.uv.resize_discard(num_vertices);
-                mesh.colors.resize_discard(num_vertices);
-                mesh.indices.resize_discard(num_vertices);
-                for (int vi = 0; vi < num_vertices; ++vi) {
-                    mesh.points[vi] = vertices[vi].vertex;
-                    mesh.normals[vi] = vertices[vi].normal;
-                    mesh.uv[vi] = vertices[vi].uv;
-                    mesh.colors[vi] = vertices[vi].color;
-                    mesh.indices[vi] = vi;
-                }
-            }
-
-            mesh.counts.resize_discard(num_triangles);
-            mesh.materialIDs.resize_discard(num_triangles);
-            for (int ti = 0; ti < num_triangles; ++ti) {
-                mesh.counts[ti] = 3;
-                mesh.materialIDs[ti] = task.material_id;
-            }
+            ptask->buildMSMesh();
 
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.meshes = { task.ms_mesh };
+            set.scene.meshes = { ptask->ms_mesh };
             client.send(set);
         });
         g_ctx.send_tasks.clear();
