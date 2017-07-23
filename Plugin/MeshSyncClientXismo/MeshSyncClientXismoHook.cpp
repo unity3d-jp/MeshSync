@@ -86,9 +86,9 @@ struct XismoSyncContext
     XismoSyncSettings settings;
 
     std::map<uint32_t, VertexData> buffers;
-    std::vector<MaterialData> materials;
 
     ms::SetMessage send_scene;
+    std::vector<MaterialData> materials;
     std::vector<SendTaskPtr> send_tasks;
     std::vector<GLuint> meshes_deleted;
     std::future<void> send_future;
@@ -96,6 +96,8 @@ struct XismoSyncContext
     uint32_t current_vb = 0;
     MaterialData current_material;
     float4x4 current_transform = float4x4::identity();
+    float4x4 current_proj = float4x4::identity();
+    float4x4 current_modelview = float4x4::identity();
 
     bool camera_dirty = false;
     float3 current_camera_pos = float3::zero();
@@ -227,7 +229,7 @@ void msxmSend(bool force)
             if (!mat) mat.reset(new ms::Material());
 
             char name[128];
-            sprintf(name, "xismo:id[%04x]", i);
+            sprintf(name, "XismoMaterial:ID[%04x]", i);
             mat->name = name;
             mat->color = g_ctx.materials[i].difuse;
         }
@@ -298,7 +300,7 @@ void msxmSend(bool force)
                 task.ms_mesh.reset(new ms::Mesh());
 
                 char name[128];
-                sprintf(name, "/xismo:id[%08x]", task.handle);
+                sprintf(name, "/XismoMesh:ID[%08x]", task.handle);
                 task.ms_mesh->path = name;
                 task.ms_mesh->id = task.handle;
             }
@@ -454,36 +456,12 @@ static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloa
 static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
     if (location == 0) {
-        // MV matrix
-        float4x4 mat;
-        mat.assign(value);
-
-        float3 pos, forward, up, right;
-        view_to_camera(mat, pos, forward, up, right);
-        if (length(pos) > 1.0f && length(up) >= 0.99f) {
-            quatf rot = to_quat(look33(forward, float3{0.0f, 1.0f, 0.0f}));
-            if (pos != g_ctx.current_camera_pos ||
-                rot != g_ctx.current_camera_rot)
-            {
-                g_ctx.camera_dirty = true;
-                g_ctx.current_camera_pos = pos;
-                g_ctx.current_camera_rot = rot;
-            }
-
-        }
+        // modelview matrix
+        g_ctx.current_modelview.assign(value);
     }
     else if (location == 1) {
         // projection matrix
-        float4x4 mat;
-        mat.assign(value);
-        if (mat[3][0] == 0.0f && mat[3][1] == 0.0f && mat[3][2] != 0.0f) {
-            float thf = 1.0f / mat[1][1];
-            float fov = std::atan(thf) *  Rad2Deg;
-            if (fov != g_ctx.current_camera_fov) {
-                g_ctx.camera_dirty = true;
-                g_ctx.current_camera_fov = fov;
-            }
-        }
+        g_ctx.current_proj.assign(value);
     }
 
     _glUniformMatrix4fv(location, count, transpose, value);
@@ -493,7 +471,7 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
 {
     if (mode == GL_TRIANGLES) {
         auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
-        if (buf && buf->stride == sizeof(vertex_t) && buf->dirty) {
+        if (buf && buf->stride == sizeof(vertex_t)) {
             buf->triangle = true;
             buf->drawn = true;
             buf->num_elements = (int)count;
@@ -501,6 +479,27 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
                 buf->material = g_ctx.current_material;
                 buf->dirty = true;
             }
+            {
+                float3 pos, forward, up, right;
+                view_to_camera(g_ctx.current_modelview, pos, forward, up, right);
+                quatf rot = to_quat(look33(forward, float3{ 0.0f, 1.0f, 0.0f }));
+                if (pos != g_ctx.current_camera_pos ||
+                    rot != g_ctx.current_camera_rot)
+                {
+                    g_ctx.camera_dirty = true;
+                    g_ctx.current_camera_pos = pos;
+                    g_ctx.current_camera_rot = rot;
+                }
+            }
+            {
+                float thf = 1.0f / g_ctx.current_proj[1][1];
+                float fov = std::atan(thf) *  Rad2Deg;
+                if (fov != g_ctx.current_camera_fov) {
+                    g_ctx.camera_dirty = true;
+                    g_ctx.current_camera_fov = fov;
+                }
+            }
+
             buf->transform = g_ctx.current_transform;
         }
     }
