@@ -4,7 +4,7 @@ struct XismoSyncSettings
 {
     ms::ClientSettings client_settings;
     bool auto_sync = true;
-    bool weld = true;
+    bool weld_vertices = true;
     bool sync_camera = false;
     float scale_factor = 100.0f;
 };

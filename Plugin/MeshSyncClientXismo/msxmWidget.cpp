@@ -98,9 +98,9 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
-    auto ck_weld = new QCheckBox("Weld Vertices");
-    ck_weld->setCheckState(Qt::Checked);
-    layout->addWidget(ck_weld, iy++, 0, 1, 3);
+    //auto ck_weld = new QCheckBox("Weld Vertices");
+    //ck_weld->setCheckState(Qt::Checked);
+    //layout->addWidget(ck_weld, iy++, 0, 1, 3);
 
     auto ck_camera = new QCheckBox("Sync Camera");
     layout->addWidget(ck_camera, iy++, 0, 1, 3);
@@ -116,7 +116,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     connect(ed_server, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditServer);
     connect(ed_port, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditPort);
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditScaleFactor);
-    connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
+    //connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
     connect(ck_camera, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleSyncCamera);
     connect(ck_auto_sync, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleAutoSync);
     connect(bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
@@ -168,8 +168,8 @@ void XismoSyncSettingsWidget::onEditScaleFactor(const QString& v)
 void XismoSyncSettingsWidget::onToggleWelding(int v)
 {
     auto& settings = msxmGetSettings();
-    if (settings.weld != (bool)v) {
-        msxmGetSettings().weld = v;
+    if (settings.weld_vertices != (bool)v) {
+        msxmGetSettings().weld_vertices = v;
         msxmSend(true);
     }
 }

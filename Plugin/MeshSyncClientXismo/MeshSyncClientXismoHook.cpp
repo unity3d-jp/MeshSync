@@ -205,7 +205,7 @@ void SendTaskData::buildMSMesh()
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
 
-    if (g_ctx.settings.weld) {
+    if (g_ctx.settings.weld_vertices) {
         Weld(vertices, num_indices, vertices_welded, mesh.indices);
 
         int num_vertices = (int)vertices_welded.size();
