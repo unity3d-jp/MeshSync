@@ -19,6 +19,7 @@
 #include <string>
 #include <codecvt>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <map>
 #include <functional>

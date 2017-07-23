@@ -2,8 +2,6 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSyncClientXismo.h"
 
-using namespace mu;
-
 
 #pragma warning(push)
 #pragma warning(disable:4229)  

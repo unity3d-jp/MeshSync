@@ -10,15 +10,16 @@
 
 
 template<class T, int Stride = 0>
-struct strided_iterator
+struct stride_iterator
 {
-    Boilerplate(strided_iterator, T);
+    Boilerplate(stride_iterator, T);
     static const int stride = Stride;
 
     uint8_t *data;
 
-    reference operator*()  { return *(T*)data; }
-    pointer   operator->() { return &(T*)data; }
+    reference operator[](int v)  { return *(T*)(data + stride*v); }
+    reference operator*()        { return *(T*)data; }
+    pointer   operator->()       { return &(T*)data; }
     this_t  operator+(size_t v)  { return data + stride*v; }
     this_t  operator-(size_t v)  { return data + stride*v; }
     this_t& operator+=(size_t v) { data += stride*v; return *this; }
@@ -33,15 +34,16 @@ struct strided_iterator
 };
 
 template<class T>
-struct strided_iterator<T, 0>
+struct stride_iterator<T, 0>
 {
-    Boilerplate(strided_iterator, T)
+    Boilerplate(stride_iterator, T)
 
     uint8_t *data;
     size_t stride;
 
-    reference operator*()  { return *(T*)data; }
-    pointer   operator->() { return &(T*)data; }
+    reference operator[](int v)  { return *(T*)(data + stride*v); }
+    reference operator*()        { return *(T*)data; }
+    pointer   operator->()       { return &(T*)data; }
     this_t  operator+(size_t v)  { return data + stride*v; }
     this_t  operator-(size_t v)  { return data + stride*v; }
     this_t& operator+=(size_t v) { data += stride*v; return *this; }
@@ -63,6 +65,7 @@ struct indexed_iterator
     VIter data;
     IIter index;
     
+    reference operator[](int v) { return data[index[v]]; }
     reference operator*()       { return data[*index]; }
     pointer   operator->()      { return &data[*index]; }
     this_t  operator+(size_t v) { return { data, index + v }; }
@@ -85,6 +88,7 @@ struct indexed_iterator_s
     VIter data;
     IIter index;
 
+    reference operator[](int v) { return index ? data[index[v]] : data[v]; }
     reference operator*()       { return index ? data[*index] : *data; }
     pointer   operator->()      { return index ? &data[*index] : data; }
     this_t  operator+(size_t v) { return index ? this_t{ data, index + v } : this_t{ data + v, nullptr }; }

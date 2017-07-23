@@ -4,7 +4,15 @@
 using namespace mu;
 
 
-struct vertex_t
+struct ms_vertex
+{
+    float3 vertex;
+    float3 normal;
+    float4 color;
+    float2 uv;
+};
+
+struct xm_vertex1
 {
     float3 vertex;
     float3 normal;
@@ -12,16 +20,16 @@ struct vertex_t
     float2 uv;
     float state;
 
-    bool operator==(const vertex_t& v) const
+    bool operator==(const ms_vertex& v) const
     {
-        return
-            vertex == v.vertex &&
-            normal == v.normal &&
-            color == v.color &&
-            uv == v.uv;
-        // no need to compare state
+        return vertex == v.vertex && normal == v.normal && color == v.color && uv == v.uv;
+    }
+    operator ms_vertex() const
+    {
+        return { vertex, normal, color, uv };
     }
 };
+
 
 struct MaterialData
 {
@@ -46,7 +54,7 @@ struct SendTaskData
     bool                visible = true;
     int                 material_id = 0;
     float4x4            transform = float4x4::identity();
-    RawVector<vertex_t> vertices_welded;
+    RawVector<ms_vertex> vertices_welded;
     ms::MeshPtr         ms_mesh;
 
     void buildMSMesh(bool weld_vertices);
@@ -120,19 +128,46 @@ protected:
     float m_camera_fov = 60.0f;
 };
 
-static std::unique_ptr<msxmIContext> g_ctx;
+
+int msxmGetAppVersion()
+{
+    static int s_version;
+    if (s_version == 0) {
+        char buf[2048];
+        GetModuleFileNameA(nullptr, buf, sizeof(buf));
+        std::string path = buf;
+        auto spos = path.find_last_of("\\");
+        if (spos != std::string::npos) {
+            path.resize(spos + 1);
+            path += "xismo.ini";
+        }
+
+        std::fstream ifs(path.c_str(), std::ios::in|std::ios::binary);
+        if (ifs) {
+            ifs.getline(buf, sizeof(buf));
+            ifs.getline(buf, sizeof(buf));
+            int v;
+            if (sscanf(buf, "AppVer=%d", &v)) {
+                s_version = v;
+            }
+        }
+    }
+    return s_version;
+}
 
 msxmIContext* msxmGetContext()
 {
-    if (!g_ctx) {
-        g_ctx.reset(new msxmContext());
+    static std::unique_ptr<msxmIContext> s_ctx;
+    if (!s_ctx) {
+        s_ctx.reset(new msxmContext());
         msxmInitializeWidget();
     }
-    return g_ctx.get();
+    return s_ctx.get();
 }
 
 
-static void Weld(const vertex_t src[], int num_vertices, RawVector<vertex_t>& dst_vertices, RawVector<int>& dst_indices)
+template<class SrcVertexT, class DstVertexT>
+static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>& dst_vertices, RawVector<int>& dst_indices)
 {
     dst_vertices.clear();
     dst_vertices.reserve_discard(num_vertices / 2);
@@ -140,7 +175,7 @@ static void Weld(const vertex_t src[], int num_vertices, RawVector<vertex_t>& ds
 
     for (int vi = 0; vi < num_vertices; ++vi) {
         auto tmp = src[vi];
-        auto it = std::find_if(dst_vertices.begin(), dst_vertices.end(), [&](const vertex_t& v) { return v == tmp; });
+        auto it = std::find_if(dst_vertices.begin(), dst_vertices.end(), [&](const DstVertexT& v) { return tmp == v; });
         if (it != dst_vertices.end()) {
             int pos = (int)std::distance(dst_vertices.begin(), it);
             dst_indices[vi] = pos;
@@ -155,8 +190,7 @@ static void Weld(const vertex_t src[], int num_vertices, RawVector<vertex_t>& ds
 
 void SendTaskData::buildMSMesh(bool weld_vertices)
 {
-    auto vertices = (const vertex_t*)data.data();
-    if (!vertices) { return; }
+    if (!data.data()) { return; }
     int num_indices = num_elements;
     int num_triangles = num_indices / 3;
 
@@ -183,6 +217,7 @@ void SendTaskData::buildMSMesh(bool weld_vertices)
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
 
+    auto vertices = (const xm_vertex1*)data.data();
     if (weld_vertices) {
         Weld(vertices, num_indices, vertices_welded, mesh.indices);
 
@@ -206,6 +241,7 @@ void SendTaskData::buildMSMesh(bool weld_vertices)
         mesh.uv.resize_discard(num_vertices);
         mesh.colors.resize_discard(num_vertices);
         mesh.indices.resize_discard(num_vertices);
+
         for (int vi = 0; vi < num_vertices; ++vi) {
             mesh.points[vi] = vertices[vi].vertex;
             mesh.normals[vi] = vertices[vi].normal;
@@ -267,7 +303,7 @@ void msxmContext::send(bool force)
     std::vector<VertexData*> buffers_to_send;
     for (auto& pair : m_buffers) {
         auto& buf = pair.second;
-        if (buf.stride == sizeof(vertex_t) && buf.triangle && (buf.dirty || force)) {
+        if (buf.stride == sizeof(xm_vertex1) && buf.triangle && (buf.dirty || force)) {
             buffers_to_send.push_back(&buf);
         }
     }
@@ -493,7 +529,7 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
     auto *buf = getActiveBuffer(GL_ARRAY_BUFFER);
     if (mode == GL_TRIANGLES &&
         ((m_vertex_attributes & 0x1f) == 0x1f) && // model vb has 5 attributes
-        (buf && buf->stride == sizeof(vertex_t)))
+        (buf && buf->stride == sizeof(xm_vertex1)))
     {
         buf->triangle = true;
         buf->num_elements = (int)count;
@@ -534,3 +570,4 @@ void msxmContext::onFlush()
         send(false);
     }
 }
+
