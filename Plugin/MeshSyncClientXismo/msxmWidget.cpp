@@ -193,6 +193,7 @@ void XismoSyncSettingsWidget::onToggleAutoSync(int v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
+    settings.auto_sync = v;
     if (v) {
         ctx->send(true);
     }

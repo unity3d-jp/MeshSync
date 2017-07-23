@@ -62,8 +62,7 @@ struct VertexData
     int         stride = 0;
     bool        triangle = false;
     bool        dirty = false;
-    bool        drawn = false;
-    bool        drawn_prev = false;
+    bool        visible = true;
     MaterialData material;
     float4x4    transform = float4x4::identity();
 
@@ -233,12 +232,9 @@ void VertexData::updateTaskData()
     dst.data = data;
     dst.handle = handle;
     dst.num_elements = num_elements;
-    dst.visible = drawn;
     dst.transform = transform;
-
+    dst.visible = visible;
     dirty = false;
-    drawn_prev = drawn;
-    drawn = false;
 }
 
 
@@ -249,6 +245,9 @@ msxmContext::msxmContext()
 
 msxmContext::~msxmContext()
 {
+    if (m_send_future.valid()) {
+        m_send_future.wait();
+    }
 }
 
 msxmSettings& msxmContext::getSettings()
@@ -268,10 +267,8 @@ void msxmContext::send(bool force)
     std::vector<VertexData*> buffers_to_send;
     for (auto& pair : m_buffers) {
         auto& buf = pair.second;
-        if (buf.stride == sizeof(vertex_t) && buf.triangle) {
-            if ((buf.dirty || force) || (buf.drawn != buf.drawn_prev)) {
-                buffers_to_send.push_back(&buf);
-            }
+        if (buf.stride == sizeof(vertex_t) && buf.triangle && (buf.dirty || force)) {
+            buffers_to_send.push_back(&buf);
         }
     }
     if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
@@ -415,9 +412,6 @@ void msxmContext::onGenBuffers(GLsizei n, GLuint * handles)
 
 void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
 {
-    if (m_send_future.valid()) {
-        m_send_future.wait();
-    }
     for (int i = 0; i < n; ++i) {
         auto it = m_buffers.find(handles[i]);
         if (it != m_buffers.end()) {
@@ -502,7 +496,6 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
         (buf && buf->stride == sizeof(vertex_t)))
     {
         buf->triangle = true;
-        buf->drawn = true;
         buf->num_elements = (int)count;
         if (buf->material != m_material) {
             buf->material = m_material;
@@ -537,7 +530,6 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
 
 void msxmContext::onFlush()
 {
-    msxmInitializeWidget();
     if (m_settings.auto_sync) {
         send(false);
     }
