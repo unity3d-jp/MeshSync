@@ -116,8 +116,8 @@ void MatrixSwapHandedness()
 {
     quatf rot1 = rotate(normalize(float3{0.15f, 0.3f, 0.6f}), 60.0f);
     quatf rot2 = swap_handedness(rot1);
-    float4x4 mat1 = to_float4x4(rot1);
-    float4x4 mat2 = to_float4x4(rot2);
+    float4x4 mat1 = to_mat4x4(rot1);
+    float4x4 mat2 = to_mat4x4(rot2);
     float4x4 mat3 = swap_handedness(mat1);
     float4x4 imat1 = invert(mat1);
     float4x4 imat2 = invert(mat2);

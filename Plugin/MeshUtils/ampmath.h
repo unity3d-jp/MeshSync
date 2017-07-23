@@ -1,10 +1,5 @@
 #pragma once
 
-namespace am {}
-
-#ifndef NOMINMAX
-    #define NOMINMAX
-#endif
 #include <amp.h>
 #include <amp_graphics.h>
 #include <amp_math.h>

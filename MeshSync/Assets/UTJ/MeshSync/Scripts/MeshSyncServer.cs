@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace UTJ
+namespace UTJ.MeshSync
 {
     [ExecuteInEditMode]
     public partial class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
@@ -1158,7 +1158,7 @@ namespace UTJ
 
         void OnRecvScreenshot(IntPtr data)
         {
-            Application.CaptureScreenshot("screenshot.png");
+            ScreenCapture.CaptureScreenshot("screenshot.png");
             // actual capture will be done at end of frame. not done immediately.
             // just set flag now.
             m_captureScreenshotInProgress = true;

@@ -140,7 +140,7 @@ void ProjectNormals(ms::Mesh& dst, ms::Mesh& src, EditFlags flags)
             float3 rdir = dst.normals[ri];
             int ti;
             float distance;
-            int num_hit = ms::RayTrianglesIntersection(rpos, rdir,
+            int num_hit = ms::RayTrianglesIntersectionSoA(rpos, rdir,
                 soa[0].data(), soa[1].data(), soa[2].data(),
                 soa[3].data(), soa[4].data(), soa[5].data(),
                 soa[6].data(), soa[7].data(), soa[8].data(),

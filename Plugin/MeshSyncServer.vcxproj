@@ -55,15 +55,9 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
     <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>

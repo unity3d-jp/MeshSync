@@ -39,10 +39,7 @@ struct MeshRefiner
 private:
     RawVector<int> counts_tmp;
     RawVector<int> offsets;
-    RawVector<int> v2f_counts;
-    RawVector<int> v2f_offsets;
-    RawVector<int> shared_faces;
-    RawVector<int> shared_indices;
+    ConnectionData connection;
     RawVector<float3> face_normals;
     RawVector<float3> normals_tmp;
     RawVector<float4> tangents_tmp;
@@ -57,6 +54,7 @@ private:
     RawVector<int>    new_indices_triangulated;
     RawVector<int>    new_indices_submeshes;
     RawVector<int>    old2new;
+
     int num_indices_tri = 0;
 
 public:

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MeshUtils\MeshUtils_impl.h" />
     <ClInclude Include="MeshUtils\muAllocator.h" />
     <ClInclude Include="MeshUtils\ampmath.h" />
     <ClInclude Include="MeshUtils\ampmath_impl.h" />
@@ -30,6 +31,7 @@
     <ClInclude Include="MeshUtils\muMeshRefiner.h" />
     <ClInclude Include="MeshUtils\mikktspace.h" />
     <ClInclude Include="MeshUtils\muMisc.h" />
+    <ClInclude Include="MeshUtils\muSIMDConfig.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
     <ClInclude Include="MeshUtils\muRawVector.h" />
@@ -56,15 +58,17 @@
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
       <FileType>Document</FileType>
-      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse2,sse4,avx --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --opt=force-aligned-memory</Command>
-      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse2,sse4,avx --arch=x86 --opt=fast-masked-vload --opt=fast-math --opt=force-aligned-memory</Command>
-      <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse2.obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj</Outputs>
+      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4,avx --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --opt=force-aligned-memory</Command>
+      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4,avx --arch=x86 --opt=fast-masked-vload --opt=fast-math --opt=force-aligned-memory</Command>
+      <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj</Outputs>
+      <AdditionalInputs>$(SolutionDir)MeshUtils\ispcmath.h;$(SolutionDir)MeshUtils\muSIMDConfig.h</AdditionalInputs>
     </CustomBuild>
     <CustomBuild Include="MeshUtils\MeshUtilsCore2.ispc">
       <FileType>Document</FileType>
-      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse2,sse4,avx --arch=x86-64 --opt=fast-masked-vload --opt=fast-math</Command>
-      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse2,sse4,avx --arch=x86 --opt=fast-masked-vload --opt=fast-math</Command>
-      <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse2.obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj</Outputs>
+      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4,avx --arch=x86-64 --opt=fast-masked-vload --opt=fast-math</Command>
+      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4,avx --arch=x86 --opt=fast-masked-vload --opt=fast-math</Command>
+      <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj</Outputs>
+      <AdditionalInputs>$(SolutionDir)MeshUtils\ispcmath.h;$(SolutionDir)MeshUtils\muSIMDConfig.h</AdditionalInputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -97,8 +101,8 @@
     <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\OpenEXR\include\OpenEXR;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(ProjectName)_$(Platform)_$(Configuration)\</OutDir>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
