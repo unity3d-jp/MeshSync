@@ -39,6 +39,8 @@ struct SendTaskData
     RawVector<char>     data;
     GLuint              handle = 0;
     int                 num_elements = 0;
+    bool                drawn = false;
+    int                 material_id = 0;
     float4x4            transform = float4x4::identity();
     RawVector<vertex_t> vertices_welded;
     ms::MeshPtr         ms_mesh;
@@ -54,6 +56,8 @@ struct VertexData
     int         stride = 0;
     bool        triangle = false;
     bool        dirty = false;
+    bool        drawn = false;
+    MaterialData material;
     float4x4    transform = float4x4::identity();
 
     SendTaskPtr send_task;
@@ -67,6 +71,7 @@ struct VertexData
         dst.data = data;
         dst.handle = handle;
         dst.num_elements = num_elements;
+        dst.drawn = drawn;
         dst.transform = transform;
     }
 };
@@ -77,17 +82,36 @@ struct XismoSyncContext
     XismoSyncSettings settings;
 
     std::map<uint32_t, VertexData> buffers;
+    std::vector<MaterialData> materials;
 
+    ms::SetMessage send_scene;
     std::vector<SendTaskPtr> send_tasks;
-    std::vector<ms::MaterialPtr> materials_to_send;
     std::vector<GLuint> meshes_deleted;
     std::future<void> send_future;
 
-    bool manual_sync_trigger = false;
     uint32_t current_vb = 0;
+    MaterialData current_material;
     float4x4 current_transform = float4x4::identity();
-    float4 current_diffuse = float4::one();
+
+    bool camera_dirty = false;
+    float3 current_camera_pos = float3::zero();
+    quatf current_camera_rot = quatf::identity();
+
+    int findOrAddMaterial(const MaterialData& md);
 };
+
+int XismoSyncContext::findOrAddMaterial(const MaterialData& md)
+{
+    auto it = std::find(materials.begin(), materials.end(), md);
+    if (it != materials.end()) {
+        return (int)std::distance(materials.begin(), it);
+    }
+    else {
+        int ret = (int)materials.size();
+        materials.push_back(md);
+        return ret;
+    }
+}
 
 #pragma warning(push)
 #pragma warning(disable:4229)  
@@ -159,6 +183,7 @@ void msxmSend(bool force)
         return;
     }
 
+    auto& scene = g_ctx.send_scene.scene;
     std::vector<VertexData*> buffers_to_send;
     for (auto& pair : g_ctx.buffers) {
         auto& buf = pair.second;
@@ -166,18 +191,54 @@ void msxmSend(bool force)
             buffers_to_send.push_back(&buf);
         }
     }
-    if (buffers_to_send.empty() && g_ctx.meshes_deleted.empty()) {
+    if (buffers_to_send.empty() && g_ctx.meshes_deleted.empty() && (!g_ctx.settings.sync_camera || !g_ctx.camera_dirty)) {
         return;
     }
 
     // make copy for worker thread
     parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [&](VertexData *buf) {
-        buf->dirty = false;
         buf->updateTaskData();
+        buf->dirty = false;
+        buf->drawn = false;
     });
     g_ctx.send_tasks.resize(buffers_to_send.size());
     for (size_t i = 0; i < buffers_to_send.size(); ++i) {
         g_ctx.send_tasks[i] = buffers_to_send[i]->send_task;
+    }
+
+    // build material list
+    {
+        g_ctx.materials.clear();
+        for (auto* buf : buffers_to_send) {
+            buf->send_task->material_id = g_ctx.findOrAddMaterial(buf->material);
+        }
+
+        scene.materials.resize(g_ctx.materials.size());
+        for (int i = 0; i < (int)scene.materials.size(); ++i) {
+            auto& mat = scene.materials[i];
+            if (!mat) mat.reset(new ms::Material());
+
+            char name[128];
+            sprintf(name, "xismo:id[%04x]", i);
+            mat->name = name;
+            mat->color = g_ctx.materials[i].difuse;
+        }
+    }
+
+    // camera
+    if (g_ctx.settings.sync_camera) {
+        if (scene.cameras.empty()) {
+            auto c = new ms::Camera();
+            c->path = "/Main Camera";
+            scene.cameras.emplace_back(c);
+        }
+        auto& cam = *scene.cameras.back();
+        cam.transform.position = g_ctx.current_camera_pos;
+        cam.transform.rotation = g_ctx.current_camera_rot;
+        g_ctx.camera_dirty = false;
+    }
+    else {
+        scene.cameras.clear();
     }
 
     g_ctx.send_future = std::async(std::launch::async, []() {
@@ -187,11 +248,6 @@ void msxmSend(bool force)
         scene_settings.handedness = ms::Handedness::Left;
         scene_settings.scale_factor = g_ctx.settings.scale_factor;
 
-        if (g_ctx.materials_to_send.empty()) {
-            auto mat = new ms::Material();
-            mat->name = "Default Material";
-            g_ctx.materials_to_send.emplace_back(mat);
-        }
 
         // notify scene begin
         {
@@ -201,12 +257,8 @@ void msxmSend(bool force)
         }
 
         // send material
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.materials = g_ctx.materials_to_send;
-            client.send(set);
-        }
+        g_ctx.send_scene.scene.settings = scene_settings;
+        client.send(g_ctx.send_scene);
 
         // send deleted
         if (!g_ctx.meshes_deleted.empty()) {
@@ -385,18 +437,45 @@ static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloa
 {
     if (location == 3) {
         // diffuse
-        g_ctx.current_diffuse.assign(value);
+        g_ctx.current_material.difuse.assign(value);
     }
     _glUniform4fv(location, count, value);
 }
 
+template<class T>
+inline void view_to_camera(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
+{
+    tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
+    tvec3<T> d = (tvec3<T>&)view[3];
+    pos = view33 * -d;
+
+    auto tview = transpose(view);
+    forward = { -tview[2].x, tview[2].y, tview[2].z };
+    up = (tvec3<T>&)tview[1];
+    right = (tvec3<T>&)tview[0];
+}
+
 static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
-    float4x4 mat;
-    mat.assign(value);
+    if (location == 0) {
+        // MV matrix
+        float4x4 mat;
+        mat.assign(value);
 
-    float3 pos, forward, up, right;
-    view_to_camera_data_lhs(mat, pos, forward, up, right);
+        float3 pos, forward, up, right;
+        view_to_camera(mat, pos, forward, up, right);
+        if (length(pos) > 1.0f && length(up) >= 0.99f) {
+            quatf rot = to_quat(look33(forward, float3{0.0f, 1.0f, 0.0f}));
+            if (pos != g_ctx.current_camera_pos ||
+                rot != g_ctx.current_camera_rot)
+            {
+                g_ctx.camera_dirty = true;
+                g_ctx.current_camera_pos = pos;
+                g_ctx.current_camera_rot = rot;
+            }
+
+        }
+    }
 
     _glUniformMatrix4fv(location, count, transpose, value);
 }
@@ -407,7 +486,9 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
         auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
         if (buf && buf->stride == sizeof(vertex_t) && buf->dirty) {
             buf->triangle = true;
+            buf->drawn = true;
             buf->num_elements = (int)count;
+            buf->material = g_ctx.current_material;
             buf->transform = g_ctx.current_transform;
         }
     }
@@ -417,8 +498,7 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
 static void WINAPI glFlush_hook(void)
 {
     msxmInitializeWidget();
-    if (g_ctx.manual_sync_trigger || g_ctx.settings.auto_sync) {
-        g_ctx.manual_sync_trigger = false;
+    if (g_ctx.settings.auto_sync) {
         msxmSend();
     }
     _glFlush();

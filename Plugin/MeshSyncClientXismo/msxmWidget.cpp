@@ -37,6 +37,7 @@ private:
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
     void onToggleWelding(int v);
+    void onToggleSyncCamera(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
     void onMenuAction(bool v);
@@ -101,6 +102,9 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     ck_weld->setCheckState(Qt::Checked);
     layout->addWidget(ck_weld, iy++, 0, 1, 3);
 
+    auto ck_camera = new QCheckBox("Sync Camera");
+    layout->addWidget(ck_camera, iy++, 0, 1, 3);
+
     auto ck_auto_sync = new QCheckBox("Auto Sync");
     layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
 
@@ -113,6 +117,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     connect(ed_port, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditPort);
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditScaleFactor);
     connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
+    connect(ck_camera, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleSyncCamera);
     connect(ck_auto_sync, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleAutoSync);
     connect(bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
 
@@ -155,7 +160,7 @@ void XismoSyncSettingsWidget::onEditScaleFactor(const QString& v)
     float scale = v.toFloat(&ok);
     if (ok && settings.scale_factor != scale) {
         settings.scale_factor = scale;
-        msxmForceSetDirty();
+        msxmSend(true);
     }
 }
 
@@ -164,7 +169,16 @@ void XismoSyncSettingsWidget::onToggleWelding(int v)
     auto& settings = msxmGetSettings();
     if (settings.weld != (bool)v) {
         msxmGetSettings().weld = v;
-        msxmForceSetDirty();
+        msxmSend(true);
+    }
+}
+
+void XismoSyncSettingsWidget::onToggleSyncCamera(int v)
+{
+    auto& settings = msxmGetSettings();
+    if (settings.sync_camera != (bool)v) {
+        msxmGetSettings().sync_camera = v;
+        msxmSend(true);
     }
 }
 

@@ -482,11 +482,17 @@ inline static tvec4<T> mul4(const tmat4x4<T>& m, const tvec3<T>& v)
 
 template<class T> inline T dot(const tvec2<T>& l, const tvec2<T>& r) { return l.x*r.x + l.y*r.y; }
 template<class T> inline T dot(const tvec3<T>& l, const tvec3<T>& r) { return l.x*r.x + l.y*r.y + l.z*r.z; }
+template<class T> inline T dot(const tvec4<T>& l, const tvec4<T>& r) { return l.x*r.x + l.y*r.y + l.z*r.z + l.w*r.w; }
 template<class T> inline T length_sq(const tvec2<T>& v) { return dot(v, v); }
 template<class T> inline T length_sq(const tvec3<T>& v) { return dot(v, v); }
+template<class T> inline T length_sq(const tvec4<T>& v) { return dot(v, v); }
 template<class T> inline T length(const tvec2<T>& v) { return sqrt(length_sq(v)); }
 template<class T> inline T length(const tvec3<T>& v) { return sqrt(length_sq(v)); }
+template<class T> inline T length(const tvec4<T>& v) { return sqrt(length_sq(v)); }
+template<class T> inline tvec2<T> normalize(const tvec2<T>& v) { return v / length(v); }
 template<class T> inline tvec3<T> normalize(const tvec3<T>& v) { return v / length(v); }
+template<class T> inline tvec4<T> normalize(const tvec4<T>& v) { return v / length(v); }
+template<class T> inline tquat<T> normalize(const tquat<T>& v) { return (tquat<T>&)normalize((const tvec4<T>&)v); }
 template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
 {
     return{
@@ -649,9 +655,9 @@ template<class T> inline void to_axis_angle(const tquat<T>& q, tvec3<T>& axis, T
     };
 }
 
-template<class T> inline tmat3x3<T> look33(const tvec3<T>& dir, const tvec3<T>& up)
+template<class T> inline tmat3x3<T> look33(const tvec3<T>& forward, const tvec3<T>& up)
 {
-    auto z = dir;
+    auto z = forward;
     auto x = normalize(cross(up, z));
     auto y = cross(z, x);
     return{ {
@@ -887,25 +893,20 @@ template<class T> inline tmat4x4<T> invert(const tmat4x4<T>& x)
     return s;
 }
 
-template<class T>
-inline void view_to_camera_data(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
+template <typename T>
+inline tmat4x4<T> look_at(const tvec3<T>& eye, const tvec3<T>& center, const tvec3<T>& up)
 {
-    tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
-    tvec3<T> rpos = { view[0].w, view[1].w, view[2].w };
-    pos     = transpose(view33) * -rpos;
-    forward =-(tvec3<T>&)view[2];
-    up      = (tvec3<T>&)view[1];
-    right   = (tvec3<T>&)view[0];
-}
-template<class T>
-inline void view_to_camera_data_lhs(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
-{
-    tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
-    tvec3<T> rpos = { view[3].x, view[3].y, view[3].z };
-    pos = transpose(view33) * -rpos;
-    forward = -(tvec3<T>&)view[2];
-    up = (tvec3<T>&)view[1];
-    right = (tvec3<T>&)view[0];
+    tvec3<T> f(normalize(center - eye));
+    tvec3<T> r(normalize(cross(f, up)));
+    tvec3<T> u(cross(r, f));
+    tvec3<T> p(-dot(r, eye), -dot(u, eye), dot(f, eye));
+
+    return { {
+        { r.x, u.x, -f.x, T(0.0) },
+        { r.y, u.y, -f.y, T(0.0) },
+        { r.z, u.z, -f.z, T(0.0) },
+        { p.x, p.y,  p.z, T(1.0) },
+    } };
 }
 
 
@@ -913,51 +914,43 @@ template<class TMat>
 inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
 {
     using T = typename TMat::scalar_t;
-    T tr, s;
-    T q[4];
-    int i, j, k;
-    tquat<T> quat;
 
-    int nxt[3] = { 1, 2, 0 };
-    tr = m[0][0] + m[1][1] + m[2][2];
+    T trace = m[0][0] + m[1][1] + m[2][2];
+    T root;
+    tquat<T> q;
 
-    // check the diagonal
-    if (tr > 0.0) {
-        s = std::sqrt(tr + T(1.0));
-        quat.w = s / T(2.0);
-        s = T(0.5) / s;
-
-        quat.x = (m[1][2] - m[2][1]) * s;
-        quat.y = (m[2][0] - m[0][2]) * s;
-        quat.z = (m[0][1] - m[1][0]) * s;
+    if (trace > 0.0f)
+    {
+        // |w| > 1/2, may as well choose w > 1/2
+        root = std::sqrt(trace + 1.0f);   // 2w
+        q.w = 0.5f * root;
+        root = 0.5f / root;  // 1/(4w)
+        q.x = (m[2][1] - m[1][2]) * root;
+        q.y = (m[0][2] - m[2][0]) * root;
+        q.z = (m[1][0] - m[0][1]) * root;
     }
-    else {
-        // diagonal is negative
-        i = 0;
+    else
+    {
+        // |w| <= 1/2
+        int next[3] = { 1, 2, 0 };
+        int i = 0;
         if (m[1][1] > m[0][0])
             i = 1;
         if (m[2][2] > m[i][i])
             i = 2;
+        int j = next[i];
+        int k = next[j];
 
-        j = nxt[i];
-        k = nxt[j];
-        s = std::sqrt((m[i][i] - (m[j][j] + m[k][k])) + T(1.0));
-
-        q[i] = s * T(0.5);
-        if (s != T(0.0))
-            s = T(0.5) / s;
-
-        q[3] = (m[j][k] - m[k][j]) * s;
-        q[j] = (m[i][j] + m[j][i]) * s;
-        q[k] = (m[i][k] + m[k][i]) * s;
-
-        quat.x = q[0];
-        quat.y = q[1];
-        quat.z = q[2];
-        quat.w = q[3];
+        root = std::sqrt(m[i][i] - m[j][j] - m[k][k] + T(1.0));
+        float* qv[3] = { &q.x, &q.y, &q.z };
+        *qv[i] = T(0.5) * root;
+        root = T(0.5) / root;
+        q.w = (m[k][j] - m[j][k]) * root;
+        *qv[j] = (m[j][i] + m[i][j]) * root;
+        *qv[k] = (m[k][i] + m[i][k]) * root;
     }
-
-    return quat;
+    q = normalize(q);
+    return q;
 }
 
 template<class T> inline quatf to_quat(const tmat3x3<T>& m)
