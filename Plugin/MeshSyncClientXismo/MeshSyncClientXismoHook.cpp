@@ -85,6 +85,7 @@ struct XismoSyncContext
     std::vector<GLuint> meshes_deleted;
     std::future<void> send_future;
 
+    uint32_t current_attributes = 0;
     uint32_t current_vb = 0;
     MaterialData current_material;
     float4x4 current_transform = float4x4::identity();
@@ -462,6 +463,7 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
 {
     if (auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER)) {
         buf->stride = stride;
+        g_ctx.current_attributes |= 1 << index;
     }
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
@@ -491,7 +493,7 @@ static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLbool
 
 static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
 {
-    if (mode == GL_TRIANGLES) {
+    if (mode == GL_TRIANGLES && ((g_ctx.current_attributes & 0x1f) == 0x1f)) {
         auto *buf = GetActiveBuffer(GL_ARRAY_BUFFER);
         if (buf && buf->stride == sizeof(vertex_t)) {
             buf->triangle = true;
@@ -525,6 +527,7 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
             buf->transform = g_ctx.current_transform;
         }
     }
+    g_ctx.current_attributes = 0;
     _glDrawElements(mode, count, type, indices);
 }
 
