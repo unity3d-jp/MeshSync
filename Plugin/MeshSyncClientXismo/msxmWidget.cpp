@@ -78,7 +78,8 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     setWindowTitle("Unity Mesh Sync");
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
-    msxmGetSettings().auto_sync = false;
+    auto ctx = msxmGetContext();
+    ctx->getSettings().auto_sync = false;
 
 
     // setup controls
@@ -141,12 +142,14 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
 
 void XismoSyncSettingsWidget::onEditServer(const QString& v)
 {
-    msxmGetSettings().client_settings.server = v.toStdString();
+    auto ctx = msxmGetContext();
+    ctx->getSettings().client_settings.server = v.toStdString();
 }
 
 void XismoSyncSettingsWidget::onEditPort(const QString& v)
 {
-    auto& settings = msxmGetSettings();
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
     bool ok;
     uint16_t port = v.toUShort(&ok);
     if (ok) {
@@ -156,44 +159,49 @@ void XismoSyncSettingsWidget::onEditPort(const QString& v)
 
 void XismoSyncSettingsWidget::onEditScaleFactor(const QString& v)
 {
-    auto& settings = msxmGetSettings();
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
     bool ok;
     float scale = v.toFloat(&ok);
     if (ok && settings.scale_factor != scale) {
         settings.scale_factor = scale;
-        msxmSend(true);
+        ctx->send(true);
     }
 }
 
 void XismoSyncSettingsWidget::onToggleWelding(int v)
 {
-    auto& settings = msxmGetSettings();
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
     if (settings.weld_vertices != (bool)v) {
-        msxmGetSettings().weld_vertices = v;
-        msxmSend(true);
+        settings.weld_vertices = v;
+        ctx->send(true);
     }
 }
 
 void XismoSyncSettingsWidget::onToggleSyncCamera(int v)
 {
-    auto& settings = msxmGetSettings();
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
     if (settings.sync_camera != (bool)v) {
-        msxmGetSettings().sync_camera = v;
-        msxmSend(true);
+        settings.sync_camera = v;
+        ctx->send(true);
     }
 }
 
 void XismoSyncSettingsWidget::onToggleAutoSync(int v)
 {
-    msxmGetSettings().auto_sync = v;
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
     if (v) {
-        msxmSend(true);
+        ctx->send(true);
     }
 }
 
 void XismoSyncSettingsWidget::onClickManualSync(bool v)
 {
-    msxmSend(true);
+    auto ctx = msxmGetContext();
+    ctx->send(true);
 }
 
 void XismoSyncSettingsWidget::onMenuAction(bool v)

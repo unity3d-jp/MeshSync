@@ -10,6 +10,9 @@
     <ClCompile Include="MeshSyncClientXismo\msxmWidget.cpp">
       <Filter>MeshSyncClientXismo</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientXismo\msxmContext.cpp">
+      <Filter>MeshSyncClientXismo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientXismo\pch.h">

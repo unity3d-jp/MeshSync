@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClientXismo\MeshSyncClientXismoHook.cpp" />
+    <ClCompile Include="MeshSyncClientXismo\msxmContext.cpp" />
     <ClCompile Include="MeshSyncClientXismo\msxmWidget.cpp" />
     <ClCompile Include="MeshSyncClientXismo\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
