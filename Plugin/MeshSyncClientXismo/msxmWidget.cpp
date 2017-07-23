@@ -124,9 +124,10 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
 
     // try to add menu item (Widget -> Unity Mesh Sync)
 
-    auto mainwindow = FindMainWindow();
-    auto menubar = mainwindow->menuBar();
-    if (auto *act_widgets = FindAction(menubar, "&Widget")) {
+    auto actions = FindMainWindow()->menuBar()->actions();
+    if (actions.size() > 9) {
+        auto *act_widgets = actions[9]; // "Widgets" menu
+
         m_menu_item = new QAction("Unity Mesh Sync");
         m_menu_item->setCheckable(true);
         m_menu_item->setChecked(true);

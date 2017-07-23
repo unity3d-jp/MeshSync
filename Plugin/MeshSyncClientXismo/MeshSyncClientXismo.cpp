@@ -55,7 +55,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmd, int show)
         std::string hook_path;
         hook_path += module_path + "\\" + HookDllName;
 
-        //::Sleep(14000); // for debug
+        //::Sleep(10000); // for debug
         InjectDLL(pi.hProcess, hook_path);
         ::ResumeThread(pi.hThread);
     }
