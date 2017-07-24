@@ -1,21 +1,23 @@
 [![MeshSync demo](https://img.youtube.com/vi/vawI9BJ9AUY/0.jpg)](https://www.youtube.com/watch?v=vawI9BJ9AUY)
 # MeshSync
-[English](Readme.en.md)
+[English](https://translate.google.com/translate?sl=ja&tl=en&u=https://github.com/unity3d-jp/MeshSync)
 
-DCC ツールのモデルの編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
-現状 [メタセコイア](http://www.metaseq.net/) と [xismo](http://mqdl.jpn.org/) をサポートしています。
+DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
+Unity と DCC ツール両方のプラグインとして機能し、現在 [メタセコイア](http://www.metaseq.net/) と [xismo](http://mqdl.jpn.org/) をサポートしています。
 
-Unity とメタセコイア両方のプラグインとして機能します。
-Unity は 5.6 以上 (64bit Windows)、メタセコイアは 3 系と 4.5.6 以降 (32bit, 64bit Windows) に対応しています。
-
+関連ツール:  
+[NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするプラグイン  
+[FbxExporter](https://github.com/unity3d-jp/FbxExporter): Unity の Mesh を FBX でエクスポートできるようにするプラグイン  
 ## 使い方
 - Unity 側
+  - 動作環境は Unity 5.6 系以上 & Windows (64 bit) です
   - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/MeshSync.unitypackage) をプロジェクトにインポートします。
   - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
   - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 
 
 - メタセコイア側
+  - メタセコイア 3 系、4 系 (32bit & 64bit) どちらも対応しています。
   - メタセコイア用プラグイン [UnityMeshSync.for.Metasequoia.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
   - パネル -> Unity Mesh Sync を開き、"Auto Sync" をチェックします。
   - Auto Sync がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
@@ -23,13 +25,13 @@ Unity は 5.6 以上 (64bit Windows)、メタセコイアは 3 系と 4.5.6 以�
 
 
 - xismo 側
-  - xismo はプラグインの仕組みを提供していないため、使い方が特殊であったり不思議な制限があったりすることをご理解ください。
+  - xismo はプラグインの仕組みを提供していないため (2017/07 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191 と 192 で動作を確認済みです。
   - [UnityMeshSync.for.xismo.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/UnityMeshSync.for.xismo.zip) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
-  - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態の xismo が起動します。
-  - ウィンドウ -> Unity Mesh Sync で設定項目を開き、"Auto Sync" をチェックすると、編集が自動的に Unity 側に反映されます。
+  - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態で xismo が起動します。
+  - ウィンドウ -> Unity Mesh Sync で設定項目を開き、"Auto Sync" をチェックすると編集が自動的に Unity 側に反映されるようになります。
   
     
-  同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定が必要になります。設定項目の "Server : Port" をリモートマシンのアドレスに設定してください。
+  同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定が必要です。設定項目の "Server : Port" を Unity 側のマシンのアドレスに設定してください。
   
 ## メタセコイア側解説
 
@@ -43,8 +45,8 @@ Unity は 5.6 以上 (64bit Windows)、メタセコイアは 3 系と 4.5.6 以�
 
 ## xismo 側解説
 
-- xismo のビューポート上で表示されているモデルをそのまま送っているため、モデルは大体同期できるはずです。
-- オブジェクトやマテリアルの名前、ボーンなどは未対応です。これらは xismo 側がアクセス手段を用意しない限り対応が困難であり、現状対応予定はありません。
+- xismo のビューポートに表示されているモデルをそのまま送っているため、モデルは大体同期できるはずです。
+- モデル以外 (オブジェクト/マテリアルの名前、ボーンなど) は未対応です。これらは xismo 側がプラグイン API を用意しない限り対応が困難であり、現状対応予定はありません。
 
 ## Unity 側解説
 
