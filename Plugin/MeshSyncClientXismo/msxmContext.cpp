@@ -34,11 +34,12 @@ struct xm_vertex1
 struct MaterialData
 {
     GLuint program = 0;
+    GLuint texture = 0;
     float4 difuse = float4::one();
 
     bool operator==(const MaterialData& v) const
     {
-        return program == v.program && difuse == v.difuse;
+        return program == v.program && texture == v.texture && difuse == v.difuse;
     }
     bool operator!=(const MaterialData& v) const
     {
@@ -88,6 +89,8 @@ public:
     msxmSettings& getSettings() override;
     void send(bool force) override;
 
+    void onActiveTexture(GLenum texture) override;
+    void onBindTexture(GLenum target, GLuint texture) override;
     void onGenBuffers(GLsizei n, GLuint* buffers) override;
     void onDeleteBuffers(GLsizei n, const GLuint* buffers) override;
     void onBindBuffer(GLenum target, GLuint buffer) override;
@@ -110,6 +113,8 @@ protected:
     std::future<void> m_send_future;
 
     std::vector<GLuint> m_meshes_deleted;
+    GLuint m_texture_slot = 0;
+
     uint32_t m_vertex_attributes = 0;
     uint32_t m_vb_handle = 0;
     MaterialData m_material;
@@ -308,21 +313,20 @@ void msxmContext::send(bool force)
     }
 
     auto& scene = m_send_data.message.scene;
+    std::vector<VertexData*> buffers_to_send;
+    for (auto& pair : m_buffers) {
+        auto& buf = pair.second;
+        if (buf.stride == sizeof(xm_vertex1) && buf.triangle && (buf.dirty || force)) {
+            buffers_to_send.push_back(&buf);
+        }
+    }
+    if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
+        // nothing to send
+        return;
+    }
 
     parallel_invoke([&]() {
         // build mesh data to send
-        std::vector<VertexData*> buffers_to_send;
-        for (auto& pair : m_buffers) {
-            auto& buf = pair.second;
-            if (buf.stride == sizeof(xm_vertex1) && buf.triangle && (buf.dirty || force)) {
-                buffers_to_send.push_back(&buf);
-            }
-        }
-        if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
-            // nothing to send
-            return;
-        }
-
         parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](VertexData *buf) {
             buf->updateSendData();
         });
@@ -393,6 +397,18 @@ void msxmContext::send(bool force)
     m_send_future = std::async(std::launch::async, [this]() { m_send_data.send(); });
 }
 
+void msxmContext::onActiveTexture(GLenum texture)
+{
+    m_texture_slot = texture - GL_TEXTURE0;
+}
+
+void msxmContext::onBindTexture(GLenum target, GLuint texture)
+{
+    if (m_texture_slot == 0) {
+        m_material.texture = texture;
+    }
+}
+
 void msxmContext::SendTaskData::send()
 {
     ms::Client client(settings.client_settings);
@@ -414,7 +430,7 @@ void msxmContext::SendTaskData::send()
     client.send(message);
 
     // send deleted
-    if (!meshes_deleted.empty()) {
+    if (settings.sync_delete && !meshes_deleted.empty()) {
         ms::DeleteMessage del;
         for (auto h : meshes_deleted) {
             auto it = std::find_if(meshes.begin(), meshes.end(), [h](VertexData::SendTaskPtr& v) {
@@ -508,9 +524,11 @@ void msxmContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            memcpy(buf->data.data(), buf->mapped_data, buf->data.size());
+            if (memcmp(buf->data.data(), buf->mapped_data, buf->data.size()) != 0) {
+                memcpy(buf->data.data(), buf->mapped_data, buf->data.size());
+                buf->dirty = true;
+            }
             buf->mapped_data = nullptr;
-            buf->dirty = true;
         }
     }
 }
@@ -572,7 +590,7 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
         {
             // projection matrix -> camera fov
             float thf = 1.0f / m_proj[1][1];
-            float fov = std::atan(thf) *  Rad2Deg;
+            float fov = std::atan(thf) * 2.0f * Rad2Deg;
             if (fov != m_camera_fov) {
                 m_camera_dirty = true;
                 m_camera_fov = fov;

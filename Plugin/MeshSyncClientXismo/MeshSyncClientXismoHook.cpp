@@ -4,7 +4,9 @@
 
 
 #pragma warning(push)
-#pragma warning(disable:4229)  
+#pragma warning(disable:4229)
+static void(*WINAPI _glActiveTexture)(GLenum texture);
+static void(*WINAPI _glBindTexture)(GLenum target, GLuint texture);
 static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
 static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
 static void(*WINAPI _glBindBuffer) (GLenum target, GLuint buffer);
@@ -20,38 +22,43 @@ static void* (*WINAPI _wglGetProcAddress)(const char* name);
 #pragma warning(pop)
 
 
+static void WINAPI glActiveTexture_hook(GLenum texture)
+{
+    msxmGetContext()->onActiveTexture(texture);
+    _glActiveTexture(texture);
+}
+static void WINAPI glBindTexture_hook(GLenum target, GLuint texture)
+{
+    msxmGetContext()->onBindTexture(target, texture);
+    _glBindTexture(target, texture);
+}
 
 static void WINAPI glGenBuffers_hook(GLsizei n, GLuint* buffers)
 {
     _glGenBuffers(n, buffers);
     msxmGetContext()->onGenBuffers(n, buffers);
 }
-
 static void WINAPI glDeleteBuffers_hook(GLsizei n, const GLuint* buffers)
 {
     msxmGetContext()->onDeleteBuffers(n, buffers);
     _glDeleteBuffers(n, buffers);
 }
-
 static void WINAPI glBindBuffer_hook(GLenum target, GLuint buffer)
 {
     msxmGetContext()->onBindBuffer(target, buffer);
     _glBindBuffer(target, buffer);
 }
-
 static void WINAPI glBufferData_hook(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
     msxmGetContext()->onBufferData(target, size, data, usage);
     _glBufferData(target, size, data, usage);
 }
-
 static void* WINAPI glMapBuffer_hook(GLenum target, GLenum access)
 {
     auto ret = _glMapBuffer(target, access);
     msxmGetContext()->onMapBuffer(target, access, ret);
     return ret;
 }
-
 static GLboolean WINAPI glUnmapBuffer_hook(GLenum target)
 {
     msxmGetContext()->onUnmapBuffer(target);
@@ -69,7 +76,6 @@ static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloa
     msxmGetContext()->onUniform4fv(location, count, value);
     _glUniform4fv(location, count, value);
 }
-
 static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
     msxmGetContext()->onUniformMatrix4fv(location, count, transpose, value);
@@ -81,7 +87,6 @@ static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, 
     msxmGetContext()->onDrawElements(mode, count, type, indices);
     _glDrawElements(mode, count, type, indices);
 }
-
 static void WINAPI glFlush_hook(void)
 {
     msxmGetContext()->onFlush();
@@ -98,6 +103,8 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     }
     s_hooks[] = {
 #define Hook(Name) {#Name, (void**)&Name##_hook, (void**)&_##Name}
+    Hook(glActiveTexture),
+    Hook(glBindTexture),
     Hook(glGenBuffers),
     Hook(glDeleteBuffers),
     Hook(glBindBuffer),

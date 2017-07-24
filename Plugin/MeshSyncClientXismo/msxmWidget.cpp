@@ -38,6 +38,7 @@ private:
     void onEditScaleFactor(const QString& v);
     void onToggleWelding(int v);
     void onToggleSyncCamera(int v);
+    void onToggleSyncDelete(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
     void onMenuAction(bool v);
@@ -103,6 +104,10 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     //ck_weld->setCheckState(Qt::Checked);
     //layout->addWidget(ck_weld, iy++, 0, 1, 3);
 
+    auto ck_delete = new QCheckBox("Sync Delete / Hide");
+    ck_delete->setCheckState(Qt::Checked);
+    layout->addWidget(ck_delete, iy++, 0, 1, 3);
+
     auto ck_camera = new QCheckBox("Sync Camera");
     layout->addWidget(ck_camera, iy++, 0, 1, 3);
 
@@ -119,6 +124,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditScaleFactor);
     //connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
     connect(ck_camera, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleSyncCamera);
+    connect(ck_delete, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleSyncDelete);
     connect(ck_auto_sync, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleAutoSync);
     connect(bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
 
@@ -187,6 +193,13 @@ void XismoSyncSettingsWidget::onToggleSyncCamera(int v)
         settings.sync_camera = v;
         ctx->send(true);
     }
+}
+
+void XismoSyncSettingsWidget::onToggleSyncDelete(int v)
+{
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
+    settings.sync_delete = v;
 }
 
 void XismoSyncSettingsWidget::onToggleAutoSync(int v)

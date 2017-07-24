@@ -3,10 +3,11 @@
 struct msxmSettings
 {
     ms::ClientSettings client_settings;
+    float scale_factor = 100.0f;
     bool auto_sync = true;
     bool weld_vertices = true;
+    bool sync_delete = true;
     bool sync_camera = false;
-    float scale_factor = 100.0f;
 };
 
 class msxmIContext
@@ -16,6 +17,8 @@ public:
     virtual msxmSettings& getSettings() = 0;
     virtual void send(bool force = false) = 0;
 
+    virtual void onActiveTexture(GLenum texture) = 0;
+    virtual void onBindTexture(GLenum target, GLuint texture) = 0;
     virtual void onGenBuffers(GLsizei n, GLuint* buffers) = 0;
     virtual void onDeleteBuffers(GLsizei n, const GLuint* buffers) = 0;
     virtual void onBindBuffer(GLenum target, GLuint buffer) = 0;
