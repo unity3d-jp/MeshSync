@@ -50,8 +50,8 @@ struct MaterialData
 
 struct VertexData
 {
-    RawVector<char> data;
-    void        *mapped_data = nullptr;
+    RawVector<char> data, tmp_data;
+    void        *mapped_data;
     GLuint      handle = 0;
     int         num_elements = 0;
     int         stride = 0;
@@ -95,7 +95,7 @@ public:
     void onDeleteBuffers(GLsizei n, const GLuint* buffers) override;
     void onBindBuffer(GLenum target, GLuint buffer) override;
     void onBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage) override;
-    void onMapBuffer(GLenum target, GLenum access, void *mapped_data) override;
+    void onMapBuffer(GLenum target, GLenum access, void *&mapped_data) override;
     void onUnmapBuffer(GLenum target) override;
     void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) override;
     void onUniform4fv(GLint location, GLsizei count, const GLfloat* value) override;
@@ -228,6 +228,8 @@ void VertexData::SendTaskData::buildMeshData(bool weld_vertices)
     mesh.flags.has_materialIDs = 1;
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
+    mesh.refine_settings.flags.gen_tangents = 1;
+    mesh.refine_settings.flags.invert_v = 1;
 
     auto vertices = (const xm_vertex1*)data.data();
     if (weld_vertices) {
@@ -513,10 +515,20 @@ void msxmContext::onBufferData(GLenum target, GLsizeiptr size, const void * data
     }
 }
 
-void msxmContext::onMapBuffer(GLenum target, GLenum access, void *mapped_data)
+void msxmContext::onMapBuffer(GLenum target, GLenum access, void *&mapped_data)
 {
+    if (target != GL_ARRAY_BUFFER || access != GL_WRITE_ONLY) {
+        return;
+    }
+
+    // mapped memory returned by glMapBuffer() is special kind of memory and reading it is exetemery slow.
+    // so make temporary memory and return it to application, and copy it to mapped memory later (onUnmapBuffer()).
     if (auto *buf = getActiveBuffer(target)) {
-        buf->mapped_data = mapped_data;
+        if (buf->triangle && buf->stride == sizeof(xm_vertex1)) {
+            buf->mapped_data = mapped_data;
+            buf->tmp_data.resize_discard(buf->data.size());
+            mapped_data = buf->tmp_data.data();
+        }
     }
 }
 
@@ -524,8 +536,9 @@ void msxmContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            if (memcmp(buf->data.data(), buf->mapped_data, buf->data.size()) != 0) {
-                memcpy(buf->data.data(), buf->mapped_data, buf->data.size());
+            memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
+            if (memcmp(buf->data.data(), buf->tmp_data.data(), buf->data.size()) != 0) {
+                buf->data.swap(buf->tmp_data);
                 buf->dirty = true;
             }
             buf->mapped_data = nullptr;

@@ -23,7 +23,7 @@ public:
     virtual void onDeleteBuffers(GLsizei n, const GLuint* buffers) = 0;
     virtual void onBindBuffer(GLenum target, GLuint buffer) = 0;
     virtual void onBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage) = 0;
-    virtual void onMapBuffer(GLenum target, GLenum access, void *mapped_data) = 0;
+    virtual void onMapBuffer(GLenum target, GLenum access, void *&mapped_data) = 0;
     virtual void onUnmapBuffer(GLenum target) = 0;
     virtual void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) = 0;
     virtual void onUniform4fv(GLint location, GLsizei count, const GLfloat* value) = 0;
