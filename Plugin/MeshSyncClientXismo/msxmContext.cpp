@@ -568,11 +568,18 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
         ((m_vertex_attributes & 0x1f) == 0x1f) && // model vb has 5 attributes
         (buf && buf->stride == sizeof(xm_vertex1)))
     {
-        buf->triangle = true;
-        buf->num_elements = (int)count;
-        if (buf->material != m_material) {
-            buf->material = m_material;
-            buf->dirty = true;
+        {
+            // projection matrix -> camera fov
+            float thf = 1.0f / m_proj[1][1];
+            float fov = std::atan(thf) * 2.0f * Rad2Deg;
+            if (fov > 179.0f) {
+                // camera is not perspective. capture only when camera is perspective.
+                goto bailout;
+            }
+            if (fov != m_camera_fov) {
+                m_camera_dirty = true;
+                m_camera_fov = fov;
+            }
         }
         {
             // modelview matrix -> camera pos & rot
@@ -587,17 +594,15 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
                 m_camera_rot = rot;
             }
         }
-        {
-            // projection matrix -> camera fov
-            float thf = 1.0f / m_proj[1][1];
-            float fov = std::atan(thf) * 2.0f * Rad2Deg;
-            if (fov != m_camera_fov) {
-                m_camera_dirty = true;
-                m_camera_fov = fov;
-            }
+
+        buf->triangle = true;
+        buf->num_elements = (int)count;
+        if (buf->material != m_material) {
+            buf->material = m_material;
+            buf->dirty = true;
         }
     }
-
+bailout:
     m_vertex_attributes = 0;
 }
 
