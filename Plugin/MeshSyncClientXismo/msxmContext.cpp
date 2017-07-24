@@ -524,11 +524,9 @@ void msxmContext::onMapBuffer(GLenum target, GLenum access, void *&mapped_data)
     // mapped memory returned by glMapBuffer() is special kind of memory and reading it is exetemery slow.
     // so make temporary memory and return it to application, and copy it to mapped memory later (onUnmapBuffer()).
     if (auto *buf = getActiveBuffer(target)) {
-        if (buf->triangle && buf->stride == sizeof(xm_vertex1)) {
-            buf->mapped_data = mapped_data;
-            buf->tmp_data.resize_discard(buf->data.size());
-            mapped_data = buf->tmp_data.data();
-        }
+        buf->mapped_data = mapped_data;
+        buf->tmp_data.resize_discard(buf->data.size());
+        mapped_data = buf->tmp_data.data();
     }
 }
 
@@ -536,11 +534,15 @@ void msxmContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
-            if (memcmp(buf->data.data(), buf->tmp_data.data(), buf->data.size()) != 0) {
-                buf->data.swap(buf->tmp_data);
-                buf->dirty = true;
-            }
+            parallel_invoke([buf]() {
+                memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
+            },
+            [buf]() {
+                if (memcmp(buf->data.data(), buf->tmp_data.data(), buf->data.size()) != 0) {
+                    buf->data = buf->tmp_data;
+                    buf->dirty = true;
+                }
+            });
             buf->mapped_data = nullptr;
         }
     }
