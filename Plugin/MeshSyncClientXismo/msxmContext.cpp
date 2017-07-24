@@ -46,20 +46,6 @@ struct MaterialData
     }
 };
 
-struct SendTaskData
-{
-    RawVector<char>     data;
-    GLuint              handle = 0;
-    int                 num_elements = 0;
-    bool                visible = true;
-    int                 material_id = 0;
-    float4x4            transform = float4x4::identity();
-    RawVector<ms_vertex> vertices_welded;
-    ms::MeshPtr         ms_mesh;
-
-    void buildMSMesh(bool weld_vertices);
-};
-using SendTaskPtr = std::shared_ptr<SendTaskData>;
 
 struct VertexData
 {
@@ -74,9 +60,23 @@ struct VertexData
     MaterialData material;
     float4x4    transform = float4x4::identity();
 
-    SendTaskPtr send_task;
+    struct SendTaskData
+    {
+        RawVector<char>     data;
+        GLuint              handle = 0;
+        int                 num_elements = 0;
+        bool                visible = true;
+        int                 material_id = 0;
+        float4x4            transform = float4x4::identity();
+        RawVector<ms_vertex> vertices_welded;
+        ms::MeshPtr         ms_mesh;
 
-    void updateTaskData();
+        void buildMeshData(bool weld_vertices);
+    };
+    using SendTaskPtr = std::shared_ptr<SendTaskData>;
+    SendTaskPtr send_data;
+
+    void updateSendData();
 };
 
 
@@ -102,19 +102,14 @@ public:
 
 protected:
     VertexData* getActiveBuffer(GLenum target);
-    int findOrAddMaterial(const MaterialData& md);
-
 
 protected:
     msxmSettings m_settings;
 
     std::map<uint32_t, VertexData> m_buffers;
-    ms::SetMessage m_send_scene;
-    std::vector<MaterialData> m_materials;
-    std::vector<SendTaskPtr> m_send_tasks;
-    std::vector<GLuint> m_meshes_deleted;
     std::future<void> m_send_future;
 
+    std::vector<GLuint> m_meshes_deleted;
     uint32_t m_vertex_attributes = 0;
     uint32_t m_vb_handle = 0;
     MaterialData m_material;
@@ -126,10 +121,22 @@ protected:
     float3 m_camera_pos = float3::zero();
     quatf m_camera_rot = quatf::identity();
     float m_camera_fov = 60.0f;
+
+    struct SendTaskData
+    {
+        msxmSettings settings;
+        ms::SetMessage message;
+        std::vector<MaterialData> materials;
+        std::vector<VertexData::SendTaskPtr> meshes;
+        std::vector<GLuint> meshes_deleted;
+
+        void send();
+    };
+    SendTaskData m_send_data;
 };
 
 
-int msxmGetAppVersion()
+int msxmGetXismoVersion()
 {
     static int s_version;
     if (s_version == 0) {
@@ -188,7 +195,7 @@ static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>
     }
 }
 
-void SendTaskData::buildMSMesh(bool weld_vertices)
+void VertexData::SendTaskData::buildMeshData(bool weld_vertices)
 {
     if (!data.data()) { return; }
     int num_indices = num_elements;
@@ -226,6 +233,7 @@ void SendTaskData::buildMSMesh(bool weld_vertices)
         mesh.normals.resize_discard(num_vertices);
         mesh.uv.resize_discard(num_vertices);
         mesh.colors.resize_discard(num_vertices);
+
         for (int vi = 0; vi < num_vertices; ++vi) {
             auto& v = vertices_welded[vi];
             mesh.points[vi] = v.vertex;
@@ -259,12 +267,12 @@ void SendTaskData::buildMSMesh(bool weld_vertices)
     }
 }
 
-void VertexData::updateTaskData()
+void VertexData::updateSendData()
 {
-    if (!send_task) {
-        send_task.reset(new SendTaskData());
+    if (!send_data) {
+        send_data.reset(new SendTaskData());
     }
-    auto& dst = *send_task;
+    auto& dst = *send_data;
     dst.data = data;
     dst.handle = handle;
     dst.num_elements = num_elements;
@@ -299,125 +307,149 @@ void msxmContext::send(bool force)
         return;
     }
 
-    auto& scene = m_send_scene.scene;
-    std::vector<VertexData*> buffers_to_send;
-    for (auto& pair : m_buffers) {
-        auto& buf = pair.second;
-        if (buf.stride == sizeof(xm_vertex1) && buf.triangle && (buf.dirty || force)) {
-            buffers_to_send.push_back(&buf);
-        }
-    }
-    if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
-        // nothing to send
-        return;
-    }
+    auto& scene = m_send_data.message.scene;
 
-    // make copy for worker thread
-    parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](VertexData *buf) {
-        buf->updateTaskData();
-    });
-    m_send_tasks.resize(buffers_to_send.size());
-    for (size_t i = 0; i < buffers_to_send.size(); ++i) {
-        m_send_tasks[i] = buffers_to_send[i]->send_task;
-    }
-
-    // build material list
-    {
-        m_materials.clear();
+    parallel_invoke([&]() {
+        // build mesh data to send
+        std::vector<VertexData*> buffers_to_send;
         for (auto& pair : m_buffers) {
             auto& buf = pair.second;
-            if (buf.send_task) {
-                buf.send_task->material_id = findOrAddMaterial(buf.material);
+            if (buf.stride == sizeof(xm_vertex1) && buf.triangle && (buf.dirty || force)) {
+                buffers_to_send.push_back(&buf);
             }
         }
-
-        scene.materials.resize(m_materials.size());
-        for (int i = 0; i < (int)scene.materials.size(); ++i) {
-            auto& mat = scene.materials[i];
-            if (!mat) mat.reset(new ms::Material());
-
-            char name[128];
-            sprintf(name, "XismoMaterial:ID[%04x]", i);
-            mat->id = i;
-            mat->name = name;
-            mat->color = m_materials[i].difuse;
+        if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
+            // nothing to send
+            return;
         }
-    }
 
-    // camera
-    if (m_settings.sync_camera) {
-        if (scene.cameras.empty()) {
-            auto c = new ms::Camera();
-            c->path = "/Main Camera";
-            scene.cameras.emplace_back(c);
+        parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](VertexData *buf) {
+            buf->updateSendData();
+        });
+        m_send_data.meshes.resize(buffers_to_send.size());
+        for (size_t i = 0; i < buffers_to_send.size(); ++i) {
+            m_send_data.meshes[i] = buffers_to_send[i]->send_data;
         }
-        auto& cam = *scene.cameras.back();
-        cam.transform.position = m_camera_pos;
-        cam.transform.rotation = m_camera_rot;
-        cam.fov = m_camera_fov;
-        m_camera_dirty = false;
-    }
-    else {
-        scene.cameras.clear();
-    }
-
-    m_send_future = std::async(std::launch::async, [this]() {
-        ms::Client client(m_settings.client_settings);
-
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Left;
-        scene_settings.scale_factor = m_settings.scale_factor;
-
-
-        // notify scene begin
+    },
+    [&]() {
+        // build material list
         {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
+            m_send_data.materials.clear();
+            auto findOrAddMaterial = [this](const MaterialData& md) {
+                auto it = std::find(m_send_data.materials.begin(), m_send_data.materials.end(), md);
+                if (it != m_send_data.materials.end()) {
+                    return (int)std::distance(m_send_data.materials.begin(), it);
+                }
+                else {
+                    int ret = (int)m_send_data.materials.size();
+                    m_send_data.materials.push_back(md);
+                    return ret;
+                }
+            };
 
-        // send material
-        m_send_scene.scene.settings = scene_settings;
-        client.send(m_send_scene);
-
-        // send deleted
-        if (!m_meshes_deleted.empty()) {
-            ms::DeleteMessage del;
-            for (auto h : m_meshes_deleted) {
-                auto it = std::find_if(m_send_tasks.begin(), m_send_tasks.end(), [h](SendTaskPtr& v) {
-                    return v->handle == h;
-                });
-                if (it == m_send_tasks.end()) {
-                    char path[128];
-                    sprintf(path, "/XismoMesh:ID[%08x]", h);
-                    del.targets.push_back({ path, (int)h });
+            for (auto& pair : m_buffers) {
+                auto& buf = pair.second;
+                if (buf.send_data) {
+                    buf.send_data->material_id = findOrAddMaterial(buf.material);
                 }
             }
-            if (!del.targets.empty()) {
-                client.send(del);
+
+            scene.materials.resize(m_send_data.materials.size());
+            for (int i = 0; i < (int)scene.materials.size(); ++i) {
+                auto& mat = scene.materials[i];
+                if (!mat) mat.reset(new ms::Material());
+
+                char name[128];
+                sprintf(name, "XismoMaterial:ID[%04x]", i);
+                mat->id = i;
+                mat->name = name;
+                mat->color = m_send_data.materials[i].difuse;
             }
-            m_meshes_deleted.clear();
         }
 
-        // send meshes
-        parallel_for_each(m_send_tasks.begin(), m_send_tasks.end(), [&](SendTaskPtr& ptask) {
-            ptask->buildMSMesh(m_settings.weld_vertices);
-
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.meshes = { ptask->ms_mesh };
-            client.send(set);
-        });
-        m_send_tasks.clear();
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
+        // camera
+        if (m_settings.sync_camera) {
+            if (scene.cameras.empty()) {
+                auto c = new ms::Camera();
+                c->path = "/Main Camera";
+                scene.cameras.emplace_back(c);
+            }
+            auto& cam = *scene.cameras.back();
+            cam.transform.position = m_camera_pos;
+            cam.transform.rotation = m_camera_rot;
+            cam.fov = m_camera_fov;
+            m_camera_dirty = false;
         }
+        else {
+            scene.cameras.clear();
+        }
+
+        m_send_data.meshes_deleted.swap(m_meshes_deleted);
+        m_meshes_deleted.clear();
+        m_send_data.settings = m_settings;
     });
+
+    // kick async send
+    m_send_future = std::async(std::launch::async, [this]() { m_send_data.send(); });
 }
+
+void msxmContext::SendTaskData::send()
+{
+    ms::Client client(settings.client_settings);
+
+    ms::SceneSettings scene_settings;
+    scene_settings.handedness = ms::Handedness::Left;
+    scene_settings.scale_factor = settings.scale_factor;
+
+
+    // notify scene begin
+    {
+        ms::FenceMessage fence;
+        fence.type = ms::FenceMessage::FenceType::SceneBegin;
+        client.send(fence);
+    }
+
+    // send camera & materials
+    message.scene.settings = scene_settings;
+    client.send(message);
+
+    // send deleted
+    if (!meshes_deleted.empty()) {
+        ms::DeleteMessage del;
+        for (auto h : meshes_deleted) {
+            auto it = std::find_if(meshes.begin(), meshes.end(), [h](VertexData::SendTaskPtr& v) {
+                return v->handle == h;
+            });
+            if (it == meshes.end()) {
+                char path[128];
+                sprintf(path, "/XismoMesh:ID[%08x]", h);
+                del.targets.push_back({ path, (int)h });
+            }
+        }
+        if (!del.targets.empty()) {
+            client.send(del);
+        }
+    }
+
+    // send meshes
+    parallel_for_each(meshes.begin(), meshes.end(), [&](VertexData::SendTaskPtr& v) {
+        v->buildMeshData(settings.weld_vertices);
+
+        ms::SetMessage set;
+        set.scene.settings = scene_settings;
+        set.scene.meshes = { v->ms_mesh };
+        client.send(set);
+    });
+    meshes.clear();
+
+    // notify scene end
+    {
+        ms::FenceMessage fence;
+        fence.type = ms::FenceMessage::FenceType::SceneEnd;
+        client.send(fence);
+    }
+}
+
 
 VertexData* msxmContext::getActiveBuffer(GLenum target)
 {
@@ -426,19 +458,6 @@ VertexData* msxmContext::getActiveBuffer(GLenum target)
         bid = m_vb_handle;
     }
     return bid != 0 ? &m_buffers[bid] : nullptr;
-}
-
-int msxmContext::findOrAddMaterial(const MaterialData& md)
-{
-    auto it = std::find(m_materials.begin(), m_materials.end(), md);
-    if (it != m_materials.end()) {
-        return (int)std::distance(m_materials.begin(), it);
-    }
-    else {
-        int ret = (int)m_materials.size();
-        m_materials.push_back(md);
-        return ret;
-    }
 }
 
 
@@ -451,7 +470,7 @@ void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
     for (int i = 0; i < n; ++i) {
         auto it = m_buffers.find(handles[i]);
         if (it != m_buffers.end()) {
-            if (it->second.send_task) {
+            if (it->second.send_data) {
                 m_meshes_deleted.push_back(it->second.handle);
             }
             m_buffers.erase(it);
@@ -538,7 +557,7 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
             buf->dirty = true;
         }
         {
-            // modelview matrix -> camera data
+            // modelview matrix -> camera pos & rot
             float3 pos, forward, up, right;
             view_to_camera(m_modelview, pos, forward, up, right);
             quatf rot = to_quat(look33(forward, float3{ 0.0f, 1.0f, 0.0f }));
@@ -551,7 +570,7 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
             }
         }
         {
-            // projection matrix -> camera data (fov)
+            // projection matrix -> camera fov
             float thf = 1.0f / m_proj[1][1];
             float fov = std::atan(thf) *  Rad2Deg;
             if (fov != m_camera_fov) {

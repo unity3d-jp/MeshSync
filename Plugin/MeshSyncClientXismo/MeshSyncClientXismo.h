@@ -29,6 +29,6 @@ public:
     virtual void onFlush() = 0;
 };
 
-int msxmGetAppVersion();
+int msxmGetXismoVersion();
 msxmIContext* msxmGetContext();
 void msxmInitializeWidget();
