@@ -504,7 +504,7 @@ template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
 // a & b must be normalized
 template<class T> inline T angle_between(const tvec3<T>& a, const tvec3<T>& b)
 {
-    return std::acos(dot(a, b));
+    return acos(dot(a, b));
 }
 template<class T> inline T angle_between2(const tvec3<T>& pos1, const tvec3<T>& pos2, const tvec3<T>& center)
 {
@@ -532,20 +532,20 @@ template<class T> inline tquat<T> flipY(const tquat<T>& v)
 
 template<class T> inline tquat<T> rotateX(T angle)
 {
-    T c = std::cos(angle * T(0.5));
-    T s = std::sin(angle * T(0.5));
+    T c = cos(angle * T(0.5));
+    T s = sin(angle * T(0.5));
     return{ s, T(0.0), T(0.0), c };
 }
 template<class T> inline tquat<T> rotateY(T angle)
 {
-    T c = std::cos(angle * T(0.5));
-    T s = std::sin(angle * T(0.5));
+    T c = cos(angle * T(0.5));
+    T s = sin(angle * T(0.5));
     return{ T(0.0), s, T(0.0), c };
 }
 template<class T> inline tquat<T> rotateZ(T angle)
 {
-    T c = std::cos(angle * T(0.5));
-    T s = std::sin(angle * T(0.5));
+    T c = cos(angle * T(0.5));
+    T s = sin(angle * T(0.5));
     return{ T(0.0), T(0.0), s, c };
 }
 
@@ -596,10 +596,10 @@ template<class T> inline tquat<T> rotateZYX(const tvec3<T>& euler)
 template<class T> inline tquat<T> rotate(const tvec3<T>& axis, T angle)
 {
     return{
-        axis.x * std::sin(angle * T(0.5)),
-        axis.y * std::sin(angle * T(0.5)),
-        axis.z * std::sin(angle * T(0.5)),
-        std::cos(angle * T(0.5))
+        axis.x * sin(angle * T(0.5)),
+        axis.y * sin(angle * T(0.5)),
+        axis.z * sin(angle * T(0.5)),
+        cos(angle * T(0.5))
     };
 }
 
@@ -618,15 +618,15 @@ template<class T> inline tvec3<T> to_eularZXY(const tquat<T>& q)
     T v3 = T(-1.0);
     T v4 = T(2.0) * v0;
 
-    if (std::abs(v0) < T(0.499999))
+    if (abs(v0) < T(0.499999))
     {
         T v5 = T(2.0) * (d[2] + d[6]);
         T v6 = d[7] - d[0] - d[4] + d[9];
 
         return{
-            v3 * std::asin(saturate(v4)),
-            std::atan2(v5, v6),
-            std::atan2(v1, v2)
+            v3 * asin(saturate(v4)),
+            atan2(v5, v6),
+            atan2(v1, v2)
         };
     }
     else
@@ -638,8 +638,8 @@ template<class T> inline tvec3<T> to_eularZXY(const tquat<T>& q)
         T v5 = a*e + b*c;
         T v6 = b*e - a*c;
         return{
-            v3 * std::asin(saturate(v4)),
-            std::atan2(v5, v6),
+            v3 * asin(saturate(v4)),
+            atan2(v5, v6),
             T(0.0)
         };
     }
@@ -647,11 +647,11 @@ template<class T> inline tvec3<T> to_eularZXY(const tquat<T>& q)
 
 template<class T> inline void to_axis_angle(const tquat<T>& q, tvec3<T>& axis, T& angle)
 {
-    angle = T(2.0) * std::acos(q.w);
+    angle = T(2.0) * acos(q.w);
     axis = {
-        q.x / std::sqrt(T(1.0) - q.w*q.w),
-        q.y / std::sqrt(T(1.0) - q.w*q.w),
-        q.z / std::sqrt(T(1.0) - q.w*q.w)
+        q.x / sqrt(T(1.0) - q.w*q.w),
+        q.y / sqrt(T(1.0) - q.w*q.w),
+        q.z / sqrt(T(1.0) - q.w*q.w)
     };
 }
 
@@ -778,7 +778,7 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
 
         T r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
 
-        if (std::abs(r) >= T(1.0)) {
+        if (abs(r) >= T(1.0)) {
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
                     s[i][j] /= r;
@@ -786,11 +786,11 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
             }
         }
         else {
-            T mr = std::abs(r) / std::numeric_limits<T>::min();
+            T mr = abs(r) / numeric_limits<T>::min();
 
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
-                    if (mr > std::abs(s[i][j])) {
+                    if (mr > abs(s[i][j])) {
                         s[i][j] /= r;
                     }
                     else {
@@ -811,7 +811,7 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
 
         T r = x[0][0] * x[1][1] - x[1][0] * x[0][1];
 
-        if (std::abs(r) >= 1) {
+        if (abs(r) >= 1) {
             for (int i = 0; i < 2; ++i) {
                 for (int j = 0; j < 2; ++j) {
                     s[i][j] /= r;
@@ -819,11 +819,11 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
             }
         }
         else {
-            T mr = std::abs(r) / std::numeric_limits<T>::min();
+            T mr = abs(r) / numeric_limits<T>::min();
 
             for (int i = 0; i < 2; ++i) {
                 for (int j = 0; j < 2; ++j) {
-                    if (mr > std::abs(s[i][j])) {
+                    if (mr > abs(s[i][j])) {
                         s[i][j] /= r;
                     }
                     else
@@ -864,7 +864,7 @@ template<class T> inline tmat4x4<T> invert(const tmat4x4<T>& x)
 
     auto r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
 
-    if (std::abs(r) >= 1) {
+    if (abs(r) >= 1) {
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
                 s[i][j] /= r;
@@ -872,11 +872,11 @@ template<class T> inline tmat4x4<T> invert(const tmat4x4<T>& x)
         }
     }
     else {
-        auto mr = std::abs(r) / std::numeric_limits<T>::min();
+        auto mr = abs(r) / numeric_limits<T>::min();
 
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
-                if (mr > std::abs(s[i][j])) {
+                if (mr > abs(s[i][j])) {
                     s[i][j] /= r;
                 }
                 else {
@@ -913,7 +913,7 @@ template<class T>
 inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T& near_plane, T& far_plane)
 {
     auto tan_half_fov = T(1.0) / proj[1][1];
-    fov = std::atan(tan_half_fov) * T(2.0) * Rad2Deg;
+    fov = atan(tan_half_fov) * T(2.0) * Rad2Deg;
     aspect = (T(1.0) / proj[0][0]) / tan_half_fov;
 
     auto m22 = -proj[2][2];
@@ -972,7 +972,7 @@ inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
     if (trace > 0.0f)
     {
         // |w| > 1/2, may as well choose w > 1/2
-        root = std::sqrt(trace + 1.0f);   // 2w
+        root = sqrt(trace + 1.0f);   // 2w
         q.w = 0.5f * root;
         root = 0.5f / root;  // 1/(4w)
         q.x = (m[2][1] - m[1][2]) * root;
@@ -991,7 +991,7 @@ inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
         int j = next[i];
         int k = next[j];
 
-        root = std::sqrt(m[i][i] - m[j][j] - m[k][k] + T(1.0));
+        root = sqrt(m[i][i] - m[j][j] - m[k][k] + T(1.0));
         float* qv[3] = { &q.x, &q.y, &q.z };
         *qv[i] = T(0.5) * root;
         root = T(0.5) / root;
@@ -1015,14 +1015,14 @@ template<class T> inline quatf to_quat(const tmat4x4<T>& m)
 // aperture and focal_length must be millimeter. return fov in degree
 template<class T> inline T compute_fov(T aperture, T focal_length)
 {
-    return T(2.0) * std::atan(aperture / (T(2.0) * focal_length)) * Rad2Deg;
+    return T(2.0) * atan(aperture / (T(2.0) * focal_length)) * Rad2Deg;
 }
 
 // aperture: millimeter
 // fov: degree
 template<class T> inline T compute_focal_length(T aperture, T fov)
 {
-    return aperture / std::tan(fov * Deg2Rad / T(2.0)) / T(2.0);
+    return aperture / tan(fov * Deg2Rad / T(2.0)) / T(2.0);
 }
 
 
@@ -1037,7 +1037,7 @@ inline bool ray_triangle_intersection(
     auto e2 = p3 - p1;
     auto p = cross(dir, e2);
     auto det = dot(e1, p);
-    if (std::abs(det) < epsdet) return false;
+    if (abs(det) < epsdet) return false;
     auto inv_det = T(1.0) / det;
     auto t = pos - p1;
     auto u = dot(t, p) * inv_det;
@@ -1084,7 +1084,7 @@ template<class T> inline void compute_triangle_tangent(
     auto t = tvec2<T>{ uv[1].y - uv[0].y, uv[2].y - uv[0].y };
 
     T div = s.x * t.y - s.y * t.x;
-    T area = std::abs(div);
+    T area = abs(div);
     T rdiv = T(1.0) / div;
     s *= rdiv;
     t *= rdiv;
@@ -1132,9 +1132,9 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
     {
         tvec3<T> axis1, axis2;
 
-        auto dpXN = std::abs(dot({ T(1.0), T(0.0), T(0.0) }, normal));
-        auto dpYN = std::abs(dot({ T(0.0), T(1.0), T(0.0) }, normal));
-        auto dpZN = std::abs(dot({ T(0.0), T(0.0), T(1.0) }, normal));
+        auto dpXN = abs(dot({ T(1.0), T(0.0), T(0.0) }, normal));
+        auto dpYN = abs(dot({ T(0.0), T(1.0), T(0.0) }, normal));
+        auto dpZN = abs(dot({ T(0.0), T(0.0), T(1.0) }, normal));
 
         if (dpXN <= dpYN && dpXN <= dpZN)
         {
