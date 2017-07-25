@@ -910,7 +910,23 @@ inline tmat4x4<T> look_at(const tvec3<T>& eye, const tvec3<T>& center, const tve
 }
 
 template<class T>
-inline void view_to_camera(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
+inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T& near_plane, T& far_plane)
+{
+    auto tan_half_fov = T(1.0) / proj[1][1];
+    fov = std::atan(tan_half_fov) * T(2.0) * Rad2Deg;
+    aspect = (T(1.0) / proj[0][0]) / tan_half_fov;
+
+    auto m22 = -proj[2][2];
+    auto m32 = -proj[3][2];
+    auto tmp_near = (T(2.0) * m32) / (T(2.0)*m22 - T(2.0));
+    auto tmp_far = ((m22 - T(1.0))*tmp_near) / (m22 + T(1.0));
+    near_plane = abs(tmp_near);
+    far_plane = abs(tmp_far);
+
+}
+
+template<class T>
+inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
 {
     //tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
     //tvec3<T> d = (tvec3<T>&)view[3];
@@ -934,6 +950,13 @@ inline void view_to_camera(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forw
     forward = (tvec3<T>&)tview[2];
     up = (tvec3<T>&)tview[1];
     right = (tvec3<T>&)tview[0];
+}
+template<class T>
+inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tquat<T>& rot)
+{
+    tvec3<T> forward, up, right;
+    extract_look_data(view, pos, forward, up, right);
+    rot = to_quat(look33(forward, tvec3<T>{ T(0.0), T(1.0), T(0.0) }));
 }
 
 

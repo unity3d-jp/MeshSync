@@ -35,7 +35,7 @@ struct MaterialData
 {
     GLuint program = 0;
     GLuint texture = 0;
-    float4 difuse = float4::one();
+    float4 difuse = float4::zero();
 
     bool operator==(const MaterialData& v) const
     {
@@ -126,6 +126,8 @@ protected:
     float3 m_camera_pos = float3::zero();
     quatf m_camera_rot = quatf::identity();
     float m_camera_fov = 60.0f;
+    float m_camera_near = 0.01f;
+    float m_camera_far = 100.0f;
 
     struct SendTaskData
     {
@@ -384,6 +386,8 @@ void msxmContext::send(bool force)
             cam.transform.position = m_camera_pos;
             cam.transform.rotation = m_camera_rot;
             cam.fov = m_camera_fov;
+            cam.near_plane = m_camera_near;
+            cam.far_plane = m_camera_far;
             m_camera_dirty = false;
         }
         else {
@@ -582,9 +586,10 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
         (buf && buf->stride == sizeof(xm_vertex1)))
     {
         {
-            // projection matrix -> camera fov
-            float thf = 1.0f / m_proj[1][1];
-            float fov = std::atan(thf) * 2.0f * Rad2Deg;
+            // projection matrix -> camera fov & clippling planes
+            float fov, aspect, near_plane, far_plane;
+            extract_projection_data(m_proj, fov, aspect, near_plane, far_plane);
+
             if (fov > 179.0f) {
                 // camera is not perspective. capture only when camera is perspective.
                 goto bailout;
@@ -592,13 +597,15 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
             if (fov != m_camera_fov) {
                 m_camera_dirty = true;
                 m_camera_fov = fov;
+                m_camera_near = near_plane;
+                m_camera_far = far_plane;
             }
         }
         {
             // modelview matrix -> camera pos & rot
-            float3 pos, forward, up, right;
-            view_to_camera(m_modelview, pos, forward, up, right);
-            quatf rot = to_quat(look33(forward, float3{ 0.0f, 1.0f, 0.0f }));
+            float3 pos;
+            quatf rot;
+            extract_look_data(m_modelview, pos, rot);
             if (pos != m_camera_pos ||
                 rot != m_camera_rot)
             {
