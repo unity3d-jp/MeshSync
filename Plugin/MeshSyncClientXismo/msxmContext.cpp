@@ -399,18 +399,6 @@ void msxmContext::send(bool force)
     m_send_future = std::async(std::launch::async, [this]() { m_send_data.send(); });
 }
 
-void msxmContext::onActiveTexture(GLenum texture)
-{
-    m_texture_slot = texture - GL_TEXTURE0;
-}
-
-void msxmContext::onBindTexture(GLenum target, GLuint texture)
-{
-    if (m_texture_slot == 0) {
-        m_material.texture = texture;
-    }
-}
-
 void msxmContext::SendTaskData::send()
 {
     ms::Client client(settings.client_settings);
@@ -435,18 +423,11 @@ void msxmContext::SendTaskData::send()
     if (settings.sync_delete && !meshes_deleted.empty()) {
         ms::DeleteMessage del;
         for (auto h : meshes_deleted) {
-            auto it = std::find_if(meshes.begin(), meshes.end(), [h](VertexData::SendTaskPtr& v) {
-                return v->handle == h;
-            });
-            if (it == meshes.end()) {
-                char path[128];
-                sprintf(path, "/XismoMesh:ID[%08x]", h);
-                del.targets.push_back({ path, (int)h });
-            }
+            char path[128];
+            sprintf(path, "/XismoMesh:ID[%08x]", h);
+            del.targets.push_back({ path, (int)h });
         }
-        if (!del.targets.empty()) {
-            client.send(del);
-        }
+        client.send(del);
     }
 
     // send meshes
@@ -468,6 +449,17 @@ void msxmContext::SendTaskData::send()
     }
 }
 
+void msxmContext::onActiveTexture(GLenum texture)
+{
+    m_texture_slot = texture - GL_TEXTURE0;
+}
+
+void msxmContext::onBindTexture(GLenum target, GLuint texture)
+{
+    if (m_texture_slot == 0) {
+        m_material.texture = texture;
+    }
+}
 
 VertexData* msxmContext::getActiveBuffer(GLenum target)
 {
@@ -481,6 +473,12 @@ VertexData* msxmContext::getActiveBuffer(GLenum target)
 
 void msxmContext::onGenBuffers(GLsizei n, GLuint * handles)
 {
+    for (int i = 0; i < (int)n; ++i) {
+        auto it = std::find(m_meshes_deleted.begin(), m_meshes_deleted.end(), handles[i]);
+        if (it != m_meshes_deleted.end()) {
+            m_meshes_deleted.erase(it);
+        }
+    }
 }
 
 void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
@@ -521,8 +519,8 @@ void msxmContext::onMapBuffer(GLenum target, GLenum access, void *&mapped_data)
         return;
     }
 
-    // mapped memory returned by glMapBuffer() is special kind of memory and reading it is exetemery slow.
-    // so make temporary memory and return it to application, and copy it to mapped memory later (onUnmapBuffer()).
+    // mapped memory returned by glMapBuffer() is a special kind of memory and reading it is exetemery slow.
+    // so make temporary memory and return it to application, and copy it to actual mapped memory later (onUnmapBuffer()).
     if (auto *buf = getActiveBuffer(target)) {
         buf->mapped_data = mapped_data;
         buf->tmp_data.resize_discard(buf->data.size());
