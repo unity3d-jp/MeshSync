@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientXismo", "Mesh
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientXismoHook", "MeshSyncClientXismoHook.vcxproj", "{62680C45-269B-4751-9FBD-774481C13873}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PyMeshSync", "PyMeshSync.vcxproj", "{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -108,6 +110,12 @@ Global
 		{62680C45-269B-4751-9FBD-774481C13873}.Master|x64.ActiveCfg = Master|x64
 		{62680C45-269B-4751-9FBD-774481C13873}.Master|x64.Build.0 = Master|x64
 		{62680C45-269B-4751-9FBD-774481C13873}.Master|x86.ActiveCfg = Master|x64
+		{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}.Debug|x64.ActiveCfg = Debug|x64
+		{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}.Debug|x64.Build.0 = Debug|x64
+		{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}.Debug|x86.ActiveCfg = Debug|x64
+		{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}.Master|x64.ActiveCfg = Master|x64
+		{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}.Master|x64.Build.0 = Master|x64
+		{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}.Master|x86.ActiveCfg = Master|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

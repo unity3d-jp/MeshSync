@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef _WIN32
+    #define NOMINMAX
+    #include <windows.h>
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #ifdef muEnableHalf
     #include <OpenEXR/half.h>
 #endif // muEnableHalf
@@ -872,7 +873,7 @@ template<class T> inline tmat4x4<T> invert(const tmat4x4<T>& x)
         }
     }
     else {
-        auto mr = abs(r) / numeric_limits<T>::min();
+        auto mr = abs(r) / std::numeric_limits<T>::min();
 
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
