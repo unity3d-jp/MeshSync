@@ -548,45 +548,20 @@ void Transform::applyScaleFactor(float scale)
     transform.position *= scale;
 }
 
-std::array<float, 3> Transform::getPosition() const
-{
-    return { transform.position.x, transform.position.y, transform.position.z };
-}
-std::array<float, 4> Transform::getRotation() const
-{
-    return { transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w };
-}
-std::array<float, 3> Transform::getScale() const
-{
-    return { transform.scale.x, transform.scale.y, transform.scale.z };
-}
-void Transform::setPosition(const std::array<float, 3>& v)
-{
-    transform.position = {v[0], v[1], v[2]};
-}
-void Transform::setRotation(const std::array<float, 4>& v)
-{
-    transform.rotation = { v[0], v[1], v[2], v[3] };
-}
-void Transform::setScale(const std::array<float, 3>& v)
-{
-    transform.scale = { v[0], v[1], v[2] };
-}
-
-void Transform::addTranslationKey(float t, const std::array<float, 3>& v)
+void Transform::addTranslationKey(float t, const float3& v)
 {
     if (!animation) { createAnimation(); }
-    static_cast<TransformAnimation&>(*animation).translation.push_back({ t, float3{ v[0], v[1], v[2] } });
+    static_cast<TransformAnimation&>(*animation).translation.push_back({ t, v });
 }
-void Transform::addRotationKey(float t, const std::array<float, 4>& v)
+void Transform::addRotationKey(float t, const quatf& v)
 {
     if (!animation) { createAnimation(); }
-    static_cast<TransformAnimation&>(*animation).rotation.push_back({ t, quatf{ v[0], v[1], v[2], v[3] } });
+    static_cast<TransformAnimation&>(*animation).rotation.push_back({ t, v });
 }
-void Transform::addScaleKey(float t, const std::array<float, 3>& v)
+void Transform::addScaleKey(float t, const float3& v)
 {
     if (!animation) { createAnimation(); }
-    static_cast<TransformAnimation&>(*animation).scale.push_back({ t, float3{ v[0], v[1], v[2] } });
+    static_cast<TransformAnimation&>(*animation).scale.push_back({ t, v });
 }
 
 
@@ -843,19 +818,10 @@ void Light::applyScaleFactor(float scale)
     range *= scale;
 }
 
-std::array<float, 4> Light::getColor() const
-{
-    return { color.x, color.y, color.z, color.w };
-}
-void Light::setColor(const std::array<float, 4>& v)
-{
-    color = { v[0],v[1] ,v[2] ,v[3] };
-}
-
-void Light::addColorKey(float t, std::array<float, 4>& v)
+void Light::addColorKey(float t, const float4& v)
 {
     if (!animation) { createAnimation(); }
-    static_cast<LightAnimation&>(*animation).color.push_back({ t, float4{ v[0], v[1], v[2], v[3] } });
+    static_cast<LightAnimation&>(*animation).color.push_back({ t, v });
 }
 void Light::addIntensityKey(float t, float v)
 {
@@ -1290,21 +1256,35 @@ void Mesh::generateWeights4()
     }
 }
 
-void Mesh::addVertex(const std::array<float, 3>& v)
+void Mesh::setupFlags()
 {
-    points.push_back({ v[0], v[1], v[2] });
+    flags.has_points = !points.empty();
+    flags.has_normals = !normals.empty();
+    flags.has_tangents = !tangents.empty();
+    flags.has_uv = !uv.empty();
+    flags.has_colors = !colors.empty();
+    flags.has_counts = !counts.empty();
+    flags.has_indices = !indices.empty();
+    flags.has_materialIDs = !materialIDs.empty();
+    flags.has_bones = !bones.empty() && !bindposes.empty() && !bone_weights.empty() && !bone_indices.empty();
+    flags.has_blendshapes = !blendshape.empty();
 }
-void Mesh::addNormal(const std::array<float, 3>& v)
+
+void Mesh::addVertex(const float3& v)
 {
-    normals.push_back({ v[0], v[1], v[2] });
+    points.push_back(v);
 }
-void Mesh::addUV(const std::array<float, 2>& v)
+void Mesh::addNormal(const float3& v)
 {
-    uv.push_back({ v[0], v[1] });
+    normals.push_back(v);
 }
-void Mesh::addColor(const std::array<float, 4>& v)
+void Mesh::addUV(const float2& v)
 {
-    colors.push_back({ v[0], v[1], v[2], v[3] });
+    uv.push_back(v);
+}
+void Mesh::addColor(const float4& v)
+{
+    colors.push_back(v);
 }
 void Mesh::addCount(int v)
 {

@@ -12,7 +12,6 @@ std::shared_ptr<T> pymsContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>
 {
     std::shared_ptr<T> ret;
     {
-        lock_t l(m_mutex);
         if (cache.empty()) {
             ret.reset(new T());
         }
@@ -70,8 +69,18 @@ void pymsContext::send()
         return;
     }
 
+    // return objects to cache
+    for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
+    for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }
+    for (auto& v : m_message.scene.lights) { m_transform_cache.push_back(v); }
+    for (auto& v : m_mesh_send) { m_mesh_cache.push_back(v); }
+
+    // setup send data
     m_message.scene = m_scene;
     m_scene.clear();
+
+    m_mesh_send = m_meshes;
+    m_meshes.clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {
@@ -91,16 +100,9 @@ void pymsContext::send()
         // send transform, camera, etc
         m_message.scene.settings = scene_settings;
         client.send(m_message);
-        {
-            lock_t l(m_mutex);
-            for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
-            for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }
-            for (auto& v : m_message.scene.lights) { m_transform_cache.push_back(v); }
-        }
-        m_message.scene.clear();
 
         // send deleted
-        if (m_settings.sync_delete && !m_deleted.empty()) {
+        if (!m_deleted.empty()) {
             ms::DeleteMessage del;
             for (auto& path : m_deleted) {
                 del.targets.push_back({path, 0});
@@ -110,17 +112,14 @@ void pymsContext::send()
         m_deleted.clear();
 
         // send meshes
-        parallel_for_each(m_meshes.begin(), m_meshes.end(), [&](ms::MeshPtr& v) {
+        parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& v) {
+            v->setupFlags();
+
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { v };
             client.send(set);
         });
-        {
-            lock_t l(m_mutex);
-            for (auto& v : m_meshes) { m_mesh_cache.push_back(v); }
-        }
-        m_meshes.clear();
 
         // notify scene end
         {

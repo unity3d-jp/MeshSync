@@ -10,14 +10,10 @@ struct pymsSettings
 {
     ms::ClientSettings client_settings;
     float scale_factor = 100.0f;
-    bool auto_sync = true;
-    bool sync_delete = true;
-    bool sync_camera = false;
-    bool sync_animation = false;
 };
 
 
-class pymsContext
+class pymsContext : public std::enable_shared_from_this<pymsContext>
 {
 public:
     pymsSettings&       getSettings();
@@ -38,12 +34,11 @@ private:
     std::vector<ms::TransformPtr> m_transform_cache;
     std::vector<ms::CameraPtr> m_camera_cache;
     std::vector<ms::LightPtr> m_light_cache;
-    std::vector<ms::MeshPtr> m_mesh_cache, m_meshes;
+    std::vector<ms::MeshPtr> m_mesh_cache, m_meshes, m_mesh_send;
     std::vector<std::string> m_deleted;
     ms::Scene m_scene;
-    ms::SetMessage m_message;
-    std::mutex m_mutex;
-    std::future<void> m_send_future;
 
-    using lock_t = std::unique_lock<std::mutex>;
+    ms::SetMessage m_message;
+    std::future<void> m_send_future;
 };
+using pymsContextPtr = std::shared_ptr<pymsContext>;

@@ -106,16 +106,9 @@ public:
 
 public:
     // for python binding
-    std::array<float, 3> getPosition() const;
-    std::array<float, 4> getRotation() const;
-    std::array<float, 3> getScale() const;
-    void setPosition(const std::array<float, 3>& v);
-    void setRotation(const std::array<float, 4>& v);
-    void setScale(const std::array<float, 3>& v);
-
-    void addTranslationKey(float t, const std::array<float, 3>& v);
-    void addRotationKey(float t, const std::array<float, 4>& v);
-    void addScaleKey(float t, const std::array<float, 3>& v);
+    void addTranslationKey(float t, const float3& v);
+    void addRotationKey(float t, const quatf& v);
+    void addScaleKey(float t, const float3& v);
 };
 using TransformPtr = std::shared_ptr<Transform>;
 
@@ -220,10 +213,7 @@ public:
 
 public:
     // for python binding
-    std::array<float, 4> getColor() const;
-    void setColor(const std::array<float, 4>& v);
-
-    void addColorKey(float t, std::array<float, 4>& v);
+    void addColorKey(float t, const float4& v);
     void addIntensityKey(float t, float v);
     void addRangeKey(float t, float v);
     void addSpotAngleKey(float t, float v);
@@ -383,13 +373,14 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
     void generateWeights4();
+    void setupFlags();
 
 public:
     // for python binding
-    void addVertex(const std::array<float, 3>& v);
-    void addNormal(const std::array<float, 3>& v);
-    void addUV(const std::array<float, 2>& v);
-    void addColor(const std::array<float, 4>& v);
+    void addVertex(const float3& v);
+    void addNormal(const float3& v);
+    void addUV(const float2& v);
+    void addColor(const float4& v);
 
     void addCount(int v);
     void addIndex(int v);
