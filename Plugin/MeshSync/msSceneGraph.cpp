@@ -398,6 +398,13 @@ void Entity::deserialize(std::istream& is)
     read(is, path);
 }
 
+void Entity::clear()
+{
+    id = 0;
+    index = 0;
+    path.clear();
+}
+
 const char* Entity::getName() const
 {
     size_t name_pos = path.find_last_of('/');
@@ -420,6 +427,10 @@ void Animation::serialize(std::ostream &) const
 }
 
 void Animation::deserialize(std::istream &)
+{
+}
+
+void Animation::clear()
 {
 }
 
@@ -501,6 +512,14 @@ void Transform::deserialize(std::istream& is)
     }
 }
 
+void Transform::clear()
+{
+    super::clear();
+    transform = TRS();
+    visible = true;
+    animation.reset();
+}
+
 void Transform::createAnimation()
 {
     if (!animation) {
@@ -529,6 +548,28 @@ void Transform::applyScaleFactor(float scale)
     transform.position *= scale;
 }
 
+void Transform::setPath(const std::string & v)
+{
+    path = v;
+}
+void Transform::setVisible(bool v)
+{
+    visible = v;
+}
+void Transform::setPosition(const std::array<float, 3>& v)
+{
+    transform.position = {v[0], v[1], v[2]};
+}
+void Transform::setRotation(const std::array<float, 4>& v)
+{
+    transform.rotation = { v[0], v[1], v[2], v[3] };
+}
+void Transform::setScale(const std::array<float, 3>& v)
+{
+    transform.scale = { v[0], v[1], v[2] };
+}
+
+
 uint32_t TransformAnimation::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -553,6 +594,14 @@ void TransformAnimation::deserialize(std::istream & is)
     read(is, rotation);
     read(is, scale);
     read(is, visible);
+}
+
+void TransformAnimation::clear()
+{
+    translation.clear();
+    rotation.clear();
+    scale.clear();
+    visible.clear();
 }
 
 bool TransformAnimation::empty() const
@@ -605,6 +654,21 @@ void Camera::deserialize(std::istream& is)
     read(is, focus_distance);
 }
 
+void Camera::clear()
+{
+    super::clear();
+
+    is_ortho = false;
+    fov = 30.0f;
+    near_plane = 0.3f;
+    far_plane = 1000.0f;
+
+    vertical_aperture = 0.0f;
+    horizontal_aperture = 0.0f;
+    focal_length = 0.0f;
+    focus_distance = 0.0f;
+}
+
 void Camera::createAnimation()
 {
     if (!animation) {
@@ -618,6 +682,14 @@ void Camera::applyScaleFactor(float scale)
     near_plane *= scale;
     far_plane *= scale;
 }
+
+void Camera::setFov(float v) { fov = v; }
+void Camera::setNearPlane(float v) { near_plane = v; }
+void Camera::setFarPlane(float v) { far_plane = v; }
+void Camera::setVerticalAperture(float v) { vertical_aperture = v; }
+void Camera::setHorizontalAperture(float v) { horizontal_aperture = v; }
+void Camera::setFocalLength(float v) { focal_length = v; }
+void Camera::setFocusDistance(float v) { focus_distance = v; }
 
 uint32_t CameraAnimation::getSerializeSize() const
 {
@@ -642,6 +714,18 @@ void CameraAnimation::deserialize(std::istream & is)
     read(is, fov);
     read(is, near_plane);
     read(is, far_plane);
+}
+
+void CameraAnimation::clear()
+{
+    super::clear();
+    fov.clear();
+    near_plane.clear();
+    far_plane.clear();
+    horizontal_aperture.clear();
+    vertical_aperture.clear();
+    focal_length.clear();
+    focus_distance.clear();
 }
 
 bool CameraAnimation::empty() const
@@ -687,6 +771,16 @@ void Light::deserialize(std::istream & is)
     read(is, spot_angle);
 }
 
+void Light::clear()
+{
+    super::clear();
+    type = Type::Directional;
+    color = float4::one();
+    intensity = 1.0f;
+    range = 0.0f;
+    spot_angle = 30.0f;
+}
+
 void Light::createAnimation()
 {
     if (!animation) {
@@ -699,6 +793,13 @@ void Light::applyScaleFactor(float scale)
     super::applyScaleFactor(scale);
     range *= scale;
 }
+
+void Light::setLightType(int v) { type = (Type)v; }
+void Light::setColor(const std::array<float, 4>& v) { color = { v[0],v[1] ,v[2] ,v[3] }; }
+void Light::setIntensity(float v) { intensity = v; }
+void Light::setRange(float v) { range = v; }
+void Light::setSpotAngle(float v) { spot_angle = v; }
+
 
 uint32_t LightAnimation::getSerializeSize() const
 {
@@ -724,6 +825,15 @@ void LightAnimation::deserialize(std::istream & is)
     read(is, intensity);
     read(is, range);
     read(is, spot_angle);
+}
+
+void LightAnimation::clear()
+{
+    super::clear();
+    color.clear();
+    intensity.clear();
+    range.clear();
+    spot_angle.clear();
 }
 
 bool LightAnimation::empty() const
@@ -767,25 +877,6 @@ void BlendshapeData::deserialize(std::istream& is)
 
 Mesh::Mesh()
 {
-}
-
-void Mesh::clear()
-{
-    id = 0;
-    path.clear();
-    flags = {0};
-
-    transform = TRS();
-    refine_settings = MeshRefineSettings();
-
-#define Body(A) vclear(A);
-    EachVertexProperty(Body);
-    EachBoneProperty(Body);
-#undef Body
-
-    submeshes.clear();
-    splits.clear();
-    weights4.clear();
 }
 
 Entity::TypeID Mesh::getTypeID() const
@@ -856,6 +947,25 @@ void Mesh::deserialize(std::istream& is)
     if (flags.has_blendshapes) {
         read(is, blendshape);
     }
+}
+
+void Mesh::clear()
+{
+    id = 0;
+    path.clear();
+    flags = { 0 };
+
+    transform = TRS();
+    refine_settings = MeshRefineSettings();
+
+#define Body(A) vclear(A);
+    EachVertexProperty(Body);
+    EachBoneProperty(Body);
+#undef Body
+
+    submeshes.clear();
+    splits.clear();
+    weights4.clear();
 }
 
 #undef EachVertexProperty
@@ -1106,6 +1216,37 @@ void Mesh::generateWeights4()
     }
 }
 
+void Mesh::addVertex(const std::array<float, 3>& v)
+{
+    points.push_back({ v[0], v[1], v[2] });
+}
+void Mesh::addNormal(const std::array<float, 3>& v)
+{
+    normals.push_back({ v[0], v[1], v[2] });
+}
+void Mesh::addUV(const std::array<float, 2>& v)
+{
+    uv.push_back({ v[0], v[1] });
+}
+void Mesh::addColor(const std::array<float, 4>& v)
+{
+    colors.push_back({ v[0], v[1], v[2], v[3] });
+}
+void Mesh::addCount(int v)
+{
+    counts.push_back(v);
+}
+void Mesh::addIndex(int v)
+{
+    indices.push_back(v);
+}
+void Mesh::addMaterialID(int v)
+{
+    materialIDs.push_back(v);
+}
+
+
+
 uint32_t SceneSettings::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -1155,6 +1296,15 @@ void Scene::deserialize(std::istream& is)
     read(is, cameras);
     read(is, lights);
     read(is, materials);
+}
+
+void Scene::clear()
+{
+    meshes.clear();
+    transforms.clear();
+    cameras.clear();
+    lights.clear();
+    materials.clear();
 }
 
 } // namespace ms

@@ -14,7 +14,7 @@
 
 namespace ms {
 
-class Entity
+class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
     enum class TypeID
@@ -35,6 +35,7 @@ public:
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void clear();
 
     const char* getName() const; // get name (leaf) from path
 };
@@ -65,6 +66,7 @@ public:
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void clear();
 
     virtual bool empty() const;
 };
@@ -96,10 +98,19 @@ public:
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     virtual void createAnimation();
     virtual void swapHandedness();
     virtual void applyScaleFactor(float scale);
+
+public:
+    // for python binding
+    void setPath(const std::string& v);
+    void setVisible(bool v);
+    void setPosition(const std::array<float, 3>& v);
+    void setRotation(const std::array<float, 4>& v);
+    void setScale(const std::array<float, 3>& v);
 };
 using TransformPtr = std::shared_ptr<Transform>;
 
@@ -114,6 +125,7 @@ public:
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     bool empty() const override;
 };
@@ -138,9 +150,20 @@ public:
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     void createAnimation() override;
     void applyScaleFactor(float scale) override;
+
+public:
+    // for python binding
+    void setFov(float v);
+    void setNearPlane(float v);
+    void setFarPlane(float v);
+    void setVerticalAperture(float v);
+    void setHorizontalAperture(float v);
+    void setFocalLength(float v);
+    void setFocusDistance(float v);
 };
 using CameraPtr = std::shared_ptr<Camera>;
 
@@ -159,6 +182,7 @@ public:
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     bool empty() const override;
 };
@@ -186,9 +210,18 @@ public:
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     void createAnimation() override;
     void applyScaleFactor(float scale) override;
+
+public:
+    // for python binding
+    void setLightType(int v);
+    void setColor(const std::array<float, 4>& v);
+    void setIntensity(float v);
+    void setRange(float v);
+    void setSpotAngle(float v);
 };
 using LightPtr = std::shared_ptr<Light>;
 
@@ -204,6 +237,7 @@ public:
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     bool empty() const override;
 };
@@ -329,13 +363,14 @@ public:
     RawVector<SplitData> splits;
     RawVector<Weights4> weights4;
 
+
 public:
     Mesh();
-    void clear();
     TypeID getTypeID() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void clear() override;
 
     void swapHandedness() override;
     void applyScaleFactor(float scale) override;
@@ -344,6 +379,17 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
     void generateWeights4();
+
+public:
+    // for python binding
+    void addVertex(const std::array<float, 3>& v);
+    void addNormal(const std::array<float, 3>& v);
+    void addUV(const std::array<float, 2>& v);
+    void addColor(const std::array<float, 4>& v);
+
+    void addCount(int v);
+    void addIndex(int v);
+    void addMaterialID(int v);
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 
@@ -369,16 +415,17 @@ struct Scene
 {
 public:
     SceneSettings settings;
-    std::vector<MeshPtr> meshes;
+    std::vector<MeshPtr>      meshes;
     std::vector<TransformPtr> transforms;
-    std::vector<CameraPtr> cameras;
-    std::vector<LightPtr> lights;
-    std::vector<MaterialPtr> materials;
+    std::vector<CameraPtr>    cameras;
+    std::vector<LightPtr>     lights;
+    std::vector<MaterialPtr>  materials;
 
 public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void clear();
 };
 using ScenePtr = std::shared_ptr<Scene>;
 

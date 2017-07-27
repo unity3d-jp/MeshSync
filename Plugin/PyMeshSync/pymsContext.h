@@ -4,7 +4,6 @@
 
 struct pymsSettings;
 class pymsContext;
-struct pymsMesh;
 
 
 struct pymsSettings
@@ -21,32 +20,29 @@ struct pymsSettings
 class pymsContext
 {
 public:
-    pymsMesh addMesh();
+    ms::TransformPtr    addTransform(const std::string& path);
+    ms::CameraPtr       addCamera(const std::string& path);
+    ms::LightPtr        addLight(const std::string& path);
+    ms::MeshPtr         addMesh(const std::string& path);
+
+    bool isSending() const;
     void send();
 
 private:
+    template<class T>
+    std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
+
+
     pymsSettings m_settings;
-    std::vector<ms::MeshPtr> m_meshes_cache;
-    std::vector<ms::MeshPtr> m_meshes;
-    std::vector<ms::MeshPtr> m_meshes_deleted;
+    std::vector<ms::TransformPtr> m_transform_cache;
+    std::vector<ms::CameraPtr> m_camera_cache;
+    std::vector<ms::LightPtr> m_light_cache;
+    std::vector<ms::MeshPtr> m_mesh_cache, m_meshes;
+    std::vector<std::string> m_deleted;
+    ms::Scene m_scene;
     ms::SetMessage m_message;
+    std::mutex m_mutex;
     std::future<void> m_send_future;
-};
 
-
-struct pymsMesh
-{
-public:
-    ms::Mesh *mesh;
-
-    void setPath(const std::string& v);
-
-    void addVertex(const std::array<float, 3>& v);
-    void addNormal(const std::array<float, 3>& v);
-    void addUV(const std::array<float, 2>& v);
-    void addColor(const std::array<float, 4>& v);
-
-    void addCount(int v);
-    void addIndex(int v);
-    void addMaterialID(int v);
+    using lock_t = std::unique_lock<std::mutex>;
 };

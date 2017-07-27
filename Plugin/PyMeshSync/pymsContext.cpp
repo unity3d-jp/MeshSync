@@ -3,27 +3,71 @@
 #include "pymsContext.h"
 using namespace mu;
 
-pymsMesh pymsContext::addMesh()
+template<class T>
+std::shared_ptr<T> pymsContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
 {
-    if (m_meshes_cache.empty()) {
-        m_meshes.emplace_back(new ms::Mesh());
+    std::shared_ptr<T> ret;
+    {
+        lock_t l(m_mutex);
+        if (cache.empty()) {
+            ret.reset(new T());
+        }
+        else {
+            ret = cache.back();
+            cache.pop_back();
+        }
     }
-    else {
-        auto v = m_meshes_cache.back();
-        v->clear();
-        m_meshes.push_back(v);
-        m_meshes_cache.pop_back();
-    }
-    return { m_meshes.back().get() };
+    ret->clear();
+    return ret;
+}
+
+ms::TransformPtr pymsContext::addTransform(const std::string& path)
+{
+    auto ret = getCacheOrCreate(m_transform_cache);
+    ret->path = path;
+    m_scene.transforms.push_back(ret);
+    return ret;
+}
+
+ms::CameraPtr pymsContext::addCamera(const std::string& path)
+{
+    auto ret = getCacheOrCreate(m_camera_cache);
+    ret->path = path;
+    m_scene.cameras.push_back(ret);
+    return ret;
+}
+
+ms::LightPtr pymsContext::addLight(const std::string& path)
+{
+    auto ret = getCacheOrCreate(m_light_cache);
+    ret->path = path;
+    m_scene.lights.push_back(ret);
+    return ret;
+}
+
+ms::MeshPtr pymsContext::addMesh(const std::string& path)
+{
+    auto ret = getCacheOrCreate(m_mesh_cache);
+    ret->path = path;
+    m_meshes.push_back(ret);
+    return ret;
+}
+
+bool pymsContext::isSending() const
+{
+    return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
 void pymsContext::send()
 {
-    if (m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+    if (isSending())
     {
         // previous request is not completed yet
         return;
     }
+
+    m_message.scene = m_scene;
+    m_scene.clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {
@@ -40,15 +84,26 @@ void pymsContext::send()
             client.send(fence);
         }
 
-        // send camera & materials
+        // send transform, camera, etc
         m_message.scene.settings = scene_settings;
         client.send(m_message);
+        {
+            lock_t l(m_mutex);
+            for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
+            for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }
+            for (auto& v : m_message.scene.lights) { m_transform_cache.push_back(v); }
+        }
+        m_message.scene.clear();
 
         // send deleted
-        if (m_settings.sync_delete && !m_meshes_deleted.empty()) {
+        if (m_settings.sync_delete && !m_deleted.empty()) {
             ms::DeleteMessage del;
+            for (auto& path : m_deleted) {
+                del.targets.push_back({path, 0});
+            }
             client.send(del);
         }
+        m_deleted.clear();
 
         // send meshes
         parallel_for_each(m_meshes.begin(), m_meshes.end(), [&](ms::MeshPtr& v) {
@@ -57,8 +112,10 @@ void pymsContext::send()
             set.scene.meshes = { v };
             client.send(set);
         });
-
-        for (auto& v : m_meshes) { m_meshes_cache.push_back(v); }
+        {
+            lock_t l(m_mutex);
+            for (auto& v : m_meshes) { m_mesh_cache.push_back(v); }
+        }
         m_meshes.clear();
 
         // notify scene end
@@ -69,45 +126,3 @@ void pymsContext::send()
         }
     });
 }
-
-void pymsMesh::setPath(const std::string& v)
-{
-    mesh->path = v;
-}
-
-void pymsMesh::addVertex(const std::array<float, 3>& v)
-{
-    mesh->points.push_back({ v[0], v[1], v[2] });
-}
-
-void pymsMesh::addNormal(const std::array<float, 3>& v)
-{
-    mesh->normals.push_back({ v[0], v[1], v[2] });
-}
-
-void pymsMesh::addUV(const std::array<float, 2>& v)
-{
-    mesh->uv.push_back({ v[0], v[1] });
-}
-
-void pymsMesh::addColor(const std::array<float, 4>& v)
-{
-    mesh->colors.push_back({ v[0], v[1], v[2], v[3] });
-}
-
-void pymsMesh::addCount(int v)
-{
-    mesh->counts.push_back(v);
-}
-
-void pymsMesh::addIndex(int v)
-{
-    mesh->indices.push_back(v);
-}
-
-void pymsMesh::addMaterialID(int v)
-{
-    mesh->materialIDs.push_back(v);
-}
-
-
