@@ -573,6 +573,22 @@ void Transform::setScale(const std::array<float, 3>& v)
     transform.scale = { v[0], v[1], v[2] };
 }
 
+void Transform::addTranslationKey(float t, const std::array<float, 3>& v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<TransformAnimation&>(*animation).translation.push_back({ t, float3{ v[0], v[1], v[2] } });
+}
+void Transform::addRotationKey(float t, const std::array<float, 4>& v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<TransformAnimation&>(*animation).rotation.push_back({ t, quatf{ v[0], v[1], v[2], v[3] } });
+}
+void Transform::addScaleKey(float t, const std::array<float, 3>& v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<TransformAnimation&>(*animation).scale.push_back({ t, float3{ v[0], v[1], v[2] } });
+}
+
 
 uint32_t TransformAnimation::getSerializeSize() const
 {
@@ -687,6 +703,43 @@ void Camera::applyScaleFactor(float scale)
     far_plane *= scale;
 }
 
+void Camera::addFovKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).fov.push_back({ t, v });
+}
+void Camera::addNearPlaneKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).near_plane.push_back({ t, v });
+}
+void Camera::addFarPlaneKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).far_plane.push_back({ t, v });
+}
+void Camera::addHorizontalApertureKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).horizontal_aperture.push_back({ t, v });
+}
+void Camera::addVerticalApertureKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).vertical_aperture.push_back({ t, v });
+}
+void Camera::addFocalLengthKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).focal_length.push_back({ t, v });
+}
+void Camera::addFocusDistanceKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<CameraAnimation&>(*animation).focus_distance.push_back({ t, v });
+}
+
+
 uint32_t CameraAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
@@ -798,6 +851,28 @@ void Light::setColor(const std::array<float, 4>& v)
 {
     color = { v[0],v[1] ,v[2] ,v[3] };
 }
+
+void Light::addColorKey(float t, std::array<float, 4>& v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<LightAnimation&>(*animation).color.push_back({ t, float4{ v[0], v[1], v[2], v[3] } });
+}
+void Light::addIntensityKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<LightAnimation&>(*animation).intensity.push_back({ t, v });
+}
+void Light::addRangeKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<LightAnimation&>(*animation).range.push_back({ t, v });
+}
+void Light::addSpotAngleKey(float t, float v)
+{
+    if (!animation) { createAnimation(); }
+    static_cast<LightAnimation&>(*animation).spot_angle.push_back({ t, v });
+}
+
 
 
 uint32_t LightAnimation::getSerializeSize() const

@@ -14,17 +14,20 @@ PYBIND11_PLUGIN(PyMeshSync)
 #define BindProperty2(Name, ...) .def_property(#Name, __VA_ARGS__)
     {
         using self_t = ms::Transform;
-        py::class_<ms::Transform, ms::TransformPtr>(mod, "Transform", py::metaclass())
+        py::class_<ms::Transform, ms::TransformPtr>(mod, "Transform")
             BindField(path)
             BindField(visible)
             BindProperty(position, Position)
             BindProperty(rotation, Rotation)
             BindProperty(scale, Scale)
+            BindMethod(addTranslationKey)
+            BindMethod(addRotationKey)
+            BindMethod(addScaleKey)
             ;
     }
     {
         using self_t = ms::Camera;
-        py::class_<ms::Camera, ms::CameraPtr, ms::Transform>(mod, "Camera", py::metaclass())
+        py::class_<ms::Camera, ms::CameraPtr, ms::Transform>(mod, "Camera")
             BindField(fov)
             BindField(near_plane)
             BindField(far_plane)
@@ -32,21 +35,32 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindField(horizontal_aperture)
             BindField(focal_length)
             BindField(focus_distance)
+            BindMethod(addFovKey)
+            BindMethod(addNearPlaneKey)
+            BindMethod(addFarPlaneKey)
+            BindMethod(addVerticalApertureKey)
+            BindMethod(addHorizontalApertureKey)
+            BindMethod(addFocalLengthKey)
+            BindMethod(addFocusDistanceKey)
             ;
     }
     {
         using self_t = ms::Light;
-        py::class_<ms::Light, ms::LightPtr, ms::Transform>(mod, "Light", py::metaclass())
+        py::class_<ms::Light, ms::LightPtr, ms::Transform>(mod, "Light")
             BindField(type)
             BindProperty(color, Color)
             BindField(intensity)
             BindField(range)
             BindField(spot_angle)
+            BindMethod(addColorKey)
+            BindMethod(addIntensityKey)
+            BindMethod(addRangeKey)
+            BindMethod(addSpotAngleKey)
             ;
     }
     {
         using self_t = ms::Mesh;
-        py::class_<ms::Mesh, ms::MeshPtr, ms::Transform>(mod, "Mesh", py::metaclass())
+        py::class_<ms::Mesh, ms::MeshPtr, ms::Transform>(mod, "Mesh")
             BindMethod(addVertex)
             BindMethod(addNormal)
             BindMethod(addUV)
@@ -58,7 +72,7 @@ PYBIND11_PLUGIN(PyMeshSync)
     }
     {
         using self_t = pymsContext;
-        py::class_<pymsContext>(mod, "Context", py::metaclass())
+        py::class_<pymsContext>(mod, "Context")
             BindMethod(addTransform)
             BindMethod(addCamera)
             BindMethod(addLight)

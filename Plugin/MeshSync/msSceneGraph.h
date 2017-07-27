@@ -112,6 +112,10 @@ public:
     void setPosition(const std::array<float, 3>& v);
     void setRotation(const std::array<float, 4>& v);
     void setScale(const std::array<float, 3>& v);
+
+    void addTranslationKey(float t, const std::array<float, 3>& v);
+    void addRotationKey(float t, const std::array<float, 4>& v);
+    void addScaleKey(float t, const std::array<float, 3>& v);
 };
 using TransformPtr = std::shared_ptr<Transform>;
 
@@ -127,7 +131,6 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
-
     bool empty() const override;
 };
 
@@ -155,6 +158,16 @@ public:
 
     void createAnimation() override;
     void applyScaleFactor(float scale) override;
+
+public:
+    // for python binding
+    void addFovKey(float t, float v);
+    void addNearPlaneKey(float t, float v);
+    void addFarPlaneKey(float t, float v);
+    void addHorizontalApertureKey(float t, float v);
+    void addVerticalApertureKey(float t, float v);
+    void addFocalLengthKey(float t, float v);
+    void addFocusDistanceKey(float t, float v);
 };
 using CameraPtr = std::shared_ptr<Camera>;
 
@@ -174,7 +187,6 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
-
     bool empty() const override;
 };
 
@@ -210,6 +222,11 @@ public:
     // for python binding
     std::array<float, 4> getColor() const;
     void setColor(const std::array<float, 4>& v);
+
+    void addColorKey(float t, std::array<float, 4>& v);
+    void addIntensityKey(float t, float v);
+    void addRangeKey(float t, float v);
+    void addSpotAngleKey(float t, float v);
 };
 using LightPtr = std::shared_ptr<Light>;
 
@@ -226,7 +243,6 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
-
     bool empty() const override;
 };
 
