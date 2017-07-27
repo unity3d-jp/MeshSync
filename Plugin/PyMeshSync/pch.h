@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef _WIN32
+    #define _CRT_SECURE_NO_WARNINGS
     #define NOMINMAX
     #include <windows.h>
 #endif
@@ -15,12 +16,11 @@
 #include <functional>
 #include <memory>
 #include <iostream>
-#include <sstream>
-#include <numeric>
 #include <mutex>
 #include <atomic>
 #include <algorithm>
 #include <thread>
+#include <future>
 
 #include "PyBind11/pybind11.h"
 #include "PyBind11/operators.h"

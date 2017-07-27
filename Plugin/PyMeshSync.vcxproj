@@ -15,9 +15,12 @@
     <ClCompile Include="PyMeshSync\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PyMeshSync\pymsContext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PyMeshSync\pch.h" />
+    <ClInclude Include="PyMeshSync\PyMeshSync.h" />
+    <ClInclude Include="PyMeshSync\pymsContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
@@ -56,7 +59,10 @@
     <IncludePath>$(SolutionDir);$(SolutionDir)External\python27\include;$(SolutionDir)External;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
-    <LibraryPath>$(SolutionDir)External\python27\lib64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\python27\lib64;$(LibraryPath)</LibraryPath>
+    <TargetExt>.mll</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>

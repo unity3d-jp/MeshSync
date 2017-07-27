@@ -10,6 +10,9 @@
     <ClCompile Include="PyMeshSync\pch.cpp">
       <Filter>PyMeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="PyMeshSync\pymsContext.cpp">
+      <Filter>PyMeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PyMeshSync">
@@ -18,6 +21,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PyMeshSync\pch.h">
+      <Filter>PyMeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="PyMeshSync\PyMeshSync.h">
+      <Filter>PyMeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="PyMeshSync\pymsContext.h">
       <Filter>PyMeshSync</Filter>
     </ClInclude>
   </ItemGroup>
