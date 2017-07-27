@@ -114,6 +114,13 @@ void pymsContext::send()
         // send meshes
         parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& v) {
             v->setupFlags();
+            v->flags.has_refine_settings = true;
+            if (!v->flags.has_normals) {
+                v->refine_settings.flags.gen_normals = true;
+            }
+            if (!v->flags.has_tangents) {
+                v->refine_settings.flags.gen_tangents = true;
+            }
 
             ms::SetMessage set;
             set.scene.settings = scene_settings;

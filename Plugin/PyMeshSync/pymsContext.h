@@ -9,7 +9,7 @@ class pymsContext;
 struct pymsSettings
 {
     ms::ClientSettings client_settings;
-    float scale_factor = 100.0f;
+    float scale_factor = 1.0f;
 };
 
 
