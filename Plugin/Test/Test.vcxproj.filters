@@ -11,4 +11,14 @@
     <ClInclude Include="Test.h" />
     <ClInclude Include="MeshGenerator.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="python">
+      <UniqueIdentifier>{4881a4b8-4720-4c6a-bb19-474049172f11}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="python\TestPyMeshSync.py">
+      <Filter>python</Filter>
+    </None>
+  </ItemGroup>
 </Project>

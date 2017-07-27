@@ -37,7 +37,7 @@
     <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="PyMeshSync\python\MeshSync\__init__.py" />
+    <None Include="PyMeshSync\python\__init__.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}</ProjectGuid>
@@ -60,7 +60,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External\python36\include;$(SolutionDir)External;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\python\MeshSync\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
@@ -69,7 +69,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Command>xcopy /Yq $(TargetPath) $(SolutionDir)..\MeshSync\Assets\UTJ\MeshSync\Plugins\x86_64\</Command>
+      <Command>xcopy /YQ $(ProjectDir)PyMeshSync\python\* $(OutputPath)</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -86,7 +86,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
     <PostBuildEvent>
-      <Command>xcopy /Yq $(TargetPath) $(SolutionDir)..\MeshSync\Assets\UTJ\MeshSync\Plugins\x86_64\</Command>
+      <Command>xcopy /YQ $(ProjectDir)PyMeshSync\python\* $(OutputPath)</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>

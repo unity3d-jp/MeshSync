@@ -32,6 +32,9 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Test.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="python\TestPyMeshSync.py" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{11990C37-1C63-418F-9AB1-74076C470584}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -59,8 +62,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /YQ $(ProjectDir)python\* $(OutputPath)python</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -77,8 +79,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /YQ $(ProjectDir)python\* $(OutputPath)python</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
