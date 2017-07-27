@@ -883,7 +883,7 @@ bool LightAnimation::empty() const
 }
 
 
-uint32_t BlendshapeData::getSerializeSize() const
+uint32_t BlendShapeData::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += ssize(name);
@@ -893,7 +893,7 @@ uint32_t BlendshapeData::getSerializeSize() const
     ret += ssize(tangents);
     return ret;
 }
-void BlendshapeData::serialize(std::ostream& os) const
+void BlendShapeData::serialize(std::ostream& os) const
 {
     write(os, name);
     write(os, weight);
@@ -901,7 +901,7 @@ void BlendshapeData::serialize(std::ostream& os) const
     write(os, normals);
     write(os, tangents);
 }
-void BlendshapeData::deserialize(std::istream& is)
+void BlendShapeData::deserialize(std::istream& is)
 {
     read(is, name);
     read(is, weight);
@@ -910,7 +910,7 @@ void BlendshapeData::deserialize(std::istream& is)
     read(is, tangents);
 }
 
-void BlendshapeData::clear()
+void BlendShapeData::clear()
 {
     name.clear();
     weight = 0.0f;
@@ -918,6 +918,9 @@ void BlendshapeData::clear()
     normals.clear();
     tangents.clear();
 }
+
+void BlendShapeData::addVertex(const float3 & v) { normals.push_back(v); }
+void BlendShapeData::addNormal(const float3 & v) { points.push_back(v); }
 
 
 uint32_t BoneData::getSerializeSize() const
@@ -948,6 +951,11 @@ void BoneData::clear()
     path.clear();
     bindpose = float4x4::identity();
     weights.clear();
+}
+
+void BoneData::addWeight(float v)
+{
+    weights.push_back(v);
 }
 
 
@@ -1379,6 +1387,22 @@ void Mesh::addIndex(int v)
 void Mesh::addMaterialID(int v)
 {
     materialIDs.push_back(v);
+}
+
+BoneDataPtr Mesh::addBone(const std::string& _path)
+{
+    BoneDataPtr ret(new BoneData());
+    ret->path = _path;
+    bones.push_back(ret);
+    return ret;
+}
+
+BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
+{
+    BlendShapeDataPtr ret(new BlendShapeData());
+    ret->name = _name;
+    blendshape.push_back(ret);
+    return ret;
 }
 
 

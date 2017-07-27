@@ -986,7 +986,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
 
         for (uint32_t wi = 0; wi < num_weights; ++wi) {
-            auto bs = new ms::BlendshapeData();
+            auto bs = new ms::BlendShapeData();
             bs->points.resize(dst.points.size());
             dst.blendshape[wi].reset(bs);
 

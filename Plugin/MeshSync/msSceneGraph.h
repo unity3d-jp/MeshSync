@@ -312,7 +312,7 @@ struct SplitData
     IArray<SubmeshData> submeshes;
 };
 
-struct BlendshapeData
+struct BlendShapeData : public std::enable_shared_from_this<BlendShapeData>
 {
     std::string name;
     float weight = 0.0f;
@@ -324,10 +324,14 @@ struct BlendshapeData
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
-};
-using BlendshapeDataPtr = std::shared_ptr<BlendshapeData>;
 
-struct BoneData
+    void generateTangents(); // todo
+    void addVertex(const float3& v);
+    void addNormal(const float3& v);
+};
+using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
+
+struct BoneData : public std::enable_shared_from_this<BoneData>
 {
     std::string path;
     float4x4 bindpose = float4x4::identity();
@@ -337,6 +341,8 @@ struct BoneData
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
+
+    void addWeight(float v);
 };
 using BoneDataPtr = std::shared_ptr<BoneData>;
 
@@ -357,7 +363,7 @@ public:
     RawVector<int>    materialIDs;
 
     std::vector<BoneDataPtr> bones;
-    std::vector<BlendshapeDataPtr> blendshape;
+    std::vector<BlendShapeDataPtr> blendshape;
 
     // non-serialized
     RawVector<SubmeshData> submeshes;
@@ -393,6 +399,9 @@ public:
     void addCount(int v);
     void addIndex(int v);
     void addMaterialID(int v);
+
+    BoneDataPtr addBone(const std::string& path);
+    BlendShapeDataPtr addBlendShape(const std::string& name);
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 

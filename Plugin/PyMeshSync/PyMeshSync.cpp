@@ -6,14 +6,24 @@ namespace py = pybind11;
 using float2a = std::array<float, 2>;
 using float3a = std::array<float, 3>;
 using float4a = std::array<float, 4>;
+using float4x4a = std::array<float, 16>;
+
 inline float2a to_a(const float2& v) { return { v.x, v.y }; }
 inline float3a to_a(const float3& v) { return { v.x, v.y, v.z }; }
 inline float4a to_a(const float4& v) { return { v.x, v.y, v.z, v.w }; }
-inline float4a to_a(const quatf& v)  { return { v.x, v.y, v.z, v.w }; }
+inline float4a to_a(const quatf& v) { return { v.x, v.y, v.z, v.w }; }
+inline float4x4a to_a(const float4x4& v)
+{
+    float4x4a ret;
+    for (int i = 0; i < 16; ++i) { ret[i] = ((float*)&v)[i]; }
+    return ret;
+}
+
 inline float2 to_float2(const float2a& v) { return { v[0], v[1] }; }
 inline float3 to_float3(const float3a& v) { return { v[0], v[1], v[2] }; }
 inline float4 to_float4(const float4a& v) { return { v[0], v[1], v[2], v[3] }; }
-inline quatf  to_quatf( const float4a& v) { return { v[0], v[1], v[2], v[3] }; }
+inline quatf  to_quatf(const float4a& v) { return { v[0], v[1], v[2], v[3] }; }
+inline float4x4 to_float4x4(const float4x4a& v) { float4x4 ret; ret.assign(v.data()); return ret; }
 
 
 PYBIND11_PLUGIN(PyMeshSync)
@@ -83,6 +93,27 @@ PYBIND11_PLUGIN(PyMeshSync)
             ;
     }
     {
+        using self_t = ms::BlendShapeData;
+        py::class_<ms::BlendShapeData, ms::BlendShapeDataPtr>(mod, "BlendShapeData")
+            BindField(name)
+            BindField(weight)
+            BindMethod2(addVertex,
+                [](ms::BlendShapeData& self, const float3a& v) { self.addVertex(to_float3(v)); })
+            BindMethod2(addNormal,
+                [](ms::BlendShapeData& self, const float3a& v) { self.addNormal(to_float3(v)); })
+            ;
+    }
+    {
+        using self_t = ms::BoneData;
+        py::class_<ms::BoneData, ms::BoneDataPtr>(mod, "BoneData")
+            BindField(path)
+            BindProperty(bindpose,
+                [](const ms::BoneData& self) { return to_a(self.bindpose); },
+                [](ms::BoneData& self, const float4x4a& v) { self.bindpose = to_float4x4(v); })
+            BindMethod(addWeight)
+            ;
+    }
+    {
         using self_t = ms::Mesh;
         py::class_<ms::Mesh, ms::MeshPtr, ms::Transform>(mod, "Mesh")
             BindMethod2(addVertex,
@@ -96,6 +127,8 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindMethod(addCount)
             BindMethod(addIndex)
             BindMethod(addMaterialID)
+            BindMethod(addBone)
+            BindMethod(addBlendShape)
             ;
     }
     {

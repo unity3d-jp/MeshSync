@@ -55,7 +55,7 @@
   </ImportGroup>
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MAYA_INCLUDE_DIR);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(MAYA_VERSION)</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(MAYA_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(MAYA_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
