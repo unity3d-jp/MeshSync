@@ -16,6 +16,9 @@ struct pymsSettings
 class pymsContext : public std::enable_shared_from_this<pymsContext>
 {
 public:
+    pymsContext();
+    ~pymsContext();
+
     pymsSettings&       getSettings();
     const pymsSettings& getSettings() const;
     ms::TransformPtr    addTransform(const std::string& path);

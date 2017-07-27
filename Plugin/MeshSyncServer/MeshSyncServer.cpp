@@ -524,22 +524,28 @@ msAPI int msMeshGetNumBones(ms::Mesh *_this)
 }
 msAPI const char* msMeshGetBonePath(ms::Mesh *_this, int i)
 {
-    return _this->bones[i].c_str();
+    return _this->bones[i]->path.c_str();
 }
 msAPI void msMeshSetBonePath(ms::Mesh *_this, const char *v, int i)
 {
-    if (i + 1 >= _this->bones.size()) {
-        _this->bones.resize(i + 1);
+    while (_this->bones.size() <= i) {
+        _this->bones.emplace_back(new ms::BoneData());
     }
-    _this->bones[i] = v;
+    _this->bones[i]->path = v;
 }
 msAPI void msMeshReadBindPoses(ms::Mesh *_this, float4x4 *v)
 {
-    _this->bindposes.copy_to(v);
+    int num_bones = (int)_this->bones.size();
+    for (int bi = 0; num_bones; ++bi) {
+        v[bi] = _this->bones[bi]->bindpose;
+    }
 }
 msAPI void msMeshWriteBindPoses(ms::Mesh *_this, const float4x4 *v, int size)
 {
-    _this->bindposes.assign(v, v + size);
+    int num_bones = (int)_this->bones.size();
+    for (int bi = 0; num_bones; ++bi) {
+        _this->bones[bi]->bindpose = v[bi];
+    }
 }
 
 msAPI int msMeshGetNumBlendShapeTargets(ms::Mesh *_this)

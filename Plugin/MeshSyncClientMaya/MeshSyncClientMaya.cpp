@@ -1017,22 +1017,21 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         auto num_joints = fn_skin.influenceObjects(joint_paths);
 
         dst.flags.has_bones = 1;
-        dst.bones_per_vertex = num_joints;
-        dst.bones.resize(num_joints);
-        dst.bindposes.resize(num_joints);
+        dst.resizeBones(num_joints);
 
         {
             std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
             for (uint32_t ij = 0; ij < num_joints; ij++) {
+                auto& bone = *dst.bones[ij];
                 auto joint = joint_paths[ij].node();
                 notifyUpdateTransform(joint, true);
-                dst.bones[ij] = GetPath(joint);
+                bone.path = GetPath(joint);
 
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
                 plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
                 MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
-                dst.bindposes[ij].assign(bindpose[0]);
+                bone.bindpose.assign(bindpose[0]);
             }
         }
 
@@ -1046,10 +1045,8 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             fn_skin.getWeights(mesh_path, component, weights, influence_count);
 
             for (uint32_t ij = 0; ij < influence_count; ij++) {
-                dst.bone_indices.push_back(ij);
-                dst.bone_weights.push_back(weights[ij]);
+                dst.bones[ij]->weights.push_back(weights[ij]);
             }
-
             it_geom.next();
         }
 

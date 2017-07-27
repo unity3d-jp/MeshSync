@@ -7,6 +7,14 @@ struct Weights
 {
     float   weights[N] = {};
     int     indices[N] = {};
+
+    void normalize()
+    {
+        float total = 0.0f;
+        for (auto w : weights) { total += w; }
+        float rcp_total = 1.0f / total;
+        for (auto& w : weights) { w *= rcp_total; }
+    }
 };
 using Weights4 = Weights<4>;
 using Weights8 = Weights<8>;

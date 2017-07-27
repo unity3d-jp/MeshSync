@@ -4,6 +4,17 @@
 using namespace mu;
 
 
+pymsContext::pymsContext()
+{
+}
+
+pymsContext::~pymsContext()
+{
+    if (m_send_future.valid()) {
+        m_send_future.wait();
+    }
+}
+
 pymsSettings& pymsContext::getSettings() { return m_settings; }
 const pymsSettings& pymsContext::getSettings() const { return m_settings; }
 

@@ -323,8 +323,22 @@ struct BlendshapeData
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void clear();
 };
 using BlendshapeDataPtr = std::shared_ptr<BlendshapeData>;
+
+struct BoneData
+{
+    std::string path;
+    float4x4 bindpose = float4x4::identity();
+    RawVector<float> weights;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    void clear();
+};
+using BoneDataPtr = std::shared_ptr<BoneData>;
 
 class Mesh : public Transform
 {
@@ -342,21 +356,13 @@ public:
     RawVector<int>    indices;
     RawVector<int>    materialIDs;
 
-    // bone data
-    int bones_per_vertex = 0;
-    RawVector<float> bone_weights;
-    RawVector<int> bone_indices;
-    std::vector<std::string> bones;
-    RawVector<float4x4> bindposes;
-
-    // blendshape data
+    std::vector<BoneDataPtr> bones;
     std::vector<BlendshapeDataPtr> blendshape;
 
-    // not serialized
+    // non-serialized
     RawVector<SubmeshData> submeshes;
     RawVector<SplitData> splits;
     RawVector<Weights4> weights4;
-
 
 public:
     Mesh();
@@ -372,6 +378,8 @@ public:
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
+
+    void resizeBones(int n);
     void generateWeights4();
     void setupFlags();
 

@@ -910,10 +910,49 @@ void BlendshapeData::deserialize(std::istream& is)
     read(is, tangents);
 }
 
+void BlendshapeData::clear()
+{
+    name.clear();
+    weight = 0.0f;
+    points.clear();
+    normals.clear();
+    tangents.clear();
+}
+
+
+uint32_t BoneData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(path);
+    ret += ssize(bindpose);
+    ret += ssize(weights);
+    return ret;
+}
+
+void BoneData::serialize(std::ostream & os) const
+{
+    write(os, path);
+    write(os, bindpose);
+    write(os, weights);
+}
+
+void BoneData::deserialize(std::istream & is)
+{
+    read(is, path);
+    read(is, bindpose);
+    read(is, weights);
+}
+
+void BoneData::clear()
+{
+    path.clear();
+    bindpose = float4x4::identity();
+    weights.clear();
+}
+
 
 
 #define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs)
-#define EachBoneProperty(Body) Body(bones_per_vertex) Body(bone_weights) Body(bone_indices) Body(bones) Body(bindposes)
 
 Mesh::Mesh()
 {
@@ -936,9 +975,7 @@ uint32_t Mesh::getSerializeSize() const
 #undef Body
 
     if (flags.has_bones) {
-#define Body(A) ret += ssize(A);
-        EachBoneProperty(Body);
-#undef Body
+        ret += ssize(bones);
     }
     if (flags.has_blendshapes) {
         ret += ssize(blendshape);
@@ -958,9 +995,7 @@ void Mesh::serialize(std::ostream& os) const
 #undef Body
 
     if (flags.has_bones) {
-#define Body(A) write(os, A);
-        EachBoneProperty(Body);
-#undef Body
+        write(os, bones);
     }
     if (flags.has_blendshapes) {
         write(os, blendshape);
@@ -980,9 +1015,7 @@ void Mesh::deserialize(std::istream& is)
 #undef Body
 
     if (flags.has_bones) {
-#define Body(A) read(is, A);
-        EachBoneProperty(Body);
-#undef Body
+        read(is, bones);
     }
     if (flags.has_blendshapes) {
         read(is, blendshape);
@@ -1000,8 +1033,10 @@ void Mesh::clear()
 
 #define Body(A) vclear(A);
     EachVertexProperty(Body);
-    EachBoneProperty(Body);
 #undef Body
+
+    bones.clear();
+    blendshape.clear();
 
     submeshes.clear();
     splits.clear();
@@ -1009,15 +1044,14 @@ void Mesh::clear()
 }
 
 #undef EachVertexProperty
-#undef EachBoneProperty
 
 void Mesh::swapHandedness()
 {
     super::swapHandedness();
     mu::InvertX(points.data(), points.size());
     mu::InvertX(normals.data(), normals.size());
-    for (auto& bp : bindposes) {
-        bp = swap_handedness(bp);
+    for (auto& bone : bones) {
+        bone->bindpose = swap_handedness(bone->bindpose);
     }
 }
 
@@ -1025,8 +1059,8 @@ void Mesh::applyScaleFactor(float scale)
 {
     super::applyScaleFactor(scale);
     mu::Scale(points.data(), scale, points.size());
-    for (auto& bp : bindposes) {
-        (float3&)bp[3] *= scale;
+    for (auto& bone : bones) {
+        (float3&)bone->bindpose[3] *= scale;
     }
 }
 
@@ -1063,7 +1097,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.swap_handedness) {
         swapHandedness();
     }
-    if (mrs.flags.gen_weights4 && !bone_weights.empty()) {
+    if (mrs.flags.gen_weights4 && !bones.empty()) {
         generateWeights4();
     }
 
@@ -1249,10 +1283,58 @@ void Mesh::applyTransform(const float4x4& m)
     mu::Normalize(normals.data(), normals.size());
 }
 
+void Mesh::resizeBones(int n)
+{
+    bones.resize(n);
+    for (auto& bone : bones) {
+        if (!bone) {
+            bone.reset(new BoneData());
+        }
+    }
+}
+
 void Mesh::generateWeights4()
 {
-    if (!GenerateWeightsN(weights4, bone_indices, bone_weights, bones_per_vertex)) {
-        msLogError("Mesh::normalizeWeights(): should not be here\n");
+    if (bones.empty()) { return; }
+
+    int num_bones = (int)bones.size();
+    int num_vertices = (int)points.size();
+    weights4.resize_discard(num_vertices);
+
+    if (num_bones <= 4) {
+        weights4.zeroclear();
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            auto& w4 = weights4[vi];
+            for (int bi = 0; bi < num_bones; ++bi) {
+                w4.indices[bi] = bi;
+                w4.weights[bi] = bones[bi]->weights[vi];
+            }
+            w4.normalize();
+        }
+    }
+    else {
+        struct IW
+        {
+            int index;
+            float weight;
+        };
+
+        auto *tmp = (IW*)alloca(sizeof(IW) * num_bones);
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            for (int bi = 0; bi < num_bones; ++bi) {
+                tmp[bi].index = bi;
+                tmp[bi].weight = bones[bi]->weights[vi];
+            }
+            std::nth_element(tmp, tmp + 4, tmp + num_bones,
+                [&](const IW& a, const IW& b) { return a.weight > b.weight; });
+
+            auto& w4 = weights4[vi];
+            for (int bi = 0; bi < 4; ++bi) {
+                w4.indices[bi] = tmp[bi].index;
+                w4.weights[bi] = tmp[bi].weight;
+            }
+            w4.normalize();
+        }
     }
 }
 
@@ -1266,7 +1348,7 @@ void Mesh::setupFlags()
     flags.has_counts = !counts.empty();
     flags.has_indices = !indices.empty();
     flags.has_materialIDs = !materialIDs.empty();
-    flags.has_bones = !bones.empty() && !bindposes.empty() && !bone_weights.empty() && !bone_indices.empty();
+    flags.has_bones = !bones.empty();
     flags.has_blendshapes = !blendshape.empty();
 }
 
