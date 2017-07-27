@@ -106,8 +106,9 @@ public:
 
 public:
     // for python binding
-    void setPath(const std::string& v);
-    void setVisible(bool v);
+    std::array<float, 3> getPosition() const;
+    std::array<float, 4> getRotation() const;
+    std::array<float, 3> getScale() const;
     void setPosition(const std::array<float, 3>& v);
     void setRotation(const std::array<float, 4>& v);
     void setScale(const std::array<float, 3>& v);
@@ -154,16 +155,6 @@ public:
 
     void createAnimation() override;
     void applyScaleFactor(float scale) override;
-
-public:
-    // for python binding
-    void setFov(float v);
-    void setNearPlane(float v);
-    void setFarPlane(float v);
-    void setVerticalAperture(float v);
-    void setHorizontalAperture(float v);
-    void setFocalLength(float v);
-    void setFocusDistance(float v);
 };
 using CameraPtr = std::shared_ptr<Camera>;
 
@@ -217,11 +208,8 @@ public:
 
 public:
     // for python binding
-    void setLightType(int v);
+    std::array<float, 4> getColor() const;
     void setColor(const std::array<float, 4>& v);
-    void setIntensity(float v);
-    void setRange(float v);
-    void setSpotAngle(float v);
 };
 using LightPtr = std::shared_ptr<Light>;
 

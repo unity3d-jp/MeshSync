@@ -18,6 +18,12 @@
     <Filter Include="PyMeshSync">
       <UniqueIdentifier>{77f978cc-4715-478f-aea5-b74f039ff464}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PyMeshSync\python">
+      <UniqueIdentifier>{d1e1adb5-2dd2-416c-a2dd-89fe761f1a8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PyMeshSync\python\MeshSync">
+      <UniqueIdentifier>{c7843e2a-29e2-43a6-a9d9-b2a8de701872}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PyMeshSync\pch.h">
@@ -29,5 +35,10 @@
     <ClInclude Include="PyMeshSync\pymsContext.h">
       <Filter>PyMeshSync</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PyMeshSync\python\MeshSync\__init__.py">
+      <Filter>PyMeshSync\python\MeshSync</Filter>
+    </None>
   </ItemGroup>
 </Project>

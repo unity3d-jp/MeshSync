@@ -548,13 +548,17 @@ void Transform::applyScaleFactor(float scale)
     transform.position *= scale;
 }
 
-void Transform::setPath(const std::string & v)
+std::array<float, 3> Transform::getPosition() const
 {
-    path = v;
+    return { transform.position.x, transform.position.y, transform.position.z };
 }
-void Transform::setVisible(bool v)
+std::array<float, 4> Transform::getRotation() const
 {
-    visible = v;
+    return { transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w };
+}
+std::array<float, 3> Transform::getScale() const
+{
+    return { transform.scale.x, transform.scale.y, transform.scale.z };
 }
 void Transform::setPosition(const std::array<float, 3>& v)
 {
@@ -683,14 +687,6 @@ void Camera::applyScaleFactor(float scale)
     far_plane *= scale;
 }
 
-void Camera::setFov(float v) { fov = v; }
-void Camera::setNearPlane(float v) { near_plane = v; }
-void Camera::setFarPlane(float v) { far_plane = v; }
-void Camera::setVerticalAperture(float v) { vertical_aperture = v; }
-void Camera::setHorizontalAperture(float v) { horizontal_aperture = v; }
-void Camera::setFocalLength(float v) { focal_length = v; }
-void Camera::setFocusDistance(float v) { focus_distance = v; }
-
 uint32_t CameraAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
@@ -794,11 +790,14 @@ void Light::applyScaleFactor(float scale)
     range *= scale;
 }
 
-void Light::setLightType(int v) { type = (Type)v; }
-void Light::setColor(const std::array<float, 4>& v) { color = { v[0],v[1] ,v[2] ,v[3] }; }
-void Light::setIntensity(float v) { intensity = v; }
-void Light::setRange(float v) { range = v; }
-void Light::setSpotAngle(float v) { spot_angle = v; }
+std::array<float, 4> Light::getColor() const
+{
+    return { color.x, color.y, color.z, color.w };
+}
+void Light::setColor(const std::array<float, 4>& v)
+{
+    color = { v[0],v[1] ,v[2] ,v[3] };
+}
 
 
 uint32_t LightAnimation::getSerializeSize() const

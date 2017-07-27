@@ -36,6 +36,9 @@
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="PyMeshSync\python\MeshSync\__init__.py" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

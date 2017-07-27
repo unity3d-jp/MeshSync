@@ -3,6 +3,10 @@
 #include "pymsContext.h"
 using namespace mu;
 
+
+pymsSettings& pymsContext::getSettings() { return m_settings; }
+const pymsSettings& pymsContext::getSettings() const { return m_settings; }
+
 template<class T>
 std::shared_ptr<T> pymsContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
 {
