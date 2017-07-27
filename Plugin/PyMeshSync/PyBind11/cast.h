@@ -156,20 +156,12 @@ PYBIND11_NOINLINE inline std::string error_string() {
         PyFrameObject *frame = trace->tb_frame;
         errorString += "\n\nAt:\n";
         while (frame) {
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 6
-            errorString +=
-                "  " + handle(frame->f_code->co_filename).cast<std::string>() +
-                ": " +
-                handle(frame->f_code->co_name).cast<std::string>() + "\n";
-            frame = frame->f_back;
-#else
             int lineno = PyFrame_GetLineNumber(frame);
             errorString +=
                 "  " + handle(frame->f_code->co_filename).cast<std::string>() +
                 "(" + std::to_string(lineno) + "): " +
                 handle(frame->f_code->co_name).cast<std::string>() + "\n";
             frame = frame->f_back;
-#endif
         }
         trace = trace->tb_next;
     }
@@ -515,7 +507,7 @@ public:
             if (PyFloat_Check(src.ptr()))
                 return false;
             if (std::is_signed<T>::value)
-                py_value = (py_type) PYBIND11_PYOBJECT_AS_LONG(src.ptr());
+                py_value = (py_type) PyLong_AsLong(src.ptr());
             else
                 py_value = (py_type) PyLong_AsUnsignedLong(src.ptr());
         } else {
@@ -556,7 +548,7 @@ public:
             return PyFloat_FromDouble((double) src);
         } else if (sizeof(T) <= sizeof(long)) {
             if (std::is_signed<T>::value)
-                return PYBIND11_PYOBJECT_FROM_LONG((long) src);
+                return PyLong_FromLong((long) src);
             else
                 return PyLong_FromUnsignedLong((unsigned long) src);
         } else {

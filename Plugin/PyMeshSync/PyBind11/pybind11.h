@@ -396,13 +396,8 @@ protected:
         using namespace detail;
 
         /* Iterator over the list of potentially admissible overloads */
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 6
-        function_record *overloads = (function_record *) PyCObject_AsVoidPtr(self),
-                        *it = overloads;
-#else
         function_record *overloads = (function_record *) PyCapsule_GetPointer(self, nullptr),
                         *it = overloads;
-#endif
 
         /* Need to know how many arguments + keyword arguments there are to pick the right overload */
         const size_t n_args_in = (size_t) PyTuple_GET_SIZE(args_in);

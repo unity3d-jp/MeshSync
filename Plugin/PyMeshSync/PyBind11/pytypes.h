@@ -923,14 +923,14 @@ private:
 class int_ : public object {
 public:
     PYBIND11_OBJECT_CVT(int_, object, PYBIND11_LONG_CHECK, PyNumber_Long)
-    int_() : object(PYBIND11_PYOBJECT_FROM_LONG(0), stolen) { }
+    int_() : object(PyLong_FromLong(0), stolen) { }
     // Allow implicit conversion from C++ integral types:
     template <typename T,
               detail::enable_if_t<std::is_integral<T>::value, int> = 0>
     int_(T value) {
         if (sizeof(T) <= sizeof(long)) {
             if (std::is_signed<T>::value)
-                m_ptr = PYBIND11_PYOBJECT_FROM_LONG((long) value);
+                m_ptr = PyLong_FromLong((long) value);
             else
                 m_ptr = PyLong_FromUnsignedLong((unsigned long) value);
         } else {
@@ -947,7 +947,7 @@ public:
     operator T() const {
         if (sizeof(T) <= sizeof(long)) {
             if (std::is_signed<T>::value)
-                return (T)PYBIND11_PYOBJECT_AS_LONG(m_ptr);
+                return (T) PyLong_AsLong(m_ptr);
             else
                 return (T) PyLong_AsUnsignedLong(m_ptr);
         } else {
@@ -998,50 +998,7 @@ public:
                                     (ssize_t *) slicelength) == 0;
     }
 };
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 6
-class capsule : public object {
-public:
-    PYBIND11_OBJECT_DEFAULT(capsule, object, PyCObject_Check)
-    PYBIND11_DEPRECATED("Use reinterpret_borrow<capsule>() or reinterpret_steal<capsule>()")
-    capsule(PyObject *ptr, bool is_borrowed) : object(is_borrowed ? object(ptr, borrowed) : object(ptr, stolen)) { }
 
-    explicit capsule(const void *value)
-        : object(PyCObject_FromVoidPtr(const_cast<void *>(value), nullptr), stolen) {
-        if (!m_ptr)
-            pybind11_fail("Could not allocate capsule object!");
-    }
-
-    PYBIND11_DEPRECATED("Please pass a destructor that takes a void pointer as input")
-    capsule(const void *value, void (*destruct)(PyObject *))
-        : object(PyCObject_FromVoidPtr(const_cast<void*>(value), (void (*)(void*)) destruct), stolen) {
-        if (!m_ptr)
-            pybind11_fail("Could not allocate capsule object!");
-    }
-
-    capsule(const void *value, void (*destructor)(void *)) {
-        m_ptr = PyCObject_FromVoidPtr(const_cast<void *>(value), destructor);
-
-        if (!m_ptr)
-            pybind11_fail("Could not allocate capsule object!");
-    }
-
-    capsule(void (*destructor)()) {
-        m_ptr = PyCObject_FromVoidPtr(reinterpret_cast<void *>(destructor), [](void *o) {
-            auto destructor = reinterpret_cast<void (*)()>(PyCObject_AsVoidPtr((PyObject*) o));
-            destructor();
-        });
-
-        if (!m_ptr)
-            pybind11_fail("Could not allocate capsule object!");
-    }
-
-    template <typename T> operator T *() const {
-        T * result = static_cast<T *>(PyCObject_AsVoidPtr(m_ptr));
-        if (!result) pybind11_fail("Unable to extract capsule contents!");
-        return result;
-    }
-};
-#else
 class capsule : public object {
 public:
     PYBIND11_OBJECT_DEFAULT(capsule, object, PyCapsule_CheckExact)
@@ -1091,7 +1048,6 @@ public:
         return result;
     }
 };
-#endif
 
 class tuple : public object {
 public:
@@ -1196,7 +1152,6 @@ public:
     }
 };
 
-#if (PY_MAJOR_VERSION > 2) || (PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION > 6)
 class memoryview : public object {
 public:
     explicit memoryview(const buffer_info& info) {
@@ -1228,7 +1183,6 @@ public:
 
     PYBIND11_OBJECT_CVT(memoryview, object, PyMemoryView_Check, PyMemoryView_FromObject)
 };
-#endif
 /// @} pytypes
 
 /// \addtogroup python_builtins

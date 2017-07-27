@@ -23,6 +23,9 @@
     <ProjectReference Include="..\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\PyMeshSync.vcxproj">
+      <Project>{f8f15b0d-44e4-4ae0-a380-6aab2730b56c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshGenerator.h" />

@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <patchlevel.h>
-
 #if !defined(NAMESPACE_BEGIN)
 #  define NAMESPACE_BEGIN(name) namespace name {
 #endif
@@ -90,13 +88,6 @@
 #  if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 4)
 #    define HAVE_ROUND 1
 #  endif
-#  if (PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 6)
-#    define HAVE_ACOSH
-#    define HAVE_ASINH
-#    define HAVE_ATANH
-#    define HAVE_LOG1P
-#    define HAVE_HYPOT
-#  endif
 #  pragma warning(push)
 #  pragma warning(disable: 4510 4610 4512 4005)
 #  if defined(_DEBUG)
@@ -169,13 +160,6 @@
 #define PYBIND11_BYTES_AS_STRING PyString_AsString
 #define PYBIND11_BYTES_SIZE PyString_Size
 #define PYBIND11_LONG_CHECK(o) (PyInt_Check(o) || PyLong_Check(o))
-#  ifdef PYBIND11_PREFER_PYINT
-#    define PYBIND11_PYOBJECT_FROM_LONG PyInt_FromLong
-#    define PYBIND11_PYOBJECT_AS_LONG PyInt_AsLong
-#  else
-#    define PYBIND11_PYOBJECT_FROM_LONG PyLong_FromLong
-#    define PYBIND11_PYOBJECT_AS_LONG PyLong_AsLong
-#  endif
 #define PYBIND11_LONG_AS_LONGLONG(o) (PyInt_Check(o) ? (long long) PyLong_AsLong(o) : PyLong_AsLongLong(o))
 #define PYBIND11_LONG_AS_UNSIGNED_LONGLONG(o) (PyInt_Check(o) ? (unsigned long long) PyLong_AsUnsignedLong(o) : PyLong_AsUnsignedLongLong(o))
 #define PYBIND11_BYTES_NAME "str"

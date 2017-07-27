@@ -59,12 +59,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\python27\include;$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\python36\include;$(SolutionDir)External;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\python27\lib64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\python36\lib64;$(LibraryPath)</LibraryPath>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
