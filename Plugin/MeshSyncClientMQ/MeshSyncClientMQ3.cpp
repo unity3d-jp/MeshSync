@@ -11,6 +11,7 @@ bool IsSettingDialogActive();
 
 
 MeshSyncClientPlugin::MeshSyncClientPlugin()
+    : m_sync(this)
 {
 }
 

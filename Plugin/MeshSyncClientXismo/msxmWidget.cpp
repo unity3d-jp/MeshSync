@@ -60,18 +60,6 @@ static QMainWindow* FindMainWindow()
     return nullptr;
 }
 
-template<class MenuT>
-static QAction* FindAction(MenuT *menu, const char *name)
-{
-    if (!menu) { return nullptr; }
-    for (auto a : menu->actions()) {
-        if (a->text() == name) {
-            return a;
-        }
-    }
-    return nullptr;
-}
-
 
 XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     : super(parent)

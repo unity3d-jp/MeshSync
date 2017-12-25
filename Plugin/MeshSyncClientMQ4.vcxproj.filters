@@ -28,6 +28,9 @@
     <ClCompile Include="MeshSyncClientMQ\MQSync.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
+    <ClCompile Include="External\mqsdk4\MQBoneManager.cpp">
+      <Filter>External\mqsdk4</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMQ/pch.h">
@@ -53,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\MQSync.h">
       <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="External\mqsdk4\MQBoneManager.h">
+      <Filter>External\mqsdk4</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

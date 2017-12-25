@@ -60,6 +60,12 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_camera = CreateCheckBox(vf, L"Sync Camera");
         m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
         m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
+
+#if MQPLUGIN_VERSION >= 0x0464
+        m_check_camera = CreateCheckBox(vf, L"Sync Bones");
+        m_check_camera->SetChecked(m_plugin->getSync().getSyncBones());
+        m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
+#endif
     }
 
     {
@@ -134,6 +140,12 @@ BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncCamera() = m_check_camera->GetChecked();
+    return 0;
+}
+
+BOOL SettingsDlg::OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getSyncBones() = m_check_bones->GetChecked();
     return 0;
 }
 

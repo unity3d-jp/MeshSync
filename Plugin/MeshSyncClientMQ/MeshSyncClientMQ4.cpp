@@ -7,6 +7,7 @@ static MeshSyncClientPlugin g_plugin;
 // Constructor
 // コンストラクタ
 MeshSyncClientPlugin::MeshSyncClientPlugin()
+    : m_sync(this)
 {
 }
 

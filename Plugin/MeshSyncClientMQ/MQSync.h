@@ -7,7 +7,7 @@ using namespace mu;
 class MQSync
 {
 public:
-    MQSync();
+    MQSync(MQBasePlugin *plugin);
     ~MQSync();
     ms::ClientSettings& getClientSettings();
     std::string& getHostCameraPath();
@@ -15,6 +15,7 @@ public:
     bool& getAutoSync();
     bool& getSyncVertexColor();
     bool& getSyncCamera();
+    bool& getSyncBones();
     bool& getBakeSkin();
     bool& getBakeCloth();
 
@@ -43,12 +44,14 @@ private:
         MQObject normal_projector = nullptr;
     };
 
+    MQBasePlugin *m_plugin = nullptr;
     ms::ClientSettings m_settings;
     float m_scale_factor = 200.0f;
     std::string m_host_camera_path = "/Main Camera";
     bool m_auto_sync = false;
     bool m_sync_vertex_color = false;
     bool m_sync_camera = false;
+    bool m_sync_bones = true;
 
     bool m_bake_skin = false;
     bool m_bake_cloth = false;

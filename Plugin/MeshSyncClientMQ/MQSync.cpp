@@ -28,8 +28,9 @@ static inline bool ExtractID(const char *name, int& id)
 }
 
 
-MQSync::MQSync()
+MQSync::MQSync(MQBasePlugin *plugin)
 {
+    m_plugin = plugin;
 }
 
 MQSync::~MQSync()
@@ -52,6 +53,8 @@ float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
 bool & MQSync::getSyncVertexColor() { return m_sync_vertex_color; }
 bool& MQSync::getSyncCamera() { return m_sync_camera; }
+bool& MQSync::getSyncBones() { return m_sync_bones; }
+
 bool& MQSync::getBakeSkin() { return m_bake_skin; }
 bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 
@@ -195,6 +198,28 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             m_materials.emplace_back(dst);
         }
     }
+
+#if MQPLUGIN_VERSION >= 0x0464
+    {
+        // gather bone data
+        MQBoneManager bone_manager(m_plugin, doc);
+
+        int nbones = bone_manager.GetBoneNum();
+        {
+            std::vector<UINT> ids;
+            bone_manager.EnumBoneID(ids);
+
+            std::wstring name;
+            for (auto id : ids) {
+                bone_manager.GetName(id, name);
+            }
+        }
+        {
+            std::vector<float> weights(nbones);
+            std::vector<UINT> bones(nbones);
+        }
+    }
+#endif
 
 
     // kick async send
