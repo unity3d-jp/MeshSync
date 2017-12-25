@@ -4,6 +4,11 @@
 using namespace mu;
 
 
+pymsSettings::pymsSettings()
+{
+    scene_settings.handedness = ms::Handedness::Left;
+}
+
 pymsContext::pymsContext()
 {
 }
@@ -97,10 +102,6 @@ void pymsContext::send()
     m_send_future = std::async(std::launch::async, [this]() {
         ms::Client client(m_settings.client_settings);
 
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Left;
-        scene_settings.scale_factor = m_settings.scale_factor;
-
         // notify scene begin
         {
             ms::FenceMessage fence;
@@ -109,7 +110,7 @@ void pymsContext::send()
         }
 
         // send transform, camera, etc
-        m_message.scene.settings = scene_settings;
+        m_message.scene.settings = m_settings.scene_settings;
         client.send(m_message);
 
         // send deleted
@@ -134,7 +135,7 @@ void pymsContext::send()
             }
 
             ms::SetMessage set;
-            set.scene.settings = scene_settings;
+            set.scene.settings = m_settings.scene_settings;
             set.scene.meshes = { v };
             client.send(set);
         });

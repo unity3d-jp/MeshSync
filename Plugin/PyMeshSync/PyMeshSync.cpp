@@ -147,9 +147,12 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindProperty(server_port,
                 [](const pymsContext& self) { return self.getSettings().client_settings.port; },
                 [](pymsContext& self, uint16_t v) { return self.getSettings().client_settings.port = v; })
+            BindProperty(scene_name,
+                [](const pymsContext& self) { return self.getSettings().scene_settings.name; },
+                [](pymsContext& self, const std::string& v) { return self.getSettings().scene_settings.name = v; })
             BindProperty(scale_factor,
-                [](const pymsContext& self) { return self.getSettings().scale_factor; },
-                [](pymsContext& self, float v) { return self.getSettings().scale_factor = v; })
+                [](const pymsContext& self) { return self.getSettings().scene_settings.scale_factor; },
+                [](pymsContext& self, float v) { return self.getSettings().scene_settings.scale_factor = v; })
             ;
     }
 #undef BindMethod

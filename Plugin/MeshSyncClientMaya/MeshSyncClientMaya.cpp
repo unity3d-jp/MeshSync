@@ -60,7 +60,7 @@ MeshSyncClientMaya& MeshSyncClientMaya::getInstance()
 
 MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
-    , m_iplugin(obj, "Unity Technologies", "0.8.0")
+    , m_iplugin(obj, "Unity Technologies", "20170915")
 {
 #define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create);
     EachCommand(Body)
