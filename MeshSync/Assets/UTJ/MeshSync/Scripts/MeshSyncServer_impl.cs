@@ -1163,6 +1163,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMeshReadWeights4(IntPtr _this, BoneWeight[] weights);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteWeights4(IntPtr _this, BoneWeight[] weights, int size);
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumBones(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetRootBonePath(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMeshSetRootBonePath(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetBonePath(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern void msMeshSetBonePath(IntPtr _this, string v, int i);
             [DllImport("MeshSyncServer")] static extern void msMeshReadBindPoses(IntPtr _this, Matrix4x4[] v);
@@ -1319,6 +1321,11 @@ namespace UTJ.MeshSync
             public int numBones
             {
                 get { return msMeshGetNumBones(_this); }
+            }
+            public string rootBonePath
+            {
+                get { return S(msMeshGetRootBonePath(_this)); }
+                set { msMeshSetRootBonePath(_this, value); }
             }
             public Matrix4x4[] bindposes
             {

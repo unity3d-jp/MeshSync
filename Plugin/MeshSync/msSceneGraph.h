@@ -362,6 +362,7 @@ public:
     RawVector<int>    indices;
     RawVector<int>    materialIDs;
 
+    std::string root_bone;
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshape;
 

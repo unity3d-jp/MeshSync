@@ -983,6 +983,7 @@ uint32_t Mesh::getSerializeSize() const
 #undef Body
 
     if (flags.has_bones) {
+        ret += ssize(root_bone);
         ret += ssize(bones);
     }
     if (flags.has_blendshapes) {
@@ -1003,6 +1004,7 @@ void Mesh::serialize(std::ostream& os) const
 #undef Body
 
     if (flags.has_bones) {
+        write(os, root_bone);
         write(os, bones);
     }
     if (flags.has_blendshapes) {
@@ -1023,6 +1025,7 @@ void Mesh::deserialize(std::istream& is)
 #undef Body
 
     if (flags.has_bones) {
+        read(is, root_bone);
         read(is, bones);
     }
     if (flags.has_blendshapes) {
@@ -1043,6 +1046,7 @@ void Mesh::clear()
     EachVertexProperty(Body);
 #undef Body
 
+    root_bone.clear();
     bones.clear();
     blendshape.clear();
 

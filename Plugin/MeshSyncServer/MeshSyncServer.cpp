@@ -522,6 +522,14 @@ msAPI int msMeshGetNumBones(ms::Mesh *_this)
 {
     return (int)_this->bones.size();
 }
+msAPI const char* msMeshGetRootBonePath(ms::Mesh *_this)
+{
+    return _this->root_bone.c_str();
+}
+msAPI void msMeshSetRootBonePath(ms::Mesh *_this, const char *v)
+{
+    _this->root_bone = v;
+}
 msAPI const char* msMeshGetBonePath(ms::Mesh *_this, int i)
 {
     return _this->bones[i]->path.c_str();

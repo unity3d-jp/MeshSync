@@ -246,47 +246,82 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         {
             std::wstring name;
             UINT parent;
-            MQPoint position;
+            MQPoint root_pos, tip_pos;
             MQAngle rotation;
             MQPoint scale;
+            MQMatrix matrix;
             std::vector<UINT> bone_ids;
+            std::vector<UINT> brothers;
 
             bone_manager.EnumBoneID(bone_ids);
             for (auto bid : bone_ids) {
                 auto& bone = m_bones[bid];
                 auto& trs = bone.transform->transform;
                 bone.id = bid;
-                std::string path;
-                MQPoint position;
-                MQAngle rotation;
-                MQPoint scale;
 
-                if (bone_manager.GetName(bid, name))
-                    bone.name = S(name);
-                if (bone_manager.GetParent(bid, parent))
+                bone_manager.GetName(bid, name);
+                bone.name = S(name);
+
+                if (bone.parent == -1)
+                {
+                    bone_manager.GetParent(bid, parent);
                     bone.parent = parent;
-                if (bone_manager.GetDeformRootPos(bid, position))
-                    trs.position = (const float3&)position;
-                if (bone_manager.GetDeformRotate(bid, rotation))
-                    trs.rotation = ToQuaternion(rotation);
-                if (bone_manager.GetDeformScale(bid, scale))
-                    trs.scale = (const float3&)scale;
-                bone.bindpose = mu::invert(mu::transform(trs.position, trs.rotation, trs.scale));
+
+                    bone_manager.GetBrothers(bid, brothers);
+                    for (auto cid : brothers) {
+                        bone_manager.GetName(cid, name);
+                        auto& bro = m_bones[cid];
+                        if (bro.parent == -1) {
+                            bro.parent = bid;
+                        }
+                    }
+                }
+
+                bone_manager.GetBaseRootPos(bid, root_pos);
+                bone_manager.GetBaseTipPos(bid, tip_pos);
+                bone.global_position = (const float3&)tip_pos;
+                bone_manager.GetDeformRotate(bid, rotation);
+                trs.rotation = ToQuaternion(rotation);
+                bone_manager.GetDeformScale(bid, scale);
+                trs.scale = (const float3&)scale;
+
+                bone_manager.GetBaseMatrix(bid, matrix);
+                bone.bindpose = mu::invert((float4x4&)matrix);
             }
 
-            // build path
             std::string tmp;
             tmp.reserve(256);
             for (auto& pair : m_bones) {
                 auto& bone = pair.second;
+
+                // build path
                 auto& path = bone.transform->path;
                 path = "/";
                 path += bone.name;
-                for (auto it = m_bones.find(pair.second.parent); it != m_bones.end(); it = m_bones.find(it->second.parent)) {
+
+                UINT parent = bone.parent;
+                for (;;) {
+                    auto it = m_bones.find(parent);
+                    if (it == m_bones.end())
+                        break;
                     tmp = "/";
                     tmp += it->second.name;
                     tmp += path;
                     std::swap(tmp, path);
+                    parent = it->second.parent;
+                }
+
+                // build relative position
+                {
+                    auto& trs = bone.transform->transform;
+                    auto it = m_bones.find(bone.parent);
+                    if (it != m_bones.end()) {
+                        trs.position = bone.global_position - it->second.global_position;
+                    }
+                    else {
+                        trs.position = bone.global_position;
+                    }
+                    bone.bindpose = mu::invert(mu::transform(bone.global_position, trs.rotation, trs.scale));
                 }
             }
 
@@ -300,9 +335,22 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     if (nweights == 0)
                         continue;
 
+                    // find root bone
+                    if (rel.data->root_bone.empty()) {
+                        auto it = m_bones.find(bid);
+                        for (;;) {
+                            auto next = m_bones.find(it->second.parent);
+                            if (next == m_bones.end())
+                                break;
+                            it = next;
+                        }
+                        rel.data->root_bone = it->second.transform->path;
+                    }
+
                     auto data = ms::BoneDataPtr(new ms::BoneData());
-                    rel.data->flags.has_bones = 1;
                     rel.data->bones.push_back(data);
+                    rel.data->flags.has_bones = 1;
+                    rel.data->refine_settings.flags.gen_weights4 = 1;
                     auto& bone = m_bones[bid];
                     data->path = bone.transform->path;
                     data->bindpose = bone.bindpose;

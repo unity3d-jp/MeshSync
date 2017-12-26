@@ -400,7 +400,7 @@ namespace UTJ.MeshSync
 
             if(rec == null)
             {
-                var t = FindObjectByPath(null, path, true, ref createdNewMesh);
+                var t = FindObjectByPath(path, true, ref createdNewMesh);
                 if(t != null)
                 {
                     rec = new Record
@@ -471,7 +471,7 @@ namespace UTJ.MeshSync
                     var t = target;
                     if (i > 0)
                     {
-                        t = FindObjectByPath(null, path + "/[" + i + "]", true, ref createdNewMesh);
+                        t = FindObjectByPath(path + "/[" + i + "]", true, ref createdNewMesh);
                         t.gameObject.SetActive(true);
                     }
 
@@ -479,31 +479,25 @@ namespace UTJ.MeshSync
                     rec.editMesh = CreateEditedMesh(data, split);
                     rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
 
-                    if (skinned)
+                    smr = GetOrAddSkinnedMeshRenderer(t.gameObject, i > 0);
+                    if (smr != null)
                     {
-                        smr = GetOrAddSkinnedMeshComponents(t.gameObject, i > 0);
-                        if(smr != null)
-                        {
-                            var old = smr.sharedMesh;
-                            smr.sharedMesh = rec.editMesh;
-                            DestroyIfNotAsset(old);
+                        var old = smr.sharedMesh;
+                        smr.sharedMesh = rec.editMesh;
+                        DestroyIfNotAsset(old);
 
+                        if (skinned)
+                        {
                             var bones = GetOrCreateBones(data);
-                            if(bones.Length > 0)
+                            if (bones.Length > 0)
                             {
                                 smr.bones = bones;
-                                smr.rootBone = bones[0];
+
+                                var root = FindObjectByPath(data.rootBonePath);
+                                if (root == null)
+                                    root = bones[0];
+                                smr.rootBone = root;
                             }
-                        }
-                    }
-                    else
-                    {
-                        var mfilter = GetOrAddMeshComponents(t.gameObject, i > 0);
-                        if (mfilter != null)
-                        {
-                            var old = mfilter.sharedMesh;
-                            mfilter.sharedMesh = rec.editMesh;
-                            DestroyIfNotAsset(old);
                         }
                     }
                 }
@@ -511,7 +505,7 @@ namespace UTJ.MeshSync
                 int num_splits = Math.Max(1, data.numSplits);
                 for (int i = num_splits; ; ++i)
                 {
-                    var t = FindObjectByPath(null, path + "/[" + i + "]");
+                    var t = FindObjectByPath(path + "/[" + i + "]");
                     if (t == null) { break; }
                     DestroyImmediate(t.gameObject);
                 }
@@ -536,7 +530,7 @@ namespace UTJ.MeshSync
             var ret = new Transform[data.numBones];
             for (int i = 0; i < ret.Length; ++i)
             {
-                ret[i] = FindObjectByPath(null, paths[i]);
+                ret[i] = FindObjectByPath(paths[i]);
             }
             return ret;
         }
@@ -614,9 +608,7 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             string assetDir = "Assets/" + m_assetExportPath;
             if (!AssetDatabase.IsValidFolder(assetDir))
-            {
                 AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-            }
             AssetDatabase.CreateAsset(obj, path);
 #endif
         }
@@ -624,7 +616,7 @@ namespace UTJ.MeshSync
         Transform UpdateTransform(TransformData data)
         {
             bool created = false;
-            var trans = FindObjectByPath(null, data.path, true, ref created);
+            var trans = FindObjectByPath(data.path, true, ref created);
             if (trans == null) { return null; }
             var go = trans.gameObject;
 #if UNITY_EDITOR
@@ -850,7 +842,7 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-        Transform FindObjectByPath(Transform parent, string path)
+        Transform FindObjectByPath(string path)
         {
             var names = path.Split('/');
             Transform t = null;
@@ -864,7 +856,7 @@ namespace UTJ.MeshSync
             return t;
         }
 
-        Transform FindObjectByPath(Transform parent, string path, bool createIfNotExist, ref bool created)
+        Transform FindObjectByPath(string path, bool createIfNotExist, ref bool created)
         {
             var names = path.Split('/');
             Transform t = null;
@@ -927,50 +919,11 @@ namespace UTJ.MeshSync
         }
 #endif
 
-        MeshFilter GetOrAddMeshComponents(GameObject go, bool isSplit)
-        {
-            var smr = go.GetComponent<SkinnedMeshRenderer>();
-            if (smr != null)
-            {
-                return null;
-            }
-
-            var mfilter = go.GetComponent<MeshFilter>();
-            if (mfilter == null)
-            {
-                mfilter = go.AddComponent<MeshFilter>();
-                var renderer = go.AddComponent<MeshRenderer>();
-                if (isSplit)
-                {
-                    var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
-                    renderer.sharedMaterials = parent.sharedMaterials;
-                }
-            }
-            return mfilter;
-        }
-
-        SkinnedMeshRenderer GetOrAddSkinnedMeshComponents(GameObject go, bool isSplit)
+        SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
         {
             var smr = go.GetComponent<SkinnedMeshRenderer>();
             if (smr == null)
             {
-                // destroy mesh components if exist
-                {
-                    var mr = go.GetComponent<MeshRenderer>();
-                    if (mr != null)
-                    {
-                        smr.materials = mr.materials;
-                        DestroyImmediate(mr);
-                    }
-                }
-                {
-                    var mfilter = go.GetComponent<MeshFilter>();
-                    if (mfilter != null)
-                    {
-                        DestroyImmediate(mfilter);
-                    }
-                }
-
                 smr = go.AddComponent<SkinnedMeshRenderer>();
                 if (isSplit)
                 {
