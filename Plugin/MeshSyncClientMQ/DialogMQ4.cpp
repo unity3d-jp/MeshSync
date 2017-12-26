@@ -3,15 +3,6 @@
 #include "MeshSyncClientMQ4.h"
 
 
-static inline std::wstring L(const std::string& s)
-{
-    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(s);
-}
-static inline std::string S(const std::wstring& w)
-{
-    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(w);
-}
-
 SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : MQWindow(parent)
 {
     setlocale(LC_ALL, "");
@@ -60,6 +51,11 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_camera = CreateCheckBox(vf, L"Sync Camera");
         m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
         m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
+
+        m_edit_camera_path = CreateEdit(vf);
+        m_edit_camera_path->SetText(L(m_plugin->getSync().getHostCameraPath()));
+        m_edit_camera_path->AddChangedEvent(this, &SettingsDlg::OnCameraPathChange);
+        m_edit_camera_path->SetVisible(m_check_camera->GetChecked());
 
 #if MQPLUGIN_VERSION >= 0x0464
         m_check_camera = CreateCheckBox(vf, L"Sync Bones");
@@ -140,6 +136,13 @@ BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncCamera() = m_check_camera->GetChecked();
+    m_edit_camera_path->SetVisible(m_check_camera->GetChecked());
+    return 0;
+}
+
+BOOL SettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getHostCameraPath() = S(m_edit_camera_path->GetText());
     return 0;
 }
 

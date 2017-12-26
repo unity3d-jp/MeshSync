@@ -44,6 +44,18 @@ private:
         MQObject normal_projector = nullptr;
     };
 
+    struct BoneData
+    {
+        UINT id = -1;
+        UINT parent = -1;
+        std::string name;
+        std::string path;
+        float3 position = float3::zero();
+        quatf rotation = quatf::identity();
+        float3 scale = float3::one();
+        float4x4 bindpose = float4x4::identity();
+    };
+
     MQBasePlugin *m_plugin = nullptr;
     ms::ClientSettings m_settings;
     float m_scale_factor = 200.0f;
@@ -63,8 +75,12 @@ private:
 
     std::vector<MQObject> m_obj_for_normals;
     std::vector<Relation> m_relations;
+    std::map<UINT, BoneData> m_bones;
     ExistRecords m_exist_record;
     std::future<void> m_future_meshes;
     std::future<void> m_future_camera;
     bool m_pending_send_meshes = false;
 };
+
+std::wstring L(const std::string& s);
+std::string S(const std::wstring& w);

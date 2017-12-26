@@ -15,6 +15,7 @@ public:
     BOOL OnScaleChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncCameraChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnCameraPathChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncClicked(MQWidgetBase *sender, MQDocument doc);
@@ -28,6 +29,7 @@ private:
     MQEdit *m_edit_scale = nullptr;
     MQCheckBox *m_check_vcolor = nullptr;
     MQCheckBox *m_check_camera = nullptr;
+    MQEdit *m_edit_camera_path = nullptr;
     MQCheckBox *m_check_bones = nullptr;
     MQCheckBox *m_check_autosync = nullptr;
     MQButton *m_button_sync = nullptr;

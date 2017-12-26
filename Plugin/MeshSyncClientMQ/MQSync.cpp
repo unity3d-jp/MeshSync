@@ -4,6 +4,16 @@
 
 #define MaxNameBuffer 128
 
+std::wstring L(const std::string& s)
+{
+    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(s);
+}
+
+std::string S(const std::wstring& w)
+{
+    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(w);
+}
+
 static inline std::string BuildPath(MQDocument doc, MQObject obj)
 {
     std::string ret;
@@ -25,6 +35,20 @@ static inline bool ExtractID(const char *name, int& id)
         }
     }
     return false;
+}
+
+static inline float3 ToEular(const MQAngle& ang)
+{
+    return float3{
+        ang.pitch,
+        -ang.head + 180.0f, // I can't explain why this modification is needed...
+        ang.bank
+    } *mu::Deg2Rad;
+}
+
+static inline quatf ToQuaternion(const MQAngle& ang)
+{
+    return rotateZXY(ToEular(ang));
 }
 
 
@@ -205,19 +229,72 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         MQBoneManager bone_manager(m_plugin, doc);
 
         int nbones = bone_manager.GetBoneNum();
-        {
-            std::vector<UINT> ids;
-            bone_manager.EnumBoneID(ids);
+        if (nbones == 0) {
+            goto bone_end;
+        }
 
-            std::wstring name;
-            for (auto id : ids) {
-                bone_manager.GetName(id, name);
-            }
-        }
         {
-            std::vector<float> weights(nbones);
-            std::vector<UINT> bones(nbones);
+            std::wstring name;
+            UINT parent;
+            MQPoint position;
+            MQAngle rotation;
+            MQPoint scale;
+            std::vector<UINT> bone_ids;
+
+            bone_manager.EnumBoneID(bone_ids);
+            for (auto bid : bone_ids) {
+                auto& bone = m_bones[bid];
+                bone.id = bid;
+                if (bone_manager.GetName(bid, name))
+                    bone.name = S(name);
+                if (bone_manager.GetParent(bid, parent))
+                    bone.parent = parent;
+                if (bone_manager.GetDeformTranslate(bid, position))
+                    bone.position = (const float3&)position;
+                if (bone_manager.GetDeformRotate(bid, rotation))
+                    bone.rotation = ToQuaternion(rotation);
+                if (bone_manager.GetDeformScale(bid, scale))
+                    bone.scale = (const float3&)scale;
+            }
+
+            // build path
+            std::string tmp;
+            tmp.reserve(256);
+            for (auto& pair : m_bones) {
+                auto& bone = pair.second;
+                bone.path = "/";
+                bone.path += bone.name;
+                for (auto it = m_bones.find(pair.second.parent); it != m_bones.end(); it = m_bones.find(it->second.parent)) {
+                    tmp = "/";
+                    tmp += it->second.name;
+                    tmp += bone.path;
+                    std::swap(tmp, bone.path);
+                }
+            }
+
+            // get weights
+            parallel_for_each(m_relations.begin(), m_relations.end(), [this, &bone_manager, nbones, &bone_ids](Relation& rel) {
+                auto obj = rel.obj;
+                std::vector<UINT> vertex_ids;
+                std::vector<float> weights;
+                for (auto bid : bone_ids) {
+                    int nweights = bone_manager.GetWeightedVertexArray(bid, obj, vertex_ids, weights);
+                    if (nweights == 0)
+                        continue;
+
+                    auto data = ms::BoneDataPtr(new ms::BoneData());
+                    rel.data->bones.push_back(data);
+                    auto& bone = m_bones[bid];
+                    data->path = bone.path;
+                    data->weights.resize_zeroclear(obj->GetVertexCount());
+                    for (int iw = 0; iw < nweights; ++iw) {
+                        int vi = obj->GetVertexIndexFromUniqueID(vertex_ids[iw]);
+                        data->weights[vi] = weights[iw];
+                    }
+                }
+            });
         }
+    bone_end:;
     }
 #endif
 
@@ -609,16 +686,10 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
     dst.transform.position = (const float3&)scene->GetCameraPosition();
-    {
-        auto ang = scene->GetCameraAngle();
-        auto eular = float3{
-            ang.pitch,
-            -ang.head + 180.0f, // I can't explain why this modification is needed...
-            ang.bank
-        } * mu::Deg2Rad;
-        dst.transform.rotation_eularZXY = eular;
-        dst.transform.rotation = rotateZXY(eular);
-    }
+    auto eular = ToEular(scene->GetCameraAngle());
+    dst.transform.rotation_eularZXY = eular;
+    dst.transform.rotation = rotateZXY(eular);
+
     dst.fov = scene->GetFOV() * mu::Rad2Deg;
 #if MQPLUGIN_VERSION >= 0x450
     dst.near_plane = scene->GetFrontClip();

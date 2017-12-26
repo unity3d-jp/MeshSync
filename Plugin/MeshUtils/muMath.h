@@ -30,8 +30,8 @@ struct tvec2
     template<class U> void assign(const U *v) { *this = { (T)v[0], (T)v[1] }; }
     template<class U> void assign(const tvec2<U>& v) { assign((const U*)&v); }
 
-    static tvec2 zero() { return{ (T)0, (T)0 }; }
-    static tvec2 one() { return{ (T)1, (T)1 }; }
+    static constexpr tvec2 zero() { return{ (T)0, (T)0 }; }
+    static constexpr tvec2 one() { return{ (T)1, (T)1 }; }
 };
 
 template<class T>
@@ -47,8 +47,8 @@ struct tvec3
     template<class U> void assign(const U *v) { *this = { (T)v[0], (T)v[1], (T)v[2] }; }
     template<class U> void assign(const tvec3<U>& v) { assign((const U*)&v); }
 
-    static tvec3 zero() { return{ (T)0, (T)0, (T)0 }; }
-    static tvec3 one() { return{ (T)1, (T)1, (T)1 }; }
+    static constexpr tvec3 zero() { return{ (T)0, (T)0, (T)0 }; }
+    static constexpr tvec3 one() { return{ (T)1, (T)1, (T)1 }; }
 };
 
 template<class T>
@@ -64,8 +64,8 @@ struct tvec4
     template<class U> void assign(const U *v) { *this = { (T)v[0], (T)v[1], (T)v[2], (T)v[3] }; }
     template<class U> void assign(const tvec4<U>& v) { assign((const U*)&v); }
 
-    static tvec4 zero() { return{ (T)0, (T)0, (T)0, (T)0 }; }
-    static tvec4 one() { return{ (T)1, (T)1, (T)1, (T)1 }; }
+    static constexpr tvec4 zero() { return{ (T)0, (T)0, (T)0, (T)0 }; }
+    static constexpr tvec4 one() { return{ (T)1, (T)1, (T)1, (T)1 }; }
 };
 
 template<class T>
@@ -81,7 +81,7 @@ struct tquat
     template<class U> void assign(const U *v) { *this = { (T)v[0], (T)v[1], (T)v[2], (T)v[3] }; }
     template<class U> void assign(const tquat<U>& v) { assign((const U*)&v); }
 
-    static tquat identity() { return{ (T)0, (T)0, (T)0, (T)1 }; }
+    static constexpr tquat identity() { return{ (T)0, (T)0, (T)0, (T)1 }; }
 };
 
 template<class T>
@@ -105,7 +105,7 @@ struct tmat3x3
     }
     template<class U> void assign(const tmat3x3<U>& v) { assign((U*)&v); }
 
-    static tmat3x3 identity()
+    static constexpr tmat3x3 identity()
     {
         return{ {
             { T(1.0), T(0.0), T(0.0) },
@@ -141,7 +141,7 @@ struct tmat4x4
     }
     template<class U> void assign(const tmat4x4<U>& v) { assign((U*)&v); }
 
-    static tmat4x4 identity()
+    static constexpr tmat4x4 identity()
     {
         return{ {
             { (T)1, (T)0, (T)0, (T)0 },
