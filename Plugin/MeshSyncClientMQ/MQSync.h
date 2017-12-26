@@ -49,10 +49,8 @@ private:
         UINT id = -1;
         UINT parent = -1;
         std::string name;
-        std::string path;
-        float3 position = float3::zero();
-        quatf rotation = quatf::identity();
-        float3 scale = float3::one();
+
+        ms::TransformPtr transform = ms::TransformPtr(new ms::Transform());
         float4x4 bindpose = float4x4::identity();
     };
 

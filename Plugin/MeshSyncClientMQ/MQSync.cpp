@@ -37,13 +37,22 @@ static inline bool ExtractID(const char *name, int& id)
     return false;
 }
 
-static inline float3 ToEular(const MQAngle& ang)
+static inline float3 ToEular(const MQAngle& ang, bool flip_head = false)
 {
-    return float3{
-        ang.pitch,
-        -ang.head + 180.0f, // I can't explain why this modification is needed...
-        ang.bank
-    } *mu::Deg2Rad;
+    if (flip_head) {
+        return float3{
+            ang.pitch,
+            -ang.head + 180.0f, // I can't explain why this modification is needed...
+            ang.bank
+        } *mu::Deg2Rad;
+    }
+    else {
+        return float3{
+            ang.pitch,
+            ang.head,
+            ang.bank
+        } *mu::Deg2Rad;
+    }
 }
 
 static inline quatf ToQuaternion(const MQAngle& ang)
@@ -120,6 +129,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     m_obj_for_normals.clear();
     m_relations.clear();
     m_materials.clear();
+    m_bones.clear();
 
 
     {
@@ -224,7 +234,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
 
 #if MQPLUGIN_VERSION >= 0x0464
-    {
+    if (m_sync_bones) {
         // gather bone data
         MQBoneManager bone_manager(m_plugin, doc);
 
@@ -244,17 +254,24 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             bone_manager.EnumBoneID(bone_ids);
             for (auto bid : bone_ids) {
                 auto& bone = m_bones[bid];
+                auto& trs = bone.transform->transform;
                 bone.id = bid;
+                std::string path;
+                MQPoint position;
+                MQAngle rotation;
+                MQPoint scale;
+
                 if (bone_manager.GetName(bid, name))
                     bone.name = S(name);
                 if (bone_manager.GetParent(bid, parent))
                     bone.parent = parent;
-                if (bone_manager.GetDeformTranslate(bid, position))
-                    bone.position = (const float3&)position;
+                if (bone_manager.GetDeformRootPos(bid, position))
+                    trs.position = (const float3&)position;
                 if (bone_manager.GetDeformRotate(bid, rotation))
-                    bone.rotation = ToQuaternion(rotation);
+                    trs.rotation = ToQuaternion(rotation);
                 if (bone_manager.GetDeformScale(bid, scale))
-                    bone.scale = (const float3&)scale;
+                    trs.scale = (const float3&)scale;
+                bone.bindpose = mu::invert(mu::transform(trs.position, trs.rotation, trs.scale));
             }
 
             // build path
@@ -262,13 +279,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             tmp.reserve(256);
             for (auto& pair : m_bones) {
                 auto& bone = pair.second;
-                bone.path = "/";
-                bone.path += bone.name;
+                auto& path = bone.transform->path;
+                path = "/";
+                path += bone.name;
                 for (auto it = m_bones.find(pair.second.parent); it != m_bones.end(); it = m_bones.find(it->second.parent)) {
                     tmp = "/";
                     tmp += it->second.name;
-                    tmp += bone.path;
-                    std::swap(tmp, bone.path);
+                    tmp += path;
+                    std::swap(tmp, path);
                 }
             }
 
@@ -283,9 +301,12 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                         continue;
 
                     auto data = ms::BoneDataPtr(new ms::BoneData());
+                    rel.data->flags.has_bones = 1;
                     rel.data->bones.push_back(data);
                     auto& bone = m_bones[bid];
-                    data->path = bone.path;
+                    data->path = bone.transform->path;
+                    data->bindpose = bone.bindpose;
+
                     data->weights.resize_zeroclear(obj->GetVertexCount());
                     for (int iw = 0; iw < nweights; ++iw) {
                         int vi = obj->GetVertexIndexFromUniqueID(vertex_ids[iw]);
@@ -320,11 +341,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             client.send(fence);
         }
 
-        // send cameras and materials
+        // send cameras, materials and bones
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.materials = m_materials;
+            for (auto& pair : m_bones) {
+                set.scene.transforms.push_back(pair.second.transform);
+            }
             client.send(set);
         }
 
@@ -686,7 +710,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
     dst.transform.position = (const float3&)scene->GetCameraPosition();
-    auto eular = ToEular(scene->GetCameraAngle());
+    auto eular = ToEular(scene->GetCameraAngle(), true);
     dst.transform.rotation_eularZXY = eular;
     dst.transform.rotation = rotateZXY(eular);
 

@@ -28,8 +28,11 @@ private:
     MQEdit *m_edit_port = nullptr;
     MQEdit *m_edit_scale = nullptr;
     MQCheckBox *m_check_vcolor = nullptr;
+
+    MQFrame *m_frame_camera_path = nullptr;
     MQCheckBox *m_check_camera = nullptr;
     MQEdit *m_edit_camera_path = nullptr;
+
     MQCheckBox *m_check_bones = nullptr;
     MQCheckBox *m_check_autosync = nullptr;
     MQButton *m_button_sync = nullptr;

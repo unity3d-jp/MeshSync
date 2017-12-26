@@ -52,15 +52,20 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
         m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
 
-        m_edit_camera_path = CreateEdit(vf);
+        m_frame_camera_path = CreateHorizontalFrame(vf);
+        auto space = CreateLabel(m_frame_camera_path, L" ");
+        space->SetWidth(32);
+        CreateLabel(m_frame_camera_path, L"Camera Path");
+        m_edit_camera_path = CreateEdit(m_frame_camera_path);
         m_edit_camera_path->SetText(L(m_plugin->getSync().getHostCameraPath()));
         m_edit_camera_path->AddChangedEvent(this, &SettingsDlg::OnCameraPathChange);
-        m_edit_camera_path->SetVisible(m_check_camera->GetChecked());
+        m_edit_camera_path->SetHorzLayout(LAYOUT_FILL);
+        m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
 
 #if MQPLUGIN_VERSION >= 0x0464
-        m_check_camera = CreateCheckBox(vf, L"Sync Bones");
-        m_check_camera->SetChecked(m_plugin->getSync().getSyncBones());
-        m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
+        m_check_bones = CreateCheckBox(vf, L"Sync Bones");
+        m_check_bones->SetChecked(m_plugin->getSync().getSyncBones());
+        m_check_bones->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
 #endif
     }
 
@@ -136,7 +141,7 @@ BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncCamera() = m_check_camera->GetChecked();
-    m_edit_camera_path->SetVisible(m_check_camera->GetChecked());
+    m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
     return 0;
 }
 

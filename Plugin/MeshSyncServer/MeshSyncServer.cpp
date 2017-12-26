@@ -536,14 +536,14 @@ msAPI void msMeshSetBonePath(ms::Mesh *_this, const char *v, int i)
 msAPI void msMeshReadBindPoses(ms::Mesh *_this, float4x4 *v)
 {
     int num_bones = (int)_this->bones.size();
-    for (int bi = 0; num_bones; ++bi) {
+    for (int bi = 0; bi < num_bones; ++bi) {
         v[bi] = _this->bones[bi]->bindpose;
     }
 }
 msAPI void msMeshWriteBindPoses(ms::Mesh *_this, const float4x4 *v, int size)
 {
     int num_bones = (int)_this->bones.size();
-    for (int bi = 0; num_bones; ++bi) {
+    for (int bi = 0; bi < num_bones; ++bi) {
         _this->bones[bi]->bindpose = v[bi];
     }
 }
