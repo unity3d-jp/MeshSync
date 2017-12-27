@@ -36,12 +36,10 @@ private:
     using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::MaterialPtr>;
 
-    struct Relation
+    struct MeshData
     {
         ms::MeshPtr data;
-        ms::MeshPtr normal_data;
         MQObject obj = nullptr;
-        MQObject normal_projector = nullptr;
     };
 
     struct BoneData
@@ -72,8 +70,7 @@ private:
     Materials m_materials;
     ms::CameraPtr m_camera;
 
-    std::vector<MQObject> m_obj_for_normals;
-    std::vector<Relation> m_relations;
+    std::vector<MeshData> m_meshes;
     std::map<UINT, BoneData> m_bones;
     ExistRecords m_exist_record;
     std::future<void> m_future_meshes;

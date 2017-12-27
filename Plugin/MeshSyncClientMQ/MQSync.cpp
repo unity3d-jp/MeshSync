@@ -93,8 +93,7 @@ bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 
 void MQSync::clear()
 {
-    m_obj_for_normals.clear();
-    m_relations.clear();
+    m_meshes.clear();
     m_client_meshes.clear();
     m_host_meshes.clear();
     m_materials.clear();
@@ -126,8 +125,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
 
     m_pending_send_meshes = false;
-    m_obj_for_normals.clear();
-    m_relations.clear();
+    m_meshes.clear();
     m_materials.clear();
     m_bones.clear();
 
@@ -144,30 +142,10 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             char name[MaxNameBuffer];
             obj->GetName(name, sizeof(name));
 
-            if (auto pos_normal = std::strstr(name, ":normal")) {
-                m_obj_for_normals.push_back(obj);
-            }
-            else {
-                auto rel = Relation();
-                rel.obj = obj;
-                m_relations.push_back(rel);
-                ++num_mesh_data;
-            }
-        }
-        for (auto nobj : m_obj_for_normals) {
-            char nname[MaxNameBuffer];
-            nobj->GetName(nname, sizeof(nname));
-            *std::strstr(nname, ":normal") = '\0';
-
-            for (auto& rel : m_relations) {
-                char name[MaxNameBuffer];
-                rel.obj->GetName(name, sizeof(name));
-                if (strcmp(nname, name) == 0) {
-                    rel.normal_projector = nobj;
-                    ++num_mesh_data;
-                    break;
-                }
-            }
+            auto rel = MeshData();
+            rel.obj = obj;
+            m_meshes.push_back(rel);
+            ++num_mesh_data;
         }
 
         {
@@ -176,23 +154,20 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             }
 
             int mi = 0;
-            for (size_t i = 0; i < m_relations.size(); ++i) {
-                auto& rel = m_relations[i];
+            for (size_t i = 0; i < m_meshes.size(); ++i) {
+                auto& rel = m_meshes[i];
                 rel.data = m_client_meshes[mi++];
                 rel.data->index = (int)i;
-                if (rel.normal_projector) {
-                    rel.normal_data = m_client_meshes[mi++];
-                }
             }
         }
 
         // gather mesh data
-        parallel_for_each(m_relations.begin(), m_relations.end(), [this, doc](Relation& rel) {
+        parallel_for_each(m_meshes.begin(), m_meshes.end(), [this, doc](MeshData& rel) {
             rel.data->clear();
             rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
             ExtractID(rel.data->path.c_str(), rel.data->id);
 
-            bool visible = rel.obj->GetVisible() || (rel.normal_projector && rel.normal_projector->GetVisible());
+            bool visible = rel.obj->GetVisible() != 0;
             rel.data->visible = visible;
             if (!visible) {
                 // not send actual contents if not visible
@@ -200,10 +175,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             }
 
             extractMeshData(doc, rel.obj, *rel.data);
-            if (rel.normal_projector) {
-                rel.normal_data->clear();
-                extractMeshData(doc, rel.normal_projector, *rel.normal_data, true);
-            }
         });
     }
 
@@ -315,7 +286,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             }
 
             // get weights
-            parallel_for_each(m_relations.begin(), m_relations.end(), [this, &bone_manager, nbones, &bone_ids](Relation& rel) {
+            parallel_for_each(m_meshes.begin(), m_meshes.end(), [this, &bone_manager, nbones, &bone_ids](MeshData& rel) {
                 auto obj = rel.obj;
                 std::vector<UINT> vertex_ids;
                 std::vector<float> weights;
@@ -362,12 +333,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
     // kick async send
     m_future_meshes = std::async(std::launch::async, [this]() {
-        for (auto& rel : m_relations) {
-            if (rel.normal_projector) {
-                ms::ProjectNormals(*rel.data, *rel.normal_data);
-            }
-        }
-
         ms::Client client(m_settings);
 
         ms::SceneSettings scene_settings;
@@ -394,7 +359,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         {
             // send meshes one by one to Unity can respond quickly
-            parallel_for_each(m_relations.begin(), m_relations.end(), [&scene_settings, &client](Relation& rel) {
+            parallel_for_each(m_meshes.begin(), m_meshes.end(), [&scene_settings, &client](MeshData& rel) {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
                 set.scene.meshes = { rel.data };
@@ -405,7 +370,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             for (auto& e : m_exist_record) {
                 e.second = false;
             }
-            for (auto& rel : m_relations) {
+            for (auto& rel : m_meshes) {
                 if (!rel.data->path.empty()) {
                     m_exist_record[rel.data->path] = true;
                 }
