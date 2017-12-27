@@ -237,6 +237,10 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 bone_manager.GetBaseRootPos(bid, base_pos);
                 bone.world_pos = (const float3&)base_pos;
                 bone.bindpose = mu::invert(mu::transform(bone.world_pos, quatf::identity(), float3::one()));
+
+                MQMatrix rot;
+                bone_manager.GetRotationMatrix(bid, rot);
+                bone.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
             }
 
             std::string tmp;
@@ -264,16 +268,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 tmp += path;
                 std::swap(tmp, path);
 
-                // build relative position
+                // setup transform
                 {
                     auto& trs = bone.transform->transform;
+                    trs.rotation = bone.world_rot;
+                    trs.position = bone.world_pos;
                     auto it = m_bones.find(bone.parent);
-                    if (it != m_bones.end()) {
-                        trs.position = bone.world_pos - it->second.world_pos;
-                    }
-                    else {
-                        trs.position = bone.world_pos;
-                    }
+                    if (it != m_bones.end())
+                        trs.position -= it->second.world_pos;
                 }
             }
 

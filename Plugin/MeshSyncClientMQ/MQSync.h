@@ -49,6 +49,7 @@ private:
         UINT parent = -1;
         std::string name;
         float3 world_pos = float3::zero();
+        quatf world_rot = quatf::identity();
 
         ms::TransformPtr transform = ms::TransformPtr(new ms::Transform());
         float4x4 bindpose = float4x4::identity();
