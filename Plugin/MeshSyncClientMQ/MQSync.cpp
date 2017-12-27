@@ -84,6 +84,7 @@ ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
 std::string& MQSync::getHostCameraPath() { return m_host_camera_path; }
 float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
+bool& MQSync::getSyncNormals() { return m_sync_normals; }
 bool & MQSync::getSyncVertexColor() { return m_sync_vertex_color; }
 bool& MQSync::getSyncCamera() { return m_sync_camera; }
 bool& MQSync::getSyncBones() { return m_sync_bones; }
@@ -94,11 +95,13 @@ bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 void MQSync::clear()
 {
     m_meshes.clear();
+    m_bones.clear();
     m_client_meshes.clear();
     m_host_meshes.clear();
     m_materials.clear();
     m_camera.reset();
-    m_exist_record.clear();
+    m_mesh_exists.clear();
+    m_bone_exists.clear();
     m_pending_send_meshes = false;
 }
 
@@ -367,26 +370,41 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             });
 
             // detect deleted objects and send delete message
-            for (auto& e : m_exist_record) {
+            for (auto& e : m_mesh_exists)
                 e.second = false;
-            }
             for (auto& rel : m_meshes) {
-                if (!rel.data->path.empty()) {
-                    m_exist_record[rel.data->path] = true;
-                }
+                auto& path = rel.data->path;
+                if (!path.empty())
+                    m_mesh_exists[path] = true;
+            }
+            for (auto& e : m_bone_exists)
+                e.second = false;
+            for (auto& rel : m_bones) {
+                auto& path = rel.second.transform->path;
+                if (!path.empty())
+                    m_bone_exists[path] = true;
             }
 
             ms::DeleteMessage del;
-            for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
+            for (auto i = m_mesh_exists.begin(); i != m_mesh_exists.end(); ) {
                 if (!i->second) {
                     int id = 0;
                     ExtractID(i->first.c_str(), id);
                     del.targets.push_back({ i->first , id });
-                    m_exist_record.erase(i++);
+                    m_mesh_exists.erase(i++);
                 }
-                else {
+                else
                     ++i;
+            }
+            for (auto i = m_bone_exists.begin(); i != m_bone_exists.end(); ) {
+                if (!i->second) {
+                    int id = 0;
+                    ExtractID(i->first.c_str(), id);
+                    del.targets.push_back({ i->first , id });
+                    m_bone_exists.erase(i++);
                 }
+                else
+                    ++i;
             }
             if (!del.targets.empty()) {
                 client.send(del);

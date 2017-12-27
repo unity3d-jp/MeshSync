@@ -13,6 +13,7 @@ public:
     BOOL OnServerChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnPortChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnScaleChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncCameraChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnCameraPathChange(MQWidgetBase *sender, MQDocument doc);
@@ -27,6 +28,7 @@ private:
     MQEdit *m_edit_server = nullptr;
     MQEdit *m_edit_port = nullptr;
     MQEdit *m_edit_scale = nullptr;
+    MQCheckBox *m_check_normals = nullptr;
     MQCheckBox *m_check_vcolor = nullptr;
 
     MQFrame *m_frame_camera_path = nullptr;

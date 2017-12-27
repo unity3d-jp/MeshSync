@@ -44,6 +44,10 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         MQFrame *vf = CreateVerticalFrame(this);
         vf->SetOutSpace(margin);
 
+        m_check_normals = CreateCheckBox(vf, L"Sync Normals");
+        m_check_normals->SetChecked(m_plugin->getSync().getSyncNormals());
+        m_check_normals->AddChangedEvent(this, &SettingsDlg::OnSyncNormalsChange);
+
         m_check_vcolor = CreateCheckBox(vf, L"Sync Vertex Color");
         m_check_vcolor->SetChecked(m_plugin->getSync().getSyncVertexColor());
         m_check_vcolor->AddChangedEvent(this, &SettingsDlg::OnSyncVertexColorChange);
@@ -129,6 +133,12 @@ BOOL SettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
     if (f != 0.0) {
         m_plugin->getSync().getScaleFactor() = (float)f;
     }
+    return 0;
+}
+
+BOOL SettingsDlg::OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getSyncNormals() = m_check_normals->GetChecked();
     return 0;
 }
 

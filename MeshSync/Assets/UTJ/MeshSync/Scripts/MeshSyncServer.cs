@@ -24,8 +24,8 @@ namespace UTJ.MeshSync
         bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
 
-        Dictionary<string, Record> m_clientMeshes = new Dictionary<string, Record>();
-        Dictionary<int, Record> m_hostMeshes = new Dictionary<int, Record>();
+        Dictionary<string, Record> m_clientObjects = new Dictionary<string, Record>();
+        Dictionary<int, Record> m_hostObjects = new Dictionary<int, Record>();
         Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
 
         [HideInInspector][SerializeField] string[] m_clientMeshes_keys;
@@ -79,14 +79,14 @@ namespace UTJ.MeshSync
 
         public void OnBeforeSerialize()
         {
-            SerializeDictionary(m_clientMeshes, ref m_clientMeshes_keys, ref m_clientMeshes_values);
-            SerializeDictionary(m_hostMeshes, ref m_hostMeshes_keys, ref m_hostMeshes_values);
+            SerializeDictionary(m_clientObjects, ref m_clientMeshes_keys, ref m_clientMeshes_values);
+            SerializeDictionary(m_hostObjects, ref m_hostMeshes_keys, ref m_hostMeshes_values);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
         public void OnAfterDeserialize()
         {
-            DeserializeDictionary(m_clientMeshes, ref m_clientMeshes_keys, ref m_clientMeshes_values);
-            DeserializeDictionary(m_hostMeshes, ref m_hostMeshes_keys, ref m_hostMeshes_values);
+            DeserializeDictionary(m_clientObjects, ref m_clientMeshes_keys, ref m_clientMeshes_values);
+            DeserializeDictionary(m_hostObjects, ref m_hostMeshes_keys, ref m_hostMeshes_values);
             DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
 
@@ -192,9 +192,9 @@ namespace UTJ.MeshSync
                 var id = mes.GetID(i);
                 var path = mes.GetPath(i);
 
-                if (id != 0 && m_hostMeshes.ContainsKey(id))
+                if (id != 0 && m_hostObjects.ContainsKey(id))
                 {
-                    var rec = m_hostMeshes[id];
+                    var rec = m_hostObjects[id];
                     if (rec.go != null)
                     {
 #if UNITY_EDITOR
@@ -204,11 +204,11 @@ namespace UTJ.MeshSync
                         DestroyImmediate(rec.go);
 #endif
                     }
-                    m_hostMeshes.Remove(id);
+                    m_hostObjects.Remove(id);
                 }
-                else if (m_clientMeshes.ContainsKey(path))
+                else if (m_clientObjects.ContainsKey(path))
                 {
-                    var rec = m_clientMeshes[path];
+                    var rec = m_clientObjects[path];
                     if (rec.go != null)
                     {
 #if UNITY_EDITOR
@@ -218,7 +218,7 @@ namespace UTJ.MeshSync
                         DestroyImmediate(rec.go);
 #endif
                     }
-                    m_clientMeshes.Remove(path);
+                    m_clientObjects.Remove(path);
                 }
             }
 
@@ -379,28 +379,28 @@ namespace UTJ.MeshSync
 
             // find or create target object
             Record rec = null;
-            if(data_id != 0 && m_hostMeshes.ContainsKey(data_id))
+            if(data_id != 0 && m_hostObjects.ContainsKey(data_id))
             {
-                rec = m_hostMeshes[data_id];
+                rec = m_hostObjects[data_id];
                 if(rec.go == null)
                 {
-                    m_hostMeshes.Remove(data_id);
+                    m_hostObjects.Remove(data_id);
                     rec = null;
                 }
             }
-            else if(m_clientMeshes.ContainsKey(path))
+            else if(m_clientObjects.ContainsKey(path))
             {
-                rec = m_clientMeshes[path];
+                rec = m_clientObjects[path];
                 if (rec.go == null)
                 {
-                    m_clientMeshes.Remove(path);
+                    m_clientObjects.Remove(path);
                     rec = null;
                 }
             }
 
             if(rec == null)
             {
-                var t = FindObjectByPath(path, true, ref createdNewMesh);
+                var t = FindOrCreateObjectByPath(path, true, ref createdNewMesh);
                 if(t != null)
                 {
                     rec = new Record
@@ -408,7 +408,7 @@ namespace UTJ.MeshSync
                         go = t.gameObject,
                         recved = true,
                     };
-                    m_clientMeshes[path] = rec;
+                    m_clientObjects[path] = rec;
                 }
             }
             if (rec == null) { return; }
@@ -466,20 +466,20 @@ namespace UTJ.MeshSync
             else
             {
                 // update mesh
-                for (int i = 0; i < data.numSplits; ++i)
+                for (int si = 0; si < data.numSplits; ++si)
                 {
                     var t = target;
-                    if (i > 0)
+                    if (si > 0)
                     {
-                        t = FindObjectByPath(path + "/[" + i + "]", true, ref createdNewMesh);
+                        t = FindOrCreateObjectByPath(path + "/[" + si + "]", true, ref createdNewMesh);
                         t.gameObject.SetActive(true);
                     }
 
-                    var split = data.GetSplit(i);
+                    var split = data.GetSplit(si);
                     rec.editMesh = CreateEditedMesh(data, split);
-                    rec.editMesh.name = i == 0 ? target.name : target.name + "[" + i + "]";
+                    rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
 
-                    smr = GetOrAddSkinnedMeshRenderer(t.gameObject, i > 0);
+                    smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                     if (smr != null)
                     {
                         var old = smr.sharedMesh;
@@ -488,12 +488,29 @@ namespace UTJ.MeshSync
 
                         if (skinned)
                         {
-                            var bones = GetOrCreateBones(data);
+                            // create bones
+                            var paths = data.GetBonePaths();
+                            var bones = new Transform[data.numBones];
+                            for (int bi = 0; bi < bones.Length; ++bi)
+                            {
+                                bool created = false;
+                                bones[bi] = FindOrCreateObjectByPath(paths[bi], true, ref created);
+                                if (created)
+                                {
+                                    m_clientObjects.Add(paths[bi], new Record
+                                    {
+                                        go = bones[bi].gameObject,
+                                        recved = true,
+                                    });
+                                }
+                            }
+
                             if (bones.Length > 0)
                             {
                                 smr.bones = bones;
 
-                                var root = FindObjectByPath(data.rootBonePath);
+                                bool created = false;
+                                var root = FindOrCreateObjectByPath(data.rootBonePath, true, ref created);
                                 if (root == null)
                                     root = bones[0];
                                 smr.rootBone = root;
@@ -503,9 +520,10 @@ namespace UTJ.MeshSync
                 }
 
                 int num_splits = Math.Max(1, data.numSplits);
-                for (int i = num_splits; ; ++i)
+                for (int si = num_splits; ; ++si)
                 {
-                    var t = FindObjectByPath(path + "/[" + i + "]");
+                    bool created = false;
+                    var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
                     if (t == null) { break; }
                     DestroyImmediate(t.gameObject);
                 }
@@ -522,17 +540,6 @@ namespace UTJ.MeshSync
             {
                 AssignMaterials(rec);
             }
-        }
-
-        Transform[] GetOrCreateBones(MeshData data)
-        {
-            var paths = data.GetBonePaths();
-            var ret = new Transform[data.numBones];
-            for (int i = 0; i < ret.Length; ++i)
-            {
-                ret[i] = FindObjectByPath(paths[i]);
-            }
-            return ret;
         }
 
         Mesh CreateEditedMesh(MeshData data, SplitData split, bool noTopologyUpdate = false, Mesh prev = null)
@@ -593,7 +600,7 @@ namespace UTJ.MeshSync
 
         void SortObjects()
         {
-            var rec = m_clientMeshes.Values.OrderBy(v => v.index);
+            var rec = m_clientObjects.Values.OrderBy(v => v.index);
             foreach(var r in rec)
             {
                 if(r.go != null)
@@ -616,7 +623,7 @@ namespace UTJ.MeshSync
         Transform UpdateTransform(TransformData data)
         {
             bool created = false;
-            var trans = FindObjectByPath(data.path, true, ref created);
+            var trans = FindOrCreateObjectByPath(data.path, true, ref created);
             if (trans == null) { return null; }
             var go = trans.gameObject;
 #if UNITY_EDITOR
@@ -727,11 +734,11 @@ namespace UTJ.MeshSync
 
         public void ReassignMaterials()
         {
-            foreach (var rec in m_clientMeshes)
+            foreach (var rec in m_clientObjects)
             {
                 AssignMaterials(rec.Value);
             }
-            foreach (var rec in m_hostMeshes)
+            foreach (var rec in m_hostObjects)
             {
                 AssignMaterials(rec.Value);
             }
@@ -842,34 +849,20 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-        Transform FindObjectByPath(string path)
+        Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
         {
             var names = path.Split('/');
             Transform t = null;
             foreach (var name in names)
             {
                 if (name.Length == 0) { continue; }
-                bool created = false;
-                t = FindObjectByName(t, name, false, ref created);
+                t = FindOrCreateObjectByName(t, name, createIfNotExist, ref created);
                 if (t == null) { break; }
             }
             return t;
         }
 
-        Transform FindObjectByPath(string path, bool createIfNotExist, ref bool created)
-        {
-            var names = path.Split('/');
-            Transform t = null;
-            foreach (var name in names)
-            {
-                if (name.Length == 0) { continue; }
-                t = FindObjectByName(t, name, createIfNotExist, ref created);
-                if (t == null) { break; }
-            }
-            return t;
-        }
-
-        Transform FindObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
+        Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
         {
             Transform ret = null;
             if (parent == null)
@@ -898,9 +891,7 @@ namespace UTJ.MeshSync
                 go.name = name;
                 ret = go.GetComponent<Transform>();
                 if (parent != null)
-                {
                     ret.SetParent(parent, false);
-                }
                 created = true;
             }
             return ret;
@@ -988,11 +979,11 @@ namespace UTJ.MeshSync
                 dst.local2world = trans.localToWorldMatrix;
                 dst.world2local = trans.worldToLocalMatrix;
 
-                if (!m_hostMeshes.ContainsKey(dst_trans.id))
+                if (!m_hostObjects.ContainsKey(dst_trans.id))
                 {
-                    m_hostMeshes[dst_trans.id] = new Record();
+                    m_hostObjects[dst_trans.id] = new Record();
                 }
-                var rec = m_hostMeshes[dst_trans.id];
+                var rec = m_hostObjects[dst_trans.id];
                 rec.go = renderer.gameObject;
                 rec.origMesh = origMesh;
 
@@ -1139,11 +1130,11 @@ namespace UTJ.MeshSync
         }
         public void GenerateLightmapUV()
         {
-            foreach (var kvp in m_clientMeshes)
+            foreach (var kvp in m_clientObjects)
             {
                 GenerateLightmapUV(kvp.Value.go);
             }
-            foreach (var kvp in m_hostMeshes)
+            foreach (var kvp in m_hostObjects)
             {
                 if(kvp.Value.editMesh != null)
                     GenerateLightmapUV(kvp.Value.go);
@@ -1175,7 +1166,7 @@ namespace UTJ.MeshSync
         public void ExportMeshes()
         {
             // export client meshes
-            foreach (var kvp in m_clientMeshes)
+            foreach (var kvp in m_clientObjects)
             {
                 if(kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
                 if (kvp.Value.editMesh != null)
@@ -1187,7 +1178,7 @@ namespace UTJ.MeshSync
 
             // replace existing meshes
             int n = 0;
-            foreach (var kvp in m_hostMeshes)
+            foreach (var kvp in m_hostObjects)
             {
                 if (kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
                 if (kvp.Value.editMesh != null)
@@ -1219,7 +1210,7 @@ namespace UTJ.MeshSync
         void CheckMaterialAssignedViaEditor()
         {
             bool changed = false;
-            foreach(var kvp in m_clientMeshes)
+            foreach(var kvp in m_clientObjects)
             {
                 var rec = kvp.Value;
                 if (rec.go != null && rec.go.activeInHierarchy)

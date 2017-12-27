@@ -13,6 +13,7 @@ public:
     std::string& getHostCameraPath();
     float& getScaleFactor();
     bool& getAutoSync();
+    bool& getSyncNormals();
     bool& getSyncVertexColor();
     bool& getSyncCamera();
     bool& getSyncBones();
@@ -58,6 +59,7 @@ private:
     float m_scale_factor = 200.0f;
     std::string m_host_camera_path = "/Main Camera";
     bool m_auto_sync = false;
+    bool m_sync_normals = true;
     bool m_sync_vertex_color = false;
     bool m_sync_camera = false;
     bool m_sync_bones = true;
@@ -72,7 +74,8 @@ private:
 
     std::vector<MeshData> m_meshes;
     std::map<UINT, BoneData> m_bones;
-    ExistRecords m_exist_record;
+    ExistRecords m_mesh_exists;
+    ExistRecords m_bone_exists;
     std::future<void> m_future_meshes;
     std::future<void> m_future_camera;
     bool m_pending_send_meshes = false;
