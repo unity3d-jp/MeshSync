@@ -132,7 +132,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     m_materials.clear();
     m_bones.clear();
 
-
     {
         int nobj = doc->GetObjectCount();
         int num_mesh_data = 0;
@@ -220,7 +219,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         {
             std::wstring name;
             std::vector<UINT> bone_ids;
-            std::vector<UINT> brothers;
 
             bone_manager.EnumBoneID(bone_ids);
             for (auto bid : bone_ids) {
@@ -231,21 +229,9 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 bone_manager.GetName(bid, name);
                 bone.name = S(name);
 
-                if (bone.parent == -1)
-                {
-                    UINT parent;
-                    bone_manager.GetParent(bid, parent);
-                    bone.parent = parent;
-
-                    bone_manager.GetBrothers(bid, brothers);
-                    for (auto cid : brothers) {
-                        bone_manager.GetName(cid, name);
-                        auto& bro = m_bones[cid];
-                        if (bro.parent == -1) {
-                            bro.parent = bid;
-                        }
-                    }
-                }
+                UINT parent;
+                bone_manager.GetParent(bid, parent);
+                bone.parent = parent;
 
                 MQPoint base_pos;
                 bone_manager.GetBaseRootPos(bid, base_pos);
@@ -274,6 +260,9 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     std::swap(tmp, path);
                     parent = it->second.parent;
                 }
+                tmp = "/bones";
+                tmp += path;
+                std::swap(tmp, path);
 
                 // build relative position
                 {
