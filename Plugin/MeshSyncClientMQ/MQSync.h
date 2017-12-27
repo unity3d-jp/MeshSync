@@ -29,7 +29,7 @@ public:
 private:
     MQObject findMesh(MQDocument doc, const char *name);
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
-    void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst, bool shape_only = false);
+    void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
     void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
 
     using ClientMeshes = std::vector<ms::MeshPtr>;

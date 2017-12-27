@@ -21,6 +21,8 @@
 *.ogg
 *.flac
 *.wav
+*.zip
+*.mll
 
 .vs/
 _out/
@@ -34,3 +36,6 @@ TestLocal.meta
 
 MeshSync/*.csproj
 MeshSync/*.sln
+
+NormalPainter/
+NormalPainter.meta

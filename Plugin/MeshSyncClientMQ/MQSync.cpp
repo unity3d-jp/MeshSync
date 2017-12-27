@@ -612,7 +612,7 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
     return ret;
 }
 
-void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool shape_only)
+void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
     dst.flags.has_points = 1;
     dst.flags.has_uv = 1;
@@ -621,8 +621,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
     dst.flags.has_materialIDs = 1;
     dst.flags.has_refine_settings = 1;
 
-    dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
-    dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.invert_v = 1;
     if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {
@@ -638,7 +636,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
     }
 
     // transform
-    if(!shape_only) {
+    {
         dst.refine_settings.flags.apply_world2local = 1;
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
@@ -654,12 +652,12 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
         }
     }
 
-    // copy vertices
+    // vertices
     int npoints = obj->GetVertexCount();
     dst.points.resize(npoints);
     obj->GetVertexArray((MQPoint*)dst.points.data());
 
-    // copy faces
+    // faces
     int nfaces = obj->GetFaceCount();
     int nindices = 0;
     dst.counts.resize(nfaces);
@@ -671,50 +669,59 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
         }
     }
 
-    if (shape_only) {
-        // copy indices
-        dst.indices.resize(nindices);
-        auto *indices = dst.indices.data();
-        for (int fi = 0; fi < nfaces; ++fi) {
-            int c = dst.counts[fi];
-            if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
-                obj->GetFacePointArray(fi, indices);
-                indices += c;
-            }
+    // indices, uv, material ID
+    dst.indices.resize_discard(nindices);
+    dst.uv.resize_discard(nindices);
+    dst.materialIDs.resize_discard(nfaces);
+    auto *indices = dst.indices.data();
+    auto *uv = dst.uv.data();
+    for (int fi = 0; fi < nfaces; ++fi) {
+        int c = dst.counts[fi];
+        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
+        if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+            obj->GetFacePointArray(fi, indices);
+            obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
+            indices += c;
+            uv += c;
         }
     }
-    else {
-        // copy indices, uv, material ID
-        dst.indices.resize(nindices);
-        dst.uv.resize(nindices);
-        dst.materialIDs.resize(nfaces);
-        auto *indices = dst.indices.data();
-        auto *uv = dst.uv.data();
-        for (int fi = 0; fi < nfaces; ++fi) {
-            int c = dst.counts[fi];
-            dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
-            if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
-                obj->GetFacePointArray(fi, indices);
-                obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
-                indices += c;
-                uv += c;
-            }
-        }
 
-        // copy vertex colors if needed
-        if (m_sync_vertex_color) {
-            dst.colors.resize(nindices);
-            dst.flags.has_colors = 1;
-            auto *colors = dst.colors.data();
-            for (int fi = 0; fi < nfaces; ++fi) {
-                int count = dst.counts[fi];
-                if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
-                    for (int ci = 0; ci < count; ++ci) {
-                        *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
-                    }
+    // vertex colors
+    if (m_sync_vertex_color) {
+        dst.colors.resize_discard(nindices);
+        dst.flags.has_colors = 1;
+        auto *colors = dst.colors.data();
+        for (int fi = 0; fi < nfaces; ++fi) {
+            int count = dst.counts[fi];
+            if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                for (int ci = 0; ci < count; ++ci) {
+                    *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
                 }
             }
         }
+    }
+
+    // normals
+#if MQPLUGIN_VERSION >= 0x0460
+    if (m_sync_normals) {
+        dst.normals.resize_discard(nindices);
+        dst.flags.has_normals = 1;
+        auto *normals = dst.normals.data();
+        for (int fi = 0; fi < nfaces; ++fi) {
+            int count = dst.counts[fi];
+            BYTE flags;
+            if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+                for (int ci = 0; ci < count; ++ci) {
+                    obj->GetFaceVertexNormal(fi, ci, flags, (MQPoint&)*(normals++));
+                }
+            }
+        }
+    }
+    else
+#endif
+    {
+        dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
+        dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     }
 
     // remove lines and points
