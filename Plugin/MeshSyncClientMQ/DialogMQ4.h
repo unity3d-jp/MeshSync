@@ -18,6 +18,7 @@ public:
     BOOL OnSyncCameraChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnCameraPathChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncClicked(MQWidgetBase *sender, MQDocument doc);
     BOOL OnBakeSkinChange(MQWidgetBase *sender, MQDocument doc);
@@ -36,6 +37,9 @@ private:
     MQEdit *m_edit_camera_path = nullptr;
 
     MQCheckBox *m_check_bones = nullptr;
+    MQFrame *m_frame_poses = nullptr;
+    MQCheckBox *m_check_poses = nullptr;
+
     MQCheckBox *m_check_autosync = nullptr;
     MQButton *m_button_sync = nullptr;
     MQCheckBox *m_check_bake_skin = nullptr;

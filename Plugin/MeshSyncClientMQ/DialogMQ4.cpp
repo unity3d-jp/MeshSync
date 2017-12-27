@@ -72,6 +72,13 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_bones = CreateCheckBox(vf, L"Sync Bones");
         m_check_bones->SetChecked(m_plugin->getSync().getSyncBones());
         m_check_bones->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
+
+        m_frame_poses = CreateHorizontalFrame(vf);
+        space = CreateLabel(m_frame_poses, L" ");
+        space->SetWidth(32);
+        m_check_poses = CreateCheckBox(m_frame_poses, L"Sync Poses");
+        m_check_poses->SetChecked(m_plugin->getSync().getSyncBones());
+        m_check_poses->AddChangedEvent(this, &SettingsDlg::OnSyncPosesChange);
 #endif
     }
 
@@ -166,6 +173,13 @@ BOOL SettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncBones() = m_check_bones->GetChecked();
+    m_frame_poses->SetVisible(m_check_bones->GetChecked());
+    return 0;
+}
+
+BOOL SettingsDlg::OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getSyncPoses() = m_check_poses->GetChecked();
     return 0;
 }
 

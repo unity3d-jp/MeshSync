@@ -17,6 +17,7 @@ public:
     bool& getSyncVertexColor();
     bool& getSyncCamera();
     bool& getSyncBones();
+    bool& getSyncPoses();
     bool& getBakeSkin();
     bool& getBakeCloth();
 
@@ -27,16 +28,6 @@ public:
     bool importMeshes(MQDocument doc);
 
 private:
-    MQObject findMesh(MQDocument doc, const char *name);
-    MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
-    void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
-    void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
-
-    using ClientMeshes = std::vector<ms::MeshPtr>;
-    using HostMeshes = std::map<int, ms::MeshPtr>;
-    using ExistRecords = std::map<std::string, bool>;
-    using Materials = std::vector<ms::MaterialPtr>;
-
     struct MeshData
     {
         ms::MeshPtr data;
@@ -55,6 +46,18 @@ private:
         float4x4 bindpose = float4x4::identity();
     };
 
+    using ClientMeshes = std::vector<ms::MeshPtr>;
+    using HostMeshes = std::map<int, ms::MeshPtr>;
+    using ExistRecords = std::map<std::string, bool>;
+    using Materials = std::vector<ms::MaterialPtr>;
+
+    MQObject findMesh(MQDocument doc, const char *name);
+    MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
+    void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
+    void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
+    void buildBonePath(std::string& dst, BoneData& bd);
+
+
     MQBasePlugin *m_plugin = nullptr;
     ms::ClientSettings m_settings;
     float m_scale_factor = 200.0f;
@@ -64,6 +67,7 @@ private:
     bool m_sync_vertex_color = false;
     bool m_sync_camera = false;
     bool m_sync_bones = true;
+    bool m_sync_poses = true;
 
     bool m_bake_skin = false;
     bool m_bake_cloth = false;

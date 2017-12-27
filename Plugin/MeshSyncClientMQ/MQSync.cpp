@@ -88,6 +88,7 @@ bool& MQSync::getSyncNormals() { return m_sync_normals; }
 bool & MQSync::getSyncVertexColor() { return m_sync_vertex_color; }
 bool& MQSync::getSyncCamera() { return m_sync_camera; }
 bool& MQSync::getSyncBones() { return m_sync_bones; }
+bool& MQSync::getSyncPoses() { return m_sync_poses; }
 
 bool& MQSync::getBakeSkin() { return m_bake_skin; }
 bool& MQSync::getBakeCloth() { return m_bake_cloth; }
@@ -240,33 +241,19 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
                 MQMatrix rot;
                 bone_manager.GetRotationMatrix(bid, rot);
-                bone.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
+                if (m_sync_poses)
+                    bone.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
+                else
+                    bone.world_rot = quatf::identity();
             }
 
-            std::string tmp;
-            tmp.reserve(256);
             for (auto& pair : m_bones) {
                 auto& bone = pair.second;
 
                 // build path
                 auto& path = bone.transform->path;
-                path = "/";
-                path += bone.name;
-
-                UINT parent = bone.parent;
-                for (;;) {
-                    auto it = m_bones.find(parent);
-                    if (it == m_bones.end())
-                        break;
-                    tmp = "/";
-                    tmp += it->second.name;
-                    tmp += path;
-                    std::swap(tmp, path);
-                    parent = it->second.parent;
-                }
-                tmp = "/bones";
-                tmp += path;
-                std::swap(tmp, path);
+                path = "/bones";
+                buildBonePath(path, bone);
 
                 // setup transform
                 {
@@ -410,6 +397,17 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         }
     });
 }
+
+void MQSync::buildBonePath(std::string& dst, BoneData& bd)
+{
+    auto it = m_bones.find(bd.parent);
+    if (it != m_bones.end())
+        buildBonePath(dst, it->second);
+
+    dst += "/";
+    dst += bd.name;
+}
+
 
 void MQSync::sendCamera(MQDocument doc, bool force)
 {
