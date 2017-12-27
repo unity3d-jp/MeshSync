@@ -1573,6 +1573,7 @@ namespace UTJ.MeshSync
             public int max_queue;
             public int max_threads;
             public ushort port;
+            public uint mesh_split_unit;
 
             public static ServerSettings default_value
             {
@@ -1583,6 +1584,11 @@ namespace UTJ.MeshSync
                         max_queue = 256,
                         max_threads = 8,
                         port = 8080,
+#if UNITY_2017_3_OR_NEWER
+                        mesh_split_unit = 0xffffffff,
+#else
+                        mesh_split_unit = 65000,
+#endif
                     };
                 }
             }

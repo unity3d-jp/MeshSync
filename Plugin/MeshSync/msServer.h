@@ -18,6 +18,7 @@ struct ServerSettings
     int max_queue = 256;
     int max_threads = 8;
     uint16_t port = 8080;
+    uint32_t mesh_split_unit = 0xffffffff;
 };
 
 class Server

@@ -550,6 +550,9 @@ namespace UTJ.MeshSync
             }
 
             var mesh = noTopologyUpdate ? Instantiate<Mesh>(prev) : new Mesh();
+#if UNITY_2017_3_OR_NEWER
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#endif
             var flags = data.flags;
             if (flags.hasPoints)
             {

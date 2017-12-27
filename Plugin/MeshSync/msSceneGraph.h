@@ -288,8 +288,8 @@ struct MeshRefineSettings
     MeshRefineFlags flags = { 0 };
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f;
-    int split_unit = 65000;
-    int max_bones_par_vertices = 4;
+    uint32_t split_unit = 65000;
+    uint32_t max_bones_par_vertices = 4;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
 };

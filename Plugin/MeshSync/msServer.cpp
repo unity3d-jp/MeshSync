@@ -285,14 +285,14 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         return;
     }
 
-    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [&mes](MeshPtr& pmesh) {
+    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [this, &mes](MeshPtr& pmesh) {
         auto& mesh = *pmesh;
         mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
         mesh.refine_settings.flags.swap_handedness = mes->scene.settings.handedness == Handedness::Right;
         mesh.refine_settings.flags.triangulate = 1;
         mesh.refine_settings.flags.split = 1;
         mesh.refine_settings.flags.optimize_topology = 1;
-        mesh.refine_settings.split_unit = 65000;
+        mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
         mesh.refine(mesh.refine_settings);
     });
     if (mes->scene.settings.handedness == Handedness::Right) {
