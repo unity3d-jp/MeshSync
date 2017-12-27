@@ -54,12 +54,25 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_vcolor->SetChecked(m_plugin->getSync().getSyncVertexColor());
         m_check_vcolor->AddChangedEvent(this, &SettingsDlg::OnSyncVertexColorChange);
 
+#if MQPLUGIN_VERSION >= 0x0464
+        m_check_bones = CreateCheckBox(vf, L"Sync Bones");
+        m_check_bones->SetChecked(m_plugin->getSync().getSyncBones());
+        m_check_bones->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
+
+        m_frame_poses = CreateHorizontalFrame(vf);
+        auto space = CreateLabel(m_frame_poses, L" ");
+        space->SetWidth(32);
+        m_check_poses = CreateCheckBox(m_frame_poses, L"Sync Poses");
+        m_check_poses->SetChecked(m_plugin->getSync().getSyncBones());
+        m_check_poses->AddChangedEvent(this, &SettingsDlg::OnSyncPosesChange);
+#endif
+
         m_check_camera = CreateCheckBox(vf, L"Sync Camera");
         m_check_camera->SetChecked(m_plugin->getSync().getSyncCamera());
         m_check_camera->AddChangedEvent(this, &SettingsDlg::OnSyncCameraChange);
 
         m_frame_camera_path = CreateHorizontalFrame(vf);
-        auto space = CreateLabel(m_frame_camera_path, L" ");
+        space = CreateLabel(m_frame_camera_path, L" ");
         space->SetWidth(32);
         CreateLabel(m_frame_camera_path, L"Camera Path");
         m_edit_camera_path = CreateEdit(m_frame_camera_path);
@@ -67,19 +80,6 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_edit_camera_path->AddChangedEvent(this, &SettingsDlg::OnCameraPathChange);
         m_edit_camera_path->SetHorzLayout(LAYOUT_FILL);
         m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
-
-#if MQPLUGIN_VERSION >= 0x0464
-        m_check_bones = CreateCheckBox(vf, L"Sync Bones");
-        m_check_bones->SetChecked(m_plugin->getSync().getSyncBones());
-        m_check_bones->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
-
-        m_frame_poses = CreateHorizontalFrame(vf);
-        space = CreateLabel(m_frame_poses, L" ");
-        space->SetWidth(32);
-        m_check_poses = CreateCheckBox(m_frame_poses, L"Sync Poses");
-        m_check_poses->SetChecked(m_plugin->getSync().getSyncBones());
-        m_check_poses->AddChangedEvent(this, &SettingsDlg::OnSyncPosesChange);
-#endif
     }
 
     {
@@ -141,6 +141,7 @@ BOOL SettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
     auto f = std::atof(v.c_str());
     if (f != 0.0) {
         m_plugin->getSync().getScaleFactor() = (float)f;
+        m_plugin->SendAll();
     }
     return 0;
 }
@@ -148,25 +149,32 @@ BOOL SettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncNormals() = m_check_normals->GetChecked();
+    m_plugin->SendAll();
     return 0;
 }
 
 BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncVertexColor() = m_check_vcolor->GetChecked();
+    m_plugin->SendAll();
     return 0;
 }
 
 BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
 {
-    m_plugin->getSync().getSyncCamera() = m_check_camera->GetChecked();
-    m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
+    bool checked = m_check_camera->GetChecked();
+    m_plugin->getSync().getSyncCamera() = checked;
+    m_frame_camera_path->SetVisible(checked);
+    if (checked) {
+        m_plugin->SendCamera();
+    }
     return 0;
 }
 
 BOOL SettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getHostCameraPath() = S(m_edit_camera_path->GetText());
+    m_plugin->SendCamera();
     return 0;
 }
 
@@ -174,12 +182,14 @@ BOOL SettingsDlg::OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncBones() = m_check_bones->GetChecked();
     m_frame_poses->SetVisible(m_check_bones->GetChecked());
+    m_plugin->SendAll();
     return 0;
 }
 
 BOOL SettingsDlg::OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncPoses() = m_check_poses->GetChecked();
+    m_plugin->SendAll();
     return 0;
 }
 
@@ -191,7 +201,7 @@ BOOL SettingsDlg::OnAutoSyncChange(MQWidgetBase * sender, MQDocument doc)
 
 BOOL SettingsDlg::OnSyncClicked(MQWidgetBase * sender, MQDocument doc)
 {
-    m_plugin->Send();
+    m_plugin->SendAll();
     return 0;
 }
 

@@ -290,9 +290,14 @@ MQSync& MeshSyncClientPlugin::getSync()
     return m_sync;
 }
 
-void MeshSyncClientPlugin::Send()
+void MeshSyncClientPlugin::SendAll()
 {
-    Execute(&MeshSyncClientPlugin::SendImpl);
+    Execute(&MeshSyncClientPlugin::SendAllImpl);
+}
+
+void MeshSyncClientPlugin::SendCamera()
+{
+    Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 
 void MeshSyncClientPlugin::Import()
@@ -300,9 +305,15 @@ void MeshSyncClientPlugin::Import()
     Execute(&MeshSyncClientPlugin::ImportImpl);
 }
 
-bool MeshSyncClientPlugin::SendImpl(MQDocument doc)
+bool MeshSyncClientPlugin::SendAllImpl(MQDocument doc)
 {
     m_sync.sendMeshes(doc, true);
+    m_sync.sendCamera(doc, true);
+    return true;
+}
+
+bool MeshSyncClientPlugin::SendCameraImpl(MQDocument doc)
+{
     m_sync.sendCamera(doc, true);
     return true;
 }

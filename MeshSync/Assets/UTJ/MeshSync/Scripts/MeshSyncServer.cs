@@ -444,6 +444,7 @@ namespace UTJ.MeshSync
 
             bool skinned = data.numBones > 0;
 
+            bool bonesUpdated = false;
             var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
             if (smr != null && !rec.recved && !skinned)
             {
@@ -507,13 +508,22 @@ namespace UTJ.MeshSync
 
                             if (bones.Length > 0)
                             {
-                                smr.bones = bones;
-
                                 bool created = false;
                                 var root = FindOrCreateObjectByPath(data.rootBonePath, true, ref created);
                                 if (root == null)
                                     root = bones[0];
                                 smr.rootBone = root;
+                                smr.bones = bones;
+                                bonesUpdated = true;
+                            }
+                        }
+                        else
+                        {
+                            if(smr.rootBone != null)
+                            {
+                                bonesUpdated = true;
+                                smr.bones = null;
+                                smr.rootBone = null;
                             }
                         }
                     }
@@ -529,7 +539,7 @@ namespace UTJ.MeshSync
                 }
             }
 
-            if (skinned)
+            if (bonesUpdated)
             {
                 rec.go.SetActive(false); // 
                 rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...

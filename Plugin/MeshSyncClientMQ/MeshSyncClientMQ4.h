@@ -80,11 +80,13 @@ public:
     MQSync& getSync();
     bool& getActive();
 
-    void Send();
+    void SendAll();
+    void SendCamera();
     void Import();
 
 private:
-    bool SendImpl(MQDocument doc);
+    bool SendAllImpl(MQDocument doc);
+    bool SendCameraImpl(MQDocument doc);
     bool ImportImpl(MQDocument doc);
 
     MQSync m_sync;
