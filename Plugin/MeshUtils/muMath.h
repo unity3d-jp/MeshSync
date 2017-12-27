@@ -895,12 +895,12 @@ template<class T> inline tmat4x4<T> invert(const tmat4x4<T>& x)
 }
 
 template <typename T>
-inline tmat4x4<T> look_at(const tvec3<T>& eye, const tvec3<T>& center, const tvec3<T>& up)
+inline tmat4x4<T> look_at(const tvec3<T>& eye, const tvec3<T>& target, const tvec3<T>& up)
 {
-    tvec3<T> f(normalize(center - eye));
-    tvec3<T> r(normalize(cross(f, up)));
-    tvec3<T> u(cross(r, f));
-    tvec3<T> p(-dot(r, eye), -dot(u, eye), dot(f, eye));
+    tvec3<T> f = { normalize(target - eye) };
+    tvec3<T> r = { normalize(cross(f, up)) };
+    tvec3<T> u = { cross(r, f) };
+    tvec3<T> p = { -dot(r, eye), -dot(u, eye), dot(f, eye) };
 
     return { {
         { r.x, u.x, -f.x, T(0.0) },

@@ -246,10 +246,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         {
             std::wstring name;
             UINT parent;
-            MQPoint root_pos, tip_pos;
-            MQAngle rotation;
-            MQPoint scale;
-            MQMatrix matrix;
+            MQPoint base_pos, base_tip, def_pos, def_tip;
             std::vector<UINT> bone_ids;
             std::vector<UINT> brothers;
 
@@ -277,16 +274,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     }
                 }
 
-                bone_manager.GetBaseRootPos(bid, root_pos);
-                bone_manager.GetBaseTipPos(bid, tip_pos);
-                bone.global_position = (const float3&)tip_pos;
-                bone_manager.GetDeformRotate(bid, rotation);
-                trs.rotation = ToQuaternion(rotation);
-                bone_manager.GetDeformScale(bid, scale);
-                trs.scale = (const float3&)scale;
+                bone_manager.GetBaseRootPos(bid, base_pos);
+                bone_manager.GetBaseTipPos(bid, base_tip);
+                bone_manager.GetDeformRootPos(bid, def_pos);
+                bone_manager.GetDeformTipPos(bid, def_tip);
 
-                bone_manager.GetBaseMatrix(bid, matrix);
-                bone.bindpose = mu::invert((float4x4&)matrix);
+                bone.world_base_pos = (const float3&)base_pos;
+                bone.world_def_pos = (const float3&)def_pos;
+                bone.bindpose = mu::invert(mu::transform(bone.world_base_pos, quatf::identity(), float3::one()));
             }
 
             std::string tmp;
@@ -316,12 +311,11 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     auto& trs = bone.transform->transform;
                     auto it = m_bones.find(bone.parent);
                     if (it != m_bones.end()) {
-                        trs.position = bone.global_position - it->second.global_position;
+                        trs.position = bone.world_base_pos - it->second.world_base_pos;
                     }
                     else {
-                        trs.position = bone.global_position;
+                        trs.position = bone.world_base_pos;
                     }
-                    bone.bindpose = mu::invert(mu::transform(bone.global_position, trs.rotation, trs.scale));
                 }
             }
 
@@ -671,13 +665,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst, bool s
             dst.flags.apply_trs = 0;
         }
         else {
-            auto ang = obj->GetRotation();
-            auto eular = float3{ ang.pitch, ang.head, ang.bank } * mu::Deg2Rad;
-            quatf rot = rotateZXY(eular);
-
             dst.flags.apply_trs = 1;
             dst.transform.position = (const float3&)obj->GetTranslation();
-            dst.transform.rotation = rot;
+            dst.transform.rotation = ToQuaternion(obj->GetRotation());
             dst.transform.scale = (const float3&)obj->GetScaling();
             dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
         }

@@ -29,6 +29,8 @@ _build_*/
 external/
 Library/
 Temp/
+TestLocal/
+TestLocal.meta
 
 MeshSync/*.csproj
 MeshSync/*.sln
