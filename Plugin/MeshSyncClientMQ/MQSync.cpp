@@ -269,6 +269,8 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             // get weights
             parallel_for_each(m_meshes.begin(), m_meshes.end(), [this, &bone_manager, nbones, &bone_ids](MeshData& rel) {
                 auto obj = rel.obj;
+                if (!rel.data->visible) { return; }
+
                 std::vector<UINT> vertex_ids;
                 std::vector<float> weights;
                 for (auto bid : bone_ids) {
