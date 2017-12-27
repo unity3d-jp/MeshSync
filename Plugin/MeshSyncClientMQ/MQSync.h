@@ -49,8 +49,7 @@ private:
         UINT id = -1;
         UINT parent = -1;
         std::string name;
-        float3 world_base_pos = float3::zero();
-        float3 world_def_pos = float3::zero();
+        float3 world_pos = float3::zero();
 
         ms::TransformPtr transform = ms::TransformPtr(new ms::Transform());
         float4x4 bindpose = float4x4::identity();

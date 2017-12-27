@@ -245,8 +245,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         {
             std::wstring name;
-            UINT parent;
-            MQPoint base_pos, base_tip, def_pos, def_tip;
             std::vector<UINT> bone_ids;
             std::vector<UINT> brothers;
 
@@ -261,6 +259,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
                 if (bone.parent == -1)
                 {
+                    UINT parent;
                     bone_manager.GetParent(bid, parent);
                     bone.parent = parent;
 
@@ -274,14 +273,10 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     }
                 }
 
+                MQPoint base_pos;
                 bone_manager.GetBaseRootPos(bid, base_pos);
-                bone_manager.GetBaseTipPos(bid, base_tip);
-                bone_manager.GetDeformRootPos(bid, def_pos);
-                bone_manager.GetDeformTipPos(bid, def_tip);
-
-                bone.world_base_pos = (const float3&)base_pos;
-                bone.world_def_pos = (const float3&)def_pos;
-                bone.bindpose = mu::invert(mu::transform(bone.world_base_pos, quatf::identity(), float3::one()));
+                bone.world_pos = (const float3&)base_pos;
+                bone.bindpose = mu::invert(mu::transform(bone.world_pos, quatf::identity(), float3::one()));
             }
 
             std::string tmp;
@@ -311,10 +306,10 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     auto& trs = bone.transform->transform;
                     auto it = m_bones.find(bone.parent);
                     if (it != m_bones.end()) {
-                        trs.position = bone.world_base_pos - it->second.world_base_pos;
+                        trs.position = bone.world_pos - it->second.world_pos;
                     }
                     else {
-                        trs.position = bone.world_base_pos;
+                        trs.position = bone.world_pos;
                     }
                 }
             }
@@ -341,18 +336,21 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                         rel.data->root_bone = it->second.transform->path;
                     }
 
-                    auto data = ms::BoneDataPtr(new ms::BoneData());
-                    rel.data->bones.push_back(data);
+                    auto data = new ms::BoneData();
+                    rel.data->bones.emplace_back(data);
                     rel.data->flags.has_bones = 1;
                     rel.data->refine_settings.flags.gen_weights4 = 1;
                     auto& bone = m_bones[bid];
                     data->path = bone.transform->path;
                     data->bindpose = bone.bindpose;
 
-                    data->weights.resize_zeroclear(obj->GetVertexCount());
+                    auto size = rel.data->points.size();
+                    data->weights.resize_zeroclear(size);
                     for (int iw = 0; iw < nweights; ++iw) {
                         int vi = obj->GetVertexIndexFromUniqueID(vertex_ids[iw]);
-                        data->weights[vi] = weights[iw];
+                        if (vi >= 0) {
+                            data->weights[vi] = weights[iw];
+                        }
                     }
                 }
             });

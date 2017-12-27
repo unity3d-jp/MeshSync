@@ -158,7 +158,7 @@ public:
 
     void clear()
     {
-        m_size = m_capacity = 0;
+        m_size = 0;
     }
 
     void swap(RawVector &other)

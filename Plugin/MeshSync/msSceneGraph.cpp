@@ -953,11 +953,6 @@ void BoneData::clear()
     weights.clear();
 }
 
-void BoneData::addWeight(float v)
-{
-    weights.push_back(v);
-}
-
 
 
 #define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs)

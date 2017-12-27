@@ -341,8 +341,6 @@ struct BoneData : public std::enable_shared_from_this<BoneData>
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
-
-    void addWeight(float v);
 };
 using BoneDataPtr = std::shared_ptr<BoneData>;
 
