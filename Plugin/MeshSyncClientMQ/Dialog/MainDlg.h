@@ -64,6 +64,7 @@ private:
     CButton m_check_autosync;
     CButton m_check_bake_skin;
     CButton m_check_bake_cloth;
+    bool m_initializing = true;
 public:
     LRESULT OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

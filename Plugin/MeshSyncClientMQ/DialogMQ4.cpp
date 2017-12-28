@@ -41,6 +41,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
     }
 
     {
+        MQLabel *space = nullptr;
         MQFrame *vf = CreateVerticalFrame(this);
         vf->SetOutSpace(margin);
 
@@ -60,7 +61,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_bones->AddChangedEvent(this, &SettingsDlg::OnSyncBonesChange);
 
         m_frame_poses = CreateHorizontalFrame(vf);
-        auto space = CreateLabel(m_frame_poses, L" ");
+        space = CreateLabel(m_frame_poses, L" ");
         space->SetWidth(32);
         m_check_poses = CreateCheckBox(m_frame_poses, L"Sync Poses");
         m_check_poses->SetChecked(m_plugin->getSync().getSyncBones());
@@ -196,6 +197,8 @@ BOOL SettingsDlg::OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc)
 BOOL SettingsDlg::OnAutoSyncChange(MQWidgetBase * sender, MQDocument doc)
 {
     m_plugin->getSync().getAutoSync() = m_check_autosync->GetChecked();
+    if (m_check_autosync->GetChecked())
+        m_plugin->SendAll();
     return 0;
 }
 

@@ -73,7 +73,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
     m_check_bake_skin.SetCheck(GetBakeSkin(m_plugin));
     m_check_bake_cloth.SetCheck(GetBakeCloth(m_plugin));
-
+    m_initializing = false;
     return TRUE;
 }
 
@@ -125,7 +125,8 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
     auto scale = std::atof(buf);
     if (scale != 0.0) {
         GetScaleFactor(m_plugin) = (float)scale;
-        SendAll(m_plugin);
+        if (!m_initializing)
+            SendAll(m_plugin);
     }
     return 0;
 }
@@ -133,29 +134,35 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
 LRESULT CMainDlg::OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     GetSyncVertexColor(m_plugin) = m_check_vcolor.GetCheck() != 0;
-    SendAll(m_plugin);
+    if (!m_initializing)
+        SendAll(m_plugin);
     return 0;
 }
 
 LRESULT CMainDlg::OnBnClickedCheckCamera(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     GetSyncCamera(m_plugin) = m_check_camera.GetCheck() != 0;
-    if (m_check_camera.GetCheck() != 0) {
+    if (m_check_camera.GetCheck() != 0 && !m_initializing) {
         SendCamera(m_plugin);
     }
     return 0;
 }
 
-LRESULT CMainDlg::OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT CMainDlg::OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND hWndCtl, BOOL& /*bHandled*/)
 {
-    GetCameraPath(m_plugin) = m_check_camera.GetCheck() != 0;
-    SendCamera(m_plugin);
+    if (!m_initializing) {
+        char buf[1024];
+        ::GetWindowTextA(hWndCtl, buf, sizeof(buf));
+        GetCameraPath(m_plugin) = buf;
+    }
     return 0;
 }
 
 LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
     GetAutoSync(m_plugin) = m_check_autosync.GetCheck() != 0;
+    if (m_check_autosync.GetCheck() != 0)
+        SendAll(m_plugin);
     return 0;
 }
 
