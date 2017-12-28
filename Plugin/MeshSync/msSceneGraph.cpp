@@ -1253,6 +1253,19 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
         IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, IArray<int>{indirect.data(), indirect.size()});
 
+    if (normals.data()) {
+        if (normals.size() == num_points) {
+            normals.resize(points.size());
+            mu::CopyWithIndices(&normals[num_points], &normals[0], copylist);
+        }
+        else if (normals.size() == num_indices) {
+            normals.resize(indices.size());
+            auto dst = &normals[num_indices];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
+                dst[idx] = normals[ridx];
+            });
+        }
+    }
     if (uv.data()) {
         if (uv.size() == num_points) {
             uv.resize(points.size());
@@ -1283,6 +1296,11 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
         size_t n = materialIDs.size();
         materialIDs.resize(n * 2);
         memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
+    }
+    for (auto& bone : bones) {
+        auto& weights = bone->weights;
+        weights.resize(points.size());
+        mu::CopyWithIndices(&weights[num_points], &weights[0], copylist);
     }
 }
 
