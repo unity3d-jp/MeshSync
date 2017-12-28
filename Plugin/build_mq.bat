@@ -1,4 +1,4 @@
-call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat"
+call "%VS2017INSTALLDIR%\Common7\Tools\VsDevCmd.bat"
 
 msbuild MeshSyncClientMQ3.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
 msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
