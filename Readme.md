@@ -12,14 +12,14 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [メ�
 ## 使い方
 - Unity 側
   - Unity 2017.1 系以上 & Windows (64 bit) で動作を確認しています
-  - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/MeshSync.unitypackage) をプロジェクトにインポートします。
+  - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases/download/20171228/MeshSync.unitypackage) をプロジェクトにインポートします。
   - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
   - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 
 
 - メタセコイア側
   - メタセコイア 3 系、4 系 (32bit & 64bit) どちらも対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
-  - メタセコイア用プラグイン [UnityMeshSync.for.Metasequoia.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
+  - メタセコイア用プラグイン [UnityMeshSync.for.Metasequoia.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20171228/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
   - パネル -> Unity Mesh Sync を開き、"Auto Sync" をチェックします。
   - Auto Sync がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
   - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
@@ -27,7 +27,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [メ�
 
 - xismo 側
   - xismo はプラグインの仕組みを提供していないため (2017/07 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～196 で動作を確認済みです。
-  - [UnityMeshSync.for.xismo.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20170725/UnityMeshSync.for.xismo.zip) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
+  - [UnityMeshSync.for.xismo.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20171228/UnityMeshSync.for.xismo.zip) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
   - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態で xismo が起動します。
   - ウィンドウ -> Unity Mesh Sync で設定項目を開き、"Auto Sync" をチェックすると編集が自動的に Unity 側に反映されるようになります。
   
@@ -41,8 +41,8 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [メ�
 - メタセコイアで非表示のオブジェクトは Unity でも非表示になります。非表示のオブジェクトはメッシュの内容は送られないので、シーン内にオブジェクトが増えて同期が重くなってきた場合適切に非表示にすることで同期も速くなるはずです。
 - マテリアルは Unity には反映されませんが、マテリアル ID に応じて適切にサブメッシュに分割されます。
 - サブディビジョンやメタボールはフリーズするまで Unity には反映されません。
-- メタセコイア 4 系でサポートされた法線の編集は "Sync Normals" にチェックを入れることで反映できます。(デフォルトで有効)
-- メタセコイア 4 系でサポートされたボーンは "Sync Bones" にチェックを入れることで反映できます。(デフォルトで有効) "Sync Poses" にチェックを入れると "スキニング" で設定したポーズも反映します。
+- メタセコイア 4 系でサポートされた法線の編集は "Sync Normals" にチェックを入れることで反映できます。
+- メタセコイア 4 系でサポートされたボーンは "Sync Bones" にチェックを入れることで反映できます。 "Sync Poses" にチェックを入れると "スキニング" で設定したポーズも反映します。
 
 ## xismo 側解説
 
