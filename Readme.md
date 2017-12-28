@@ -5,19 +5,20 @@
 DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
 Unity と DCC ツール両方のプラグインとして機能し、現在 [メタセコイア](http://www.metaseq.net/) と [xismo](http://mqdl.jpn.org/) をサポートしています。
 
-関連ツール:  
-[NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするプラグイン  
-[FbxExporter](https://github.com/unity3d-jp/FbxExporter): Unity の Mesh を FBX でエクスポートできるようにするプラグイン  
+関連:  
+[NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするツール  
+[BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール  
+[FbxExporter](https://github.com/unity3d-jp/FbxExporter): Unity の Mesh を FBX でエクスポートできるようにするツール  
 ## 使い方
 - Unity 側
-  - 動作環境は Unity 5.6 系以上 & Windows (64 bit) です
+  - Unity 2017.1 系以上 & Windows (64 bit) で動作を確認しています
   - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/MeshSync.unitypackage) をプロジェクトにインポートします。
   - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
   - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 
 
 - メタセコイア側
-  - メタセコイア 3 系、4 系 (32bit & 64bit) どちらも対応しています。
+  - メタセコイア 3 系、4 系 (32bit & 64bit) どちらも対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
   - メタセコイア用プラグイン [UnityMeshSync.for.Metasequoia.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20170724/UnityMeshSync.for.Metasequoia.zip) をインストールします。プラグインのタイプは Station です。
   - パネル -> Unity Mesh Sync を開き、"Auto Sync" をチェックします。
   - Auto Sync がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
@@ -40,8 +41,8 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [メ�
 - メタセコイアで非表示のオブジェクトは Unity でも非表示になります。非表示のオブジェクトはメッシュの内容は送られないので、シーン内にオブジェクトが増えて同期が重くなってきた場合適切に非表示にすることで同期も速くなるはずです。
 - マテリアルは Unity には反映されませんが、マテリアル ID に応じて適切にサブメッシュに分割されます。
 - サブディビジョンやメタボールはフリーズするまで Unity には反映されません。
-- ボーンは現在未対応です。メタセコイア SDK がボーンを正式にサポートしたら対応予定です。
-- Unity のシーンをインポートしてきた場合の Skinned Mesh の編集にも制限があります。ウェイトの編集およびトポロジが変わる編集は受け付けません。頂点の移動のみ反映できます。
+- メタセコイア 4 系でサポートされた法線の編集は "Sync Normals" にチェックを入れることで反映できます。(デフォルトで有効)
+- メタセコイア 4 系でサポートされたボーンは "Sync Bones" にチェックを入れることで反映できます。(デフォルトで有効) "Sync Poses" にチェックを入れると "スキニング" で設定したポーズも反映します。
 
 ## xismo 側解説
 

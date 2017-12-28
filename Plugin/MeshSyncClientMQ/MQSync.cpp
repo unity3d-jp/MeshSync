@@ -81,7 +81,7 @@ MQSync::~MQSync()
 }
 
 ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
-std::string& MQSync::getHostCameraPath() { return m_host_camera_path; }
+std::string& MQSync::getCameraPath() { return m_host_camera_path; }
 float& MQSync::getScaleFactor() { return m_scale_factor; }
 bool& MQSync::getAutoSync() { return m_auto_sync; }
 bool& MQSync::getSyncNormals() { return m_sync_normals; }

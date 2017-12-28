@@ -17,6 +17,9 @@
 #define IDC_CHECK_BAKE_CLOTH            1010
 #define IDC_CHECK_CAMERA                1011
 #define IDC_CHECK_VCOLOR                1012
+#define IDC_STATIC_SCALEFACTOR2         1013
+#define IDC_STATIC_CAMERA_PATH          1013
+#define IDC_EDIT_CAMERA_PATH            1014
 
 // Next default values for new objects
 // 

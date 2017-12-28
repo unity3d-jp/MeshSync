@@ -10,7 +10,7 @@ public:
     MQSync(MQBasePlugin *plugin);
     ~MQSync();
     ms::ClientSettings& getClientSettings();
-    std::string& getHostCameraPath();
+    std::string& getCameraPath();
     float& getScaleFactor();
     bool& getAutoSync();
     bool& getSyncNormals();

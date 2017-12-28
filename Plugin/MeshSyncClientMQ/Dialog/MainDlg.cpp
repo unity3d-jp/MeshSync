@@ -13,9 +13,11 @@ float& GetScaleFactor(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
 bool& GetSyncVertexColor(MeshSyncClientPlugin *plugin);
 bool& GetSyncCamera(MeshSyncClientPlugin *plugin);
+std::string& GetCameraPath(MeshSyncClientPlugin *plugin);
 bool& GetBakeSkin(MeshSyncClientPlugin *plugin);
 bool& GetBakeCloth(MeshSyncClientPlugin *plugin);
-void Send(MeshSyncClientPlugin *plugin);
+void SendAll(MeshSyncClientPlugin *plugin);
+void SendCamera(MeshSyncClientPlugin *plugin);
 void Import(MeshSyncClientPlugin *plugin);
 void CloseWindow(MeshSyncClientPlugin *plugin);
 
@@ -54,6 +56,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
     m_check_vcolor.Attach(GetDlgItem(IDC_CHECK_VCOLOR));
     m_check_camera.Attach(GetDlgItem(IDC_CHECK_CAMERA));
+    m_edit_camera_path.Attach(GetDlgItem(IDC_EDIT_CAMERA_PATH));
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));
     m_check_bake_skin.Attach(GetDlgItem(IDC_CHECK_BAKE_SKIN));
     m_check_bake_cloth.Attach(GetDlgItem(IDC_CHECK_BAKE_CLOTH));
@@ -66,6 +69,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_scale.SetWindowText(buf);
     m_check_vcolor.SetCheck(GetSyncVertexColor(m_plugin));
     m_check_camera.SetCheck(GetSyncCamera(m_plugin));
+    m_edit_camera_path.SetWindowText(GetCameraPath(m_plugin).c_str());
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
     m_check_bake_skin.SetCheck(GetBakeSkin(m_plugin));
     m_check_bake_cloth.SetCheck(GetBakeCloth(m_plugin));
@@ -121,6 +125,7 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
     auto scale = std::atof(buf);
     if (scale != 0.0) {
         GetScaleFactor(m_plugin) = (float)scale;
+        SendAll(m_plugin);
     }
     return 0;
 }
@@ -128,12 +133,23 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
 LRESULT CMainDlg::OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     GetSyncVertexColor(m_plugin) = m_check_vcolor.GetCheck() != 0;
+    SendAll(m_plugin);
     return 0;
 }
 
 LRESULT CMainDlg::OnBnClickedCheckCamera(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     GetSyncCamera(m_plugin) = m_check_camera.GetCheck() != 0;
+    if (m_check_camera.GetCheck() != 0) {
+        SendCamera(m_plugin);
+    }
+    return 0;
+}
+
+LRESULT CMainDlg::OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    GetCameraPath(m_plugin) = m_check_camera.GetCheck() != 0;
+    SendCamera(m_plugin);
     return 0;
 }
 
@@ -146,7 +162,7 @@ LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND 
 
 LRESULT CMainDlg::OnBnClickedButtonSync(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    Send(m_plugin);
+    SendAll(m_plugin);
     return 0;
 }
 

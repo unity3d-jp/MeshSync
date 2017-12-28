@@ -33,6 +33,7 @@ public:
         COMMAND_HANDLER(IDC_BUTTON_IMPORT, BN_CLICKED, OnBnClickedButtonImport)
         COMMAND_HANDLER(IDC_CHECK_CAMERA, BN_CLICKED, OnBnClickedCheckCamera)
         COMMAND_HANDLER(IDC_CHECK_VCOLOR, BN_CLICKED, OnBnClickedCheckVcolor)
+        COMMAND_HANDLER(IDC_EDIT_CAMERA_PATH, EN_CHANGE, OnEnChangeCameraPath)
     END_MSG_MAP()
 
     LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -59,7 +60,10 @@ private:
     CEdit m_edit_scale;
     CButton m_check_vcolor;
     CButton m_check_camera;
+    CEdit m_edit_camera_path;
     CButton m_check_autosync;
     CButton m_check_bake_skin;
     CButton m_check_bake_cloth;
+public:
+    LRESULT OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

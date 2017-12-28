@@ -76,7 +76,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         space->SetWidth(32);
         CreateLabel(m_frame_camera_path, L"Camera Path");
         m_edit_camera_path = CreateEdit(m_frame_camera_path);
-        m_edit_camera_path->SetText(L(m_plugin->getSync().getHostCameraPath()));
+        m_edit_camera_path->SetText(L(m_plugin->getSync().getCameraPath()));
         m_edit_camera_path->AddChangedEvent(this, &SettingsDlg::OnCameraPathChange);
         m_edit_camera_path->SetHorzLayout(LAYOUT_FILL);
         m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
@@ -173,7 +173,7 @@ BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
 
 BOOL SettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
 {
-    m_plugin->getSync().getHostCameraPath() = S(m_edit_camera_path->GetText());
+    m_plugin->getSync().getCameraPath() = S(m_edit_camera_path->GetText());
     m_plugin->SendCamera();
     return 0;
 }

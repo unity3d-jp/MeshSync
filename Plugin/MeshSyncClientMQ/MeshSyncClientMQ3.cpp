@@ -237,9 +237,14 @@ bool& MeshSyncClientPlugin::getActive()
     return m_active;
 }
 
-void MeshSyncClientPlugin::Send()
+void MeshSyncClientPlugin::SendAll()
 {
-    Execute(&MeshSyncClientPlugin::SendImpl);
+    Execute(&MeshSyncClientPlugin::SendAllImpl);
+}
+
+void MeshSyncClientPlugin::SendCamera()
+{
+    Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 
 void MeshSyncClientPlugin::Import()
@@ -247,9 +252,15 @@ void MeshSyncClientPlugin::Import()
     Execute(&MeshSyncClientPlugin::ImportImpl);
 }
 
-bool MeshSyncClientPlugin::SendImpl(MQDocument doc)
+bool MeshSyncClientPlugin::SendAllImpl(MQDocument doc)
 {
     m_sync.sendMeshes(doc, true);
+    m_sync.sendCamera(doc, true);
+    return true;
+}
+
+bool MeshSyncClientPlugin::SendCameraImpl(MQDocument doc)
+{
     m_sync.sendCamera(doc, true);
     return true;
 }
@@ -281,6 +292,10 @@ bool& GetSyncCamera(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getSyncCamera();
 }
+std::string& GetCameraPath(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getSync().getCameraPath();
+}
 bool& GetBakeSkin(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getBakeSkin();
@@ -293,9 +308,13 @@ float& GetScaleFactor(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getScaleFactor();
 }
-void Send(MeshSyncClientPlugin *plugin)
+void SendAll(MeshSyncClientPlugin *plugin)
 {
-    plugin->Send();
+    plugin->SendAll();
+}
+void SendCamera(MeshSyncClientPlugin *plugin)
+{
+    plugin->SendCamera();
 }
 void Import(MeshSyncClientPlugin *plugin)
 {
