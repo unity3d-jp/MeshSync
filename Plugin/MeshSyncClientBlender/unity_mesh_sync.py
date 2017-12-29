@@ -1,7 +1,7 @@
 from time import time
 import bpy
 from bpy.app.handlers import persistent
-#import MeshSync as ms
+import MeshSync as ms
 
 bl_info = {
     "name": "Unity Mesh Sync",
@@ -91,11 +91,9 @@ class MeshSync_OpSync(bpy.types.Operator):
 def on_scene_update(dummy):
     scene = bpy.context.scene
     if(scene['meshsync_auto_sync']):
-        t = time()
-        if(t - scene['meshsync_last_sent'] > scene['meshsync_interval']):
-            print("auto update ", t)
-            scene['meshsync_last_sent'] = t
+        if(time() - scene['meshsync_last_sent'] > scene['meshsync_interval']):
             msb_sync()
+            scene['meshsync_last_sent'] = time()
 
 def register():
     MeshSync_InitProperties()
