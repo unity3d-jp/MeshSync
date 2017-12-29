@@ -673,66 +673,88 @@ template<class T> inline tvec4<T> swap_handedness(const tvec4<T>& v) { return { 
 template<class T> inline tquat<T> swap_handedness(const tquat<T>& v) { return { v.x, -v.y, -v.z, v.w }; }
 template<class T> inline tmat3x3<T> swap_handedness(const tmat3x3<T>& m)
 {
-    return{ {
-        { m[0].x,-m[0].y,-m[0].z },
-        {-m[1].x, m[1].y, m[1].z },
-        {-m[2].x, m[2].y, m[2].z },
-    } };
+    return tmat3x3<T> {
+         m[0].x,-m[0].y,-m[0].z,
+        -m[1].x, m[1].y, m[1].z,
+        -m[2].x, m[2].y, m[2].z,
+    };
 }
 template<class T> inline tmat4x4<T> swap_handedness(const tmat4x4<T>& m)
 {
-    return{ {
-        { m[0].x,-m[0].y,-m[0].z, m[0].w },
-        {-m[1].x, m[1].y, m[1].z, m[1].w },
-        {-m[2].x, m[2].y, m[2].z, m[2].w },
-        {-m[3].x, m[3].y, m[3].z, m[3].w },
-    } };
+    return tmat4x4<T> {
+         m[0].x,-m[0].y,-m[0].z, m[0].w,
+        -m[1].x, m[1].y, m[1].z, m[1].w,
+        -m[2].x, m[2].y, m[2].z, m[2].w,
+        -m[3].x, m[3].y, m[3].z, m[3].w,
+    };
+}
+
+
+template<class T> inline tvec3<T> swap_yz(const tvec3<T>& v) { return { v.x, v.z, v.y }; }
+template<class T> inline tvec4<T> swap_yz(const tvec4<T>& v) { return { v.x, v.z, v.y, v.w }; }
+template<class T> inline tquat<T> swap_yz(const tquat<T>& v) { return {-v.x,-v.z,-v.y, v.w }; }
+template<class T> inline tmat3x3<T> swap_yz(const tmat3x3<T>& m)
+{
+    return m * tmat3x3<T> {
+        1, 0, 0,
+        0, 0, 1,
+        0, 1, 0,
+    };
+}
+template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
+{
+    return m * tmat4x4<T> {
+        1, 0, 0, 0,
+        0, 0, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 1,
+    };
 }
 
 template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)
 {
-    return {{
-        {T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,        },
-        {T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,        },
-        {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y}
-    }};
+    return tmat3x3<T>{
+        T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,        ,
+        T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,        ,
+        T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y
+    };
 }
 template<class T> inline tmat4x4<T> to_mat4x4(const tquat<T>& q)
 {
-    return {{
-        {T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,         T(0.0)},
-        {T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,         T(0.0)},
-        {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y,T(0.0)},
-        {T(0.0),                                T(0.0),                                  T(0.0),                                  T(1.0)}
-    }};
+    return tmat4x4<T>{
+        T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,         T(0.0),
+        T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,         T(0.0),
+        T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y,T(0.0),
+        T(0.0),                                T(0.0),                                  T(0.0),                                  T(1.0)
+    };
 }
 
 template<class T> inline tmat4x4<T> translate(const tvec3<T>& t)
 {
-    return {{
-        { T(1.0), T(0.0), T(0.0), T(0.0) },
-        { T(0.0), T(1.0), T(0.0), T(0.0) },
-        { T(0.0), T(0.0), T(1.0), T(0.0) },
-        {    t.x,    t.y,    t.z, T(1.0) }
-    }};
+    return tmat4x4<T>{
+        T(1.0), T(0.0), T(0.0), T(0.0),
+        T(0.0), T(1.0), T(0.0), T(0.0),
+        T(0.0), T(0.0), T(1.0), T(0.0),
+           t.x,    t.y,    t.z, T(1.0)
+    };
 }
 
 template<class T> inline tmat3x3<T> scale33(const tvec3<T>& t)
 {
-    return{{
-        {    t.x, T(0.0), T(0.0) },
-        { T(0.0),    t.y, T(0.0) },
-        { T(0.0), T(0.0),    t.z },
-    }};
+    return tmat3x3<T>{
+           t.x, T(0.0), T(0.0),
+        T(0.0),    t.y, T(0.0),
+        T(0.0), T(0.0),    t.z,
+    };
 }
 template<class T> inline tmat4x4<T> scale44(const tvec3<T>& t)
 {
-    return{{
-        {    t.x, T(0.0), T(0.0), T(0.0) },
-        { T(0.0),    t.y, T(0.0), T(0.0) },
-        { T(0.0), T(0.0),    t.z, T(0.0) },
-        { T(0.0), T(0.0), T(0.0), T(1.0) }
-    }};
+    return tmat4x4<T>{
+           t.x, T(0.0), T(0.0), T(0.0),
+        T(0.0),    t.y, T(0.0), T(0.0),
+        T(0.0), T(0.0),    t.z, T(0.0),
+        T(0.0), T(0.0), T(0.0), T(1.0)
+    };
 }
 
 template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>& r, const tvec3<T>& s)
@@ -745,20 +767,20 @@ template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>&
 
 template<class T> inline tmat3x3<T> transpose(const tmat3x3<T>& x)
 {
-    return{{
-        { x[0][0], x[1][0], x[2][0] },
-        { x[0][1], x[1][1], x[2][1] },
-        { x[0][2], x[1][2], x[2][2] },
-    }};
+    return tmat3x3<T>{
+        x[0][0], x[1][0], x[2][0],
+        x[0][1], x[1][1], x[2][1],
+        x[0][2], x[1][2], x[2][2],
+    };
 }
 template<class T> inline tmat4x4<T> transpose(const tmat4x4<T>& x)
 {
-    return{{
-        { x[0][0], x[1][0], x[2][0], x[3][0] },
-        { x[0][1], x[1][1], x[2][1], x[3][1] },
-        { x[0][2], x[1][2], x[2][2], x[3][2] },
-        { x[0][3], x[1][3], x[2][3], x[3][3] },
-    }};
+    return tmat4x4<T>{
+        x[0][0], x[1][0], x[2][0], x[3][0],
+        x[0][1], x[1][1], x[2][1], x[3][1],
+        x[0][2], x[1][2], x[2][2], x[3][2],
+        x[0][3], x[1][3], x[2][3], x[3][3],
+    };
 }
 
 template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)

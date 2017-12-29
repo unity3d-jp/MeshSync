@@ -23,6 +23,7 @@
 *.wav
 *.zip
 *.mll
+*.unitypackage
 
 .vs/
 _out/

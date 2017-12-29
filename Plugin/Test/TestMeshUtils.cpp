@@ -645,3 +645,23 @@ TestCase(TestEdge)
         Print("\n");
     }
 }
+
+TestCase(TestHandedness)
+{
+    float4 xdir{ 1.0f, 0.0f, 0.0f, 0.0f };
+    float4 ydir{ 0.0f, 1.0f, 0.0f, 0.0f };
+    float4 zdir{ 0.0f, 0.0f, 1.0f, 0.0f };
+
+    quatf rot1 = rotateY(90.0f * Deg2Rad);
+    quatf rot2 = swap_yz(rot1);
+
+    float4
+        x1 = to_mat4x4(rot1) * xdir,
+        x2 = to_mat4x4(rot2) * xdir,
+        y1 = to_mat4x4(rot1) * ydir,
+        z2 = to_mat4x4(rot2) * zdir,
+        y2 = to_mat4x4(rot2) * ydir,
+        z1 = to_mat4x4(rot1) * zdir;
+
+    Print("ok");
+}

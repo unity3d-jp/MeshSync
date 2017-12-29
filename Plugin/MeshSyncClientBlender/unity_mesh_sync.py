@@ -8,9 +8,7 @@ bl_info = {
     "author": "Unity Technologies",
     "version": (2018, 1, 1),
     "blender": (2, 65, 4),
-    "location": "File > Export > Skeletal Mesh/Animation Data (.psk/.psa)",
     "description": "Sync Meshes with Unity",
-    "category": "Import-Export",
 }
 
 

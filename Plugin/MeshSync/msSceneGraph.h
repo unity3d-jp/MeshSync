@@ -412,6 +412,7 @@ enum class Handedness
 {
     Left,
     Right,
+    LeftZUp,
 };
 
 struct SceneSettings
