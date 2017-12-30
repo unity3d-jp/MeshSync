@@ -49,6 +49,8 @@ def msb_add_object(ctx, obj):
     scene = bpy.context.scene
     if obj.type == 'MESH':
         ret = msb_add_mesh(ctx, obj)
+    elif obj.type == 'ARMATURE' and scene['meshsync_sync_bones']:
+        ret = msb_add_bone(ctx, obj)
     elif obj.type == 'CAMERA' and scene['meshsync_sync_cameras']:
         ret = msb_add_camera(ctx, obj)
     return ret
@@ -56,11 +58,35 @@ def msb_add_object(ctx, obj):
 
 def msb_extract_transform(dst, obj):
     t = obj.location
-    r = obj.rotation_quaternion
     s = obj.scale
     dst.position = [t.x, t.y, t.z]
-    dst.rotation = [r.x, r.y, r.z, r.w]
     dst.scale = [s.x, s.y, s.z]
+
+    rmode = obj.rotation_mode
+    if rmode == 'QUATERNION':
+        r = obj.rotation_quaternion
+        dst.rotation_quaternion = [r.x, r.y, r.z, r.w]
+    elif rmode == 'AXIS_ANGLE':
+        r = obj.rotation_axis_angle
+        dst.rotation_axis_angle = [r[0], r[1], r[2], r[3]]
+    elif rmode == 'XYZ':
+        r = obj.rotation_euler
+        dst.rotation_xyz = [r.x, r.y, r.z]
+    elif rmode == 'XZY':
+        r = obj.rotation_euler
+        dst.rotation_xzy = [r.x, r.y, r.z]
+    elif rmode == 'YXZ':
+        r = obj.rotation_euler
+        dst.rotation_yxz = [r.x, r.y, r.z]
+    elif rmode == 'YZX':
+        r = obj.rotation_euler
+        dst.rotation_yzx = [r.x, r.y, r.z]
+    elif rmode == 'ZXY':
+        r = obj.rotation_euler
+        dst.rotation_zxy = [r.x, r.y, r.z]
+    elif rmode == 'ZYX':
+        r = obj.rotation_euler
+        dst.rotation_zyx = [r.x, r.y, r.z]
 
 
 def msb_add_mesh(ctx, obj):
@@ -99,12 +125,36 @@ def msb_add_mesh(ctx, obj):
             dst.addCount(len(poly.vertices));
             for idx in poly.vertices:
                 dst.addIndex(idx)
+
+        if scene['meshsync_sync_bones'] and len(obj.vertex_groups) > 0:
+            arm = bpy.data.objects['Armature']
+            group_names = [g.name for g in obj.vertex_groups]
+            for bone in arm.pose.bones:
+                if bone.name not in group_names:
+                    continue
+                gidx = obj.vertex_groups[bone.name].index
+                bone_verts = [v for v in data.vertices if gidx in [g.group for g in v.groups]]
+                weights = [0.0] * len(data.vertices)
+                for v in bone_verts:
+                    weights[v.index] = v.groups[gidx].weight
+
+                bone_path = bone.name # todo
+                bdst = dst.addBone(bone_path)
+                for w in weights:
+                    bdst.addWeight(w)
     return dst
 
+
+def msb_add_bone(ctx, obj):
+    dst = ctx.addTransform('/'+obj.name)
+    msb_extract_transform(dst, obj)
+    # todo
+    return dst
 
 def msb_add_camera(ctx, obj):
     dst = ctx.addCamera('/'+obj.name)
     msb_extract_transform(dst, obj)
+    # todo
     return dst
 
 
