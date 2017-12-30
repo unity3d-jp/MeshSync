@@ -73,6 +73,11 @@ ms::MeshPtr pymsContext::addMesh(const std::string& path)
     return ret;
 }
 
+void pymsContext::addDeleted(const std::string& path)
+{
+    m_deleted.push_back(path);
+}
+
 bool pymsContext::isSending() const
 {
     return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;

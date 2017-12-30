@@ -14,6 +14,8 @@ bl_info = {
 
 msb_context = ms.Context()
 msb_context.handedness = 2
+msb_last_sent = 0.0
+msb_updated = []
 
 def msb_sync_all():
     global msb_context
@@ -23,6 +25,7 @@ def msb_sync_all():
     for obj in bpy.data.objects:
         msb_add_object(ctx, obj)
     ctx.send()
+    msb_last_sent = time()
     print("msb_sync_all(): done")
 
 
@@ -37,14 +40,16 @@ def msb_sync_updated():
         if obj.is_updated:
             msb_add_object(ctx, obj)
     ctx.send()
+    msb_last_sent = time()
     print("msb_sync_updated(): done")
 
 
 def msb_add_object(ctx, obj):
     ret = None
+    scene = bpy.context.scene
     if obj.type == 'MESH':
         ret = msb_add_mesh(ctx, obj)
-    elif obj.type == 'CAMERA':
+    elif obj.type == 'CAMERA' and scene['meshsync_sync_cameras']:
         ret = msb_add_camera(ctx, obj)
     return ret
 
@@ -69,18 +74,26 @@ def msb_add_mesh(ctx, obj):
         dst.visible = True
         dst.swap_faces = True
 
-        apply_modifiers = False
         data = None
-        if apply_modifiers:
+        if scene['meshsync_apply_modifiers']:
             data = obj.to_mesh(scene, True, 'PREVIEW')
         else:
             data = obj.data
 
         for vtx in data.vertices:
             p = vtx.co
-            n = vtx.normal
             dst.addVertex([p.x, p.y, p.z])
+
+        data.calc_normals_split()
+        for loop in data.loops:
+            n = loop.normal
             dst.addNormal([n.x, n.y, n.z])
+        if len(data.uv_layers) > 0:
+            for v in data.uv_layers.active.data:
+                dst.addUV([v.uv.x, v.uv.y])
+        if scene['meshsync_sync_colors'] and len(data.vertex_colors) > 0:
+            for c in data.vertex_colors.active.data:
+                dst.addColor([c.r, c.g, c.b, c.a])
         for poly in data.polygons:
             dst.addMaterialID(poly.material_index)
             dst.addCount(len(poly.vertices));
@@ -99,28 +112,24 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_server_addr = bpy.props.StringProperty(name = "Server Address")
     bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(name = "Server Port")
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(name = "Scale Factor")
-    bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(name = "Sync Normals")
+    bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(name = "Sync Vertex Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(name = "Sync Bones")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(name = "Sync Cameras")
-    bpy.types.Scene.meshsync_camera_path = bpy.props.StringProperty(name = "Camera Path")
     bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(name = "Sync Animations")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(name = "Auto Sync")
     bpy.types.Scene.meshsync_interval = bpy.props.FloatProperty(name = "Interval (Sec)")
-    bpy.types.Scene.meshsync_last_sent = bpy.props.FloatProperty(name = "Last Sent")
     scene = bpy.context.scene
     scene['meshsync_server_addr'] = "localhost"
     scene['meshsync_server_port'] = 8080
     scene['meshsync_scale_factor'] = 1.0
-    scene['meshsync_sync_normals'] = True
+    scene['meshsync_apply_modifiers'] = True
     scene['meshsync_sync_colors'] = False
     scene['meshsync_sync_bones'] = True
     scene['meshsync_sync_cameras'] = True
-    scene['meshsync_camera_path'] = "/Main Camera"
     scene['meshsync_sync_animations'] = True
     scene['meshsync_auto_sync'] = False
-    scene['meshsync_interval'] = 2.0
-    scene['meshsync_last_sent'] = 0.0
+    scene['meshsync_interval'] = 1.0
 
 
 class MeshSyncPanel(bpy.types.Panel):
@@ -135,12 +144,10 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.prop(context.scene, 'meshsync_server_port')
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_scale_factor')
-        self.layout.prop(context.scene, 'meshsync_sync_normals')
+        self.layout.prop(context.scene, 'meshsync_apply_modifiers')
         self.layout.prop(context.scene, 'meshsync_sync_colors')
         self.layout.prop(context.scene, 'meshsync_sync_bones')
         self.layout.prop(context.scene, 'meshsync_sync_cameras')
-        if(scene['meshsync_sync_cameras']):
-            self.layout.prop(context.scene, 'meshsync_camera_path')
         self.layout.prop(context.scene, 'meshsync_sync_animations')
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         if(scene['meshsync_auto_sync']):
@@ -155,14 +162,6 @@ class MeshSync_OpSyncAll(bpy.types.Operator):
     def execute(self, context):
         msb_sync_all()
         return{'FINISHED'}
-    
-class MeshSync_OpSyncUpdated(bpy.types.Operator):
-    bl_idname = "meshsync.sync_updated"
-    bl_label = "Sync Updated"
-    def execute(self, context):
-        msb_sync_updated()
-        return{'FINISHED'}
-
 
 
 @persistent

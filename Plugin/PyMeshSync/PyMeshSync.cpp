@@ -142,6 +142,7 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindMethod(addCamera)
             BindMethod(addLight)
             BindMethod(addMesh)
+            BindMethod(addDeleted)
             BindMethod(isSending)
             BindMethod(send)
             BindProperty(server_address,

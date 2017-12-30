@@ -27,6 +27,7 @@ public:
     ms::CameraPtr       addCamera(const std::string& path);
     ms::LightPtr        addLight(const std::string& path);
     ms::MeshPtr         addMesh(const std::string& path);
+    void                addDeleted(const std::string& path);
 
     bool isSending() const;
     void send();
