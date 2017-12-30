@@ -16,44 +16,70 @@ msb_context = ms.Context()
 msb_context.handedness = 2
 msb_last_sent = 0.0
 msb_updated = []
+msb_added = set()
+
 
 def msb_sync_all():
-    global msb_context
-    ctx = msb_context
-    if ctx.isSending():
-        return
-    for obj in bpy.data.objects:
-        msb_add_object(ctx, obj)
-    ctx.send()
-    msb_last_sent = time()
-    print("msb_sync_all(): done")
+    msb_sync(bpy.data.objects)
 
 
 def msb_sync_updated():
+    if not bpy.data.objects.is_updated:
+        return
+    msb_sync([obj for obj in bpy.data.objects if obj.is_updated])
+
+
+def msb_sync(targets):
     global msb_context
     ctx = msb_context
     if ctx.isSending():
         return
-    if not bpy.data.objects.is_updated:
-        return
-    for obj in bpy.data.objects:
-        if obj.is_updated:
+
+    scene = bpy.context.scene
+    for obj in targets:
+        if obj.type == 'MESH' or\
+          (obj.type == 'ARMATURE' and scene['meshsync_sync_bones']) or\
+          (obj.type == 'CAMERA' and scene['meshsync_sync_cameras']):
             msb_add_object(ctx, obj)
     ctx.send()
+    msb_added.clear()
     msb_last_sent = time()
-    print("msb_sync_updated(): done")
+    print("msb_sync(): done")
 
 
 def msb_add_object(ctx, obj):
+    if obj in msb_added:
+        return None
+    msb_construct_tree(ctx, obj.parent)
+
     ret = None
-    scene = bpy.context.scene
     if obj.type == 'MESH':
         ret = msb_add_mesh(ctx, obj)
-    elif obj.type == 'ARMATURE' and scene['meshsync_sync_bones']:
-        ret = msb_add_bone(ctx, obj)
-    elif obj.type == 'CAMERA' and scene['meshsync_sync_cameras']:
+    elif obj.type == 'CAMERA':
         ret = msb_add_camera(ctx, obj)
+    else:
+        ret = msb_add_transform(ctx, obj)
+    msb_added.add(obj)
     return ret
+
+
+def msb_construct_tree(ctx, obj):
+    if obj == None:
+        return
+    if obj.parent != None:
+        msb_construct_tree(ctx, obj.parent)
+    msb_add_object(ctx, obj)
+
+
+def msb_get_path(obj):
+    path = None
+    if obj.parent != None:
+        path = msb_get_path(obj.parent)
+    else:
+        path = ''
+    path += '/'
+    path += obj.name
+    return path
 
 
 def msb_extract_transform(dst, obj):
@@ -90,7 +116,7 @@ def msb_extract_transform(dst, obj):
 
 
 def msb_add_mesh(ctx, obj):
-    dst = ctx.addMesh('/'+obj.name)
+    dst = ctx.addMesh(msb_get_path(obj))
     msb_extract_transform(dst, obj)
 
     scene = bpy.context.scene
@@ -138,21 +164,21 @@ def msb_add_mesh(ctx, obj):
                 for v in bone_verts:
                     weights[v.index] = v.groups[gidx].weight
 
-                bone_path = bone.name # todo
-                bdst = dst.addBone(bone_path)
+                bdst = dst.addBone(msb_get_path(bone))
                 for w in weights:
                     bdst.addWeight(w)
     return dst
 
 
-def msb_add_bone(ctx, obj):
-    dst = ctx.addTransform('/'+obj.name)
+def msb_add_camera(ctx, obj):
+    dst = ctx.addCamera(msb_get_path(obj))
     msb_extract_transform(dst, obj)
     # todo
     return dst
 
-def msb_add_camera(ctx, obj):
-    dst = ctx.addCamera('/'+obj.name)
+
+def msb_add_transform(ctx, obj):
+    dst = ctx.addTransform(msb_get_path(obj))
     msb_extract_transform(dst, obj)
     # todo
     return dst
