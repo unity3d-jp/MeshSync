@@ -116,6 +116,9 @@ PYBIND11_PLUGIN(PyMeshSync)
     {
         using self_t = ms::Mesh;
         py::class_<ms::Mesh, ms::MeshPtr, ms::Transform>(mod, "Mesh")
+            BindProperty(swap_faces,
+                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.swap_faces; },
+                [](ms::Mesh& self, bool v) { self.refine_settings.flags.swap_faces = v; })
             BindMethod2(addVertex,
                 [](ms::Mesh& self, const float3a& v) { self.addVertex(to_float3(v)); })
             BindMethod2(addNormal,
@@ -143,16 +146,19 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindMethod(send)
             BindProperty(server_address,
                 [](const pymsContext& self) { return self.getSettings().client_settings.server; },
-                [](pymsContext& self, const std::string& v) { return self.getSettings().client_settings.server = v; })
+                [](pymsContext& self, const std::string& v) { self.getSettings().client_settings.server = v; })
             BindProperty(server_port,
                 [](const pymsContext& self) { return self.getSettings().client_settings.port; },
-                [](pymsContext& self, uint16_t v) { return self.getSettings().client_settings.port = v; })
+                [](pymsContext& self, uint16_t v) { self.getSettings().client_settings.port = v; })
             BindProperty(scene_name,
                 [](const pymsContext& self) { return self.getSettings().scene_settings.name; },
-                [](pymsContext& self, const std::string& v) { return self.getSettings().scene_settings.name = v; })
+                [](pymsContext& self, const std::string& v) { self.getSettings().scene_settings.name = v; })
             BindProperty(scale_factor,
                 [](const pymsContext& self) { return self.getSettings().scene_settings.scale_factor; },
-                [](pymsContext& self, float v) { return self.getSettings().scene_settings.scale_factor = v; })
+                [](pymsContext& self, float v) { self.getSettings().scene_settings.scale_factor = v; })
+            BindProperty(handedness,
+                [](const pymsContext& self) { return (int)self.getSettings().scene_settings.handedness; },
+                [](pymsContext& self, int v) { self.getSettings().scene_settings.handedness = (ms::Handedness)v; })
             ;
     }
 #undef BindMethod

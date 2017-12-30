@@ -288,10 +288,13 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         return;
     }
 
-    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [this, &mes](MeshPtr& pmesh) {
+    bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
+    bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
+    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [this, &mes, swap_x, swap_yz](MeshPtr& pmesh) {
         auto& mesh = *pmesh;
         mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-        mesh.refine_settings.flags.swap_handedness = mes->scene.settings.handedness == Handedness::Right;
+        mesh.refine_settings.flags.swap_handedness = swap_x;
+        mesh.refine_settings.flags.swap_yz = swap_yz;
         mesh.refine_settings.flags.triangulate = 1;
         mesh.refine_settings.flags.split = 1;
         mesh.refine_settings.flags.optimize_topology = 1;
@@ -299,12 +302,10 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         mesh.refine(mesh.refine_settings);
     });
     {
-        bool x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
-        bool yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-        if (x || yz) {
-            for (auto& obj : mes->scene.transforms) { obj->convertHandedness(x, yz); }
-            for (auto& obj : mes->scene.cameras) { obj->convertHandedness(x, yz); }
-            for (auto& obj : mes->scene.lights) { obj->convertHandedness(x, yz); }
+        if (swap_x || swap_yz) {
+            for (auto& obj : mes->scene.transforms) { obj->convertHandedness(swap_x, swap_yz); }
+            for (auto& obj : mes->scene.cameras) { obj->convertHandedness(swap_x, swap_yz); }
+            for (auto& obj : mes->scene.lights) { obj->convertHandedness(swap_x, swap_yz); }
         }
     }
     if (mes->scene.settings.scale_factor != 1.0f) {

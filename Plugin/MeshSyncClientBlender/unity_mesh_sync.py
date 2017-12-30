@@ -13,6 +13,7 @@ bl_info = {
 }
 
 msb_context = ms.Context()
+msb_context.handedness = 2
 
 def msb_sync_all():
     global msb_context
@@ -22,16 +23,21 @@ def msb_sync_all():
     for obj in bpy.data.objects:
         msb_add_object(ctx, obj)
     ctx.send()
+    print("msb_sync_all(): done")
 
 
-def msb_sync_selected():
+def msb_sync_updated():
     global msb_context
     ctx = msb_context
-    if cts.isSending():
+    if ctx.isSending():
         return
-    for obj in bpy.context.selected_objects:
-        msb_add_object(ctx, obj)
+    if not bpy.data.objects.is_updated:
+        return
+    for obj in bpy.data.objects:
+        if obj.is_updated:
+            msb_add_object(ctx, obj)
     ctx.send()
+    print("msb_sync_updated(): done")
 
 
 def msb_add_object(ctx, obj):
@@ -55,9 +61,31 @@ def msb_extract_transform(dst, obj):
 def msb_add_mesh(ctx, obj):
     dst = ctx.addMesh('/'+obj.name)
     msb_extract_transform(dst, obj)
-    for vtx in obj.data.vertices:
-        va = vtx.co
-        dst.addVertex([va.x, va.y, va.z])
+
+    scene = bpy.context.scene
+    if not obj.is_visible(scene):
+        dst.visible = False
+    else:
+        dst.visible = True
+        dst.swap_faces = True
+
+        apply_modifiers = False
+        data = None
+        if apply_modifiers:
+            data = obj.to_mesh(scene, True, 'PREVIEW')
+        else:
+            data = obj.data
+
+        for vtx in data.vertices:
+            p = vtx.co
+            n = vtx.normal
+            dst.addVertex([p.x, p.y, p.z])
+            dst.addNormal([n.x, n.y, n.z])
+        for poly in data.polygons:
+            dst.addMaterialID(poly.material_index)
+            dst.addCount(len(poly.vertices));
+            for idx in poly.vertices:
+                dst.addIndex(idx)
     return dst
 
 
@@ -128,37 +156,28 @@ class MeshSync_OpSyncAll(bpy.types.Operator):
         msb_sync_all()
         return{'FINISHED'}
     
-class MeshSync_OpSyncSelected(bpy.types.Operator):
-    bl_idname = "meshsync.sync_selected"
-    bl_label = "Sync Selected"
+class MeshSync_OpSyncUpdated(bpy.types.Operator):
+    bl_idname = "meshsync.sync_updated"
+    bl_label = "Sync Updated"
     def execute(self, context):
-        msb_sync_selected()
+        msb_sync_updated()
         return{'FINISHED'}
 
 
 
 @persistent
-def on_scene_update(dummy):
-    scene = bpy.context.scene
-    if(scene['meshsync_auto_sync']):
-        if(time() - scene['meshsync_last_sent'] > scene['meshsync_interval']):
-            msb_sync_selected()
-            scene['meshsync_last_sent'] = time()
+def on_scene_update(context):
+    if(bpy.context.scene['meshsync_auto_sync']):
+        msb_sync_updated()
 
 def register():
     MeshSync_InitProperties()
     bpy.utils.register_module(__name__)
     bpy.app.handlers.scene_update_post.append(on_scene_update)
-    bpy.app.handlers.frame_change_post.append(on_scene_update)
-    bpy.app.handlers.save_post.append(on_scene_update)
-    bpy.app.handlers.load_post.append(on_scene_update)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.app.handlers.scene_update_post.remove(on_scene_update)
-    bpy.app.handlers.frame_change_post.remove(on_scene_update)
-    bpy.app.handlers.save_post.remove(on_scene_update)
-    bpy.app.handlers.load_post.remove(on_scene_update)
 
 if __name__ == "__main__":
     register()

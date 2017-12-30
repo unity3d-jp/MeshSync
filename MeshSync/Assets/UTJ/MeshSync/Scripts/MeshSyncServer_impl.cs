@@ -219,15 +219,10 @@ namespace UTJ.MeshSync
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
             }
-            public bool hasNPoints
+            public bool applyTRS
             {
                 get { return (flags & (1 << 11)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 11)); }
-            }
-            public bool applyTRS
-            {
-                get { return (flags & (1 << 12)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 12)); }
             }
         };
 

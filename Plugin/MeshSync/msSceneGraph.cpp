@@ -545,11 +545,14 @@ void Transform::convertHandedness(bool x, bool yz)
     if (yz) {
         transform.position = swap_yz(transform.position);
         transform.rotation = swap_yz(transform.rotation);
+        transform.scale = swap_yz(transform.scale);
         if (animation) {
             auto& anim = static_cast<TransformAnimation&>(*animation);
             for (auto& tvp : anim.translation)
                 tvp.value = swap_yz(tvp.value);
             for (auto& tvp : anim.rotation)
+                tvp.value = swap_yz(tvp.value);
+            for (auto& tvp : anim.scale)
                 tvp.value = swap_yz(tvp.value);
         }
     }
