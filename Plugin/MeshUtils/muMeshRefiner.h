@@ -54,6 +54,7 @@ private:
     RawVector<int>    new_indices_triangulated;
     RawVector<int>    new_indices_submeshes;
     RawVector<int>    old2new;
+    RawVector<int>    dummy_materialIDs;
 
     int num_indices_tri = 0;
 
@@ -66,7 +67,7 @@ public:
     bool refine(bool optimize);
 
     // should be called after refine(), and only valid for triangulated meshes
-    bool genSubmesh(const IArray<int>& materialIDs);
+    bool genSubmesh(IArray<int> materialIDs);
 
     void swapNewData(
         RawVector<float3>& p,

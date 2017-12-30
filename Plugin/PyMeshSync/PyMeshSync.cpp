@@ -42,7 +42,7 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindProperty(position,
                 [](const ms::Transform& self) { return to_a(self.transform.position); },
                 [](ms::Transform& self, const float3a& v) { self.transform.position = to_float3(v); })
-            BindProperty(rotation_quaternion,
+            BindProperty(rotation,
                 [](const ms::Transform& self) { return to_a(self.transform.rotation); },
                 [](ms::Transform& self, const float4a& v) { self.transform.rotation = to_quatf(v); })
             BindProperty(scale,

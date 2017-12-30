@@ -1,5 +1,6 @@
 from time import time
 import bpy
+import bmesh
 from bpy.app.handlers import persistent
 import MeshSync as ms
 
@@ -7,18 +8,63 @@ bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
     "version": (2018, 1, 1),
-    "blender": (2, 65, 4),
+    "blender": (2, 79),
     "description": "Sync Meshes with Unity",
 }
 
+msb_context = ms.Context()
 
-def msb_sync():
-    print("msb_sync:", bpy.data.filepath)
-    objects = bpy.data.objects
+def msb_sync_all():
+    global msb_context
+    ctx = msb_context
+    if ctx.isSending():
+        return
+    for obj in bpy.data.objects:
+        msb_add_object(ctx, obj)
+    ctx.send()
+
+
+def msb_sync_selected():
+    global msb_context
+    ctx = msb_context
+    if cts.isSending():
+        return
+    for obj in bpy.context.selected_objects:
+        msb_add_object(ctx, obj)
+    ctx.send()
+
+
+def msb_add_object(ctx, obj):
+    ret = None
+    if obj.type == 'MESH':
+        ret = msb_add_mesh(ctx, obj)
+    elif obj.type == 'CAMERA':
+        ret = msb_add_camera(ctx, obj)
+    return ret
+
+
+def msb_extract_transform(dst, obj):
+    t = obj.location
+    r = obj.rotation_quaternion
+    s = obj.scale
+    dst.position = [t.x, t.y, t.z]
+    dst.rotation = [r.x, r.y, r.z, r.w]
+    dst.scale = [s.x, s.y, s.z]
 
 
 def msb_add_mesh(ctx, obj):
-    pass
+    dst = ctx.addMesh('/'+obj.name)
+    msb_extract_transform(dst, obj)
+    for vtx in obj.data.vertices:
+        va = vtx.co
+        dst.addVertex([va.x, va.y, va.z])
+    return dst
+
+
+def msb_add_camera(ctx, obj):
+    dst = ctx.addCamera('/'+obj.name)
+    msb_extract_transform(dst, obj)
+    return dst
 
 
 def MeshSync_InitProperties():
@@ -37,7 +83,7 @@ def MeshSync_InitProperties():
     scene = bpy.context.scene
     scene['meshsync_server_addr'] = "localhost"
     scene['meshsync_server_port'] = 8080
-    scene['meshsync_scale_factor'] = 100.0
+    scene['meshsync_scale_factor'] = 1.0
     scene['meshsync_sync_normals'] = True
     scene['meshsync_sync_colors'] = False
     scene['meshsync_sync_bones'] = True
@@ -72,15 +118,21 @@ class MeshSyncPanel(bpy.types.Panel):
         if(scene['meshsync_auto_sync']):
             self.layout.prop(context.scene, 'meshsync_interval')
         self.layout.separator()
-        self.layout.operator("meshsync.sync", text="Manual Sync")
+        self.layout.operator("meshsync.sync_all", text="Manual Sync")
 
 
-class MeshSync_OpSync(bpy.types.Operator):
-    bl_idname = "meshsync.sync"
-    bl_label = "Sync"
-
+class MeshSync_OpSyncAll(bpy.types.Operator):
+    bl_idname = "meshsync.sync_all"
+    bl_label = "Sync All"
     def execute(self, context):
-        msb_sync()
+        msb_sync_all()
+        return{'FINISHED'}
+    
+class MeshSync_OpSyncSelected(bpy.types.Operator):
+    bl_idname = "meshsync.sync_selected"
+    bl_label = "Sync Selected"
+    def execute(self, context):
+        msb_sync_selected()
         return{'FINISHED'}
 
 
@@ -90,7 +142,7 @@ def on_scene_update(dummy):
     scene = bpy.context.scene
     if(scene['meshsync_auto_sync']):
         if(time() - scene['meshsync_last_sent'] > scene['meshsync_interval']):
-            msb_sync()
+            msb_sync_selected()
             scene['meshsync_last_sent'] = time()
 
 def register():

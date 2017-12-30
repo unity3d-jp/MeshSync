@@ -101,7 +101,7 @@ public:
     void clear() override;
 
     virtual void createAnimation();
-    virtual void swapHandedness();
+    virtual void convertHandedness(bool x, bool yz);
     virtual void applyScaleFactor(float scale);
 
 public:
@@ -262,10 +262,11 @@ struct MeshRefineFlags
     uint32_t triangulate : 1;
     uint32_t optimize_topology : 1;
     uint32_t swap_handedness : 1;
+    uint32_t swap_yz : 1;
     uint32_t swap_faces : 1;
     uint32_t gen_normals : 1;
     uint32_t gen_normals_with_smooth_angle : 1;
-    uint32_t flip_normals : 1;
+    uint32_t flip_normals : 1; // 10
     uint32_t gen_tangents : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
@@ -276,7 +277,7 @@ struct MeshRefineFlags
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
     uint32_t mirror_z : 1;
-    uint32_t mirror_x_weld : 1;
+    uint32_t mirror_x_weld : 1; // 20
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
 
@@ -380,7 +381,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 
-    void swapHandedness() override;
+    void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
 
     void refine(const MeshRefineSettings& mrs);
@@ -413,6 +414,7 @@ enum class Handedness
     Left,
     Right,
     LeftZUp,
+    RightZUp,
 };
 
 struct SceneSettings

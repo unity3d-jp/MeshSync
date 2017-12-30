@@ -527,18 +527,30 @@ void Transform::createAnimation()
     }
 }
 
-void Transform::swapHandedness()
+void Transform::convertHandedness(bool x, bool yz)
 {
-    transform.position.x *= -1.0f;
-    transform.rotation = swap_handedness(transform.rotation);
+    if (!x && !yz) return;
 
-    if (animation) {
-        auto& anim = static_cast<TransformAnimation&>(*animation);
-        for (auto& tvp : anim.translation) {
-            tvp.value.x *= -1.0f;
+    if (x) {
+        transform.position = swap_handedness(transform.position);
+        transform.rotation = swap_handedness(transform.rotation);
+        if (animation) {
+            auto& anim = static_cast<TransformAnimation&>(*animation);
+            for (auto& tvp : anim.translation)
+                tvp.value = swap_handedness(tvp.value);
+            for (auto& tvp : anim.rotation)
+                tvp.value = swap_handedness(tvp.value);
         }
-        for (auto& tvp : anim.rotation) {
-            tvp.value = swap_handedness(tvp.value);
+    }
+    if (yz) {
+        transform.position = swap_yz(transform.position);
+        transform.rotation = swap_yz(transform.rotation);
+        if (animation) {
+            auto& anim = static_cast<TransformAnimation&>(*animation);
+            for (auto& tvp : anim.translation)
+                tvp.value = swap_yz(tvp.value);
+            for (auto& tvp : anim.rotation)
+                tvp.value = swap_yz(tvp.value);
         }
     }
 }
@@ -1056,13 +1068,25 @@ void Mesh::clear()
 
 #undef EachVertexProperty
 
-void Mesh::swapHandedness()
+void Mesh::convertHandedness(bool x, bool yz)
 {
-    super::swapHandedness();
-    mu::InvertX(points.data(), points.size());
-    mu::InvertX(normals.data(), normals.size());
-    for (auto& bone : bones) {
-        bone->bindpose = swap_handedness(bone->bindpose);
+    if (!x && !yz) return;
+
+    super::convertHandedness(x, yz);
+
+    if (x) {
+        mu::InvertX(points.data(), points.size());
+        mu::InvertX(normals.data(), normals.size());
+        for (auto& bone : bones)
+            bone->bindpose = swap_handedness(bone->bindpose);
+    }
+    if (yz) {
+        for (auto& v : points)
+            v = swap_yz(v);
+        for (auto& v : normals)
+            v = swap_yz(v);
+        for (auto& bone : bones)
+            bone->bindpose = swap_yz(bone->bindpose);
     }
 }
 
@@ -1105,8 +1129,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.scale_factor != 1.0f) {
         applyScaleFactor(mrs.scale_factor);
     }
-    if (mrs.flags.swap_handedness) {
-        swapHandedness();
+    if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
+        convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
     if (mrs.flags.gen_weights4 && !bones.empty()) {
         generateWeights4();

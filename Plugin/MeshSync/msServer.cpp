@@ -209,7 +209,10 @@ void Server::beginServe()
 
     auto& request = *m_current_get_request;
     request.refine_settings.scale_factor = request.scene_settings.scale_factor;
-    request.refine_settings.flags.swap_handedness = request.scene_settings.handedness == Handedness::Right;
+    request.refine_settings.flags.swap_handedness =
+        request.scene_settings.handedness == Handedness::Right || request.scene_settings.handedness == Handedness::RightZUp;
+    request.refine_settings.flags.swap_yz =
+        request.scene_settings.handedness == Handedness::LeftZUp || request.scene_settings.handedness == Handedness::RightZUp;
     m_host_scene->settings = request.scene_settings;
 }
 
@@ -295,10 +298,14 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
         mesh.refine(mesh.refine_settings);
     });
-    if (mes->scene.settings.handedness == Handedness::Right) {
-        for (auto& obj : mes->scene.transforms) { obj->swapHandedness(); }
-        for (auto& obj : mes->scene.cameras) { obj->swapHandedness(); }
-        for (auto& obj : mes->scene.lights) { obj->swapHandedness(); }
+    {
+        bool x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
+        bool yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
+        if (x || yz) {
+            for (auto& obj : mes->scene.transforms) { obj->convertHandedness(x, yz); }
+            for (auto& obj : mes->scene.cameras) { obj->convertHandedness(x, yz); }
+            for (auto& obj : mes->scene.lights) { obj->convertHandedness(x, yz); }
+        }
     }
     if (mes->scene.settings.scale_factor != 1.0f) {
         float scale = 1.0f / mes->scene.settings.scale_factor;

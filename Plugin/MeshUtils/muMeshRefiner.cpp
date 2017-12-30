@@ -143,12 +143,15 @@ bool MeshRefiner::refine(bool optimize)
 
 
 
-
-bool MeshRefiner::genSubmesh(const IArray<int>& materialIDs)
+bool MeshRefiner::genSubmesh(IArray<int> materialIDs)
 {
     submeshes.clear();
 
-    if (materialIDs.size() != counts.size()) {
+    if (materialIDs.empty()) {
+        dummy_materialIDs.resize_zeroclear(counts.size());
+        materialIDs = IArray<int>(dummy_materialIDs);
+    }
+    else if (materialIDs.size() != counts.size()) {
         return false;
     }
 
