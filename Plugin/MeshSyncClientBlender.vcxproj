@@ -11,16 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PyMeshSync\PyMeshSync.cpp" />
-    <ClCompile Include="PyMeshSync\pch.cpp">
+    <ClCompile Include="MeshSyncClientBlender\MeshSyncClientBlender.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="PyMeshSync\pymsContext.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msbContext.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PyMeshSync\pch.h" />
-    <ClInclude Include="PyMeshSync\PyMeshSync.h" />
-    <ClInclude Include="PyMeshSync\pymsContext.h" />
+    <ClInclude Include="MeshSyncClientBlender\pch.h" />
+    <ClInclude Include="MeshSyncClientBlender\MeshSyncClientBlender.h" />
+    <ClInclude Include="MeshSyncClientBlender\msbContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
@@ -37,7 +37,8 @@
     <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="PyMeshSync\python\__init__.py">
+    <None Include="MeshSyncClientBlender\python\unity_mesh_sync.py" />
+    <None Include="MeshSyncClientBlender\python\__init__.py">
       <DeploymentContent>true</DeploymentContent>
     </None>
   </ItemGroup>
@@ -62,7 +63,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(PYTHON_INCLUDE_DIR);$(SolutionDir)External;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(PYTHON_VERSION)\MeshSync\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(PYTHON_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(PYTHON_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
@@ -70,9 +71,6 @@
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PostBuildEvent>
-      <Command>xcopy /YQ $(ProjectDir)PyMeshSync\python\* $(OutputPath)</Command>
-    </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -87,9 +85,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
-    <PostBuildEvent>
-      <Command>xcopy /YQ $(ProjectDir)PyMeshSync\python\* $(OutputPath)</Command>
-    </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>

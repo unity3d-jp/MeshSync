@@ -2,7 +2,7 @@ from time import time
 import bpy
 import bmesh
 from bpy.app.handlers import persistent
-import MeshSync as ms
+import MeshSyncClientBlender as ms
 
 bl_info = {
     "name": "Unity Mesh Sync",

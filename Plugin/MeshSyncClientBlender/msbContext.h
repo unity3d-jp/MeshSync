@@ -2,27 +2,27 @@
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
 
-struct pymsSettings;
-class pymsContext;
+struct msbSettings;
+class msbContext;
 
 
-struct pymsSettings
+struct msbSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
 
-    pymsSettings();
+    msbSettings();
 };
 
 
-class pymsContext : public std::enable_shared_from_this<pymsContext>
+class msbContext : public std::enable_shared_from_this<msbContext>
 {
 public:
-    pymsContext();
-    ~pymsContext();
+    msbContext();
+    ~msbContext();
 
-    pymsSettings&       getSettings();
-    const pymsSettings& getSettings() const;
+    msbSettings&       getSettings();
+    const msbSettings& getSettings() const;
     ms::TransformPtr    addTransform(const std::string& path);
     ms::CameraPtr       addCamera(const std::string& path);
     ms::LightPtr        addLight(const std::string& path);
@@ -41,7 +41,7 @@ private:
     template<class T>
     std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 
-    pymsSettings m_settings;
+    msbSettings m_settings;
     std::vector<ms::TransformPtr> m_transform_cache;
     std::vector<ms::CameraPtr> m_camera_cache;
     std::vector<ms::LightPtr> m_light_cache;
@@ -54,4 +54,4 @@ private:
 
     std::vector<std::function<void()>> m_get_tasks;
 };
-using pymsContextPtr = std::shared_ptr<pymsContext>;
+using msbContextPtr = std::shared_ptr<msbContext>;

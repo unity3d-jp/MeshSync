@@ -1,31 +1,31 @@
 #include "pch.h"
-#include "PyMeshSync.h"
-#include "pymsContext.h"
+#include "MeshSyncClientBlender.h"
+#include "msbContext.h"
 using namespace mu;
 
 
-pymsSettings::pymsSettings()
+msbSettings::msbSettings()
 {
     scene_settings.handedness = ms::Handedness::Left;
 }
 
-pymsContext::pymsContext()
+msbContext::msbContext()
 {
     m_settings.scene_settings.handedness = ms::Handedness::LeftZUp;
 }
 
-pymsContext::~pymsContext()
+msbContext::~msbContext()
 {
     if (m_send_future.valid()) {
         m_send_future.wait();
     }
 }
 
-pymsSettings& pymsContext::getSettings() { return m_settings; }
-const pymsSettings& pymsContext::getSettings() const { return m_settings; }
+msbSettings& msbContext::getSettings() { return m_settings; }
+const msbSettings& msbContext::getSettings() const { return m_settings; }
 
 template<class T>
-std::shared_ptr<T> pymsContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
+std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
 {
     std::shared_ptr<T> ret;
     {
@@ -41,7 +41,7 @@ std::shared_ptr<T> pymsContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>
     return ret;
 }
 
-ms::TransformPtr pymsContext::addTransform(const std::string& path)
+ms::TransformPtr msbContext::addTransform(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
     ret->path = path;
@@ -49,7 +49,7 @@ ms::TransformPtr pymsContext::addTransform(const std::string& path)
     return ret;
 }
 
-ms::CameraPtr pymsContext::addCamera(const std::string& path)
+ms::CameraPtr msbContext::addCamera(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_camera_cache);
     ret->path = path;
@@ -57,7 +57,7 @@ ms::CameraPtr pymsContext::addCamera(const std::string& path)
     return ret;
 }
 
-ms::LightPtr pymsContext::addLight(const std::string& path)
+ms::LightPtr msbContext::addLight(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_light_cache);
     ret->path = path;
@@ -65,7 +65,7 @@ ms::LightPtr pymsContext::addLight(const std::string& path)
     return ret;
 }
 
-ms::MeshPtr pymsContext::addMesh(const std::string& path)
+ms::MeshPtr msbContext::addMesh(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_mesh_cache);
     ret->path = path;
@@ -73,13 +73,13 @@ ms::MeshPtr pymsContext::addMesh(const std::string& path)
     return ret;
 }
 
-void pymsContext::addDeleted(const std::string& path)
+void msbContext::addDeleted(const std::string& path)
 {
     m_deleted.push_back(path);
 }
 
 
-void pymsContext::getPoints(ms::MeshPtr mesh, py::object vertices)
+void msbContext::getPoints(ms::MeshPtr mesh, py::object vertices)
 {
     static py::str
         attr_co = "co",
@@ -105,7 +105,7 @@ void pymsContext::getPoints(ms::MeshPtr mesh, py::object vertices)
     //m_get_tasks.push_back(task);
 }
 
-void pymsContext::getNormals(ms::MeshPtr mesh, py::object loops)
+void msbContext::getNormals(ms::MeshPtr mesh, py::object loops)
 {
     static py::str
         attr_normal = "normal",
@@ -131,7 +131,7 @@ void pymsContext::getNormals(ms::MeshPtr mesh, py::object loops)
     //m_get_tasks.push_back(task);
 }
 
-void pymsContext::getUVs(ms::MeshPtr mesh, py::object data)
+void msbContext::getUVs(ms::MeshPtr mesh, py::object data)
 {
     static py::str
         attr_uv = "uv",
@@ -155,7 +155,7 @@ void pymsContext::getUVs(ms::MeshPtr mesh, py::object data)
     //m_get_tasks.push_back(task);
 }
 
-void pymsContext::getColors(ms::MeshPtr mesh, py::object colors)
+void msbContext::getColors(ms::MeshPtr mesh, py::object colors)
 {
     static py::str
         attr_r = "r",
@@ -182,12 +182,12 @@ void pymsContext::getColors(ms::MeshPtr mesh, py::object colors)
     //m_get_tasks.push_back(task);
 }
 
-bool pymsContext::isSending() const
+bool msbContext::isSending() const
 {
     return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-void pymsContext::send()
+void msbContext::send()
 {
     if (isSending())
     {
