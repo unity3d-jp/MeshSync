@@ -88,6 +88,8 @@ def msb_get_path(obj):
 
 def msb_extract_transform(dst, obj):
     t = obj.location
+    if obj.parent != None:
+        t = t + obj.matrix_parent_inverse.translation
     s = obj.scale
     dst.position = [t.x, t.y, t.z]
     dst.scale = [s.x, s.y, s.z]
