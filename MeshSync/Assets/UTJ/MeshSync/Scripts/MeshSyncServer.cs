@@ -760,9 +760,7 @@ namespace UTJ.MeshSync
 
             var cam = trans.GetComponent<Camera>();
             if(cam == null)
-            {
                 cam = trans.gameObject.AddComponent<Camera>();
-            }
             cam.orthographic = data.orthographic;
             cam.fieldOfView = data.fov;
             cam.nearClipPlane = data.nearClipPlane;

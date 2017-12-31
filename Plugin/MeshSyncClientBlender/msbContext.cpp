@@ -201,6 +201,13 @@ void msbContext::send()
     });
     m_get_tasks.clear();
 
+    // todo
+    //for (auto& v : m_scene.cameras)
+    //    v->transform.rotation = rotateX(-90.0f * Deg2Rad) * swap_yz(v->transform.rotation);
+    //for (auto& v : m_scene.lights)
+    //    v->transform.rotation = rotateX(-90.0f * Deg2Rad) * swap_yz(v->transform.rotation);
+
+
     // return objects to cache
     for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
     for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }

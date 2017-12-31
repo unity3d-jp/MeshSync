@@ -146,11 +146,11 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_x; },
                 [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_x = v; })
             BindProperty(mirror_y,
-                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_z; }, // y and z is swapped
-                [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_z = v; })
-            BindProperty(mirror_z,
                 [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_y; },
                 [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_y = v; })
+            BindProperty(mirror_z,
+                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_z; },
+                [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_z = v; })
             BindProperty(mirror_merge,
                 [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_x_weld; },
                 [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_x_weld = self.refine_settings.flags.mirror_y_weld = self.refine_settings.flags.mirror_z_weld = v; })

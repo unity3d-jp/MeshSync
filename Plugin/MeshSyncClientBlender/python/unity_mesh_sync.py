@@ -43,6 +43,7 @@ def msb_sync(targets):
             ctx.addDeleted(msb_get_path(obj))
         elif (obj.type == 'MESH') or\
              (obj.type == 'CAMERA' and scene['meshsync_sync_cameras']) or\
+             (obj.type == 'LAMP' and scene['meshsync_sync_lights']) or\
              (obj.dupli_group != None):
             msb_add_object(ctx, obj)
     ctx.send()
@@ -62,6 +63,8 @@ def msb_add_object(ctx, obj):
         ret = msb_add_mesh(ctx, obj)
     elif obj.type == 'CAMERA':
         ret = msb_add_camera(ctx, obj)
+    elif obj.type == 'LAMP':
+        ret = msb_add_light(ctx, obj)
     else:
         ret = msb_add_transform(ctx, obj)
     msb_added.add(obj)
@@ -139,6 +142,12 @@ def msb_add_mesh(ctx, obj):
             data = obj.to_mesh(scene, True, 'PREVIEW')
         else:
             data = obj.data
+            for mod in obj.modifiers:
+                if mod.type == 'MIRROR':
+                    dst.mirror_x = mod.use_x
+                    dst.mirror_y = mod.use_y
+                    dst.mirror_z = mod.use_z
+                    dst.mirror_merge = mod.use_mirror_merge
 
         msb_data_keeper.append(data.vertices)
         ctx.getPoints(dst, data.vertices)
@@ -196,6 +205,13 @@ def msb_add_camera(ctx, obj):
     return dst
 
 
+def msb_add_light(ctx, obj):
+    dst = ctx.addLight(msb_get_path(obj))
+    msb_extract_transform(dst, obj)
+    # todo
+    return dst
+
+
 def msb_add_transform(ctx, obj):
     path = msb_get_path(obj)
     dst = ctx.addTransform(path)
@@ -229,6 +245,7 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_sync_blensshapes = bpy.props.BoolProperty(name = "Sync Blend Shapes")
     bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(name = "Sync Animations")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(name = "Sync Cameras")
+    bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(name = "Sync Lights")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(name = "Auto Sync")
     bpy.types.Scene.meshsync_interval = bpy.props.FloatProperty(name = "Interval (Sec)")
     scene = bpy.context.scene
@@ -241,6 +258,7 @@ def MeshSync_InitProperties():
     scene['meshsync_sync_blensshapes'] = False
     scene['meshsync_sync_animations'] = False
     scene['meshsync_sync_cameras'] = True
+    scene['meshsync_sync_lights'] = True
     scene['meshsync_auto_sync'] = False
     scene['meshsync_interval'] = 1.0
 
@@ -263,6 +281,7 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.prop(context.scene, 'meshsync_sync_blensshapes')
         self.layout.prop(context.scene, 'meshsync_sync_animations')
         self.layout.prop(context.scene, 'meshsync_sync_cameras')
+        self.layout.prop(context.scene, 'meshsync_sync_lights')
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         if(scene['meshsync_auto_sync']):
