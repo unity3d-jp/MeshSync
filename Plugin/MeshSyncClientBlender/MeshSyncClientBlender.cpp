@@ -25,9 +25,9 @@ inline quatf  to_quatf(const float4a& v) { return { v[0], v[1], v[2], v[3] }; }
 inline float4x4 to_float4x4(const float4x4a& v) { float4x4 ret; ret.assign(v.data()); return ret; }
 
 
-PYBIND11_PLUGIN(PyMeshSync)
+PYBIND11_PLUGIN(MeshSyncClientBlender)
 {
-    py::module mod("PyMeshSync", "Python bindings for MeshSync");
+    py::module mod("MeshSyncClientBlender", "Python bindings for MeshSync");
 
 #define BindMethod(Name) .def(#Name, &self_t::Name)
 #define BindMethod2(Name, ...) .def(#Name, __VA_ARGS__)

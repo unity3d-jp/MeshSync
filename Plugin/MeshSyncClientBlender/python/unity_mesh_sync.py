@@ -36,6 +36,7 @@ def msb_sync(targets):
     if ctx.isSending():
         return
 
+    start_time = time()
     scene = bpy.context.scene
     for obj in targets:
         if not (obj.name in bpy.data.objects):
@@ -45,8 +46,9 @@ def msb_sync(targets):
             msb_add_object(ctx, obj)
     ctx.send()
     msb_added.clear()
-    msb_last_sent = time()
-    #print("msb_sync(): done")
+    end_time = time()
+    msb_last_sent = end_time
+    #print("msb_sync(): done (", end_time-start_time, "sec)")
 
 
 def msb_add_object(ctx, obj):
