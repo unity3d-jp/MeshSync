@@ -202,9 +202,20 @@ def msb_add_transform(ctx, obj):
     msb_extract_transform(dst, obj)
     if obj.dupli_group != None:
         for c in obj.dupli_group.objects:
-            refpath = msb_get_path(c)
-            child = ctx.addTransform(path + '/' + refpath)
-            child.reference = refpath
+            cdst = msb_add_reference_nodes(ctx, path, c)
+    return dst
+
+
+def msb_add_reference_nodes(ctx, base_path, child, depth = 0):
+    refpath = msb_get_path(child)
+    dst = ctx.addTransform(base_path + refpath)
+    msb_extract_transform(dst, child)
+    dst.reference = refpath
+    if child.dupli_group != None:
+        for c in child.dupli_group.objects:
+            msb_add_reference_nodes(ctx, base_path + refpath, c, depth + 1)
+    for c in child.children:
+        msb_add_reference_nodes(ctx, base_path, c, depth + 1)
     return dst
 
 

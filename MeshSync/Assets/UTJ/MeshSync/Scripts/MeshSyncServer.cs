@@ -307,11 +307,16 @@ namespace UTJ.MeshSync
                 foreach(var pair in m_clientObjects)
                 {
                     var dstrec = pair.Value;
-                    if (dstrec.reference == null) continue;
+                    if (dstrec.go == null)
+                        continue;
+                    else if (dstrec.reference == null)
+                        continue;
 
                     Record srcrec = null;
                     if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
                     {
+                        if (srcrec.go == null)
+                            continue;
                         var src = srcrec.go.GetComponent<SkinnedMeshRenderer>();
                         if (src == null)
                             continue;
@@ -520,11 +525,14 @@ namespace UTJ.MeshSync
                                 bones[bi] = FindOrCreateObjectByPath(paths[bi], true, ref created);
                                 if (created)
                                 {
-                                    m_clientObjects.Add(paths[bi], new Record
-                                    {
+                                    var newrec = new Record {
                                         go = bones[bi].gameObject,
                                         recved = true,
-                                    });
+                                    };
+                                    if (!m_clientObjects.ContainsKey(paths[bi]))
+                                        m_clientObjects[paths[bi]] = newrec;
+                                    else
+                                        m_clientObjects.Add(paths[bi], newrec);
                                 }
                             }
 
@@ -662,12 +670,15 @@ namespace UTJ.MeshSync
             if (created)
             {
                 var reference = data.reference;
-                m_clientObjects.Add(path, new Record
-                {
+                var rec = new Record {
                     go = trans.gameObject,
                     recved = true,
                     reference = reference != "" ? reference : null,
-                });
+                };
+                if(m_clientObjects.ContainsKey(path))
+                    m_clientObjects[path] = rec;
+                else
+                    m_clientObjects.Add(path, rec);
             }
 
 

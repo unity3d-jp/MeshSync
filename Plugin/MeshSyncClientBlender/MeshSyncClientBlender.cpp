@@ -36,9 +36,11 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
     {
         using self_t = ms::Transform;
         py::class_<ms::Transform, ms::TransformPtr>(mod, "Transform")
-            BindField(path)
             BindField(visible)
             BindField(reference)
+            BindProperty(path,
+                [](const ms::Transform& self) { return self.path; },
+                [](ms::Transform& self, const std::string& v) { self.path = v; })
             BindProperty(position,
                 [](const ms::Transform& self) { return to_a(self.transform.position); },
                 [](ms::Transform& self, const float3a& v) { self.transform.position = to_float3(v); })
@@ -49,25 +51,25 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](const ms::Transform& self) { return to_a(self.transform.rotation); },
                 [](ms::Transform& self, const float4a& v) { self.transform.rotation = to_quatf(v); })
             BindProperty(rotation_axis_angle,
-                [](const ms::Transform& self) { return float4::zero(); },
+                [](const ms::Transform& self) { return float4a{}; },
                 [](ms::Transform& self, const float4a& v) { self.transform.rotation = rotate(normalize(float3{v[1], v[2], v[3]}), v[0]); })
             BindProperty(rotation_xyz,
-                [](const ms::Transform& self) { return float3::zero(); },
+                [](const ms::Transform& self) { return float3a{}; },
                 [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateXYZ(to_float3(v)); })
             BindProperty(rotation_xzy,
-                [](const ms::Transform& self) { return float3::zero(); },
+                [](const ms::Transform& self) { return float3a{}; },
                 [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateXZY(to_float3(v)); })
             BindProperty(rotation_yxz,
-                [](const ms::Transform& self) { return float3::zero(); },
+                [](const ms::Transform& self) { return float3a{}; },
                 [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateYXZ(to_float3(v)); })
             BindProperty(rotation_yzx,
-                [](const ms::Transform& self) { return float3::zero(); },
+                [](const ms::Transform& self) { return float3a{}; },
                 [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateYZX(to_float3(v)); })
             BindProperty(rotation_zxy,
-                [](const ms::Transform& self) { return float3::zero(); },
+                [](const ms::Transform& self) { return float3a{}; },
                 [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateZXY(to_float3(v)); })
             BindProperty(rotation_zyx,
-                [](const ms::Transform& self) { return float3::zero(); },
+                [](const ms::Transform& self) { return float3a{}; },
                 [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateZYX(to_float3(v)); })
             BindMethod2(addTranslationKey,
                 [](ms::Transform& self, float t, const float3a& v) { self.addTranslationKey(t, to_float3(v)); })
@@ -140,6 +142,18 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(swap_faces,
                 [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.swap_faces; },
                 [](ms::Mesh& self, bool v) { self.refine_settings.flags.swap_faces = v; })
+            BindProperty(mirror_x,
+                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_x; },
+                [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_x = v; })
+            BindProperty(mirror_y,
+                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_z; }, // y and z is swapped
+                [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_z = v; })
+            BindProperty(mirror_z,
+                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_y; },
+                [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_y = v; })
+            BindProperty(mirror_merge,
+                [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_x_weld; },
+                [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_x_weld = self.refine_settings.flags.mirror_y_weld = self.refine_settings.flags.mirror_z_weld = v; })
             BindMethod2(addVertex,
                 [](ms::Mesh& self, const float3a& v) { self.addVertex(to_float3(v)); })
             BindMethod2(addNormal,
