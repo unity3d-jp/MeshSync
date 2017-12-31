@@ -38,6 +38,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
         py::class_<ms::Transform, ms::TransformPtr>(mod, "Transform")
             BindField(path)
             BindField(visible)
+            BindField(reference)
             BindProperty(position,
                 [](const ms::Transform& self) { return to_a(self.transform.position); },
                 [](ms::Transform& self, const float3a& v) { self.transform.position = to_float3(v); })

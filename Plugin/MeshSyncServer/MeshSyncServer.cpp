@@ -273,6 +273,14 @@ msAPI void msTransformSetVisible(ms::Transform *_this, bool v)
 {
     _this->visible = v;
 }
+msAPI const char* msTransformGetReference(ms::Transform *_this)
+{
+    return _this->reference.c_str();
+}
+msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
+{
+    _this->reference = v;
+}
 msAPI ms::Animation* msTransformGetAnimation(ms::Transform *_this)
 {
     return _this->animation.get();

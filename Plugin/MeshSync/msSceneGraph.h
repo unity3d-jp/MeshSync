@@ -91,6 +91,7 @@ using super = Entity;
 public:
     TRS transform;
     bool visible = true;
+    std::string reference;
     AnimationPtr animation;
 
 

@@ -302,6 +302,28 @@ namespace UTJ.MeshSync
             }
             catch (Exception e) { Debug.Log(e); }
 
+            // update references
+            {
+                foreach(var pair in m_clientObjects)
+                {
+                    var dstrec = pair.Value;
+                    if (dstrec.reference == null) continue;
+
+                    Record srcrec = null;
+                    if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
+                    {
+                        var src = srcrec.go.GetComponent<SkinnedMeshRenderer>();
+                        if (src == null)
+                            continue;
+                        var dst = dstrec.go.GetComponent<SkinnedMeshRenderer>();
+                        if (dst == null)
+                            dst = dstrec.go.AddComponent<SkinnedMeshRenderer>();
+                        dst.sharedMesh = src.sharedMesh;
+                        dst.sharedMaterials = src.sharedMaterials;
+                    }
+                }
+            }
+
             GC.Collect();
         }
 
@@ -435,7 +457,8 @@ namespace UTJ.MeshSync
                     if (!go.activeSelf) go.SetActive(true);
                 }
             }
-            if (!go.activeInHierarchy) { return; }
+            bool activeInHierarchy = go.activeInHierarchy;
+            if (!activeInHierarchy && !data.flags.hasPoints) { return; }
 
 
             // allocate material list
@@ -536,6 +559,7 @@ namespace UTJ.MeshSync
                 }
             }
 
+            if (activeInHierarchy)
             {
                 rec.go.SetActive(false); // 
                 rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
@@ -631,9 +655,22 @@ namespace UTJ.MeshSync
 
         Transform UpdateTransform(TransformData data)
         {
+            var path = data.path;
             bool created = false;
-            var trans = FindOrCreateObjectByPath(data.path, true, ref created);
+            var trans = FindOrCreateObjectByPath(path, true, ref created);
             if (trans == null) { return null; }
+            if (created)
+            {
+                var reference = data.reference;
+                m_clientObjects.Add(path, new Record
+                {
+                    go = trans.gameObject,
+                    recved = true,
+                    reference = reference != "" ? reference : null,
+                });
+            }
+
+
             var go = trans.gameObject;
 #if UNITY_EDITOR
             Undo.RecordObject(trans, "MeshSync");

@@ -484,6 +484,7 @@ uint32_t Transform::getSerializeSize() const
     ret += sizeof(TransformDataFlags);
     ret += ssize(transform);
     ret += ssize(visible);
+    ret += ssize(reference);
     if (animation) { ret += ssize(animation); }
     return ret;
 }
@@ -496,6 +497,7 @@ void Transform::serialize(std::ostream& os) const
     write(os, flags);
     write(os, transform);
     write(os, visible);
+    write(os, reference);
     if (flags.has_animation) { write(os, animation); }
 }
 void Transform::deserialize(std::istream& is)
@@ -506,6 +508,7 @@ void Transform::deserialize(std::istream& is)
     read(is, flags);
     read(is, transform);
     read(is, visible);
+    read(is, reference);
     if(flags.has_animation) {
         createAnimation();
         animation->deserialize(is);
@@ -517,6 +520,7 @@ void Transform::clear()
     super::clear();
     transform = TRS();
     visible = true;
+    reference.clear();
     animation.reset();
 }
 

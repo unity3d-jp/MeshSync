@@ -933,6 +933,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
             [DllImport("MeshSyncServer")] static extern byte msTransformGetVisible(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetVisible(IntPtr _this, byte v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern AnimationData msTransformGetAnimation(IntPtr _this);
 
             public static explicit operator TransformData(IntPtr v)
@@ -962,7 +964,6 @@ namespace UTJ.MeshSync
                 get { return S(msTransformGetPath(_this)); }
                 set { msTransformSetPath(_this, value); }
             }
-
             public TRS trs
             {
                 get
@@ -976,13 +977,16 @@ namespace UTJ.MeshSync
                     msTransformSetTRS(_this, ref value);
                 }
             }
-
             public bool visible
             {
                 get { return msTransformGetVisible(_this) != 0; }
                 set { msTransformSetVisible(_this, (byte)(value ? 1 : 0)); }
             }
-
+            public string reference
+            {
+                get { return S(msTransformGetReference(_this)); }
+                set { msTransformSetReference(_this, value); }
+            }
             public AnimationData animation
             {
                 get { return msTransformGetAnimation(_this); }
@@ -1630,6 +1634,7 @@ namespace UTJ.MeshSync
             public Mesh editMesh;
             public int[] materialIDs = new int[0];
             public int[] submeshCounts = new int[0];
+            public string reference;
             public bool recved = false;
 
             // return true if modified

@@ -41,8 +41,9 @@ def msb_sync(targets):
     for obj in targets:
         if not (obj.name in bpy.data.objects):
             ctx.addDeleted(msb_get_path(obj))
-        elif obj.type == 'MESH' or\
-            (obj.type == 'CAMERA' and scene['meshsync_sync_cameras']):
+        elif (obj.type == 'MESH') or\
+             (obj.type == 'CAMERA' and scene['meshsync_sync_cameras']) or\
+             (obj.dupli_group != None):
             msb_add_object(ctx, obj)
     ctx.send()
     msb_added.clear()
@@ -125,12 +126,12 @@ def msb_add_mesh(ctx, obj):
     dst = ctx.addMesh(msb_get_path(obj))
     msb_extract_transform(dst, obj)
 
-    scene = bpy.context.scene
-    if not obj.is_visible(scene):
+    if obj.hide:
         dst.visible = False
     else:
         global msb_data_keeper
-        dst.visible = True
+        scene = bpy.context.scene
+        dst.visible = obj.is_visible(scene)
         dst.swap_faces = True
 
         data = None
@@ -196,9 +197,14 @@ def msb_add_camera(ctx, obj):
 
 
 def msb_add_transform(ctx, obj):
-    dst = ctx.addTransform(msb_get_path(obj))
+    path = msb_get_path(obj)
+    dst = ctx.addTransform(path)
     msb_extract_transform(dst, obj)
-    # todo
+    if obj.dupli_group != None:
+        for c in obj.dupli_group.objects:
+            refpath = msb_get_path(c)
+            child = ctx.addTransform(path + '/' + refpath)
+            child.reference = refpath
     return dst
 
 
