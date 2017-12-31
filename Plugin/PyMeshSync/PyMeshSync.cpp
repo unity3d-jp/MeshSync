@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "PyMeshSync.h"
 using namespace mu;
-namespace py = pybind11;
 
 using float2a = std::array<float, 2>;
 using float3a = std::array<float, 3>;
@@ -164,6 +163,10 @@ PYBIND11_PLUGIN(PyMeshSync)
             BindMethod(addLight)
             BindMethod(addMesh)
             BindMethod(addDeleted)
+            BindMethod(getPoints)
+            BindMethod(getNormals)
+            BindMethod(getUVs)
+            BindMethod(getColors)
             BindMethod(isSending)
             BindMethod(send)
             BindProperty(server_address,

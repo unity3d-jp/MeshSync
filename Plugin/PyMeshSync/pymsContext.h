@@ -29,6 +29,11 @@ public:
     ms::MeshPtr         addMesh(const std::string& path);
     void                addDeleted(const std::string& path);
 
+    void getPoints(ms::MeshPtr mesh, py::object vertices);
+    void getNormals(ms::MeshPtr mesh, py::object loops);
+    void getUVs(ms::MeshPtr mesh, py::object uvs);
+    void getColors(ms::MeshPtr mesh, py::object colors);
+
     bool isSending() const;
     void send();
 
@@ -46,5 +51,7 @@ private:
 
     ms::SetMessage m_message;
     std::future<void> m_send_future;
+
+    std::vector<std::function<void()>> m_get_tasks;
 };
 using pymsContextPtr = std::shared_ptr<pymsContext>;

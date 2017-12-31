@@ -17,6 +17,7 @@ msb_context.handedness = 2
 msb_last_sent = 0.0
 msb_updated = []
 msb_added = set()
+msb_data_keeper = []
 
 
 def msb_sync_all():
@@ -37,14 +38,15 @@ def msb_sync(targets):
 
     scene = bpy.context.scene
     for obj in targets:
-        if obj.type == 'MESH' or\
-          (obj.type == 'ARMATURE' and scene['meshsync_sync_bones']) or\
-          (obj.type == 'CAMERA' and scene['meshsync_sync_cameras']):
+        if not (obj.name in bpy.data.objects):
+            ctx.addDeleted(msb_get_path(obj))
+        elif obj.type == 'MESH' or\
+            (obj.type == 'CAMERA' and scene['meshsync_sync_cameras']):
             msb_add_object(ctx, obj)
     ctx.send()
     msb_added.clear()
     msb_last_sent = time()
-    print("msb_sync(): done")
+    #print("msb_sync(): done")
 
 
 def msb_add_object(ctx, obj):
@@ -123,6 +125,7 @@ def msb_add_mesh(ctx, obj):
     if not obj.is_visible(scene):
         dst.visible = False
     else:
+        global msb_data_keeper
         dst.visible = True
         dst.swap_faces = True
 
@@ -132,20 +135,30 @@ def msb_add_mesh(ctx, obj):
         else:
             data = obj.data
 
-        for vtx in data.vertices:
-            p = vtx.co
-            dst.addVertex([p.x, p.y, p.z])
+        msb_data_keeper.append(data.vertices)
+        ctx.getPoints(dst, data.vertices)
+        #for vtx in data.vertices:
+        #    p = vtx.co
+        #    dst.addVertex([p.x, p.y, p.z])
 
         data.calc_normals_split()
-        for loop in data.loops:
-            n = loop.normal
-            dst.addNormal([n.x, n.y, n.z])
+        msb_data_keeper.append(data.loops)
+        ctx.getNormals(dst, data.loops)
+        #for loop in data.loops:
+        #    n = loop.normal
+        #    dst.addNormal([n.x, n.y, n.z])
+
         if len(data.uv_layers) > 0:
-            for v in data.uv_layers.active.data:
-                dst.addUV([v.uv.x, v.uv.y])
+            msb_data_keeper.append(data.uv_layers.active.data)
+            ctx.getUVs(dst, data.uv_layers.active.data)
+            #for v in data.uv_layers.active.data:
+            #    dst.addUV([v.uv.x, v.uv.y])
+
         if scene['meshsync_sync_colors'] and len(data.vertex_colors) > 0:
+            msb_data_keeper.append(data.vertex_colors.active.data)
             for c in data.vertex_colors.active.data:
                 dst.addColor([c.r, c.g, c.b, c.a])
+
         for poly in data.polygons:
             dst.addMaterialID(poly.material_index)
             dst.addCount(len(poly.vertices));
@@ -158,6 +171,7 @@ def msb_add_mesh(ctx, obj):
             for bone in arm.pose.bones:
                 if bone.name not in group_names:
                     continue
+                msb_add_object(ctx, bone)
                 gidx = obj.vertex_groups[bone.name].index
                 bone_verts = [v for v in data.vertices if gidx in [g.group for g in v.groups]]
                 weights = [0.0] * len(data.vertices)
@@ -191,19 +205,21 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(name = "Sync Vertex Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(name = "Sync Bones")
-    bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(name = "Sync Cameras")
+    bpy.types.Scene.meshsync_sync_blensshapes = bpy.props.BoolProperty(name = "Sync Blend Shapes")
     bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(name = "Sync Animations")
+    bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(name = "Sync Cameras")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(name = "Auto Sync")
     bpy.types.Scene.meshsync_interval = bpy.props.FloatProperty(name = "Interval (Sec)")
     scene = bpy.context.scene
     scene['meshsync_server_addr'] = "localhost"
     scene['meshsync_server_port'] = 8080
     scene['meshsync_scale_factor'] = 1.0
-    scene['meshsync_apply_modifiers'] = True
+    scene['meshsync_apply_modifiers'] = False
     scene['meshsync_sync_colors'] = False
-    scene['meshsync_sync_bones'] = True
+    scene['meshsync_sync_bones'] = False
+    scene['meshsync_sync_blensshapes'] = False
+    scene['meshsync_sync_animations'] = False
     scene['meshsync_sync_cameras'] = True
-    scene['meshsync_sync_animations'] = True
     scene['meshsync_auto_sync'] = False
     scene['meshsync_interval'] = 1.0
 
@@ -223,12 +239,13 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.prop(context.scene, 'meshsync_apply_modifiers')
         self.layout.prop(context.scene, 'meshsync_sync_colors')
         self.layout.prop(context.scene, 'meshsync_sync_bones')
-        self.layout.prop(context.scene, 'meshsync_sync_cameras')
+        self.layout.prop(context.scene, 'meshsync_sync_blensshapes')
         self.layout.prop(context.scene, 'meshsync_sync_animations')
+        self.layout.prop(context.scene, 'meshsync_sync_cameras')
+        self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         if(scene['meshsync_auto_sync']):
             self.layout.prop(context.scene, 'meshsync_interval')
-        self.layout.separator()
         self.layout.operator("meshsync.sync_all", text="Manual Sync")
 
 

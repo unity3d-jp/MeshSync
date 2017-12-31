@@ -25,3 +25,4 @@
 #include "PyBind11/pybind11.h"
 #include "PyBind11/operators.h"
 #include "PyBind11/stl.h"
+namespace py = pybind11;
