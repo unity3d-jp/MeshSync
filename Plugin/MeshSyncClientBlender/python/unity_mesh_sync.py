@@ -108,38 +108,7 @@ def msb_get_path(obj):
 
 
 def msb_extract_transform(dst, obj):
-    t = obj.location
-    s = obj.scale
-    dst.position = [t.x, t.y, t.z]
-    dst.scale = [s.x, s.y, s.z]
-
-    rmode = obj.rotation_mode
-    if rmode == 'QUATERNION':
-        r = obj.rotation_quaternion
-        dst.rotation_quaternion = [r.x, r.y, r.z, r.w]
-    elif rmode == 'AXIS_ANGLE':
-        r = obj.rotation_axis_angle
-        dst.rotation_axis_angle = [r[0], r[1], r[2], r[3]]
-    elif rmode == 'XYZ':
-        r = obj.rotation_euler
-        dst.rotation_xyz = [r.x, r.y, r.z]
-    elif rmode == 'XZY':
-        r = obj.rotation_euler
-        dst.rotation_xzy = [r.x, r.y, r.z]
-    elif rmode == 'YXZ':
-        r = obj.rotation_euler
-        dst.rotation_yxz = [r.x, r.y, r.z]
-    elif rmode == 'YZX':
-        r = obj.rotation_euler
-        dst.rotation_yzx = [r.x, r.y, r.z]
-    elif rmode == 'ZXY':
-        r = obj.rotation_euler
-        dst.rotation_zxy = [r.x, r.y, r.z]
-    elif rmode == 'ZYX':
-        r = obj.rotation_euler
-        dst.rotation_zyx = [r.x, r.y, r.z]
-    if obj.parent != None:
-        dst.applyMatrix(msb_mat4x4_to_array(obj.matrix_parent_inverse))
+    dst.matrix = msb_mat4x4_to_array(obj.matrix_local)
 
 
 def msb_add_mesh(ctx, obj):
@@ -268,7 +237,7 @@ def msb_add_bone(ctx, obj):
     msb_construct_tree(ctx, obj.parent)
     
     dst = ctx.addTransform(msb_get_path(obj))
-    msb_extract_transform(dst, obj)
+    dst.matrix = msb_mat4x4_to_array(obj.matrix)
     msb_added.add(obj)
     return dst
 

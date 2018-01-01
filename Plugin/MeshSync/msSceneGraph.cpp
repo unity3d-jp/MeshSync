@@ -533,11 +533,17 @@ float4x4 Transform::toMatrix() const
 }
 
 
+void Transform::assignMatrix(const float4x4& v)
+{
+    position = extract_position(v);
+    rotation = extract_rotation(v);
+    scale = extract_scale(v);
+}
+
 void Transform::applyMatrix(const float4x4& v)
 {
-    position = mul_p(v, position);
-    rotation = to_quat(v) * rotation;
-    // scale ?
+    if (!near_equal(v, float4x4::identity()))
+        assignMatrix(v * toMatrix());
 }
 
 void Transform::createAnimation()

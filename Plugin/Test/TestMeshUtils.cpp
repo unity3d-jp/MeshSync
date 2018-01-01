@@ -665,3 +665,18 @@ TestCase(TestHandedness)
 
     Print("ok");
 }
+
+TestCase(TestMatrixExtraction)
+{
+    auto position = float3{ 1.0f, 2.0f, 3.0f };
+    auto rotation = rotateXYZ(float3{ 15.0f * Deg2Rad, 30.0f * Deg2Rad, 60.0f * Deg2Rad });
+    auto scale = float3{ 1.0f, 0.5f, 0.25f };
+    auto mat = transform(position, rotation, scale);
+
+    float3 epos = extract_position(mat);
+    float3 escale = extract_scale(mat);
+    quatf erot = extract_rotation(mat);
+
+    Print("ok");
+}
+

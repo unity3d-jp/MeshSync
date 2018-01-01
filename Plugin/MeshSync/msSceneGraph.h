@@ -97,6 +97,7 @@ public:
     void clear() override;
 
     float4x4 toMatrix() const;
+    void assignMatrix(const float4x4& v);
     void applyMatrix(const float4x4& v);
 
     virtual void createAnimation();

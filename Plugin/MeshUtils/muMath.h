@@ -662,7 +662,7 @@ template<class T> inline void to_axis_angle(const tquat<T>& q, tvec3<T>& axis, T
 
 template<class T> inline tmat3x3<T> look33(const tvec3<T>& forward, const tvec3<T>& up)
 {
-    auto z = forward;
+    auto z = normalize(forward);
     auto x = normalize(cross(up, z));
     auto y = cross(z, x);
     return{ {
@@ -955,10 +955,6 @@ inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T
 template<class T>
 inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
 {
-    //tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
-    //tvec3<T> d = (tvec3<T>&)view[3];
-    //pos = view33 * -d;
-
     auto tview = transpose(view);
 
     auto n1 = (tvec3<T>&)tview[0];
@@ -983,7 +979,7 @@ inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tquat<T>& r
 {
     tvec3<T> forward, up, right;
     extract_look_data(view, pos, forward, up, right);
-    rot = to_quat(look33(forward, tvec3<T>{ T(0.0), T(1.0), T(0.0) }));
+    rot = to_quat(look33(forward, up));
 }
 
 
@@ -1037,6 +1033,23 @@ template<class T> inline quatf to_quat(const tmat3x3<T>& m)
 template<class T> inline quatf to_quat(const tmat4x4<T>& m)
 {
     return to_quat_impl(m);
+}
+
+template<class T> inline tvec3<T> extract_position(const tmat4x4<T>& m)
+{
+    return (const tvec3<T>&)m[3];
+}
+
+template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
+{
+    tvec3<T> forward = { m[2][0], m[2][1] , m[2][2] };
+    tvec3<T> upwards = { m[1][0], m[1][1] , m[1][2] };
+    return to_quat(look33(forward, upwards));
+}
+
+template<class T> inline tvec3<T> extract_scale(const tmat4x4<T>& m)
+{
+    return tvec3<T>{length(m[0]), length(m[1]), length(m[2])};
 }
 
 // aperture and focal_length must be millimeter. return fov in degree
