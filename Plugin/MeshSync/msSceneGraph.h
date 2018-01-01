@@ -97,6 +97,7 @@ public:
     void clear() override;
 
     float4x4 toMatrix() const;
+    void applyMatrix(const float4x4& v);
 
     virtual void createAnimation();
     virtual void convertHandedness(bool x, bool yz);

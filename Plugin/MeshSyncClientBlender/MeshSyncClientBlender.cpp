@@ -24,6 +24,27 @@ inline float4 to_float4(const float4a& v) { return { v[0], v[1], v[2], v[3] }; }
 inline quatf  to_quatf(const float4a& v) { return { v[0], v[1], v[2], v[3] }; }
 inline float4x4 to_float4x4(const float4x4a& v) { float4x4 ret; ret.assign(v.data()); return ret; }
 
+inline float2 to_float2(const py::object& v)
+{
+    static py::str x = "x", y = "y";
+    return { v.attr(x).cast<float>(), v.attr(y).cast<float>() };
+}
+inline float3 to_float3(const py::object& v)
+{
+    static py::str x = "x", y = "y", z = "z";
+    return { v.attr(x).cast<float>(), v.attr(y).cast<float>(), v.attr(z).cast<float>() };
+}
+inline float4 to_float4(const py::object& v)
+{
+    static py::str x = "x", y = "y", z = "z", w = "w";
+    return { v.attr(x).cast<float>(), v.attr(y).cast<float>(), v.attr(z).cast<float>(), v.attr(w).cast<float>() };
+}
+inline quatf  to_quatf(const py::object& v)
+{
+    static py::str x = "x", y = "y", z = "z", w = "w";
+    return { v.attr(x).cast<float>(), v.attr(y).cast<float>(), v.attr(z).cast<float>(), v.attr(w).cast<float>() };
+}
+
 
 PYBIND11_PLUGIN(MeshSyncClientBlender)
 {
@@ -80,6 +101,8 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](ms::Transform& self, float t, const float4a& v) { self.addRotationKey(t, to_quatf(v)); })
             BindMethod2(addScaleKey,
                 [](ms::Transform& self, float t, const float3a& v) { self.addScaleKey(t, to_float3(v)); })
+            BindMethod2(applyMatrix,
+                [](ms::Transform& self, const float4x4a& v) { self.applyMatrix(to_float4x4(v)); })
             ;
     }
     {

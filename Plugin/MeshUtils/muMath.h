@@ -493,7 +493,11 @@ template<class T> inline T length(const tvec4<T>& v) { return sqrt(length_sq(v))
 template<class T> inline tvec2<T> normalize(const tvec2<T>& v) { return v / length(v); }
 template<class T> inline tvec3<T> normalize(const tvec3<T>& v) { return v / length(v); }
 template<class T> inline tvec4<T> normalize(const tvec4<T>& v) { return v / length(v); }
-template<class T> inline tquat<T> normalize(const tquat<T>& v) { return (tquat<T>&)normalize((const tvec4<T>&)v); }
+template<class T> inline tquat<T> normalize(const tquat<T>& v)
+{
+    auto r = normalize((const tvec4<T>&)v);
+    return (const tquat<T>&)r;
+}
 template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
 {
     return{

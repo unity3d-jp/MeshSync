@@ -49,6 +49,17 @@ def msb_sync(targets):
              (obj.type == 'LAMP' and scene.meshsync_sync_lights) or\
              (obj.dupli_group != None):
             msb_add_object(ctx, obj)
+
+    # materials
+    i = 0
+    for mat in bpy.data.materials:
+        dst = ctx.addMaterial()
+        dst.name = mat.name
+        dst.id = i
+        i += 1
+        c = mat.diffuse_color
+        dst.color = [c[0], c[1], c[2], 1.0]
+
     ctx.send()
     msb_added.clear()
     end_time = time()
@@ -98,8 +109,6 @@ def msb_get_path(obj):
 
 def msb_extract_transform(dst, obj):
     t = obj.location
-    if obj.parent != None:
-        t = t + obj.matrix_parent_inverse.translation
     s = obj.scale
     dst.position = [t.x, t.y, t.z]
     dst.scale = [s.x, s.y, s.z]
@@ -129,6 +138,8 @@ def msb_extract_transform(dst, obj):
     elif rmode == 'ZYX':
         r = obj.rotation_euler
         dst.rotation_zyx = [r.x, r.y, r.z]
+    if obj.parent != None:
+        dst.applyMatrix(msb_mat4x4_to_array(obj.matrix_parent_inverse))
 
 
 def msb_add_mesh(ctx, obj):
@@ -159,8 +170,12 @@ def msb_add_mesh(ctx, obj):
                     dst.mirror_z = mod.use_z
                     dst.mirror_merge = mod.use_mirror_merge
 
+        material_ids = []
+        for mat in data.materials:
+            material_ids.append(msb_get_material_id(mat))
+
         ctx.getPoints(dst, data.vertices)
-        ctx.getPolygons(dst, data.polygons)
+        ctx.getPolygons(dst, data.polygons, material_ids)
         #for vtx in data.vertices:
         #    p = vtx.co
         #    dst.addVertex([p.x, p.y, p.z])
@@ -263,6 +278,23 @@ def msb_is_particle_system(obj):
         if mod.type == 'PARTICLE_SYSTEM':
             return True
     return False
+
+
+def msb_get_material_id(material):
+    i = 0
+    for mat in bpy.data.materials:
+        if material == mat:
+            return i
+        i += 1
+    return 0
+
+
+def msb_mat4x4_to_array(m):
+    return [
+        m[0][0], m[1][0], m[2][0], m[3][0],
+        m[0][1], m[1][1], m[2][1], m[3][1],
+        m[0][2], m[1][2], m[2][2], m[3][2],
+        m[0][3], m[1][3], m[2][3], m[3][3]]
 
 
 def MeshSync_InitProperties():

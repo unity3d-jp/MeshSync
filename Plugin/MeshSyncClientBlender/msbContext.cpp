@@ -87,13 +87,13 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
-void msbContext::getPolygons(ms::MeshPtr mesh, py::object polygons)
+void msbContext::getPolygons(ms::MeshPtr mesh, py::object polygons, const py::list material_ids_)
 {
     static py::str
         attr_material_index = "material_index",
         attr_vertices = "vertices";
 
-    auto task = [mesh, polygons]() {
+    auto task = [mesh, polygons, material_ids_]() {
         auto npolygons = py::len(polygons);
         auto& dst_counts = mesh->counts;
         auto& dst_materialIDs = mesh->materialIDs;
@@ -102,13 +102,19 @@ void msbContext::getPolygons(ms::MeshPtr mesh, py::object polygons)
         dst_materialIDs.resize(npolygons);
         dst_indices.reserve(npolygons * 4);
 
+        std::vector<int> material_ids;
+        for (auto mit = py::iter(material_ids_); mit != py::iterator::sentinel(); ++mit)
+            material_ids.push_back(mit->cast<int>());
+        if (material_ids.empty())
+            material_ids.push_back(0);
+
         size_t pi = 0, vi = 0;
         for (auto pit = py::iter(polygons); pit != py::iterator::sentinel(); ++pit, ++pi) {
             auto& polygon = *pit;
             auto& vertices = py::getattr(polygon, attr_vertices);
             auto count = py::len(vertices);
             dst_counts[pi] = (int)count;
-            dst_materialIDs[pi] = py::getattr(polygon, attr_material_index).cast<int>();
+            dst_materialIDs[pi] = material_ids[py::getattr(polygon, attr_material_index).cast<int>()];
             dst_indices.resize(dst_indices.size() + count);
             for (auto vit = py::iter(vertices); vit != py::iterator::sentinel(); ++vit) {
                 dst_indices[vi++] = vit->cast<int>();

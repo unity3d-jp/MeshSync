@@ -32,7 +32,7 @@ public:
     ms::MaterialPtr     addMaterial();
     void                addDeleted(const std::string& path);
 
-    void getPolygons(ms::MeshPtr mesh, py::object polygons);
+    void getPolygons(ms::MeshPtr mesh, py::object polygons, py::list material_ids);
     void getPoints(ms::MeshPtr mesh, py::object vertices);
     void getNormals(ms::MeshPtr mesh, py::object loops);
     void getUVs(ms::MeshPtr mesh, py::object uvs);
