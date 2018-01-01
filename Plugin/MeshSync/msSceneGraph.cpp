@@ -463,11 +463,6 @@ void Material::deserialize(std::istream& is)
 
 
 
-float4x4 TRS::toMatrix() const
-{
-    return ms::transform(position, rotation, scale);
-}
-
 struct TransformDataFlags
 {
     uint32_t has_animation : 1;
@@ -482,7 +477,9 @@ uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += sizeof(TransformDataFlags);
-    ret += ssize(transform);
+    ret += ssize(position);
+    ret += ssize(rotation);
+    ret += ssize(scale);
     ret += ssize(visible);
     ret += ssize(reference);
     if (animation) { ret += ssize(animation); }
@@ -495,7 +492,9 @@ void Transform::serialize(std::ostream& os) const
     TransformDataFlags flags = {};
     flags.has_animation = animation ? 1 : 0;
     write(os, flags);
-    write(os, transform);
+    write(os, position);
+    write(os, rotation);
+    write(os, scale);
     write(os, visible);
     write(os, reference);
     if (flags.has_animation) { write(os, animation); }
@@ -506,7 +505,9 @@ void Transform::deserialize(std::istream& is)
 
     TransformDataFlags flags;
     read(is, flags);
-    read(is, transform);
+    read(is, position);
+    read(is, rotation);
+    read(is, scale);
     read(is, visible);
     read(is, reference);
     if(flags.has_animation) {
@@ -518,11 +519,19 @@ void Transform::deserialize(std::istream& is)
 void Transform::clear()
 {
     super::clear();
-    transform = TRS();
+    position = float3::zero();
+    rotation = quatf::identity();
+    scale = float3::one();
     visible = true;
     reference.clear();
     animation.reset();
 }
+
+float4x4 Transform::toMatrix() const
+{
+    return ms::transform(position, rotation, scale);
+}
+
 
 void Transform::createAnimation()
 {
@@ -536,8 +545,8 @@ void Transform::convertHandedness(bool x, bool yz)
     if (!x && !yz) return;
 
     if (x) {
-        transform.position = swap_handedness(transform.position);
-        transform.rotation = swap_handedness(transform.rotation);
+        position = swap_handedness(position);
+        rotation = swap_handedness(rotation);
         if (animation) {
             auto& anim = static_cast<TransformAnimation&>(*animation);
             for (auto& tvp : anim.translation)
@@ -547,9 +556,9 @@ void Transform::convertHandedness(bool x, bool yz)
         }
     }
     if (yz) {
-        transform.position = swap_yz(transform.position);
-        transform.rotation = swap_yz(transform.rotation);
-        transform.scale = swap_yz(transform.scale);
+        position = swap_yz(position);
+        rotation = swap_yz(rotation);
+        scale = swap_yz(scale);
         if (animation) {
             auto& anim = static_cast<TransformAnimation&>(*animation);
             for (auto& tvp : anim.translation)
@@ -562,9 +571,9 @@ void Transform::convertHandedness(bool x, bool yz)
     }
 }
 
-void Transform::applyScaleFactor(float scale)
+void Transform::applyScaleFactor(float v)
 {
-    transform.position *= scale;
+    position *= v;
 }
 
 void Transform::addTranslationKey(float t, const float3& v)
@@ -690,11 +699,11 @@ void Camera::createAnimation()
     }
 }
 
-void Camera::applyScaleFactor(float scale)
+void Camera::applyScaleFactor(float v)
 {
-    super::applyScaleFactor(scale);
-    near_plane *= scale;
-    far_plane *= scale;
+    super::applyScaleFactor(v);
+    near_plane *= v;
+    far_plane *= v;
 }
 
 void Camera::addFovKey(float t, float v)
@@ -831,10 +840,10 @@ void Light::createAnimation()
     }
 }
 
-void Light::applyScaleFactor(float scale)
+void Light::applyScaleFactor(float v)
 {
-    super::applyScaleFactor(scale);
-    range *= scale;
+    super::applyScaleFactor(v);
+    range *= v;
 }
 
 void Light::addColorKey(float t, const float4& v)
@@ -1053,11 +1062,9 @@ void Mesh::deserialize(std::istream& is)
 
 void Mesh::clear()
 {
-    id = 0;
-    path.clear();
-    flags = { 0 };
+    super::clear();
 
-    transform = TRS();
+    flags = { 0 };
     refine_settings = MeshRefineSettings();
 
 #define Body(A) vclear(A);
@@ -1097,12 +1104,12 @@ void Mesh::convertHandedness(bool x, bool yz)
     }
 }
 
-void Mesh::applyScaleFactor(float scale)
+void Mesh::applyScaleFactor(float v)
 {
-    super::applyScaleFactor(scale);
-    mu::Scale(points.data(), scale, points.size());
+    super::applyScaleFactor(v);
+    mu::Scale(points.data(), v, points.size());
     for (auto& bone : bones) {
-        (float3&)bone->bindpose[3] *= scale;
+        (float3&)bone->bindpose[3] *= v;
     }
 }
 

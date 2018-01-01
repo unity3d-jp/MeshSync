@@ -41,16 +41,6 @@ public:
 };
 
 
-struct TRS
-{
-    float3   position = float3::zero();
-    quatf    rotation = quatf::identity();
-    float3   rotation_eularZXY = float3::zero();
-    float3   scale = float3::one();
-
-    float4x4 toMatrix() const;
-};
-
 // time-value pair
 template<class T>
 struct TVP
@@ -91,7 +81,10 @@ class Transform : public Entity
 {
 using super = Entity;
 public:
-    TRS transform;
+    float3   position = float3::zero();
+    quatf    rotation = quatf::identity();
+    float3   scale = float3::one();
+
     bool visible = true;
     std::string reference;
     AnimationPtr animation;
@@ -102,6 +95,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+
+    float4x4 toMatrix() const;
 
     virtual void createAnimation();
     virtual void convertHandedness(bool x, bool yz);

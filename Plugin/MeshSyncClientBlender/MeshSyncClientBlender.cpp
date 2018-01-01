@@ -45,35 +45,35 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](const ms::Transform& self) { return self.path; },
                 [](ms::Transform& self, const std::string& v) { self.path = v; })
             BindProperty(position,
-                [](const ms::Transform& self) { return to_a(self.transform.position); },
-                [](ms::Transform& self, const float3a& v) { self.transform.position = to_float3(v); })
+                [](const ms::Transform& self) { return to_a(self.position); },
+                [](ms::Transform& self, const float3a& v) { self.position = to_float3(v); })
             BindProperty(scale,
-                [](const ms::Transform& self) { return to_a(self.transform.scale); },
-                [](ms::Transform& self, const float3a& v) { self.transform.scale = to_float3(v); })
+                [](const ms::Transform& self) { return to_a(self.scale); },
+                [](ms::Transform& self, const float3a& v) { self.scale = to_float3(v); })
             BindProperty(rotation_quaternion,
-                [](const ms::Transform& self) { return to_a(self.transform.rotation); },
-                [](ms::Transform& self, const float4a& v) { self.transform.rotation = to_quatf(v); })
+                [](const ms::Transform& self) { return to_a(self.rotation); },
+                [](ms::Transform& self, const float4a& v) { self.rotation = to_quatf(v); })
             BindProperty(rotation_axis_angle,
                 [](const ms::Transform& self) { return float4a{}; },
-                [](ms::Transform& self, const float4a& v) { self.transform.rotation = rotate(normalize(float3{v[1], v[2], v[3]}), v[0]); })
+                [](ms::Transform& self, const float4a& v) { self.rotation = rotate(normalize(float3{v[1], v[2], v[3]}), v[0]); })
             BindProperty(rotation_xyz,
                 [](const ms::Transform& self) { return float3a{}; },
-                [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateXYZ(to_float3(v)); })
+                [](ms::Transform& self, const float3a& v) { self.rotation = rotateXYZ(to_float3(v)); })
             BindProperty(rotation_xzy,
                 [](const ms::Transform& self) { return float3a{}; },
-                [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateXZY(to_float3(v)); })
+                [](ms::Transform& self, const float3a& v) { self.rotation = rotateXZY(to_float3(v)); })
             BindProperty(rotation_yxz,
                 [](const ms::Transform& self) { return float3a{}; },
-                [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateYXZ(to_float3(v)); })
+                [](ms::Transform& self, const float3a& v) { self.rotation = rotateYXZ(to_float3(v)); })
             BindProperty(rotation_yzx,
                 [](const ms::Transform& self) { return float3a{}; },
-                [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateYZX(to_float3(v)); })
+                [](ms::Transform& self, const float3a& v) { self.rotation = rotateYZX(to_float3(v)); })
             BindProperty(rotation_zxy,
                 [](const ms::Transform& self) { return float3a{}; },
-                [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateZXY(to_float3(v)); })
+                [](ms::Transform& self, const float3a& v) { self.rotation = rotateZXY(to_float3(v)); })
             BindProperty(rotation_zyx,
                 [](const ms::Transform& self) { return float3a{}; },
-                [](ms::Transform& self, const float3a& v) { self.transform.rotation = rotateZYX(to_float3(v)); })
+                [](ms::Transform& self, const float3a& v) { self.rotation = rotateZYX(to_float3(v)); })
             BindMethod2(addTranslationKey,
                 [](ms::Transform& self, float t, const float3a& v) { self.addTranslationKey(t, to_float3(v)); })
             BindMethod2(addRotationKey,

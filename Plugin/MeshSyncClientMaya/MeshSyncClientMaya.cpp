@@ -549,15 +549,15 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     pos = mtrans.getTranslation(MSpace::kTransform, &stat);
     stat = mtrans.getRotation(rot, MSpace::kTransform);
     stat = mtrans.getScale(scale);
-    dst.transform.position.assign(&pos[0]);
-    dst.transform.rotation.assign(&rot[0]);
-    dst.transform.scale.assign(scale);
+    dst.position.assign(&pos[0]);
+    dst.rotation.assign(&rot[0]);
+    dst.scale.assign(scale);
 
     // handle joint's segment scale compensate
     if (src.hasFn(MFn::kJoint)) {
         mu::float3 inverse_scale;
         if (JointGetSegmentScaleCompensate(src) && JointGetInverseScale(src, inverse_scale)) {
-            dst.transform.scale /= inverse_scale;
+            dst.scale /= inverse_scale;
         }
     }
 
@@ -598,8 +598,8 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             // build time-sampled animation data
             int sps = m_animation_samples_per_seconds;
             ConvertAnimationBool(anim.visible, true, pvis, sps);
-            ConvertAnimationFloat3(anim.translation, dst.transform.position, ptx, pty, ptz, sps);
-            ConvertAnimationFloat3(anim.scale, dst.transform.scale, psx, psy, psz, sps);
+            ConvertAnimationFloat3(anim.translation, dst.position, ptx, pty, ptz, sps);
+            ConvertAnimationFloat3(anim.scale, dst.scale, psx, psy, psz, sps);
             {
                 // build rotation animation data (eular angles) and convert to quaternion
                 RawVector<ms::TVP<mu::float3>> eular;
@@ -641,7 +641,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
     if (!extractTransformData(dst, src)) { return false; }
-    dst.transform.rotation = mu::flipY(dst.transform.rotation);
+    dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kCamera)) {
@@ -754,7 +754,7 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 {
     if (!extractTransformData(dst, src)) { return false; }
-    dst.transform.rotation = mu::flipY(dst.transform.rotation);
+    dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
     if (shape.hasFn(MFn::kSpotLight)) {
@@ -1008,8 +1008,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     if(!fn_skin.object().isNull()) {
         // request bake TRS
         dst.refine_settings.flags.apply_local2world = 1;
-        dst.refine_settings.local2world = dst.transform.toMatrix();
-        dst.transform = ms::TRS();
+        dst.refine_settings.local2world = dst.toMatrix();
 
         // get bone data
         MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix");

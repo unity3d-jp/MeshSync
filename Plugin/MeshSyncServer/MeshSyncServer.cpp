@@ -257,13 +257,29 @@ msAPI void msTransformSetPath(ms::Transform *_this, const char *v)
 {
     _this->path = v;
 }
-msAPI void msTransformGetTRS(ms::Transform *_this, ms::TRS *dst)
+msAPI mu::float3 msTransformGetPosition(ms::Transform *_this)
 {
-    *dst = _this->transform;
+    return _this->position;
 }
-msAPI void msTransformSetTRS(ms::Transform *_this, const ms::TRS *v)
+msAPI void msTransformSetPosition(ms::Transform *_this, mu::float3 v)
 {
-    _this->transform = *v;
+    _this->position = v;
+}
+msAPI mu::quatf msTransformGetRotation(ms::Transform *_this)
+{
+    return _this->rotation;
+}
+msAPI void msTransformSetRotation(ms::Transform *_this, mu::quatf v)
+{
+    _this->rotation = v;
+}
+msAPI mu::float3 msTransformGetScale(ms::Transform *_this)
+{
+    return _this->scale;
+}
+msAPI void msTransformSetScale(ms::Transform *_this, mu::float3 v)
+{
+    _this->scale = v;
 }
 msAPI bool msTransformGetVisible(ms::Transform *_this)
 {

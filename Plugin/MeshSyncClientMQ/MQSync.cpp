@@ -224,7 +224,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             bone_manager.EnumBoneID(bone_ids);
             for (auto bid : bone_ids) {
                 auto& bone = m_bones[bid];
-                auto& trs = bone.transform->transform;
                 bone.id = bid;
 
                 bone_manager.GetName(bid, name);
@@ -257,12 +256,12 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
                 // setup transform
                 {
-                    auto& trs = bone.transform->transform;
-                    trs.rotation = bone.world_rot;
-                    trs.position = bone.world_pos;
+                    auto& trans = *bone.transform;
+                    trans.rotation = bone.world_rot;
+                    trans.position = bone.world_pos;
                     auto it = m_bones.find(bone.parent);
                     if (it != m_bones.end())
-                        trs.position -= it->second.world_pos;
+                        trans.position -= it->second.world_pos;
                 }
             }
 
@@ -433,16 +432,16 @@ void MQSync::sendCamera(MQDocument doc, bool force)
             m_camera->near_plane *= m_scale_factor;
             m_camera->far_plane *= m_scale_factor;
         }
-        auto prev_pos = m_camera->transform.position;
-        auto prev_rot = m_camera->transform.rotation;
+        auto prev_pos = m_camera->position;
+        auto prev_rot = m_camera->rotation;
         auto prev_fov = m_camera->fov;
 
         m_camera->path = m_host_camera_path;
         extractCameraData(doc, scene, *m_camera);
 
         if (!force &&
-            m_camera->transform.position == prev_pos &&
-            m_camera->transform.rotation == prev_rot &&
+            m_camera->position == prev_pos &&
+            m_camera->rotation == prev_rot &&
             m_camera->fov == prev_fov)
         {
             // no need to send
@@ -636,9 +635,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         }
         else {
             dst.flags.apply_trs = 1;
-            dst.transform.position = (const float3&)obj->GetTranslation();
-            dst.transform.rotation = ToQuaternion(obj->GetRotation());
-            dst.transform.scale = (const float3&)obj->GetScaling();
+            dst.position = (const float3&)obj->GetTranslation();
+            dst.rotation = ToQuaternion(obj->GetRotation());
+            dst.scale = (const float3&)obj->GetScaling();
             dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
         }
     }
@@ -726,10 +725,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
-    dst.transform.position = (const float3&)scene->GetCameraPosition();
+    dst.position = (const float3&)scene->GetCameraPosition();
     auto eular = ToEular(scene->GetCameraAngle(), true);
-    dst.transform.rotation_eularZXY = eular;
-    dst.transform.rotation = rotateZXY(eular);
+    dst.rotation = rotateZXY(eular);
 
     dst.fov = scene->GetFOV() * mu::Rad2Deg;
 #if MQPLUGIN_VERSION >= 0x450

@@ -386,7 +386,8 @@ namespace UTJ.MeshSync
 
         void UpdateMesh(MeshData data)
         {
-            UpdateTransform(data.transform);
+            var trans = UpdateTransform(data.transform);
+            if (trans == null) { return; }
 
             var data_trans = data.transform;
             var data_id = data_trans.id;
@@ -405,7 +406,7 @@ namespace UTJ.MeshSync
             var go = target.gameObject;
 
             bool activeInHierarchy = go.activeInHierarchy;
-            if (!data.flags.hasPoints) { return; }
+            if (!activeInHierarchy && !data.flags.hasPoints) { return; }
 
 
             // allocate material list
@@ -425,8 +426,15 @@ namespace UTJ.MeshSync
                 }
 
                 var split = data.GetSplit(si);
-                rec.editMesh = CreateEditedMesh(data, split);
-                rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                if(split.numPoints == 0 || split.numIndices == 0)
+                {
+                    rec.editMesh = null;
+                }
+                else
+                {
+                    rec.editMesh = CreateEditedMesh(data, split);
+                    rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                }
 
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
@@ -451,7 +459,7 @@ namespace UTJ.MeshSync
                                     go = bones[bi].gameObject,
                                     recved = true,
                                 };
-                                if (!m_clientObjects.ContainsKey(paths[bi]))
+                                if (m_clientObjects.ContainsKey(paths[bi]))
                                     m_clientObjects[paths[bi]] = newrec;
                                 else
                                     m_clientObjects.Add(paths[bi], newrec);
@@ -561,10 +569,12 @@ namespace UTJ.MeshSync
 
         Transform UpdateTransform(TransformData data)
         {
-            Transform trans = null;
-            Record rec = null;
             var path = data.path;
             int data_id = data.id;
+            if(path.Length == 0) { return null; }
+
+            Transform trans = null;
+            Record rec = null;
             if (data_id != 0)
             {
                 if (m_hostObjects.TryGetValue(data_id, out rec))
@@ -612,10 +622,9 @@ namespace UTJ.MeshSync
 #endif
 
             // import TRS
-            var trs = data.trs;
-            trans.localPosition = trs.position;
-            trans.localRotation = trs.rotation;
-            trans.localScale = trs.scale;
+            trans.localPosition = data.position;
+            trans.localRotation = data.rotation;
+            trans.localScale = data.scale;
 
             if (!data.visible)
             {
@@ -945,17 +954,11 @@ namespace UTJ.MeshSync
             if (ret)
             {
                 var dst_trans = dst.transform;
-                dst_trans.id = GetObjectlID(renderer.gameObject);
                 var trans = renderer.GetComponent<Transform>();
-                if (mes.flags.getTransform)
-                {
-                    var trs = default(TRS);
-                    trs.position = trans.localPosition;
-                    trs.rotation = trans.localRotation;
-                    trs.rotation_eularZXY = trans.localEulerAngles;
-                    trs.scale = trans.localScale;
-                    dst_trans.trs = trs;
-                }
+                dst_trans.id = GetObjectlID(renderer.gameObject);
+                dst_trans.position = trans.localPosition;
+                dst_trans.rotation = trans.localRotation;
+                dst_trans.scale = trans.localScale;
                 dst.local2world = trans.localToWorldMatrix;
                 dst.world2local = trans.worldToLocalMatrix;
 

@@ -226,14 +226,6 @@ namespace UTJ.MeshSync
             }
         };
 
-        public struct TRS
-        {
-            public Vector3 position;
-            public Quaternion rotation;
-            public Vector3 rotation_eularZXY;
-            public Vector3 scale;
-        };
-
         public struct MaterialData
         {
             internal IntPtr _this;
@@ -929,8 +921,12 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTransformSetIndex(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetPath(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetPath(IntPtr _this, string v);
-            [DllImport("MeshSyncServer")] static extern void msTransformGetTRS(IntPtr _this, ref TRS dst);
-            [DllImport("MeshSyncServer")] static extern void msTransformSetTRS(IntPtr _this, ref TRS v);
+            [DllImport("MeshSyncServer")] static extern Vector3 msTransformGetPosition(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetPosition(IntPtr _this, Vector3 v);
+            [DllImport("MeshSyncServer")] static extern Quaternion msTransformGetRotation(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetRotation(IntPtr _this, Quaternion v);
+            [DllImport("MeshSyncServer")] static extern Vector3 msTransformGetScale(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetScale(IntPtr _this, Vector3 v);
             [DllImport("MeshSyncServer")] static extern byte msTransformGetVisible(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetVisible(IntPtr _this, byte v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
@@ -964,18 +960,20 @@ namespace UTJ.MeshSync
                 get { return S(msTransformGetPath(_this)); }
                 set { msTransformSetPath(_this, value); }
             }
-            public TRS trs
+            public Vector3 position
             {
-                get
-                {
-                    var ret = default(TRS);
-                    msTransformGetTRS(_this, ref ret);
-                    return ret;
-                }
-                set
-                {
-                    msTransformSetTRS(_this, ref value);
-                }
+                get { return msTransformGetPosition(_this); }
+                set { msTransformSetPosition(_this, value); }
+            }
+            public Quaternion rotation
+            {
+                get { return msTransformGetRotation(_this); }
+                set { msTransformSetRotation(_this, value); }
+            }
+            public Vector3 scale
+            {
+                get { return msTransformGetScale(_this); }
+                set { msTransformSetScale(_this, value); }
             }
             public bool visible
             {

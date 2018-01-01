@@ -380,8 +380,8 @@ void msxmContext::send(bool force)
             scene.cameras.emplace_back(c);
         }
         auto& cam = *scene.cameras.back();
-        cam.transform.position = m_camera_pos;
-        cam.transform.rotation = m_camera_rot;
+        cam.position = m_camera_pos;
+        cam.rotation = m_camera_rot;
         cam.fov = m_camera_fov;
         cam.near_plane = m_camera_near;
         cam.far_plane = m_camera_far;

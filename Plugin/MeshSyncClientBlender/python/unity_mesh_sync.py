@@ -44,7 +44,7 @@ def msb_sync(targets):
     for obj in targets:
         if not (obj.name in bpy.data.objects):
             ctx.addDeleted(msb_get_path(obj))
-        elif (obj.type == 'MESH' and scene.meshsync_sync_meshes) or\
+        elif (obj.type == 'MESH' and scene.meshsync_sync_meshes and not msb_is_particle_system(obj)) or\
              (obj.type == 'CAMERA' and scene.meshsync_sync_cameras) or\
              (obj.type == 'LAMP' and scene.meshsync_sync_lights) or\
              (obj.dupli_group != None):
@@ -70,8 +70,10 @@ def msb_add_object(ctx, obj):
         ret = msb_add_light(ctx, obj)
     else:
         ret = msb_add_transform(ctx, obj)
-    #ret.index = obj.pass_index
-    msb_added.add(obj)
+
+    if ret != None:
+        msb_added.add(obj)
+        #ret.index = obj.pass_index
     return ret
 
 
@@ -254,6 +256,13 @@ def msb_add_bone(ctx, obj):
     msb_extract_transform(dst, obj)
     msb_added.add(obj)
     return dst
+
+
+def msb_is_particle_system(obj):
+    for mod in obj.modifiers:
+        if mod.type == 'PARTICLE_SYSTEM':
+            return True
+    return False
 
 
 def MeshSync_InitProperties():
