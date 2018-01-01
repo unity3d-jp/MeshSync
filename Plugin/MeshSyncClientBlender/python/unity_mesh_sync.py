@@ -70,6 +70,7 @@ def msb_add_object(ctx, obj):
         ret = msb_add_light(ctx, obj)
     else:
         ret = msb_add_transform(ctx, obj)
+    #ret.index = obj.pass_index
     msb_added.add(obj)
     return ret
 
@@ -129,8 +130,12 @@ def msb_extract_transform(dst, obj):
 
 
 def msb_add_mesh(ctx, obj):
-    dst = ctx.addMesh(msb_get_path(obj))
+    path = msb_get_path(obj)
+    dst = ctx.addMesh(path)
     msb_extract_transform(dst, obj)
+    if obj.dupli_group != None:
+        for c in obj.dupli_group.objects:
+            cdst = msb_add_reference_nodes(ctx, path, c)
 
     if obj.hide:
         dst.visible = False
@@ -180,22 +185,26 @@ def msb_add_mesh(ctx, obj):
                 dst.addColor([c.r, c.g, c.b, c.a])
 
 
-        if scene.meshsync_sync_bones and len(obj.vertex_groups) > 0:
-            arm = bpy.data.objects['Armature']
-            group_names = [g.name for g in obj.vertex_groups]
-            for bone in arm.pose.bones:
-                if bone.name not in group_names:
-                    continue
-                msb_add_object(ctx, bone)
-                gidx = obj.vertex_groups[bone.name].index
-                bone_verts = [v for v in data.vertices if gidx in [g.group for g in v.groups]]
-                weights = [0.0] * len(data.vertices)
-                for v in bone_verts:
-                    weights[v.index] = v.groups[gidx].weight
+        if scene.meshsync_sync_bones > 0:
+            arm = None
+            for mod in obj.modifiers:
+                if mod.type == 'ARMATURE':
+                    arm = mod.object
+            if arm != None:
+                group_names = [g.name for g in obj.vertex_groups]
+                for bone in arm.pose.bones:
+                    if bone.name not in group_names:
+                        continue
+                    msb_add_bone(ctx, bone)
+                    gidx = obj.vertex_groups[bone.name].index
+                    bone_verts = [v for v in data.vertices if gidx in [g.group for g in v.groups]]
+                    weights = [0.0] * len(data.vertices)
+                    for v in bone_verts:
+                        weights[v.index] = v.groups[gidx].weight
 
-                bdst = dst.addBone(msb_get_path(bone))
-                for w in weights:
-                    bdst.addWeight(w)
+                    bdst = dst.addBone(msb_get_path(bone))
+                    for w in weights:
+                        bdst.addWeight(w)
     return dst
 
 
@@ -233,6 +242,17 @@ def msb_add_reference_nodes(ctx, base_path, child, depth = 0):
             msb_add_reference_nodes(ctx, base_path + refpath, c, depth + 1)
     for c in child.children:
         msb_add_reference_nodes(ctx, base_path, c, depth + 1)
+    return dst
+
+
+def msb_add_bone(ctx, obj):
+    if obj in msb_added:
+        return None
+    msb_construct_tree(ctx, obj.parent)
+    
+    dst = ctx.addTransform(msb_get_path(obj))
+    msb_extract_transform(dst, obj)
+    msb_added.add(obj)
     return dst
 
 

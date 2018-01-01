@@ -23,6 +23,7 @@ msbContext::~msbContext()
 
 msbSettings& msbContext::getSettings() { return m_settings; }
 const msbSettings& msbContext::getSettings() const { return m_settings; }
+ms::ScenePtr msbContext::getCurrentScene() const { return m_scene; }
 
 template<class T>
 std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
@@ -45,7 +46,7 @@ ms::TransformPtr msbContext::addTransform(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
     ret->path = path;
-    m_scene.transforms.push_back(ret);
+    m_scene->transforms.push_back(ret);
     return ret;
 }
 
@@ -53,7 +54,7 @@ ms::CameraPtr msbContext::addCamera(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_camera_cache);
     ret->path = path;
-    m_scene.cameras.push_back(ret);
+    m_scene->cameras.push_back(ret);
     return ret;
 }
 
@@ -61,7 +62,7 @@ ms::LightPtr msbContext::addLight(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_light_cache);
     ret->path = path;
-    m_scene.lights.push_back(ret);
+    m_scene->lights.push_back(ret);
     return ret;
 }
 
@@ -69,7 +70,14 @@ ms::MeshPtr msbContext::addMesh(const std::string& path)
 {
     auto ret = getCacheOrCreate(m_mesh_cache);
     ret->path = path;
-    m_meshes.push_back(ret);
+    m_scene->meshes.push_back(ret);
+    return ret;
+}
+
+ms::MaterialPtr msbContext::addMaterial()
+{
+    auto ret = ms::MaterialPtr(new ms::Material());
+    m_scene->materials.push_back(ret);
     return ret;
 }
 
@@ -244,14 +252,12 @@ void msbContext::send()
     for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
     for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }
     for (auto& v : m_message.scene.lights) { m_transform_cache.push_back(v); }
-    for (auto& v : m_mesh_send) { m_mesh_cache.push_back(v); }
+    for (auto& v : m_message.scene.meshes) { m_mesh_cache.push_back(v); }
 
     // setup send data
-    m_message.scene = m_scene;
-    m_scene.clear();
-
-    m_mesh_send = m_meshes;
-    m_meshes.clear();
+    std::swap(m_scene->meshes, m_mesh_send);
+    m_message.scene = *m_scene;
+    m_scene->clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {
@@ -295,6 +301,7 @@ void msbContext::send()
             set.scene.meshes = { v };
             client.send(set);
         });
+        m_mesh_send.clear();
 
         // notify scene end
         {

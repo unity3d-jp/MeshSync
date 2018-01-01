@@ -59,7 +59,7 @@ struct TVP
     T value;
 };
 
-class Animation
+class Animation : public std::enable_shared_from_this<Animation>
 {
 public:
     virtual ~Animation();
@@ -72,8 +72,10 @@ public:
 };
 using AnimationPtr = std::shared_ptr<Animation>;
 
-struct Material
+
+class Material : public std::enable_shared_from_this<Material>
 {
+public:
     int id = 0;
     std::string name;
     float4 color = float4::one();
@@ -429,7 +431,7 @@ struct SceneSettings
     void deserialize(std::istream& is);
 };
 
-struct Scene
+struct Scene : public std::enable_shared_from_this<Scene>
 {
 public:
     SceneSettings settings;

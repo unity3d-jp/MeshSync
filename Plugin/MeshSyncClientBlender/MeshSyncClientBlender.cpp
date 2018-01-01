@@ -38,6 +38,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
         py::class_<ms::Transform, ms::TransformPtr>(mod, "Transform")
             BindField(visible)
             BindField(reference)
+            BindProperty(index,
+                [](const ms::Transform& self) { return self.index; },
+                [](ms::Transform& self, int v) { self.index = v; })
             BindProperty(path,
                 [](const ms::Transform& self) { return self.path; },
                 [](ms::Transform& self, const std::string& v) { self.path = v; })
@@ -170,6 +173,26 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             ;
     }
     {
+        using self_t = ms::Material;
+        py::class_<ms::Material, ms::MaterialPtr>(mod, "Material")
+            BindField(id)
+            BindField(name)
+            BindProperty(color,
+                [](const ms::Material& self) { return to_a(self.color); },
+                [](ms::Material& self, const float4a& v) { self.color = to_float4(v); })
+            ;
+    }
+    {
+        using self_t = ms::Scene;
+        py::class_<ms::Scene, ms::ScenePtr>(mod, "Scene")
+            BindField(transforms)
+            BindField(cameras)
+            BindField(lights)
+            BindField(meshes)
+            BindField(materials)
+            ;
+    }
+    {
         using self_t = msbContext;
         py::class_<msbContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
@@ -177,6 +200,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindMethod(addCamera)
             BindMethod(addLight)
             BindMethod(addMesh)
+            BindMethod(addMaterial)
             BindMethod(addDeleted)
             BindMethod(getPolygons)
             BindMethod(getPoints)
@@ -200,6 +224,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(handedness,
                 [](const msbContext& self) { return (int)self.getSettings().scene_settings.handedness; },
                 [](msbContext& self, int v) { self.getSettings().scene_settings.handedness = (ms::Handedness)v; })
+            BindProperty(current_scene,
+                [](const msbContext& self) { return self.getCurrentScene(); },
+                [](msbContext& self, ms::ScenePtr v) { self.getCurrentScene() = v; })
             ;
     }
 #undef BindMethod

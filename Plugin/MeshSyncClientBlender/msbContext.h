@@ -21,12 +21,15 @@ public:
     msbContext();
     ~msbContext();
 
-    msbSettings&       getSettings();
-    const msbSettings& getSettings() const;
+    msbSettings&        getSettings();
+    const msbSettings&  getSettings() const;
+    ms::ScenePtr        getCurrentScene() const;
+
     ms::TransformPtr    addTransform(const std::string& path);
     ms::CameraPtr       addCamera(const std::string& path);
     ms::LightPtr        addLight(const std::string& path);
     ms::MeshPtr         addMesh(const std::string& path);
+    ms::MaterialPtr     addMaterial();
     void                addDeleted(const std::string& path);
 
     void getPolygons(ms::MeshPtr mesh, py::object polygons);
@@ -46,9 +49,9 @@ private:
     std::vector<ms::TransformPtr> m_transform_cache;
     std::vector<ms::CameraPtr> m_camera_cache;
     std::vector<ms::LightPtr> m_light_cache;
-    std::vector<ms::MeshPtr> m_mesh_cache, m_meshes, m_mesh_send;
+    std::vector<ms::MeshPtr> m_mesh_cache, m_mesh_send;
     std::vector<std::string> m_deleted;
-    ms::Scene m_scene;
+    ms::ScenePtr m_scene = ms::ScenePtr(new ms::Scene());
 
     ms::SetMessage m_message;
     std::future<void> m_send_future;
