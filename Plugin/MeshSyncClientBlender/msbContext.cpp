@@ -79,6 +79,38 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
+void msbContext::getPolygons(ms::MeshPtr mesh, py::object polygons)
+{
+    static py::str
+        attr_material_index = "material_index",
+        attr_vertices = "vertices";
+
+    auto task = [mesh, polygons]() {
+        auto npolygons = py::len(polygons);
+        auto& dst_counts = mesh->counts;
+        auto& dst_materialIDs = mesh->materialIDs;
+        auto& dst_indices  = mesh->indices;
+        dst_counts.resize(npolygons);
+        dst_materialIDs.resize(npolygons);
+        dst_indices.reserve(npolygons * 4);
+
+        size_t pi = 0, vi = 0;
+        for (auto pit = py::iter(polygons); pit != py::iterator::sentinel(); ++pit, ++pi) {
+            auto& polygon = *pit;
+            auto& vertices = py::getattr(polygon, attr_vertices);
+            auto count = py::len(vertices);
+            dst_counts[pi] = (int)count;
+            dst_materialIDs[pi] = py::getattr(polygon, attr_material_index).cast<int>();
+            dst_indices.resize(dst_indices.size() + count);
+            for (auto vit = py::iter(vertices); vit != py::iterator::sentinel(); ++vit) {
+                dst_indices[vi++] = vit->cast<int>();
+            }
+        }
+    };
+    task();
+    //m_get_tasks.push_back(task);
+}
+
 void msbContext::getPoints(ms::MeshPtr mesh, py::object vertices)
 {
     static py::str

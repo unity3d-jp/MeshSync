@@ -29,6 +29,7 @@ public:
     ms::MeshPtr         addMesh(const std::string& path);
     void                addDeleted(const std::string& path);
 
+    void getPolygons(ms::MeshPtr mesh, py::object polygons);
     void getPoints(ms::MeshPtr mesh, py::object vertices);
     void getNormals(ms::MeshPtr mesh, py::object loops);
     void getUVs(ms::MeshPtr mesh, py::object uvs);
