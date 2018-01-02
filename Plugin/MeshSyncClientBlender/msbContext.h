@@ -12,12 +12,15 @@ enum class msbNormalSyncMode {
     PerIndex,
 };
 
-
 struct msbSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
-    msbNormalSyncMode normal_sync_mode = msbNormalSyncMode::PerIndex;
+    msbNormalSyncMode sync_normals = msbNormalSyncMode::PerIndex;
+    bool sync_uvs = true;
+    bool sync_colors = true;
+    bool sync_bones = true;
+    bool sync_blendshapes = true;
 
     msbSettings();
 };
@@ -46,7 +49,8 @@ public:
     void getUVs(ms::MeshPtr mesh, py::object uvs);
     void getColors(ms::MeshPtr mesh, py::object colors);
 
-    void extractMeshData(ms::MeshPtr mesh, py::object meshdata);
+    void addMaterials(ms::MeshPtr mesh, py::object materials);
+    void extractMeshData(ms::MeshPtr mesh, py::object obj);
 
     bool isSending() const;
     void send();

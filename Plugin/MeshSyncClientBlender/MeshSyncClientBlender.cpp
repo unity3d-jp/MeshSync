@@ -227,7 +227,22 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](msbContext& self, float v) { self.getSettings().scene_settings.scale_factor = v; })
             BindProperty(handedness,
                 [](const msbContext& self) { return (int)self.getSettings().scene_settings.handedness; },
-                [](msbContext& self, int v) { self.getSettings().scene_settings.handedness = (ms::Handedness)v; })
+                [](msbContext& self, int v) { (int&)self.getSettings().scene_settings.handedness = v; })
+            BindProperty(sync_normals,
+                [](const msbContext& self) { return (int)self.getSettings().sync_normals; },
+                [](msbContext& self, int v) { (int&)self.getSettings().sync_normals = v; })
+            BindProperty(sync_uv,
+                [](const msbContext& self) { return self.getSettings().sync_uvs; },
+                [](msbContext& self, bool v) { self.getSettings().sync_uvs = v; })
+            BindProperty(sync_colors,
+                [](const msbContext& self) { return self.getSettings().sync_colors; },
+                [](msbContext& self, bool v) { self.getSettings().sync_colors = v; })
+            BindProperty(sync_bones,
+                [](const msbContext& self) { return self.getSettings().sync_bones; },
+                [](msbContext& self, bool v) { self.getSettings().sync_bones = v; })
+            BindProperty(sync_blendshapes,
+                [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
+                [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
             BindProperty(current_scene,
                 [](const msbContext& self) { return self.getCurrentScene(); },
                 [](msbContext& self, ms::ScenePtr v) { self.getCurrentScene() = v; })

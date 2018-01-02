@@ -229,7 +229,7 @@ void msbContext::getColors(ms::MeshPtr mesh, py::object colors)
 }
 
 
-inline float3 short3_to_float3(const short v[3])
+inline float3 to_float3(const short (&v)[3])
 {
     return float3{
         v[0] * (1.0f / 32767.0f),
@@ -238,13 +238,32 @@ inline float3 short3_to_float3(const short v[3])
     };
 }
 
-void* CustomData_get(const CustomData *data,  int type)
+inline float4 to_float4(const MLoopCol& c)
 {
-    int layer_index = data->typemap[type];
+    return float4{
+        c.r * (1.0f / 255.0f),
+        c.g * (1.0f / 255.0f),
+        c.b * (1.0f / 255.0f),
+        c.a * (1.0f / 255.0f),
+    };
+}
+
+void* CustomData_get(const CustomData& data,  int type)
+{
+    int layer_index = data.typemap[type];
     if (layer_index == -1)
         return nullptr;
-    layer_index = layer_index + data->layers[layer_index].active;
-    return data->layers[layer_index].data;
+    layer_index = layer_index + data.layers[layer_index].active;
+    return data.layers[layer_index].data;
+}
+
+int CustomData_number_of_layers(const CustomData& data, int type)
+{
+    int i, number = 0;
+    for (i = 0; i < data.totlayer; i++)
+        if (data.layers[i].type == type)
+            number++;
+    return number;
 }
 
 
@@ -287,16 +306,16 @@ void msbContext::extractMeshData(ms::MeshPtr dst_, py::object src_)
     }
 
     // normals
-    if (m_settings.normal_sync_mode == msbNormalSyncMode::PerVertex) {
+    if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
         // per-vertex
         dst.normals.resize_discard(num_vertices);
         for (int vi = 0; vi < num_vertices; ++vi) {
-            dst.normals[vi] = short3_to_float3(src.mvert[vi].no);
+            dst.normals[vi] = to_float3(src.mvert[vi].no);
         }
     }
-    else if (m_settings.normal_sync_mode == msbNormalSyncMode::PerIndex) {
+    else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
         // per-index
-        auto normals = (float3*)CustomData_get(&src.ldata, CD_NORMAL);
+        auto normals = (float3*)CustomData_get(src.ldata, CD_NORMAL);
         if (normals == nullptr) {
             dst.normals.resize_zeroclear(num_loops);
         }
@@ -306,6 +325,38 @@ void msbContext::extractMeshData(ms::MeshPtr dst_, py::object src_)
                 dst.normals[li] = normals[li];
             }
         }
+    }
+
+    // uvs
+    if (m_settings.sync_uvs && CustomData_number_of_layers(src.ldata, CD_MLOOPUV) > 0) {
+        auto data = (const float2*)CustomData_get(src.ldata, CD_MLOOPUV);
+        if (data != nullptr) {
+            dst.uv.resize_discard(num_loops);
+            for (int li = 0; li < num_loops; ++li) {
+                dst.uv[li] = data[li];
+            }
+        }
+    }
+
+    // colors
+    if (m_settings.sync_colors && CustomData_number_of_layers(src.ldata, CD_MLOOPCOL) > 0) {
+        auto data = (const MLoopCol*)CustomData_get(src.ldata, CD_MLOOPCOL);
+        if (data != nullptr) {
+            dst.colors.resize_discard(num_loops);
+            for (int li = 0; li < num_loops; ++li) {
+                dst.colors[li] = to_float4(data[li]);
+            }
+        }
+    }
+
+    // bones
+    if (m_settings.sync_bones) {
+        // todo
+    }
+
+    // blend shapes
+    if (m_settings.sync_blendshapes) {
+        // todo
     }
 }
 

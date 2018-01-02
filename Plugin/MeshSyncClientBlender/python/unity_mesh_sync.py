@@ -148,16 +148,6 @@ def msb_add_mesh(ctx, obj):
 
         ctx.extractMeshData(dst, obj)
 
-        if scene.meshsync_sync_uvs and len(data.uv_layers) > 0:
-            ctx.getUVs(dst, data.uv_layers.active.data)
-            #for v in data.uv_layers.active.data:
-            #    dst.addUV([v.uv.x, v.uv.y])
-
-        if scene.meshsync_sync_colors and len(data.vertex_colors) > 0:
-            for c in data.vertex_colors.active.data:
-                dst.addColor([c.r, c.g, c.b, c.a])
-
-
         if scene.meshsync_sync_bones > 0:
             arm = None
             for mod in obj.modifiers:
