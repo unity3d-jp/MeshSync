@@ -40,6 +40,11 @@ def msb_sync(targets):
         return
 
     start_time = time()
+
+    # materials
+    for mat in bpy.data.materials:
+        ctx.addMaterial(mat)
+
     scene = bpy.context.scene
     for obj in targets:
         if not (obj.name in bpy.data.objects):
@@ -49,16 +54,6 @@ def msb_sync(targets):
              (obj.type == 'LAMP' and scene.meshsync_sync_lights) or\
              (obj.dupli_group != None):
             msb_add_object(ctx, obj)
-
-    # materials
-    i = 0
-    for mat in bpy.data.materials:
-        dst = ctx.addMaterial()
-        dst.name = mat.name
-        dst.id = i
-        i += 1
-        c = mat.diffuse_color
-        dst.color = [c[0], c[1], c[2], 1.0]
 
     ctx.send()
     msb_added.clear()
@@ -248,12 +243,12 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Server Port")
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor")
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
+    bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals")
+    bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
+    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
+    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
+    bpy.types.Scene.meshsync_sync_blensshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
-    bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Sync Normals")
-    bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "Sync UVs")
-    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Sync Colors")
-    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Sync Bones")
-    bpy.types.Scene.meshsync_sync_blensshapes = bpy.props.BoolProperty(default = True, name = "Sync Blend Shapes")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
     bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(default = False, name = "Sync Animations")

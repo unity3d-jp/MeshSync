@@ -30,6 +30,7 @@ namespace py = pybind11;
 
 #include "blender/makesrna/RNA_types.h"
 #include "blender/makesdna/DNA_object_types.h"
+#include "blender/makesdna/DNA_material_types.h"
 #include "blender/makesdna/DNA_mesh_types.h"
 #include "blender/makesdna/DNA_meshdata_types.h"
 #include "blender/python/intern/bpy_rna.h"

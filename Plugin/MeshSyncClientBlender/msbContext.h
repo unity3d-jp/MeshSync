@@ -40,16 +40,10 @@ public:
     ms::CameraPtr       addCamera(const std::string& path);
     ms::LightPtr        addLight(const std::string& path);
     ms::MeshPtr         addMesh(const std::string& path);
-    ms::MaterialPtr     addMaterial();
     void                addDeleted(const std::string& path);
 
-    void getPolygons(ms::MeshPtr mesh, py::object polygons, py::list material_ids);
-    void getPoints(ms::MeshPtr mesh, py::object vertices);
-    void getNormals(ms::MeshPtr mesh, py::object loops);
-    void getUVs(ms::MeshPtr mesh, py::object uvs);
-    void getColors(ms::MeshPtr mesh, py::object colors);
-
-    void addMaterials(ms::MeshPtr mesh, py::object materials);
+    ms::MaterialPtr addMaterial(py::object material);
+    int getMaterialIndex(Material *mat);
     void extractMeshData(ms::MeshPtr mesh, py::object obj);
 
     bool isSending() const;
