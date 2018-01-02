@@ -6,10 +6,18 @@ struct msbSettings;
 class msbContext;
 
 
+enum class msbNormalSyncMode {
+    None,
+    PerVertex,
+    PerIndex,
+};
+
+
 struct msbSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
+    msbNormalSyncMode normal_sync_mode = msbNormalSyncMode::PerIndex;
 
     msbSettings();
 };
@@ -37,6 +45,8 @@ public:
     void getNormals(ms::MeshPtr mesh, py::object loops);
     void getUVs(ms::MeshPtr mesh, py::object uvs);
     void getColors(ms::MeshPtr mesh, py::object colors);
+
+    void extractMeshData(ms::MeshPtr mesh, py::object meshdata);
 
     bool isSending() const;
     void send();

@@ -232,9 +232,11 @@ void Message::serialize(std::ostream& os) const
 }
 bool Message::deserialize(std::istream& is)
 {
-    int pv = 0;
-    read(is, pv);
-    return pv == msProtocolVersion;
+    int protocol_version = 0;
+    read(is, protocol_version);
+    if (protocol_version != msProtocolVersion)
+        return false;
+    return true;
 }
 
 GetMessage::GetMessage()

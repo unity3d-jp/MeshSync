@@ -668,14 +668,30 @@ TestCase(TestHandedness)
 
 TestCase(TestMatrixExtraction)
 {
-    auto position = float3{ 1.0f, 2.0f, 3.0f };
-    auto rotation = rotateXYZ(float3{ 15.0f * Deg2Rad, 30.0f * Deg2Rad, 60.0f * Deg2Rad });
-    auto scale = float3{ 1.0f, 0.5f, 0.25f };
-    auto mat = transform(position, rotation, scale);
+    // parent
+    auto pos1 = float3{ 1.0f, 2.0f, 3.0f };
+    auto rot1 = rotateXYZ(float3{ 15.0f * Deg2Rad, 30.0f * Deg2Rad, 60.0f * Deg2Rad });
+    auto scl1 = float3{ 1.0f, -0.5f, 0.25f };
 
-    float3 epos = extract_position(mat);
-    float3 escale = extract_scale(mat);
-    quatf erot = extract_rotation(mat);
+    // child
+    auto pos2 = float3{ -5.0f, -2.5f, -1.0f };
+    auto rot2 = rotateXYZ(float3{ -90.0f * Deg2Rad, -60.0f * Deg2Rad, -30.0f * Deg2Rad });
+    auto scl2 = float3{ -3.0f, -1.0f, 2.0f };
+
+    auto mat_parent = transform(pos1, rot1, scl1);
+    auto mat_invert_parent = invert(mat_parent);
+    auto mat_basis = transform(pos2, rot2, scl2);
+
+    auto mat_local = mat_invert_parent * mat_basis;
+
+    auto epos = extract_position(mat_local);
+    auto erot = extract_rotation(mat_local);
+    auto escl = extract_scale(mat_local);
+
+    auto mat_tmp = mat_local;
+    mat_tmp *= invert(translate(epos));
+    mat_tmp *= invert(to_mat4x4(rot2));
+    auto scl = mul_v(mat_invert_parent, scl2);
 
     Print("ok");
 }

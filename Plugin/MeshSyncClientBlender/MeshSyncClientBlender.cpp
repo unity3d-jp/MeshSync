@@ -210,6 +210,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindMethod(getNormals)
             BindMethod(getUVs)
             BindMethod(getColors)
+            BindMethod(extractMeshData)
             BindMethod(isSending)
             BindMethod(send)
             BindProperty(server_address,

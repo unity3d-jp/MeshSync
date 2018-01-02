@@ -346,6 +346,7 @@ template<class T> inline tmat4x4<T>& operator*=(tmat4x4<T>& a, const tmat4x4<T> 
 inline int ceildiv(int v, int d) { return (v + (d - 1)) / d; }
 
 #define SF(T)                                                                                       \
+    inline T sign(T v) { return v < T(0.0) ? T(-1.0) : T(1.0); }                                    \
     inline T rcp(T v) { return T(1.0) / v; }                                                        \
     inline T rsqrt(T v) { return T(1.0) / std::sqrt(v); }                                           \
     inline T mod(T a, T b) { return std::fmod(a, b); }                                              \
@@ -384,6 +385,7 @@ VF1std(floor)
 VF1std(ceil)
 VF2std(min)
 VF2std(max)
+VF1(sign)
 VF1(rcp)
 VF1std(sqrt)
 VF1(rsqrt)
@@ -669,6 +671,18 @@ template<class T> inline tmat3x3<T> look33(const tvec3<T>& forward, const tvec3<
         { x.x, y.x, z.x },
         { x.y, y.y, z.y },
         { x.z, y.z, z.z },
+    } };
+}
+template<class T> inline tmat4x4<T> look44(const tvec3<T>& forward, const tvec3<T>& up)
+{
+    auto z = normalize(forward);
+    auto x = normalize(cross(up, z));
+    auto y = cross(z, x);
+    return{ {
+        { x.x, y.x, z.x, T(0) },
+        { x.y, y.y, z.y, T(0) },
+        { x.z, y.z, z.z, T(0) },
+        {T(0),T(0),T(0), T(1) },
     } };
 }
 
@@ -1026,11 +1040,11 @@ inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
     return q;
 }
 
-template<class T> inline quatf to_quat(const tmat3x3<T>& m)
+template<class T> inline tquat<T> to_quat(const tmat3x3<T>& m)
 {
     return to_quat_impl(m);
 }
-template<class T> inline quatf to_quat(const tmat4x4<T>& m)
+template<class T> inline tquat<T> to_quat(const tmat4x4<T>& m)
 {
     return to_quat_impl(m);
 }

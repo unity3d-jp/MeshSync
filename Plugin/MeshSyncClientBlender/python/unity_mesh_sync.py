@@ -143,23 +143,10 @@ def msb_add_mesh(ctx, obj):
         for mat in data.materials:
             material_ids.append(msb_get_material_id(mat))
 
-        ctx.getPoints(dst, data.vertices)
-        ctx.getPolygons(dst, data.polygons, material_ids)
-        #for vtx in data.vertices:
-        #    p = vtx.co
-        #    dst.addVertex([p.x, p.y, p.z])
-        #for poly in data.polygons:
-        #    dst.addMaterialID(poly.material_index)
-        #    dst.addCount(len(poly.vertices));
-        #    for idx in poly.vertices:
-        #        dst.addIndex(idx)
-
         if scene.meshsync_sync_normals:
             data.calc_normals_split()
-            ctx.getNormals(dst, data.loops)
-            #for loop in data.loops:
-            #    n = loop.normal
-            #    dst.addNormal([n.x, n.y, n.z])
+
+        ctx.extractMeshData(dst, obj)
 
         if scene.meshsync_sync_uvs and len(data.uv_layers) > 0:
             ctx.getUVs(dst, data.uv_layers.active.data)

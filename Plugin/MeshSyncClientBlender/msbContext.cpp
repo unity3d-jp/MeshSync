@@ -228,6 +228,87 @@ void msbContext::getColors(ms::MeshPtr mesh, py::object colors)
     //m_get_tasks.push_back(task);
 }
 
+
+inline float3 short3_to_float3(const short v[3])
+{
+    return float3{
+        v[0] * (1.0f / 32767.0f),
+        v[1] * (1.0f / 32767.0f),
+        v[2] * (1.0f / 32767.0f),
+    };
+}
+
+void* CustomData_get(const CustomData *data,  int type)
+{
+    int layer_index = data->typemap[type];
+    if (layer_index == -1)
+        return nullptr;
+    layer_index = layer_index + data->layers[layer_index].active;
+    return data->layers[layer_index].data;
+}
+
+
+// src_: bpy.Object
+void msbContext::extractMeshData(ms::MeshPtr dst_, py::object src_)
+{
+    auto rna = (BPy_StructRNA*)src_.ptr();
+    auto& obj = *(Object*)rna->ptr.id.data;
+    auto& src = *(Mesh*)obj.data;
+    auto& dst = *dst_;
+
+    int num_polygons = src.totpoly;
+    int num_vertices = src.totvert;
+    int num_loops = src.totloop;
+
+    // vertices
+    dst.points.resize_discard(num_vertices);
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        dst.points[vi] = (float3&)src.mvert[vi].co;
+    }
+
+    // faces
+    dst.indices.reserve(num_loops);
+    dst.counts.resize_discard(num_polygons);
+    dst.materialIDs.resize_discard(num_polygons);
+    {
+        int ti = 0;
+        for (int pi = 0; pi < num_polygons; ++pi) {
+            int material_index = src.mpoly[pi].mat_nr;
+            int count = src.mpoly[pi].totloop;
+            dst.counts[pi] = count;
+            dst.materialIDs[pi] = material_index;
+            dst.indices.resize(dst.indices.size() + count);
+
+            auto *loops = src.mloop + src.mpoly[pi].loopstart;
+            for (int li = 0; li < count; ++li) {
+                dst.indices[ti++] = loops[li].v;
+            }
+        }
+    }
+
+    // normals
+    if (m_settings.normal_sync_mode == msbNormalSyncMode::PerVertex) {
+        // per-vertex
+        dst.normals.resize_discard(num_vertices);
+        for (int vi = 0; vi < num_vertices; ++vi) {
+            dst.normals[vi] = short3_to_float3(src.mvert[vi].no);
+        }
+    }
+    else if (m_settings.normal_sync_mode == msbNormalSyncMode::PerIndex) {
+        // per-index
+        auto normals = (float3*)CustomData_get(&src.ldata, CD_NORMAL);
+        if (normals == nullptr) {
+            dst.normals.resize_zeroclear(num_loops);
+        }
+        else {
+            dst.normals.resize_discard(num_loops);
+            for (int li = 0; li < num_loops; ++li) {
+                dst.normals[li] = normals[li];
+            }
+        }
+    }
+}
+
 bool msbContext::isSending() const
 {
     return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
