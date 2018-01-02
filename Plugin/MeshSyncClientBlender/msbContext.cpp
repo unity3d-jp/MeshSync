@@ -117,6 +117,7 @@ int CustomData_number_of_layers(const CustomData& data, int type)
     return number;
 }
 
+// src_: bpy.Material
 ms::MaterialPtr msbContext::addMaterial(py::object src)
 {
     auto rna = (BPy_StructRNA*)src.ptr();
@@ -130,7 +131,7 @@ ms::MaterialPtr msbContext::addMaterial(py::object src)
     return ret;
 }
 
-int msbContext::getMaterialIndex(Material *mat)
+int msbContext::getMaterialIndex(const Material *mat)
 {
     if (mat == nullptr)
         return 0;
@@ -145,13 +146,21 @@ int msbContext::getMaterialIndex(Material *mat)
 }
 
 // src_: bpy.Object
-void msbContext::extractMeshData(ms::MeshPtr dst_, py::object src_)
+void msbContext::extractMeshData(ms::MeshPtr dst, py::object src_)
 {
     auto rna = (BPy_StructRNA*)src_.ptr();
-    auto& obj = *(Object*)rna->ptr.id.data;
-    auto& src = *(Mesh*)obj.data;
-    auto& dst = *dst_;
+    auto obj = (Object*)rna->ptr.id.data;
+    auto src = (Mesh*)obj->data;
 
+    auto task = [this, dst, src]() {
+        doExtractMeshData(*dst, *src);
+    };
+    //task(); // for debug
+    m_extract_tasks.push_back(task);
+}
+
+void msbContext::doExtractMeshData(ms::Mesh& dst, const Mesh& src)
+{
     int num_polygons = src.totpoly;
     int num_vertices = src.totvert;
     int num_loops = src.totloop;
@@ -178,7 +187,7 @@ void msbContext::extractMeshData(ms::MeshPtr dst_, py::object src_)
             int material_index = src.mpoly[pi].mat_nr;
             int count = src.mpoly[pi].totloop;
             dst.counts[pi] = count;
-            dst.materialIDs[pi] = material_index;
+            dst.materialIDs[pi] = material_ids[material_index];
             dst.indices.resize(dst.indices.size() + count);
 
             auto *loops = src.mloop + src.mpoly[pi].loopstart;
@@ -257,10 +266,10 @@ void msbContext::send()
     }
 
     // get vertex data in parallel
-    parallel_for_each(m_get_tasks.begin(), m_get_tasks.end(), [](auto& task) {
+    parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](auto& task) {
         task();
     });
-    m_get_tasks.clear();
+    m_extract_tasks.clear();
 
     // todo
     //for (auto& v : m_scene.cameras)

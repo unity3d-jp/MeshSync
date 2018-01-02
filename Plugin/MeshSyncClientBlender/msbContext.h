@@ -43,13 +43,14 @@ public:
     void                addDeleted(const std::string& path);
 
     ms::MaterialPtr addMaterial(py::object material);
-    int getMaterialIndex(Material *mat);
+    int getMaterialIndex(const Material *mat);
     void extractMeshData(ms::MeshPtr mesh, py::object obj);
 
     bool isSending() const;
     void send();
 
 private:
+    void doExtractMeshData(ms::Mesh& mesh, const Mesh& src);
     template<class T>
     std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 
@@ -64,6 +65,6 @@ private:
     ms::SetMessage m_message;
     std::future<void> m_send_future;
 
-    std::vector<std::function<void()>> m_get_tasks;
+    std::vector<std::function<void()>> m_extract_tasks;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;
