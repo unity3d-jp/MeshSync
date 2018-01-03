@@ -116,10 +116,7 @@ def msb_add_mesh(ctx, obj):
     path = msb_get_path(obj)
     dst = ctx.addMesh(path)
     msb_extract_transform(dst, obj)
-    if obj.dupli_group != None:
-        for c in obj.dupli_group.objects:
-            cdst = msb_add_reference_nodes(ctx, path, c)
-
+    msb_handle_dupli_group(ctx, path, obj)
     if obj.hide:
         dst.visible = False
     else:
@@ -169,22 +166,19 @@ def msb_add_transform(ctx, obj):
     path = msb_get_path(obj)
     dst = ctx.addTransform(path)
     msb_extract_transform(dst, obj)
-    if obj.dupli_group != None:
-        for c in obj.dupli_group.objects:
-            cdst = msb_add_reference_nodes(ctx, path, c)
+    msb_handle_dupli_group(ctx, path, obj)
     return dst
 
 
-def msb_add_reference_nodes(ctx, base_path, child, depth = 0):
-    refpath = msb_get_path(child)
-    dst = ctx.addTransform(base_path + refpath)
-    msb_extract_transform(dst, child)
-    dst.reference = refpath
-    if child.dupli_group != None:
-        for c in child.dupli_group.objects:
-            msb_add_reference_nodes(ctx, base_path + refpath, c, depth + 1)
-    for c in child.children:
-        msb_add_reference_nodes(ctx, base_path, c, depth + 1)
+def msb_add_reference_nodes(ctx, base_path, obj):
+    local_path = msb_get_path(obj)
+    path = base_path + local_path
+    dst = ctx.addTransform(path)
+    msb_extract_transform(dst, obj)
+    msb_handle_dupli_group(ctx, path, obj)
+    dst.reference = local_path
+    for c in obj.children:
+        msb_add_reference_nodes(ctx, path, c)
     return dst
 
 
@@ -197,6 +191,20 @@ def msb_add_bone(ctx, obj):
     dst.matrix = msb_mat4x4_to_array(obj.matrix)
     msb_added.add(obj)
     return dst
+
+
+def msb_handle_dupli_group(ctx, base_path, obj):
+    group = obj.dupli_group
+    if group != None:
+        o = group.dupli_offset
+        for c in group.objects:
+            cdst = msb_add_reference_nodes(ctx, base_path, c)
+            if c.parent == None:
+                pos = cdst.position
+                pos[0] -= o.x
+                pos[1] -= o.y
+                pos[2] -= o.z
+                cdst.position = pos
 
 
 def msb_is_particle_system(obj):
