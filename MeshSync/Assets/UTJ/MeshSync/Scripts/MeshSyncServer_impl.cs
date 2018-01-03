@@ -36,6 +36,7 @@ namespace UTJ.MeshSync
             public bool getIndices { get { return (flags & (1 << 6)) != 0; } }
             public bool getMaterialIDs { get { return (flags & (1 << 7)) != 0; } }
             public bool getBones { get { return (flags & (1 << 8)) != 0; } }
+            public bool getBlendShapes { get { return (flags & (1 << 9)) != 0; } }
         }
 
         public struct GetMessage
@@ -1175,6 +1176,7 @@ namespace UTJ.MeshSync
 
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshAddBlendShape(IntPtr _this, string name);
 
 
             public static MeshData Create()
@@ -1279,6 +1281,10 @@ namespace UTJ.MeshSync
             {
                 return msMeshGetBlendShapeData(_this, i);
             }
+            public BlendShapeData AddBlendShape(string name)
+            {
+                return msMeshAddBlendShape(_this, name);
+            }
         };
 
         public struct SplitData
@@ -1329,6 +1335,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, int f, Vector3[] dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, Vector3[] dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, Vector3[] dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeAddFrame(IntPtr _this, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
 
             public string name
             {
@@ -1346,6 +1353,11 @@ namespace UTJ.MeshSync
             public void ReadPoints(int f, Vector3[] dst, SplitData split) { msBlendShapeReadPoints(_this, f, dst, split); }
             public void ReadNormals(int f, Vector3[] dst, SplitData split) { msBlendShapeReadNormals(_this, f, dst, split); }
             public void ReadTangents(int f, Vector3[] dst, SplitData split) { msBlendShapeReadTangents(_this, f, dst, split); }
+
+            public void AddFrame(float w, Vector3[] v, Vector3[] n, Vector3[] t)
+            {
+                msBlendShapeAddFrame(_this, w, v.Length, v, n, t);
+            }
         }
 
 

@@ -495,6 +495,7 @@ struct GetFlags
     uint32_t get_indices : 1;
     uint32_t get_materialIDs : 1;
     uint32_t get_bones : 1;
+    uint32_t get_blendshapes : 1;
     uint32_t apply_culling : 1;
 };
 

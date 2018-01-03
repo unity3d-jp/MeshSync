@@ -1148,6 +1148,23 @@ namespace UTJ.MeshSync
                 data.WriteWeights(mesh.boneWeights);
                 data.bindposes = mesh.bindposes;
             }
+            if (flags.getBlendShapes && mesh.blendShapeCount > 0)
+            {
+                var v = new Vector3[mesh.vertexCount];
+                var n = new Vector3[mesh.vertexCount];
+                var t = new Vector3[mesh.vertexCount];
+                for (int bi = 0; bi < mesh.blendShapeCount; ++bi)
+                {
+                    var bd = data.AddBlendShape(mesh.GetBlendShapeName(bi));
+                    int frameCount = mesh.GetBlendShapeFrameCount(bi);
+                    for (int fi = 0; fi < frameCount; ++fi)
+                    {
+                        mesh.GetBlendShapeFrameVertices(bi, fi, v, n, t);
+                        float w = mesh.GetBlendShapeFrameWeight(bi, fi);
+                        bd.AddFrame(w, v, n, t);
+                    }
+                }
+            }
         }
 
         void OnRecvScreenshot(IntPtr data)

@@ -605,6 +605,13 @@ msAPI ms::BlendShapeData* msMeshGetBlendShapeData(ms::Mesh *_this, int i)
 {
     return _this->blendshapes[i].get();
 }
+msAPI ms::BlendShapeData* msMeshAddBlendShape(ms::Mesh *_this, const char *name)
+{
+    auto *ret = new ms::BlendShapeData();
+    ret->name = name;
+    _this->blendshapes.emplace_back(ret);
+    return ret;
+}
 
 msAPI void msMeshSetLocal2World(ms::Mesh *_this, const float4x4 *v)
 {
@@ -706,6 +713,15 @@ msAPI void msBlendShapeReadTangents(ms::BlendShapeData *_this, int f, float3 *ds
             memset(dst, 0, sizeof(float3)*size);
         else
             src.copy_to(dst);
+}
+msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num, const float3 *v, const float3 *n, const float3 *t)
+{
+    ms::BlendShapeData::Frame frame;
+    frame.weight = weight;
+    if (v) frame.points.assign(v, v + num);
+    if (n) frame.normals.assign(n, n + num);
+    if (t) frame.tangents.assign(t, t + num);
+    _this->frames.push_back(std::move(frame));
 }
 
 
