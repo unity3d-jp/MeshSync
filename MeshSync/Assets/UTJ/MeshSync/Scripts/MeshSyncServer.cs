@@ -512,7 +512,6 @@ namespace UTJ.MeshSync
         PinnedList<Vector3> tmpV3, tmpV3a, tmpV3b;
         PinnedList<Vector4> tmpV4;
         PinnedList<Color> tmpC;
-        PinnedList<BoneWeight> tmpW;
 
         Mesh CreateEditedMesh(MeshData data, SplitData split)
         {
@@ -523,7 +522,6 @@ namespace UTJ.MeshSync
             if (tmpV3b == null) tmpV3b = new PinnedList<Vector3>();
             if (tmpV4 == null) tmpV4 = new PinnedList<Vector4>();
             if (tmpC == null) tmpC = new PinnedList<Color>();
-            if (tmpW == null) tmpW = new PinnedList<BoneWeight>();
 
             var mesh = new Mesh();
 #if UNITY_2017_3_OR_NEWER
@@ -563,10 +561,11 @@ namespace UTJ.MeshSync
             }
             if (flags.hasBones)
             {
+                var tmpW = new PinnedList<BoneWeight>();
                 tmpW.Resize(split.numPoints);
                 data.ReadBoneWeights(tmpW, split);
-                mesh.boneWeights = tmpW;
                 mesh.bindposes = data.bindposes;
+                mesh.boneWeights = tmpW;
             }
             if(flags.hasIndices)
             {
@@ -1196,7 +1195,7 @@ namespace UTJ.MeshSync
         {
             if(go == null) { return; }
             AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-            var mf = go.GetComponent<MeshFilter>();
+            var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
                 var path = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
