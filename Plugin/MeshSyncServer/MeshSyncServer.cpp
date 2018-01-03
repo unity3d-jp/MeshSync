@@ -665,29 +665,25 @@ msAPI float msBlendShapeGetWeight(ms::BlendShapeData *_this)
 {
     return _this ? _this->weight : 0.0f;
 }
-msAPI int msBlendShapeGetNumPoints(ms::BlendShapeData *_this)
+msAPI int msBlendShapeGetNumFrames(ms::BlendShapeData *_this)
 {
-    return _this ? (int)_this->points.size() : 0;
+    return _this ? (int)_this->frames.size() : 0;
 }
-msAPI bool msBlendShapeHasNormals(ms::BlendShapeData *_this)
+msAPI float msBlendShapeGetFrameWeight(ms::BlendShapeData *_this, int f)
 {
-    return _this ? !_this->normals.empty() : false;
+    return _this ? _this->frames[f].weight : 0.0f;
 }
-msAPI bool msBlendShapeHasTangents(ms::BlendShapeData *_this)
+msAPI void msBlendShapeReadPoints(ms::BlendShapeData *_this, int f, float3 *dst)
 {
-    return _this ? !_this->tangents.empty() : false;
+    if (_this) _this->frames[f].points.copy_to(dst);
 }
-msAPI void msBlendShapeReadPoints(ms::BlendShapeData *_this, float3 *dst)
+msAPI void msBlendShapeReadNormals(ms::BlendShapeData *_this, int f, float3 *dst)
 {
-    if (_this) _this->points.copy_to(dst);
+    if (_this) _this->frames[f].normals.copy_to(dst);
 }
-msAPI void msBlendShapeReadNormals(ms::BlendShapeData *_this, float3 *dst)
+msAPI void msBlendShapeReadTangents(ms::BlendShapeData *_this, int f, float3 *dst)
 {
-    if (_this) _this->normals.copy_to(dst);
-}
-msAPI void msBlendShapeReadTangents(ms::BlendShapeData *_this, float3 *dst)
-{
-    if (_this) _this->tangents.copy_to(dst);
+    if (_this) _this->frames[f].tangents.copy_to(dst);
 }
 
 

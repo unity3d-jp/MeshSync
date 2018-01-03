@@ -32,6 +32,7 @@ struct read_impl
     template<> struct write_impl<T> { void operator()(std::ostream& os, const T& v) { return v.serialize(os); } };\
     template<> struct read_impl<T>  { void operator()(std::istream& is, T& v) { return v.deserialize(is); } };\
 
+DefSpecialize(BlendShapeData::Frame)
 DefSpecialize(Material)
 DefSpecialize(DeleteMessage::Identifier)
 
@@ -926,44 +927,63 @@ bool LightAnimation::empty() const
 }
 
 
-uint32_t BlendShapeData::getSerializeSize() const
+uint32_t BlendShapeData::Frame::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(name);
     ret += ssize(weight);
     ret += ssize(points);
     ret += ssize(normals);
     ret += ssize(tangents);
     return ret;
 }
-void BlendShapeData::serialize(std::ostream& os) const
+void BlendShapeData::Frame::serialize(std::ostream& os) const
 {
-    write(os, name);
     write(os, weight);
     write(os, points);
     write(os, normals);
     write(os, tangents);
 }
-void BlendShapeData::deserialize(std::istream& is)
+void BlendShapeData::Frame::deserialize(std::istream& is)
 {
-    read(is, name);
     read(is, weight);
     read(is, points);
     read(is, normals);
     read(is, tangents);
 }
-
-void BlendShapeData::clear()
+void BlendShapeData::Frame::clear()
 {
-    name.clear();
     weight = 0.0f;
     points.clear();
     normals.clear();
     tangents.clear();
 }
 
-void BlendShapeData::addVertex(const float3 & v) { normals.push_back(v); }
-void BlendShapeData::addNormal(const float3 & v) { points.push_back(v); }
+uint32_t BlendShapeData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(name);
+    ret += ssize(weight);
+    ret += ssize(frames);
+    return ret;
+}
+void BlendShapeData::serialize(std::ostream& os) const
+{
+    write(os, name);
+    write(os, weight);
+    write(os, frames);
+}
+void BlendShapeData::deserialize(std::istream& is)
+{
+    read(is, name);
+    read(is, weight);
+    read(is, frames);
+}
+void BlendShapeData::clear()
+{
+    name.clear();
+    weight = 0.0f;
+    frames.clear();
+}
 
 
 uint32_t BoneData::getSerializeSize() const

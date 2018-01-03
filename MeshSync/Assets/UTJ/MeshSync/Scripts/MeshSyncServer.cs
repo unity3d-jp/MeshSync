@@ -540,6 +540,27 @@ namespace UTJ.MeshSync
                     }
                 }
             }
+            if (flags.hasBlendshapes)
+            {
+                var points = new Vector3[split.numPoints];
+                var normals = new Vector3[split.numPoints];
+                var tangents = new Vector3[split.numPoints];
+                int numBlendShapes = data.numBlendShapes;
+                for (int bi = 0; bi < numBlendShapes; ++bi)
+                {
+                    var bsd = data.GetBlendShapeData(bi);
+                    var name = bsd.name;
+                    var numFrames = bsd.numFrames;
+                    for (int fi = 0; fi < numFrames; ++fi)
+                    {
+                        bsd.ReadPoints(fi, points);
+                        bsd.ReadNormals(fi, normals);
+                        bsd.ReadTangents(fi, tangents);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), points, normals, tangents);
+                    }
+                }
+            }
+
             mesh.RecalculateBounds();
             mesh.UploadMeshData(false);
             return mesh;

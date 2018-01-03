@@ -122,27 +122,6 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             ;
     }
     {
-        using self_t = ms::BlendShapeData;
-        py::class_<ms::BlendShapeData, ms::BlendShapeDataPtr>(mod, "BlendShapeData")
-            BindField(name)
-            BindField(weight)
-            BindMethod2(addVertex,
-                [](ms::BlendShapeData& self, const float3a& v) { self.addVertex(to_float3(v)); })
-            BindMethod2(addNormal,
-                [](ms::BlendShapeData& self, const float3a& v) { self.addNormal(to_float3(v)); })
-            ;
-    }
-    {
-        using self_t = ms::BoneData;
-        py::class_<ms::BoneData, ms::BoneDataPtr>(mod, "BoneData")
-            BindField(path)
-            BindProperty(bindpose,
-                [](const ms::BoneData& self) { return to_a(self.bindpose); },
-                [](ms::BoneData& self, const float4x4a& v) { self.bindpose = to_float4x4(v); })
-            BindMethod(addWeight)
-            ;
-    }
-    {
         using self_t = ms::Mesh;
         py::class_<ms::Mesh, ms::MeshPtr, ms::Transform>(mod, "Mesh")
             BindProperty(swap_faces,

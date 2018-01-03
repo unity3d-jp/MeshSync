@@ -129,9 +129,7 @@ static inline void each_modifiers(Object *obj, const Body& body)
 }
 static inline const ModifierData* find_modofier(Object *obj, ModifierType type)
 {
-    auto *it = (const ModifierData*)obj->modifiers.first;
-    auto *end = (const ModifierData*)obj->modifiers.last;
-    for (; it != end; it = it->next)
+    for (auto *it = (const ModifierData*)obj->modifiers.first; it != nullptr; it = it->next)
         if (it->type == type)
             return it;
     return nullptr;;
@@ -142,9 +140,7 @@ static inline const ModifierData* find_modofier(Object *obj, ModifierType type)
 template<class Body>
 static inline void each_vertex_groups(Object *obj, const Body& body)
 {
-    auto *it = (const bDeformGroup*)obj->defbase.first;
-    auto *end = (const bDeformGroup*)obj->defbase.last;
-    for (; it != end; it = it->next)
+    for (auto *it = (const bDeformGroup*)obj->defbase.first; it != nullptr; it = it->next)
         body(it);
 }
 
@@ -153,21 +149,27 @@ template<class Body>
 static inline void each_bones(Object *obj, const Body& body)
 {
     if (obj->pose == nullptr) { return; }
-    auto *it = (const bPoseChannel*)obj->pose->chanbase.first;
-    auto *end = (const bPoseChannel*)obj->pose->chanbase.last;
-    for (; it != end; it = it->next)
+    for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
         body(it);
 }
 static inline const bPoseChannel* find_bone(Object *obj, const char *name)
 {
     if (obj->pose == nullptr) { return nullptr; }
-    auto *it = (const bPoseChannel*)obj->pose->chanbase.first;
-    auto *end = (const bPoseChannel*)obj->pose->chanbase.last;
-    for (; it != end; it = it->next)
+    for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
         if (strcmp(it->name, name) == 0)
             return it;
     return nullptr;
 }
+
+// Body: [](const KeyBlock*) -> void
+template<class Body>
+static inline void each_keys(Mesh *obj, const Body& body)
+{
+    if (obj->key == nullptr || obj->key->block.first == nullptr) { return; }
+    for (auto *it = (const KeyBlock*)obj->key->block.first; it != nullptr; it = it->next)
+        body(it);
+}
+
 
 static inline const void* CustomData_get(const CustomData& data,  int type)
 {
@@ -344,8 +346,10 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 
     // blend shapes
-    if (m_settings.sync_blendshapes) {
-        // todo
+    if (m_settings.sync_blendshapes && src.key) {
+        each_keys(&src, [&](const KeyBlock *kb) {
+            // todo
+        });
     }
 }
 

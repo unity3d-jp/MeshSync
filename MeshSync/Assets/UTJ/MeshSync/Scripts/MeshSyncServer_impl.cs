@@ -1360,7 +1360,7 @@ namespace UTJ.MeshSync
                 return msMeshGetSubmesh(_this, i);
             }
 
-            public int numBlendShapeTargets { get { return msMeshGetNumBlendShapeTargets(_this); } }
+            public int numBlendShapes { get { return msMeshGetNumBlendShapeTargets(_this); } }
             public BlendShapeData GetBlendShapeData(int i)
             {
                 return msMeshGetBlendShapeData(_this, i);
@@ -1479,12 +1479,11 @@ namespace UTJ.MeshSync
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumPoints(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern byte msBlendShapeHasNormals(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern byte msBlendShapeHasTangents(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msBlendShapeGetFrameWeight(IntPtr _this, int f);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, int f, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, Vector3[] dst);
 
             public string name
             {
@@ -1494,43 +1493,14 @@ namespace UTJ.MeshSync
             {
                 get { return msBlendShapeGetWeight(_this); }
             }
-            public bool hasNormals
+            public float numFrames
             {
-                get { return msBlendShapeHasNormals(_this) != 0; }
+                get { return msBlendShapeGetNumFrames(_this); }
             }
-            public bool hasTangents
-            {
-                get { return msBlendShapeHasTangents(_this) != 0; }
-            }
-            public Vector3[] points
-            {
-                get
-                {
-                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
-                    msBlendShapeReadPoints(_this, ret);
-                    return ret;
-                }
-            }
-            public Vector3[] normals
-            {
-                get
-                {
-                    if(!hasNormals) { return new Vector3[0]; }
-                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
-                    msBlendShapeReadNormals(_this, ret);
-                    return ret;
-                }
-            }
-            public Vector3[] tangents
-            {
-                get
-                {
-                    if (!hasTangents) { return new Vector3[0]; }
-                    var ret = new Vector3[msBlendShapeGetNumPoints(_this)];
-                    msBlendShapeReadTangents(_this, ret);
-                    return ret;
-                }
-            }
+            public float GetWeight(int f) { return msBlendShapeGetFrameWeight(_this, f); }
+            public void ReadPoints(int f, Vector3[] dst) { msBlendShapeReadPoints(_this, f, dst); }
+            public void ReadNormals(int f, Vector3[] dst) { msBlendShapeReadNormals(_this, f, dst); }
+            public void ReadTangents(int f, Vector3[] dst) { msBlendShapeReadTangents(_this, f, dst); }
         }
 
 

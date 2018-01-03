@@ -313,22 +313,29 @@ struct SplitData
     IArray<SubmeshData> submeshes;
 };
 
-struct BlendShapeData : public std::enable_shared_from_this<BlendShapeData>
+struct BlendShapeData
 {
+    struct Frame
+    {
+        float weight = 0.0f;
+        RawVector<float3> points;
+        RawVector<float3> normals;
+        RawVector<float3> tangents;
+
+        uint32_t getSerializeSize() const;
+        void serialize(std::ostream& os) const;
+        void deserialize(std::istream& is);
+        void clear();
+    };
+
     std::string name;
     float weight = 0.0f;
-    RawVector<float3> points;
-    RawVector<float3> normals;
-    RawVector<float3> tangents;
+    std::vector<Frame> frames;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
-
-    void generateTangents(); // todo
-    void addVertex(const float3& v);
-    void addNormal(const float3& v);
 };
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 
