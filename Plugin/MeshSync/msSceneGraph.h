@@ -377,8 +377,8 @@ public:
 
     // non-serialized
     RawVector<SubmeshData> submeshes;
-    RawVector<SplitData> splits;
     RawVector<Weights4> weights4;
+    std::vector<SplitData> splits;
 
 public:
     Mesh();

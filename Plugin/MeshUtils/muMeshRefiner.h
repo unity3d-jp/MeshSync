@@ -13,11 +13,36 @@ struct MeshRefiner
 
     struct Split
     {
+        int offset_faces = 0;
+        int offset_indices = 0;
+        int offset_vertices = 0;
         int num_faces = 0;
         int num_vertices = 0;
         int num_indices = 0;
         int num_indices_triangulated = 0;
         int num_submeshes = 0;
+    };
+
+    struct BlendShapeFrameIn
+    {
+        IArray<float3> points;
+        IArray<float3> normals;
+        IArray<float3> tangents;
+    };
+    struct BlendShapeIn
+    {
+        std::vector<BlendShapeFrameIn> frames;
+    };
+
+    struct BlendShapeFrameOut
+    {
+        RawVector<float3> points;
+        RawVector<float3> normals;
+        RawVector<float3> tangents;
+    };
+    struct BlendShapeOut
+    {
+        std::vector<BlendShapeFrameOut> frames;
     };
 
 
@@ -32,7 +57,7 @@ struct MeshRefiner
     IArray<float2> uv;
     IArray<float4> colors;
     IArray<Weights4> weights4;
-
+    RawVector<BlendShapeIn> blendshapes;
     RawVector<Submesh> submeshes;
     RawVector<Split> splits;
 
@@ -50,14 +75,12 @@ private:
     RawVector<float2> new_uv;
     RawVector<float4> new_colors;
     RawVector<Weights4> new_weights4;
+    std::vector<BlendShapeOut> new_blendshapes;
     RawVector<int>    new_indices;
     RawVector<int>    new_indices_triangulated;
     RawVector<int>    new_indices_submeshes;
     RawVector<int>    old2new;
     RawVector<int>    dummy_materialIDs;
-    //std::vector<BlendShapeDataPtr> new_blendshapes;
-
-
     int num_indices_tri = 0;
 
 public:
@@ -79,6 +102,7 @@ public:
         RawVector<float4>& c,
         RawVector<Weights4>& w,
         RawVector<int>& idx);
+    std::vector<BlendShapeOut>& getNewBlendShapes();
 
 private:
     bool refineDumb();

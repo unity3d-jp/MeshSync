@@ -219,6 +219,12 @@ public:
         resize(m_size + 1);
         back() = v;
     }
+    void push_back(T&& v)
+    {
+        resize(m_size + 1);
+        back() = v;
+    }
+
 
     void pop_back()
     {

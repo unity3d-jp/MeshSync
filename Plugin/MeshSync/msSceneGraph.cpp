@@ -1193,6 +1193,17 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.uv = uv;
     refiner.colors = colors;
     refiner.weights4 = weights4;
+    for (auto& bs : blendshapes) {
+        mu::MeshRefiner::BlendShapeIn ibs;
+        for (auto& frame : bs->frames) {
+            mu::MeshRefiner::BlendShapeFrameIn ibsf;
+            ibsf.points = frame.points;
+            ibsf.normals = frame.normals;
+            ibsf.tangents = frame.tangents;
+            ibs.frames.push_back(ibsf);
+        }
+        refiner.blendshapes.push_back(std::move(ibs));
+    }
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
@@ -1285,15 +1296,30 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
     }
 
-    for (auto& bs : blendshapes) {
-        size_t num_points = points.size();
-        for (auto& frame : bs->frames) {
-            if (frame.points.size() != num_points)
-                frame.points.resize_zeroclear(num_points);
-            if (frame.normals.size() != num_points)
-                frame.normals.resize_zeroclear(num_points);
-            if (frame.tangents.size() != num_points)
-                frame.tangents.resize_zeroclear(num_points);
+    {
+        auto num_points = points.size();
+        auto num_blendshaped = blendshapes.size();
+        for (size_t bi = 0; bi < num_blendshaped; ++bi) {
+            auto num_frames = blendshapes[bi]->frames.size();
+            for (size_t bfi = 0; bfi < num_frames; ++bfi) {
+                auto& frame = blendshapes[bi]->frames[bfi];
+                auto& new_frame = refiner.getNewBlendShapes()[bi].frames[bfi];
+
+                if (frame.points.size() != num_points)
+                    frame.points.resize_zeroclear(num_points);
+                else
+                    frame.points.swap(new_frame.points);
+
+                if (frame.normals.size() != num_points)
+                    frame.normals.resize_zeroclear(num_points);
+                else
+                    frame.normals.swap(new_frame.normals);
+
+                if (frame.tangents.size() != num_points)
+                    frame.tangents.resize_zeroclear(num_points);
+                else
+                    frame.tangents.swap(new_frame.tangents);
+            }
         }
     }
 

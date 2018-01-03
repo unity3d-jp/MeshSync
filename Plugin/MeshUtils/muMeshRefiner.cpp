@@ -13,6 +13,7 @@ void MeshRefiner::prepare(
     uv.reset(nullptr, 0);
     colors.reset(nullptr, 0);
     weights4.reset(nullptr, 0);
+    blendshapes.clear();
 
     submeshes.clear();
     splits.clear();
@@ -30,6 +31,7 @@ void MeshRefiner::prepare(
     new_uv.clear();
     new_colors.clear();
     new_weights4.clear();
+    new_blendshapes.clear();
     new_indices.clear();
     new_indices_triangulated.clear();
     new_indices_submeshes.clear();
@@ -251,14 +253,19 @@ bool MeshRefiner::refineDumb()
     if ((int)points.size() > split_unit) {
         int *sub_indices = new_indices_triangulated.data();
         int offset_faces = 0;
+        int offset_indices = 0;
         int offset_vertices = 0;
         mu::Split(counts, split_unit, [&](int num_faces, int num_vertices, int num_indices_triangulated) {
             mu::Triangulate(sub_indices, IntrusiveArray<int>(&counts[offset_faces], num_faces), swap_faces);
             sub_indices += num_indices_triangulated;
             offset_faces += num_faces;
+            offset_indices += num_indices_triangulated;
             offset_vertices += num_vertices;
 
             auto split = Split{};
+            split.offset_faces = offset_faces;
+            split.offset_indices = offset_indices;
+            split.offset_vertices = offset_vertices;
             split.num_faces = num_faces;
             split.num_vertices = num_vertices;
             split.num_indices = num_vertices; // in this case num_vertex == num_indices
@@ -296,24 +303,43 @@ void MeshRefiner::doRefine(const Body& body)
     if (!weights4.empty()) { new_weights4.reserve(num_indices); }
     new_indices.reserve(num_indices);
 
+    auto num_blendshapes = blendshapes.size();
+    new_blendshapes.resize(num_blendshapes);
+    for (size_t bi = 0; bi < num_blendshapes; ++bi) {
+        auto& ibs = blendshapes[bi];
+        auto& obs = new_blendshapes[bi];
+        for (auto& iframe : ibs.frames) {
+            BlendShapeFrameOut tmp;
+            if (!iframe.points.empty()) tmp.points.reserve(num_indices);
+            if (!iframe.normals.empty()) tmp.normals.reserve(num_indices);
+            if (!iframe.tangents.empty()) tmp.tangents.reserve(num_indices);
+            obs.frames.push_back(std::move(tmp));
+        }
+    }
+
     old2new.resize(num_indices, -1);
 
     int num_faces_total = (int)counts.size();
-    int offset_vertices = 0;
+    int offset_faces = 0;
     int offset_indices = 0;
+    int offset_vertices = 0;
     int num_faces = 0;
     int num_indices_triangulated = 0;
 
     auto add_new_split = [&]() {
         auto split = Split{};
+        split.offset_faces = offset_faces;
+        split.offset_indices = offset_indices;
+        split.offset_vertices = offset_vertices;
         split.num_faces = num_faces;
         split.num_indices_triangulated = num_indices_triangulated;
         split.num_vertices = (int)new_points.size() - offset_vertices;
         split.num_indices = (int)new_indices.size() - offset_indices;
         splits.push_back(split);
 
-        offset_vertices += split.num_vertices;
+        offset_faces += split.num_faces;
         offset_indices += split.num_indices;
+        offset_vertices += split.num_vertices;
         num_faces = 0;
         num_indices_triangulated = 0;
     };
@@ -333,9 +359,19 @@ void MeshRefiner::doRefine(const Body& body)
             int i = offset + ci;
             int vi = indices[i];
             int ni = body(vi, i);
+            new_indices.push_back(ni - offset_vertices);
 
             if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
-            new_indices.push_back(ni - offset_vertices);
+            for (size_t bi = 0; bi < num_blendshapes; ++bi) {
+                size_t num_frames = blendshapes[bi].frames.size();
+                for (size_t bfi = 0; bfi < num_frames; ++bfi) {
+                    auto& ibsf = blendshapes[bi].frames[bfi];
+                    auto& obsf = new_blendshapes[bi].frames[bfi];
+                    if (!ibsf.points.empty()) obsf.points.push_back(ibsf.points[vi]);
+                    if (!ibsf.normals.empty()) obsf.normals.push_back(ibsf.normals[vi]);
+                    if (!ibsf.tangents.empty()) obsf.tangents.push_back(ibsf.tangents[vi]);
+                }
+            }
         }
         ++num_faces;
         num_indices_triangulated += (count - 2) * 3;
@@ -518,6 +554,11 @@ void MeshRefiner::swapNewData(
 
     if (!new_indices_submeshes.empty()) { idx.swap(new_indices_submeshes); }
     else if (!new_indices_triangulated.empty()) { idx.swap(new_indices_triangulated); }
+}
+
+std::vector<mu::MeshRefiner::BlendShapeOut>& MeshRefiner::getNewBlendShapes()
+{
+    return new_blendshapes;
 }
 
 void MeshRefiner::buildConnection()
