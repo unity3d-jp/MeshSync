@@ -57,7 +57,7 @@ struct MeshRefiner
     IArray<float2> uv;
     IArray<float4> colors;
     IArray<Weights4> weights4;
-    RawVector<BlendShapeIn> blendshapes;
+    std::vector<BlendShapeIn> blendshapes;
     RawVector<Submesh> submeshes;
     RawVector<Split> splits;
 

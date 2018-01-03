@@ -303,13 +303,10 @@ struct SubmeshData
 
 struct SplitData
 {
-    IArray<float3> points;
-    IArray<float3> normals;
-    IArray<float4> tangents;
-    IArray<float2> uv;
-    IArray<float4> colors;
-    IArray<int> indices;
-    IArray<Weights4> weights4;
+    int offset_indices = 0;
+    int offset_vertices = 0;
+    int num_indices = 0;
+    int num_vertices = 0;
     IArray<SubmeshData> submeshes;
 };
 
@@ -336,6 +333,7 @@ struct BlendShapeData
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
+    void convertHandedness(bool x, bool yz);
 };
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 

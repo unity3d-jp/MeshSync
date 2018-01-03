@@ -507,28 +507,74 @@ namespace UTJ.MeshSync
                 AssignMaterials(rec);
         }
 
+        PinnedList<int> tmpI;
+        PinnedList<Vector2> tmpV2;
+        PinnedList<Vector3> tmpV3, tmpV3a, tmpV3b;
+        PinnedList<Vector4> tmpV4;
+        PinnedList<Color> tmpC;
+        PinnedList<BoneWeight> tmpW;
+
         Mesh CreateEditedMesh(MeshData data, SplitData split)
         {
+            if (tmpI == null) tmpI = new PinnedList<int>();
+            if (tmpV2 == null) tmpV2 = new PinnedList<Vector2>();
+            if (tmpV3 == null) tmpV3 = new PinnedList<Vector3>();
+            if (tmpV3a == null) tmpV3a = new PinnedList<Vector3>();
+            if (tmpV3b == null) tmpV3b = new PinnedList<Vector3>();
+            if (tmpV4 == null) tmpV4 = new PinnedList<Vector4>();
+            if (tmpC == null) tmpC = new PinnedList<Color>();
+            if (tmpW == null) tmpW = new PinnedList<BoneWeight>();
+
             var mesh = new Mesh();
 #if UNITY_2017_3_OR_NEWER
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 #endif
+
             var flags = data.flags;
-            if (flags.hasPoints) mesh.vertices = split.points;
-            if (flags.hasNormals) mesh.normals = split.normals;
-            if (flags.hasTangents) mesh.tangents = split.tangents;
-            if (flags.hasUV) mesh.uv = split.uv;
-            if (flags.hasColors) mesh.colors = split.colors;
+            if (flags.hasPoints)
+            {
+                tmpV3.Resize(split.numPoints);
+                data.ReadPoints(tmpV3, split);
+                mesh.SetVertices(tmpV3);
+            }
+            if (flags.hasNormals)
+            {
+                tmpV3.Resize(split.numPoints);
+                data.ReadNormals(tmpV3, split);
+                mesh.SetNormals(tmpV3);
+            }
+            if (flags.hasTangents)
+            {
+                tmpV4.Resize(split.numPoints);
+                data.ReadTangents(tmpV4, split);
+                mesh.SetTangents(tmpV4);
+            }
+            if (flags.hasUV)
+            {
+                tmpV2.Resize(split.numPoints);
+                data.ReadUVs(tmpV2, split);
+                mesh.SetUVs(0, tmpV2);
+            }
+            if (flags.hasColors)
+            {
+                tmpC.Resize(split.numPoints);
+                data.ReadColors(tmpC, split);
+                mesh.SetColors(tmpC);
+            }
             if (flags.hasBones)
             {
-                mesh.boneWeights = split.boneWeights;
+                tmpW.Resize(split.numPoints);
+                data.ReadBoneWeights(tmpW, split);
+                mesh.boneWeights = tmpW;
                 mesh.bindposes = data.bindposes;
             }
             if(flags.hasIndices)
             {
                 if (split.numSubmeshes == 0)
                 {
-                    mesh.SetIndices(split.indices, MeshTopology.Triangles, 0);
+                    tmpI.Resize(split.numIndices);
+                    data.ReadIndices(tmpI, split);
+                    mesh.SetIndices(tmpI, MeshTopology.Triangles, 0);
                 }
                 else
                 {
@@ -542,9 +588,10 @@ namespace UTJ.MeshSync
             }
             if (flags.hasBlendshapes)
             {
-                var points = new Vector3[split.numPoints];
-                var normals = new Vector3[split.numPoints];
-                var tangents = new Vector3[split.numPoints];
+                tmpV3.Resize(split.numPoints);
+                tmpV3a.Resize(split.numPoints);
+                tmpV3b.Resize(split.numPoints);
+
                 int numBlendShapes = data.numBlendShapes;
                 for (int bi = 0; bi < numBlendShapes; ++bi)
                 {
@@ -553,10 +600,10 @@ namespace UTJ.MeshSync
                     var numFrames = bsd.numFrames;
                     for (int fi = 0; fi < numFrames; ++fi)
                     {
-                        bsd.ReadPoints(fi, points);
-                        bsd.ReadNormals(fi, normals);
-                        bsd.ReadTangents(fi, tangents);
-                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), points, normals, tangents);
+                        bsd.ReadPoints(fi, tmpV3, split);
+                        bsd.ReadNormals(fi, tmpV3a, split);
+                        bsd.ReadTangents(fi, tmpV3b, split);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpV3, tmpV3a, tmpV3b);
                     }
                 }
             }
@@ -1050,7 +1097,7 @@ namespace UTJ.MeshSync
                 {
                     dst.SetBonePaths(smr.bones);
                     dst.bindposes = mesh.bindposes;
-                    dst.boneWeights = mesh.boneWeights;
+                    dst.WriteWeights(mesh.boneWeights);
                 }
             }
             return true;
@@ -1062,29 +1109,29 @@ namespace UTJ.MeshSync
 
             if (flags.getPoints)
             {
-                data.points = use_cloth ? cloth.vertices : mesh.vertices;
+                data.WritePoints(use_cloth ? cloth.vertices : mesh.vertices);
             }
             if (flags.getNormals)
             {
-                data.normals = use_cloth ? cloth.normals : mesh.normals;
+                data.WriteNormals(use_cloth ? cloth.normals : mesh.normals);
             }
             if (flags.getTangents)
             {
-                data.tangents = mesh.tangents;
+                data.WriteTangents(mesh.tangents);
             }
             if (flags.getUV)
             {
-                data.uv = mesh.uv;
+                data.WriteUVs(mesh.uv);
             }
             if (flags.getColors)
             {
-                data.colors = mesh.colors;
+                data.WriteColors(mesh.colors);
             }
             if (flags.getIndices)
             {
                 if(!flags.getMaterialIDs || materials == null || materials.Length == 0)
                 {
-                    data.indices = mesh.triangles;
+                    data.WriteIndices(mesh.triangles);
                 }
                 else
                 {
@@ -1099,7 +1146,7 @@ namespace UTJ.MeshSync
             }
             if (flags.getBones)
             {
-                data.boneWeights = mesh.boneWeights;
+                data.WriteWeights(mesh.boneWeights);
                 data.bindposes = mesh.bindposes;
             }
         }

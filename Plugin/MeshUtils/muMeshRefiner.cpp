@@ -313,7 +313,7 @@ void MeshRefiner::doRefine(const Body& body)
             if (!iframe.points.empty()) tmp.points.reserve(num_indices);
             if (!iframe.normals.empty()) tmp.normals.reserve(num_indices);
             if (!iframe.tangents.empty()) tmp.tangents.reserve(num_indices);
-            obs.frames.push_back(std::move(tmp));
+            obs.frames.push_back(tmp);
         }
     }
 

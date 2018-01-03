@@ -360,7 +360,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
                 bsd->frames.resize(1);
                 auto& frame = bsd->frames.back();
                 frame.weight = 100.0f;
-                frame.points.reserve_discard(kb->totelem);
+                frame.points.resize_discard(kb->totelem);
                 memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));
 
                 size_t len = frame.points.size();

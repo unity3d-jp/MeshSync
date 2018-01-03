@@ -984,7 +984,23 @@ void BlendShapeData::clear()
     weight = 0.0f;
     frames.clear();
 }
-
+void BlendShapeData::convertHandedness(bool x, bool yz)
+{
+    if (x) {
+        for (auto& f : frames) {
+            for (auto& v : f.points) { v = swap_handedness(v); }
+            for (auto& v : f.normals) { v = swap_handedness(v); }
+            for (auto& v : f.tangents) { v = swap_handedness(v); }
+        }
+    }
+    if (yz) {
+        for (auto& f : frames) {
+            for (auto& v : f.points) { v = swap_yz(v); }
+            for (auto& v : f.normals) { v = swap_yz(v); }
+            for (auto& v : f.tangents) { v = swap_yz(v); }
+        }
+    }
+}
 
 uint32_t BoneData::getSerializeSize() const
 {
@@ -1126,17 +1142,16 @@ void Mesh::convertHandedness(bool x, bool yz)
     if (x) {
         mu::InvertX(points.data(), points.size());
         mu::InvertX(normals.data(), normals.size());
-        for (auto& bone : bones)
-            bone->bindpose = swap_handedness(bone->bindpose);
+        mu::InvertX(tangents.data(), tangents.size());
+        for (auto& bone : bones) bone->bindpose = swap_handedness(bone->bindpose);
     }
     if (yz) {
-        for (auto& v : points)
-            v = swap_yz(v);
-        for (auto& v : normals)
-            v = swap_yz(v);
-        for (auto& bone : bones)
-            bone->bindpose = swap_yz(bone->bindpose);
+        for (auto& v : points) v = swap_yz(v);
+        for (auto& v : normals) v = swap_yz(v);
+        for (auto& v : tangents) v = swap_yz(v);
+        for (auto& bone : bones) bone->bindpose = swap_yz(bone->bindpose);
     }
+    for (auto& bs : blendshapes) bs->convertHandedness(x, yz);
 }
 
 void Mesh::applyScaleFactor(float v)
@@ -1239,34 +1254,18 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
 
         splits.clear();
-        int *sub_indices = indices.data();
+        int offset_indices = 0;
         int offset_vertices = 0;
         for (auto& split : refiner.splits) {
             auto sp = SplitData();
-
-            sp.indices.reset(sub_indices, split.num_indices_triangulated);
-            sub_indices += split.num_indices_triangulated;
-
-            if (!points.empty()) {
-                sp.points.reset(&points[offset_vertices], split.num_vertices);
-            }
-            if (!normals.empty()) {
-                sp.normals.reset(&normals[offset_vertices], split.num_vertices);
-            }
-            if (!tangents.empty()) {
-                sp.tangents.reset(&tangents[offset_vertices], split.num_vertices);
-            }
-            if (!uv.empty()) {
-                sp.uv.reset(&uv[offset_vertices], split.num_vertices);
-            }
-            if (!colors.empty()) {
-                sp.colors.reset(&colors[offset_vertices], split.num_vertices);
-            }
-            if (!weights4.empty()) {
-                sp.weights4.reset(&weights4[offset_vertices], split.num_vertices);
-            }
-            offset_vertices += split.num_vertices;
+            sp.offset_indices = offset_indices;
+            sp.offset_vertices = offset_vertices;
+            sp.num_indices = split.num_indices_triangulated;
+            sp.num_vertices = split.num_vertices;
             splits.push_back(sp);
+
+            offset_vertices += split.num_vertices;
+            offset_indices += split.num_indices_triangulated;
         }
 
         // setup submeshes
@@ -1297,7 +1296,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     {
-        auto num_points = points.size();
         auto num_blendshaped = blendshapes.size();
         for (size_t bi = 0; bi < num_blendshaped; ++bi) {
             auto num_frames = blendshapes[bi]->frames.size();
@@ -1305,20 +1303,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
                 auto& frame = blendshapes[bi]->frames[bfi];
                 auto& new_frame = refiner.getNewBlendShapes()[bi].frames[bfi];
 
-                if (frame.points.size() != num_points)
-                    frame.points.resize_zeroclear(num_points);
-                else
-                    frame.points.swap(new_frame.points);
-
-                if (frame.normals.size() != num_points)
-                    frame.normals.resize_zeroclear(num_points);
-                else
-                    frame.normals.swap(new_frame.normals);
-
-                if (frame.tangents.size() != num_points)
-                    frame.tangents.resize_zeroclear(num_points);
-                else
-                    frame.tangents.swap(new_frame.tangents);
+                frame.points.swap(new_frame.points);
+                frame.normals.swap(new_frame.normals);
+                frame.tangents.swap(new_frame.tangents);
             }
         }
     }
