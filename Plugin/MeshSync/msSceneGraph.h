@@ -280,8 +280,6 @@ struct MeshRefineFlags
     uint32_t mirror_x_weld : 1; // 20
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
-
-    uint32_t gen_weights4 : 1;
 };
 
 struct MeshRefineSettings

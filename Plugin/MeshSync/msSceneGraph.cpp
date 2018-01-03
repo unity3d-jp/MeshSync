@@ -1196,7 +1196,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
         convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
-    if (mrs.flags.gen_weights4 && !bones.empty()) {
+    if (!bones.empty()) {
         generateWeights4();
     }
 

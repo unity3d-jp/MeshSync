@@ -21,6 +21,11 @@ bool IsVisible(MObject node)
     return visible;
 }
 
+std::string GetName(MObject node)
+{
+    MFnDependencyNode fn_node(node);
+    return fn_node.name().asChar();
+}
 std::string GetPath(MDagPath path)
 {
     std::string ret = path.fullPathName().asChar();

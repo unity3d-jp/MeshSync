@@ -292,7 +292,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     auto data = new ms::BoneData();
                     rel.data->bones.emplace_back(data);
                     rel.data->flags.has_bones = 1;
-                    rel.data->refine_settings.flags.gen_weights4 = 1;
                     auto& bone = m_bones[bid];
                     data->path = bone.transform->path;
                     data->bindpose = bone.bindpose;

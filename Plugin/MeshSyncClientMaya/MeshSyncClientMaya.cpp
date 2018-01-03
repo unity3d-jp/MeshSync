@@ -847,7 +847,6 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.flags.apply_trs = 1;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
-    dst.refine_settings.flags.gen_weights4 = 1;
 
     MFnBlendShapeDeformer fn_blendshape = FindBlendShape(mmesh.object());
     MFnSkinCluster fn_skin = FindSkinCluster(mmesh.object());
@@ -950,8 +949,6 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get blendshape data
     if (!fn_blendshape.object().isNull()) {
         auto num_weights = fn_blendshape.numWeights();
-        dst.blendshape.resize(num_weights);
-
         auto plug_inputTargets = fn_blendshape.findPlug("inputTarget");
         auto plug_inputTargetGroups = plug_inputTargets.elementByPhysicalIndex(0).child(0);
         auto plug_inputTargetItem = plug_inputTargetGroups.elementByPhysicalIndex(0).child(0).elementByPhysicalIndex(0);
@@ -986,19 +983,24 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
 
         for (uint32_t wi = 0; wi < num_weights; ++wi) {
-            auto bs = new ms::BlendShapeData();
-            bs->points.resize(dst.points.size());
-            dst.blendshape[wi].reset(bs);
-
             MObjectArray targets;
             fn_blendshape.getTargets(bases[0], wi, targets);
             auto num_targets = targets.length();
             for (uint32_t ti = 0; ti < targets.length(); ++ti) {
+                auto bs = new ms::BlendShapeData();
+                dst.blendshapes.emplace_back(bs);
+
+                bs->name = GetName(targets[ti]);
+                bs->weight = 100.0f;
+                bs->frames.push_back(ms::BlendShapeData::Frame());
+                auto& frame = bs->frames.back();
+                frame.points.resize(dst.points.size());
+
                 MItGeometry gi = targets[ti];
                 while (!gi.isDone()) {
                     auto idx = gi.index();
                     auto p = gi.position();
-                    bs->points[idx] = (ms::float3&)p;
+                    frame.points[idx] = (ms::float3&)p;
                 }
             }
         }
