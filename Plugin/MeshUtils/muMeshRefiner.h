@@ -55,6 +55,8 @@ private:
     RawVector<int>    new_indices_submeshes;
     RawVector<int>    old2new;
     RawVector<int>    dummy_materialIDs;
+    //std::vector<BlendShapeDataPtr> new_blendshapes;
+
 
     int num_indices_tri = 0;
 

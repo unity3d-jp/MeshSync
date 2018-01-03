@@ -1049,7 +1049,7 @@ uint32_t Mesh::getSerializeSize() const
         ret += ssize(bones);
     }
     if (flags.has_blendshapes) {
-        ret += ssize(blendshape);
+        ret += ssize(blendshapes);
     }
     return ret;
 }
@@ -1070,7 +1070,7 @@ void Mesh::serialize(std::ostream& os) const
         write(os, bones);
     }
     if (flags.has_blendshapes) {
-        write(os, blendshape);
+        write(os, blendshapes);
     }
 }
 
@@ -1091,7 +1091,7 @@ void Mesh::deserialize(std::istream& is)
         read(is, bones);
     }
     if (flags.has_blendshapes) {
-        read(is, blendshape);
+        read(is, blendshapes);
     }
 }
 
@@ -1108,7 +1108,7 @@ void Mesh::clear()
 
     root_bone.clear();
     bones.clear();
-    blendshape.clear();
+    blendshapes.clear();
 
     submeshes.clear();
     splits.clear();
@@ -1285,6 +1285,18 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
     }
 
+    for (auto& bs : blendshapes) {
+        size_t num_points = points.size();
+        for (auto& frame : bs->frames) {
+            if (frame.points.size() != num_points)
+                frame.points.resize_zeroclear(num_points);
+            if (frame.normals.size() != num_points)
+                frame.normals.resize_zeroclear(num_points);
+            if (frame.tangents.size() != num_points)
+                frame.tangents.resize_zeroclear(num_points);
+        }
+    }
+
     flags.has_points = !points.empty();
     flags.has_normals = !normals.empty();
     flags.has_tangents = !tangents.empty();
@@ -1451,7 +1463,7 @@ void Mesh::setupFlags()
     flags.has_indices = !indices.empty();
     flags.has_materialIDs = !materialIDs.empty();
     flags.has_bones = !bones.empty();
-    flags.has_blendshapes = !blendshape.empty();
+    flags.has_blendshapes = !blendshapes.empty();
 }
 
 void Mesh::addVertex(const float3& v)
@@ -1495,7 +1507,7 @@ BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
 {
     BlendShapeDataPtr ret(new BlendShapeData());
     ret->name = _name;
-    blendshape.push_back(ret);
+    blendshapes.push_back(ret);
     return ret;
 }
 

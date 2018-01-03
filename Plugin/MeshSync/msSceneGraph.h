@@ -373,7 +373,7 @@ public:
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
-    std::vector<BlendShapeDataPtr> blendshape;
+    std::vector<BlendShapeDataPtr> blendshapes;
 
     // non-serialized
     RawVector<SubmeshData> submeshes;

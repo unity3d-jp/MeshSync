@@ -347,8 +347,28 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 
     // blend shapes
     if (m_settings.sync_blendshapes && src.key) {
+        RawVector<float3> basis;
+        int bi = 0;
         each_keys(&src, [&](const KeyBlock *kb) {
-            // todo
+            if (bi == 0) { // Basis
+                basis.resize_discard(kb->totelem);
+                memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
+            }
+            else {
+                auto bsd = dst.addBlendShape(kb->name);
+                bsd->weight = kb->curval * 100.0f;
+                bsd->frames.resize(1);
+                auto& frame = bsd->frames.back();
+                frame.weight = 100.0f;
+                frame.points.reserve_discard(kb->totelem);
+                memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));
+
+                size_t len = frame.points.size();
+                for (size_t i = 0; i < len; ++i) {
+                    frame.points[i] -= basis[i];
+                }
+            }
+            ++bi;
         });
     }
 }

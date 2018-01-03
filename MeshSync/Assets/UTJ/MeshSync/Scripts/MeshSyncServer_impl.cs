@@ -1174,7 +1174,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumSubmeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern SubmeshData msMeshGetSubmesh(IntPtr _this, int i);
 
-            [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapeTargets(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr _this, int i);
 
 
@@ -1360,7 +1360,7 @@ namespace UTJ.MeshSync
                 return msMeshGetSubmesh(_this, i);
             }
 
-            public int numBlendShapes { get { return msMeshGetNumBlendShapeTargets(_this); } }
+            public int numBlendShapes { get { return msMeshGetNumBlendShapes(_this); } }
             public BlendShapeData GetBlendShapeData(int i)
             {
                 return msMeshGetBlendShapeData(_this, i);

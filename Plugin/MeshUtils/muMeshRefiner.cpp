@@ -333,6 +333,8 @@ void MeshRefiner::doRefine(const Body& body)
             int i = offset + ci;
             int vi = indices[i];
             int ni = body(vi, i);
+
+            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             new_indices.push_back(ni - offset_vertices);
         }
         ++num_faces;
@@ -543,7 +545,6 @@ int MeshRefiner::findOrAddVertexPNTUC(int vi, const float3& p, const float3& n, 
             new_tangents.push_back(t);
             new_uv.push_back(u);
             new_colors.push_back(c);
-            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
     }
@@ -565,7 +566,6 @@ int MeshRefiner::findOrAddVertexPNTU(int vi, const float3& p, const float3& n, c
             new_normals.push_back(n);
             new_tangents.push_back(t);
             new_uv.push_back(u);
-            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
     }
@@ -586,7 +586,6 @@ int MeshRefiner::findOrAddVertexPNU(int vi, const float3& p, const float3& n, co
             new_points.push_back(p);
             new_normals.push_back(n);
             new_uv.push_back(u);
-            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
     }
@@ -606,7 +605,6 @@ int MeshRefiner::findOrAddVertexPN(int vi, const float3& p, const float3& n)
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_normals.push_back(n);
-            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
     }
@@ -626,7 +624,6 @@ int MeshRefiner::findOrAddVertexPU(int vi, const float3& p, const float2& u)
             ni = (int)new_points.size();
             new_points.push_back(p);
             new_uv.push_back(u);
-            if (!weights4.empty()) { new_weights4.push_back(weights4[vi]); }
             return ni;
         }
     }

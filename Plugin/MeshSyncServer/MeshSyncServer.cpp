@@ -580,13 +580,13 @@ msAPI void msMeshWriteBindPoses(ms::Mesh *_this, const float4x4 *v, int size)
     }
 }
 
-msAPI int msMeshGetNumBlendShapeTargets(ms::Mesh *_this)
+msAPI int msMeshGetNumBlendShapes(ms::Mesh *_this)
 {
-    return (int)_this->blendshape.size();
+    return (int)_this->blendshapes.size();
 }
 msAPI ms::BlendShapeData* msMeshGetBlendShapeData(ms::Mesh *_this, int i)
 {
-    return _this->blendshape[i].get();
+    return _this->blendshapes[i].get();
 }
 
 msAPI void msMeshSetLocal2World(ms::Mesh *_this, const float4x4 *v)
