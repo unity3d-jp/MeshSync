@@ -331,7 +331,9 @@ struct BlendShapeData
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
+
     void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
 };
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 
@@ -346,8 +348,8 @@ struct BoneData : public std::enable_shared_from_this<BoneData>
     void deserialize(std::istream& is);
     void clear();
 
-    // for python
-    void addWeight(float v);
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
 };
 using BoneDataPtr = std::shared_ptr<BoneData>;
 
@@ -391,7 +393,6 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 
-    void resizeBones(int n);
     void generateWeights4();
     void setupFlags();
 

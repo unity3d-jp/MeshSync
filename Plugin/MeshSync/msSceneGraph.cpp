@@ -1002,6 +1002,13 @@ void BlendShapeData::convertHandedness(bool x, bool yz)
     }
 }
 
+void BlendShapeData::applyScaleFactor(float scale)
+{
+    for (auto& f : frames) {
+        mu::Scale(f.points.data(), scale, f.points.size());
+    }
+}
+
 uint32_t BoneData::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -1032,9 +1039,19 @@ void BoneData::clear()
     weights.clear();
 }
 
-void BoneData::addWeight(float v)
+void BoneData::convertHandedness(bool x, bool yz)
 {
-    weights.push_back(v);
+    if (x) {
+        bindpose = swap_handedness(bindpose);
+    }
+    if (yz) {
+        bindpose = swap_yz(bindpose);
+    }
+}
+
+void BoneData::applyScaleFactor(float scale)
+{
+    (float3&)bindpose[3] *= scale;
 }
 
 
@@ -1143,14 +1160,13 @@ void Mesh::convertHandedness(bool x, bool yz)
         mu::InvertX(points.data(), points.size());
         mu::InvertX(normals.data(), normals.size());
         mu::InvertX(tangents.data(), tangents.size());
-        for (auto& bone : bones) bone->bindpose = swap_handedness(bone->bindpose);
     }
     if (yz) {
         for (auto& v : points) v = swap_yz(v);
         for (auto& v : normals) v = swap_yz(v);
         for (auto& v : tangents) v = swap_yz(v);
-        for (auto& bone : bones) bone->bindpose = swap_yz(bone->bindpose);
     }
+    for (auto& bone : bones) bone->convertHandedness(x, yz);
     for (auto& bs : blendshapes) bs->convertHandedness(x, yz);
 }
 
@@ -1158,9 +1174,8 @@ void Mesh::applyScaleFactor(float v)
 {
     super::applyScaleFactor(v);
     mu::Scale(points.data(), v, points.size());
-    for (auto& bone : bones) {
-        (float3&)bone->bindpose[3] *= v;
-    }
+    for (auto& bone : bones) bone->applyScaleFactor(v);
+    for (auto& bs : blendshapes) bs->applyScaleFactor(v);
 }
 
 void Mesh::refine(const MeshRefineSettings& mrs)
@@ -1196,7 +1211,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
         convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
-    if (!bones.empty()) {
+    if (weights4.empty() && !bones.empty()) {
         generateWeights4();
     }
 
@@ -1207,18 +1222,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.prepare(counts, indices, points);
     refiner.uv = uv;
     refiner.colors = colors;
-    refiner.weights4 = weights4;
-    for (auto& bs : blendshapes) {
-        mu::MeshRefiner::BlendShapeIn ibs;
-        for (auto& frame : bs->frames) {
-            mu::MeshRefiner::BlendShapeFrameIn ibsf;
-            ibsf.points = frame.points;
-            ibsf.normals = frame.normals;
-            ibsf.tangents = frame.tangents;
-            ibs.frames.push_back(ibsf);
-        }
-        refiner.blendshapes.push_back(std::move(ibs));
-    }
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
@@ -1251,7 +1254,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if(refine_topology) {
         refiner.refine(mrs.flags.optimize_topology);
         refiner.genSubmesh(materialIDs);
-        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
+        refiner.swapNewData(points, normals, tangents, uv, colors, indices);
 
         splits.clear();
         int offset_indices = 0;
@@ -1292,20 +1295,34 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         }
     }
     else {
-        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
+        refiner.swapNewData(points, normals, tangents, uv, colors, indices);
     }
 
-    {
-        auto num_blendshaped = blendshapes.size();
-        for (size_t bi = 0; bi < num_blendshaped; ++bi) {
-            auto num_frames = blendshapes[bi]->frames.size();
-            for (size_t bfi = 0; bfi < num_frames; ++bfi) {
-                auto& frame = blendshapes[bi]->frames[bfi];
-                auto& new_frame = refiner.getNewBlendShapes()[bi].frames[bfi];
-
-                frame.points.swap(new_frame.points);
-                frame.normals.swap(new_frame.normals);
-                frame.tangents.swap(new_frame.tangents);
+    if (!weights4.empty()) {
+        RawVector<Weights4> tmp;
+        tmp.resize_discard(points.size());
+        CopyWithIndices(tmp.data(), weights4.data(), refiner.new2old_vertices);
+        weights4.swap(tmp);
+    }
+    if (!blendshapes.empty()) {
+        RawVector<float3> tmp;
+        for (auto& bs : blendshapes) {
+            for (auto& frame : bs->frames) {
+                if (!frame.points.empty()) {
+                    tmp.resize_discard(points.size());
+                    CopyWithIndices(tmp.data(), frame.points.data(), refiner.new2old_vertices);
+                    frame.points.swap(tmp);
+                }
+                if (!frame.normals.empty()) {
+                    tmp.resize_discard(points.size());
+                    CopyWithIndices(tmp.data(), frame.normals.data(), refiner.new2old_vertices);
+                    frame.normals.swap(tmp);
+                }
+                if (!frame.tangents.empty()) {
+                    tmp.resize_discard(points.size());
+                    CopyWithIndices(tmp.data(), frame.tangents.data(), refiner.new2old_vertices);
+                    frame.tangents.swap(tmp);
+                }
             }
         }
     }
@@ -1343,14 +1360,17 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
         }
     }
 
+    // points
     points.resize(num_points + copylist.size());
     mu::MirrorPoints(points.data() + num_points, IArray<float3>{points.data(), num_points}, copylist, plane_n, plane_d);
 
+    // indices
     counts.resize(num_faces * 2);
     indices.resize(num_indices * 2);
     mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
         IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, IArray<int>{indirect.data(), indirect.size()});
 
+    // normals
     if (normals.data()) {
         if (normals.size() == num_points) {
             normals.resize(points.size());
@@ -1364,6 +1384,8 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
             });
         }
     }
+
+    // uv
     if (uv.data()) {
         if (uv.size() == num_points) {
             uv.resize(points.size());
@@ -1377,6 +1399,8 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
             });
         }
     }
+
+    // colors
     if (colors.data()) {
         if (colors.size() == num_points) {
             colors.resize(points.size());
@@ -1390,34 +1414,45 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
             });
         }
     }
+
+    // material ids
     if (materialIDs.data()) {
         size_t n = materialIDs.size();
         materialIDs.resize(n * 2);
         memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
     }
+
+    // bone weights
     for (auto& bone : bones) {
         auto& weights = bone->weights;
         weights.resize(points.size());
         mu::CopyWithIndices(&weights[num_points], &weights[0], copylist);
     }
-}
 
+    // blend shapes
+    for (auto& bs : blendshapes) {
+        for (auto& f : bs->frames) {
+            if (!f.points.empty()) {
+                f.points.resize(points.size());
+                mu::CopyWithIndices(&f.points[num_points], &f.points[0], copylist);
+            }
+            if (!f.normals.empty()) {
+                f.normals.resize(points.size());
+                mu::CopyWithIndices(&f.normals[num_points], &f.normals[0], copylist);
+            }
+            if (!f.tangents.empty()) {
+                f.tangents.resize(points.size());
+                mu::CopyWithIndices(&f.tangents[num_points], &f.tangents[0], copylist);
+            }
+        }
+    }
+}
 
 void Mesh::applyTransform(const float4x4& m)
 {
     for (auto& v : points) { v = mul_p(m, v); }
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
-}
-
-void Mesh::resizeBones(int n)
-{
-    bones.resize(n);
-    for (auto& bone : bones) {
-        if (!bone) {
-            bone.reset(new BoneData());
-        }
-    }
 }
 
 void Mesh::generateWeights4()

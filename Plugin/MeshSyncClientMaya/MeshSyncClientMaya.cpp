@@ -1017,22 +1017,21 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         MDagPathArray joint_paths;
         auto num_joints = fn_skin.influenceObjects(joint_paths);
 
-        dst.flags.has_bones = 1;
-        dst.resizeBones(num_joints);
-
         {
             std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
             for (uint32_t ij = 0; ij < num_joints; ij++) {
-                auto& bone = *dst.bones[ij];
+                auto bone = new ms::BoneData();
+                dst.bones.emplace_back(bone);
+
                 auto joint = joint_paths[ij].node();
                 notifyUpdateTransform(joint, true);
-                bone.path = GetPath(joint);
+                bone->path = GetPath(joint);
 
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
                 plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
                 MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
-                bone.bindpose.assign(bindpose[0]);
+                bone->bindpose.assign(bindpose[0]);
             }
         }
 
