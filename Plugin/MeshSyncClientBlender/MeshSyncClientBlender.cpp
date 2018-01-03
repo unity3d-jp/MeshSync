@@ -160,19 +160,6 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(mirror_merge,
                 [](const ms::Mesh& self) { return (bool)self.refine_settings.flags.mirror_x_weld; },
                 [](ms::Mesh& self, bool v) { self.refine_settings.flags.mirror_x_weld = self.refine_settings.flags.mirror_y_weld = self.refine_settings.flags.mirror_z_weld = v; })
-            BindMethod2(addVertex,
-                [](ms::Mesh& self, const float3a& v) { self.addVertex(to_float3(v)); })
-            BindMethod2(addNormal,
-                [](ms::Mesh& self, const float3a& v) { self.addNormal(to_float3(v)); })
-            BindMethod2(addUV,
-                [](ms::Mesh& self, const float2a& v) { self.addUV(to_float2(v)); })
-            BindMethod2(addColor,
-                [](ms::Mesh& self, const float4a& v) { self.addColor(to_float4(v)); })
-            BindMethod(addCount)
-            BindMethod(addIndex)
-            BindMethod(addMaterialID)
-            BindMethod(addBone)
-            BindMethod(addBlendShape)
             ;
     }
     {
@@ -226,7 +213,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_normals,
                 [](const msbContext& self) { return (int)self.getSettings().sync_normals; },
                 [](msbContext& self, int v) { (int&)self.getSettings().sync_normals = v; })
-            BindProperty(sync_uv,
+            BindProperty(sync_uvs,
                 [](const msbContext& self) { return self.getSettings().sync_uvs; },
                 [](msbContext& self, bool v) { self.getSettings().sync_uvs = v; })
             BindProperty(sync_colors,

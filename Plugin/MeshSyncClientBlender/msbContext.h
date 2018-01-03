@@ -50,11 +50,14 @@ public:
     void send();
 
 private:
-    void doExtractMeshData(ms::Mesh& mesh, const Mesh& src);
+    ms::TransformPtr addBone(const bPoseChannel *bone);
+
+    void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     template<class T>
     std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 
     msbSettings m_settings;
+    std::map<const bPoseChannel*, ms::TransformPtr> m_bones;
     std::vector<ms::TransformPtr> m_transform_cache;
     std::vector<ms::CameraPtr> m_camera_cache;
     std::vector<ms::LightPtr> m_light_cache;
@@ -66,5 +69,6 @@ private:
     std::future<void> m_send_future;
 
     std::vector<std::function<void()>> m_extract_tasks;
+    std::mutex m_extract_mutex;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;

@@ -80,7 +80,7 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
-inline float3 to_float3(const short (&v)[3])
+static inline float3 to_float3(const short (&v)[3])
 {
     return float3{
         v[0] * (1.0f / 32767.0f),
@@ -89,7 +89,7 @@ inline float3 to_float3(const short (&v)[3])
     };
 }
 
-inline float4 to_float4(const MLoopCol& c)
+static inline float4 to_float4(const MLoopCol& c)
 {
     return float4{
         c.r * (1.0f / 255.0f),
@@ -99,7 +99,77 @@ inline float4 to_float4(const MLoopCol& c)
     };
 }
 
-void* CustomData_get(const CustomData& data,  int type)
+static inline std::string get_path(const Object *obj)
+{
+    std::string ret;
+    if (obj->parent)
+        ret += get_path(obj->parent);
+    ret += '/';
+    ret += obj->id.name;
+    return ret;
+}
+static inline std::string get_path(const bPoseChannel *obj)
+{
+    std::string ret;
+    if (obj->parent)
+        ret += get_path(obj->parent);
+    ret += '/';
+    ret += obj->name;
+    return ret;
+}
+
+// Body: [](const ModifierData*) -> void
+template<class Body>
+static inline void each_modifiers(Object *obj, const Body& body)
+{
+    auto *it = (const ModifierData*)obj->modifiers.first;
+    auto *end = (const ModifierData*)obj->modifiers.last;
+    for (; it != end; it = it->next)
+        body(it);
+}
+static inline const ModifierData* find_modofier(Object *obj, ModifierType type)
+{
+    auto *it = (const ModifierData*)obj->modifiers.first;
+    auto *end = (const ModifierData*)obj->modifiers.last;
+    for (; it != end; it = it->next)
+        if (it->type == type)
+            return it;
+    return nullptr;;
+}
+
+
+// Body: [](const bDeformGroup*) -> void
+template<class Body>
+static inline void each_vertex_groups(Object *obj, const Body& body)
+{
+    auto *it = (const bDeformGroup*)obj->defbase.first;
+    auto *end = (const bDeformGroup*)obj->defbase.last;
+    for (; it != end; it = it->next)
+        body(it);
+}
+
+// Body: [](const bPoseChannel*) -> void
+template<class Body>
+static inline void each_bones(Object *obj, const Body& body)
+{
+    if (obj->pose == nullptr) { return; }
+    auto *it = (const bPoseChannel*)obj->pose->chanbase.first;
+    auto *end = (const bPoseChannel*)obj->pose->chanbase.last;
+    for (; it != end; it = it->next)
+        body(it);
+}
+static inline const bPoseChannel* find_bone(Object *obj, const char *name)
+{
+    if (obj->pose == nullptr) { return nullptr; }
+    auto *it = (const bPoseChannel*)obj->pose->chanbase.first;
+    auto *end = (const bPoseChannel*)obj->pose->chanbase.last;
+    for (; it != end; it = it->next)
+        if (strcmp(it->name, name) == 0)
+            return it;
+    return nullptr;
+}
+
+static inline const void* CustomData_get(const CustomData& data,  int type)
 {
     int layer_index = data.typemap[type];
     if (layer_index == -1)
@@ -108,7 +178,7 @@ void* CustomData_get(const CustomData& data,  int type)
     return data.layers[layer_index].data;
 }
 
-int CustomData_number_of_layers(const CustomData& data, int type)
+static inline int CustomData_number_of_layers(const CustomData& data, int type)
 {
     int i, number = 0;
     for (i = 0; i < data.totlayer; i++)
@@ -150,17 +220,21 @@ void msbContext::extractMeshData(ms::MeshPtr dst, py::object src_)
 {
     auto rna = (BPy_StructRNA*)src_.ptr();
     auto obj = (Object*)rna->ptr.id.data;
-    auto src = (Mesh*)obj->data;
 
-    auto task = [this, dst, src]() {
-        doExtractMeshData(*dst, *src);
+    auto task = [this, dst, obj]() {
+        doExtractMeshData(*dst, obj);
     };
-    //task(); // for debug
+#ifdef msDebug
+    task();
+#else
     m_extract_tasks.push_back(task);
+#endif
 }
 
-void msbContext::doExtractMeshData(ms::Mesh& dst, const Mesh& src)
+void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 {
+    auto& src = *(Mesh*)obj->data;
+
     int num_polygons = src.totpoly;
     int num_vertices = src.totvert;
     int num_loops = src.totloop;
@@ -243,7 +317,30 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, const Mesh& src)
 
     // bones
     if (m_settings.sync_bones) {
-        // todo
+        auto *armature = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
+        if (armature) {
+            int group_index = 0;
+            each_vertex_groups(obj, [&](const bDeformGroup *g) {
+                auto bone = find_bone(armature->object, g->name);
+                if (bone) {
+                    auto trans = addBone(bone);
+                    auto b = dst.addBone(trans->path);
+                    b->bindpose = invert(trans->toMatrix());
+                    b->weights.resize_zeroclear(num_vertices);
+
+                    for (int vi = 0; vi < num_vertices; ++vi) {
+                        int num_weights = src.dvert[vi].totweight;
+                        auto& dvert = src.dvert[vi];
+                        for (int wi = 0; wi < num_weights; ++wi) {
+                            if (dvert.dw[wi].def_nr == group_index) {
+                                b->weights[vi] = dvert.dw[wi].weight;
+                            }
+                        }
+                    }
+                }
+                ++group_index;
+            });
+        }
     }
 
     // blend shapes
@@ -251,6 +348,21 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, const Mesh& src)
         // todo
     }
 }
+
+ms::TransformPtr msbContext::addBone(const bPoseChannel *bone)
+{
+    std::unique_lock<std::mutex> lock(m_extract_mutex);
+    auto& ret = m_bones[bone];
+    if (ret) { return ret; }
+
+    ret = addTransform(get_path(bone));
+    auto mat = (const float4x4&)bone->pose_mat;
+    ret->position = extract_position(mat);
+    ret->rotation = extract_rotation(mat);
+    ret->scale = extract_scale(mat);
+    return ret;
+}
+
 
 bool msbContext::isSending() const
 {
@@ -288,6 +400,7 @@ void msbContext::send()
     std::swap(m_scene->meshes, m_mesh_send);
     m_message.scene = *m_scene;
     m_scene->clear();
+    m_bones.clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {

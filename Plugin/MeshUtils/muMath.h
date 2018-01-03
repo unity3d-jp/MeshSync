@@ -1063,7 +1063,7 @@ template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
 
 template<class T> inline tvec3<T> extract_scale(const tmat4x4<T>& m)
 {
-    return tvec3<T>{length(m[0]), length(m[1]), length(m[2])};
+    return tvec3<T>{length((tvec3<T>&)m[0]), length((tvec3<T>&)m[1]), length((tvec3<T>&)m[2])};
 }
 
 // aperture and focal_length must be millimeter. return fov in degree

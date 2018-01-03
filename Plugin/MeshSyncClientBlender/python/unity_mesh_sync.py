@@ -41,11 +41,17 @@ def msb_sync(targets):
 
     start_time = time()
 
+    scene = bpy.context.scene
+    ctx.sync_normals = 2 if scene.meshsync_sync_normals else 0
+    ctx.sync_uvs = scene.meshsync_sync_uvs
+    ctx.sync_colors = scene.meshsync_sync_colors
+    ctx.sync_bones = scene.meshsync_sync_bones
+    ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
+
     # materials
     for mat in bpy.data.materials:
         ctx.addMaterial(mat)
 
-    scene = bpy.context.scene
     for obj in targets:
         if not (obj.name in bpy.data.objects):
             ctx.addDeleted(msb_get_path(obj))
@@ -142,27 +148,6 @@ def msb_add_mesh(ctx, obj):
             data.calc_normals_split()
 
         ctx.extractMeshData(dst, obj)
-
-        if scene.meshsync_sync_bones > 0:
-            arm = None
-            for mod in obj.modifiers:
-                if mod.type == 'ARMATURE':
-                    arm = mod.object
-            if arm != None:
-                group_names = [g.name for g in obj.vertex_groups]
-                for bone in arm.pose.bones:
-                    if bone.name not in group_names:
-                        continue
-                    msb_add_bone(ctx, bone)
-                    gidx = obj.vertex_groups[bone.name].index
-                    bone_verts = [v for v in data.vertices if gidx in [g.group for g in v.groups]]
-                    weights = [0.0] * len(data.vertices)
-                    for v in bone_verts:
-                        weights[v.index] = v.groups[gidx].weight
-
-                    bdst = dst.addBone(msb_get_path(bone))
-                    for w in weights:
-                        bdst.addWeight(w)
     return dst
 
 
@@ -247,7 +232,7 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
-    bpy.types.Scene.meshsync_sync_blensshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
+    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
@@ -274,7 +259,7 @@ class MeshSyncPanel(bpy.types.Panel):
             b.prop(context.scene, 'meshsync_sync_uvs')
             b.prop(context.scene, 'meshsync_sync_colors')
             b.prop(context.scene, 'meshsync_sync_bones')
-            b.prop(context.scene, 'meshsync_sync_blensshapes')
+            b.prop(context.scene, 'meshsync_sync_blendshapes')
             b.prop(context.scene, 'meshsync_apply_modifiers')
         self.layout.prop(context.scene, 'meshsync_sync_cameras')
         self.layout.prop(context.scene, 'meshsync_sync_lights')
