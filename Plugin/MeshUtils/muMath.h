@@ -731,30 +731,30 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
 
 template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)
 {
-    return tmat3x3<T>{
-        T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,        ,
-        T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,        ,
-        T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y
-    };
+    return tmat3x3<T>{{
+        {T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,        },
+        {T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,        },
+        {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y}
+    }};
 }
 template<class T> inline tmat4x4<T> to_mat4x4(const tquat<T>& q)
 {
-    return tmat4x4<T>{
-        T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,         T(0.0),
-        T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,         T(0.0),
-        T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y,T(0.0),
-        T(0.0),                                T(0.0),                                  T(0.0),                                  T(1.0)
-    };
+    return tmat4x4<T>{{
+        {T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,         T(0.0)},
+        {T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,         T(0.0)},
+        {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y,T(0.0)},
+        {T(0.0),                                T(0.0),                                  T(0.0),                                  T(1.0)}
+    }};
 }
 
 template<class T> inline tmat4x4<T> translate(const tvec3<T>& t)
 {
-    return tmat4x4<T>{
-        T(1.0), T(0.0), T(0.0), T(0.0),
-        T(0.0), T(1.0), T(0.0), T(0.0),
-        T(0.0), T(0.0), T(1.0), T(0.0),
-           t.x,    t.y,    t.z, T(1.0)
-    };
+    return tmat4x4<T>{{
+        {T(1.0), T(0.0), T(0.0), T(0.0)},
+        {T(0.0), T(1.0), T(0.0), T(0.0)},
+        {T(0.0), T(0.0), T(1.0), T(0.0)},
+        {   t.x,    t.y,    t.z, T(1.0)}
+    }};
 }
 
 template<class T> inline tmat3x3<T> scale33(const tvec3<T>& t)
@@ -827,7 +827,7 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
             }
         }
         else {
-            T mr = abs(r) / numeric_limits<T>::min();
+            T mr = abs(r) / std::numeric_limits<T>::min();
 
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
@@ -860,7 +860,7 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
             }
         }
         else {
-            T mr = abs(r) / numeric_limits<T>::min();
+            T mr = abs(r) / std::numeric_limits<T>::min();
 
             for (int i = 0; i < 2; ++i) {
                 for (int j = 0; j < 2; ++j) {
