@@ -511,13 +511,25 @@ template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
 // a & b must be normalized
 template<class T> inline T angle_between(const tvec3<T>& a, const tvec3<T>& b)
 {
-    return acos(dot(a, b));
+    return acos(clamp01(dot(a, b)));
 }
-template<class T> inline T angle_between2(const tvec3<T>& pos1, const tvec3<T>& pos2, const tvec3<T>& center)
+template<class T> inline T angle_between2(const tvec3<T>& p1, const tvec3<T>& p2, const tvec3<T>& center)
 {
     return angle_between(
-        normalize(pos1 - center),
-        normalize(pos2 - center));
+        normalize(p1 - center),
+        normalize(p2 - center));
+}
+
+template<class T> inline T angle_between_signed(const tvec3<T>& a, const tvec3<T>& b, const tvec3<T>& n)
+{
+    float ret = atan2(length(cross(a, b)), dot(a, b));
+    if (dot(n, cross(a, b)) < 0)
+        ret *= -1.0f;
+    return ret;
+}
+template<class T> inline T angle_between2_signed(const tvec3<T>& p1, const tvec3<T>& p2, const tvec3<T>& center, const tvec3<T>& n)
+{
+    return angle_between_signed((p1 - center), (p2 - center), n);
 }
 
 template<class T> inline tvec3<T> apply_rotation(const tquat<T>& q, const tvec3<T>& p)

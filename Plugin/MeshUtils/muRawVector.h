@@ -187,7 +187,7 @@ public:
         size_t d = std::distance(begin(), pos);
         size_t s = std::distance(first, last);
         resize(d + s);
-        std::copy(first, last, begin() + pos);
+        std::copy(first, last, begin() + d);
     }
     void insert(iterator pos, const_pointer first, const_pointer last)
     {

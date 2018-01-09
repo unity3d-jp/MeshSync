@@ -201,6 +201,129 @@ template bool GenerateWeightsN(RawVector<Weights<4>>& dst, IArray<int> bone_indi
 template bool GenerateWeightsN(RawVector<Weights<8>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
 
 
+inline int check_overlap(const int *a, const int *b)
+{
+    int i00 = a[0], i01 = a[1], i02 = a[2];
+    int i10 = b[0], i11 = b[1], i12 = b[2];
+    int ret = 0;
+    if (i00 == i10) ++ret;
+    if (i00 == i11) ++ret;
+    if (i00 == i12) ++ret;
+    if (i01 == i10) ++ret;
+    if (i01 == i11) ++ret;
+    if (i01 == i12) ++ret;
+    if (i02 == i10) ++ret;
+    if (i02 == i11) ++ret;
+    if (i02 == i12) ++ret;
+    return ret;
+}
+
+void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, float threshold_angle,
+    RawVector<int>& dst_indices, RawVector<int>& dst_counts)
+{
+    struct Connection
+    {
+        int nindex;
+        float nangle;
+        int quad[4];
+        bool merged;
+    };
+    int num_triangles = (int)indices.size() / 3;
+    RawVector<Connection> connections(num_triangles);
+
+    parallel_for(0, num_triangles, 8192, [&](int ti1) {
+        auto& cd = connections[ti1];
+        cd.nindex = -1;
+        cd.nangle = 180.0f;
+        cd.merged = false;
+
+        auto *tri1 = indices.data() + (ti1 * 3);
+        const float3 normal1 = normalize(cross(vertices[tri1[1]] - vertices[tri1[0]], vertices[tri1[2]] - vertices[tri1[0]]));
+
+        // ti1 - 1 is highly likely a triangle that constitutes a quad
+        for (int ti2 = std::max(ti1 - 1, 0); ti2 < num_triangles; ++ti2) {
+            auto *tri2 = indices.data() + (ti2 * 3);
+
+            if (check_overlap(tri1, tri2) != 2)
+                continue;
+
+            float3 normal2 = normalize(cross(vertices[tri2[1]] - vertices[tri2[0]], vertices[tri2[2]] - vertices[tri2[0]]));
+            if (dot(normal1, normal2) < 0.0f)
+                continue;
+
+            int quad[6];
+            std::copy(tri1, tri1 + 3, quad);
+            std::copy(tri2, tri2 + 3, quad + 3);
+            std::sort(quad, quad + 6);
+            std::unique(quad, quad + 6);
+
+            float3 qvertices[4];
+            for (int i = 0; i < 4; ++i)
+                qvertices[i] = vertices[quad[i]];
+
+            float3 center = float3::zero();
+            for (auto& v : qvertices)
+                center += v;
+            center *= 0.25f;
+
+            float angles[4]{
+                0.0f,
+                angle_between2_signed(qvertices[0], qvertices[1], center, normal1),
+                angle_between2_signed(qvertices[0], qvertices[2], center, normal1),
+                angle_between2_signed(qvertices[0], qvertices[3], center, normal1),
+            };
+
+            int cwi[4], quad_tmp[4];
+            std::iota(cwi, cwi + 4, 0);
+            std::sort(cwi, cwi + 4, [&angles](int a, int b) {
+                return angles[a] < angles[b];
+            });
+            for (int i = 0; i < 4; ++i) {
+                quad_tmp[i] = quad[cwi[i]];
+                qvertices[i] = vertices[quad_tmp[i]];
+            }
+
+            int corners[4][3]{
+                { 3, 0, 1 },
+                { 0, 1, 2 },
+                { 1, 2, 3 },
+                { 2, 3, 0 }
+            };
+            float diff = 0.0f;
+            for (int i = 0; i < 4; ++i) {
+                float angle = angle_between2(
+                    qvertices[corners[i][0]],
+                    qvertices[corners[i][2]],
+                    qvertices[corners[i][1]]) * Rad2Deg;
+                diff = std::max(diff, abs(angle - 90.0f));
+            }
+            if (diff < threshold_angle && diff < cd.nangle)
+            {
+                cd.nindex = ti2;
+                cd.nangle = diff;
+                std::copy(quad_tmp, quad_tmp + 4, cd.quad);
+                if (diff < threshold_angle * 0.5f) { break; }
+            }
+        }
+    });
+
+    for (int ti1 = 0; ti1 < num_triangles; ++ti1) {
+        auto& cd = connections[ti1];
+        if (cd.merged) { continue; }
+
+        if (cd.nindex != -1 && !connections[cd.nindex].merged) {
+            connections[cd.nindex].merged = true;
+            dst_indices.insert(dst_indices.end(), cd.quad, cd.quad + 4);
+            dst_counts.push_back(4);
+        }
+        else {
+            auto *tri1 = indices.data() + (ti1 * 3);
+            dst_indices.insert(dst_indices.end(), tri1, tri1 + 3);
+            dst_counts.push_back(3);
+        }
+    }
+}
+
 void ConnectionData::clear()
 {
     v2f_counts.clear();

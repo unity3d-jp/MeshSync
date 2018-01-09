@@ -38,6 +38,8 @@ void GenerateTangentsPoly(float4 *dst,
 template<int N>
 bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
 
+void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, float threshold_angle,
+    RawVector<int>& dst_indices, RawVector<int>& dst_counts);
 
 struct ConnectionData
 {
