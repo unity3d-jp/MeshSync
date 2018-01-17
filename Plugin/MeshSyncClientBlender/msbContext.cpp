@@ -153,10 +153,10 @@ static const Bone* find_bone_recursive(const Bone *bone, const char *name)
     }
     return nullptr;
 }
-static inline const Bone* find_bone(Object *obj, const char *name)
+static inline const Bone* find_bone(const Object *obj, const char *name)
 {
     if (obj == nullptr) { return nullptr; }
-    auto *arm = (bArmature*)obj->data;
+    auto *arm = (const bArmature*)obj->data;
     for (auto *bone = (const Bone*)arm->bonebase.first; bone != nullptr; bone = bone->next)
     {
         auto found = find_bone_recursive(bone, name);
@@ -164,6 +164,22 @@ static inline const Bone* find_bone(Object *obj, const char *name)
             return found;
     }
     return nullptr;
+}
+
+static void bone_extract_TRS(const Bone *bone, float3& pos, quatf& rot, float3& scale)
+{
+    float4x4 local = (float4x4&)bone->arm_mat;
+    if (auto parent = bone->parent)
+        local *= invert((float4x4&)parent->arm_mat);
+
+    pos = extract_position(local);
+    rot = extract_rotation(local);
+    scale = extract_scale(local);
+}
+
+static float4x4 bone_extract_bindpose(const Bone *bone)
+{
+    return invert((float4x4&)bone->arm_mat);
 }
 
 // Body: [](const KeyBlock*) -> void
@@ -332,7 +348,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
                 if (bone) {
                     auto trans = findOrAddBone(bone);
                     auto b = dst.addBone(trans->path);
-                    b->bindpose = invert(trans->toMatrix());
+                    b->bindpose = bone_extract_bindpose(bone);
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {
@@ -385,10 +401,7 @@ ms::TransformPtr msbContext::findOrAddBone(const Bone *bone)
     if (ret) { return ret; }
 
     ret = addTransform(get_path(bone));
-    auto mat = (const float4x4&)bone->arm_mat;
-    ret->position = extract_position(mat);
-    ret->rotation = extract_rotation(mat);
-    ret->scale = extract_scale(mat);
+    bone_extract_TRS(bone, ret->position, ret->rotation, ret->scale);
     return ret;
 }
 

@@ -17,7 +17,6 @@ bl_info = {
 }
 
 msb_context = ms.Context()
-msb_context.handedness = 2
 msb_last_sent = 0.0
 msb_updated = []
 msb_added = set()
