@@ -21,8 +21,6 @@ struct msbSettings
     bool sync_colors = true;
     bool sync_bones = true;
     bool sync_blendshapes = true;
-
-    msbSettings();
 };
 
 
@@ -50,14 +48,14 @@ public:
     void send();
 
 private:
-    ms::TransformPtr addBone(const bPoseChannel *bone);
+    ms::TransformPtr findOrAddBone(const Bone *bone);
 
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     template<class T>
     std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 
     msbSettings m_settings;
-    std::map<const bPoseChannel*, ms::TransformPtr> m_bones;
+    std::map<const Bone*, ms::TransformPtr> m_bones;
     std::vector<ms::TransformPtr> m_transform_cache;
     std::vector<ms::CameraPtr> m_camera_cache;
     std::vector<ms::LightPtr> m_light_cache;

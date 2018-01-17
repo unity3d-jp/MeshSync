@@ -4,11 +4,6 @@
 using namespace mu;
 
 
-msbSettings::msbSettings()
-{
-    scene_settings.handedness = ms::Handedness::Left;
-}
-
 msbContext::msbContext()
 {
     m_settings.scene_settings.handedness = ms::Handedness::LeftZUp;
@@ -108,7 +103,7 @@ static inline std::string get_path(const Object *obj)
     ret += obj->id.name;
     return ret;
 }
-static inline std::string get_path(const bPoseChannel *obj)
+static inline std::string get_path(const Bone *obj)
 {
     std::string ret;
     if (obj->parent)
@@ -144,20 +139,30 @@ static inline void each_vertex_groups(Object *obj, const Body& body)
         body(it);
 }
 
-// Body: [](const bPoseChannel*) -> void
-template<class Body>
-static inline void each_bones(Object *obj, const Body& body)
+static const Bone* find_bone_recursive(const Bone *bone, const char *name)
 {
-    if (obj->pose == nullptr) { return; }
-    for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
-        body(it);
+    if (strcmp(bone->name, name) == 0) {
+        return bone;
+    }
+    else {
+        for (auto *child = (const Bone*)bone->childbase.first; child != nullptr; child = child->next) {
+            auto *found = find_bone_recursive(child, name);
+            if (found)
+                return found;
+        }
+    }
+    return nullptr;
 }
-static inline const bPoseChannel* find_bone(Object *obj, const char *name)
+static inline const Bone* find_bone(Object *obj, const char *name)
 {
-    if (obj->pose == nullptr) { return nullptr; }
-    for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
-        if (strcmp(it->name, name) == 0)
-            return it;
+    if (obj == nullptr) { return nullptr; }
+    auto *arm = (bArmature*)obj->data;
+    for (auto *bone = (const Bone*)arm->bonebase.first; bone != nullptr; bone = bone->next)
+    {
+        auto found = find_bone_recursive(bone, name);
+        if (found)
+            return found;
+    }
     return nullptr;
 }
 
@@ -325,7 +330,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
                 auto bone = find_bone(armature->object, g->name);
                 if (bone) {
-                    auto trans = addBone(bone);
+                    auto trans = findOrAddBone(bone);
                     auto b = dst.addBone(trans->path);
                     b->bindpose = invert(trans->toMatrix());
                     b->weights.resize_zeroclear(num_vertices);
@@ -373,14 +378,14 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 }
 
-ms::TransformPtr msbContext::addBone(const bPoseChannel *bone)
+ms::TransformPtr msbContext::findOrAddBone(const Bone *bone)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
     auto& ret = m_bones[bone];
     if (ret) { return ret; }
 
     ret = addTransform(get_path(bone));
-    auto mat = (const float4x4&)bone->pose_mat;
+    auto mat = (const float4x4&)bone->arm_mat;
     ret->position = extract_position(mat);
     ret->rotation = extract_rotation(mat);
     ret->scale = extract_scale(mat);
