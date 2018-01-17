@@ -155,7 +155,7 @@ static const Bone* find_bone_recursive(const Bone *bone, const char *name)
 }
 static inline const Bone* find_bone(const Object *obj, const char *name)
 {
-    if (obj == nullptr) { return nullptr; }
+    if (!obj) { return nullptr; }
     auto *arm = (const bArmature*)obj->data;
     for (auto *bone = (const Bone*)arm->bonebase.first; bone != nullptr; bone = bone->next)
     {
@@ -166,7 +166,16 @@ static inline const Bone* find_bone(const Object *obj, const char *name)
     return nullptr;
 }
 
-static void bone_extract_TRS(const Bone *bone, float3& pos, quatf& rot, float3& scale)
+static inline const bPoseChannel* find_pose(Object *obj, const char *name)
+{
+    if (!obj || !obj->pose) { return nullptr; }
+    for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
+        if (strcmp(it->name, name) == 0)
+            return it;
+    return nullptr;
+}
+
+static void extract_TRS(const Bone *bone, float3& pos, quatf& rot, float3& scale)
 {
     float4x4 local = (float4x4&)bone->arm_mat;
     if (auto parent = bone->parent)
@@ -177,7 +186,18 @@ static void bone_extract_TRS(const Bone *bone, float3& pos, quatf& rot, float3& 
     scale = extract_scale(local);
 }
 
-static float4x4 bone_extract_bindpose(const Bone *bone)
+static void extract_TRS(const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale)
+{
+    float4x4 local = (float4x4&)pose->pose_mat;
+    if (auto parent = pose->parent)
+        local *= invert((float4x4&)parent->pose_mat);
+
+    pos = extract_position(local);
+    rot = extract_rotation(local);
+    scale = extract_scale(local);
+}
+
+static float4x4 extract_bindpose(const Bone *bone)
 {
     return invert((float4x4&)bone->arm_mat);
 }
@@ -346,9 +366,10 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
                 auto bone = find_bone(armature->object, g->name);
                 if (bone) {
-                    auto trans = findOrAddBone(bone);
+                    auto pose = find_pose(armature->object, g->name);
+                    auto trans = findOrAddBone(bone, pose);
                     auto b = dst.addBone(trans->path);
-                    b->bindpose = bone_extract_bindpose(bone);
+                    b->bindpose = extract_bindpose(bone);
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {
@@ -394,14 +415,17 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 }
 
-ms::TransformPtr msbContext::findOrAddBone(const Bone *bone)
+ms::TransformPtr msbContext::findOrAddBone(const Bone *bone, const bPoseChannel *pose)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
     auto& ret = m_bones[bone];
     if (ret) { return ret; }
 
     ret = addTransform(get_path(bone));
-    bone_extract_TRS(bone, ret->position, ret->rotation, ret->scale);
+    if(pose)
+        extract_TRS(pose, ret->position, ret->rotation, ret->scale);
+    else
+        extract_TRS(bone, ret->position, ret->rotation, ret->scale);
     return ret;
 }
 

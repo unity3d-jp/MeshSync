@@ -48,7 +48,7 @@ public:
     void send();
 
 private:
-    ms::TransformPtr findOrAddBone(const Bone *bone);
+    ms::TransformPtr findOrAddBone(const Bone *bone, const bPoseChannel *pose);
 
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     template<class T>
