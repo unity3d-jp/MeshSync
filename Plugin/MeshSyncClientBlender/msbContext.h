@@ -43,13 +43,16 @@ public:
 
     ms::MaterialPtr addMaterial(py::object material);
     int getMaterialIndex(const Material *mat);
+    void extractTransformData(ms::TransformPtr mesh, py::object obj);
+    void extractCameraData(ms::CameraPtr mesh, py::object obj);
+    void extractLightData(ms::LightPtr mesh, py::object obj);
     void extractMeshData(ms::MeshPtr mesh, py::object obj);
 
     bool isSending() const;
     void send();
 
 private:
-    ms::TransformPtr findOrAddBone(const Bone *bone, const bPoseChannel *pose);
+    ms::TransformPtr findOrAddBone(const Object *armature, const Bone *bone);
 
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     template<class T>

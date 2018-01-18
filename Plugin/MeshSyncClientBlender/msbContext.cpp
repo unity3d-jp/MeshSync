@@ -100,7 +100,7 @@ static inline std::string get_path(const Object *obj)
     if (obj->parent)
         ret += get_path(obj->parent);
     ret += '/';
-    ret += obj->id.name;
+    ret += obj->id.name + 2;
     return ret;
 }
 static inline std::string get_path(const Bone *obj)
@@ -166,7 +166,7 @@ static inline const Bone* find_bone(const Object *obj, const char *name)
     return nullptr;
 }
 
-static inline const bPoseChannel* find_pose(Object *obj, const char *name)
+static inline const bPoseChannel* find_pose(const Object *obj, const char *name)
 {
     if (!obj || !obj->pose) { return nullptr; }
     for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
@@ -175,7 +175,27 @@ static inline const bPoseChannel* find_pose(Object *obj, const char *name)
     return nullptr;
 }
 
-static void extract_TRS(const Bone *bone, float3& pos, quatf& rot, float3& scale)
+static void extract_global_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)
+{
+    float4x4 global = (float4x4&)obj->obmat;
+    pos = extract_position(global);
+    rot = extract_rotation(global);
+    scale = extract_scale(global);
+}
+
+static void extract_local_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)
+{
+    float4x4 local = (float4x4&)obj->obmat;
+    if (auto parent = obj->parent)
+        local *= invert((float4x4&)parent->obmat);
+
+    pos = extract_position(local);
+    rot = extract_rotation(local);
+    scale = extract_scale(local);
+}
+
+// bone
+static void extract_local_TRS(const Object *armature, const Bone *bone, float3& pos, quatf& rot, float3& scale)
 {
     float4x4 local = (float4x4&)bone->arm_mat;
     if (auto parent = bone->parent)
@@ -186,7 +206,8 @@ static void extract_TRS(const Bone *bone, float3& pos, quatf& rot, float3& scale
     scale = extract_scale(local);
 }
 
-static void extract_TRS(const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale)
+// pose
+static void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale)
 {
     float4x4 local = (float4x4&)pose->pose_mat;
     if (auto parent = pose->parent)
@@ -197,7 +218,7 @@ static void extract_TRS(const bPoseChannel *pose, float3& pos, quatf& rot, float
     scale = extract_scale(local);
 }
 
-static float4x4 extract_bindpose(const Bone *bone)
+static float4x4 extract_bindpose(const Object *armature, const Bone *bone)
 {
     return invert((float4x4&)bone->arm_mat);
 }
@@ -259,8 +280,39 @@ int msbContext::getMaterialIndex(const Material *mat)
 }
 
 // src: bpy.Object
+void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
+{
+    auto rna = (BPy_StructRNA*)src.ptr();
+    auto *obj = (Object*)rna->ptr.id.data;
+
+    extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
+}
+
+// src: bpy.Object
+void msbContext::extractCameraData(ms::CameraPtr dst, py::object src)
+{
+    extractTransformData(dst, src);
+
+    auto rna = (BPy_StructRNA*)src.ptr();
+    auto *obj = (Object*)rna->ptr.id.data;
+    // todo
+}
+
+// src: bpy.Object
+void msbContext::extractLightData(ms::LightPtr dst, py::object src)
+{
+    extractTransformData(dst, src);
+
+    auto rna = (BPy_StructRNA*)src.ptr();
+    auto *obj = (Object*)rna->ptr.id.data;
+    // todo
+}
+
+// src: bpy.Object
 void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 {
+    extractTransformData(dst, src);
+
     auto rna = (BPy_StructRNA*)src.ptr();
     auto obj = (Object*)rna->ptr.id.data;
 
@@ -368,16 +420,16 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 
     // bones
     if (m_settings.sync_bones) {
-        auto *armature = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
-        if (armature) {
+        auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
+        if (arm_mod) {
+            auto *arm_obj = arm_mod->object;
             int group_index = 0;
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
-                auto bone = find_bone(armature->object, g->name);
+                auto bone = find_bone(arm_obj, g->name);
                 if (bone) {
-                    auto *pose = m_settings.sync_poses ? find_pose(armature->object, g->name) : nullptr;
-                    auto trans = findOrAddBone(bone, pose);
+                    auto trans = findOrAddBone(arm_obj, bone);
                     auto b = dst.addBone(trans->path);
-                    b->bindpose = extract_bindpose(bone);
+                    b->bindpose = extract_bindpose(arm_obj, bone);
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {
@@ -423,17 +475,18 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 }
 
-ms::TransformPtr msbContext::findOrAddBone(const Bone *bone, const bPoseChannel *pose)
+ms::TransformPtr msbContext::findOrAddBone(const Object *armature, const Bone *bone)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
     auto& ret = m_bones[bone];
     if (ret) { return ret; }
 
-    ret = addTransform(get_path(bone));
+    auto *pose = m_settings.sync_poses ? find_pose(armature, bone->name) : nullptr;
+    ret = addTransform(get_path(armature) + get_path(bone));
     if(pose)
-        extract_TRS(pose, ret->position, ret->rotation, ret->scale);
+        extract_local_TRS(armature, pose, ret->position, ret->rotation, ret->scale);
     else
-        extract_TRS(bone, ret->position, ret->rotation, ret->scale);
+        extract_local_TRS(armature, bone, ret->position, ret->rotation, ret->scale);
     return ret;
 }
 
