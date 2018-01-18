@@ -241,6 +241,8 @@ template<class T> inline tvec4<T>& operator-=(tvec4<T>& l, T r) { l.x -= r; l.y 
 template<class T> inline tvec4<T>& operator*=(tvec4<T>& l, T r) { l.x *= r; l.y *= r; l.z *= r; l.w *= r; return l; }
 template<class T> inline tvec4<T>& operator/=(tvec4<T>& l, T r) { l.x /= r; l.y /= r; l.z /= r; l.w /= r; return l; }
 
+template<class T> inline tmat3x3<T> operator-(const tmat3x3<T>& v) { return{ -v[0], -v[1], -v[2] }; }
+template<class T> inline tmat4x4<T> operator-(const tmat4x4<T>& v) { return{ -v[0], -v[1], -v[2], -v[3] }; }
 
 template<class T> inline tquat<T> operator*(const tquat<T>& l, T r) { return{ l.x*r, l.y*r, l.z*r, l.w*r }; }
 template<class T> inline tquat<T> operator*(const tquat<T>& l, const tquat<T>& r)
@@ -741,6 +743,20 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
     };
 }
 
+template<class T> inline tmat3x3<T> to_mat3x3(const tmat4x4<T>& v)
+{
+    return { (tvec3<T>&)v[0], (tvec3<T>&)v[1], (tvec3<T>&)v[2] };
+}
+template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
+{
+    return tmat4x4<T>{
+        v[0][0], v[0][1], v[0][2], 0,
+        v[1][0], v[1][1], v[1][2], 0,
+        v[2][0], v[2][1], v[2][2], 0,
+              0,       0,       0, 1,
+    };
+}
+
 template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)
 {
     return tmat3x3<T>{{
@@ -757,6 +773,15 @@ template<class T> inline tmat4x4<T> to_mat4x4(const tquat<T>& q)
         {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y,T(0.0)},
         {T(0.0),                                T(0.0),                                  T(0.0),                                  T(1.0)}
     }};
+}
+
+template<class T> inline bool is_negative(const tmat3x3<T>& m)
+{
+    return dot(cross(m[0], m[1]), m[2]) < 0;
+}
+template<class T> inline bool is_negative(const tmat4x4<T>& m)
+{
+    return dot(cross((tvec3<T>&)m[0], (tvec3<T>&)m[1]), (tvec3<T>&)m[2]) < 0;
 }
 
 template<class T> inline tmat4x4<T> translate(const tvec3<T>& t)
@@ -1010,9 +1035,14 @@ inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tquat<T>& r
 
 
 template<class TMat>
-inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
+inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m_)
 {
     using T = typename TMat::scalar_t;
+    tmat3x3<T> m {
+        normalize((tvec3<T>&)m_[0]),
+        normalize((tvec3<T>&)m_[1]),
+        normalize((tvec3<T>&)m_[2])
+    };
 
     T trace = m[0][0] + m[1][1] + m[2][2];
     T root;
@@ -1066,13 +1096,81 @@ template<class T> inline tvec3<T> extract_position(const tmat4x4<T>& m)
     return (const tvec3<T>&)m[3];
 }
 
+
+template<class TMat>
+inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m)
+{
+    using T = typename TMat::scalar_t;
+    tquat<T> q;
+    T tr, s;
+
+    tr = T(0.25) * (T(1) + m[0][0] + m[1][1] + m[2][2]);
+
+    if (tr > T(1e-4f)) {
+        s = sqrt(tr);
+        q[3] = (float)s;
+        s = T(1) / (T(4) * s);
+        q[0] = (m[1][2] - m[2][1]) * s;
+        q[1] = (m[2][0] - m[0][2]) * s;
+        q[2] = (m[0][1] - m[1][0]) * s;
+    }
+    else {
+        if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) {
+            s = T(2) * sqrt(T(1) + m[0][0] - m[1][1] - m[2][2]);
+            q[0] = T(0.25) * s;
+
+            s = T(1) / s;
+            q[3] = (m[1][2] - m[2][1]) * s;
+            q[1] = (m[1][0] + m[0][1]) * s;
+            q[2] = (m[2][0] + m[0][2]) * s;
+        }
+        else if (m[1][1] > m[2][2]) {
+            s = T(2) * sqrt(T(1) + m[1][1] - m[0][0] - m[2][2]);
+            q[1] = T(0.25) * s;
+
+            s = T(1) / s;
+            q[3] = (m[2][0] - m[0][2]) * s;
+            q[0] = (m[1][0] + m[0][1]) * s;
+            q[2] = (m[2][1] + m[1][2]) * s;
+        }
+        else {
+            s = T(2) * sqrt(T(1) + m[2][2] - m[0][0] - m[1][1]);
+            q[2] = T(0.25) * s;
+
+            s = T(1) / s;
+            q[3] = (m[0][1] - m[1][0]) * s;
+            q[0] = (m[2][0] + m[0][2]) * s;
+            q[1] = (m[2][1] + m[1][2]) * s;
+        }
+    }
+    return normalize(q);
+}
+template<class T> inline tquat<T> extract_rotation(const tmat3x3<T>& m)
+{
+    return extract_rotation_impl(m);
+}
 template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
 {
-    tvec3<T> forward = { m[2][0], m[2][1] , m[2][2] };
-    tvec3<T> upwards = { m[1][0], m[1][1] , m[1][2] };
-    return to_quat(look33(forward, upwards));
+    return extract_rotation_impl(m);
 }
 
+//template<class T> inline tquat<T> extract_rotation(const tmat3x3<T>& m)
+//{
+//    auto forward = (tvec3<T>&)m[2];
+//    auto upwards = (tvec3<T>&)m[1];
+//    return to_quat(look33(forward, upwards));
+//}
+//template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
+//{
+//    auto forward = (tvec3<T>&)m[2];
+//    auto upwards = (tvec3<T>&)m[1];
+//    return to_quat(look33(forward, upwards));
+//}
+
+template<class T> inline tvec3<T> extract_scale(const tmat3x3<T>& m)
+{
+    return tvec3<T>{length(m[0]), length(m[1]), length(m[2])};
+}
 template<class T> inline tvec3<T> extract_scale(const tmat4x4<T>& m)
 {
     return tvec3<T>{length((tvec3<T>&)m[0]), length((tvec3<T>&)m[1]), length((tvec3<T>&)m[2])};
