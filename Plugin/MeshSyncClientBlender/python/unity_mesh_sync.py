@@ -29,7 +29,7 @@ def msb_sync_all():
 def msb_sync_updated():
     if not bpy.data.objects.is_updated:
         return
-    msb_sync([obj for obj in bpy.data.objects if obj.is_updated])
+    msb_sync([obj for obj in bpy.data.objects if obj.is_updated or obj.is_updated_data])
 
 
 def msb_sync(targets):
@@ -179,17 +179,6 @@ def msb_add_reference_nodes(ctx, base_path, obj):
     dst.reference = local_path
     for c in obj.children:
         msb_add_reference_nodes(ctx, path, c)
-    return dst
-
-
-def msb_add_bone(ctx, obj):
-    if obj in msb_added:
-        return None
-    msb_construct_tree(ctx, obj.parent)
-    
-    dst = ctx.addTransform(msb_get_path(obj))
-    dst.matrix = msb_mat4x4_to_array(obj.matrix)
-    msb_added.add(obj)
     return dst
 
 

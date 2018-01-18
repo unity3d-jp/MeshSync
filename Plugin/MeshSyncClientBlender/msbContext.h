@@ -62,6 +62,7 @@ private:
     std::vector<ms::LightPtr> m_light_cache;
     std::vector<ms::MeshPtr> m_mesh_cache, m_mesh_send;
     std::vector<std::string> m_deleted;
+    std::set<Object*> m_added;
     ms::ScenePtr m_scene = ms::ScenePtr(new ms::Scene());
 
     ms::SetMessage m_message;

@@ -258,18 +258,26 @@ int msbContext::getMaterialIndex(const Material *mat)
     return 0;
 }
 
-// src_: bpy.Object
-void msbContext::extractMeshData(ms::MeshPtr dst, py::object src_)
+// src: bpy.Object
+void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 {
-    auto rna = (BPy_StructRNA*)src_.ptr();
+    auto rna = (BPy_StructRNA*)src.ptr();
     auto obj = (Object*)rna->ptr.id.data;
+
+    if (find_modofier(obj, eModifierType_ParticleSystem) || find_modofier(obj, eModifierType_ParticleInstance))
+        return; // todo: handle particle system?
+    if (m_added.find(obj) != m_added.end())
+        return;
+    m_added.insert(obj);
 
     auto task = [this, dst, obj]() {
         doExtractMeshData(*dst, obj);
     };
 #ifdef msDebug
+    // force single-threaded
     task();
 #else
+    // add async task
     m_extract_tasks.push_back(task);
 #endif
 }
@@ -467,6 +475,7 @@ void msbContext::send()
     m_message.scene = *m_scene;
     m_scene->clear();
     m_bones.clear();
+    m_added.clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {
