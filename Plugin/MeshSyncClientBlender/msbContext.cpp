@@ -366,7 +366,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
                 auto bone = find_bone(armature->object, g->name);
                 if (bone) {
-                    auto pose = find_pose(armature->object, g->name);
+                    auto *pose = m_settings.sync_poses ? find_pose(armature->object, g->name) : nullptr;
                     auto trans = findOrAddBone(bone, pose);
                     auto b = dst.addBone(trans->path);
                     b->bindpose = extract_bindpose(bone);

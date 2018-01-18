@@ -201,6 +201,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_bones,
                 [](const msbContext& self) { return self.getSettings().sync_bones; },
                 [](msbContext& self, bool v) { self.getSettings().sync_bones = v; })
+            BindProperty(sync_poses,
+                [](const msbContext& self) { return self.getSettings().sync_poses; },
+                [](msbContext& self, bool v) { self.getSettings().sync_poses = v; })
             BindProperty(sync_blendshapes,
                 [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
                 [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })

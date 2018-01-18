@@ -45,6 +45,7 @@ def msb_sync(targets):
     ctx.sync_uvs = scene.meshsync_sync_uvs
     ctx.sync_colors = scene.meshsync_sync_colors
     ctx.sync_bones = scene.meshsync_sync_bones
+    ctx.sync_poses = scene.meshsync_sync_poses
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
 
     # materials
@@ -239,6 +240,7 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
+    bpy.types.Scene.meshsync_sync_poses = bpy.props.BoolProperty(default = True, name = "Poses")
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
@@ -266,6 +268,9 @@ class MeshSyncPanel(bpy.types.Panel):
             b.prop(context.scene, 'meshsync_sync_uvs')
             b.prop(context.scene, 'meshsync_sync_colors')
             b.prop(context.scene, 'meshsync_sync_bones')
+            if scene.meshsync_sync_bones:
+                b2 = b.box()
+                b2.prop(context.scene, 'meshsync_sync_poses')
             b.prop(context.scene, 'meshsync_sync_blendshapes')
             b.prop(context.scene, 'meshsync_apply_modifiers')
         self.layout.prop(context.scene, 'meshsync_sync_cameras')

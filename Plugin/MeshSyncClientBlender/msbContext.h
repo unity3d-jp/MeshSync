@@ -20,6 +20,7 @@ struct msbSettings
     bool sync_uvs = true;
     bool sync_colors = true;
     bool sync_bones = true;
+    bool sync_poses = true;
     bool sync_blendshapes = true;
 };
 
