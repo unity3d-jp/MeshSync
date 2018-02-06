@@ -693,15 +693,10 @@ namespace UTJ.MeshSync
             trans.localRotation = data.rotation;
             trans.localScale = data.scale;
 
-            if (!data.visible)
             {
-                if (trans.gameObject.activeSelf)
-                    trans.gameObject.SetActive(false);
-            }
-            else
-            {
-                if (!trans.gameObject.activeSelf)
-                    trans.gameObject.SetActive(true);
+                var renderer = trans.gameObject.GetComponent<Renderer>();
+                if(renderer != null)
+                    renderer.enabled = data.visible;
             }
 
 #if UNITY_EDITOR

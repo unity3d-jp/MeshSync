@@ -35,11 +35,11 @@ struct MaterialData
 {
     GLuint program = 0;
     GLuint texture = 0;
-    float4 difuse = float4::zero();
+    float4 diffuse = float4::zero();
 
     bool operator==(const MaterialData& v) const
     {
-        return program == v.program && texture == v.texture && difuse == v.difuse;
+        return program == v.program && texture == v.texture && diffuse == v.diffuse;
     }
     bool operator!=(const MaterialData& v) const
     {
@@ -368,7 +368,7 @@ void msxmContext::send(bool force)
             sprintf(name, "XismoMaterial:ID[%04x]", i);
             mat->id = i;
             mat->name = name;
-            mat->color = m_send_data.materials[i].difuse;
+            mat->color = m_send_data.materials[i].diffuse;
         }
     }
 
@@ -567,7 +567,7 @@ void msxmContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * va
 {
     if (location == 3) {
         // diffuse
-        m_material.difuse.assign(value);
+        m_material.diffuse.assign(value);
     }
 }
 

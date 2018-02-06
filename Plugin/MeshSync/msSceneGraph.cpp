@@ -1255,7 +1255,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.genSubmeshes(material_ids);
 
         refiner.new_points.swap(points);
-        refiner.new_indices.swap(indices);
+        refiner.new_indices_submeshes.swap(indices);
         if (!tmp_normals.empty()) tmp_normals.swap(normals);
         if (!tmp_uv0.empty()) tmp_uv0.swap(uv0);
         if (!tmp_colors.empty()) tmp_colors.swap(colors);
