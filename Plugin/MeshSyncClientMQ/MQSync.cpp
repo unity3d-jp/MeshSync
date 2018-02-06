@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "MQSync.h"
-#include "MeshSync/msEditing.h"
 
 #define MaxNameBuffer 128
 
@@ -476,7 +475,7 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
     gd.flags.get_colors = 1;
-    gd.flags.get_materialIDs = 1;
+    gd.flags.get_material_ids = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
@@ -566,13 +565,13 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
             ret->AddFace(3, const_cast<int*>(&data.indices[i]));
         }
     }
-    if(!data.uv.empty()) {
+    if(!data.uv0.empty()) {
         float2 uv[3];
         size_t nfaces = data.indices.size() / 3;
         for (size_t i = 0; i < nfaces; ++i) {
-            uv[0] = data.uv[data.indices[i * 3 + 0]];
-            uv[1] = data.uv[data.indices[i * 3 + 1]];
-            uv[2] = data.uv[data.indices[i * 3 + 2]];
+            uv[0] = data.uv0[data.indices[i * 3 + 0]];
+            uv[1] = data.uv0[data.indices[i * 3 + 1]];
+            uv[2] = data.uv0[data.indices[i * 3 + 2]];
             ret->SetFaceCoordinateArray((int)i, (MQCoordinate*)uv);
         }
     }
@@ -584,7 +583,7 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
             ret->SetFaceVertexColor((int)i, 2, mu::Float4ToColor32(data.colors[data.indices[i * 3 + 2]]));
         }
         // enable vertex color flag on assigned materials
-        auto mids = data.materialIDs;
+        auto mids = data.material_ids;
         mids.erase(std::unique(mids.begin(), mids.end()), mids.end());
         for (auto mid : mids) {
             if (mid >= 0) {
@@ -592,10 +591,10 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
             }
         }
     }
-    if (!data.materialIDs.empty()) {
+    if (!data.material_ids.empty()) {
         size_t nfaces = data.indices.size() / 3;
         for (size_t i = 0; i < nfaces; ++i) {
-            ret->SetFaceMaterial((int)i, data.materialIDs[i]);
+            ret->SetFaceMaterial((int)i, data.material_ids[i]);
         }
     }
     return ret;
@@ -604,10 +603,10 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
 void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
     dst.flags.has_points = 1;
-    dst.flags.has_uv = 1;
+    dst.flags.has_uv0 = 1;
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
-    dst.flags.has_materialIDs = 1;
+    dst.flags.has_material_ids = 1;
     dst.flags.has_refine_settings = 1;
 
     dst.refine_settings.flags.gen_tangents = 1;
@@ -660,13 +659,13 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
     // indices, uv, material ID
     dst.indices.resize_discard(nindices);
-    dst.uv.resize_discard(nindices);
-    dst.materialIDs.resize_discard(nfaces);
+    dst.uv0.resize_discard(nindices);
+    dst.material_ids.resize_discard(nfaces);
     auto *indices = dst.indices.data();
-    auto *uv = dst.uv.data();
+    auto *uv = dst.uv0.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
-        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
+        dst.material_ids[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
         if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
             obj->GetFacePointArray(fi, indices);
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
@@ -714,9 +713,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     }
 
     // remove lines and points
-    dst.materialIDs.erase(
-        std::remove(dst.materialIDs.begin(), dst.materialIDs.end(), -2),
-        dst.materialIDs.end());
+    dst.material_ids.erase(
+        std::remove(dst.material_ids.begin(), dst.material_ids.end(), -2),
+        dst.material_ids.end());
     dst.counts.erase(
         std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
         dst.counts.end());

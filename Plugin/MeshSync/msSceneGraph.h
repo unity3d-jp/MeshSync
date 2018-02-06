@@ -247,9 +247,9 @@ struct MeshDataFlags
     uint32_t has_points : 1;
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
-    uint32_t has_uv : 1;
+    uint32_t has_uv0 : 1;
     uint32_t has_colors : 1;
-    uint32_t has_materialIDs : 1;
+    uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
     uint32_t has_blendshapes : 1;
     uint32_t apply_trs : 1;
@@ -296,15 +296,15 @@ struct MeshRefineSettings
 struct SubmeshData
 {
     IArray<int> indices;
-    int materialID = 0;
+    int material_id = 0;
 };
 
 struct SplitData
 {
-    int offset_indices = 0;
-    int offset_vertices = 0;
-    int num_indices = 0;
-    int num_vertices = 0;
+    int index_count = 0;
+    int index_offset = 0;
+    int vertex_count = 0;
+    int vertex_offset = 0;
     IArray<SubmeshData> submeshes;
 };
 
@@ -363,19 +363,23 @@ public:
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float4> tangents;
-    RawVector<float2> uv;
+    RawVector<float2> uv0;
     RawVector<float4> colors;
     RawVector<int>    counts;
     RawVector<int>    indices;
-    RawVector<int>    materialIDs;
+    RawVector<int>    material_ids;
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshapes;
 
     // non-serialized
-    RawVector<SubmeshData> submeshes;
     RawVector<Weights4> weights4;
+    RawVector<float3> tmp_normals;
+    RawVector<float2> tmp_uv0;
+    RawVector<float4> tmp_colors;
+    RawVector<Weights4> tmp_weights4;
+    std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
 
 public:
@@ -493,7 +497,7 @@ struct GetFlags
     uint32_t get_uv : 1;
     uint32_t get_colors : 1;
     uint32_t get_indices : 1;
-    uint32_t get_materialIDs : 1;
+    uint32_t get_material_ids : 1;
     uint32_t get_bones : 1;
     uint32_t get_blendshapes : 1;
     uint32_t apply_culling : 1;

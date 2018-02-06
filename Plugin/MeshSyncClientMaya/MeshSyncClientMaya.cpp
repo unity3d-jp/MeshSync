@@ -502,7 +502,7 @@ bool MeshSyncClientMaya::importScene()
     gd.flags.get_indices = 1;
     gd.flags.get_points = 1;
     gd.flags.get_uv = 1;
-    gd.flags.get_materialIDs = 1;
+    gd.flags.get_material_ids= 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.bake_skin = m_bake_skin;
@@ -842,7 +842,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.flags.has_normals = 1;
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
-    dst.flags.has_materialIDs = 1;
+    dst.flags.has_material_ids = 1;
     dst.flags.has_refine_settings = 1;
     dst.flags.apply_trs = 1;
     dst.refine_settings.flags.gen_tangents = 1;
@@ -899,7 +899,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getUVSetNames(uvsets);
 
         if (uvsets.length() > 0 && fn_src_mesh.numUVs(uvsets[0]) > 0) {
-            dst.flags.has_uv = 1;
+            dst.flags.has_uv0 = 1;
 
             MFloatArray u;
             MFloatArray v;
@@ -912,7 +912,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     int iu;
                     it_poly.getUVIndex(i, iu, &uvsets[0]);
 
-                    dst.uv.push_back(mu::float2{ u[iu], v[iu] });
+                    dst.uv0.push_back(mu::float2{ u[iu], v[iu] });
                 }
                 it_poly.next();
             }
@@ -936,12 +936,12 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
 
         if (mids.size() == 1) {
-            dst.materialIDs.resize(indices.length(), mids[0]);
+            dst.material_ids.resize(indices.length(), mids[0]);
         }
         else {
-            dst.materialIDs.resize(indices.length());
+            dst.material_ids.resize(indices.length());
             for (uint32_t i = 0; i < indices.length(); ++i) {
-                dst.materialIDs[i] = mids[indices[i]];
+                dst.material_ids[i] = mids[indices[i]];
             }
         }
     }
@@ -1102,7 +1102,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                                 mu::float2 v;
                                 p2.child(0).getValue(v.x);
                                 p2.child(1).getValue(v.y);
-                                dst.uv[li] += v;
+                                dst.uv0[li] += v;
                             }
                         }
                     }

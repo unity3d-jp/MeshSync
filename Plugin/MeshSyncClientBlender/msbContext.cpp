@@ -357,14 +357,14 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     // faces
     dst.indices.reserve(num_loops);
     dst.counts.resize_discard(num_polygons);
-    dst.materialIDs.resize_discard(num_polygons);
+    dst.material_ids.resize_discard(num_polygons);
     {
         int ti = 0;
         for (int pi = 0; pi < num_polygons; ++pi) {
             int material_index = src.mpoly[pi].mat_nr;
             int count = src.mpoly[pi].totloop;
             dst.counts[pi] = count;
-            dst.materialIDs[pi] = material_ids[material_index];
+            dst.material_ids[pi] = material_ids[material_index];
             dst.indices.resize(dst.indices.size() + count);
 
             auto *loops = src.mloop + src.mpoly[pi].loopstart;
@@ -400,9 +400,9 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     if (m_settings.sync_uvs && CustomData_number_of_layers(src.ldata, CD_MLOOPUV) > 0) {
         auto data = (const float2*)CustomData_get(src.ldata, CD_MLOOPUV);
         if (data != nullptr) {
-            dst.uv.resize_discard(num_loops);
+            dst.uv0.resize_discard(num_loops);
             for (int li = 0; li < num_loops; ++li) {
-                dst.uv[li] = data[li];
+                dst.uv0[li] = data[li];
             }
         }
     }

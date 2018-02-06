@@ -1055,7 +1055,7 @@ void BoneData::applyScaleFactor(float scale)
 }
 
 
-#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs)
+#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv0) Body(colors) Body(counts) Body(indices) Body(material_ids)
 
 Mesh::Mesh()
 {
@@ -1181,7 +1181,7 @@ void Mesh::applyScaleFactor(float v)
 void Mesh::refine(const MeshRefineSettings& mrs)
 {
     if (mrs.flags.invert_v) {
-        mu::InvertV(uv.data(), uv.size());
+        mu::InvertV(uv0.data(), uv0.size());
     }
 
     if (mrs.flags.apply_local2world) {
@@ -1216,59 +1216,63 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     mu::MeshRefiner refiner;
-    refiner.triangulate = mrs.flags.triangulate;
-    refiner.swap_faces = mrs.flags.swap_faces;
+    refiner.points = points;
+    refiner.indices = indices;
+    refiner.counts = counts;
     refiner.split_unit = mrs.split_unit;
-    refiner.prepare(counts, indices, points);
-    refiner.uv = uv;
-    refiner.colors = colors;
+    refiner.buildConnection();
+
+    if (uv0.size() == indices.size()) {
+        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0);
+    }
+    if (colors.size() == indices.size()) {
+        refiner.addExpandedAttribute<float4>(colors, tmp_colors);
+    }
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
         if (mrs.smooth_angle < 180.0f) {
-            refiner.genNormalsWithSmoothAngle(mrs.smooth_angle, mrs.flags.flip_normals);
+            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, mrs.flags.flip_normals);
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
         }
         else {
-            refiner.genNormals(mrs.flags.flip_normals);
+            GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
         }
     }
     else if (mrs.flags.gen_normals) {
-        refiner.genNormals(mrs.flags.flip_normals);
+        GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
     }
     else {
-        refiner.normals = normals;
+        if (normals.size() == indices.size()) {
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
+        }
     }
 
-    // tangents
-    bool gen_tangents = mrs.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
-    if (gen_tangents) {
-        refiner.genTangents();
-    }
+    // refine
+    {
+        refiner.refine();
+        refiner.triangulate(mrs.flags.swap_faces);
+        refiner.genSubmeshes(material_ids);
 
-    // refine topology
-    bool refine_topology = !mrs.flags.no_reindexing  && (
-         mrs.flags.triangulate ||
-        (mrs.flags.split && points.size() > mrs.split_unit) ||
-        (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()))
-    );
-    if(refine_topology) {
-        refiner.refine(mrs.flags.optimize_topology);
-        refiner.genSubmesh(materialIDs);
-        refiner.swapNewData(points, normals, tangents, uv, colors, indices);
+        refiner.new_points.swap(points);
+        refiner.new_indices.swap(indices);
+        if (!tmp_normals.empty()) tmp_normals.swap(normals);
+        if (!tmp_uv0.empty()) tmp_uv0.swap(uv0);
+        if (!tmp_colors.empty()) tmp_colors.swap(colors);
 
         splits.clear();
         int offset_indices = 0;
         int offset_vertices = 0;
         for (auto& split : refiner.splits) {
             auto sp = SplitData();
-            sp.offset_indices = offset_indices;
-            sp.offset_vertices = offset_vertices;
-            sp.num_indices = split.num_indices_triangulated;
-            sp.num_vertices = split.num_vertices;
+            sp.index_offset = offset_indices;
+            sp.vertex_offset = offset_vertices;
+            sp.index_count = split.triangulated_index_count;
+            sp.vertex_count = split.vertex_count;
             splits.push_back(sp);
 
-            offset_vertices += split.num_vertices;
-            offset_indices += split.num_indices_triangulated;
+            offset_vertices += split.vertex_count;
+            offset_indices += split.triangulated_index_count;
         }
 
         // setup submeshes
@@ -1276,33 +1280,37 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             int nsm = 0;
             int *tri = indices.data();
             for (auto& split : refiner.splits) {
-                for (int i = 0; i < split.num_submeshes; ++i) {
+                for (int i = 0; i < split.submesh_count; ++i) {
                     auto& sm = refiner.submeshes[nsm + i];
                     SubmeshData tmp;
-                    tmp.materialID = sm.materialID;
-                    tmp.indices.reset(tri, sm.num_indices_tri);
-                    tri += sm.num_indices_tri;
+                    tmp.material_id = sm.material_id;
+                    tmp.indices.reset(tri, sm.index_count);
+                    tri += sm.index_count;
                     submeshes.push_back(tmp);
                 }
-                nsm += split.num_submeshes;
+                nsm += split.submesh_count;
             }
             nsm = 0;
             for (int i = 0; i < splits.size(); ++i) {
-                int n = refiner.splits[i].num_submeshes;
+                int n = refiner.splits[i].submesh_count;
                 splits[i].submeshes.reset(&submeshes[nsm], n);
                 nsm += n;
             }
         }
     }
-    else {
-        refiner.swapNewData(points, normals, tangents, uv, colors, indices);
+
+    // tangents
+    if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
+        tangents.resize(points.size());
+        GenerateTangentsTriangleIndexed(tangents.data(),
+            points.data(), uv0.data(), normals.data(), indices.data(), (int)indices.size() / 3, (int)points.size());
     }
 
+    // weights
     if (!weights4.empty()) {
-        RawVector<Weights4> tmp;
-        tmp.resize_discard(points.size());
-        CopyWithIndices(tmp.data(), weights4.data(), refiner.new2old_vertices);
-        weights4.swap(tmp);
+        tmp_weights4.resize_discard(points.size());
+        CopyWithIndices(tmp_weights4.data(), weights4.data(), refiner.new2old_points);
+        weights4.swap(tmp_weights4);
     }
     if (!blendshapes.empty()) {
         RawVector<float3> tmp;
@@ -1310,17 +1318,17 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             for (auto& frame : bs->frames) {
                 if (!frame.points.empty()) {
                     tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), frame.points.data(), refiner.new2old_vertices);
+                    CopyWithIndices(tmp.data(), frame.points.data(), refiner.new2old_points);
                     frame.points.swap(tmp);
                 }
                 if (!frame.normals.empty()) {
                     tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), frame.normals.data(), refiner.new2old_vertices);
+                    CopyWithIndices(tmp.data(), frame.normals.data(), refiner.new2old_points);
                     frame.normals.swap(tmp);
                 }
                 if (!frame.tangents.empty()) {
                     tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), frame.tangents.data(), refiner.new2old_vertices);
+                    CopyWithIndices(tmp.data(), frame.tangents.data(), refiner.new2old_points);
                     frame.tangents.swap(tmp);
                 }
             }
@@ -1330,7 +1338,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     flags.has_points = !points.empty();
     flags.has_normals = !normals.empty();
     flags.has_tangents = !tangents.empty();
-    flags.has_uv = !uv.empty();
+    flags.has_uv0 = !uv0.empty();
     flags.has_indices = !indices.empty();
 }
 
@@ -1386,16 +1394,16 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     // uv
-    if (uv.data()) {
-        if (uv.size() == num_points) {
-            uv.resize(points.size());
-            mu::CopyWithIndices(&uv[num_points], &uv[0], copylist);
+    if (uv0.data()) {
+        if (uv0.size() == num_points) {
+            uv0.resize(points.size());
+            mu::CopyWithIndices(&uv0[num_points], &uv0[0], copylist);
         }
-        else if (uv.size() == num_indices) {
-            uv.resize(indices.size());
-            auto dst = &uv[num_indices];
+        else if (uv0.size() == num_indices) {
+            uv0.resize(indices.size());
+            auto dst = &uv0[num_indices];
             mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
-                dst[idx] = uv[ridx];
+                dst[idx] = uv0[ridx];
             });
         }
     }
@@ -1416,10 +1424,10 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     // material ids
-    if (materialIDs.data()) {
-        size_t n = materialIDs.size();
-        materialIDs.resize(n * 2);
-        memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
+    if (material_ids.data()) {
+        size_t n = material_ids.size();
+        material_ids.resize(n * 2);
+        memcpy(material_ids.data() + n, material_ids.data(), sizeof(int) * n);
     }
 
     // bone weights
@@ -1505,11 +1513,11 @@ void Mesh::setupFlags()
     flags.has_points = !points.empty();
     flags.has_normals = !normals.empty();
     flags.has_tangents = !tangents.empty();
-    flags.has_uv = !uv.empty();
+    flags.has_uv0 = !uv0.empty();
     flags.has_colors = !colors.empty();
     flags.has_counts = !counts.empty();
     flags.has_indices = !indices.empty();
-    flags.has_materialIDs = !materialIDs.empty();
+    flags.has_material_ids = !material_ids.empty();
     flags.has_bones = !bones.empty();
     flags.has_blendshapes = !blendshapes.empty();
 }
@@ -1524,7 +1532,7 @@ void Mesh::addNormal(const float3& v)
 }
 void Mesh::addUV(const float2& v)
 {
-    uv.push_back(v);
+    uv0.push_back(v);
 }
 void Mesh::addColor(const float4& v)
 {
@@ -1540,7 +1548,7 @@ void Mesh::addIndex(int v)
 }
 void Mesh::addMaterialID(int v)
 {
-    materialIDs.push_back(v);
+    material_ids.push_back(v);
 }
 
 BoneDataPtr Mesh::addBone(const std::string& _path)

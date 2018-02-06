@@ -17,11 +17,14 @@ public:
     IntrusiveArray() : m_data(nullptr), m_size(0) {}
     IntrusiveArray(const T *d, size_t s) : m_data(const_cast<T*>(d)), m_size(s) {}
     IntrusiveArray(const IntrusiveArray& v) : m_data(const_cast<T*>(v.m_data)), m_size(v.m_size) {}
-    template<int N>
-    IntrusiveArray(const T(&v)[N]) : m_data(const_cast<T*>(v)), m_size(N) {}
-    template<class Container>
-    IntrusiveArray(const Container& v) : m_data(const_cast<T*>(v.data())), m_size(v.size()) {}
+    template<class Container> IntrusiveArray(const Container& v) : m_data(const_cast<T*>(v.data())), m_size(v.size()) {}
     IntrusiveArray& operator=(const IntrusiveArray& v) { m_data = const_cast<T*>(v.m_data); m_size = v.m_size; return *this; }
+
+    void reset()
+    {
+        m_data = nullptr;
+        m_size = 0;
+    }
 
     void reset(T *d, size_t s)
     {

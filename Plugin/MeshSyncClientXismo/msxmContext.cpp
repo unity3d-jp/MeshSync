@@ -226,10 +226,10 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
 
     mesh.flags.has_points = 1;
     mesh.flags.has_normals = 1;
-    mesh.flags.has_uv = 1;
+    mesh.flags.has_uv0 = 1;
     mesh.flags.has_counts = 1;
     mesh.flags.has_indices = 1;
-    mesh.flags.has_materialIDs = 1;
+    mesh.flags.has_material_ids = 1;
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
     mesh.refine_settings.flags.gen_tangents = 1;
@@ -242,14 +242,14 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
         int num_vertices = (int)vertices_welded.size();
         mesh.points.resize_discard(num_vertices);
         mesh.normals.resize_discard(num_vertices);
-        mesh.uv.resize_discard(num_vertices);
+        mesh.uv0.resize_discard(num_vertices);
         mesh.colors.resize_discard(num_vertices);
 
         for (int vi = 0; vi < num_vertices; ++vi) {
             auto& v = vertices_welded[vi];
             mesh.points[vi] = v.vertex;
             mesh.normals[vi] = v.normal;
-            mesh.uv[vi] = v.uv;
+            mesh.uv0[vi] = v.uv;
             mesh.colors[vi] = v.color;
         }
     }
@@ -257,24 +257,24 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
         int num_vertices = num_indices;
         mesh.points.resize_discard(num_vertices);
         mesh.normals.resize_discard(num_vertices);
-        mesh.uv.resize_discard(num_vertices);
+        mesh.uv0.resize_discard(num_vertices);
         mesh.colors.resize_discard(num_vertices);
         mesh.indices.resize_discard(num_vertices);
 
         for (int vi = 0; vi < num_vertices; ++vi) {
             mesh.points[vi] = vertices[vi].vertex;
             mesh.normals[vi] = vertices[vi].normal;
-            mesh.uv[vi] = vertices[vi].uv;
+            mesh.uv0[vi] = vertices[vi].uv;
             mesh.colors[vi] = vertices[vi].color;
             mesh.indices[vi] = vi;
         }
     }
 
     mesh.counts.resize_discard(num_triangles);
-    mesh.materialIDs.resize_discard(num_triangles);
+    mesh.material_ids.resize_discard(num_triangles);
     for (int ti = 0; ti < num_triangles; ++ti) {
         mesh.counts[ti] = 3;
-        mesh.materialIDs[ti] = material_id;
+        mesh.material_ids[ti] = material_id;
     }
 }
 

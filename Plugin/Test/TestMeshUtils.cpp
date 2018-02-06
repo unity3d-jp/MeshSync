@@ -76,7 +76,7 @@ TestCase(TestMeshRefiner)
     RawVector<int> counts = {
         4, 4, 4, 4
     };
-    RawVector<int> materialIDs = {
+    RawVector<int> material_ids = {
         0, 1, 2, 3
     };
 
@@ -85,14 +85,22 @@ TestCase(TestMeshRefiner)
         uv_flattened[i] = uv[indices[i]];
     }
 
+    RawVector<float2> uv_refined;
+    RawVector<float3> normals, normals_refined;
+
     mu::MeshRefiner refiner;
-    refiner.prepare(counts, indices, points);
-    refiner.uv = uv_flattened;
     refiner.split_unit = 8;
-    refiner.genNormalsWithSmoothAngle(40.0f, false);
-    refiner.genTangents();
-    refiner.refine(false);
-    refiner.genSubmesh(materialIDs);
+    refiner.counts = counts;
+    refiner.indices = indices;
+    refiner.points = points;
+    refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined);
+    refiner.buildConnection();
+
+    GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, 40.0f, false);
+    refiner.addExpandedAttribute<float3>(normals, normals_refined);
+
+    refiner.refine();
+    refiner.genSubmeshes(material_ids);
 }
 
 
@@ -558,19 +566,19 @@ TestCase(TestPolygonInside)
 TestCase(TestEdge)
 {
     {
-        float3 points[] = {
+        RawVector<float3> points = {
             { 0.0f, 0.5f, 0.0f },
             { 1.0f, 0.0f, 0.0f },
             { 0.0f, 1.0f, 0.0f },
             { -1.0f, 0.0f, 0.0f },
         };
-        int indices[] = {
+        RawVector<int> indices = {
             0, 1, 2,
             0, 2, 3,
             0, 3, 1,
         };
 
-        ConnectionData connection;
+        MeshConnectionInfo connection;
         connection.buildConnection(indices, 3, points);
 
         for (int vi = 0; vi < 4; ++vi) {
@@ -579,7 +587,7 @@ TestCase(TestEdge)
         }
 
         RawVector<int> edges;
-        int vi[] = { 1 };
+        RawVector<int> vi = { 1 };
         SelectEdge(indices, 3, points, vi, [&](int vi) { edges.push_back(vi); });
 
         Print("    SelectEdge (triangles):");
@@ -591,7 +599,7 @@ TestCase(TestEdge)
     Print("\n");
 
     {
-        float3 points[4 * 4];
+        RawVector<float3> points(4 * 4);
         RawVector<int> indices(3 * 3 * 4);
 
         for (int yi = 0; yi < 4; ++yi) {
@@ -610,15 +618,15 @@ TestCase(TestEdge)
         }
         indices.erase(indices.begin() + 4 * 4, indices.begin() + 5 * 4);
 
-        int counts[8] = { 4,4,4,4,4,4,4,4 };
-        int offsets[8] = { 0,4,8,12,16,20,24,28 };
+        RawVector<int> counts = { 4,4,4,4,4,4,4,4 };
+        RawVector<int> offsets = { 0,4,8,12,16,20,24,28 };
         for (int i = 0; i < 8; ++i) {
             counts[i] = 4;
             offsets[i] = i * 4;
         }
 
-        ConnectionData connection;
-        connection.buildConnection(indices, counts, offsets, points);
+        MeshConnectionInfo connection;
+        connection.buildConnection(indices, counts, points);
 
         for (int vi = 0; vi < 16; ++vi) {
             bool is_edge = OnEdge(indices, 4, points, connection, vi);
@@ -626,7 +634,7 @@ TestCase(TestEdge)
         }
 
         RawVector<int> edges;
-        int vi[] = { 1 };
+        RawVector<int> vi = { 1 };
 
         SelectEdge(indices, counts, offsets, points, vi, [&](int vi) { edges.push_back(vi); });
         Print("    SelectEdge (quads):");

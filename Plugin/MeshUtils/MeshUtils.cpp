@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MeshUtils.h"
+#include "muMeshRefiner.h"
 #include "mikktspace.h"
 
 #ifdef muEnableHalf
@@ -12,30 +13,84 @@ namespace mu {
 
 
 
-bool GenerateNormalsPoly(
-    IArray<float3> dst, const IArray<float3> points,
-    const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices)
+bool GenerateNormalsPoly(RawVector<float3>& dst,
+    const IArray<float3> points, const IArray<int> counts, const IArray<int> indices, bool flip)
 {
-    if (dst.size() != points.size()) {
-        return false;
-    }
+    const size_t num_faces = counts.size();
+    const int i1 = flip ? 2 : 1;
+    const int i2 = flip ? 1 : 2;
+
+    dst.resize_discard(points.size());
     dst.zeroclear();
 
-    size_t num_faces = counts.size();
+    int offset = 0;
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
-        const int *face = &indices[offsets[fi]];
+        const int *face = &indices[offset];
         float3 p0 = points[face[0]];
-        float3 p1 = points[face[1]];
-        float3 p2 = points[face[2]];
+        float3 p1 = points[face[i1]];
+        float3 p2 = points[face[i2]];
         float3 n = cross(p1 - p0, p2 - p0);
         for (int ci = 0; ci < count; ++ci) {
             dst[face[ci]] += n;
         }
+        offset += count;
     }
     Normalize(dst.data(), dst.size());
     return true;
+}
+
+void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
+    const MeshConnectionInfo& connection, const IArray<float3> points,
+    const IArray<int> counts, const IArray<int> indices, float smooth_angle, bool flip)
+{
+    const size_t num_faces = counts.size();
+    const int i1 = flip ? 2 : 1;
+    const int i2 = flip ? 1 : 2;
+
+    // gen face normals
+    int offset = 0;
+    RawVector<float3> face_normals;
+    face_normals.resize_zeroclear(num_faces);
+    for (size_t fi = 0; fi < num_faces; ++fi)
+    {
+        const int *face = &indices[offset];
+        float3 p0 = points[face[0]];
+        float3 p1 = points[face[i1]];
+        float3 p2 = points[face[i2]];
+        float3 n = cross(p1 - p0, p2 - p0);
+        face_normals[fi] = n;
+        offset += counts[fi];
+    }
+    Normalize(face_normals.data(), face_normals.size());
+
+    // gen vertex normals
+    dst.resize_discard(indices.size());
+    dst.zeroclear();
+    offset = 0;
+    const float angle = std::cos(smooth_angle * Deg2Rad) - 0.001f;
+    for (size_t fi = 0; fi < num_faces; ++fi)
+    {
+        int count = counts[fi];
+        const int *face = &indices[offset];
+        auto& face_normal = face_normals[fi];
+        for (int ci = 0; ci < count; ++ci) {
+            int vi = face[ci];
+            auto normal = float3::zero();
+            connection.eachConnectedFaces(vi, [&](int fi2, int) {
+                float3 n = face_normals[fi2];
+                if (dot(face_normal, n) > angle) {
+                    normal += n;
+                }
+            });
+            dst[offset + ci] = normal;
+        }
+        offset += count;
+    }
+
+    // normalize
+    Normalize(dst.data(), dst.size());
 }
 
 struct TSpaceContext
@@ -322,75 +377,6 @@ void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, 
             dst_counts.push_back(3);
         }
     }
-}
-
-void ConnectionData::clear()
-{
-    v2f_counts.clear();
-    v2f_offsets.clear();
-    v2f_faces.clear();
-    v2f_indices.clear();
-
-    weld_map.clear();
-    weld_counts.clear();
-    weld_offsets.clear();
-    weld_indices.clear();
-}
-
-void ConnectionData::buildConnection(
-    const IArray<int>& indices_, int ngon_, const IArray<float3>& vertices_, bool welding)
-{
-    if (welding) {
-        impl::BuildWeldMap(*this, vertices_);
-
-        impl::IndicesW indices__{ indices_, weld_map };
-        impl::CountsC counts_{ ngon_, indices_.size()/ngon_ };
-        impl::BuildConnection(*this, indices__, counts_, vertices_);
-    }
-    else {
-        impl::CountsC counts_{ ngon_, indices_.size() / ngon_ };
-        impl::BuildConnection(*this, indices_, counts_, vertices_);
-    }
-}
-
-void ConnectionData::buildConnection(
-    const IArray<int>& indices_, const IArray<int>& counts_, const IArray<int>& /*offsets_*/, const IArray<float3>& vertices_, bool welding)
-{
-    if (welding) {
-        impl::BuildWeldMap(*this, vertices_);
-
-        impl::IndicesW vi{ indices_, weld_map };
-        impl::BuildConnection(*this, vi, counts_, vertices_);
-    }
-    else {
-        impl::BuildConnection(*this, indices_, counts_, vertices_);
-    }
-}
-
-
-bool OnEdge(const IArray<int>& indices, int ngon, const IArray<float3>& vertices, const ConnectionData& connection, int vertex_index)
-{
-    impl::CountsC counts{ ngon, indices.size() / ngon };
-    impl::OffsetsC offsets{ ngon, indices.size() / ngon };
-    return impl::OnEdgeImpl(indices, counts, offsets, vertices, connection, vertex_index);
-}
-
-bool OnEdge(const IArray<int>& indices, const IArray<int>& counts, const IArray<int>& offsets, const IArray<float3>& vertices, const ConnectionData& connection, int vertex_index)
-{
-    return impl::OnEdgeImpl(indices, counts, offsets, vertices, connection, vertex_index);
-}
-
-
-bool IsEdgeOpened(const IArray<int>& indices, int ngon, const ConnectionData& connection, int i0, int i1)
-{
-    impl::CountsC counts{ ngon, indices.size() / ngon };
-    impl::OffsetsC offsets{ ngon, indices.size() / ngon };
-    return IsEdgeOpenedImpl(indices, counts, offsets, connection, i0, i1);
-}
-
-bool IsEdgeOpened(const IArray<int>& indices, const IArray<int>& counts, const IArray<int>& offsets, const ConnectionData& connection, int i0, int i1)
-{
-    return impl::IsEdgeOpenedImpl(indices, counts, offsets, connection, i0, i1);
 }
 
 } // namespace mu
