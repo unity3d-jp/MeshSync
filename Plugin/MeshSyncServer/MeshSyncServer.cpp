@@ -483,18 +483,32 @@ msAPI void msMeshWriteTangents(ms::Mesh *_this, const float4 *v, int size)
         _this->flags.has_tangents = 1;
     }
 }
-msAPI void msMeshReadUVs(ms::Mesh *_this, float2 *dst, ms::SplitData *split)
+msAPI void msMeshReadUV0(ms::Mesh *_this, float2 *dst, ms::SplitData *split)
 {
     if (split)
         _this->uv0.copy_to(dst, split->vertex_count, split->vertex_offset);
     else
         _this->uv0.copy_to(dst);
 }
-msAPI void msMeshWriteUVs(ms::Mesh *_this, const float2 *v, int size)
+msAPI void msMeshReadUV1(ms::Mesh *_this, float2 *dst, ms::SplitData *split)
+{
+    if (split)
+        _this->uv1.copy_to(dst, split->vertex_count, split->vertex_offset);
+    else
+        _this->uv1.copy_to(dst);
+}
+msAPI void msMeshWriteUV0(ms::Mesh *_this, const float2 *v, int size)
 {
     if (size > 0) {
         _this->uv0.assign(v, v + size);
         _this->flags.has_uv0 = 1;
+    }
+}
+msAPI void msMeshWriteUV1(ms::Mesh *_this, const float2 *v, int size)
+{
+    if (size > 0) {
+        _this->uv1.assign(v, v + size);
+        _this->flags.has_uv1 = 1;
     }
 }
 msAPI void msMeshReadColors(ms::Mesh *_this, float4 *dst, ms::SplitData *split)

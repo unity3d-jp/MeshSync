@@ -248,6 +248,7 @@ struct MeshDataFlags
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv0 : 1;
+    uint32_t has_uv1 : 1;
     uint32_t has_colors : 1;
     uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
@@ -363,7 +364,7 @@ public:
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float4> tangents;
-    RawVector<float2> uv0;
+    RawVector<float2> uv0, uv1;
     RawVector<float4> colors;
     RawVector<int>    counts;
     RawVector<int>    indices;
@@ -376,7 +377,7 @@ public:
     // non-serialized
     RawVector<Weights4> weights4;
     RawVector<float3> tmp_normals;
-    RawVector<float2> tmp_uv0;
+    RawVector<float2> tmp_uv0, tmp_uv1;
     RawVector<float4> tmp_colors;
     RawVector<Weights4> tmp_weights4;
     std::vector<SubmeshData> submeshes;
@@ -494,7 +495,8 @@ struct GetFlags
     uint32_t get_points : 1;
     uint32_t get_normals : 1;
     uint32_t get_tangents : 1;
-    uint32_t get_uv : 1;
+    uint32_t get_uv0 : 1;
+    uint32_t get_uv1 : 1;
     uint32_t get_colors : 1;
     uint32_t get_indices : 1;
     uint32_t get_material_ids : 1;

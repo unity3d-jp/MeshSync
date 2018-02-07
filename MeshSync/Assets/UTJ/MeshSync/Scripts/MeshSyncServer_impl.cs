@@ -31,12 +31,13 @@ namespace UTJ.MeshSync
             public bool getPoints { get { return (flags & (1 << 1)) != 0; } }
             public bool getNormals { get { return (flags & (1 << 2)) != 0; } }
             public bool getTangents { get { return (flags & (1 << 3)) != 0; } }
-            public bool getUV { get { return (flags & (1 << 4)) != 0; } }
-            public bool getColors { get { return (flags & (1 << 5)) != 0; } }
-            public bool getIndices { get { return (flags & (1 << 6)) != 0; } }
-            public bool getMaterialIDs { get { return (flags & (1 << 7)) != 0; } }
-            public bool getBones { get { return (flags & (1 << 8)) != 0; } }
-            public bool getBlendShapes { get { return (flags & (1 << 9)) != 0; } }
+            public bool getUV0 { get { return (flags & (1 << 4)) != 0; } }
+            public bool getUV1 { get { return (flags & (1 << 5)) != 0; } }
+            public bool getColors { get { return (flags & (1 << 6)) != 0; } }
+            public bool getIndices { get { return (flags & (1 << 7)) != 0; } }
+            public bool getMaterialIDs { get { return (flags & (1 << 8)) != 0; } }
+            public bool getBones { get { return (flags & (1 << 9)) != 0; } }
+            public bool getBlendShapes { get { return (flags & (1 << 10)) != 0; } }
         }
 
         public struct GetMessage
@@ -195,35 +196,40 @@ namespace UTJ.MeshSync
                 get { return (flags & (1 << 5)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 5)); }
             }
-            public bool hasUV
+            public bool hasUV0
             {
                 get { return (flags & (1 << 6)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 6)); }
             }
-            public bool hasColors
+            public bool hasUV1
             {
                 get { return (flags & (1 << 7)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 7)); }
             }
-            public bool hasMaterialIDs
+            public bool hasColors
             {
                 get { return (flags & (1 << 8)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 8)); }
             }
-            public bool hasBones
+            public bool hasMaterialIDs
             {
                 get { return (flags & (1 << 9)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 9)); }
             }
-            public bool hasBlendshapes
+            public bool hasBones
             {
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
             }
-            public bool applyTRS
+            public bool hasBlendshapes
             {
                 get { return (flags & (1 << 11)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 11)); }
+            }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 12)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 12)); }
             }
         };
 
@@ -1149,8 +1155,10 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMeshWriteNormals(IntPtr _this, Vector3[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadTangents(IntPtr _this, IntPtr dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteTangents(IntPtr _this, Vector4[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msMeshReadUVs(IntPtr _this, IntPtr dst, SplitData split);
-            [DllImport("MeshSyncServer")] static extern void msMeshWriteUVs(IntPtr _this, Vector2[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadUV0(IntPtr _this, IntPtr dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msMeshReadUV1(IntPtr _this, IntPtr dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteUV0(IntPtr _this, Vector2[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msMeshWriteUV1(IntPtr _this, Vector2[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadColors(IntPtr _this, IntPtr dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msMeshWriteColors(IntPtr _this, Color[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msMeshReadWeights4(IntPtr _this, IntPtr dst, SplitData split);
@@ -1206,18 +1214,20 @@ namespace UTJ.MeshSync
             public int numIndices { get { return msMeshGetNumIndices(_this); } }
             public int numSplits { get { return msMeshGetNumSplits(_this); } }
 
-            public void ReadPoints(IntPtr dst, SplitData split) { msMeshReadPoints(_this, dst, split); }
-            public void ReadNormals(IntPtr dst, SplitData split) { msMeshReadNormals(_this, dst, split); }
-            public void ReadTangents(IntPtr dst, SplitData split) { msMeshReadTangents(_this, dst, split); }
-            public void ReadUVs(IntPtr dst, SplitData split) { msMeshReadUVs(_this, dst, split); }
-            public void ReadColors(IntPtr dst, SplitData split) { msMeshReadColors(_this, dst, split); }
+            public void ReadPoints(PinnedList<Vector3> dst, SplitData split) { msMeshReadPoints(_this, dst, split); }
+            public void ReadNormals(PinnedList<Vector3> dst, SplitData split) { msMeshReadNormals(_this, dst, split); }
+            public void ReadTangents(PinnedList<Vector4> dst, SplitData split) { msMeshReadTangents(_this, dst, split); }
+            public void ReadUV0(PinnedList<Vector2> dst, SplitData split) { msMeshReadUV0(_this, dst, split); }
+            public void ReadUV1(PinnedList<Vector2> dst, SplitData split) { msMeshReadUV1(_this, dst, split); }
+            public void ReadColors(PinnedList<Color> dst, SplitData split) { msMeshReadColors(_this, dst, split); }
             public void ReadBoneWeights(IntPtr dst, SplitData split) { msMeshReadWeights4(_this, dst, split); }
             public void ReadIndices(IntPtr dst, SplitData split) { msMeshReadIndices(_this, dst, split); }
 
             public void WritePoints(Vector3[] v) { msMeshWritePoints(_this, v, v.Length); }
             public void WriteNormals(Vector3[] v) { msMeshWriteNormals(_this, v, v.Length); }
             public void WriteTangents(Vector4[] v) { msMeshWriteTangents(_this, v, v.Length); }
-            public void WriteUVs(Vector2[] v) { msMeshWriteUVs(_this, v, v.Length); }
+            public void WriteUV0(Vector2[] v) { msMeshWriteUV0(_this, v, v.Length); }
+            public void WriteUV1(Vector2[] v) { msMeshWriteUV1(_this, v, v.Length); }
             public void WriteColors(Color[] v) { msMeshWriteColors(_this, v, v.Length); }
             public void WriteWeights(BoneWeight[] v) { msMeshWriteWeights4(_this, v, v.Length); }
             public void WriteIndices(int[] v) { msMeshWriteIndices(_this, v, v.Length); }

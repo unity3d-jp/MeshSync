@@ -507,22 +507,16 @@ namespace UTJ.MeshSync
                 AssignMaterials(rec);
         }
 
-        PinnedList<int> tmpI;
-        PinnedList<Vector2> tmpV2;
-        PinnedList<Vector3> tmpV3, tmpV3a, tmpV3b;
-        PinnedList<Vector4> tmpV4;
-        PinnedList<Color> tmpC;
+        PinnedList<int> tmpI = new PinnedList<int>();
+        PinnedList<Vector2> tmpV2 = new PinnedList<Vector2>();
+        PinnedList<Vector3> tmpV3 = new PinnedList<Vector3>();
+        PinnedList<Vector3> tmpV3a = new PinnedList<Vector3>();
+        PinnedList<Vector3> tmpV3b = new PinnedList<Vector3>();
+        PinnedList<Vector4> tmpV4 = new PinnedList<Vector4>();
+        PinnedList<Color> tmpC = new PinnedList<Color>();
 
         Mesh CreateEditedMesh(MeshData data, SplitData split)
         {
-            if (tmpI == null) tmpI = new PinnedList<int>();
-            if (tmpV2 == null) tmpV2 = new PinnedList<Vector2>();
-            if (tmpV3 == null) tmpV3 = new PinnedList<Vector3>();
-            if (tmpV3a == null) tmpV3a = new PinnedList<Vector3>();
-            if (tmpV3b == null) tmpV3b = new PinnedList<Vector3>();
-            if (tmpV4 == null) tmpV4 = new PinnedList<Vector4>();
-            if (tmpC == null) tmpC = new PinnedList<Color>();
-
             var mesh = new Mesh();
 #if UNITY_2017_3_OR_NEWER
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -547,11 +541,17 @@ namespace UTJ.MeshSync
                 data.ReadTangents(tmpV4, split);
                 mesh.SetTangents(tmpV4);
             }
-            if (flags.hasUV)
+            if (flags.hasUV0)
             {
                 tmpV2.Resize(split.numPoints);
-                data.ReadUVs(tmpV2, split);
+                data.ReadUV0(tmpV2, split);
                 mesh.SetUVs(0, tmpV2);
+            }
+            if (flags.hasUV1)
+            {
+                tmpV2.Resize(split.numPoints);
+                data.ReadUV1(tmpV2, split);
+                mesh.SetUVs(1, tmpV2);
             }
             if (flags.hasColors)
             {
@@ -693,11 +693,10 @@ namespace UTJ.MeshSync
             trans.localRotation = data.rotation;
             trans.localScale = data.scale;
 
-            {
-                var renderer = trans.gameObject.GetComponent<Renderer>();
-                if(renderer != null)
-                    renderer.enabled = data.visible;
-            }
+            // visibility
+            var renderer = trans.gameObject.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.enabled = data.visible;
 
 #if UNITY_EDITOR
             var animData = data.animation;
@@ -1099,23 +1098,26 @@ namespace UTJ.MeshSync
 
         void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials)
         {
-            bool use_cloth = cloth != null;
-
+            // todo: cloth?
             if (flags.getPoints)
             {
-                data.WritePoints(use_cloth ? cloth.vertices : mesh.vertices);
+                data.WritePoints(mesh.vertices);
             }
             if (flags.getNormals)
             {
-                data.WriteNormals(use_cloth ? cloth.normals : mesh.normals);
+                data.WriteNormals(mesh.normals);
             }
             if (flags.getTangents)
             {
                 data.WriteTangents(mesh.tangents);
             }
-            if (flags.getUV)
+            if (flags.getUV0)
             {
-                data.WriteUVs(mesh.uv);
+                data.WriteUV0(mesh.uv);
+            }
+            if (flags.getUV1)
+            {
+                data.WriteUV1(mesh.uv2);
             }
             if (flags.getColors)
             {
