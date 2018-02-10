@@ -319,7 +319,7 @@ void MeshRefiner::refine()
             if (ni != -1 && compare_all_attributes(ni, ii)) {
                 return ni;
             }
-            else if (ni == -1) {
+            else {
                 ni = (int)new_points.size();
                 new_points.push_back(points[vi]);
                 new2old_points.push_back(vi);
