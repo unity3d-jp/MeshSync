@@ -258,6 +258,8 @@ void MeshRefiner::clear()
     splits.clear();
     submeshes.clear();
     num_new_indices = 0;
+
+    connection.clear();
 }
 
 void MeshRefiner::buildConnection()

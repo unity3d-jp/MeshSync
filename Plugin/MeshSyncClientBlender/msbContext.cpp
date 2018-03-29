@@ -500,7 +500,8 @@ void msbContext::send()
 {
     if (isSending())
     {
-        // previous request is not completed yet
+        // previous request is not completed yet. skip
+        m_extract_tasks.clear();
         return;
     }
 
@@ -520,7 +521,7 @@ void msbContext::send()
     // return objects to cache
     for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
     for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }
-    for (auto& v : m_message.scene.lights) { m_transform_cache.push_back(v); }
+    for (auto& v : m_message.scene.lights) { m_light_cache.push_back(v); }
     for (auto& v : m_message.scene.meshes) { m_mesh_cache.push_back(v); }
 
     // setup send data
@@ -542,7 +543,23 @@ void msbContext::send()
         }
 
         // send transform, camera, etc
-        m_message.scene.settings = m_settings.scene_settings;
+
+        auto scene_settings = m_settings.scene_settings;
+        float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
+        scene_settings.scale_factor = 1.0f;
+        scene_settings.handedness = ms::Handedness::Left;
+
+        m_message.scene.settings = scene_settings;
+
+        auto& scene = m_message.scene;
+        for (auto& obj : scene.transforms) { obj->convertHandedness(false, true); }
+        for (auto& obj : scene.cameras) { obj->convertHandedness(false, true); }
+        for (auto& obj : scene.lights) { obj->convertHandedness(false, true); }
+        if (scale_factor != 1.0f) {
+            for (auto& obj : scene.transforms) { obj->applyScaleFactor(scale_factor); }
+            for (auto& obj : scene.cameras) { obj->applyScaleFactor(scale_factor); }
+            for (auto& obj : scene.lights) { obj->applyScaleFactor(scale_factor); }
+        }
         client.send(m_message);
 
         // send deleted
@@ -556,20 +573,23 @@ void msbContext::send()
         m_deleted.clear();
 
         // send meshes
-        parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& v) {
-            v->setupFlags();
-            v->flags.apply_trs = true;
-            v->flags.has_refine_settings = true;
-            if (!v->flags.has_normals) {
-                v->refine_settings.flags.gen_normals = true;
-            }
-            if (!v->flags.has_tangents) {
-                v->refine_settings.flags.gen_tangents = true;
-            }
+        parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& pmesh) {
+            auto& mesh = *pmesh;
+            mesh.setupFlags();
+            mesh.flags.apply_trs = true;
+            mesh.flags.has_refine_settings = true;
+            if (!mesh.flags.has_normals)
+                mesh.refine_settings.flags.gen_normals = true;
+            if (!mesh.flags.has_tangents)
+                mesh.refine_settings.flags.gen_tangents = true;
+
+            if (scale_factor != 1.0f)
+                mesh.applyScaleFactor(scale_factor);
+            mesh.convertHandedness(false, true);
 
             ms::SetMessage set;
-            set.scene.settings = m_settings.scene_settings;
-            set.scene.meshes = { v };
+            set.scene.settings = scene_settings;
+            set.scene.meshes = { pmesh };
             client.send(set);
         });
         m_mesh_send.clear();
