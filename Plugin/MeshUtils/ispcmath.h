@@ -446,7 +446,6 @@ static inline float4 orthogonalize_tangent(float3 tangent, float3 binormal, floa
     float magB = length(binormal);
     binormal = binormal / magB;
 
-#if 0
     const float epsilon = 1e-6f;
     if (magT <= epsilon || magB <= epsilon)
     {
@@ -455,11 +454,11 @@ static inline float4 orthogonalize_tangent(float3 tangent, float3 binormal, floa
         float dpZN = abs(dot(float3_(0.0f, 0.0f, 1.0f), normal));
 
         bool a1x = dpXN <= dpYN && dpXN <= dpZN;
-        bool a1y = dpYN <  dpXN && dpYN <  dpZN;
-        bool a1z = dpZN <  dpXN && dpZN <  dpYN;
+        bool a1y = !a1x && (dpYN <= dpXN && dpYN <= dpZN);
+        bool a1z = !a1x && !a1y;
         bool a2x = (a1y && dpXN <= dpZN) || (a1z && dpXN <= dpYN);
-        bool a2y = (a1x && dpYN <= dpZN) || (a1z && dpXN >  dpYN);
-        bool a2z = (a1x && dpYN >  dpZN) || (a1y && dpXN >  dpZN);
+        bool a2y = (a1x && dpYN <= dpZN) || !a1z;
+        bool a2z = !a1x || !a1y;
 
         float3 axis1 = {
             select(a1x, 1.0f, 0.0f),
@@ -471,10 +470,9 @@ static inline float4 orthogonalize_tangent(float3 tangent, float3 binormal, floa
             select(a2y, 1.0f, 0.0f),
             select(a2z, 1.0f, 0.0f),
         };
-        tangent = normalize(axis1 - normal * dot(normal, axis1));
-        binormal = normalize(axis2 - normal * dot(normal, axis2) - normalize(tangent) * dot(tangent, axis2));
+        tangent = normalize_estimate(axis1 - normal * dot(normal, axis1));
+        binormal = normalize_estimate(axis2 - normal * dot(normal, axis2) - normalize_estimate(tangent) * dot(tangent, axis2));
     }
-#endif
     return float4_(tangent.x, tangent.y, tangent.z,
         select(dot(cross(normal, tangent), binormal) > 0.0f, 1.0f, -1.0f) );
 }
@@ -493,7 +491,6 @@ static inline uniform float4 orthogonalize_tangent(
     uniform float magB = length(binormal);
     binormal = binormal / magB;
 
-#if 0
     uniform const float epsilon = 1e-6f;
     if (magT <= epsilon || magB <= epsilon)
     {
@@ -502,11 +499,11 @@ static inline uniform float4 orthogonalize_tangent(
         uniform float dpZN = abs(dot(float3_(0.0f, 0.0f, 1.0f), normal));
 
         uniform bool a1x = dpXN <= dpYN && dpXN <= dpZN;
-        uniform bool a1y = dpYN <  dpXN && dpYN <  dpZN;
-        uniform bool a1z = dpZN <  dpXN && dpZN <  dpYN;
+        uniform bool a1y = !a1x && (dpYN <= dpXN && dpYN <= dpZN);
+        uniform bool a1z = !a1x && !a1y;
         uniform bool a2x = (a1y && dpXN <= dpZN) || (a1z && dpXN <= dpYN);
-        uniform bool a2y = (a1x && dpYN <= dpZN) || (a1z && dpXN >  dpYN);
-        uniform bool a2z = (a1x && dpYN >  dpZN) || (a1y && dpXN >  dpZN);
+        uniform bool a2y = (a1x && dpYN <= dpZN) || !a1z;
+        uniform bool a2z = !a1x || !a1y;
 
         uniform float3 axis1 = {
             select(a1x, 1.0f, 0.0f),
@@ -518,10 +515,9 @@ static inline uniform float4 orthogonalize_tangent(
             select(a2y, 1.0f, 0.0f),
             select(a2z, 1.0f, 0.0f),
         };
-        tangent = normalize(axis1 - normal * dot(normal, axis1));
-        binormal = normalize(axis2 - normal * dot(normal, axis2) - normalize(tangent) * dot(tangent, axis2));
+        tangent = normalize_estimate(axis1 - normal * dot(normal, axis1));
+        binormal = normalize_estimate(axis2 - normal * dot(normal, axis2) - normalize_estimate(tangent) * dot(tangent, axis2));
     }
-#endif
     return float4_(tangent.x, tangent.y, tangent.z,
         select(dot(cross(normal, tangent), binormal) > 0.0f, 1.0f, -1.0f));
 }

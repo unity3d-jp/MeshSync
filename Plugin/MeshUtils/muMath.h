@@ -1290,7 +1290,6 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
     auto magB = length(binormal);
     binormal = binormal / magB;
 
-#if 0
     const auto epsilon = 1e-6f;
     if (magT <= epsilon || magB <= epsilon)
     {
@@ -1327,7 +1326,6 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
         tangent = normalize(axis1 - normal * dot(normal, axis1));
         binormal = normalize(axis2 - normal * dot(normal, axis2) - normalize(tangent) * dot(tangent, axis2));
     }
-#endif
 
     return { tangent.x, tangent.y, tangent.z,
         dot(cross(normal, tangent), binormal) > T(0.0) ? T(1.0) : -T(1.0) };
