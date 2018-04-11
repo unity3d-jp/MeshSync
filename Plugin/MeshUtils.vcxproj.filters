@@ -100,8 +100,5 @@
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
       <Filter>MeshUtils</Filter>
     </CustomBuild>
-    <CustomBuild Include="MeshUtils\MeshUtilsCore2.ispc">
-      <Filter>MeshUtils</Filter>
-    </CustomBuild>
   </ItemGroup>
 </Project>
