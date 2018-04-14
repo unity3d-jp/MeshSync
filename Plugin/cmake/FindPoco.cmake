@@ -147,7 +147,6 @@ foreach( component ${components} )
 	endif()
 	if(Poco_${component}_LIBRARY)
 		list(APPEND Poco_LIBRARIES "optimized" ${Poco_${component}_LIBRARY} )
-		mark_as_advanced(Poco_${component}_LIBRARY)
 	endif()
 
 	# debug library
@@ -166,7 +165,6 @@ foreach( component ${components} )
 	endif(NOT Poco_${component}_LIBRARY_DEBUG)
 	if(Poco_${component}_LIBRARY_DEBUG)
 		list(APPEND Poco_LIBRARIES "debug" ${Poco_${component}_LIBRARY_DEBUG})
-		mark_as_advanced(Poco_${component}_LIBRARY_DEBUG)
 	endif()
 
 	# mark component as found or handle not finding it
@@ -175,6 +173,11 @@ foreach( component ${components} )
 	elseif(NOT Poco_FIND_QUIETLY)
 		message(FATAL_ERROR "Could not find Poco component ${component}!")
 	endif()
+
+	mark_as_advanced(Poco_${component}_INCLUDE_DIR)
+	mark_as_advanced(Poco_INCLUDE_DIRS)
+	mark_as_advanced(Poco_${component}_LIBRARY)
+	mark_as_advanced(Poco_${component}_LIBRARY_DEBUG)
 endforeach()
 
 if(DEFINED Poco_LIBRARIES)

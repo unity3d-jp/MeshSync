@@ -39,8 +39,8 @@ MeshSync/*.csproj
 MeshSync/*.sln
 
 Plugin/UnityMeshSync for*/
-MeshSyncClientBlender2.8/
-MeshSyncClientBlender2.79/
-MeshSyncClientMaya2018/
-MeshSyncClientMaya2017/
-MeshSyncClientMaya2016/
+Plugin/MeshSyncClientBlender2.8/
+Plugin/MeshSyncClientBlender2.79/
+Plugin/MeshSyncClientMaya2018/
+Plugin/MeshSyncClientMaya2017/
+Plugin/MeshSyncClientMaya2016/
