@@ -50,12 +50,12 @@ inline void parallel_for_blocked(int begin, int end, int granularity, const Body
 template<class Body>
 inline void parallel_for(int begin, int end, int /*granularity*/, const Body& body)
 {
-    body(begin, end);
+    for (; begin != end; ++begin) { body(begin); }
 }
 template<class Body>
 inline void parallel_for_blocked(int begin, int end, int /*granularity*/, const Body& body)
 {
-    body(begin, end);
+    for (; begin != end; ++begin) { body(begin); }
 }
 #endif
 
