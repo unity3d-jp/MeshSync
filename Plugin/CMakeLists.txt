@@ -8,9 +8,7 @@ include(AddPlugin)
 include(ISPC)
 
 OPTION(BUILD_SERVER "Build MeshSyncServer" ON)
-if(APPLE)
-    OPTION(BUILD_METASEQUOIA4_CLIENT "Build MeshSyncClient for Metasequoia 4" OFF)
-endif()
+OPTION(BUILD_METASEQUOIA4_CLIENT "Build MeshSyncClient for Metasequoia 4" OFF)
 OPTION(BUILD_BLENDER279_CLIENT "Build MeshSyncClient for Blender 2.79" OFF)
 OPTION(BUILD_BLENDER28_CLIENT "Build MeshSyncClient for Blender 2.8" OFF)
 OPTION(BUILD_MAYA2018_CLIENT "Build MeshSyncClient for Maya 2018" OFF)
@@ -18,19 +16,9 @@ OPTION(BUILD_MAYA2017_CLIENT "Build MeshSyncClient for Maya 2017" OFF)
 OPTION(BUILD_MAYA2016_CLIENT "Build MeshSyncClient for Maya 2016" OFF)
 OPTION(BUILD_TESTS "Tests" OFF)
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11 -Wno-deprecated")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-
-add_subdirectory(MeshUtils)
-add_subdirectory(MeshSync)
-if(BUILD_SERVER)
-    add_subdirectory(MeshSyncServer)
-endif()
-
-if(BUILD_METASEQUOIA4_CLIENT)
-    add_subdirectory(MeshSyncClientMQ)
-endif()
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11 -Wno-deprecated")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 
 
 function(add_subdirectory_link from to)
@@ -39,6 +27,17 @@ function(add_subdirectory_link from to)
     endif()
     add_subdirectory("${to}")
 endfunction()
+
+add_subdirectory(MeshUtils)
+add_subdirectory(MeshSync)
+
+if(BUILD_SERVER)
+    add_subdirectory(MeshSyncServer)
+endif()
+
+if(BUILD_METASEQUOIA4_CLIENT)
+    add_subdirectory(MeshSyncClientMQ)
+endif()
 
 if(BUILD_BLENDER279_CLIENT)
     add_subdirectory_link(MeshSyncClientBlender MeshSyncClientBlender2.79)

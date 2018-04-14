@@ -13,6 +13,19 @@ std::string S(const std::wstring& w)
     return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(w);
 }
 
+static inline float3 to_float3(const MQColor& v)
+{
+    return (const float3&)v;
+}
+static inline float3 to_float3(const MQPoint& v)
+{
+    return (const float3&)v;
+}
+static inline float4x4 to_float4x4(const MQMatrix& v)
+{
+    return (const float4x4&)v;
+}
+
 static inline std::string BuildPath(MQDocument doc, MQObject obj)
 {
     std::string ret;
@@ -201,7 +214,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 src->GetName(name, sizeof(name));
                 dst->name = ms::ToUTF8(name);
             }
-            (float3&)dst->color = (const float3&)src->GetColor();
+            (float3&)dst->color = to_float3(src->GetColor());
             m_materials.emplace_back(dst);
         }
     }
@@ -633,10 +646,10 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         }
         else {
             dst.flags.apply_trs = 1;
-            dst.position = (const float3&)obj->GetTranslation();
+            dst.position = to_float3(obj->GetTranslation());
             dst.rotation = ToQuaternion(obj->GetRotation());
-            dst.scale = (const float3&)obj->GetScaling();
-            dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
+            dst.scale = to_float3(obj->GetScaling());
+            dst.refine_settings.world2local = to_float4x4(obj->GetLocalInverseMatrix());
         }
     }
 
@@ -723,7 +736,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
-    dst.position = (const float3&)scene->GetCameraPosition();
+    dst.position = to_float3(scene->GetCameraPosition());
     auto eular = ToEular(scene->GetCameraAngle(), true);
     dst.rotation = rotateZXY(eular);
 

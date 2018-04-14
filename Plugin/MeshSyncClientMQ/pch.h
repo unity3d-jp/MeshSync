@@ -25,6 +25,7 @@
 #include <future>
 #include <mutex>
 #include <memory>
+#include <locale>
 #include <cassert>
 
 #include "MQPlugin.h"
