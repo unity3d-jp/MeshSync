@@ -17,7 +17,7 @@ foreach(MAYA_LIB OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI OpenMaya Foun
 endforeach()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args("Maya2016.5"
+find_package_handle_standard_args("Maya2016"
     DEFAULT_MSG
     MAYA2016_INCLUDE_DIR
     MAYA2016_LIBRARIES

@@ -506,7 +506,7 @@ void msbContext::send()
     }
 
     // get vertex data in parallel
-    parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](auto& task) {
+    parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {
         task();
     });
     m_extract_tasks.clear();

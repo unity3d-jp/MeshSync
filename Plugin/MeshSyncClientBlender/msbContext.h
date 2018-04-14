@@ -71,7 +71,8 @@ private:
     ms::SetMessage m_message;
     std::future<void> m_send_future;
 
-    std::vector<std::function<void()>> m_extract_tasks;
+    using task_t = std::function<void()>;
+    std::vector<task_t> m_extract_tasks;
     std::mutex m_extract_mutex;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;
