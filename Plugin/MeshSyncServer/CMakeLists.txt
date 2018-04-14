@@ -4,10 +4,7 @@ add_plugin(MeshSyncServer SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
 
 add_dependencies(MeshSyncServer MeshUtils)
 target_include_directories(MeshSyncServer PUBLIC "${CMAKE_SOURCE_DIR}")
-target_link_libraries(MeshSyncServer
-    MeshSync MeshUtils
-    ${Poco_Net_LIBRARY} ${Poco_Util_LIBRARY} ${Poco_Foundation_LIBRARY}
-)
+target_link_libraries(MeshSyncServer MeshSync MeshUtils ${Poco_LIBRARIES})
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     target_link_libraries(MeshSyncServer pthread)
 endif()
