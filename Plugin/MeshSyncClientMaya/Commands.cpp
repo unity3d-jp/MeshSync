@@ -1,3 +1,4 @@
+#define _MApiVersion
 #include "pch.h"
 #include "MeshSyncClientMaya.h"
 #include "Commands.h"

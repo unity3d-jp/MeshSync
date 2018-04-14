@@ -39,5 +39,8 @@ MeshSync/*.csproj
 MeshSync/*.sln
 
 Plugin/UnityMeshSync for*/
-NormalPainter/
-NormalPainter.meta
+MeshSyncClientBlender2.80/
+MeshSyncClientBlender2.79/
+MeshSyncClientMaya2018/
+MeshSyncClientMaya2017/
+MeshSyncClientMaya2016.5/

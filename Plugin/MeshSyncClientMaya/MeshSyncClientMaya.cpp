@@ -128,7 +128,9 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
                 if (path_to_shape.extendToShape() == MS::kSuccess && path_to_shape.node().hasFn(MFn::kMesh)) {
                     mscTrace("tracking mesh %s\n", path.fullPathName().asChar());
                     m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnChangeTransform, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(path_to_shape.node(), OnChangeMesh, this, &stat));
+
+                    MObject shape_obj = path_to_shape.node();
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape_obj, OnChangeMesh, this, &stat));
                 }
             }
         }
@@ -529,7 +531,8 @@ void MeshSyncClientMaya::extractAllMaterialData()
 
         auto tmp = new ms::Material();
         tmp->name = fn.name().asChar();
-        tmp->color = (const mu::float4&)fn.color();
+        auto color = fn.color();
+        tmp->color = (const mu::float4&)color;
         tmp->id = getMaterialID(fn.uuid());
         m_client_materials.emplace_back(tmp);
 
@@ -618,7 +621,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
         }\
         break;
 
-                    MFnTransform mtrans = src;
+                    MFnTransform mtrans(src);
                     switch (mtrans.rotationOrder()) {
                         Case(XYZ);
                         Case(YZX);
@@ -649,7 +652,7 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
         return false;
     }
 
-    MFnCamera mcam = shape;
+    MFnCamera mcam(shape);
     dst.is_ortho = mcam.isOrtho();
     dst.near_plane = (float)mcam.nearClippingPlane();
     dst.far_plane = (float)mcam.farClippingPlane();
@@ -759,23 +762,23 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 
     auto shape = GetShape(src);
     if (shape.hasFn(MFn::kSpotLight)) {
-        MFnSpotLight mlight = shape;
+        MFnSpotLight mlight(shape);
         dst.type = ms::Light::Type::Spot;
         dst.spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
     }
     else if (shape.hasFn(MFn::kDirectionalLight)) {
-        MFnDirectionalLight mlight = shape;
+        MFnDirectionalLight mlight(shape);
         dst.type = ms::Light::Type::Directional;
     }
     else if (shape.hasFn(MFn::kPointLight)) {
-        MFnPointLight mlight = shape;
+        MFnPointLight mlight(shape);
         dst.type = ms::Light::Type::Point;
     }
     else {
         return false;
     }
 
-    MFnLight mlight = shape;
+    MFnLight mlight(shape);
     auto color = mlight.color();
     dst.color = { color.r, color.g, color.b, color.a };
     dst.intensity = mlight.intensity();
@@ -837,7 +840,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return false; }
 
-    MFnMesh mmesh = shape;
+    MFnMesh mmesh(shape);
 
     dst.flags.has_points = 1;
     dst.flags.has_normals = 1;
@@ -849,9 +852,9 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
 
-    MFnBlendShapeDeformer fn_blendshape = FindBlendShape(mmesh.object());
-    MFnSkinCluster fn_skin = FindSkinCluster(mmesh.object());
-    MFnMesh fn_src_mesh = mmesh.object();
+    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
+    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
+    MFnMesh fn_src_mesh(mmesh.object());
     int skin_index = 0;
 
     if (m_export_skinning) {
@@ -962,13 +965,13 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
         if (plug_inputGeomTarget.isConnected()) {
             auto data = plug_inputGeomTarget.asMObject();
-            MFnMesh tmesh = data;
+            MFnMesh tmesh(data);
             auto t = data.apiTypeStr();
         }
         else {
             MObject data;
             plug_inputRelativePointsTarget.getValue(data);
-            MFnPointArrayData pad = data;
+            MFnPointArrayData pad(data);
             MPointArray pts;
             pad.copyTo(pts);
             auto len = pts.length();
@@ -978,7 +981,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_blendshape.getBaseObjects(bases);
         auto num_bases = bases.length();
         for (uint32_t bi = 0; bi < num_bases; ++bi) {
-            MFnDependencyNode fn = bases[bi];
+            MFnDependencyNode fn(bases[bi]);
             std::string name = fn.name().asChar();
             printf("%s\n", name.c_str());
         }
@@ -1057,12 +1060,13 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             // vertex tweak
             {
                 MObject tweak;
-                MItDependencyGraph it(fn_skin.object(), MFn::kTweak, MItDependencyGraph::kUpstream);
+                MObject skin_obj = fn_skin.object();
+                MItDependencyGraph it(skin_obj, MFn::kTweak, MItDependencyGraph::kUpstream);
                 if (!it.isDone()) {
                     tweak = it.currentItem();
                 }
                 if (!tweak.isNull()) {
-                    MFnDependencyNode fn_tweak = tweak;
+                    MFnDependencyNode fn_tweak(tweak);
                     auto plug_vlist = fn_tweak.findPlug("vlist");
                     if (plug_vlist.isArray() && (int)plug_vlist.numElements() > skin_index) {
                         auto plug_vertex = plug_vlist.elementByPhysicalIndex(skin_index).child(0);
@@ -1085,12 +1089,13 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             // uv tweak
             {
                 MObject tweak;
-                MItDependencyGraph it(fn_skin.object(), MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
+                MObject skin_obj = fn_skin.object();
+                MItDependencyGraph it(skin_obj, MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
                 if (!it.isDone()) {
                     tweak = it.currentItem();
                 }
                 if (!tweak.isNull()) {
-                    MFnDependencyNode fn_tweak = tweak;
+                    MFnDependencyNode fn_tweak(tweak);
                     auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
                     auto plug_uv = fn_tweak.findPlug("uvTweak");
                     if (plug_uv.isArray() && (int)plug_uv.numElements() > skin_index) {

@@ -1,19 +1,19 @@
-autodesk/# * PYTHON_INCLUDE_DIR
-# * PYTHON_LIBRARY
+# * MAYA_INCLUDE_DIR
+# * MAYA_LIBRARIES
 
 set(CMAKE_PREFIX_PATH
-    "/opt/autodesk/maya2018"
+    "/opt/autodesk/maya2017"
 )
 
-find_path(MAYA_INCLUDE_DIR NAMES maya/MGlobal.h)
-mark_as_advanced(MAYA_INCLUDE_DIR)
-
-find_library(MAYA_LIBRARIES NAMES OpenMaya OpenMayaAnim OpenMayaFx OpenMayaRender OpenMayaUI PATHS ${LIBRARY_PATHS} PATH_SUFFIXES lib64 lib)
-mark_as_advanced(MAYA_LIBRARIES)
+find_path(MAYA2017_INCLUDE_DIR NAMES maya/MGlobal.h)
+foreach(MAYA_LIB OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI OpenMaya Foundation tbb)
+    find_library(MAYA2017_${MAYA_LIB}_LIBRARY NAMES ${MAYA_LIB} PATHS ${LIBRARY_PATHS} PATH_SUFFIXES lib)
+    list(APPEND MAYA2017_LIBRARIES ${MAYA_${MAYA_LIB}_LIBRARY})
+endforeach()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args("Maya2018"
+find_package_handle_standard_args("Maya2017"
     DEFAULT_MSG
-    MAYA_INCLUDE_DIR
-    MAYA_LIBRARIES
+    MAYA2017_INCLUDE_DIR
+    MAYA2017_LIBRARIES
 )

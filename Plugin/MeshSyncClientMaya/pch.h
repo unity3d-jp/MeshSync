@@ -25,13 +25,15 @@
     #include <ppl.h>
 #endif
 #ifdef msMaya_UseTBB
-    #include <tbb.h>
+    #include <tbb/tbb.h>
     namespace concurrency = tbb;
 #endif
 
 // this must be before maya includes
 #include "MeshSync/MeshSync.h"
 
+// avoid multiple definition of `MApiVersion'
+//#define _MApiVersion
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MDagPath.h>
