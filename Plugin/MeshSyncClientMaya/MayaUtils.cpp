@@ -1,11 +1,12 @@
+#define _MApiVersion
 #include "pch.h"
 #include "MayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
 template<class Body>
-static void EachChild(MObject node, const Body& body)
+static inline void EachChild(MObject node, const Body& body)
 {
-    MFnDagNode fn = node;
+    MFnDagNode fn(node);
     auto num_children = fn.childCount();
     for (uint32_t i = 0; i < num_children; ++i) {
         body(fn.child(i));
@@ -14,13 +15,18 @@ static void EachChild(MObject node, const Body& body)
 
 bool IsVisible(MObject node)
 {
-    MFnDagNode dag = node;
+    MFnDagNode dag(node);
     auto vis = dag.findPlug("visibility");
     bool visible = false;
     vis.getValue(visible);
     return visible;
 }
 
+std::string GetName(MObject node)
+{
+    MFnDependencyNode fn_node(node);
+    return fn_node.name().asChar();
+}
 std::string GetPath(MDagPath path)
 {
     std::string ret = path.fullPathName().asChar();
@@ -96,7 +102,7 @@ MObject FindOrigMesh(MObject node)
     MObject ret;
     EachChild(node, [&](MObject child) {
         if (child.hasFn(MFn::kMesh)) {
-            MFnMesh fn = child;
+            MFnMesh fn(child);
             if (ret.isNull() || fn.isIntermediateObject()) {
                 ret = child;
             }
@@ -135,14 +141,14 @@ MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
 
 bool JointGetSegmentScaleCompensate(MObject joint)
 {
-    const MFnIkJoint fn_joint = joint;
+    const MFnIkJoint fn_joint(joint);
     auto plug = fn_joint.findPlug("segmentScaleCompensate");
     return plug.asBool();
 }
 
 bool JointGetInverseScale(MObject joint, mu::float3& dst)
 {
-    const MFnIkJoint fn_joint = joint;
+    const MFnIkJoint fn_joint(joint);
     auto plug = fn_joint.findPlug("inverseScale");
     if (plug.isNull()) { return false; }
 

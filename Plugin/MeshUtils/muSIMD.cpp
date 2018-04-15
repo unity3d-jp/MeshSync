@@ -8,7 +8,6 @@ namespace mu {
 
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
-#include "MeshUtilsCore2.h"
 
 #ifdef muEnableHalf
 #ifdef muSIMD_FloatToHalf

@@ -33,23 +33,13 @@
 #		  True if a component's library or debug library was found successfully.
 #	Poco_Xxx_LIBRARY 
 #		- Library for component Xxx.
-#	Poco_Xxx_LIBRARY_DEBUG 
-#		- debug library for component Xxx
 #   Poco_Xxx_INCLUDE_DIR
 #		- include directory for component Xxx
-#
-#  	- OSP BundleCreator variables: (i.e. bundle.exe on windows, bundle on unix-likes)
-#		(is only discovered if OSP is a requested component)
-#	Poco_OSP_Bundle_EXECUTABLE_FOUND 
-#		- true if the bundle-creator executable was found.
-#	Poco_OSP_Bundle_EXECUTABLE
-#		- the path to the bundle-creator executable.
 #
 # Author: Andreas Stahl andreas.stahl@tu-dresden.de
 
 set(Poco_HINTS
 	/usr/local
-	C:/AppliedInformatics
 	${Poco_DIR} 
 	$ENV{Poco_DIR}
 )
@@ -84,16 +74,6 @@ if(NOT Poco_ROOT_DIR)
 	endif()
 endif()
 
-# add dynamic library directory
-if(WIN32)
-	find_path(Poco_RUNTIME_LIBRARY_DIRS
-		NAMES PocoFoundation.dll
-		HINTS ${Poco_ROOT_DIR}
-		PATH_SUFFIXES 
-			bin
-			lib
-	)
-endif()
 
 # if installed directory structure, set full include dir
 if(Poco_INSTALLED)
@@ -135,7 +115,7 @@ foreach( component ${components} )
 	if(NOT Poco_${component}_LIBRARY)
 		find_library(
 			Poco_${component}_LIBRARY 
-			NAMES Poco${component} 
+			NAMES libPoco${component}.a 
 			HINTS ${Poco_ROOT_DIR}
 			PATH_SUFFIXES
 				lib
@@ -146,65 +126,21 @@ foreach( component ${components} )
 		endif()
 	endif()
 	if(Poco_${component}_LIBRARY)
-		list(APPEND Poco_LIBRARIES "optimized" ${Poco_${component}_LIBRARY} )
-		mark_as_advanced(Poco_${component}_LIBRARY)
-	endif()
-
-	# debug library
-	if(NOT Poco_${component}_LIBRARY_DEBUG)
-		find_library(
-			Poco_${component}_LIBRARY_DEBUG
-			Names Poco${component}d
-			HINTS ${Poco_ROOT_DIR}
-			PATH_SUFFIXES
-				lib
-				bin
-		)
-		if(Poco_${component}_LIBRARY_DEBUG)
-			message(STATUS "Found Poco ${component} (debug): ${Poco_${component}_LIBRARY_DEBUG}")
-		endif()
-	endif(NOT Poco_${component}_LIBRARY_DEBUG)
-	if(Poco_${component}_LIBRARY_DEBUG)
-		list(APPEND Poco_LIBRARIES "debug" ${Poco_${component}_LIBRARY_DEBUG})
-		mark_as_advanced(Poco_${component}_LIBRARY_DEBUG)
+		list(APPEND Poco_LIBRARIES ${Poco_${component}_LIBRARY})
 	endif()
 
 	# mark component as found or handle not finding it
-	if(Poco_${component}_LIBRARY_DEBUG OR Poco_${component}_LIBRARY)
+	if(Poco_${component}_LIBRARY)
 		set(Poco_${component}_FOUND TRUE)
 	elseif(NOT Poco_FIND_QUIETLY)
 		message(FATAL_ERROR "Could not find Poco component ${component}!")
 	endif()
+
+	mark_as_advanced(Poco_${component}_INCLUDE_DIR)
+	mark_as_advanced(Poco_INCLUDE_DIRS)
+	mark_as_advanced(Poco_${component}_LIBRARY)
 endforeach()
 
 if(DEFINED Poco_LIBRARIES)
 	set(Poco_FOUND true)
 endif()
-
-if(${Poco_OSP_FOUND})
-	# find the osp bundle program
-	find_program(
-		Poco_OSP_Bundle_EXECUTABLE 
-		NAMES bundle
-		HINTS 
-			${Poco_RUNTIME_LIBRARY_DIRS}
-			${Poco_ROOT_DIR}
-		PATH_SUFFIXES
-			bin
-			OSP/BundleCreator/bin/Darwin/x86_64
-			OSP/BundleCreator/bin/Darwin/i386
-		DOC "The executable that bundles OSP packages according to a .bndlspec specification."
-	)
-	if(Poco_OSP_Bundle_EXECUTABLE)
-		set(Poco_OSP_Bundle_EXECUTABLE_FOUND true)
-	endif()
-	# include bundle script file
-	find_file(Poco_OSP_Bundles_file NAMES PocoBundles.cmake HINTS ${CMAKE_MODULE_PATH})
-	if(${Poco_OSP_Bundles_file})
-		include(${Poco_OSP_Bundles_file})
-	endif()
-endif()
-
-message(STATUS "Found Poco: ${Poco_LIBRARIES}")
-
-

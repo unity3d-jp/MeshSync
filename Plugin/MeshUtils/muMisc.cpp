@@ -45,9 +45,9 @@ void Print(const wchar_t *fmt, ...)
     va_end(args);
 }
 
-#ifdef _WIN32
 std::string ToUTF8(const char *src)
 {
+#ifdef _WIN32
     // to UTF-16
     const int wsize = ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, nullptr, 0);
     std::wstring ws;
@@ -60,6 +60,9 @@ std::string ToUTF8(const char *src)
     u8s.resize(u8size);
     ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
     return u8s;
+#else
+    return src;
+#endif
 }
 std::string ToUTF8(const std::string& src)
 {
@@ -68,6 +71,7 @@ std::string ToUTF8(const std::string& src)
 
 std::string ToANSI(const char *src)
 {
+#ifdef _WIN32
     // to UTF-16
     const int wsize = ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, nullptr, 0);
     std::wstring ws;
@@ -80,12 +84,14 @@ std::string ToANSI(const char *src)
     u8s.resize(u8size);
     ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
     return u8s;
+#else
+    return src;
+#endif
 }
 std::string ToANSI(const std::string& src)
 {
     return ToANSI(src.c_str());
 }
-#endif
 
 
 

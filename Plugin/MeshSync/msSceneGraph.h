@@ -41,16 +41,6 @@ public:
 };
 
 
-struct TRS
-{
-    float3   position = float3::zero();
-    quatf    rotation = quatf::identity();
-    float3   rotation_eularZXY = float3::zero();
-    float3   scale = float3::one();
-
-    float4x4 toMatrix() const;
-};
-
 // time-value pair
 template<class T>
 struct TVP
@@ -59,7 +49,7 @@ struct TVP
     T value;
 };
 
-class Animation
+class Animation : public std::enable_shared_from_this<Animation>
 {
 public:
     virtual ~Animation();
@@ -72,8 +62,10 @@ public:
 };
 using AnimationPtr = std::shared_ptr<Animation>;
 
-struct Material
+
+class Material : public std::enable_shared_from_this<Material>
 {
+public:
     int id = 0;
     std::string name;
     float4 color = float4::one();
@@ -89,8 +81,12 @@ class Transform : public Entity
 {
 using super = Entity;
 public:
-    TRS transform;
+    float3   position = float3::zero();
+    quatf    rotation = quatf::identity();
+    float3   scale = float3::one();
+
     bool visible = true;
+    std::string reference;
     AnimationPtr animation;
 
 
@@ -100,8 +96,12 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 
+    float4x4 toMatrix() const;
+    void assignMatrix(const float4x4& v);
+    void applyMatrix(const float4x4& v);
+
     virtual void createAnimation();
-    virtual void swapHandedness();
+    virtual void convertHandedness(bool x, bool yz);
     virtual void applyScaleFactor(float scale);
 
 public:
@@ -247,9 +247,10 @@ struct MeshDataFlags
     uint32_t has_points : 1;
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
-    uint32_t has_uv : 1;
+    uint32_t has_uv0 : 1;
+    uint32_t has_uv1 : 1;
     uint32_t has_colors : 1;
-    uint32_t has_materialIDs : 1;
+    uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
     uint32_t has_blendshapes : 1;
     uint32_t apply_trs : 1;
@@ -262,10 +263,11 @@ struct MeshRefineFlags
     uint32_t triangulate : 1;
     uint32_t optimize_topology : 1;
     uint32_t swap_handedness : 1;
+    uint32_t swap_yz : 1;
     uint32_t swap_faces : 1;
     uint32_t gen_normals : 1;
     uint32_t gen_normals_with_smooth_angle : 1;
-    uint32_t flip_normals : 1;
+    uint32_t flip_normals : 1; // 10
     uint32_t gen_tangents : 1;
     uint32_t apply_local2world : 1;
     uint32_t apply_world2local : 1;
@@ -276,11 +278,9 @@ struct MeshRefineFlags
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
     uint32_t mirror_z : 1;
-    uint32_t mirror_x_weld : 1;
+    uint32_t mirror_x_weld : 1; // 20
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
-
-    uint32_t gen_weights4 : 1;
 };
 
 struct MeshRefineSettings
@@ -297,37 +297,44 @@ struct MeshRefineSettings
 struct SubmeshData
 {
     IArray<int> indices;
-    int materialID = 0;
+    int material_id = 0;
 };
 
 struct SplitData
 {
-    IArray<float3> points;
-    IArray<float3> normals;
-    IArray<float4> tangents;
-    IArray<float2> uv;
-    IArray<float4> colors;
-    IArray<int> indices;
-    IArray<Weights4> weights4;
+    int index_count = 0;
+    int index_offset = 0;
+    int vertex_count = 0;
+    int vertex_offset = 0;
     IArray<SubmeshData> submeshes;
 };
 
-struct BlendShapeData : public std::enable_shared_from_this<BlendShapeData>
+struct BlendShapeData
 {
+    struct Frame
+    {
+        float weight = 0.0f;
+        RawVector<float3> points;
+        RawVector<float3> normals;
+        RawVector<float3> tangents;
+
+        uint32_t getSerializeSize() const;
+        void serialize(std::ostream& os) const;
+        void deserialize(std::istream& is);
+        void clear();
+    };
+
     std::string name;
     float weight = 0.0f;
-    RawVector<float3> points;
-    RawVector<float3> normals;
-    RawVector<float3> tangents;
+    std::vector<Frame> frames;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
 
-    void generateTangents(); // todo
-    void addVertex(const float3& v);
-    void addNormal(const float3& v);
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
 };
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 
@@ -342,8 +349,8 @@ struct BoneData : public std::enable_shared_from_this<BoneData>
     void deserialize(std::istream& is);
     void clear();
 
-    // for python
-    void addWeight(float v);
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
 };
 using BoneDataPtr = std::shared_ptr<BoneData>;
 
@@ -357,20 +364,24 @@ public:
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float4> tangents;
-    RawVector<float2> uv;
+    RawVector<float2> uv0, uv1;
     RawVector<float4> colors;
     RawVector<int>    counts;
     RawVector<int>    indices;
-    RawVector<int>    materialIDs;
+    RawVector<int>    material_ids;
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
-    std::vector<BlendShapeDataPtr> blendshape;
+    std::vector<BlendShapeDataPtr> blendshapes;
 
     // non-serialized
-    RawVector<SubmeshData> submeshes;
-    RawVector<SplitData> splits;
     RawVector<Weights4> weights4;
+    RawVector<float3> tmp_normals;
+    RawVector<float2> tmp_uv0, tmp_uv1;
+    RawVector<float4> tmp_colors;
+    RawVector<Weights4> tmp_weights4;
+    std::vector<SubmeshData> submeshes;
+    std::vector<SplitData> splits;
 
 public:
     Mesh();
@@ -380,14 +391,13 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 
-    void swapHandedness() override;
+    void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
 
     void refine(const MeshRefineSettings& mrs);
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 
-    void resizeBones(int n);
     void generateWeights4();
     void setupFlags();
 
@@ -412,6 +422,8 @@ enum class Handedness
 {
     Left,
     Right,
+    LeftZUp,
+    RightZUp,
 };
 
 struct SceneSettings
@@ -425,7 +437,7 @@ struct SceneSettings
     void deserialize(std::istream& is);
 };
 
-struct Scene
+struct Scene : public std::enable_shared_from_this<Scene>
 {
 public:
     SceneSettings settings;
@@ -483,11 +495,13 @@ struct GetFlags
     uint32_t get_points : 1;
     uint32_t get_normals : 1;
     uint32_t get_tangents : 1;
-    uint32_t get_uv : 1;
+    uint32_t get_uv0 : 1;
+    uint32_t get_uv1 : 1;
     uint32_t get_colors : 1;
     uint32_t get_indices : 1;
-    uint32_t get_materialIDs : 1;
+    uint32_t get_material_ids : 1;
     uint32_t get_bones : 1;
+    uint32_t get_blendshapes : 1;
     uint32_t apply_culling : 1;
 };
 

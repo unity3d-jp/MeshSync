@@ -32,6 +32,7 @@ struct read_impl
     template<> struct write_impl<T> { void operator()(std::ostream& os, const T& v) { return v.serialize(os); } };\
     template<> struct read_impl<T>  { void operator()(std::istream& is, T& v) { return v.deserialize(is); } };\
 
+DefSpecialize(BlendShapeData::Frame)
 DefSpecialize(Material)
 DefSpecialize(DeleteMessage::Identifier)
 
@@ -232,9 +233,11 @@ void Message::serialize(std::ostream& os) const
 }
 bool Message::deserialize(std::istream& is)
 {
-    int pv = 0;
-    read(is, pv);
-    return pv == msProtocolVersion;
+    int protocol_version = 0;
+    read(is, protocol_version);
+    if (protocol_version != msProtocolVersion)
+        return false;
+    return true;
 }
 
 GetMessage::GetMessage()
@@ -463,11 +466,6 @@ void Material::deserialize(std::istream& is)
 
 
 
-float4x4 TRS::toMatrix() const
-{
-    return ms::transform(position, rotation, scale);
-}
-
 struct TransformDataFlags
 {
     uint32_t has_animation : 1;
@@ -482,8 +480,11 @@ uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
     ret += sizeof(TransformDataFlags);
-    ret += ssize(transform);
+    ret += ssize(position);
+    ret += ssize(rotation);
+    ret += ssize(scale);
     ret += ssize(visible);
+    ret += ssize(reference);
     if (animation) { ret += ssize(animation); }
     return ret;
 }
@@ -494,8 +495,11 @@ void Transform::serialize(std::ostream& os) const
     TransformDataFlags flags = {};
     flags.has_animation = animation ? 1 : 0;
     write(os, flags);
-    write(os, transform);
+    write(os, position);
+    write(os, rotation);
+    write(os, scale);
     write(os, visible);
+    write(os, reference);
     if (flags.has_animation) { write(os, animation); }
 }
 void Transform::deserialize(std::istream& is)
@@ -504,8 +508,11 @@ void Transform::deserialize(std::istream& is)
 
     TransformDataFlags flags;
     read(is, flags);
-    read(is, transform);
+    read(is, position);
+    read(is, rotation);
+    read(is, scale);
     read(is, visible);
+    read(is, reference);
     if(flags.has_animation) {
         createAnimation();
         animation->deserialize(is);
@@ -515,9 +522,31 @@ void Transform::deserialize(std::istream& is)
 void Transform::clear()
 {
     super::clear();
-    transform = TRS();
+    position = float3::zero();
+    rotation = quatf::identity();
+    scale = float3::one();
     visible = true;
+    reference.clear();
     animation.reset();
+}
+
+float4x4 Transform::toMatrix() const
+{
+    return ms::transform(position, rotation, scale);
+}
+
+
+void Transform::assignMatrix(const float4x4& v)
+{
+    position = extract_position(v);
+    rotation = extract_rotation(v);
+    scale = extract_scale(v);
+}
+
+void Transform::applyMatrix(const float4x4& v)
+{
+    if (!near_equal(v, float4x4::identity()))
+        assignMatrix(v * toMatrix());
 }
 
 void Transform::createAnimation()
@@ -527,25 +556,40 @@ void Transform::createAnimation()
     }
 }
 
-void Transform::swapHandedness()
+void Transform::convertHandedness(bool x, bool yz)
 {
-    transform.position.x *= -1.0f;
-    transform.rotation = swap_handedness(transform.rotation);
+    if (!x && !yz) return;
 
-    if (animation) {
-        auto& anim = static_cast<TransformAnimation&>(*animation);
-        for (auto& tvp : anim.translation) {
-            tvp.value.x *= -1.0f;
+    if (x) {
+        position = swap_handedness(position);
+        rotation = swap_handedness(rotation);
+        if (animation) {
+            auto& anim = static_cast<TransformAnimation&>(*animation);
+            for (auto& tvp : anim.translation)
+                tvp.value = swap_handedness(tvp.value);
+            for (auto& tvp : anim.rotation)
+                tvp.value = swap_handedness(tvp.value);
         }
-        for (auto& tvp : anim.rotation) {
-            tvp.value = swap_handedness(tvp.value);
+    }
+    if (yz) {
+        position = swap_yz(position);
+        rotation = swap_yz(rotation);
+        scale = swap_yz(scale);
+        if (animation) {
+            auto& anim = static_cast<TransformAnimation&>(*animation);
+            for (auto& tvp : anim.translation)
+                tvp.value = swap_yz(tvp.value);
+            for (auto& tvp : anim.rotation)
+                tvp.value = swap_yz(tvp.value);
+            for (auto& tvp : anim.scale)
+                tvp.value = swap_yz(tvp.value);
         }
     }
 }
 
-void Transform::applyScaleFactor(float scale)
+void Transform::applyScaleFactor(float v)
 {
-    transform.position *= scale;
+    position *= v;
 }
 
 void Transform::addTranslationKey(float t, const float3& v)
@@ -671,11 +715,11 @@ void Camera::createAnimation()
     }
 }
 
-void Camera::applyScaleFactor(float scale)
+void Camera::applyScaleFactor(float v)
 {
-    super::applyScaleFactor(scale);
-    near_plane *= scale;
-    far_plane *= scale;
+    super::applyScaleFactor(v);
+    near_plane *= v;
+    far_plane *= v;
 }
 
 void Camera::addFovKey(float t, float v)
@@ -812,10 +856,10 @@ void Light::createAnimation()
     }
 }
 
-void Light::applyScaleFactor(float scale)
+void Light::applyScaleFactor(float v)
 {
-    super::applyScaleFactor(scale);
-    range *= scale;
+    super::applyScaleFactor(v);
+    range *= v;
 }
 
 void Light::addColorKey(float t, const float4& v)
@@ -883,45 +927,87 @@ bool LightAnimation::empty() const
 }
 
 
-uint32_t BlendShapeData::getSerializeSize() const
+uint32_t BlendShapeData::Frame::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(name);
     ret += ssize(weight);
     ret += ssize(points);
     ret += ssize(normals);
     ret += ssize(tangents);
     return ret;
 }
-void BlendShapeData::serialize(std::ostream& os) const
+void BlendShapeData::Frame::serialize(std::ostream& os) const
 {
-    write(os, name);
     write(os, weight);
     write(os, points);
     write(os, normals);
     write(os, tangents);
 }
-void BlendShapeData::deserialize(std::istream& is)
+void BlendShapeData::Frame::deserialize(std::istream& is)
 {
-    read(is, name);
     read(is, weight);
     read(is, points);
     read(is, normals);
     read(is, tangents);
 }
-
-void BlendShapeData::clear()
+void BlendShapeData::Frame::clear()
 {
-    name.clear();
     weight = 0.0f;
     points.clear();
     normals.clear();
     tangents.clear();
 }
 
-void BlendShapeData::addVertex(const float3 & v) { normals.push_back(v); }
-void BlendShapeData::addNormal(const float3 & v) { points.push_back(v); }
+uint32_t BlendShapeData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    ret += ssize(name);
+    ret += ssize(weight);
+    ret += ssize(frames);
+    return ret;
+}
+void BlendShapeData::serialize(std::ostream& os) const
+{
+    write(os, name);
+    write(os, weight);
+    write(os, frames);
+}
+void BlendShapeData::deserialize(std::istream& is)
+{
+    read(is, name);
+    read(is, weight);
+    read(is, frames);
+}
+void BlendShapeData::clear()
+{
+    name.clear();
+    weight = 0.0f;
+    frames.clear();
+}
+void BlendShapeData::convertHandedness(bool x, bool yz)
+{
+    if (x) {
+        for (auto& f : frames) {
+            for (auto& v : f.points) { v = swap_handedness(v); }
+            for (auto& v : f.normals) { v = swap_handedness(v); }
+            for (auto& v : f.tangents) { v = swap_handedness(v); }
+        }
+    }
+    if (yz) {
+        for (auto& f : frames) {
+            for (auto& v : f.points) { v = swap_yz(v); }
+            for (auto& v : f.normals) { v = swap_yz(v); }
+            for (auto& v : f.tangents) { v = swap_yz(v); }
+        }
+    }
+}
 
+void BlendShapeData::applyScaleFactor(float scale)
+{
+    for (auto& f : frames) {
+        mu::Scale(f.points.data(), scale, f.points.size());
+    }
+}
 
 uint32_t BoneData::getSerializeSize() const
 {
@@ -953,13 +1039,24 @@ void BoneData::clear()
     weights.clear();
 }
 
-void BoneData::addWeight(float v)
+void BoneData::convertHandedness(bool x, bool yz)
 {
-    weights.push_back(v);
+    if (x) {
+        bindpose = swap_handedness(bindpose);
+    }
+    if (yz) {
+        bindpose = swap_yz(bindpose);
+    }
+}
+
+void BoneData::applyScaleFactor(float scale)
+{
+    (float3&)bindpose[3] *= scale;
 }
 
 
-#define EachVertexProperty(Body) Body(points) Body(normals) Body(tangents) Body(uv) Body(colors) Body(counts) Body(indices) Body(materialIDs)
+#define EachVertexProperty(Body)\
+    Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(counts) Body(indices) Body(material_ids)
 
 Mesh::Mesh()
 {
@@ -986,7 +1083,7 @@ uint32_t Mesh::getSerializeSize() const
         ret += ssize(bones);
     }
     if (flags.has_blendshapes) {
-        ret += ssize(blendshape);
+        ret += ssize(blendshapes);
     }
     return ret;
 }
@@ -1007,7 +1104,7 @@ void Mesh::serialize(std::ostream& os) const
         write(os, bones);
     }
     if (flags.has_blendshapes) {
-        write(os, blendshape);
+        write(os, blendshapes);
     }
 }
 
@@ -1028,17 +1125,15 @@ void Mesh::deserialize(std::istream& is)
         read(is, bones);
     }
     if (flags.has_blendshapes) {
-        read(is, blendshape);
+        read(is, blendshapes);
     }
 }
 
 void Mesh::clear()
 {
-    id = 0;
-    path.clear();
-    flags = { 0 };
+    super::clear();
 
-    transform = TRS();
+    flags = { 0 };
     refine_settings = MeshRefineSettings();
 
 #define Body(A) vclear(A);
@@ -1047,7 +1142,7 @@ void Mesh::clear()
 
     root_bone.clear();
     bones.clear();
-    blendshape.clear();
+    blendshapes.clear();
 
     submeshes.clear();
     splits.clear();
@@ -1056,29 +1151,38 @@ void Mesh::clear()
 
 #undef EachVertexProperty
 
-void Mesh::swapHandedness()
+void Mesh::convertHandedness(bool x, bool yz)
 {
-    super::swapHandedness();
-    mu::InvertX(points.data(), points.size());
-    mu::InvertX(normals.data(), normals.size());
-    for (auto& bone : bones) {
-        bone->bindpose = swap_handedness(bone->bindpose);
+    if (!x && !yz) return;
+
+    super::convertHandedness(x, yz);
+
+    if (x) {
+        mu::InvertX(points.data(), points.size());
+        mu::InvertX(normals.data(), normals.size());
+        mu::InvertX(tangents.data(), tangents.size());
     }
+    if (yz) {
+        for (auto& v : points) v = swap_yz(v);
+        for (auto& v : normals) v = swap_yz(v);
+        for (auto& v : tangents) v = swap_yz(v);
+    }
+    for (auto& bone : bones) bone->convertHandedness(x, yz);
+    for (auto& bs : blendshapes) bs->convertHandedness(x, yz);
 }
 
-void Mesh::applyScaleFactor(float scale)
+void Mesh::applyScaleFactor(float v)
 {
-    super::applyScaleFactor(scale);
-    mu::Scale(points.data(), scale, points.size());
-    for (auto& bone : bones) {
-        (float3&)bone->bindpose[3] *= scale;
-    }
+    super::applyScaleFactor(v);
+    mu::Scale(points.data(), v, points.size());
+    for (auto& bone : bones) bone->applyScaleFactor(v);
+    for (auto& bs : blendshapes) bs->applyScaleFactor(v);
 }
 
 void Mesh::refine(const MeshRefineSettings& mrs)
 {
     if (mrs.flags.invert_v) {
-        mu::InvertV(uv.data(), uv.size());
+        mu::InvertV(uv0.data(), uv0.size());
     }
 
     if (mrs.flags.apply_local2world) {
@@ -1105,84 +1209,72 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.scale_factor != 1.0f) {
         applyScaleFactor(mrs.scale_factor);
     }
-    if (mrs.flags.swap_handedness) {
-        swapHandedness();
+    if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
+        convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
-    if (mrs.flags.gen_weights4 && !bones.empty()) {
+    if (weights4.empty() && !bones.empty()) {
         generateWeights4();
     }
 
     mu::MeshRefiner refiner;
-    refiner.triangulate = mrs.flags.triangulate;
-    refiner.swap_faces = mrs.flags.swap_faces;
+    refiner.points = points;
+    refiner.indices = indices;
+    refiner.counts = counts;
     refiner.split_unit = mrs.split_unit;
-    refiner.prepare(counts, indices, points);
-    refiner.uv = uv;
-    refiner.colors = colors;
-    refiner.weights4 = weights4;
+    refiner.buildConnection();
+
+    if (uv0.size() == indices.size())
+        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0);
+    if (uv1.size() == indices.size())
+        refiner.addExpandedAttribute<float2>(uv1, tmp_uv1);
+    if (colors.size() == indices.size())
+        refiner.addExpandedAttribute<float4>(colors, tmp_colors);
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
         if (mrs.smooth_angle < 180.0f) {
-            refiner.genNormalsWithSmoothAngle(mrs.smooth_angle, mrs.flags.flip_normals);
+            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, mrs.flags.flip_normals);
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
         }
         else {
-            refiner.genNormals(mrs.flags.flip_normals);
+            GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
         }
     }
     else if (mrs.flags.gen_normals) {
-        refiner.genNormals(mrs.flags.flip_normals);
+        GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
     }
     else {
-        refiner.normals = normals;
+        if (normals.size() == indices.size()) {
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
+        }
     }
 
-    // tangents
-    bool gen_tangents = mrs.flags.gen_tangents && !refiner.normals.empty() && !refiner.uv.empty();
-    if (gen_tangents) {
-        refiner.genTangents();
-    }
+    // refine
+    {
+        refiner.refine();
+        refiner.triangulate(mrs.flags.swap_faces);
+        refiner.genSubmeshes(material_ids);
 
-    // refine topology
-    bool refine_topology = !mrs.flags.no_reindexing  && (
-         mrs.flags.triangulate ||
-        (mrs.flags.split && points.size() > mrs.split_unit) ||
-        (points.size() != indices.size() && (normals.size() == indices.size() || uv.size() == indices.size()))
-    );
-    if(refine_topology) {
-        refiner.refine(mrs.flags.optimize_topology);
-        refiner.genSubmesh(materialIDs);
-        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
+        refiner.new_points.swap(points);
+        refiner.new_indices_submeshes.swap(indices);
+        if (!tmp_normals.empty()) tmp_normals.swap(normals);
+        if (!tmp_uv0.empty()) tmp_uv0.swap(uv0);
+        if (!tmp_uv1.empty()) tmp_uv1.swap(uv1);
+        if (!tmp_colors.empty()) tmp_colors.swap(colors);
 
         splits.clear();
-        int *sub_indices = indices.data();
+        int offset_indices = 0;
         int offset_vertices = 0;
         for (auto& split : refiner.splits) {
             auto sp = SplitData();
-
-            sp.indices.reset(sub_indices, split.num_indices_triangulated);
-            sub_indices += split.num_indices_triangulated;
-
-            if (!points.empty()) {
-                sp.points.reset(&points[offset_vertices], split.num_vertices);
-            }
-            if (!normals.empty()) {
-                sp.normals.reset(&normals[offset_vertices], split.num_vertices);
-            }
-            if (!tangents.empty()) {
-                sp.tangents.reset(&tangents[offset_vertices], split.num_vertices);
-            }
-            if (!uv.empty()) {
-                sp.uv.reset(&uv[offset_vertices], split.num_vertices);
-            }
-            if (!colors.empty()) {
-                sp.colors.reset(&colors[offset_vertices], split.num_vertices);
-            }
-            if (!weights4.empty()) {
-                sp.weights4.reset(&weights4[offset_vertices], split.num_vertices);
-            }
-            offset_vertices += split.num_vertices;
+            sp.index_offset = offset_indices;
+            sp.vertex_offset = offset_vertices;
+            sp.index_count = split.triangulated_index_count;
+            sp.vertex_count = split.vertex_count;
             splits.push_back(sp);
+
+            offset_vertices += split.vertex_count;
+            offset_indices += split.triangulated_index_count;
         }
 
         // setup submeshes
@@ -1190,48 +1282,81 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             int nsm = 0;
             int *tri = indices.data();
             for (auto& split : refiner.splits) {
-                for (int i = 0; i < split.num_submeshes; ++i) {
+                for (int i = 0; i < split.submesh_count; ++i) {
                     auto& sm = refiner.submeshes[nsm + i];
                     SubmeshData tmp;
-                    tmp.materialID = sm.materialID;
-                    tmp.indices.reset(tri, sm.num_indices_tri);
-                    tri += sm.num_indices_tri;
+                    tmp.material_id = sm.material_id;
+                    tmp.indices.reset(tri, sm.index_count);
+                    tri += sm.index_count;
                     submeshes.push_back(tmp);
                 }
-                nsm += split.num_submeshes;
+                nsm += split.submesh_count;
             }
             nsm = 0;
             for (int i = 0; i < splits.size(); ++i) {
-                int n = refiner.splits[i].num_submeshes;
+                int n = refiner.splits[i].submesh_count;
                 splits[i].submeshes.reset(&submeshes[nsm], n);
                 nsm += n;
             }
         }
     }
-    else {
-        refiner.swapNewData(points, normals, tangents, uv, colors, weights4, indices);
+
+    // tangents
+    if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
+        tangents.resize(points.size());
+        GenerateTangentsTriangleIndexed(tangents.data(),
+            points.data(), uv0.data(), normals.data(), indices.data(), (int)indices.size() / 3, (int)points.size());
+    }
+
+    // weights
+    if (!weights4.empty()) {
+        tmp_weights4.resize_discard(points.size());
+        CopyWithIndices(tmp_weights4.data(), weights4.data(), refiner.new2old_points);
+        weights4.swap(tmp_weights4);
+    }
+    if (!blendshapes.empty()) {
+        RawVector<float3> tmp;
+        for (auto& bs : blendshapes) {
+            for (auto& frame : bs->frames) {
+                if (!frame.points.empty()) {
+                    tmp.resize_discard(points.size());
+                    CopyWithIndices(tmp.data(), frame.points.data(), refiner.new2old_points);
+                    frame.points.swap(tmp);
+                }
+                if (!frame.normals.empty()) {
+                    tmp.resize_discard(points.size());
+                    CopyWithIndices(tmp.data(), frame.normals.data(), refiner.new2old_points);
+                    frame.normals.swap(tmp);
+                }
+                if (!frame.tangents.empty()) {
+                    tmp.resize_discard(points.size());
+                    CopyWithIndices(tmp.data(), frame.tangents.data(), refiner.new2old_points);
+                    frame.tangents.swap(tmp);
+                }
+            }
+        }
     }
 
     flags.has_points = !points.empty();
     flags.has_normals = !normals.empty();
     flags.has_tangents = !tangents.empty();
-    flags.has_uv = !uv.empty();
+    flags.has_uv0 = !uv0.empty();
     flags.has_indices = !indices.empty();
 }
 
 void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 {
-    size_t num_points = points.size();
-    size_t num_faces = counts.size();
-    size_t num_indices = indices.size();
+    size_t num_points_old = points.size();
+    size_t num_faces_old = counts.size();
+    size_t num_indices_old = indices.size();
 
-    RawVector<int> indirect(num_points);
+    RawVector<int> indirect(num_points_old);
     RawVector<int> copylist;
-    copylist.reserve(num_points);
+    copylist.reserve(num_points_old);
     {
         // welding
         int idx = 0;
-        for (size_t pi = 0; pi < num_points; ++pi) {
+        for (size_t pi = 0; pi < num_points_old; ++pi) {
             auto& p = points[pi];
             float d = dot(plane_n, p) - plane_d;
             if (near_equal(d, 0.0f)) {
@@ -1239,87 +1364,118 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
             }
             else {
                 copylist.push_back((int)pi);
-                indirect[pi] = (int)num_points + idx++;
+                indirect[pi] = (int)num_points_old + idx++;
             }
 
         }
     }
 
-    points.resize(num_points + copylist.size());
-    mu::MirrorPoints(points.data() + num_points, IArray<float3>{points.data(), num_points}, copylist, plane_n, plane_d);
+    // points
+    points.resize(num_points_old + copylist.size());
+    mu::MirrorPoints(points.data() + num_points_old, IArray<float3>{points.data(), num_points_old}, copylist, plane_n, plane_d);
 
-    counts.resize(num_faces * 2);
-    indices.resize(num_indices * 2);
-    mu::MirrorTopology(counts.data() + num_faces, indices.data() + num_indices,
-        IArray<int>{counts.data(), num_faces}, IArray<int>{indices.data(), num_indices}, IArray<int>{indirect.data(), indirect.size()});
+    // indices
+    counts.resize(num_faces_old * 2);
+    indices.resize(num_indices_old * 2);
+    mu::MirrorTopology(counts.data() + num_faces_old, indices.data() + num_indices_old,
+        IArray<int>{counts.data(), num_faces_old}, IArray<int>{indices.data(), num_indices_old}, IArray<int>{indirect.data(), indirect.size()});
 
+    // normals
     if (normals.data()) {
-        if (normals.size() == num_points) {
+        if (normals.size() == num_points_old) {
             normals.resize(points.size());
-            mu::CopyWithIndices(&normals[num_points], &normals[0], copylist);
+            mu::CopyWithIndices(&normals[num_points_old], &normals[0], copylist);
         }
-        else if (normals.size() == num_indices) {
+        else if (normals.size() == num_indices_old) {
             normals.resize(indices.size());
-            auto dst = &normals[num_indices];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
+            auto dst = &normals[num_indices_old];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = normals[ridx];
             });
         }
     }
-    if (uv.data()) {
-        if (uv.size() == num_points) {
-            uv.resize(points.size());
-            mu::CopyWithIndices(&uv[num_points], &uv[0], copylist);
+
+    // uv
+    if (uv0.data()) {
+        if (uv0.size() == num_points_old) {
+            uv0.resize(points.size());
+            mu::CopyWithIndices(&uv0[num_points_old], &uv0[0], copylist);
         }
-        else if (uv.size() == num_indices) {
-            uv.resize(indices.size());
-            auto dst = &uv[num_indices];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
-                dst[idx] = uv[ridx];
+        else if (uv0.size() == num_indices_old) {
+            uv0.resize(indices.size());
+            auto dst = &uv0[num_indices_old];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+                dst[idx] = uv0[ridx];
             });
         }
     }
-    if (colors.data()) {
-        if (colors.size() == num_points) {
-            colors.resize(points.size());
-            mu::CopyWithIndices(&colors[num_points], &colors[0], copylist);
+    if (uv1.data()) {
+        if (uv1.size() == num_points_old) {
+            uv1.resize(points.size());
+            mu::CopyWithIndices(&uv1[num_points_old], &uv1[0], copylist);
         }
-        else if (colors.size() == num_indices) {
+        else if (uv1.size() == num_indices_old) {
+            uv1.resize(indices.size());
+            auto dst = &uv1[num_indices_old];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+                dst[idx] = uv1[ridx];
+            });
+        }
+    }
+
+    // colors
+    if (colors.data()) {
+        if (colors.size() == num_points_old) {
+            colors.resize(points.size());
+            mu::CopyWithIndices(&colors[num_points_old], &colors[0], copylist);
+        }
+        else if (colors.size() == num_indices_old) {
             colors.resize(indices.size());
-            auto dst = &colors[num_indices];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces}, [dst, this](int, int idx, int ridx) {
+            auto dst = &colors[num_indices_old];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = colors[ridx];
             });
         }
     }
-    if (materialIDs.data()) {
-        size_t n = materialIDs.size();
-        materialIDs.resize(n * 2);
-        memcpy(materialIDs.data() + n, materialIDs.data(), sizeof(int) * n);
+
+    // material ids
+    if (material_ids.data()) {
+        size_t n = material_ids.size();
+        material_ids.resize(n * 2);
+        memcpy(material_ids.data() + n, material_ids.data(), sizeof(int) * n);
     }
+
+    // bone weights
     for (auto& bone : bones) {
         auto& weights = bone->weights;
         weights.resize(points.size());
-        mu::CopyWithIndices(&weights[num_points], &weights[0], copylist);
+        mu::CopyWithIndices(&weights[num_points_old], &weights[0], copylist);
+    }
+
+    // blend shapes
+    for (auto& bs : blendshapes) {
+        for (auto& f : bs->frames) {
+            if (!f.points.empty()) {
+                f.points.resize(points.size());
+                mu::CopyWithIndices(&f.points[num_points_old], &f.points[0], copylist);
+            }
+            if (!f.normals.empty()) {
+                f.normals.resize(points.size());
+                mu::CopyWithIndices(&f.normals[num_points_old], &f.normals[0], copylist);
+            }
+            if (!f.tangents.empty()) {
+                f.tangents.resize(points.size());
+                mu::CopyWithIndices(&f.tangents[num_points_old], &f.tangents[0], copylist);
+            }
+        }
     }
 }
-
 
 void Mesh::applyTransform(const float4x4& m)
 {
     for (auto& v : points) { v = mul_p(m, v); }
     for (auto& v : normals) { v = m * v; }
     mu::Normalize(normals.data(), normals.size());
-}
-
-void Mesh::resizeBones(int n)
-{
-    bones.resize(n);
-    for (auto& bone : bones) {
-        if (!bone) {
-            bone.reset(new BoneData());
-        }
-    }
 }
 
 void Mesh::generateWeights4()
@@ -1372,13 +1528,14 @@ void Mesh::setupFlags()
     flags.has_points = !points.empty();
     flags.has_normals = !normals.empty();
     flags.has_tangents = !tangents.empty();
-    flags.has_uv = !uv.empty();
+    flags.has_uv0 = !uv0.empty();
+    flags.has_uv1 = !uv1.empty();
     flags.has_colors = !colors.empty();
     flags.has_counts = !counts.empty();
     flags.has_indices = !indices.empty();
-    flags.has_materialIDs = !materialIDs.empty();
+    flags.has_material_ids = !material_ids.empty();
     flags.has_bones = !bones.empty();
-    flags.has_blendshapes = !blendshape.empty();
+    flags.has_blendshapes = !blendshapes.empty();
 }
 
 void Mesh::addVertex(const float3& v)
@@ -1391,7 +1548,7 @@ void Mesh::addNormal(const float3& v)
 }
 void Mesh::addUV(const float2& v)
 {
-    uv.push_back(v);
+    uv0.push_back(v);
 }
 void Mesh::addColor(const float4& v)
 {
@@ -1407,7 +1564,7 @@ void Mesh::addIndex(int v)
 }
 void Mesh::addMaterialID(int v)
 {
-    materialIDs.push_back(v);
+    material_ids.push_back(v);
 }
 
 BoneDataPtr Mesh::addBone(const std::string& _path)
@@ -1422,7 +1579,7 @@ BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
 {
     BlendShapeDataPtr ret(new BlendShapeData());
     ret->name = _name;
-    blendshape.push_back(ret);
+    blendshapes.push_back(ret);
     return ret;
 }
 

@@ -187,7 +187,7 @@ public:
         size_t d = std::distance(begin(), pos);
         size_t s = std::distance(first, last);
         resize(d + s);
-        std::copy(first, last, begin() + pos);
+        std::copy(first, last, begin() + d);
     }
     void insert(iterator pos, const_pointer first, const_pointer last)
     {
@@ -219,6 +219,12 @@ public:
         resize(m_size + 1);
         back() = v;
     }
+    void push_back(T&& v)
+    {
+        resize(m_size + 1);
+        back() = v;
+    }
+
 
     void pop_back()
     {
@@ -244,9 +250,9 @@ public:
     {
         memcpy(dst, m_data, sizeof(value_type) * m_size);
     }
-    void copy_to(pointer dst, size_t num_elements)
+    void copy_to(pointer dst, size_t length, size_t offset = 0)
     {
-        memcpy(dst, m_data, sizeof(value_type) * num_elements);
+        memcpy(dst, m_data + offset, sizeof(value_type) * length);
     }
 
 private:

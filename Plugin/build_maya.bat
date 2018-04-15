@@ -1,4 +1,4 @@
-call "%VS2017INSTALLDIR%\Common7\Tools\VsDevCmd.bat"
+call buildtools.bat
 
 set MAYA_VERSION=2017
 set MAYA_LIB_DIR=%cd%\External\Maya2017\lib

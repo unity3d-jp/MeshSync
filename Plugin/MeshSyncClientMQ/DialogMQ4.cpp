@@ -12,7 +12,8 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
     SetTitle(L"Unity Mesh Sync");
     SetOutSpace(0.4);
 
-    wchar_t buf[128];
+    const size_t buf_len = 128;
+    wchar_t buf[buf_len];
     double margin = 0.3;
 
     {
@@ -25,13 +26,13 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_edit_server->SetText(L(m_plugin->getSync().getClientSettings().server));
         m_edit_server->AddChangedEvent(this, &SettingsDlg::OnServerChange);
 
-        swprintf(buf, L"%d", (int)m_plugin->getSync().getClientSettings().port);
+        swprintf(buf, buf_len, L"%d", (int)m_plugin->getSync().getClientSettings().port);
         m_edit_port = CreateEdit(hf);
         m_edit_port->SetNumeric(MQEdit::NUMERIC_INT);
         m_edit_port->SetText(buf);
         m_edit_port->AddChangedEvent(this, &SettingsDlg::OnPortChange);
 
-        swprintf(buf, L"%.3f", m_plugin->getSync().getScaleFactor());
+        swprintf(buf, buf_len, L"%.3f", m_plugin->getSync().getScaleFactor());
         hf = CreateHorizontalFrame(vf);
         CreateLabel(hf, L"Scale Factor");
         m_edit_scale = CreateEdit(hf);

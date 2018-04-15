@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "MQSync.h"
-#include "MeshSync/msEditing.h"
 
 #define MaxNameBuffer 128
 
@@ -12,6 +11,19 @@ std::wstring L(const std::string& s)
 std::string S(const std::wstring& w)
 {
     return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(w);
+}
+
+static inline float3 to_float3(const MQColor& v)
+{
+    return (const float3&)v;
+}
+static inline float3 to_float3(const MQPoint& v)
+{
+    return (const float3&)v;
+}
+static inline float4x4 to_float4x4(const MQMatrix& v)
+{
+    return (const float4x4&)v;
 }
 
 static inline std::string BuildPath(MQDocument doc, MQObject obj)
@@ -202,7 +214,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 src->GetName(name, sizeof(name));
                 dst->name = ms::ToUTF8(name);
             }
-            (float3&)dst->color = (const float3&)src->GetColor();
+            (float3&)dst->color = to_float3(src->GetColor());
             m_materials.emplace_back(dst);
         }
     }
@@ -224,7 +236,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             bone_manager.EnumBoneID(bone_ids);
             for (auto bid : bone_ids) {
                 auto& bone = m_bones[bid];
-                auto& trs = bone.transform->transform;
                 bone.id = bid;
 
                 bone_manager.GetName(bid, name);
@@ -257,12 +268,12 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
                 // setup transform
                 {
-                    auto& trs = bone.transform->transform;
-                    trs.rotation = bone.world_rot;
-                    trs.position = bone.world_pos;
+                    auto& trans = *bone.transform;
+                    trans.rotation = bone.world_rot;
+                    trans.position = bone.world_pos;
                     auto it = m_bones.find(bone.parent);
                     if (it != m_bones.end())
-                        trs.position -= it->second.world_pos;
+                        trans.position -= it->second.world_pos;
                 }
             }
 
@@ -293,7 +304,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     auto data = new ms::BoneData();
                     rel.data->bones.emplace_back(data);
                     rel.data->flags.has_bones = 1;
-                    rel.data->refine_settings.flags.gen_weights4 = 1;
                     auto& bone = m_bones[bid];
                     data->path = bone.transform->path;
                     data->bindpose = bone.bindpose;
@@ -433,16 +443,16 @@ void MQSync::sendCamera(MQDocument doc, bool force)
             m_camera->near_plane *= m_scale_factor;
             m_camera->far_plane *= m_scale_factor;
         }
-        auto prev_pos = m_camera->transform.position;
-        auto prev_rot = m_camera->transform.rotation;
+        auto prev_pos = m_camera->position;
+        auto prev_rot = m_camera->rotation;
         auto prev_fov = m_camera->fov;
 
         m_camera->path = m_host_camera_path;
         extractCameraData(doc, scene, *m_camera);
 
         if (!force &&
-            m_camera->transform.position == prev_pos &&
-            m_camera->transform.rotation == prev_rot &&
+            m_camera->position == prev_pos &&
+            m_camera->rotation == prev_rot &&
             m_camera->fov == prev_fov)
         {
             // no need to send
@@ -476,9 +486,9 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.flags.get_transform = 1;
     gd.flags.get_indices = 1;
     gd.flags.get_points = 1;
-    gd.flags.get_uv = 1;
+    gd.flags.get_uv0 = 1;
     gd.flags.get_colors = 1;
-    gd.flags.get_materialIDs = 1;
+    gd.flags.get_material_ids = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
@@ -568,13 +578,13 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
             ret->AddFace(3, const_cast<int*>(&data.indices[i]));
         }
     }
-    if(!data.uv.empty()) {
+    if(!data.uv0.empty()) {
         float2 uv[3];
         size_t nfaces = data.indices.size() / 3;
         for (size_t i = 0; i < nfaces; ++i) {
-            uv[0] = data.uv[data.indices[i * 3 + 0]];
-            uv[1] = data.uv[data.indices[i * 3 + 1]];
-            uv[2] = data.uv[data.indices[i * 3 + 2]];
+            uv[0] = data.uv0[data.indices[i * 3 + 0]];
+            uv[1] = data.uv0[data.indices[i * 3 + 1]];
+            uv[2] = data.uv0[data.indices[i * 3 + 2]];
             ret->SetFaceCoordinateArray((int)i, (MQCoordinate*)uv);
         }
     }
@@ -586,7 +596,7 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
             ret->SetFaceVertexColor((int)i, 2, mu::Float4ToColor32(data.colors[data.indices[i * 3 + 2]]));
         }
         // enable vertex color flag on assigned materials
-        auto mids = data.materialIDs;
+        auto mids = data.material_ids;
         mids.erase(std::unique(mids.begin(), mids.end()), mids.end());
         for (auto mid : mids) {
             if (mid >= 0) {
@@ -594,10 +604,10 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
             }
         }
     }
-    if (!data.materialIDs.empty()) {
+    if (!data.material_ids.empty()) {
         size_t nfaces = data.indices.size() / 3;
         for (size_t i = 0; i < nfaces; ++i) {
-            ret->SetFaceMaterial((int)i, data.materialIDs[i]);
+            ret->SetFaceMaterial((int)i, data.material_ids[i]);
         }
     }
     return ret;
@@ -606,10 +616,10 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
 void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
     dst.flags.has_points = 1;
-    dst.flags.has_uv = 1;
+    dst.flags.has_uv0 = 1;
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
-    dst.flags.has_materialIDs = 1;
+    dst.flags.has_material_ids = 1;
     dst.flags.has_refine_settings = 1;
 
     dst.refine_settings.flags.gen_tangents = 1;
@@ -636,10 +646,10 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         }
         else {
             dst.flags.apply_trs = 1;
-            dst.transform.position = (const float3&)obj->GetTranslation();
-            dst.transform.rotation = ToQuaternion(obj->GetRotation());
-            dst.transform.scale = (const float3&)obj->GetScaling();
-            dst.refine_settings.world2local = (float4x4&)obj->GetLocalInverseMatrix();
+            dst.position = to_float3(obj->GetTranslation());
+            dst.rotation = ToQuaternion(obj->GetRotation());
+            dst.scale = to_float3(obj->GetScaling());
+            dst.refine_settings.world2local = to_float4x4(obj->GetLocalInverseMatrix());
         }
     }
 
@@ -662,13 +672,13 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
     // indices, uv, material ID
     dst.indices.resize_discard(nindices);
-    dst.uv.resize_discard(nindices);
-    dst.materialIDs.resize_discard(nfaces);
+    dst.uv0.resize_discard(nindices);
+    dst.material_ids.resize_discard(nfaces);
     auto *indices = dst.indices.data();
-    auto *uv = dst.uv.data();
+    auto *uv = dst.uv0.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
-        dst.materialIDs[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
+        dst.material_ids[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
         if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
             obj->GetFacePointArray(fi, indices);
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
@@ -716,9 +726,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     }
 
     // remove lines and points
-    dst.materialIDs.erase(
-        std::remove(dst.materialIDs.begin(), dst.materialIDs.end(), -2),
-        dst.materialIDs.end());
+    dst.material_ids.erase(
+        std::remove(dst.material_ids.begin(), dst.material_ids.end(), -2),
+        dst.material_ids.end());
     dst.counts.erase(
         std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
         dst.counts.end());
@@ -726,10 +736,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
-    dst.transform.position = (const float3&)scene->GetCameraPosition();
+    dst.position = to_float3(scene->GetCameraPosition());
     auto eular = ToEular(scene->GetCameraAngle(), true);
-    dst.transform.rotation_eularZXY = eular;
-    dst.transform.rotation = rotateZXY(eular);
+    dst.rotation = rotateZXY(eular);
 
     dst.fov = scene->GetFOV() * mu::Rad2Deg;
 #if MQPLUGIN_VERSION >= 0x450

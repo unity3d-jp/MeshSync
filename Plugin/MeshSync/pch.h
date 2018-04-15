@@ -35,8 +35,6 @@
 #include <algorithm>
 #include <thread>
 
-#include "MeshUtils/MeshUtils.h"
-
 #define POCO_STATIC
 #include "Poco/Path.h"
 #include "Poco/File.h"

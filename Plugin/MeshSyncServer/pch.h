@@ -17,5 +17,3 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
-
-#include "MeshUtils/MeshUtils.h"

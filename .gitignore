@@ -23,6 +23,7 @@
 *.wav
 *.zip
 *.mll
+*.unitypackage
 
 .vs/
 _out/
@@ -37,5 +38,9 @@ TestLocal.meta
 MeshSync/*.csproj
 MeshSync/*.sln
 
-NormalPainter/
-NormalPainter.meta
+Plugin/UnityMeshSync for*/
+Plugin/MeshSyncClientBlender2.8/
+Plugin/MeshSyncClientBlender2.79/
+Plugin/MeshSyncClientMaya2018/
+Plugin/MeshSyncClientMaya2017/
+Plugin/MeshSyncClientMaya2016/

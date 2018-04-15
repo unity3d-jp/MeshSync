@@ -10,9 +10,6 @@
     <ClCompile Include="MeshSync/pch.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\msEditing.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSync\msSceneGraph.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
@@ -25,9 +22,6 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\pch.h">
-      <Filter>MeshSync</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\msEditing.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msConfig.h">

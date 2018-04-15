@@ -1,1 +1,0 @@
-from MeshSync.PyMeshSync import *

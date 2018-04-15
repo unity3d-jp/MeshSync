@@ -128,7 +128,9 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
                 if (path_to_shape.extendToShape() == MS::kSuccess && path_to_shape.node().hasFn(MFn::kMesh)) {
                     mscTrace("tracking mesh %s\n", path.fullPathName().asChar());
                     m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnChangeTransform, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(path_to_shape.node(), OnChangeMesh, this, &stat));
+
+                    MObject shape_obj = path_to_shape.node();
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape_obj, OnChangeMesh, this, &stat));
                 }
             }
         }
@@ -501,8 +503,9 @@ bool MeshSyncClientMaya::importScene()
     gd.flags.get_transform = 1;
     gd.flags.get_indices = 1;
     gd.flags.get_points = 1;
-    gd.flags.get_uv = 1;
-    gd.flags.get_materialIDs = 1;
+    gd.flags.get_uv0 = 1;
+    gd.flags.get_uv1 = 1;
+    gd.flags.get_material_ids= 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.bake_skin = m_bake_skin;
@@ -528,7 +531,8 @@ void MeshSyncClientMaya::extractAllMaterialData()
 
         auto tmp = new ms::Material();
         tmp->name = fn.name().asChar();
-        tmp->color = (const mu::float4&)fn.color();
+        auto color = fn.color();
+        tmp->color = (const mu::float4&)color;
         tmp->id = getMaterialID(fn.uuid());
         m_client_materials.emplace_back(tmp);
 
@@ -549,15 +553,15 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     pos = mtrans.getTranslation(MSpace::kTransform, &stat);
     stat = mtrans.getRotation(rot, MSpace::kTransform);
     stat = mtrans.getScale(scale);
-    dst.transform.position.assign(&pos[0]);
-    dst.transform.rotation.assign(&rot[0]);
-    dst.transform.scale.assign(scale);
+    dst.position.assign(&pos[0]);
+    dst.rotation.assign(&rot[0]);
+    dst.scale.assign(scale);
 
     // handle joint's segment scale compensate
     if (src.hasFn(MFn::kJoint)) {
         mu::float3 inverse_scale;
         if (JointGetSegmentScaleCompensate(src) && JointGetInverseScale(src, inverse_scale)) {
-            dst.transform.scale /= inverse_scale;
+            dst.scale /= inverse_scale;
         }
     }
 
@@ -598,8 +602,8 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             // build time-sampled animation data
             int sps = m_animation_samples_per_seconds;
             ConvertAnimationBool(anim.visible, true, pvis, sps);
-            ConvertAnimationFloat3(anim.translation, dst.transform.position, ptx, pty, ptz, sps);
-            ConvertAnimationFloat3(anim.scale, dst.transform.scale, psx, psy, psz, sps);
+            ConvertAnimationFloat3(anim.translation, dst.position, ptx, pty, ptz, sps);
+            ConvertAnimationFloat3(anim.scale, dst.scale, psx, psy, psz, sps);
             {
                 // build rotation animation data (eular angles) and convert to quaternion
                 RawVector<ms::TVP<mu::float3>> eular;
@@ -617,7 +621,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
         }\
         break;
 
-                    MFnTransform mtrans = src;
+                    MFnTransform mtrans(src);
                     switch (mtrans.rotationOrder()) {
                         Case(XYZ);
                         Case(YZX);
@@ -625,6 +629,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
                         Case(XZY);
                         Case(YXZ);
                         Case(ZYX);
+                        default: break;
                     }
 #undef Case
                 }
@@ -641,14 +646,14 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
     if (!extractTransformData(dst, src)) { return false; }
-    dst.transform.rotation = mu::flipY(dst.transform.rotation);
+    dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kCamera)) {
         return false;
     }
 
-    MFnCamera mcam = shape;
+    MFnCamera mcam(shape);
     dst.is_ortho = mcam.isOrtho();
     dst.near_plane = (float)mcam.nearClippingPlane();
     dst.far_plane = (float)mcam.farClippingPlane();
@@ -754,27 +759,27 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 {
     if (!extractTransformData(dst, src)) { return false; }
-    dst.transform.rotation = mu::flipY(dst.transform.rotation);
+    dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
     if (shape.hasFn(MFn::kSpotLight)) {
-        MFnSpotLight mlight = shape;
+        MFnSpotLight mlight(shape);
         dst.type = ms::Light::Type::Spot;
         dst.spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
     }
     else if (shape.hasFn(MFn::kDirectionalLight)) {
-        MFnDirectionalLight mlight = shape;
+        MFnDirectionalLight mlight(shape);
         dst.type = ms::Light::Type::Directional;
     }
     else if (shape.hasFn(MFn::kPointLight)) {
-        MFnPointLight mlight = shape;
+        MFnPointLight mlight(shape);
         dst.type = ms::Light::Type::Point;
     }
     else {
         return false;
     }
 
-    MFnLight mlight = shape;
+    MFnLight mlight(shape);
     auto color = mlight.color();
     dst.color = { color.r, color.g, color.b, color.a };
     dst.intensity = mlight.intensity();
@@ -836,22 +841,21 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return false; }
 
-    MFnMesh mmesh = shape;
+    MFnMesh mmesh(shape);
 
     dst.flags.has_points = 1;
     dst.flags.has_normals = 1;
     dst.flags.has_counts = 1;
     dst.flags.has_indices = 1;
-    dst.flags.has_materialIDs = 1;
+    dst.flags.has_material_ids = 1;
     dst.flags.has_refine_settings = 1;
     dst.flags.apply_trs = 1;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
-    dst.refine_settings.flags.gen_weights4 = 1;
 
-    MFnBlendShapeDeformer fn_blendshape = FindBlendShape(mmesh.object());
-    MFnSkinCluster fn_skin = FindSkinCluster(mmesh.object());
-    MFnMesh fn_src_mesh = mmesh.object();
+    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
+    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
+    MFnMesh fn_src_mesh(mmesh.object());
     int skin_index = 0;
 
     if (m_export_skinning) {
@@ -900,7 +904,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getUVSetNames(uvsets);
 
         if (uvsets.length() > 0 && fn_src_mesh.numUVs(uvsets[0]) > 0) {
-            dst.flags.has_uv = 1;
+            dst.flags.has_uv0 = 1;
 
             MFloatArray u;
             MFloatArray v;
@@ -913,7 +917,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     int iu;
                     it_poly.getUVIndex(i, iu, &uvsets[0]);
 
-                    dst.uv.push_back(mu::float2{ u[iu], v[iu] });
+                    dst.uv0.push_back(mu::float2{ u[iu], v[iu] });
                 }
                 it_poly.next();
             }
@@ -937,12 +941,12 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
 
         if (mids.size() == 1) {
-            dst.materialIDs.resize(indices.length(), mids[0]);
+            dst.material_ids.resize(indices.length(), mids[0]);
         }
         else {
-            dst.materialIDs.resize(indices.length());
+            dst.material_ids.resize(indices.length());
             for (uint32_t i = 0; i < indices.length(); ++i) {
-                dst.materialIDs[i] = mids[indices[i]];
+                dst.material_ids[i] = mids[indices[i]];
             }
         }
     }
@@ -950,8 +954,6 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get blendshape data
     if (!fn_blendshape.object().isNull()) {
         auto num_weights = fn_blendshape.numWeights();
-        dst.blendshape.resize(num_weights);
-
         auto plug_inputTargets = fn_blendshape.findPlug("inputTarget");
         auto plug_inputTargetGroups = plug_inputTargets.elementByPhysicalIndex(0).child(0);
         auto plug_inputTargetItem = plug_inputTargetGroups.elementByPhysicalIndex(0).child(0).elementByPhysicalIndex(0);
@@ -964,13 +966,13 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
         if (plug_inputGeomTarget.isConnected()) {
             auto data = plug_inputGeomTarget.asMObject();
-            MFnMesh tmesh = data;
+            MFnMesh tmesh(data);
             auto t = data.apiTypeStr();
         }
         else {
             MObject data;
             plug_inputRelativePointsTarget.getValue(data);
-            MFnPointArrayData pad = data;
+            MFnPointArrayData pad(data);
             MPointArray pts;
             pad.copyTo(pts);
             auto len = pts.length();
@@ -980,25 +982,30 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_blendshape.getBaseObjects(bases);
         auto num_bases = bases.length();
         for (uint32_t bi = 0; bi < num_bases; ++bi) {
-            MFnDependencyNode fn = bases[bi];
+            MFnDependencyNode fn(bases[bi]);
             std::string name = fn.name().asChar();
             printf("%s\n", name.c_str());
         }
 
         for (uint32_t wi = 0; wi < num_weights; ++wi) {
-            auto bs = new ms::BlendShapeData();
-            bs->points.resize(dst.points.size());
-            dst.blendshape[wi].reset(bs);
-
             MObjectArray targets;
             fn_blendshape.getTargets(bases[0], wi, targets);
             auto num_targets = targets.length();
             for (uint32_t ti = 0; ti < targets.length(); ++ti) {
+                auto bs = new ms::BlendShapeData();
+                dst.blendshapes.emplace_back(bs);
+
+                bs->name = GetName(targets[ti]);
+                bs->weight = 100.0f;
+                bs->frames.push_back(ms::BlendShapeData::Frame());
+                auto& frame = bs->frames.back();
+                frame.points.resize(dst.points.size());
+
                 MItGeometry gi = targets[ti];
                 while (!gi.isDone()) {
                     auto idx = gi.index();
                     auto p = gi.position();
-                    bs->points[idx] = (ms::float3&)p;
+                    frame.points[idx] = (ms::float3&)p;
                 }
             }
         }
@@ -1008,30 +1015,28 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     if(!fn_skin.object().isNull()) {
         // request bake TRS
         dst.refine_settings.flags.apply_local2world = 1;
-        dst.refine_settings.local2world = dst.transform.toMatrix();
-        dst.transform = ms::TRS();
+        dst.refine_settings.local2world = dst.toMatrix();
 
         // get bone data
         MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix");
         MDagPathArray joint_paths;
         auto num_joints = fn_skin.influenceObjects(joint_paths);
 
-        dst.flags.has_bones = 1;
-        dst.resizeBones(num_joints);
-
         {
             std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
             for (uint32_t ij = 0; ij < num_joints; ij++) {
-                auto& bone = *dst.bones[ij];
+                auto bone = new ms::BoneData();
+                dst.bones.emplace_back(bone);
+
                 auto joint = joint_paths[ij].node();
                 notifyUpdateTransform(joint, true);
-                bone.path = GetPath(joint);
+                bone->path = GetPath(joint);
 
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
                 plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
                 MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
-                bone.bindpose.assign(bindpose[0]);
+                bone->bindpose.assign(bindpose[0]);
             }
         }
 
@@ -1056,12 +1061,13 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             // vertex tweak
             {
                 MObject tweak;
-                MItDependencyGraph it(fn_skin.object(), MFn::kTweak, MItDependencyGraph::kUpstream);
+                MObject skin_obj = fn_skin.object();
+                MItDependencyGraph it(skin_obj, MFn::kTweak, MItDependencyGraph::kUpstream);
                 if (!it.isDone()) {
                     tweak = it.currentItem();
                 }
                 if (!tweak.isNull()) {
-                    MFnDependencyNode fn_tweak = tweak;
+                    MFnDependencyNode fn_tweak(tweak);
                     auto plug_vlist = fn_tweak.findPlug("vlist");
                     if (plug_vlist.isArray() && (int)plug_vlist.numElements() > skin_index) {
                         auto plug_vertex = plug_vlist.elementByPhysicalIndex(skin_index).child(0);
@@ -1084,12 +1090,13 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             // uv tweak
             {
                 MObject tweak;
-                MItDependencyGraph it(fn_skin.object(), MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
+                MObject skin_obj = fn_skin.object();
+                MItDependencyGraph it(skin_obj, MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
                 if (!it.isDone()) {
                     tweak = it.currentItem();
                 }
                 if (!tweak.isNull()) {
-                    MFnDependencyNode fn_tweak = tweak;
+                    MFnDependencyNode fn_tweak(tweak);
                     auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
                     auto plug_uv = fn_tweak.findPlug("uvTweak");
                     if (plug_uv.isArray() && (int)plug_uv.numElements() > skin_index) {
@@ -1102,7 +1109,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                                 mu::float2 v;
                                 p2.child(0).getValue(v.x);
                                 p2.child(1).getValue(v.y);
-                                dst.uv[li] += v;
+                                dst.uv0[li] += v;
                             }
                         }
                     }

@@ -110,13 +110,13 @@ bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float e
 
 void MulPoints_Generic(const float4x4& m, const float3 src[], float3 dst[], size_t num_data)
 {
-    for (int i = 0; i < num_data; ++i) {
+    for (size_t i = 0; i < num_data; ++i) {
         dst[i] = mul_p(m, src[i]);
     }
 }
 void MulVectors_Generic(const float4x4& m, const float3 src[], float3 dst[], size_t num_data)
 {
-    for (int i = 0; i < num_data; ++i) {
+    for (size_t i = 0; i < num_data; ++i) {
         dst[i] = mul_v(m, src[i]);
     }
 }
@@ -446,7 +446,7 @@ bool GenerateNormalsPoly(
 {
     memset(dst, 0, sizeof(float3)*num_vertices);
 
-    for (size_t fi = 0; fi < num_faces; ++fi)
+    for (int fi = 0; fi < num_faces; ++fi)
     {
         const int *face = &indices[offsets[fi]];
         float3 p0 = points[face[0]];

@@ -10,6 +10,11 @@ public:
     MeshSyncClientPlugin();
     virtual ~MeshSyncClientPlugin();
 
+#if defined(__APPLE__) || defined(__linux__)
+    // Create a new plugin class for another document.
+    // 別のドキュメントのための新しいプラグインクラスを作成する。
+    MQBasePlugin *CreateNewPlugin() override;
+#endif
     // プラグインIDを返す。
     void GetPlugInID(DWORD *Product, DWORD *ID) override;
     // プラグイン名を返す。

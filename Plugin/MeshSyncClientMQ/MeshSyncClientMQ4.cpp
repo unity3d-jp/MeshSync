@@ -17,6 +17,15 @@ MeshSyncClientPlugin::~MeshSyncClientPlugin()
 {
 }
 
+#if defined(__APPLE__) || defined(__linux__)
+// Create a new plugin class for another document.
+// 別のドキュメントのための新しいプラグインクラスを作成する。
+MQBasePlugin* MeshSyncClientPlugin::CreateNewPlugin()
+{
+    return new MeshSyncClientPlugin();
+}
+#endif
+
 //---------------------------------------------------------------------------
 //  GetPlugInID
 //    プラグインIDを返す。
@@ -76,7 +85,8 @@ const wchar_t *MeshSyncClientPlugin::GetSubCommandString(int index)
 BOOL MeshSyncClientPlugin::Initialize()
 {
     if (!m_dlg) {
-        m_dlg = new SettingsDlg(this, MQWindow::GetMainWindow());
+        auto parent = MQWindow::GetMainWindow();
+        m_dlg = new SettingsDlg(this, parent);
     }
     return TRUE;
 }
@@ -325,6 +335,7 @@ bool MeshSyncClientPlugin::ImportImpl(MQDocument doc)
 }
 
 
+#ifdef _WIN32
 //---------------------------------------------------------------------------
 //  DllMain
 //---------------------------------------------------------------------------
@@ -347,4 +358,4 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance,
 
     return TRUE;
 }
-
+#endif

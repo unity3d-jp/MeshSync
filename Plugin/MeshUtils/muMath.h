@@ -241,6 +241,8 @@ template<class T> inline tvec4<T>& operator-=(tvec4<T>& l, T r) { l.x -= r; l.y 
 template<class T> inline tvec4<T>& operator*=(tvec4<T>& l, T r) { l.x *= r; l.y *= r; l.z *= r; l.w *= r; return l; }
 template<class T> inline tvec4<T>& operator/=(tvec4<T>& l, T r) { l.x /= r; l.y /= r; l.z /= r; l.w /= r; return l; }
 
+template<class T> inline tmat3x3<T> operator-(const tmat3x3<T>& v) { return{ -v[0], -v[1], -v[2] }; }
+template<class T> inline tmat4x4<T> operator-(const tmat4x4<T>& v) { return{ -v[0], -v[1], -v[2], -v[3] }; }
 
 template<class T> inline tquat<T> operator*(const tquat<T>& l, T r) { return{ l.x*r, l.y*r, l.z*r, l.w*r }; }
 template<class T> inline tquat<T> operator*(const tquat<T>& l, const tquat<T>& r)
@@ -346,6 +348,7 @@ template<class T> inline tmat4x4<T>& operator*=(tmat4x4<T>& a, const tmat4x4<T> 
 inline int ceildiv(int v, int d) { return (v + (d - 1)) / d; }
 
 #define SF(T)                                                                                       \
+    inline T sign(T v) { return v < T(0.0) ? T(-1.0) : T(1.0); }                                    \
     inline T rcp(T v) { return T(1.0) / v; }                                                        \
     inline T rsqrt(T v) { return T(1.0) / std::sqrt(v); }                                           \
     inline T mod(T a, T b) { return std::fmod(a, b); }                                              \
@@ -384,6 +387,7 @@ VF1std(floor)
 VF1std(ceil)
 VF2std(min)
 VF2std(max)
+VF1(sign)
 VF1(rcp)
 VF1std(sqrt)
 VF1(rsqrt)
@@ -493,7 +497,11 @@ template<class T> inline T length(const tvec4<T>& v) { return sqrt(length_sq(v))
 template<class T> inline tvec2<T> normalize(const tvec2<T>& v) { return v / length(v); }
 template<class T> inline tvec3<T> normalize(const tvec3<T>& v) { return v / length(v); }
 template<class T> inline tvec4<T> normalize(const tvec4<T>& v) { return v / length(v); }
-template<class T> inline tquat<T> normalize(const tquat<T>& v) { return (tquat<T>&)normalize((const tvec4<T>&)v); }
+template<class T> inline tquat<T> normalize(const tquat<T>& v)
+{
+    auto r = normalize((const tvec4<T>&)v);
+    return (const tquat<T>&)r;
+}
 template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
 {
     return{
@@ -505,13 +513,25 @@ template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
 // a & b must be normalized
 template<class T> inline T angle_between(const tvec3<T>& a, const tvec3<T>& b)
 {
-    return acos(dot(a, b));
+    return acos(clamp01(dot(a, b)));
 }
-template<class T> inline T angle_between2(const tvec3<T>& pos1, const tvec3<T>& pos2, const tvec3<T>& center)
+template<class T> inline T angle_between2(const tvec3<T>& p1, const tvec3<T>& p2, const tvec3<T>& center)
 {
     return angle_between(
-        normalize(pos1 - center),
-        normalize(pos2 - center));
+        normalize(p1 - center),
+        normalize(p2 - center));
+}
+
+template<class T> inline T angle_between_signed(const tvec3<T>& a, const tvec3<T>& b, const tvec3<T>& n)
+{
+    float ret = atan2(length(cross(a, b)), dot(a, b));
+    if (dot(n, cross(a, b)) < 0)
+        ret *= -1.0f;
+    return ret;
+}
+template<class T> inline T angle_between2_signed(const tvec3<T>& p1, const tvec3<T>& p2, const tvec3<T>& center, const tvec3<T>& n)
+{
+    return angle_between_signed((p1 - center), (p2 - center), n);
 }
 
 template<class T> inline tvec3<T> apply_rotation(const tquat<T>& q, const tvec3<T>& p)
@@ -658,7 +678,7 @@ template<class T> inline void to_axis_angle(const tquat<T>& q, tvec3<T>& axis, T
 
 template<class T> inline tmat3x3<T> look33(const tvec3<T>& forward, const tvec3<T>& up)
 {
-    auto z = forward;
+    auto z = normalize(forward);
     auto x = normalize(cross(up, z));
     auto y = cross(z, x);
     return{ {
@@ -667,31 +687,79 @@ template<class T> inline tmat3x3<T> look33(const tvec3<T>& forward, const tvec3<
         { x.z, y.z, z.z },
     } };
 }
+template<class T> inline tmat4x4<T> look44(const tvec3<T>& forward, const tvec3<T>& up)
+{
+    auto z = normalize(forward);
+    auto x = normalize(cross(up, z));
+    auto y = cross(z, x);
+    return{ {
+        { x.x, y.x, z.x, T(0) },
+        { x.y, y.y, z.y, T(0) },
+        { x.z, y.z, z.z, T(0) },
+        {T(0),T(0),T(0), T(1) },
+    } };
+}
 
 template<class T> inline tvec3<T> swap_handedness(const tvec3<T>& v) { return { -v.x, v.y, v.z }; }
 template<class T> inline tvec4<T> swap_handedness(const tvec4<T>& v) { return { -v.x, v.y, v.z, v.w }; }
 template<class T> inline tquat<T> swap_handedness(const tquat<T>& v) { return { v.x, -v.y, -v.z, v.w }; }
 template<class T> inline tmat3x3<T> swap_handedness(const tmat3x3<T>& m)
 {
-    return{ {
-        { m[0].x,-m[0].y,-m[0].z },
-        {-m[1].x, m[1].y, m[1].z },
-        {-m[2].x, m[2].y, m[2].z },
-    } };
+    return tmat3x3<T> {
+         m[0].x,-m[0].y,-m[0].z,
+        -m[1].x, m[1].y, m[1].z,
+        -m[2].x, m[2].y, m[2].z,
+    };
 }
 template<class T> inline tmat4x4<T> swap_handedness(const tmat4x4<T>& m)
 {
-    return{ {
-        { m[0].x,-m[0].y,-m[0].z, m[0].w },
-        {-m[1].x, m[1].y, m[1].z, m[1].w },
-        {-m[2].x, m[2].y, m[2].z, m[2].w },
-        {-m[3].x, m[3].y, m[3].z, m[3].w },
-    } };
+    return tmat4x4<T> {
+         m[0].x,-m[0].y,-m[0].z, m[0].w,
+        -m[1].x, m[1].y, m[1].z, m[1].w,
+        -m[2].x, m[2].y, m[2].z, m[2].w,
+        -m[3].x, m[3].y, m[3].z, m[3].w,
+    };
+}
+
+
+template<class T> inline tvec3<T> swap_yz(const tvec3<T>& v) { return { v.x, v.z, v.y }; }
+template<class T> inline tvec4<T> swap_yz(const tvec4<T>& v) { return { v.x, v.z, v.y, v.w }; }
+template<class T> inline tquat<T> swap_yz(const tquat<T>& v) { return {-v.x,-v.z,-v.y, v.w }; }
+template<class T> inline tmat3x3<T> swap_yz(const tmat3x3<T>& m)
+{
+    return m * tmat3x3<T> {
+        1, 0, 0,
+        0, 0, 1,
+        0, 1, 0,
+    };
+}
+template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
+{
+    return m * tmat4x4<T> {
+        1, 0, 0, 0,
+        0, 0, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 1,
+    };
+}
+
+template<class T> inline tmat3x3<T> to_mat3x3(const tmat4x4<T>& v)
+{
+    return { (tvec3<T>&)v[0], (tvec3<T>&)v[1], (tvec3<T>&)v[2] };
+}
+template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
+{
+    return tmat4x4<T>{
+        v[0][0], v[0][1], v[0][2], 0,
+        v[1][0], v[1][1], v[1][2], 0,
+        v[2][0], v[2][1], v[2][2], 0,
+              0,       0,       0, 1,
+    };
 }
 
 template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)
 {
-    return {{
+    return tmat3x3<T>{{
         {T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,        },
         {T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,        },
         {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y}
@@ -699,7 +767,7 @@ template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)
 }
 template<class T> inline tmat4x4<T> to_mat4x4(const tquat<T>& q)
 {
-    return {{
+    return tmat4x4<T>{{
         {T(1.0)-T(2.0)*q.y*q.y - T(2.0)*q.z*q.z,T(2.0)*q.x*q.y - T(2.0)*q.z*q.w,         T(2.0)*q.x*q.z + T(2.0)*q.y*q.w,         T(0.0)},
         {T(2.0)*q.x*q.y + T(2.0)*q.z*q.w,       T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.z*q.z,T(2.0)*q.y*q.z - T(2.0)*q.x*q.w,         T(0.0)},
         {T(2.0)*q.x*q.z - T(2.0)*q.y*q.w,       T(2.0)*q.y*q.z + T(2.0)*q.x*q.w,         T(1.0) - T(2.0)*q.x*q.x - T(2.0)*q.y*q.y,T(0.0)},
@@ -707,32 +775,41 @@ template<class T> inline tmat4x4<T> to_mat4x4(const tquat<T>& q)
     }};
 }
 
+template<class T> inline bool is_negative(const tmat3x3<T>& m)
+{
+    return dot(cross(m[0], m[1]), m[2]) < 0;
+}
+template<class T> inline bool is_negative(const tmat4x4<T>& m)
+{
+    return dot(cross((tvec3<T>&)m[0], (tvec3<T>&)m[1]), (tvec3<T>&)m[2]) < 0;
+}
+
 template<class T> inline tmat4x4<T> translate(const tvec3<T>& t)
 {
-    return {{
-        { T(1.0), T(0.0), T(0.0), T(0.0) },
-        { T(0.0), T(1.0), T(0.0), T(0.0) },
-        { T(0.0), T(0.0), T(1.0), T(0.0) },
-        {    t.x,    t.y,    t.z, T(1.0) }
+    return tmat4x4<T>{{
+        {T(1.0), T(0.0), T(0.0), T(0.0)},
+        {T(0.0), T(1.0), T(0.0), T(0.0)},
+        {T(0.0), T(0.0), T(1.0), T(0.0)},
+        {   t.x,    t.y,    t.z, T(1.0)}
     }};
 }
 
 template<class T> inline tmat3x3<T> scale33(const tvec3<T>& t)
 {
-    return{{
-        {    t.x, T(0.0), T(0.0) },
-        { T(0.0),    t.y, T(0.0) },
-        { T(0.0), T(0.0),    t.z },
-    }};
+    return tmat3x3<T>{
+           t.x, T(0.0), T(0.0),
+        T(0.0),    t.y, T(0.0),
+        T(0.0), T(0.0),    t.z,
+    };
 }
 template<class T> inline tmat4x4<T> scale44(const tvec3<T>& t)
 {
-    return{{
-        {    t.x, T(0.0), T(0.0), T(0.0) },
-        { T(0.0),    t.y, T(0.0), T(0.0) },
-        { T(0.0), T(0.0),    t.z, T(0.0) },
-        { T(0.0), T(0.0), T(0.0), T(1.0) }
-    }};
+    return tmat4x4<T>{
+           t.x, T(0.0), T(0.0), T(0.0),
+        T(0.0),    t.y, T(0.0), T(0.0),
+        T(0.0), T(0.0),    t.z, T(0.0),
+        T(0.0), T(0.0), T(0.0), T(1.0)
+    };
 }
 
 template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>& r, const tvec3<T>& s)
@@ -745,20 +822,20 @@ template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>&
 
 template<class T> inline tmat3x3<T> transpose(const tmat3x3<T>& x)
 {
-    return{{
-        { x[0][0], x[1][0], x[2][0] },
-        { x[0][1], x[1][1], x[2][1] },
-        { x[0][2], x[1][2], x[2][2] },
-    }};
+    return tmat3x3<T>{
+        x[0][0], x[1][0], x[2][0],
+        x[0][1], x[1][1], x[2][1],
+        x[0][2], x[1][2], x[2][2],
+    };
 }
 template<class T> inline tmat4x4<T> transpose(const tmat4x4<T>& x)
 {
-    return{{
-        { x[0][0], x[1][0], x[2][0], x[3][0] },
-        { x[0][1], x[1][1], x[2][1], x[3][1] },
-        { x[0][2], x[1][2], x[2][2], x[3][2] },
-        { x[0][3], x[1][3], x[2][3], x[3][3] },
-    }};
+    return tmat4x4<T>{
+        x[0][0], x[1][0], x[2][0], x[3][0],
+        x[0][1], x[1][1], x[2][1], x[3][1],
+        x[0][2], x[1][2], x[2][2], x[3][2],
+        x[0][3], x[1][3], x[2][3], x[3][3],
+    };
 }
 
 template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
@@ -787,7 +864,7 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
             }
         }
         else {
-            T mr = abs(r) / numeric_limits<T>::min();
+            T mr = abs(r) / std::numeric_limits<T>::min();
 
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
@@ -820,7 +897,7 @@ template<class T> inline tmat3x3<T> invert(const tmat3x3<T>& x)
             }
         }
         else {
-            T mr = abs(r) / numeric_limits<T>::min();
+            T mr = abs(r) / std::numeric_limits<T>::min();
 
             for (int i = 0; i < 2; ++i) {
                 for (int j = 0; j < 2; ++j) {
@@ -929,10 +1006,6 @@ inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T
 template<class T>
 inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tvec3<T>& forward, tvec3<T>& up, tvec3<T>& right)
 {
-    //tmat3x3<T> view33 = { (tvec3<T>&)view[0], (tvec3<T>&)view[1], (tvec3<T>&)view[2] };
-    //tvec3<T> d = (tvec3<T>&)view[3];
-    //pos = view33 * -d;
-
     auto tview = transpose(view);
 
     auto n1 = (tvec3<T>&)tview[0];
@@ -957,14 +1030,19 @@ inline void extract_look_data(const tmat4x4<T>& view, tvec3<T>& pos, tquat<T>& r
 {
     tvec3<T> forward, up, right;
     extract_look_data(view, pos, forward, up, right);
-    rot = to_quat(look33(forward, tvec3<T>{ T(0.0), T(1.0), T(0.0) }));
+    rot = to_quat(look33(forward, up));
 }
 
 
 template<class TMat>
-inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
+inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m_)
 {
     using T = typename TMat::scalar_t;
+    tmat3x3<T> m {
+        normalize((tvec3<T>&)m_[0]),
+        normalize((tvec3<T>&)m_[1]),
+        normalize((tvec3<T>&)m_[2])
+    };
 
     T trace = m[0][0] + m[1][1] + m[2][2];
     T root;
@@ -1004,13 +1082,98 @@ inline tquat<typename TMat::scalar_t> to_quat_impl(const TMat& m)
     return q;
 }
 
-template<class T> inline quatf to_quat(const tmat3x3<T>& m)
+template<class T> inline tquat<T> to_quat(const tmat3x3<T>& m)
 {
     return to_quat_impl(m);
 }
-template<class T> inline quatf to_quat(const tmat4x4<T>& m)
+template<class T> inline tquat<T> to_quat(const tmat4x4<T>& m)
 {
     return to_quat_impl(m);
+}
+
+template<class T> inline tvec3<T> extract_position(const tmat4x4<T>& m)
+{
+    return (const tvec3<T>&)m[3];
+}
+
+
+template<class TMat>
+inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m)
+{
+    using T = typename TMat::scalar_t;
+    tquat<T> q;
+    T tr, s;
+
+    tr = T(0.25) * (T(1) + m[0][0] + m[1][1] + m[2][2]);
+
+    if (tr > T(1e-4f)) {
+        s = sqrt(tr);
+        q[3] = (float)s;
+        s = T(1) / (T(4) * s);
+        q[0] = (m[1][2] - m[2][1]) * s;
+        q[1] = (m[2][0] - m[0][2]) * s;
+        q[2] = (m[0][1] - m[1][0]) * s;
+    }
+    else {
+        if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) {
+            s = T(2) * sqrt(T(1) + m[0][0] - m[1][1] - m[2][2]);
+            q[0] = T(0.25) * s;
+
+            s = T(1) / s;
+            q[3] = (m[1][2] - m[2][1]) * s;
+            q[1] = (m[1][0] + m[0][1]) * s;
+            q[2] = (m[2][0] + m[0][2]) * s;
+        }
+        else if (m[1][1] > m[2][2]) {
+            s = T(2) * sqrt(T(1) + m[1][1] - m[0][0] - m[2][2]);
+            q[1] = T(0.25) * s;
+
+            s = T(1) / s;
+            q[3] = (m[2][0] - m[0][2]) * s;
+            q[0] = (m[1][0] + m[0][1]) * s;
+            q[2] = (m[2][1] + m[1][2]) * s;
+        }
+        else {
+            s = T(2) * sqrt(T(1) + m[2][2] - m[0][0] - m[1][1]);
+            q[2] = T(0.25) * s;
+
+            s = T(1) / s;
+            q[3] = (m[0][1] - m[1][0]) * s;
+            q[0] = (m[2][0] + m[0][2]) * s;
+            q[1] = (m[2][1] + m[1][2]) * s;
+        }
+    }
+    return normalize(q);
+}
+template<class T> inline tquat<T> extract_rotation(const tmat3x3<T>& m)
+{
+    return extract_rotation_impl(m);
+}
+template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
+{
+    return extract_rotation_impl(m);
+}
+
+//template<class T> inline tquat<T> extract_rotation(const tmat3x3<T>& m)
+//{
+//    auto forward = (tvec3<T>&)m[2];
+//    auto upwards = (tvec3<T>&)m[1];
+//    return to_quat(look33(forward, upwards));
+//}
+//template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
+//{
+//    auto forward = (tvec3<T>&)m[2];
+//    auto upwards = (tvec3<T>&)m[1];
+//    return to_quat(look33(forward, upwards));
+//}
+
+template<class T> inline tvec3<T> extract_scale(const tmat3x3<T>& m)
+{
+    return tvec3<T>{length(m[0]), length(m[1]), length(m[2])};
+}
+template<class T> inline tvec3<T> extract_scale(const tmat4x4<T>& m)
+{
+    return tvec3<T>{length((tvec3<T>&)m[0]), length((tvec3<T>&)m[1]), length((tvec3<T>&)m[2])};
 }
 
 // aperture and focal_length must be millimeter. return fov in degree
@@ -1084,22 +1247,28 @@ template<class T> inline void compute_triangle_tangent(
     auto s = tvec2<T>{ uv[1].x - uv[0].x, uv[2].x - uv[0].x };
     auto t = tvec2<T>{ uv[1].y - uv[0].y, uv[2].y - uv[0].y };
 
+    tvec3<T> tangent, binormal;
     T div = s.x * t.y - s.y * t.x;
     T area = abs(div);
-    T rdiv = T(1.0) / div;
-    s *= rdiv;
-    t *= rdiv;
+    if (area > 1e-8f) {
+        T rdiv = T(1.0) / div;
+        s *= rdiv;
+        t *= rdiv;
 
-    auto tangent = normalize(tvec3<T>{
-        t.y * p.x - t.x * q.x,
-        t.y * p.y - t.x * q.y,
-        t.y * p.z - t.x * q.z
-    }) * area;
-    auto binormal = normalize(tvec3<T>{
-        s.x * q.x - s.y * p.x,
-        s.x * q.y - s.y * p.y,
-        s.x * q.z - s.y * p.z
-    }) * area;
+        tangent = normalize(tvec3<T>{
+            t.y * p.x - t.x * q.x,
+                t.y * p.y - t.x * q.y,
+                t.y * p.z - t.x * q.z
+        }) * area;
+        binormal = normalize(tvec3<T>{
+            s.x * q.x - s.y * p.x,
+                s.x * q.y - s.y * p.y,
+                s.x * q.z - s.y * p.z
+        }) * area;
+    }
+    else {
+        tangent = binormal = tvec3<T>::zero();
+    }
 
     T angles[3] = {
         angle_between2(vertices[2], vertices[1], vertices[0]),
@@ -1127,7 +1296,6 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
     auto magB = length(binormal);
     binormal = binormal / magB;
 
-#if 0
     const auto epsilon = 1e-6f;
     if (magT <= epsilon || magB <= epsilon)
     {
@@ -1164,7 +1332,6 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
         tangent = normalize(axis1 - normal * dot(normal, axis1));
         binormal = normalize(axis2 - normal * dot(normal, axis2) - normalize(tangent) * dot(tangent, axis2));
     }
-#endif
 
     return { tangent.x, tangent.y, tangent.z,
         dot(cross(normal, tangent), binormal) > T(0.0) ? T(1.0) : -T(1.0) };

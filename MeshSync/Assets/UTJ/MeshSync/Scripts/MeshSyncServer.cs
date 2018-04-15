@@ -28,10 +28,10 @@ namespace UTJ.MeshSync
         Dictionary<int, Record> m_hostObjects = new Dictionary<int, Record>();
         Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
 
-        [HideInInspector][SerializeField] string[] m_clientMeshes_keys;
-        [HideInInspector][SerializeField] Record[] m_clientMeshes_values;
-        [HideInInspector][SerializeField] int[] m_hostMeshes_keys;
-        [HideInInspector][SerializeField] Record[] m_hostMeshes_values;
+        [HideInInspector][SerializeField] string[] m_clientObjects_keys;
+        [HideInInspector][SerializeField] Record[] m_clientObjects_values;
+        [HideInInspector][SerializeField] int[] m_hostObjects_keys;
+        [HideInInspector][SerializeField] Record[] m_hostObjects_values;
         [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector][SerializeField] int[] m_objIDTable_values;
         #endregion
@@ -79,17 +79,16 @@ namespace UTJ.MeshSync
 
         public void OnBeforeSerialize()
         {
-            SerializeDictionary(m_clientObjects, ref m_clientMeshes_keys, ref m_clientMeshes_values);
-            SerializeDictionary(m_hostObjects, ref m_hostMeshes_keys, ref m_hostMeshes_values);
+            SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
+            SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
         public void OnAfterDeserialize()
         {
-            DeserializeDictionary(m_clientObjects, ref m_clientMeshes_keys, ref m_clientMeshes_values);
-            DeserializeDictionary(m_hostObjects, ref m_hostMeshes_keys, ref m_hostMeshes_values);
+            DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
+            DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
             DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
-
 
 
         void StartServer()
@@ -250,9 +249,7 @@ namespace UTJ.MeshSync
             {
                 int numMaterials = scene.numMaterials;
                 if (numMaterials > 0)
-                {
                     UpdateMaterials(scene);
-                }
             }
             catch (Exception e) { Debug.Log(e); }
 
@@ -261,9 +258,7 @@ namespace UTJ.MeshSync
             {
                 int numTransforms = scene.numTransforms;
                 for (int i = 0; i < numTransforms; ++i)
-                {
                     UpdateTransform(scene.GetTransform(i));
-                }
             }
             catch (Exception e) { Debug.Log(e); }
 
@@ -272,10 +267,7 @@ namespace UTJ.MeshSync
             {
                 int numCameras = scene.numCameras;
                 for (int i = 0; i < numCameras; ++i)
-                {
                     UpdateCamera(scene.GetCamera(i));
-                }
-
             }
             catch (Exception e) { Debug.Log(e); }
 
@@ -284,10 +276,7 @@ namespace UTJ.MeshSync
             {
                 int numLights = scene.numLights;
                 for (int i = 0; i < numLights; ++i)
-                {
                     UpdateLight(scene.GetLight(i));
-                }
-
             }
             catch (Exception e) { Debug.Log(e); }
 
@@ -296,11 +285,36 @@ namespace UTJ.MeshSync
             {
                 int numMeshes = scene.numMeshes;
                 for (int i = 0; i < numMeshes; ++i)
-                {
                     UpdateMesh(scene.GetMesh(i));
-                }
             }
             catch (Exception e) { Debug.Log(e); }
+
+            // update references
+            {
+                foreach(var pair in m_clientObjects)
+                {
+                    var dstrec = pair.Value;
+                    if (dstrec.go == null)
+                        continue;
+                    else if (dstrec.reference == null)
+                        continue;
+
+                    Record srcrec = null;
+                    if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
+                    {
+                        if (srcrec.go == null)
+                            continue;
+                        var src = srcrec.go.GetComponent<SkinnedMeshRenderer>();
+                        if (src == null)
+                            continue;
+                        var dst = dstrec.go.GetComponent<SkinnedMeshRenderer>();
+                        if (dst == null)
+                            dst = dstrec.go.AddComponent<SkinnedMeshRenderer>();
+                        dst.sharedMesh = src.sharedMesh;
+                        dst.sharedMaterials = src.sharedMaterials;
+                    }
+                }
+            }
 
             GC.Collect();
         }
@@ -372,225 +386,194 @@ namespace UTJ.MeshSync
 
         void UpdateMesh(MeshData data)
         {
+            var trans = UpdateTransform(data.transform);
+            if (trans == null) { return; }
+
             var data_trans = data.transform;
             var data_id = data_trans.id;
             var path = data_trans.path;
-            bool createdNewMesh = false;
 
-            // find or create target object
             Record rec = null;
-            if(data_id != 0 && m_hostObjects.ContainsKey(data_id))
+            if (!m_clientObjects.TryGetValue(path, out rec))
+                m_hostObjects.TryGetValue(data_id, out rec);
+            if (rec == null)
             {
-                rec = m_hostObjects[data_id];
-                if(rec.go == null)
-                {
-                    m_hostObjects.Remove(data_id);
-                    rec = null;
-                }
+                Debug.LogError("Something wrong");
+                return;
             }
-            else if(m_clientObjects.ContainsKey(path))
-            {
-                rec = m_clientObjects[path];
-                if (rec.go == null)
-                {
-                    m_clientObjects.Remove(path);
-                    rec = null;
-                }
-            }
-
-            if(rec == null)
-            {
-                var t = FindOrCreateObjectByPath(path, true, ref createdNewMesh);
-                if(t != null)
-                {
-                    rec = new Record
-                    {
-                        go = t.gameObject,
-                        recved = true,
-                    };
-                    m_clientObjects[path] = rec;
-                }
-            }
-            if (rec == null) { return; }
-            rec.index = data_trans.index;
-
 
             var target = rec.go.GetComponent<Transform>();
             var go = target.gameObject;
 
-            // update transform
-            if (data.flags.applyTRS)
-            {
-                UpdateTransform(data_trans);
-            }
-            else
-            {
-                // if object is not visible, just disable and return
-                if (!data_trans.visible)
-                {
-                    if (go.activeSelf) go.SetActive(false);
-                }
-                else
-                {
-                    if (!go.activeSelf) go.SetActive(true);
-                }
-            }
-            if (!go.activeInHierarchy) { return; }
+            bool activeInHierarchy = go.activeInHierarchy;
+            if (!activeInHierarchy && !data.flags.hasPoints) { return; }
 
 
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
             var flags = data.flags;
-
             bool skinned = data.numBones > 0;
 
-            var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
-            if (smr != null && !rec.recved && !skinned)
+            // update mesh
+            for (int si = 0; si < data.numSplits; ++si)
             {
-                // update skinned mesh - only when topology is not changed
-                rec.editMesh = CreateEditedMesh(data, data.GetSplit(0), true, rec.origMesh);
-                if (rec.editMesh == null)
+                var t = target;
+                if (si > 0)
                 {
-                    if (m_logging)
-                    {
-                        Debug.Log("edit for " + rec.origMesh.name + " is ignored. currently changing topology of skinned meshes is not supported.");
-                    }
+                    bool created = false;
+                    t = FindOrCreateObjectByPath(path + "/[" + si + "]", true, ref created);
+                    t.gameObject.SetActive(true);
+                }
+
+                var split = data.GetSplit(si);
+                if(split.numPoints == 0 || split.numIndices == 0)
+                {
+                    rec.editMesh = null;
                 }
                 else
+                {
+                    rec.editMesh = CreateEditedMesh(data, split);
+                    rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                }
+
+                var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
+                if (smr != null)
                 {
                     var old = smr.sharedMesh;
                     smr.sharedMesh = rec.editMesh;
                     DestroyIfNotAsset(old);
-                }
-            }
-            else
-            {
-                // update mesh
-                for (int si = 0; si < data.numSplits; ++si)
-                {
-                    var t = target;
-                    if (si > 0)
+
+                    if (skinned)
                     {
-                        t = FindOrCreateObjectByPath(path + "/[" + si + "]", true, ref createdNewMesh);
-                        t.gameObject.SetActive(true);
-                    }
-
-                    var split = data.GetSplit(si);
-                    rec.editMesh = CreateEditedMesh(data, split);
-                    rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
-
-                    smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
-                    if (smr != null)
-                    {
-                        var old = smr.sharedMesh;
-                        smr.sharedMesh = rec.editMesh;
-                        DestroyIfNotAsset(old);
-
-                        if (skinned)
+                        // create bones
+                        var paths = data.GetBonePaths();
+                        var bones = new Transform[data.numBones];
+                        for (int bi = 0; bi < bones.Length; ++bi)
                         {
-                            // create bones
-                            var paths = data.GetBonePaths();
-                            var bones = new Transform[data.numBones];
-                            for (int bi = 0; bi < bones.Length; ++bi)
+                            bool created = false;
+                            bones[bi] = FindOrCreateObjectByPath(paths[bi], true, ref created);
+                            if (created)
                             {
-                                bool created = false;
-                                bones[bi] = FindOrCreateObjectByPath(paths[bi], true, ref created);
-                                if (created)
+                                var newrec = new Record
                                 {
-                                    m_clientObjects.Add(paths[bi], new Record
-                                    {
-                                        go = bones[bi].gameObject,
-                                        recved = true,
-                                    });
-                                }
-                            }
-
-                            if (bones.Length > 0)
-                            {
-                                bool created = false;
-                                var root = FindOrCreateObjectByPath(data.rootBonePath, true, ref created);
-                                if (root == null)
-                                    root = bones[0];
-                                smr.rootBone = root;
-                                smr.bones = bones;
+                                    go = bones[bi].gameObject,
+                                    recved = true,
+                                };
+                                if (m_clientObjects.ContainsKey(paths[bi]))
+                                    m_clientObjects[paths[bi]] = newrec;
+                                else
+                                    m_clientObjects.Add(paths[bi], newrec);
                             }
                         }
-                        else
+
+                        if (bones.Length > 0)
                         {
-                            if(smr.rootBone != null)
-                            {
-                                smr.bones = null;
-                                smr.rootBone = null;
-                            }
+                            bool created = false;
+                            var root = FindOrCreateObjectByPath(data.rootBonePath, true, ref created);
+                            if (root == null)
+                                root = bones[0];
+                            smr.rootBone = root;
+                            smr.bones = bones;
+                        }
+                    }
+                    else
+                    {
+                        if (smr.rootBone != null)
+                        {
+                            smr.bones = null;
+                            smr.rootBone = null;
                         }
                     }
                 }
-
-                int num_splits = Math.Max(1, data.numSplits);
-                for (int si = num_splits; ; ++si)
-                {
-                    bool created = false;
-                    var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
-                    if (t == null) { break; }
-                    DestroyImmediate(t.gameObject);
-                }
             }
 
+            int num_splits = Math.Max(1, data.numSplits);
+            for (int si = num_splits; ; ++si)
+            {
+                bool created = false;
+                var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
+                if (t == null) { break; }
+                DestroyImmediate(t.gameObject);
+            }
+
+            if (activeInHierarchy)
             {
                 rec.go.SetActive(false); // 
-                rec.go.SetActive(true);  // force recalculate skinned mesh in editor. I couldn't find better way...
+                rec.go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
             }
 
             // assign materials if needed
             if (materialsUpdated)
-            {
                 AssignMaterials(rec);
-            }
         }
 
-        Mesh CreateEditedMesh(MeshData data, SplitData split, bool noTopologyUpdate = false, Mesh prev = null)
-        {
-            if(noTopologyUpdate)
-            {
-                if(data.numPoints != prev.vertexCount) { return null; }
-            }
+        PinnedList<int> tmpI = new PinnedList<int>();
+        PinnedList<Vector2> tmpV2 = new PinnedList<Vector2>();
+        PinnedList<Vector3> tmpV3 = new PinnedList<Vector3>();
+        PinnedList<Vector3> tmpV3a = new PinnedList<Vector3>();
+        PinnedList<Vector3> tmpV3b = new PinnedList<Vector3>();
+        PinnedList<Vector4> tmpV4 = new PinnedList<Vector4>();
+        PinnedList<Color> tmpC = new PinnedList<Color>();
 
-            var mesh = noTopologyUpdate ? Instantiate<Mesh>(prev) : new Mesh();
+        Mesh CreateEditedMesh(MeshData data, SplitData split)
+        {
+            var mesh = new Mesh();
 #if UNITY_2017_3_OR_NEWER
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 #endif
+
             var flags = data.flags;
             if (flags.hasPoints)
             {
-                mesh.vertices = split.points;
+                tmpV3.Resize(split.numPoints);
+                data.ReadPoints(tmpV3, split);
+                mesh.SetVertices(tmpV3);
             }
             if (flags.hasNormals)
             {
-                mesh.normals = split.normals;
+                tmpV3.Resize(split.numPoints);
+                data.ReadNormals(tmpV3, split);
+                mesh.SetNormals(tmpV3);
             }
             if (flags.hasTangents)
             {
-                mesh.tangents = split.tangents;
+                tmpV4.Resize(split.numPoints);
+                data.ReadTangents(tmpV4, split);
+                mesh.SetTangents(tmpV4);
             }
-            if (flags.hasUV)
+            if (flags.hasUV0)
             {
-                mesh.uv = split.uv;
+                tmpV2.Resize(split.numPoints);
+                data.ReadUV0(tmpV2, split);
+                mesh.SetUVs(0, tmpV2);
+            }
+            if (flags.hasUV1)
+            {
+                tmpV2.Resize(split.numPoints);
+                data.ReadUV1(tmpV2, split);
+                mesh.SetUVs(1, tmpV2);
             }
             if (flags.hasColors)
             {
-                mesh.colors = split.colors;
+                tmpC.Resize(split.numPoints);
+                data.ReadColors(tmpC, split);
+                mesh.SetColors(tmpC);
             }
             if (flags.hasBones)
             {
-                mesh.boneWeights = split.boneWeights;
+                var tmpW = new PinnedList<BoneWeight>();
+                tmpW.Resize(split.numPoints);
+                data.ReadBoneWeights(tmpW, split);
                 mesh.bindposes = data.bindposes;
+                mesh.boneWeights = tmpW;
             }
-
-            if(!noTopologyUpdate && flags.hasIndices)
+            if(flags.hasIndices)
             {
                 if (split.numSubmeshes == 0)
                 {
-                    mesh.SetIndices(split.indices, MeshTopology.Triangles, 0);
+                    tmpI.Resize(split.numIndices);
+                    data.ReadIndices(tmpI, split);
+                    mesh.SetIndices(tmpI, MeshTopology.Triangles, 0);
                 }
                 else
                 {
@@ -602,6 +585,28 @@ namespace UTJ.MeshSync
                     }
                 }
             }
+            if (flags.hasBlendshapes)
+            {
+                tmpV3.Resize(split.numPoints);
+                tmpV3a.Resize(split.numPoints);
+                tmpV3b.Resize(split.numPoints);
+
+                int numBlendShapes = data.numBlendShapes;
+                for (int bi = 0; bi < numBlendShapes; ++bi)
+                {
+                    var bsd = data.GetBlendShapeData(bi);
+                    var name = bsd.name;
+                    var numFrames = bsd.numFrames;
+                    for (int fi = 0; fi < numFrames; ++fi)
+                    {
+                        bsd.ReadPoints(fi, tmpV3, split);
+                        bsd.ReadNormals(fi, tmpV3a, split);
+                        bsd.ReadTangents(fi, tmpV3b, split);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpV3, tmpV3a, tmpV3b);
+                    }
+                }
+            }
+
             mesh.RecalculateBounds();
             mesh.UploadMeshData(false);
             return mesh;
@@ -631,28 +636,67 @@ namespace UTJ.MeshSync
 
         Transform UpdateTransform(TransformData data)
         {
-            bool created = false;
-            var trans = FindOrCreateObjectByPath(data.path, true, ref created);
-            if (trans == null) { return null; }
-            var go = trans.gameObject;
+            var path = data.path;
+            int data_id = data.id;
+            if(path.Length == 0) { return null; }
+
+            Transform trans = null;
+            Record rec = null;
+            if (data_id != 0)
+            {
+                if (m_hostObjects.TryGetValue(data_id, out rec))
+                {
+                    if (rec.go == null)
+                    {
+                        m_hostObjects.Remove(data_id);
+                        rec = null;
+                    }
+                }
+            }
+            else
+            {
+                if (m_clientObjects.TryGetValue(path, out rec))
+                {
+                    if (rec.go == null)
+                    {
+                        m_clientObjects.Remove(path);
+                        rec = null;
+                    }
+                }
+            }
+
+            if (rec != null)
+            {
+                trans = rec.go.GetComponent<Transform>();
+            }
+            else
+            {
+                bool created = false;
+                trans = FindOrCreateObjectByPath(path, true, ref created);
+                rec = new Record
+                {
+                    go = trans.gameObject,
+                    recved = true,
+                };
+                m_clientObjects.Add(path, rec);
+            }
+
+            rec.index = data.index;
+            var reference = data.reference;
+            rec.reference = reference != "" ? reference : null;
 #if UNITY_EDITOR
             Undo.RecordObject(trans, "MeshSync");
 #endif
 
             // import TRS
-            var trs = data.trs;
-            trans.localPosition = trs.position;
-            trans.localRotation = trs.rotation;
-            trans.localScale = trs.scale;
+            trans.localPosition = data.position;
+            trans.localRotation = data.rotation;
+            trans.localScale = data.scale;
 
-            if (!data.visible)
-            {
-                if(go.activeSelf) go.SetActive(false);
-            }
-            else
-            {
-                if (!go.activeSelf) go.SetActive(true);
-            }
+            // visibility
+            var renderer = trans.gameObject.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.enabled = data.visible;
 
 #if UNITY_EDITOR
             var animData = data.animation;
@@ -701,7 +745,6 @@ namespace UTJ.MeshSync
                 animData.ExportToClip(clip, animPath, false);
             }
 #endif
-
             return trans;
         }
 
@@ -712,9 +755,7 @@ namespace UTJ.MeshSync
 
             var cam = trans.GetComponent<Camera>();
             if(cam == null)
-            {
                 cam = trans.gameObject.AddComponent<Camera>();
-            }
             cam.orthographic = data.orthographic;
             cam.fieldOfView = data.fov;
             cam.nearClipPlane = data.nearClipPlane;
@@ -974,17 +1015,11 @@ namespace UTJ.MeshSync
             if (ret)
             {
                 var dst_trans = dst.transform;
-                dst_trans.id = GetObjectlID(renderer.gameObject);
                 var trans = renderer.GetComponent<Transform>();
-                if (mes.flags.getTransform)
-                {
-                    var trs = default(TRS);
-                    trs.position = trans.localPosition;
-                    trs.rotation = trans.localRotation;
-                    trs.rotation_eularZXY = trans.localEulerAngles;
-                    trs.scale = trans.localScale;
-                    dst_trans.trs = trs;
-                }
+                dst_trans.id = GetObjectlID(renderer.gameObject);
+                dst_trans.position = trans.localPosition;
+                dst_trans.rotation = trans.localRotation;
+                dst_trans.scale = trans.localScale;
                 dst.local2world = trans.localToWorldMatrix;
                 dst.world2local = trans.worldToLocalMatrix;
 
@@ -1055,7 +1090,7 @@ namespace UTJ.MeshSync
                 {
                     dst.SetBonePaths(smr.bones);
                     dst.bindposes = mesh.bindposes;
-                    dst.boneWeights = mesh.boneWeights;
+                    dst.WriteWeights(mesh.boneWeights);
                 }
             }
             return true;
@@ -1063,33 +1098,36 @@ namespace UTJ.MeshSync
 
         void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials)
         {
-            bool use_cloth = cloth != null;
-
+            // todo: cloth?
             if (flags.getPoints)
             {
-                data.points = use_cloth ? cloth.vertices : mesh.vertices;
+                data.WritePoints(mesh.vertices);
             }
             if (flags.getNormals)
             {
-                data.normals = use_cloth ? cloth.normals : mesh.normals;
+                data.WriteNormals(mesh.normals);
             }
             if (flags.getTangents)
             {
-                data.tangents = mesh.tangents;
+                data.WriteTangents(mesh.tangents);
             }
-            if (flags.getUV)
+            if (flags.getUV0)
             {
-                data.uv = mesh.uv;
+                data.WriteUV0(mesh.uv);
+            }
+            if (flags.getUV1)
+            {
+                data.WriteUV1(mesh.uv2);
             }
             if (flags.getColors)
             {
-                data.colors = mesh.colors;
+                data.WriteColors(mesh.colors);
             }
             if (flags.getIndices)
             {
                 if(!flags.getMaterialIDs || materials == null || materials.Length == 0)
                 {
-                    data.indices = mesh.triangles;
+                    data.WriteIndices(mesh.triangles);
                 }
                 else
                 {
@@ -1104,8 +1142,25 @@ namespace UTJ.MeshSync
             }
             if (flags.getBones)
             {
-                data.boneWeights = mesh.boneWeights;
+                data.WriteWeights(mesh.boneWeights);
                 data.bindposes = mesh.bindposes;
+            }
+            if (flags.getBlendShapes && mesh.blendShapeCount > 0)
+            {
+                var v = new Vector3[mesh.vertexCount];
+                var n = new Vector3[mesh.vertexCount];
+                var t = new Vector3[mesh.vertexCount];
+                for (int bi = 0; bi < mesh.blendShapeCount; ++bi)
+                {
+                    var bd = data.AddBlendShape(mesh.GetBlendShapeName(bi));
+                    int frameCount = mesh.GetBlendShapeFrameCount(bi);
+                    for (int fi = 0; fi < frameCount; ++fi)
+                    {
+                        mesh.GetBlendShapeFrameVertices(bi, fi, v, n, t);
+                        float w = mesh.GetBlendShapeFrameWeight(bi, fi);
+                        bd.AddFrame(w, v, n, t);
+                    }
+                }
             }
         }
 
@@ -1154,7 +1209,7 @@ namespace UTJ.MeshSync
         {
             if(go == null) { return; }
             AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-            var mf = go.GetComponent<MeshFilter>();
+            var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
                 var path = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";

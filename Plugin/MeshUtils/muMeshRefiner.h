@@ -2,92 +2,213 @@
 
 namespace mu {
 
+
+struct MeshConnectionInfo
+{
+    RawVector<int> v2f_counts;
+    RawVector<int> v2f_offsets;
+    RawVector<int> v2f_faces;
+    RawVector<int> v2f_indices;
+
+    RawVector<int> weld_map;
+    RawVector<int> weld_counts;
+    RawVector<int> weld_offsets;
+    RawVector<int> weld_indices;
+
+    void clear();
+    void buildConnection(
+        const IArray<int>& indices, int ngon, const IArray<float3>& vertices, bool welding = false);
+    void buildConnection(
+        const IArray<int>& indices, const IArray<int>& counts, const IArray<float3>& vertices, bool welding = false);
+
+    // Body: [](int face_index, int index_index) -> void
+    template<class Body>
+    void eachConnectedFaces(int vi, const Body& body) const
+    {
+        int count = v2f_counts[vi];
+        int offset = v2f_offsets[vi];
+        for (int i = 0; i < count; ++i) {
+            body(v2f_faces[offset + i], v2f_indices[offset + i]);
+        }
+    }
+
+    // Body: [](int vertex_index) -> void
+    template<class Body>
+    void eachWeldedVertices(int vi, const Body& body) const
+    {
+        int count = weld_counts[vi];
+        int offset = weld_offsets[vi];
+        for (int i = 0; i < count; ++i) {
+            body(weld_indices[offset + i]);
+        }
+    }
+};
+
+bool OnEdge(const IArray<int>& indices, int ngon, const IArray<float3>& vertices, const MeshConnectionInfo& connection, int vertex_index);
+bool OnEdge(const IArray<int>& indices, const IArray<int>& counts, const IArray<int>& offsets, const IArray<float3>& vertices, const MeshConnectionInfo& connection, int vertex_index);
+
+bool IsEdgeOpened(const IArray<int>& indices, int ngon, const MeshConnectionInfo& connection, int i0, int i1);
+bool IsEdgeOpened(const IArray<int>& indices, const IArray<int>& counts, const IArray<int>& offsets, const MeshConnectionInfo& connection, int i0, int i1);
+
+
+
 struct MeshRefiner
 {
     struct Submesh
     {
-        int num_indices_tri = 0;
-        int materialID = 0;
-        int* faces_to_write = nullptr;
+        int split_index = 0;
+        int submesh_index = 0; // submesh index in split
+        int index_count = 0; // triangulated
+        int index_offset = 0;
+        int material_id = 0;
+        int* indices_write = nullptr;
     };
 
     struct Split
     {
-        int num_faces = 0;
-        int num_vertices = 0;
-        int num_indices = 0;
-        int num_indices_triangulated = 0;
-        int num_submeshes = 0;
+        int submesh_count = 0;
+        int submesh_offset = 0;
+        int vertex_count = 0;
+        int vertex_offset = 0;
+        int index_count = 0;
+        int index_offset = 0;
+        int face_count = 0;
+        int face_offset = 0;
+        int triangulated_index_count = 0;
     };
 
-
+    // inputs
     int split_unit = 0; // 0 == no split
-    bool triangulate = true;
-    bool swap_faces = false;
-
     IArray<int> counts;
     IArray<int> indices;
     IArray<float3> points;
-    IArray<float3> normals;
-    IArray<float2> uv;
-    IArray<float4> colors;
-    IArray<Weights4> weights4;
 
-    RawVector<Submesh> submeshes;
-    RawVector<Split> splits;
-
-private:
-    RawVector<int> counts_tmp;
-    RawVector<int> offsets;
-    ConnectionData connection;
-    RawVector<float3> face_normals;
-    RawVector<float3> normals_tmp;
-    RawVector<float4> tangents_tmp;
-
+    // outputs
+    RawVector<int> old2new_indices; // old index to new index
+    RawVector<int> new2old_points;  // new index to old vertex
+    RawVector<int> new_indices;
+    RawVector<int> new_indices_triangulated;
+    RawVector<int> new_indices_submeshes; // triangulated
     RawVector<float3> new_points;
-    RawVector<float3> new_normals;
-    RawVector<float4> new_tangents;
-    RawVector<float2> new_uv;
-    RawVector<float4> new_colors;
-    RawVector<Weights4> new_weights4;
-    RawVector<int>    new_indices;
-    RawVector<int>    new_indices_triangulated;
-    RawVector<int>    new_indices_submeshes;
-    RawVector<int>    old2new;
+    RawVector<Split> splits;
+    RawVector<Submesh> submeshes;
+    MeshConnectionInfo connection;
+    int num_new_indices = 0;
 
-    int num_indices_tri = 0;
+    // attributes
+    template<class T>
+    void addIndexedAttribute(const IArray<T>& values, const IArray<int>& indices, RawVector<T>& new_values)
+    {
+        auto attr = newAttribute<IndexedAttribute<T>>();
+        attr->values = values;
+        attr->indices = indices;
+        attr->new_values = &new_values;
+    }
 
-public:
-    void prepare(const IArray<int>& counts, const IArray<int>& indices, const IArray<float3>& points);
-    void genNormals(bool flip);
-    void genNormalsWithSmoothAngle(float smooth_angle, bool flip);
-    void genTangents();
+    template<class T>
+    void addExpandedAttribute(const IArray<T>& values, RawVector<T>& new_values)
+    {
+        auto attr = newAttribute<ExpandedAttribute<T>>();
+        attr->values = values;
+        attr->new_values = &new_values;
+    }
 
-    bool refine(bool optimize);
-
-    // should be called after refine(), and only valid for triangulated meshes
-    bool genSubmesh(const IArray<int>& materialIDs);
-
-    void swapNewData(
-        RawVector<float3>& p,
-        RawVector<float3>& n,
-        RawVector<float4>& t,
-        RawVector<float2>& u,
-        RawVector<float4>& c,
-        RawVector<Weights4>& w,
-        RawVector<int>& idx);
+    void buildConnection(); // can be skipped
+    void refine();
+    void triangulate(bool swap_faces, bool turn_quads = false);
+    void genSubmeshes(IArray<int> material_ids);
+    void genSubmeshes();
+    void clear();
 
 private:
-    bool refineDumb();
-    bool refineWithOptimization();
-    void buildConnection();
+    void setupSubmeshes();
 
-    template<class Body> void doRefine(const Body& body);
-    int findOrAddVertexPNTUC(int vi, const float3& p, const float3& n, const float4& t, const float2& u, const float4& c);
-    int findOrAddVertexPNTU(int vi, const float3& p, const float3& n, const float4& t, const float2& u);
-    int findOrAddVertexPNU(int vi, const float3& p, const float3& n, const float2& u);
-    int findOrAddVertexPN(int vi, const float3& p, const float3& n);
-    int findOrAddVertexPU(int vi, const float3& p, const float2& u);
+    class IAttribute
+    {
+    public:
+        virtual ~IAttribute() {}
+        virtual void prepare(int vertex_count, int index_count) = 0;
+        virtual bool compare(int vertex_index, int index_index) = 0;
+        virtual void emit(int index_index) = 0;
+        virtual void clear() = 0;
+    };
+
+    template<class T>
+    class IndexedAttribute : public IAttribute
+    {
+    public:
+        void prepare(int /*vertex_count*/, int /*index_count*/) override
+        {
+            clear();
+        }
+
+        bool compare(int ni, int ii) override
+        {
+            return (*new_values)[ni] == values[indices[ii]];
+        }
+
+        void emit(int ii) override
+        {
+            int i = indices[ii];
+            new_values->push_back(values[i]);
+        }
+
+        void clear() override
+        {
+            new_values->clear();
+        }
+
+        IArray<T> values;
+        IArray<int> indices;
+        RawVector<T> *new_values = nullptr;
+    };
+
+    template<class T>
+    class ExpandedAttribute : public IAttribute
+    {
+    public:
+        void prepare(int /*vertex_count*/, int /*index_count*/) override
+        {
+            clear();
+        }
+
+        bool compare(int ni, int ii) override
+        {
+            return (*new_values)[ni] == values[ii];
+        }
+
+        void emit(int ii) override
+        {
+            new_values->push_back(values[ii]);
+        }
+
+        void clear() override
+        {
+            new_values->clear();
+        }
+
+        IArray<T> values;
+        RawVector<T> *new_values = nullptr;
+    };
+
+    template<class AttrType>
+    AttrType* newAttribute()
+    {
+        const int size_attr = sizeof(IndexedAttribute<char>);
+        if (buf_attributes.empty())
+            buf_attributes.resize(size_attr * max_attributes);
+
+        size_t i = attributes.size();
+        if (i >= max_attributes)
+            return nullptr;
+        auto *ret = new (&buf_attributes[size_attr * i]) AttrType();
+        attributes.push_back(ret);
+        return ret;
+    }
+
+    RawVector<IAttribute*> attributes;
+    RawVector<char> buf_attributes;
+    static const int max_attributes = 8; // you can increase this if needed
 };
 
 } // namespace mu

@@ -10,6 +10,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cstdarg>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <map>

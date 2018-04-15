@@ -22,43 +22,17 @@
 # language governing permissions and limitations under the Apache License.
 #
 
-if (APPLE)
-    find_path(OPENEXR_LIBRARY_DIR
-            libHalf.dylib
-        HINTS
-            "${OPENEXR_LOCATION}"
-            "$ENV{OPENEXR_LOCATION}"
-            "${OPENEXR_BASE_DIR}"
-        PATH_SUFFIXES
-            lib/
-        DOC
-            "OpenEXR library path"
-    )
-elseif (UNIX)
-    find_path(OPENEXR_LIBRARY_DIR
-            libHalf.so
-        HINTS
-            "${OPENEXR_LOCATION}"
-            "$ENV{OPENEXR_LOCATION}"
-            "${OPENEXR_BASE_DIR}"
-        PATH_SUFFIXES
-            lib/
-        DOC
-            "OpenEXR library path"
-    )
-elseif (WIN32)
-    find_path(OPENEXR_LIBRARY_DIR
-            Half.lib
-        HINTS
-            "${OPENEXR_LOCATION}"
-            "$ENV{OPENEXR_LOCATION}"
-            "${OPENEXR_BASE_DIR}"
-        PATH_SUFFIXES
-            lib/
-        DOC
-            "OpenEXR library path"
-    )
-endif()
+find_path(OPENEXR_LIBRARY_DIR
+        libHalf.a
+    HINTS
+        "${OPENEXR_LOCATION}"
+        "$ENV{OPENEXR_LOCATION}"
+        "${OPENEXR_BASE_DIR}"
+    PATH_SUFFIXES
+        lib/
+    DOC
+        "OpenEXR library path"
+)
 mark_as_advanced(OPENEXR_LIBRARY_DIR)
 
 find_path(OPENEXR_INCLUDE_DIR
@@ -93,7 +67,9 @@ foreach(OPENEXR_LIB
     )
 
     find_library(OPENEXR_${OPENEXR_LIB}_LIBRARY
-            ${OPENEXR_LIB}
+        NAMES
+            lib${OPENEXR_LIB}.a
+            lib${OPENEXR_LIB}-2_2.a
         HINTS
             "${OPENEXR_LOCATION}"
             "$ENV{OPENEXR_LOCATION}"
