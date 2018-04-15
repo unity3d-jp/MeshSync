@@ -16,10 +16,14 @@ list(APPEND sources
     "${MQSDK_DIR}/MQSetting.cpp"
     "${MQSDK_DIR}/MQWidget.cpp"
 )
+if(APPLE)
+    list(APPEND sources "${MQSDK_DIR}/osx/StringUtil.mm")
+endif()
 add_library(MeshSyncClientMQ4 SHARED ${sources})
 
 add_dependencies(MeshSyncClientMQ4 MeshUtils MeshSync)
 target_include_directories(MeshSyncClientMQ4 PUBLIC "${CMAKE_SOURCE_DIR}" "${MQSDK_DIR}")
-target_link_libraries(MeshSyncClientMQ4 MeshSync MeshUtils ${Poco_LIBRARIES})
+target_link_libraries(MeshSyncClientMQ4
+MeshSync MeshUtils ${Poco_LIBRARIES} ${CORE_FOUNDATION_LIBRARY} ${CORE_DATA_LIBRARY} ${COCOA_LIBRARY})
 install(TARGETS MeshSyncClientMQ4 DESTINATION .)
 
