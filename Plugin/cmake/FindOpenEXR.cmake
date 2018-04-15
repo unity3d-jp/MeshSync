@@ -67,7 +67,9 @@ foreach(OPENEXR_LIB
     )
 
     find_library(OPENEXR_${OPENEXR_LIB}_LIBRARY
+        NAMES
             lib${OPENEXR_LIB}.a
+            lib${OPENEXR_LIB}-2_2.a
         HINTS
             "${OPENEXR_LOCATION}"
             "$ENV{OPENEXR_LOCATION}"
