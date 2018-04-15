@@ -17,9 +17,12 @@ list(APPEND sources
     "${MQSDK_DIR}/MQWidget.cpp"
 )
 if(APPLE)
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm" "#import <Foundation/Foundation.h>\n#include \"${MQSDK_DIR}/osx/StringUtil.mm\"")
+    if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm"
+            "#import <Foundation/Foundation.h>\n"
+            "#include \"${MQSDK_DIR}/osx/StringUtil.mm\"\n")
+    endif()
     list(APPEND sources "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
-    message("${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
 endif()
 add_library(MeshSyncClientMQ4 SHARED ${sources})
 

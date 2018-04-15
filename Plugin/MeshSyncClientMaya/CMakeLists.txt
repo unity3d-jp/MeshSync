@@ -1,7 +1,6 @@
 string(REGEX MATCH "([0-9]+)$" MAYA_VERSION "${CMAKE_CURRENT_SOURCE_DIR}")
 set(MESHSYNC_CLIENT_MAYA "MeshSyncClientMaya${MAYA_VERSION}")
 
-set(LIBRARIES )
 if(${MAYA_VERSION} STREQUAL "2018")
     find_package(Maya2018)
 elseif(${MAYA_VERSION} STREQUAL "2017")
@@ -18,4 +17,10 @@ target_link_libraries(${MESHSYNC_CLIENT_MAYA} MeshSync MeshUtils ${Poco_LIBRARIE
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     target_link_libraries(${MESHSYNC_CLIENT_MAYA} pthread)
 endif()
+if(APPLE)
+    set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES COMPILE_FLAGS -DOSMac_)
+    set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES SUFFIX ".bundle")
+endif()
+set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES PREFIX "")
+set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES OUTPUT_NAME "MeshSyncClientMaya")
 install(TARGETS ${MESHSYNC_CLIENT_MAYA} DESTINATION .)

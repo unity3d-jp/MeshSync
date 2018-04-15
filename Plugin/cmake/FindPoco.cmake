@@ -126,7 +126,7 @@ foreach( component ${components} )
 		endif()
 	endif()
 	if(Poco_${component}_LIBRARY)
-		list(APPEND Poco_LIBRARIES "optimized" ${Poco_${component}_LIBRARY} )
+		list(APPEND Poco_LIBRARIES ${Poco_${component}_LIBRARY})
 	endif()
 
 	# mark component as found or handle not finding it

@@ -629,6 +629,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
                         Case(XZY);
                         Case(YXZ);
                         Case(ZYX);
+                        default: break;
                     }
 #undef Case
                 }
