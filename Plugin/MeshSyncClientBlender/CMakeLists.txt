@@ -1,7 +1,6 @@
 string(REGEX MATCH "([0-9.]+)$" BLENDER_VERSION "${CMAKE_CURRENT_SOURCE_DIR}")
 set(MESHSYNC_CLIENT_BLENDER "MeshSyncClientBlender${BLENDER_VERSION}")
 
-set(LIBRARIES )
 if(${BLENDER_VERSION} STREQUAL "2.79")
     find_package(Blender2.79)
 elseif(${BLENDER_VERSION} STREQUAL "2.8")
@@ -15,6 +14,11 @@ if(NOT EXISTS "${EXTERNAL_ARCHIVE}")
     execute_process(WORKING_DIRECTORY "${EXTERNAL_DIR}" COMMAND 7za x "${EXTERNAL_ARCHIVE}")
 endif()
 
+set(BLENDER_INCLUDE_DIRS
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}"
+    "${BLENDER_PYTHON_INCLUDE_DIR}"
+)
+
 file(GLOB sources *.cpp *.h)
 add_library(${MESHSYNC_CLIENT_BLENDER}  SHARED ${sources})
 
@@ -22,11 +26,16 @@ add_dependencies(${MESHSYNC_CLIENT_BLENDER} MeshUtils MeshSync)
 target_include_directories(${MESHSYNC_CLIENT_BLENDER} PUBLIC
     "${CMAKE_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/PyBind11"
-    "${PYTHON_INCLUDE_DIR}"
-    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}"
+    ${BLENDER_INCLUDE_DIRS}
 )
-target_link_libraries(${MESHSYNC_CLIENT_BLENDER} MeshSync MeshUtils ${Poco_LIBRARIES} ${PYTHON_LIBRARY})
+target_link_libraries(${MESHSYNC_CLIENT_BLENDER} MeshSync MeshUtils ${Poco_LIBRARIES})
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     target_link_libraries(${MESHSYNC_CLIENT_BLENDER} pthread)
+    set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES SUFFIX ".cpython-${BLENDER_PYTHON_VERSION}m-x86_64-linux-gnu.so")
+elseif(APPLE)
+    target_link_libraries(${MESHSYNC_CLIENT_BLENDER} PRIVATE "-undefined dynamic_lookup")
+    set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES SUFFIX ".cpython-${BLENDER_PYTHON_VERSION}m-darwin.so")
 endif()
+set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES PREFIX "")
+set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES OUTPUT_NAME "MeshSyncClientBlender")
 install(TARGETS ${MESHSYNC_CLIENT_BLENDER} DESTINATION .)

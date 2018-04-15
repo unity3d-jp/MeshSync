@@ -1,19 +1,16 @@
-# * PYTHON_INCLUDE_DIR
-# * PYTHON_LIBRARY
+# * BLENDER_PYTHON_INCLUDE_DIR
 
 set(CMAKE_PREFIX_PATH
     "/opt/rh/rh-python35/root/usr"
+    "/usr/local/include"
 )
 
-find_path(PYTHON_INCLUDE_DIR NAMES Python.h PATH_SUFFIXES python3.5m)
-mark_as_advanced(PYTHON_INCLUDE_DIR)
-
-find_library(PYTHON_LIBRARY NAMES python3.5m PATHS ${LIBRARY_PATHS} PATH_SUFFIXES lib64 lib)
-mark_as_advanced(PYTHON_LIBRARY)
+set(BLENDER_PYTHON_VERSION 35)
+find_path(BLENDER_PYTHON_INCLUDE_DIR NAMES Python.h PATH_SUFFIXES python3.5m)
+mark_as_advanced(BLENDER_PYTHON_INCLUDE_DIR)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args("Python"
+find_package_handle_standard_args("Blender"
     DEFAULT_MSG
-    PYTHON_LIBRARY
-    PYTHON_INCLUDE_DIR
+    BLENDER_PYTHON_INCLUDE_DIR
 )
