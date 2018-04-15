@@ -24,15 +24,16 @@ if(MAC)
     endif()
     list(APPEND sources "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
 endif()
-add_library(MeshSyncClientMQ4 SHARED ${sources})
+
+add_library(MeshSyncClientMQ4 MODULE ${sources})
+set_target_properties(MeshSyncClientMQ4 PROPERTIES BUNDLE ON)
 
 add_dependencies(MeshSyncClientMQ4 MeshUtils MeshSync)
 target_include_directories(MeshSyncClientMQ4 PUBLIC "${CMAKE_SOURCE_DIR}" "${MQSDK_DIR}")
 target_link_libraries(MeshSyncClientMQ4
     MeshSync MeshUtils
     ${Poco_LIBRARIES} ${COCOA_LIBRARY})
-set_target_properties(MeshSyncClientMQ4 PROPERTIES PREFIX "")
-set_target_properties(MeshSyncClientMQ4 PROPERTIES SUFFIX ".plugin")
 
 set(INSTALL_DIR "UnityMeshSync for Metasequoia/Metasequoia4_${PLATFORM}")
-install(TARGETS MeshSyncClientMQ4 DESTINATION ${INSTALL_DIR}/Plugins/Station)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/MeshSyncClientMQ4.bundle"
+    DESTINATION ${INSTALL_DIR} RENAME MeshSyncClientMQ4.plugin)

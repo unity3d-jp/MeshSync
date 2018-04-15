@@ -9,7 +9,7 @@ set(CMAKE_PREFIX_PATH
 
 find_path(MAYA2017_INCLUDE_DIR NAMES maya/MGlobal.h)
 mark_as_advanced(MAYA2017_INCLUDE_DIR)
-foreach(MAYA_LIB OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI OpenMaya Foundation tbb)
+foreach(MAYA_LIB OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI OpenMaya Foundation)
     find_file(MAYA2017_${MAYA_LIB}_LIBRARY lib${MAYA_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX} PATH_SUFFIXES lib MacOS)
     mark_as_advanced(MAYA2017_${MAYA_LIB}_LIBRARY)
     if(MAYA2017_${MAYA_LIB}_LIBRARY)
