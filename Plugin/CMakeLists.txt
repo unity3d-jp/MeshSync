@@ -7,6 +7,11 @@ find_package(Poco COMPONENTS Net QUIET)
 if(APPLE)
     find_library(COCOA_LIBRARY Cocoa)
     mark_as_advanced(COCOA_LIBRARY)
+    set(PLATFORM "Mac")
+    set(MAC ON)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    set(PLATFORM "Linux")
+    set(LINUX ON)
 endif()
 
 include(AddPlugin)
@@ -23,10 +28,6 @@ OPTION(BUILD_TESTS "Tests" OFF)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11 -Wno-deprecated")
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-endif()
-
 
 function(add_subdirectory_link from to)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")

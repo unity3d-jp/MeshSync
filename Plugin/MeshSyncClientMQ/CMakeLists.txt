@@ -16,7 +16,7 @@ list(APPEND sources
     "${MQSDK_DIR}/MQSetting.cpp"
     "${MQSDK_DIR}/MQWidget.cpp"
 )
-if(APPLE)
+if(MAC)
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
         file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm"
             "#import <Foundation/Foundation.h>\n"
@@ -33,5 +33,6 @@ target_link_libraries(MeshSyncClientMQ4
     ${Poco_LIBRARIES} ${COCOA_LIBRARY})
 set_target_properties(MeshSyncClientMQ4 PROPERTIES PREFIX "")
 set_target_properties(MeshSyncClientMQ4 PROPERTIES SUFFIX ".plugin")
-install(TARGETS MeshSyncClientMQ4 DESTINATION .)
 
+set(INSTALL_DIR "UnityMeshSync for Metasequoia/Metasequoia4_${PLATFORM}")
+install(TARGETS MeshSyncClientMQ4 DESTINATION ${INSTALL_DIR}/Plugins/Station)

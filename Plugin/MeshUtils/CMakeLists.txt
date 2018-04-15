@@ -16,7 +16,6 @@ endif()
 
 file(GLOB sources *.cpp *.c *.h)
 add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
-install(TARGETS MeshUtils DESTINATION .)
 
 if(ENABLE_ISPC)
     add_definitions(-DmuEnableISPC)
@@ -34,4 +33,3 @@ if(ENABLE_HALF)
     include_directories(${OPENEXR_INCLUDE_DIR})
     list(APPEND EXTERNAL_LIBS ${OPENEXR_Half_LIBRARY})
 endif()
-set(EXTERNAL_LIBS ${EXTERNAL_LIBS} PARENT_SCOPE)
