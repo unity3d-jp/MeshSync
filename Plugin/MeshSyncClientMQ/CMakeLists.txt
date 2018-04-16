@@ -34,6 +34,5 @@ target_link_libraries(MeshSyncClientMQ4
     MeshSync MeshUtils
     ${Poco_LIBRARIES} ${COCOA_LIBRARY})
 
-set(INSTALL_DIR "UnityMeshSync_Metasequoia4_${PLATFORM}")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/MeshSyncClientMQ4.bundle"
-    DESTINATION ${INSTALL_DIR} RENAME MeshSyncClientMQ4.plugin)
+set(INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Metasequoia4_${PLATFORM}")
+install(CODE "execute_process(COMMAND cp -r \"${CMAKE_CURRENT_BINARY_DIR}/MeshSyncClientMQ4.bundle\" \"${INSTALL_DIR}/MeshSyncClientMQ4.plugin\")")

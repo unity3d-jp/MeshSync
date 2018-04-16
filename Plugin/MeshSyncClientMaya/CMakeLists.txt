@@ -23,6 +23,6 @@ endif()
 set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES PREFIX "")
 set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES OUTPUT_NAME "MeshSyncClientMaya")
 
-set(INSTALL_DIR "UnityMeshSync_maya${MAYA_VERSION}_${PLATFORM}/UnityMeshSync")
+set(INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_maya${MAYA_VERSION}_${PLATFORM}/UnityMeshSync")
 install(TARGETS ${MESHSYNC_CLIENT_MAYA} DESTINATION "${INSTALL_DIR}/plug-ins")
 install(DIRECTORY MEL/ DESTINATION "${INSTALL_DIR}/scripts" FILES_MATCHING PATTERN "*.mel")
