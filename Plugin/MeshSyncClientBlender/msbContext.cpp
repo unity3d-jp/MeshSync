@@ -572,7 +572,7 @@ void msbContext::send()
         }
         m_deleted.clear();
 
-        // send meshes
+        // convert and send meshes
         parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& pmesh) {
             auto& mesh = *pmesh;
             mesh.setupFlags();
@@ -582,16 +582,16 @@ void msbContext::send()
                 mesh.refine_settings.flags.gen_normals = true;
             if (!mesh.flags.has_tangents)
                 mesh.refine_settings.flags.gen_tangents = true;
-
             if (scale_factor != 1.0f)
                 mesh.applyScaleFactor(scale_factor);
             mesh.convertHandedness(false, true);
-
+        });
+        for(auto& pmesh : m_mesh_send) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { pmesh };
             client.send(set);
-        });
+        }
         m_mesh_send.clear();
 
         // notify scene end

@@ -1154,12 +1154,12 @@ void MeshSyncClientMaya::kickAsyncSend()
         }
 
         // send meshes one by one to Unity can respond quickly
-        ms::parallel_for_each(m_client_meshes.begin(), m_client_meshes.end(), [&scene_settings, &client](ms::MeshPtr& mesh) {
+        for(auto& mesh : m_client_meshes) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { mesh };
             client.send(set);
-        });
+        };
         m_client_meshes.clear();
 
         // send delete message

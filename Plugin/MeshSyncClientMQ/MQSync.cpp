@@ -352,12 +352,12 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         {
             // send meshes one by one to Unity can respond quickly
-            parallel_for_each(m_meshes.begin(), m_meshes.end(), [&scene_settings, &client](MeshData& rel) {
+            for(auto& rel : m_meshes) {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
                 set.scene.meshes = { rel.data };
                 client.send(set);
-            });
+            };
 
             // detect deleted objects and send delete message
             for (auto& e : m_mesh_exists)

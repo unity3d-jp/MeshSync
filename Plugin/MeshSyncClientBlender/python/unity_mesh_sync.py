@@ -144,6 +144,7 @@ def msb_add_mesh(ctx, obj):
 
 
 def msb_add_camera(ctx, obj):
+    path = msb_get_path(obj)
     dst = ctx.addCamera(msb_get_path(obj))
     ctx.extractCameraData(dst, obj)
     msb_handle_dupli_group(ctx, path, obj)
@@ -151,6 +152,7 @@ def msb_add_camera(ctx, obj):
 
 
 def msb_add_light(ctx, obj):
+    path = msb_get_path(obj)
     dst = ctx.addLight(msb_get_path(obj))
     ctx.extractLightData(dst, obj)
     msb_handle_dupli_group(ctx, path, obj)
