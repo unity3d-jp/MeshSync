@@ -379,6 +379,8 @@ public:
     RawVector<float3> tmp_normals;
     RawVector<float2> tmp_uv0, tmp_uv1;
     RawVector<float4> tmp_colors;
+    RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
+
     RawVector<Weights4> tmp_weights4;
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;

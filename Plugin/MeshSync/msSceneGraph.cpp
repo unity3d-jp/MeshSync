@@ -1217,24 +1217,23 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     mu::MeshRefiner refiner;
+    refiner.split_unit = mrs.split_unit;
     refiner.points = points;
     refiner.indices = indices;
     refiner.counts = counts;
-    refiner.split_unit = mrs.split_unit;
-    refiner.buildConnection();
 
     if (uv0.size() == indices.size())
-        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0);
+        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);
     if (uv1.size() == indices.size())
-        refiner.addExpandedAttribute<float2>(uv1, tmp_uv1);
+        refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
     if (colors.size() == indices.size())
-        refiner.addExpandedAttribute<float4>(colors, tmp_colors);
+        refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
 
     // normals
     if (mrs.flags.gen_normals_with_smooth_angle) {
         if (mrs.smooth_angle < 180.0f) {
             GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, mrs.flags.flip_normals);
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
         }
         else {
             GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
@@ -1245,14 +1244,14 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
     else {
         if (normals.size() == indices.size()) {
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
         }
     }
 
     // refine
     {
         refiner.refine();
-        refiner.triangulate(mrs.flags.swap_faces);
+        refiner.retopology(mrs.flags.swap_faces, false /*mrs.flags.turn_quad_edges*/);
         refiner.genSubmeshes(material_ids);
 
         refiner.new_points.swap(points);
@@ -1269,12 +1268,12 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             auto sp = SplitData();
             sp.index_offset = offset_indices;
             sp.vertex_offset = offset_vertices;
-            sp.index_count = split.triangulated_index_count;
+            sp.index_count = split.index_count;
             sp.vertex_count = split.vertex_count;
             splits.push_back(sp);
 
             offset_vertices += split.vertex_count;
-            offset_indices += split.triangulated_index_count;
+            offset_indices += split.index_count;
         }
 
         // setup submeshes

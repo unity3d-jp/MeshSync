@@ -54,14 +54,23 @@ bool IsEdgeOpened(const IArray<int>& indices, const IArray<int>& counts, const I
 
 struct MeshRefiner
 {
+    enum class Topology
+    {
+        Points,
+        Lines,
+        Triangles,
+        Quads,
+    };
+
     struct Submesh
     {
+        Topology topology = Topology::Triangles;
         int split_index = 0;
         int submesh_index = 0; // submesh index in split
         int index_count = 0; // triangulated
         int index_offset = 0;
         int material_id = 0;
-        int* indices_write = nullptr;
+        int* dst_indices = nullptr;
     };
 
     struct Split
@@ -74,11 +83,18 @@ struct MeshRefiner
         int index_offset = 0;
         int face_count = 0;
         int face_offset = 0;
-        int triangulated_index_count = 0;
+
+        int index_count_tri = 0;
+        int index_count_lines = 0;
+        int index_count_points = 0;
     };
 
     // inputs
     int split_unit = 0; // 0 == no split
+    bool gen_points = true;
+    bool gen_lines = true;
+    bool gen_triangles = true;
+
     IArray<int> counts;
     IArray<int> indices;
     IArray<float3> points;
@@ -86,39 +102,45 @@ struct MeshRefiner
     // outputs
     RawVector<int> old2new_indices; // old index to new index
     RawVector<int> new2old_points;  // new index to old vertex
-    RawVector<int> new_indices;
-    RawVector<int> new_indices_triangulated;
-    RawVector<int> new_indices_submeshes; // triangulated
+    RawVector<int> new_indices;     // non-triangulated new indices
+    RawVector<int> new_indices_tri;
+    RawVector<int> new_indices_lines;
+    RawVector<int> new_indices_points;
+    RawVector<int> new_indices_submeshes;
     RawVector<float3> new_points;
     RawVector<Split> splits;
     RawVector<Submesh> submeshes;
     MeshConnectionInfo connection;
-    int num_new_indices = 0;
 
     // attributes
     template<class T>
-    void addIndexedAttribute(const IArray<T>& values, const IArray<int>& indices, RawVector<T>& new_values)
+    void addIndexedAttribute(const IArray<T>& values, const IArray<int>& indices, RawVector<T>& new_values, RawVector<int>& new2old)
     {
         auto attr = newAttribute<IndexedAttribute<T>>();
         attr->values = values;
         attr->indices = indices;
         attr->new_values = &new_values;
+        attr->new2old = &new2old;
     }
 
     template<class T>
-    void addExpandedAttribute(const IArray<T>& values, RawVector<T>& new_values)
+    void addExpandedAttribute(const IArray<T>& values, RawVector<T>& new_values, RawVector<int>& new2old)
     {
         auto attr = newAttribute<ExpandedAttribute<T>>();
         attr->values = values;
         attr->new_values = &new_values;
+        attr->new2old = &new2old;
     }
 
-    void buildConnection(); // can be skipped
     void refine();
-    void triangulate(bool swap_faces, bool turn_quads = false);
+    void retopology(bool swap_faces, bool turn_quads);
     void genSubmeshes(IArray<int> material_ids);
     void genSubmeshes();
     void clear();
+
+    int getTrianglesIndexCountTotal() const;
+    int getLinesIndexCountTotal() const;
+    int getPointsIndexCountTotal() const;
 
 private:
     void setupSubmeshes();
@@ -151,16 +173,19 @@ private:
         {
             int i = indices[ii];
             new_values->push_back(values[i]);
+            new2old->push_back(i);
         }
 
         void clear() override
         {
             new_values->clear();
+            new2old->clear();
         }
 
         IArray<T> values;
         IArray<int> indices;
         RawVector<T> *new_values = nullptr;
+        RawVector<int> *new2old = nullptr;
     };
 
     template<class T>
@@ -180,6 +205,7 @@ private:
         void emit(int ii) override
         {
             new_values->push_back(values[ii]);
+            new2old->push_back(ii);
         }
 
         void clear() override
@@ -189,6 +215,7 @@ private:
 
         IArray<T> values;
         RawVector<T> *new_values = nullptr;
+        RawVector<int> *new2old = nullptr;
     };
 
     template<class AttrType>
