@@ -38,7 +38,7 @@ TestLocal.meta
 MeshSync/*.csproj
 MeshSync/*.sln
 
-Plugin/UnityMeshSync for*/
+Plugin/dist/
 Plugin/MeshSyncClientBlender2.8/
 Plugin/MeshSyncClientBlender2.79/
 Plugin/MeshSyncClientMaya2018/

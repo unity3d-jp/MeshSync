@@ -63,8 +63,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(BLENDER_INCLUDE_DIR);$(PYTHON_INCLUDE_DIR);$(SolutionDir)External;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(PYTHON_VERSION)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(PYTHON_VERSION)_$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)-$(BLENDER_VERSION)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)-$(BLENDER_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <LibraryPath>$(SolutionDir)External\Poco\lib64;$(PYTHON_LIB_DIR);$(LibraryPath)</LibraryPath>
