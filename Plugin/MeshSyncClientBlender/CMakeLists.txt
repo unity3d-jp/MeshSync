@@ -39,6 +39,6 @@ endif()
 set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES PREFIX "")
 set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES OUTPUT_NAME "MeshSyncClientBlender")
 
-set(INSTALL_DIR "Blender/UnityMeshSync_blender-${BLENDER_VERSION}_${PLATFORM}")
+set(INSTALL_DIR "UnityMeshSync_blender-${BLENDER_VERSION}_${PLATFORM}")
 install(TARGETS ${MESHSYNC_CLIENT_BLENDER} DESTINATION ${INSTALL_DIR}/MeshSyncClientBlender)
 install(DIRECTORY python/ DESTINATION ${INSTALL_DIR} FILES_MATCHING PATTERN "*.py")

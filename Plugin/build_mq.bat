@@ -4,9 +4,9 @@ msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=x
 msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
 msbuild MeshSyncClientMQ3.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
 
-set DIST_DIR_MQ4_64="dist\Metasequoia\UnityMeshSync_Metasequoia4_Windows_64bit"
-set DIST_DIR_MQ4_32="dist\Metasequoia\UnityMeshSync_Metasequoia4_Windows_32bit"
-set DIST_DIR_MQ3="dist\Metasequoia\UnityMeshSync_Metasequoia3_Windows"
+set DIST_DIR_MQ4_64="dist\UnityMeshSync_Metasequoia4_Windows_64bit"
+set DIST_DIR_MQ4_32="dist\UnityMeshSync_Metasequoia4_Windows_32bit"
+set DIST_DIR_MQ3="dist\UnityMeshSync_Metasequoia3_Windows"
 mkdir "%DIST_DIR_MQ4_64%"
 mkdir "%DIST_DIR_MQ4_32%"
 mkdir "%DIST_DIR_MQ3%"
