@@ -1098,9 +1098,15 @@ template<class T> inline tvec3<T> extract_position(const tmat4x4<T>& m)
 
 
 template<class TMat>
-inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m)
+inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m_)
 {
     using T = typename TMat::scalar_t;
+    tmat3x3<T> m{
+        normalize((tvec3<T>&)m_[0]),
+        normalize((tvec3<T>&)m_[1]),
+        normalize((tvec3<T>&)m_[2])
+    };
+
     tquat<T> q;
     T tr, s;
 
