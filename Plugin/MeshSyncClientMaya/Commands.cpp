@@ -16,24 +16,26 @@ const char* CmdSettings::name()
 MStatus CmdSettings::doIt(const MArgList& args)
 {
     for (uint32_t i = 0; i < args.length(); ++i) {
-        if (args.asString(i) == MString("-address")) {
+        if (args.asString(i) == MString("-address"))
             MeshSyncClientMaya::getInstance().setServerAddress(args.asString(++i).asChar());
-        }
-        else if (args.asString(i) == MString("-port")) {
+        else if (args.asString(i) == MString("-port"))
             MeshSyncClientMaya::getInstance().setServerPort((uint16_t)args.asInt(++i));
-        }
-        else if (args.asString(i) == MString("-autosync")) {
+        else if (args.asString(i) == MString("-autosync"))
             MeshSyncClientMaya::getInstance().setAutoSync(args.asInt(++i) != 0);
-        }
-        else if (args.asString(i) == MString("-sync_animations")) {
-            MeshSyncClientMaya::getInstance().setSyncAnimations(args.asInt(++i) != 0);
-        }
-        else if (args.asString(i) == MString("-animation_sps")) {
-            MeshSyncClientMaya::getInstance().setAnimationSPS(args.asInt(++i) != 0);
-        }
-        else if (args.asString(i) == MString("-sync_blendshapes")) {
+        else if (args.asString(i) == MString("-syncMeshes"))
+            MeshSyncClientMaya::getInstance().setSyncMeshes(args.asInt(++i) != 0);
+        else if (args.asString(i) == MString("-syncBlendshapes"))
             MeshSyncClientMaya::getInstance().setSyncBlendShapes(args.asInt(++i) != 0);
-        }
+        else if (args.asString(i) == MString("-syncBones"))
+            MeshSyncClientMaya::getInstance().setSyncBones(args.asInt(++i) != 0);
+        else if (args.asString(i) == MString("-syncCameras"))
+            MeshSyncClientMaya::getInstance().setSyncCameras(args.asInt(++i) != 0);
+        else if (args.asString(i) == MString("-syncLights"))
+            MeshSyncClientMaya::getInstance().setSyncLights(args.asInt(++i) != 0);
+        else if (args.asString(i) == MString("-syncAnimations"))
+            MeshSyncClientMaya::getInstance().setSyncAnimations(args.asInt(++i) != 0);
+        else if (args.asString(i) == MString("-animationSPS"))
+            MeshSyncClientMaya::getInstance().setAnimationSPS(args.asInt(++i) != 0);
     }
     return MStatus::kSuccess;
 }

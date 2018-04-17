@@ -243,7 +243,7 @@ void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
 
 void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
 {
-    if ((force || m_auto_sync) && m_export_cameras && shape.hasFn(MFn::kCamera)) {
+    if ((force || m_auto_sync) && m_sync_cameras && shape.hasFn(MFn::kCamera)) {
         auto node = GetTransform(shape);
         if (std::find(m_mcameras.begin(), m_mcameras.end(), node) == m_mcameras.end()) {
             mscTrace("MeshSyncClientMaya::notifyUpdateCamera()\n");
@@ -254,7 +254,7 @@ void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
 
 void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
 {
-    if ((force || m_auto_sync) && m_export_lights && shape.hasFn(MFn::kLight)) {
+    if ((force || m_auto_sync) && m_sync_lights && shape.hasFn(MFn::kLight)) {
         auto node = GetTransform(shape);
         if (std::find(m_mlights.begin(), m_mlights.end(), node) == m_mlights.end()) {
             mscTrace("MeshSyncClientMaya::notifyUpdateLight()\n");
@@ -265,7 +265,7 @@ void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
 
 void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
 {
-    if ((force || m_auto_sync) && m_export_meshes && shape.hasFn(MFn::kMesh)) {
+    if ((force || m_auto_sync) && m_sync_meshes && shape.hasFn(MFn::kMesh)) {
         auto node = GetTransform(shape);
         if (std::find(m_mmeshes.begin(), m_mmeshes.end(), node) == m_mmeshes.end()) {
             mscTrace("MeshSyncClientMaya::notifyUpdateMesh()\n");
@@ -351,22 +351,14 @@ void MeshSyncClientMaya::setServerPort(uint16_t v)
     m_client_settings.port = v;
 }
 
-void MeshSyncClientMaya::setAutoSync(bool v)
-{
-    m_auto_sync = v;
-}
-void MeshSyncClientMaya::setSyncAnimations(bool v)
-{
-    m_sync_animations = v;
-}
-void MeshSyncClientMaya::setAnimationSPS(int v)
-{
-    m_animation_samples_per_seconds = v;
-}
-void MeshSyncClientMaya::setSyncBlendShapes(bool v)
-{
-    m_sync_blend_shapes = v;
-}
+void MeshSyncClientMaya::setAutoSync(bool v)        { m_auto_sync = v; }
+void MeshSyncClientMaya::setSyncMeshes(bool v)      { m_sync_meshes = v; }
+void MeshSyncClientMaya::setSyncBlendShapes(bool v) { m_sync_blend_shapes = v; }
+void MeshSyncClientMaya::setSyncBones(bool v)       { m_sync_bones = v; }
+void MeshSyncClientMaya::setSyncCameras(bool v)     { m_sync_cameras = v; }
+void MeshSyncClientMaya::setSyncLights(bool v)      { m_sync_lights = v; }
+void MeshSyncClientMaya::setSyncAnimations(bool v)  { m_sync_animations = v; }
+void MeshSyncClientMaya::setAnimationSPS(int v)     { m_animation_samples_per_seconds = v; }
 
 bool MeshSyncClientMaya::sendUpdatedObjects()
 {
@@ -858,7 +850,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     MFnMesh fn_src_mesh(mmesh.object());
     int skin_index = 0;
 
-    if (m_export_skinning) {
+    if (m_sync_bones) {
         fn_skin.setObject(FindSkinCluster(mmesh.object()));
         if (!fn_skin.object().isNull()) {
             fn_src_mesh.setObject(FindOrigMesh(src));

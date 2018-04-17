@@ -24,9 +24,13 @@ public:
     void setServerAddress(const char *v);
     void setServerPort(uint16_t v);
     void setAutoSync(bool v);
+    void setSyncMeshes(bool v);
+    void setSyncBlendShapes(bool v);
+    void setSyncBones(bool v);
+    void setSyncCameras(bool v);
+    void setSyncLights(bool v);
     void setSyncAnimations(bool v);
     void setAnimationSPS(int v);
-    void setSyncBlendShapes(bool v);
 
     void update();
     void onSelectionChanged();
@@ -62,13 +66,13 @@ private:
     MObject m_obj;
     MFnPlugin m_iplugin;
     bool m_auto_sync = false;
-    bool m_export_meshes = true;
-    bool m_export_skinning = true;
-    bool m_export_cameras = true;
-    bool m_export_lights = true;
-    bool m_apply_tweak = true;
+    bool m_sync_meshes = true;
+    bool m_sync_bones = true;
     bool m_sync_animations = true;
     bool m_sync_blend_shapes = true;
+    bool m_sync_cameras = true;
+    bool m_sync_lights = true;
+    bool m_apply_tweak = true;
     int m_timeout_ms = 5000;
     int m_animation_samples_per_seconds = 10;
     float m_scale_factor = 1.0f;
