@@ -7,7 +7,7 @@ import MeshSyncClientBlender as ms
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2018, 1, 1),
+    "version": (2018, 4, 20),
     "blender": (2, 79),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -218,7 +218,7 @@ def msb_mat4x4_to_array(m):
 
 
 def MeshSync_InitProperties():
-    bpy.types.Scene.meshsync_server_addr = bpy.props.StringProperty(default = "localhost", name = "Server Address")
+    bpy.types.Scene.meshsync_server_addr = bpy.props.StringProperty(default = "127.0.0.1", name = "Server Address")
     bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Server Port")
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor")
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
