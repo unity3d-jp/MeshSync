@@ -1,2 +1,2 @@
-+ UnityMeshSync 0.9 ../plug-ins/UnityMeshSync
++ UnityMeshSync 0.9 ./UnityMeshSync
 scripts: scripts

@@ -5,6 +5,7 @@
 *.user
 *.log
 *.tlog
+*.DS_Store
 
 *.exe
 *.dll
