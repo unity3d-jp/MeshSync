@@ -21,17 +21,6 @@ public:
     MeshSyncClientMaya(MObject obj);
     ~MeshSyncClientMaya();
 
-    void setServerAddress(const char *v);
-    void setServerPort(uint16_t v);
-    void setAutoSync(bool v);
-    void setSyncMeshes(bool v);
-    void setSyncBlendShapes(bool v);
-    void setSyncBones(bool v);
-    void setSyncCameras(bool v);
-    void setSyncLights(bool v);
-    void setSyncAnimations(bool v);
-    void setAnimationSPS(int v);
-
     void update();
     void onSelectionChanged();
     void onSceneUpdated();
@@ -60,24 +49,30 @@ private:
     bool extractMeshData(ms::Mesh& dst, MObject src);
     void kickAsyncSend();
 
+public:
+    ms::ClientSettings m_client_settings;
+    float m_scale_factor = 1.0f;
+    int m_animation_samples_per_seconds = 10;
+    int m_timeout_ms = 5000;
+    bool m_auto_sync = false;
+    bool m_sync_meshes = true;
+    bool m_sync_normals = true;
+    bool m_sync_uvs= true;
+    bool m_sync_colors= true;
+    bool m_sync_bones = true;
+    bool m_sync_animations = true;
+    bool m_sync_blendshapes = true;
+    bool m_sync_cameras = true;
+    bool m_sync_lights = true;
+    bool m_apply_tweak = true;
+    bool m_bake_skin = false;
+    bool m_bake_cloth = false;
+
 private:
     using ExistRecords = std::map<std::string, bool>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
-    bool m_auto_sync = false;
-    bool m_sync_meshes = true;
-    bool m_sync_bones = true;
-    bool m_sync_animations = true;
-    bool m_sync_blend_shapes = true;
-    bool m_sync_cameras = true;
-    bool m_sync_lights = true;
-    bool m_apply_tweak = true;
-    int m_timeout_ms = 5000;
-    int m_animation_samples_per_seconds = 10;
-    float m_scale_factor = 1.0f;
-    bool m_bake_skin = false;
-    bool m_bake_cloth = false;
 
     std::vector<MCallbackId> m_cids_global;
     std::vector<MCallbackId> m_cids_node;
@@ -88,7 +83,6 @@ private:
     std::vector<MObject> m_mlights;
     std::vector<MObject> m_mmeshes;
 
-    ms::ClientSettings              m_client_settings;
     std::vector<ms::TransformPtr>   m_client_transforms;
     std::vector<ms::CameraPtr>      m_client_cameras;
     std::vector<ms::LightPtr>       m_client_lights;

@@ -62,7 +62,7 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
     , m_iplugin(obj, "Unity Technologies", "20170915")
 {
-#define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create);
+#define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create, CmdType::createSyntax);
     EachCommand(Body)
 #undef Body
 
@@ -341,25 +341,6 @@ void MeshSyncClientMaya::onSceneUpdated()
     m_scene_updated = true;
 }
 
-void MeshSyncClientMaya::setServerAddress(const char * v)
-{
-    m_client_settings.server = v;
-}
-
-void MeshSyncClientMaya::setServerPort(uint16_t v)
-{
-    m_client_settings.port = v;
-}
-
-void MeshSyncClientMaya::setAutoSync(bool v)        { m_auto_sync = v; }
-void MeshSyncClientMaya::setSyncMeshes(bool v)      { m_sync_meshes = v; }
-void MeshSyncClientMaya::setSyncBlendShapes(bool v) { m_sync_blend_shapes = v; }
-void MeshSyncClientMaya::setSyncBones(bool v)       { m_sync_bones = v; }
-void MeshSyncClientMaya::setSyncCameras(bool v)     { m_sync_cameras = v; }
-void MeshSyncClientMaya::setSyncLights(bool v)      { m_sync_lights = v; }
-void MeshSyncClientMaya::setSyncAnimations(bool v)  { m_sync_animations = v; }
-void MeshSyncClientMaya::setAnimationSPS(int v)     { m_animation_samples_per_seconds = v; }
-
 bool MeshSyncClientMaya::sendUpdatedObjects()
 {
     if (isAsyncSendInProgress() ||
@@ -499,7 +480,7 @@ bool MeshSyncClientMaya::importScene()
     gd.flags.get_uv1 = 1;
     gd.flags.get_material_ids= 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
-    gd.scene_settings.scale_factor = m_scale_factor;
+    gd.scene_settings.scale_factor = 1.0f / m_scale_factor;
     gd.refine_settings.flags.bake_skin = m_bake_skin;
     gd.refine_settings.flags.bake_cloth = m_bake_cloth;
 
@@ -508,7 +489,6 @@ bool MeshSyncClientMaya::importScene()
         return false;
     }
 
-    // todo: create materials
 
     // todo: create mesh objects
 
