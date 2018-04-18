@@ -51,8 +51,9 @@ private:
 
 public:
     ms::ClientSettings m_client_settings;
+
     float m_scale_factor = 1.0f;
-    int m_animation_samples_per_seconds = 10;
+    int m_animation_sps = 10;
     int m_timeout_ms = 5000;
     bool m_auto_sync = false;
     bool m_sync_meshes = true;
@@ -65,6 +66,8 @@ public:
     bool m_sync_cameras = true;
     bool m_sync_lights = true;
     bool m_apply_tweak = true;
+
+    // import settings
     bool m_bake_skin = false;
     bool m_bake_cloth = false;
 

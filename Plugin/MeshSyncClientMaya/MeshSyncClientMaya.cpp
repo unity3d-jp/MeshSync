@@ -572,7 +572,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            int sps = m_animation_samples_per_seconds;
+            int sps = m_animation_sps;
             ConvertAnimationBool(anim.visible, true, pvis, sps);
             ConvertAnimationFloat3(anim.translation, dst.position, ptx, pty, ptz, sps);
             ConvertAnimationFloat3(anim.scale, dst.scale, psx, psy, psz, sps);
@@ -666,7 +666,7 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
             auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            int sps = m_animation_samples_per_seconds;
+            int sps = m_animation_sps;
             ConvertAnimationFloat(anim.near_plane, dst.near_plane, pnplane, sps);
             ConvertAnimationFloat(anim.far_plane, dst.far_plane, pfplane, sps);
             ConvertAnimationFloat(anim.horizontal_aperture, dst.horizontal_aperture, phaperture, sps);
@@ -784,7 +784,7 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
             auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            int sps = m_animation_samples_per_seconds;
+            int sps = m_animation_sps;
             ConvertAnimationFloat4(anim.color, dst.color, pcolr, pcolg, pcolb, pcola, sps);
             ConvertAnimationFloat(anim.intensity, dst.intensity, pint, sps);
 
@@ -856,22 +856,31 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getNormals(normals);
 
         MItMeshPolygon it_poly(fn_src_mesh.object());
-        while (!it_poly.isDone()) {
-            int count = it_poly.polygonVertexCount();
-            dst.counts.push_back(count);
-            for (int i = 0; i < count; ++i) {
-                int iv = it_poly.vertexIndex(i);
-                int in = it_poly.normalIndex(i);
-
-                dst.indices.push_back(iv);
-                dst.normals.push_back((const mu::float3&)normals[in]);
+        if (m_sync_normals) {
+            while (!it_poly.isDone()) {
+                int count = it_poly.polygonVertexCount();
+                dst.counts.push_back(count);
+                for (int i = 0; i < count; ++i) {
+                    dst.indices.push_back(it_poly.vertexIndex(i));
+                    dst.normals.push_back((const mu::float3&)normals[it_poly.normalIndex(i)]);
+                }
+                it_poly.next();
             }
-            it_poly.next();
+        }
+        else {
+            while (!it_poly.isDone()) {
+                int count = it_poly.polygonVertexCount();
+                dst.counts.push_back(count);
+                for (int i = 0; i < count; ++i) {
+                    dst.indices.push_back(it_poly.vertexIndex(i));
+                }
+                it_poly.next();
+            }
         }
     }
 
     // get uv
-    {
+    if (m_sync_uvs) {
         MStringArray uvsets;
         fn_src_mesh.getUVSetNames(uvsets);
 
@@ -888,8 +897,31 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 for (int i = 0; i < count; ++i) {
                     int iu;
                     it_poly.getUVIndex(i, iu, &uvsets[0]);
-
                     dst.uv0.push_back(mu::float2{ u[iu], v[iu] });
+                }
+                it_poly.next();
+            }
+        }
+    }
+
+    // get vertex colors
+    if (m_sync_colors) {
+        MStringArray color_sets;
+        fn_src_mesh.getColorSetNames(color_sets);
+
+        if (color_sets.length() > 0 && fn_src_mesh.numColors(color_sets[0]) > 0) {
+            dst.flags.has_colors = 1;
+
+            MColorArray colors;
+            fn_src_mesh.getColors(colors, &color_sets[0]);
+
+            MItMeshPolygon it_poly(fn_src_mesh.object());
+            while (!it_poly.isDone()) {
+                int count = it_poly.polygonVertexCount();
+                for (int i = 0; i < count; ++i) {
+                    int ic;
+                    it_poly.getColorIndex(i, ic, &color_sets[0]);
+                    dst.colors.push_back((const mu::float4&)colors[ic]);
                 }
                 it_poly.next();
             }
@@ -924,7 +956,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
     // get blendshape data
-    if (!fn_blendshape.object().isNull()) {
+    if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
         auto num_weights = fn_blendshape.numWeights();
         auto plug_inputTargets = fn_blendshape.findPlug("inputTarget");
         auto plug_inputTargetGroups = plug_inputTargets.elementByPhysicalIndex(0).child(0);
@@ -984,7 +1016,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
     // get skinning data
-    if(!fn_skin.object().isNull()) {
+    if (m_sync_bones && !fn_skin.object().isNull()) {
         // request bake TRS
         dst.refine_settings.flags.apply_local2world = 1;
         dst.refine_settings.local2world = dst.toMatrix();

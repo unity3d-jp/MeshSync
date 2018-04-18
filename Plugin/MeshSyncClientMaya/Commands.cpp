@@ -116,7 +116,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncCameras", instance.m_sync_cameras);
     Handle("syncLights", instance.m_sync_lights);
     Handle("syncAnimations", instance.m_sync_animations);
-    Handle("animationSPS", instance.m_animation_samples_per_seconds);
+    Handle("animationSPS", instance.m_animation_sps);
 #undef Handle
 
     MPxCommand::setResult(result);
