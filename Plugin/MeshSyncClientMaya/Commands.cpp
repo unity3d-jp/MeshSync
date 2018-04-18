@@ -74,19 +74,19 @@ MSyntax CmdSettings::createSyntax()
     syntax.enableQuery(true);
     syntax.enableEdit(false);
     syntax.addFlag("-a",    "-address",         MSyntax::kString);
-    syntax.addFlag("-p",    "-port",            MSyntax::kUnsigned);
-    syntax.addFlag("-s",    "-scaleFactor",     MSyntax::kDouble);
+    syntax.addFlag("-p",    "-port",            MSyntax::kLong);
+    syntax.addFlag("-sf",   "-scaleFactor",     MSyntax::kDouble);
     syntax.addFlag("-as",   "-autosync",        MSyntax::kBoolean);
     syntax.addFlag("-sm",   "-syncMeshes",      MSyntax::kBoolean);
     syntax.addFlag("-smn",  "-syncNormals",     MSyntax::kBoolean);
     syntax.addFlag("-smu",  "-syncUVs",         MSyntax::kBoolean);
     syntax.addFlag("-smc",  "-syncColors",      MSyntax::kBoolean);
-    syntax.addFlag("-smbs", "-syncBlendShapes", MSyntax::kBoolean);
+    syntax.addFlag("-sms",  "-syncBlendShapes", MSyntax::kBoolean);
     syntax.addFlag("-smb",  "-syncBones",       MSyntax::kBoolean);
     syntax.addFlag("-sc",   "-syncCameras",     MSyntax::kBoolean);
     syntax.addFlag("-sl",   "-syncLights",      MSyntax::kBoolean);
     syntax.addFlag("-sa",   "-syncAnimations",  MSyntax::kBoolean);
-    syntax.addFlag("-sps",  "-animationSPS",    MSyntax::kUnsigned);
+    syntax.addFlag("-sps",  "-animationSPS",    MSyntax::kLong);
     return syntax;
 }
 

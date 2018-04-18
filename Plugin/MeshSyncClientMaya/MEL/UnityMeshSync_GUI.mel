@@ -1,46 +1,64 @@
 global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSync";
-
     if (`window -exists $Window`) deleteUI -window $Window;
-
     window -t ("Unity Mesh Sync") $Window;
+    
+    string $address         = `UnityMeshSync_Settings -q -address`;
+    int    $port            = `UnityMeshSync_Settings -q -port`;
+    float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
+    int    $syncMeshes      = `UnityMeshSync_Settings -q -syncMeshes`;
+    int    $syncNormals     = `UnityMeshSync_Settings -q -syncNormals`;
+    int    $syncUVs         = `UnityMeshSync_Settings -q -syncUVs`;
+    int    $syncColors      = `UnityMeshSync_Settings -q -syncColors`;
+    int    $syncBlendShapes = `UnityMeshSync_Settings -q -syncBlendShapes`;
+    int    $syncBones       = `UnityMeshSync_Settings -q -syncBones`;
+    int    $syncCameras     = `UnityMeshSync_Settings -q -syncCameras`;
+    int    $syncLights      = `UnityMeshSync_Settings -q -syncLights`;
+    int    $syncAnimations  = `UnityMeshSync_Settings -q -syncAnimations`;
+    int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
+    int    $autosync        = `UnityMeshSync_Settings -q -autosync`;
 
     columnLayout;
-        rowLayout -numberOfColumns 3;
-        text -label "Server:Port";
-        textField -text "127.0.0.1" -w 120 -cc "UnityMeshSync_CBServerAddress" msuCtrlAddress;
-        intField -v 8080 -w 60  -cc "UnityMeshSync_CBServerPort" msuCtrlPort;
-        setParent ..;
+    rowLayout -numberOfColumns 3;
+    text -label "Server:Port";
+    textField -text $address -w 120 -cc "UnityMeshSync_CBServerAddress" msuCtrlAddress;
+    intField -value $port -w 60  -cc "UnityMeshSync_CBServerPort" msuCtrlPort;
+    setParent ..;
 
-        separator -h 10 -w 300;
-        
-        rowLayout -numberOfColumns 2;
-        text -label "Scale Factor"; floatField -v 1.0 -cc "UnityMeshSync_CBScaleFactor" msuCtrlScaleFactor;
+    separator -h 10 -w 300;
+    
+    rowLayout -numberOfColumns 2;
+    text -label "Scale Factor"; floatField -value $scaleFactor -cc "UnityMeshSync_CBScaleFactor" msuCtrlScaleFactor;
+    setParent ..;
+    checkBox -label "Sync Meshes" -value $syncMeshes -cc "UnityMeshSync_CBSyncMeshes" msuCtrlSyncMeshes;
+        columnLayout -columnOffset "left" 20 msuFoldMeshes;
+        checkBox -label "Normals" -value $syncNormals -cc "UnityMeshSync_CBSyncNormals" msuCtrlSyncNormals;
+        checkBox -label "UVs" -value $syncUVs -cc "UnityMeshSync_CBSyncUVs" msuCtrlSyncUVs;
+        checkBox -label "Colors" -value $syncColors -cc "UnityMeshSync_CBSyncColors" msuCtrlSyncColors;
+        checkBox -label "Bones" -value $syncBones -cc "UnityMeshSync_CBSyncBones" msuCtrlSyncBones;
+        checkBox -label "Blend Shapes" -value $syncBlendShapes -cc "UnityMeshSync_CBSyncBlendShapes" msuCtrlSyncBlendShapes;
         setParent ..;
-        checkBox -label "Sync Meshes" -cc "UnityMeshSync_CBSyncMeshes" msuCtrlSyncMeshes;
-            columnLayout msuFoldMeshes;
-            checkBox -label "Normals" -cc "UnityMeshSync_CBSyncNormals" msuCtrlSyncNormals;
-            checkBox -label "UVs" -cc "UnityMeshSync_CBSyncUVs" msuCtrlSyncUVs;
-            checkBox -label "Colors" -cc "UnityMeshSync_CBSyncColors" msuCtrlSyncColors;
-            checkBox -label "Bones" -cc "UnityMeshSync_CBSyncBones" msuCtrlSyncBones;
-            checkBox -label "Blend Shapes" -cc "UnityMeshSync_CBSyncBlendShapes" msuCtrlSyncBlendShapes;
-            setParent ..;
-        checkBox -label "Sync Cameras" -cc "UnityMeshSync_CBSyncCameras" msuCtrlSyncCameras;
-        checkBox -label "Sync Lights" -cc "UnityMeshSync_CBSyncLights" msuCtrlSyncLights;
-        checkBox -label "Sync Animations" -cc "UnityMeshSync_CBSyncAnimations" msuCtrlSyncAnimations;
-            columnLayout msuFoldAnimations;
-            rowLayout -numberOfColumns 2;
-            text -label "Samples per Second"; intField -v 10 -cc "UnityMeshSync_CBSPS" msuCtrlSPS;
-            setParent ..;
-            setParent ..;
-        
-        separator -h 10 -w 300;
-        checkBox -label "Auto Sync" -cc "UnityMeshSync_CBAutoSync" msuCtrlAutoSync;
-        button -l "Manual Sync" -c "UnityMeshSync_OnManualSync";
+    checkBox -label "Sync Cameras" -value $syncCameras -cc "UnityMeshSync_CBSyncCameras" msuCtrlSyncCameras;
+    checkBox -label "Sync Lights" -value $syncLights -cc "UnityMeshSync_CBSyncLights" msuCtrlSyncLights;
+    checkBox -label "Sync Animations" -value $syncAnimations -cc "UnityMeshSync_CBSyncAnimations" msuCtrlSyncAnimations;
+        columnLayout -columnOffset "left" 20 msuFoldAnimations;
+        rowLayout -numberOfColumns 2;
+        text -label "Samples per Second"; intField -v $animationSPS -cc "UnityMeshSync_CBSPS" msuCtrlSPS;
+        setParent ..;
+        setParent ..;
+    
+    separator -h 10 -w 300;
+    checkBox -label "Auto Sync" -value $autosync -cc "UnityMeshSync_CBAutoSync" msuCtrlAutoSync;
+    button -l "Manual Sync" -c "UnityMeshSync_OnManualSync";
     //    separator -h 10 -w 300;
     //    button -l "Import Unity Scene" -w 100 -c "UnityMeshSync_OnImport" BUTTON_IMPORT;
     setParent ..;
+    
+    if(!$syncMeshes)
+        columnLayout -e -visible 0 msuFoldMeshes;
+    if(!$syncAnimations)
+        columnLayout -e -visible 0 msuFoldAnimations;
 
     showWindow $Window;
 }
