@@ -824,17 +824,14 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
 
-    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
     MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     MFnMesh fn_src_mesh(mmesh.object());
     int skin_index = 0;
 
-    if (m_sync_bones) {
-        fn_skin.setObject(FindSkinCluster(mmesh.object()));
-        if (!fn_skin.object().isNull()) {
-            fn_src_mesh.setObject(FindOrigMesh(src));
-            skin_index = fn_skin.indexForOutputShape(mmesh.object());
-        }
+    // if target is skinned, use pre-skinned mesh as source
+    if (m_sync_bones && !fn_skin.object().isNull()) {
+        fn_src_mesh.setObject(FindOrigMesh(src));
+        skin_index = fn_skin.indexForOutputShape(mmesh.object());
     }
 
     // get points
@@ -967,6 +964,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
     // get blendshape data
+    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
     if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
         auto num_weights = fn_blendshape.numWeights();
         auto plug_inputTargets = fn_blendshape.findPlug("inputTarget");
@@ -999,14 +997,14 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         for (uint32_t bi = 0; bi < num_bases; ++bi) {
             MFnDependencyNode fn(bases[bi]);
             std::string name = fn.name().asChar();
-            printf("%s\n", name.c_str());
+            msLogInfo("%s\n", name.c_str());
         }
 
         for (uint32_t wi = 0; wi < num_weights; ++wi) {
             MObjectArray targets;
             fn_blendshape.getTargets(bases[0], wi, targets);
             auto num_targets = targets.length();
-            for (uint32_t ti = 0; ti < targets.length(); ++ti) {
+            for (uint32_t ti = 0; ti < num_targets; ++ti) {
                 auto bs = new ms::BlendShapeData();
                 dst.blendshapes.emplace_back(bs);
 
@@ -1014,7 +1012,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 bs->weight = 100.0f;
                 bs->frames.push_back(ms::BlendShapeData::Frame());
                 auto& frame = bs->frames.back();
-                frame.points.resize(vertex_count);
+                frame.points = dst.points;
 
                 MItGeometry gi = targets[ti];
                 while (!gi.isDone()) {
@@ -1046,7 +1044,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 auto bone = new ms::BoneData();
                 bone->path = GetPath(joint);
                 if (dst.bones.empty())
-                    dst.root_bone = bone->path;
+                    dst.root_bone = GetRootPath(joint);
                 dst.bones.emplace_back(bone);
 
                 MObject matrix_obj;

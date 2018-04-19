@@ -723,7 +723,7 @@ namespace UTJ.MeshSync
                     if (animator.runtimeAnimatorController != null)
                     {
                         var clips = animator.runtimeAnimatorController.animationClips;
-                        if(clips != null && clips.Length > 0)
+                        if (clips != null && clips.Length > 0)
                         {
                             clip = animator.runtimeAnimatorController.animationClips[0];
                         }

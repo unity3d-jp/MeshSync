@@ -5,6 +5,8 @@
 std::string GetName(MObject node);
 std::string GetPath(MDagPath path);
 std::string GetPath(MObject node);
+std::string GetRootPath(MDagPath path);
+std::string GetRootPath(MObject node);
 
 MDagPath GetDagPath(MObject node);
 bool IsVisible(MObject node);
