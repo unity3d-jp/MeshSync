@@ -205,6 +205,8 @@ void MeshSyncClientMaya::removeNodeCallbacks()
 
 int MeshSyncClientMaya::getMaterialID(MUuid uid)
 {
+    std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
+
     auto i = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
     if (i != m_material_id_table.end()) {
         return (int)std::distance(m_material_id_table.begin(), i);
@@ -219,6 +221,8 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
 
 int MeshSyncClientMaya::getObjectID(MUuid uid)
 {
+    std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
+
     auto i = std::find(m_object_id_table.begin(), m_object_id_table.end(), uid);
     if (i != m_object_id_table.end()) {
         return (int)std::distance(m_object_id_table.begin(), i);
@@ -815,11 +819,6 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
     MFnMesh mmesh(shape);
 
-    dst.flags.has_points = 1;
-    dst.flags.has_normals = 1;
-    dst.flags.has_counts = 1;
-    dst.flags.has_indices = 1;
-    dst.flags.has_material_ids = 1;
     dst.flags.has_refine_settings = 1;
     dst.flags.apply_trs = 1;
     dst.refine_settings.flags.gen_tangents = 1;
@@ -850,29 +849,39 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
     }
 
-    // get normals and faces
+    // get faces
     {
-        MFloatVectorArray normals;
-        fn_src_mesh.getNormals(normals);
-
         MItMeshPolygon it_poly(fn_src_mesh.object());
-        if (m_sync_normals) {
-            while (!it_poly.isDone()) {
-                int count = it_poly.polygonVertexCount();
-                dst.counts.push_back(count);
-                for (int i = 0; i < count; ++i) {
-                    dst.indices.push_back(it_poly.vertexIndex(i));
-                    dst.normals.push_back((const mu::float3&)normals[it_poly.normalIndex(i)]);
-                }
-                it_poly.next();
+        dst.counts.reserve(it_poly.count());
+        dst.indices.reserve(it_poly.count() * 4);
+
+        while (!it_poly.isDone()) {
+            int count = it_poly.polygonVertexCount();
+            dst.counts.push_back(count);
+            for (int i = 0; i < count; ++i) {
+                dst.indices.push_back(it_poly.vertexIndex(i));
             }
+            it_poly.next();
         }
-        else {
+    }
+
+    size_t vertex_count = dst.points.size();
+    size_t index_count = dst.indices.size();
+    size_t face_count = dst.counts.size();
+
+    // get normals
+    if (m_sync_normals) {
+        MFloatVectorArray normals;
+        if (fn_src_mesh.getNormals(normals) == MStatus::kSuccess) {
+            dst.normals.resize_zeroclear(index_count);
+
+            size_t ii = 0;
+            MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
-                dst.counts.push_back(count);
                 for (int i = 0; i < count; ++i) {
-                    dst.indices.push_back(it_poly.vertexIndex(i));
+                    dst.normals[ii] = (const mu::float3&)normals[it_poly.normalIndex(i)];
+                    ++ii;
                 }
                 it_poly.next();
             }
@@ -885,19 +894,21 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getUVSetNames(uvsets);
 
         if (uvsets.length() > 0 && fn_src_mesh.numUVs(uvsets[0]) > 0) {
-            dst.flags.has_uv0 = 1;
+            dst.uv0.resize_zeroclear(index_count);
 
             MFloatArray u;
             MFloatArray v;
             fn_src_mesh.getUVs(u, v, &uvsets[0]);
 
+            size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
                     int iu;
-                    it_poly.getUVIndex(i, iu, &uvsets[0]);
-                    dst.uv0.push_back(mu::float2{ u[iu], v[iu] });
+                    if (it_poly.getUVIndex(i, iu, &uvsets[0]))
+                        dst.uv0[ii] = mu::float2{ u[iu], v[iu] };
+                    ++ii;
                 }
                 it_poly.next();
             }
@@ -910,18 +921,20 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getColorSetNames(color_sets);
 
         if (color_sets.length() > 0 && fn_src_mesh.numColors(color_sets[0]) > 0) {
-            dst.flags.has_colors = 1;
+            dst.colors.resize_zeroclear(index_count);
 
             MColorArray colors;
             fn_src_mesh.getColors(colors, &color_sets[0]);
 
+            size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
                     int ic;
-                    it_poly.getColorIndex(i, ic, &color_sets[0]);
-                    dst.colors.push_back((const mu::float4&)colors[ic]);
+                    if (it_poly.getColorIndex(i, ic, &color_sets[0]))
+                        dst.colors[ii] = (const mu::float4&)colors[ic];
+                    ++ii;
                 }
                 it_poly.next();
             }
@@ -944,12 +957,10 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             }
         }
 
-        if (mids.size() == 1) {
-            dst.material_ids.resize(indices.length(), mids[0]);
-        }
-        else {
-            dst.material_ids.resize(indices.length());
-            for (uint32_t i = 0; i < indices.length(); ++i) {
+        if (mids.size() > 0) {
+            dst.material_ids.resize_zeroclear(face_count);
+            uint32_t len = std::min((uint32_t)face_count, indices.length());
+            for (uint32_t i = 0; i < len; ++i) {
                 dst.material_ids[i] = mids[indices[i]];
             }
         }
@@ -1003,7 +1014,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 bs->weight = 100.0f;
                 bs->frames.push_back(ms::BlendShapeData::Frame());
                 auto& frame = bs->frames.back();
-                frame.points.resize(dst.points.size());
+                frame.points.resize(vertex_count);
 
                 MItGeometry gi = targets[ti];
                 while (!gi.isDone()) {
@@ -1029,12 +1040,14 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         {
             std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
             for (uint32_t ij = 0; ij < num_joints; ij++) {
-                auto bone = new ms::BoneData();
-                dst.bones.emplace_back(bone);
-
                 auto joint = joint_paths[ij].node();
                 notifyUpdateTransform(joint, true);
+
+                auto bone = new ms::BoneData();
                 bone->path = GetPath(joint);
+                if (dst.bones.empty())
+                    dst.root_bone = bone->path;
+                dst.bones.emplace_back(bone);
 
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
@@ -1046,17 +1059,16 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
         // get weights
         MDagPath mesh_path = GetDagPath(mmesh.object());
-        MItGeometry it_geom(mesh_path);
-        while (!it_geom.isDone()) {
-            MObject component = it_geom.component();
+        MItGeometry gi(mesh_path);
+        while (!gi.isDone()) {
             MFloatArray weights;
             uint32_t influence_count;
-            fn_skin.getWeights(mesh_path, component, weights, influence_count);
+            fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count);
 
             for (uint32_t ij = 0; ij < influence_count; ij++) {
                 dst.bones[ij]->weights.push_back(weights[ij]);
             }
-            it_geom.next();
+            gi.next();
         }
 
         // handling tweaks
@@ -1121,6 +1133,8 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             }
         }
     }
+
+    dst.setupFlags();
     return true;
 }
 

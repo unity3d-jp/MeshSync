@@ -24,7 +24,12 @@ bool JointGetInverseScale(MObject joint, mu::float3& dst);
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
 
-void DumpPlugInfo(MPlug plug);
+#ifdef mscDebug
+    void DumpPlugInfoImpl(MPlug plug);
+    #define DumpPlugInfo DumpPlugInfoImpl
+#else
+    #define DumpPlugInfo
+#endif
 
 
 template<class T> T* ptr(T& v) { return (T*)&(int&)v; }

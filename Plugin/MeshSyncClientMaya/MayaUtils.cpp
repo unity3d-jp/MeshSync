@@ -175,7 +175,8 @@ MTime ToMTime(float seconds)
 }
 
 
-static void DumpPlugInfo(MPlug plug, std::string indent)
+#ifdef mscDebug
+static void DumpPlugInfoImpl(MPlug plug, std::string indent)
 {
     uint32_t num_elements = 0;
     uint32_t num_children= 0;
@@ -202,11 +203,12 @@ static void DumpPlugInfo(MPlug plug, std::string indent)
     }
 }
 
-void DumpPlugInfo(MPlug plug)
+void DumpPlugInfoImpl(MPlug plug)
 {
-    DumpPlugInfo(plug, "");
+    DumpPlugInfoImpl(plug, "");
     mscTrace("\n");
 }
+#endif
 
 
 
