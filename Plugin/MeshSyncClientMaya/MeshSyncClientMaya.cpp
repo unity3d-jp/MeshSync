@@ -576,7 +576,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            int sps = m_animation_sps;
+            int sps = m_sample_animation ? m_animation_sps : 0;
             ConvertAnimationBool(anim.visible, true, pvis, sps);
             ConvertAnimationFloat3(anim.translation, dst.position, ptx, pty, ptz, sps);
             ConvertAnimationFloat3(anim.scale, dst.scale, psx, psy, psz, sps);
@@ -670,7 +670,7 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
             auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            int sps = m_animation_sps;
+            int sps = m_sample_animation ? m_animation_sps : 0;
             ConvertAnimationFloat(anim.near_plane, dst.near_plane, pnplane, sps);
             ConvertAnimationFloat(anim.far_plane, dst.far_plane, pfplane, sps);
             ConvertAnimationFloat(anim.horizontal_aperture, dst.horizontal_aperture, phaperture, sps);
@@ -788,7 +788,7 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
             auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
 
             // build time-sampled animation data
-            int sps = m_animation_sps;
+            int sps = m_sample_animation ? m_animation_sps : 0;
             ConvertAnimationFloat4(anim.color, dst.color, pcolr, pcolg, pcolb, pcola, sps);
             ConvertAnimationFloat(anim.intensity, dst.intensity, pint, sps);
 

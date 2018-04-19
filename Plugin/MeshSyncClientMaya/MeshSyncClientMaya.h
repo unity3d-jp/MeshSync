@@ -61,10 +61,11 @@ public:
     bool m_sync_uvs= true;
     bool m_sync_colors= true;
     bool m_sync_bones = true;
-    bool m_sync_animations = true;
     bool m_sync_blendshapes = true;
     bool m_sync_cameras = true;
     bool m_sync_lights = true;
+    bool m_sync_animations = true;
+    bool m_sample_animation = true;
     bool m_apply_tweak = true;
 
     // import settings
