@@ -903,7 +903,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
                     int iu;
-                    if (it_poly.getUVIndex(i, iu, &uvsets[0]))
+                    if (it_poly.getUVIndex(i, iu, &uvsets[0]) == MStatus::kSuccess && iu >= 0)
                         dst.uv0[ii] = mu::float2{ u[iu], v[iu] };
                     ++ii;
                 }
@@ -929,7 +929,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
                     int ic;
-                    if (it_poly.getColorIndex(i, ic, &color_sets[0]))
+                    if (it_poly.getColorIndex(i, ic, &color_sets[0]) == MStatus::kSuccess && ic >= 0)
                         dst.colors[ii] = (const mu::float4&)colors[ic];
                     ++ii;
                 }
