@@ -21,30 +21,35 @@ static void OnSelectionChanged(void *_this)
     reinterpret_cast<MeshSyncClientMaya*>(_this)->onSelectionChanged();
 }
 
-static void OnChangeDag(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void *_this)
+static void OnDagChange(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void *_this)
 {
     reinterpret_cast<MeshSyncClientMaya*>(_this)->onSceneUpdated();
 }
 
-static void OnChangeTransform(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+static void OnTimeChange(MTime& time, void* _this)
+{
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->onTimeChange(time);
+}
+
+static void OnTransformUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateTransform(plug.node());
 }
 
-static void OnChangeCamera(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+static void OnCameraUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateCamera(plug.node());
 }
 
-static void OnChangeLight(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+static void OnLightUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateLight(plug.node());
 }
 
-static void OnChangeMesh(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateMesh(plug.node());
 }
@@ -100,7 +105,8 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
     MStatus stat;
     m_cids_global.push_back(MTimerMessage::addTimerCallback(0.03f, OnIdle, this, &stat));
     m_cids_global.push_back(MEventMessage::addEventCallback("SelectionChanged", OnSelectionChanged, this, &stat));
-    m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnChangeDag, this, &stat));
+    m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnDagChange, this, &stat));
+    m_cids_global.push_back(MDGMessage::addTimeChangeCallback(OnTimeChange, this));
 }
 
 void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
@@ -121,16 +127,16 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
 
             if (node.hasFn(MFn::kJoint)) {
                 mscTrace("tracking transform %s\n", path.fullPathName().asChar());
-                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnChangeTransform, this, &stat));
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this, &stat));
             }
             else {
                 auto path_to_shape = path;
                 if (path_to_shape.extendToShape() == MS::kSuccess && path_to_shape.node().hasFn(MFn::kMesh)) {
                     mscTrace("tracking mesh %s\n", path.fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnChangeTransform, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this, &stat));
 
                     MObject shape_obj = path_to_shape.node();
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape_obj, OnChangeMesh, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape_obj, OnMeshUpdated, this, &stat));
                 }
             }
         }
@@ -145,8 +151,8 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
                 if (!fn.isIntermediateObject()) {
                     auto trans = GetTransform(shape);
                     mscTrace("tracking mesh %s\n", GetDagPath(trans).fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeMesh, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnTransformUpdated, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnMeshUpdated, this, &stat));
                 }
                 it.next();
             }
@@ -161,8 +167,8 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
                 if (!fn.isIntermediateObject()) {
                     auto trans = GetTransform(shape);
                     mscTrace("tracking camera %s\n", GetDagPath(trans).fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeCamera, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnTransformUpdated, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnCameraUpdated, this, &stat));
                 }
                 it.next();
             }
@@ -177,8 +183,8 @@ void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
                 if (!fn.isIntermediateObject()) {
                     auto trans = GetTransform(shape);
                     mscTrace("tracking light %s\n", GetDagPath(trans).fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnChangeTransform, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnChangeLight, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnTransformUpdated, this, &stat));
+                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnLightUpdated, this, &stat));
                 }
                 it.next();
             }
@@ -343,6 +349,13 @@ void MeshSyncClientMaya::onSelectionChanged()
 void MeshSyncClientMaya::onSceneUpdated()
 {
     m_scene_updated = true;
+    mscTrace("MeshSyncClientMaya::onSceneUpdated()\n");
+}
+
+void MeshSyncClientMaya::onTimeChange(MTime & time)
+{
+    sendScene();
+    mscTrace("MeshSyncClientMaya::onTimeChange()\n");
 }
 
 bool MeshSyncClientMaya::sendUpdatedObjects()

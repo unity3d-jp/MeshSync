@@ -24,6 +24,7 @@ public:
     void update();
     void onSelectionChanged();
     void onSceneUpdated();
+    void onTimeChange(MTime& time);
 
     void notifyUpdateTransform(MObject obj, bool force = false);
     void notifyUpdateCamera(MObject obj, bool force = false);

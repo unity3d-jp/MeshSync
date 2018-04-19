@@ -23,149 +23,144 @@ global proc UnityMeshSync_GUI()
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
     text -label "Server:Port";
-    textField -text $address -w 120 -cc "UnityMeshSync_CBServerAddress" msuCtrlAddress;
-    intField -value $port -w 60  -cc "UnityMeshSync_CBServerPort" msuCtrlPort;
+    textField -text $address -w 120 -cc "umsCBServerAddress" umsCtrlAddress;
+    intField -value $port -w 60  -cc "umsCBServerPort" umsCtrlPort;
     setParent ..;
 
     separator -h 10 -w 250;
     
     rowLayout -numberOfColumns 2;
-    text -label "Scale Factor"; floatField -value $scaleFactor -cc "UnityMeshSync_CBScaleFactor" msuCtrlScaleFactor;
+    text -label "Scale Factor"; floatField -value $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
     setParent ..;
-    checkBox -label "Sync Meshes" -value $syncMeshes -cc "UnityMeshSync_CBSyncMeshes" msuCtrlSyncMeshes;
-        columnLayout -columnOffset "left" 20 msuFoldMeshes;
-        checkBox -label "Normals" -value $syncNormals -cc "UnityMeshSync_CBSyncNormals" msuCtrlSyncNormals;
-        checkBox -label "UVs" -value $syncUVs -cc "UnityMeshSync_CBSyncUVs" msuCtrlSyncUVs;
-        checkBox -label "Colors" -value $syncColors -cc "UnityMeshSync_CBSyncColors" msuCtrlSyncColors;
-        checkBox -label "Bones" -value $syncBones -cc "UnityMeshSync_CBSyncBones" msuCtrlSyncBones;
-        checkBox -label "Blend Shapes" -value $syncBlendShapes -cc "UnityMeshSync_CBSyncBlendShapes" msuCtrlSyncBlendShapes;
+    checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
+        columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
+        checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
+        checkBox -label "UVs" -value $syncUVs -cc "umsCBSyncUVs" umsCtrlSyncUVs;
+        checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
+        checkBox -label "Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
+        checkBox -label "Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
         setParent ..;
-    checkBox -label "Sync Cameras" -value $syncCameras -cc "UnityMeshSync_CBSyncCameras" msuCtrlSyncCameras;
-    checkBox -label "Sync Lights" -value $syncLights -cc "UnityMeshSync_CBSyncLights" msuCtrlSyncLights;
-    checkBox -label "Sync Animations" -value $syncAnimations -cc "UnityMeshSync_CBSyncAnimations" msuCtrlSyncAnimations;
-        columnLayout -columnOffset "left" 20 msuFoldAnimations;
-        checkBox -label "Sample Animation" -value $sampleAnimation -cc "UnityMeshSync_CBSampleAnimation" msuCtrlSampleAnimation;
-            columnLayout -columnOffset "left" 20 msuFoldSampleAnimation;
+    checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
+    checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
+    checkBox -label "Sync Animations" -value $syncAnimations -cc "umsCBSyncAnimations" umsCtrlSyncAnimations;
+        columnLayout -visible $syncAnimations -columnOffset "left" 20 msuFoldAnimations;
+        checkBox -label "Sample Animation" -value $sampleAnimation -cc "umsCBSampleAnimation" umsCtrlSampleAnimation;
+            columnLayout -visible $sampleAnimation -columnOffset "left" 20 msuFoldSampleAnimation;
             rowLayout -numberOfColumns 2;
-            text -label "Samples per Second"; intField -w 60 -v $animationSPS -cc "UnityMeshSync_CBSPS" msuCtrlSPS;
+            text -label "Samples per Second"; intField -w 60 -v $animationSPS -cc "umsCBSPS" umsCtrlSPS;
             setParent ..;
             setParent ..;
         setParent ..;
     
     separator -h 10 -w 250;
-    checkBox -label "Auto Sync" -value $autosync -cc "UnityMeshSync_CBAutoSync" msuCtrlAutoSync;
-    button -l "Manual Sync" -c "UnityMeshSync_OnManualSync";
+    checkBox -label "Auto Sync" -value $autosync -cc "umsCBAutoSync" umsCtrlAutoSync;
+    button -l "Manual Sync" -c "umsCBManualSync";
     //    separator -h 10 -w 300;
-    //    button -l "Import Unity Scene" -w 100 -c "UnityMeshSync_OnImport" BUTTON_IMPORT;
+    //    button -l "Import Unity Scene" -w 100 -c "umsCBImport" BUTTON_IMPORT;
     setParent ..;
-    
-    if(!$syncMeshes)
-        columnLayout -e -visible 0 msuFoldMeshes;
-    if(!$syncAnimations)
-        columnLayout -e -visible 0 msuFoldAnimations;
 
     showWindow $Window;
 }
 
-global proc UnityMeshSync_CBServerAddress()
+global proc umsCBServerAddress()
 {
-    string $v = `textField -q -text msuCtrlAddress`;
+    string $v = `textField -q -text umsCtrlAddress`;
     string $ret = `UnityMeshSync_Settings -address $v`;
 }
 
-global proc UnityMeshSync_CBServerPort()
+global proc umsCBServerPort()
 {
-    int $v = `intField -q -value msuCtrlPort`;
+    int $v = `intField -q -value umsCtrlPort`;
     string $ret = `UnityMeshSync_Settings -port $v`;
 }
 
-global proc UnityMeshSync_CBScaleFactor()
+global proc umsCBScaleFactor()
 {
-    float $v = `floatField -q -value msuCtrlScaleFactor`;
+    float $v = `floatField -q -value umsCtrlScaleFactor`;
     string $ret = `UnityMeshSync_Settings -scaleFactor $v`;
 }
 
-global proc UnityMeshSync_CBSyncMeshes()
+global proc umsCBSyncMeshes()
 {
-    int $v = `checkBox -q -value msuCtrlSyncMeshes`;
+    int $v = `checkBox -q -value umsCtrlSyncMeshes`;
     string $ret = `UnityMeshSync_Settings -syncMeshes $v`;
     columnLayout -e -visible $v msuFoldMeshes;
 }
 
-global proc UnityMeshSync_CBSyncNormals()
+global proc umsCBSyncNormals()
 {
-    int $v = `checkBox -q -value msuCtrlSyncNormals`;
+    int $v = `checkBox -q -value umsCtrlSyncNormals`;
     string $ret = `UnityMeshSync_Settings -syncNormals $v`;
 }
 
-global proc UnityMeshSync_CBSyncUVs()
+global proc umsCBSyncUVs()
 {
-    int $v = `checkBox -q -value msuCtrlSyncUVs`;
+    int $v = `checkBox -q -value umsCtrlSyncUVs`;
     string $ret = `UnityMeshSync_Settings -syncUVs $v`;
 }
 
-global proc UnityMeshSync_CBSyncColors()
+global proc umsCBSyncColors()
 {
-    int $v = `checkBox -q -value msuCtrlSyncColors`;
+    int $v = `checkBox -q -value umsCtrlSyncColors`;
     string $ret = `UnityMeshSync_Settings -syncColors $v`;
 }
 
-global proc UnityMeshSync_CBSyncBlendShapes()
+global proc umsCBSyncBlendShapes()
 {
-    int $v = `checkBox -q -value msuCtrlSyncBlendShapes`;
+    int $v = `checkBox -q -value umsCtrlSyncBlendShapes`;
     string $ret = `UnityMeshSync_Settings -syncBlendShapes $v`;
 }
 
-global proc UnityMeshSync_CBSyncBones()
+global proc umsCBSyncBones()
 {
-    int $v = `checkBox -q -value msuCtrlSyncBones`;
+    int $v = `checkBox -q -value umsCtrlSyncBones`;
     string $ret = `UnityMeshSync_Settings -syncBones $v`;
 }
 
-global proc UnityMeshSync_CBSyncCameras()
+global proc umsCBSyncCameras()
 {
-    int $v = `checkBox -q -value msuCtrlSyncCameras`;
+    int $v = `checkBox -q -value umsCtrlSyncCameras`;
     string $ret = `UnityMeshSync_Settings -syncCameras $v`;
 }
 
-global proc UnityMeshSync_CBSyncLights()
+global proc umsCBSyncLights()
 {
-    int $v = `checkBox -q -value msuCtrlSyncLights`;
+    int $v = `checkBox -q -value umsCtrlSyncLights`;
     string $ret = `UnityMeshSync_Settings -syncLights $v`;
 }
 
-global proc UnityMeshSync_CBSyncAnimations()
+global proc umsCBSyncAnimations()
 {
-    int $v = `checkBox -q -value msuCtrlSyncAnimations`;
+    int $v = `checkBox -q -value umsCtrlSyncAnimations`;
     string $ret = `UnityMeshSync_Settings -syncAnimations $v`;
     columnLayout -e -visible $v msuFoldAnimations;
 }
 
-global proc UnityMeshSync_CBSampleAnimation()
+global proc umsCBSampleAnimation()
 {
-    int $v = `checkBox -q -value msuCtrlSampleAnimation`;
+    int $v = `checkBox -q -value umsCtrlSampleAnimation`;
     string $ret = `UnityMeshSync_Settings -sampleAnimation $v`;
     columnLayout -e -visible $v msuFoldSampleAnimation;
 }
 
-global proc UnityMeshSync_CBSPS()
+global proc umsCBSPS()
 {
-    int $v = `intField -q -value msuCtrlSPS`;
+    int $v = `intField -q -value umsCtrlSPS`;
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
 }
 
-global  proc UnityMeshSync_CBAutoSync()
+global  proc umsCBAutoSync()
 {
-    int $v = `checkBox -q -value msuCtrlAutoSync`;
+    int $v = `checkBox -q -value umsCtrlAutoSync`;
     string $ret = `UnityMeshSync_Settings -autosync $v`;
 }
 
-global proc UnityMeshSync_OnManualSync()
+global proc umsCBManualSync()
 {
     string $ret = `UnityMeshSync_Sync`;
 }
 
-global proc UnityMeshSync_OnImport()
+global proc umsCBImport()
 {
     string $ret = `UnityMeshSync_Import`;
 }
