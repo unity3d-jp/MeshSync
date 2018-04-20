@@ -837,20 +837,31 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
 
+    if (!mmesh.object().hasFn(MFn::kMesh)) {
+        // this mesh is empty
+        return true;
+    }
+
     MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     MFnMesh fn_src_mesh(mmesh.object());
     int skin_index = 0;
 
     // if target is skinned, use pre-skinned mesh as source
     if (m_sync_bones && !fn_skin.object().isNull()) {
-        fn_src_mesh.setObject(FindOrigMesh(src));
-        skin_index = fn_skin.indexForOutputShape(mmesh.object());
+        auto orig_mesh = FindOrigMesh(src);
+        if (!orig_mesh.hasFn(MFn::kMesh)) {
+            fn_src_mesh.setObject(orig_mesh);
+            skin_index = fn_skin.indexForOutputShape(mmesh.object());
+        }
     }
 
     // get points
     {
         MFloatPointArray points;
-        fn_src_mesh.getPoints(points);
+        if (fn_src_mesh.getPoints(points) != MStatus::kSuccess) {
+            // this mesh is empty
+            return true;
+        }
 
         auto len = points.length();
         dst.points.resize(len);
@@ -931,7 +942,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         fn_src_mesh.getColorSetNames(color_sets);
 
         if (color_sets.length() > 0 && fn_src_mesh.numColors(color_sets[0]) > 0) {
-            dst.colors.resize_zeroclear(index_count);
+            dst.colors.resize(index_count, mu::float4::one());
 
             MColorArray colors;
             fn_src_mesh.getColors(colors, &color_sets[0]);
