@@ -842,14 +842,21 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         return true;
     }
 
-    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     MFnMesh fn_src_mesh(mmesh.object());
+    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
+    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     int skin_index = 0;
 
-    // if target is skinned, use pre-skinned mesh as source
+    // if target is skinned or has blend shape, use pre-deformed mesh as source
+    if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
+        auto orig_mesh = FindOrigMesh(src);
+        if (orig_mesh.hasFn(MFn::kMesh)) {
+            fn_src_mesh.setObject(orig_mesh);
+        }
+    }
     if (m_sync_bones && !fn_skin.object().isNull()) {
         auto orig_mesh = FindOrigMesh(src);
-        if (!orig_mesh.hasFn(MFn::kMesh)) {
+        if (orig_mesh.hasFn(MFn::kMesh)) {
             fn_src_mesh.setObject(orig_mesh);
             skin_index = fn_skin.indexForOutputShape(mmesh.object());
         }
@@ -993,7 +1000,6 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
     // get blendshape data
-    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
     if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
         // https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2018/ENU/Maya-Tech-Docs/Nodes/blendShape-html.html
 
@@ -1037,11 +1043,11 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                             if (!obj_points.isNull() && obj_points.hasFn(MFn::kPointArrayData)) {
                                 handled = true;
 
-                                const MFnPointArrayData fn_points(obj_points);
+                                MFnPointArrayData fn_points(obj_points);
                                 const uint32_t len = std::min(fn_points.length(), vertex_count);
                                 const MPoint *points_ptr(&fn_points[0]);
                                 for (uint32_t pi = 0; pi < len; ++pi) {
-                                    frame.points[pi] += (const mu::float3&)points_ptr[pi];
+                                    frame.points[pi] = to_float3(points_ptr[pi]);
                                 }
                             }
                         }
