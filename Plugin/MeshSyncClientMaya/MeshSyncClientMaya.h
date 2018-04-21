@@ -83,8 +83,7 @@ private:
         std::string path;
         MObject node;
     };
-    // key: uuid
-    using ObjectRecords = std::map<std::string, Object>;
+    using ObjectRecords = std::map<void*, Object>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
@@ -92,10 +91,7 @@ private:
     std::vector<MCallbackId> m_cids_global;
     std::vector<MCallbackId> m_cids_node;
     std::vector<MUuid> m_material_id_table;
-    std::vector<MObject> m_mtransforms;
-    std::vector<MObject> m_mcameras;
-    std::vector<MObject> m_mlights;
-    std::vector<MObject> m_mmeshes;
+    std::vector<MObject> m_dirty_objects;
 
     std::vector<ms::TransformPtr>   m_client_transforms;
     std::vector<ms::CameraPtr>      m_client_cameras;

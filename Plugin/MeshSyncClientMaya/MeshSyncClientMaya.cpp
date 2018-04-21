@@ -234,7 +234,7 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
 
 void MeshSyncClientMaya::addRecord(MObject node)
 {
-    auto& record = m_records[GetUUIDString(node)];
+    auto& record = m_records[(void*&)node];
     if (record.path.empty()) {
         record = Object { GetName(node), GetPath(node), node };
         mscTrace("MeshSyncClientMaya::addRecord(): %s\n", record.path.c_str());
@@ -244,8 +244,8 @@ void MeshSyncClientMaya::addRecord(MObject node)
 void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
 {
     if ((force || m_auto_sync) && node.hasFn(MFn::kTransform)) {
-        if (std::find(m_mtransforms.begin(), m_mtransforms.end(), node) == m_mtransforms.end()) {
-            m_mtransforms.push_back(node);
+        if (std::find(m_dirty_objects.begin(), m_dirty_objects.end(), node) == m_dirty_objects.end()) {
+            m_dirty_objects.push_back(node);
             addRecord(node);
         }
     }
@@ -254,33 +254,21 @@ void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
 void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_cameras && shape.hasFn(MFn::kCamera)) {
-        auto node = GetTransform(shape);
-        if (std::find(m_mcameras.begin(), m_mcameras.end(), node) == m_mcameras.end()) {
-            m_mcameras.push_back(node);
-            addRecord(node);
-        }
+        notifyUpdateTransform(GetTransform(shape));
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_lights && shape.hasFn(MFn::kLight)) {
-        auto node = GetTransform(shape);
-        if (std::find(m_mlights.begin(), m_mlights.end(), node) == m_mlights.end()) {
-            m_mlights.push_back(node);
-            addRecord(node);
-        }
+        notifyUpdateTransform(GetTransform(shape));
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_meshes && shape.hasFn(MFn::kMesh)) {
-        auto node = GetTransform(shape);
-        if (std::find(m_mmeshes.begin(), m_mmeshes.end(), node) == m_mmeshes.end()) {
-            m_mmeshes.push_back(node);
-            addRecord(node);
-        }
+        notifyUpdateTransform(GetTransform(shape));
     }
 }
 
@@ -327,7 +315,7 @@ void MeshSyncClientMaya::onTimeChange(MTime & time)
 void MeshSyncClientMaya::onNodeRemoved(MObject & node)
 {
     if (node.hasFn(MFn::kTransform)) {
-        auto it = m_records.find(GetUUIDString(node));
+        auto it = m_records.find((void*&)node);
         if (it != m_records.end()) {
             mscTrace("MeshSyncClientMaya::onNodeRemoved(): %s\n", it->second.path.c_str());
             m_deleted.push_back(it->second.path);
@@ -345,8 +333,7 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
     m_pending_send_scene = false;
 
     // clear dirty list and add all objects
-    m_mtransforms.clear();
-    m_mmeshes.clear();
+    m_dirty_objects.clear();
 
     if(scope == TargetScope::All) {
         // meshes
@@ -416,15 +403,14 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
 
 bool MeshSyncClientMaya::sendMarkedObjects()
 {
-    if (isAsyncSendInProgress() ||
-        (m_mtransforms.empty() && m_mcameras.empty() && m_mlights.empty() && m_mmeshes.empty())) {
+    if (isAsyncSendInProgress() || m_dirty_objects.empty()) {
         return false;
     }
 
     extractSceneData();
 
     auto check_rename = [this](MObject node) {
-        auto& record = m_records[GetUUIDString(node)];
+        auto& record = m_records[(void*&)node];
         auto name = GetName(node);
         if (record.name != GetName(node)) {
             mscTrace("rename %s -> %s\n", record.path.c_str(), GetPath(node).c_str());
@@ -434,43 +420,38 @@ bool MeshSyncClientMaya::sendMarkedObjects()
         }
     };
 
-    for (auto& node : m_mmeshes) {
+    // note: this must be index based because joints maybe added to m_dirty_objects in this loop.
+    for (size_t i = 0; i < m_dirty_objects.size();++i) {
+        auto node = m_dirty_objects[i];
+        auto shape = GetShape(node);
         check_rename(node);
-        auto mesh = ms::MeshPtr(new ms::Mesh());
-        if (extractMeshData(*mesh, node)) {
-            m_client_meshes.emplace_back(mesh);
+
+        if (shape.hasFn(MFn::kMesh)) {
+            auto mesh = ms::MeshPtr(new ms::Mesh());
+            if (extractMeshData(*mesh, node)) {
+                m_client_meshes.emplace_back(mesh);
+            }
+        }
+        else if (shape.hasFn(MFn::kCamera)) {
+            auto dst = ms::CameraPtr(new ms::Camera());
+            if (extractCameraData(*dst, node)) {
+                m_client_cameras.emplace_back(dst);
+            }
+        }
+        else if (shape.hasFn(MFn::kLight)) {
+            auto dst = ms::LightPtr(new ms::Light());
+            if (extractLightData(*dst, node)) {
+                m_client_lights.emplace_back(dst);
+            }
+        }
+        else {
+            auto dst = ms::TransformPtr(new ms::Transform());
+            if (extractTransformData(*dst, node)) {
+                m_client_transforms.emplace_back(dst);
+            }
         }
     }
-
-    for (auto& node : m_mcameras) {
-        check_rename(node);
-        auto dst = ms::CameraPtr(new ms::Camera());
-        if (extractCameraData(*dst, node)) {
-            m_client_cameras.emplace_back(dst);
-        }
-    }
-
-    for (auto& node : m_mlights) {
-        check_rename(node);
-        auto dst = ms::LightPtr(new ms::Light());
-        if (extractLightData(*dst, node)) {
-            m_client_lights.emplace_back(dst);
-        }
-    }
-
-    // transforms must be latter as extractMeshData() maybe add joints to m_mtransforms
-    for (auto& node : m_mtransforms) {
-        check_rename(node);
-        auto dst = ms::TransformPtr(new ms::Transform());
-        if (extractTransformData(*dst, node)) {
-            m_client_transforms.emplace_back(dst);
-        }
-    }
-
-    m_mtransforms.clear();
-    m_mcameras.clear();
-    m_mlights.clear();
-    m_mmeshes.clear();
+    m_dirty_objects.clear();
 
     kickAsyncSend();
     return true;
