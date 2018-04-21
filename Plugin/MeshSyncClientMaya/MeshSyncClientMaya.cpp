@@ -336,7 +336,7 @@ void MeshSyncClientMaya::update()
         }
     }
     else {
-        if (sendUpdatedObjects()) {
+        if (send()) {
             mscTrace("MeshSyncClientMaya::update(): handling send updated objects\n");
         }
     }
@@ -356,54 +356,6 @@ void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
     sendScene();
     mscTrace("MeshSyncClientMaya::onTimeChange()\n");
-}
-
-bool MeshSyncClientMaya::sendUpdatedObjects()
-{
-    if (isAsyncSendInProgress() ||
-        (m_mtransforms.empty() && m_mcameras.empty() && m_mlights.empty() && m_mmeshes.empty())) {
-        return false;
-    }
-
-    if (!m_mmeshes.empty()) {
-        extractAllMaterialData();
-    }
-    for (auto& mmesh : m_mmeshes) {
-        auto mesh = ms::MeshPtr(new ms::Mesh());
-        if (extractMeshData(*mesh, mmesh)) {
-            m_client_meshes.emplace_back(mesh);
-        }
-    }
-
-    for (auto& mcam : m_mcameras) {
-        auto dst = ms::CameraPtr(new ms::Camera());
-        if (extractCameraData(*dst, mcam)) {
-            m_client_cameras.emplace_back(dst);
-        }
-    }
-
-    for (auto& mlight : m_mlights) {
-        auto dst = ms::LightPtr(new ms::Light());
-        if (extractLightData(*dst, mlight)) {
-            m_client_lights.emplace_back(dst);
-        }
-    }
-
-    // transforms must be latter as extractMeshData() maybe add joints to m_mtransforms
-    for (auto& mtrans : m_mtransforms) {
-        auto dst = ms::TransformPtr(new ms::Transform());
-        if (extractTransformData(*dst, mtrans)) {
-            m_client_transforms.emplace_back(dst);
-        }
-    }
-
-    m_mtransforms.clear();
-    m_mcameras.clear();
-    m_mlights.clear();
-    m_mmeshes.clear();
-
-    kickAsyncSend();
-    return true;
 }
 
 bool MeshSyncClientMaya::sendScene(TargetScope scope)
@@ -481,7 +433,54 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
         }
     }
 
-    return sendUpdatedObjects();
+    return send();
+}
+
+bool MeshSyncClientMaya::send()
+{
+    if (isAsyncSendInProgress() ||
+        (m_mtransforms.empty() && m_mcameras.empty() && m_mlights.empty() && m_mmeshes.empty())) {
+        return false;
+    }
+
+    extractSceneData();
+
+    for (auto& mmesh : m_mmeshes) {
+        auto mesh = ms::MeshPtr(new ms::Mesh());
+        if (extractMeshData(*mesh, mmesh)) {
+            m_client_meshes.emplace_back(mesh);
+        }
+    }
+
+    for (auto& mcam : m_mcameras) {
+        auto dst = ms::CameraPtr(new ms::Camera());
+        if (extractCameraData(*dst, mcam)) {
+            m_client_cameras.emplace_back(dst);
+        }
+    }
+
+    for (auto& mlight : m_mlights) {
+        auto dst = ms::LightPtr(new ms::Light());
+        if (extractLightData(*dst, mlight)) {
+            m_client_lights.emplace_back(dst);
+        }
+    }
+
+    // transforms must be latter as extractMeshData() maybe add joints to m_mtransforms
+    for (auto& mtrans : m_mtransforms) {
+        auto dst = ms::TransformPtr(new ms::Transform());
+        if (extractTransformData(*dst, mtrans)) {
+            m_client_transforms.emplace_back(dst);
+        }
+    }
+
+    m_mtransforms.clear();
+    m_mcameras.clear();
+    m_mlights.clear();
+    m_mmeshes.clear();
+
+    kickAsyncSend();
+    return true;
 }
 
 bool MeshSyncClientMaya::importScene()
@@ -512,19 +511,22 @@ bool MeshSyncClientMaya::importScene()
     return true;
 }
 
-void MeshSyncClientMaya::extractAllMaterialData()
+void MeshSyncClientMaya::extractSceneData()
 {
-    MItDependencyNodes it(MFn::kLambert);
-    while (!it.isDone()) {
-        MFnLambertShader fn(it.item());
+    // materials
+    {
+        MItDependencyNodes it(MFn::kLambert);
+        while (!it.isDone()) {
+            MFnLambertShader fn(it.item());
 
-        auto tmp = new ms::Material();
-        tmp->name = fn.name().asChar();
-        tmp->color = to_float4(fn.color());
-        tmp->id = getMaterialID(fn.uuid());
-        m_client_materials.emplace_back(tmp);
+            auto tmp = new ms::Material();
+            tmp->name = fn.name().asChar();
+            tmp->color = to_float4(fn.color());
+            tmp->id = getMaterialID(fn.uuid());
+            m_client_materials.emplace_back(tmp);
 
-        it.next();
+            it.next();
+        }
     }
 }
 
@@ -838,7 +840,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     dst.refine_settings.flags.swap_faces = 1;
 
     if (!mmesh.object().hasFn(MFn::kMesh)) {
-        // this mesh is empty
+        // return empty mesh
         return true;
     }
 
@@ -847,7 +849,9 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     int skin_index = 0;
 
-    // if target is skinned or has blend shape, use pre-deformed mesh as source
+    // if target has skinning or blendshape, use pre-deformed mesh as source.
+    // * this code assumes blendshape is applied always after skinning, and there is no multiple blendshapes or skinnings.
+    // * maybe this cause a problem..
     if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
         auto orig_mesh = FindOrigMesh(src);
         if (orig_mesh.hasFn(MFn::kMesh)) {
@@ -866,7 +870,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     {
         MFloatPointArray points;
         if (fn_src_mesh.getPoints(points) != MStatus::kSuccess) {
-            // this mesh is empty
+            // return empty mesh
             return true;
         }
 
@@ -1003,6 +1007,64 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
         // https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2018/ENU/Maya-Tech-Docs/Nodes/blendShape-html.html
 
+        auto gen_delta = [&dst](ms::BlendShapeData::Frame& dst_frame, MPlug plug_geom) {
+            MObject obj_geom;
+            plug_geom.getValue(obj_geom);
+            if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
+
+                MFnMesh fn_geom(obj_geom);
+                MFloatPointArray points;
+                fn_geom.getPoints(points);
+
+                uint32_t len = std::min(points.length(), (uint32_t)dst.points.size());
+                MFloatPoint *points_ptr = &points[0];
+                for (uint32_t pi = 0; pi < len; ++pi) {
+                    dst_frame.points[pi] = to_float3(points_ptr[pi]) - dst.points[pi];
+                }
+            }
+        };
+
+        auto retrieve_delta = [&dst](ms::BlendShapeData::Frame& dst_frame, MPlug plug_ipt, MPlug plug_ict) {
+            MObject obj_component_list;
+            MObject obj_points;
+            {
+                MObject obj_cld;
+                plug_ict.getValue(obj_cld);
+                if (!obj_cld.isNull() && obj_cld.hasFn(MFn::kComponentListData)) {
+                    MFnComponentListData fn_cld(obj_cld);
+                    uint32_t len = fn_cld.length();
+                    for (uint32_t ci = 0; ci < len; ++ci) {
+                        MObject tmp = fn_cld[ci];
+                        if (tmp.apiType() == MFn::kMeshVertComponent) {
+                            obj_component_list = tmp;
+                            break;
+                        }
+                    }
+                }
+            }
+            {
+                MObject tmp;
+                plug_ipt.getValue(tmp);
+                if (!tmp.isNull() && tmp.hasFn(MFn::kPointArrayData)) {
+                    obj_points = tmp;
+                }
+            }
+            if (!obj_component_list.isNull() && !obj_points.isNull()) {
+                MIntArray indices;
+                MFnSingleIndexedComponent fn_indices(obj_component_list);
+                fn_indices.getElements(indices);
+                int *indices_ptr = &indices[0];
+
+                MFnPointArrayData fn_points(obj_points);
+                MPoint *points_ptr = &fn_points[0];
+
+                uint32_t len = std::min(fn_points.length(), (uint32_t)dst.points.size());
+                for (uint32_t pi = 0; pi < len; ++pi) {
+                    dst_frame.points[indices_ptr[pi]] = to_float3(points_ptr[pi]);
+                }
+            }
+        };
+
         MPlug plug_weight = fn_blendshape.findPlug("weight");
         MPlug plug_it = fn_blendshape.findPlug("inputTarget");
         uint32_t num_it = plug_it.evaluateNumElements();
@@ -1011,7 +1073,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             if (plug_itp.logicalIndex() == 0) {
                 MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
                 uint32_t num_itg = plug_itg.evaluateNumElements();
-                //DumpPlugInfo(plug_itg);
+                DumpPlugInfo(plug_itg);
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     auto dst_bs = new ms::BlendShapeData();
@@ -1030,43 +1092,20 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                         MPlug plug_itip(plug_iti.elementByPhysicalIndex(idx_iti));
 
                         dst_bs->frames.push_back(ms::BlendShapeData::Frame());
-                        auto& frame = dst_bs->frames.back();
-                        frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f; // index 5000-6000 -> weight 0.0f-100.0f
-                        frame.points.resize_zeroclear(dst.points.size());
+                        auto& dst_frame = dst_bs->frames.back();
+                        dst_frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f; // index 5000-6000 -> weight 0.0f-100.0f
+                        dst_frame.points.resize_zeroclear(dst.points.size());
 
-                        bool handled = false;
-                        if (!handled) {
-                            MPlug plug_geom(plug_itip.child(0)); // .inputGeomTarget
-                            MObject obj_geom;
-                            plug_geom.getValue(obj_geom);
-                            if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
-                                handled = true;
-
-                                MFnMesh fn_geom(obj_geom);
-                                MFloatPointArray points;
-                                fn_geom.getPoints(points);
-
-                                uint32_t len = std::min(points.length(), vertex_count);
-                                MFloatPoint *points_ptr = &points[0];
-                                for (uint32_t pi = 0; pi < len; ++pi) {
-                                    frame.points[pi] = to_float3(points_ptr[pi]) - dst.points[pi];
-                                }
-                            }
+                        MPlug plug_geom(plug_itip.child(0)); // .inputGeomTarget
+                        if (plug_geom.isConnected()) {
+                            // in this case targets are geometry
+                            gen_delta(dst_frame, plug_geom);
                         }
-                        if (!handled) {
-                            MPlug plug_points(plug_itip.child(3)); // .inputPointsTarget
-                            MObject obj_points;
-                            plug_points.getValue(obj_points);
-                            if (!obj_points.isNull() && obj_points.hasFn(MFn::kPointArrayData)) {
-                                handled = true;
-
-                                MFnPointArrayData fn_points(obj_points);
-                                uint32_t len = std::min(fn_points.length(), vertex_count);
-                                MPoint *points_ptr = &fn_points[0];
-                                for (uint32_t pi = 0; pi < len; ++pi) {
-                                    frame.points[pi] = to_float3(points_ptr[pi]);
-                                }
-                            }
+                        else {
+                            // in this case there are no geometry targets. try to retrieves deltas
+                            MPlug plug_ipt(plug_itip.child(3)); // .inputPointsTarget
+                            MPlug plug_ict(plug_itip.child(4)); // .inputComponentsTarget
+                            retrieve_delta(dst_frame, plug_ipt, plug_ict);
                         }
                     }
                 }

@@ -30,8 +30,8 @@ public:
     void notifyUpdateCamera(MObject obj, bool force = false);
     void notifyUpdateLight(MObject obj, bool force = false);
     void notifyUpdateMesh(MObject obj, bool force = false);
-    bool sendUpdatedObjects();
     bool sendScene(TargetScope scope = TargetScope::All);
+    bool send();
     bool importScene();
 
 private:
@@ -43,7 +43,8 @@ private:
     void removeNodeCallbacks();
     int getMaterialID(MUuid uid);
     int getObjectID(MUuid uid);
-    void extractAllMaterialData();
+
+    void extractSceneData();
     bool extractTransformData(ms::Transform& dst, MObject src);
     bool extractCameraData(ms::Camera& dst, MObject src);
     bool extractLightData(ms::Light& dst, MObject src);
