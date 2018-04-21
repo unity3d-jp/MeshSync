@@ -1031,24 +1031,9 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                         dst_bs->frames.push_back(ms::BlendShapeData::Frame());
                         auto& frame = dst_bs->frames.back();
                         frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f;
-                        frame.points = dst.points;
+                        frame.points.resize_zeroclear(dst.points.size());
 
                         bool handled = false;
-                        if (!handled) {
-                            MPlug plug_points(plug_itip.child(3)); // .inputPointsTarget
-                            MObject obj_points;
-                            plug_points.getValue(obj_points);
-                            if (!obj_points.isNull() && obj_points.hasFn(MFn::kPointArrayData)) {
-                                handled = true;
-
-                                MFnPointArrayData fn_points(obj_points);
-                                uint32_t len = std::min(fn_points.length(), vertex_count);
-                                MPoint *points_ptr(&fn_points[0]);
-                                for (uint32_t pi = 0; pi < len; ++pi) {
-                                    frame.points[pi] = to_float3(points_ptr[pi]);
-                                }
-                            }
-                        }
                         if (!handled) {
                             MPlug plug_geom(plug_itip.child(0)); // .inputGeomTarget
                             MObject obj_geom;
@@ -1062,6 +1047,21 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
                                 uint32_t len = std::min(points.length(), vertex_count);
                                 MFloatPoint *points_ptr = &points[0];
+                                for (uint32_t pi = 0; pi < len; ++pi) {
+                                    frame.points[pi] = to_float3(points_ptr[pi]) - dst.points[pi];
+                                }
+                            }
+                        }
+                        if (!handled) {
+                            MPlug plug_points(plug_itip.child(3)); // .inputPointsTarget
+                            MObject obj_points;
+                            plug_points.getValue(obj_points);
+                            if (!obj_points.isNull() && obj_points.hasFn(MFn::kPointArrayData)) {
+                                handled = true;
+
+                                MFnPointArrayData fn_points(obj_points);
+                                uint32_t len = std::min(fn_points.length(), vertex_count);
+                                MPoint *points_ptr(&fn_points[0]);
                                 for (uint32_t pi = 0; pi < len; ++pi) {
                                     frame.points[pi] = to_float3(points_ptr[pi]);
                                 }
