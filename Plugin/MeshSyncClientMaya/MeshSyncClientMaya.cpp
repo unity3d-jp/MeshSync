@@ -1011,7 +1011,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             if (plug_itp.logicalIndex() == 0) {
                 MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
                 uint32_t num_itg = plug_itg.evaluateNumElements();
-                DumpPlugInfo(plug_itg);
+                //DumpPlugInfo(plug_itg);
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     auto dst_bs = new ms::BlendShapeData();
@@ -1031,7 +1031,6 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
                         dst_bs->frames.push_back(ms::BlendShapeData::Frame());
                         auto& frame = dst_bs->frames.back();
-                        // index = wt * 1000 + 5000
                         frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f;
                         frame.points = dst.points;
 
@@ -1044,8 +1043,8 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                                 handled = true;
 
                                 MFnPointArrayData fn_points(obj_points);
-                                const uint32_t len = std::min(fn_points.length(), vertex_count);
-                                const MPoint *points_ptr(&fn_points[0]);
+                                uint32_t len = std::min(fn_points.length(), vertex_count);
+                                MPoint *points_ptr(&fn_points[0]);
                                 for (uint32_t pi = 0; pi < len; ++pi) {
                                     frame.points[pi] = to_float3(points_ptr[pi]);
                                 }
@@ -1057,20 +1056,15 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                             plug_geom.getValue(obj_geom);
                             if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
                                 handled = true;
-                                dst_bs->name = GetName(obj_geom);
 
-                                const MFnMesh fn_geom(obj_geom);
+                                MFnMesh fn_geom(obj_geom);
                                 MFloatPointArray points;
-                                MFloatVectorArray normals;
                                 fn_geom.getPoints(points);
-                                fn_geom.getNormals(normals);
 
-                                const uint32_t len = std::min(points.length(), vertex_count);
-                                const MFloatPoint *points_ptr = &points[0];
-                                const MFloatVector *normals_ptr = &normals[0];
+                                uint32_t len = std::min(points.length(), vertex_count);
+                                MFloatPoint *points_ptr = &points[0];
                                 for (uint32_t pi = 0; pi < len; ++pi) {
                                     frame.points[pi] = (const mu::float3&)points_ptr[pi];
-                                    frame.normals[pi] = (const mu::float3&)normals_ptr[pi];
                                 }
                             }
                         }
