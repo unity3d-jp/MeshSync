@@ -8,6 +8,9 @@ std::string GetPath(MObject node);
 std::string GetRootPath(MDagPath path);
 std::string GetRootPath(MObject node);
 
+MUuid GetUUID(MObject node);
+std::string GetUUIDString(MObject node);
+
 MDagPath GetDagPath(MObject node);
 bool IsVisible(MObject node);
 MObject GetTransform(MDagPath path);

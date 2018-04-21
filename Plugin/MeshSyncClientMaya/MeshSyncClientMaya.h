@@ -25,16 +25,18 @@ public:
     void onSelectionChanged();
     void onSceneUpdated();
     void onTimeChange(MTime& time);
+    void onNodeRemoved(MObject& node);
 
     void notifyUpdateTransform(MObject obj, bool force = false);
     void notifyUpdateCamera(MObject obj, bool force = false);
     void notifyUpdateLight(MObject obj, bool force = false);
     void notifyUpdateMesh(MObject obj, bool force = false);
     bool sendScene(TargetScope scope = TargetScope::All);
-    bool send();
+    bool sendMarkedObjects();
     bool importScene();
 
 private:
+    void addRecord(MObject node);
     bool isAsyncSendInProgress() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
@@ -42,7 +44,6 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
     int getMaterialID(MUuid uid);
-    int getObjectID(MUuid uid);
 
     void extractSceneData();
     bool extractTransformData(ms::Transform& dst, MObject src);
@@ -75,7 +76,15 @@ public:
     bool m_bake_cloth = false;
 
 private:
-    using ExistRecords = std::map<std::string, bool>;
+    // name:path pair
+    struct Object
+    {
+        std::string name;
+        std::string path;
+        MObject node;
+    };
+    // key: uuid
+    using ObjectRecords = std::map<std::string, Object>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
@@ -83,7 +92,6 @@ private:
     std::vector<MCallbackId> m_cids_global;
     std::vector<MCallbackId> m_cids_node;
     std::vector<MUuid> m_material_id_table;
-    std::vector<MUuid> m_object_id_table;
     std::vector<MObject> m_mtransforms;
     std::vector<MObject> m_mcameras;
     std::vector<MObject> m_mlights;
@@ -95,7 +103,7 @@ private:
     std::vector<ms::MeshPtr>        m_client_meshes;
     std::vector<ms::MaterialPtr>    m_client_materials;
     std::vector<std::string>        m_deleted;
-    ExistRecords        m_exist_record;
+    ObjectRecords       m_records;
     std::mutex          m_mutex_extract_mesh;
     std::future<void>   m_future_send;
     bool                m_pending_send_scene = false;

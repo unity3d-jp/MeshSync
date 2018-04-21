@@ -31,6 +31,12 @@ static void OnTimeChange(MTime& time, void* _this)
     reinterpret_cast<MeshSyncClientMaya*>(_this)->onTimeChange(time);
 }
 
+static void OnNodeRemoved(MObject& node, void *_this)
+{
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->onNodeRemoved(node);
+}
+
+
 static void OnTransformUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
     if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
@@ -107,6 +113,7 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
     m_cids_global.push_back(MEventMessage::addEventCallback("SelectionChanged", OnSelectionChanged, this, &stat));
     m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnDagChange, this, &stat));
     m_cids_global.push_back(MDGMessage::addTimeChangeCallback(OnTimeChange, this));
+    m_cids_global.push_back(MDGMessage::addNodeRemovedCallback(OnNodeRemoved, kDefaultNodeType, this));
 }
 
 void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
@@ -225,19 +232,12 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
     }
 }
 
-int MeshSyncClientMaya::getObjectID(MUuid uid)
+void MeshSyncClientMaya::addRecord(MObject node)
 {
-    std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
-
-    auto i = std::find(m_object_id_table.begin(), m_object_id_table.end(), uid);
-    if (i != m_object_id_table.end()) {
-        return (int)std::distance(m_object_id_table.begin(), i);
-    }
-    else {
-        mscTrace("MeshSyncClientMaya::getObjectID() new ID\n");
-        int id = (int)m_object_id_table.size();
-        m_object_id_table.push_back(uid);
-        return id;
+    auto& record = m_records[GetUUIDString(node)];
+    if (record.path.empty()) {
+        record = Object { GetName(node), GetPath(node), node };
+        mscTrace("MeshSyncClientMaya::addRecord(): %s\n", record.path.c_str());
     }
 }
 
@@ -245,8 +245,8 @@ void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
 {
     if ((force || m_auto_sync) && node.hasFn(MFn::kTransform)) {
         if (std::find(m_mtransforms.begin(), m_mtransforms.end(), node) == m_mtransforms.end()) {
-            mscTrace("MeshSyncClientMaya::notifyUpdateTransform()\n");
             m_mtransforms.push_back(node);
+            addRecord(node);
         }
     }
 }
@@ -256,8 +256,8 @@ void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
     if ((force || m_auto_sync) && m_sync_cameras && shape.hasFn(MFn::kCamera)) {
         auto node = GetTransform(shape);
         if (std::find(m_mcameras.begin(), m_mcameras.end(), node) == m_mcameras.end()) {
-            mscTrace("MeshSyncClientMaya::notifyUpdateCamera()\n");
             m_mcameras.push_back(node);
+            addRecord(node);
         }
     }
 }
@@ -267,8 +267,8 @@ void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
     if ((force || m_auto_sync) && m_sync_lights && shape.hasFn(MFn::kLight)) {
         auto node = GetTransform(shape);
         if (std::find(m_mlights.begin(), m_mlights.end(), node) == m_mlights.end()) {
-            mscTrace("MeshSyncClientMaya::notifyUpdateLight()\n");
             m_mlights.push_back(node);
+            addRecord(node);
         }
     }
 }
@@ -278,8 +278,8 @@ void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
     if ((force || m_auto_sync) && m_sync_meshes && shape.hasFn(MFn::kMesh)) {
         auto node = GetTransform(shape);
         if (std::find(m_mmeshes.begin(), m_mmeshes.end(), node) == m_mmeshes.end()) {
-            mscTrace("MeshSyncClientMaya::notifyUpdateMesh()\n");
             m_mmeshes.push_back(node);
+            addRecord(node);
         }
     }
 }
@@ -291,40 +291,6 @@ void MeshSyncClientMaya::update()
         mscTrace("MeshSyncClientMaya::update(): handling scene update\n");
 
         registerNodeCallbacks();
-
-        // detect deleted objects
-        {
-            for (auto& e : m_exist_record) {
-                e.second = false;
-            }
-
-            {
-                MItDag it(MItDag::kDepthFirst, MFn::kMesh);
-                while (!it.isDone()) {
-                    m_exist_record[GetPath(GetTransform(it.item()))] = true;
-                    it.next();
-                }
-            }
-            {
-                MItDag it(MItDag::kDepthFirst, MFn::kJoint);
-                while (!it.isDone()) {
-                    m_exist_record[GetPath(it.item())] = true;
-                    it.next();
-                }
-            }
-
-            for (auto i = m_exist_record.begin(); i != m_exist_record.end(); ) {
-                if (!i->second) {
-                    mscTrace("MeshSyncClientMaya::update(): detected %s is deleted\n", i->first.c_str());
-                    m_deleted.push_back(i->first);
-                    m_exist_record.erase(i++);
-                }
-                else {
-                    ++i;
-                }
-            }
-        }
-
         if (m_auto_sync) {
             m_pending_send_scene = true;
         }
@@ -336,7 +302,7 @@ void MeshSyncClientMaya::update()
         }
     }
     else {
-        if (send()) {
+        if (sendMarkedObjects()) {
             mscTrace("MeshSyncClientMaya::update(): handling send updated objects\n");
         }
     }
@@ -356,6 +322,18 @@ void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
     sendScene();
     mscTrace("MeshSyncClientMaya::onTimeChange()\n");
+}
+
+void MeshSyncClientMaya::onNodeRemoved(MObject & node)
+{
+    if (node.hasFn(MFn::kTransform)) {
+        auto it = m_records.find(GetUUIDString(node));
+        if (it != m_records.end()) {
+            mscTrace("MeshSyncClientMaya::onNodeRemoved(): %s\n", it->second.path.c_str());
+            m_deleted.push_back(it->second.path);
+            m_records.erase(it);
+        }
+    }
 }
 
 bool MeshSyncClientMaya::sendScene(TargetScope scope)
@@ -433,10 +411,10 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
         }
     }
 
-    return send();
+    return sendMarkedObjects();
 }
 
-bool MeshSyncClientMaya::send()
+bool MeshSyncClientMaya::sendMarkedObjects()
 {
     if (isAsyncSendInProgress() ||
         (m_mtransforms.empty() && m_mcameras.empty() && m_mlights.empty() && m_mmeshes.empty())) {
@@ -445,31 +423,46 @@ bool MeshSyncClientMaya::send()
 
     extractSceneData();
 
-    for (auto& mmesh : m_mmeshes) {
+    auto check_rename = [this](MObject node) {
+        auto& record = m_records[GetUUIDString(node)];
+        auto name = GetName(node);
+        if (record.name != GetName(node)) {
+            mscTrace("rename %s -> %s\n", record.path.c_str(), GetPath(node).c_str());
+            m_deleted.push_back(record.path);
+            record.name = name;
+            record.path = GetPath(node);
+        }
+    };
+
+    for (auto& node : m_mmeshes) {
+        check_rename(node);
         auto mesh = ms::MeshPtr(new ms::Mesh());
-        if (extractMeshData(*mesh, mmesh)) {
+        if (extractMeshData(*mesh, node)) {
             m_client_meshes.emplace_back(mesh);
         }
     }
 
-    for (auto& mcam : m_mcameras) {
+    for (auto& node : m_mcameras) {
+        check_rename(node);
         auto dst = ms::CameraPtr(new ms::Camera());
-        if (extractCameraData(*dst, mcam)) {
+        if (extractCameraData(*dst, node)) {
             m_client_cameras.emplace_back(dst);
         }
     }
 
-    for (auto& mlight : m_mlights) {
+    for (auto& node : m_mlights) {
+        check_rename(node);
         auto dst = ms::LightPtr(new ms::Light());
-        if (extractLightData(*dst, mlight)) {
+        if (extractLightData(*dst, node)) {
             m_client_lights.emplace_back(dst);
         }
     }
 
     // transforms must be latter as extractMeshData() maybe add joints to m_mtransforms
-    for (auto& mtrans : m_mtransforms) {
+    for (auto& node : m_mtransforms) {
+        check_rename(node);
         auto dst = ms::TransformPtr(new ms::Transform());
-        if (extractTransformData(*dst, mtrans)) {
+        if (extractTransformData(*dst, node)) {
             m_client_transforms.emplace_back(dst);
         }
     }
@@ -1073,7 +1066,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             if (plug_itp.logicalIndex() == 0) {
                 MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
                 uint32_t num_itg = plug_itg.evaluateNumElements();
-                DumpPlugInfo(plug_itg);
+                //DumpPlugInfo(plug_itg);
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     auto dst_bs = new ms::BlendShapeData();

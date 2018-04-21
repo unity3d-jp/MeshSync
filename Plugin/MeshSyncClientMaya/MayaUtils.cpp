@@ -55,6 +55,16 @@ std::string GetRootPath(MObject node)
 }
 
 
+MUuid GetUUID(MObject node)
+{
+    return MFnDependencyNode(node).uuid();
+}
+
+std::string GetUUIDString(MObject node)
+{
+    return GetUUID(node).asString().asChar();
+}
+
 MDagPath GetDagPath(MObject node)
 {
     return MDagPath::getAPathTo(node);
