@@ -55,7 +55,33 @@ void ConvertAnimationFloat4(
     RawVector<ms::TVP<mu::float4>>& dst,
     const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int samples_per_seconds);
 
+
 inline mu::float3 to_float3(const MPoint& v)
 {
     return { (float)v.x, (float)v.y, (float)v.z };
 }
+inline mu::float3 to_float3(const MVector& v)
+{
+    return { (float)v.x, (float)v.y, (float)v.z };
+}
+inline mu::float3 to_float3(const MFloatPoint& v)
+{
+    return (const mu::float3&)v;
+}
+inline mu::float3 to_float3(const MFloatVector& v)
+{
+    return (const mu::float3&)v;
+}
+inline mu::float3 to_float3(const double (&v)[3])
+{
+    return { (float)v[0], (float)v[1], (float)v[2] };
+}
+inline mu::float4 to_float4(const MColor& v)
+{
+    return (const mu::float4&)v;
+}
+inline mu::quatf to_quatf(const MQuaternion& v)
+{
+    return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };
+}
+

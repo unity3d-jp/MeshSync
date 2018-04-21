@@ -520,8 +520,7 @@ void MeshSyncClientMaya::extractAllMaterialData()
 
         auto tmp = new ms::Material();
         tmp->name = fn.name().asChar();
-        auto color = fn.color();
-        tmp->color = (const mu::float4&)color;
+        tmp->color = to_float4(fn.color());
         tmp->id = getMaterialID(fn.uuid());
         m_client_materials.emplace_back(tmp);
 
@@ -542,9 +541,9 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     pos = mtrans.getTranslation(MSpace::kTransform, &stat);
     stat = mtrans.getRotation(rot, MSpace::kTransform);
     stat = mtrans.getScale(scale);
-    dst.position.assign(&pos[0]);
-    dst.rotation.assign(&rot[0]);
-    dst.scale.assign(scale);
+    dst.position = to_float3(pos);
+    dst.rotation = to_quatf(rot);
+    dst.scale = to_float3(scale);
 
     // handle joint's segment scale compensate
     if (src.hasFn(MFn::kJoint)) {
@@ -874,7 +873,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         dst.points.resize(len);
         const MFloatPoint *points_ptr = &points[0];
         for (uint32_t i = 0; i < len; ++i) {
-            dst.points[i] = (const mu::float3&)points_ptr[i];
+            dst.points[i] = to_float3(points_ptr[i]);
         }
     }
 
@@ -910,7 +909,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
-                    dst.normals[ii] = (const mu::float3&)normals_ptr[it_poly.normalIndex(i)];
+                    dst.normals[ii] = to_float3(normals_ptr[it_poly.normalIndex(i)]);
                     ++ii;
                 }
                 it_poly.next();
@@ -1064,7 +1063,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                                 uint32_t len = std::min(points.length(), vertex_count);
                                 MFloatPoint *points_ptr = &points[0];
                                 for (uint32_t pi = 0; pi < len; ++pi) {
-                                    frame.points[pi] = (const mu::float3&)points_ptr[pi];
+                                    frame.points[pi] = to_float3(points_ptr[pi]);
                                 }
                             }
                         }
