@@ -254,21 +254,21 @@ void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
 void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_cameras && shape.hasFn(MFn::kCamera)) {
-        notifyUpdateTransform(GetTransform(shape));
+        notifyUpdateTransform(GetTransform(shape), force);
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_lights && shape.hasFn(MFn::kLight)) {
-        notifyUpdateTransform(GetTransform(shape));
+        notifyUpdateTransform(GetTransform(shape), force);
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_meshes && shape.hasFn(MFn::kMesh)) {
-        notifyUpdateTransform(GetTransform(shape));
+        notifyUpdateTransform(GetTransform(shape), force);
     }
 }
 
@@ -977,6 +977,61 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
     }
 
+
+
+    auto apply_tweak = [&dst](MObject deformer, int obj_index) {
+        MItDependencyGraph it(deformer, MFn::kTweak, MItDependencyGraph::kUpstream);
+        if (!it.isDone()) {
+            MObject tweak = it.currentItem();
+            if (!tweak.isNull()) {
+                MFnDependencyNode fn_tweak(tweak);
+                auto plug_vlist = fn_tweak.findPlug("vlist");
+                if (plug_vlist.isArray() && (int)plug_vlist.numElements() > obj_index) {
+                    auto plug_vertex = plug_vlist.elementByPhysicalIndex(obj_index).child(0);
+                    if (plug_vertex.isArray()) {
+                        auto vertices_len = plug_vertex.numElements();
+                        for (uint32_t vi = 0; vi < vertices_len; ++vi) {
+                            MPlug p3 = plug_vertex.elementByPhysicalIndex(vi);
+                            int li = p3.logicalIndex();
+                            mu::float3 v;
+                            p3.child(0).getValue(v.x);
+                            p3.child(1).getValue(v.y);
+                            p3.child(2).getValue(v.z);
+                            dst.points[li] += v;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    auto apply_uv_tweak = [&dst](MObject deformer, int obj_index) {
+        MItDependencyGraph it(deformer, MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
+        if (!it.isDone()) {
+            MObject tweak = it.currentItem();
+            if (!tweak.isNull()) {
+                MFnDependencyNode fn_tweak(tweak);
+                auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
+                auto plug_uv = fn_tweak.findPlug("uvTweak");
+                if (plug_uv.isArray() && (int)plug_uv.numElements() > obj_index) {
+                    auto plug_vertex = plug_uv.elementByPhysicalIndex(obj_index).child(0);
+                    if (plug_vertex.isArray()) {
+                        auto vertices_len = plug_vertex.numElements();
+                        for (uint32_t vi = 0; vi < vertices_len; ++vi) {
+                            MPlug p2 = plug_vertex.elementByPhysicalIndex(vi);
+                            int li = p2.logicalIndex();
+                            mu::float2 v;
+                            p2.child(0).getValue(v.x);
+                            p2.child(1).getValue(v.y);
+                            dst.uv0[li] += v;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+
     // get blendshape data
     if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
         // https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2018/ENU/Maya-Tech-Docs/Nodes/blendShape-html.html
@@ -1072,11 +1127,11 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
                         MPlug plug_geom(plug_itip.child(0)); // .inputGeomTarget
                         if (plug_geom.isConnected()) {
-                            // in this case targets are geometry
+                            // in this case target is geometry
                             gen_delta(dst_frame, plug_geom);
                         }
                         else {
-                            // in this case there are no geometry targets. try to retrieves deltas
+                            // in this case there is no geometry target. try to retrieves deltas
                             MPlug plug_ipt(plug_itip.child(3)); // .inputPointsTarget
                             MPlug plug_ict(plug_itip.child(4)); // .inputComponentsTarget
                             retrieve_delta(dst_frame, plug_ipt, plug_ict);
@@ -1084,6 +1139,12 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     }
                 }
             }
+        }
+
+        // apply tweaks
+        if (m_apply_tweak) {
+            apply_tweak(fn_blendshape.object(), skin_index);
+            apply_uv_tweak(fn_blendshape.object(), skin_index);
         }
     }
 
@@ -1132,66 +1193,10 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             gi.next();
         }
 
-        // handling tweaks
+        // apply tweaks
         if (m_apply_tweak) {
-
-            // vertex tweak
-            {
-                MObject tweak;
-                MObject skin_obj = fn_skin.object();
-                MItDependencyGraph it(skin_obj, MFn::kTweak, MItDependencyGraph::kUpstream);
-                if (!it.isDone()) {
-                    tweak = it.currentItem();
-                }
-                if (!tweak.isNull()) {
-                    MFnDependencyNode fn_tweak(tweak);
-                    auto plug_vlist = fn_tweak.findPlug("vlist");
-                    if (plug_vlist.isArray() && (int)plug_vlist.numElements() > skin_index) {
-                        auto plug_vertex = plug_vlist.elementByPhysicalIndex(skin_index).child(0);
-                        if (plug_vertex.isArray()) {
-                            auto vertices_len = plug_vertex.numElements();
-                            for (uint32_t vi = 0; vi < vertices_len; ++vi) {
-                                MPlug p3 = plug_vertex.elementByPhysicalIndex(vi);
-                                int li = p3.logicalIndex();
-                                mu::float3 v;
-                                p3.child(0).getValue(v.x);
-                                p3.child(1).getValue(v.y);
-                                p3.child(2).getValue(v.z);
-                                dst.points[li] += v;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // uv tweak
-            {
-                MObject tweak;
-                MObject skin_obj = fn_skin.object();
-                MItDependencyGraph it(skin_obj, MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
-                if (!it.isDone()) {
-                    tweak = it.currentItem();
-                }
-                if (!tweak.isNull()) {
-                    MFnDependencyNode fn_tweak(tweak);
-                    auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
-                    auto plug_uv = fn_tweak.findPlug("uvTweak");
-                    if (plug_uv.isArray() && (int)plug_uv.numElements() > skin_index) {
-                        auto plug_vertex = plug_uv.elementByPhysicalIndex(skin_index).child(0);
-                        if (plug_vertex.isArray()) {
-                            auto vertices_len = plug_vertex.numElements();
-                            for (uint32_t vi = 0; vi < vertices_len; ++vi) {
-                                MPlug p2 = plug_vertex.elementByPhysicalIndex(vi);
-                                int li = p2.logicalIndex();
-                                mu::float2 v;
-                                p2.child(0).getValue(v.x);
-                                p2.child(1).getValue(v.y);
-                                dst.uv0[li] += v;
-                            }
-                        }
-                    }
-                }
-            }
+            apply_tweak(fn_blendshape.object(), skin_index);
+            apply_uv_tweak(fn_blendshape.object(), skin_index);
         }
     }
 
