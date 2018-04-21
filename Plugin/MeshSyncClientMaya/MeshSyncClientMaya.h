@@ -54,7 +54,7 @@ public:
     ms::ClientSettings m_client_settings;
 
     float m_scale_factor = 1.0f;
-    int m_animation_sps = 10;
+    int m_animation_sps = 5;
     int m_timeout_ms = 5000;
     bool m_auto_sync = false;
     bool m_sync_meshes = true;

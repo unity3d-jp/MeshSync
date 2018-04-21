@@ -484,6 +484,16 @@ namespace UTJ.MeshSync
                             smr.rootBone = null;
                         }
                     }
+
+                    if (flags.hasBlendshapes)
+                    {
+                        int numBlendShapes = data.numBlendShapes;
+                        for (int bi = 0; bi < numBlendShapes; ++bi)
+                        {
+                            var bsd = data.GetBlendShapeData(bi);
+                            smr.SetBlendShapeWeight(bi, bsd.weight);
+                        }
+                    }
                 }
             }
 

@@ -567,6 +567,7 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             MObjectArray animation;
             if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
 
+            // this copy is inevitable..
             std::string name = plug.name().asChar();
 #define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
             Case(".translateX", ptx);
@@ -1018,7 +1019,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
                     dst_bs->name = plug_wc.name().asChar();
                     plug_wc.getValue(dst_bs->weight);
-                    dst_bs->weight *= 100.0f;
+                    dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
 
                     MPlug plug_itgp(plug_itg.elementByPhysicalIndex(idx_itg));
                     uint32_t delta_index = plug_itgp.logicalIndex();
@@ -1030,7 +1031,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
                         dst_bs->frames.push_back(ms::BlendShapeData::Frame());
                         auto& frame = dst_bs->frames.back();
-                        frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f;
+                        frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f; // index 5000-6000 -> weight 0.0f-100.0f
                         frame.points.resize_zeroclear(dst.points.size());
 
                         bool handled = false;
@@ -1061,7 +1062,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
                                 MFnPointArrayData fn_points(obj_points);
                                 uint32_t len = std::min(fn_points.length(), vertex_count);
-                                MPoint *points_ptr(&fn_points[0]);
+                                MPoint *points_ptr = &fn_points[0];
                                 for (uint32_t pi = 0; pi < len; ++pi) {
                                     frame.points[pi] = to_float3(points_ptr[pi]);
                                 }
