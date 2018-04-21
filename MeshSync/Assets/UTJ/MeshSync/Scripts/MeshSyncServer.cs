@@ -510,8 +510,6 @@ namespace UTJ.MeshSync
         PinnedList<int> tmpI = new PinnedList<int>();
         PinnedList<Vector2> tmpV2 = new PinnedList<Vector2>();
         PinnedList<Vector3> tmpV3 = new PinnedList<Vector3>();
-        PinnedList<Vector3> tmpV3a = new PinnedList<Vector3>();
-        PinnedList<Vector3> tmpV3b = new PinnedList<Vector3>();
         PinnedList<Vector4> tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> tmpC = new PinnedList<Color>();
 
@@ -587,9 +585,9 @@ namespace UTJ.MeshSync
             }
             if (flags.hasBlendshapes)
             {
-                tmpV3.Resize(split.numPoints);
-                tmpV3a.Resize(split.numPoints);
-                tmpV3b.Resize(split.numPoints);
+                PinnedList<Vector3> tmpBSP = new PinnedList<Vector3>(split.numPoints);
+                PinnedList<Vector3> tmpBSN = new PinnedList<Vector3>(split.numPoints);
+                PinnedList<Vector3> tmpBST = new PinnedList<Vector3>(split.numPoints);
 
                 int numBlendShapes = data.numBlendShapes;
                 for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -599,10 +597,10 @@ namespace UTJ.MeshSync
                     var numFrames = bsd.numFrames;
                     for (int fi = 0; fi < numFrames; ++fi)
                     {
-                        bsd.ReadPoints(fi, tmpV3, split);
-                        bsd.ReadNormals(fi, tmpV3a, split);
-                        bsd.ReadTangents(fi, tmpV3b, split);
-                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpV3, tmpV3a, tmpV3b);
+                        bsd.ReadPoints(fi, tmpBSP, split);
+                        bsd.ReadNormals(fi, tmpBSN, split);
+                        bsd.ReadTangents(fi, tmpBST, split);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP, tmpBSN, tmpBST);
                     }
                 }
             }

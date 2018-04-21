@@ -865,8 +865,9 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
         auto len = points.length();
         dst.points.resize(len);
+        const MFloatPoint *points_ptr = &points[0];
         for (uint32_t i = 0; i < len; ++i) {
-            dst.points[i] = (const mu::float3&)points[i];
+            dst.points[i] = (const mu::float3&)points_ptr[i];
         }
     }
 
@@ -886,22 +887,23 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         }
     }
 
-    size_t vertex_count = dst.points.size();
-    size_t index_count = dst.indices.size();
-    size_t face_count = dst.counts.size();
+    uint32_t vertex_count = (uint32_t)dst.points.size();
+    uint32_t index_count = (uint32_t)dst.indices.size();
+    uint32_t face_count = (uint32_t)dst.counts.size();
 
     // get normals
     if (m_sync_normals) {
         MFloatVectorArray normals;
         if (fn_src_mesh.getNormals(normals) == MStatus::kSuccess) {
             dst.normals.resize_zeroclear(index_count);
+            const MFloatVector *normals_ptr = &normals[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
-                    dst.normals[ii] = (const mu::float3&)normals[it_poly.normalIndex(i)];
+                    dst.normals[ii] = (const mu::float3&)normals_ptr[it_poly.normalIndex(i)];
                     ++ii;
                 }
                 it_poly.next();
@@ -920,6 +922,8 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
             MFloatArray u;
             MFloatArray v;
             fn_src_mesh.getUVs(u, v, &uvsets[0]);
+            const float *u_ptr = &u[0];
+            const float *v_ptr = &v[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
@@ -928,7 +932,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 for (int i = 0; i < count; ++i) {
                     int iu;
                     if (it_poly.getUVIndex(i, iu, &uvsets[0]) == MStatus::kSuccess && iu >= 0)
-                        dst.uv0[ii] = mu::float2{ u[iu], v[iu] };
+                        dst.uv0[ii] = mu::float2{ u_ptr[iu], v_ptr[iu] };
                     ++ii;
                 }
                 it_poly.next();
@@ -946,6 +950,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
             MColorArray colors;
             fn_src_mesh.getColors(colors, &color_sets[0]);
+            const MColor *colors_ptr = &colors[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
@@ -954,7 +959,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
                 for (int i = 0; i < count; ++i) {
                     int ic;
                     if (it_poly.getColorIndex(i, ic, &color_sets[0]) == MStatus::kSuccess && ic >= 0)
-                        dst.colors[ii] = (const mu::float4&)colors[ic];
+                        dst.colors[ii] = (const mu::float4&)colors_ptr[ic];
                     ++ii;
                 }
                 it_poly.next();
@@ -980,7 +985,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
         if (mids.size() > 0) {
             dst.material_ids.resize_zeroclear(face_count);
-            uint32_t len = std::min((uint32_t)face_count, indices.length());
+            uint32_t len = std::min(face_count, indices.length());
             for (uint32_t i = 0; i < len; ++i) {
                 dst.material_ids[i] = mids[indices[i]];
             }
@@ -990,59 +995,80 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     // get blendshape data
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
     if (m_sync_blendshapes && !fn_blendshape.object().isNull()) {
-        auto num_weights = fn_blendshape.numWeights();
-        auto plug_inputTargets = fn_blendshape.findPlug("inputTarget");
-        auto plug_inputTargetGroups = plug_inputTargets.elementByPhysicalIndex(0).child(0);
-        auto plug_inputTargetItem = plug_inputTargetGroups.elementByPhysicalIndex(0).child(0).elementByPhysicalIndex(0);
-        auto plug_inputGeomTarget = plug_inputTargetItem.child(0);
-        auto plug_inputRelativePointsTarget = plug_inputTargetItem.child(1);
-        DumpPlugInfo(plug_inputTargets);
-        DumpPlugInfo(plug_inputTargetGroups);
-        DumpPlugInfo(plug_inputTargetItem);
-        DumpPlugInfo(plug_inputRelativePointsTarget);
+        // https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2018/ENU/Maya-Tech-Docs/Nodes/blendShape-html.html
 
-        if (plug_inputGeomTarget.isConnected()) {
-            auto data = plug_inputGeomTarget.asMObject();
-            MFnMesh tmesh(data);
-            auto t = data.apiTypeStr();
-        }
-        else {
-            MObject data;
-            plug_inputRelativePointsTarget.getValue(data);
-            MFnPointArrayData pad(data);
-            MPointArray pts;
-            pad.copyTo(pts);
-            auto len = pts.length();
-        }
+        MPlug plug_weight = fn_blendshape.findPlug("weight");
+        MPlug plug_it = fn_blendshape.findPlug("inputTarget");
+        uint32_t num_it = plug_it.evaluateNumElements();
+        for (uint32_t idx_it = 0; idx_it < num_it; ++idx_it) {
+            MPlug plug_itp(plug_it.elementByPhysicalIndex(idx_it));
+            if (plug_itp.logicalIndex() == 0) {
+                MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
+                uint32_t num_itg = plug_itg.evaluateNumElements();
+                DumpPlugInfo(plug_itg);
 
-        MObjectArray bases;
-        fn_blendshape.getBaseObjects(bases);
-        auto num_bases = bases.length();
-        for (uint32_t bi = 0; bi < num_bases; ++bi) {
-            MFnDependencyNode fn(bases[bi]);
-            std::string name = fn.name().asChar();
-            msLogInfo("%s\n", name.c_str());
-        }
+                for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
+                    auto dst_bs = new ms::BlendShapeData();
+                    dst.blendshapes.emplace_back(dst_bs);
+                    MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
+                    dst_bs->name = plug_wc.name().asChar();
+                    plug_wc.getValue(dst_bs->weight);
+                    dst_bs->weight *= 100.0f;
 
-        for (uint32_t wi = 0; wi < num_weights; ++wi) {
-            MObjectArray targets;
-            fn_blendshape.getTargets(bases[0], wi, targets);
-            auto num_targets = targets.length();
-            for (uint32_t ti = 0; ti < num_targets; ++ti) {
-                auto bs = new ms::BlendShapeData();
-                dst.blendshapes.emplace_back(bs);
+                    MPlug plug_itgp(plug_itg.elementByPhysicalIndex(idx_itg));
+                    uint32_t delta_index = plug_itgp.logicalIndex();
 
-                bs->name = GetName(targets[ti]);
-                bs->weight = 100.0f;
-                bs->frames.push_back(ms::BlendShapeData::Frame());
-                auto& frame = bs->frames.back();
-                frame.points = dst.points;
+                    MPlug plug_iti(plug_itgp.child(0)); // .inputTarget[idx_it].inputTargetGroup[idx_itg].inputTargetItem
+                    uint32_t num_iti(plug_iti.evaluateNumElements());
+                    for (uint32_t idx_iti = 0; idx_iti != num_iti; ++idx_iti) {
+                        MPlug plug_itip(plug_iti.elementByPhysicalIndex(idx_iti));
 
-                MItGeometry gi = targets[ti];
-                while (!gi.isDone()) {
-                    auto idx = gi.index();
-                    auto p = gi.position();
-                    frame.points[idx] = (ms::float3&)p;
+                        dst_bs->frames.push_back(ms::BlendShapeData::Frame());
+                        auto& frame = dst_bs->frames.back();
+                        // index = wt * 1000 + 5000
+                        frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f;
+                        frame.points = dst.points;
+
+                        bool handled = false;
+                        if (!handled) {
+                            MPlug plug_points(plug_itip.child(3)); // .inputPointsTarget
+                            MObject obj_points;
+                            plug_points.getValue(obj_points);
+                            if (!obj_points.isNull() && obj_points.hasFn(MFn::kPointArrayData)) {
+                                handled = true;
+
+                                const MFnPointArrayData fn_points(obj_points);
+                                const uint32_t len = std::min(fn_points.length(), vertex_count);
+                                const MPoint *points_ptr(&fn_points[0]);
+                                for (uint32_t pi = 0; pi < len; ++pi) {
+                                    frame.points[pi] += (const mu::float3&)points_ptr[pi];
+                                }
+                            }
+                        }
+                        if (!handled) {
+                            MPlug plug_geom(plug_itip.child(0)); // .inputGeomTarget
+                            MObject obj_geom;
+                            plug_geom.getValue(obj_geom);
+                            if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
+                                handled = true;
+                                dst_bs->name = GetName(obj_geom);
+
+                                const MFnMesh fn_geom(obj_geom);
+                                MFloatPointArray points;
+                                MFloatVectorArray normals;
+                                fn_geom.getPoints(points);
+                                fn_geom.getNormals(normals);
+
+                                const uint32_t len = std::min(points.length(), vertex_count);
+                                const MFloatPoint *points_ptr = &points[0];
+                                const MFloatVector *normals_ptr = &normals[0];
+                                for (uint32_t pi = 0; pi < len; ++pi) {
+                                    frame.points[pi] = (const mu::float3&)points_ptr[pi];
+                                    frame.normals[pi] = (const mu::float3&)normals_ptr[pi];
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
