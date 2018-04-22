@@ -115,7 +115,6 @@ def msb_add_mesh(ctx, obj):
     if obj.hide:
         dst.visible = False
     else:
-        global msb_data_keeper
         scene = bpy.context.scene
         dst.visible = obj.is_visible(scene)
         dst.swap_faces = True

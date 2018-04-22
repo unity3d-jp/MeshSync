@@ -13,8 +13,18 @@ if(NOT EXISTS "${EXTERNAL_ARCHIVE}")
 endif()
 
 set(BLENDER_INCLUDE_DIRS
-    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/blender/blenlib"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/blender/makesdna"
     "${BLENDER_PYTHON_INCLUDE_DIR}"
+)
+if(LINUX)
+    link_directories("${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/lib_linux")
+elseif(MAC)
+    link_directories("${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/lib_mac")
+endif()
+set(BLENDER_LIBRARIES
+    "libbf_blenkernel.a"
 )
 
 file(GLOB sources *.cpp *.h)
@@ -26,7 +36,7 @@ target_include_directories(${MESHSYNC_CLIENT_BLENDER} PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/PyBind11"
     ${BLENDER_INCLUDE_DIRS}
 )
-target_link_libraries(${MESHSYNC_CLIENT_BLENDER} MeshSync MeshUtils ${Poco_LIBRARIES})
+target_link_libraries(${MESHSYNC_CLIENT_BLENDER} MeshSync MeshUtils ${Poco_LIBRARIES} ${BLENDER_LIBRARIES})
 if(LINUX)
     target_link_libraries(${MESHSYNC_CLIENT_BLENDER} pthread)
     set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES SUFFIX ".cpython-${BLENDER_PYTHON_VERSION}m-x86_64-linux-gnu.so")

@@ -14,7 +14,12 @@ dst_dir = os.getcwd()
 os.chdir(src_dir + '/source/blender')
 print(os.getcwd())
 
-for target in ['blenlib', 'makesdna', 'makesrna', 'python']:
+for target in [
+    'blenkernel',
+    'blenlib',
+    'makesdna',
+    'makesrna',
+    'python'
+    ]:
     shutil.copytree(target, dst_dir+'/'+target,
         ignore = lambda dir, list: [f for f in list if os.path.isfile(dir + '/' + f) and not re.search('\.h$', f)])
-    

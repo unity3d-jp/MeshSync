@@ -24,6 +24,9 @@
     <Filter Include="MeshSyncClientBlender\python\MeshSyncClientBlender">
       <UniqueIdentifier>{3b44599e-70f1-49eb-aecc-1310e74fa802}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MeshSyncClientBlender\tools">
+      <UniqueIdentifier>{39366f81-1fb0-4079-b4f3-830c19e7acd5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientBlender\pch.h">
@@ -42,6 +45,9 @@
     </None>
     <None Include="MeshSyncClientBlender\python\unity_mesh_sync.py">
       <Filter>MeshSyncClientBlender\python</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\tools\extract_headers.py">
+      <Filter>MeshSyncClientBlender\tools</Filter>
     </None>
   </ItemGroup>
 </Project>
