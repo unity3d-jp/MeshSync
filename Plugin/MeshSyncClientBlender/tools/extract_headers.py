@@ -15,7 +15,6 @@ os.chdir(src_dir + '/source/blender')
 print(os.getcwd())
 
 for target in [
-    'blenkernel',
     'blenlib',
     'makesdna',
     'makesrna',

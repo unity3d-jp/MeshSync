@@ -63,7 +63,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(BLENDER_INCLUDE_DIR);$(BLENDER_INCLUDE_DIR)\blender\blenlib;$(BLENDER_INCLUDE_DIR)\blender\makesdna;$(PYTHON_INCLUDE_DIR);$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(BLENDER_INCLUDE_DIR);$(PYTHON_INCLUDE_DIR);$(SolutionDir)External;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)-$(BLENDER_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)-$(BLENDER_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>

@@ -7,8 +7,6 @@ exit /B 0
     set BLENDER_VERSION=%~1
     set PYTHON_VERSION=%~2
     set BLENDER_INCLUDE_DIR="%cd%\External\blender-%BLENDER_VERSION%\include"
-    set BLENDER_LIB_DIR="%cd%\External\blender-%BLENDER_VERSION%\lib_win64"
-    set PYTHON_LIB_DIR="%cd%\External\python%PYTHON_VERSION%\lib64"
     set PYTHON_INCLUDE_DIR="%cd%\External\python%PYTHON_VERSION%\include"
     set DIST_DIR="dist\UnityMeshSync_blender-%BLENDER_VERSION%_Windows"
     msbuild MeshSyncClientBlender.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo

@@ -316,8 +316,10 @@ void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
     auto rna = (BPy_StructRNA*)src.ptr();
     auto obj = (Object*)rna->ptr.id.data;
 
+    // ignore particles
     if (find_modofier(obj, eModifierType_ParticleSystem) || find_modofier(obj, eModifierType_ParticleInstance))
-        return; // todo: handle particle system?
+        return;
+    // ignore if already added
     if (m_added.find(obj) != m_added.end())
         return;
     m_added.insert(obj);

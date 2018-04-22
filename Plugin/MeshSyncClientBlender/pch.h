@@ -38,6 +38,3 @@ namespace py = pybind11;
 #include "blender/makesdna/DNA_anim_types.h"
 #include "blender/makesdna/DNA_key_types.h"
 #include "blender/python/intern/bpy_rna.h"
-#include "blender/blenkernel/BKE_customdata.h"
-#include "blender/blenkernel/BKE_fcurve.h"
-#include "blender/blenkernel/BKE_mesh.h"
