@@ -72,4 +72,4 @@ MesySyncServer の "Generate Lightmap UV" ボタンを押すとそのライト�
 
 
 ## ライセンス
-[MIT](LICENSE.txt)
+[MIT](LICENSE.txt), ただし Blender プラグインは [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt)
