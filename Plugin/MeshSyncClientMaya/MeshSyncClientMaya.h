@@ -36,7 +36,17 @@ public:
     bool importScene();
 
 private:
-    void addRecord(MObject node);
+    struct ObjectRecord
+    {
+        MObject node;
+        std::string name;
+        std::string path;
+        bool dirty_transform = true;
+        bool dirty_shape = true;
+    };
+
+    ObjectRecord& findOrAddRecord(MObject node);
+    bool addToDirtyList(MObject node);
     bool isAsyncSendInProgress() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
@@ -76,14 +86,7 @@ public:
     bool m_bake_cloth = false;
 
 private:
-    // name:path pair
-    struct Object
-    {
-        std::string name;
-        std::string path;
-        MObject node;
-    };
-    using ObjectRecords = std::map<void*, Object>;
+    using ObjectRecords = std::map<void*, ObjectRecord>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;

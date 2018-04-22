@@ -114,85 +114,107 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
     m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnDagChange, this, &stat));
     m_cids_global.push_back(MDGMessage::addTimeChangeCallback(OnTimeChange, this));
     m_cids_global.push_back(MDGMessage::addNodeRemovedCallback(OnNodeRemoved, kDefaultNodeType, this));
+
+    // shut up warning about blendshape
+    MGlobal::executeCommand("cycleCheck -e off");
 }
 
 void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
 {
     removeNodeCallbacks();
 
+    auto track_mesh = [this](MObject& node, MObject& shape) -> bool {
+        if (shape.hasFn(MFn::kMesh)) {
+            MFnMesh fn(shape);
+            if (!fn.isIntermediateObject()) {
+                mscTrace("track mesh %s\n", GetName(node).c_str());
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this));
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnMeshUpdated, this));
+            }
+            return true;
+        }
+        return false;
+    };
+
+    auto track_camera = [this](MObject& node, MObject& shape) -> bool {
+        if (shape.hasFn(MFn::kCamera)) {
+            MFnCamera fn(shape);
+            if (!fn.isIntermediateObject()) {
+                mscTrace("track camera %s\n", GetName(node).c_str());
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this));
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnCameraUpdated, this));
+            }
+            return true;
+        }
+        return false;
+    };
+
+    auto track_light = [this](MObject& node, MObject& shape) -> bool {
+        if (shape.hasFn(MFn::kLight)) {
+            MFnLight fn(shape);
+            if (!fn.isIntermediateObject()) {
+                mscTrace("track light %s\n", GetName(node).c_str());
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this));
+                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnLightUpdated, this));
+            }
+            return true;
+        }
+        return false;
+    };
+
+    auto track_joint = [this](MObject& node) -> bool {
+        if (node.hasFn(MFn::kJoint)) {
+            mscTrace("track joint %s\n", GetName(node).c_str());
+            m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this));
+            return true;
+        }
+        return false;
+    };
+
+
     MStatus stat;
     if (scope == TargetScope::Selection) {
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
 
-        for (uint32_t i = 0; i < list.length(); i++)
-        {
+        for (uint32_t i = 0; i < list.length(); i++) {
             MObject node;
-            MDagPath path;
             list.getDependNode(i, node);
-            list.getDagPath(i, path);
-
-            if (node.hasFn(MFn::kJoint)) {
-                mscTrace("tracking transform %s\n", path.fullPathName().asChar());
-                m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this, &stat));
-            }
-            else {
-                auto path_to_shape = path;
-                if (path_to_shape.extendToShape() == MS::kSuccess && path_to_shape.node().hasFn(MFn::kMesh)) {
-                    mscTrace("tracking mesh %s\n", path.fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this, &stat));
-
-                    MObject shape_obj = path_to_shape.node();
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape_obj, OnMeshUpdated, this, &stat));
+            if (!track_joint(node)) {
+                MObject shape = GetShape(node);
+                if (!shape.isNull()) {
+                    track_mesh(node, shape) || track_camera(node, shape) || track_light(node, shape);
                 }
             }
         }
     }
     else {
-        // track  meshes
+        //  meshes
         {
             MItDag it(MItDag::kDepthFirst, MFn::kMesh);
             while (!it.isDone()) {
                 auto shape = it.item();
-                MFnMesh fn(shape);
-                if (!fn.isIntermediateObject()) {
-                    auto trans = GetTransform(shape);
-                    mscTrace("tracking mesh %s\n", GetDagPath(trans).fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnTransformUpdated, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnMeshUpdated, this, &stat));
-                }
+                track_mesh(GetTransform(shape), shape);
                 it.next();
             }
         }
 
-        // track cameras
+        // cameras
         {
             MItDag it(MItDag::kDepthFirst, MFn::kCamera);
             while (!it.isDone()) {
                 auto shape = it.item();
-                MFnCamera fn(shape);
-                if (!fn.isIntermediateObject()) {
-                    auto trans = GetTransform(shape);
-                    mscTrace("tracking camera %s\n", GetDagPath(trans).fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnTransformUpdated, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnCameraUpdated, this, &stat));
-                }
+                track_camera(GetTransform(shape), shape);
                 it.next();
             }
         }
 
-        // track lights
+        // lights
         {
             MItDag it(MItDag::kDepthFirst, MFn::kLight);
             while (!it.isDone()) {
                 auto shape = it.item();
-                MFnLight fn(shape);
-                if (!fn.isIntermediateObject()) {
-                    auto trans = GetTransform(shape);
-                    mscTrace("tracking light %s\n", GetDagPath(trans).fullPathName().asChar());
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(trans, OnTransformUpdated, this, &stat));
-                    m_cids_node.push_back(MNodeMessage::addAttributeChangedCallback(shape, OnLightUpdated, this, &stat));
-                }
+                track_light(GetTransform(shape), shape);
                 it.next();
             }
         }
@@ -232,43 +254,57 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
     }
 }
 
-void MeshSyncClientMaya::addRecord(MObject node)
+MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject node)
 {
     auto& record = m_records[(void*&)node];
     if (record.path.empty()) {
-        record = Object { GetName(node), GetPath(node), node };
+        record = ObjectRecord { node, GetName(node), GetPath(node), };
         mscTrace("MeshSyncClientMaya::addRecord(): %s\n", record.path.c_str());
     }
+    return record;
+}
+
+bool MeshSyncClientMaya::addToDirtyList(MObject node)
+{
+    if (std::find(m_dirty_objects.begin(), m_dirty_objects.end(), node) == m_dirty_objects.end()) {
+        m_dirty_objects.push_back(node);
+        return true;
+    }
+    return false;
 }
 
 void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
 {
     if ((force || m_auto_sync) && node.hasFn(MFn::kTransform)) {
-        if (std::find(m_dirty_objects.begin(), m_dirty_objects.end(), node) == m_dirty_objects.end()) {
-            m_dirty_objects.push_back(node);
-            addRecord(node);
-        }
+        findOrAddRecord(node).dirty_transform = true;
+        addToDirtyList(node);
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_cameras && shape.hasFn(MFn::kCamera)) {
-        notifyUpdateTransform(GetTransform(shape), force);
+        auto node = GetTransform(shape);
+        findOrAddRecord(node).dirty_shape = true;
+        addToDirtyList(node);
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_lights && shape.hasFn(MFn::kLight)) {
-        notifyUpdateTransform(GetTransform(shape), force);
+        auto node = GetTransform(shape);
+        findOrAddRecord(node).dirty_shape = true;
+        addToDirtyList(node);
     }
 }
 
 void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
 {
     if ((force || m_auto_sync) && m_sync_meshes && shape.hasFn(MFn::kMesh)) {
-        notifyUpdateTransform(GetTransform(shape), force);
+        auto node = GetTransform(shape);
+        findOrAddRecord(node).dirty_shape = true;
+        addToDirtyList(node);
     }
 }
 
@@ -409,47 +445,48 @@ bool MeshSyncClientMaya::sendMarkedObjects()
 
     extractSceneData();
 
-    auto check_rename = [this](MObject node) {
+    // note: this must be index based because joints maybe added to m_dirty_objects in this loop.
+    for (size_t i = 0; i < m_dirty_objects.size();++i) {
+        auto node = m_dirty_objects[i];
+        auto shape = GetShape(node);
         auto& record = m_records[(void*&)node];
+
+        // check rename
         auto name = GetName(node);
         if (record.name != GetName(node)) {
             mscTrace("rename %s -> %s\n", record.path.c_str(), GetPath(node).c_str());
             m_deleted.push_back(record.path);
             record.name = name;
             record.path = GetPath(node);
+            record.dirty_transform = true;
+            record.dirty_shape = true;
         }
-    };
 
-    // note: this must be index based because joints maybe added to m_dirty_objects in this loop.
-    for (size_t i = 0; i < m_dirty_objects.size();++i) {
-        auto node = m_dirty_objects[i];
-        auto shape = GetShape(node);
-        check_rename(node);
-
-        if (shape.hasFn(MFn::kMesh)) {
+        if (record.dirty_shape && shape.hasFn(MFn::kMesh)) {
             auto mesh = ms::MeshPtr(new ms::Mesh());
             if (extractMeshData(*mesh, node)) {
                 m_client_meshes.emplace_back(mesh);
             }
         }
-        else if (shape.hasFn(MFn::kCamera)) {
+        else if (record.dirty_shape && shape.hasFn(MFn::kCamera)) {
             auto dst = ms::CameraPtr(new ms::Camera());
             if (extractCameraData(*dst, node)) {
                 m_client_cameras.emplace_back(dst);
             }
         }
-        else if (shape.hasFn(MFn::kLight)) {
+        else if (record.dirty_shape && shape.hasFn(MFn::kLight)) {
             auto dst = ms::LightPtr(new ms::Light());
             if (extractLightData(*dst, node)) {
                 m_client_lights.emplace_back(dst);
             }
         }
-        else {
+        else if(record.dirty_shape || record.dirty_transform) {
             auto dst = ms::TransformPtr(new ms::Transform());
             if (extractTransformData(*dst, node)) {
                 m_client_transforms.emplace_back(dst);
             }
         }
+        record.dirty_shape = record.dirty_transform = false;
     }
     m_dirty_objects.clear();
 
