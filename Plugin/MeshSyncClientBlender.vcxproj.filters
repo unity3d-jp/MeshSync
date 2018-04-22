@@ -13,6 +13,9 @@
     <ClCompile Include="MeshSyncClientBlender\msbContext.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientBlender\msbBlenderUtils.cpp">
+      <Filter>MeshSyncClientBlender</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSyncClientBlender">
@@ -36,6 +39,9 @@
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
     <ClInclude Include="MeshSyncClientBlender\msbContext.h">
+      <Filter>MeshSyncClientBlender</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientBlender\msbBlenderUtils.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
   </ItemGroup>

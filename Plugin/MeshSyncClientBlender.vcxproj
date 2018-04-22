@@ -12,12 +12,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClientBlender\MeshSyncClientBlender.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msbBlenderUtils.cpp" />
     <ClCompile Include="MeshSyncClientBlender\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSyncClientBlender\msbContext.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MeshSyncClientBlender\msbBlenderUtils.h" />
     <ClInclude Include="MeshSyncClientBlender\pch.h" />
     <ClInclude Include="MeshSyncClientBlender\MeshSyncClientBlender.h" />
     <ClInclude Include="MeshSyncClientBlender\msbContext.h" />
