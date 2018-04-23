@@ -13,7 +13,11 @@ if(NOT EXISTS "${EXTERNAL_ARCHIVE}")
 endif()
 
 set(BLENDER_INCLUDE_DIRS
-    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/blenkernel"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/blenlib"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/makesdna"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/makesrna"
+    "${EXTERNAL_DIR}/blender-${BLENDER_VERSION}/include/python"
     "${BLENDER_PYTHON_INCLUDE_DIR}"
 )
 

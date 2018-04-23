@@ -41,12 +41,21 @@ def msb_sync(targets):
     start_time = time()
 
     scene = bpy.context.scene
+    ctx.server_address = scene.meshsync_server_address
+    ctx.server_port = scene.meshsync_server_port
+    ctx.scale_factor = scene.meshsync_scale_factor
+    ctx.sync_meshes = scene.meshsync_sync_meshes
     ctx.sync_normals = 2 if scene.meshsync_sync_normals else 0
     ctx.sync_uvs = scene.meshsync_sync_uvs
     ctx.sync_colors = scene.meshsync_sync_colors
     ctx.sync_bones = scene.meshsync_sync_bones
     ctx.sync_poses = scene.meshsync_sync_poses
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
+    ctx.sync_cameras = scene.meshsync_sync_cameras
+    ctx.sync_lights = scene.meshsync_sync_lights
+    ctx.sync_animations = scene.meshsync_sync_animations
+    ctx.sample_animation = scene.meshsync_sample_animation
+    ctx.animation_sps = scene.meshsync_animation_sps
 
     # materials
     for mat in bpy.data.materials:
@@ -217,7 +226,7 @@ def msb_mat4x4_to_array(m):
 
 
 def MeshSync_InitProperties():
-    bpy.types.Scene.meshsync_server_addr = bpy.props.StringProperty(default = "127.0.0.1", name = "Server Address")
+    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(default = "127.0.0.1", name = "Server Address")
     bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Server Port")
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor")
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
@@ -231,6 +240,8 @@ def MeshSync_InitProperties():
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
     bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(default = False, name = "Sync Animations")
+    bpy.types.Scene.meshsync_sample_animation = bpy.props.BoolProperty(default = True, name = "Sample Animations")
+    bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync")
 
 
@@ -242,7 +253,7 @@ class MeshSyncPanel(bpy.types.Panel):
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(context.scene, 'meshsync_server_addr')
+        self.layout.prop(context.scene, 'meshsync_server_address')
         self.layout.prop(context.scene, 'meshsync_server_port')
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_scale_factor')
@@ -261,6 +272,11 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.prop(context.scene, 'meshsync_sync_cameras')
         self.layout.prop(context.scene, 'meshsync_sync_lights')
         self.layout.prop(context.scene, 'meshsync_sync_animations')
+        if scene.meshsync_sync_animations:
+            b = self.layout.box()
+            b.prop(context.scene, 'meshsync_sample_animation')
+            if scene.meshsync_sample_animation:
+                b.prop(context.scene, 'meshsync_animation_sps')
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_all", text="Manual Sync")

@@ -17,11 +17,17 @@ struct msbSettings
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
     msbNormalSyncMode sync_normals = msbNormalSyncMode::PerIndex;
+    bool sync_meshes = true;
     bool sync_uvs = true;
     bool sync_colors = true;
     bool sync_bones = true;
     bool sync_poses = true;
     bool sync_blendshapes = true;
+    bool sync_animations = true;
+    bool sync_cameras = true;
+    bool sync_lights = true;
+    bool sample_animation = true;
+    int animation_sps = 5;
 };
 
 

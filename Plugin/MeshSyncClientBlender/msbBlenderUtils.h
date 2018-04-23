@@ -25,10 +25,21 @@ namespace blender
     void setup(py::object context);
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
-    float FCurve_evaluate(const FCurve& fcurve, float time);
+    void Mesh_calc_normals_split(Mesh& mesh);
+    float FCurve_evaluate(FCurve& fcurve, float time);
+} // namespace blender
+
+
+
+// Body: [](const FCurve*) -> void
+template<class Body>
+static inline void each_fcurves(Object *obj, const Body& body)
+{
+    if (!obj->adt || !obj->adt->action) return;
+    for (auto *curve = (FCurve*)obj->adt->action->curves->first; curve; curve = curve->next) {
+        body(curve);
+    }
 }
-
-
 
 // Body: [](const ModifierData*) -> void
 template<class Body>

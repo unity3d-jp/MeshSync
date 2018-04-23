@@ -7,4 +7,5 @@ set BLENDER_INCLUDE_DIRS=^
 %cd%\External\blender-%BLENDER_VERSION%\include\makesrna;^
 %cd%\External\blender-%BLENDER_VERSION%\include\python;
 set PYTHON_INCLUDE_DIR=%cd%\External\python%PYTHON_VERSION%\include
+set PYTHON_LIB_DIR=%cd%\External\python%PYTHON_VERSION%\lib64
 MeshSync_Blender.sln
