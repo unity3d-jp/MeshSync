@@ -1147,6 +1147,8 @@ void Mesh::clear()
     submeshes.clear();
     splits.clear();
     weights4.clear();
+
+    remap_normals.clear(); remap_uv0.clear(); remap_uv1.clear(); remap_colors.clear();
 }
 
 #undef EachVertexProperty
@@ -1177,6 +1179,18 @@ void Mesh::applyScaleFactor(float v)
     mu::Scale(points.data(), v, points.size());
     for (auto& bone : bones) bone->applyScaleFactor(v);
     for (auto& bs : blendshapes) bs->applyScaleFactor(v);
+}
+
+template<class T>
+inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<int>& indices)
+{
+    if (indices.empty()) {
+        dst.assign(src.begin(), src.end());
+    }
+    else {
+        dst.resize_discard(indices.size());
+        CopyWithIndices(dst.data(), src.data(), indices);
+    }
 }
 
 void Mesh::refine(const MeshRefineSettings& mrs)
@@ -1230,17 +1244,18 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
 
     // normals
+    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.swap_faces;
     if (mrs.flags.gen_normals_with_smooth_angle) {
         if (mrs.smooth_angle < 180.0f) {
-            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, mrs.flags.flip_normals);
+            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, flip_normals);
             refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
         }
         else {
-            GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
+            GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
         }
     }
     else if (mrs.flags.gen_normals) {
-        GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
+        GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
     }
     else {
         if (normals.size() == indices.size()) {
@@ -1256,10 +1271,22 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
         refiner.new_points.swap(points);
         refiner.new_indices_submeshes.swap(indices);
-        if (!tmp_normals.empty()) tmp_normals.swap(normals);
-        if (!tmp_uv0.empty()) tmp_uv0.swap(uv0);
-        if (!tmp_uv1.empty()) tmp_uv1.swap(uv1);
-        if (!tmp_colors.empty()) tmp_colors.swap(colors);
+        if (!normals.empty()) {
+            Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
+            tmp_normals.swap(normals);
+        }
+        if (!uv0.empty()) {
+            Remap(tmp_uv0, uv0, !remap_uv0.empty() ? remap_uv0 : refiner.new2old_points);
+            tmp_uv0.swap(uv0);
+        }
+        if (!uv1.empty()) {
+            Remap(tmp_uv1, uv1, !remap_uv1.empty() ? remap_uv1 : refiner.new2old_points);
+            tmp_uv1.swap(uv1);
+        }
+        if (!colors.empty()) {
+            Remap(tmp_colors, colors, !remap_colors.empty() ? remap_colors : refiner.new2old_points);
+            tmp_colors.swap(colors);
+        }
 
         splits.clear();
         int offset_indices = 0;
