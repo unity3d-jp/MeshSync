@@ -165,6 +165,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
         using self_t = msbContext;
         py::class_<msbContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
+            BindMethod(setup)
             BindMethod(addTransform)
             BindMethod(addCamera)
             BindMethod(addLight)

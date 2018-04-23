@@ -17,6 +17,11 @@ msbContext::~msbContext()
     }
 }
 
+void msbContext::setup(py::object bcontext)
+{
+    blender::setup(bcontext);
+}
+
 msbSettings& msbContext::getSettings() { return m_settings; }
 const msbSettings& msbContext::getSettings() const { return m_settings; }
 ms::ScenePtr msbContext::getCurrentScene() const { return m_scene; }
@@ -212,7 +217,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
     else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
         // per-index
-        auto normals = (float3*)CustomData_get(src.ldata, CD_NORMAL);
+        auto normals = (float3*)blender::CustomData_get(src.ldata, CD_NORMAL);
         if (normals == nullptr) {
             dst.normals.resize_zeroclear(num_loops);
         }
@@ -225,8 +230,8 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 
     // uvs
-    if (m_settings.sync_uvs && CustomData_number_of_layers(src.ldata, CD_MLOOPUV) > 0) {
-        auto data = (const float2*)CustomData_get(src.ldata, CD_MLOOPUV);
+    if (m_settings.sync_uvs && blender::CustomData_number_of_layers(src.ldata, CD_MLOOPUV) > 0) {
+        auto data = (const float2*)blender::CustomData_get(src.ldata, CD_MLOOPUV);
         if (data != nullptr) {
             dst.uv0.resize_discard(num_loops);
             for (int li = 0; li < num_loops; ++li) {
@@ -236,8 +241,8 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 
     // colors
-    if (m_settings.sync_colors && CustomData_number_of_layers(src.ldata, CD_MLOOPCOL) > 0) {
-        auto data = (const MLoopCol*)CustomData_get(src.ldata, CD_MLOOPCOL);
+    if (m_settings.sync_colors && blender::CustomData_number_of_layers(src.ldata, CD_MLOOPCOL) > 0) {
+        auto data = (const MLoopCol*)blender::CustomData_get(src.ldata, CD_MLOOPCOL);
         if (data != nullptr) {
             dst.colors.resize_discard(num_loops);
             for (int li = 0; li < num_loops; ++li) {

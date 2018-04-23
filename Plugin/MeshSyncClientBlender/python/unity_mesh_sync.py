@@ -276,6 +276,7 @@ class MeshSync_OpSyncAll(bpy.types.Operator):
 
 @persistent
 def on_scene_update(context):
+    msb_context.setup(context)
     if(bpy.context.scene.meshsync_auto_sync):
         msb_sync_updated()
 

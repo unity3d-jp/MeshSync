@@ -439,7 +439,7 @@ bool MeshSyncClientMaya::sendScene(TargetScope scope)
 
 bool MeshSyncClientMaya::sendMarkedObjects()
 {
-    if (isAsyncSendInProgress() || m_dirty_objects.empty()) {
+    if (isAsyncSendInProgress() || (m_dirty_objects.empty() && m_deleted.empty())) {
         return false;
     }
 

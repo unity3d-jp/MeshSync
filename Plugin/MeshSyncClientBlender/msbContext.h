@@ -30,6 +30,7 @@ class msbContext : public std::enable_shared_from_this<msbContext>
 public:
     msbContext();
     ~msbContext();
+    void setup(py::object bcontext);
 
     msbSettings&        getSettings();
     const msbSettings&  getSettings() const;
