@@ -30,7 +30,7 @@ def msb_sync_updated():
     if not bpy.data.objects.is_updated:
         return
     msb_sync([obj for obj in bpy.data.objects if obj.is_updated or obj.is_updated_data])
-
+    
 
 def msb_sync(targets):
     global msb_context
@@ -39,23 +39,7 @@ def msb_sync(targets):
         return
 
     start_time = time()
-
     scene = bpy.context.scene
-    ctx.server_address = scene.meshsync_server_address
-    ctx.server_port = scene.meshsync_server_port
-    ctx.scale_factor = scene.meshsync_scale_factor
-    ctx.sync_meshes = scene.meshsync_sync_meshes
-    ctx.sync_normals = 2 if scene.meshsync_sync_normals else 0
-    ctx.sync_uvs = scene.meshsync_sync_uvs
-    ctx.sync_colors = scene.meshsync_sync_colors
-    ctx.sync_bones = scene.meshsync_sync_bones
-    ctx.sync_poses = scene.meshsync_sync_poses
-    ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
-    ctx.sync_cameras = scene.meshsync_sync_cameras
-    ctx.sync_lights = scene.meshsync_sync_lights
-    ctx.sync_animations = scene.meshsync_sync_animations
-    ctx.sample_animation = scene.meshsync_sample_animation
-    ctx.animation_sps = scene.meshsync_animation_sps
 
     # materials
     for mat in bpy.data.materials:
@@ -211,32 +195,48 @@ def msb_get_material_id(material):
     return 0
 
 
-def msb_mat4x4_to_array(m):
-    return [
-        m[0][0], m[1][0], m[2][0], m[3][0],
-        m[0][1], m[1][1], m[2][1], m[3][1],
-        m[0][2], m[1][2], m[2][2], m[3][2],
-        m[0][3], m[1][3], m[2][3], m[3][3]]
+def msb_update_settings(self = None, context = None):
+    global msb_context
+    ctx = msb_context
+    scene = bpy.context.scene
+    ctx.server_address = scene.meshsync_server_address
+    ctx.server_port = scene.meshsync_server_port
+    ctx.scale_factor = scene.meshsync_scale_factor
+    ctx.sync_meshes = scene.meshsync_sync_meshes
+    ctx.sync_normals = 2 if scene.meshsync_sync_normals else 0
+    ctx.sync_uvs = scene.meshsync_sync_uvs
+    ctx.sync_colors = scene.meshsync_sync_colors
+    ctx.sync_bones = scene.meshsync_sync_bones
+    ctx.sync_poses = scene.meshsync_sync_poses
+    ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
+    ctx.sync_cameras = scene.meshsync_sync_cameras
+    ctx.sync_lights = scene.meshsync_sync_lights
+    ctx.sync_animations = scene.meshsync_sync_animations
+    ctx.sample_animation = scene.meshsync_sample_animation
+    ctx.animation_sps = scene.meshsync_animation_sps
+    #print("msb_update_settings")
+    return None
 
 
-def MeshSync_InitProperties():
-    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(default = "127.0.0.1", name = "Server Address")
-    bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Server Port")
-    bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor")
-    bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
-    bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals")
-    bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
-    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
-    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
-    bpy.types.Scene.meshsync_sync_poses = bpy.props.BoolProperty(default = True, name = "Poses")
-    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
-    bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
-    bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
-    bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
-    bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(default = False, name = "Sync Animations")
-    bpy.types.Scene.meshsync_sample_animation = bpy.props.BoolProperty(default = True, name = "Sample Animations")
-    bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples")
-    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync")
+def msb_initialize_properties():
+    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(default = "127.0.0.1", name = "Server Address", update = msb_update_settings)
+    bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Server Port", update = msb_update_settings)
+    bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_poses = bpy.props.BoolProperty(default = True, name = "Poses", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes", update = msb_update_settings)
+    bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(default = False, name = "Sync Animations", update = msb_update_settings)
+    bpy.types.Scene.meshsync_sample_animation = bpy.props.BoolProperty(default = True, name = "Sample Animations", update = msb_update_settings)
+    bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples", update = msb_update_settings)
+    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_update_settings)
+    msb_update_settings()
 
 
 class MeshSyncPanel(bpy.types.Panel):
@@ -304,7 +304,7 @@ def on_scene_update(context):
         msb_sync_updated()
 
 def register():
-    MeshSync_InitProperties()
+    msb_initialize_properties()
     bpy.utils.register_module(__name__)
     bpy.app.handlers.scene_update_post.append(on_scene_update)
 
