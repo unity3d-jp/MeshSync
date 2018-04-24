@@ -29,6 +29,9 @@
 namespace py = pybind11;
 
 
+#include "BKE_main.h"
+#include "BKE_context.h"
+#include "BKE_fcurve.h"
 #include "RNA_types.h"
 #include "intern/rna_internal_types.h"
 #include "DNA_object_types.h"
@@ -42,4 +45,3 @@ namespace py = pybind11;
 #include "intern/bpy_rna.h"
 #include "BLI_utildefines.h"
 #include "BLI_math_base.h"
-#include "BKE_fcurve.h"

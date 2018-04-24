@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MeshSyncClientBlender.h"
-#include "msbBlenderUtils.h"
+#include "msbUtils.h"
 using namespace mu;
 
 
@@ -116,92 +116,4 @@ float4x4 extract_bindpose(const Object *armature, const Bone *bone)
 {
     return invert((float4x4&)bone->arm_mat);
 }
-
-
-namespace blender
-{
-static bContext *g_bcontext;
-static StructRNA *g_rna_head;
-static StructRNA *g_rna_mesh;
-static StructRNA *g_rna_fcurve;
-static FunctionRNA *g_mesh_calc_normals_split;
-static FunctionRNA *g_fcurve_evaluate;
-
-
-// context: bpi.context in python
-void setup(py::object context)
-{
-    if (g_bcontext)
-        return;
-
-    auto rna = (BPy_StructRNA*)context.ptr();
-    auto head = &rna->ptr.type->cont;
-    while (head->prev)
-        head = (ContainerRNA*)head->prev;
-    g_rna_head = (StructRNA*)head;
-    g_bcontext = (bContext*)rna->ptr.id.data;
-
-
-    // resolve blender internal functions
-    auto find_type = [](const char *type_name) -> StructRNA* {
-        if (type_name) {
-            for (auto type = g_rna_head; type; type = (StructRNA*)type->cont.next)
-                if (strcmp(type->identifier, type_name) == 0)
-                    return type;
-        }
-        return nullptr;
-    };
-    auto find_function = [](StructRNA *type, const char *name) -> FunctionRNA*
-    {
-        if (type) {
-            for (auto func = (FunctionRNA*)type->functions.first; func; func = (FunctionRNA*)func->cont.next) {
-                if (strcmp(func->identifier, name) == 0)
-                    return func;
-            }
-        }
-        return nullptr;
-    };
-
-    g_rna_mesh = find_type("Mesh");
-    g_mesh_calc_normals_split = find_function(g_rna_mesh, "calc_normals_split");
-
-    g_rna_fcurve = find_type("FCurve");
-    g_fcurve_evaluate = find_function(g_rna_fcurve, "evaluate");
-}
-
-
-
-void Mesh_calc_normals_split(Mesh & mesh)
-{
-    PointerRNA self; self.data = &mesh;
-    g_mesh_calc_normals_split->call(nullptr, nullptr, &self, nullptr);
-}
-
-float FCurve_evaluate(FCurve& fcurve, float time)
-{
-    PointerRNA self; self.data = &fcurve;
-    struct { float a1; float r; } params = {time};
-    g_fcurve_evaluate->call(nullptr, nullptr, &self, (ParameterList*)&params);
-    return params.r;
-}
-
-const void* CustomData_get(const CustomData& data, int type)
-{
-    int layer_index = data.typemap[type];
-    if (layer_index == -1)
-        return nullptr;
-    layer_index = layer_index + data.layers[layer_index].active;
-    return data.layers[layer_index].data;
-}
-
-int CustomData_number_of_layers(const CustomData& data, int type)
-{
-    int i, number = 0;
-    for (i = 0; i < data.totlayer; i++)
-        if (data.layers[i].type == type)
-            number++;
-    return number;
-}
-
-} // namespace blender
 

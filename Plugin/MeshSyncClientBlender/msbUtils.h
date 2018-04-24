@@ -20,14 +20,6 @@ void extract_local_TRS(const Object *armature, const Bone *bone, float3& pos, qu
 void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale);
 float4x4 extract_bindpose(const Object *armature, const Bone *bone);
 
-namespace blender
-{
-    void setup(py::object context);
-    const void* CustomData_get(const CustomData& data, int type);
-    int CustomData_number_of_layers(const CustomData& data, int type);
-    void Mesh_calc_normals_split(Mesh& mesh);
-    float FCurve_evaluate(FCurve& fcurve, float time);
-} // namespace blender
 
 
 

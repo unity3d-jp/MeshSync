@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "MeshSyncClientBlender.h"
 #include "msbContext.h"
-#include "msbBlenderUtils.h"
+#include "msbBinder.h"
+#include "msbUtils.h"
 using namespace mu;
 
 
@@ -17,9 +18,9 @@ msbContext::~msbContext()
     }
 }
 
-void msbContext::setup(py::object bcontext)
+void msbContext::setup()
 {
-    blender::setup(bcontext);
+    blender::setup();
 }
 
 msbSettings& msbContext::getSettings() { return m_settings; }

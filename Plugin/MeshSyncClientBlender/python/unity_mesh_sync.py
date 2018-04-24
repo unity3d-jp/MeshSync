@@ -236,7 +236,6 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sample_animation = bpy.props.BoolProperty(default = True, name = "Sample Animations", update = msb_update_settings)
     bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples", update = msb_update_settings)
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_update_settings)
-    msb_update_settings()
 
 
 class MeshSyncPanel(bpy.types.Panel):
@@ -274,13 +273,14 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_all", text="Manual Sync")
-        self.layout.operator("meshsync.fcurve", text="fcurve")
+        self.layout.operator("meshsync.fcurve", text="Debug")
 
 
 class MeshSync_OpSyncAll(bpy.types.Operator):
     bl_idname = "meshsync.sync_all"
     bl_label = "Sync All"
     def execute(self, context):
+        msb_context.setup()
         msb_sync_all()
         return{'FINISHED'}
 
@@ -299,7 +299,7 @@ class MeshSync_OpFCurve(bpy.types.Operator):
 
 @persistent
 def on_scene_update(context):
-    msb_context.setup(context)
+    msb_context.setup()
     if(bpy.context.scene.meshsync_auto_sync):
         msb_sync_updated()
 
