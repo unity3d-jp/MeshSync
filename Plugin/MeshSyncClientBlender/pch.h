@@ -42,6 +42,7 @@ namespace py = pybind11;
 #include "DNA_armature_types.h"
 #include "DNA_anim_types.h"
 #include "DNA_key_types.h"
+#include "DNA_scene_types.h"
 #include "intern/bpy_rna.h"
 #include "BLI_utildefines.h"
 #include "BLI_math_base.h"

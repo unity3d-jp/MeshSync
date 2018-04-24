@@ -1,11 +1,6 @@
 #pragma once
 #include "MeshUtils/MeshUtils.h"
 
-using mu::float2;
-using mu::float3;
-using mu::float4;
-using mu::quatf;
-using mu::float4x4;
 
 std::string get_path(const Object *obj);
 std::string get_path(const Bone *obj);
