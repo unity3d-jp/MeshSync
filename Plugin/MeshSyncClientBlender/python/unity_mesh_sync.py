@@ -133,12 +133,6 @@ def msb_add_mesh(ctx, obj):
             data = obj.to_mesh(scene, True, 'PREVIEW')
         else:
             data = obj.data
-            for mod in obj.modifiers:
-                if mod.type == 'MIRROR':
-                    dst.mirror_x = mod.use_x
-                    dst.mirror_y = mod.use_y
-                    dst.mirror_z = mod.use_z
-                    dst.mirror_merge = mod.use_mirror_merge
 
         material_ids = []
         for mat in data.materials:
@@ -280,6 +274,7 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_all", text="Manual Sync")
+        self.layout.operator("meshsync.fcurve", text="fcurve")
 
 
 class MeshSync_OpSyncAll(bpy.types.Operator):
@@ -287,6 +282,18 @@ class MeshSync_OpSyncAll(bpy.types.Operator):
     bl_label = "Sync All"
     def execute(self, context):
         msb_sync_all()
+        return{'FINISHED'}
+
+class MeshSync_OpFCurve(bpy.types.Operator):
+    bl_idname = "meshsync.fcurve"
+    bl_label = "fcurve"
+    def execute(self, context):
+        obj = bpy.context.active_object
+        print("object " + obj.name)
+        for curve in obj.animation_data.action.fcurves:
+            print("  curve " + curve.data_path + "[" + str(curve.array_index) + "]")
+            curve.evaluate(0)
+            print(curve.evaluate)
         return{'FINISHED'}
 
 
