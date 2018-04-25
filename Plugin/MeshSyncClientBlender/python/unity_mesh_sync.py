@@ -35,7 +35,7 @@ def msb_sync_updated():
 def msb_sync(targets):
     global msb_context
     ctx = msb_context
-    if ctx.isSending():
+    if not ctx.prepare():
         return
 
     start_time = time()
@@ -297,6 +297,7 @@ class MeshSync_OpFCurve(bpy.types.Operator):
 @persistent
 def on_scene_update(context):
     msb_context.setup()
+    msb_context.flushPendingList();
     if(bpy.context.scene.meshsync_auto_sync):
         msb_sync_updated()
 

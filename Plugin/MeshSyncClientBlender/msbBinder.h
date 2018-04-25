@@ -2,6 +2,10 @@
 
 namespace blender
 {
+    using mu::float2;
+    using mu::float3;
+    using mu::float4;
+
     void setup();
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
@@ -66,6 +70,7 @@ namespace blender
     template<typename T> barray<T> array(T *t, size_t s) { return barray<T>(t, s); }
 
 
+
 #define Boilerplate2(Type, BType)\
     using btype = ::BType;\
     static StructRNA *s_type;\
@@ -77,17 +82,43 @@ namespace blender
 
 #define Boilerplate(Type) Boilerplate2(B##Type, Type)
 
+#define Compatible(Type)\
+    operator Type() { return *(Type*)this; }\
+    operator Type() const { return *(const Type*)this; }
 
+    struct TypeCode
+    {
+        uint16_t code;
+
+        TypeCode() : code(0) {}
+        TypeCode(char *s) : code(*(uint16_t*)s) {}
+        TypeCode(char a, char b) { auto *p = (char*)&code; p[0] = a; p[1] = b; }
+        TypeCode(int v) : code((uint16_t)v) {}
+        bool operator==(const TypeCode& v) const { return code == v.code; }
+        bool operator!=(const TypeCode& v) const { return code != v.code; }
+    };
+
+    class BID
+    {
+    public:
+        Boilerplate(ID)
+
+        TypeCode typecode() const;
+        const char *name() const;
+        bool is_updated_data() const;
+    };
 
     class BObject
     {
     public:
         Boilerplate(Object)
+        Compatible(BID)
 
         brange<ModifierData> modifiers();
         brange<FCurve> fcurves();
         brange<bDeformGroup> deform_groups();
 
+        TypeCode typecode() const;
         const char *name() const;
         void* data();
     };
@@ -96,6 +127,7 @@ namespace blender
     {
     public:
         Boilerplate(Mesh)
+        Compatible(BID)
 
         barray<MLoop> indices();
         barray<MPoly> polygons();
@@ -134,6 +166,7 @@ namespace blender
     {
     public:
         Boilerplate(Material)
+        Compatible(BID)
 
         const char *name() const;
         const float3& color() const;
@@ -143,6 +176,7 @@ namespace blender
     {
     public:
         Boilerplate(Scene)
+        Compatible(BID)
 
         brange<Object> objects();
     };
@@ -166,4 +200,7 @@ namespace blender
         brange<Material> materials();
     };
 
+#undef Compatible
+#undef Boilerplate
+#undef Boilerplate2
 } // namespace blender

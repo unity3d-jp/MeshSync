@@ -172,14 +172,15 @@ R getter(T *self, PropPointerGetFunc f)
     return (R)ret.data;
 }
 
-const char *BObject::name() const
-{
-    return m_ptr->id.name + 2;
-}
-void* BObject::data()
-{
-    return m_ptr->data;
-}
+
+
+const char *BID::name() const { return m_ptr->name + 2; }
+TypeCode BID::typecode() const { return TypeCode(m_ptr->name); }
+
+
+const char *BObject::name() const { return ((BID)*this).name(); }
+TypeCode BObject::typecode() const { return ((BID)*this).typecode(); }
+void* BObject::data() { return m_ptr->data; }
 
 brange<ModifierData> BObject::modifiers()
 {

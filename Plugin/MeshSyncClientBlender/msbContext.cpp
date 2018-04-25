@@ -1,10 +1,8 @@
 #include "pch.h"
 #include "MeshSyncClientBlender.h"
 #include "msbContext.h"
-#include "msbBinder.h"
 #include "msbUtils.h"
 using namespace mu;
-namespace bl = blender;
 
 
 msbContext::msbContext()
@@ -43,6 +41,20 @@ std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>&
     }
     ret->clear();
     return ret;
+}
+
+void msbContext::addObject(Object * obj)
+{
+    // todo
+    bl::BObject bo(obj);
+    auto tc = bo.typecode();
+    if (tc == ID_ME) { // Mesh
+    }
+    else if (tc == ID_CA) { // Camera
+    }
+    else if (tc == ID_LA) { // Lamp
+    }
+
 }
 
 ms::TransformPtr msbContext::addTransform(const std::string& path)
@@ -115,41 +127,48 @@ int msbContext::getMaterialIndex(const Material *mat)
 // src: bpy.Object
 void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
 {
-    auto bp = bl::BObject(src);
-
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto *obj = (Object*)rna->ptr.id.data;
-
-    extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
+    extractTransformData_(dst, bl::BObject(src));
 }
+void msbContext::extractTransformData_(ms::TransformPtr dst, bl::BObject src)
+{
+    extract_local_TRS(src.ptr(), dst->position, dst->rotation, dst->scale);
+}
+
 
 // src: bpy.Object
 void msbContext::extractCameraData(ms::CameraPtr dst, py::object src)
 {
-    extractTransformData(dst, src);
+    extractCameraData_(dst, bl::BObject(src));
+}
+void msbContext::extractCameraData_(ms::CameraPtr dst, bl::BObject src)
+{
+    extractTransformData_(dst, src);
 
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto *obj = (Object*)rna->ptr.id.data;
     // todo
 }
 
+
 // src: bpy.Object
+
 void msbContext::extractLightData(ms::LightPtr dst, py::object src)
 {
-    extractTransformData(dst, src);
-
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto *obj = (Object*)rna->ptr.id.data;
+    extractLightData_(dst, bl::BObject(src));
+}
+void msbContext::extractLightData_(ms::LightPtr dst, bl::BObject src)
+{
+    extractTransformData_(dst, src);
     // todo
 }
 
 // src: bpy.Object
 void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 {
-    extractTransformData(dst, src);
+    extractMeshData_(dst, bl::BObject(src));
+}
 
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto obj = (Object*)rna->ptr.id.data;
+void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
+{
+    auto obj = src.ptr();
 
     // ignore particles
     if (find_modofier(obj, eModifierType_ParticleSystem) || find_modofier(obj, eModifierType_ParticleInstance))
@@ -157,8 +176,25 @@ void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
     // ignore if already added
     if (m_added.find(obj) != m_added.end())
         return;
+
+    // check if mesh is dirty
+    {
+        bl::BObject bobj(obj);
+        bl::BMesh bmesh(bobj.data());
+        if (bmesh.ptr()->edit_btmesh) {
+            auto bm = bmesh.ptr()->edit_btmesh->bm;
+            if (bm->elem_index_dirty || bm->elem_table_dirty) {
+                // mesh is editing and dirty. just add to pending list
+                dst->clear();
+                m_pending.insert(obj);
+                return;
+            }
+        }
+    }
+
     m_added.insert(obj);
 
+    extractTransformData_(dst, src);
     auto task = [this, dst, obj]() {
         doExtractMeshData(*dst, obj);
     };
@@ -176,7 +212,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     bl::BObject bobj(obj);
     bl::BMesh bmesh(bobj.data());
 
-    if (bmesh.ptr()->edit_btmesh && bmesh.ptr()->edit_btmesh->bm->vtable_tot > 0) {
+    if (bmesh.ptr()->edit_btmesh) {
         doExtractEditMeshData(dst, obj);
     }
     else {
@@ -373,9 +409,13 @@ void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
         size_t ii = 0;
         for (size_t ti = 0; ti < num_triangles; ++ti) {
             auto& triangle = triangles[ti];
-            auto& polygon = *polygons[triangle[0]->f->head.index];
 
-            dst.material_ids[ti] = material_ids[polygon.mat_nr];
+            int material_index = 0;
+            int polygon_index = triangle[0]->f->head.index;
+            if (polygon_index < polygons.size())
+                material_index = material_ids[polygons[polygon_index]->mat_nr];
+            dst.material_ids[ti] = material_index;
+
             dst.counts[ti] = 3;
             for (auto *idx : triangle)
                 dst.indices[ii++] = idx->v->head.index;
@@ -435,6 +475,25 @@ ms::TransformPtr msbContext::findOrAddBone(const Object *armature, const Bone *b
 bool msbContext::isSending() const
 {
     return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
+}
+
+void msbContext::flushPendingList()
+{
+    if (!m_pending.empty() && prepare()) {
+        std::swap(m_pending, m_pending_tmp);
+        for (auto p : m_pending_tmp)
+            addObject(p);
+        m_pending_tmp.clear();
+
+        send();
+    }
+}
+
+bool msbContext::prepare()
+{
+    if (isSending()) return false;
+
+    return true;
 }
 
 void msbContext::send()
