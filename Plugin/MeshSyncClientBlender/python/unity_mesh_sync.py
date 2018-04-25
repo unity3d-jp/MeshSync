@@ -122,9 +122,6 @@ def msb_add_mesh(ctx, obj):
         for mat in data.materials:
             material_ids.append(msb_get_material_id(mat))
 
-        if scene.meshsync_sync_normals:
-            data.calc_normals_split()
-
         ctx.extractMeshData(dst, obj)
     return dst
 

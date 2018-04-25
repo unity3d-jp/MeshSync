@@ -26,6 +26,7 @@ struct msbSettings
     bool sync_animations = true;
     bool sync_cameras = true;
     bool sync_lights = true;
+    bool calc_per_index_normals = true;
     bool sample_animation = true;
     int animation_sps = 5;
 };

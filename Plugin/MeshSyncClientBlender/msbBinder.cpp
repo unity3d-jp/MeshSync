@@ -5,13 +5,13 @@
 
 namespace blender
 {
+    static Main *g_data;
 static bContext *g_context;
-static Main *g_data;
 
 
 #define Def(T) StructRNA* T::s_type
-#define Func(T, F) FunctionRNA* T##_##F
-#define Prop(T, F) PropertyRNA* T##_##F
+#define Func(T, F) static FunctionRNA* T##_##F
+#define Prop(T, F) static PropertyRNA* T##_##F
 
 Def(BObject);
 
@@ -191,15 +191,53 @@ brange<FCurve> BObject::fcurves()
     }
     return range((FCurve*)nullptr);
 }
-brange<bDeformGroup> BObject::vertex_groups()
+brange<bDeformGroup> BObject::deform_groups()
 {
     return range((bDeformGroup*)m_ptr->defbase.first);
 }
 
 
-brange<Key> BMesh::keys()
+barray<MLoop> BMesh::indices()
 {
-    return range(m_ptr->key);
+    return { m_ptr->mloop, (size_t)m_ptr->totloop };
+}
+barray<MPoly> BMesh::polygons()
+{
+    return { m_ptr->mpoly, (size_t)m_ptr->totpoly };
+}
+
+barray<MVert> BMesh::vertices()
+{
+    return { m_ptr->mvert, (size_t)m_ptr->totvert };
+}
+barray<float3> BMesh::normals()
+{
+    if (CustomData_number_of_layers(m_ptr->ldata, CD_NORMAL) > 0) {
+        auto data = (float3*)CustomData_get(m_ptr->ldata, CD_NORMAL);
+        if (data != nullptr)
+            return { data, (size_t)m_ptr->totloop };
+    }
+    return { nullptr, (size_t)0 };
+}
+barray<float2> BMesh::uv()
+{
+    if (CustomData_number_of_layers(m_ptr->ldata, CD_MLOOPUV) > 0) {
+        auto data = (float2*)CustomData_get(m_ptr->ldata, CD_MLOOPUV);
+        if (data != nullptr) {
+            return { data, (size_t)m_ptr->totloop };
+        }
+    }
+    return { nullptr, (size_t)0 };
+}
+barray<MLoopCol> BMesh::colors()
+{
+    if (CustomData_number_of_layers(m_ptr->ldata, CD_MLOOPCOL) > 0) {
+        auto data = (MLoopCol*)CustomData_get(m_ptr->ldata, CD_MLOOPCOL);
+        if (data != nullptr) {
+            return { data, (size_t)m_ptr->totloop };
+        }
+    }
+    return { nullptr, (size_t)0 };
 }
 
 void BMesh::calc_normals_split()

@@ -4,6 +4,7 @@
 #include "msbBinder.h"
 #include "msbUtils.h"
 using namespace mu;
+namespace bl = blender;
 
 
 msbContext::msbContext()
@@ -20,7 +21,7 @@ msbContext::~msbContext()
 
 void msbContext::setup()
 {
-    blender::setup();
+    bl::setup();
 }
 
 msbSettings& msbContext::getSettings() { return m_settings; }
@@ -114,6 +115,8 @@ int msbContext::getMaterialIndex(const Material *mat)
 // src: bpy.Object
 void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
 {
+    auto bp = bl::BObject(src);
+
     auto rna = (BPy_StructRNA*)src.ptr();
     auto *obj = (Object*)rna->ptr.id.data;
 
@@ -170,11 +173,17 @@ void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 
 void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 {
+    bl::BObject bobj(obj);
+    bl::BMesh bmesh(bobj.data());
     auto& src = *(Mesh*)obj->data;
 
-    int num_polygons = src.totpoly;
-    int num_vertices = src.totvert;
-    int num_loops = src.totloop;
+    auto indices = bmesh.indices();
+    auto polygons = bmesh.polygons();
+    auto vertices = bmesh.vertices();
+
+    size_t num_indices = indices.size();
+    size_t num_polygons = polygons.size();
+    size_t num_vertices = vertices.size();
 
     std::vector<int> material_ids(src.totcol);
     for (int mi = 0; mi < src.totcol; ++mi)
@@ -184,26 +193,27 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 
     // vertices
     dst.points.resize_discard(num_vertices);
-    for (int vi = 0; vi < num_vertices; ++vi) {
+    for (size_t vi = 0; vi < num_vertices; ++vi) {
         dst.points[vi] = (float3&)src.mvert[vi].co;
     }
 
     // faces
-    dst.indices.reserve(num_loops);
+    dst.indices.reserve(num_indices);
     dst.counts.resize_discard(num_polygons);
     dst.material_ids.resize_discard(num_polygons);
     {
         int ti = 0;
-        for (int pi = 0; pi < num_polygons; ++pi) {
-            int material_index = src.mpoly[pi].mat_nr;
-            int count = src.mpoly[pi].totloop;
+        for (size_t pi = 0; pi < num_polygons; ++pi) {
+            auto& polygon = polygons[pi];
+            int material_index = polygon.mat_nr;
+            int count = polygon.totloop;
             dst.counts[pi] = count;
             dst.material_ids[pi] = material_ids[material_index];
             dst.indices.resize(dst.indices.size() + count);
 
-            auto *loops = src.mloop + src.mpoly[pi].loopstart;
+            auto *idx = &indices[polygon.loopstart];
             for (int li = 0; li < count; ++li) {
-                dst.indices[ti++] = loops[li].v;
+                dst.indices[ti++] = idx[li].v;
             }
         }
     }
@@ -211,44 +221,41 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     // normals
     if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
         // per-vertex
-        dst.normals.resize_discard(num_vertices);
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            dst.normals[vi] = to_float3(src.mvert[vi].no);
+        if (m_settings.calc_per_index_normals)
+            dst.normals.resize_discard(num_vertices);
+        for (size_t vi = 0; vi < num_vertices; ++vi) {
+            dst.normals[vi] = to_float3(vertices[vi].no);
         }
     }
     else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
         // per-index
-        auto normals = (float3*)blender::CustomData_get(src.ldata, CD_NORMAL);
-        if (normals == nullptr) {
-            dst.normals.resize_zeroclear(num_loops);
-        }
-        else {
-            dst.normals.resize_discard(num_loops);
-            for (int li = 0; li < num_loops; ++li) {
-                dst.normals[li] = normals[li];
-            }
+        bmesh.calc_normals_split();
+
+        auto normals = bmesh.normals();
+        if (!normals.empty()) {
+            dst.normals.resize_discard(normals.size());
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.normals[ii] = normals[ii];
         }
     }
 
-    // uvs
-    if (m_settings.sync_uvs && blender::CustomData_number_of_layers(src.ldata, CD_MLOOPUV) > 0) {
-        auto data = (const float2*)blender::CustomData_get(src.ldata, CD_MLOOPUV);
-        if (data != nullptr) {
-            dst.uv0.resize_discard(num_loops);
-            for (int li = 0; li < num_loops; ++li) {
-                dst.uv0[li] = data[li];
-            }
+    // uv
+    if (m_settings.sync_uvs) {
+        auto uv = bmesh.uv();
+        if (!uv.empty()) {
+            dst.uv0.resize_discard(uv.size());
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.uv0[ii] = uv[ii];
         }
     }
 
     // colors
-    if (m_settings.sync_colors && blender::CustomData_number_of_layers(src.ldata, CD_MLOOPCOL) > 0) {
-        auto data = (const MLoopCol*)blender::CustomData_get(src.ldata, CD_MLOOPCOL);
-        if (data != nullptr) {
-            dst.colors.resize_discard(num_loops);
-            for (int li = 0; li < num_loops; ++li) {
-                dst.colors[li] = to_float4(data[li]);
-            }
+    if (m_settings.sync_colors) {
+        auto colors = bmesh.colors();
+        if (!colors.empty()) {
+            dst.colors.resize_discard(colors.size());
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.colors[ii] = to_float4(colors[ii]);
         }
     }
 
