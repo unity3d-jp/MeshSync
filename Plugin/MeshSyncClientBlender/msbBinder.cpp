@@ -258,14 +258,15 @@ barray<BMVert*> BEditMesh::vertices()
     return { m_ptr->bm->vtable, (size_t)m_ptr->bm->vtable_tot };
 }
 
-float2* BEditMesh::uv()
+barray<BMTriangle> BEditMesh::triangles()
 {
-    if (CustomData_number_of_layers(m_ptr->bm->ldata, CD_MLOOPUV) > 0) {
-        return (float2*)CustomData_get(m_ptr->bm->ldata, CD_MLOOPUV);
-    }
-    return nullptr;
+    return barray<BMTriangle> { m_ptr->looptris, (size_t)m_ptr->tottri };
 }
 
+int BEditMesh::uv_data_offset() const
+{
+    return CustomData_get_offset(m_ptr->bm->ldata, CD_MLOOPUV);
+}
 
 const char *BFCurve::path() const
 {
@@ -336,6 +337,16 @@ int CustomData_number_of_layers(const CustomData& data, int type)
             number++;
     return number;
 }
+
+int CustomData_get_offset(const CustomData& data, int type)
+{
+    int layer_index = data.typemap[type];
+    if (layer_index == -1)
+        return -1;
+
+    return data.layers[layer_index].offset;
+}
+
 
 float3 BM_loop_calc_face_normal(const BMLoop& l)
 {

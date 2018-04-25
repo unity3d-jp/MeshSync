@@ -5,6 +5,7 @@ namespace blender
     void setup();
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
+    int CustomData_get_offset(const CustomData& data, int type);
     float3 BM_loop_calc_face_normal(const BMLoop& l);
 
 
@@ -106,6 +107,7 @@ namespace blender
         void calc_normals_split();
     };
 
+    using BMTriangle = BMLoop*[3];
     class BEditMesh
     {
     public:
@@ -113,7 +115,8 @@ namespace blender
 
         barray<BMFace*> polygons();
         barray<BMVert*> vertices();
-        float2* uv();
+        barray<BMTriangle> triangles();
+        int uv_data_offset() const;
     };
 
 
