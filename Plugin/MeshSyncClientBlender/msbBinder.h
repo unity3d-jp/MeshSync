@@ -5,6 +5,8 @@ namespace blender
     void setup();
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
+    float3 BM_loop_calc_face_normal(const BMLoop& l);
+
 
     struct ListHeader { ListHeader *next, *prev; };
     template<typename T> inline T rna_data(py::object p) { return (T)((BPy_StructRNA*)p.ptr())->ptr.id.data; }
@@ -52,25 +54,25 @@ namespace blender
 
         barray(T *p, size_t s) : m_ptr(p), m_size(s) {}
         iterator begin() { return m_ptr; }
-        iterator end() { return m_pt + m_sizer; }
+        iterator end() { return m_ptr + m_size; }
         const_iterator begin() const { return m_ptr; }
         const_iterator end() const { return m_ptr + m_size; }
         reference operator[](size_t i) { return m_ptr[i]; }
         const_reference operator[](size_t i) const { return m_ptr[i]; }
         size_t size() const { return m_size; }
-        bool empty() const { return m_size == 0; }
+        bool empty() const { return !m_ptr || m_size == 0; }
     };
     template<typename T> barray<T> array(T *t, size_t s) { return barray<T>(t, s); }
 
 
 #define Boilerplate2(Type, BType)\
-    using btype = BType;\
+    using btype = ::BType;\
     static StructRNA *s_type;\
     ::BType *m_ptr;\
     static StructRNA* type() { return s_type; }\
     Type(void *p) : m_ptr((::BType*)p) {}\
     Type(py::object p) : m_ptr(rna_data<::BType*>(p)) {}\
-    BType* ptr() {return m_ptr; }
+    ::BType* ptr() {return m_ptr; }
 
 #define Boilerplate(Type) Boilerplate2(B##Type, Type)
 
@@ -103,6 +105,17 @@ namespace blender
 
         void calc_normals_split();
     };
+
+    class BEditMesh
+    {
+    public:
+        Boilerplate2(BEditMesh, BMEditMesh)
+
+        barray<BMFace*> polygons();
+        barray<BMVert*> vertices();
+        float2* uv();
+    };
+
 
     class BFCurve
     {

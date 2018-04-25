@@ -5,7 +5,8 @@
 
 namespace blender
 {
-    static Main *g_data;
+
+static Main *g_data;
 static bContext *g_context;
 
 
@@ -246,6 +247,26 @@ void BMesh::calc_normals_split()
 }
 
 
+
+barray<BMFace*> BEditMesh::polygons()
+{
+    return { m_ptr->bm->ftable, (size_t)m_ptr->bm->ftable_tot };
+}
+
+barray<BMVert*> BEditMesh::vertices()
+{
+    return { m_ptr->bm->vtable, (size_t)m_ptr->bm->vtable_tot };
+}
+
+float2* BEditMesh::uv()
+{
+    if (CustomData_number_of_layers(m_ptr->bm->ldata, CD_MLOOPUV) > 0) {
+        return (float2*)CustomData_get(m_ptr->bm->ldata, CD_MLOOPUV);
+    }
+    return nullptr;
+}
+
+
 const char *BFCurve::path() const
 {
     return m_ptr->rna_path;
@@ -314,6 +335,21 @@ int CustomData_number_of_layers(const CustomData& data, int type)
         if (data.layers[i].type == type)
             number++;
     return number;
+}
+
+float3 BM_loop_calc_face_normal(const BMLoop& l)
+{
+    float r_normal[3];
+    float v1[3], v2[3];
+    sub_v3_v3v3(v1, l.prev->v->co, l.v->co);
+    sub_v3_v3v3(v2, l.next->v->co, l.v->co);
+
+    cross_v3_v3v3(r_normal, v1, v2);
+    const float len = normalize_v3(r_normal);
+    if (UNLIKELY(len == 0.0f)) {
+        copy_v3_v3(r_normal, l.f->no);
+    }
+    return (float3&)r_normal;
 }
 
 } // namespace blender

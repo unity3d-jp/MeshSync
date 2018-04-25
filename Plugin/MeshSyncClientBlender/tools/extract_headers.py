@@ -14,12 +14,20 @@ dst_dir = os.getcwd()
 os.chdir(src_dir + '/source/blender')
 print(os.getcwd())
 
+def cond(f):
+    return re.search('\.h$', f) or\
+        f == 'math_base_inline.c' or\
+        f == 'math_vector_inline.c' or\
+        f == 'math_color_inline.c' or\
+        f == 'math_geom_inline.c'
+
 for target in [
     'blenkernel',
     'blenlib',
+    'bmesh',
     'makesdna',
     'makesrna',
     'python'
     ]:
     shutil.copytree(target, dst_dir+'/'+target,
-        ignore = lambda dir, list: [f for f in list if os.path.isfile(dir + '/' + f) and not re.search('\.h$', f)])
+        ignore = lambda dir, list: [f for f in list if os.path.isfile(dir + '/' + f) and not cond(f)])

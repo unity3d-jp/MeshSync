@@ -3,6 +3,7 @@ set PYTHON_VERSION=35
 set BLENDER_INCLUDE_DIRS=^
 %cd%\External\blender-%BLENDER_VERSION%\include\blenkernel;^
 %cd%\External\blender-%BLENDER_VERSION%\include\blenlib;^
+%cd%\External\blender-%BLENDER_VERSION%\include\bmesh;^
 %cd%\External\blender-%BLENDER_VERSION%\include\makesdna;^
 %cd%\External\blender-%BLENDER_VERSION%\include\makesrna;^
 %cd%\External\blender-%BLENDER_VERSION%\include\python;

@@ -175,7 +175,27 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 {
     bl::BObject bobj(obj);
     bl::BMesh bmesh(bobj.data());
-    auto& src = *(Mesh*)obj->data;
+
+    if (bmesh.ptr()->edit_btmesh && bmesh.ptr()->edit_btmesh->bm->vtable_tot > 0) {
+        doExtractEditMeshData(dst, obj);
+    }
+    else {
+        doExtractNonEditMeshData(dst, obj);
+    }
+
+    // mirror
+    if(auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
+        if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
+        if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
+        if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+    }
+}
+
+void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
+{
+    bl::BObject bobj(obj);
+    bl::BMesh bmesh(bobj.data());
+    auto& mesh = *(Mesh*)obj->data;
 
     auto indices = bmesh.indices();
     auto polygons = bmesh.polygons();
@@ -185,16 +205,16 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     size_t num_polygons = polygons.size();
     size_t num_vertices = vertices.size();
 
-    std::vector<int> material_ids(src.totcol);
-    for (int mi = 0; mi < src.totcol; ++mi)
-        material_ids[mi] = getMaterialIndex(src.mat[mi]);
+    std::vector<int> material_ids(mesh.totcol);
+    for (int mi = 0; mi < mesh.totcol; ++mi)
+        material_ids[mi] = getMaterialIndex(mesh.mat[mi]);
     if (material_ids.empty())
         material_ids.push_back(0);
 
     // vertices
     dst.points.resize_discard(num_vertices);
     for (size_t vi = 0; vi < num_vertices; ++vi) {
-        dst.points[vi] = (float3&)src.mvert[vi].co;
+        dst.points[vi] = (float3&)vertices[vi].co;
     }
 
     // faces
@@ -221,29 +241,30 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     // normals
     if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
         // per-vertex
-        if (m_settings.calc_per_index_normals)
-            dst.normals.resize_discard(num_vertices);
+        dst.normals.resize_discard(num_vertices);
         for (size_t vi = 0; vi < num_vertices; ++vi) {
             dst.normals[vi] = to_float3(vertices[vi].no);
         }
     }
     else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
         // per-index
-        bmesh.calc_normals_split();
+        if (m_settings.calc_per_index_normals)
+            bmesh.calc_normals_split();
 
         auto normals = bmesh.normals();
         if (!normals.empty()) {
-            dst.normals.resize_discard(normals.size());
+            dst.normals.resize_discard(num_indices);
             for (size_t ii = 0; ii < num_indices; ++ii)
                 dst.normals[ii] = normals[ii];
         }
     }
 
+
     // uv
     if (m_settings.sync_uvs) {
         auto uv = bmesh.uv();
         if (!uv.empty()) {
-            dst.uv0.resize_discard(uv.size());
+            dst.uv0.resize_discard(num_indices);
             for (size_t ii = 0; ii < num_indices; ++ii)
                 dst.uv0[ii] = uv[ii];
         }
@@ -253,7 +274,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     if (m_settings.sync_colors) {
         auto colors = bmesh.colors();
         if (!colors.empty()) {
-            dst.colors.resize_discard(colors.size());
+            dst.colors.resize_discard(num_indices);
             for (size_t ii = 0; ii < num_indices; ++ii)
                 dst.colors[ii] = to_float4(colors[ii]);
         }
@@ -274,8 +295,8 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {
-                        int num_weights = src.dvert[vi].totweight;
-                        auto& dvert = src.dvert[vi];
+                        int num_weights = mesh.dvert[vi].totweight;
+                        auto& dvert = mesh.dvert[vi];
                         for (int wi = 0; wi < num_weights; ++wi) {
                             if (dvert.dw[wi].def_nr == group_index) {
                                 b->weights[vi] = dvert.dw[wi].weight;
@@ -289,10 +310,10 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     }
 
     // blend shapes
-    if (m_settings.sync_blendshapes && src.key) {
+    if (m_settings.sync_blendshapes && mesh.key) {
         RawVector<float3> basis;
         int bi = 0;
-        each_keys(&src, [&](const KeyBlock *kb) {
+        each_keys(&mesh, [&](const KeyBlock *kb) {
             if (bi == 0) { // Basis
                 basis.resize_discard(kb->totelem);
                 memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
@@ -314,14 +335,90 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
             ++bi;
         });
     }
+}
 
-    // mirror
-    if(auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
-        if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
-        if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
-        if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
+{
+    bl::BObject bobj(obj);
+    bl::BMesh bmesh(bobj.data());
+    bl::BEditMesh emesh(bmesh.ptr()->edit_btmesh);
+    auto& mesh = *(Mesh*)obj->data;
+
+    auto polygons = emesh.polygons();
+    auto vertices = emesh.vertices();
+
+    size_t num_polygons = polygons.size();
+    size_t num_vertices = vertices.size();
+    size_t num_indices = 0;
+
+    // count indices
+    for (size_t pi = 0; pi < num_polygons; ++pi)
+        num_indices += polygons[pi]->len;
+
+    std::vector<int> material_ids(mesh.totcol);
+    for (int mi = 0; mi < mesh.totcol; ++mi)
+        material_ids[mi] = getMaterialIndex(mesh.mat[mi]);
+    if (material_ids.empty())
+        material_ids.push_back(0);
+
+    // vertices
+    dst.points.resize_discard(num_vertices);
+    for (size_t vi = 0; vi < num_vertices; ++vi) {
+        dst.points[vi] = (float3&)vertices[vi]->co;
+    }
+
+    // faces
+    {
+        dst.indices.resize(num_indices);
+        dst.counts.resize_discard(num_polygons);
+        dst.material_ids.resize_discard(num_polygons);
+
+        size_t ii = 0;
+        for (size_t pi = 0; pi < num_polygons; ++pi) {
+            auto& polygon = *polygons[pi];
+            auto poly_indices = bl::array(polygon.l_first, polygon.len);
+
+            int material_index = polygon.mat_nr;
+            dst.material_ids[pi] = material_ids[material_index];
+            dst.counts[pi] = (int)poly_indices.size();
+            for (auto idx : poly_indices) {
+                dst.indices[ii++] = idx.v->head.index;
+            }
+        }
+    }
+
+    // normals
+    if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
+        // per-vertex
+        dst.normals.resize_discard(num_vertices);
+        for (size_t vi = 0; vi < num_vertices; ++vi) {
+            dst.normals[vi] = to_float3(vertices[vi]->no);
+        }
+    }
+    else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
+        // per-index
+        dst.normals.resize_discard(num_indices);
+        size_t ii = 0;
+        for (size_t pi = 0; pi < num_polygons; ++pi) {
+            auto& polygon = *polygons[pi];
+            auto poly_indices = bl::array(polygon.l_first, polygon.len);
+            for (auto idx : poly_indices) {
+                dst.normals[ii++] = -bl::BM_loop_calc_face_normal(idx);
+            }
+        }
+    }
+
+    // uv
+    if (m_settings.sync_uvs) {
+        auto uv = bl::array(emesh.uv(), num_indices);
+        if (!uv.empty()) {
+            dst.uv0.resize_discard(uv.size());
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.uv0[ii] = uv[ii];
+        }
     }
 }
+
 
 ms::TransformPtr msbContext::findOrAddBone(const Object *armature, const Bone *bone)
 {

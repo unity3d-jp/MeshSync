@@ -63,6 +63,8 @@ private:
     ms::TransformPtr findOrAddBone(const Object *armature, const Bone *bone);
 
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
+    void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj);
+    void doExtractEditMeshData(ms::Mesh& mesh, Object *obj);
     template<class T>
     std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 

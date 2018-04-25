@@ -57,6 +57,11 @@ static inline void each_keys(Mesh *obj, const Body& body)
 
 
 
+inline float3 to_float3(const float(&v)[3])
+{
+    return (float3&)v;
+}
+
 inline float3 to_float3(const short(&v)[3])
 {
     return float3{
