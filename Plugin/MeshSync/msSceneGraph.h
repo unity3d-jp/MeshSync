@@ -296,7 +296,16 @@ struct MeshRefineSettings
 
 struct SubmeshData
 {
+    enum class Topology
+    {
+        Points,
+        Lines,
+        Triangles,
+        Quads,
+    };
+
     IArray<int> indices;
+    Topology topology = Topology::Triangles;
     int material_id = 0;
 };
 

@@ -659,13 +659,17 @@ msAPI int msSubmeshGetNumIndices(ms::SubmeshData *_this)
 {
     return (int)_this->indices.size();
 }
+msAPI void msSubmeshReadIndices(ms::SubmeshData *_this, int *dst)
+{
+    _this->indices.copy_to(dst);
+}
 msAPI int msSubmeshGetMaterialID(ms::SubmeshData *_this)
 {
     return _this->material_id;
 }
-msAPI void msSubmeshReadIndices(ms::SubmeshData *_this, int *dst)
+msAPI ms::SubmeshData::Topology msSubmeshGetTopology(ms::SubmeshData *_this)
 {
-    _this->indices.copy_to(dst);
+    return _this->topology;
 }
 
 msAPI const char* msBlendShapeGetName(ms::BlendShapeData *_this)

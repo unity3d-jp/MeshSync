@@ -1,4 +1,4 @@
-call buildtools.bat
+call toolchain.bat
 call :Build 2.79 35
 @rem call :Build 2.8 36
 exit /B 0
@@ -18,7 +18,7 @@ exit /B 0
     msbuild MeshSyncClientBlender.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
     IF %ERRORLEVEL% NEQ 0 (
         pause
-        exit /B 0
+        exit /B 1
     )
     
     set DIST_DIR="dist\UnityMeshSync_blender-%BLENDER_VERSION%_Windows"

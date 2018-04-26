@@ -1,4 +1,4 @@
-call buildtools.bat
+call toolchain.bat
 call :Build 2016.5
 call :Build 2017
 call :Build 2018
@@ -11,7 +11,7 @@ exit /B 0
     msbuild MeshSyncClientMaya.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
     IF %ERRORLEVEL% NEQ 0 (
         pause
-        exit /B 0
+        exit /B 1
     )
     
     set DIST_DIR="dist\UnityMeshSync_maya%MAYA_VERSION%_Windows"

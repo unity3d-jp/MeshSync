@@ -1359,11 +1359,22 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr _this);
             #endregion
 
+            public enum Topology
+            {
+                Points,
+                Lines,
+                Triangles,
+                Quads,
+            };
+
+
             public int numIndices { get { return msSubmeshGetNumIndices(_this); } }
+            public Topology topology { get { return msSubmeshGetTopology(_this); } }
             public int materialID { get { return msSubmeshGetMaterialID(_this); } }
             public int[] indices
             {

@@ -535,37 +535,37 @@ namespace UTJ.MeshSync
             {
                 tmpV3.Resize(split.numPoints);
                 data.ReadPoints(tmpV3, split);
-                mesh.SetVertices(tmpV3);
+                mesh.SetVertices(tmpV3.List);
             }
             if (flags.hasNormals)
             {
                 tmpV3.Resize(split.numPoints);
                 data.ReadNormals(tmpV3, split);
-                mesh.SetNormals(tmpV3);
+                mesh.SetNormals(tmpV3.List);
             }
             if (flags.hasTangents)
             {
                 tmpV4.Resize(split.numPoints);
                 data.ReadTangents(tmpV4, split);
-                mesh.SetTangents(tmpV4);
+                mesh.SetTangents(tmpV4.List);
             }
             if (flags.hasUV0)
             {
                 tmpV2.Resize(split.numPoints);
                 data.ReadUV0(tmpV2, split);
-                mesh.SetUVs(0, tmpV2);
+                mesh.SetUVs(0, tmpV2.List);
             }
             if (flags.hasUV1)
             {
                 tmpV2.Resize(split.numPoints);
                 data.ReadUV1(tmpV2, split);
-                mesh.SetUVs(1, tmpV2);
+                mesh.SetUVs(1, tmpV2.List);
             }
             if (flags.hasColors)
             {
                 tmpC.Resize(split.numPoints);
                 data.ReadColors(tmpC, split);
-                mesh.SetColors(tmpC);
+                mesh.SetColors(tmpC.List);
             }
             if (flags.hasBones)
             {
@@ -573,24 +573,25 @@ namespace UTJ.MeshSync
                 tmpW.Resize(split.numPoints);
                 data.ReadBoneWeights(tmpW, split);
                 mesh.bindposes = data.bindposes;
-                mesh.boneWeights = tmpW;
+                mesh.boneWeights = tmpW.Array;
             }
             if(flags.hasIndices)
             {
-                if (split.numSubmeshes == 0)
+                mesh.subMeshCount = split.numSubmeshes;
+                for (int smi = 0; smi < mesh.subMeshCount; ++smi)
                 {
-                    tmpI.Resize(split.numIndices);
-                    data.ReadIndices(tmpI, split);
-                    mesh.SetIndices(tmpI, MeshTopology.Triangles, 0);
-                }
-                else
-                {
-                    mesh.subMeshCount = split.numSubmeshes;
-                    for (int smi = 0; smi < split.numSubmeshes; ++smi)
-                    {
-                        var submesh = split.GetSubmesh(smi);
-                        mesh.SetIndices(submesh.indices, MeshTopology.Triangles, smi);
-                    }
+                    var submesh = split.GetSubmesh(smi);
+                    var topology = submesh.topology;
+
+                    if (topology == SubmeshData.Topology.Triangles)
+                        mesh.SetTriangles(submesh.indices, smi, false);
+                    else if (topology == SubmeshData.Topology.Lines)
+                        mesh.SetIndices(submesh.indices, MeshTopology.Lines, smi, false);
+                    else if (topology == SubmeshData.Topology.Points)
+                        mesh.SetIndices(submesh.indices, MeshTopology.Points, smi, false);
+                    else if (topology == SubmeshData.Topology.Quads)
+                        mesh.SetIndices(submesh.indices, MeshTopology.Quads, smi, false);
+
                 }
             }
             if (flags.hasBlendshapes)
@@ -607,10 +608,10 @@ namespace UTJ.MeshSync
                     var numFrames = bsd.numFrames;
                     for (int fi = 0; fi < numFrames; ++fi)
                     {
-                        bsd.ReadPoints(fi, tmpBSP, split);
-                        bsd.ReadNormals(fi, tmpBSN, split);
-                        bsd.ReadTangents(fi, tmpBST, split);
-                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP, tmpBSN, tmpBST);
+                        bsd.ReadPoints(fi, tmpBSP.Array, split);
+                        bsd.ReadNormals(fi, tmpBSN.Array, split);
+                        bsd.ReadTangents(fi, tmpBST.Array, split);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP.Array, tmpBSN.Array, tmpBST.Array);
                     }
                 }
             }

@@ -1,21 +1,21 @@
-call buildtools.bat
+call toolchain.bat
 
 msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
 IF %ERRORLEVEL% NEQ 0 (
     pause
-    exit /B 0
+    exit /B 1
 )
 
 msbuild MeshSyncClientMQ4.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
 IF %ERRORLEVEL% NEQ 0 (
     pause
-    exit /B 0
+    exit /B 1
 )
 
 msbuild MeshSyncClientMQ3.vcxproj /t:Build /p:Configuration=Master /p:Platform=Win32 /m /nologo
 IF %ERRORLEVEL% NEQ 0 (
     pause
-    exit /B 0
+    exit /B 1
 )
 
 set DIST_DIR_MQ4_64="dist\UnityMeshSync_Metasequoia4_Windows_64bit"

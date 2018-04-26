@@ -36,16 +36,15 @@ namespace UTJ.MeshSync
         }
 
         public static implicit operator IntPtr(PinnedObject<T> v) { return v.Pointer; }
-        public static implicit operator T (PinnedObject<T> v) { return v.Object; }
     }
 
 
-    public class PinnedArray<T> : IDisposable, IEnumerable<T>
+    public class PinnedArray<T> : IDisposable, IEnumerable<T> where T : struct
     {
         T[] m_data;
         GCHandle m_gch;
 
-        public PinnedArray(int size = 0)
+        public PinnedArray(int size)
         {
             m_data = new T[size];
             m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
@@ -101,103 +100,31 @@ namespace UTJ.MeshSync
         }
 
         public static implicit operator IntPtr(PinnedArray<T> v) { return v == null ? IntPtr.Zero : v.Pointer; }
-        public static implicit operator T[](PinnedArray<T> v) { return v == null ? null : v.Array; }
     }
 
 
-    public class PinnedArray2D<T> : IDisposable, IEnumerable<T>
+    #region dirty
+    public static class PinnedListImpl
     {
-        T[,] m_data;
-        GCHandle m_gch;
-
-        public PinnedArray2D(int x, int y)
-        {
-            m_data = new T[x, y];
-            m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
-        }
-        public PinnedArray2D(T[,] data, bool clone = false)
-        {
-            m_data = clone ? (T[,])data.Clone() : data;
-            m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
-        }
-
-        public int Length { get { return m_data.Length; } }
-        public T this[int x, int y]
-        {
-            get { return m_data[x,y]; }
-            set { m_data[x,y] = value; }
-        }
-        public T[,] Array { get { return m_data; } }
-        public IntPtr Pointer { get { return m_data.Length == 0 ? IntPtr.Zero : m_gch.AddrOfPinnedObject(); } }
-
-        public PinnedArray2D<T> Clone() { return new PinnedArray2D<T>((T[,])m_data.Clone()); }
-        public bool Assign(T[,] source)
-        {
-            if (source != null && m_data.Length == source.Length)
-            {
-                System.Array.Copy(source, m_data, m_data.Length);
-                return true;
-            }
-            return false;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (m_gch.IsAllocated)
-                    m_gch.Free();
-            }
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return (IEnumerator<T>)m_data.GetEnumerator();
-        }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public static implicit operator IntPtr(PinnedArray2D<T> v) { return v == null ? IntPtr.Zero : v.Pointer; }
-        public static implicit operator T[,] (PinnedArray2D<T> v) { return v == null ? null : v.Array; }
-    }
-
-    // Pinned"List" but assume size is fixed (== functionality is same as PinnedArray).
-    // this class is intended to pass to Mesh.GetNormals(), Mesh.SetNormals(), and C++ functions.
-    public class PinnedList<T> : IDisposable, IEnumerable<T>
-    {
-        List<T> m_list;
-        T[] m_data;
-        GCHandle m_gch;
-
-        #region dirty
-
         class ListData
         {
-            public T[] items;
+            public object items;
             public int size;
         }
         [StructLayout(LayoutKind.Explicit)]
         struct Caster
         {
-            [FieldOffset(0)] public List<T> list;
+            [FieldOffset(0)] public object list;
             [FieldOffset(0)] public ListData data;
         }
 
-        public static T[] ListGetInternalArray(List<T> list)
+        public static T[] GetInternalArray<T>(List<T> list) where T : struct
         {
             var caster = new Caster();
             caster.list = list;
-            return caster.data.items;
+            return (T[])caster.data.items;
         }
-        public static List<T> ListCreateIntrusive(T[] data)
+        public static List<T> CreateIntrusiveList<T>(T[] data) where T : struct
         {
             var ret = new List<T>();
             var caster = new Caster();
@@ -206,31 +133,40 @@ namespace UTJ.MeshSync
             caster.data.size = data.Length;
             return ret;
         }
-        public static void ListSetCount(List<T> list, int count)
+        public static void SetCount<T>(List<T> list, int count) where T : struct
         {
             var caster = new Caster();
             caster.list = list;
             caster.data.size = count;
         }
-        #endregion
+    }
+    #endregion
 
+
+    // Pinned"List" but assume size is fixed (== functionality is same as PinnedArray).
+    // this class is intended to pass to Mesh.GetNormals(), Mesh.SetNormals(), and C++ functions.
+    public class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct
+    {
+        List<T> m_list;
+        T[] m_data;
+        GCHandle m_gch;
 
         public PinnedList(int size = 0)
         {
             m_data = new T[size];
-            m_list = ListCreateIntrusive(m_data);
+            m_list = PinnedListImpl.CreateIntrusiveList(m_data);
             m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
         }
         public PinnedList(T[] data, bool clone = false)
         {
             m_data = clone ? (T[])data.Clone() : data;
-            m_list = ListCreateIntrusive(m_data);
+            m_list = PinnedListImpl.CreateIntrusiveList(m_data);
             m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
         }
         public PinnedList(List<T> data, bool clone = false)
         {
             m_list = clone ? new List<T>(data) : data;
-            m_data = ListGetInternalArray(m_list);
+            m_data = PinnedListImpl.GetInternalArray(m_list);
             m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
         }
 
@@ -251,19 +187,20 @@ namespace UTJ.MeshSync
             if (m_gch.IsAllocated)
                 m_gch.Free();
             body(m_list);
-            m_data = ListGetInternalArray(m_list);
+            m_data = PinnedListImpl.GetInternalArray(m_list);
             m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
         }
 
         public void Resize(int size)
         {
-            if(size > m_data.Length)
+            if (size > m_data.Length)
             {
-                LockList(l => {
+                LockList(l =>
+                {
                     l.Capacity = size;
                 });
             }
-            ListSetCount(m_list, size);
+            PinnedListImpl.SetCount(m_list, size);
         }
 
         public void ResizeDiscard(int size)
@@ -273,19 +210,19 @@ namespace UTJ.MeshSync
                 if (m_gch.IsAllocated)
                     m_gch.Free();
                 m_data = new T[size];
-                m_list = ListCreateIntrusive(m_data);
+                m_list = PinnedListImpl.CreateIntrusiveList(m_data);
                 m_gch = GCHandle.Alloc(m_data, GCHandleType.Pinned);
             }
             else
             {
-                ListSetCount(m_list, size);
+                PinnedListImpl.SetCount(m_list, size);
             }
         }
 
         public void Clear()
         {
             if (m_data.Length > 0)
-                ListSetCount(m_list, 0);
+                PinnedListImpl.SetCount(m_list, 0);
         }
 
         public PinnedList<T> Clone()
@@ -300,7 +237,7 @@ namespace UTJ.MeshSync
         }
         public void Assign(List<T> sourceList)
         {
-            var sourceData = ListGetInternalArray(sourceList);
+            var sourceData = PinnedListImpl.GetInternalArray(sourceList);
             var count = sourceList.Count;
             ResizeDiscard(count);
             System.Array.Copy(sourceData, m_data, count);
@@ -331,8 +268,6 @@ namespace UTJ.MeshSync
         }
 
         public static implicit operator IntPtr(PinnedList<T> v) { return v == null ? IntPtr.Zero : v.Pointer; }
-        public static implicit operator T[] (PinnedList<T> v) { return v == null ? null : v.Array; }
-        public static implicit operator List<T> (PinnedList<T> v) { return v == null ? null : v.List; }
     }
 
 }

@@ -1311,9 +1311,10 @@ void Mesh::refine(const MeshRefineSettings& mrs)
                 for (int i = 0; i < split.submesh_count; ++i) {
                     auto& sm = refiner.submeshes[nsm + i];
                     SubmeshData tmp;
-                    tmp.material_id = sm.material_id;
                     tmp.indices.reset(tri, sm.index_count);
                     tri += sm.index_count;
+                    tmp.topology = (SubmeshData::Topology)sm.topology;
+                    tmp.material_id = sm.material_id;
                     submeshes.push_back(tmp);
                 }
                 nsm += split.submesh_count;
