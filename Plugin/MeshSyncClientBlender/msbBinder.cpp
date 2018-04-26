@@ -203,6 +203,10 @@ barray<MLoop> BMesh::indices()
 {
     return { m_ptr->mloop, (size_t)m_ptr->totloop };
 }
+barray<MEdge> BMesh::edges()
+{
+    return { m_ptr->medge, (size_t)m_ptr->totedge };
+}
 barray<MPoly> BMesh::polygons()
 {
     return { m_ptr->mpoly, (size_t)m_ptr->totpoly };

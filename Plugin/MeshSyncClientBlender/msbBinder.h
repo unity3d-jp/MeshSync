@@ -130,6 +130,7 @@ namespace blender
         Compatible(BID)
 
         barray<MLoop> indices();
+        barray<MEdge> edges();
         barray<MPoly> polygons();
         barray<MVert> vertices();
         barray<float3> normals();

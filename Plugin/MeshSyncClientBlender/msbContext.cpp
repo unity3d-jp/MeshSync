@@ -280,7 +280,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
     dst.counts.resize_discard(num_polygons);
     dst.material_ids.resize_discard(num_polygons);
     {
-        int ti = 0;
+        int ii = 0;
         for (size_t pi = 0; pi < num_polygons; ++pi) {
             auto& polygon = polygons[pi];
             int material_index = polygon.mat_nr;
@@ -291,7 +291,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
 
             auto *idx = &indices[polygon.loopstart];
             for (int li = 0; li < count; ++li) {
-                dst.indices[ti++] = idx[li].v;
+                dst.indices[ii++] = idx[li].v;
             }
         }
     }
@@ -393,6 +393,55 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             ++bi;
         });
     }
+
+
+#if 0
+    // lines
+    // (blender doesn't include lines & points in polygons - MPoly::totloop is always >= 3)
+    {
+        auto edges = bmesh.edges();
+
+        std::vector<bool> point_shared(num_vertices);
+        for (size_t pi = 0; pi < num_polygons; ++pi) {
+            auto& polygon = polygons[pi];
+            int count = polygon.totloop;
+            auto *idx = &indices[polygon.loopstart];
+            for (int li = 0; li < count; ++li) {
+                point_shared[idx[li].v] = true;
+            }
+        }
+
+        size_t lines_begin = dst.indices.size();
+        size_t num_lines = 0;
+        for (auto edge : edges) {
+            if (!point_shared[edge.v1] || !point_shared[edge.v2]) {
+                ++num_lines;
+                dst.counts.push_back(2);
+                dst.indices.push_back(edge.v1);
+                dst.indices.push_back(edge.v2);
+            }
+        }
+
+        if (num_lines > 0) {
+            num_indices = dst.indices.size();
+
+            if (!dst.normals.empty() && m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
+                dst.normals.resize(num_indices, float3::zero());
+            }
+            if (!dst.uv0.empty()) {
+                dst.uv0.resize(num_indices, float2::zero());
+            }
+            if (!dst.colors.empty()) {
+                auto colors = bmesh.colors();
+                dst.colors.resize(num_indices, float4::one());
+                for (size_t ii = lines_begin; ii < num_indices; ++ii) {
+                    int vi = dst.indices[ii];
+                    dst.colors[ii] = to_float4(colors[vi]);
+                }
+            }
+        }
+    }
+#endif
 }
 
 void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
