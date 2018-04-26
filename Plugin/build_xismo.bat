@@ -1,7 +1,16 @@
 call buildtools.bat
 
 msbuild MeshSyncClientXismo.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+IF %ERRORLEVEL% NEQ 0 (
+    pause
+    exit /B 0
+)
+
 msbuild MeshSyncClientXismoHook.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+IF %ERRORLEVEL% NEQ 0 (
+    pause
+    exit /B 0
+)
 
 set DIST_DIR="dist\UnityMeshSync_xismo_Windows"
 mkdir "%DIST_DIR%"

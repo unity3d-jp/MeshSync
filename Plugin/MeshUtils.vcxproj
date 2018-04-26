@@ -29,7 +29,6 @@
     <ClInclude Include="MeshUtils\ispcmath.h" />
     <ClInclude Include="MeshUtils\muIterator.h" />
     <ClInclude Include="MeshUtils\muMeshRefiner.h" />
-    <ClInclude Include="MeshUtils\mikktspace.h" />
     <ClInclude Include="MeshUtils\muMisc.h" />
     <ClInclude Include="MeshUtils\muSIMDConfig.h" />
     <ClInclude Include="MeshUtils\pch.h" />
@@ -43,9 +42,6 @@
   <ItemGroup>
     <ClCompile Include="MeshUtils\muAllocator.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
-    <ClCompile Include="MeshUtils\mikktspace.c">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="MeshUtils\muMisc.cpp" />
     <ClCompile Include="MeshUtils\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

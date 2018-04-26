@@ -826,6 +826,84 @@ export void GenerateNormalsTriangleSoA(uniform float3 dst[],
 }
 #endif
 
+#ifdef muSIMD_GenerateNormalsPolygonIndexed
+export void GenerateNormalsPolygonIndexed(uniform float3 dst[],
+    uniform const float3 points[], uniform const int indices[], uniform const int counts[], uniform const int offsets[],
+    uniform const int num_points, uniform const int num_faces)
+{
+    uniform int num_points_aligned = (num_points + (C - 1)) & ~(C - 1);
+    float * uniform mem_tmp = uniform new float[num_points_aligned * 3];
+    zeroclear(mem_tmp, num_points_aligned * 3);
+    float * uniform tnx = mem_tmp + num_points_aligned * 0;
+    float * uniform tny = mem_tmp + num_points_aligned * 1;
+    float * uniform tnz = mem_tmp + num_points_aligned * 2;
+
+    uniform int num_faces_simd = num_faces & ~(C - 1);
+
+    // SIMD pass
+    for (uniform int bi = 0; bi < num_faces_simd; bi += C) {
+        int fi = bi + I;
+        int count = counts[fi];
+        if (count < 3) { continue; }
+
+        int offset = offsets[fi];
+        int num_trignales = count - 2;
+
+        float3 n = float3_(0, 0, 0);
+        float3 p0 = points[indices[offset]];
+        for (int ti = 0; ti < num_trignales; ++ti) {
+            float3 p1 = points[indices[offset + ti + 1]];
+            float3 p2 = points[indices[offset + ti + 2]];
+            n = n + cross(p1 - p0, p2 - p0);
+        }
+        if (count > 3) {
+            n = normalize(n);
+        }
+
+        for (uniform int ci = 0; ci<C; ++ci) {
+            uniform float3 cn = { extract(n.x, ci), extract(n.y, ci), extract(n.z, ci) };
+            uniform int coffset = offsets[bi + ci];
+            for (uniform int i = 0; i<count; ++i) {
+                uniform int ix = indices[coffset + i];
+                tnx[ix] += cn.x;
+                tny[ix] += cn.y;
+                tnz[ix] += cn.z;
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for (uniform int fi = num_faces_simd; fi < num_faces; ++fi) {
+        uniform int count = counts[fi];
+        if (count < 3) { continue; }
+
+        uniform int offset = offsets[fi];
+        uniform int num_trignales = count - 2;
+
+        uniform float3 n = float3_(0, 0, 0);
+        uniform float3 p0 = points[indices[offset]];
+        for (uniform int ti = 0; ti < num_trignales; ++ti) {
+            uniform float3 p1 = points[indices[offset + ti + 1]];
+            uniform float3 p2 = points[indices[offset + ti + 2]];
+            n = n + cross(p1 - p0, p2 - p0);
+        }
+        if (count > 3) {
+            n = normalize(n);
+        }
+
+        for (uniform int i = 0; i<count; ++i) {
+            uniform int ix = indices[offset + i];
+            tnx[ix] += n.x;
+            tny[ix] += n.y;
+            tnz[ix] += n.z;
+        }
+    }
+
+    NormalizeSoAToAoS(dst, tnx, tny, tnz, num_points);
+    delete[] mem_tmp;
+}
+#endif
+
 
 #ifdef muSIMD_GenerateTangentsTriangleIndexed
 export void GenerateTangentsTriangleIndexed(uniform float4 dst[],
@@ -1106,6 +1184,107 @@ export void GenerateTangentsTriangleSoA(
 
     // non-SIMD pass
     for(uniform int vi=num_vertices_simd; vi < num_vertices; ++vi) {
+        uniform float3 t = float3_(ttx[vi], tty[vi], ttz[vi]);
+        uniform float3 b = float3_(tbx[vi], tby[vi], tbz[vi]);
+        uniform float3 n = normals[vi];
+        dst[vi] = orthogonalize_tangent(t, b, n);
+    }
+
+    delete[] mem_tmp;
+}
+#endif
+
+#ifdef muSIMD_GenerateTangentsPolygonIndexed
+export void GenerateTangentsPolygonIndexed(uniform float4 dst[],
+    uniform const float3 points[], uniform const float2 uv[], uniform const float3 normals[],
+    uniform const int indices[], uniform const int counts[], uniform const int offsets[],
+    uniform const int num_points, uniform const int num_faces)
+{
+    uniform int num_points_aligned = (num_points + (C - 1)) & ~(C - 1);
+    float * uniform mem_tmp = uniform new float[num_points_aligned * 6];
+    zeroclear(mem_tmp, num_points_aligned * 6);
+    float * uniform ttx = mem_tmp + num_points_aligned * 0;
+    float * uniform tty = mem_tmp + num_points_aligned * 1;
+    float * uniform ttz = mem_tmp + num_points_aligned * 2;
+    float * uniform tbx = mem_tmp + num_points_aligned * 3;
+    float * uniform tby = mem_tmp + num_points_aligned * 4;
+    float * uniform tbz = mem_tmp + num_points_aligned * 5;
+
+    uniform int num_faces_simd = num_faces & ~(C - 1);
+    uniform int num_points_simd = num_points & ~(C - 1);
+
+    // SIMD pass
+    for (uniform int bi = 0; bi < num_faces_simd; bi += C) {
+        int fi = bi + I;
+        int count = counts[fi];
+        if (count < 3) { continue; }
+
+        int offset = offsets[fi];
+        int num_trignales = count - 2;
+
+        float3 v[3], t[3], b[3];
+        float2 u[3];
+        v[0] = points[indices[offset]];
+        u[0] = uv[indices[offset]];
+        for (int ti = 0; ti < num_trignales; ++ti) {
+            v[1] = points[indices[offset + ti + 1]];
+            v[2] = points[indices[offset + ti + 2]];
+            u[1] = uv[indices[offset + ti + 1]];
+            u[2] = uv[indices[offset + ti + 2]];
+            compute_triangle_tangents(v, u, t, b);
+
+            for (uniform int ci = 0; ci<C; ++ci) {
+                uniform int coffset = offsets[bi + ci];
+                for (uniform int i = 0; i<count; ++i) {
+                    uniform int ix = indices[coffset + i];
+                    ttx[ix] += extract(t[i].x, ci); tty[ix] += extract(t[i].y, ci); ttz[ix] += extract(t[i].z, ci);
+                    tbx[ix] += extract(b[i].x, ci); tby[ix] += extract(b[i].y, ci); tbz[ix] += extract(b[i].z, ci);
+                }
+            }
+        }
+    }
+
+    // non-SIMD pass
+    for (uniform int fi = num_faces_simd; fi < num_faces; ++fi) {
+        uniform int count = counts[fi];
+        if (count < 3) { continue; }
+
+        uniform int offset = offsets[fi];
+        uniform int num_trignales = count - 2;
+
+        uniform float3 v[3], t[3], b[3];
+        uniform float2 u[3];
+        v[0] = points[indices[offset]];
+        u[0] = uv[indices[offset]];
+        for (uniform int ti = 0; ti < num_trignales; ++ti) {
+            v[1] = points[indices[offset + ti + 1]];
+            v[2] = points[indices[offset + ti + 2]];
+            u[1] = uv[indices[offset + ti + 1]];
+            u[2] = uv[indices[offset + ti + 2]];
+            compute_triangle_tangents(v, u, t, b);
+
+            for (uniform int i = 0; i<count; ++i) {
+                uniform int ix = indices[offset + i];
+                ttx[ix] += t[i].x; tty[ix] += t[i].y; ttz[ix] += t[i].z;
+                tbx[ix] += b[i].x; tby[ix] += b[i].y; tbz[ix] += b[i].z;
+            }
+        }
+    }
+
+
+    // SIMD pass
+    for (uniform int bi = 0; bi < num_points_simd; bi += C) {
+        int vi = bi + I;
+        float3 t = float3_(ttx[vi], tty[vi], ttz[vi]);
+        float3 b = float3_(tbx[vi], tby[vi], tbz[vi]);
+        float3 n; aos_to_soa3((uniform float*)&normals[bi], &n.x, &n.y, &n.z);
+
+        float4 result = orthogonalize_tangent(t, b, n);
+        soa_to_aos4(result.x, result.y, result.z, result.w, (uniform float*)&dst[bi]);
+    }
+
+    // non-SIMD pass
+    for (uniform int vi = num_points_simd; vi < num_points; ++vi) {
         uniform float3 t = float3_(ttx[vi], tty[vi], ttz[vi]);
         uniform float3 b = float3_(tbx[vi], tby[vi], tbz[vi]);
         uniform float3 n = normals[vi];

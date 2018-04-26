@@ -31,6 +31,8 @@ namespace py = pybind11;
 #ifndef NDEBUG
     #define NDEBUG
 #endif
+#pragma warning( push )
+#pragma warning( disable : 4200 ) // zero length array
 #include "BKE_main.h"
 #include "BKE_context.h"
 #include "BKE_fcurve.h"
@@ -51,3 +53,4 @@ namespace py = pybind11;
 #include "BLI_math_base.h"
 #include "BLI_math_vector.h"
 #include "bmesh_class.h"
+#pragma warning( pop ) 

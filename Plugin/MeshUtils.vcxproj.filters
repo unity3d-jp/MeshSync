@@ -7,9 +7,6 @@
     <ClInclude Include="MeshUtils\pch.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
-    <ClInclude Include="MeshUtils\mikktspace.h">
-      <Filter>MeshUtils</Filter>
-    </ClInclude>
     <ClInclude Include="MeshUtils\muTLS.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
@@ -72,9 +69,6 @@
       <Filter>MeshUtils</Filter>
     </ClCompile>
     <ClCompile Include="MeshUtils\pch.cpp">
-      <Filter>MeshUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshUtils\mikktspace.c">
       <Filter>MeshUtils</Filter>
     </ClCompile>
     <ClCompile Include="MeshUtils\muAllocator.cpp">
