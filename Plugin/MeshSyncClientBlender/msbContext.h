@@ -45,7 +45,10 @@ public:
     const msbSettings&  getSettings() const;
     ms::ScenePtr        getCurrentScene() const;
 
+    void syncAll();
+    void syncUpdated();
     void addObject(Object *obj);
+
     ms::TransformPtr    addTransform(const std::string& path);
     ms::CameraPtr       addCamera(const std::string& path);
     ms::LightPtr        addLight(const std::string& path);

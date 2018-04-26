@@ -43,16 +43,38 @@ std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>&
     return ret;
 }
 
+
+void msbContext::syncAll()
+{
+    if (!prepare()) return;
+
+    for (auto *o : bl::BData::get().objects()) {
+        addObject(o);
+    }
+    send();
+}
+
+void msbContext::syncUpdated()
+{
+    if (!prepare()) return;
+}
+
 void msbContext::addObject(Object * obj)
 {
     // todo
     bl::BObject bo(obj);
-    auto tc = bo.typecode();
-    if (tc == ID_ME) { // Mesh
-    }
-    else if (tc == ID_CA) { // Camera
-    }
-    else if (tc == ID_LA) { // Lamp
+    bl::BID data_id(bo.data());
+    if (data_id.ptr()) {
+        auto tc = data_id.typecode();
+        if (tc == ID_ME && m_settings.sync_meshes) {
+            auto dst = addMesh(get_path(obj));
+            dst->refine_settings.flags.swap_faces = true;
+            extractMeshData_(dst, bo);
+        }
+        else if (tc == ID_CA && m_settings.sync_cameras) {
+        }
+        else if (tc == ID_LA && m_settings.sync_lights) {
+        }
     }
 
 }
@@ -183,7 +205,7 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
         bl::BMesh bmesh(bobj.data());
         if (bmesh.ptr()->edit_btmesh) {
             auto bm = bmesh.ptr()->edit_btmesh->bm;
-            if (bm->elem_index_dirty || bm->elem_table_dirty) {
+            if (bm->elem_table_dirty) {
                 // mesh is editing and dirty. just add to pending list
                 dst->clear();
                 m_pending.insert(obj);
