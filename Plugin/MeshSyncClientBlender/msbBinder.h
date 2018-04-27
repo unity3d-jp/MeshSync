@@ -2,10 +2,6 @@
 
 namespace blender
 {
-    using mu::float2;
-    using mu::float3;
-    using mu::float4;
-
     void setup();
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
@@ -76,7 +72,7 @@ namespace blender
     static StructRNA *s_type;\
     ::BType *m_ptr;\
     static StructRNA* type() { return s_type; }\
-    Type(void *p) : m_ptr((::BType*)p) {}\
+    Type(const void *p) : m_ptr((::BType*)p) {}\
     Type(py::object p) : m_ptr(rna_data<::BType*>(p)) {}\
     ::BType* ptr() {return m_ptr; }
 
@@ -121,6 +117,7 @@ namespace blender
         TypeCode typecode() const;
         const char *name() const;
         void* data();
+        float4x4 matrix_local() const;
     };
 
     class BMesh

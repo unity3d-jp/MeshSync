@@ -570,7 +570,7 @@ template<class T> inline tquat<T> rotateZ(T angle)
     return{ T(0.0), T(0.0), s, c };
 }
 
-// eular -> quaternion
+// euler -> quaternion
 template<class T> inline tquat<T> rotateXYZ(const tvec3<T>& euler)
 {
     auto qX = rotateX(euler.x);
@@ -624,7 +624,7 @@ template<class T> inline tquat<T> rotate(const tvec3<T>& axis, T angle)
     };
 }
 
-template<class T> inline tvec3<T> to_eularZXY(const tquat<T>& q)
+template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
 {
     T d[] = {
         q.x*q.x, q.x*q.y, q.x*q.z, q.x*q.w,

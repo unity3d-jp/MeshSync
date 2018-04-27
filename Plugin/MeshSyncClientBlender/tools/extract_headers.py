@@ -17,9 +17,14 @@ print(os.getcwd())
 def cond(f):
     return re.search('\.h$', f) or\
         f == 'math_base_inline.c' or\
+        f == 'math_bits_inline.c' or\
         f == 'math_vector_inline.c' or\
         f == 'math_color_inline.c' or\
-        f == 'math_geom_inline.c'
+        f == 'math_geom_inline.c' or\
+        f == 'math_vector.c' or\
+        f == 'math_matrix.c' or\
+        f == 'math_rotation.c' or\
+        f == 'math_geom.c'
 
 for target in [
     'blenkernel',

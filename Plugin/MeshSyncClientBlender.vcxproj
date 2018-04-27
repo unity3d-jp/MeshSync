@@ -11,6 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MeshSyncClientBlender\blender.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientBlender\blender.cpp" />
     <ClCompile Include="MeshSyncClientBlender\MeshSyncClientBlender.cpp" />
     <ClCompile Include="MeshSyncClientBlender\msbBinder.cpp" />
     <ClCompile Include="MeshSyncClientBlender\msbUtils.cpp" />

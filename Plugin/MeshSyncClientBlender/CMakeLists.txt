@@ -22,7 +22,7 @@ set(BLENDER_INCLUDE_DIRS
     "${BLENDER_PYTHON_INCLUDE_DIR}"
 )
 
-file(GLOB sources *.cpp *.h)
+file(GLOB sources *.cpp *.h *.c)
 add_library(${MESHSYNC_CLIENT_BLENDER}  SHARED ${sources})
 
 add_dependencies(${MESHSYNC_CLIENT_BLENDER} MeshUtils MeshSync)

@@ -1,7 +1,49 @@
 #include "pch.h"
 #include "MeshSyncClientBlender.h"
 #include "msbUtils.h"
+#include "msbBinder.h"
 using namespace mu;
+
+
+void materix_decompose(const float4x4& mat, float3& pos, quatf& rot, float3& scale)
+{
+    float rmat[3][3];
+    mat4_to_loc_rot_size((float*)&pos, rmat, (float*)&scale, (float(*)[4])&mat);
+    mat3_to_quat((float*)&rot, rmat);
+}
+
+
+float3 to_euler_xyz(const float3x3& mat)
+{
+    const float cy = hypotf(mat[0][0], mat[0][1]);
+
+    if (cy > 16.0f * FLT_EPSILON) {
+        float3 eul1{
+            atan2f(mat[1][2], mat[2][2]),
+            atan2f(-mat[0][2], cy),
+            atan2f(mat[0][1], mat[0][0]),
+        };
+        float3 eul2{
+            atan2f(mat[1][2], mat[2][2]),
+            atan2f(-mat[0][2], cy),
+            atan2f(mat[0][1], mat[0][0]),
+        };
+        if (fabsf(eul1[0]) + fabsf(eul1[1]) + fabsf(eul1[2]) > fabsf(eul2[0]) + fabsf(eul2[1]) + fabsf(eul2[2])) {
+            return eul2;
+        }
+        else {
+            return eul1;
+        }
+    }
+    else {
+        return float3{
+            atan2f(-mat[2][1], mat[1][1]),
+            atan2f(-mat[0][2], cy),
+            0.0f
+        };
+    }
+}
+
 
 
 std::string get_path(const Object *obj)
@@ -67,14 +109,6 @@ const bPoseChannel* find_pose(const Object *obj, const char *name)
         if (strcmp(it->name, name) == 0)
             return it;
     return nullptr;
-}
-
-void extract_global_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)
-{
-    float4x4 global = (float4x4&)obj->obmat;
-    pos = extract_position(global);
-    rot = extract_rotation(global);
-    scale = extract_scale(global);
 }
 
 void extract_local_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)

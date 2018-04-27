@@ -15,6 +15,7 @@ static bContext *g_context;
 #define Prop(T, F) static PropertyRNA* T##_##F
 
 Def(BObject);
+Prop(BObject, matrix_local);
 
 Def(BMesh);
 Func(BMesh, calc_normals_split);
@@ -63,12 +64,15 @@ void setup()
 #define match_func(N) strcmp(func->identifier, N) == 0
 #define match_prop(N) strcmp(prop->identifier, N) == 0
 #define each_func for (auto *func : range((FunctionRNA*)type->functions.first))
-#define each_iprop for (auto *prop : range((PropertyRNA*)type->iteratorproperty))
-#define each_nprop for (auto *prop : range((PropertyRNA*)type->iteratorproperty))
+#define each_prop for (auto *prop : range((PropertyRNA*)type->cont.properties.first))
 
     for (auto *type : range((StructRNA*)&first_type)) {
         if (match_type("Object")) {
             BObject::s_type = type;
+            each_prop{
+                if (match_prop("matrix_local")) BObject_matrix_local = prop;
+            }
+
             each_func{
 
             }
@@ -95,7 +99,7 @@ void setup()
         }
         else if (match_type("Context")) {
             BData::s_type = type;
-            each_nprop{
+            each_prop{
                 if (match_prop("scene")) BContext_scene = prop;
             }
         }
@@ -161,12 +165,24 @@ R call(T *self, FunctionRNA *f, const std::tuple<A...>& args)
     return params.get();
 }
 
-
-template<typename T, typename R>
-R getter(T *self, PropPointerGetFunc f)
+template<typename T, typename U, typename R>
+R getter(T *idd, U *d, PropFloatArrayGetFunc f)
 {
     PointerRNA ptr;
-    ptr.data = self;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    R r;
+    f(&ptr, (float*)&r);
+    return r;
+}
+
+template<typename T, typename U, typename R>
+R getter(T *idd, U *d, PropPointerGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
 
     PointerRNA ret = f(&ptr);
     return (R)ret.data;
@@ -181,6 +197,11 @@ TypeCode BID::typecode() const { return TypeCode(m_ptr->name); }
 const char *BObject::name() const { return ((BID)*this).name(); }
 TypeCode BObject::typecode() const { return ((BID)*this).typecode(); }
 void* BObject::data() { return m_ptr->data; }
+
+float4x4 blender::BObject::matrix_local() const
+{
+    return getter<Object, nullptr_t, float4x4>(m_ptr, nullptr, ((FloatPropertyRNA*)BObject_matrix_local)->getarray);
+}
 
 brange<ModifierData> BObject::modifiers()
 {
@@ -309,7 +330,7 @@ BContext BContext::get()
 }
 BScene BContext::scene()
 {
-    return getter<bContext, Scene*>(m_ptr, ((PointerPropertyRNA*)BContext_scene)->get);
+    return getter<nullptr_t, bContext, Scene*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_scene)->get);
 }
 
 BData BData::get()

@@ -1,6 +1,44 @@
 #include "pch.h"
 
 
+void BKE_object_rot_to_mat3(Object *ob, float mat[3][3], bool use_drot)
+{
+    float rmat[3][3], dmat[3][3];
+
+    /* 'dmat' is the delta-rotation matrix, which will get (pre)multiplied
+    * with the rotation matrix to yield the appropriate rotation
+    */
+
+    /* rotations may either be quats, eulers (with various rotation orders), or axis-angle */
+    if (ob->rotmode > 0) {
+        /* euler rotations (will cause gimble lock, but this can be alleviated a bit with rotation orders) */
+        eulO_to_mat3(rmat, ob->rot, ob->rotmode);
+        eulO_to_mat3(dmat, ob->drot, ob->rotmode);
+    }
+    else if (ob->rotmode == ROT_MODE_AXISANGLE) {
+        /* axis-angle - not really that great for 3D-changing orientations */
+        axis_angle_to_mat3(rmat, ob->rotAxis, ob->rotAngle);
+        axis_angle_to_mat3(dmat, ob->drotAxis, ob->drotAngle);
+    }
+    else {
+        /* quats are normalized before use to eliminate scaling issues */
+        float tquat[4];
+
+        normalize_qt_qt(tquat, ob->quat);
+        quat_to_mat3(rmat, tquat);
+
+        normalize_qt_qt(tquat, ob->dquat);
+        quat_to_mat3(dmat, tquat);
+    }
+
+    /* combine these rotations */
+    if (use_drot)
+        mul_m3_m3m3(mat, dmat, rmat);
+    else
+        copy_m3_m3(mat, rmat);
+}
+
+
 #ifdef USE_DATA_PTR
 #  define CHUNK_DATA(chunk) (chunk)->_data
 #else
