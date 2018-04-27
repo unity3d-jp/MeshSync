@@ -437,13 +437,13 @@ bool MeshSyncClientMaya::sendMarkedObjects()
         auto shape = GetShape(node);
         auto& record = findOrAddRecord(node);
 
-        // check rename
-        auto name = GetName(node);
-        if (record.name != GetName(node)) {
-            mscTrace("rename %s -> %s\n", record.path.c_str(), GetPath(node).c_str());
+        // check rename / re-parenting
+        auto path = GetPath(node);
+        if (record.path != path) {
+            mscTrace("rename %s -> %s\n", record.path.c_str(), path.c_str());
             m_deleted.push_back(record.path);
-            record.name = name;
-            record.path = GetPath(node);
+            record.name = GetName(node);
+            record.path = path;
             record.dirty_transform = true;
             record.dirty_shape = true;
         }
