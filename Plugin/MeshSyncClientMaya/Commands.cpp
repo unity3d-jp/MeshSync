@@ -95,7 +95,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
-    auto& instance = MeshSyncClientMaya::getInstance();
+    auto& settings = MeshSyncClientMaya::getInstance().m_settings;
 
     MString result;
 #define Handle(Name, Value)\
@@ -104,21 +104,21 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         else get_arg(Value, Name, args);\
     }
 
-    Handle("address", instance.m_client_settings.server);
-    Handle("port", instance.m_client_settings.port);
-    Handle("scaleFactor", instance.m_scale_factor);
-    Handle("autosync", instance.m_auto_sync);
-    Handle("syncMeshes", instance.m_sync_meshes);
-    Handle("syncNormals", instance.m_sync_normals);
-    Handle("syncUVs", instance.m_sync_uvs);
-    Handle("syncColors", instance.m_sync_colors);
-    Handle("syncBlendShapes", instance.m_sync_blendshapes);
-    Handle("syncBones", instance.m_sync_bones);
-    Handle("syncCameras", instance.m_sync_cameras);
-    Handle("syncLights", instance.m_sync_lights);
-    Handle("syncAnimations", instance.m_sync_animations);
-    Handle("sampleAnimation", instance.m_sample_animation);
-    Handle("animationSPS", instance.m_animation_sps);
+    Handle("address", settings.client_settings.server);
+    Handle("port", settings.client_settings.port);
+    Handle("scaleFactor", settings.scale_factor);
+    Handle("autosync", settings.auto_sync);
+    Handle("syncMeshes", settings.sync_meshes);
+    Handle("syncNormals", settings.sync_normals);
+    Handle("syncUVs", settings.sync_uvs);
+    Handle("syncColors", settings.sync_colors);
+    Handle("syncBlendShapes", settings.sync_blendshapes);
+    Handle("syncBones", settings.sync_bones);
+    Handle("syncCameras", settings.sync_cameras);
+    Handle("syncLights", settings.sync_lights);
+    Handle("syncAnimations", settings.sync_animations);
+    Handle("sampleAnimation", settings.sample_animation);
+    Handle("animationSPS", settings.animation_sps);
 #undef Handle
 
     MPxCommand::setResult(result);

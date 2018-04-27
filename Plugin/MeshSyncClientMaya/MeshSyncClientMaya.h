@@ -10,6 +10,33 @@
 class MeshSyncClientMaya
 {
 public:
+    struct Settings
+    {
+        ms::ClientSettings client_settings;
+
+        float scale_factor = 1.0f;
+        int  animation_sps = 5;
+        int  timeout_ms = 5000;
+        bool auto_sync = false;
+        bool sync_meshes = true;
+        bool sync_normals = true;
+        bool sync_uvs = true;
+        bool sync_colors = true;
+        bool sync_bones = true;
+        bool sync_blendshapes = true;
+        bool sync_cameras = true;
+        bool sync_lights = true;
+        bool sync_animations = true;
+        bool sample_animation = true;
+        bool apply_tweak = true;
+
+        // import settings
+        bool bake_skin = false;
+        bool bake_cloth = false;
+    };
+    Settings m_settings;
+
+
     enum class TargetScope
     {
         Unknown,
@@ -35,6 +62,7 @@ public:
     bool sendScene(TargetScope scope = TargetScope::All);
     bool sendMarkedObjects();
     bool importScene();
+
 
 private:
     struct ObjectRecord
@@ -65,29 +93,6 @@ private:
     bool extractLightData(ms::Light& dst, MObject src);
     bool extractMeshData(ms::Mesh& dst, MObject src);
     void kickAsyncSend();
-
-public:
-    ms::ClientSettings m_client_settings;
-
-    float m_scale_factor = 1.0f;
-    int m_animation_sps = 5;
-    int m_timeout_ms = 5000;
-    bool m_auto_sync = false;
-    bool m_sync_meshes = true;
-    bool m_sync_normals = true;
-    bool m_sync_uvs= true;
-    bool m_sync_colors= true;
-    bool m_sync_bones = true;
-    bool m_sync_blendshapes = true;
-    bool m_sync_cameras = true;
-    bool m_sync_lights = true;
-    bool m_sync_animations = true;
-    bool m_sample_animation = true;
-    bool m_apply_tweak = true;
-
-    // import settings
-    bool m_bake_skin = false;
-    bool m_bake_cloth = false;
 
 private:
     using ObjectRecords = std::map<void*, ObjectRecord>;
