@@ -86,6 +86,12 @@ MObject GetShape(MObject node)
     return path.node();
 }
 
+MObject GetParent(MObject node)
+{
+    MFnDagNode dn(GetDagPath(node));
+    return dn.parentCount() > 0 ? dn.parent(0) : MObject();
+}
+
 MObject FindMesh(MObject node)
 {
     auto path = GetDagPath(node);

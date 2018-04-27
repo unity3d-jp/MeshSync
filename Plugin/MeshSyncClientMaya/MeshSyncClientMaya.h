@@ -27,6 +27,7 @@ public:
     void onTimeChange(MTime& time);
     void onNodeRemoved(MObject& node);
 
+    void notifyObjectUpdated(MObject obj, bool force = false);
     void notifyUpdateTransform(MObject obj, bool force = false);
     void notifyUpdateCamera(MObject obj, bool force = false);
     void notifyUpdateLight(MObject obj, bool force = false);
@@ -41,6 +42,8 @@ private:
         MObject node;
         std::string name;
         std::string path;
+        MCallbackId cid_trans = 0;
+        MCallbackId cid_shape = 0;
         bool dirty_transform = true;
         bool dirty_shape = true;
     };
@@ -51,6 +54,7 @@ private:
     void waitAsyncSend();
     void registerGlobalCallbacks();
     void registerNodeCallbacks(TargetScope scope = TargetScope::All);
+    bool registerNodeCallback(MObject node, bool leaf = true);
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
     int getMaterialID(MUuid uid);
@@ -92,7 +96,6 @@ private:
     MFnPlugin m_iplugin;
 
     std::vector<MCallbackId> m_cids_global;
-    std::vector<MCallbackId> m_cids_node;
     std::vector<MUuid> m_material_id_table;
     std::vector<MObject> m_dirty_objects;
 

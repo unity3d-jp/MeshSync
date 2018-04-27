@@ -16,6 +16,7 @@ bool IsVisible(MObject node);
 MObject GetTransform(MDagPath path);
 MObject GetTransform(MObject node);
 MObject GetShape(MObject node);
+MObject GetParent(MObject node);
 
 MObject FindMesh(MObject node);
 MObject FindSkinCluster(MObject node);
@@ -88,3 +89,14 @@ inline mu::quatf to_quatf(const MQuaternion& v)
     return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };
 }
 
+// body: [](MObject&) -> void
+template<class Body>
+void Enumerate(MFn::Type type, const Body& body)
+{
+    MItDag it(MItDag::kDepthFirst, type);
+    while (!it.isDone()) {
+        auto obj = it.item();
+        body(obj);
+        it.next();
+    }
+}
