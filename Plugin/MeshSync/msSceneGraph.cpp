@@ -1341,6 +1341,14 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         }
     }
 
+    // bounds
+    for (auto& split : splits) {
+        float3 bmin, bmax;
+        MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
+        split.bound_center = (bmax + bmin) * 0.5f;
+        split.bound_size = bmax - bmin;
+    }
+
     // tangents
     if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
         tangents.resize(points.size());

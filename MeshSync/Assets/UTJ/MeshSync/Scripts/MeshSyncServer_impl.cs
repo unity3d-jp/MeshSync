@@ -1340,12 +1340,15 @@ namespace UTJ.MeshSync
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsSize(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr _this, int i);
             #endregion
 
             public int numPoints { get { return msSplitGetNumPoints(_this); } }
             public int numIndices { get { return msSplitGetNumIndices(_this); } }
+            public Bounds bounds { get { return new Bounds(msSplitGetBoundsCenter(_this), msSplitGetBoundsSize(_this)); } }
             public int numSubmeshes { get { return msSplitGetNumSubmeshes(_this); } }
 
             public SubmeshData GetSubmesh(int i)

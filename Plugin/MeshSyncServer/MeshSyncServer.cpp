@@ -646,6 +646,14 @@ msAPI int msSplitGetNumIndices(ms::SplitData *_this)
 {
     return (int)_this->index_count;
 }
+msAPI float3 msSplitGetBoundsCenter(ms::SplitData *_this)
+{
+    return _this->bound_center;
+}
+msAPI float3 msSplitGetBoundsSize(ms::SplitData *_this)
+{
+    return _this->bound_size;
+}
 msAPI int msSplitGetNumSubmeshes(ms::SplitData *_this)
 {
     return (int)_this->submeshes.size();

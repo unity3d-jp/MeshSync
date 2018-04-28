@@ -441,6 +441,7 @@ namespace UTJ.MeshSync
                 {
                     var old = smr.sharedMesh;
                     smr.sharedMesh = rec.editMesh;
+                    smr.localBounds = rec.editMesh.bounds;
                     DestroyIfNotAsset(old);
 
                     if (skinned)
@@ -616,7 +617,7 @@ namespace UTJ.MeshSync
                 }
             }
 
-            mesh.RecalculateBounds();
+            mesh.bounds = split.bounds;
             mesh.UploadMeshData(false);
             return mesh;
         }

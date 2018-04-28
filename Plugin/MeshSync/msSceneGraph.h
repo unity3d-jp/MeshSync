@@ -316,6 +316,8 @@ struct SplitData
     int vertex_count = 0;
     int vertex_offset = 0;
     IArray<SubmeshData> submeshes;
+    float3 bound_center = float3::zero();
+    float3 bound_size = float3::zero();
 };
 
 struct BlendShapeData
