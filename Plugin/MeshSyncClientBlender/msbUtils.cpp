@@ -111,43 +111,54 @@ const bPoseChannel* find_pose(const Object *obj, const char *name)
     return nullptr;
 }
 
-void extract_local_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)
+void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
 {
     float4x4 local = (float4x4&)obj->obmat;
     if (auto parent = obj->parent)
         local *= invert((float4x4&)parent->obmat);
 
-    pos = extract_position(local);
-    rot = extract_rotation(local);
-    scale = extract_scale(local);
+    t = swap_yz(extract_position(local));
+    r = swap_yz(extract_rotation(local));
+    s = swap_yz(extract_scale(local));
 }
 
 // bone
-void extract_local_TRS(const Object *armature, const Bone *bone, float3& pos, quatf& rot, float3& scale)
+void extract_local_TRS(const Object *armature, const Bone *bone, float3& t, quatf& r, float3& s)
 {
     float4x4 local = (float4x4&)bone->arm_mat;
     if (auto parent = bone->parent)
         local *= invert((float4x4&)parent->arm_mat);
 
-    pos = extract_position(local);
-    rot = extract_rotation(local);
-    scale = extract_scale(local);
+    t = swap_yz(extract_position(local));
+    r = swap_yz(extract_rotation(local));
+    s = swap_yz(extract_scale(local));
 }
 
 // pose
-void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale)
+void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& t, quatf& r, float3& s)
 {
     float4x4 local = (float4x4&)pose->pose_mat;
     if (auto parent = pose->parent)
         local *= invert((float4x4&)parent->pose_mat);
 
-    pos = extract_position(local);
-    rot = extract_rotation(local);
-    scale = extract_scale(local);
+    t = swap_yz(extract_position(local));
+    r = swap_yz(extract_rotation(local));
+    s = swap_yz(extract_scale(local));
 }
 
 float4x4 extract_bindpose(const Object *armature, const Bone *bone)
 {
-    return invert((float4x4&)bone->arm_mat);
+    auto mat = (float4x4&)bone->arm_mat;
+    mat *= float4x4 {
+        1, 0, 0, 0,
+        0, 0,-1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 1,
+    };
+
+    auto t = swap_yz(extract_position(mat));
+    auto r = swap_yz(extract_rotation(mat));
+    auto s = swap_yz(extract_scale(mat));
+    return invert(transform(t, r, s));
 }
 

@@ -1158,7 +1158,12 @@ void Mesh::convertHandedness(bool x, bool yz)
     if (!x && !yz) return;
 
     super::convertHandedness(x, yz);
-
+    convertHandedness_Mesh(x, yz);
+    convertHandedness_BlendShapes(x, yz);
+    convertHandedness_Bones(x, yz);
+}
+void Mesh::convertHandedness_Mesh(bool x, bool yz)
+{
     if (x) {
         mu::InvertX(points.data(), points.size());
         mu::InvertX(normals.data(), normals.size());
@@ -1169,9 +1174,17 @@ void Mesh::convertHandedness(bool x, bool yz)
         for (auto& v : normals) v = swap_yz(v);
         for (auto& v : tangents) v = swap_yz(v);
     }
-    for (auto& bone : bones) bone->convertHandedness(x, yz);
+}
+void Mesh::convertHandedness_BlendShapes(bool x, bool yz)
+{
     for (auto& bs : blendshapes) bs->convertHandedness(x, yz);
 }
+
+void ms::Mesh::convertHandedness_Bones(bool x, bool yz)
+{
+    for (auto& bone : bones) bone->convertHandedness(x, yz);
+}
+
 
 void Mesh::applyScaleFactor(float v)
 {

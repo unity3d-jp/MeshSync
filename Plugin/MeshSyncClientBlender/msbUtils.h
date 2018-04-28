@@ -9,10 +9,10 @@ const Bone* find_bone_recursive(const Bone *bone, const char *name);
 const Bone* find_bone(const Object *obj, const char *name);
 const bPoseChannel* find_pose(const Object *obj, const char *name);
 
-void materix_decompose(const float4x4& mat, float3& pos, quatf& rot, float3& scale);
-void extract_local_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale);
-void extract_local_TRS(const Object *armature, const Bone *bone, float3& pos, quatf& rot, float3& scale);
-void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale);
+void materix_decompose(const float4x4& mat, float3& t, quatf& r, float3& s);
+void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s);
+void extract_local_TRS(const Object *armature, const Bone *bone, float3& t, quatf& r, float3& s);
+void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& t, quatf& r, float3& s);
 float4x4 extract_bindpose(const Object *armature, const Bone *bone);
 
 

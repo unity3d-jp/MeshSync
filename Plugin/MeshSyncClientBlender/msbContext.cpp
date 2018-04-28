@@ -247,6 +247,9 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
         if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
         if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
     }
+
+    dst.convertHandedness_Mesh(false, true);
+    dst.convertHandedness_BlendShapes(false, true);
 }
 
 void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
@@ -624,9 +627,6 @@ void msbContext::send()
         m_message.scene.settings = scene_settings;
 
         auto& scene = m_message.scene;
-        for (auto& obj : scene.transforms) { obj->convertHandedness(swap_x, swap_yz); }
-        for (auto& obj : scene.cameras) { obj->convertHandedness(swap_x, swap_yz); }
-        for (auto& obj : scene.lights) { obj->convertHandedness(swap_x, swap_yz); }
         if (scale_factor != 1.0f) {
             for (auto& obj : scene.transforms) { obj->applyScaleFactor(scale_factor); }
             for (auto& obj : scene.cameras) { obj->applyScaleFactor(scale_factor); }
@@ -656,7 +656,6 @@ void msbContext::send()
                 mesh.refine_settings.flags.gen_tangents = true;
             if (scale_factor != 1.0f)
                 mesh.applyScaleFactor(scale_factor);
-            mesh.convertHandedness(swap_x, swap_yz);
         });
         for(auto& pmesh : m_mesh_send) {
             ms::SetMessage set;

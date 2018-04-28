@@ -412,6 +412,10 @@ public:
     void generateWeights4();
     void setupFlags();
 
+    void convertHandedness_Mesh(bool x, bool yz);
+    void convertHandedness_BlendShapes(bool x, bool yz);
+    void convertHandedness_Bones(bool x, bool yz);
+
 public:
     // for python binding
     void addVertex(const float3& v);

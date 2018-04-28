@@ -37,6 +37,16 @@ struct msbSettings
 class msbContext : public std::enable_shared_from_this<msbContext>
 {
 public:
+    struct ObjectRecord
+    {
+        Object *obj = nullptr; // null if joint
+        std::string name;
+        std::string path;
+        float4x4 mat_local;
+        float4x4 mat_global;
+        bool alive = true;
+    };
+
     msbContext();
     ~msbContext();
     void setup();
@@ -72,6 +82,10 @@ public:
     void send();
 
 private:
+    ObjectRecord & findOrAddObject(Object *obj);
+    ObjectRecord & findOrAddObject(Bone *obj);
+    ObjectRecord & findOrAddObject(bPoseChannel *obj);
+
     ms::TransformPtr findOrAddBone(const Object *armature, const Bone *bone);
 
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
@@ -90,6 +104,7 @@ private:
     std::vector<ms::MeshPtr> m_mesh_cache, m_mesh_send;
     std::vector<std::string> m_deleted;
     ms::ScenePtr m_scene = ms::ScenePtr(new ms::Scene());
+    std::map<void*, ObjectRecord> m_records;
 
     ms::SetMessage m_message;
     std::future<void> m_send_future;
