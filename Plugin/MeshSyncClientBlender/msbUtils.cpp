@@ -149,16 +149,12 @@ void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3&
 float4x4 extract_bindpose(const Object *armature, const Bone *bone)
 {
     auto mat = (float4x4&)bone->arm_mat;
-    mat *= float4x4 {
+    mat *= float4x4{
         1, 0, 0, 0,
-        0, 0,-1, 0,
-        0, 1, 0, 0,
+        0,-1, 0, 0,
+        0, 0, 1, 0,
         0, 0, 0, 1,
     };
-
-    auto t = swap_yz(extract_position(mat));
-    auto r = swap_yz(extract_rotation(mat));
-    auto s = swap_yz(extract_scale(mat));
-    return invert(transform(t, r, s));
+    return swap_yz(invert(mat));
 }
 
