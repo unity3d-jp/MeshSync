@@ -1218,7 +1218,9 @@ namespace UTJ.MeshSync
         public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
-            AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+
+            if (!AssetDatabase.IsValidFolder("Assets/" + m_assetExportPath))
+                AssetDatabase.CreateFolder("Assets", m_assetExportPath);
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
