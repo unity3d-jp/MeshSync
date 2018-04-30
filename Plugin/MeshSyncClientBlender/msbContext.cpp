@@ -345,11 +345,6 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
     if (m_settings.sync_bones) {
         auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
         if (arm_mod) {
-            // request bake TRS
-            dst.refine_settings.flags.apply_local2world = 1;
-            dst.refine_settings.local2world = dst.toMatrix();
-            auto inv_mat = invert(dst.refine_settings.local2world);
-
             auto *arm_obj = arm_mod->object;
             int group_index = 0;
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
@@ -357,7 +352,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
                 if (bone) {
                     auto trans = findOrAddBone(arm_obj, bone);
                     auto b = dst.addBone(trans->path);
-                    b->bindpose = inv_mat * extract_bindpose(arm_obj, bone);
+                    b->bindpose = extract_bindpose(obj, arm_obj, bone);
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {

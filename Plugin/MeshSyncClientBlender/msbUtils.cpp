@@ -122,16 +122,30 @@ void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
     s = swap_yz(extract_scale(local));
 }
 
+
+static inline quatf flip_z(const quatf& v)
+{
+    return { -v.x, -v.y, v.z, v.w };
+}
+static const float4x4 g_arm_to_world = float4x4{
+    1, 0, 0, 0,
+    0, 0,-1, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1
+};
+
 // bone
 void extract_local_TRS(const Object *armature, const Bone *bone, float3& t, quatf& r, float3& s)
 {
     float4x4 local = (float4x4&)bone->arm_mat;
     if (auto parent = bone->parent)
         local *= invert((float4x4&)parent->arm_mat);
+    else
+        local *= g_arm_to_world;
 
-    t = swap_yz(extract_position(local));
-    r = swap_yz(extract_rotation(local));
-    s = swap_yz(extract_scale(local));
+    t = extract_position(local);
+    r = flip_z(extract_rotation(local));
+    s = extract_scale(local);
 }
 
 // pose
@@ -140,21 +154,18 @@ void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3&
     float4x4 local = (float4x4&)pose->pose_mat;
     if (auto parent = pose->parent)
         local *= invert((float4x4&)parent->pose_mat);
+    else
+        local *= g_arm_to_world;
 
-    t = swap_yz(extract_position(local));
-    r = swap_yz(extract_rotation(local));
-    s = swap_yz(extract_scale(local));
+    t = extract_position(local);
+    r = flip_z(extract_rotation(local));
+    s = extract_scale(local);
 }
 
-float4x4 extract_bindpose(const Object *armature, const Bone *bone)
+float4x4 extract_bindpose(const Object *mesh, const Object *armature, const Bone *bone)
 {
-    auto mat = (float4x4&)bone->arm_mat;
-    mat *= float4x4{
-        1, 0, 0, 0,
-        0,-1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1,
-    };
-    return swap_yz(invert(mat));
+    auto mat_bone = (float4x4&)bone->arm_mat * g_arm_to_world;
+    auto mat_obj = (float4x4&)mesh->obmat;
+    return invert(mat_bone * mat_obj);
 }
 
