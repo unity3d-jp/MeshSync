@@ -17,47 +17,62 @@ public class VisualizeSkeleton : MonoBehaviour
     Transform[] m_bones;
 
 
-    [MenuItem("Debug/Toggle Visualize Skeleton")]
-    public static void Toggle()
+    [MenuItem("Debug/Visualize Skeleton: On")]
+    public static void On()
     {
-        var go = Selection.activeGameObject;
-        if (go != null)
+        EachSkinnedMeshRenderer(smr => On(smr));
+    }
+
+    [MenuItem("Debug/Visualize Skeleton: Off")]
+    public static void Off()
+    {
+        EachSkinnedMeshRenderer(smr => Off(smr));
+    }
+
+    static void EachSkinnedMeshRenderer(System.Action<SkinnedMeshRenderer> act)
+    {
+        var selection = Selection.gameObjects;
+        if (selection.Length > 0)
         {
-            Toggle(go.GetComponent<SkinnedMeshRenderer>());
+            foreach (var go in selection)
+            {
+                var smr = go.GetComponent<SkinnedMeshRenderer>();
+                if (smr != null)
+                    act.Invoke(smr);
+            }
         }
         else
         {
-            var roots = new HashSet<Transform>();
             foreach (var smr in GameObject.FindObjectsOfType<SkinnedMeshRenderer>())
-            {
-                if (!roots.Contains(smr.rootBone))
-                {
-                    roots.Add(smr.rootBone);
-                    Toggle(smr);
-                }
-            }
+                act.Invoke(smr);
         }
     }
 
-    public static void Toggle(SkinnedMeshRenderer smr)
+    static void On(SkinnedMeshRenderer smr)
     {
         if (smr != null && smr.rootBone != null)
         {
-            var root = smr.rootBone.GetComponent<VisualizeSkeleton>();
-            if (root == null)
+            var vs = smr.rootBone.GetComponent<VisualizeSkeleton>();
+            if (vs == null)
             {
-                root = smr.rootBone.gameObject.AddComponent<VisualizeSkeleton>();
-                root.root = smr.rootBone;
-                root.bones = smr.bones;
-            }
-            else
-            {
-                DestroyImmediate(root);
+                vs = smr.rootBone.gameObject.AddComponent<VisualizeSkeleton>();
+                vs.root = smr.rootBone;
+                vs.bones = smr.bones;
             }
         }
     }
 
-    public static Mesh BuildCubeMesh(float size)
+    static void Off(SkinnedMeshRenderer smr)
+    {
+        if (smr != null && smr.rootBone != null)
+        {
+            var vs = smr.rootBone.GetComponent<VisualizeSkeleton>();
+            if (vs != null)
+                DestroyImmediate(vs);
+        }
+    }
+
+    static Mesh BuildCubeMesh(float size)
     {
         float l = size;
         var p = new Vector3[] {
