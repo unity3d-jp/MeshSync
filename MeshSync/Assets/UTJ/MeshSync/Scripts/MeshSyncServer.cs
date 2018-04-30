@@ -441,7 +441,7 @@ namespace UTJ.MeshSync
                 {
                     var old = smr.sharedMesh;
                     smr.sharedMesh = rec.editMesh;
-                    smr.localBounds = rec.editMesh.bounds;
+
                     DestroyIfNotAsset(old);
 
                     if (skinned)
@@ -475,6 +475,10 @@ namespace UTJ.MeshSync
                                 root = bones[0];
                             smr.rootBone = root;
                             smr.bones = bones;
+
+                            var bounds = rec.editMesh.bounds;
+                            bounds.center = bounds.center - root.position;
+                            smr.localBounds = bounds;
                         }
                     }
                     else
@@ -484,6 +488,8 @@ namespace UTJ.MeshSync
                             smr.bones = null;
                             smr.rootBone = null;
                         }
+
+                        smr.localBounds = rec.editMesh.bounds;
                     }
 
                     if (flags.hasBlendshapes)
