@@ -345,6 +345,11 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
     if (m_settings.sync_bones) {
         auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
         if (arm_mod) {
+            // request bake TRS
+            dst.refine_settings.flags.apply_local2world = 1;
+            // I can't explain why this invert() is needed...
+            dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
+
             auto *arm_obj = arm_mod->object;
             int group_index = 0;
             each_vertex_groups(obj, [&](const bDeformGroup *g) {

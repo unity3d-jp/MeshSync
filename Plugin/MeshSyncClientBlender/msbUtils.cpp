@@ -123,7 +123,7 @@ void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
 }
 
 
-static inline quatf flip_z(const quatf& v)
+template<class T> inline tquat<T> flip_z(const tquat<T>& v)
 {
     return { -v.x, -v.y, v.z, v.w };
 }
@@ -165,7 +165,6 @@ void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3&
 float4x4 extract_bindpose(const Object *mesh, const Object *armature, const Bone *bone)
 {
     auto mat_bone = (float4x4&)bone->arm_mat * g_arm_to_world;
-    auto mat_obj = (float4x4&)mesh->obmat;
-    return invert(mat_bone * mat_obj);
+    return invert(mat_bone);
 }
 
