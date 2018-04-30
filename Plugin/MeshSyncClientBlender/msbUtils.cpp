@@ -123,10 +123,24 @@ void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
 }
 
 
+template<class T> inline tquat<T> flip_y(const tquat<T>& v)
+{
+    return { -v.x,  v.y,-v.z, v.w };
+}
 template<class T> inline tquat<T> flip_z(const tquat<T>& v)
 {
     return { -v.x, -v.y, v.z, v.w };
 }
+template<class T> inline tmat4x4<T> flip_z(const tmat4x4<T>& m)
+{
+    return tmat4x4<T> {
+         m[0].x, m[0].y,-m[0].z, m[0].w,
+         m[1].x, m[1].y,-m[1].z, m[1].w,
+        -m[2].x,-m[2].y, m[2].z, m[2].w,
+         m[3].x, m[3].y,-m[3].z, m[3].w,
+    };
+}
+
 static const float4x4 g_arm_to_world = float4x4{
     1, 0, 0, 0,
     0, 0,-1, 0,
@@ -165,6 +179,6 @@ void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3&
 float4x4 extract_bindpose(const Object *mesh, const Object *armature, const Bone *bone)
 {
     auto mat_bone = (float4x4&)bone->arm_mat * g_arm_to_world;
-    return invert(mat_bone);
+    return invert(flip_z(mat_bone));
 }
 
