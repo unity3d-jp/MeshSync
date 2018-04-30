@@ -1,6 +1,7 @@
 fileFormatVersion: 2
-guid: 11133534f441bc14ab075dc7e037b7fb
-timeCreated: 1484038929
+guid: 6a040fc09bc2c3e46be7a8c1649b5e88
+folderAsset: yes
+timeCreated: 1523903709
 licenseType: Pro
 PluginImporter:
   externalObjects: {}
@@ -46,7 +47,7 @@ PluginImporter:
       settings:
         CPU: x86_64
         DefaultValueInitialized: true
-        OS: Windows
+        OS: OSX
   - first:
       Facebook: Win
     second:
