@@ -168,6 +168,8 @@ namespace blender
 
         const char *name() const;
         const float3& color() const;
+        bool use_nodes() const;
+        Material* active_node_material() const;
     };
 
     class BScene

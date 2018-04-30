@@ -24,6 +24,8 @@ Def(BFCurve);
 Func(BFCurve, evaluate);
 
 Def(BMaterial);
+Prop(BMaterial, use_nodes);
+Prop(BMaterial, active_node_material);
 
 Def(BScene);
 
@@ -91,7 +93,9 @@ void setup()
         }
         else if (match_type("Material")) {
             BMaterial::s_type = type;
-            each_func{
+            each_prop{
+                if (match_prop("use_nodes")) BMaterial_use_nodes = prop;
+                if (match_prop("active_node_material")) BMaterial_active_node_material = prop;
             }
         }
         else if (match_type("Scene")) {
@@ -186,6 +190,16 @@ R getter(T *idd, U *d, PropPointerGetFunc f)
 
     PointerRNA ret = f(&ptr);
     return (R)ret.data;
+}
+
+template<typename T, typename U>
+bool getter(T *idd, U *d, PropBooleanGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    return f(&ptr) != 0;
 }
 
 
@@ -316,6 +330,14 @@ const char *BMaterial::name() const
 const float3& BMaterial::color() const
 {
     return (float3&)m_ptr->r;
+}
+bool BMaterial::use_nodes() const
+{
+    return getter<nullptr_t, Material>(nullptr, m_ptr, ((BoolPropertyRNA*)BMaterial_use_nodes)->get);
+}
+Material * BMaterial::active_node_material() const
+{
+    return getter<nullptr_t, Material, Material*>(nullptr, m_ptr, ((PointerPropertyRNA*)BMaterial_active_node_material)->get);
 }
 
 brange<Object> BScene::objects()

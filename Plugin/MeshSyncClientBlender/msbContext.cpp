@@ -117,17 +117,26 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
-
 // src_: bpy.Material
 ms::MaterialPtr msbContext::addMaterial(py::object src)
 {
     auto rna = (BPy_StructRNA*)src.ptr();
-    auto& mat = *(Material*)rna->ptr.id.data;
+    auto mat = (Material*)rna->ptr.id.data;
 
     auto ret = ms::MaterialPtr(new ms::Material());
-    ret->name = mat.id.name;
+    ret->name = mat->id.name + 2;
     ret->id = (int)m_scene->materials.size();
-    ret->color = float4{ mat.r, mat.g, mat.b, 1.0f };
+    {
+        bl::BMaterial bm(mat);
+        auto color_src = mat;
+        if (bm.use_nodes()) {
+            bl::BMaterial node(bm.active_node_material());
+            if (node.ptr()) {
+                color_src = node.ptr();
+            }
+        }
+        ret->color = float4{ color_src->r, color_src->g, color_src->b, 1.0f };
+    }
     m_scene->materials.emplace_back(ret);
     return ret;
 }
@@ -139,7 +148,7 @@ int msbContext::getMaterialIndex(const Material *mat)
 
     int i = 0;
     for (auto& m : m_scene->materials) {
-        if (m->name == mat->id.name)
+        if (m->name == mat->id.name + 2)
             return i;
         ++i;
     }
