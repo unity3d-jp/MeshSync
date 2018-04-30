@@ -35,6 +35,8 @@ Library/
 Temp/
 TestLocal/
 TestLocal.meta
+MeshSyncAssets/
+MeshSyncAssets.meta
 
 MeshSync/*.csproj
 MeshSync/*.sln

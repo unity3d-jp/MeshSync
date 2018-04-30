@@ -816,7 +816,7 @@ template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>&
 {
     auto ret = scale44(s);
     ret *= to_mat4x4(r);
-    ret *= translate(t);
+    (tvec3<T>&)ret[3] = t;
     return ret;
 }
 

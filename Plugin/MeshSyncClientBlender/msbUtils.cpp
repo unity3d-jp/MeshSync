@@ -123,10 +123,6 @@ void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
 }
 
 
-template<class T> inline tquat<T> flip_y(const tquat<T>& v)
-{
-    return { -v.x,  v.y,-v.z, v.w };
-}
 template<class T> inline tquat<T> flip_z(const tquat<T>& v)
 {
     return { -v.x, -v.y, v.z, v.w };
