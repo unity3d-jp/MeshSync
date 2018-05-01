@@ -11,9 +11,9 @@ const bPoseChannel* find_pose(const Object *obj, const char *name);
 
 void materix_decompose(const float4x4& mat, float3& t, quatf& r, float3& s);
 void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s);
-void extract_local_TRS(const Object *armature, const Bone *bone, float3& t, quatf& r, float3& s);
-void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& t, quatf& r, float3& s);
-float4x4 extract_bindpose(const Object *mesh, const Object *armature, const Bone *bone);
+void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s);
+void extract_local_TRS(const bPoseChannel *pose, float3& t, quatf& r, float3& s);
+float4x4 extract_bindpose(const Bone *bone);
 
 
 

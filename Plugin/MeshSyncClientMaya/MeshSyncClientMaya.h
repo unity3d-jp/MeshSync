@@ -1,12 +1,6 @@
 ﻿#pragma once
 #include "MeshSync/MeshSync.h"
 
-#ifdef mscDebug
-    #define mscTrace(...) ::mu::Print("MeshSync trace: " __VA_ARGS__)
-#else
-    #define mscTrace(...)
-#endif
-
 class MeshSyncClientMaya
 {
 public:

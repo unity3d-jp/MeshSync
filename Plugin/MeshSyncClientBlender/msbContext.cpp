@@ -207,6 +207,7 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
     // ignore if already added
     if (m_added.find(obj) != m_added.end())
         return;
+    m_added.insert(obj);
 
     // check if mesh is dirty
     {
@@ -223,7 +224,6 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
         }
     }
 
-    m_added.insert(obj);
 
     extractTransformData_(dst, src);
     auto task = [this, dst, obj]() {
@@ -236,6 +236,29 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
     // add async task
     m_extract_tasks.push_back(task);
 #endif
+}
+
+void msbContext::exportArmature(bl::BObject src)
+{
+    std::unique_lock<std::mutex> lock(m_extract_mutex);
+
+    Object *arm_obj = src.ptr();
+    if (m_added.find(arm_obj) != m_added.end())
+        return;
+    m_added.insert(arm_obj);
+
+    auto poses = bl::range((bPoseChannel*)arm_obj->pose->chanbase.first);
+
+    for (auto pose : poses)
+    {
+        auto bone = pose->bone;
+        auto& dst = m_bones[bone];
+        dst = addTransform(get_path(arm_obj) + get_path(bone));
+        if (m_settings.sync_poses)
+            extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
+        else
+            extract_local_TRS(bone, dst->position, dst->rotation, dst->scale);
+    }
 }
 
 void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
@@ -359,13 +382,15 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
 
             auto *arm_obj = arm_mod->object;
+            exportArmature(arm_obj);
+
             int group_index = 0;
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
                 auto bone = find_bone(arm_obj, g->name);
                 if (bone) {
-                    auto trans = findOrAddBone(arm_obj, bone);
+                    auto trans = findBone(arm_obj, bone);
                     auto b = dst.addBone(trans->path);
-                    b->bindpose = extract_bindpose(obj, arm_obj, bone);
+                    b->bindpose = extract_bindpose(bone);
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {
@@ -377,6 +402,9 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
                             }
                         }
                     }
+                }
+                else {
+                    mscTrace("bone not found %s\n", bone->name);
                 }
                 ++group_index;
             });
@@ -543,19 +571,12 @@ void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
 }
 
 
-ms::TransformPtr msbContext::findOrAddBone(const Object *armature, const Bone *bone)
+ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
-    auto& ret = m_bones[bone];
-    if (ret) { return ret; }
 
-    auto *pose = m_settings.sync_poses ? find_pose(armature, bone->name) : nullptr;
-    ret = addTransform(get_path(armature) + get_path(bone));
-    if(pose)
-        extract_local_TRS(armature, pose, ret->position, ret->rotation, ret->scale);
-    else
-        extract_local_TRS(armature, bone, ret->position, ret->rotation, ret->scale);
-    return ret;
+    auto it = m_bones.find(bone);
+    return it != m_bones.end() ? it->second : nullptr;
 }
 
 

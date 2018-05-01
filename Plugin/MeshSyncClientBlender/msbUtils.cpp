@@ -145,7 +145,7 @@ static const float4x4 g_arm_to_world = float4x4{
 };
 
 // bone
-void extract_local_TRS(const Object *armature, const Bone *bone, float3& t, quatf& r, float3& s)
+void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s)
 {
     float4x4 local = (float4x4&)bone->arm_mat;
     if (auto parent = bone->parent)
@@ -159,7 +159,7 @@ void extract_local_TRS(const Object *armature, const Bone *bone, float3& t, quat
 }
 
 // pose
-void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& t, quatf& r, float3& s)
+void extract_local_TRS(const bPoseChannel *pose, float3& t, quatf& r, float3& s)
 {
     float4x4 local = (float4x4&)pose->pose_mat;
     if (auto parent = pose->parent)
@@ -172,7 +172,7 @@ void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3&
     s = extract_scale(local);
 }
 
-float4x4 extract_bindpose(const Object *mesh, const Object *armature, const Bone *bone)
+float4x4 extract_bindpose(const Bone *bone)
 {
     auto mat_bone = (float4x4&)bone->arm_mat * g_arm_to_world;
     return invert(flip_z(mat_bone));

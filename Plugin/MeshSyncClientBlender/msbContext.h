@@ -75,6 +75,7 @@ public:
     void extractLightData_(ms::LightPtr dst, bl::BObject src);
     void extractMeshData(ms::MeshPtr dst, py::object src);
     void extractMeshData_(ms::MeshPtr dst, bl::BObject src);
+    void exportArmature(bl::BObject src);
 
     bool isSending() const;
     void flushPendingList();
@@ -86,7 +87,7 @@ private:
     ObjectRecord & findOrAddObject(Bone *obj);
     ObjectRecord & findOrAddObject(bPoseChannel *obj);
 
-    ms::TransformPtr findOrAddBone(const Object *armature, const Bone *bone);
+    ms::TransformPtr findBone(const Object *armature, const Bone *bone);
 
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj);
