@@ -92,10 +92,10 @@ ms::TransformPtr msbContext::addTransform_(Object * obj)
     return ret;
 }
 
-ms::TransformPtr msbContext::addTransform_(Bone * obj)
+ms::TransformPtr msbContext::addTransform_(Object *arm, Bone * obj)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
-    ret->path = get_path(obj);
+    ret->path = get_path(arm, obj);
     m_scene->transforms.push_back(ret);
     return ret;
 }
@@ -283,7 +283,7 @@ ms::TransformPtr msbContext::exportArmature(bl::BObject src)
     {
         auto bone = pose->bone;
         auto& dst = m_bones[bone];
-        dst = addTransform_(bone);
+        dst = addTransform_(arm_obj, bone);
         if (m_settings.sync_poses)
             extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
         else

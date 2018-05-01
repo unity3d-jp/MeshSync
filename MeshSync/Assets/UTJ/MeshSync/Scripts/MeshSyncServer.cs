@@ -524,7 +524,6 @@ namespace UTJ.MeshSync
                 AssignMaterials(rec);
         }
 
-        PinnedList<int> tmpI = new PinnedList<int>();
         PinnedList<Vector2> tmpV2 = new PinnedList<Vector2>();
         PinnedList<Vector3> tmpV3 = new PinnedList<Vector3>();
         PinnedList<Vector4> tmpV4 = new PinnedList<Vector4>();

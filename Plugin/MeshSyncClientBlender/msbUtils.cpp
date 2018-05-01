@@ -13,7 +13,7 @@ std::string get_path(const Object *obj)
     if (obj->parent) {
         if (obj->partype == PARBONE) {
             if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
-                ret += get_path(bone);
+                ret += get_path(obj->parent, bone);
             }
         }
         else {
@@ -24,11 +24,13 @@ std::string get_path(const Object *obj)
     ret += obj->id.name + 2;
     return ret;
 }
-std::string get_path(const Bone *obj)
+std::string get_path(const Object *arm, const Bone *obj)
 {
     std::string ret;
     if (obj->parent)
-        ret += get_path(obj->parent);
+        ret += get_path(arm, obj->parent);
+    else
+        ret += get_path(arm);
     ret += '/';
     ret += obj->name;
     return ret;
@@ -115,8 +117,16 @@ void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
     if (auto parent = obj->parent) {
         if (obj->partype == PARBONE) {
             if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
-                local *= g_world_to_arm;
-                (float3&)local[3] += to_mat3x3((float4x4&)bone->arm_mat) * (float3&)bone->tail;
+                auto arm_obj = obj->parent;
+                if ((bone->flag & BONE_NO_DEFORM) != 0) {
+                    auto inv_armmat = invert((float4x4&)bone->arm_mat);
+                    local = ((float4x4&)obj->obmat * g_world_to_arm) * inv_armmat;
+                }
+                else {
+                    local *= g_world_to_arm;
+                }
+                if ((bone->flag & BONE_CONNECTED) != 0)
+                    (float3&)local[3] += to_mat3x3((float4x4&)bone->arm_mat) * (float3&)bone->tail;
             }
         }
     }

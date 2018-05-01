@@ -36,8 +36,8 @@
   <ImportGroup Label="Shared">
   </ImportGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)_out\setup\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\setup\</IntDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

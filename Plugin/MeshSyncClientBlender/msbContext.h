@@ -61,7 +61,7 @@ public:
 
     ms::TransformPtr    addTransform(py::object obj);
     ms::TransformPtr    addTransform_(Object *obj);
-    ms::TransformPtr    addTransform_(Bone *obj);
+    ms::TransformPtr    addTransform_(Object *arm, Bone *obj);
     ms::CameraPtr       addCamera(py::object obj);
     ms::CameraPtr       addCamera_(Object *obj);
     ms::LightPtr        addLight(py::object obj);

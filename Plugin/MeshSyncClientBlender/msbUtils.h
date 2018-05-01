@@ -3,13 +3,12 @@
 
 
 std::string get_path(const Object *obj);
-std::string get_path(const Bone *obj);
+std::string get_path(const Object *arm, const Bone *obj);
 const ModifierData* find_modofier(Object *obj, ModifierType type);
 const Bone* find_bone_recursive(const Bone *bone, const char *name);
 const Bone* find_bone(const Object *obj, const char *name);
 const bPoseChannel* find_pose(const Object *obj, const char *name);
 
-void materix_decompose(const float4x4& mat, float3& t, quatf& r, float3& s);
 void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s);
 void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s);
 void extract_local_TRS(const bPoseChannel *pose, float3& t, quatf& r, float3& s);
