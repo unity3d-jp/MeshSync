@@ -103,7 +103,7 @@ def msb_get_path(obj):
 
 def msb_add_mesh(ctx, obj):
     path = msb_get_path(obj)
-    dst = ctx.addMesh(path)
+    dst = ctx.addMesh(obj)
     msb_handle_dupli_group(ctx, path, obj)
     if obj.hide:
         dst.visible = False
@@ -128,7 +128,7 @@ def msb_add_mesh(ctx, obj):
 
 def msb_add_camera(ctx, obj):
     path = msb_get_path(obj)
-    dst = ctx.addCamera(msb_get_path(obj))
+    dst = ctx.addCamera(obj)
     ctx.extractCameraData(dst, obj)
     msb_handle_dupli_group(ctx, path, obj)
     return dst
@@ -136,7 +136,7 @@ def msb_add_camera(ctx, obj):
 
 def msb_add_light(ctx, obj):
     path = msb_get_path(obj)
-    dst = ctx.addLight(msb_get_path(obj))
+    dst = ctx.addLight(obj)
     ctx.extractLightData(dst, obj)
     msb_handle_dupli_group(ctx, path, obj)
     return dst
@@ -144,7 +144,7 @@ def msb_add_light(ctx, obj):
 
 def msb_add_transform(ctx, obj):
     path = msb_get_path(obj)
-    dst = ctx.addTransform(path)
+    dst = ctx.addTransform(obj)
     ctx.extractTransformData(dst, obj)
     msb_handle_dupli_group(ctx, path, obj)
     return dst
@@ -153,7 +153,7 @@ def msb_add_transform(ctx, obj):
 def msb_add_reference_nodes(ctx, base_path, obj):
     local_path = msb_get_path(obj)
     path = base_path + local_path
-    dst = ctx.addTransform(path)
+    dst = ctx.addTransform(obj)
     ctx.extractTransformData(dst, obj)
     msb_handle_dupli_group(ctx, path, obj)
     dst.reference = local_path

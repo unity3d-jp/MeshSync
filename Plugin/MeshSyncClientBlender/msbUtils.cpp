@@ -5,52 +5,21 @@
 using namespace mu;
 
 
-void materix_decompose(const float4x4& mat, float3& pos, quatf& rot, float3& scale)
-{
-    float rmat[3][3];
-    mat4_to_loc_rot_size((float*)&pos, rmat, (float*)&scale, (float(*)[4])&mat);
-    mat3_to_quat((float*)&rot, rmat);
-}
-
-
-float3 to_euler_xyz(const float3x3& mat)
-{
-    const float cy = hypotf(mat[0][0], mat[0][1]);
-
-    if (cy > 16.0f * FLT_EPSILON) {
-        float3 eul1{
-            atan2f(mat[1][2], mat[2][2]),
-            atan2f(-mat[0][2], cy),
-            atan2f(mat[0][1], mat[0][0]),
-        };
-        float3 eul2{
-            atan2f(mat[1][2], mat[2][2]),
-            atan2f(-mat[0][2], cy),
-            atan2f(mat[0][1], mat[0][0]),
-        };
-        if (fabsf(eul1[0]) + fabsf(eul1[1]) + fabsf(eul1[2]) > fabsf(eul2[0]) + fabsf(eul2[1]) + fabsf(eul2[2])) {
-            return eul2;
-        }
-        else {
-            return eul1;
-        }
-    }
-    else {
-        return float3{
-            atan2f(-mat[2][1], mat[1][1]),
-            atan2f(-mat[0][2], cy),
-            0.0f
-        };
-    }
-}
-
 
 
 std::string get_path(const Object *obj)
 {
     std::string ret;
-    if (obj->parent)
-        ret += get_path(obj->parent);
+    if (obj->parent) {
+        if (obj->partype == PARBONE) {
+            if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
+                ret += get_path(bone);
+            }
+        }
+        else {
+            ret += get_path(obj->parent);
+        }
+    }
     ret += '/';
     ret += obj->id.name + 2;
     return ret;
@@ -111,17 +80,6 @@ const bPoseChannel* find_pose(const Object *obj, const char *name)
     return nullptr;
 }
 
-void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
-{
-    float4x4 local = (float4x4&)obj->obmat;
-    if (auto parent = obj->parent)
-        local *= invert((float4x4&)parent->obmat);
-
-    t = swap_yz(extract_position(local));
-    r = swap_yz(extract_rotation(local));
-    s = swap_yz(extract_scale(local));
-}
-
 
 template<class T> inline tquat<T> flip_z(const tquat<T>& v)
 {
@@ -130,10 +88,10 @@ template<class T> inline tquat<T> flip_z(const tquat<T>& v)
 template<class T> inline tmat4x4<T> flip_z(const tmat4x4<T>& m)
 {
     return tmat4x4<T> {
-         m[0].x, m[0].y,-m[0].z, m[0].w,
-         m[1].x, m[1].y,-m[1].z, m[1].w,
-        -m[2].x,-m[2].y, m[2].z, m[2].w,
-         m[3].x, m[3].y,-m[3].z, m[3].w,
+        m[0].x, m[0].y,-m[0].z, m[0].w,
+        m[1].x, m[1].y,-m[1].z, m[1].w,
+       -m[2].x,-m[2].y, m[2].z, m[2].w,
+        m[3].x, m[3].y,-m[3].z, m[3].w,
     };
 }
 
@@ -143,6 +101,31 @@ static const float4x4 g_arm_to_world = float4x4{
     0, 1, 0, 0,
     0, 0, 0, 1
 };
+static const float4x4 g_world_to_arm = float4x4{
+    1, 0, 0, 0,
+    0, 0, 1, 0,
+    0,-1, 0, 0,
+    0, 0, 0, 1
+};
+
+
+void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
+{
+    float4x4 local = bl::BObject(obj).matrix_local();
+    if (auto parent = obj->parent) {
+        if (obj->partype == PARBONE) {
+            if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
+                local *= g_world_to_arm;
+                (float3&)local[3] += to_mat3x3((float4x4&)bone->arm_mat) * (float3&)bone->tail;
+            }
+        }
+    }
+
+    t = swap_yz(extract_position(local));
+    r = swap_yz(extract_rotation(local));
+    s = swap_yz(extract_scale(local));
+}
+
 
 // bone
 void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s)

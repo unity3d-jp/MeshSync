@@ -59,10 +59,15 @@ public:
     void syncUpdated();
     void addObject(Object *obj);
 
-    ms::TransformPtr    addTransform(const std::string& path);
-    ms::CameraPtr       addCamera(const std::string& path);
-    ms::LightPtr        addLight(const std::string& path);
-    ms::MeshPtr         addMesh(const std::string& path);
+    ms::TransformPtr    addTransform(py::object obj);
+    ms::TransformPtr    addTransform_(Object *obj);
+    ms::TransformPtr    addTransform_(Bone *obj);
+    ms::CameraPtr       addCamera(py::object obj);
+    ms::CameraPtr       addCamera_(Object *obj);
+    ms::LightPtr        addLight(py::object obj);
+    ms::LightPtr        addLight_(Object *obj);
+    ms::MeshPtr         addMesh(py::object obj);
+    ms::MeshPtr         addMesh_(Object *obj);
     void                addDeleted(const std::string& path);
 
     ms::MaterialPtr addMaterial(py::object material);
@@ -75,7 +80,7 @@ public:
     void extractLightData_(ms::LightPtr dst, bl::BObject src);
     void extractMeshData(ms::MeshPtr dst, py::object src);
     void extractMeshData_(ms::MeshPtr dst, bl::BObject src);
-    void exportArmature(bl::BObject src);
+    ms::TransformPtr exportArmature(bl::BObject src);
 
     bool isSending() const;
     void flushPendingList();

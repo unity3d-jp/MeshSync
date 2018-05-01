@@ -19,12 +19,6 @@
     <ClCompile Include="MeshSyncClientBlender\msbUtils.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientBlender\blender.cpp">
-      <Filter>MeshSyncClientBlender</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSyncClientBlender\blender.c">
-      <Filter>MeshSyncClientBlender</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSyncClientBlender">

@@ -67,7 +67,7 @@ void msbContext::addObject(Object * obj)
     if (data_id.ptr()) {
         auto tc = data_id.typecode();
         if (tc == ID_ME && m_settings.sync_meshes) {
-            auto dst = addMesh(get_path(obj));
+            auto dst = addMesh_(obj);
             dst->refine_settings.flags.swap_faces = true;
             extractMeshData_(dst, bo);
         }
@@ -79,34 +79,62 @@ void msbContext::addObject(Object * obj)
 
 }
 
-ms::TransformPtr msbContext::addTransform(const std::string& path)
+ms::TransformPtr msbContext::addTransform(py::object obj)
+{
+    return addTransform_(bl::rna_data<Object*>(obj));
+}
+
+ms::TransformPtr msbContext::addTransform_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->transforms.push_back(ret);
     return ret;
 }
 
-ms::CameraPtr msbContext::addCamera(const std::string& path)
+ms::TransformPtr msbContext::addTransform_(Bone * obj)
+{
+    auto ret = getCacheOrCreate(m_transform_cache);
+    ret->path = get_path(obj);
+    m_scene->transforms.push_back(ret);
+    return ret;
+}
+
+ms::CameraPtr msbContext::addCamera(py::object obj)
+{
+    return addCamera_(bl::rna_data<Object*>(obj));
+}
+
+ms::CameraPtr msbContext::addCamera_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_camera_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->cameras.push_back(ret);
     return ret;
 }
 
-ms::LightPtr msbContext::addLight(const std::string& path)
+ms::LightPtr msbContext::addLight(py::object obj)
+{
+    return addLight_(bl::rna_data<Object*>(obj));
+}
+
+ms::LightPtr msbContext::addLight_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_light_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->lights.push_back(ret);
     return ret;
 }
 
-ms::MeshPtr msbContext::addMesh(const std::string& path)
+ms::MeshPtr msbContext::addMesh(py::object obj)
+{
+    return addMesh_(bl::rna_data<Object*>(obj));
+}
+
+ms::MeshPtr msbContext::addMesh_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_mesh_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->meshes.push_back(ret);
     return ret;
 }
@@ -238,27 +266,31 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
 #endif
 }
 
-void msbContext::exportArmature(bl::BObject src)
+ms::TransformPtr msbContext::exportArmature(bl::BObject src)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
 
     Object *arm_obj = src.ptr();
     if (m_added.find(arm_obj) != m_added.end())
-        return;
+        return nullptr;
     m_added.insert(arm_obj);
 
-    auto poses = bl::range((bPoseChannel*)arm_obj->pose->chanbase.first);
+    auto ret = addTransform_(arm_obj);
+    extractTransformData_(ret, src);
 
+    auto poses = bl::range((bPoseChannel*)arm_obj->pose->chanbase.first);
     for (auto pose : poses)
     {
         auto bone = pose->bone;
         auto& dst = m_bones[bone];
-        dst = addTransform(get_path(arm_obj) + get_path(bone));
+        dst = addTransform_(bone);
         if (m_settings.sync_poses)
             extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
         else
             extract_local_TRS(bone, dst->position, dst->rotation, dst->scale);
     }
+
+    return ret;
 }
 
 void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
