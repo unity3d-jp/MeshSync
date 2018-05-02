@@ -118,15 +118,9 @@ void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s)
         if (obj->partype == PARBONE) {
             if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
                 auto arm_obj = obj->parent;
-                if ((bone->flag & BONE_NO_DEFORM) != 0) {
-                    auto inv_armmat = invert((float4x4&)bone->arm_mat);
-                    local = ((float4x4&)obj->obmat * g_world_to_arm) * inv_armmat;
-                }
-                else {
-                    local *= g_world_to_arm;
-                }
-                if ((bone->flag & BONE_CONNECTED) != 0)
-                    (float3&)local[3] += to_mat3x3((float4x4&)bone->arm_mat) * (float3&)bone->tail;
+
+                local *= translate(float3{ 0.0f, length((float3&)bone->tail - (float3&)bone->head), 0.0f });
+                local *= g_world_to_arm;
             }
         }
     }
