@@ -83,6 +83,10 @@ const bPoseChannel* find_pose(const Object *obj, const char *name)
 }
 
 
+template<class T> inline tvec3<T> flip_z(const tvec3<T>& v)
+{
+    return { v.x, v.y, -v.z };
+}
 template<class T> inline tquat<T> flip_z(const tquat<T>& v)
 {
     return { -v.x, -v.y, v.z, v.w };
@@ -140,7 +144,7 @@ void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s)
     else
         local *= g_arm_to_world;
 
-    t = extract_position(local);
+    t = flip_z(extract_position(local));
     r = flip_z(extract_rotation(local));
     s = extract_scale(local);
 }
@@ -154,7 +158,7 @@ void extract_local_TRS(const bPoseChannel *pose, float3& t, quatf& r, float3& s)
     else
         local *= g_arm_to_world;
 
-    t = extract_position(local);
+    t = flip_z(extract_position(local));
     r = flip_z(extract_rotation(local));
     s = extract_scale(local);
 }
