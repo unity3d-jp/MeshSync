@@ -22,7 +22,7 @@ template<class Body>
 static inline void each_fcurves(Object *obj, const Body& body)
 {
     if (!obj->adt || !obj->adt->action) return;
-    for (auto *curve = (FCurve*)obj->adt->action->curves->first; curve; curve = curve->next) {
+    for (auto *curve = (FCurve*)obj->adt->action->curves.first; curve; curve = curve->next) {
         body(curve);
     }
 }

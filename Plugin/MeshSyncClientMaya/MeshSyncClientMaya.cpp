@@ -258,7 +258,9 @@ MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject no
 {
     auto& record = m_records[(void*&)node];
     if (record.path.empty()) {
-        record = ObjectRecord { node, GetName(node), GetPath(node), };
+        record.node = node;
+        record.name = GetName(node);
+        record.path = GetPath(node);
         mscTrace("MeshSyncClientMaya::addRecord(): %s\n", record.path.c_str());
     }
     return record;
