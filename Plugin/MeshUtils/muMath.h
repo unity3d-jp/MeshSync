@@ -570,7 +570,7 @@ template<class T> inline tquat<T> rotateZ(T angle)
     return{ T(0.0), T(0.0), s, c };
 }
 
-// eular -> quaternion
+// euler -> quaternion
 template<class T> inline tquat<T> rotateXYZ(const tvec3<T>& euler)
 {
     auto qX = rotateX(euler.x);
@@ -624,7 +624,7 @@ template<class T> inline tquat<T> rotate(const tvec3<T>& axis, T angle)
     };
 }
 
-template<class T> inline tvec3<T> to_eularZXY(const tquat<T>& q)
+template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
 {
     T d[] = {
         q.x*q.x, q.x*q.y, q.x*q.z, q.x*q.w,
@@ -816,7 +816,7 @@ template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>&
 {
     auto ret = scale44(s);
     ret *= to_mat4x4(r);
-    ret *= translate(t);
+    (tvec3<T>&)ret[3] = t;
     return ret;
 }
 
@@ -1098,9 +1098,15 @@ template<class T> inline tvec3<T> extract_position(const tmat4x4<T>& m)
 
 
 template<class TMat>
-inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m)
+inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m_)
 {
     using T = typename TMat::scalar_t;
+    tmat3x3<T> m{
+        normalize((tvec3<T>&)m_[0]),
+        normalize((tvec3<T>&)m_[1]),
+        normalize((tvec3<T>&)m_[2])
+    };
+
     tquat<T> q;
     T tr, s;
 

@@ -58,12 +58,12 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\glew\include;$(SolutionDir)External\Poco\include;$(SolutionDir)External\Qt\5.9.1\msvc2015_64\include;$(SolutionDir)External\Qt\5.9.1\msvc2015_64\include\QtCore;$(SolutionDir)External\Qt\5.9.1\msvc2015_64\include\QtGui;$(SolutionDir)External\Qt\5.9.1\msvc2015_64\include\QtWidgets;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\glew\include;$(SolutionDir)External\Poco\include;$(SolutionDir)External\Qt\include;$(SolutionDir)External\Qt\include\QtCore;$(SolutionDir)External\Qt\include\QtGui;$(SolutionDir)External\Qt\include\QtWidgets;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\Qt\5.9.1\msvc2015_64\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\Qt\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>

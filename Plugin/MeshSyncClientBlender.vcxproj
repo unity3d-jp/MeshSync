@@ -12,12 +12,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClientBlender\MeshSyncClientBlender.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msbBinder.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msbUtils.cpp" />
     <ClCompile Include="MeshSyncClientBlender\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSyncClientBlender\msbContext.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MeshSyncClientBlender\msbBinder.h" />
+    <ClInclude Include="MeshSyncClientBlender\msbUtils.h" />
     <ClInclude Include="MeshSyncClientBlender\pch.h" />
     <ClInclude Include="MeshSyncClientBlender\MeshSyncClientBlender.h" />
     <ClInclude Include="MeshSyncClientBlender\msbContext.h" />
@@ -41,6 +45,7 @@
     <None Include="MeshSyncClientBlender\python\__init__.py">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="MeshSyncClientBlender\tools\extract_headers.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}</ProjectGuid>
@@ -62,12 +67,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(BLENDER_INCLUDE_DIR);$(PYTHON_INCLUDE_DIR);$(SolutionDir)External;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(PYTHON_VERSION)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(PYTHON_VERSION)_$(Platform)_$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir);$(PYTHON_INCLUDE_DIR);$(BLENDER_INCLUDE_DIRS);$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)-$(BLENDER_VERSION)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)-$(BLENDER_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(PYTHON_LIB_DIR);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(PYTHON_LIB_DIR);$(BLENDER_LIB_DIR);$(LibraryPath)</LibraryPath>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -78,7 +83,7 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>msDebug;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>mscDebug;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

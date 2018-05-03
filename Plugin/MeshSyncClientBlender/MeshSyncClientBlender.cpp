@@ -165,6 +165,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
         using self_t = msbContext;
         py::class_<msbContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
+            BindMethod(setup)
             BindMethod(addTransform)
             BindMethod(addCamera)
             BindMethod(addLight)
@@ -176,6 +177,8 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindMethod(extractLightData)
             BindMethod(extractMeshData)
             BindMethod(isSending)
+            BindMethod(flushPendingList)
+            BindMethod(prepare)
             BindMethod(send)
             BindProperty(server_address,
                 [](const msbContext& self) { return self.getSettings().client_settings.server; },
@@ -192,6 +195,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(handedness,
                 [](const msbContext& self) { return (int)self.getSettings().scene_settings.handedness; },
                 [](msbContext& self, int v) { (int&)self.getSettings().scene_settings.handedness = v; })
+            BindProperty(sync_meshes,
+                [](const msbContext& self) { return (int)self.getSettings().sync_meshes; },
+                [](msbContext& self, int v) { (int&)self.getSettings().sync_meshes = v; })
             BindProperty(sync_normals,
                 [](const msbContext& self) { return (int)self.getSettings().sync_normals; },
                 [](msbContext& self, int v) { (int&)self.getSettings().sync_normals = v; })
@@ -210,6 +216,21 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_blendshapes,
                 [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
                 [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
+            BindProperty(sync_animations,
+                [](const msbContext& self) { return self.getSettings().sync_animations; },
+                [](msbContext& self, bool v) { self.getSettings().sync_animations = v; })
+            BindProperty(sync_cameras,
+                [](const msbContext& self) { return self.getSettings().sync_cameras; },
+                [](msbContext& self, bool v) { self.getSettings().sync_cameras = v; })
+            BindProperty(sync_lights,
+                [](const msbContext& self) { return self.getSettings().sync_lights; },
+                [](msbContext& self, bool v) { self.getSettings().sync_lights = v; })
+            BindProperty(sample_animation,
+                [](const msbContext& self) { return self.getSettings().sample_animation; },
+                [](msbContext& self, bool v) { self.getSettings().sample_animation = v; })
+            BindProperty(animation_sps,
+                [](const msbContext& self) { return self.getSettings().animation_sps; },
+                [](msbContext& self, int v) { self.getSettings().animation_sps = v; })
             BindProperty(current_scene,
                 [](const msbContext& self) { return self.getCurrentScene(); },
                 [](msbContext& self, ms::ScenePtr v) { self.getCurrentScene() = v; })

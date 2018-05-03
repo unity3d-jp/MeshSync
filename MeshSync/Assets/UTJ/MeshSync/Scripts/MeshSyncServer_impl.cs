@@ -12,7 +12,6 @@ namespace UTJ.MeshSync
 {
     public partial class MeshSyncServer
     {
-        #region internal
         public enum MessageType
         {
             Unknown,
@@ -42,10 +41,12 @@ namespace UTJ.MeshSync
 
         public struct GetMessage
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern GetFlags msGetGetFlags(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msGetGetBakeSkin(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msGetGetBakeCloth(IntPtr _this);
+            #endregion
 
             public static explicit operator GetMessage(IntPtr v)
             {
@@ -61,8 +62,10 @@ namespace UTJ.MeshSync
 
         public struct SetMessage
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern SceneData msSetGetSceneData(IntPtr _this);
+            #endregion
 
             public static explicit operator SetMessage(IntPtr v)
             {
@@ -80,10 +83,12 @@ namespace UTJ.MeshSync
 
         public struct DeleteMessage
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msDeleteGetNumTargets(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern IntPtr msDeleteGetPath(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msDeleteGetID(IntPtr _this, int i);
+            #endregion
 
             public static explicit operator DeleteMessage(IntPtr v)
             {
@@ -100,15 +105,17 @@ namespace UTJ.MeshSync
 
         public struct FenceMessage
         {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern FenceType msFenceGetType(IntPtr _this);
+            #endregion
+
             public enum FenceType
             {
                 Unknown,
                 SceneBegin,
                 SceneEnd,
             }
-
-            internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern FenceType msFenceGetType(IntPtr _this);
 
             public static explicit operator FenceMessage(IntPtr v)
             {
@@ -123,16 +130,18 @@ namespace UTJ.MeshSync
 
         public struct TextMessage
         {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msTextGetText(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TextType msTextGetType(IntPtr _this);
+            #endregion
+
             public enum TextType
             {
                 Normal,
                 Warning,
                 Error,
             }
-
-            internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern IntPtr msTextGetText(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern TextType msTextGetType(IntPtr _this);
 
             public static explicit operator TextMessage(IntPtr v)
             {
@@ -235,6 +244,7 @@ namespace UTJ.MeshSync
 
         public struct MaterialData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern MaterialData msMaterialCreate();
             [DllImport("MeshSyncServer")] static extern int msMaterialGetID(IntPtr _this);
@@ -243,6 +253,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
+            #endregion
 
             public static MaterialData Create() { return msMaterialCreate(); }
 
@@ -262,6 +273,7 @@ namespace UTJ.MeshSync
 
         public struct TransformAnimationData
         {
+            #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern int msTransformAGetNumTranslationSamples(IntPtr _this);
@@ -279,6 +291,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibleSamples(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibleTime(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibleValue(IntPtr _this, int i);
+            #endregion
 
             public static explicit operator TransformAnimationData(IntPtr v)
             {
@@ -376,6 +389,10 @@ namespace UTJ.MeshSync
 
                 var ttrans = typeof(Transform);
                 var tgo = typeof(GameObject);
+                clip.SetCurve(path, ttrans, "m_LocalPosition", null);
+                clip.SetCurve(path, ttrans, "m_LocalRotation", null);
+                clip.SetCurve(path, ttrans, "m_LocalScale", null);
+                clip.SetCurve(path, ttrans, "m_IsActive", null);
                 if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
                 if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
                 if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
@@ -386,12 +403,13 @@ namespace UTJ.MeshSync
                 if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
                 if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
                 if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
-                if (v.length > 0) clip.SetCurve(path, tgo, "m_IsActive", v);
+                if (v.length > 0)    clip.SetCurve(path, tgo, "m_IsActive", v);
             }
         }
 
         public struct CameraAnimationData
         {
+            #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFovSamples(IntPtr _this);
@@ -421,6 +439,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocusDistanceSamples(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceTime(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceValue(IntPtr _this, int i);
+            #endregion
 
             public static explicit operator CameraAnimationData(IntPtr v)
             {
@@ -567,19 +586,23 @@ namespace UTJ.MeshSync
             }
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
-                var fov = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
+                var fov  = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
                 var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
-                var far = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
+                var far  = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
 
                 var tcam = typeof(Camera);
-                if (fov.length > 0) clip.SetCurve(path, tcam, "field of view", fov);
+                clip.SetCurve(path, tcam, "field of view", null);
+                clip.SetCurve(path, tcam, "near clip plane", null);
+                clip.SetCurve(path, tcam, "far clip plane", null);
+                if (fov.length > 0)  clip.SetCurve(path, tcam, "field of view", fov);
                 if (near.length > 0) clip.SetCurve(path, tcam, "near clip plane", near);
-                if (far.length > 0) clip.SetCurve(path, tcam, "far clip plane", far);
+                if (far.length > 0)  clip.SetCurve(path, tcam, "far clip plane", far);
             }
         }
 
         public struct LightAnimationData
         {
+            #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern int msLightAGetNumColorSamples(IntPtr _this);
@@ -597,6 +620,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern int msLightAGetNumSpotAngleSamples(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleTime(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleValue(IntPtr _this, int i);
+            #endregion
 
 
             public static explicit operator LightAnimationData(IntPtr v)
@@ -689,19 +713,23 @@ namespace UTJ.MeshSync
 
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
-                var color = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
+                var color     = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
                 var intensity = AnimationData.ToAnimatinCurve(intensityTimes, intensityValues, reduce);
-                var range = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
-                var spot = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
+                var range     = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
+                var spot      = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
 
                 var tlight = typeof(Light);
-                if (color[0].length > 0) clip.SetCurve(path, tlight, "m_Color.r", color[0]);
-                if (color[1].length > 0) clip.SetCurve(path, tlight, "m_Color.g", color[1]);
-                if (color[2].length > 0) clip.SetCurve(path, tlight, "m_Color.b", color[2]);
-                if (color[3].length > 0) clip.SetCurve(path, tlight, "m_Color.a", color[3]);
+                clip.SetCurve(path, tlight, "m_Color", null);
+                clip.SetCurve(path, tlight, "m_Intensity", null);
+                clip.SetCurve(path, tlight, "m_Range", null);
+                clip.SetCurve(path, tlight, "m_SpotAngle", null);
+                if (color[0].length > 0)  clip.SetCurve(path, tlight, "m_Color.r", color[0]);
+                if (color[1].length > 0)  clip.SetCurve(path, tlight, "m_Color.g", color[1]);
+                if (color[2].length > 0)  clip.SetCurve(path, tlight, "m_Color.b", color[2]);
+                if (color[3].length > 0)  clip.SetCurve(path, tlight, "m_Color.a", color[3]);
                 if (intensity.length > 0) clip.SetCurve(path, tlight, "m_Intensity", intensity);
-                if (range.length > 0) clip.SetCurve(path, tlight, "m_Range", range);
-                if (spot.length > 0) clip.SetCurve(path, tlight, "m_SpotAngle", spot);
+                if (range.length > 0)     clip.SetCurve(path, tlight, "m_Range", range);
+                if (spot.length > 0)      clip.SetCurve(path, tlight, "m_SpotAngle", spot);
             }
         }
 
@@ -709,11 +737,13 @@ namespace UTJ.MeshSync
 
         public struct AnimationData
         {
+            #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern TransformAnimationData msAnimationAsTransform(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern CameraAnimationData msAnimationAsCamera(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern LightAnimationData msAnimationAsLight(IntPtr _this);
+            #endregion
 
 
             public static explicit operator AnimationData(IntPtr v)
@@ -777,12 +807,12 @@ namespace UTJ.MeshSync
                     ret[1].AddKey(new Keyframe(t, v.y));
                     ret[2].AddKey(new Keyframe(t, v.z));
 #if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
 #endif
                 }
                 if(reduce)
@@ -813,14 +843,14 @@ namespace UTJ.MeshSync
                     ret[2].AddKey(new Keyframe(t, v.z));
                     ret[3].AddKey(new Keyframe(t, v.w));
 #if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
 #endif
                 }
                 if (reduce)
@@ -852,14 +882,14 @@ namespace UTJ.MeshSync
                     ret[2].AddKey(new Keyframe(t, v.b));
                     ret[3].AddKey(new Keyframe(t, v.a));
 #if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
 #endif
                 }
                 if (reduce)
@@ -883,8 +913,8 @@ namespace UTJ.MeshSync
                     var v = values[i];
                     ret.AddKey(new Keyframe(t, v));
 #if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Auto);
+                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Auto);
 #endif
                 }
                 if (reduce)
@@ -920,6 +950,7 @@ namespace UTJ.MeshSync
 
         public struct TransformData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
             [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr _this);
@@ -939,6 +970,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern AnimationData msTransformGetAnimation(IntPtr _this);
+            #endregion
 
             public static explicit operator TransformData(IntPtr v)
             {
@@ -1000,6 +1032,7 @@ namespace UTJ.MeshSync
 
         public struct CameraData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
             [DllImport("MeshSyncServer")] static extern byte msCameraIsOrtho(IntPtr _this);
@@ -1018,6 +1051,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msCameraSetFocalLength(IntPtr _this, float v);
             [DllImport("MeshSyncServer")] static extern float msCameraGetFocusDistance(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msCameraSetFocusDistance(IntPtr _this, float v);
+            #endregion
 
 
             public static explicit operator CameraData(IntPtr v)
@@ -1081,6 +1115,7 @@ namespace UTJ.MeshSync
 
         public struct LightData
         {
+            #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
@@ -1094,6 +1129,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msLightSetRange(IntPtr _this, float v);
             [DllImport("MeshSyncServer")] static extern float msLightGetSpotAngle(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msLightSetSpotAngle(IntPtr _this, float v);
+            #endregion
 
             public static explicit operator LightData(IntPtr v)
             {
@@ -1141,6 +1177,7 @@ namespace UTJ.MeshSync
 
         public struct MeshData
         {
+            #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
@@ -1185,7 +1222,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshAddBlendShape(IntPtr _this, string name);
-
+            #endregion
 
             public static MeshData Create()
             {
@@ -1299,14 +1336,19 @@ namespace UTJ.MeshSync
 
         public struct SplitData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsSize(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr _this, int i);
+            #endregion
 
             public int numPoints { get { return msSplitGetNumPoints(_this); } }
             public int numIndices { get { return msSplitGetNumIndices(_this); } }
+            public Bounds bounds { get { return new Bounds(msSplitGetBoundsCenter(_this), msSplitGetBoundsSize(_this)); } }
             public int numSubmeshes { get { return msSplitGetNumSubmeshes(_this); } }
 
             public SubmeshData GetSubmesh(int i)
@@ -1317,12 +1359,25 @@ namespace UTJ.MeshSync
 
         public struct SubmeshData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr _this);
+            #endregion
+
+            public enum Topology
+            {
+                Points,
+                Lines,
+                Triangles,
+                Quads,
+            };
+
 
             public int numIndices { get { return msSubmeshGetNumIndices(_this); } }
+            public Topology topology { get { return msSubmeshGetTopology(_this); } }
             public int materialID { get { return msSubmeshGetMaterialID(_this); } }
             public int[] indices
             {
@@ -1337,6 +1392,7 @@ namespace UTJ.MeshSync
 
         public struct BlendShapeData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr _this);
@@ -1346,6 +1402,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, Vector3[] dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, Vector3[] dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msBlendShapeAddFrame(IntPtr _this, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
+            #endregion
 
             public string name
             {
@@ -1373,6 +1430,7 @@ namespace UTJ.MeshSync
 
         public struct SceneData
         {
+            #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumTransforms(IntPtr _this);
@@ -1385,6 +1443,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
+            #endregion
 
             public string name { get { return S(msSceneGetName(_this)); } }
             public int numTransforms { get { return msSceneGetNumTransforms(_this); } }
@@ -1575,6 +1634,5 @@ namespace UTJ.MeshSync
                 return key1.value + t * (t * (a * t + b) + c);
             }
         }
-        #endregion
     }
 }

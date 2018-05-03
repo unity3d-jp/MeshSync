@@ -5,12 +5,18 @@
 std::string GetName(MObject node);
 std::string GetPath(MDagPath path);
 std::string GetPath(MObject node);
+std::string GetRootPath(MDagPath path);
+std::string GetRootPath(MObject node);
+
+MUuid GetUUID(MObject node);
+std::string GetUUIDString(MObject node);
 
 MDagPath GetDagPath(MObject node);
 bool IsVisible(MObject node);
 MObject GetTransform(MDagPath path);
 MObject GetTransform(MObject node);
 MObject GetShape(MObject node);
+MObject GetParent(MObject node);
 
 MObject FindMesh(MObject node);
 MObject FindSkinCluster(MObject node);
@@ -24,7 +30,12 @@ bool JointGetInverseScale(MObject joint, mu::float3& dst);
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
 
-void DumpPlugInfo(MPlug plug);
+#ifdef mscDebug
+    void DumpPlugInfoImpl(MPlug plug);
+    #define DumpPlugInfo DumpPlugInfoImpl
+#else
+    #define DumpPlugInfo
+#endif
 
 
 template<class T> T* ptr(T& v) { return (T*)&(int&)v; }
@@ -47,3 +58,45 @@ void ConvertAnimationFloat3(
 void ConvertAnimationFloat4(
     RawVector<ms::TVP<mu::float4>>& dst,
     const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int samples_per_seconds);
+
+
+inline mu::float3 to_float3(const MPoint& v)
+{
+    return { (float)v.x, (float)v.y, (float)v.z };
+}
+inline mu::float3 to_float3(const MVector& v)
+{
+    return { (float)v.x, (float)v.y, (float)v.z };
+}
+inline mu::float3 to_float3(const MFloatPoint& v)
+{
+    return (const mu::float3&)v;
+}
+inline mu::float3 to_float3(const MFloatVector& v)
+{
+    return (const mu::float3&)v;
+}
+inline mu::float3 to_float3(const double (&v)[3])
+{
+    return { (float)v[0], (float)v[1], (float)v[2] };
+}
+inline mu::float4 to_float4(const MColor& v)
+{
+    return (const mu::float4&)v;
+}
+inline mu::quatf to_quatf(const MQuaternion& v)
+{
+    return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };
+}
+
+// body: [](MObject&) -> void
+template<class Body>
+void Enumerate(MFn::Type type, const Body& body)
+{
+    MItDag it(MItDag::kDepthFirst, type);
+    while (!it.isDone()) {
+        auto obj = it.item();
+        body(obj);
+        it.next();
+    }
+}

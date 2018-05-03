@@ -2,9 +2,6 @@
 # * MAYA2016_LIBRARIES
 
 set(CMAKE_PREFIX_PATH
-    "/Applications/Autodesk/maya2016.5/Maya.app/Contents"
-    "/usr/autodesk/maya2016.5"
-    "/opt/autodesk/maya2016.5"
     "/Applications/Autodesk/maya2016/Maya.app/Contents"
     "/usr/autodesk/maya2016"
     "/opt/autodesk/maya2016"
@@ -12,7 +9,7 @@ set(CMAKE_PREFIX_PATH
 
 find_path(MAYA2016_INCLUDE_DIR NAMES maya/MGlobal.h)
 mark_as_advanced(MAYA2016_INCLUDE_DIR)
-foreach(MAYA_LIB OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI OpenMaya Foundation tbb)
+foreach(MAYA_LIB OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI OpenMaya Foundation)
     find_file(MAYA2016_${MAYA_LIB}_LIBRARY lib${MAYA_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX} PATH_SUFFIXES lib MacOS)
     mark_as_advanced(MAYA2016_${MAYA_LIB}_LIBRARY)
     if(MAYA2016_${MAYA_LIB}_LIBRARY)

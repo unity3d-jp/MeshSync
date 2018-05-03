@@ -26,7 +26,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [メ�
 
 
 - xismo 側
-  - xismo はプラグインの仕組みを提供していないため (2017/07 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～196 で動作を確認済みです。
+  - xismo はプラグインの仕組みを提供していないため (2018/04 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～199 で動作を確認済みです。
   - [UnityMeshSync.for.xismo.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20171228/UnityMeshSync.for.xismo.zip) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
   - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態で xismo が起動します。
   - ウィンドウ -> Unity Mesh Sync で設定項目を開き、"Auto Sync" をチェックすると編集が自動的に Unity 側に反映されるようになります。
@@ -72,4 +72,4 @@ MesySyncServer の "Generate Lightmap UV" ボタンを押すとそのライト�
 
 
 ## ライセンス
-[MIT](LICENSE.txt)
+[MIT](LICENSE.txt), ただし Blender プラグインは [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt)

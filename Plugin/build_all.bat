@@ -1,5 +1,5 @@
-call build_server.bat
-call build_mq.bat
-call build_xismo.bat
-call build_blender.bat
-call build_maya.bat
+start /wait cmd /k "call build_server.bat && exit"
+start /wait cmd /k "call build_mq.bat && exit"
+start /wait cmd /k "call build_xismo.bat && exit"
+start /wait cmd /k "call build_blender.bat && exit"
+start /wait cmd /k "call build_maya.bat && exit"

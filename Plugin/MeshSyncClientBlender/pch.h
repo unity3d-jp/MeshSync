@@ -24,16 +24,35 @@
 
 #include "PyBind11/pybind11.h"
 #include "PyBind11/operators.h"
+#include "PyBind11/eval.h"
 #include "PyBind11/stl.h"
 namespace py = pybind11;
 
-
-#include "blender/makesrna/RNA_types.h"
-#include "blender/makesdna/DNA_object_types.h"
-#include "blender/makesdna/DNA_material_types.h"
-#include "blender/makesdna/DNA_mesh_types.h"
-#include "blender/makesdna/DNA_meshdata_types.h"
-#include "blender/makesdna/DNA_modifier_types.h"
-#include "blender/makesdna/DNA_armature_types.h"
-#include "blender/makesdna/DNA_key_types.h"
-#include "blender/python/intern/bpy_rna.h"
+#ifndef NDEBUG
+    #define NDEBUG
+#endif
+#pragma warning( push )
+#pragma warning( disable : 4200 ) // zero length array
+#include "BKE_main.h"
+#include "BKE_context.h"
+#include "BKE_fcurve.h"
+#include "BKE_editmesh.h"
+#include "BKE_DerivedMesh.h"
+#include "RNA_types.h"
+#include "DNA_object_types.h"
+#include "DNA_material_types.h"
+#include "DNA_mesh_types.h"
+#include "DNA_meshdata_types.h"
+#include "DNA_modifier_types.h"
+#include "DNA_armature_types.h"
+#include "DNA_anim_types.h"
+#include "DNA_key_types.h"
+#include "DNA_scene_types.h"
+#include "BLI_utildefines.h"
+#include "BLI_math_base.h"
+#include "BLI_math_vector.h"
+#include "bmesh_class.h"
+#include "intern/rna_internal_types.h"
+#include "intern/bpy_rna.h"
+#include "intern/bmesh_structure.h"
+#pragma warning( pop ) 

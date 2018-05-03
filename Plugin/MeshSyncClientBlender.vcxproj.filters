@@ -13,6 +13,12 @@
     <ClCompile Include="MeshSyncClientBlender\msbContext.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientBlender\msbBinder.cpp">
+      <Filter>MeshSyncClientBlender</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientBlender\msbUtils.cpp">
+      <Filter>MeshSyncClientBlender</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSyncClientBlender">
@@ -23,6 +29,9 @@
     </Filter>
     <Filter Include="MeshSyncClientBlender\python\MeshSyncClientBlender">
       <UniqueIdentifier>{3b44599e-70f1-49eb-aecc-1310e74fa802}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MeshSyncClientBlender\tools">
+      <UniqueIdentifier>{39366f81-1fb0-4079-b4f3-830c19e7acd5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +44,12 @@
     <ClInclude Include="MeshSyncClientBlender\msbContext.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClientBlender\msbBinder.h">
+      <Filter>MeshSyncClientBlender</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientBlender\msbUtils.h">
+      <Filter>MeshSyncClientBlender</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="MeshSyncClientBlender\python\__init__.py">
@@ -42,6 +57,9 @@
     </None>
     <None Include="MeshSyncClientBlender\python\unity_mesh_sync.py">
       <Filter>MeshSyncClientBlender\python</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\tools\extract_headers.py">
+      <Filter>MeshSyncClientBlender\tools</Filter>
     </None>
   </ItemGroup>
 </Project>

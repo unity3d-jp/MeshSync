@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "MeshUtils.h"
 #include "muMeshRefiner.h"
-#include "mikktspace.h"
 
 #ifdef muEnableHalf
 #ifdef _WIN32
@@ -27,6 +26,9 @@ bool GenerateNormalsPoly(RawVector<float3>& dst,
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
+        if (count < 3)
+            continue;
+
         const int *face = &indices[offset];
         float3 p0 = points[face[0]];
         float3 p1 = points[face[i1]];
@@ -55,13 +57,17 @@ void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
     face_normals.resize_zeroclear(num_faces);
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
+        int count = counts[fi];
+        if (count < 3)
+            continue;
+
         const int *face = &indices[offset];
         float3 p0 = points[face[0]];
         float3 p1 = points[face[i1]];
         float3 p2 = points[face[i2]];
         float3 n = cross(p1 - p0, p2 - p0);
         face_normals[fi] = n;
-        offset += counts[fi];
+        offset += count;
     }
     Normalize(face_normals.data(), face_normals.size());
 
@@ -73,6 +79,9 @@ void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
+        if (count < 3)
+            continue;
+
         const int *face = &indices[offset];
         auto& face_normal = face_normals[fi];
         for (int ci = 0; ci < count; ++ci) {
@@ -93,107 +102,6 @@ void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
     Normalize(dst.data(), dst.size());
 }
 
-struct TSpaceContext
-{
-    IArray<float4> dst;
-    const IArray<float3> points;
-    const IArray<float3> normals;
-    const IArray<float2> uv;
-    const IArray<int> counts;
-    const IArray<int> offsets;
-    const IArray<int> indices;
-
-    static int getNumFaces(const SMikkTSpaceContext *tctx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        return (int)_this->counts.size();
-    }
-
-    static int getCount(const SMikkTSpaceContext *tctx, int i)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        return (int)_this->counts[i];
-    }
-
-    static void getPosition(const SMikkTSpaceContext *tctx, float *o_pos, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        const int *face = &_this->indices[_this->offsets[iface]];
-        (float3&)*o_pos = _this->points[face[ivtx]];
-    }
-
-    static void getPositionFlattened(const SMikkTSpaceContext *tctx, float *o_pos, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        (float3&)*o_pos = _this->points[_this->offsets[iface] + ivtx];
-    }
-
-    static void getNormal(const SMikkTSpaceContext *tctx, float *o_normal, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        const int *face = &_this->indices[_this->offsets[iface]];
-        (float3&)*o_normal = _this->normals[face[ivtx]];
-    }
-
-    static void getNormalFlattened(const SMikkTSpaceContext *tctx, float *o_normal, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        (float3&)*o_normal = _this->normals[_this->offsets[iface] + ivtx];
-    }
-
-    static void getTexCoord(const SMikkTSpaceContext *tctx, float *o_tcoord, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        const int *face = &_this->indices[_this->offsets[iface]];
-        (float2&)*o_tcoord = _this->uv[face[ivtx]];
-    }
-
-    static void getTexCoordFlattened(const SMikkTSpaceContext *tctx, float *o_tcoord, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        (float2&)*o_tcoord = _this->uv[_this->offsets[iface] + ivtx];
-    }
-
-    static void setTangent(const SMikkTSpaceContext *tctx, const float* tangent, const float* /*bitangent*/,
-        float /*fMagS*/, float /*fMagT*/, tbool IsOrientationPreserving, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        const int *face = &_this->indices[_this->offsets[iface]];
-        float sign = (IsOrientationPreserving != 0) ? 1.0f : -1.0f;
-        _this->dst[face[ivtx]] = { tangent[0], tangent[1], tangent[2], sign };
-    }
-
-    static void setTangentFlattened(const SMikkTSpaceContext *tctx, const float* tangent, const float* /*bitangent*/,
-        float /*fMagS*/, float /*fMagT*/, tbool IsOrientationPreserving, int iface, int ivtx)
-    {
-        auto *_this = reinterpret_cast<TSpaceContext*>(tctx->m_pUserData);
-        float sign = (IsOrientationPreserving != 0) ? 1.0f : -1.0f;
-        _this->dst[_this->offsets[iface] + ivtx] = { tangent[0], tangent[1], tangent[2], sign };
-    }
-};
-
-bool GenerateTangentsPoly(
-    IArray<float4> dst, const IArray<float3> points, const IArray<float3> normals, const IArray<float2> uv,
-    const IArray<int> counts, const IArray<int> offsets, const IArray<int> indices)
-{
-    TSpaceContext ctx = {dst, points, normals, uv, counts, offsets, indices};
-
-    SMikkTSpaceInterface iface;
-    memset(&iface, 0, sizeof(iface));
-    iface.m_getNumFaces = TSpaceContext::getNumFaces;
-    iface.m_getNumVerticesOfFace = TSpaceContext::getCount;
-    iface.m_getPosition = points.size()  == indices.size() ? TSpaceContext::getPositionFlattened : TSpaceContext::getPosition;
-    iface.m_getNormal   = normals.size() == indices.size() ? TSpaceContext::getNormalFlattened : TSpaceContext::getNormal;
-    iface.m_getTexCoord = uv.size()      == indices.size() ? TSpaceContext::getTexCoordFlattened : TSpaceContext::getTexCoord;
-    iface.m_setTSpace   = dst.size()     == indices.size() ? TSpaceContext::setTangentFlattened : TSpaceContext::setTangent;
-
-    SMikkTSpaceContext tctx;
-    memset(&tctx, 0, sizeof(tctx));
-    tctx.m_pInterface = &iface;
-    tctx.m_pUserData = &ctx;
-
-    return genTangSpaceDefault(&tctx) != 0;
-}
 
 
 

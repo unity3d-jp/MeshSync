@@ -296,7 +296,16 @@ struct MeshRefineSettings
 
 struct SubmeshData
 {
+    enum class Topology
+    {
+        Points,
+        Lines,
+        Triangles,
+        Quads,
+    };
+
     IArray<int> indices;
+    Topology topology = Topology::Triangles;
     int material_id = 0;
 };
 
@@ -307,6 +316,8 @@ struct SplitData
     int vertex_count = 0;
     int vertex_offset = 0;
     IArray<SubmeshData> submeshes;
+    float3 bound_center = float3::zero();
+    float3 bound_size = float3::zero();
 };
 
 struct BlendShapeData
@@ -379,6 +390,8 @@ public:
     RawVector<float3> tmp_normals;
     RawVector<float2> tmp_uv0, tmp_uv1;
     RawVector<float4> tmp_colors;
+    RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
+
     RawVector<Weights4> tmp_weights4;
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
@@ -400,6 +413,10 @@ public:
 
     void generateWeights4();
     void setupFlags();
+
+    void convertHandedness_Mesh(bool x, bool yz);
+    void convertHandedness_BlendShapes(bool x, bool yz);
+    void convertHandedness_Bones(bool x, bool yz);
 
 public:
     // for python binding

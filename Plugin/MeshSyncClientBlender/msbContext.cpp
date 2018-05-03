@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MeshSyncClientBlender.h"
 #include "msbContext.h"
+#include "msbUtils.h"
 using namespace mu;
 
 
@@ -14,6 +15,11 @@ msbContext::~msbContext()
     if (m_send_future.valid()) {
         m_send_future.wait();
     }
+}
+
+void msbContext::setup()
+{
+    bl::setup();
 }
 
 msbSettings& msbContext::getSettings() { return m_settings; }
@@ -37,34 +43,98 @@ std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>&
     return ret;
 }
 
-ms::TransformPtr msbContext::addTransform(const std::string& path)
+
+void msbContext::syncAll()
+{
+    if (!prepare()) return;
+
+    for (auto *o : bl::BData::get().objects()) {
+        addObject(o);
+    }
+    send();
+}
+
+void msbContext::syncUpdated()
+{
+    if (!prepare()) return;
+}
+
+void msbContext::addObject(Object * obj)
+{
+    // todo
+    bl::BObject bo(obj);
+    bl::BID data_id(bo.data());
+    if (data_id.ptr()) {
+        auto tc = data_id.typecode();
+        if (tc == ID_ME && m_settings.sync_meshes) {
+            auto dst = addMesh_(obj);
+            dst->refine_settings.flags.swap_faces = true;
+            extractMeshData_(dst, bo);
+        }
+        else if (tc == ID_CA && m_settings.sync_cameras) {
+        }
+        else if (tc == ID_LA && m_settings.sync_lights) {
+        }
+    }
+
+}
+
+ms::TransformPtr msbContext::addTransform(py::object obj)
+{
+    return addTransform_(bl::rna_data<Object*>(obj));
+}
+
+ms::TransformPtr msbContext::addTransform_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->transforms.push_back(ret);
     return ret;
 }
 
-ms::CameraPtr msbContext::addCamera(const std::string& path)
+ms::TransformPtr msbContext::addTransform_(Object *arm, Bone * obj)
+{
+    auto ret = getCacheOrCreate(m_transform_cache);
+    ret->path = get_path(arm, obj);
+    m_scene->transforms.push_back(ret);
+    return ret;
+}
+
+ms::CameraPtr msbContext::addCamera(py::object obj)
+{
+    return addCamera_(bl::rna_data<Object*>(obj));
+}
+
+ms::CameraPtr msbContext::addCamera_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_camera_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->cameras.push_back(ret);
     return ret;
 }
 
-ms::LightPtr msbContext::addLight(const std::string& path)
+ms::LightPtr msbContext::addLight(py::object obj)
+{
+    return addLight_(bl::rna_data<Object*>(obj));
+}
+
+ms::LightPtr msbContext::addLight_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_light_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->lights.push_back(ret);
     return ret;
 }
 
-ms::MeshPtr msbContext::addMesh(const std::string& path)
+ms::MeshPtr msbContext::addMesh(py::object obj)
+{
+    return addMesh_(bl::rna_data<Object*>(obj));
+}
+
+ms::MeshPtr msbContext::addMesh_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_mesh_cache);
-    ret->path = path;
+    ret->path = get_path(obj);
     m_scene->meshes.push_back(ret);
     return ret;
 }
@@ -75,192 +145,26 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
-static inline float3 to_float3(const short (&v)[3])
-{
-    return float3{
-        v[0] * (1.0f / 32767.0f),
-        v[1] * (1.0f / 32767.0f),
-        v[2] * (1.0f / 32767.0f),
-    };
-}
-
-static inline float4 to_float4(const MLoopCol& c)
-{
-    return float4{
-        c.r * (1.0f / 255.0f),
-        c.g * (1.0f / 255.0f),
-        c.b * (1.0f / 255.0f),
-        c.a * (1.0f / 255.0f),
-    };
-}
-
-static inline std::string get_path(const Object *obj)
-{
-    std::string ret;
-    if (obj->parent)
-        ret += get_path(obj->parent);
-    ret += '/';
-    ret += obj->id.name + 2;
-    return ret;
-}
-static inline std::string get_path(const Bone *obj)
-{
-    std::string ret;
-    if (obj->parent)
-        ret += get_path(obj->parent);
-    ret += '/';
-    ret += obj->name;
-    return ret;
-}
-
-// Body: [](const ModifierData*) -> void
-template<class Body>
-static inline void each_modifiers(Object *obj, const Body& body)
-{
-    auto *it = (const ModifierData*)obj->modifiers.first;
-    auto *end = (const ModifierData*)obj->modifiers.last;
-    for (; it != end; it = it->next)
-        body(it);
-}
-static inline const ModifierData* find_modofier(Object *obj, ModifierType type)
-{
-    for (auto *it = (const ModifierData*)obj->modifiers.first; it != nullptr; it = it->next)
-        if (it->type == type)
-            return it;
-    return nullptr;;
-}
-
-
-// Body: [](const bDeformGroup*) -> void
-template<class Body>
-static inline void each_vertex_groups(Object *obj, const Body& body)
-{
-    for (auto *it = (const bDeformGroup*)obj->defbase.first; it != nullptr; it = it->next)
-        body(it);
-}
-
-static const Bone* find_bone_recursive(const Bone *bone, const char *name)
-{
-    if (strcmp(bone->name, name) == 0) {
-        return bone;
-    }
-    else {
-        for (auto *child = (const Bone*)bone->childbase.first; child != nullptr; child = child->next) {
-            auto *found = find_bone_recursive(child, name);
-            if (found)
-                return found;
-        }
-    }
-    return nullptr;
-}
-static inline const Bone* find_bone(const Object *obj, const char *name)
-{
-    if (!obj) { return nullptr; }
-    auto *arm = (const bArmature*)obj->data;
-    for (auto *bone = (const Bone*)arm->bonebase.first; bone != nullptr; bone = bone->next)
-    {
-        auto found = find_bone_recursive(bone, name);
-        if (found)
-            return found;
-    }
-    return nullptr;
-}
-
-static inline const bPoseChannel* find_pose(const Object *obj, const char *name)
-{
-    if (!obj || !obj->pose) { return nullptr; }
-    for (auto *it = (const bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
-        if (strcmp(it->name, name) == 0)
-            return it;
-    return nullptr;
-}
-
-static void extract_global_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)
-{
-    float4x4 global = (float4x4&)obj->obmat;
-    pos = extract_position(global);
-    rot = extract_rotation(global);
-    scale = extract_scale(global);
-}
-
-static void extract_local_TRS(const Object *obj, float3& pos, quatf& rot, float3& scale)
-{
-    float4x4 local = (float4x4&)obj->obmat;
-    if (auto parent = obj->parent)
-        local *= invert((float4x4&)parent->obmat);
-
-    pos = extract_position(local);
-    rot = extract_rotation(local);
-    scale = extract_scale(local);
-}
-
-// bone
-static void extract_local_TRS(const Object *armature, const Bone *bone, float3& pos, quatf& rot, float3& scale)
-{
-    float4x4 local = (float4x4&)bone->arm_mat;
-    if (auto parent = bone->parent)
-        local *= invert((float4x4&)parent->arm_mat);
-
-    pos = extract_position(local);
-    rot = extract_rotation(local);
-    scale = extract_scale(local);
-}
-
-// pose
-static void extract_local_TRS(const Object *armature, const bPoseChannel *pose, float3& pos, quatf& rot, float3& scale)
-{
-    float4x4 local = (float4x4&)pose->pose_mat;
-    if (auto parent = pose->parent)
-        local *= invert((float4x4&)parent->pose_mat);
-
-    pos = extract_position(local);
-    rot = extract_rotation(local);
-    scale = extract_scale(local);
-}
-
-static float4x4 extract_bindpose(const Object *armature, const Bone *bone)
-{
-    return invert((float4x4&)bone->arm_mat);
-}
-
-// Body: [](const KeyBlock*) -> void
-template<class Body>
-static inline void each_keys(Mesh *obj, const Body& body)
-{
-    if (obj->key == nullptr || obj->key->block.first == nullptr) { return; }
-    for (auto *it = (const KeyBlock*)obj->key->block.first; it != nullptr; it = it->next)
-        body(it);
-}
-
-
-static inline const void* CustomData_get(const CustomData& data,  int type)
-{
-    int layer_index = data.typemap[type];
-    if (layer_index == -1)
-        return nullptr;
-    layer_index = layer_index + data.layers[layer_index].active;
-    return data.layers[layer_index].data;
-}
-
-static inline int CustomData_number_of_layers(const CustomData& data, int type)
-{
-    int i, number = 0;
-    for (i = 0; i < data.totlayer; i++)
-        if (data.layers[i].type == type)
-            number++;
-    return number;
-}
-
 // src_: bpy.Material
 ms::MaterialPtr msbContext::addMaterial(py::object src)
 {
     auto rna = (BPy_StructRNA*)src.ptr();
-    auto& mat = *(Material*)rna->ptr.id.data;
+    auto mat = (Material*)rna->ptr.id.data;
 
     auto ret = ms::MaterialPtr(new ms::Material());
-    ret->name = mat.id.name;
+    ret->name = mat->id.name + 2;
     ret->id = (int)m_scene->materials.size();
-    ret->color = float4{ mat.r, mat.g, mat.b, 1.0f };
+    {
+        bl::BMaterial bm(mat);
+        auto color_src = mat;
+        if (bm.use_nodes()) {
+            bl::BMaterial node(bm.active_node_material());
+            if (node.ptr()) {
+                color_src = node.ptr();
+            }
+        }
+        ret->color = float4{ color_src->r, color_src->g, color_src->b, 1.0f };
+    }
     m_scene->materials.emplace_back(ret);
     return ret;
 }
@@ -272,7 +176,7 @@ int msbContext::getMaterialIndex(const Material *mat)
 
     int i = 0;
     for (auto& m : m_scene->materials) {
-        if (m->name == mat->id.name)
+        if (m->name == mat->id.name + 2)
             return i;
         ++i;
     }
@@ -282,46 +186,74 @@ int msbContext::getMaterialIndex(const Material *mat)
 // src: bpy.Object
 void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
 {
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto *obj = (Object*)rna->ptr.id.data;
-
-    extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
+    extractTransformData_(dst, bl::BObject(src));
 }
+void msbContext::extractTransformData_(ms::TransformPtr dst, bl::BObject src)
+{
+    extract_local_TRS(src.ptr(), dst->position, dst->rotation, dst->scale);
+}
+
 
 // src: bpy.Object
 void msbContext::extractCameraData(ms::CameraPtr dst, py::object src)
 {
-    extractTransformData(dst, src);
+    extractCameraData_(dst, bl::BObject(src));
+}
+void msbContext::extractCameraData_(ms::CameraPtr dst, bl::BObject src)
+{
+    extractTransformData_(dst, src);
 
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto *obj = (Object*)rna->ptr.id.data;
     // todo
 }
 
+
 // src: bpy.Object
+
 void msbContext::extractLightData(ms::LightPtr dst, py::object src)
 {
-    extractTransformData(dst, src);
-
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto *obj = (Object*)rna->ptr.id.data;
+    extractLightData_(dst, bl::BObject(src));
+}
+void msbContext::extractLightData_(ms::LightPtr dst, bl::BObject src)
+{
+    extractTransformData_(dst, src);
     // todo
 }
 
 // src: bpy.Object
 void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 {
-    extractTransformData(dst, src);
+    extractMeshData_(dst, bl::BObject(src));
+}
 
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto obj = (Object*)rna->ptr.id.data;
+void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
+{
+    auto obj = src.ptr();
 
+    // ignore particles
     if (find_modofier(obj, eModifierType_ParticleSystem) || find_modofier(obj, eModifierType_ParticleInstance))
-        return; // todo: handle particle system?
+        return;
+    // ignore if already added
     if (m_added.find(obj) != m_added.end())
         return;
     m_added.insert(obj);
 
+    // check if mesh is dirty
+    {
+        bl::BObject bobj(obj);
+        bl::BMesh bmesh(bobj.data());
+        if (bmesh.ptr()->edit_btmesh) {
+            auto bm = bmesh.ptr()->edit_btmesh->bm;
+            if (bm->elem_table_dirty) {
+                // mesh is editing and dirty. just add to pending list
+                dst->clear();
+                m_pending.insert(obj);
+                return;
+            }
+        }
+    }
+
+
+    extractTransformData_(dst, src);
     auto task = [this, dst, obj]() {
         doExtractMeshData(*dst, obj);
     };
@@ -334,42 +266,99 @@ void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 #endif
 }
 
+ms::TransformPtr msbContext::exportArmature(bl::BObject src)
+{
+    std::unique_lock<std::mutex> lock(m_extract_mutex);
+
+    Object *arm_obj = src.ptr();
+    if (m_added.find(arm_obj) != m_added.end())
+        return nullptr;
+    m_added.insert(arm_obj);
+
+    auto ret = addTransform_(arm_obj);
+    extractTransformData_(ret, src);
+
+    auto poses = bl::range((bPoseChannel*)arm_obj->pose->chanbase.first);
+    for (auto pose : poses)
+    {
+        auto bone = pose->bone;
+        auto& dst = m_bones[bone];
+        dst = addTransform_(arm_obj, bone);
+        if (m_settings.sync_poses)
+            extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
+        else
+            extract_local_TRS(bone, dst->position, dst->rotation, dst->scale);
+    }
+
+    return ret;
+}
+
 void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 {
-    auto& src = *(Mesh*)obj->data;
+    bl::BObject bobj(obj);
+    bl::BMesh bmesh(bobj.data());
 
-    int num_polygons = src.totpoly;
-    int num_vertices = src.totvert;
-    int num_loops = src.totloop;
+    if (bmesh.ptr()->edit_btmesh) {
+        doExtractEditMeshData(dst, obj);
+    }
+    else {
+        doExtractNonEditMeshData(dst, obj);
+    }
 
-    std::vector<int> material_ids(src.totcol);
-    for (int mi = 0; mi < src.totcol; ++mi)
-        material_ids[mi] = getMaterialIndex(src.mat[mi]);
+    // mirror
+    if(auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
+        if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
+        if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
+        if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+    }
+
+    dst.convertHandedness_Mesh(false, true);
+    dst.convertHandedness_BlendShapes(false, true);
+}
+
+void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
+{
+    bl::BObject bobj(obj);
+    bl::BMesh bmesh(bobj.data());
+    auto& mesh = *(Mesh*)obj->data;
+
+    auto indices = bmesh.indices();
+    auto polygons = bmesh.polygons();
+    auto vertices = bmesh.vertices();
+
+    size_t num_indices = indices.size();
+    size_t num_polygons = polygons.size();
+    size_t num_vertices = vertices.size();
+
+    std::vector<int> material_ids(mesh.totcol);
+    for (int mi = 0; mi < mesh.totcol; ++mi)
+        material_ids[mi] = getMaterialIndex(mesh.mat[mi]);
     if (material_ids.empty())
         material_ids.push_back(0);
 
     // vertices
     dst.points.resize_discard(num_vertices);
-    for (int vi = 0; vi < num_vertices; ++vi) {
-        dst.points[vi] = (float3&)src.mvert[vi].co;
+    for (size_t vi = 0; vi < num_vertices; ++vi) {
+        dst.points[vi] = (float3&)vertices[vi].co;
     }
 
     // faces
-    dst.indices.reserve(num_loops);
+    dst.indices.reserve(num_indices);
     dst.counts.resize_discard(num_polygons);
     dst.material_ids.resize_discard(num_polygons);
     {
-        int ti = 0;
-        for (int pi = 0; pi < num_polygons; ++pi) {
-            int material_index = src.mpoly[pi].mat_nr;
-            int count = src.mpoly[pi].totloop;
+        int ii = 0;
+        for (size_t pi = 0; pi < num_polygons; ++pi) {
+            auto& polygon = polygons[pi];
+            int material_index = polygon.mat_nr;
+            int count = polygon.totloop;
             dst.counts[pi] = count;
             dst.material_ids[pi] = material_ids[material_index];
             dst.indices.resize(dst.indices.size() + count);
 
-            auto *loops = src.mloop + src.mpoly[pi].loopstart;
+            auto *idx = &indices[polygon.loopstart];
             for (int li = 0; li < count; ++li) {
-                dst.indices[ti++] = loops[li].v;
+                dst.indices[ii++] = idx[li].v;
             }
         }
     }
@@ -378,43 +367,41 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
         // per-vertex
         dst.normals.resize_discard(num_vertices);
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            dst.normals[vi] = to_float3(src.mvert[vi].no);
+        for (size_t vi = 0; vi < num_vertices; ++vi) {
+            dst.normals[vi] = to_float3(vertices[vi].no);
         }
     }
     else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
         // per-index
-        auto normals = (float3*)CustomData_get(src.ldata, CD_NORMAL);
-        if (normals == nullptr) {
-            dst.normals.resize_zeroclear(num_loops);
-        }
-        else {
-            dst.normals.resize_discard(num_loops);
-            for (int li = 0; li < num_loops; ++li) {
-                dst.normals[li] = normals[li];
-            }
+        if (m_settings.calc_per_index_normals)
+            bmesh.calc_normals_split();
+
+        auto normals = bmesh.normals();
+        if (!normals.empty()) {
+            dst.normals.resize_discard(num_indices);
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.normals[ii] = normals[ii];
         }
     }
 
-    // uvs
-    if (m_settings.sync_uvs && CustomData_number_of_layers(src.ldata, CD_MLOOPUV) > 0) {
-        auto data = (const float2*)CustomData_get(src.ldata, CD_MLOOPUV);
-        if (data != nullptr) {
-            dst.uv0.resize_discard(num_loops);
-            for (int li = 0; li < num_loops; ++li) {
-                dst.uv0[li] = data[li];
-            }
+
+    // uv
+    if (m_settings.sync_uvs) {
+        auto uv = bmesh.uv();
+        if (!uv.empty()) {
+            dst.uv0.resize_discard(num_indices);
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.uv0[ii] = uv[ii];
         }
     }
 
     // colors
-    if (m_settings.sync_colors && CustomData_number_of_layers(src.ldata, CD_MLOOPCOL) > 0) {
-        auto data = (const MLoopCol*)CustomData_get(src.ldata, CD_MLOOPCOL);
-        if (data != nullptr) {
-            dst.colors.resize_discard(num_loops);
-            for (int li = 0; li < num_loops; ++li) {
-                dst.colors[li] = to_float4(data[li]);
-            }
+    if (m_settings.sync_colors) {
+        auto colors = bmesh.colors();
+        if (!colors.empty()) {
+            dst.colors.resize_discard(num_indices);
+            for (size_t ii = 0; ii < num_indices; ++ii)
+                dst.colors[ii] = to_float4(colors[ii]);
         }
     }
 
@@ -422,19 +409,25 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     if (m_settings.sync_bones) {
         auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
         if (arm_mod) {
+            // request bake TRS
+            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
+
             auto *arm_obj = arm_mod->object;
+            exportArmature(arm_obj);
+
             int group_index = 0;
             each_vertex_groups(obj, [&](const bDeformGroup *g) {
                 auto bone = find_bone(arm_obj, g->name);
                 if (bone) {
-                    auto trans = findOrAddBone(arm_obj, bone);
+                    auto trans = findBone(arm_obj, bone);
                     auto b = dst.addBone(trans->path);
-                    b->bindpose = extract_bindpose(arm_obj, bone);
+                    b->bindpose = extract_bindpose(bone);
                     b->weights.resize_zeroclear(num_vertices);
 
                     for (int vi = 0; vi < num_vertices; ++vi) {
-                        int num_weights = src.dvert[vi].totweight;
-                        auto& dvert = src.dvert[vi];
+                        int num_weights = mesh.dvert[vi].totweight;
+                        auto& dvert = mesh.dvert[vi];
                         for (int wi = 0; wi < num_weights; ++wi) {
                             if (dvert.dw[wi].def_nr == group_index) {
                                 b->weights[vi] = dvert.dw[wi].weight;
@@ -442,16 +435,19 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
                         }
                     }
                 }
+                else {
+                    mscTrace("bone not found %s\n", bone->name);
+                }
                 ++group_index;
             });
         }
     }
 
     // blend shapes
-    if (m_settings.sync_blendshapes && src.key) {
+    if (m_settings.sync_blendshapes && mesh.key) {
         RawVector<float3> basis;
         int bi = 0;
-        each_keys(&src, [&](const KeyBlock *kb) {
+        each_keys(&mesh, [&](const KeyBlock *kb) {
             if (bi == 0) { // Basis
                 basis.resize_discard(kb->totelem);
                 memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
@@ -473,27 +469,171 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
             ++bi;
         });
     }
+
+
+#if 0
+    // lines
+    // (blender doesn't include lines & points in polygons - MPoly::totloop is always >= 3)
+    {
+        auto edges = bmesh.edges();
+
+        std::vector<bool> point_shared(num_vertices);
+        for (size_t pi = 0; pi < num_polygons; ++pi) {
+            auto& polygon = polygons[pi];
+            int count = polygon.totloop;
+            auto *idx = &indices[polygon.loopstart];
+            for (int li = 0; li < count; ++li) {
+                point_shared[idx[li].v] = true;
+            }
+        }
+
+        size_t lines_begin = dst.indices.size();
+        size_t num_lines = 0;
+        for (auto edge : edges) {
+            if (!point_shared[edge.v1] || !point_shared[edge.v2]) {
+                ++num_lines;
+                dst.counts.push_back(2);
+                dst.indices.push_back(edge.v1);
+                dst.indices.push_back(edge.v2);
+            }
+        }
+
+        if (num_lines > 0) {
+            num_indices = dst.indices.size();
+
+            if (!dst.normals.empty() && m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
+                dst.normals.resize(num_indices, float3::zero());
+            }
+            if (!dst.uv0.empty()) {
+                dst.uv0.resize(num_indices, float2::zero());
+            }
+            if (!dst.colors.empty()) {
+                auto colors = bmesh.colors();
+                dst.colors.resize(num_indices, float4::one());
+                for (size_t ii = lines_begin; ii < num_indices; ++ii) {
+                    int vi = dst.indices[ii];
+                    dst.colors[ii] = to_float4(colors[vi]);
+                }
+            }
+        }
+    }
+#endif
 }
 
-ms::TransformPtr msbContext::findOrAddBone(const Object *armature, const Bone *bone)
+void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
+{
+    bl::BObject bobj(obj);
+    bl::BMesh bmesh(bobj.data());
+    bl::BEditMesh emesh(bmesh.ptr()->edit_btmesh);
+    auto& mesh = *(Mesh*)obj->data;
+
+    auto polygons = emesh.polygons();
+    auto triangles = emesh.triangles();
+    auto vertices = emesh.vertices();
+
+    size_t num_triangles = triangles.size();
+    size_t num_vertices = vertices.size();
+    size_t num_indices = triangles.size() * 3;
+
+    std::vector<int> material_ids(mesh.totcol);
+    for (int mi = 0; mi < mesh.totcol; ++mi)
+        material_ids[mi] = getMaterialIndex(mesh.mat[mi]);
+    if (material_ids.empty())
+        material_ids.push_back(0);
+
+    // vertices
+    dst.points.resize_discard(num_vertices);
+    for (size_t vi = 0; vi < num_vertices; ++vi) {
+        dst.points[vi] = (float3&)vertices[vi]->co;
+    }
+
+    // faces
+    {
+        dst.indices.resize(num_indices);
+        dst.counts.resize_discard(num_triangles);
+        dst.material_ids.resize_discard(num_triangles);
+
+        size_t ii = 0;
+        for (size_t ti = 0; ti < num_triangles; ++ti) {
+            auto& triangle = triangles[ti];
+
+            int material_index = 0;
+            int polygon_index = triangle[0]->f->head.index;
+            if (polygon_index < polygons.size())
+                material_index = material_ids[polygons[polygon_index]->mat_nr];
+            dst.material_ids[ti] = material_index;
+
+            dst.counts[ti] = 3;
+            for (auto *idx : triangle)
+                dst.indices[ii++] = idx->v->head.index;
+        }
+    }
+
+    // normals
+    if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
+        // per-vertex
+        dst.normals.resize_discard(num_vertices);
+        for (size_t vi = 0; vi < num_vertices; ++vi)
+            dst.normals[vi] = to_float3(vertices[vi]->no);
+    }
+    else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
+        // per-index
+        dst.normals.resize_discard(num_indices);
+        size_t ii = 0;
+        for (size_t ti = 0; ti < num_triangles; ++ti) {
+            auto& triangle = triangles[ti];
+            for (auto *idx : triangle)
+                dst.normals[ii++] = -bl::BM_loop_calc_face_normal(*idx);
+        }
+    }
+
+    // uv
+    if (m_settings.sync_uvs) {
+        int offset = emesh.uv_data_offset();
+        if (offset != -1) {
+            dst.uv0.resize_discard(num_indices);
+            size_t ii = 0;
+            for (size_t ti = 0; ti < num_triangles; ++ti) {
+                auto& triangle = triangles[ti];
+                for (auto *idx : triangle)
+                    dst.uv0[ii++] = *(float2*)((char*)idx->head.data + offset);
+            }
+        }
+    }
+}
+
+
+ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
-    auto& ret = m_bones[bone];
-    if (ret) { return ret; }
 
-    auto *pose = m_settings.sync_poses ? find_pose(armature, bone->name) : nullptr;
-    ret = addTransform(get_path(armature) + get_path(bone));
-    if(pose)
-        extract_local_TRS(armature, pose, ret->position, ret->rotation, ret->scale);
-    else
-        extract_local_TRS(armature, bone, ret->position, ret->rotation, ret->scale);
-    return ret;
+    auto it = m_bones.find(bone);
+    return it != m_bones.end() ? it->second : nullptr;
 }
 
 
 bool msbContext::isSending() const
 {
     return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
+}
+
+void msbContext::flushPendingList()
+{
+    if (!m_pending.empty() && prepare()) {
+        std::swap(m_pending, m_pending_tmp);
+        for (auto p : m_pending_tmp)
+            addObject(p);
+        m_pending_tmp.clear();
+
+        send();
+    }
+}
+
+bool msbContext::prepare()
+{
+    if (isSending()) return false;
+
+    return true;
 }
 
 void msbContext::send()
@@ -548,13 +688,11 @@ void msbContext::send()
         float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
         scene_settings.scale_factor = 1.0f;
         scene_settings.handedness = ms::Handedness::Left;
+        bool swap_x = false, swap_yz = true;
 
         m_message.scene.settings = scene_settings;
 
         auto& scene = m_message.scene;
-        for (auto& obj : scene.transforms) { obj->convertHandedness(false, true); }
-        for (auto& obj : scene.cameras) { obj->convertHandedness(false, true); }
-        for (auto& obj : scene.lights) { obj->convertHandedness(false, true); }
         if (scale_factor != 1.0f) {
             for (auto& obj : scene.transforms) { obj->applyScaleFactor(scale_factor); }
             for (auto& obj : scene.cameras) { obj->applyScaleFactor(scale_factor); }
@@ -572,7 +710,7 @@ void msbContext::send()
         }
         m_deleted.clear();
 
-        // send meshes
+        // convert and send meshes
         parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& pmesh) {
             auto& mesh = *pmesh;
             mesh.setupFlags();
@@ -582,16 +720,15 @@ void msbContext::send()
                 mesh.refine_settings.flags.gen_normals = true;
             if (!mesh.flags.has_tangents)
                 mesh.refine_settings.flags.gen_tangents = true;
-
             if (scale_factor != 1.0f)
                 mesh.applyScaleFactor(scale_factor);
-            mesh.convertHandedness(false, true);
-
+        });
+        for(auto& pmesh : m_mesh_send) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.meshes = { pmesh };
             client.send(set);
-        });
+        }
         m_mesh_send.clear();
 
         // notify scene end

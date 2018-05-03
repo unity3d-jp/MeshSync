@@ -34,9 +34,13 @@
 
 // avoid multiple definition of `MApiVersion'
 //#define _MApiVersion
+#include <maya/MAnimControl.h>
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MDagPath.h>
+#include <maya/MDagPathArray.h>
+#include <maya/MDagMessage.h>
+#include <maya/MDGMessage.h>
 #include <maya/MUintArray.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFloatPointArray.h>
@@ -46,7 +50,6 @@
 #include <maya/MMatrixArray.h>
 #include <maya/MQuaternion.h>
 #include <maya/MPlugArray.h>
-#include <maya/MDagPathArray.h>
 #include <maya/MUuid.h>
 #include <maya/MItDag.h>
 #include <maya/MItSelectionList.h>
@@ -60,6 +63,7 @@
 #include <maya/MFnSet.h>
 #include <maya/MFnMatrixData.h>
 #include <maya/MFnPointArrayData.h>
+#include <maya/MFnComponentListData.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnLambertShader.h>
@@ -72,12 +76,12 @@
 #include <maya/MFnDirectionalLight.h>
 #include <maya/MFnPointLight.h>
 #include <maya/MFnSpotLight.h>
+#include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnVolumeLight.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MEventMessage.h>
 #include <maya/MSceneMessage.h>
-#include <maya/MDagMessage.h>
 #include <maya/MNodeMessage.h>
 #include <maya/MPolyMessage.h>
 #include <maya/MTimerMessage.h>

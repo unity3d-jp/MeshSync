@@ -123,7 +123,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     if (actions.size() > 9) {
         auto *act_widgets = actions[9]; // "Widgets" menu
 
-        m_menu_item = new QAction("Unity Mesh Sync");
+        m_menu_item = new QAction("Unity Mesh Sync", nullptr);
         m_menu_item->setCheckable(true);
         m_menu_item->setChecked(true);
         connect(m_menu_item, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);

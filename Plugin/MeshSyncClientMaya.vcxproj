@@ -17,6 +17,7 @@
     <ClCompile Include="MeshSyncClientMaya\Commands.cpp" />
     <ClCompile Include="MeshSyncClientMaya\MayaUtils.cpp" />
     <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya.cpp" />
+    <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya_extract.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMaya/pch.h" />

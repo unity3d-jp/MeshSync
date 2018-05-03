@@ -1147,6 +1147,8 @@ void Mesh::clear()
     submeshes.clear();
     splits.clear();
     weights4.clear();
+
+    remap_normals.clear(); remap_uv0.clear(); remap_uv1.clear(); remap_colors.clear();
 }
 
 #undef EachVertexProperty
@@ -1156,7 +1158,12 @@ void Mesh::convertHandedness(bool x, bool yz)
     if (!x && !yz) return;
 
     super::convertHandedness(x, yz);
-
+    convertHandedness_Mesh(x, yz);
+    convertHandedness_BlendShapes(x, yz);
+    convertHandedness_Bones(x, yz);
+}
+void Mesh::convertHandedness_Mesh(bool x, bool yz)
+{
     if (x) {
         mu::InvertX(points.data(), points.size());
         mu::InvertX(normals.data(), normals.size());
@@ -1167,9 +1174,17 @@ void Mesh::convertHandedness(bool x, bool yz)
         for (auto& v : normals) v = swap_yz(v);
         for (auto& v : tangents) v = swap_yz(v);
     }
-    for (auto& bone : bones) bone->convertHandedness(x, yz);
+}
+void Mesh::convertHandedness_BlendShapes(bool x, bool yz)
+{
     for (auto& bs : blendshapes) bs->convertHandedness(x, yz);
 }
+
+void ms::Mesh::convertHandedness_Bones(bool x, bool yz)
+{
+    for (auto& bone : bones) bone->convertHandedness(x, yz);
+}
+
 
 void Mesh::applyScaleFactor(float v)
 {
@@ -1177,6 +1192,18 @@ void Mesh::applyScaleFactor(float v)
     mu::Scale(points.data(), v, points.size());
     for (auto& bone : bones) bone->applyScaleFactor(v);
     for (auto& bs : blendshapes) bs->applyScaleFactor(v);
+}
+
+template<class T>
+inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<int>& indices)
+{
+    if (indices.empty()) {
+        dst.assign(src.begin(), src.end());
+    }
+    else {
+        dst.resize_discard(indices.size());
+        CopyWithIndices(dst.data(), src.data(), indices);
+    }
 }
 
 void Mesh::refine(const MeshRefineSettings& mrs)
@@ -1217,50 +1244,62 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     mu::MeshRefiner refiner;
+    refiner.split_unit = mrs.split_unit;
     refiner.points = points;
     refiner.indices = indices;
     refiner.counts = counts;
-    refiner.split_unit = mrs.split_unit;
-    refiner.buildConnection();
 
     if (uv0.size() == indices.size())
-        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0);
+        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);
     if (uv1.size() == indices.size())
-        refiner.addExpandedAttribute<float2>(uv1, tmp_uv1);
+        refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
     if (colors.size() == indices.size())
-        refiner.addExpandedAttribute<float4>(colors, tmp_colors);
+        refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
 
     // normals
+    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.swap_faces;
     if (mrs.flags.gen_normals_with_smooth_angle) {
         if (mrs.smooth_angle < 180.0f) {
-            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, mrs.flags.flip_normals);
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
+            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, flip_normals);
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
         }
         else {
-            GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
+            GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
         }
     }
     else if (mrs.flags.gen_normals) {
-        GenerateNormalsPoly(normals, points, counts, indices, mrs.flags.flip_normals);
+        GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
     }
     else {
         if (normals.size() == indices.size()) {
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals);
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
         }
     }
 
     // refine
     {
         refiner.refine();
-        refiner.triangulate(mrs.flags.swap_faces);
+        refiner.retopology(mrs.flags.swap_faces, false /*mrs.flags.turn_quad_edges*/);
         refiner.genSubmeshes(material_ids);
 
         refiner.new_points.swap(points);
         refiner.new_indices_submeshes.swap(indices);
-        if (!tmp_normals.empty()) tmp_normals.swap(normals);
-        if (!tmp_uv0.empty()) tmp_uv0.swap(uv0);
-        if (!tmp_uv1.empty()) tmp_uv1.swap(uv1);
-        if (!tmp_colors.empty()) tmp_colors.swap(colors);
+        if (!normals.empty()) {
+            Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
+            tmp_normals.swap(normals);
+        }
+        if (!uv0.empty()) {
+            Remap(tmp_uv0, uv0, !remap_uv0.empty() ? remap_uv0 : refiner.new2old_points);
+            tmp_uv0.swap(uv0);
+        }
+        if (!uv1.empty()) {
+            Remap(tmp_uv1, uv1, !remap_uv1.empty() ? remap_uv1 : refiner.new2old_points);
+            tmp_uv1.swap(uv1);
+        }
+        if (!colors.empty()) {
+            Remap(tmp_colors, colors, !remap_colors.empty() ? remap_colors : refiner.new2old_points);
+            tmp_colors.swap(colors);
+        }
 
         splits.clear();
         int offset_indices = 0;
@@ -1269,12 +1308,12 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             auto sp = SplitData();
             sp.index_offset = offset_indices;
             sp.vertex_offset = offset_vertices;
-            sp.index_count = split.triangulated_index_count;
+            sp.index_count = split.index_count;
             sp.vertex_count = split.vertex_count;
             splits.push_back(sp);
 
             offset_vertices += split.vertex_count;
-            offset_indices += split.triangulated_index_count;
+            offset_indices += split.index_count;
         }
 
         // setup submeshes
@@ -1285,9 +1324,10 @@ void Mesh::refine(const MeshRefineSettings& mrs)
                 for (int i = 0; i < split.submesh_count; ++i) {
                     auto& sm = refiner.submeshes[nsm + i];
                     SubmeshData tmp;
-                    tmp.material_id = sm.material_id;
                     tmp.indices.reset(tri, sm.index_count);
                     tri += sm.index_count;
+                    tmp.topology = (SubmeshData::Topology)sm.topology;
+                    tmp.material_id = sm.material_id;
                     submeshes.push_back(tmp);
                 }
                 nsm += split.submesh_count;
@@ -1299,6 +1339,14 @@ void Mesh::refine(const MeshRefineSettings& mrs)
                 nsm += n;
             }
         }
+    }
+
+    // bounds
+    for (auto& split : splits) {
+        float3 bmin, bmax;
+        MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
+        split.bound_center = (bmax + bmin) * 0.5f;
+        split.bound_size = abs(bmax - bmin);
     }
 
     // tangents

@@ -73,6 +73,7 @@ if(NOT Poco_ROOT_DIR)
 		endif()
 	endif()
 endif()
+mark_as_advanced(Poco_ROOT_DIR)
 
 
 # if installed directory structure, set full include dir

@@ -38,6 +38,33 @@ std::string GetPath(MObject node)
     return GetPath(GetDagPath(node));
 }
 
+std::string GetRootPath(MDagPath path)
+{
+    std::string ret = GetPath(path);
+    if (ret.size() > 1) {
+        auto it = std::find(ret.begin() + 1, ret.end(), '/');
+        if (it != ret.end()) {
+            ret.erase(it, ret.end());
+        }
+    }
+    return ret;
+}
+std::string GetRootPath(MObject node)
+{
+    return GetRootPath(GetDagPath(node));
+}
+
+
+MUuid GetUUID(MObject node)
+{
+    return MFnDependencyNode(node).uuid();
+}
+
+std::string GetUUIDString(MObject node)
+{
+    return GetUUID(node).asString().asChar();
+}
+
 MDagPath GetDagPath(MObject node)
 {
     return MDagPath::getAPathTo(node);
@@ -57,6 +84,12 @@ MObject GetShape(MObject node)
     auto path = GetDagPath(node);
     path.extendToShape();
     return path.node();
+}
+
+MObject GetParent(MObject node)
+{
+    MFnDagNode dn(GetDagPath(node));
+    return dn.parentCount() > 0 ? dn.parent(0) : MObject();
 }
 
 MObject FindMesh(MObject node)
@@ -175,7 +208,8 @@ MTime ToMTime(float seconds)
 }
 
 
-static void DumpPlugInfo(MPlug plug, std::string indent)
+#ifdef mscDebug
+static void DumpPlugInfoImpl(MPlug plug, std::string indent)
 {
     uint32_t num_elements = 0;
     uint32_t num_children= 0;
@@ -202,11 +236,12 @@ static void DumpPlugInfo(MPlug plug, std::string indent)
     }
 }
 
-void DumpPlugInfo(MPlug plug)
+void DumpPlugInfoImpl(MPlug plug)
 {
-    DumpPlugInfo(plug, "");
+    DumpPlugInfoImpl(plug, "");
     mscTrace("\n");
 }
+#endif
 
 
 
@@ -270,9 +305,8 @@ void GatherSamples(
     }
 }
 
-RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cvs, int samples_per_seconds)
+RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cvs, int sps)
 {
-    const float time_resolution = 1.0f / (float)samples_per_seconds;
     float time_begin = std::numeric_limits<float>::quiet_NaN();
     float time_end = std::numeric_limits<float>::quiet_NaN();
     float time_range = 0.0f;
@@ -286,7 +320,6 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
 
     // build time samples
     RawVector<float> keyframe_times;
-    RawVector<float> sample_times;
     for (auto& cv : cvs) {
         GatherTimes(keyframe_times, *cv);
     }
@@ -295,10 +328,14 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
         keyframe_times.erase(std::unique(keyframe_times.begin(), keyframe_times.end()), keyframe_times.end());
     }
 
-    int num_samples = int(time_range / time_resolution);
-    sample_times.resize(num_samples - 1);
-    for (int i = 1; i < num_samples; ++i) {
-        sample_times[i - 1] = (time_resolution * i) + time_begin;
+    RawVector<float> sample_times;
+    if (sps > 0) {
+        const float time_resolution = 1.0f / (float)sps;
+        int num_samples = int(time_range / time_resolution);
+        sample_times.resize(num_samples - 1);
+        for (int i = 1; i < num_samples; ++i) {
+            sample_times[i - 1] = (time_resolution * i) + time_begin;
+        }
     }
 
     RawVector<float> times;
@@ -311,35 +348,35 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
 
 void ConvertAnimationBool(
     RawVector<ms::TVP<bool>>& dst,
-    bool default_value, MPlug& pb, int samples_per_seconds)
+    bool default_value, MPlug& pb, int sps)
 {
     if (pb.isNull()) { return; }
 
     MFnAnimCurve acv;
     if (!GetAnimationCurve(acv, pb)) { return; }
 
-    auto time_samples = BuildTimeSamples({ ptr(acv) }, samples_per_seconds);
+    auto time_samples = BuildTimeSamples({ ptr(acv) }, sps);
     dst.resize(time_samples.size(), { 0.0f, default_value });
     GatherSamples(dst, acv, time_samples, [](bool& v, double s) { v = s > 0.0; });
 }
 
 void ConvertAnimationFloat(
     RawVector<ms::TVP<float>>& dst,
-    float default_value, MPlug& pb, int samples_per_seconds)
+    float default_value, MPlug& pb, int sps)
 {
     if (pb.isNull()) { return; }
 
     MFnAnimCurve acv;
     if (!GetAnimationCurve(acv, pb)) { return; }
 
-    auto time_samples = BuildTimeSamples({ ptr(acv) }, samples_per_seconds);
+    auto time_samples = BuildTimeSamples({ ptr(acv) }, sps);
     dst.resize(time_samples.size(), { 0.0f, default_value });
     GatherSamples(dst, acv, time_samples, [](float& v, double s) { v = (float)s; });
 }
 
 void ConvertAnimationFloat3(
     RawVector<ms::TVP<mu::float3>>& dst,
-    const mu::float3& default_value, MPlug& px, MPlug& py, MPlug& pz, int samples_per_seconds)
+    const mu::float3& default_value, MPlug& px, MPlug& py, MPlug& pz, int sps)
 {
     if (px.isNull() && py.isNull() && pz.isNull()) { return; }
 
@@ -350,7 +387,7 @@ void ConvertAnimationFloat3(
     if (GetAnimationCurve(acz, pz)) { ++num_valid_curves; }
     if (num_valid_curves == 0) { return; }
 
-    auto time_samples = BuildTimeSamples({ ptr(acx), ptr(acy), ptr(acz) }, samples_per_seconds);
+    auto time_samples = BuildTimeSamples({ ptr(acx), ptr(acy), ptr(acz) }, sps);
     dst.resize(time_samples.size(), { 0.0f, default_value });
     GatherSamples(dst, acx, time_samples, [](mu::float3& v, double s) { v.x = (float)s; });
     GatherSamples(dst, acy, time_samples, [](mu::float3& v, double s) { v.y = (float)s; });
@@ -359,7 +396,7 @@ void ConvertAnimationFloat3(
 
 void ConvertAnimationFloat4(
     RawVector<ms::TVP<mu::float4>>& dst,
-    const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int samples_per_seconds)
+    const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int sps)
 {
     if (px.isNull() && py.isNull() && pz.isNull() && pw.isNull()) { return; }
 
@@ -371,7 +408,7 @@ void ConvertAnimationFloat4(
     if (GetAnimationCurve(acw, pw)) { ++num_valid_curves; }
     if (num_valid_curves == 0) { return; }
 
-    auto time_samples = BuildTimeSamples({ ptr(acx), ptr(acy), ptr(acz), ptr(acw) }, samples_per_seconds);
+    auto time_samples = BuildTimeSamples({ ptr(acx), ptr(acy), ptr(acz), ptr(acw) }, sps);
     dst.resize(time_samples.size(), { 0.0f, default_value });
     GatherSamples(dst, acx, time_samples, [](mu::float4& v, double s) { v.x = (float)s; });
     GatherSamples(dst, acy, time_samples, [](mu::float4& v, double s) { v.y = (float)s; });

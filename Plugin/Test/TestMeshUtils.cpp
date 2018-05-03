@@ -87,17 +87,17 @@ TestCase(TestMeshRefiner)
 
     RawVector<float2> uv_refined;
     RawVector<float3> normals, normals_refined;
+    RawVector<int> remap_uv, remap_normals;
 
     mu::MeshRefiner refiner;
     refiner.split_unit = 8;
     refiner.counts = counts;
     refiner.indices = indices;
     refiner.points = points;
-    refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined);
-    refiner.buildConnection();
+    refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined, remap_uv);
 
     GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, 40.0f, false);
-    refiner.addExpandedAttribute<float3>(normals, normals_refined);
+    refiner.addExpandedAttribute<float3>(normals, normals_refined, remap_normals);
 
     refiner.refine();
     refiner.genSubmeshes(material_ids);
@@ -656,22 +656,28 @@ TestCase(TestEdge)
 
 TestCase(TestHandedness)
 {
-    float4 xdir{ 1.0f, 0.0f, 0.0f, 0.0f };
-    float4 ydir{ 0.0f, 1.0f, 0.0f, 0.0f };
-    float4 zdir{ 0.0f, 0.0f, 1.0f, 0.0f };
+    {
+        quatf rot1 = rotate(normalize(float3{ 0.2f, 0.5f, 1.0f }), 30.0f);
+        quatf rot2 = rotate(normalize(float3{ 0.2f, 1.0f, 0.5f }), 30.0f);
+        Print("ok");
+    }
+    {
+        float4 xdir{ 1.0f, 0.0f, 0.0f, 0.0f };
+        float4 ydir{ 0.0f, 1.0f, 0.0f, 0.0f };
+        float4 zdir{ 0.0f, 0.0f, 1.0f, 0.0f };
 
-    quatf rot1 = rotateY(90.0f * Deg2Rad);
-    quatf rot2 = swap_yz(rot1);
+        quatf rot1 = rotateY(90.0f * Deg2Rad);
+        quatf rot2 = swap_yz(rot1);
 
-    float4
-        x1 = to_mat4x4(rot1) * xdir,
-        x2 = to_mat4x4(rot2) * xdir,
-        y1 = to_mat4x4(rot1) * ydir,
-        z2 = to_mat4x4(rot2) * zdir,
-        y2 = to_mat4x4(rot2) * ydir,
-        z1 = to_mat4x4(rot1) * zdir;
-
-    Print("ok");
+        float4
+            x1 = to_mat4x4(rot1) * xdir,
+            x2 = to_mat4x4(rot2) * xdir,
+            y1 = to_mat4x4(rot1) * ydir,
+            y2 = to_mat4x4(rot2) * ydir,
+            z2 = to_mat4x4(rot2) * zdir,
+            z1 = to_mat4x4(rot1) * zdir;
+        Print("ok");
+    }
 }
 
 TestCase(TestMatrixExtraction)

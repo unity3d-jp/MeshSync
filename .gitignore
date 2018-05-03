@@ -5,6 +5,7 @@
 *.user
 *.log
 *.tlog
+*.DS_Store
 
 *.exe
 *.dll
@@ -34,13 +35,16 @@ Library/
 Temp/
 TestLocal/
 TestLocal.meta
+MeshSyncAssets/
+MeshSyncAssets.meta
 
 MeshSync/*.csproj
 MeshSync/*.sln
 
-Plugin/UnityMeshSync for*/
+Plugin/dist/
 Plugin/MeshSyncClientBlender2.8/
 Plugin/MeshSyncClientBlender2.79/
 Plugin/MeshSyncClientMaya2018/
 Plugin/MeshSyncClientMaya2017/
+Plugin/MeshSyncClientMaya2016.5/
 Plugin/MeshSyncClientMaya2016/

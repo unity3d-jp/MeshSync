@@ -441,6 +441,7 @@ namespace UTJ.MeshSync
                 {
                     var old = smr.sharedMesh;
                     smr.sharedMesh = rec.editMesh;
+
                     DestroyIfNotAsset(old);
 
                     if (skinned)
@@ -474,6 +475,10 @@ namespace UTJ.MeshSync
                                 root = bones[0];
                             smr.rootBone = root;
                             smr.bones = bones;
+
+                            var bounds = rec.editMesh.bounds;
+                            bounds.center = bounds.center - root.position;
+                            smr.localBounds = bounds;
                         }
                     }
                     else
@@ -482,6 +487,18 @@ namespace UTJ.MeshSync
                         {
                             smr.bones = null;
                             smr.rootBone = null;
+                        }
+
+                        smr.localBounds = rec.editMesh.bounds;
+                    }
+
+                    if (flags.hasBlendshapes)
+                    {
+                        int numBlendShapes = data.numBlendShapes;
+                        for (int bi = 0; bi < numBlendShapes; ++bi)
+                        {
+                            var bsd = data.GetBlendShapeData(bi);
+                            smr.SetBlendShapeWeight(bi, bsd.weight);
                         }
                     }
                 }
@@ -507,11 +524,8 @@ namespace UTJ.MeshSync
                 AssignMaterials(rec);
         }
 
-        PinnedList<int> tmpI = new PinnedList<int>();
         PinnedList<Vector2> tmpV2 = new PinnedList<Vector2>();
         PinnedList<Vector3> tmpV3 = new PinnedList<Vector3>();
-        PinnedList<Vector3> tmpV3a = new PinnedList<Vector3>();
-        PinnedList<Vector3> tmpV3b = new PinnedList<Vector3>();
         PinnedList<Vector4> tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> tmpC = new PinnedList<Color>();
 
@@ -527,37 +541,37 @@ namespace UTJ.MeshSync
             {
                 tmpV3.Resize(split.numPoints);
                 data.ReadPoints(tmpV3, split);
-                mesh.SetVertices(tmpV3);
+                mesh.SetVertices(tmpV3.List);
             }
             if (flags.hasNormals)
             {
                 tmpV3.Resize(split.numPoints);
                 data.ReadNormals(tmpV3, split);
-                mesh.SetNormals(tmpV3);
+                mesh.SetNormals(tmpV3.List);
             }
             if (flags.hasTangents)
             {
                 tmpV4.Resize(split.numPoints);
                 data.ReadTangents(tmpV4, split);
-                mesh.SetTangents(tmpV4);
+                mesh.SetTangents(tmpV4.List);
             }
             if (flags.hasUV0)
             {
                 tmpV2.Resize(split.numPoints);
                 data.ReadUV0(tmpV2, split);
-                mesh.SetUVs(0, tmpV2);
+                mesh.SetUVs(0, tmpV2.List);
             }
             if (flags.hasUV1)
             {
                 tmpV2.Resize(split.numPoints);
                 data.ReadUV1(tmpV2, split);
-                mesh.SetUVs(1, tmpV2);
+                mesh.SetUVs(1, tmpV2.List);
             }
             if (flags.hasColors)
             {
                 tmpC.Resize(split.numPoints);
                 data.ReadColors(tmpC, split);
-                mesh.SetColors(tmpC);
+                mesh.SetColors(tmpC.List);
             }
             if (flags.hasBones)
             {
@@ -565,31 +579,32 @@ namespace UTJ.MeshSync
                 tmpW.Resize(split.numPoints);
                 data.ReadBoneWeights(tmpW, split);
                 mesh.bindposes = data.bindposes;
-                mesh.boneWeights = tmpW;
+                mesh.boneWeights = tmpW.Array;
             }
             if(flags.hasIndices)
             {
-                if (split.numSubmeshes == 0)
+                mesh.subMeshCount = split.numSubmeshes;
+                for (int smi = 0; smi < mesh.subMeshCount; ++smi)
                 {
-                    tmpI.Resize(split.numIndices);
-                    data.ReadIndices(tmpI, split);
-                    mesh.SetIndices(tmpI, MeshTopology.Triangles, 0);
-                }
-                else
-                {
-                    mesh.subMeshCount = split.numSubmeshes;
-                    for (int smi = 0; smi < split.numSubmeshes; ++smi)
-                    {
-                        var submesh = split.GetSubmesh(smi);
-                        mesh.SetIndices(submesh.indices, MeshTopology.Triangles, smi);
-                    }
+                    var submesh = split.GetSubmesh(smi);
+                    var topology = submesh.topology;
+
+                    if (topology == SubmeshData.Topology.Triangles)
+                        mesh.SetTriangles(submesh.indices, smi, false);
+                    else if (topology == SubmeshData.Topology.Lines)
+                        mesh.SetIndices(submesh.indices, MeshTopology.Lines, smi, false);
+                    else if (topology == SubmeshData.Topology.Points)
+                        mesh.SetIndices(submesh.indices, MeshTopology.Points, smi, false);
+                    else if (topology == SubmeshData.Topology.Quads)
+                        mesh.SetIndices(submesh.indices, MeshTopology.Quads, smi, false);
+
                 }
             }
             if (flags.hasBlendshapes)
             {
-                tmpV3.Resize(split.numPoints);
-                tmpV3a.Resize(split.numPoints);
-                tmpV3b.Resize(split.numPoints);
+                PinnedList<Vector3> tmpBSP = new PinnedList<Vector3>(split.numPoints);
+                PinnedList<Vector3> tmpBSN = new PinnedList<Vector3>(split.numPoints);
+                PinnedList<Vector3> tmpBST = new PinnedList<Vector3>(split.numPoints);
 
                 int numBlendShapes = data.numBlendShapes;
                 for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -599,15 +614,15 @@ namespace UTJ.MeshSync
                     var numFrames = bsd.numFrames;
                     for (int fi = 0; fi < numFrames; ++fi)
                     {
-                        bsd.ReadPoints(fi, tmpV3, split);
-                        bsd.ReadNormals(fi, tmpV3a, split);
-                        bsd.ReadTangents(fi, tmpV3b, split);
-                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpV3, tmpV3a, tmpV3b);
+                        bsd.ReadPoints(fi, tmpBSP.Array, split);
+                        bsd.ReadNormals(fi, tmpBSN.Array, split);
+                        bsd.ReadTangents(fi, tmpBST.Array, split);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP.Array, tmpBSN.Array, tmpBST.Array);
                     }
                 }
             }
 
-            mesh.RecalculateBounds();
+            mesh.bounds = split.bounds;
             mesh.UploadMeshData(false);
             return mesh;
         }
@@ -723,7 +738,7 @@ namespace UTJ.MeshSync
                     if (animator.runtimeAnimatorController != null)
                     {
                         var clips = animator.runtimeAnimatorController.animationClips;
-                        if(clips != null && clips.Length > 0)
+                        if (clips != null && clips.Length > 0)
                         {
                             clip = animator.runtimeAnimatorController.animationClips[0];
                         }
@@ -1208,7 +1223,9 @@ namespace UTJ.MeshSync
         public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
-            AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+
+            if (!AssetDatabase.IsValidFolder("Assets/" + m_assetExportPath))
+                AssetDatabase.CreateFolder("Assets", m_assetExportPath);
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {

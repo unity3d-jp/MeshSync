@@ -216,7 +216,6 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
         char path[128];
         sprintf(path, "/XismoMesh:ID[%08x]", handle);
         ms_mesh->path = path;
-        ms_mesh->id = handle;
     }
     auto& mesh = *ms_mesh;
     mesh.visible = visible;
@@ -442,12 +441,13 @@ void msxmContext::SendTaskData::send()
     // send meshes
     parallel_for_each(meshes.begin(), meshes.end(), [&](BufferData::SendTaskPtr& v) {
         v->buildMeshData(settings.weld_vertices);
-
+    });
+    for (auto& v : meshes) {
         ms::SetMessage set;
         set.scene.settings = scene_settings;
         set.scene.meshes = { v->ms_mesh };
         client.send(set);
-    });
+    }
     meshes.clear();
 
     // notify scene end

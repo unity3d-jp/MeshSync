@@ -1,10 +1,18 @@
-call buildtools.bat
+call toolchain.bat
 
 msbuild MeshSyncClientXismo.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
-msbuild MeshSyncClientXismoHook.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+IF %ERRORLEVEL% NEQ 0 (
+    pause
+    exit /B 1
+)
 
-mkdir "UnityMeshSync for xismo"
-copy _out\x64_Master\MeshSyncClientXismo.exe "UnityMeshSync for xismo"
-copy _out\x64_Master\MeshSyncClientXismoHook.dll "UnityMeshSync for xismo"
-del "UnityMeshSync for xismo.zip"
-powershell.exe -nologo -noprofile -command "Compress-Archive -Path 'UnityMeshSync for xismo\*' -DestinationPath 'UnityMeshSync for xismo.zip'"
+msbuild MeshSyncClientXismoHook.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+IF %ERRORLEVEL% NEQ 0 (
+    pause
+    exit /B 1
+)
+
+set DIST_DIR="dist\UnityMeshSync_xismo_Windows"
+mkdir "%DIST_DIR%"
+copy _out\x64_Master\MeshSyncClientXismo.exe "%DIST_DIR%"
+copy _out\x64_Master\MeshSyncClientXismoHook.dll "%DIST_DIR%"

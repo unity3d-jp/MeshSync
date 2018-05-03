@@ -352,12 +352,12 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         {
             // send meshes one by one to Unity can respond quickly
-            parallel_for_each(m_meshes.begin(), m_meshes.end(), [&scene_settings, &client](MeshData& rel) {
+            for(auto& rel : m_meshes) {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
                 set.scene.meshes = { rel.data };
                 client.send(set);
-            });
+            };
 
             // detect deleted objects and send delete message
             for (auto& e : m_mesh_exists)
@@ -665,9 +665,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = obj->GetFacePointCount(fi);
         dst.counts[fi] = c;
-        if (c >= 3) { // ignore lines and points
-            nindices += c;
-        }
+        nindices += c;
     }
 
     // indices, uv, material ID
@@ -678,8 +676,9 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     auto *uv = dst.uv0.data();
     for (int fi = 0; fi < nfaces; ++fi) {
         int c = dst.counts[fi];
-        dst.material_ids[fi] = c < 3 ? -2 : obj->GetFaceMaterial(fi); // assign -2 for lines and points and erase later
-        if (c >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+        dst.material_ids[fi] = obj->GetFaceMaterial(fi);
+        //if (obj->GetFaceVisible(fi))
+        {
             obj->GetFacePointArray(fi, indices);
             obj->GetFaceCoordinateArray(fi, (MQCoordinate*)uv);
             indices += c;
@@ -694,7 +693,8 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         auto *colors = dst.colors.data();
         for (int fi = 0; fi < nfaces; ++fi) {
             int count = dst.counts[fi];
-            if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+            //if (obj->GetFaceVisible(fi))
+            {
                 for (int ci = 0; ci < count; ++ci) {
                     *(colors++) = Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
                 }
@@ -711,7 +711,8 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         for (int fi = 0; fi < nfaces; ++fi) {
             int count = dst.counts[fi];
             BYTE flags;
-            if (count >= 3 /*&& obj->GetFaceVisible(fi)*/) {
+            //if (obj->GetFaceVisible(fi))
+            {
                 for (int ci = 0; ci < count; ++ci) {
                     obj->GetFaceVertexNormal(fi, ci, flags, (MQPoint&)*(normals++));
                 }
@@ -724,14 +725,6 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
         dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     }
-
-    // remove lines and points
-    dst.material_ids.erase(
-        std::remove(dst.material_ids.begin(), dst.material_ids.end(), -2),
-        dst.material_ids.end());
-    dst.counts.erase(
-        std::remove_if(dst.counts.begin(), dst.counts.end(), [](int c) { return c < 3; }),
-        dst.counts.end());
 }
 
 void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
