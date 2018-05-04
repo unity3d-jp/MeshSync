@@ -14,6 +14,10 @@ static bContext *g_context;
 #define Func(T, F) static FunctionRNA* T##_##F
 #define Prop(T, F) static PropertyRNA* T##_##F
 
+Def(BID);
+Prop(BID, is_updated);
+Prop(BID, is_updated_data);
+
 Def(BObject);
 Prop(BObject, matrix_local);
 
@@ -37,6 +41,9 @@ Def(BData);
 #undef Prop
 #undef Func
 #undef Def
+
+PropertyRNA* BlendDataObjects_is_updated;
+
 
 // context: bpi.context in python
 void setup()
@@ -65,18 +72,21 @@ void setup()
 #define match_type(N) strcmp(type->identifier, N) == 0
 #define match_func(N) strcmp(func->identifier, N) == 0
 #define match_prop(N) strcmp(prop->identifier, N) == 0
-#define each_func for (auto *func : range((FunctionRNA*)type->functions.first))
-#define each_prop for (auto *prop : range((PropertyRNA*)type->cont.properties.first))
+#define each_func for (auto *func : list_range((FunctionRNA*)type->functions.first))
+#define each_prop for (auto *prop : list_range((PropertyRNA*)type->cont.properties.first))
 
-    for (auto *type : range((StructRNA*)&first_type)) {
-        if (match_type("Object")) {
+    for (auto *type : list_range((StructRNA*)&first_type)) {
+        if (match_type("ID")) {
+            BID::s_type = type;
+            each_prop{
+                if (match_prop("is_updated")) BID_is_updated = prop;
+                if (match_prop("is_updated_data")) BID_is_updated_data = prop;
+            }
+        }
+        else if (match_type("Object")) {
             BObject::s_type = type;
             each_prop{
                 if (match_prop("matrix_local")) BObject_matrix_local = prop;
-            }
-
-            each_func{
-
             }
         }
         else if (match_type("Mesh")) {
@@ -109,7 +119,10 @@ void setup()
         }
         else if (match_type("BlendData")) {
             BData::s_type = type;
-            each_func{
+        }
+        else if (match_type("BlendDataObjects")) {
+            each_prop{
+                if (match_prop("is_updated")) BlendDataObjects_is_updated = prop;
             }
         }
     }
@@ -205,53 +218,59 @@ bool getter(T *idd, U *d, PropBooleanGetFunc f)
 
 
 const char *BID::name() const { return m_ptr->name + 2; }
-TypeCode BID::typecode() const { return TypeCode(m_ptr->name); }
+bool BID::is_updated() const
+{
+    return getter<nullptr_t, ID>(nullptr, m_ptr, ((BoolPropertyRNA*)BID_is_updated)->get);
+}
+bool BID::is_updated_data() const
+{
+    return getter<nullptr_t, ID>(nullptr, m_ptr, ((BoolPropertyRNA*)BID_is_updated_data)->get);
+}
 
 
 const char *BObject::name() const { return ((BID)*this).name(); }
-TypeCode BObject::typecode() const { return ((BID)*this).typecode(); }
 void* BObject::data() { return m_ptr->data; }
 
-float4x4 blender::BObject::matrix_local() const
+float4x4 BObject::matrix_local() const
 {
     return getter<Object, nullptr_t, float4x4>(m_ptr, nullptr, ((FloatPropertyRNA*)BObject_matrix_local)->getarray);
 }
 
-brange<ModifierData> BObject::modifiers()
+blist_range<ModifierData> BObject::modifiers()
 {
-    return range((ModifierData*)m_ptr->modifiers.first);
+    return list_range((ModifierData*)m_ptr->modifiers.first);
 }
-brange<FCurve> BObject::fcurves()
+blist_range<FCurve> BObject::fcurves()
 {
     if (m_ptr->action) {
-        return range((FCurve*)m_ptr->action->curves.first);
+        return list_range((FCurve*)m_ptr->action->curves.first);
     }
-    return range((FCurve*)nullptr);
+    return list_range((FCurve*)nullptr);
 }
-brange<bDeformGroup> BObject::deform_groups()
+blist_range<bDeformGroup> BObject::deform_groups()
 {
-    return range((bDeformGroup*)m_ptr->defbase.first);
+    return list_range((bDeformGroup*)m_ptr->defbase.first);
 }
 
 
-barray<MLoop> BMesh::indices()
+barray_range<MLoop> BMesh::indices()
 {
     return { m_ptr->mloop, (size_t)m_ptr->totloop };
 }
-barray<MEdge> BMesh::edges()
+barray_range<MEdge> BMesh::edges()
 {
     return { m_ptr->medge, (size_t)m_ptr->totedge };
 }
-barray<MPoly> BMesh::polygons()
+barray_range<MPoly> BMesh::polygons()
 {
     return { m_ptr->mpoly, (size_t)m_ptr->totpoly };
 }
 
-barray<MVert> BMesh::vertices()
+barray_range<MVert> BMesh::vertices()
 {
     return { m_ptr->mvert, (size_t)m_ptr->totvert };
 }
-barray<float3> BMesh::normals()
+barray_range<float3> BMesh::normals()
 {
     if (CustomData_number_of_layers(m_ptr->ldata, CD_NORMAL) > 0) {
         auto data = (float3*)CustomData_get(m_ptr->ldata, CD_NORMAL);
@@ -260,7 +279,7 @@ barray<float3> BMesh::normals()
     }
     return { nullptr, (size_t)0 };
 }
-barray<float2> BMesh::uv()
+barray_range<float2> BMesh::uv()
 {
     if (CustomData_number_of_layers(m_ptr->ldata, CD_MLOOPUV) > 0) {
         auto data = (float2*)CustomData_get(m_ptr->ldata, CD_MLOOPUV);
@@ -270,7 +289,7 @@ barray<float2> BMesh::uv()
     }
     return { nullptr, (size_t)0 };
 }
-barray<MLoopCol> BMesh::colors()
+barray_range<MLoopCol> BMesh::colors()
 {
     if (CustomData_number_of_layers(m_ptr->ldata, CD_MLOOPCOL) > 0) {
         auto data = (MLoopCol*)CustomData_get(m_ptr->ldata, CD_MLOOPCOL);
@@ -288,19 +307,19 @@ void BMesh::calc_normals_split()
 
 
 
-barray<BMFace*> BEditMesh::polygons()
+barray_range<BMFace*> BEditMesh::polygons()
 {
     return { m_ptr->bm->ftable, (size_t)m_ptr->bm->ftable_tot };
 }
 
-barray<BMVert*> BEditMesh::vertices()
+barray_range<BMVert*> BEditMesh::vertices()
 {
     return { m_ptr->bm->vtable, (size_t)m_ptr->bm->vtable_tot };
 }
 
-barray<BMTriangle> BEditMesh::triangles()
+barray_range<BMTriangle> BEditMesh::triangles()
 {
-    return barray<BMTriangle> { m_ptr->looptris, (size_t)m_ptr->tottri };
+    return barray_range<BMTriangle> { m_ptr->looptris, (size_t)m_ptr->tottri };
 }
 
 int BEditMesh::uv_data_offset() const
@@ -340,9 +359,9 @@ Material * BMaterial::active_node_material() const
     return getter<nullptr_t, Material, Material*>(nullptr, m_ptr, ((PointerPropertyRNA*)BMaterial_active_node_material)->get);
 }
 
-brange<Object> BScene::objects()
+blist_range<Object> BScene::objects()
 {
-    return range((Object*)m_ptr->base.first);
+    return list_range((Object*)m_ptr->base.first);
 }
 
 
@@ -359,13 +378,17 @@ BData BData::get()
 {
     return BData(g_data);
 }
-brange<Object> BData::objects()
+blist_range<Object> BData::objects()
 {
-    return range((Object*)g_data->object.first);
+    return list_range((Object*)g_data->object.first);
 }
-brange<Material> BData::materials()
+blist_range<Material> BData::materials()
 {
-    return range((Material*)g_data->mat.first);
+    return list_range((Material*)g_data->mat.first);
+}
+bool BData::objects_is_updated()
+{
+    return getter<nullptr_t, Main>(nullptr, m_ptr, ((BoolPropertyRNA*)BlendDataObjects_is_updated)->get);
 }
 
 const void* CustomData_get(const CustomData& data, int type)

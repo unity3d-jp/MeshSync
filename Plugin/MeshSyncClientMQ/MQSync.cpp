@@ -250,12 +250,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 bone.world_pos = (const float3&)base_pos;
                 bone.bindpose = mu::invert(mu::transform(bone.world_pos, quatf::identity(), float3::one()));
 
-                MQMatrix rot;
-                bone_manager.GetRotationMatrix(bid, rot);
-                if (m_sync_poses)
+                if (m_sync_poses) {
+                    MQMatrix rot;
+                    bone_manager.GetRotationMatrix(bid, rot);
                     bone.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
-                else
+                }
+                else {
                     bone.world_rot = quatf::identity();
+                }
             }
 
             for (auto& pair : m_bones) {

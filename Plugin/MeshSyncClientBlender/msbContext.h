@@ -73,14 +73,14 @@ public:
     ms::MaterialPtr addMaterial(py::object material);
     int getMaterialIndex(const Material *mat);
     void extractTransformData(ms::TransformPtr dst, py::object src);
-    void extractTransformData_(ms::TransformPtr dst, bl::BObject src);
+    void extractTransformData_(ms::TransformPtr dst, Object *obj);
     void extractCameraData(ms::CameraPtr dst, py::object src);
-    void extractCameraData_(ms::CameraPtr dst, bl::BObject src);
+    void extractCameraData_(ms::CameraPtr dst, Object *obj);
     void extractLightData(ms::LightPtr dst, py::object src);
-    void extractLightData_(ms::LightPtr dst, bl::BObject src);
+    void extractLightData_(ms::LightPtr dst, Object *obj);
     void extractMeshData(ms::MeshPtr dst, py::object src);
-    void extractMeshData_(ms::MeshPtr dst, bl::BObject src);
-    ms::TransformPtr exportArmature(bl::BObject src);
+    void extractMeshData_(ms::MeshPtr dst, Object *obj);
+    ms::TransformPtr exportArmature(Object *obj);
 
     bool isSending() const;
     void flushPendingList();

@@ -16,34 +16,34 @@ namespace blender
     template<typename T> inline void rna_sdata(py::object p, T& v) { v = (T)((BPy_StructRNA*)p.ptr())->ptr.data; }
 
     template<typename T>
-    struct biterator
+    struct blist_iterator
     {
         T *m_ptr;
 
-        biterator(T *p) : m_ptr(p) {}
+        blist_iterator(T *p) : m_ptr(p) {}
         T* operator*() const { return m_ptr; }
         T* operator++() { m_ptr = (T*)(((ListHeader*)m_ptr)->next); return m_ptr; }
-        bool operator==(const biterator& v) const { return m_ptr == v.m_ptr; }
-        bool operator!=(const biterator& v) const { return m_ptr != v.m_ptr; }
+        bool operator==(const blist_iterator& v) const { return m_ptr == v.m_ptr; }
+        bool operator!=(const blist_iterator& v) const { return m_ptr != v.m_ptr; }
     };
 
     template<typename T>
-    struct brange
+    struct blist_range
     {
-        using iterator = biterator<T>;
-        using const_iterator = biterator<const T>;
+        using iterator = blist_iterator<T>;
+        using const_iterator = blist_iterator<const T>;
         T *ptr;
 
-        brange(T *p) : ptr(p) {}
+        blist_range(T *p) : ptr(p) {}
         iterator begin() { return iterator(ptr); }
         iterator end() { return iterator(nullptr); }
         const_iterator begin() const { return const_iterator(ptr); }
         const_iterator end() const { return const_iterator(nullptr); }
     };
-    template<typename T> brange<T> range(T *t) { return brange<T>(t); }
+    template<typename T> blist_range<T> list_range(T *t) { return blist_range<T>(t); }
 
     template<typename T>
-    struct barray
+    struct barray_range
     {
         using iterator = T * ;
         using const_iterator = const T * ;
@@ -53,7 +53,7 @@ namespace blender
         T *m_ptr;
         size_t m_size;
 
-        barray(T *p, size_t s) : m_ptr(p), m_size(s) {}
+        barray_range(T *p, size_t s) : m_ptr(p), m_size(s) {}
         iterator begin() { return m_ptr; }
         iterator end() { return m_ptr + m_size; }
         const_iterator begin() const { return m_ptr; }
@@ -63,7 +63,7 @@ namespace blender
         size_t size() const { return m_size; }
         bool empty() const { return !m_ptr || m_size == 0; }
     };
-    template<typename T> barray<T> array(T *t, size_t s) { return barray<T>(t, s); }
+    template<typename T> barray_range<T> array_range(T *t, size_t s) { return barray_range<T>(t, s); }
 
 
 
@@ -99,8 +99,8 @@ namespace blender
     public:
         Boilerplate(ID)
 
-        TypeCode typecode() const;
         const char *name() const;
+        bool is_updated() const;
         bool is_updated_data() const;
     };
 
@@ -110,11 +110,10 @@ namespace blender
         Boilerplate(Object)
         Compatible(BID)
 
-        brange<ModifierData> modifiers();
-        brange<FCurve> fcurves();
-        brange<bDeformGroup> deform_groups();
+        blist_range<ModifierData> modifiers();
+        blist_range<FCurve> fcurves();
+        blist_range<bDeformGroup> deform_groups();
 
-        TypeCode typecode() const;
         const char *name() const;
         void* data();
         float4x4 matrix_local() const;
@@ -126,13 +125,13 @@ namespace blender
         Boilerplate(Mesh)
         Compatible(BID)
 
-        barray<MLoop> indices();
-        barray<MEdge> edges();
-        barray<MPoly> polygons();
-        barray<MVert> vertices();
-        barray<float3> normals();
-        barray<float2> uv();
-        barray<MLoopCol> colors();
+        barray_range<MLoop> indices();
+        barray_range<MEdge> edges();
+        barray_range<MPoly> polygons();
+        barray_range<MVert> vertices();
+        barray_range<float3> normals();
+        barray_range<float2> uv();
+        barray_range<MLoopCol> colors();
 
         void calc_normals_split();
     };
@@ -143,9 +142,9 @@ namespace blender
     public:
         Boilerplate2(BEditMesh, BMEditMesh)
 
-        barray<BMFace*> polygons();
-        barray<BMVert*> vertices();
-        barray<BMTriangle> triangles();
+        barray_range<BMFace*> polygons();
+        barray_range<BMVert*> vertices();
+        barray_range<BMTriangle> triangles();
         int uv_data_offset() const;
     };
 
@@ -178,7 +177,7 @@ namespace blender
         Boilerplate(Scene)
         Compatible(BID)
 
-        brange<Object> objects();
+        blist_range<Object> objects();
     };
 
     class BContext
@@ -196,8 +195,10 @@ namespace blender
         Boilerplate2(BData, Main)
 
         static BData get();
-        brange<Object> objects();
-        brange<Material> materials();
+        blist_range<Object> objects();
+        blist_range<Material> materials();
+
+        bool objects_is_updated();
     };
 
 #undef Compatible

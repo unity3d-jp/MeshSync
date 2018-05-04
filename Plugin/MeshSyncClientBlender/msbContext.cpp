@@ -61,22 +61,22 @@ void msbContext::syncUpdated()
 
 void msbContext::addObject(Object * obj)
 {
-    // todo
-    bl::BObject bo(obj);
-    bl::BID data_id(bo.data());
-    if (data_id.ptr()) {
-        auto tc = data_id.typecode();
-        if (tc == ID_ME && m_settings.sync_meshes) {
-            auto dst = addMesh_(obj);
-            dst->refine_settings.flags.swap_faces = true;
-            extractMeshData_(dst, bo);
-        }
-        else if (tc == ID_CA && m_settings.sync_cameras) {
-        }
-        else if (tc == ID_LA && m_settings.sync_lights) {
-        }
-    }
+    if (!obj)
+        return;
 
+    switch (obj->type) {
+    case OB_MESH:
+        addMesh_(obj);
+        break;
+    case OB_ARMATURE:
+        break;
+    case OB_CAMERA:
+        break;
+    case OB_LAMP:
+        break;
+    default:
+        break;
+    }
 }
 
 ms::TransformPtr msbContext::addTransform(py::object obj)
@@ -186,20 +186,20 @@ int msbContext::getMaterialIndex(const Material *mat)
 // src: bpy.Object
 void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
 {
-    extractTransformData_(dst, bl::BObject(src));
+    extractTransformData_(dst, bl::rna_data<Object*>(src));
 }
-void msbContext::extractTransformData_(ms::TransformPtr dst, bl::BObject src)
+void msbContext::extractTransformData_(ms::TransformPtr dst, Object *obj)
 {
-    extract_local_TRS(src.ptr(), dst->position, dst->rotation, dst->scale);
+    extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
 }
 
 
 // src: bpy.Object
 void msbContext::extractCameraData(ms::CameraPtr dst, py::object src)
 {
-    extractCameraData_(dst, bl::BObject(src));
+    extractCameraData_(dst, bl::rna_data<Object*>(src));
 }
-void msbContext::extractCameraData_(ms::CameraPtr dst, bl::BObject src)
+void msbContext::extractCameraData_(ms::CameraPtr dst, Object *src)
 {
     extractTransformData_(dst, src);
 
@@ -211,9 +211,9 @@ void msbContext::extractCameraData_(ms::CameraPtr dst, bl::BObject src)
 
 void msbContext::extractLightData(ms::LightPtr dst, py::object src)
 {
-    extractLightData_(dst, bl::BObject(src));
+    extractLightData_(dst, bl::rna_data<Object*>(src));
 }
-void msbContext::extractLightData_(ms::LightPtr dst, bl::BObject src)
+void msbContext::extractLightData_(ms::LightPtr dst, Object *src)
 {
     extractTransformData_(dst, src);
     // todo
@@ -222,31 +222,29 @@ void msbContext::extractLightData_(ms::LightPtr dst, bl::BObject src)
 // src: bpy.Object
 void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
 {
-    extractMeshData_(dst, bl::BObject(src));
+    extractMeshData_(dst, bl::rna_data<Object*>(src));
 }
 
-void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
+void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
 {
-    auto obj = src.ptr();
-
     // ignore particles
-    if (find_modofier(obj, eModifierType_ParticleSystem) || find_modofier(obj, eModifierType_ParticleInstance))
+    if (find_modofier(src, eModifierType_ParticleSystem) || find_modofier(src, eModifierType_ParticleInstance))
         return;
     // ignore if already added
-    if (m_added.find(obj) != m_added.end())
+    if (m_added.find(src) != m_added.end())
         return;
-    m_added.insert(obj);
+    m_added.insert(src);
 
     // check if mesh is dirty
     {
-        bl::BObject bobj(obj);
+        bl::BObject bobj(src);
         bl::BMesh bmesh(bobj.data());
         if (bmesh.ptr()->edit_btmesh) {
             auto bm = bmesh.ptr()->edit_btmesh->bm;
             if (bm->elem_table_dirty) {
                 // mesh is editing and dirty. just add to pending list
                 dst->clear();
-                m_pending.insert(obj);
+                m_pending.insert(src);
                 return;
             }
         }
@@ -254,8 +252,8 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
 
 
     extractTransformData_(dst, src);
-    auto task = [this, dst, obj]() {
-        doExtractMeshData(*dst, obj);
+    auto task = [this, dst, src]() {
+        doExtractMeshData(*dst, src);
     };
 #ifdef msDebug
     // force single-threaded
@@ -266,24 +264,23 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, bl::BObject src)
 #endif
 }
 
-ms::TransformPtr msbContext::exportArmature(bl::BObject src)
+ms::TransformPtr msbContext::exportArmature(Object *src)
 {
     std::unique_lock<std::mutex> lock(m_extract_mutex);
 
-    Object *arm_obj = src.ptr();
-    if (m_added.find(arm_obj) != m_added.end())
+    if (m_added.find(src) != m_added.end())
         return nullptr;
-    m_added.insert(arm_obj);
+    m_added.insert(src);
 
-    auto ret = addTransform_(arm_obj);
+    auto ret = addTransform_(src);
     extractTransformData_(ret, src);
 
-    auto poses = bl::range((bPoseChannel*)arm_obj->pose->chanbase.first);
+    auto poses = bl::list_range((bPoseChannel*)src->pose->chanbase.first);
     for (auto pose : poses)
     {
         auto bone = pose->bone;
         auto& dst = m_bones[bone];
-        dst = addTransform_(arm_obj, bone);
+        dst = addTransform_(src, bone);
         if (m_settings.sync_poses)
             extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
         else
