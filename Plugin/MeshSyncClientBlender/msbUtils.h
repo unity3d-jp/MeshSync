@@ -2,6 +2,8 @@
 #include "MeshUtils/MeshUtils.h"
 
 
+std::string get_name(const Object *obj);
+std::string get_name(const Bone *obj);
 std::string get_path(const Object *obj);
 std::string get_path(const Object *arm, const Bone *obj);
 const ModifierData* find_modofier(Object *obj, ModifierType type);

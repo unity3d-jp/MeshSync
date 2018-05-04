@@ -44,41 +44,6 @@ std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>&
 }
 
 
-void msbContext::syncAll()
-{
-    if (!prepare()) return;
-
-    for (auto *o : bl::BData::get().objects()) {
-        addObject(o);
-    }
-    send();
-}
-
-void msbContext::syncUpdated()
-{
-    if (!prepare()) return;
-}
-
-void msbContext::addObject(Object * obj)
-{
-    if (!obj)
-        return;
-
-    switch (obj->type) {
-    case OB_MESH:
-        addMesh_(obj);
-        break;
-    case OB_ARMATURE:
-        break;
-    case OB_CAMERA:
-        break;
-    case OB_LAMP:
-        break;
-    default:
-        break;
-    }
-}
-
 ms::TransformPtr msbContext::addTransform(py::object obj)
 {
     return addTransform_(bl::rna_data<Object*>(obj));
@@ -88,6 +53,14 @@ ms::TransformPtr msbContext::addTransform_(Object * obj)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
     ret->path = get_path(obj);
+    m_scene->transforms.push_back(ret);
+    return ret;
+}
+
+ms::TransformPtr msbContext::addTransform_(Object * obj, std::string path)
+{
+    auto ret = getCacheOrCreate(m_transform_cache);
+    ret->path = path;
     m_scene->transforms.push_back(ret);
     return ret;
 }
@@ -148,9 +121,11 @@ void msbContext::addDeleted(const std::string& path)
 // src_: bpy.Material
 ms::MaterialPtr msbContext::addMaterial(py::object src)
 {
-    auto rna = (BPy_StructRNA*)src.ptr();
-    auto mat = (Material*)rna->ptr.id.data;
+    return addMaterial_(bl::rna_data<::Material*>(src));
+}
 
+ms::MaterialPtr msbContext::addMaterial_(Material * mat)
+{
     auto ret = ms::MaterialPtr(new ms::Material());
     ret->name = mat->id.name + 2;
     ret->id = (int)m_scene->materials.size();
@@ -262,6 +237,14 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
     // add async task
     m_extract_tasks.push_back(task);
 #endif
+}
+
+void msbContext::exportSceneData()
+{
+    auto bpy_data = bl::BData::get();
+    for (auto *mat : bpy_data.materials()) {
+        addMaterial_(mat);
+    }
 }
 
 ms::TransformPtr msbContext::exportArmature(Object *src)
@@ -519,6 +502,8 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
 
 void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
 {
+    dst.refine_settings.flags.swap_faces = true;
+
     bl::BObject bobj(obj);
     bl::BMesh bmesh(bobj.data());
     bl::BEditMesh emesh(bmesh.ptr()->edit_btmesh);
@@ -609,28 +594,164 @@ ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
 }
 
 
+void msbContext::exportObject(Object * obj, bool force)
+{
+    if (!obj || !updateRecord(obj))
+        return;
+
+    switch (obj->type) {
+    case OB_ARMATURE:
+    {
+        exportObject(obj->parent, true);
+        exportArmature(obj);
+        break;
+    }
+    case OB_MESH:
+    {
+        exportObject(obj->parent, true);
+        auto dst = addMesh_(obj);
+        extractMeshData_(dst, obj);
+        break;
+    }
+    case OB_CAMERA:
+    {
+        exportObject(obj->parent, true);
+        auto dst = addCamera_(obj);
+        extractCameraData_(dst, obj);
+        break;
+    }
+    case OB_LAMP:
+    {
+        exportObject(obj->parent, true);
+        auto dst = addLight_(obj);
+        extractLightData_(dst, obj);
+        break;
+    }
+    default:
+    {
+        if (obj->dup_group) {
+            exportObject(obj->parent, true);
+            // todo
+        }
+        else if (force) {
+            exportObject(obj->parent, true);
+        }
+        break;
+    }
+    }
+}
+
+void msbContext::exportReference(Object * obj, const std::string & base_path)
+{
+    auto local_path = get_path(obj);
+    auto path = base_path + local_path;
+
+    auto dst = addTransform_(obj, path);
+    extractTransformData_(dst, obj);
+    dst->reference = local_path;
+    // todo
+}
+
+bool msbContext::updateRecord(Object * obj)
+{
+    auto& rec = m_records[obj];
+    if (rec.updated)
+        return false; // already updated
+
+    auto path = get_path(obj);
+    if (rec.path != path) {
+        if (!rec.path.empty()) {
+            // in this case, obj is renamed
+            rec.renamed = true;
+            m_deleted.push_back(rec.path);
+        }
+        rec.name = get_name(obj);
+        rec.path = path;
+    }
+
+    rec.updated = true;
+    if (obj->type == OB_ARMATURE) {
+        auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
+        for (auto pose : poses) {
+            m_records[pose].updated = true;
+        }
+    }
+    if (obj->dup_group) {
+        // todo?
+    }
+    return true;
+}
+
+void msbContext::eraseStaleObjects()
+{
+    for (auto i = m_records.begin(); i != m_records.end(); /**/) {
+        if (!i->second.updated) {
+            m_deleted.push_back(i->second.path);
+            m_records.erase(i++);
+        }
+        else {
+            ++i;
+        }
+    }
+}
+
+
+
 bool msbContext::isSending() const
 {
     return m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-void msbContext::flushPendingList()
-{
-    if (!m_pending.empty() && prepare()) {
-        std::swap(m_pending, m_pending_tmp);
-        for (auto p : m_pending_tmp)
-            addObject(p);
-        m_pending_tmp.clear();
-
-        send();
-    }
-}
-
 bool msbContext::prepare()
 {
-    if (isSending()) return false;
+    if (isSending())
+        return false;
+
+    for (auto& kvp : m_records) {
+        kvp.second.prepare();
+    }
 
     return true;
+}
+
+void msbContext::syncAll()
+{
+    if (!prepare()) return;
+
+    exportSceneData();
+    for (auto *o : bl::BData::get().objects()) {
+        exportObject(o, false);
+    }
+    eraseStaleObjects();
+    send();
+}
+
+void msbContext::syncUpdated()
+{
+    auto bpy_data = bl::BData::get();
+    if (!bpy_data.objects_is_updated() || !prepare()) return;
+
+    exportSceneData();
+    for (auto *obj : bpy_data.objects()) {
+        auto bid = bl::BID(obj);
+        if (bid.is_updated() || bid.is_updated_data())
+            exportObject(obj, false);
+        else
+            updateRecord(obj);
+    }
+    eraseStaleObjects();
+    send();
+}
+
+void msbContext::flushPendingList()
+{
+    if (!m_pending.empty() && !isSending()) {
+        std::swap(m_pending, m_pending_tmp);
+        for (auto p : m_pending_tmp)
+            exportObject(p, false);
+        m_pending_tmp.clear();
+        send();
+    }
 }
 
 void msbContext::send()

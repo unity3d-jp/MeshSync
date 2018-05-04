@@ -7,6 +7,16 @@ using namespace mu;
 
 
 
+std::string get_name(const Object * obj)
+{
+    return obj ? std::string(obj->id.name + 2) : "";
+}
+
+std::string get_name(const Bone * obj)
+{
+    return obj ? std::string(obj->name) : "";
+}
+
 std::string get_path(const Object *obj)
 {
     std::string ret;

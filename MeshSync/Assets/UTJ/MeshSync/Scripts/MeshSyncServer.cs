@@ -489,7 +489,8 @@ namespace UTJ.MeshSync
                             smr.rootBone = null;
                         }
 
-                        smr.localBounds = rec.editMesh.bounds;
+                        if (rec.editMesh != null)
+                            smr.localBounds = rec.editMesh.bounds;
                     }
 
                     if (flags.hasBlendshapes)

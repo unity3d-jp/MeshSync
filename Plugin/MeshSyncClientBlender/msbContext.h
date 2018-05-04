@@ -39,12 +39,17 @@ class msbContext : public std::enable_shared_from_this<msbContext>
 public:
     struct ObjectRecord
     {
-        Object *obj = nullptr; // null if joint
+        void *obj = nullptr; // Object* or Bone*
         std::string name;
         std::string path;
-        float4x4 mat_local;
-        float4x4 mat_global;
-        bool alive = true;
+        bool updated = false;
+        bool renamed = false;
+
+        void prepare()
+        {
+            updated = false;
+            renamed = false;
+        }
     };
 
     msbContext();
@@ -55,12 +60,9 @@ public:
     const msbSettings&  getSettings() const;
     ms::ScenePtr        getCurrentScene() const;
 
-    void syncAll();
-    void syncUpdated();
-    void addObject(Object *obj);
-
     ms::TransformPtr    addTransform(py::object obj);
     ms::TransformPtr    addTransform_(Object *obj);
+    ms::TransformPtr    addTransform_(Object *obj, std::string path);
     ms::TransformPtr    addTransform_(Object *arm, Bone *obj);
     ms::CameraPtr       addCamera(py::object obj);
     ms::CameraPtr       addCamera_(Object *obj);
@@ -71,6 +73,7 @@ public:
     void                addDeleted(const std::string& path);
 
     ms::MaterialPtr addMaterial(py::object material);
+    ms::MaterialPtr addMaterial_(Material *material);
     int getMaterialIndex(const Material *mat);
     void extractTransformData(ms::TransformPtr dst, py::object src);
     void extractTransformData_(ms::TransformPtr dst, Object *obj);
@@ -80,17 +83,24 @@ public:
     void extractLightData_(ms::LightPtr dst, Object *obj);
     void extractMeshData(ms::MeshPtr dst, py::object src);
     void extractMeshData_(ms::MeshPtr dst, Object *obj);
+
+    void exportSceneData();
     ms::TransformPtr exportArmature(Object *obj);
+    void exportObject(Object *obj, bool force);
+    void exportReference(Object *obj, const std::string& base_path);
+    bool updateRecord(Object *obj);
+    void eraseStaleObjects();
 
     bool isSending() const;
-    void flushPendingList();
     bool prepare();
+    void syncAll();
+    void syncUpdated();
+    void flushPendingList();
     void send();
 
 private:
     ObjectRecord & findOrAddObject(Object *obj);
-    ObjectRecord & findOrAddObject(Bone *obj);
-    ObjectRecord & findOrAddObject(bPoseChannel *obj);
+    ObjectRecord & findOrAddObject(Object *arm, Bone *obj);
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
 
