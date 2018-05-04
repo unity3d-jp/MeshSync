@@ -102,6 +102,7 @@ struct MeshRefiner
     // outputs
     RawVector<int> old2new_indices; // old index to new index
     RawVector<int> new2old_points;  // new index to old vertex
+    RawVector<int> new_counts;
     RawVector<int> new_indices;     // non-triangulated new indices
     RawVector<int> new_indices_tri;
     RawVector<int> new_indices_lines;

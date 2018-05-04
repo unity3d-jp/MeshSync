@@ -112,12 +112,12 @@ void MeshRefiner::retopology(bool swap_faces, bool turn_quads)
 
     const int i1 = swap_faces ? 2 : 1;
     const int i2 = swap_faces ? 1 : 2;
-    size_t num_faces = counts.size();
+    size_t num_faces = new_counts.size();
 
     int n = 0;
     if (turn_quads) {
         for (size_t fi = 0; fi < num_faces; ++fi) {
-            int count = counts[fi];
+            int count = new_counts[fi];
             if (count >= 3) {
                 if (!gen_triangles)continue;
                 if (count == 4) {
@@ -155,7 +155,7 @@ void MeshRefiner::retopology(bool swap_faces, bool turn_quads)
     }
     else {
         for (size_t fi = 0; fi < num_faces; ++fi) {
-            int count = counts[fi];
+            int count = new_counts[fi];
             if (count >= 3) {
                 if (!gen_triangles)continue;
                 for (int ni = 0; ni < count - 2; ++ni) {
@@ -204,7 +204,7 @@ void MeshRefiner::genSubmeshes(IArray<int> material_ids)
         if (split.index_count_tri > 0) {
             // gen submeshes by material ids
             for (int fi = 0; fi < split.face_count; ++fi) {
-                int count = counts[offset_faces + fi];
+                int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
                     int mid = material_ids[offset_faces + fi] + 1; // -1 == no material. adjust to zero based
                     while (mid >= (int)tmp_submeshes.size()) {
@@ -212,7 +212,7 @@ void MeshRefiner::genSubmeshes(IArray<int> material_ids)
                         tmp_submeshes.push_back({});
                         tmp_submeshes.back().material_id = id - 1;
                     }
-                    tmp_submeshes[mid].index_count += (counts[fi] - 2) * 3;
+                    tmp_submeshes[mid].index_count += (new_counts[fi] - 2) * 3;
                 }
             }
 
@@ -225,7 +225,7 @@ void MeshRefiner::genSubmeshes(IArray<int> material_ids)
 
             // copy indices
             for (int fi = 0; fi < split.face_count; ++fi) {
-                int count = counts[offset_faces + fi];
+                int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
                     int mid = material_ids[offset_faces + fi] + 1;
                     int nidx = (count - 2) * 3;
@@ -359,6 +359,7 @@ void MeshRefiner::clear()
     old2new_indices.clear();
     new2old_points.clear();
 
+    new_counts.clear();
     new_indices.clear();
     new_indices_tri.clear();
     new_indices_lines.clear();
@@ -441,6 +442,7 @@ void MeshRefiner::refine()
         return 0;
     };
 
+    new_counts.reserve(counts.size());
     int offset = 0;
     for (int fi = 0; fi < num_faces_total; ++fi) {
         int count = counts[fi];
@@ -459,6 +461,7 @@ void MeshRefiner::refine()
                 new_indices.push_back(find_or_emit_vertex(vi, ii));
             }
             ++num_faces;
+            new_counts.push_back(count);
             if (count >= 3)
                 num_indices_tri += (count - 2) * 3;
             else if (count == 2)

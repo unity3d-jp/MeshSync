@@ -1283,6 +1283,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.genSubmeshes(material_ids);
 
         refiner.new_points.swap(points);
+        refiner.new_counts.swap(counts);
         refiner.new_indices_submeshes.swap(indices);
         if (!normals.empty()) {
             Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
