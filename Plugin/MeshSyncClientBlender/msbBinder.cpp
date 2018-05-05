@@ -31,6 +31,9 @@ Def(BMaterial);
 Prop(BMaterial, use_nodes);
 Prop(BMaterial, active_node_material);
 
+Def(BCamera);
+Prop(BCamera, angle);
+
 Def(BScene);
 
 Def(BData);
@@ -100,6 +103,12 @@ void setup()
             BFCurve::s_type = type;
             each_func{
                 if (match_func("evaluate")) BFCurve_evaluate = func;
+            }
+        }
+        else if (match_type("Camera")) {
+            BCamera::s_type = type;
+            each_prop{
+                if (match_prop("angle")) BCamera_angle = prop;
             }
         }
         else if (match_type("Material")) {
@@ -184,6 +193,16 @@ R call(T *self, FunctionRNA *f, const std::tuple<A...>& args)
 
     f->call(g_context, nullptr, &ptr, &param_list);
     return params.get();
+}
+
+template<typename T, typename U>
+float getter(T *idd, U *d, PropFloatGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    return f(&ptr);
 }
 
 template<typename T, typename U, typename R>
@@ -366,6 +385,11 @@ bool BMaterial::use_nodes() const
 Material * BMaterial::active_node_material() const
 {
     return getter<nullptr_t, Material, Material*>(nullptr, m_ptr, ((PointerPropertyRNA*)BMaterial_active_node_material)->get);
+}
+
+float BCamera::fov() const
+{
+    return getter<Camera, nullptr_t>(m_ptr, nullptr, ((FloatPropertyRNA*)BCamera_angle)->get);
 }
 
 blist_range<Object> BScene::objects()

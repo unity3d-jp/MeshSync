@@ -177,8 +177,13 @@ void msbContext::extractCameraData(ms::CameraPtr dst, py::object src)
 void msbContext::extractCameraData_(ms::CameraPtr dst, Object *src)
 {
     extractTransformData_(dst, src);
+    dst->rotation *= rotateX(90.0f * Deg2Rad);
 
-    // todo
+    auto data = (Camera*)src->data;
+    dst->is_ortho = data->type == CAM_ORTHO;
+    dst->near_plane = data->clipsta;
+    dst->far_plane = data->clipend;
+    dst->fov = bl::BCamera(data).fov() * mu::Rad2Deg;
 }
 
 
@@ -191,6 +196,8 @@ void msbContext::extractLightData(ms::LightPtr dst, py::object src)
 void msbContext::extractLightData_(ms::LightPtr dst, Object *src)
 {
     extractTransformData_(dst, src);
+    dst->rotation *= rotateX(90.0f * Deg2Rad);
+
     // todo
 }
 
@@ -834,12 +841,6 @@ void msbContext::send()
         task();
     });
     m_extract_tasks.clear();
-
-    // todo
-    //for (auto& v : m_scene.cameras)
-    //    v->transform.rotation = rotateX(-90.0f * Deg2Rad) * swap_yz(v->transform.rotation);
-    //for (auto& v : m_scene.lights)
-    //    v->transform.rotation = rotateX(-90.0f * Deg2Rad) * swap_yz(v->transform.rotation);
 
 
     // return objects to cache

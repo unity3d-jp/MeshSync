@@ -172,6 +172,15 @@ namespace blender
         Material* active_node_material() const;
     };
 
+    class BCamera
+    {
+    public:
+        Boilerplate(Camera)
+        Compatible(BID)
+
+        float fov() const;
+    };
+
     class BScene
     {
     public:
