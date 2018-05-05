@@ -117,6 +117,7 @@ namespace blender
         const char *name() const;
         void* data();
         float4x4 matrix_local() const;
+        bool is_visible(Scene *scene) const;
     };
 
     class BMesh
@@ -197,8 +198,8 @@ namespace blender
         Boilerplate2(BContext, bContext)
 
         static BContext get();
-        BData data();
-        BScene scene();
+        Main* data();
+        Scene* scene();
     };
 
 #undef Compatible

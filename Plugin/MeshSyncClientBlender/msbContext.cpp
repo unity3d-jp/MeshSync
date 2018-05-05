@@ -165,6 +165,9 @@ void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
 }
 void msbContext::extractTransformData_(ms::TransformPtr dst, Object *obj)
 {
+    if (!bl::BObject(obj).is_visible(bl::BContext::get().scene())) {
+        dst->visible = false;
+    }
     extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
 }
 
@@ -241,7 +244,7 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
 
 void msbContext::exportMaterials()
 {
-    auto bpy_data = bl::BContext::get().data();
+    auto bpy_data = bl::BData(bl::BContext::get().data());;
     for (auto *mat : bpy_data.materials()) {
         addMaterial_(mat);
     }
@@ -776,7 +779,9 @@ void msbContext::syncAll()
     if (!prepare()) return;
 
     exportMaterials();
-    for (auto *o : bl::BContext::get().data().objects()) {
+
+    auto bpy_data = bl::BData(bl::BContext::get().data());
+    for (auto *o : bpy_data.objects()) {
         exportObject(o, false);
     }
     eraseStaleObjects();
@@ -785,7 +790,7 @@ void msbContext::syncAll()
 
 void msbContext::syncUpdated()
 {
-    auto bpy_data = bl::BContext::get().data();
+    auto bpy_data = bl::BData(bl::BContext::get().data());
     if (!bpy_data.objects_is_updated() || !prepare()) return;
 
     exportMaterials();

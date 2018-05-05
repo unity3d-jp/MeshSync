@@ -19,6 +19,7 @@ Prop(BID, is_updated_data);
 
 Def(BObject);
 Prop(BObject, matrix_local);
+Func(BObject, is_visible);
 
 Def(BMesh);
 Func(BMesh, calc_normals_split);
@@ -84,6 +85,9 @@ void setup()
             BObject::s_type = type;
             each_prop{
                 if (match_prop("matrix_local")) BObject_matrix_local = prop;
+            }
+            each_func {
+                if (match_func("is_visible")) BObject_is_visible = func;
             }
         }
         else if (match_type("Mesh")) {
@@ -175,8 +179,10 @@ R call(T *self, FunctionRNA *f, const std::tuple<A...>& args)
     ptr.data = self;
 
     param_holder<std::tuple<A...>, R> params{args};
+    ParameterList param_list;
+    param_list.data = &params;
 
-    f->call(g_context, nullptr, &ptr, (ParameterList*)&params);
+    f->call(g_context, nullptr, &ptr, &param_list);
     return params.get();
 }
 
@@ -232,6 +238,11 @@ void* BObject::data() { return m_ptr->data; }
 float4x4 BObject::matrix_local() const
 {
     return getter<Object, nullptr_t, float4x4>(m_ptr, nullptr, ((FloatPropertyRNA*)BObject_matrix_local)->getarray);
+}
+
+bool blender::BObject::is_visible(Scene * scene) const
+{
+    return call<Object, int, Scene*>(m_ptr, BObject_is_visible, { scene }) != 0;
 }
 
 blist_range<ModifierData> BObject::modifiers()
@@ -367,11 +378,11 @@ BContext BContext::get()
 {
     return BContext(g_context);
 }
-BData BContext::data()
+Main* BContext::data()
 {
     return getter<nullptr_t, bContext, Main*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_blend_data)->get);
 }
-BScene BContext::scene()
+Scene* BContext::scene()
 {
     return getter<nullptr_t, bContext, Scene*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_scene)->get);
 }
