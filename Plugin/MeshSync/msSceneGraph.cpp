@@ -1345,6 +1345,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     // bounds
     for (auto& split : splits) {
         float3 bmin, bmax;
+        bmin = bmax = float3::zero();
         MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
         split.bound_center = (bmax + bmin) * 0.5f;
         split.bound_size = abs(bmax - bmin);

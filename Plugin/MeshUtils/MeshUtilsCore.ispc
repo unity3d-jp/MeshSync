@@ -107,7 +107,7 @@ export void MinMax3(
 
     const uniform int block_size = C;
     const uniform int num_loops = num / block_size;
-    if(num_loops > 1) {
+    if(num_loops > 0) {
         const uniform float * uniform fv = (const uniform float * uniform)src;
         uniform float tmin[3][C];
         uniform float tmax[3][C];
@@ -170,7 +170,7 @@ export void MinMax2(
 
     const uniform int block_size = C;
     const uniform int num_loops = num / block_size;
-    if(num_loops > 1) {
+    if(num_loops > 0) {
         const uniform float * uniform fv = (const uniform float * uniform)src;
 
         float tmin[2], tmax[2];
