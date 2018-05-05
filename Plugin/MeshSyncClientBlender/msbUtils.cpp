@@ -46,6 +46,11 @@ std::string get_path(const Object *arm, const Bone *obj)
     return ret;
 }
 
+bool is_visible(const Object * obj)
+{
+    return bl::BObject(obj).is_visible(bl::BContext::get().scene());
+}
+
 const ModifierData* find_modofier(Object *obj, ModifierType type)
 {
     for (auto *it = (const ModifierData*)obj->modifiers.first; it != nullptr; it = it->next)

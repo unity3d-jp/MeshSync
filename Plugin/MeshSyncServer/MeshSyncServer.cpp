@@ -290,6 +290,14 @@ msAPI void msTransformSetVisible(ms::Transform *_this, bool v)
 {
     _this->visible = v;
 }
+msAPI bool msTransformGetVisibleHierarchy(ms::Transform *_this)
+{
+    return _this->visible_hierarchy;
+}
+msAPI void msTransformSetVisibleHierarchy(ms::Transform *_this, bool v)
+{
+    _this->visible_hierarchy = v;
+}
 msAPI const char* msTransformGetReference(ms::Transform *_this)
 {
     return _this->reference.c_str();

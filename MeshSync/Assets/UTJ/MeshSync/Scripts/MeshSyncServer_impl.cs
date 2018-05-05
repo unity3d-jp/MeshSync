@@ -967,6 +967,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTransformSetScale(IntPtr _this, Vector3 v);
             [DllImport("MeshSyncServer")] static extern byte msTransformGetVisible(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetVisible(IntPtr _this, byte v);
+            [DllImport("MeshSyncServer")] static extern byte msTransformGetVisibleHierarchy(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTransformSetVisibleHierarchy(IntPtr _this, byte v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern AnimationData msTransformGetAnimation(IntPtr _this);
@@ -1018,6 +1020,11 @@ namespace UTJ.MeshSync
             {
                 get { return msTransformGetVisible(_this) != 0; }
                 set { msTransformSetVisible(_this, (byte)(value ? 1 : 0)); }
+            }
+            public bool visibleHierarchy
+            {
+                get { return msTransformGetVisibleHierarchy(_this) != 0; }
+                set { msTransformSetVisibleHierarchy(_this, (byte)(value ? 1 : 0)); }
             }
             public string reference
             {

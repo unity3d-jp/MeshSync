@@ -165,9 +165,6 @@ void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
 }
 void msbContext::extractTransformData_(ms::TransformPtr dst, Object *obj)
 {
-    if (!bl::BObject(obj).is_visible(bl::BContext::get().scene())) {
-        dst->visible = false;
-    }
     extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
 }
 
@@ -230,6 +227,8 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
 
 
     extractTransformData_(dst, src);
+    dst->visible = is_visible(src);
+
     auto task = [this, dst, src]() {
         doExtractMeshData(*dst, src);
     };
@@ -682,12 +681,17 @@ void msbContext::handleDupliGroup(Object * obj, const std::string & base_path)
     if (!group)
         return;
 
-    auto offset = swap_yz((float3&)group->dupli_ofs);
+    std::string path = base_path;
+    path += '/';
+    path += group->id.name + 2;
+
+    auto dst_group = addTransform_(obj, path);
+    dst_group->position = -swap_yz((float3&)group->dupli_ofs);
+    dst_group->visible_hierarchy = is_visible(obj);
+
     auto gobjects = bl::list_range((GroupObject*)group->gobject.first);
     for (auto go : gobjects) {
-        auto dst = exportReference(go->ob, base_path);
-        if (!go->ob->parent)
-            dst->position -= offset;
+        exportReference(go->ob, path);
     }
 }
 

@@ -86,6 +86,7 @@ public:
     float3   scale = float3::one();
 
     bool visible = true;
+    bool visible_hierarchy = true;
     std::string reference;
     AnimationPtr animation;
 

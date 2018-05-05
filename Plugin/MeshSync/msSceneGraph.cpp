@@ -484,6 +484,7 @@ uint32_t Transform::getSerializeSize() const
     ret += ssize(rotation);
     ret += ssize(scale);
     ret += ssize(visible);
+    ret += ssize(visible_hierarchy);
     ret += ssize(reference);
     if (animation) { ret += ssize(animation); }
     return ret;
@@ -499,6 +500,7 @@ void Transform::serialize(std::ostream& os) const
     write(os, rotation);
     write(os, scale);
     write(os, visible);
+    write(os, visible_hierarchy);
     write(os, reference);
     if (flags.has_animation) { write(os, animation); }
 }
@@ -512,6 +514,7 @@ void Transform::deserialize(std::istream& is)
     read(is, rotation);
     read(is, scale);
     read(is, visible);
+    read(is, visible_hierarchy);
     read(is, reference);
     if(flags.has_animation) {
         createAnimation();
@@ -525,7 +528,7 @@ void Transform::clear()
     position = float3::zero();
     rotation = quatf::identity();
     scale = float3::one();
-    visible = true;
+    visible = visible_hierarchy = true;
     reference.clear();
     animation.reset();
 }

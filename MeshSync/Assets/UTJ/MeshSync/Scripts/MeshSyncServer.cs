@@ -713,9 +713,11 @@ namespace UTJ.MeshSync
             trans.localScale = data.scale;
 
             // visibility
+            trans.gameObject.SetActive(data.visibleHierarchy);
             var renderer = trans.gameObject.GetComponent<Renderer>();
             if (renderer != null)
                 renderer.enabled = data.visible;
+
 
 #if UNITY_EDITOR
             var animData = data.animation;
