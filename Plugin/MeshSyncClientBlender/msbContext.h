@@ -99,8 +99,8 @@ private:
     ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
     void handleDupliGroup(Object * obj, const std::string & base_path);
     bool updateRecord(Object *obj);
-    ObjectRecord & findRecord(Object *obj);
-    ObjectRecord & findRecord(Bone *obj);
+    ObjectRecord& findRecord(Object *obj);
+    ObjectRecord& findRecord(Bone *obj);
     void eraseStaleObjects();
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);

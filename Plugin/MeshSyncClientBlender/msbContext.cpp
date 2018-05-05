@@ -712,9 +712,6 @@ bool msbContext::updateRecord(Object * obj)
             m_records[pose->bone].updated = true;
         }
     }
-    if (obj->dup_group) {
-        // todo?
-    }
     return true;
 }
 
@@ -738,6 +735,20 @@ void msbContext::eraseStaleObjects()
         else {
             ++i;
         }
+    }
+
+    if (!m_deleted.empty()) {
+        // blender re-creates all objects when undo / redo.
+        // in that case, m_deleted includes all previous objects.
+        // to avoid unneeded delete, erase re-created objects from m_deleted.
+        m_deleted.erase(std::remove_if(m_deleted.begin(), m_deleted.end(),
+            [this](const std::string& v) {
+            for (auto& kvp : m_records) {
+                if (kvp.second.path == v)
+                    return true;
+            }
+            return false;
+        }), m_deleted.end());
     }
 }
 
@@ -846,6 +857,16 @@ void msbContext::send()
             client.send(fence);
         }
 
+        // send deleted
+        if (!m_deleted.empty()) {
+            ms::DeleteMessage del;
+            for (auto& path : m_deleted) {
+                del.targets.push_back({path, 0});
+            }
+            client.send(del);
+        }
+        m_deleted.clear();
+
         // send transform, camera, etc
 
         auto scene_settings = m_settings.scene_settings;
@@ -863,16 +884,6 @@ void msbContext::send()
             for (auto& obj : scene.lights) { obj->applyScaleFactor(scale_factor); }
         }
         client.send(m_message);
-
-        // send deleted
-        if (!m_deleted.empty()) {
-            ms::DeleteMessage del;
-            for (auto& path : m_deleted) {
-                del.targets.push_back({path, 0});
-            }
-            client.send(del);
-        }
-        m_deleted.clear();
 
         // convert and send meshes
         parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& pmesh) {
