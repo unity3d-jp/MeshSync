@@ -44,20 +44,7 @@ std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>&
 }
 
 
-ms::TransformPtr msbContext::addTransform(py::object obj)
-{
-    return addTransform_(bl::rna_data<Object*>(obj));
-}
-
-ms::TransformPtr msbContext::addTransform_(Object * obj)
-{
-    auto ret = getCacheOrCreate(m_transform_cache);
-    ret->path = get_path(obj);
-    m_scene->transforms.push_back(ret);
-    return ret;
-}
-
-ms::TransformPtr msbContext::addTransform_(Object * obj, std::string path)
+ms::TransformPtr msbContext::addTransform(std::string path)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
     ret->path = path;
@@ -65,20 +52,15 @@ ms::TransformPtr msbContext::addTransform_(Object * obj, std::string path)
     return ret;
 }
 
-ms::TransformPtr msbContext::addTransform_(Object *arm, Bone * obj)
+ms::TransformPtr msbContext::addTransform(Object * obj)
 {
     auto ret = getCacheOrCreate(m_transform_cache);
-    ret->path = get_path(arm, obj);
+    ret->path = get_path(obj);
     m_scene->transforms.push_back(ret);
     return ret;
 }
 
-ms::CameraPtr msbContext::addCamera(py::object obj)
-{
-    return addCamera_(bl::rna_data<Object*>(obj));
-}
-
-ms::CameraPtr msbContext::addCamera_(Object * obj)
+ms::CameraPtr msbContext::addCamera(Object * obj)
 {
     auto ret = getCacheOrCreate(m_camera_cache);
     ret->path = get_path(obj);
@@ -86,12 +68,7 @@ ms::CameraPtr msbContext::addCamera_(Object * obj)
     return ret;
 }
 
-ms::LightPtr msbContext::addLight(py::object obj)
-{
-    return addLight_(bl::rna_data<Object*>(obj));
-}
-
-ms::LightPtr msbContext::addLight_(Object * obj)
+ms::LightPtr msbContext::addLight(Object * obj)
 {
     auto ret = getCacheOrCreate(m_light_cache);
     ret->path = get_path(obj);
@@ -99,12 +76,7 @@ ms::LightPtr msbContext::addLight_(Object * obj)
     return ret;
 }
 
-ms::MeshPtr msbContext::addMesh(py::object obj)
-{
-    return addMesh_(bl::rna_data<Object*>(obj));
-}
-
-ms::MeshPtr msbContext::addMesh_(Object * obj)
+ms::MeshPtr msbContext::addMesh(Object * obj)
 {
     auto ret = getCacheOrCreate(m_mesh_cache);
     ret->path = get_path(obj);
@@ -118,13 +90,7 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
-// src_: bpy.Material
-ms::MaterialPtr msbContext::addMaterial(py::object src)
-{
-    return addMaterial_(bl::rna_data<::Material*>(src));
-}
-
-ms::MaterialPtr msbContext::addMaterial_(Material * mat)
+ms::MaterialPtr msbContext::addMaterial(Material * mat)
 {
     auto ret = ms::MaterialPtr(new ms::Material());
     ret->name = mat->id.name + 2;
@@ -158,25 +124,14 @@ int msbContext::getMaterialIndex(const Material *mat)
     return 0;
 }
 
-// src: bpy.Object
-void msbContext::extractTransformData(ms::TransformPtr dst, py::object src)
-{
-    extractTransformData_(dst, bl::rna_data<Object*>(src));
-}
-void msbContext::extractTransformData_(ms::TransformPtr dst, Object *obj)
+void msbContext::extractTransformData(ms::TransformPtr dst, Object *obj)
 {
     extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
 }
 
-
-// src: bpy.Object
-void msbContext::extractCameraData(ms::CameraPtr dst, py::object src)
+void msbContext::extractCameraData(ms::CameraPtr dst, Object *src)
 {
-    extractCameraData_(dst, bl::rna_data<Object*>(src));
-}
-void msbContext::extractCameraData_(ms::CameraPtr dst, Object *src)
-{
-    extractTransformData_(dst, src);
+    extractTransformData(dst, src);
     dst->rotation *= rotateX(90.0f * Deg2Rad);
 
     auto data = (Camera*)src->data;
@@ -186,16 +141,9 @@ void msbContext::extractCameraData_(ms::CameraPtr dst, Object *src)
     dst->fov = bl::BCamera(data).fov() * mu::Rad2Deg;
 }
 
-
-// src: bpy.Object
-
-void msbContext::extractLightData(ms::LightPtr dst, py::object src)
+void msbContext::extractLightData(ms::LightPtr dst, Object *src)
 {
-    extractLightData_(dst, bl::rna_data<Object*>(src));
-}
-void msbContext::extractLightData_(ms::LightPtr dst, Object *src)
-{
-    extractTransformData_(dst, src);
+    extractTransformData(dst, src);
     dst->rotation *= rotateX(90.0f * mu::Deg2Rad);
 
     auto data = (Lamp*)src->data;
@@ -223,13 +171,7 @@ void msbContext::extractLightData_(ms::LightPtr dst, Object *src)
     }
 }
 
-// src: bpy.Object
-void msbContext::extractMeshData(ms::MeshPtr dst, py::object src)
-{
-    extractMeshData_(dst, bl::rna_data<Object*>(src));
-}
-
-void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
+void msbContext::extractMeshData(ms::MeshPtr dst, Object *src)
 {
     // ignore particles
     if (find_modofier(src, eModifierType_ParticleSystem) || find_modofier(src, eModifierType_ParticleInstance))
@@ -255,7 +197,7 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
     }
 
 
-    extractTransformData_(dst, src);
+    extractTransformData(dst, src);
     dst->visible = is_visible(src);
 
     auto task = [this, dst, src]() {
@@ -274,7 +216,7 @@ void msbContext::exportMaterials()
 {
     auto bpy_data = bl::BData(bl::BContext::get().data());;
     for (auto *mat : bpy_data.materials()) {
-        addMaterial_(mat);
+        addMaterial(mat);
     }
 }
 
@@ -286,15 +228,15 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
         return nullptr;
     m_added.insert(src);
 
-    auto ret = addTransform_(src);
-    extractTransformData_(ret, src);
+    auto ret = addTransform(src);
+    extractTransformData(ret, src);
 
     auto poses = bl::list_range((bPoseChannel*)src->pose->chanbase.first);
     for (auto pose : poses)
     {
         auto bone = pose->bone;
         auto& dst = m_bones[bone];
-        dst = addTransform_(src, bone);
+        dst = addTransform(get_path(src, bone));
         if (m_settings.sync_poses)
             extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
         else
@@ -644,8 +586,8 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_meshes) {
-            auto dst = addMesh_(obj);
-            extractMeshData_(dst, obj);
+            auto dst = addMesh(obj);
+            extractMeshData(dst, obj);
             ret = dst;
         }
         break;
@@ -654,8 +596,8 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_cameras) {
-            auto dst = addCamera_(obj);
-            extractCameraData_(dst, obj);
+            auto dst = addCamera(obj);
+            extractCameraData(dst, obj);
             ret = dst;
         }
         break;
@@ -664,8 +606,8 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_lights) {
-            auto dst = addLight_(obj);
-            extractLightData_(dst, obj);
+            auto dst = addLight(obj);
+            extractLightData(dst, obj);
             ret = dst;
         }
         break;
@@ -674,8 +616,8 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         if (obj->dup_group || force) {
             exportObject(obj->parent, true);
-            ret = addTransform_(obj);
-            extractTransformData_(ret, obj);
+            ret = addTransform(obj);
+            extractTransformData(ret, obj);
         }
         break;
     }
@@ -694,9 +636,9 @@ ms::TransformPtr msbContext::exportReference(Object * obj, const std::string & b
     auto local_path = get_path(obj);
     auto path = base_path + local_path;
 
-    auto dst = addTransform_(obj, path);
+    auto dst = addTransform(path);
     dst->reference = local_path;
-    extractTransformData_(dst, obj);
+    extractTransformData(dst, obj);
     handleDupliGroup(obj, path);
     each_child(obj, [this, &path](Object *child) {
         exportReference(child, path);
@@ -714,7 +656,7 @@ void msbContext::handleDupliGroup(Object * obj, const std::string & base_path)
     path += '/';
     path += group->id.name + 2;
 
-    auto dst_group = addTransform_(obj, path);
+    auto dst_group = addTransform(path);
     dst_group->position = -swap_yz((float3&)group->dupli_ofs);
     dst_group->visible_hierarchy = is_visible(obj);
 

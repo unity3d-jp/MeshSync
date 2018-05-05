@@ -60,31 +60,6 @@ public:
     const msbSettings&  getSettings() const;
     ms::ScenePtr        getCurrentScene() const;
 
-    ms::TransformPtr    addTransform(py::object obj);
-    ms::TransformPtr    addTransform_(Object *obj);
-    ms::TransformPtr    addTransform_(Object *obj, std::string path);
-    ms::TransformPtr    addTransform_(Object *arm, Bone *obj);
-    ms::CameraPtr       addCamera(py::object obj);
-    ms::CameraPtr       addCamera_(Object *obj);
-    ms::LightPtr        addLight(py::object obj);
-    ms::LightPtr        addLight_(Object *obj);
-    ms::MeshPtr         addMesh(py::object obj);
-    ms::MeshPtr         addMesh_(Object *obj);
-    void                addDeleted(const std::string& path);
-
-    ms::MaterialPtr addMaterial(py::object material);
-    ms::MaterialPtr addMaterial_(Material *material);
-    int getMaterialIndex(const Material *mat);
-    void extractTransformData(ms::TransformPtr dst, py::object src);
-    void extractTransformData_(ms::TransformPtr dst, Object *obj);
-    void extractCameraData(ms::CameraPtr dst, py::object src);
-    void extractCameraData_(ms::CameraPtr dst, Object *obj);
-    void extractLightData(ms::LightPtr dst, py::object src);
-    void extractLightData_(ms::LightPtr dst, Object *obj);
-    void extractMeshData(ms::MeshPtr dst, py::object src);
-    void extractMeshData_(ms::MeshPtr dst, Object *obj);
-
-
     bool isSending() const;
     bool prepare();
     void syncAll();
@@ -93,6 +68,20 @@ public:
     void send();
 
 private:
+    ms::TransformPtr    addTransform(std::string path);
+    ms::TransformPtr    addTransform(Object *obj);
+    ms::CameraPtr       addCamera(Object *obj);
+    ms::LightPtr        addLight(Object *obj);
+    ms::MeshPtr         addMesh(Object *obj);
+    void                addDeleted(const std::string& path);
+    ms::MaterialPtr     addMaterial(Material *material);
+
+    int getMaterialIndex(const Material *mat);
+    void extractTransformData(ms::TransformPtr dst, Object *obj);
+    void extractCameraData(ms::CameraPtr dst, Object *obj);
+    void extractLightData(ms::LightPtr dst, Object *obj);
+    void extractMeshData(ms::MeshPtr dst, Object *obj);
+
     void exportMaterials();
     ms::TransformPtr exportArmature(Object *obj);
     ms::TransformPtr exportObject(Object *obj, bool force);
