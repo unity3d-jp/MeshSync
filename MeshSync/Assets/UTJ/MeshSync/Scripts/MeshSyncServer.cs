@@ -439,10 +439,13 @@ namespace UTJ.MeshSync
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
-                    var old = smr.sharedMesh;
-                    smr.sharedMesh = rec.editMesh;
-
-                    DestroyIfNotAsset(old);
+                    {
+                        var old = smr.sharedMesh;
+                        smr.sharedMesh = rec.editMesh;
+                        DestroyIfNotAsset(old);
+                        old = null;
+                        GC.Collect();
+                    }
 
                     if (skinned)
                     {
