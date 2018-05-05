@@ -30,10 +30,9 @@ def msb_sync_updated():
     if not bpy.data.objects.is_updated:
         return
     msb_sync([obj for obj in bpy.data.objects if obj.is_updated or obj.is_updated_data])
-    
+
 
 def msb_sync(targets):
-    global msb_context
     ctx = msb_context
     if not ctx.prepare():
         return
@@ -193,7 +192,6 @@ def msb_get_material_id(material):
 
 
 def msb_update_settings(self = None, context = None):
-    global msb_context
     ctx = msb_context
     scene = bpy.context.scene
     ctx.server_address = scene.meshsync_server_address
@@ -270,7 +268,6 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_all", text="Manual Sync")
-        self.layout.operator("meshsync.fcurve", text="Debug")
 
 
 class MeshSync_OpSyncAll(bpy.types.Operator):
@@ -278,19 +275,8 @@ class MeshSync_OpSyncAll(bpy.types.Operator):
     bl_label = "Sync All"
     def execute(self, context):
         msb_context.setup()
-        msb_sync_all()
-        return{'FINISHED'}
-
-class MeshSync_OpFCurve(bpy.types.Operator):
-    bl_idname = "meshsync.fcurve"
-    bl_label = "fcurve"
-    def execute(self, context):
-        obj = bpy.context.active_object
-        print("object " + obj.name)
-        for curve in obj.animation_data.action.fcurves:
-            print("  curve " + curve.data_path + "[" + str(curve.array_index) + "]")
-            curve.evaluate(0)
-            print(curve.evaluate)
+        msb_context.syncAll()
+        #msb_sync_all()
         return{'FINISHED'}
 
 
@@ -299,7 +285,8 @@ def on_scene_update(context):
     msb_context.setup()
     msb_context.flushPendingList();
     if(bpy.context.scene.meshsync_auto_sync):
-        msb_sync_updated()
+        msb_context.syncUpdated()
+        #msb_sync_updated()
 
 def register():
     msb_initialize_properties()

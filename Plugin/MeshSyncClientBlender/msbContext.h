@@ -84,12 +84,6 @@ public:
     void extractMeshData(ms::MeshPtr dst, py::object src);
     void extractMeshData_(ms::MeshPtr dst, Object *obj);
 
-    void exportSceneData();
-    ms::TransformPtr exportArmature(Object *obj);
-    void exportObject(Object *obj, bool force);
-    void exportReference(Object *obj, const std::string& base_path);
-    bool updateRecord(Object *obj);
-    void eraseStaleObjects();
 
     bool isSending() const;
     bool prepare();
@@ -99,8 +93,15 @@ public:
     void send();
 
 private:
-    ObjectRecord & findOrAddObject(Object *obj);
-    ObjectRecord & findOrAddObject(Object *arm, Bone *obj);
+    void exportMaterials();
+    ms::TransformPtr exportArmature(Object *obj);
+    ms::TransformPtr exportObject(Object *obj, bool force);
+    ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
+    void handleDupliGroup(Object * obj, const std::string & base_path);
+    bool updateRecord(Object *obj);
+    ObjectRecord & findRecord(Object *obj);
+    ObjectRecord & findRecord(Bone *obj);
+    void eraseStaleObjects();
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
 

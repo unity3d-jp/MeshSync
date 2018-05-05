@@ -6,7 +6,6 @@
 namespace blender
 {
 
-static Main *g_data;
 static bContext *g_context;
 
 
@@ -33,10 +32,11 @@ Prop(BMaterial, active_node_material);
 
 Def(BScene);
 
-Def(BContext);
-Prop(BContext, scene);
-
 Def(BData);
+
+Def(BContext);
+Prop(BContext, blend_data);
+Prop(BContext, scene);
 
 #undef Prop
 #undef Func
@@ -55,17 +55,14 @@ void setup()
     py::eval<py::eval_mode::eval_statements>(
 "import _bpy as bpi;"
 "context = bpi.context;"
-"data = bpi.data;"
 , py::object(), local);
 
     py::object bpy_context = local["context"];
-    py::object bpy_data = local["data"];
 
     auto rna = (BPy_StructRNA*)bpy_context.ptr();
     auto first_type = &rna->ptr.type->cont;
     while (first_type->prev) first_type = (ContainerRNA*)first_type->prev;
     rna_sdata(bpy_context, g_context);
-    rna_sdata(bpy_data, g_data);
 
 
     // resolve blender types and functions
@@ -111,18 +108,19 @@ void setup()
         else if (match_type("Scene")) {
             BScene::s_type = type;
         }
-        else if (match_type("Context")) {
-            BData::s_type = type;
-            each_prop{
-                if (match_prop("scene")) BContext_scene = prop;
-            }
-        }
         else if (match_type("BlendData")) {
             BData::s_type = type;
         }
         else if (match_type("BlendDataObjects")) {
             each_prop{
                 if (match_prop("is_updated")) BlendDataObjects_is_updated = prop;
+            }
+        }
+        else if (match_type("Context")) {
+            BData::s_type = type;
+            each_prop{
+                if (match_prop("blend_data")) BContext_blend_data = prop;
+                if (match_prop("scene")) BContext_scene = prop;
             }
         }
     }
@@ -369,22 +367,22 @@ BContext BContext::get()
 {
     return BContext(g_context);
 }
+BData BContext::data()
+{
+    return getter<nullptr_t, bContext, Main*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_blend_data)->get);
+}
 BScene BContext::scene()
 {
     return getter<nullptr_t, bContext, Scene*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_scene)->get);
 }
 
-BData BData::get()
-{
-    return BData(g_data);
-}
 blist_range<Object> BData::objects()
 {
-    return list_range((Object*)g_data->object.first);
+    return list_range((Object*)m_ptr->object.first);
 }
 blist_range<Material> BData::materials()
 {
-    return list_range((Material*)g_data->mat.first);
+    return list_range((Material*)m_ptr->mat.first);
 }
 bool BData::objects_is_updated()
 {

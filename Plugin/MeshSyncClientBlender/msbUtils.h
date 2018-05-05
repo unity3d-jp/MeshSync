@@ -21,7 +21,18 @@ float4x4 extract_bindpose(const Bone *bone);
 
 // Body: [](const FCurve*) -> void
 template<class Body>
-static inline void each_fcurves(Object *obj, const Body& body)
+static inline void each_child(Object *obj, const Body& body)
+{
+    // Object doesn't have children data. need to enumerate all objects and check its parent...
+    for (auto obj : bl::BContext::get().data().objects()) {
+        if (obj->parent == obj)
+            body(obj);
+    }
+}
+
+// Body: [](const FCurve*) -> void
+template<class Body>
+static inline void each_fcurve(Object *obj, const Body& body)
 {
     if (!obj->adt || !obj->adt->action) return;
     for (auto *curve = (FCurve*)obj->adt->action->curves.first; curve; curve = curve->next) {
@@ -31,7 +42,7 @@ static inline void each_fcurves(Object *obj, const Body& body)
 
 // Body: [](const ModifierData*) -> void
 template<class Body>
-inline void each_modifiers(Object *obj, const Body& body)
+inline void each_modifier(Object *obj, const Body& body)
 {
     auto *it = (const ModifierData*)obj->modifiers.first;
     auto *end = (const ModifierData*)obj->modifiers.last;
@@ -41,7 +52,7 @@ inline void each_modifiers(Object *obj, const Body& body)
 
 // Body: [](const bDeformGroup*) -> void
 template<class Body>
-static inline void each_vertex_groups(Object *obj, const Body& body)
+static inline void each_deform_group(Object *obj, const Body& body)
 {
     for (auto *it = (const bDeformGroup*)obj->defbase.first; it != nullptr; it = it->next)
         body(it);
@@ -49,7 +60,7 @@ static inline void each_vertex_groups(Object *obj, const Body& body)
 
 // Body: [](const KeyBlock*) -> void
 template<class Body>
-static inline void each_keys(Mesh *obj, const Body& body)
+static inline void each_key(Mesh *obj, const Body& body)
 {
     if (obj->key == nullptr || obj->key->block.first == nullptr) { return; }
     for (auto *it = (const KeyBlock*)obj->key->block.first; it != nullptr; it = it->next)

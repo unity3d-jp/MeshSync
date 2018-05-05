@@ -239,9 +239,9 @@ void msbContext::extractMeshData_(ms::MeshPtr dst, Object *src)
 #endif
 }
 
-void msbContext::exportSceneData()
+void msbContext::exportMaterials()
 {
-    auto bpy_data = bl::BData::get();
+    auto bpy_data = bl::BContext::get().data();
     for (auto *mat : bpy_data.materials()) {
         addMaterial_(mat);
     }
@@ -275,6 +275,8 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
 
 void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
 {
+    dst.refine_settings.flags.swap_faces = true;
+
     bl::BObject bobj(obj);
     bl::BMesh bmesh(bobj.data());
 
@@ -397,7 +399,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             exportArmature(arm_obj);
 
             int group_index = 0;
-            each_vertex_groups(obj, [&](const bDeformGroup *g) {
+            each_deform_group(obj, [&](const bDeformGroup *g) {
                 auto bone = find_bone(arm_obj, g->name);
                 if (bone) {
                     auto trans = findBone(arm_obj, bone);
@@ -427,7 +429,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
     if (m_settings.sync_blendshapes && mesh.key) {
         RawVector<float3> basis;
         int bi = 0;
-        each_keys(&mesh, [&](const KeyBlock *kb) {
+        each_key(&mesh, [&](const KeyBlock *kb) {
             if (bi == 0) { // Basis
                 basis.resize_discard(kb->totelem);
                 memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
@@ -502,8 +504,6 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
 
 void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
 {
-    dst.refine_settings.flags.swap_faces = true;
-
     bl::BObject bobj(obj);
     bl::BMesh bmesh(bobj.data());
     bl::BEditMesh emesh(bmesh.ptr()->edit_btmesh);
@@ -594,62 +594,98 @@ ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
 }
 
 
-void msbContext::exportObject(Object * obj, bool force)
+ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
 {
+    ms::TransformPtr ret;
     if (!obj || !updateRecord(obj))
-        return;
+        return ret;
 
     switch (obj->type) {
     case OB_ARMATURE:
     {
         exportObject(obj->parent, true);
-        exportArmature(obj);
+        if (m_settings.sync_meshes && m_settings.sync_bones) {
+            ret = exportArmature(obj);
+        }
         break;
     }
     case OB_MESH:
     {
         exportObject(obj->parent, true);
-        auto dst = addMesh_(obj);
-        extractMeshData_(dst, obj);
+        if (m_settings.sync_meshes) {
+            auto dst = addMesh_(obj);
+            extractMeshData_(dst, obj);
+            ret = dst;
+        }
         break;
     }
     case OB_CAMERA:
     {
         exportObject(obj->parent, true);
-        auto dst = addCamera_(obj);
-        extractCameraData_(dst, obj);
+        if (m_settings.sync_cameras) {
+            auto dst = addCamera_(obj);
+            extractCameraData_(dst, obj);
+            ret = dst;
+        }
         break;
     }
     case OB_LAMP:
     {
         exportObject(obj->parent, true);
-        auto dst = addLight_(obj);
-        extractLightData_(dst, obj);
+        if (m_settings.sync_lights) {
+            auto dst = addLight_(obj);
+            extractLightData_(dst, obj);
+            ret = dst;
+        }
         break;
     }
     default:
     {
-        if (obj->dup_group) {
+        if (obj->dup_group || force) {
             exportObject(obj->parent, true);
-            // todo
-        }
-        else if (force) {
-            exportObject(obj->parent, true);
+            ret = addTransform_(obj);
+            extractTransformData_(ret, obj);
         }
         break;
     }
     }
+
+    if (obj->dup_group) {
+        auto& rec = findRecord(obj);
+        handleDupliGroup(obj, rec.path);
+    }
+
+    return ret;
 }
 
-void msbContext::exportReference(Object * obj, const std::string & base_path)
+ms::TransformPtr msbContext::exportReference(Object * obj, const std::string & base_path)
 {
     auto local_path = get_path(obj);
     auto path = base_path + local_path;
 
     auto dst = addTransform_(obj, path);
-    extractTransformData_(dst, obj);
     dst->reference = local_path;
-    // todo
+    extractTransformData_(dst, obj);
+    handleDupliGroup(obj, path);
+    each_child(obj, [this, &path](Object *child) {
+        exportReference(child, path);
+    });
+    return dst;
+}
+
+void msbContext::handleDupliGroup(Object * obj, const std::string & base_path)
+{
+    auto group = obj->dup_group;
+    if (!group)
+        return;
+
+    auto offset = swap_yz((float3&)group->dupli_ofs);
+    auto gobjects = bl::list_range((GroupObject*)group->gobject.first);
+    for (auto go : gobjects) {
+        auto dst = exportReference(go->ob, base_path);
+        if (!go->ob->parent)
+            dst->position -= offset;
+    }
 }
 
 bool msbContext::updateRecord(Object * obj)
@@ -673,13 +709,23 @@ bool msbContext::updateRecord(Object * obj)
     if (obj->type == OB_ARMATURE) {
         auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
         for (auto pose : poses) {
-            m_records[pose].updated = true;
+            m_records[pose->bone].updated = true;
         }
     }
     if (obj->dup_group) {
         // todo?
     }
     return true;
+}
+
+msbContext::ObjectRecord& msbContext::findRecord(Object * obj)
+{
+    return m_records[obj];
+}
+
+msbContext::ObjectRecord& msbContext::findRecord(Bone * obj)
+{
+    return m_records[obj];
 }
 
 void msbContext::eraseStaleObjects()
@@ -718,8 +764,8 @@ void msbContext::syncAll()
 {
     if (!prepare()) return;
 
-    exportSceneData();
-    for (auto *o : bl::BData::get().objects()) {
+    exportMaterials();
+    for (auto *o : bl::BContext::get().data().objects()) {
         exportObject(o, false);
     }
     eraseStaleObjects();
@@ -728,10 +774,10 @@ void msbContext::syncAll()
 
 void msbContext::syncUpdated()
 {
-    auto bpy_data = bl::BData::get();
+    auto bpy_data = bl::BContext::get().data();
     if (!bpy_data.objects_is_updated() || !prepare()) return;
 
-    exportSceneData();
+    exportMaterials();
     for (auto *obj : bpy_data.objects()) {
         auto bid = bl::BID(obj);
         if (bid.is_updated() || bid.is_updated_data())

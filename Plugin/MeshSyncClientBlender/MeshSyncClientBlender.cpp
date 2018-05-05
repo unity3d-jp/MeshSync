@@ -179,6 +179,8 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindMethod(isSending)
             BindMethod(flushPendingList)
             BindMethod(prepare)
+            BindMethod(syncAll)
+            BindMethod(syncUpdated)
             BindMethod(send)
             BindProperty(server_address,
                 [](const msbContext& self) { return self.getSettings().client_settings.server; },

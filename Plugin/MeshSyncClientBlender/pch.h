@@ -40,6 +40,7 @@ namespace py = pybind11;
 #include "BKE_DerivedMesh.h"
 #include "RNA_types.h"
 #include "DNA_object_types.h"
+#include "DNA_group_types.h"
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
 #include "DNA_meshdata_types.h"

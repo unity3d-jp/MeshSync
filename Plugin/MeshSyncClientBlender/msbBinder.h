@@ -180,25 +180,25 @@ namespace blender
         blist_range<Object> objects();
     };
 
+    class BData
+    {
+    public:
+        Boilerplate2(BData, Main)
+
+        blist_range<Object> objects();
+        blist_range<Material> materials();
+
+        bool objects_is_updated();
+    };
+
     class BContext
     {
     public:
         Boilerplate2(BContext, bContext)
 
         static BContext get();
+        BData data();
         BScene scene();
-    };
-
-    class BData
-    {
-    public:
-        Boilerplate2(BData, Main)
-
-        static BData get();
-        blist_range<Object> objects();
-        blist_range<Material> materials();
-
-        bool objects_is_updated();
     };
 
 #undef Compatible
