@@ -196,9 +196,31 @@ void msbContext::extractLightData(ms::LightPtr dst, py::object src)
 void msbContext::extractLightData_(ms::LightPtr dst, Object *src)
 {
     extractTransformData_(dst, src);
-    dst->rotation *= rotateX(90.0f * Deg2Rad);
+    dst->rotation *= rotateX(90.0f * mu::Deg2Rad);
 
-    // todo
+    auto data = (Lamp*)src->data;
+    dst->color = (float4&)data->r;
+    dst->intensity = data->energy;
+    dst->range = data->dist;
+
+    switch (data->type) {
+    case LA_LOCAL:
+        dst->type = ms::Light::Type::Point;
+        break;
+    case LA_SUN:
+        dst->type = ms::Light::Type::Directional;
+        break;
+    case LA_SPOT:
+        dst->type = ms::Light::Type::Spot;
+        dst->spot_angle = data->spotsize * mu::Rad2Deg;
+        break;
+    case LA_HEMI: break;
+    case LA_AREA:
+        dst->type = ms::Light::Type::Area;
+        break;
+    default:
+        break;
+    }
 }
 
 // src: bpy.Object
