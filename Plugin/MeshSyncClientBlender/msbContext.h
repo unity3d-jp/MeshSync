@@ -39,16 +39,13 @@ class msbContext : public std::enable_shared_from_this<msbContext>
 public:
     struct ObjectRecord
     {
-        void *obj = nullptr; // Object* or Bone*
         std::string name;
         std::string path;
         bool updated = false;
-        bool renamed = false;
 
-        void prepare()
+        void clear()
         {
             updated = false;
-            renamed = false;
         }
     };
 
@@ -69,10 +66,9 @@ public:
 
 private:
     ms::TransformPtr    addTransform(std::string path);
-    ms::TransformPtr    addTransform(Object *obj);
-    ms::CameraPtr       addCamera(Object *obj);
-    ms::LightPtr        addLight(Object *obj);
-    ms::MeshPtr         addMesh(Object *obj);
+    ms::CameraPtr       addCamera(std::string path);
+    ms::LightPtr        addLight(std::string path);
+    ms::MeshPtr         addMesh(std::string path);
     void                addDeleted(const std::string& path);
     ms::MaterialPtr     addMaterial(Material *material);
 
@@ -86,7 +82,7 @@ private:
     ms::TransformPtr exportArmature(Object *obj);
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
-    void handleDupliGroup(Object * obj, const std::string & base_path);
+    ms::TransformPtr exportDupliGroup(Object *obj, const std::string & base_path);
     bool updateRecord(Object *obj);
     ObjectRecord& findRecord(Object *obj);
     ObjectRecord& findRecord(Bone *obj);

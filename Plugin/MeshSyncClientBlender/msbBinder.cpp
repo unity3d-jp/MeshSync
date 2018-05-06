@@ -392,9 +392,9 @@ float BCamera::fov() const
     return getter<Camera, nullptr_t>(m_ptr, nullptr, ((FloatPropertyRNA*)BCamera_angle)->get);
 }
 
-blist_range<Object> BScene::objects()
+blist_range<Base> BScene::objects()
 {
-    return list_range((Object*)m_ptr->base.first);
+    return list_range((Base*)m_ptr->base.first);
 }
 
 

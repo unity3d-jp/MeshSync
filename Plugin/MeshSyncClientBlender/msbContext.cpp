@@ -52,34 +52,26 @@ ms::TransformPtr msbContext::addTransform(std::string path)
     return ret;
 }
 
-ms::TransformPtr msbContext::addTransform(Object * obj)
-{
-    auto ret = getCacheOrCreate(m_transform_cache);
-    ret->path = get_path(obj);
-    m_scene->transforms.push_back(ret);
-    return ret;
-}
-
-ms::CameraPtr msbContext::addCamera(Object * obj)
+ms::CameraPtr msbContext::addCamera(std::string path)
 {
     auto ret = getCacheOrCreate(m_camera_cache);
-    ret->path = get_path(obj);
+    ret->path = path;
     m_scene->cameras.push_back(ret);
     return ret;
 }
 
-ms::LightPtr msbContext::addLight(Object * obj)
+ms::LightPtr msbContext::addLight(std::string path)
 {
     auto ret = getCacheOrCreate(m_light_cache);
-    ret->path = get_path(obj);
+    ret->path = path;
     m_scene->lights.push_back(ret);
     return ret;
 }
 
-ms::MeshPtr msbContext::addMesh(Object * obj)
+ms::MeshPtr msbContext::addMesh(std::string path)
 {
     auto ret = getCacheOrCreate(m_mesh_cache);
-    ret->path = get_path(obj);
+    ret->path = path;
     m_scene->meshes.push_back(ret);
     return ret;
 }
@@ -228,7 +220,7 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
         return nullptr;
     m_added.insert(src);
 
-    auto ret = addTransform(src);
+    auto ret = addTransform(get_path(src));
     extractTransformData(ret, src);
 
     auto poses = bl::list_range((bPoseChannel*)src->pose->chanbase.first);
@@ -586,7 +578,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_meshes) {
-            auto dst = addMesh(obj);
+            auto dst = addMesh(get_path(obj));
             extractMeshData(dst, obj);
             ret = dst;
         }
@@ -596,7 +588,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_cameras) {
-            auto dst = addCamera(obj);
+            auto dst = addCamera(get_path(obj));
             extractCameraData(dst, obj);
             ret = dst;
         }
@@ -606,7 +598,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_lights) {
-            auto dst = addLight(obj);
+            auto dst = addLight(get_path(obj));
             extractLightData(dst, obj);
             ret = dst;
         }
@@ -616,16 +608,15 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     {
         if (obj->dup_group || force) {
             exportObject(obj->parent, true);
-            ret = addTransform(obj);
+            ret = addTransform(get_path(obj));
             extractTransformData(ret, obj);
         }
         break;
     }
     }
 
-    if (obj->dup_group) {
-        auto& rec = findRecord(obj);
-        handleDupliGroup(obj, rec.path);
+    if (ret) {
+        exportDupliGroup(obj, ret->path);
     }
 
     return ret;
@@ -639,31 +630,35 @@ ms::TransformPtr msbContext::exportReference(Object * obj, const std::string & b
     auto dst = addTransform(path);
     dst->reference = local_path;
     extractTransformData(dst, obj);
-    handleDupliGroup(obj, path);
+    exportDupliGroup(obj, path);
     each_child(obj, [this, &path](Object *child) {
         exportReference(child, path);
     });
     return dst;
 }
 
-void msbContext::handleDupliGroup(Object * obj, const std::string & base_path)
+ms::TransformPtr msbContext::exportDupliGroup(Object *obj, const std::string & base_path)
 {
     auto group = obj->dup_group;
     if (!group)
-        return;
+        return nullptr;
 
-    std::string path = base_path;
-    path += '/';
-    path += group->id.name + 2;
+    auto local_path = std::string("/") + (group->id.name + 2);
+    auto path = base_path + local_path;
 
-    auto dst_group = addTransform(path);
-    dst_group->position = -swap_yz((float3&)group->dupli_ofs);
-    dst_group->visible_hierarchy = is_visible(obj);
+    auto dst = addTransform(path);
+    dst->position = -swap_yz((float3&)group->dupli_ofs);
+    dst->visible_hierarchy = is_visible(obj);
 
     auto gobjects = bl::list_range((GroupObject*)group->gobject.first);
     for (auto go : gobjects) {
-        exportReference(go->ob, path);
+        auto obj = go->ob;
+        if (auto t = exportObject(obj, false)) {
+            t->visible = obj->id.lib == nullptr;
+        }
+        exportReference(obj, path);
     }
+    return dst;
 }
 
 bool msbContext::updateRecord(Object * obj)
@@ -676,7 +671,6 @@ bool msbContext::updateRecord(Object * obj)
     if (rec.path != path) {
         if (!rec.path.empty()) {
             // in this case, obj is renamed
-            rec.renamed = true;
             m_deleted.push_back(rec.path);
         }
         rec.name = get_name(obj);
@@ -743,7 +737,7 @@ bool msbContext::prepare()
         return false;
 
     for (auto& kvp : m_records) {
-        kvp.second.prepare();
+        kvp.second.clear();
     }
 
     return true;
@@ -755,9 +749,9 @@ void msbContext::syncAll()
 
     exportMaterials();
 
-    auto bpy_data = bl::BData(bl::BContext::get().data());
-    for (auto *o : bpy_data.objects()) {
-        exportObject(o, false);
+    auto scene = bl::BScene(bl::BContext::get().scene());
+    for (auto *base : scene.objects()) {
+        exportObject(base->object, false);
     }
     eraseStaleObjects();
     send();
@@ -769,7 +763,10 @@ void msbContext::syncUpdated()
     if (!bpy_data.objects_is_updated() || !prepare()) return;
 
     exportMaterials();
-    for (auto *obj : bpy_data.objects()) {
+
+    auto scene = bl::BScene(bl::BContext::get().scene());
+    for (auto *base : scene.objects()) {
+        auto obj = base->object;
         auto bid = bl::BID(obj);
         if (bid.is_updated() || bid.is_updated_data())
             exportObject(obj, false);

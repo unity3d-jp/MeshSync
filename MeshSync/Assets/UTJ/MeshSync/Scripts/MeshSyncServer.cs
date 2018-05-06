@@ -506,6 +506,10 @@ namespace UTJ.MeshSync
                         }
                     }
                 }
+
+                var renderer = trans.gameObject.GetComponent<Renderer>();
+                if (renderer != null)
+                    renderer.enabled = data.transform.visible;
             }
 
             int num_splits = Math.Max(1, data.numSplits);
@@ -714,10 +718,6 @@ namespace UTJ.MeshSync
 
             // visibility
             trans.gameObject.SetActive(data.visibleHierarchy);
-            var renderer = trans.gameObject.GetComponent<Renderer>();
-            if (renderer != null)
-                renderer.enabled = data.visible;
-
 
 #if UNITY_EDITOR
             var animData = data.animation;

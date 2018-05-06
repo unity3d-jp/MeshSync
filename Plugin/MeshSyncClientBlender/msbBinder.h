@@ -187,7 +187,7 @@ namespace blender
         Boilerplate(Scene)
         Compatible(BID)
 
-        blist_range<Object> objects();
+        blist_range<Base> objects();
     };
 
     class BData
