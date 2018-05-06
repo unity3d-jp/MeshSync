@@ -41,6 +41,8 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     dst.rotation = to_quatf(rot);
     dst.scale = to_float3(scale);
 
+    dst.visible_hierarchy = IsVisible(src);
+
     // handle joint's segment scale compensate
     if (src.hasFn(MFn::kJoint)) {
         mu::float3 inverse_scale;
@@ -319,11 +321,11 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
     if (!extractTransformData(dst, src)) { return false; }
 
-    dst.visible = IsVisible(src);
-    if (!dst.visible) { return true; }
-
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return false; }
+
+    dst.visible = IsVisible(shape);
+    if (!dst.visible) { return true; }
 
     MFnMesh mmesh(shape);
 

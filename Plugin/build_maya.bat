@@ -14,7 +14,7 @@ exit /B 0
         exit /B 1
     )
     
-    set DIST_DIR="dist\UnityMeshSync_maya%MAYA_VERSION%_Windows"
+    set DIST_DIR="dist\UnityMeshSync_maya%MAYA_VERSION%_Windows\modules"
     xcopy /Y MeshSyncClientMaya\MEL\*.mod "%DIST_DIR%\"
     xcopy /Y MeshSyncClientMaya\MEL\*.mel "%DIST_DIR%\UnityMeshSync\scripts\"
     xcopy /Y _out\x64_Master\MeshSyncClientMaya%MAYA_VERSION%\MeshSyncClientMaya.mll "%DIST_DIR%\UnityMeshSync\plug-ins\"

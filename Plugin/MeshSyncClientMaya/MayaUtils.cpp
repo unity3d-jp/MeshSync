@@ -266,6 +266,8 @@ void DeternineTimeRange(float& time_begin, float& time_end, const MFnAnimCurve& 
 
     float t1 = ToSeconds(curve.time(0));
     float t2 = ToSeconds(curve.time(num_keys > 0 ? num_keys - 1 : 0));
+    if (t2 - t1 > 10000.0f) { return; } // something is wrong...
+
     if (std::isnan(time_begin)) {
         time_begin = t1;
         time_end = t2;
@@ -309,13 +311,15 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
 {
     float time_begin = std::numeric_limits<float>::quiet_NaN();
     float time_end = std::numeric_limits<float>::quiet_NaN();
-    float time_range = 0.0f;
 
     // build time range
     for (auto& cv : cvs) {
         DeternineTimeRange(time_begin, time_end, *cv);
     }
-    time_range = time_end - time_begin;
+    if (std::isnan(time_begin) || std::isnan(time_end)) {
+        time_begin = time_end = 0.0f;
+    }
+    float time_range = time_end - time_begin;
 
 
     // build time samples
@@ -332,9 +336,11 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
     if (sps > 0) {
         const float time_resolution = 1.0f / (float)sps;
         int num_samples = int(time_range / time_resolution);
-        sample_times.resize(num_samples - 1);
-        for (int i = 1; i < num_samples; ++i) {
-            sample_times[i - 1] = (time_resolution * i) + time_begin;
+        if (num_samples > 0) {
+            sample_times.resize(num_samples - 1);
+            for (int i = 1; i < num_samples; ++i) {
+                sample_times[i - 1] = (time_resolution * i) + time_begin;
+            }
         }
     }
 
