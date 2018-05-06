@@ -781,6 +781,7 @@ namespace UTJ.MeshSync
             cam.fieldOfView = data.fov;
             cam.nearClipPlane = data.nearClipPlane;
             cam.farClipPlane = data.farClipPlane;
+            cam.enabled = data.transform.visible;
             return cam;
         }
 
@@ -800,6 +801,7 @@ namespace UTJ.MeshSync
             lt.intensity = data.intensity;
             if (data.range > 0.0f) { lt.range = data.range; }
             if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
+            lt.enabled = data.transform.visible;
             return lt;
         }
 

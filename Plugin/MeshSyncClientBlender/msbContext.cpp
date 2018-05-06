@@ -116,9 +116,10 @@ int msbContext::getMaterialIndex(const Material *mat)
     return 0;
 }
 
-void msbContext::extractTransformData(ms::TransformPtr dst, Object *obj)
+void msbContext::extractTransformData(ms::TransformPtr dst, Object *src)
 {
-    extract_local_TRS(obj, dst->position, dst->rotation, dst->scale);
+    extract_local_TRS(src, dst->position, dst->rotation, dst->scale);
+    dst->visible = is_visible(src);
 }
 
 void msbContext::extractCameraData(ms::CameraPtr dst, Object *src)
@@ -190,7 +191,6 @@ void msbContext::extractMeshData(ms::MeshPtr dst, Object *src)
 
 
     extractTransformData(dst, src);
-    dst->visible = is_visible(src);
 
     auto task = [this, dst, src]() {
         doExtractMeshData(*dst, src);
