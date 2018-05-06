@@ -32,9 +32,9 @@ def msb_apply_settings(self = None, context = None):
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
     ctx.sync_cameras = scene.meshsync_sync_cameras
     ctx.sync_lights = scene.meshsync_sync_lights
-    ctx.sync_animations = scene.meshsync_sync_animations
-    ctx.sample_animation = scene.meshsync_sample_animation
-    ctx.animation_sps = scene.meshsync_animation_sps
+    #ctx.sync_animations = scene.meshsync_sync_animations
+    #ctx.sample_animation = scene.meshsync_sample_animation
+    #ctx.animation_sps = scene.meshsync_animation_sps
     return None
 
 
@@ -52,9 +52,9 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
-    bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(default = False, name = "Sync Animations")
-    bpy.types.Scene.meshsync_sample_animation = bpy.props.BoolProperty(default = True, name = "Sample Animations")
-    bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples")
+    #bpy.types.Scene.meshsync_sync_animations = bpy.props.BoolProperty(default = False, name = "Sync Animations")
+    #bpy.types.Scene.meshsync_sample_animation = bpy.props.BoolProperty(default = True, name = "Sample Animations")
+    #bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync")
 
 
@@ -84,12 +84,12 @@ class MeshSyncPanel(bpy.types.Panel):
             b.prop(context.scene, 'meshsync_apply_modifiers')
         self.layout.prop(context.scene, 'meshsync_sync_cameras')
         self.layout.prop(context.scene, 'meshsync_sync_lights')
-        self.layout.prop(context.scene, 'meshsync_sync_animations')
-        if scene.meshsync_sync_animations:
-            b = self.layout.box()
-            b.prop(context.scene, 'meshsync_sample_animation')
-            if scene.meshsync_sample_animation:
-                b.prop(context.scene, 'meshsync_animation_sps')
+        #self.layout.prop(context.scene, 'meshsync_sync_animations')
+        #if scene.meshsync_sync_animations:
+        #    b = self.layout.box()
+        #    b.prop(context.scene, 'meshsync_sample_animation')
+        #    if scene.meshsync_sample_animation:
+        #        b.prop(context.scene, 'meshsync_animation_sps')
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_all", text="Manual Sync")
