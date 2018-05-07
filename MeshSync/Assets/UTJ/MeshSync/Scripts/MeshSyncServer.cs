@@ -196,12 +196,7 @@ namespace UTJ.MeshSync
                     var rec = m_hostObjects[id];
                     if (rec.go != null)
                     {
-#if UNITY_EDITOR
-                        Undo.DestroyObjectImmediate(rec.go);
-                        Undo.RecordObject(this, "MeshSyncServer");
-#else
                         DestroyImmediate(rec.go);
-#endif
                     }
                     m_hostObjects.Remove(id);
                 }
@@ -210,12 +205,7 @@ namespace UTJ.MeshSync
                     var rec = m_clientObjects[path];
                     if (rec.go != null)
                     {
-#if UNITY_EDITOR
-                        Undo.DestroyObjectImmediate(rec.go);
-                        Undo.RecordObject(this, "MeshSyncServer");
-#else
                         DestroyImmediate(rec.go);
-#endif
                     }
                     m_clientObjects.Remove(path);
                 }
