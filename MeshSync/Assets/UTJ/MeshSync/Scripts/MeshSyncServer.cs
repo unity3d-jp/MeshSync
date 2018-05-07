@@ -727,7 +727,7 @@ namespace UTJ.MeshSync
                 Transform root = trans;
                 Animator animator = null;
                 AnimationClip clip = null;
-                var assetPath = "Assets/" + m_assetExportPath + "/" + root.name;
+                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(root.name);
 
                 // find or create animator & animation clip
                 while (root.parent != null)
@@ -1237,7 +1237,7 @@ namespace UTJ.MeshSync
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
-                var path = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
+                var path = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(mf.sharedMesh.name) + ".asset";
                 CreateAsset(mf.sharedMesh, path);
                 if (m_logging)
                 {

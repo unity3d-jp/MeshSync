@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -1524,6 +1524,11 @@ namespace UTJ.MeshSync
         public static string S(IntPtr cstring)
         {
             return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
+        }
+        public static string SanitizeFileName(string name)
+        {
+            var reg = new Regex("[:<>|\\*\\?]");
+            return reg.Replace(name, "_");
         }
 
         [Serializable]

@@ -226,6 +226,8 @@ bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src)
     return false;
 }
 
+#define TimeLimit 3600.0f
+
 void DeternineTimeRange(float& time_begin, float& time_end, const MFnAnimCurve& curve)
 {
     if (curve.object().isNull()) { return; }
@@ -235,7 +237,7 @@ void DeternineTimeRange(float& time_begin, float& time_end, const MFnAnimCurve& 
 
     float t1 = ToSeconds(curve.time(0));
     float t2 = ToSeconds(curve.time(num_keys > 0 ? num_keys - 1 : 0));
-    if (t2 - t1 > 10000.0f) { return; } // something is wrong...
+    if (t2 - t1 > TimeLimit) { return; }
 
     if (std::isnan(time_begin)) {
         time_begin = t1;
@@ -252,10 +254,11 @@ void GatherTimes(RawVector<float>& dst, const MFnAnimCurve& curve)
     if (curve.object().isNull()) { return; }
 
     int num_keys = curve.numKeys();
-    size_t pos = dst.size();
-    dst.resize(pos + num_keys);
     for (int i = 0; i < num_keys; ++i) {
-        dst[pos + i] = ToSeconds(curve.time(i));
+        float t = ToSeconds(curve.time(i));
+        if (std::abs(t) < TimeLimit) {
+            dst.push_back(t);
+        }
     }
 };
 
@@ -317,6 +320,9 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
     times.resize(keyframe_times.size() + sample_times.size());
     std::merge(keyframe_times.begin(), keyframe_times.end(), sample_times.begin(), sample_times.end(), times.begin());
     times.erase(std::unique(times.begin(), times.end()), times.end());
+    if (times.size() == 1) {
+        times.clear();
+    }
     return times;
 }
 
