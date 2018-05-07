@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "MeshSync/MeshSync.h"
+
 
 class MeshSyncClientMaya
 {

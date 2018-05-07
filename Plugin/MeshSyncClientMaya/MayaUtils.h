@@ -25,8 +25,6 @@ MObject FindOrigMesh(MObject node);
 MObject FindInputMesh(const MFnGeometryFilter& gf, const MDagPath& path);
 MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path);
 
-bool JointGetSegmentScaleCompensate(MObject joint);
-bool JointGetInverseScale(MObject joint, mu::float3& dst);
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
 
@@ -88,6 +86,21 @@ inline mu::quatf to_quatf(const MQuaternion& v)
 {
     return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };
 }
+
+inline bool to_bool(const MPlug plug)
+{
+    return plug.asBool();
+}
+inline mu::float3 to_float3(const MPlug plug)
+{
+    return mu::float3{
+        (float)plug.child(0).asDouble(),
+        (float)plug.child(1).asDouble(),
+        (float)plug.child(2).asDouble()
+    };
+}
+
+
 
 // body: [](MObject&) -> void
 template<class Body>

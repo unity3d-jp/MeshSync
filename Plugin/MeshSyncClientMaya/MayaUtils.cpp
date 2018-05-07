@@ -162,27 +162,6 @@ MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
     return MObject();
 }
 
-bool JointGetSegmentScaleCompensate(MObject joint)
-{
-    const MFnIkJoint fn_joint(joint);
-    auto plug = fn_joint.findPlug("segmentScaleCompensate");
-    return plug.asBool();
-}
-
-bool JointGetInverseScale(MObject joint, mu::float3& dst)
-{
-    const MFnIkJoint fn_joint(joint);
-    auto plug = fn_joint.findPlug("inverseScale");
-    if (plug.isNull()) { return false; }
-
-    dst = mu::float3{
-        (float)plug.child(0).asDouble(),
-        (float)plug.child(1).asDouble(),
-        (float)plug.child(2).asDouble()
-    };
-    return true;
-}
-
 float ToSeconds(MTime t)
 {
     t.setUnit(MTime::kSeconds);
