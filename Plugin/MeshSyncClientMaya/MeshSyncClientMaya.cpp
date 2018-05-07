@@ -119,39 +119,27 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
     MGlobal::executeCommand("cycleCheck -e off");
 }
 
-void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
+void MeshSyncClientMaya::registerNodeCallbacks()
 {
-    MStatus stat;
-    if (scope == TargetScope::Selection) {
-        MSelectionList list;
-        MGlobal::getActiveSelectionList(list);
-        for (uint32_t i = 0; i < list.length(); i++) {
-            MObject node;
-            list.getDependNode(i, node);
-            registerNodeCallback(node);
-        }
-    }
-    else {
-        //  meshes
-        Enumerate(MFn::kMesh, [this](MObject& node) {
-            registerNodeCallback(GetTransform(node));
-        });
+    //  meshes
+    Enumerate(MFn::kMesh, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
+    });
 
-        // cameras
-        Enumerate(MFn::kCamera, [this](MObject& node) {
-            registerNodeCallback(GetTransform(node));
-        });
+    // cameras
+    Enumerate(MFn::kCamera, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
+    });
 
-        // lights
-        Enumerate(MFn::kLight, [this](MObject& node) {
-            registerNodeCallback(GetTransform(node));
-        });
+    // lights
+    Enumerate(MFn::kLight, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
+    });
 
-        // joints
-        Enumerate(MFn::kJoint, [this](MObject& node) {
-            registerNodeCallback(node);
-        });
-    }
+    // joints
+    Enumerate(MFn::kJoint, [this](MObject& node) {
+        registerNodeCallback(node);
+    });
 }
 
 bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
@@ -325,34 +313,80 @@ const MeshSyncClientMaya::ObjectRecord* MeshSyncClientMaya::findRecord(MObject n
     return it == m_records.end() ? nullptr : &it->second;
 }
 
-void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
+void MeshSyncClientMaya::notifyUpdateTransform(MObject node)
 {
-    if ((force || m_settings.auto_sync) && node.hasFn(MFn::kTransform)) {
-        findOrAddRecord(node).dirty_transform = true;
-    }
+    findOrAddRecord(node).dirty_transform = true;
 }
 
-void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
+void MeshSyncClientMaya::notifyUpdateCamera(MObject shape)
 {
-    if ((force || m_settings.auto_sync) && m_settings.sync_cameras && shape.hasFn(MFn::kCamera)) {
-        auto node = GetTransform(shape);
-        findOrAddRecord(node).dirty_shape = true;
-    }
+    auto node = GetTransform(shape);
+    findOrAddRecord(node).dirty_shape = true;
 }
 
-void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
+void MeshSyncClientMaya::notifyUpdateLight(MObject shape)
 {
-    if ((force || m_settings.auto_sync) && m_settings.sync_lights && shape.hasFn(MFn::kLight)) {
-        auto node = GetTransform(shape);
-        findOrAddRecord(node).dirty_shape = true;
-    }
+    auto node = GetTransform(shape);
+    findOrAddRecord(node).dirty_shape = true;
 }
 
-void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
+void MeshSyncClientMaya::notifyUpdateMesh(MObject shape)
 {
-    if ((force || m_settings.auto_sync) && m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
-        auto node = GetTransform(shape);
-        findOrAddRecord(node).dirty_shape = true;
+    auto node = GetTransform(shape);
+    findOrAddRecord(node).dirty_shape = true;
+}
+
+bool MeshSyncClientMaya::send(SendScope scope)
+{
+    if (isSending()) {
+        m_pending_send_scene = scope;
+        return false;
+    }
+    m_pending_send_scene = SendScope::None;
+
+    int num_exported = 0;
+    if (scope == SendScope::All) {
+        auto exportShape = [this, &num_exported](MObject& shape) {
+            if (exportObject(GetTransform(shape), false))
+                ++num_exported;
+        };
+        auto exportNode = [this, &num_exported](MObject& node) {
+            if (exportObject(node, false))
+                ++num_exported;
+        };
+
+        Enumerate(MFn::kJoint, exportNode);
+        Enumerate(MFn::kMesh, exportShape);
+        Enumerate(MFn::kCamera, exportShape);
+        Enumerate(MFn::kLight, exportShape);
+    }
+    else if (scope == SendScope::Updated) {
+        for (auto& kvp : m_records) {
+            auto& rec = kvp.second;
+            if (rec.dirty_transform || rec.dirty_shape) {
+                if (exportObject(rec.node, false))
+                    ++num_exported;
+            }
+        }
+    }
+    else if (scope == SendScope::Selected) {
+        MSelectionList list;
+        MGlobal::getActiveSelectionList(list);
+        for (uint32_t i = 0; i < list.length(); i++) {
+            MObject node;
+            list.getDependNode(i, node);
+            if (exportObject(node, false))
+                ++num_exported;
+        }
+    }
+
+    if (num_exported > 0 || !m_deleted.empty()) {
+        extractSceneData();
+        kickAsyncSend();
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -364,17 +398,17 @@ void MeshSyncClientMaya::update()
 
         registerNodeCallbacks();
         if (m_settings.auto_sync) {
-            m_pending_send_scene = true;
+            m_pending_send_scene = SendScope::All;
         }
     }
 
-    if (m_pending_send_scene) {
-        if (sendAll()) {
+    if (m_pending_send_scene != SendScope::None) {
+        if (send(m_pending_send_scene)) {
             mscTrace("MeshSyncClientMaya::update(): handling send scene\n");
         }
     }
-    else {
-        if (sendUpdated()) {
+    else if (m_settings.auto_sync) {
+        if (send(SendScope::Updated)) {
             mscTrace("MeshSyncClientMaya::update(): handling send updated objects\n");
         }
     }
@@ -392,7 +426,7 @@ void MeshSyncClientMaya::onSceneUpdated()
 
 void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
-    sendAll();
+    send(SendScope::All);
     mscTrace("MeshSyncClientMaya::onTimeChange()\n");
 }
 
@@ -408,103 +442,7 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
     }
 }
 
-bool MeshSyncClientMaya::sendAll(TargetScope scope)
-{
-    if (isSending()) {
-        m_pending_send_scene = true;
-        return false;
-    }
-    m_pending_send_scene = false;
-
-    if(scope == TargetScope::All) {
-        // cameras
-        Enumerate(MFn::kCamera, [this](MObject& shape) {
-            exportObject(GetTransform(shape), false);
-        });
-
-        // lights
-        Enumerate(MFn::kLight, [this](MObject& shape) {
-            exportObject(GetTransform(shape), false);
-        });
-
-        // joints
-        Enumerate(MFn::kJoint, [this](MObject& node) {
-            exportObject(node, false);
-        });
-
-        // meshes
-        Enumerate(MFn::kMesh, [this](MObject& shape) {
-            exportObject(GetTransform(shape), false);
-        });
-    }
-    else if (scope == TargetScope::Selection) {
-        MSelectionList list;
-        MGlobal::getActiveSelectionList(list);
-
-        for (uint32_t i = 0; i < list.length(); i++) {
-            MObject node;
-            list.getDependNode(i, node);
-            exportObject(node, false);
-        }
-    }
-
-    send();
-    return true;
-}
-
-bool MeshSyncClientMaya::sendUpdated()
-{
-    if (isSending()) {
-        return false;
-    }
-
-    int num_updated = 0;
-    for (auto& kvp : m_records) {
-        auto& rec = kvp.second;
-        if (rec.dirty_transform || rec.dirty_shape) {
-            exportObject(rec.node, false);
-            ++num_updated;
-        }
-    }
-
-    if (num_updated == 0 && m_deleted.empty()) {
-        return false; // nothing to send
-    }
-
-    extractSceneData();
-    send();
-    return true;
-}
-
-bool MeshSyncClientMaya::importScene()
-{
-    waitAsyncSend();
-
-    ms::Client client(m_settings.client_settings);
-    ms::GetMessage gd;
-    gd.flags.get_transform = 1;
-    gd.flags.get_indices = 1;
-    gd.flags.get_points = 1;
-    gd.flags.get_uv0 = 1;
-    gd.flags.get_uv1 = 1;
-    gd.flags.get_material_ids= 1;
-    gd.scene_settings.handedness = ms::Handedness::Right;
-    gd.scene_settings.scale_factor = 1.0f / m_settings.scale_factor;
-    gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
-    gd.refine_settings.flags.bake_cloth = m_settings.bake_cloth;
-
-    auto ret = client.send(gd);
-    if (!ret) {
-        return false;
-    }
-
-
-    // todo: create mesh objects
-
-    return true;
-}
-
-void MeshSyncClientMaya::send()
+void MeshSyncClientMaya::kickAsyncSend()
 {
     if (!m_extract_tasks.empty()) {
         mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {
@@ -577,6 +515,34 @@ void MeshSyncClientMaya::send()
         }
         mscTrace("MeshSyncClientMaya::kickAsyncSend(): done\n");
     });
+}
+
+bool MeshSyncClientMaya::import()
+{
+    waitAsyncSend();
+
+    ms::Client client(m_settings.client_settings);
+    ms::GetMessage gd;
+    gd.flags.get_transform = 1;
+    gd.flags.get_indices = 1;
+    gd.flags.get_points = 1;
+    gd.flags.get_uv0 = 1;
+    gd.flags.get_uv1 = 1;
+    gd.flags.get_material_ids = 1;
+    gd.scene_settings.handedness = ms::Handedness::Right;
+    gd.scene_settings.scale_factor = 1.0f / m_settings.scale_factor;
+    gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
+    gd.refine_settings.flags.bake_cloth = m_settings.bake_cloth;
+
+    auto ret = client.send(gd);
+    if (!ret) {
+        return false;
+    }
+
+
+    // todo: create mesh objects
+
+    return true;
 }
 
 

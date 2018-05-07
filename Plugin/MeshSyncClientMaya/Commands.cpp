@@ -150,14 +150,16 @@ MStatus CmdSync::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto& instance = MeshSyncClientMaya::getInstance();
 
-    auto scope = MeshSyncClientMaya::TargetScope::All;
+    MeshSyncClientMaya::SendScope scope = MeshSyncClientMaya::SendScope::All;
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
         if (s == "selection")
-            scope = MeshSyncClientMaya::TargetScope::Selection;
+            scope = MeshSyncClientMaya::SendScope::Selected;
+        else if (s == "updated")
+            scope = MeshSyncClientMaya::SendScope::Updated;
     }
-    MeshSyncClientMaya::getInstance().sendAll(scope);
+    MeshSyncClientMaya::getInstance().send(scope);
     return MStatus::kSuccess;
 }
 
@@ -181,6 +183,6 @@ MSyntax CmdImport::createSyntax()
 
 MStatus CmdImport::doIt(const MArgList&)
 {
-    MeshSyncClientMaya::getInstance().importScene();
+    MeshSyncClientMaya::getInstance().import();
     return MStatus::kSuccess;
 }

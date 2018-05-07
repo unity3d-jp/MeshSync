@@ -30,13 +30,14 @@ public:
     };
     Settings m_settings;
 
-
-    enum class TargetScope
+    enum class SendScope
     {
-        Unknown,
-        Selection,
+        None,
         All,
+        Updated,
+        Selected,
     };
+
     static MeshSyncClientMaya& getInstance();
 
     MeshSyncClientMaya(MObject obj);
@@ -48,14 +49,12 @@ public:
     void onTimeChange(MTime& time);
     void onNodeRemoved(MObject& node);
 
-    void notifyObjectUpdated(MObject obj, bool force = false);
-    void notifyUpdateTransform(MObject obj, bool force = false);
-    void notifyUpdateCamera(MObject obj, bool force = false);
-    void notifyUpdateLight(MObject obj, bool force = false);
-    void notifyUpdateMesh(MObject obj, bool force = false);
-    bool sendAll(TargetScope scope = TargetScope::All);
-    bool sendUpdated();
-    bool importScene();
+    void notifyUpdateTransform(MObject obj);
+    void notifyUpdateCamera(MObject obj);
+    void notifyUpdateLight(MObject obj);
+    void notifyUpdateMesh(MObject obj);
+    bool send(SendScope scope);
+    bool import();
 
 
 private:
@@ -76,7 +75,7 @@ private:
     bool isSending() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
-    void registerNodeCallbacks(TargetScope scope = TargetScope::All);
+    void registerNodeCallbacks();
     bool registerNodeCallback(MObject node, bool leaf = true);
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
@@ -90,7 +89,7 @@ private:
     void extractLightData(ms::Light& dst, MObject src);
     void extractMeshData(ms::Mesh& dst, MObject src);
     void doExtractMeshData(ms::Mesh& dst, MObject src);
-    void send();
+    void kickAsyncSend();
 
 private:
     using ObjectRecords = std::map<void*, ObjectRecord>;
@@ -113,6 +112,6 @@ private:
     using task_t = std::function<void()>;
     std::vector<task_t> m_extract_tasks;
 
-    bool                m_pending_send_scene = false;
-    bool                m_scene_updated = false;
+    SendScope m_pending_send_scene = SendScope::None;
+    bool m_scene_updated = false;
 };
