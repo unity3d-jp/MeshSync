@@ -73,10 +73,10 @@ private:
     ms::MaterialPtr     addMaterial(Material *material);
 
     int getMaterialIndex(const Material *mat);
-    void extractTransformData(ms::TransformPtr dst, Object *obj);
-    void extractCameraData(ms::CameraPtr dst, Object *obj);
-    void extractLightData(ms::LightPtr dst, Object *obj);
-    void extractMeshData(ms::MeshPtr dst, Object *obj);
+    void extractTransformData(ms::Transform& dst, Object *obj);
+    void extractCameraData(ms::Camera& dst, Object *obj);
+    void extractLightData(ms::Light& dst, Object *obj);
+    void extractMeshData(ms::Mesh& dst, Object *obj);
 
     void exportMaterials();
     ms::TransformPtr exportArmature(Object *obj);

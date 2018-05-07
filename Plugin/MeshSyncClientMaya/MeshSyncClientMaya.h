@@ -53,8 +53,8 @@ public:
     void notifyUpdateCamera(MObject obj, bool force = false);
     void notifyUpdateLight(MObject obj, bool force = false);
     void notifyUpdateMesh(MObject obj, bool force = false);
-    bool sendScene(TargetScope scope = TargetScope::All);
-    bool sendMarkedObjects();
+    bool sendAll(TargetScope scope = TargetScope::All);
+    bool sendUpdated();
     bool importScene();
 
 
@@ -68,11 +68,12 @@ private:
         MCallbackId cid_shape = 0;
         bool dirty_transform = true;
         bool dirty_shape = true;
+        bool added = false;
     };
 
     ObjectRecord& findOrAddRecord(MObject node);
-    bool addToDirtyList(MObject node);
-    bool isAsyncSendInProgress() const;
+    const ObjectRecord* findRecord(MObject node);
+    bool isSending() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
     void registerNodeCallbacks(TargetScope scope = TargetScope::All);
@@ -81,12 +82,15 @@ private:
     void removeNodeCallbacks();
     int getMaterialID(MUuid uid);
 
+    ms::TransformPtr exportObject(MObject obj, bool force);
+
     void extractSceneData();
-    bool extractTransformData(ms::Transform& dst, MObject src);
-    bool extractCameraData(ms::Camera& dst, MObject src);
-    bool extractLightData(ms::Light& dst, MObject src);
-    bool extractMeshData(ms::Mesh& dst, MObject src);
-    void kickAsyncSend();
+    void extractTransformData(ms::Transform& dst, MObject src);
+    void extractCameraData(ms::Camera& dst, MObject src);
+    void extractLightData(ms::Light& dst, MObject src);
+    void extractMeshData(ms::Mesh& dst, MObject src);
+    void doExtractMeshData(ms::Mesh& dst, MObject src);
+    void send();
 
 private:
     using ObjectRecords = std::map<void*, ObjectRecord>;
@@ -96,7 +100,6 @@ private:
 
     std::vector<MCallbackId> m_cids_global;
     std::vector<MUuid> m_material_id_table;
-    std::vector<MObject> m_dirty_objects;
 
     std::vector<ms::TransformPtr>   m_client_transforms;
     std::vector<ms::CameraPtr>      m_client_cameras;
@@ -105,8 +108,11 @@ private:
     std::vector<ms::MaterialPtr>    m_client_materials;
     std::vector<std::string>        m_deleted;
     ObjectRecords       m_records;
-    std::mutex          m_mutex_extract_mesh;
     std::future<void>   m_future_send;
+
+    using task_t = std::function<void()>;
+    std::vector<task_t> m_extract_tasks;
+
     bool                m_pending_send_scene = false;
     bool                m_scene_updated = false;
 };

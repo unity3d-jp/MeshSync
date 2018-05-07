@@ -3,16 +3,6 @@
 #include "MayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
-template<class Body>
-static inline void EachChild(MObject node, const Body& body)
-{
-    MFnDagNode fn(node);
-    auto num_children = fn.childCount();
-    for (uint32_t i = 0; i < num_children; ++i) {
-        body(fn.child(i));
-    }
-}
-
 bool IsVisible(MObject node)
 {
     MFnDagNode dag(node);

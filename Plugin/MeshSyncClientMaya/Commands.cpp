@@ -34,25 +34,25 @@ template<> void get_arg(float& dst, const char *name, MArgParser& args)
 }
 
 
-template<class T> void to_ms(MString& dst, T& value);
+template<class T> void to_MString(MString& dst, const T& value);
 
-template<> void to_ms(MString& dst, std::string& value)
+template<> void to_MString(MString& dst, const std::string& value)
 {
     dst += value.c_str();
 }
-template<> void to_ms(MString& dst, bool& value)
+template<> void to_MString(MString& dst, const bool& value)
 {
     dst += (int)value;
 }
-template<> void to_ms(MString& dst, int& value)
+template<> void to_MString(MString& dst, const int& value)
 {
     dst += value;
 }
-template<> void to_ms(MString& dst, uint16_t& value)
+template<> void to_MString(MString& dst, const uint16_t& value)
 {
     dst += (int)value;
 }
-template<> void to_ms(MString& dst, float& value)
+template<> void to_MString(MString& dst, const float& value)
 {
     dst += value;
 }
@@ -100,7 +100,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     MString result;
 #define Handle(Name, Value)\
     if (args.isFlagSet(Name)) {\
-        if(args.isQuery()) to_ms(result, Value);\
+        if(args.isQuery()) to_MString(result, Value);\
         else get_arg(Value, Name, args);\
     }
 
@@ -157,7 +157,7 @@ MStatus CmdSync::doIt(const MArgList& args_)
         if (s == "selection")
             scope = MeshSyncClientMaya::TargetScope::Selection;
     }
-    MeshSyncClientMaya::getInstance().sendScene(scope);
+    MeshSyncClientMaya::getInstance().sendAll(scope);
     return MStatus::kSuccess;
 }
 

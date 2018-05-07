@@ -100,3 +100,14 @@ void Enumerate(MFn::Type type, const Body& body)
         it.next();
     }
 }
+
+// body: [](MObject&) -> void
+template<class Body>
+inline void EachChild(MObject node, const Body& body)
+{
+    MFnDagNode fn(node);
+    auto num_children = fn.childCount();
+    for (uint32_t i = 0; i < num_children; ++i) {
+        body(fn.child(i));
+    }
+}

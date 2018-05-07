@@ -24,7 +24,7 @@ void MeshSyncClientMaya::extractSceneData()
     }
 }
 
-bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
+void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
     MFnTransform mtrans(src);
 
@@ -127,17 +127,16 @@ bool MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
             }
         }
     }
-    return true;
 }
 
-bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
+void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
-    if (!extractTransformData(dst, src)) { return false; }
+    extractTransformData(dst, src);
     dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kCamera)) {
-        return false;
+        return;
     }
 
     MFnCamera mcam(shape);
@@ -240,12 +239,11 @@ bool MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
         auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
         for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
     }
-    return true;
 }
 
-bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
+void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 {
-    if (!extractTransformData(dst, src)) { return false; }
+    extractTransformData(dst, src);
     dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
@@ -263,7 +261,7 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
         dst.type = ms::Light::Type::Point;
     }
     else {
-        return false;
+        return;
     }
 
     MFnLight mlight(shape);
@@ -312,20 +310,28 @@ bool MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
         auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
         for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
     }
-    return true;
 }
 
-bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
-{
-    dst.clear();
 
-    if (!extractTransformData(dst, src)) { return false; }
+void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
+{
+    auto task = [this, &dst, src]() {
+        doExtractMeshData(dst, src);
+    };
+
+    //task();
+    m_extract_tasks.push_back(task);
+}
+
+void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
+{
+    extractTransformData(dst, src);
 
     auto shape = GetShape(src);
-    if (!shape.hasFn(MFn::kMesh)) { return false; }
+    if (!shape.hasFn(MFn::kMesh)) { return; }
 
     dst.visible = IsVisible(shape);
-    if (!dst.visible) { return true; }
+    if (!dst.visible) { return; }
 
     MFnMesh mmesh(shape);
 
@@ -336,7 +342,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 
     if (!mmesh.object().hasFn(MFn::kMesh)) {
         // return empty mesh
-        return true;
+        return;
     }
 
     MFnMesh fn_src_mesh(mmesh.object());
@@ -366,7 +372,7 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         MFloatPointArray points;
         if (fn_src_mesh.getPoints(points) != MStatus::kSuccess) {
             // return empty mesh
-            return true;
+            return;
         }
 
         auto len = points.length();
@@ -680,24 +686,20 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         MDagPathArray joint_paths;
         auto num_joints = fn_skin.influenceObjects(joint_paths);
 
-        {
-            std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
-            for (uint32_t ij = 0; ij < num_joints; ij++) {
-                auto joint = joint_paths[ij].node();
-                notifyUpdateTransform(joint, true);
+        for (uint32_t ij = 0; ij < num_joints; ij++) {
+            auto joint = joint_paths[ij].node();
 
-                auto bone = new ms::BoneData();
-                bone->path = GetPath(joint);
-                if (dst.bones.empty())
-                    dst.root_bone = GetRootPath(joint);
-                dst.bones.emplace_back(bone);
+            auto bone = new ms::BoneData();
+            bone->path = GetPath(joint);
+            if (dst.bones.empty())
+                dst.root_bone = GetRootPath(joint);
+            dst.bones.emplace_back(bone);
 
-                MObject matrix_obj;
-                auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
-                plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
-                MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
-                bone->bindpose.assign(bindpose[0]);
-            }
+            MObject matrix_obj;
+            auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
+            plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
+            MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
+            bone->bindpose.assign(bindpose[0]);
         }
 
         // get weights
@@ -722,5 +724,4 @@ bool MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 
     dst.setupFlags();
-    return true;
 }

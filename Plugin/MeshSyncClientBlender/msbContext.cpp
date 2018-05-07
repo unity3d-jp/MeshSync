@@ -116,55 +116,55 @@ int msbContext::getMaterialIndex(const Material *mat)
     return 0;
 }
 
-void msbContext::extractTransformData(ms::TransformPtr dst, Object *src)
+void msbContext::extractTransformData(ms::Transform& dst, Object *src)
 {
-    extract_local_TRS(src, dst->position, dst->rotation, dst->scale);
-    dst->visible = is_visible(src);
+    extract_local_TRS(src, dst.position, dst.rotation, dst.scale);
+    dst.visible = is_visible(src);
 }
 
-void msbContext::extractCameraData(ms::CameraPtr dst, Object *src)
+void msbContext::extractCameraData(ms::Camera& dst, Object *src)
 {
     extractTransformData(dst, src);
-    dst->rotation *= rotateX(90.0f * Deg2Rad);
+    dst.rotation *= rotateX(90.0f * Deg2Rad);
 
     auto data = (Camera*)src->data;
-    dst->is_ortho = data->type == CAM_ORTHO;
-    dst->near_plane = data->clipsta;
-    dst->far_plane = data->clipend;
-    dst->fov = bl::BCamera(data).fov() * mu::Rad2Deg;
+    dst.is_ortho = data->type == CAM_ORTHO;
+    dst.near_plane = data->clipsta;
+    dst.far_plane = data->clipend;
+    dst.fov = bl::BCamera(data).fov() * mu::Rad2Deg;
 }
 
-void msbContext::extractLightData(ms::LightPtr dst, Object *src)
+void msbContext::extractLightData(ms::Light& dst, Object *src)
 {
     extractTransformData(dst, src);
-    dst->rotation *= rotateX(90.0f * mu::Deg2Rad);
+    dst.rotation *= rotateX(90.0f * mu::Deg2Rad);
 
     auto data = (Lamp*)src->data;
-    dst->color = (float4&)data->r;
-    dst->intensity = data->energy;
-    dst->range = data->dist;
+    dst.color = (float4&)data->r;
+    dst.intensity = data->energy;
+    dst.range = data->dist;
 
     switch (data->type) {
     case LA_LOCAL:
-        dst->type = ms::Light::Type::Point;
+        dst.type = ms::Light::Type::Point;
         break;
     case LA_SUN:
-        dst->type = ms::Light::Type::Directional;
+        dst.type = ms::Light::Type::Directional;
         break;
     case LA_SPOT:
-        dst->type = ms::Light::Type::Spot;
-        dst->spot_angle = data->spotsize * mu::Rad2Deg;
+        dst.type = ms::Light::Type::Spot;
+        dst.spot_angle = data->spotsize * mu::Rad2Deg;
         break;
     case LA_HEMI: break;
     case LA_AREA:
-        dst->type = ms::Light::Type::Area;
+        dst.type = ms::Light::Type::Area;
         break;
     default:
         break;
     }
 }
 
-void msbContext::extractMeshData(ms::MeshPtr dst, Object *src)
+void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
 {
     // ignore particles
     if (find_modofier(src, eModifierType_ParticleSystem) || find_modofier(src, eModifierType_ParticleInstance))
@@ -182,7 +182,7 @@ void msbContext::extractMeshData(ms::MeshPtr dst, Object *src)
             auto bm = bmesh.ptr()->edit_btmesh->bm;
             if (bm->elem_table_dirty) {
                 // mesh is editing and dirty. just add to pending list
-                dst->clear();
+                dst.clear();
                 m_pending.insert(src);
                 return;
             }
@@ -192,8 +192,8 @@ void msbContext::extractMeshData(ms::MeshPtr dst, Object *src)
 
     extractTransformData(dst, src);
 
-    auto task = [this, dst, src]() {
-        doExtractMeshData(*dst, src);
+    auto task = [this, &dst, src]() {
+        doExtractMeshData(dst, src);
     };
 #ifdef msDebug
     // force single-threaded
@@ -221,7 +221,7 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
     m_added.insert(src);
 
     auto ret = addTransform(get_path(src));
-    extractTransformData(ret, src);
+    extractTransformData(*ret, src);
 
     auto poses = bl::list_range((bPoseChannel*)src->pose->chanbase.first);
     for (auto pose : poses)
@@ -579,7 +579,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
         exportObject(obj->parent, true);
         if (m_settings.sync_meshes) {
             auto dst = addMesh(get_path(obj));
-            extractMeshData(dst, obj);
+            extractMeshData(*dst, obj);
             ret = dst;
         }
         break;
@@ -589,7 +589,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
         exportObject(obj->parent, true);
         if (m_settings.sync_cameras) {
             auto dst = addCamera(get_path(obj));
-            extractCameraData(dst, obj);
+            extractCameraData(*dst, obj);
             ret = dst;
         }
         break;
@@ -599,7 +599,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
         exportObject(obj->parent, true);
         if (m_settings.sync_lights) {
             auto dst = addLight(get_path(obj));
-            extractLightData(dst, obj);
+            extractLightData(*dst, obj);
             ret = dst;
         }
         break;
@@ -609,7 +609,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
         if (obj->dup_group || force) {
             exportObject(obj->parent, true);
             ret = addTransform(get_path(obj));
-            extractTransformData(ret, obj);
+            extractTransformData(*ret, obj);
         }
         break;
     }
@@ -629,7 +629,7 @@ ms::TransformPtr msbContext::exportReference(Object * obj, const std::string & b
 
     auto dst = addTransform(path);
     dst->reference = local_path;
-    extractTransformData(dst, obj);
+    extractTransformData(*dst, obj);
     exportDupliGroup(obj, path);
     each_child(obj, [this, &path](Object *child) {
         exportReference(child, path);
