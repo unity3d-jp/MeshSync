@@ -26,6 +26,14 @@ void MeshSyncClientMaya::extractSceneData()
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
+    auto task = [this, &dst, src]() {
+        doExtractTransformData(dst, src);
+    };
+    m_extract_tasks.push_back(task);
+}
+
+void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src)
+{
     MFnTransform mtrans(src);
 
     MStatus stat;
@@ -161,7 +169,15 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 
 void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
-    extractTransformData(dst, src);
+    auto task = [this, &dst, src]() {
+        doExtractCameraData(dst, src);
+    };
+    m_extract_tasks.push_back(task);
+}
+
+void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
+{
+    doExtractTransformData(dst, src);
     dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
@@ -273,7 +289,15 @@ void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 
 void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 {
-    extractTransformData(dst, src);
+    auto task = [this, &dst, src]() {
+        doExtractLightData(dst, src);
+    };
+    m_extract_tasks.push_back(task);
+}
+
+void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
+{
+    doExtractTransformData(dst, src);
     dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
@@ -289,6 +313,10 @@ void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
     else if (shape.hasFn(MFn::kPointLight)) {
         MFnPointLight mlight(shape);
         dst.type = ms::Light::Type::Point;
+    }
+    else if (shape.hasFn(MFn::kAreaLight)) {
+        MFnAreaLight mlight(shape);
+        dst.type = ms::Light::Type::Area;
     }
     else {
         return;
@@ -348,14 +376,12 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     auto task = [this, &dst, src]() {
         doExtractMeshData(dst, src);
     };
-
-    //task();
     m_extract_tasks.push_back(task);
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
 {
-    extractTransformData(dst, src);
+    doExtractTransformData(dst, src);
 
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return; }

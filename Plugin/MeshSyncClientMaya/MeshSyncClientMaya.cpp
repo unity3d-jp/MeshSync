@@ -39,19 +39,17 @@ static void OnNodeRemoved(MObject& node, void *_this)
 
 static void OnTransformUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
-    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
+    if (msg == MNodeMessage::kAttributeEval) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateTransform(plug.node());
 }
 
 static void OnCameraUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
-    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateCamera(plug.node());
 }
 
 static void OnLightUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
-    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateLight(plug.node());
 }
 

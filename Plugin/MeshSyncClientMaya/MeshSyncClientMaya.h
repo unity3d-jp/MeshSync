@@ -85,8 +85,11 @@ private:
 
     void extractSceneData();
     void extractTransformData(ms::Transform& dst, MObject src);
+    void doExtractTransformData(ms::Transform& dst, MObject src);
     void extractCameraData(ms::Camera& dst, MObject src);
+    void doExtractCameraData(ms::Camera& dst, MObject src);
     void extractLightData(ms::Light& dst, MObject src);
+    void doExtractLightData(ms::Light& dst, MObject src);
     void extractMeshData(ms::Mesh& dst, MObject src);
     void doExtractMeshData(ms::Mesh& dst, MObject src);
     void kickAsyncSend();
