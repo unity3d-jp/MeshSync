@@ -1435,6 +1435,76 @@ namespace UTJ.MeshSync
         }
 
 
+
+
+        public struct ConstraintData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern ConstraintType msConstraintGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msConstraintGetNumSources(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msConstraintGetSource(IntPtr _this, int i);
+            #endregion
+
+            public enum ConstraintType
+            {
+                Unknown,
+                Aim,
+                Parent,
+                Position,
+                Rotation,
+                Scale,
+            }
+
+            public static explicit operator ConstraintData(IntPtr v)
+            {
+                ConstraintData ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public ConstraintType type { get { return msConstraintGetType(_this); } }
+            public int numSources { get { return msConstraintGetNumSources(_this); } }
+
+            string GetSource(int i) { return S(msConstraintGetSource(_this, i)); }
+        }
+
+        public struct AimConstraintData
+        {
+            #region internal
+            internal IntPtr _this;
+            #endregion
+
+
+            public static explicit operator AimConstraintData(ConstraintData v)
+            {
+                AimConstraintData ret;
+                ret._this = v._this;
+                return ret;
+            }
+        }
+
+        public struct ParentConstraintData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern Vector3 msParentConstraintGetPositionOffset(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Quaternion msParentConstraintGetRotationOffset(IntPtr _this);
+            #endregion
+
+
+            public static explicit operator ParentConstraintData(ConstraintData v)
+            {
+                ParentConstraintData ret;
+                ret._this = v._this;
+                return ret;
+            }
+            public Vector3 positionOffset { get { return msParentConstraintGetPositionOffset(_this); } }
+            public Quaternion rotationOffset { get { return msParentConstraintGetRotationOffset(_this); } }
+        }
+
+
+
         public struct SceneData
         {
             #region internal

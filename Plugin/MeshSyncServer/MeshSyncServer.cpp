@@ -759,6 +759,27 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num
     _this->frames.push_back(std::move(frame));
 }
 
+msAPI ms::Constraint::TypeID msConstraintGetType(ms::Constraint *_this)
+{
+    return _this->getTypeID();
+}
+msAPI int msConstraintGetNumSources(ms::Constraint *_this)
+{
+    return (int)_this->source_paths.size();
+}
+msAPI const char* msConstraintGetSource(ms::Constraint *_this, int i)
+{
+    return _this->source_paths[i].c_str();
+}
+
+msAPI float3 msParentConstraintGetPositionOffset(ms::ParentConstraint *_this)
+{
+    return _this->position_offset;
+}
+msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this)
+{
+    return _this->rotation_offset;
+}
 
 msAPI const char* msSceneGetName(ms::Scene *_this)
 {
