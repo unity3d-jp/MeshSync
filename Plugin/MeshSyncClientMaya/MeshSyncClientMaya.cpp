@@ -226,16 +226,8 @@ void MeshSyncClientMaya::removeNodeCallbacks()
 
 int MeshSyncClientMaya::getMaterialID(MUuid uid)
 {
-    auto i = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
-    if (i != m_material_id_table.end()) {
-        return (int)std::distance(m_material_id_table.begin(), i);
-    }
-    else {
-        mscTrace("MeshSyncClientMaya::getMaterialID(): new ID\n");
-        int id = (int)m_material_id_table.size();
-        m_material_id_table.push_back(uid);
-        return id;
-    }
+    auto it = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
+    return it != m_material_id_table.end() ? (int)std::distance(m_material_id_table.begin(), it) : -1;
 }
 
 ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
@@ -379,7 +371,6 @@ bool MeshSyncClientMaya::send(SendScope scope)
     }
 
     if (num_exported > 0 || !m_deleted.empty()) {
-        extractSceneData();
         kickAsyncSend();
         return true;
     }
@@ -448,6 +439,8 @@ void MeshSyncClientMaya::kickAsyncSend()
         });
         m_extract_tasks.clear();
     }
+
+    m_material_id_table.clear();
 
     for (auto& kvp : m_records) {
         auto& rec = kvp.second;

@@ -1503,6 +1503,48 @@ namespace UTJ.MeshSync
             public Quaternion rotationOffset { get { return msParentConstraintGetRotationOffset(_this); } }
         }
 
+        public struct PositionConstraintData
+        {
+            #region internal
+            internal IntPtr _this;
+            #endregion
+
+            public static explicit operator PositionConstraintData(ConstraintData v)
+            {
+                PositionConstraintData ret;
+                ret._this = v._this;
+                return ret;
+            }
+        }
+
+        public struct RotationConstraintData
+        {
+            #region internal
+            internal IntPtr _this;
+            #endregion
+
+            public static explicit operator RotationConstraintData(ConstraintData v)
+            {
+                RotationConstraintData ret;
+                ret._this = v._this;
+                return ret;
+            }
+        }
+
+        public struct ScaleConstructionData
+        {
+            #region internal
+            internal IntPtr _this;
+            #endregion
+
+            public static explicit operator ScaleConstructionData(ConstraintData v)
+            {
+                ScaleConstructionData ret;
+                ret._this = v._this;
+                return ret;
+            }
+        }
+
 
 
         public struct SceneData

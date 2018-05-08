@@ -82,8 +82,8 @@ private:
     int getMaterialID(MUuid uid);
 
     ms::TransformPtr exportObject(MObject obj, bool force);
+    void exportMaterials();
 
-    void extractSceneData();
     void extractTransformData(ms::Transform& dst, MObject src);
     void doExtractTransformData(ms::Transform& dst, MObject src);
     void extractCameraData(ms::Camera& dst, MObject src);

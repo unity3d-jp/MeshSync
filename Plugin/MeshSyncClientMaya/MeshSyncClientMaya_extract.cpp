@@ -5,22 +5,22 @@
 #include "Commands.h"
 
 
-void MeshSyncClientMaya::extractSceneData()
+void MeshSyncClientMaya::exportMaterials()
 {
-    // materials
-    {
-        MItDependencyNodes it(MFn::kLambert);
-        while (!it.isDone()) {
-            MFnLambertShader fn(it.item());
+    m_material_id_table.clear();
 
-            auto tmp = new ms::Material();
-            tmp->name = fn.name().asChar();
-            tmp->color = to_float4(fn.color());
-            tmp->id = getMaterialID(fn.uuid());
-            m_client_materials.emplace_back(tmp);
+    MItDependencyNodes it(MFn::kLambert);
+    while (!it.isDone()) {
+        MFnLambertShader fn(it.item());
 
-            it.next();
-        }
+        auto tmp = new ms::Material();
+        tmp->name = fn.name().asChar();
+        tmp->color = to_float4(fn.color());
+        tmp->id = (int)m_material_id_table.size();
+        m_material_id_table.push_back(fn.uuid());
+        m_client_materials.emplace_back(tmp);
+
+        it.next();
     }
 }
 
@@ -373,6 +373,10 @@ void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
 
 void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
 {
+    if (m_material_id_table.empty()) {
+        exportMaterials();
+    }
+
     auto task = [this, &dst, src]() {
         doExtractMeshData(dst, src);
     };
