@@ -36,6 +36,7 @@
 //#define _MApiVersion
 #include <maya/MAnimControl.h>
 #include <maya/MGlobal.h>
+#include <maya/MDistance.h>
 #include <maya/MSelectionList.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>

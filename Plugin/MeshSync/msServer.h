@@ -31,7 +31,7 @@ public:
     void stop();
     ServerSettings& getSettings();
 
-    using MessageHandler = std::function<void(MessageType type, const Message& data)>;
+    using MessageHandler = std::function<void(Message::Type type, const Message& data)>;
     int getNumMessages() const;
     int processMessages(const MessageHandler& handler);
 

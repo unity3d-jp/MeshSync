@@ -161,27 +161,27 @@ int Server::processMessages(const MessageHandler& handler)
     for (auto& p : m_recv_history) {
         if (auto *get = dynamic_cast<GetMessage*>(p.get())) {
             m_current_get_request = get;
-            handler(MessageType::Get, *p);
+            handler(Message::Type::Get, *p);
             m_current_get_request = nullptr;
         }
         else if (auto *set = dynamic_cast<SetMessage*>(p.get())) {
-            handler(MessageType::Set, *set);
+            handler(Message::Type::Set, *set);
         }
         else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
-            handler(MessageType::Delete, *p);
+            handler(Message::Type::Delete, *p);
             for (auto& id : del->targets) {
                 m_client_meshes.erase(id.path);
             }
         }
         else if (dynamic_cast<FenceMessage*>(p.get())) {
-            handler(MessageType::Fence, *p);
+            handler(Message::Type::Fence, *p);
         }
         else if (dynamic_cast<TextMessage*>(p.get())) {
-            handler(MessageType::Text, *p);
+            handler(Message::Type::Text, *p);
         }
         else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
             m_current_screenshot_request = shot;
-            handler(MessageType::Screenshot, *p);
+            handler(Message::Type::Screenshot, *p);
         }
     }
 

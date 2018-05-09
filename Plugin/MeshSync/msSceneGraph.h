@@ -476,29 +476,20 @@ using ScenePtr = std::shared_ptr<Scene>;
 
 
 
-enum class MessageType
-{
-    Unknown,
-    Get,
-    Set,
-    Delete,
-    Fence,
-    Text,
-    Screenshot,
-};
-
-enum class SenderType
-{
-    Unknown,
-    Unity,
-    Metasequoia,
-};
-
-
-
 class Message
 {
 public:
+    enum class Type
+    {
+        Unknown,
+        Get,
+        Set,
+        Delete,
+        Fence,
+        Text,
+        Screenshot,
+    };
+
     virtual ~Message();
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;

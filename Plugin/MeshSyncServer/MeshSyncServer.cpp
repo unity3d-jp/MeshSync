@@ -40,7 +40,7 @@ msAPI int msServerGetNumMessages(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::MessageType type, const ms::Message& data) {
+    return server->processMessages([handler](ms::Message::Type type, const ms::Message& data) {
         handler(type, &data);
     });
 }

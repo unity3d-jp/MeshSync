@@ -415,7 +415,7 @@ void MeshSyncClientMaya::onSceneUpdated()
 
 void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
-    send(SendScope::All);
+    m_scene_updated = true;
     mscTrace("MeshSyncClientMaya::onTimeChange()\n");
 }
 
@@ -447,13 +447,20 @@ void MeshSyncClientMaya::kickAsyncSend()
         rec.added = rec.dirty_shape = rec.dirty_transform = false;
     }
 
-    m_future_send = std::async(std::launch::async, [this]() {
+    float to_meter = 1.0f;
+    {
+        MDistance dist;
+        dist.setValue(1.0f);
+        to_meter = (float)dist.asMeters();
+    }
+
+    m_future_send = std::async(std::launch::async, [this, to_meter]() {
         mscTrace("MeshSyncClientMaya::kickAsyncSend(): kicked\n");
         ms::Client client(m_settings.client_settings);
 
         ms::SceneSettings scene_settings;
         scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = m_settings.scale_factor;
+        scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
         // notify scene begin
         {
