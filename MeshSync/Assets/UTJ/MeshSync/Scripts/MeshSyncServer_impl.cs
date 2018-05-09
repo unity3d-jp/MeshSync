@@ -1442,6 +1442,7 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern ConstraintType msConstraintGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msConstraintGetPath(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msConstraintGetNumSources(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern IntPtr msConstraintGetSource(IntPtr _this, int i);
             #endregion
@@ -1464,9 +1465,10 @@ namespace UTJ.MeshSync
             }
 
             public ConstraintType type { get { return msConstraintGetType(_this); } }
+            public string path { get { return S(msConstraintGetPath(_this)); } }
             public int numSources { get { return msConstraintGetNumSources(_this); } }
 
-            string GetSource(int i) { return S(msConstraintGetSource(_this, i)); }
+            public string GetSourcePath(int i) { return S(msConstraintGetSource(_this, i)); }
         }
 
         public struct AimConstraintData
@@ -1562,6 +1564,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr _this, int i);
             #endregion
 
             public string name { get { return S(msSceneGetName(_this)); } }
@@ -1570,12 +1574,14 @@ namespace UTJ.MeshSync
             public int numLights { get { return msSceneGetNumLights(_this); } }
             public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
+            public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
 
             public TransformData GetTransform(int i) { return msSceneGetTransformData(_this, i); }
             public CameraData GetCamera(int i) { return msSceneGetCameraData(_this, i); }
             public LightData GetLight(int i) { return msSceneGetLightData(_this, i); }
             public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
+            public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
         }
 
 

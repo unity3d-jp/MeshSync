@@ -14,6 +14,7 @@
 
 namespace ms {
 
+
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
@@ -455,6 +456,10 @@ struct SceneSettings
     void deserialize(std::istream& is);
 };
 
+
+class Constraint;
+using ConstraintPtr = std::shared_ptr<Constraint>;
+
 struct Scene : public std::enable_shared_from_this<Scene>
 {
 public:
@@ -464,6 +469,7 @@ public:
     std::vector<CameraPtr>    cameras;
     std::vector<LightPtr>     lights;
     std::vector<MaterialPtr>  materials;
+    std::vector<ConstraintPtr> constraints;
 
 public:
     uint32_t getSerializeSize() const;

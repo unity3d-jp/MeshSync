@@ -759,9 +759,13 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num
     _this->frames.push_back(std::move(frame));
 }
 
-msAPI ms::Constraint::TypeID msConstraintGetType(ms::Constraint *_this)
+msAPI ms::Constraint::Type msConstraintGetType(ms::Constraint *_this)
 {
     return _this->getTypeID();
+}
+msAPI const char* msConstraintGetPath(ms::Constraint *_this)
+{
+    return _this->path.c_str();
 }
 msAPI int msConstraintGetNumSources(ms::Constraint *_this)
 {
@@ -824,4 +828,12 @@ msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 msAPI ms::Material* msSceneGetMaterialData(ms::Scene *_this, int i)
 {
     return _this->materials[i].get();
+}
+msAPI int msSceneGetNumConstraints(ms::Scene *_this)
+{
+    return (int)_this->constraints.size();
+}
+msAPI ms::Constraint* msSceneGetConstraintData(ms::Scene *_this, int i)
+{
+    return _this->constraints[i].get();
 }

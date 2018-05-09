@@ -1,5 +1,4 @@
 namespace ms {
-namespace {
 
 template<class T>
 struct ssize_impl
@@ -31,8 +30,15 @@ struct read_impl
 DefSpecialize(BlendShapeData::Frame)
 DefSpecialize(Material)
 DefSpecialize(DeleteMessage::Identifier)
-
 #undef DefSpecialize
+
+template<> struct read_impl<std::shared_ptr<Constraint>>
+{
+    void operator()(std::istream& is, std::shared_ptr<Constraint>& v) {
+        v.reset(Constraint::make(is));
+    }
+};
+
 
 
 template<class T>
@@ -184,8 +190,7 @@ struct read_impl<std::vector<std::shared_ptr<T>>>
         is.read((char*)&size, 4);
         v.resize(size);
         for (auto& e : v) {
-            e.reset(new T);
-            e->deserialize(is);
+            read_impl<std::shared_ptr<T>>()(is, e);
         }
     }
 };
@@ -212,5 +217,5 @@ template<class T> inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v);
 template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
-} // namespace
+
 } // namespace ms

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Animations;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -278,6 +279,16 @@ namespace UTJ.MeshSync
                     UpdateMesh(scene.GetMesh(i));
             }
             catch (Exception e) { Debug.Log(e); }
+
+#if UNITY_2018_1_OR_NEWER
+            try
+            {
+                int numConstraints = scene.numConstraints;
+                for (int i = 0; i < numConstraints; ++i)
+                    UpdateConstraint(scene.GetConstraint(i));
+            }
+            catch (Exception e) { Debug.Log(e); }
+#endif
 
             // update references
             {
@@ -793,6 +804,72 @@ namespace UTJ.MeshSync
             if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
             lt.enabled = data.transform.visible;
             return lt;
+        }
+
+        T GetOrAddComponent<T>(GameObject go) where T : Component
+        {
+            var ret = go.GetComponent<T>();
+            if (ret == null)
+                ret = go.AddComponent<T>();
+            return ret;
+        }
+
+        void UpdateConstraint(ConstraintData data)
+        {
+#if UNITY_2018_1_OR_NEWER
+            bool dummy = false;
+            var trans = FindOrCreateObjectByPath(data.path, false, ref dummy);
+            if (trans == null)
+                return;
+
+            Action<IConstraint> basicSetup = (c) =>
+            {
+                int ns = data.numSources;
+                while(c.sourceCount < ns)
+                    c.AddSource(new ConstraintSource());
+                for (int si = 0; si < ns; ++si)
+                {
+                    var s = c.GetSource(si);
+                    s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), false, ref dummy);
+                }
+            };
+
+            switch (data.type)
+            {
+                case ConstraintData.ConstraintType.Aim:
+                    {
+                        var c = GetOrAddComponent<AimConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Parent:
+                    {
+                        var c = GetOrAddComponent<ParentConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Position:
+                    {
+                        var c = GetOrAddComponent<PositionConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Rotation:
+                    {
+                        var c = GetOrAddComponent<RotationConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Scale:
+                    {
+                        var c = GetOrAddComponent<ScaleConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                default:
+                    break;
+            }
+#endif
         }
 
         public void ReassignMaterials()

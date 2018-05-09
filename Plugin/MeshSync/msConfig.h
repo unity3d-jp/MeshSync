@@ -1,6 +1,6 @@
 #pragma once
 
-#define msProtocolVersion 107
+#define msProtocolVersion 108
 //#define msEnableProfiling
 
 

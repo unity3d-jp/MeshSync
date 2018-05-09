@@ -1,47 +1,74 @@
 #include "pch.h"
 #include "msSceneGraph.h"
-#include "msSceneGraphImpl.h"
 #include "msConstraints.h"
+#include "msSceneGraphImpl.h"
 
 namespace ms
 {
+
+Constraint* Constraint::make(std::istream & is)
+{
+    Constraint *ret = nullptr;
+
+    int type;
+    read(is, type);
+    switch ((Type)type) {
+    case Type::Aim: ret = new AimConstraint(); break;
+    case Type::Parent: ret = new ParentConstraint(); break;
+    case Type::Position: ret = new PositionConstraint(); break;
+    case Type::Rotation: ret = new RotationConstraint(); break;
+    case Type::Scale: ret = new ScaleConstraint(); break;
+    }
+    if (ret) {
+        ret->deserialize(is);
+    }
+    return ret;
+}
 
 Constraint::~Constraint()
 {
 }
 
-Constraint::TypeID Constraint::getTypeID() const
+Constraint::Type Constraint::getTypeID() const
 {
-    return TypeID::Unknown;
+    return Type::Unknown;
 }
 
 uint32_t Constraint::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += sizeof(int);
+    ret += ssize(path);
     ret += ssize(source_paths);
     return ret;
 }
 
 void Constraint::serialize(std::ostream& os) const
 {
+    int type = (int)getTypeID();
+    write(os, &type);
+    write(os, path);
     write(os, source_paths);
 }
 
 void Constraint::deserialize(std::istream& is)
 {
+    // type is read by make()
+    read(is, path);
     read(is, source_paths);
 }
 
 void Constraint::clear()
 {
+    path.clear();
     source_paths.clear();
 }
 
 
 
-Constraint::TypeID AimConstraint::getTypeID() const
+Constraint::Type AimConstraint::getTypeID() const
 {
-    return TypeID::Aim;
+    return Type::Aim;
 }
 
 uint32_t AimConstraint::getSerializeSize() const
@@ -67,9 +94,9 @@ void AimConstraint::clear()
 
 
 
-Constraint::TypeID ParentConstraint::getTypeID() const
+Constraint::Type ParentConstraint::getTypeID() const
 {
-    return TypeID::Parent;
+    return Type::Parent;
 }
 
 uint32_t ParentConstraint::getSerializeSize() const
@@ -103,9 +130,9 @@ void ParentConstraint::clear()
 
 
 
-Constraint::TypeID PositionConstraint::getTypeID() const
+Constraint::Type PositionConstraint::getTypeID() const
 {
-    return TypeID::Position;
+    return Type::Position;
 }
 
 uint32_t PositionConstraint::getSerializeSize() const
@@ -131,9 +158,9 @@ void PositionConstraint::clear()
 
 
 
-Constraint::TypeID RotationConstraint::getTypeID() const
+Constraint::Type RotationConstraint::getTypeID() const
 {
-    return TypeID::Rotation;
+    return Type::Rotation;
 }
 
 uint32_t RotationConstraint::getSerializeSize() const
@@ -159,9 +186,9 @@ void RotationConstraint::clear()
 
 
 
-Constraint::TypeID ScaleConstraint::getTypeID() const
+Constraint::Type ScaleConstraint::getTypeID() const
 {
-    return TypeID::Scale;
+    return Type::Scale;
 }
 
 uint32_t ScaleConstraint::getSerializeSize() const

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msSceneGraph.h"
+#include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 
 
@@ -1453,6 +1454,7 @@ uint32_t Scene::getSerializeSize() const
     ret += ssize(cameras);
     ret += ssize(lights);
     ret += ssize(materials);
+    ret += ssize(constraints);
     return ret;
 }
 void Scene::serialize(std::ostream& os) const
@@ -1463,6 +1465,7 @@ void Scene::serialize(std::ostream& os) const
     write(os, cameras);
     write(os, lights);
     write(os, materials);
+    write(os, constraints);
 }
 void Scene::deserialize(std::istream& is)
 {
@@ -1472,6 +1475,7 @@ void Scene::deserialize(std::istream& is)
     read(is, cameras);
     read(is, lights);
     read(is, materials);
+    read(is, constraints);
 }
 
 void Scene::clear()
@@ -1481,6 +1485,7 @@ void Scene::clear()
     cameras.clear();
     lights.clear();
     materials.clear();
+    constraints.clear();
 }
 
 } // namespace ms
