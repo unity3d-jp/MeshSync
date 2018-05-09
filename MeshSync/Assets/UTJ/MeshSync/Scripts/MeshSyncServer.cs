@@ -219,6 +219,7 @@ namespace UTJ.MeshSync
             if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
                 SortObjects();
+                GC.Collect();
             }
         }
 
@@ -315,8 +316,6 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-
-            GC.Collect();
         }
 
         void DestroyIfNotAsset(UnityEngine.Object obj)
@@ -444,7 +443,6 @@ namespace UTJ.MeshSync
                         smr.sharedMesh = rec.editMesh;
                         DestroyIfNotAsset(old);
                         old = null;
-                        GC.Collect();
                     }
 
                     if (skinned)

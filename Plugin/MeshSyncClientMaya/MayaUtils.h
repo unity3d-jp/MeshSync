@@ -82,6 +82,15 @@ inline mu::float4 to_float4(const MColor& v)
 {
     return (const mu::float4&)v;
 }
+inline mu::float4x4 to_float4x4(const MMatrix& v)
+{
+    return mu::float4x4{
+        (float)v[0][0], (float)v[0][1], (float)v[0][2], (float)v[0][3],
+        (float)v[1][0], (float)v[1][1], (float)v[1][2], (float)v[1][3],
+        (float)v[2][0], (float)v[2][1], (float)v[2][2], (float)v[2][3],
+        (float)v[3][0], (float)v[3][1], (float)v[3][2], (float)v[3][3],
+    };
+}
 inline mu::quatf to_quatf(const MQuaternion& v)
 {
     return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };

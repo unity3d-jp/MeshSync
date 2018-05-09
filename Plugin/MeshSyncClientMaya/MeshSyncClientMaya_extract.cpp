@@ -61,47 +61,29 @@ void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src
 {
     MFnTransform mtrans(src);
 
-    MStatus stat;
-    MVector pos;
-    MQuaternion rot;
-    double scale[3];
-
     dst.path = GetPath(src);
-    pos = mtrans.getTranslation(MSpace::kTransform, &stat);
-    stat = mtrans.getRotation(rot, MSpace::kTransform);
-    stat = mtrans.getScale(scale);
-    dst.position = to_float3(pos);
-    dst.rotation = to_quatf(rot);
-    dst.scale = to_float3(scale);
     dst.visible_hierarchy = IsVisible(src);
+    {
+        auto plug_wmat = mtrans.findPlug("worldMatrix");
+        if (!plug_wmat.isNull()) {
+            MObject obj_wmat;
+            plug_wmat.elementByLogicalIndex(0).getValue(obj_wmat);
+            auto mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
 
-    // handle joints
-    bool is_joint = src.hasFn(MFn::kJoint);
-    bool segment_scale_compensate = false;
-    mu::quatf rorient = mu::quatf::identity();
-    mu::quatf jorient = mu::quatf::identity();
-    mu::float3 inv_parent_scale = mu::float3::one();
-
-    if (is_joint) {
-        // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_fn_ik_joint_html
-
-        const MFnIkJoint fn_joint(src);
-        fn_joint.getScaleOrientation(rot); rorient = to_quatf(rot);
-        fn_joint.getOrientation(rot); jorient = to_quatf(rot);
-        dst.rotation = rorient * dst.rotation * jorient;
-
-        auto plug_ssc = fn_joint.findPlug("segmentScaleCompensate");
-        if (!plug_ssc.isNull()) {
-            segment_scale_compensate = to_bool(plug_ssc);
-            if (segment_scale_compensate) {
-                auto plug_invscale = fn_joint.findPlug("inverseScale");
-                if (!plug_invscale.isNull()) {
-                    inv_parent_scale = to_float3(plug_invscale);
-                    dst.scale /= inv_parent_scale;
-                }
+            auto plug_pimat = mtrans.findPlug("parentInverseMatrix");
+            if (!plug_pimat.isNull()) {
+                MObject obj_pimat;
+                plug_pimat.elementByLogicalIndex(0).getValue(obj_pimat);
+                auto pimat = to_float4x4(MFnMatrixData(obj_pimat).matrix());
+                mat *= pimat;
             }
+
+            dst.position = extract_position(mat);
+            dst.rotation = extract_rotation(mat);
+            dst.scale = extract_scale(mat);
         }
     }
+
 
     // handle animation
     if (m_settings.sync_animations && MAnimUtil::isAnimated(src)) {
@@ -160,7 +142,6 @@ void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src
         }\
         break;
 
-                    MFnTransform mtrans(src);
                     switch (mtrans.rotationOrder()) {
                         Case(XYZ);
                         Case(YZX);
@@ -171,17 +152,6 @@ void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src
                     default: break;
                     }
 #undef Case
-                }
-            }
-
-            if (is_joint) {
-                for (auto& rot : anim.rotation) {
-                    rot.value = rorient * rot.value * jorient;
-                }
-                if (segment_scale_compensate) {
-                    for (auto& scale : anim.scale) {
-                        scale.value /= inv_parent_scale;
-                    }
                 }
             }
 
@@ -783,8 +753,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
             MObject matrix_obj;
             auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
             plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
-            MMatrix bindpose = MFnMatrixData(matrix_obj).matrix();
-            bone->bindpose.assign(bindpose[0]);
+            bone->bindpose = to_float4x4(MFnMatrixData(matrix_obj).matrix());
         }
 
         // get weights
