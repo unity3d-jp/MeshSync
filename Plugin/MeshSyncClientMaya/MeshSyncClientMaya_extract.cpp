@@ -26,6 +26,31 @@ void MeshSyncClientMaya::exportMaterials()
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
+    if (m_settings.sync_constraints) {
+        EachConstraints(src, [this, &src](MObject& constraint) {
+            if (constraint.hasFn(MFn::kAimConstraint)) {
+                auto dst = new ms::AimConstraint();
+                m_client_constraints.emplace_back(dst);
+                extractConstraintData(*dst, constraint, src);
+            }
+            else if (constraint.hasFn(MFn::kParentConstraint)) {
+                auto dst = new ms::ParentConstraint();
+                m_client_constraints.emplace_back(dst);
+                extractConstraintData(*dst, constraint, src);
+            }
+            else if (constraint.hasFn(MFn::kPointConstraint)) {
+                auto dst = new ms::PositionConstraint();
+                m_client_constraints.emplace_back(dst);
+                extractConstraintData(*dst, constraint, src);
+            }
+            else if (constraint.hasFn(MFn::kScaleConstraint)) {
+                auto dst = new ms::ScaleConstraint();
+                m_client_constraints.emplace_back(dst);
+                extractConstraintData(*dst, constraint, src);
+            }
+        });
+    }
+
     auto task = [this, &dst, src]() {
         doExtractTransformData(dst, src);
     };
@@ -784,4 +809,19 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
     }
 
     dst.setupFlags();
+}
+
+
+void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, MObject src, MObject node)
+{
+    dst.path = GetPath(node);
+
+    auto task = [this, &dst, src, node]() {
+        doExtractConstraintData(dst, src, node);
+    };
+    m_extract_tasks.push_back(task);
+}
+void MeshSyncClientMaya::doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node)
+{
+
 }

@@ -912,6 +912,14 @@ void Mesh::deserialize(std::istream& is)
     if (flags.has_bones) {
         read(is, root_bone);
         read(is, bones);
+
+        {
+            // todo: why does this happen??
+            auto it = std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); });
+            if (it != bones.end()) {
+                bones.erase(it, bones.end());
+            }
+        }
     }
     if (flags.has_blendshapes) {
         read(is, blendshapes);

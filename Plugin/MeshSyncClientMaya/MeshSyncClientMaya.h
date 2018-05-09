@@ -20,6 +20,7 @@ public:
         bool sync_blendshapes = true;
         bool sync_cameras = true;
         bool sync_lights = true;
+        bool sync_constraints = false;
         bool sync_animations = true;
         bool sample_animation = true;
         bool apply_tweak = true;
@@ -92,6 +93,8 @@ private:
     void doExtractLightData(ms::Light& dst, MObject src);
     void extractMeshData(ms::Mesh& dst, MObject src);
     void doExtractMeshData(ms::Mesh& dst, MObject src);
+    void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
+    void doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node);
     void kickAsyncSend();
 
 private:
@@ -108,6 +111,7 @@ private:
     std::vector<ms::LightPtr>       m_client_lights;
     std::vector<ms::MeshPtr>        m_client_meshes;
     std::vector<ms::MaterialPtr>    m_client_materials;
+    std::vector<ms::ConstraintPtr>  m_client_constraints;
     std::vector<std::string>        m_deleted;
     ObjectRecords       m_records;
     std::future<void>   m_future_send;

@@ -1490,8 +1490,8 @@ namespace UTJ.MeshSync
         {
             #region internal
             internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern Vector3 msParentConstraintGetPositionOffset(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern Quaternion msParentConstraintGetRotationOffset(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Vector3 msParentConstraintGetPositionOffset(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern Quaternion msParentConstraintGetRotationOffset(IntPtr _this, int i);
             #endregion
 
 
@@ -1501,8 +1501,8 @@ namespace UTJ.MeshSync
                 ret._this = v._this;
                 return ret;
             }
-            public Vector3 positionOffset { get { return msParentConstraintGetPositionOffset(_this); } }
-            public Quaternion rotationOffset { get { return msParentConstraintGetRotationOffset(_this); } }
+            public Vector3 GetPositionOffset(int i) { return msParentConstraintGetPositionOffset(_this, i); }
+            public Quaternion GetRotationOffset(int i) { return msParentConstraintGetRotationOffset(_this, i); }
         }
 
         public struct PositionConstraintData

@@ -505,6 +505,16 @@ void MeshSyncClientMaya::kickAsyncSend()
         };
         m_client_meshes.clear();
 
+        // send constraints
+        if (!m_client_constraints.empty()) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.constraints = m_client_constraints;
+            client.send(set);
+
+            m_client_constraints.clear();
+        }
+
         // notify scene end
         {
             ms::FenceMessage fence;

@@ -46,7 +46,7 @@ uint32_t Constraint::getSerializeSize() const
 void Constraint::serialize(std::ostream& os) const
 {
     int type = (int)getTypeID();
-    write(os, &type);
+    write(os, type);
     write(os, path);
     write(os, source_paths);
 }
@@ -102,30 +102,26 @@ Constraint::Type ParentConstraint::getTypeID() const
 uint32_t ParentConstraint::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += ssize(position_offset);
-    ret += ssize(rotation_offset);
+    ret += ssize(source_data);
     return ret;
 }
 
 void ParentConstraint::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    write(os, position_offset);
-    write(os, rotation_offset);
+    write(os, source_data);
 }
 
 void ParentConstraint::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    read(is, position_offset);
-    read(is, rotation_offset);
+    read(is, source_data);
 }
 
 void ParentConstraint::clear()
 {
     super::clear();
-    position_offset = float3::zero();
-    rotation_offset = quatf::identity();
+    source_data.clear();
 }
 
 

@@ -124,3 +124,13 @@ inline void EachChild(MObject node, const Body& body)
         body(fn.child(i));
     }
 }
+
+// body: [](MObject&) -> void
+template<class Body>
+void EachConstraints(MObject node, const Body& body)
+{
+    MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);
+    if (!it.isDone()) {
+        body(it.currentItem());
+    }
+}

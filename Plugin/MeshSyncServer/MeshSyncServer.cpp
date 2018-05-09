@@ -776,13 +776,13 @@ msAPI const char* msConstraintGetSource(ms::Constraint *_this, int i)
     return _this->source_paths[i].c_str();
 }
 
-msAPI float3 msParentConstraintGetPositionOffset(ms::ParentConstraint *_this)
+msAPI float3 msParentConstraintGetPositionOffset(ms::ParentConstraint *_this, int i)
 {
-    return _this->position_offset;
+    return _this->source_data[i].position_offset;
 }
-msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this)
+msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this, int i)
 {
-    return _this->rotation_offset;
+    return _this->source_data[i].rotation_offset;
 }
 
 msAPI const char* msSceneGetName(ms::Scene *_this)

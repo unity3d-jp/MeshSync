@@ -54,8 +54,12 @@ class ParentConstraint : public Constraint
 {
 using super = Constraint;
 public:
-    float3 position_offset = float3::zero();
-    quatf rotation_offset = quatf::identity();
+    struct SourceData
+    {
+        float3 position_offset = float3::zero();
+        quatf rotation_offset = quatf::identity();
+    };
+    RawVector<SourceData> source_data;
 
     Type getTypeID() const override;
     uint32_t getSerializeSize() const override;
