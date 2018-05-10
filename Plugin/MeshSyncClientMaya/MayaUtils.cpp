@@ -7,7 +7,7 @@ bool IsVisible(MObject node)
 {
     MFnDagNode dag(node);
     auto vis = dag.findPlug("visibility");
-    bool visible = false;
+    bool visible = true;
     vis.getValue(visible);
     return visible;
 }

@@ -43,6 +43,7 @@ Animation::Type Animation::getType() const
 uint32_t Animation::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += sizeof(int);
     ret += ssize(path);
     return ret;
 }

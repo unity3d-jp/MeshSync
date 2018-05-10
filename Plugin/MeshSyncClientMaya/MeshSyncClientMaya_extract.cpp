@@ -745,6 +745,9 @@ int MeshSyncClientMaya::exportAnimations()
         m_current_time = (float)t.as(MTime::kSeconds);
         m_animation_ctx = MDGContext(t);
 
+        //mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
+        //    kvp.second(this);
+        //});
         for (auto kvp : m_anim_records) {
             kvp.second(this);
         }
@@ -761,34 +764,35 @@ void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
 {
     if (node.isNull())
         return;
-
-    auto& rec = m_anim_records[(void*&)node];
-    if (rec.dst)
+    if (m_anim_records.find((void*&)node) != m_anim_records.end())
         return;
 
-    ms::Animation *dst = nullptr;
+    AnimationRecord rec;
+    {
+        auto parent = GetParent(node);
+        if (!parent.isNull()) {
+            exportAnimation(parent, GetShape(parent));
+        }
+    }
     if (m_settings.sync_cameras && shape.hasFn(MFn::kCamera) && MAnimUtil::isAnimated(shape)) {
-        exportAnimation(GetParent(node), shape);
-        dst = new ms::CameraAnimation();
+        rec.dst = new ms::CameraAnimation();
         rec.extractor = &MeshSyncClientMaya::extractCameraAnimationData;
     }
     else if (m_settings.sync_lights && shape.hasFn(MFn::kLight) && MAnimUtil::isAnimated(shape)) {
-        exportAnimation(GetParent(node), shape);
-        dst = new ms::LightAnimation();
+        rec.dst = new ms::LightAnimation();
         rec.extractor = &MeshSyncClientMaya::extractLightAnimationData;
     }
-    else {
-        exportAnimation(GetParent(node), shape);
-        dst = new ms::TransformAnimation();
+    else if(MAnimUtil::isAnimated(node)) {
+        rec.dst = new ms::TransformAnimation();
         rec.extractor = &MeshSyncClientMaya::extractTransformAnimationData;
     }
 
-    if (dst) {
-        m_client_animations.emplace_back(dst);
-        dst->path = GetPath(node);
+    if (rec.dst) {
+        m_client_animations.emplace_back(rec.dst);
+        rec.dst->path = GetPath(node);
         rec.node = node;
         rec.shape = shape;
-        rec.dst = dst;
+        m_anim_records[(void*&)node] = rec;
     }
 }
 
@@ -806,7 +810,7 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, MObj
     dst.translation.push_back({ m_current_time, pos });
     dst.rotation.push_back({ m_current_time, rot });
     dst.scale.push_back({ m_current_time, scale });
-    dst.visible.push_back({ m_current_time, vis });
+    //dst.visible.push_back({ m_current_time, vis });
 }
 
 void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, MObject node, MObject shape)

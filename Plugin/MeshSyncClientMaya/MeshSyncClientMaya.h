@@ -151,7 +151,8 @@ private:
             (_this->*extractor)(*dst,  node, shape);
         }
     };
-    std::map<void*, AnimationRecord> m_anim_records;
+    using AnimationRecords = std::map<void*, AnimationRecord>;
+    AnimationRecords m_anim_records;
     float m_current_time = 0.0f;
     MDGContext m_animation_ctx;
 };
