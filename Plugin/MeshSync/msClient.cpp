@@ -24,6 +24,7 @@ ScenePtr Client::send(const GetMessage& mes)
             request.setContentLength(mes.getSerializeSize());
             auto& os = session.sendRequest(request);
             mes.serialize(os);
+            os.flush();
         }
 
         {
@@ -50,6 +51,7 @@ bool Client::send(const SetMessage& mes)
         request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
         mes.serialize(os);
+        os.flush();
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
@@ -74,6 +76,7 @@ bool Client::send(const DeleteMessage& mes)
         request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
         mes.serialize(os);
+        os.flush();
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
@@ -98,6 +101,7 @@ bool Client::send(const FenceMessage & mes)
         request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
         mes.serialize(os);
+        os.flush();
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
