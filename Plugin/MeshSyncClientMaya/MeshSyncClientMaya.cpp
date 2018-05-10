@@ -119,11 +119,6 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
 
 void MeshSyncClientMaya::registerNodeCallbacks()
 {
-    //  meshes
-    Enumerate(MFn::kMesh, [this](MObject& shape) {
-        registerNodeCallback(GetTransform(shape));
-    });
-
     // cameras
     Enumerate(MFn::kCamera, [this](MObject& shape) {
         registerNodeCallback(GetTransform(shape));
@@ -137,6 +132,11 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     // joints
     Enumerate(MFn::kJoint, [this](MObject& node) {
         registerNodeCallback(node);
+    });
+
+    //  meshes
+    Enumerate(MFn::kMesh, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
     });
 }
 
@@ -282,6 +282,10 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
         m_client_transforms.emplace_back(dst);
         ret = dst;
     }
+
+    if (ret) {
+        ret->index = rec.index;
+    }
     return ret;
 }
 
@@ -292,6 +296,7 @@ MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject no
         rec.node = node;
         rec.name = GetName(node);
         rec.path = GetPath(node);
+        rec.index = ++m_index_seed;
         mscTrace("MeshSyncClientMaya::addRecord(): %s\n", rec.path.c_str());
     }
     return rec;
@@ -345,10 +350,10 @@ bool MeshSyncClientMaya::send(SendScope scope)
                 ++num_exported;
         };
 
-        Enumerate(MFn::kJoint, exportNode);
-        Enumerate(MFn::kMesh, exportShape);
         Enumerate(MFn::kCamera, exportShape);
         Enumerate(MFn::kLight, exportShape);
+        Enumerate(MFn::kJoint, exportNode);
+        Enumerate(MFn::kMesh, exportShape);
     }
     else if (scope == SendScope::Updated) {
         for (auto& kvp : m_records) {
@@ -416,6 +421,7 @@ void MeshSyncClientMaya::onSceneUpdated()
 void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
     m_scene_updated = true;
+    update();
     mscTrace("MeshSyncClientMaya::onTimeChange()\n");
 }
 

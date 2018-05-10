@@ -134,7 +134,6 @@ namespace UTJ.MeshSync
             if (msServerGetNumMessages(m_server) > 0)
             {
                 msServerProcessMessages(m_server, m_handler);
-                ForceRepaint();
             }
         }
 
@@ -177,9 +176,6 @@ namespace UTJ.MeshSync
             }
             msServerEndServe(m_server);
 
-#if UNITY_EDITOR
-            Undo.RecordObject(this, "MeshSyncServer");
-#endif
             //Debug.Log("MeshSyncServer: Get");
         }
 
@@ -218,7 +214,33 @@ namespace UTJ.MeshSync
         {
             if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
-                SortObjects();
+                // sort objects by index
+                {
+                    var rec = m_clientObjects.Values.OrderBy(v => v.index);
+                    foreach (var r in rec)
+                    {
+                        if (r.go != null)
+                        {
+                            r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
+                        }
+                    }
+                }
+
+                // force recalculate skinning
+                foreach (var rec in m_clientObjects)
+                {
+                    if(rec.Value.editMesh)
+                    {
+                        var go = rec.Value.go;
+                        if(go.activeInHierarchy)
+                        {
+                            go.SetActive(false); // 
+                            go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                        }
+                    }
+                }
+
+                ForceRepaint();
                 GC.Collect();
             }
         }
@@ -230,9 +252,6 @@ namespace UTJ.MeshSync
 
         void OnRecvSet(SetMessage mes)
         {
-#if UNITY_EDITOR
-            Undo.RecordObject(this, "MeshSyncServer");
-#endif
             var scene = mes.scene;
 
             // sync materials
@@ -440,7 +459,7 @@ namespace UTJ.MeshSync
                 {
                     {
                         var old = smr.sharedMesh;
-                        smr.sharedMesh = rec.editMesh;
+                        smr.sharedMesh = null;
                         DestroyIfNotAsset(old);
                         old = null;
                     }
@@ -491,6 +510,8 @@ namespace UTJ.MeshSync
                         if (rec.editMesh != null)
                             smr.localBounds = rec.editMesh.bounds;
                     }
+
+                    smr.sharedMesh = rec.editMesh;
                     smr.updateWhenOffscreen = updateWhenOffscreen;
 
                     if (flags.hasBlendshapes)
@@ -516,12 +537,6 @@ namespace UTJ.MeshSync
                 var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
                 if (t == null) { break; }
                 DestroyImmediate(t.gameObject);
-            }
-
-            if (activeInHierarchy)
-            {
-                rec.go.SetActive(false); // 
-                rec.go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
             }
 
             // assign materials if needed
@@ -632,18 +647,6 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
-        void SortObjects()
-        {
-            var rec = m_clientObjects.Values.OrderBy(v => v.index);
-            foreach(var r in rec)
-            {
-                if(r.go != null)
-                {
-                    r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
-                }
-            }
-        }
-
         void CreateAsset(UnityEngine.Object obj, string path)
         {
 #if UNITY_EDITOR
@@ -704,9 +707,6 @@ namespace UTJ.MeshSync
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
-#if UNITY_EDITOR
-            Undo.RecordObject(trans, "MeshSync");
-#endif
 
             // import TRS
             trans.localPosition = data.position;
@@ -939,9 +939,6 @@ namespace UTJ.MeshSync
 
                 if(changed)
                 {
-#if UNITY_EDITOR
-                    //Undo.RecordObjects( new UnityEngine.Object[] { this, r }, "Update Materials");
-#endif
                     r.sharedMaterials = materials;
                 }
             }
@@ -1021,9 +1018,6 @@ namespace UTJ.MeshSync
             if (createIfNotExist && ret == null)
             {
                 var go = new GameObject();
-#if UNITY_EDITOR
-                Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
-#endif
                 go.name = name;
                 ret = go.GetComponent<Transform>();
                 if (parent != null)

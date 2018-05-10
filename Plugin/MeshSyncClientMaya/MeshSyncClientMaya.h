@@ -66,6 +66,7 @@ private:
         std::string path;
         MCallbackId cid_trans = 0;
         MCallbackId cid_shape = 0;
+        int index = 0;
         bool dirty_transform = true;
         bool dirty_shape = true;
         bool added = false;
@@ -121,4 +122,5 @@ private:
 
     SendScope m_pending_send_scene = SendScope::None;
     bool m_scene_updated = false;
+    int m_index_seed = 0;
 };

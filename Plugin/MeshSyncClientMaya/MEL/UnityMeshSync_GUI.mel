@@ -37,9 +37,9 @@ global proc UnityMeshSync_GUI()
         checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
         checkBox -label "UVs" -value $syncUVs -cc "umsCBSyncUVs" umsCtrlSyncUVs;
         checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
-        checkBox -label "Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
         checkBox -label "Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
         setParent ..;
+    checkBox -label "Sync Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
     checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
     checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
     checkBox -label "Sync Animations" -value $syncAnimations -cc "umsCBSyncAnimations" umsCtrlSyncAnimations;
