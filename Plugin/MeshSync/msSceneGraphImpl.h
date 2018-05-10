@@ -32,6 +32,12 @@ DefSpecialize(Material)
 DefSpecialize(DeleteMessage::Identifier)
 #undef DefSpecialize
 
+template<> struct read_impl<std::shared_ptr<Animation>>
+{
+    void operator()(std::istream& is, std::shared_ptr<Animation>& v) {
+        v.reset(Animation::make(is));
+    }
+};
 template<> struct read_impl<std::shared_ptr<Constraint>>
 {
     void operator()(std::istream& is, std::shared_ptr<Constraint>& v) {

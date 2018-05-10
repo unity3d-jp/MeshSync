@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msSceneGraph.h"
+#include "msAnimation.h"
 #include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 
@@ -161,9 +162,9 @@ Entity::~Entity()
 {
 }
 
-Entity::TypeID Entity::getTypeID() const
+Entity::Type Entity::getType() const
 {
-    return TypeID::Unknown;
+    return Type::Unknown;
 }
 
 uint32_t Entity::getSerializeSize() const
@@ -202,31 +203,6 @@ const char* Entity::getName() const
     return path.c_str() + name_pos;
 }
 
-Animation::~Animation()
-{
-}
-
-uint32_t Animation::getSerializeSize() const
-{
-    return 0;
-}
-
-void Animation::serialize(std::ostream &) const
-{
-}
-
-void Animation::deserialize(std::istream &)
-{
-}
-
-void Animation::clear()
-{
-}
-
-bool Animation::empty() const
-{
-    return true;
-}
 
 
 uint32_t Material::getSerializeSize() const
@@ -252,60 +228,41 @@ void Material::deserialize(std::istream& is)
 
 
 
-struct TransformDataFlags
+Entity::Type Transform::getType() const
 {
-    uint32_t has_animation : 1;
-};
-
-Entity::TypeID Transform::getTypeID() const
-{
-    return TypeID::Transform;
+    return Type::Transform;
 }
 
 uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += sizeof(TransformDataFlags);
     ret += ssize(position);
     ret += ssize(rotation);
     ret += ssize(scale);
     ret += ssize(visible);
     ret += ssize(visible_hierarchy);
     ret += ssize(reference);
-    if (animation) { ret += ssize(animation); }
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
-
-    TransformDataFlags flags = {};
-    flags.has_animation = animation ? 1 : 0;
-    write(os, flags);
     write(os, position);
     write(os, rotation);
     write(os, scale);
     write(os, visible);
     write(os, visible_hierarchy);
     write(os, reference);
-    if (flags.has_animation) { write(os, animation); }
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
-
-    TransformDataFlags flags;
-    read(is, flags);
     read(is, position);
     read(is, rotation);
     read(is, scale);
     read(is, visible);
     read(is, visible_hierarchy);
     read(is, reference);
-    if(flags.has_animation) {
-        createAnimation();
-        animation->deserialize(is);
-    }
 }
 
 void Transform::clear()
@@ -316,7 +273,6 @@ void Transform::clear()
     scale = float3::one();
     visible = visible_hierarchy = true;
     reference.clear();
-    animation.reset();
 }
 
 float4x4 Transform::toMatrix() const
@@ -338,13 +294,6 @@ void Transform::applyMatrix(const float4x4& v)
         assignMatrix(v * toMatrix());
 }
 
-void Transform::createAnimation()
-{
-    if (!animation) {
-        animation.reset(new TransformAnimation());
-    }
-}
-
 void Transform::convertHandedness(bool x, bool yz)
 {
     if (!x && !yz) return;
@@ -352,27 +301,11 @@ void Transform::convertHandedness(bool x, bool yz)
     if (x) {
         position = swap_handedness(position);
         rotation = swap_handedness(rotation);
-        if (animation) {
-            auto& anim = static_cast<TransformAnimation&>(*animation);
-            for (auto& tvp : anim.translation)
-                tvp.value = swap_handedness(tvp.value);
-            for (auto& tvp : anim.rotation)
-                tvp.value = swap_handedness(tvp.value);
-        }
     }
     if (yz) {
         position = swap_yz(position);
         rotation = swap_yz(rotation);
         scale = swap_yz(scale);
-        if (animation) {
-            auto& anim = static_cast<TransformAnimation&>(*animation);
-            for (auto& tvp : anim.translation)
-                tvp.value = swap_yz(tvp.value);
-            for (auto& tvp : anim.rotation)
-                tvp.value = swap_yz(tvp.value);
-            for (auto& tvp : anim.scale)
-                tvp.value = swap_yz(tvp.value);
-        }
     }
 }
 
@@ -381,67 +314,11 @@ void Transform::applyScaleFactor(float v)
     position *= v;
 }
 
-void Transform::addTranslationKey(float t, const float3& v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<TransformAnimation&>(*animation).translation.push_back({ t, v });
-}
-void Transform::addRotationKey(float t, const quatf& v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<TransformAnimation&>(*animation).rotation.push_back({ t, v });
-}
-void Transform::addScaleKey(float t, const float3& v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<TransformAnimation&>(*animation).scale.push_back({ t, v });
-}
 
 
-uint32_t TransformAnimation::getSerializeSize() const
+Entity::Type Camera::getType() const
 {
-    uint32_t ret = 0;
-    ret += ssize(translation);
-    ret += ssize(rotation);
-    ret += ssize(scale);
-    ret += ssize(visible);
-    return ret;
-}
-
-void TransformAnimation::serialize(std::ostream & os) const
-{
-    write(os, translation);
-    write(os, rotation);
-    write(os, scale);
-    write(os, visible);
-}
-
-void TransformAnimation::deserialize(std::istream & is)
-{
-    read(is, translation);
-    read(is, rotation);
-    read(is, scale);
-    read(is, visible);
-}
-
-void TransformAnimation::clear()
-{
-    translation.clear();
-    rotation.clear();
-    scale.clear();
-    visible.clear();
-}
-
-bool TransformAnimation::empty() const
-{
-    return translation.empty() && rotation.empty() && scale.empty() && visible.empty();
-}
-
-
-
-Entity::TypeID Camera::getTypeID() const
-{
-    return TypeID::Camera;
+    return Type::Camera;
 }
 
 uint32_t Camera::getSerializeSize() const
@@ -497,13 +374,6 @@ void Camera::clear()
     focus_distance = 0.0f;
 }
 
-void Camera::createAnimation()
-{
-    if (!animation) {
-        animation.reset(new CameraAnimation());
-    }
-}
-
 void Camera::applyScaleFactor(float v)
 {
     super::applyScaleFactor(v);
@@ -511,96 +381,17 @@ void Camera::applyScaleFactor(float v)
     far_plane *= v;
 }
 
-void Camera::addFovKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).fov.push_back({ t, v });
-}
-void Camera::addNearPlaneKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).near_plane.push_back({ t, v });
-}
-void Camera::addFarPlaneKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).far_plane.push_back({ t, v });
-}
-void Camera::addHorizontalApertureKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).horizontal_aperture.push_back({ t, v });
-}
-void Camera::addVerticalApertureKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).vertical_aperture.push_back({ t, v });
-}
-void Camera::addFocalLengthKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).focal_length.push_back({ t, v });
-}
-void Camera::addFocusDistanceKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<CameraAnimation&>(*animation).focus_distance.push_back({ t, v });
-}
 
 
-uint32_t CameraAnimation::getSerializeSize() const
+Entity::Type Light::getType() const
 {
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(fov);
-    ret += ssize(near_plane);
-    ret += ssize(far_plane);
-    return ret;
-}
-
-void CameraAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    write(os, fov);
-    write(os, near_plane);
-    write(os, far_plane);
-}
-
-void CameraAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    read(is, fov);
-    read(is, near_plane);
-    read(is, far_plane);
-}
-
-void CameraAnimation::clear()
-{
-    super::clear();
-    fov.clear();
-    near_plane.clear();
-    far_plane.clear();
-    horizontal_aperture.clear();
-    vertical_aperture.clear();
-    focal_length.clear();
-    focus_distance.clear();
-}
-
-bool CameraAnimation::empty() const
-{
-    return super::empty() &&
-        fov.empty() && near_plane.empty() && far_plane.empty();
-}
-
-
-Entity::TypeID Light::getTypeID() const
-{
-    return TypeID::Light;
+    return Type::Light;
 }
 
 uint32_t Light::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += ssize(type);
+    ret += ssize(light_type);
     ret += ssize(color);
     ret += ssize(intensity);
     ret += ssize(range);
@@ -611,7 +402,7 @@ uint32_t Light::getSerializeSize() const
 void Light::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    write(os, type);
+    write(os, light_type);
     write(os, color);
     write(os, intensity);
     write(os, range);
@@ -621,7 +412,7 @@ void Light::serialize(std::ostream & os) const
 void Light::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    read(is, type);
+    read(is, light_type);
     read(is, color);
     read(is, intensity);
     read(is, range);
@@ -631,18 +422,11 @@ void Light::deserialize(std::istream & is)
 void Light::clear()
 {
     super::clear();
-    type = Type::Directional;
+    light_type = LightType::Directional;
     color = float4::one();
     intensity = 1.0f;
     range = 0.0f;
     spot_angle = 30.0f;
-}
-
-void Light::createAnimation()
-{
-    if (!animation) {
-        animation.reset(new LightAnimation());
-    }
 }
 
 void Light::applyScaleFactor(float v)
@@ -651,69 +435,6 @@ void Light::applyScaleFactor(float v)
     range *= v;
 }
 
-void Light::addColorKey(float t, const float4& v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<LightAnimation&>(*animation).color.push_back({ t, v });
-}
-void Light::addIntensityKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<LightAnimation&>(*animation).intensity.push_back({ t, v });
-}
-void Light::addRangeKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<LightAnimation&>(*animation).range.push_back({ t, v });
-}
-void Light::addSpotAngleKey(float t, float v)
-{
-    if (!animation) { createAnimation(); }
-    static_cast<LightAnimation&>(*animation).spot_angle.push_back({ t, v });
-}
-
-
-
-uint32_t LightAnimation::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(color);
-    ret += ssize(intensity);
-    ret += ssize(range);
-    ret += ssize(spot_angle);
-    return ret;
-}
-
-void LightAnimation::serialize(std::ostream & os) const
-{
-    write(os, color);
-    write(os, intensity);
-    write(os, range);
-    write(os, spot_angle);
-}
-
-void LightAnimation::deserialize(std::istream & is)
-{
-    read(is, color);
-    read(is, intensity);
-    read(is, range);
-    read(is, spot_angle);
-}
-
-void LightAnimation::clear()
-{
-    super::clear();
-    color.clear();
-    intensity.clear();
-    range.clear();
-    spot_angle.clear();
-}
-
-bool LightAnimation::empty() const
-{
-    return super::empty() &&
-        color.empty() && intensity.empty() && range.empty() && spot_angle.empty();
-}
 
 
 uint32_t BlendShapeData::Frame::getSerializeSize() const
@@ -851,9 +572,9 @@ Mesh::Mesh()
 {
 }
 
-Entity::TypeID Mesh::getTypeID() const
+Entity::Type Mesh::getType() const
 {
-    return TypeID::Mesh;
+    return Type::Mesh;
 }
 
 uint32_t Mesh::getSerializeSize() const
@@ -1462,6 +1183,7 @@ uint32_t Scene::getSerializeSize() const
     ret += ssize(cameras);
     ret += ssize(lights);
     ret += ssize(materials);
+    ret += ssize(animations);
     ret += ssize(constraints);
     return ret;
 }
@@ -1473,6 +1195,7 @@ void Scene::serialize(std::ostream& os) const
     write(os, cameras);
     write(os, lights);
     write(os, materials);
+    write(os, animations);
     write(os, constraints);
 }
 void Scene::deserialize(std::istream& is)
@@ -1483,6 +1206,7 @@ void Scene::deserialize(std::istream& is)
     read(is, cameras);
     read(is, lights);
     read(is, materials);
+    read(is, animations);
     read(is, constraints);
 }
 
@@ -1493,6 +1217,7 @@ void Scene::clear()
     cameras.clear();
     lights.clear();
     materials.clear();
+    animations.clear();
     constraints.clear();
 }
 

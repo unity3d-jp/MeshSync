@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msSceneGraph.h"
+#include "msAnimation.h"
 #include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 
@@ -29,7 +30,7 @@ Constraint::~Constraint()
 {
 }
 
-Constraint::Type Constraint::getTypeID() const
+Constraint::Type Constraint::getType() const
 {
     return Type::Unknown;
 }
@@ -45,7 +46,7 @@ uint32_t Constraint::getSerializeSize() const
 
 void Constraint::serialize(std::ostream& os) const
 {
-    int type = (int)getTypeID();
+    int type = (int)getType();
     write(os, type);
     write(os, path);
     write(os, source_paths);
@@ -53,7 +54,7 @@ void Constraint::serialize(std::ostream& os) const
 
 void Constraint::deserialize(std::istream& is)
 {
-    // type is read by make()
+    // type is consumed by make()
     read(is, path);
     read(is, source_paths);
 }
@@ -66,7 +67,7 @@ void Constraint::clear()
 
 
 
-Constraint::Type AimConstraint::getTypeID() const
+Constraint::Type AimConstraint::getType() const
 {
     return Type::Aim;
 }
@@ -94,7 +95,7 @@ void AimConstraint::clear()
 
 
 
-Constraint::Type ParentConstraint::getTypeID() const
+Constraint::Type ParentConstraint::getType() const
 {
     return Type::Parent;
 }
@@ -126,7 +127,7 @@ void ParentConstraint::clear()
 
 
 
-Constraint::Type PositionConstraint::getTypeID() const
+Constraint::Type PositionConstraint::getType() const
 {
     return Type::Position;
 }
@@ -154,7 +155,7 @@ void PositionConstraint::clear()
 
 
 
-Constraint::Type RotationConstraint::getTypeID() const
+Constraint::Type RotationConstraint::getType() const
 {
     return Type::Rotation;
 }
@@ -182,7 +183,7 @@ void RotationConstraint::clear()
 
 
 
-Constraint::Type ScaleConstraint::getTypeID() const
+Constraint::Type ScaleConstraint::getType() const
 {
     return Type::Scale;
 }

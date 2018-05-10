@@ -306,10 +306,6 @@ msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
 {
     _this->reference = v;
 }
-msAPI ms::Animation* msTransformGetAnimation(ms::Transform *_this)
-{
-    return _this->animation.get();
-}
 
 msAPI ms::Camera* msCameraCreate()
 {
@@ -384,13 +380,13 @@ msAPI ms::Light* msLightCreate()
 {
     return new ms::Light();
 }
-msAPI ms::Light::Type msLightGetType(ms::Light *_this)
+msAPI ms::Light::LightType msLightGetType(ms::Light *_this)
 {
-    return _this->type;
+    return _this->light_type;
 }
-msAPI void msLightSetType(ms::Light *_this, ms::Light::Type v)
+msAPI void msLightSetType(ms::Light *_this, ms::Light::LightType v)
 {
-    _this->type = v;
+    _this->light_type = v;
 }
 msAPI float4 msLightGetColor(ms::Light *_this)
 {
@@ -761,7 +757,7 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num
 
 msAPI ms::Constraint::Type msConstraintGetType(ms::Constraint *_this)
 {
-    return _this->getTypeID();
+    return _this->getType();
 }
 msAPI const char* msConstraintGetPath(ms::Constraint *_this)
 {

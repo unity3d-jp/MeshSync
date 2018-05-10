@@ -4,6 +4,11 @@
 #include "MeshSyncClientMaya.h"
 #include "Commands.h"
 
+void MeshSyncClientMaya::addAnimation(ms::Animation *anim)
+{
+    lock_t l(m_mutex);
+    m_client_animations.emplace_back(anim);
+}
 
 void MeshSyncClientMaya::exportMaterials()
 {
@@ -57,109 +62,40 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
     m_extract_tasks.push_back(task);
 }
 
-void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src)
+// GetValue: [](MPlug src, MObject& dst)
+template<class GetValue>
+static inline void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis, const GetValue& get)
 {
     MFnTransform mtrans(src);
 
+    vis = IsVisible(src);
+
+    auto plug_wmat = mtrans.findPlug("worldMatrix");
+    if (!plug_wmat.isNull()) {
+        MObject obj_wmat;
+        get(plug_wmat.elementByLogicalIndex(0), obj_wmat);
+        auto mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
+
+        auto plug_pimat = mtrans.findPlug("parentInverseMatrix");
+        if (!plug_pimat.isNull()) {
+            MObject obj_pimat;
+            get(plug_pimat.elementByLogicalIndex(0), obj_pimat);
+            auto pimat = to_float4x4(MFnMatrixData(obj_pimat).matrix());
+            mat *= pimat;
+        }
+
+        pos = extract_position(mat);
+        rot = extract_rotation(mat);
+        scale = extract_scale(mat);
+    }
+}
+
+void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src)
+{
     dst.path = GetPath(src);
-    dst.visible_hierarchy = IsVisible(src);
-    {
-        auto plug_wmat = mtrans.findPlug("worldMatrix");
-        if (!plug_wmat.isNull()) {
-            MObject obj_wmat;
-            plug_wmat.elementByLogicalIndex(0).getValue(obj_wmat);
-            auto mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
-
-            auto plug_pimat = mtrans.findPlug("parentInverseMatrix");
-            if (!plug_pimat.isNull()) {
-                MObject obj_pimat;
-                plug_pimat.elementByLogicalIndex(0).getValue(obj_pimat);
-                auto pimat = to_float4x4(MFnMatrixData(obj_pimat).matrix());
-                mat *= pimat;
-            }
-
-            dst.position = extract_position(mat);
-            dst.rotation = extract_rotation(mat);
-            dst.scale = extract_scale(mat);
-        }
-    }
-
-
-    // handle animation
-    if (m_settings.sync_animations && MAnimUtil::isAnimated(src)) {
-        // get TRS & visibility animation plugs
-        MPlugArray plugs;
-        MAnimUtil::findAnimatedPlugs(src, plugs);
-        auto num_plugs = plugs.length();
-
-        MPlug ptx, pty, ptz, prx, pry, prz, psx, psy, psz, pvis;
-        int found = 0;
-        for (uint32_t pi = 0; pi < num_plugs; ++pi) {
-            auto plug = plugs[pi];
-            MObjectArray animation;
-            if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
-
-            // this copy is inevitable..
-            std::string name = plug.name().asChar();
-#define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
-            Case(".translateX", ptx);
-            Case(".translateY", pty);
-            Case(".translateZ", ptz);
-            Case(".scaleX", psx);
-            Case(".scaleY", psy);
-            Case(".scaleZ", psz);
-            Case(".rotateX", prx);
-            Case(".rotateY", pry);
-            Case(".rotateZ", prz);
-            Case(".visibility", pvis);
-#undef Case
-        }
-
-        // skip if no animation plugs are found
-        if (found > 0) {
-            dst.createAnimation();
-            auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
-
-            // build time-sampled animation data
-            int sps = m_settings.sample_animation ? m_settings.animation_sps : 0;
-            ConvertAnimationBool(anim.visible, true, pvis, sps);
-            ConvertAnimationFloat3(anim.translation, dst.position, ptx, pty, ptz, sps);
-            ConvertAnimationFloat3(anim.scale, dst.scale, psx, psy, psz, sps);
-            {
-                // build rotation animation data (eular angles) and convert to quaternion
-                RawVector<ms::TVP<mu::float3>> eular;
-                ConvertAnimationFloat3(eular, mu::float3::zero(), prx, pry, prz, sps);
-
-                if (!eular.empty()) {
-                    anim.rotation.resize(eular.size());
-                    size_t n = eular.size();
-
-#define Case(Order)\
-    case MTransformationMatrix::k##Order:\
-        for (size_t i = 0; i < n; ++i) {\
-            anim.rotation[i].time = eular[i].time;\
-            anim.rotation[i].value = mu::rotate##Order(eular[i].value);\
-        }\
-        break;
-
-                    switch (mtrans.rotationOrder()) {
-                        Case(XYZ);
-                        Case(YZX);
-                        Case(ZXY);
-                        Case(XZY);
-                        Case(YXZ);
-                        Case(ZYX);
-                    default: break;
-                    }
-#undef Case
-                }
-            }
-
-            if (dst.animation->empty()) {
-                dst.animation.reset();
-            }
-        }
-    }
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy, [](MPlug src, MObject& dst) {
+        src.getValue(dst);
+    });
 }
 
 void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
@@ -217,8 +153,9 @@ void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
 
         // skip if no animation plugs are found
         if (found > 0) {
-            dst.createAnimation();
-            auto& anim = dynamic_cast<ms::CameraAnimation&>(*dst.animation);
+            auto anim_ptr = new ms::CameraAnimation();
+            auto& anim = *anim_ptr;
+            addAnimation(anim_ptr);
 
             // build time-sampled animation data
             int sps = m_settings.sample_animation ? m_settings.animation_sps : 0;
@@ -271,14 +208,8 @@ void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
                 }
             }
 
-            if (dst.animation->empty()) {
-                dst.animation.reset();
-            }
+            for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
         }
-    }
-    if (dst.animation) {
-        auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
-        for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
     }
 }
 
@@ -298,20 +229,20 @@ void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
     auto shape = GetShape(src);
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
-        dst.type = ms::Light::Type::Spot;
+        dst.light_type = ms::Light::LightType::Spot;
         dst.spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
     }
     else if (shape.hasFn(MFn::kDirectionalLight)) {
         MFnDirectionalLight mlight(shape);
-        dst.type = ms::Light::Type::Directional;
+        dst.light_type = ms::Light::LightType::Directional;
     }
     else if (shape.hasFn(MFn::kPointLight)) {
         MFnPointLight mlight(shape);
-        dst.type = ms::Light::Type::Point;
+        dst.light_type = ms::Light::LightType::Point;
     }
     else if (shape.hasFn(MFn::kAreaLight)) {
         MFnAreaLight mlight(shape);
-        dst.type = ms::Light::Type::Area;
+        dst.light_type = ms::Light::LightType::Area;
     }
     else {
         return;
@@ -346,22 +277,17 @@ void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
 
         // skip if no animation plugs are found
         if (found > 0) {
-            dst.createAnimation();
-            auto& anim = dynamic_cast<ms::LightAnimation&>(*dst.animation);
+            auto anim_ptr = new ms::LightAnimation();
+            auto& anim = *anim_ptr;
+            addAnimation(anim_ptr);
 
             // build time-sampled animation data
             int sps = m_settings.sample_animation ? m_settings.animation_sps : 0;
             ConvertAnimationFloat4(anim.color, dst.color, pcolr, pcolg, pcolb, pcola, sps);
             ConvertAnimationFloat(anim.intensity, dst.intensity, pint, sps);
 
-            if (dst.animation->empty()) {
-                dst.animation.reset();
-            }
+            for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
         }
-    }
-    if (dst.animation) {
-        auto& anim = dynamic_cast<ms::TransformAnimation&>(*dst.animation);
-        for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
     }
 }
 
@@ -792,5 +718,80 @@ void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, MObject src,
 }
 void MeshSyncClientMaya::doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node)
 {
+}
 
+void MeshSyncClientMaya::exportAnimation()
+{
+    auto exportShape = [this](MObject& shape) {
+        exportAnimation(GetTransform(shape), shape);
+    };
+    auto exportNode = [this](MObject& node) {
+        exportAnimation(node, MObject());
+    };
+
+    Enumerate(MFn::kCamera, exportShape);
+    Enumerate(MFn::kLight, exportShape);
+    Enumerate(MFn::kJoint, exportNode);
+    Enumerate(MFn::kMesh, exportShape);
+}
+
+void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
+{
+    if (node.isNull())
+        return;
+
+    ms::Animation *dst = nullptr;
+
+    if (m_settings.sync_cameras && shape.hasFn(MFn::kCamera) && MAnimUtil::isAnimated(shape)) {
+        exportAnimation(GetParent(node), shape);
+        dst = new ms::CameraAnimation();
+        extractCameraAnimationData(*dst, node, shape);
+    }
+    else if (m_settings.sync_lights && shape.hasFn(MFn::kLight) && MAnimUtil::isAnimated(shape)) {
+        exportAnimation(GetParent(node), shape);
+        dst = new ms::LightAnimation();
+        extractLightAnimationData(*dst, node, shape);
+    }
+    else {
+        exportAnimation(GetParent(node), shape);
+        dst = new ms::TransformAnimation();
+        extractTransformAnimationData(*dst, node, shape);
+    }
+
+    if (dst) {
+        m_client_animations.emplace_back(dst);
+    }
+}
+
+void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, MObject node, MObject /*shape*/)
+{
+    auto& dst = (ms::TransformAnimation&)dst_;
+
+    auto pos = mu::float3::zero();
+    auto rot = mu::quatf::identity();
+    auto scale = mu::float3::one();
+    bool vis = true;
+    ExtractTransformData(node, pos, rot, scale, vis, [this](MPlug src, MObject& dst) {
+        src.getValue(dst, m_animation_ctx);
+    });
+    dst.translation.push_back({ m_current_time, pos });
+    dst.rotation.push_back({ m_current_time, rot });
+    dst.scale.push_back({ m_current_time, scale });
+    dst.visible.push_back({ m_current_time, vis });
+}
+
+void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, MObject node, MObject shape)
+{
+    extractTransformAnimationData(dst_, node, shape);
+
+    auto& dst = (ms::CameraAnimation&)dst_;
+    // todo
+}
+
+void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject node, MObject shape)
+{
+    extractTransformAnimationData(dst_, node, shape);
+
+    auto& dst = (ms::LightAnimation&)dst_;
+    // todo
 }

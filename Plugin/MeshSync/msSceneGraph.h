@@ -18,7 +18,7 @@ namespace ms {
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
-    enum class TypeID
+    enum class Type
     {
         Unknown,
         Transform,
@@ -32,7 +32,7 @@ public:
     std::string path;
 
     virtual ~Entity();
-    virtual TypeID getTypeID() const;
+    virtual Type getType() const;
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
@@ -40,28 +40,6 @@ public:
 
     const char* getName() const; // get name (leaf) from path
 };
-
-
-// time-value pair
-template<class T>
-struct TVP
-{
-    float time;
-    T value;
-};
-
-class Animation : public std::enable_shared_from_this<Animation>
-{
-public:
-    virtual ~Animation();
-    virtual uint32_t getSerializeSize() const;
-    virtual void serialize(std::ostream& os) const;
-    virtual void deserialize(std::istream& is);
-    virtual void clear();
-
-    virtual bool empty() const;
-};
-using AnimationPtr = std::shared_ptr<Animation>;
 
 
 class Material : public std::enable_shared_from_this<Material>
@@ -89,10 +67,9 @@ public:
     bool visible = true;
     bool visible_hierarchy = true;
     std::string reference;
-    AnimationPtr animation;
 
 
-    TypeID getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -102,33 +79,10 @@ public:
     void assignMatrix(const float4x4& v);
     void applyMatrix(const float4x4& v);
 
-    virtual void createAnimation();
     virtual void convertHandedness(bool x, bool yz);
     virtual void applyScaleFactor(float scale);
-
-public:
-    // for python binding
-    void addTranslationKey(float t, const float3& v);
-    void addRotationKey(float t, const quatf& v);
-    void addScaleKey(float t, const float3& v);
 };
 using TransformPtr = std::shared_ptr<Transform>;
-
-class TransformAnimation : public Animation
-{
-public:
-    RawVector<TVP<float3>>  translation;
-    RawVector<TVP<quatf>>   rotation;
-    RawVector<TVP<float3>>  scale;
-    RawVector<TVP<bool>>    visible;
-
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
-    void clear() override;
-    bool empty() const override;
-};
-
 
 class Camera : public Transform
 {
@@ -145,52 +99,23 @@ public:
     float focal_length = 0.0f;
     float focus_distance = 0.0f;
 
-    TypeID getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
 
-    void createAnimation() override;
     void applyScaleFactor(float scale) override;
-
-public:
-    // for python binding
-    void addFovKey(float t, float v);
-    void addNearPlaneKey(float t, float v);
-    void addFarPlaneKey(float t, float v);
-    void addHorizontalApertureKey(float t, float v);
-    void addVerticalApertureKey(float t, float v);
-    void addFocalLengthKey(float t, float v);
-    void addFocusDistanceKey(float t, float v);
 };
 using CameraPtr = std::shared_ptr<Camera>;
 
-class CameraAnimation : public TransformAnimation
-{
-using super = TransformAnimation;
-public:
-    RawVector<TVP<float>>   fov;
-    RawVector<TVP<float>>   near_plane;
-    RawVector<TVP<float>>   far_plane;
-    RawVector<TVP<float>>   horizontal_aperture;
-    RawVector<TVP<float>>   vertical_aperture;
-    RawVector<TVP<float>>   focal_length;
-    RawVector<TVP<float>>   focus_distance;
-
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
-    void clear() override;
-    bool empty() const override;
-};
 
 
 class Light : public Transform
 {
 using super = Transform;
 public:
-    enum class Type
+    enum class LightType
     {
         Spot,
         Directional,
@@ -198,45 +123,22 @@ public:
         Area,
     };
 
-    Type type = Type::Directional;
+    LightType light_type = LightType::Directional;
     float4 color = float4::one();
     float intensity = 1.0f;
     float range = 0.0f;
     float spot_angle = 30.0f; // for spot light
 
-    TypeID getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
 
-    void createAnimation() override;
     void applyScaleFactor(float scale) override;
-
-public:
-    // for python binding
-    void addColorKey(float t, const float4& v);
-    void addIntensityKey(float t, float v);
-    void addRangeKey(float t, float v);
-    void addSpotAngleKey(float t, float v);
 };
 using LightPtr = std::shared_ptr<Light>;
 
-class LightAnimation : public TransformAnimation
-{
-using super = TransformAnimation;
-public:
-    RawVector<TVP<float4>>  color;
-    RawVector<TVP<float>>   intensity;
-    RawVector<TVP<float>>   range;
-    RawVector<TVP<float>>   spot_angle; // for spot light
-
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
-    void clear() override;
-    bool empty() const override;
-};
 
 
 // Mesh
@@ -400,7 +302,7 @@ public:
 
 public:
     Mesh();
-    TypeID getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -457,6 +359,9 @@ struct SceneSettings
 };
 
 
+class Animation;
+using AnimationPtr = std::shared_ptr<Animation>;
+
 class Constraint;
 using ConstraintPtr = std::shared_ptr<Constraint>;
 
@@ -469,6 +374,7 @@ public:
     std::vector<CameraPtr>    cameras;
     std::vector<LightPtr>     lights;
     std::vector<MaterialPtr>  materials;
+    std::vector<AnimationPtr> animations;
     std::vector<ConstraintPtr> constraints;
 
 public:

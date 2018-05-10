@@ -717,7 +717,8 @@ namespace UTJ.MeshSync
             trans.gameObject.SetActive(data.visibleHierarchy);
 
 #if UNITY_EDITOR
-            var animData = data.animation;
+            // todo
+            var animData = new TransformAnimationData();
             if(animData)
             {
                 // import TRS animation

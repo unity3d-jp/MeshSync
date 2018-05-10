@@ -146,18 +146,18 @@ void msbContext::extractLightData(ms::Light& dst, Object *src)
 
     switch (data->type) {
     case LA_LOCAL:
-        dst.type = ms::Light::Type::Point;
+        dst.light_type = ms::Light::LightType::Point;
         break;
     case LA_SUN:
-        dst.type = ms::Light::Type::Directional;
+        dst.light_type = ms::Light::LightType::Directional;
         break;
     case LA_SPOT:
-        dst.type = ms::Light::Type::Spot;
+        dst.light_type = ms::Light::LightType::Spot;
         dst.spot_angle = data->spotsize * mu::Rad2Deg;
         break;
     case LA_HEMI: break;
     case LA_AREA:
-        dst.type = ms::Light::Type::Area;
+        dst.light_type = ms::Light::LightType::Area;
         break;
     default:
         break;

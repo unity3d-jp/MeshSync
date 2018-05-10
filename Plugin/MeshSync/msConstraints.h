@@ -26,7 +26,7 @@ public:
 
     static Constraint* make(std::istream& is);
     virtual ~Constraint();
-    virtual Type getTypeID() const;
+    virtual Type getType() const;
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
@@ -42,7 +42,7 @@ using super = Constraint;
 public:
     // todo
 
-    Type getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -61,7 +61,7 @@ public:
     };
     RawVector<SourceData> source_data;
 
-    Type getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -75,7 +75,7 @@ using super = Constraint;
 public:
     // todo
 
-    Type getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -89,7 +89,7 @@ using super = Constraint;
 public:
     // todo
 
-    Type getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -103,7 +103,7 @@ using super = Constraint;
 public:
     // todo
 
-    Type getTypeID() const override;
+    Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;

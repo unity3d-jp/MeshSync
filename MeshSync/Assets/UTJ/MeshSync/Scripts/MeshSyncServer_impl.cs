@@ -971,7 +971,6 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTransformSetVisibleHierarchy(IntPtr _this, byte v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
-            [DllImport("MeshSyncServer")] static extern AnimationData msTransformGetAnimation(IntPtr _this);
             #endregion
 
             public static explicit operator TransformData(IntPtr v)
@@ -1030,10 +1029,6 @@ namespace UTJ.MeshSync
             {
                 get { return S(msTransformGetReference(_this)); }
                 set { msTransformSetReference(_this, value); }
-            }
-            public AnimationData animation
-            {
-                get { return msTransformGetAnimation(_this); }
             }
         }
 

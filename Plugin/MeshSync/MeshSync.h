@@ -2,8 +2,9 @@
 
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
-#include "msConstraints.h"
 #include "msSceneGraph.h"
+#include "msAnimation.h"
+#include "msConstraints.h"
 #include "msClient.h"
 #include "msServer.h"
 
