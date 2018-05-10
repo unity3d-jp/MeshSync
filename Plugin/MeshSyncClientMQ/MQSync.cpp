@@ -341,27 +341,27 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             client.send(fence);
         }
 
-        // send cameras, materials and bones
+        // send materials and bones
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.materials = m_materials;
             for (auto& pair : m_bones) {
-                set.scene.transforms.push_back(pair.second.transform);
+                set.scene.objects.push_back(pair.second.transform);
             }
             client.send(set);
         }
 
-        {
-            // send meshes one by one to Unity can respond quickly
-            for(auto& rel : m_meshes) {
-                ms::SetMessage set;
-                set.scene.settings = scene_settings;
-                set.scene.meshes = { rel.data };
-                client.send(set);
-            };
+        // send meshes one by one to Unity can respond quickly
+        for (auto& rel : m_meshes) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = { rel.data };
+            client.send(set);
+        };
 
-            // detect deleted objects and send delete message
+        // detect deleted objects and send delete message
+        {
             for (auto& e : m_mesh_exists)
                 e.second = false;
             for (auto& rel : m_meshes) {
@@ -470,12 +470,26 @@ void MQSync::sendCamera(MQDocument doc, bool force)
         scene_settings.handedness = ms::Handedness::Right;
         scene_settings.scale_factor = m_scale_factor;
 
-        // send cameras and materials
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
+        }
+
+        // send camera
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.cameras = { m_camera };
+            set.scene.objects = { m_camera };
             client.send(set);
+        }
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
         }
     });
 }
@@ -527,20 +541,22 @@ bool MQSync::importMeshes(MQDocument doc)
     }
     
     // import meshes
-    for (auto& data : ret->meshes) {
-        auto& mdata = *data;
+    for (auto& data : ret->objects) {
+        if (data->getType() == ms::Entity::Type::Mesh) {
+            auto& mdata = (ms::Mesh&)*data;
 
-        // create name that includes ID
-        char name[MaxNameBuffer];
-        sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
+            // create name that includes ID
+            char name[MaxNameBuffer];
+            sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
 
-        if (auto obj = findMesh(doc, name)) {
-            doc->DeleteObject(doc->GetObjectIndex(obj));
+            if (auto obj = findMesh(doc, name)) {
+                doc->DeleteObject(doc->GetObjectIndex(obj));
+            }
+            auto obj = createMesh(doc, mdata, name);
+            doc->AddObject(obj);
+
+            m_host_meshes[mdata.id] = std::static_pointer_cast<ms::Mesh>(data);
         }
-        auto obj = createMesh(doc, mdata, name);
-        doc->AddObject(obj);
-
-        m_host_meshes[mdata.id] = data;
     }
     return true;
 }
