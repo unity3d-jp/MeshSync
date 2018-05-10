@@ -65,8 +65,7 @@ public:
 private:
     using GetPtr    = std::shared_ptr<GetMessage>;
     using DeletePtr = std::shared_ptr<DeleteMessage>;
-    using ClientMeshes = std::map<std::string, MeshPtr>;
-    using HostMeshes = std::vector<MeshPtr>;
+    using ClientObjects = std::map<std::string, EntityPtr>;
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
     using History = std::vector<MessagePtr>;
@@ -77,7 +76,7 @@ private:
     std::mutex m_mutex;
     std::atomic_int m_request_count{0};
 
-    ClientMeshes m_client_meshes;
+    ClientObjects m_client_objs;
     History m_recv_history;
 
     ScenePtr m_host_scene;

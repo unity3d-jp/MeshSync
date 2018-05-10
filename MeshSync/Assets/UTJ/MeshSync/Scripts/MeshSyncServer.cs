@@ -266,36 +266,26 @@ namespace UTJ.MeshSync
             // sync transforms
             try
             {
-                int numTransforms = scene.numTransforms;
-                for (int i = 0; i < numTransforms; ++i)
-                    UpdateTransform(scene.GetTransform(i));
-            }
-            catch (Exception e) { Debug.Log(e); }
-
-            // sync cameras
-            try
-            {
-                int numCameras = scene.numCameras;
-                for (int i = 0; i < numCameras; ++i)
-                    UpdateCamera(scene.GetCamera(i));
-            }
-            catch (Exception e) { Debug.Log(e); }
-
-            // sync lights
-            try
-            {
-                int numLights = scene.numLights;
-                for (int i = 0; i < numLights; ++i)
-                    UpdateLight(scene.GetLight(i));
-            }
-            catch (Exception e) { Debug.Log(e); }
-
-            // sync meshes
-            try
-            {
-                int numMeshes = scene.numMeshes;
-                for (int i = 0; i < numMeshes; ++i)
-                    UpdateMesh(scene.GetMesh(i));
+                int numObjects = scene.numObjects;
+                for (int i = 0; i < numObjects; ++i)
+                {
+                    var obj = scene.GetObject(i);
+                    switch(obj.type)
+                    {
+                        case TransformData.Type.Transform:
+                            UpdateTransform(obj);
+                            break;
+                        case TransformData.Type.Camera:
+                            UpdateCamera((CameraData)obj._this);
+                            break;
+                        case TransformData.Type.Light:
+                            UpdateLight((LightData)obj._this);
+                            break;
+                        case TransformData.Type.Mesh:
+                            UpdateMesh((MeshData)obj._this);
+                            break;
+                    }
+                }
             }
             catch (Exception e) { Debug.Log(e); }
 

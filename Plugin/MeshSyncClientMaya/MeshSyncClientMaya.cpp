@@ -265,21 +265,21 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
         exportObject(GetParent(node), true);
         auto dst = ms::CameraPtr(new ms::Camera());
         extractCameraData(*dst, node);
-        m_client_cameras.emplace_back(dst);
+        m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
         exportObject(GetParent(node), true);
         auto dst = ms::LightPtr(new ms::Light());
         extractLightData(*dst, node);
-        m_client_lights.emplace_back(dst);
+        m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
         exportObject(GetParent(node), true);
         auto dst = ms::TransformPtr(new ms::Transform());
         extractTransformData(*dst, node);
-        m_client_transforms.emplace_back(dst);
+        m_client_objects.emplace_back(dst);
         ret = dst;
     }
 
@@ -389,6 +389,9 @@ bool MeshSyncClientMaya::send(SendScope scope)
 
 void MeshSyncClientMaya::update()
 {
+    if (m_ignore_update)
+        return;
+
     if (m_scene_updated) {
         m_scene_updated = false;
         mscTrace("MeshSyncClientMaya::update(): handling scene update\n");
@@ -493,15 +496,11 @@ void MeshSyncClientMaya::kickAsyncSend()
         {
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
-            set.scene.transforms= m_client_transforms;
-            set.scene.cameras   = m_client_cameras;
-            set.scene.lights    = m_client_lights;
+            set.scene.objects = m_client_objects;
             set.scene.materials = m_client_materials;
             client.send(set);
 
-            m_client_transforms.clear();
-            m_client_cameras.clear();
-            m_client_lights.clear();
+            m_client_objects.clear();
             m_client_materials.clear();
         }
 
@@ -509,7 +508,7 @@ void MeshSyncClientMaya::kickAsyncSend()
         for(auto& mesh : m_client_meshes) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.meshes = { mesh };
+            set.scene.objects = { mesh };
             client.send(set);
         };
         m_client_meshes.clear();

@@ -28,8 +28,9 @@ public:
     };
 
     int id = 0;
-    int index = 0;
     std::string path;
+
+    static Entity* make(std::istream& is);
 
     virtual ~Entity();
     virtual Type getType() const;
@@ -40,6 +41,7 @@ public:
 
     const char* getName() const; // get name (leaf) from path
 };
+using EntityPtr = std::shared_ptr<Entity>;
 
 
 class Material : public std::enable_shared_from_this<Material>
@@ -63,6 +65,7 @@ public:
     float3   position = float3::zero();
     quatf    rotation = quatf::identity();
     float3   scale = float3::one();
+    int index = 0;
 
     bool visible = true;
     bool visible_hierarchy = true;
@@ -369,11 +372,8 @@ struct Scene : public std::enable_shared_from_this<Scene>
 {
 public:
     SceneSettings settings;
-    std::vector<MeshPtr>      meshes;
-    std::vector<TransformPtr> transforms;
-    std::vector<CameraPtr>    cameras;
-    std::vector<LightPtr>     lights;
-    std::vector<MaterialPtr>  materials;
+    std::vector<TransformPtr> objects;
+    std::vector<MaterialPtr> materials;
     std::vector<AnimationPtr> animations;
     std::vector<ConstraintPtr> constraints;
 

@@ -24,7 +24,6 @@ void msbContext::setup()
 
 msbSettings& msbContext::getSettings() { return m_settings; }
 const msbSettings& msbContext::getSettings() const { return m_settings; }
-ms::ScenePtr msbContext::getCurrentScene() const { return m_scene; }
 
 template<class T>
 std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
@@ -46,33 +45,33 @@ std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>&
 
 ms::TransformPtr msbContext::addTransform(std::string path)
 {
-    auto ret = getCacheOrCreate(m_transform_cache);
+    auto ret = ms::TransformPtr(new ms::Transform());
     ret->path = path;
-    m_scene->transforms.push_back(ret);
+    m_objects.push_back(ret);
     return ret;
 }
 
 ms::CameraPtr msbContext::addCamera(std::string path)
 {
-    auto ret = getCacheOrCreate(m_camera_cache);
+    auto ret = ms::CameraPtr(new ms::Camera());
     ret->path = path;
-    m_scene->cameras.push_back(ret);
+    m_objects.push_back(ret);
     return ret;
 }
 
 ms::LightPtr msbContext::addLight(std::string path)
 {
-    auto ret = getCacheOrCreate(m_light_cache);
+    auto ret = ms::LightPtr(new ms::Light());
     ret->path = path;
-    m_scene->lights.push_back(ret);
+    m_objects.push_back(ret);
     return ret;
 }
 
 ms::MeshPtr msbContext::addMesh(std::string path)
 {
-    auto ret = getCacheOrCreate(m_mesh_cache);
+    auto ret = ms::MeshPtr(new ms::Mesh());
     ret->path = path;
-    m_scene->meshes.push_back(ret);
+    m_meshes.push_back(ret);
     return ret;
 }
 
@@ -86,7 +85,7 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
 {
     auto ret = ms::MaterialPtr(new ms::Material());
     ret->name = mat->id.name + 2;
-    ret->id = (int)m_scene->materials.size();
+    ret->id = (int)m_materials.size();
     {
         bl::BMaterial bm(mat);
         auto color_src = mat;
@@ -98,7 +97,7 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
         }
         ret->color = float4{ color_src->r, color_src->g, color_src->b, 1.0f };
     }
-    m_scene->materials.emplace_back(ret);
+    m_materials.push_back(ret);
     return ret;
 }
 
@@ -108,7 +107,7 @@ int msbContext::getMaterialIndex(const Material *mat)
         return 0;
 
     int i = 0;
-    for (auto& m : m_scene->materials) {
+    for (auto& m : m_materials) {
         if (m->name == mat->id.name + 2)
             return i;
         ++i;
@@ -790,30 +789,12 @@ void msbContext::flushPendingList()
 
 void msbContext::send()
 {
-    if (isSending())
-    {
-        // previous request is not completed yet. skip
-        m_extract_tasks.clear();
-        return;
-    }
-
     // get vertex data in parallel
     parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {
         task();
     });
     m_extract_tasks.clear();
 
-
-    // return objects to cache
-    for (auto& v : m_message.scene.transforms) { m_transform_cache.push_back(v); }
-    for (auto& v : m_message.scene.cameras) { m_camera_cache.push_back(v); }
-    for (auto& v : m_message.scene.lights) { m_light_cache.push_back(v); }
-    for (auto& v : m_message.scene.meshes) { m_mesh_cache.push_back(v); }
-
-    // setup send data
-    std::swap(m_scene->meshes, m_mesh_send);
-    m_message.scene = *m_scene;
-    m_scene->clear();
     m_bones.clear();
     m_added.clear();
 
@@ -846,36 +827,57 @@ void msbContext::send()
         scene_settings.handedness = ms::Handedness::Left;
         bool swap_x = false, swap_yz = true;
 
-        m_message.scene.settings = scene_settings;
+        if (!m_objects.empty() || !m_materials.empty()) {
+            if (scale_factor != 1.0f) {
+                for (auto& obj : m_objects) { obj->applyScaleFactor(scale_factor); }
+            }
+            {
+                ms::SetMessage set;
+                set.scene.settings = scene_settings;
+                set.scene.objects = m_objects;
+                set.scene.materials = m_materials;
+                client.send(set);
 
-        auto& scene = m_message.scene;
-        if (scale_factor != 1.0f) {
-            for (auto& obj : scene.transforms) { obj->applyScaleFactor(scale_factor); }
-            for (auto& obj : scene.cameras) { obj->applyScaleFactor(scale_factor); }
-            for (auto& obj : scene.lights) { obj->applyScaleFactor(scale_factor); }
+                m_objects.clear();
+                m_materials.clear();
+            }
         }
-        client.send(m_message);
 
-        // convert and send meshes
-        parallel_for_each(m_mesh_send.begin(), m_mesh_send.end(), [&](ms::MeshPtr& pmesh) {
-            auto& mesh = *pmesh;
-            mesh.setupFlags();
-            mesh.flags.apply_trs = true;
-            mesh.flags.has_refine_settings = true;
-            if (!mesh.flags.has_normals)
-                mesh.refine_settings.flags.gen_normals = true;
-            if (!mesh.flags.has_tangents)
-                mesh.refine_settings.flags.gen_tangents = true;
-            if (scale_factor != 1.0f)
-                mesh.applyScaleFactor(scale_factor);
-        });
-        for(auto& pmesh : m_mesh_send) {
+        if (!m_meshes.empty()) {
+            // convert and send meshes
+            parallel_for_each(m_meshes.begin(), m_meshes.end(), [&](ms::MeshPtr& pmesh) {
+                auto& mesh = *pmesh;
+                mesh.setupFlags();
+                mesh.flags.apply_trs = true;
+                mesh.flags.has_refine_settings = true;
+                if (!mesh.flags.has_normals)
+                    mesh.refine_settings.flags.gen_normals = true;
+                if (!mesh.flags.has_tangents)
+                    mesh.refine_settings.flags.gen_tangents = true;
+                if (scale_factor != 1.0f)
+                    mesh.applyScaleFactor(scale_factor);
+            });
+            for (auto& mesh : m_meshes) {
+                ms::SetMessage set;
+                set.scene.settings = scene_settings;
+                set.scene.objects = { mesh };
+                client.send(set);
+            }
+            m_meshes.clear();
+        }
+
+        if (!m_animations.empty()) {
+            if (scale_factor != 1.0f) {
+                for (auto& obj : m_animations) { obj->applyScaleFactor(scale_factor); }
+            }
+
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.meshes = { pmesh };
+            set.scene.animations = m_animations;
             client.send(set);
+
+            m_animations.clear();
         }
-        m_mesh_send.clear();
 
         // notify scene end
         {

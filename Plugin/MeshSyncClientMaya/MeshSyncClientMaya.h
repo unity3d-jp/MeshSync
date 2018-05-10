@@ -8,7 +8,7 @@ public:
     {
         ms::ClientSettings client_settings;
 
-        float scale_factor = 1.0f;
+        float scale_factor = 0.01f;
         int  animation_sps = 5;
         int  timeout_ms = 5000;
         bool auto_sync = false;
@@ -118,9 +118,7 @@ private:
     std::vector<MCallbackId> m_cids_global;
     std::vector<MUuid> m_material_id_table;
 
-    std::vector<ms::TransformPtr>   m_client_transforms;
-    std::vector<ms::CameraPtr>      m_client_cameras;
-    std::vector<ms::LightPtr>       m_client_lights;
+    std::vector<ms::TransformPtr>   m_client_objects;
     std::vector<ms::MeshPtr>        m_client_meshes;
     std::vector<ms::MaterialPtr>    m_client_materials;
     std::vector<ms::AnimationPtr>   m_client_animations;
@@ -136,6 +134,7 @@ private:
 
     SendScope m_pending_send_scene = SendScope::None;
     bool m_scene_updated = false;
+    bool m_ignore_update = false;
     int m_index_seed = 0;
 
 

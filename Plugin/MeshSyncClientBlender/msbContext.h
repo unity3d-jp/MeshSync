@@ -55,7 +55,6 @@ public:
 
     msbSettings&        getSettings();
     const msbSettings&  getSettings() const;
-    ms::ScenePtr        getCurrentScene() const;
 
     bool isSending() const;
     bool prepare();
@@ -100,15 +99,13 @@ private:
     std::set<Object*> m_added;
     std::set<Object*> m_pending, m_pending_tmp;
     std::map<const Bone*, ms::TransformPtr> m_bones;
-    std::vector<ms::TransformPtr> m_transform_cache;
-    std::vector<ms::CameraPtr> m_camera_cache;
-    std::vector<ms::LightPtr> m_light_cache;
-    std::vector<ms::MeshPtr> m_mesh_cache, m_mesh_send;
+    std::vector<ms::TransformPtr> m_objects;
+    std::vector<ms::MeshPtr> m_meshes;
+    std::vector<ms::AnimationPtr> m_animations;
+    std::vector<ms::MaterialPtr> m_materials;
     std::vector<std::string> m_deleted;
-    ms::ScenePtr m_scene = ms::ScenePtr(new ms::Scene());
     std::map<void*, ObjectRecord> m_records;
 
-    ms::SetMessage m_message;
     std::future<void> m_send_future;
 
     using task_t = std::function<void()>;

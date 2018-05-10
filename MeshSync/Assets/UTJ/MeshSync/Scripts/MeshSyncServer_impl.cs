@@ -958,6 +958,7 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
+            [DllImport("MeshSyncServer")] static extern Type msTransformGetType(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr _this);
@@ -978,6 +979,15 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr _this, string v);
             #endregion
 
+            public enum Type
+            {
+                Unknown,
+                Transform,
+                Camera,
+                Light,
+                Mesh,
+            };
+
             public static explicit operator TransformData(IntPtr v)
             {
                 TransformData ret;
@@ -990,6 +1000,10 @@ namespace UTJ.MeshSync
                 return msTransformCreate();
             }
 
+            public Type type
+            {
+                get { return msTransformGetType(_this); }
+            }
             public int id
             {
                 get { return msTransformGetID(_this); }
@@ -1554,14 +1568,8 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumTransforms(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern TransformData msSceneGetTransformData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumCameras(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern CameraData msSceneGetCameraData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumLights(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern LightData msSceneGetLightData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumMeshes(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern MeshData msSceneGetMeshData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumObjects(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TransformData msSceneGetObjectData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
@@ -1571,18 +1579,12 @@ namespace UTJ.MeshSync
             #endregion
 
             public string name { get { return S(msSceneGetName(_this)); } }
-            public int numTransforms { get { return msSceneGetNumTransforms(_this); } }
-            public int numCameras { get { return msSceneGetNumCameras(_this); } }
-            public int numLights { get { return msSceneGetNumLights(_this); } }
-            public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
+            public int numObjects { get { return msSceneGetNumObjects(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
             public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
             public int numAnimations { get { return msSceneGetNumAnimations(_this); } }
 
-            public TransformData GetTransform(int i) { return msSceneGetTransformData(_this, i); }
-            public CameraData GetCamera(int i) { return msSceneGetCameraData(_this, i); }
-            public LightData GetLight(int i) { return msSceneGetLightData(_this, i); }
-            public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
+            public TransformData GetObject(int i) { return msSceneGetObjectData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
             public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
             public AnimationData GetAnimation(int i) { return msSceneGetAnimationData(_this, i); }

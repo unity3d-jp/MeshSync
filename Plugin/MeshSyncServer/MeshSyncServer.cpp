@@ -58,22 +58,22 @@ msAPI void msServerEndServe(ms::Server *server)
 msAPI void msServerServeTransform(ms::Server *server, ms::Transform *data)
 {
     if (!server) { return; }
-    server->getHostScene()->transforms.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeCamera(ms::Server *server, ms::Camera *data)
 {
     if (!server) { return; }
-    server->getHostScene()->cameras.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeLight(ms::Server *server, ms::Light *data)
 {
     if (!server) { return; }
-    server->getHostScene()->lights.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
-    server->getHostScene()->meshes.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
 {
@@ -234,6 +234,10 @@ msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_this)
 msAPI ms::Transform* msTransformCreate()
 {
     return new ms::Transform();
+}
+msAPI ms::Entity::Type msTransformGetType(ms::Transform *_this)
+{
+    return _this->getType();
 }
 msAPI int msTransformGetID(ms::Transform *_this)
 {
@@ -786,37 +790,13 @@ msAPI const char* msSceneGetName(ms::Scene *_this)
 {
     return _this->settings.name.c_str();
 }
-msAPI int msSceneGetNumMeshes(ms::Scene *_this)
+msAPI int msSceneGetNumObjects(ms::Scene *_this)
 {
-    return (int)_this->meshes.size();
+    return (int)_this->objects.size();
 }
-msAPI ms::Mesh* msSceneGetMeshData(ms::Scene *_this, int i)
+msAPI ms::Transform* msSceneGetObjectData(ms::Scene *_this, int i)
 {
-    return _this->meshes[i].get();
-}
-msAPI int msSceneGetNumTransforms(ms::Scene *_this)
-{
-    return (int)_this->transforms.size();
-}
-msAPI ms::Transform* msSceneGetTransformData(ms::Scene *_this, int i)
-{
-    return _this->transforms[i].get();
-}
-msAPI int msSceneGetNumCameras(ms::Scene *_this)
-{
-    return (int)_this->cameras.size();
-}
-msAPI ms::Camera* msSceneGetCameraData(ms::Scene *_this, int i)
-{
-    return _this->cameras[i].get();
-}
-msAPI int msSceneGetNumLights(ms::Scene *_this)
-{
-    return (int)_this->lights.size();
-}
-msAPI ms::Light* msSceneGetLightData(ms::Scene *_this, int i)
-{
-    return _this->lights[i].get();
+    return _this->objects[i].get();
 }
 msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 {

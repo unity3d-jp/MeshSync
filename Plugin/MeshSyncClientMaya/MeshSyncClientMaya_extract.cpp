@@ -741,18 +741,16 @@ int MeshSyncClientMaya::exportAnimations()
     auto time_end = MAnimControl::maxTime();
     auto interval = MTime(1.0 / m_settings.animation_sps, MTime::kSeconds);
 
+    m_ignore_update = true;
     for (MTime t = time_begin; t < time_end; t += interval) {
         m_current_time = (float)t.as(MTime::kSeconds);
-        m_animation_ctx = MDGContext(t);
+        MGlobal::viewFrame(t);
 
-        //mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
-        //    kvp.second(this);
-        //});
-        for (auto kvp : m_anim_records) {
+        mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
             kvp.second(this);
-        }
+        });
     }
-
+    m_ignore_update = false;
 
     // cleanup
     int ret = (int)m_anim_records.size();
@@ -762,7 +760,7 @@ int MeshSyncClientMaya::exportAnimations()
 
 void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
 {
-    if (node.isNull())
+    if (node.isNull() || node.hasFn(MFn::kWorld))
         return;
     if (m_anim_records.find((void*&)node) != m_anim_records.end())
         return;
@@ -792,7 +790,7 @@ void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
         rec.dst->path = GetPath(node);
         rec.node = node;
         rec.shape = shape;
-        m_anim_records[(void*&)node] = rec;
+        m_anim_records[(void*&)node] = std::move(rec);
     }
 }
 
@@ -805,7 +803,7 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, MObj
     auto scale = mu::float3::one();
     bool vis = true;
     ExtractTransformData(node, pos, rot, scale, vis, [this](MPlug src, MObject& dst) {
-        src.getValue(dst, m_animation_ctx);
+        src.getValue(dst);
     });
     dst.translation.push_back({ m_current_time, pos });
     dst.rotation.push_back({ m_current_time, rot });

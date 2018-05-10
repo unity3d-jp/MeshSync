@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msServer.h"
+#include "msAnimation.h"
 
 
 namespace ms {
@@ -170,7 +171,7 @@ int Server::processMessages(const MessageHandler& handler)
         else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
             handler(Message::Type::Delete, *p);
             for (auto& id : del->targets) {
-                m_client_meshes.erase(id.path);
+                m_client_objs.erase(id.path);
             }
         }
         else if (dynamic_cast<FenceMessage*>(p.get())) {
@@ -228,8 +229,12 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
-        auto& mesh = *p;
+    parallel_for_each(m_host_scene->objects.begin(), m_host_scene->objects.end(), [&request](TransformPtr& p) {
+        auto pmesh = dynamic_cast<Mesh*>(p.get());
+        if (!pmesh)
+            return;
+
+        auto& mesh = *pmesh;
         mesh.flags.has_refine_settings = 1;
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
@@ -290,36 +295,42 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
 
     bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
     bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [this, &mes, swap_x, swap_yz](MeshPtr& pmesh) {
-        auto& mesh = *pmesh;
-        mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-        mesh.refine_settings.flags.swap_handedness = swap_x;
-        mesh.refine_settings.flags.swap_yz = swap_yz;
-        mesh.refine_settings.flags.triangulate = 1;
-        mesh.refine_settings.flags.split = 1;
-        mesh.refine_settings.flags.optimize_topology = 1;
-        mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
-        mesh.refine(mesh.refine_settings);
-    });
-    {
-        if (swap_x || swap_yz) {
-            for (auto& obj : mes->scene.transforms) { obj->convertHandedness(swap_x, swap_yz); }
-            for (auto& obj : mes->scene.cameras) { obj->convertHandedness(swap_x, swap_yz); }
-            for (auto& obj : mes->scene.lights) { obj->convertHandedness(swap_x, swap_yz); }
+    parallel_for_each(mes->scene.objects.begin(), mes->scene.objects.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
+        if(obj->getType() == Entity::Type::Mesh) {
+            auto& mesh = (Mesh&)*obj;
+            mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
+            mesh.refine_settings.flags.swap_handedness = swap_x;
+            mesh.refine_settings.flags.swap_yz = swap_yz;
+            mesh.refine_settings.flags.triangulate = 1;
+            mesh.refine_settings.flags.split = 1;
+            mesh.refine_settings.flags.optimize_topology = 1;
+            mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
+            mesh.refine(mesh.refine_settings);
         }
-    }
-    if (mes->scene.settings.scale_factor != 1.0f) {
-        float scale = 1.0f / mes->scene.settings.scale_factor;
-        for (auto& obj : mes->scene.transforms) { obj->applyScaleFactor(scale); }
-        for (auto& obj : mes->scene.cameras) { obj->applyScaleFactor(scale); }
-        for (auto& obj : mes->scene.lights) { obj->applyScaleFactor(scale); }
-    }
+        else {
+            if (swap_x || swap_yz) {
+                obj->convertHandedness(swap_x, swap_yz);
+            }
+            if (mes->scene.settings.scale_factor != 1.0f) {
+                float scale = 1.0f / mes->scene.settings.scale_factor;
+                obj->applyScaleFactor(scale);
+            }
+        }
+    });
+    parallel_for_each(mes->scene.animations.begin(), mes->scene.animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+        if (swap_x || swap_yz) {
+            anim->convertHandedness(swap_x, swap_yz);
+        }
+        if (mes->scene.settings.scale_factor != 1.0f) {
+            float scale = 1.0f / mes->scene.settings.scale_factor;
+            anim->applyScaleFactor(scale);
+        }
+    });
 
     {
         lock_t l(m_mutex);
-        for (auto& pmesh : mes->scene.meshes) {
-            auto& dst = m_client_meshes[pmesh->path];
-            dst = pmesh;
+        for (auto& obj : mes->scene.objects) {
+            m_client_objs[obj->path] = obj;
         }
         m_recv_history.emplace_back(mes);
     }

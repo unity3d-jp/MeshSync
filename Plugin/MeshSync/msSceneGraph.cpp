@@ -158,6 +158,24 @@ void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os)
 bool ScreenshotMessage::deserialize(std::istream& is) { return super::deserialize(is); }
 
 
+Entity * Entity::make(std::istream & is)
+{
+    Entity *ret = nullptr;
+
+    int type;
+    read(is, type);
+    switch ((Type)type) {
+    case Type::Transform: ret = new Transform(); break;
+    case Type::Camera: ret = new Camera(); break;
+    case Type::Light: ret = new Light(); break;
+    case Type::Mesh: ret = new Mesh(); break;
+    }
+    if (ret) {
+        ret->deserialize(is);
+    }
+    return ret;
+}
+
 Entity::~Entity()
 {
 }
@@ -170,28 +188,28 @@ Entity::Type Entity::getType() const
 uint32_t Entity::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += sizeof(int);
     ret += ssize(id);
-    ret += ssize(index);
     ret += ssize(path);
     return ret;
 }
 void Entity::serialize(std::ostream& os) const
 {
+    int type = (int)getType();
+    write(os, type);
     write(os, id);
-    write(os, index);
     write(os, path);
 }
 void Entity::deserialize(std::istream& is)
 {
+    // type is consumed by make()
     read(is, id);
-    read(is, index);
     read(is, path);
 }
 
 void Entity::clear()
 {
     id = 0;
-    index = 0;
     path.clear();
 }
 
@@ -239,6 +257,7 @@ uint32_t Transform::getSerializeSize() const
     ret += ssize(position);
     ret += ssize(rotation);
     ret += ssize(scale);
+    ret += ssize(index);
     ret += ssize(visible);
     ret += ssize(visible_hierarchy);
     ret += ssize(reference);
@@ -250,6 +269,7 @@ void Transform::serialize(std::ostream& os) const
     write(os, position);
     write(os, rotation);
     write(os, scale);
+    write(os, index);
     write(os, visible);
     write(os, visible_hierarchy);
     write(os, reference);
@@ -260,6 +280,7 @@ void Transform::deserialize(std::istream& is)
     read(is, position);
     read(is, rotation);
     read(is, scale);
+    read(is, index);
     read(is, visible);
     read(is, visible_hierarchy);
     read(is, reference);
@@ -271,6 +292,7 @@ void Transform::clear()
     position = float3::zero();
     rotation = quatf::identity();
     scale = float3::one();
+    index = 0;
     visible = visible_hierarchy = true;
     reference.clear();
 }
@@ -1178,10 +1200,7 @@ uint32_t Scene::getSerializeSize() const
 {
     uint32_t ret = 0;
     ret += settings.getSerializeSize();
-    ret += ssize(meshes);
-    ret += ssize(transforms);
-    ret += ssize(cameras);
-    ret += ssize(lights);
+    ret += ssize(objects);
     ret += ssize(materials);
     ret += ssize(animations);
     ret += ssize(constraints);
@@ -1190,10 +1209,7 @@ uint32_t Scene::getSerializeSize() const
 void Scene::serialize(std::ostream& os) const
 {
     settings.serialize(os);
-    write(os, meshes);
-    write(os, transforms);
-    write(os, cameras);
-    write(os, lights);
+    write(os, objects);
     write(os, materials);
     write(os, animations);
     write(os, constraints);
@@ -1201,10 +1217,7 @@ void Scene::serialize(std::ostream& os) const
 void Scene::deserialize(std::istream& is)
 {
     settings.deserialize(is);
-    read(is, meshes);
-    read(is, transforms);
-    read(is, cameras);
-    read(is, lights);
+    read(is, objects);
     read(is, materials);
     read(is, animations);
     read(is, constraints);
@@ -1212,10 +1225,7 @@ void Scene::deserialize(std::istream& is)
 
 void Scene::clear()
 {
-    meshes.clear();
-    transforms.clear();
-    cameras.clear();
-    lights.clear();
+    objects.clear();
     materials.clear();
     animations.clear();
     constraints.clear();
