@@ -9,7 +9,7 @@ public:
         ms::ClientSettings client_settings;
 
         float scale_factor = 0.01f;
-        int  animation_sps = 5;
+        int  animation_sps = 3;
         int  timeout_ms = 5000;
         bool auto_sync = false;
         bool sync_meshes = true;
