@@ -132,6 +132,7 @@ msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
     _this->color = *v;
 }
 
+msAPI const char* msAnimationGetPath(ms::Animation *_this) { return _this->path.c_str(); }
 msAPI ms::TransformAnimation* msAnimationAsTransform(ms::Animation *_this) { return dynamic_cast<ms::TransformAnimation*>(_this); }
 msAPI ms::CameraAnimation* msAnimationAsCamera(ms::Animation *_this) { return dynamic_cast<ms::CameraAnimation*>(_this); }
 msAPI ms::LightAnimation* msAnimationAsLight(ms::Animation *_this) { return dynamic_cast<ms::LightAnimation*>(_this); }
@@ -824,6 +825,14 @@ msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 msAPI ms::Material* msSceneGetMaterialData(ms::Scene *_this, int i)
 {
     return _this->materials[i].get();
+}
+msAPI int msSceneGetNumAnimations(ms::Scene *_this)
+{
+    return (int)_this->animations.size();
+}
+msAPI ms::Animation* msSceneGetAnimationData(ms::Scene *_this, int i)
+{
+    return _this->animations[i].get();
 }
 msAPI int msSceneGetNumConstraints(ms::Scene *_this)
 {

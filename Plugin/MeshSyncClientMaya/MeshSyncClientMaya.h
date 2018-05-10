@@ -37,6 +37,7 @@ public:
         All,
         Updated,
         Selected,
+        Animations,
     };
 
     static MeshSyncClientMaya& getInstance();
@@ -98,7 +99,7 @@ private:
     void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
     void doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node);
 
-    void exportAnimation();
+    int exportAnimations();
     void exportAnimation(MObject src, MObject shape);
     void extractTransformAnimationData(ms::Animation& dst, MObject node, MObject shape);
     void extractCameraAnimationData(ms::Animation& dst, MObject node, MObject shape);
@@ -143,14 +144,14 @@ private:
     {
         MObject node, shape;
         ms::Animation *dst = nullptr;
-        void (MeshSyncClientMaya::*extractor)(ms::Animation& dst, MObject node, MObject shape);
+        void (MeshSyncClientMaya::*extractor)(ms::Animation& dst, MObject node, MObject shape) = nullptr;
 
         void operator()(MeshSyncClientMaya *_this)
         {
             (_this->*extractor)(*dst,  node, shape);
         }
     };
-    std::vector<AnimationRecord> m_anim_records;
+    std::map<void*, AnimationRecord> m_anim_records;
     float m_current_time = 0.0f;
     MDGContext m_animation_ctx;
 };

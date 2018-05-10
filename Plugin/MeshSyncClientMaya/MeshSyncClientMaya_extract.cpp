@@ -720,19 +720,41 @@ void MeshSyncClientMaya::doExtractConstraintData(ms::Constraint& dst, MObject sr
 {
 }
 
-void MeshSyncClientMaya::exportAnimation()
+int MeshSyncClientMaya::exportAnimations()
 {
-    auto exportShape = [this](MObject& shape) {
-        exportAnimation(GetTransform(shape), shape);
-    };
-    auto exportNode = [this](MObject& node) {
-        exportAnimation(node, MObject());
-    };
+    // gather target data
+    {
+        auto exportShape = [this](MObject& shape) {
+            exportAnimation(GetTransform(shape), shape);
+        };
+        auto exportNode = [this](MObject& node) {
+            exportAnimation(node, MObject());
+        };
+        Enumerate(MFn::kCamera, exportShape);
+        Enumerate(MFn::kLight, exportShape);
+        Enumerate(MFn::kJoint, exportNode);
+        Enumerate(MFn::kMesh, exportShape);
+    }
 
-    Enumerate(MFn::kCamera, exportShape);
-    Enumerate(MFn::kLight, exportShape);
-    Enumerate(MFn::kJoint, exportNode);
-    Enumerate(MFn::kMesh, exportShape);
+    // extract
+    auto time_begin = MAnimControl::minTime();
+    auto time_end = MAnimControl::maxTime();
+    auto interval = MTime(1.0 / m_settings.animation_sps, MTime::kSeconds);
+
+    for (MTime t = time_begin; t < time_end; t += interval) {
+        m_current_time = (float)t.as(MTime::kSeconds);
+        m_animation_ctx = MDGContext(t);
+
+        for (auto kvp : m_anim_records) {
+            kvp.second(this);
+        }
+    }
+
+
+    // cleanup
+    int ret = (int)m_anim_records.size();
+    m_anim_records.clear();
+    return ret;
 }
 
 void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
@@ -740,26 +762,33 @@ void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
     if (node.isNull())
         return;
 
-    ms::Animation *dst = nullptr;
+    auto& rec = m_anim_records[(void*&)node];
+    if (rec.dst)
+        return;
 
+    ms::Animation *dst = nullptr;
     if (m_settings.sync_cameras && shape.hasFn(MFn::kCamera) && MAnimUtil::isAnimated(shape)) {
         exportAnimation(GetParent(node), shape);
         dst = new ms::CameraAnimation();
-        extractCameraAnimationData(*dst, node, shape);
+        rec.extractor = &MeshSyncClientMaya::extractCameraAnimationData;
     }
     else if (m_settings.sync_lights && shape.hasFn(MFn::kLight) && MAnimUtil::isAnimated(shape)) {
         exportAnimation(GetParent(node), shape);
         dst = new ms::LightAnimation();
-        extractLightAnimationData(*dst, node, shape);
+        rec.extractor = &MeshSyncClientMaya::extractLightAnimationData;
     }
     else {
         exportAnimation(GetParent(node), shape);
         dst = new ms::TransformAnimation();
-        extractTransformAnimationData(*dst, node, shape);
+        rec.extractor = &MeshSyncClientMaya::extractTransformAnimationData;
     }
 
     if (dst) {
         m_client_animations.emplace_back(dst);
+        dst->path = GetPath(node);
+        rec.node = node;
+        rec.shape = shape;
+        rec.dst = dst;
     }
 }
 

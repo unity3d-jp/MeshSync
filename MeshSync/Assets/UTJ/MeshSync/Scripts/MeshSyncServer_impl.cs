@@ -739,7 +739,7 @@ namespace UTJ.MeshSync
         {
             #region internal
             internal IntPtr _this;
-
+            [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern TransformAnimationData msAnimationAsTransform(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern CameraAnimationData msAnimationAsCamera(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern LightAnimationData msAnimationAsLight(IntPtr _this);
@@ -755,6 +755,11 @@ namespace UTJ.MeshSync
             public static implicit operator bool(AnimationData v)
             {
                 return v._this != IntPtr.Zero;
+            }
+
+            public string path
+            {
+                get { return S(msAnimationGetPath(_this)); }
             }
 
             public TransformAnimationData transform
@@ -1561,6 +1566,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimations(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern AnimationData msSceneGetAnimationData(IntPtr _this, int i);
             #endregion
 
             public string name { get { return S(msSceneGetName(_this)); } }
@@ -1570,6 +1577,7 @@ namespace UTJ.MeshSync
             public int numMeshes { get { return msSceneGetNumMeshes(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
             public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
+            public int numAnimations { get { return msSceneGetNumAnimations(_this); } }
 
             public TransformData GetTransform(int i) { return msSceneGetTransformData(_this, i); }
             public CameraData GetCamera(int i) { return msSceneGetCameraData(_this, i); }
@@ -1577,6 +1585,7 @@ namespace UTJ.MeshSync
             public MeshData GetMesh(int i) { return msSceneGetMeshData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
             public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
+            public AnimationData GetAnimation(int i) { return msSceneGetAnimationData(_this, i); }
         }
 
 

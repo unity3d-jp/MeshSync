@@ -160,6 +160,8 @@ MStatus CmdSync::doIt(const MArgList& args_)
             scope = MeshSyncClientMaya::SendScope::Selected;
         else if (s == "updated")
             scope = MeshSyncClientMaya::SendScope::Updated;
+        else if (s == "animations")
+            scope = MeshSyncClientMaya::SendScope::Animations;
     }
     MeshSyncClientMaya::getInstance().send(scope);
     return MStatus::kSuccess;

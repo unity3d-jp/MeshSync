@@ -374,6 +374,9 @@ bool MeshSyncClientMaya::send(SendScope scope)
                 ++num_exported;
         }
     }
+    else if (scope == SendScope::Animations) {
+        num_exported = exportAnimations();
+    }
 
     if (num_exported > 0 || !m_deleted.empty()) {
         kickAsyncSend();
@@ -486,7 +489,7 @@ void MeshSyncClientMaya::kickAsyncSend()
             m_deleted.clear();
         }
 
-        // send scene data (except meshes)
+        // send scene data
         {
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
@@ -511,13 +514,15 @@ void MeshSyncClientMaya::kickAsyncSend()
         };
         m_client_meshes.clear();
 
-        // send constraints
-        if (!m_client_constraints.empty()) {
+        // send animations and constraints
+        if (!m_client_animations.empty() || !m_client_constraints.empty()) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
+            set.scene.animations = m_client_animations;
             set.scene.constraints = m_client_constraints;
             client.send(set);
 
+            m_client_animations.clear();
             m_client_constraints.clear();
         }
 
