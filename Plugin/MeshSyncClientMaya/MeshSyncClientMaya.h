@@ -21,7 +21,7 @@ public:
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
-        bool sync_animations = true;
+        bool sync_animations = false;
         bool sample_animation = true;
         bool apply_tweak = true;
 

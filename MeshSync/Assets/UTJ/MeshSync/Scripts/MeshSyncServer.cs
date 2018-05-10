@@ -445,6 +445,7 @@ namespace UTJ.MeshSync
                         old = null;
                     }
 
+                    bool updateWhenOffscreen = false;
                     if (skinned)
                     {
                         // create bones
@@ -476,10 +477,7 @@ namespace UTJ.MeshSync
                                 root = bones[0];
                             smr.rootBone = root;
                             smr.bones = bones;
-
-                            var bounds = rec.editMesh.bounds;
-                            bounds.center = bounds.center - root.position;
-                            smr.localBounds = bounds;
+                            updateWhenOffscreen = true;
                         }
                     }
                     else
@@ -493,6 +491,7 @@ namespace UTJ.MeshSync
                         if (rec.editMesh != null)
                             smr.localBounds = rec.editMesh.bounds;
                     }
+                    smr.updateWhenOffscreen = updateWhenOffscreen;
 
                     if (flags.hasBlendshapes)
                     {

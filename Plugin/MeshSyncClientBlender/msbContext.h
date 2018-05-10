@@ -25,7 +25,7 @@ struct msbSettings
     bool sync_bones = true;
     bool sync_poses = true;
     bool sync_blendshapes = true;
-    bool sync_animations = true;
+    bool sync_animations = false;
     bool sync_cameras = true;
     bool sync_lights = true;
     bool calc_per_index_normals = true;

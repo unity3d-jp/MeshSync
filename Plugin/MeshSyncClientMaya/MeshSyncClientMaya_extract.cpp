@@ -747,7 +747,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
             auto bone = new ms::BoneData();
             bone->path = GetPath(joint);
             if (dst.bones.empty())
-                dst.root_bone = GetRootPath(joint);
+                dst.root_bone = GetRootBonePath(joint);
             dst.bones.emplace_back(bone);
 
             MObject matrix_obj;

@@ -28,20 +28,15 @@ std::string GetPath(MObject node)
     return GetPath(GetDagPath(node));
 }
 
-std::string GetRootPath(MDagPath path)
+std::string GetRootBonePath(MObject joint)
 {
-    std::string ret = GetPath(path);
-    if (ret.size() > 1) {
-        auto it = std::find(ret.begin() + 1, ret.end(), '/');
-        if (it != ret.end()) {
-            ret.erase(it, ret.end());
-        }
+    for (;;) {
+        MObject parent = GetParent(joint);
+        if (parent.isNull() || !parent.hasFn(MFn::kJoint))
+            break;
+        joint = parent;
     }
-    return ret;
-}
-std::string GetRootPath(MObject node)
-{
-    return GetRootPath(GetDagPath(node));
+    return GetPath(joint);
 }
 
 

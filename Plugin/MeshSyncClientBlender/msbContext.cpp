@@ -569,7 +569,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     case OB_ARMATURE:
     {
         exportObject(obj->parent, true);
-        if (m_settings.sync_meshes && m_settings.sync_bones) {
+        if (m_settings.sync_bones) {
             ret = exportArmature(obj);
         }
         break;
