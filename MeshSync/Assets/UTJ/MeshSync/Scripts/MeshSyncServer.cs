@@ -768,7 +768,7 @@ namespace UTJ.MeshSync
         {
 #if UNITY_2018_1_OR_NEWER
             bool dummy = false;
-            var trans = FindOrCreateObjectByPath(data.path, false, ref dummy);
+            var trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
             if (trans == null)
                 return;
 
@@ -780,7 +780,7 @@ namespace UTJ.MeshSync
                 for (int si = 0; si < ns; ++si)
                 {
                     var s = c.GetSource(si);
-                    s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), false, ref dummy);
+                    s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), true, ref dummy);
                 }
             };
 
@@ -827,7 +827,7 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             var path = data.path;
             bool dummy = false;
-            var trans = FindOrCreateObjectByPath(path, false, ref dummy);
+            var trans = FindOrCreateObjectByPath(path, true, ref dummy);
             if (trans == null)
                 return;
 
