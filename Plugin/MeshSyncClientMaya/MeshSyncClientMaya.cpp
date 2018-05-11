@@ -374,11 +374,25 @@ bool MeshSyncClientMaya::send(SendScope scope)
                 ++num_exported;
         }
     }
-    else if (scope == SendScope::Animations) {
-        num_exported = exportAnimations();
-    }
 
     if (num_exported > 0 || !m_deleted.empty()) {
+        kickAsyncSend();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool MeshSyncClientMaya::sendAnimations(SendScope scope)
+{
+    // wait for previous request to complete
+    if (m_future_send.valid()) {
+        m_future_send.get();
+    }
+
+    int num_exported = exportAnimations(scope);
+    if (num_exported > 0) {
         kickAsyncSend();
         return true;
     }

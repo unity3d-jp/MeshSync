@@ -9,7 +9,8 @@ public:
         ms::ClientSettings client_settings;
 
         float scale_factor = 0.01f;
-        int  animation_sps = 3;
+        float animation_time_scale = 1.0f;
+        int  animation_sps = 2;
         int  timeout_ms = 5000;
         bool auto_sync = false;
         bool sync_meshes = true;
@@ -21,8 +22,6 @@ public:
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
-        bool sync_animations = false;
-        bool sample_animation = true;
         bool apply_tweak = true;
 
         // import settings
@@ -37,7 +36,6 @@ public:
         All,
         Updated,
         Selected,
-        Animations,
     };
 
     static MeshSyncClientMaya& getInstance();
@@ -56,6 +54,7 @@ public:
     void notifyUpdateLight(MObject obj);
     void notifyUpdateMesh(MObject obj);
     bool send(SendScope scope);
+    bool sendAnimations(SendScope scope);
     bool import();
 
 
@@ -99,7 +98,7 @@ private:
     void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
     void doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node);
 
-    int exportAnimations();
+    int exportAnimations(SendScope scope);
     void exportAnimation(MObject src, MObject shape);
     void extractTransformAnimationData(ms::Animation& dst, MObject node, MObject shape);
     void extractCameraAnimationData(ms::Animation& dst, MObject node, MObject shape);

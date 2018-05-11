@@ -73,22 +73,21 @@ MSyntax CmdSettings::createSyntax()
     MSyntax syntax;
     syntax.enableQuery(true);
     syntax.enableEdit(false);
-    syntax.addFlag("-a",    "-address",         MSyntax::kString);
-    syntax.addFlag("-p",    "-port",            MSyntax::kLong);
-    syntax.addFlag("-sf",   "-scaleFactor",     MSyntax::kDouble);
-    syntax.addFlag("-as",   "-autosync",        MSyntax::kBoolean);
-    syntax.addFlag("-sm",   "-syncMeshes",      MSyntax::kBoolean);
-    syntax.addFlag("-smn",  "-syncNormals",     MSyntax::kBoolean);
-    syntax.addFlag("-smu",  "-syncUVs",         MSyntax::kBoolean);
-    syntax.addFlag("-smc",  "-syncColors",      MSyntax::kBoolean);
-    syntax.addFlag("-sms",  "-syncBlendShapes", MSyntax::kBoolean);
-    syntax.addFlag("-smb",  "-syncBones",       MSyntax::kBoolean);
-    syntax.addFlag("-sc",   "-syncCameras",     MSyntax::kBoolean);
-    syntax.addFlag("-sl",   "-syncLights",      MSyntax::kBoolean);
-    syntax.addFlag("-sco",  "-syncConstraints", MSyntax::kBoolean);
-    syntax.addFlag("-sa",   "-syncAnimations",  MSyntax::kBoolean);
-    syntax.addFlag("-spa",  "-sampleAnimation", MSyntax::kBoolean);
-    syntax.addFlag("-sps",  "-animationSPS",    MSyntax::kLong);
+    syntax.addFlag("-a",   "-address",            MSyntax::kString);
+    syntax.addFlag("-p",   "-port",               MSyntax::kLong);
+    syntax.addFlag("-sf",  "-scaleFactor",        MSyntax::kDouble);
+    syntax.addFlag("-as",  "-autosync",           MSyntax::kBoolean);
+    syntax.addFlag("-sm",  "-syncMeshes",         MSyntax::kBoolean);
+    syntax.addFlag("-smn", "-syncNormals",        MSyntax::kBoolean);
+    syntax.addFlag("-smu", "-syncUVs",            MSyntax::kBoolean);
+    syntax.addFlag("-smc", "-syncColors",         MSyntax::kBoolean);
+    syntax.addFlag("-sms", "-syncBlendShapes",    MSyntax::kBoolean);
+    syntax.addFlag("-smb", "-syncBones",          MSyntax::kBoolean);
+    syntax.addFlag("-sc",  "-syncCameras",        MSyntax::kBoolean);
+    syntax.addFlag("-sl",  "-syncLights",         MSyntax::kBoolean);
+    syntax.addFlag("-sco", "-syncConstraints",    MSyntax::kBoolean);
+    syntax.addFlag("-ats", "-animationTS",        MSyntax::kDouble);
+    syntax.addFlag("-asp", "-animationSPS",       MSyntax::kLong);
     return syntax;
 }
 
@@ -118,8 +117,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncCameras", settings.sync_cameras);
     Handle("syncLights", settings.sync_lights);
     Handle("syncConstraints", settings.sync_constraints);
-    Handle("syncAnimations", settings.sync_animations);
-    Handle("sampleAnimation", settings.sample_animation);
+    Handle("animationTS", settings.animation_time_scale);
     Handle("animationSPS", settings.animation_sps);
 #undef Handle
 
@@ -143,6 +141,7 @@ MSyntax CmdSync::createSyntax()
     syntax.enableQuery(false);
     syntax.enableEdit(false);
     syntax.addFlag("-s", "-scope", MSyntax::kString);
+    syntax.addFlag("-t", "-target", MSyntax::kString);
     return syntax;
 }
 
@@ -152,7 +151,16 @@ MStatus CmdSync::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto& instance = MeshSyncClientMaya::getInstance();
 
-    MeshSyncClientMaya::SendScope scope = MeshSyncClientMaya::SendScope::All;
+    bool animations = false;
+    auto scope = MeshSyncClientMaya::SendScope::All;
+
+    if (args.isFlagSet("target")) {
+        std::string t;
+        get_arg(t, "target", args);
+        if (t == "animations")
+            animations = true;
+    }
+
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
@@ -160,10 +168,12 @@ MStatus CmdSync::doIt(const MArgList& args_)
             scope = MeshSyncClientMaya::SendScope::Selected;
         else if (s == "updated")
             scope = MeshSyncClientMaya::SendScope::Updated;
-        else if (s == "animations")
-            scope = MeshSyncClientMaya::SendScope::Animations;
     }
-    MeshSyncClientMaya::getInstance().send(scope);
+
+    if (animations)
+        MeshSyncClientMaya::getInstance().sendAnimations(scope);
+    else
+        MeshSyncClientMaya::getInstance().send(scope);
     return MStatus::kSuccess;
 }
 

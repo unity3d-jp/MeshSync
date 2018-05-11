@@ -614,19 +614,28 @@ void MeshSyncClientMaya::doExtractConstraintData(ms::Constraint& dst, MObject sr
 {
 }
 
-int MeshSyncClientMaya::exportAnimations()
+int MeshSyncClientMaya::exportAnimations(SendScope scope)
 {
     // gather target data
-    {
-        auto exportShape = [this](MObject& shape) {
-            exportAnimation(GetTransform(shape), shape);
-        };
+    if (scope == SendScope::Selected) {
+        MSelectionList list;
+        MGlobal::getActiveSelectionList(list);
+        for (uint32_t i = 0; i < list.length(); i++) {
+            MObject node;
+            list.getDependNode(i, node);
+            exportAnimation(node, GetShape(node));
+        }
+    }
+    else {
         auto exportNode = [this](MObject& node) {
             exportAnimation(node, MObject());
         };
+        auto exportShape = [this](MObject& shape) {
+            exportAnimation(GetTransform(shape), shape);
+        };
+        Enumerate(MFn::kJoint, exportNode);
         Enumerate(MFn::kCamera, exportShape);
         Enumerate(MFn::kLight, exportShape);
-        Enumerate(MFn::kJoint, exportNode);
         Enumerate(MFn::kMesh, exportShape);
     }
 
@@ -709,10 +718,12 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, MObj
     auto scale = mu::float3::one();
     bool vis = true;
     ExtractTransformData(node, pos, rot, scale, vis);
-    dst.translation.push_back({ m_current_time, pos });
-    dst.rotation.push_back({ m_current_time, rot });
-    dst.scale.push_back({ m_current_time, scale });
-    //dst.visible.push_back({ m_current_time, vis });
+
+    float t = m_current_time * m_settings.animation_time_scale;
+    dst.translation.push_back({ t, pos });
+    dst.rotation.push_back({ t, rot });
+    dst.scale.push_back({ t, scale });
+    //dst.visible.push_back({ t, vis });
 }
 
 void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, MObject node, MObject shape)
@@ -728,13 +739,14 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, MObject
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
     ExtractCameraData(shape, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
-    dst.near_plane.push_back({ m_current_time , near_plane });
-    dst.far_plane.push_back({ m_current_time , far_plane });
-    dst.fov.push_back({ m_current_time , fov });
-    dst.horizontal_aperture.push_back({ m_current_time , horizontal_aperture });
-    dst.vertical_aperture.push_back({ m_current_time , vertical_aperture });
-    dst.focal_length.push_back({ m_current_time , focal_length });
-    dst.focus_distance.push_back({ m_current_time , focus_distance });
+    float t = m_current_time * m_settings.animation_time_scale;
+    dst.near_plane.push_back({ t , near_plane });
+    dst.far_plane.push_back({ t , far_plane });
+    dst.fov.push_back({ t , fov });
+    dst.horizontal_aperture.push_back({ t , horizontal_aperture });
+    dst.vertical_aperture.push_back({ t , vertical_aperture });
+    dst.focal_length.push_back({ t , focal_length });
+    dst.focus_distance.push_back({ t , focus_distance });
 }
 
 void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject node, MObject shape)
@@ -752,9 +764,10 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject 
     float spot_angle;
     ExtractLightData(shape, color, intensity, spot_angle);
 
-    dst.color.push_back({ m_current_time, color });
-    dst.intensity.push_back({ m_current_time, intensity });
+    float t = m_current_time * m_settings.animation_time_scale;
+    dst.color.push_back({ t, color });
+    dst.intensity.push_back({ t, intensity });
     if (shape.hasFn(MFn::kSpotLight)) {
-        dst.spot_angle.push_back({ m_current_time, spot_angle });
+        dst.spot_angle.push_back({ t, spot_angle });
     }
 }
