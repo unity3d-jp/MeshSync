@@ -17,6 +17,7 @@ namespace UTJ.MeshSync
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
+        [SerializeField] bool m_ignoreVisibility = false;
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
@@ -533,7 +534,7 @@ namespace UTJ.MeshSync
                 }
 
                 var renderer = trans.gameObject.GetComponent<Renderer>();
-                if (renderer != null)
+                if (renderer != null && !m_ignoreVisibility)
                     renderer.enabled = data.transform.visible;
             }
 
@@ -721,7 +722,8 @@ namespace UTJ.MeshSync
             trans.localScale = data.scale;
 
             // visibility
-            trans.gameObject.SetActive(data.visibleHierarchy);
+            if (!m_ignoreVisibility)
+                trans.gameObject.SetActive(data.visibleHierarchy);
 
             return trans;
         }
@@ -738,7 +740,8 @@ namespace UTJ.MeshSync
             cam.fieldOfView = data.fov;
             cam.nearClipPlane = data.nearClipPlane;
             cam.farClipPlane = data.farClipPlane;
-            cam.enabled = data.transform.visible;
+            if (!m_ignoreVisibility)
+                cam.enabled = data.transform.visible;
             return cam;
         }
 
@@ -758,7 +761,8 @@ namespace UTJ.MeshSync
             lt.intensity = data.intensity;
             if (data.range > 0.0f) { lt.range = data.range; }
             if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
-            lt.enabled = data.transform.visible;
+            if (!m_ignoreVisibility)
+                lt.enabled = data.transform.visible;
             return lt;
         }
 
