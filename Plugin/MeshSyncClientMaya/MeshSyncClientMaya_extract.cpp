@@ -753,8 +753,8 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject 
     ExtractLightData(shape, color, intensity, spot_angle);
 
     dst.color.push_back({ m_current_time, color });
-    dst.color.push_back({ m_current_time, intensity });
+    dst.intensity.push_back({ m_current_time, intensity });
     if (shape.hasFn(MFn::kSpotLight)) {
-        dst.color.push_back({ m_current_time, spot_angle });
+        dst.spot_angle.push_back({ m_current_time, spot_angle });
     }
 }

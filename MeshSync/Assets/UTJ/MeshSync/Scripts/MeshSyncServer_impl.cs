@@ -586,6 +586,8 @@ namespace UTJ.MeshSync
             }
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
+                ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+
                 var fov  = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
                 var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
                 var far  = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
@@ -713,6 +715,8 @@ namespace UTJ.MeshSync
 
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
+                ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+
                 var color     = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
                 var intensity = AnimationData.ToAnimatinCurve(intensityTimes, intensityValues, reduce);
                 var range     = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
@@ -740,9 +744,7 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern TransformAnimationData msAnimationAsTransform(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern CameraAnimationData msAnimationAsCamera(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern LightAnimationData msAnimationAsLight(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TransformData.Type msAnimationGetType(IntPtr _this);
             #endregion
 
 
@@ -762,34 +764,24 @@ namespace UTJ.MeshSync
                 get { return S(msAnimationGetPath(_this)); }
             }
 
-            public TransformAnimationData transform
+            public TransformData.Type type
             {
-                get { return msAnimationAsTransform(_this); }
-            }
-
-            public CameraAnimationData camera
-            {
-                get { return msAnimationAsCamera(_this); }
-            }
-
-            public LightAnimationData light
-            {
-                get { return msAnimationAsLight(_this); }
+                get { return msAnimationGetType(_this); }
             }
 
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
+                switch(type)
                 {
-                    var tmp = transform;
-                    if (tmp) { tmp.ExportToClip(clip, path, reduce); }
-                }
-                {
-                    var tmp = camera;
-                    if (tmp) { tmp.ExportToClip(clip, path, reduce); }
-                }
-                {
-                    var tmp = light;
-                    if (tmp) { tmp.ExportToClip(clip, path, reduce); }
+                    case TransformData.Type.Transform:
+                        ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+                        break;
+                    case TransformData.Type.Camera:
+                        ((CameraAnimationData)_this).ExportToClip(clip, path, reduce);
+                        break;
+                    case TransformData.Type.Light:
+                        ((LightAnimationData)_this).ExportToClip(clip, path, reduce);
+                        break;
                 }
             }
 

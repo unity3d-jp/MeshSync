@@ -827,50 +827,44 @@ namespace UTJ.MeshSync
             if (trans == null)
                 return;
 
-            var tdata = data.transform;
-            if (tdata)
+            Transform root = trans;
+            while (root.parent != null)
+                root = root.parent;
+
+            Animator animator = null;
+            AnimationClip clip = null;
+
+            animator = root.GetComponent<Animator>();
+            if (animator == null)
             {
-                // import TRS animation
-
-                Transform root = trans;
-                while (root.parent != null)
-                    root = root.parent;
-
-                Animator animator = null;
-                AnimationClip clip = null;
-
-                animator = root.GetComponent<Animator>();
-                if (animator == null)
+                animator = root.gameObject.AddComponent<Animator>();
+            }
+            else
+            {
+                if (animator.runtimeAnimatorController != null)
                 {
-                    animator = root.gameObject.AddComponent<Animator>();
-                }
-                else
-                {
-                    if (animator.runtimeAnimatorController != null)
+                    var clips = animator.runtimeAnimatorController.animationClips;
+                    if (clips != null && clips.Length > 0)
                     {
-                        var clips = animator.runtimeAnimatorController.animationClips;
-                        if (clips != null && clips.Length > 0)
-                        {
-                            clip = animator.runtimeAnimatorController.animationClips[0];
-                        }
+                        clip = animator.runtimeAnimatorController.animationClips[0];
                     }
                 }
-
-                if (clip == null)
-                {
-                    clip = new AnimationClip();
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(root.name);
-                    CreateAsset(clip, assetPath + ".anim");
-                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
-                }
-
-                var animPath = path.Replace("/" + root.name, "");
-                if (animPath.Length > 0 && animPath[0] == '/')
-                {
-                    animPath = animPath.Remove(0, 1);
-                }
-                tdata.ExportToClip(clip, animPath, false);
             }
+
+            if (clip == null)
+            {
+                clip = new AnimationClip();
+                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(root.name);
+                CreateAsset(clip, assetPath + ".anim");
+                animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
+            }
+
+            var animPath = path.Replace("/" + root.name, "");
+            if (animPath.Length > 0 && animPath[0] == '/')
+            {
+                animPath = animPath.Remove(0, 1);
+            }
+            data.ExportToClip(clip, animPath, false);
 #endif
         }
 
