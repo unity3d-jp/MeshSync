@@ -25,6 +25,7 @@ static void RespondTextForm(HTTPServerResponse &response, const std::string& mes
             "<body>";
     body += message;
     body +=
+                "<div><img src=\"screenshot\"></div>"
                 "<form action=\"/text\" method=\"post\">"
                     "Message: <input type=\"text\" name=\"t\"><br>"
                     "<input type=\"submit\" value=\"Submit\">"
@@ -32,6 +33,7 @@ static void RespondTextForm(HTTPServerResponse &response, const std::string& mes
             "</body>"
         "</html>";
 
+    response.set("Cache-Control", "no-store, must-revalidate");
     response.setContentType("text/html");
     response.setContentLength(body.size());
     std::ostream &ostr = response.send();
@@ -474,6 +476,7 @@ void Server::recvScreenshot(HTTPServerRequest &request, HTTPServerResponse &resp
     }
 
     // serve data
+    response.set("Cache-Control", "no-store, must-revalidate");
     response.sendFile(m_screenshot_file_path, "image/png");
 }
 

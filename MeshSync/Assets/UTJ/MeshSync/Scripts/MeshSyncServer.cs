@@ -1250,6 +1250,7 @@ namespace UTJ.MeshSync
 
         void OnRecvScreenshot(IntPtr data)
         {
+            ForceRepaint();
             ScreenCapture.CaptureScreenshot("screenshot.png");
             // actual capture will be done at end of frame. not done immediately.
             // just set flag now.
