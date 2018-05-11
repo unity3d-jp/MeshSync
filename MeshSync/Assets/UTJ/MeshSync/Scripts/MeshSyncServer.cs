@@ -139,27 +139,31 @@ namespace UTJ.MeshSync
 
         void OnServerMessage(MessageType type, IntPtr data)
         {
-            switch (type)
+            try
             {
-                case MessageType.Get:
-                    OnRecvGet((GetMessage)data);
-                    break;
-                case MessageType.Set:
-                    OnRecvSet((SetMessage)data);
-                    break;
-                case MessageType.Delete:
-                    OnRecvDelete((DeleteMessage)data);
-                    break;
-                case MessageType.Fence:
-                    OnRecvFence((FenceMessage)data);
-                    break;
-                case MessageType.Text:
-                    OnRecvText((TextMessage)data);
-                    break;
-                case MessageType.Screenshot:
-                    OnRecvScreenshot(data);
-                    break;
+                switch (type)
+                {
+                    case MessageType.Get:
+                        OnRecvGet((GetMessage)data);
+                        break;
+                    case MessageType.Set:
+                        OnRecvSet((SetMessage)data);
+                        break;
+                    case MessageType.Delete:
+                        OnRecvDelete((DeleteMessage)data);
+                        break;
+                    case MessageType.Fence:
+                        OnRecvFence((FenceMessage)data);
+                        break;
+                    case MessageType.Text:
+                        OnRecvText((TextMessage)data);
+                        break;
+                    case MessageType.Screenshot:
+                        OnRecvScreenshot(data);
+                        break;
+                }
             }
+            catch (Exception e) { Debug.Log(e); }
         }
 
         void OnRecvGet(GetMessage mes)
@@ -232,7 +236,7 @@ namespace UTJ.MeshSync
                     if(rec.Value.editMesh)
                     {
                         var go = rec.Value.go;
-                        if(go.activeInHierarchy)
+                        if(go != null && go.activeInHierarchy)
                         {
                             go.SetActive(false); // 
                             go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
