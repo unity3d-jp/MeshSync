@@ -17,6 +17,7 @@ namespace UTJ.MeshSync
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
+        [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
         IntPtr m_server;
@@ -267,7 +268,7 @@ namespace UTJ.MeshSync
             }
             catch (Exception e) { Debug.Log(e); }
 
-            // sync transforms
+            // objects
             try
             {
                 int numObjects = scene.numObjects;
@@ -294,6 +295,7 @@ namespace UTJ.MeshSync
             catch (Exception e) { Debug.Log(e); }
 
 #if UNITY_2018_1_OR_NEWER
+            // constraints
             try
             {
                 int numConstraints = scene.numConstraints;
@@ -302,6 +304,7 @@ namespace UTJ.MeshSync
             }
             catch (Exception e) { Debug.Log(e); }
 #endif
+            // animations
             try
             {
                 int numAnimations = scene.numAnimations;
@@ -336,6 +339,9 @@ namespace UTJ.MeshSync
                     }
                 }
             }
+
+            if(m_progressiveDisplay)
+                ForceRepaint();
         }
 
         void DestroyIfNotAsset(UnityEngine.Object obj)
