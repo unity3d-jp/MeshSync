@@ -95,12 +95,28 @@ void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 }
 
+
 void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
     auto task = [this, &dst, src]() {
         doExtractCameraData(dst, src);
     };
     m_extract_tasks.push_back(task);
+}
+
+static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane, float& fov,
+    float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
+{
+    MFnCamera mcam(shape);
+
+    near_plane = (float)mcam.nearClippingPlane();
+    far_plane = (float)mcam.farClippingPlane();
+    fov = (float)mcam.horizontalFieldOfView() * ms::Rad2Deg * 0.5f;
+
+    horizontal_aperture = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
+    vertical_aperture = (float)mcam.verticalFilmAperture() * InchToMillimeter;
+    focal_length = (float)mcam.focalLength();
+    focus_distance = (float)mcam.focusDistance();
 }
 
 void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
@@ -115,101 +131,8 @@ void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
 
     MFnCamera mcam(shape);
     dst.is_ortho = mcam.isOrtho();
-    dst.near_plane = (float)mcam.nearClippingPlane();
-    dst.far_plane = (float)mcam.farClippingPlane();
-    dst.fov = (float)mcam.horizontalFieldOfView() * ms::Rad2Deg;
-
-    dst.horizontal_aperture = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
-    dst.vertical_aperture = (float)mcam.verticalFilmAperture() * InchToMillimeter;
-    dst.focal_length = (float)mcam.focalLength();
-    dst.focus_distance = (float)mcam.focusDistance();
-
-#if 0
-    // handle animation
-    if (m_settings.sync_animations && MAnimUtil::isAnimated(shape)) {
-        MPlugArray plugs;
-        MAnimUtil::findAnimatedPlugs(shape, plugs);
-        auto num_plugs = plugs.length();
-
-        MPlug pnplane, pfplane, phaperture, pvaperture, pflen, pfdist;
-        int found = 0;
-        for (uint32_t pi = 0; pi < num_plugs; ++pi) {
-            auto plug = plugs[pi];
-            MObjectArray animation;
-            if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
-
-            std::string name = plug.name().asChar();
-#define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
-            Case(".nearClipPlane", pnplane);
-            Case(".farClipPlane", pfplane);
-            Case(".horizontalFilmAperture", phaperture);
-            Case(".verticalFilmAperture", pvaperture);
-            Case(".focalLength", pflen);
-            Case(".focusDistance", pfdist);
-#undef Case
-        }
-
-        // skip if no animation plugs are found
-        if (found > 0) {
-            auto anim_ptr = new ms::CameraAnimation();
-            auto& anim = *anim_ptr;
-            addAnimation(anim_ptr);
-
-            // build time-sampled animation data
-            int sps = m_settings.sample_animation ? m_settings.animation_sps : 0;
-            ConvertAnimationFloat(anim.near_plane, dst.near_plane, pnplane, sps);
-            ConvertAnimationFloat(anim.far_plane, dst.far_plane, pfplane, sps);
-            ConvertAnimationFloat(anim.horizontal_aperture, dst.horizontal_aperture, phaperture, sps);
-            ConvertAnimationFloat(anim.vertical_aperture, dst.vertical_aperture, pvaperture, sps);
-            ConvertAnimationFloat(anim.focal_length, dst.focal_length, pflen, sps);
-            ConvertAnimationFloat(anim.focus_distance, dst.focus_distance, pfdist, sps);
-
-            // convert inch to millimeter
-            for (auto& v : anim.horizontal_aperture) { v.value *= InchToMillimeter; }
-            for (auto& v : anim.vertical_aperture) { v.value *= InchToMillimeter; }
-
-            // fov needs calculate by myself...
-            if (!anim.focal_length.empty() || !anim.horizontal_aperture.empty()) {
-                MFnAnimCurve fcv, acv;
-                GetAnimationCurve(fcv, pflen);
-                GetAnimationCurve(acv, phaperture);
-
-                auto time_samples = BuildTimeSamples({ ptr(fcv), ptr(acv) }, sps);
-                auto num_samples = time_samples.size();
-                anim.fov.resize(num_samples);
-                if (!fcv.object().isNull() && acv.object().isNull()) {
-                    for (size_t i = 0; i < num_samples; ++i) {
-                        auto& tvp = anim.fov[i];
-                        tvp.time = time_samples[i];
-                        tvp.value = mu::compute_fov(
-                            dst.horizontal_aperture,
-                            (float)fcv.evaluate(ToMTime(time_samples[i])));
-                    }
-                }
-                else if (fcv.object().isNull() && !acv.object().isNull()) {
-                    for (size_t i = 0; i < num_samples; ++i) {
-                        auto& tvp = anim.fov[i];
-                        tvp.time = time_samples[i];
-                        tvp.value = mu::compute_fov(
-                            (float)acv.evaluate(ToMTime(time_samples[i])),
-                            dst.focal_length);
-                    }
-                }
-                else if (!fcv.object().isNull() && !acv.object().isNull()) {
-                    for (size_t i = 0; i < num_samples; ++i) {
-                        auto& tvp = anim.fov[i];
-                        tvp.time = time_samples[i];
-                        tvp.value = mu::compute_fov(
-                            (float)acv.evaluate(ToMTime(time_samples[i])),
-                            (float)fcv.evaluate(ToMTime(time_samples[i])));
-                    }
-                }
-            }
-
-            for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
-        }
-    }
-#endif
+    ExtractCameraData(shape, dst.near_plane, dst.far_plane, dst.fov,
+        dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 }
 
 void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
@@ -218,6 +141,19 @@ void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
         doExtractLightData(dst, src);
     };
     m_extract_tasks.push_back(task);
+}
+
+static void ExtractLightData(MObject shape, mu::float4& color, float& intensity, float& spot_angle)
+{
+    if (shape.hasFn(MFn::kSpotLight)) {
+        MFnSpotLight mlight(shape);
+        spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
+    }
+
+    MFnLight mlight(shape);
+    auto mcol = mlight.color();
+    color = { mcol.r, mcol.g, mcol.b, mcol.a };
+    intensity = mlight.intensity();
 }
 
 void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
@@ -229,7 +165,6 @@ void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
         dst.light_type = ms::Light::LightType::Spot;
-        dst.spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
     }
     else if (shape.hasFn(MFn::kDirectionalLight)) {
         MFnDirectionalLight mlight(shape);
@@ -247,49 +182,7 @@ void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
         return;
     }
 
-    MFnLight mlight(shape);
-    auto color = mlight.color();
-    dst.color = { color.r, color.g, color.b, color.a };
-    dst.intensity = mlight.intensity();
-
-#if 0
-    // handle animation
-    if (m_settings.sync_animations && MAnimUtil::isAnimated(shape)) {
-        MPlugArray plugs;
-        MAnimUtil::findAnimatedPlugs(shape, plugs);
-        auto num_plugs = plugs.length();
-
-        MPlug pcolr, pcolg, pcolb, pcola, pint;
-        int found = 0;
-        for (uint32_t pi = 0; pi < num_plugs; ++pi) {
-            auto plug = plugs[pi];
-            MObjectArray animation;
-            if (!MAnimUtil::findAnimation(plug, animation)) { continue; }
-
-            std::string name = plug.name().asChar();
-#define Case(Name, Plug) if (name.find(Name) != std::string::npos) { Plug = plug; ++found; continue; }
-            Case(".colorR", pcolr);
-            Case(".colorG", pcolg);
-            Case(".colorB", pcolb);
-            Case(".intensity", pint);
-#undef Case
-        }
-
-        // skip if no animation plugs are found
-        if (found > 0) {
-            auto anim_ptr = new ms::LightAnimation();
-            auto& anim = *anim_ptr;
-            addAnimation(anim_ptr);
-
-            // build time-sampled animation data
-            int sps = m_settings.sample_animation ? m_settings.animation_sps : 0;
-            ConvertAnimationFloat4(anim.color, dst.color, pcolr, pcolg, pcolb, pcola, sps);
-            ConvertAnimationFloat(anim.intensity, dst.intensity, pint, sps);
-
-            for (auto& v : anim.rotation) { v.value = mu::flipY(v.value); }
-        }
-    }
-#endif
+    ExtractLightData(shape, dst.color, dst.intensity, dst.spot_angle);
 }
 
 
@@ -756,6 +649,16 @@ int MeshSyncClientMaya::exportAnimations()
     // cleanup
     int ret = (int)m_anim_records.size();
     m_anim_records.clear();
+
+    // reduction
+    mu::parallel_for_each(m_client_animations.begin(), m_client_animations.end(), [](ms::AnimationPtr& p) {
+        p->reduction();
+    });
+
+    // erase empty animation
+    m_client_animations.erase(
+        std::remove_if(m_client_animations.begin(), m_client_animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
+        m_client_animations.end());
     return ret;
 }
 
@@ -822,7 +725,16 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, MObject
         last.value = mu::flipY(last.value);
     }
 
-    // todo
+    float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
+    ExtractCameraData(shape, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+
+    dst.near_plane.push_back({ m_current_time , near_plane });
+    dst.far_plane.push_back({ m_current_time , far_plane });
+    dst.fov.push_back({ m_current_time , fov });
+    dst.horizontal_aperture.push_back({ m_current_time , horizontal_aperture });
+    dst.vertical_aperture.push_back({ m_current_time , vertical_aperture });
+    dst.focal_length.push_back({ m_current_time , focal_length });
+    dst.focus_distance.push_back({ m_current_time , focus_distance });
 }
 
 void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject node, MObject shape)
@@ -835,5 +747,14 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject 
         last.value = mu::flipY(last.value);
     }
 
-    // todo
+    mu::float4 color;
+    float intensity;
+    float spot_angle;
+    ExtractLightData(shape, color, intensity, spot_angle);
+
+    dst.color.push_back({ m_current_time, color });
+    dst.color.push_back({ m_current_time, intensity });
+    if (shape.hasFn(MFn::kSpotLight)) {
+        dst.color.push_back({ m_current_time, spot_angle });
+    }
 }

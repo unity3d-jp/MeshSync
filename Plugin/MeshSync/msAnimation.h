@@ -31,6 +31,7 @@ public:
     virtual void deserialize(std::istream& is);
     virtual void clear();
     virtual bool empty() const = 0;
+    virtual void reduction() = 0;
 
     virtual void convertHandedness(bool x, bool yz) = 0;
     virtual void applyScaleFactor(float scale) = 0;
@@ -53,6 +54,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     bool empty() const override;
+    void reduction() override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
@@ -77,6 +79,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     bool empty() const override;
+    void reduction() override;
 
     void applyScaleFactor(float scale) override;
 };
@@ -97,6 +100,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     bool empty() const override;
+    void reduction() override;
 
     void applyScaleFactor(float scale) override;
 };

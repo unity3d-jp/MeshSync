@@ -10,8 +10,41 @@
 #define Read(V) read(is, V);
 #define Clear(V) V.clear();
 #define Empty(V) && V.empty()
+#define Reduce(V) DoReduction(V);
 
 namespace ms {
+
+template<class T>
+struct Equals
+{
+    bool operator()(const T& a, const T& b) const
+    {
+        return mu::near_equal(a, b);
+    }
+};
+template<>
+struct Equals<bool>
+{
+    bool operator()(bool a, bool b) const
+    {
+        return a == b;
+    }
+};
+
+template<class T>
+static void DoReduction(RawVector<TVP<T>>& data)
+{
+    while (data.size() >= 2) {
+        if (Equals<T>()(data[data.size()-2].value, data.back().value))
+            data.pop_back();
+        else
+            break;
+    }
+    if (data.size() == 1) {
+        data.clear();
+    }
+}
+
 
 Animation * Animation::make(std::istream & is)
 {
@@ -103,6 +136,10 @@ bool TransformAnimation::empty() const
     ret = ret EachMembers(Empty);
     return ret;
 }
+void TransformAnimation::reduction()
+{
+    EachMembers(Reduce);
+}
 #undef EachMembers
 
 void TransformAnimation::convertHandedness(bool x, bool yz)
@@ -164,6 +201,11 @@ bool CameraAnimation::empty() const
 {
     return super::empty() EachMembers(Empty);
 }
+void CameraAnimation::reduction()
+{
+    super::reduction();
+    EachMembers(Reduce);
+}
 #undef EachMembers
 
 void CameraAnimation::applyScaleFactor(float s)
@@ -208,6 +250,11 @@ void LightAnimation::clear()
 bool LightAnimation::empty() const
 {
     return super::empty() EachMembers(Empty);
+}
+void LightAnimation::reduction()
+{
+    super::reduction();
+    EachMembers(Reduce);
 }
 #undef EachMembers
 
