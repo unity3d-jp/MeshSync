@@ -33,7 +33,7 @@ def msb_apply_settings(self = None, context = None):
     ctx.sync_cameras = scene.meshsync_sync_cameras
     ctx.sync_lights = scene.meshsync_sync_lights
     ctx.animation_ts = scene.meshsync_animation_ts
-    ctx.animation_sps = scene.meshsync_animation_sps
+    ctx.animation_interval = scene.meshsync_animation_fi
     return None
 
 
@@ -52,8 +52,8 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync")
-    bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 5, name = "Time Scale")
-    bpy.types.Scene.meshsync_animation_sps = bpy.props.IntProperty(default = 5, name = "Samples Per Seconds")
+    bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 1, name = "Time Scale")
+    bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Interval")
 
 
 class MeshSyncPanel(bpy.types.Panel):
@@ -67,6 +67,8 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.prop(context.scene, 'meshsync_server_address')
         self.layout.prop(context.scene, 'meshsync_server_port')
         self.layout.separator()
+
+        self.layout.label("Scene")
         self.layout.prop(context.scene, 'meshsync_scale_factor')
         self.layout.prop(context.scene, 'meshsync_sync_meshes')
         if scene.meshsync_sync_meshes:
@@ -85,16 +87,17 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.separator()
         self.layout.prop(context.scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_scene", text="Manual Sync")
-
         self.layout.separator()
-        b.prop(context.scene, 'meshsync_animation_sps')
+
+        self.layout.label("Animation")
         b.prop(context.scene, 'meshsync_animation_ts')
-        self.layout.operator("meshsync.sync_animations", text="Sync Animations")
+        b.prop(context.scene, 'meshsync_animation_fi')
+        self.layout.operator("meshsync.sync_animations", text="Sync")
 
 
 class MeshSync_OpSyncScene(bpy.types.Operator):
     bl_idname = "meshsync.sync_scene"
-    bl_label = "Sync"
+    bl_label = "Sync Scene"
     def execute(self, context):
         msb_apply_settings()
         msb_context.setup()

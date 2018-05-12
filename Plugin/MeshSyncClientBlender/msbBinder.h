@@ -189,10 +189,11 @@ namespace blender
 
         blist_range<Base> objects();
 
+        int fps();
         int frame_start();
         int frame_end();
         int frame_current();
-        void frame_set(int f);
+        void frame_set(int f, float subf = 0.0f);
     };
 
     class BData

@@ -25,23 +25,6 @@ void msbContext::setup()
 msbSettings& msbContext::getSettings() { return m_settings; }
 const msbSettings& msbContext::getSettings() const { return m_settings; }
 
-template<class T>
-std::shared_ptr<T> msbContext::getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache)
-{
-    std::shared_ptr<T> ret;
-    {
-        if (cache.empty()) {
-            ret.reset(new T());
-        }
-        else {
-            ret = cache.back();
-            cache.pop_back();
-        }
-    }
-    ret->clear();
-    return ret;
-}
-
 
 ms::TransformPtr msbContext::addTransform(std::string path)
 {
@@ -121,16 +104,47 @@ void msbContext::extractTransformData(ms::Transform& dst, Object *src)
     dst.visible = is_visible(src);
 }
 
+
+static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov)
+{
+    auto data = (Camera*)src->data;
+    ortho = data->type == CAM_ORTHO;
+    near_plane = data->clipsta;
+    far_plane = data->clipend;
+    fov = bl::BCamera(data).fov() * mu::Rad2Deg;
+}
+
 void msbContext::extractCameraData(ms::Camera& dst, Object *src)
 {
     extractTransformData(dst, src);
     dst.rotation *= rotateX(90.0f * Deg2Rad);
 
-    auto data = (Camera*)src->data;
-    dst.is_ortho = data->type == CAM_ORTHO;
-    dst.near_plane = data->clipsta;
-    dst.far_plane = data->clipend;
-    dst.fov = bl::BCamera(data).fov() * mu::Rad2Deg;
+    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov);
+}
+
+
+static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& color, float& intensity, float& range, float& spot_angle)
+{
+    auto data = (Lamp*)src->data;
+    color = (float4&)data->r;
+    intensity = data->energy;
+    range = data->dist;
+
+    switch (data->type) {
+    case LA_SUN:
+        type = ms::Light::LightType::Directional;
+        break;
+    case LA_SPOT:
+        type = ms::Light::LightType::Spot;
+        spot_angle = data->spotsize * mu::Rad2Deg;
+        break;
+    case LA_AREA:
+        type = ms::Light::LightType::Area;
+        break;
+    default:
+        type = ms::Light::LightType::Point;
+        break;
+    }
 }
 
 void msbContext::extractLightData(ms::Light& dst, Object *src)
@@ -138,29 +152,7 @@ void msbContext::extractLightData(ms::Light& dst, Object *src)
     extractTransformData(dst, src);
     dst.rotation *= rotateX(90.0f * mu::Deg2Rad);
 
-    auto data = (Lamp*)src->data;
-    dst.color = (float4&)data->r;
-    dst.intensity = data->energy;
-    dst.range = data->dist;
-
-    switch (data->type) {
-    case LA_LOCAL:
-        dst.light_type = ms::Light::LightType::Point;
-        break;
-    case LA_SUN:
-        dst.light_type = ms::Light::LightType::Directional;
-        break;
-    case LA_SPOT:
-        dst.light_type = ms::Light::LightType::Spot;
-        dst.spot_angle = data->spotsize * mu::Rad2Deg;
-        break;
-    case LA_HEMI: break;
-    case LA_AREA:
-        dst.light_type = ms::Light::LightType::Area;
-        break;
-    default:
-        break;
-    }
+    ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 }
 
 void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
@@ -724,6 +716,139 @@ void msbContext::eraseStaleObjects()
 }
 
 
+void msbContext::syncAnimations()
+{
+    if (m_send_future.valid()) {
+        m_send_future.get(); // wait previous request to complete
+    }
+
+    // list target objects
+    auto scene = bl::BScene(bl::BContext::get().scene());
+    for (auto *base : scene.objects()) {
+        exportAnimation(base->object);
+    }
+
+    // advance frame and record animations
+    {
+        int frame_current = scene.frame_current();
+        int frame_start = scene.frame_start();
+        int frame_end = scene.frame_end();
+        float frame_to_seconds = 1.0f / scene.fps();
+        for (int f = frame_start; f < frame_end; f += m_settings.animation_frame_interval) {
+            scene.frame_set(f);
+
+            m_current_time = frame_to_seconds * f;
+            mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
+                kvp.second(this);
+            });
+        }
+        scene.frame_set(frame_current);
+    }
+
+    // keyframe reduction
+    mu::parallel_for_each(m_animations.begin(), m_animations.end(), [](ms::AnimationPtr& p) {
+        p->reduction();
+    });
+    // erase empty animation
+    m_animations.erase(
+        std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
+        m_animations.end());
+
+    // send
+    if (!m_animations.empty()) {
+        send();
+    }
+}
+
+void msbContext::exportAnimation(Object *obj)
+{
+    if (m_anim_records.find(obj) != m_anim_records.end())
+        return;
+
+    //// todo
+    //AnimationRecord rec;
+    //m_anim_records[obj] = rec;
+}
+
+void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
+{
+    auto& dst = (ms::TransformAnimation&)dst_;
+
+    float3 pos;
+    quatf rot;
+    float3 scale;
+    bool vis;
+    extract_local_TRS((Object*)obj, pos, rot, scale);
+    vis = is_visible((Object*)obj);
+
+    float t = m_current_time * m_settings.animation_timescale;
+    dst.translation.push_back({ t, pos });
+    dst.rotation.push_back({ t, rot });
+    dst.scale.push_back({ t, scale });
+    dst.visible.push_back({ t, vis });
+}
+
+void msbContext::extractBoneAnimationData(ms::Animation& dst_, void * obj)
+{
+    auto& dst = (ms::TransformAnimation&)dst_;
+
+    float3 pos;
+    quatf rot;
+    float3 scale;
+    extract_local_TRS((Bone*)obj, pos, rot, scale);
+
+    float t = m_current_time * m_settings.animation_timescale;
+    dst.translation.push_back({ t, pos });
+    dst.rotation.push_back({ t, rot });
+    dst.scale.push_back({ t, scale });
+}
+
+void msbContext::extractCameraAnimationData(ms::Animation& dst_, void *obj)
+{
+    extractTransformAnimationData(dst_, obj);
+
+    auto& dst = (ms::CameraAnimation&)dst_;
+    {
+        auto& last = dst.rotation.back();
+        last.value *= rotateX(90.0f * Deg2Rad);
+    }
+
+    bool ortho;
+    float near_plane, far_plane, fov;
+    ExtractCameraData((Object*)obj, ortho, near_plane, far_plane, fov);
+
+    float t = m_current_time * m_settings.animation_timescale;
+    dst.near_plane.push_back({ t , near_plane });
+    dst.far_plane.push_back({ t , far_plane });
+    dst.fov.push_back({ t , fov });
+}
+
+void msbContext::extractLightAnimationData(ms::Animation& dst_, void *obj)
+{
+    extractTransformAnimationData(dst_, obj);
+
+    auto& dst = (ms::LightAnimation&)dst_;
+    {
+        auto& last = dst.rotation.back();
+        last.value *= rotateX(90.0f * Deg2Rad);
+    }
+
+    ms::Light::LightType type;
+    float4 color;
+    float intensity, range, spot_angle;
+    ExtractLightData((Object*)obj, type, color, intensity, range, spot_angle);
+
+    float t = m_current_time * m_settings.animation_timescale;
+    dst.color.push_back({ t, color });
+    dst.intensity.push_back({ t, intensity });
+    dst.range.push_back({ t, range });
+    if (type == ms::Light::LightType::Spot) {
+        dst.spot_angle.push_back({ t, spot_angle });
+    }
+}
+
+
+
 
 bool msbContext::isSending() const
 {
@@ -776,14 +901,6 @@ void msbContext::syncUpdated()
     send();
 }
 
-void msbContext::syncAnimations()
-{
-    if (m_send_future.valid()) {
-        m_send_future.get(); // wait previous request to complete
-    }
-
-}
-
 void msbContext::flushPendingList()
 {
     if (!m_pending.empty() && !isSending()) {
@@ -805,6 +922,7 @@ void msbContext::send()
 
     m_bones.clear();
     m_added.clear();
+    m_anim_records.clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {
@@ -824,10 +942,9 @@ void msbContext::send()
                 del.targets.push_back({path, 0});
             }
             client.send(del);
+            m_deleted.clear();
         }
-        m_deleted.clear();
 
-        // send transform, camera, etc
 
         auto scene_settings = m_settings.scene_settings;
         float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
@@ -835,6 +952,7 @@ void msbContext::send()
         scene_settings.handedness = ms::Handedness::Left;
         bool swap_x = false, swap_yz = true;
 
+        // scene objects except meshes
         if (!m_objects.empty() || !m_materials.empty()) {
             if (scale_factor != 1.0f) {
                 for (auto& obj : m_objects) { obj->applyScaleFactor(scale_factor); }
@@ -851,6 +969,7 @@ void msbContext::send()
             }
         }
 
+        // meshes
         if (!m_meshes.empty()) {
             // convert and send meshes
             parallel_for_each(m_meshes.begin(), m_meshes.end(), [&](ms::MeshPtr& pmesh) {
@@ -874,6 +993,7 @@ void msbContext::send()
             m_meshes.clear();
         }
 
+        // animations
         if (!m_animations.empty()) {
             if (scale_factor != 1.0f) {
                 for (auto& obj : m_animations) { obj->applyScaleFactor(scale_factor); }

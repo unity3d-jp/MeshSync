@@ -64,9 +64,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(animation_ts,
                 [](const msbContext& self) { return self.getSettings().animation_timescale; },
                 [](msbContext& self, float v) { self.getSettings().animation_timescale = v; })
-            BindProperty(animation_sps,
-                [](const msbContext& self) { return self.getSettings().animation_sps; },
-                [](msbContext& self, int v) { self.getSettings().animation_sps = v; })
+            BindProperty(animation_interval,
+                [](const msbContext& self) { return self.getSettings().animation_frame_interval; },
+                [](msbContext& self, int v) { self.getSettings().animation_frame_interval = v; })
             ;
     }
 #undef BindMethod

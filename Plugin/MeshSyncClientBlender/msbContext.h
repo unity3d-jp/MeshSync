@@ -29,8 +29,8 @@ struct msbSettings
     bool sync_lights = true;
     bool calc_per_index_normals = true;
 
-    int animation_sps = 5;
     float animation_timescale = 1.0f;
+    int animation_frame_interval = 5;
 };
 
 
@@ -93,9 +93,14 @@ private:
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj);
     void doExtractEditMeshData(ms::Mesh& mesh, Object *obj);
-    template<class T>
-    std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 
+    void exportAnimation(Object *obj);
+    void extractTransformAnimationData(ms::Animation& dst, void *obj);
+    void extractBoneAnimationData(ms::Animation& dst, void *obj);
+    void extractCameraAnimationData(ms::Animation& dst, void *obj);
+    void extractLightAnimationData(ms::Animation& dst, void *obj);
+
+private:
     msbSettings m_settings;
     std::set<Object*> m_added;
     std::set<Object*> m_pending, m_pending_tmp;
@@ -112,5 +117,21 @@ private:
     using task_t = std::function<void()>;
     std::vector<task_t> m_extract_tasks;
     std::mutex m_extract_mutex;
+
+    // animation export
+    struct AnimationRecord
+    {
+        void *obj;
+        ms::Animation *dst = nullptr;
+        void (msbContext::*extractor)(ms::Animation& dst, void *obj) = nullptr;
+
+        void operator()(msbContext *_this)
+        {
+            (_this->*extractor)(*dst, obj);
+        }
+    };
+    using AnimationRecords = std::map<void*, AnimationRecord>;
+    AnimationRecords m_anim_records;
+    float m_current_time = 0.0f;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;

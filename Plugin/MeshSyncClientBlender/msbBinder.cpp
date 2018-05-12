@@ -277,7 +277,7 @@ float4x4 BObject::matrix_local() const
     return ret;
 }
 
-bool blender::BObject::is_visible(Scene * scene) const
+bool BObject::is_visible(Scene * scene) const
 {
     return call<Object, int, Scene*>(m_ptr, BObject_is_visible, { scene }) != 0;
 }
@@ -415,14 +415,29 @@ blist_range<Base> BScene::objects()
     return list_range((Base*)m_ptr->base.first);
 }
 
-int BScene::frame_current()
+int BScene::fps()
 {
-    return get_int<Scene, nullptr_t>(m_ptr, nullptr, ((IntPropertyRNA*)BScene_frame_current)->get);
+    return m_ptr->r.frs_sec;
 }
 
-void BScene::frame_set(int f)
+int BScene::frame_start()
 {
-    call<Scene, void, int>(m_ptr, BScene_frame_set, {f});
+    return get_int<nullptr_t, Scene>(nullptr, m_ptr, ((IntPropertyRNA*)BScene_frame_start)->get);
+}
+
+int BScene::frame_end()
+{
+    return get_int<nullptr_t, Scene>(nullptr, m_ptr, ((IntPropertyRNA*)BScene_frame_end)->get);
+}
+
+int BScene::frame_current()
+{
+    return get_int<nullptr_t, Scene>(nullptr, m_ptr, ((IntPropertyRNA*)BScene_frame_current)->get);
+}
+
+void BScene::frame_set(int f, float subf)
+{
+    call<Scene, void, int, float>(m_ptr, BScene_frame_set, { f, subf });
 }
 
 
