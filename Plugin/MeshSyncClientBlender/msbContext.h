@@ -8,35 +8,49 @@ class msbContext;
 namespace bl = blender;
 
 
-enum class msbNormalSyncMode {
-    None,
-    PerVertex,
-    PerIndex,
-};
-
 struct msbSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
-    msbNormalSyncMode sync_normals = msbNormalSyncMode::PerIndex;
     bool sync_meshes = true;
+    bool sync_normals = true;
     bool sync_uvs = true;
     bool sync_colors = true;
     bool sync_bones = true;
-    bool sync_poses = true;
     bool sync_blendshapes = true;
     bool sync_cameras = true;
     bool sync_lights = true;
     bool calc_per_index_normals = true;
 
     float animation_timescale = 1.0f;
-    int animation_frame_interval = 5;
+    int animation_frame_interval = 10;
 };
 
 
 class msbContext : public std::enable_shared_from_this<msbContext>
 {
 public:
+    enum class SendScope
+    {
+        None,
+        All,
+        Updated,
+        Selected,
+    };
+
+    msbContext();
+    ~msbContext();
+
+    msbSettings&        getSettings();
+    const msbSettings&  getSettings() const;
+
+    bool isSending() const;
+    bool prepare();
+    void sendScene(SendScope scope);
+    void sendAnimations(SendScope scope);
+    void flushPendingList();
+
+private:
     struct ObjectRecord
     {
         std::string name;
@@ -49,22 +63,6 @@ public:
         }
     };
 
-    msbContext();
-    ~msbContext();
-    void setup();
-
-    msbSettings&        getSettings();
-    const msbSettings&  getSettings() const;
-
-    bool isSending() const;
-    bool prepare();
-    void syncAll();
-    void syncUpdated();
-    void syncAnimations();
-    void flushPendingList();
-    void send();
-
-private:
     ms::TransformPtr    addTransform(std::string path);
     ms::CameraPtr       addCamera(std::string path);
     ms::LightPtr        addLight(std::string path);
@@ -99,6 +97,8 @@ private:
     void extractPoseAnimationData(ms::Animation& dst, void *obj);
     void extractCameraAnimationData(ms::Animation& dst, void *obj);
     void extractLightAnimationData(ms::Animation& dst, void *obj);
+
+    void kickAsyncSend();
 
 private:
     msbSettings m_settings;

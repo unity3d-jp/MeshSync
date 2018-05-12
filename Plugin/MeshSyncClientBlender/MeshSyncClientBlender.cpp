@@ -14,11 +14,12 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
         using self_t = msbContext;
         py::class_<msbContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
-            BindMethod(setup)
             BindMethod(flushPendingList)
-            BindMethod(syncAll)
-            BindMethod(syncUpdated)
-            BindMethod(syncAnimations)
+            BindMethod2(sendSceneAll, [](msbContext& self) { self.sendScene(msbContext::SendScope::All); })
+            BindMethod2(sendSceneUpdated, [](msbContext& self) { self.sendScene(msbContext::SendScope::Updated); })
+            BindMethod2(sendSceneSelected, [](msbContext& self) { self.sendScene(msbContext::SendScope::Selected); })
+            BindMethod2(sendAnimationsAll, [](msbContext& self) { self.sendAnimations(msbContext::SendScope::All); })
+            BindMethod2(sendAnimationsSelected, [](msbContext& self) { self.sendAnimations(msbContext::SendScope::Selected); })
             BindProperty(server_address,
                 [](const msbContext& self) { return self.getSettings().client_settings.server; },
                 [](msbContext& self, const std::string& v) { self.getSettings().client_settings.server = v; })
@@ -39,7 +40,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](msbContext& self, int v) { (int&)self.getSettings().sync_meshes = v; })
             BindProperty(sync_normals,
                 [](const msbContext& self) { return (int)self.getSettings().sync_normals; },
-                [](msbContext& self, int v) { (int&)self.getSettings().sync_normals = v; })
+                [](msbContext& self, bool v) { (int&)self.getSettings().sync_normals = v; })
             BindProperty(sync_uvs,
                 [](const msbContext& self) { return self.getSettings().sync_uvs; },
                 [](msbContext& self, bool v) { self.getSettings().sync_uvs = v; })
@@ -49,9 +50,6 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_bones,
                 [](const msbContext& self) { return self.getSettings().sync_bones; },
                 [](msbContext& self, bool v) { self.getSettings().sync_bones = v; })
-            BindProperty(sync_poses,
-                [](const msbContext& self) { return self.getSettings().sync_poses; },
-                [](msbContext& self, bool v) { self.getSettings().sync_poses = v; })
             BindProperty(sync_blendshapes,
                 [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
                 [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })

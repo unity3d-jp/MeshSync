@@ -17,11 +17,6 @@ msbContext::~msbContext()
     }
 }
 
-void msbContext::setup()
-{
-    bl::setup();
-}
-
 msbSettings& msbContext::getSettings() { return m_settings; }
 const msbSettings& msbContext::getSettings() const { return m_settings; }
 
@@ -220,10 +215,7 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
         auto bone = pose->bone;
         auto& dst = m_bones[bone];
         dst = addTransform(get_path(src, bone));
-        if (m_settings.sync_poses)
-            extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
-        else
-            extract_local_TRS(bone, dst->position, dst->rotation, dst->scale);
+        extract_local_TRS(pose, dst->position, dst->rotation, dst->scale);
     }
 
     return ret;
@@ -240,6 +232,11 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
         doExtractEditMeshData(dst, obj);
     }
     else {
+        // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
+        // todo: calculate normals by myself to be multi-threaded
+        if (m_settings.calc_per_index_normals)
+            bmesh.calc_normals_split();
+
         doExtractNonEditMeshData(dst, obj);
     }
 
@@ -302,18 +299,15 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
     }
 
     // normals
-    if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
+    if (m_settings.sync_normals) {
+#if 0
         // per-vertex
         dst.normals.resize_discard(num_vertices);
         for (size_t vi = 0; vi < num_vertices; ++vi) {
             dst.normals[vi] = to_float3(vertices[vi].no);
         }
-    }
-    else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
+#endif
         // per-index
-        if (m_settings.calc_per_index_normals)
-            bmesh.calc_normals_split();
-
         auto normals = bmesh.normals();
         if (!normals.empty()) {
             dst.normals.resize_discard(num_indices);
@@ -508,13 +502,13 @@ void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
     }
 
     // normals
-    if (m_settings.sync_normals == msbNormalSyncMode::PerVertex) {
+    if (m_settings.sync_normals) {
+#if 0
         // per-vertex
         dst.normals.resize_discard(num_vertices);
         for (size_t vi = 0; vi < num_vertices; ++vi)
             dst.normals[vi] = to_float3(vertices[vi]->no);
-    }
-    else if (m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
+#endif
         // per-index
         dst.normals.resize_discard(num_indices);
         size_t ii = 0;
@@ -716,18 +710,26 @@ void msbContext::eraseStaleObjects()
 }
 
 
-void msbContext::syncAnimations()
+void msbContext::sendAnimations(SendScope scope)
 {
+    bl::setup();
     if (m_send_future.valid()) {
         m_send_future.get(); // wait previous request to complete
     }
 
     m_ignore_update = true;
 
-    // list target objects
     auto scene = bl::BScene(bl::BContext::get().scene());
-    for (auto *base : scene.objects()) {
-        exportAnimation(base->object, false);
+
+    // list target objects
+    if (scope == SendScope::Selected) {
+        // todo
+    }
+    else {
+        // all
+        for (auto *base : scene.objects()) {
+            exportAnimation(base->object, false);
+        }
     }
 
     // advance frame and record animations
@@ -736,7 +738,7 @@ void msbContext::syncAnimations()
         int frame_start = scene.frame_start();
         int frame_end = scene.frame_end();
         float frame_to_seconds = 1.0f / scene.fps();
-        for (int f = frame_start; f < frame_end; f += m_settings.animation_frame_interval) {
+        for (int f = frame_start; f <= frame_end; f += m_settings.animation_frame_interval) {
             scene.frame_set(f);
 
             m_current_time = frame_to_seconds * f;
@@ -759,7 +761,7 @@ void msbContext::syncAnimations()
 
     // send
     if (!m_animations.empty()) {
-        send();
+        kickAsyncSend();
     }
 
     m_ignore_update = false;
@@ -934,44 +936,43 @@ bool msbContext::prepare()
     return true;
 }
 
-void msbContext::syncAll()
+void msbContext::sendScene(SendScope scope)
 {
-    if (m_ignore_update)
+    bl::setup();
+    if (m_ignore_update || !prepare())
         return;
 
-    if (!prepare()) return;
+    if (scope == SendScope::Updated) {
+        auto bpy_data = bl::BData(bl::BContext::get().data());
+        if (!bpy_data.objects_is_updated())
+            return; // nothing to send
 
-    exportMaterials();
+        exportMaterials();
 
-    auto scene = bl::BScene(bl::BContext::get().scene());
-    for (auto *base : scene.objects()) {
-        exportObject(base->object, false);
+        auto scene = bl::BScene(bl::BContext::get().scene());
+        for (auto *base : scene.objects()) {
+            auto obj = base->object;
+            auto bid = bl::BID(obj);
+            if (bid.is_updated() || bid.is_updated_data())
+                exportObject(obj, false);
+            else
+                updateRecord(obj);
+        }
     }
-    eraseStaleObjects();
-    send();
-}
-
-void msbContext::syncUpdated()
-{
-    if (m_ignore_update)
-        return;
-
-    auto bpy_data = bl::BData(bl::BContext::get().data());
-    if (!bpy_data.objects_is_updated() || !prepare()) return;
-
-    exportMaterials();
-
-    auto scene = bl::BScene(bl::BContext::get().scene());
-    for (auto *base : scene.objects()) {
-        auto obj = base->object;
-        auto bid = bl::BID(obj);
-        if (bid.is_updated() || bid.is_updated_data())
-            exportObject(obj, false);
-        else
-            updateRecord(obj);
+    if (scope == SendScope::Selected) {
+        // todo
     }
+    else {
+        // all
+        exportMaterials();
+        auto scene = bl::BScene(bl::BContext::get().scene());
+        for (auto *base : scene.objects()) {
+            exportObject(base->object, false);
+        }
+    }
+
     eraseStaleObjects();
-    send();
+    kickAsyncSend();
 }
 
 void msbContext::flushPendingList()
@@ -981,11 +982,11 @@ void msbContext::flushPendingList()
         for (auto p : m_pending_tmp)
             exportObject(p, false);
         m_pending_tmp.clear();
-        send();
+        kickAsyncSend();
     }
 }
 
-void msbContext::send()
+void msbContext::kickAsyncSend()
 {
     // get vertex data in parallel
     parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {

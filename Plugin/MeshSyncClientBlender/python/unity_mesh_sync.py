@@ -24,11 +24,10 @@ def msb_apply_settings(self = None, context = None):
     ctx.server_port = scene.meshsync_server_port
     ctx.scale_factor = scene.meshsync_scale_factor
     ctx.sync_meshes = scene.meshsync_sync_meshes
-    ctx.sync_normals = 2 if scene.meshsync_sync_normals else 0
+    ctx.sync_normals = scene.meshsync_sync_normals
     ctx.sync_uvs = scene.meshsync_sync_uvs
     ctx.sync_colors = scene.meshsync_sync_colors
     ctx.sync_bones = scene.meshsync_sync_bones
-    ctx.sync_poses = scene.meshsync_sync_poses
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
     ctx.sync_cameras = scene.meshsync_sync_cameras
     ctx.sync_lights = scene.meshsync_sync_lights
@@ -46,7 +45,6 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
-    bpy.types.Scene.meshsync_sync_poses = bpy.props.BoolProperty(default = True, name = "Poses")
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
@@ -77,9 +75,6 @@ class MeshSyncPanel(bpy.types.Panel):
             b.prop(context.scene, 'meshsync_sync_uvs')
             b.prop(context.scene, 'meshsync_sync_colors')
             b.prop(context.scene, 'meshsync_sync_bones')
-            if scene.meshsync_sync_bones:
-                b2 = b.box()
-                b2.prop(context.scene, 'meshsync_sync_poses')
             b.prop(context.scene, 'meshsync_sync_blendshapes')
             b.prop(context.scene, 'meshsync_apply_modifiers')
         self.layout.prop(context.scene, 'meshsync_sync_cameras')
@@ -100,8 +95,7 @@ class MeshSync_OpSyncScene(bpy.types.Operator):
     bl_label = "Sync Scene"
     def execute(self, context):
         msb_apply_settings()
-        msb_context.setup()
-        msb_context.syncAll()
+        msb_context.sendSceneAll()
         return{'FINISHED'}
     
 
@@ -110,18 +104,16 @@ class MeshSync_OpSyncAnimations(bpy.types.Operator):
     bl_label = "Sync Animations"
     def execute(self, context):
         msb_apply_settings()
-        msb_context.setup()
-        msb_context.syncAnimations()
+        msb_context.sendAnimationsAll()
         return{'FINISHED'}
 
 
 @persistent
 def on_scene_update(context):
-    msb_context.setup()
     msb_context.flushPendingList();
     if(bpy.context.scene.meshsync_auto_sync):
         msb_apply_settings()
-        msb_context.syncUpdated()
+        msb_context.sendSceneUpdated()
 
 def register():
     msb_initialize_properties()
