@@ -32,7 +32,7 @@ Prop(BMaterial, use_nodes);
 Prop(BMaterial, active_node_material);
 
 Def(BCamera);
-Prop(BCamera, angle);
+Prop(BCamera, angle_y);
 
 Def(BScene);
 Prop(BScene, frame_start);
@@ -112,7 +112,7 @@ void setup()
         else if (match_type("Camera")) {
             BCamera::s_type = type;
             each_prop{
-                if (match_prop("angle")) BCamera_angle = prop;
+                if (match_prop("angle_y")) BCamera_angle_y = prop;
             }
         }
         else if (match_type("Material")) {
@@ -437,7 +437,7 @@ Material * BMaterial::active_node_material() const
 
 float BCamera::fov() const
 {
-    return get_float<Camera, nullptr_t>(m_ptr, nullptr, ((FloatPropertyRNA*)BCamera_angle)->get);
+    return get_float<Camera, nullptr_t>(m_ptr, nullptr, ((FloatPropertyRNA*)BCamera_angle_y)->get);
 }
 
 blist_range<Base> BScene::objects()
