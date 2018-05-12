@@ -94,9 +94,9 @@ private:
     void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj);
     void doExtractEditMeshData(ms::Mesh& mesh, Object *obj);
 
-    void exportAnimation(Object *obj);
+    void exportAnimation(Object *obj, bool force, const std::string base_path="");
     void extractTransformAnimationData(ms::Animation& dst, void *obj);
-    void extractBoneAnimationData(ms::Animation& dst, void *obj);
+    void extractPoseAnimationData(ms::Animation& dst, void *obj);
     void extractCameraAnimationData(ms::Animation& dst, void *obj);
     void extractLightAnimationData(ms::Animation& dst, void *obj);
 

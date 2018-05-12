@@ -725,7 +725,7 @@ void msbContext::syncAnimations()
     // list target objects
     auto scene = bl::BScene(bl::BContext::get().scene());
     for (auto *base : scene.objects()) {
-        exportAnimation(base->object);
+        exportAnimation(base->object, false);
     }
 
     // advance frame and record animations
@@ -760,14 +760,73 @@ void msbContext::syncAnimations()
     }
 }
 
-void msbContext::exportAnimation(Object *obj)
+void msbContext::exportAnimation(Object *obj, bool force, const std::string base_path)
 {
+    if (!obj)
+        return;
     if (m_anim_records.find(obj) != m_anim_records.end())
         return;
 
-    //// todo
-    //AnimationRecord rec;
-    //m_anim_records[obj] = rec;
+    switch (obj->type) {
+    case OB_CAMERA:
+    {
+        exportAnimation(obj->parent, true, base_path);
+        auto& rec = m_anim_records[obj];
+        rec.extractor = &msbContext::extractCameraAnimationData;
+        rec.obj = obj;
+        rec.dst = new ms::CameraAnimation();
+        rec.dst->path = base_path + get_path(obj);
+        m_animations.emplace_back(rec.dst);
+        break;
+    }
+    case OB_LAMP:
+    {
+        exportAnimation(obj->parent, true, base_path);
+        auto& rec = m_anim_records[obj];
+        rec.extractor = &msbContext::extractLightAnimationData;
+        rec.obj = obj;
+        rec.dst = new ms::LightAnimation();
+        rec.dst->path = base_path + get_path(obj);
+        m_animations.emplace_back(rec.dst);
+        break;
+    }
+    default:
+    if (force || obj->type == OB_ARMATURE || obj->type == OB_MESH || obj->dup_group) {
+        exportAnimation(obj->parent, true, base_path);
+        {
+            auto& rec = m_anim_records[obj];
+            rec.extractor = &msbContext::extractTransformAnimationData;
+            rec.obj = obj;
+            rec.dst = new ms::TransformAnimation();
+            rec.dst->path = base_path + get_path(obj);
+            m_animations.emplace_back(rec.dst);
+        }
+
+        if (obj->type == OB_ARMATURE) {
+            // export bones
+            auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
+            for (auto pose : poses) {
+                auto& rec = m_anim_records[pose];
+                rec.extractor = &msbContext::extractPoseAnimationData;
+                rec.obj = pose;
+                rec.dst = new ms::TransformAnimation();
+                rec.dst->path = get_path(obj, pose->bone);
+                m_animations.emplace_back(rec.dst);
+            }
+        }
+        break;
+    }
+    }
+
+    if (obj->dup_group) {
+        auto local_path = std::string("/") + (obj->dup_group->id.name + 2);
+        auto path = base_path + local_path;
+
+        auto gobjects = bl::list_range((GroupObject*)obj->dup_group->gobject.first);
+        for (auto go : gobjects) {
+            exportAnimation(go->ob, false, path);
+        }
+    }
 }
 
 void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
@@ -788,14 +847,14 @@ void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
     dst.visible.push_back({ t, vis });
 }
 
-void msbContext::extractBoneAnimationData(ms::Animation& dst_, void * obj)
+void msbContext::extractPoseAnimationData(ms::Animation& dst_, void * obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
     float3 pos;
     quatf rot;
     float3 scale;
-    extract_local_TRS((Bone*)obj, pos, rot, scale);
+    extract_local_TRS((bPoseChannel*)obj, pos, rot, scale);
 
     float t = m_current_time * m_settings.animation_timescale;
     dst.translation.push_back({ t, pos });
