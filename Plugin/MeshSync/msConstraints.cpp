@@ -19,6 +19,7 @@ Constraint* Constraint::make(std::istream & is)
     case Type::Position: ret = new PositionConstraint(); break;
     case Type::Rotation: ret = new RotationConstraint(); break;
     case Type::Scale: ret = new ScaleConstraint(); break;
+    default: break;
     }
     if (ret) {
         ret->deserialize(is);

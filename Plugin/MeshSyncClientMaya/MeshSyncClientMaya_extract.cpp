@@ -32,7 +32,7 @@ void MeshSyncClientMaya::exportMaterials()
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
     if (m_settings.sync_constraints) {
-        EachConstraints(src, [this, &src](MObject& constraint) {
+        EachConstraints(src, [this, &src](const MObject& constraint) {
             if (constraint.hasFn(MFn::kAimConstraint)) {
                 auto dst = new ms::AimConstraint();
                 m_client_constraints.emplace_back(dst);

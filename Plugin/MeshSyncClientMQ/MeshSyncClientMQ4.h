@@ -79,7 +79,7 @@ public:
     };
 
     // コールバックに対する実装部
-    virtual bool ExecuteCallback(MQDocument doc, void *option);
+    bool ExecuteCallback(MQDocument doc, void *option) override;
 
 
     MQSync& getSync();

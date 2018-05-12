@@ -169,6 +169,7 @@ Entity * Entity::make(std::istream & is)
     case Type::Camera: ret = new Camera(); break;
     case Type::Light: ret = new Light(); break;
     case Type::Mesh: ret = new Mesh(); break;
+    default: break;
     }
     if (ret) {
         ret->deserialize(is);

@@ -56,6 +56,7 @@ Animation * Animation::make(std::istream & is)
     case Type::Transform: ret = new TransformAnimation(); break;
     case Type::Camera: ret = new CameraAnimation(); break;
     case Type::Light: ret = new LightAnimation(); break;
+    default: break;
     }
     if (ret) {
         ret->deserialize(is);
