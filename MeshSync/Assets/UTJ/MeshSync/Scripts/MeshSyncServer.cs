@@ -36,6 +36,8 @@ namespace UTJ.MeshSync
         [HideInInspector][SerializeField] Record[] m_hostObjects_values;
         [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector][SerializeField] int[] m_objIDTable_values;
+
+        Dictionary<GameObject, AnimationClip> m_animClipCache;
         #endregion
 
         #region properties
@@ -245,6 +247,9 @@ namespace UTJ.MeshSync
                         }
                     }
                 }
+
+                // cleanup animation clip cache
+                m_animClipCache = null;
 
                 ForceRepaint();
                 GC.Collect();
@@ -848,20 +853,24 @@ namespace UTJ.MeshSync
             Animator animator = null;
             AnimationClip clip = null;
 
+            if (m_animClipCache == null)
+                m_animClipCache = new Dictionary<GameObject, AnimationClip>();
+            else if (m_animClipCache.ContainsKey(root.gameObject))
+                clip = m_animClipCache[root.gameObject];
+
             animator = root.GetComponent<Animator>();
             if (animator == null)
             {
                 animator = root.gameObject.AddComponent<Animator>();
             }
-            else
+            else if (clip == null && animator.runtimeAnimatorController != null)
             {
-                if (animator.runtimeAnimatorController != null)
+                var clips = animator.runtimeAnimatorController.animationClips;
+                if (clips != null && clips.Length > 0)
                 {
-                    var clips = animator.runtimeAnimatorController.animationClips;
-                    if (clips != null && clips.Length > 0)
-                    {
-                        clip = animator.runtimeAnimatorController.animationClips[0];
-                    }
+                    // note: this is extremely slow. m_animClipTable exists to cache the result and avoid frequent call.
+                    clip = animator.runtimeAnimatorController.animationClips[0];
+                    m_animClipCache[root.gameObject] = clip;
                 }
             }
 
@@ -871,6 +880,7 @@ namespace UTJ.MeshSync
                 var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(root.name);
                 CreateAsset(clip, assetPath + ".anim");
                 animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
+                m_animClipCache[root.gameObject] = clip;
             }
 
             var animPath = path.Replace("/" + root.name, "");

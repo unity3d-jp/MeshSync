@@ -271,6 +271,38 @@ namespace UTJ.MeshSync
             }
         }
 
+        static void Smooth(Keyframe[] keys)
+        {
+            int len = keys.Length;
+            for (int i = 0; i < len; ++i)
+            {
+                if(i > 0 && i < len - 1)
+                {
+                    float diff = keys[i + 1].value - keys[i - 1].value;
+                    float dt = keys[i + 1].time - keys[i - 1].time;
+                    float tan = diff / dt;
+                    keys[i].outTangent = tan;
+                    keys[i].inTangent = tan;
+                }
+                else
+                {
+                    if (i < len - 1)
+                    {
+                        float diff = keys[i + 1].value - keys[i].value;
+                        float dt = keys[i + 1].time - keys[i].time;
+                        keys[i].outTangent = diff / dt;
+                    }
+                    if (i > 0)
+                    {
+                        float diff = keys[i - 1].value - keys[i].value;
+                        float dt = keys[i - 1].time - keys[i].time;
+                        keys[i].inTangent = diff / dt;
+                    }
+                }
+            }
+        }
+
+
         public struct TransformAnimationData
         {
             #region internal
@@ -304,80 +336,103 @@ namespace UTJ.MeshSync
                 return v._this != IntPtr.Zero;
             }
 
-            public float[] translateTimes
+            public AnimationCurve[] GenTranslationCurves()
             {
-                get
+                int n = msTransformAGetNumTranslationSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msTransformAGetNumTranslationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetTranslationTime(_this, i); }
-                    return ret;
+                    var t = msTransformAGetTranslationTime(_this, i);
+                    var v = msTransformAGetTranslationValue(_this, i);
+                    x[i].time = y[i].time = z[i].time = t;
+                    x[i].value = v.x;
+                    y[i].value = v.y;
+                    z[i].value = v.z;
                 }
-            }
-            public Vector3[] translateValues
-            {
-                get
-                {
-                    var ret = new Vector3[msTransformAGetNumTranslationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetTranslationValue(_this, i); }
-                    return ret;
-                }
-            }
-
-            public float[] rotationTimes
-            {
-                get
-                {
-                    var ret = new float[msTransformAGetNumRotationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetRotationTime(_this, i); }
-                    return ret;
-                }
-            }
-            public Quaternion[] rotationValues
-            {
-                get
-                {
-                    var ret = new Quaternion[msTransformAGetNumRotationSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetRotationValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x); Smooth(y); Smooth(z);
+                var ret = new AnimationCurve[] {
+                    new AnimationCurve(x),
+                    new AnimationCurve(y),
+                    new AnimationCurve(z),
+                };
+                return ret;
             }
 
-            public float[] scaleTimes
+            public AnimationCurve[] GenRotationCurves()
             {
-                get
+                int n = msTransformAGetNumRotationSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                var w = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msTransformAGetNumScaleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetScaleTime(_this, i); }
-                    return ret;
+                    var t = msTransformAGetRotationTime(_this, i);
+                    var v = msTransformAGetRotationValue(_this, i);
+                    x[i].time = y[i].time = z[i].time = w[i].time = t;
+                    x[i].value = v.x;
+                    y[i].value = v.y;
+                    z[i].value = v.z;
+                    w[i].value = v.w;
                 }
-            }
-            public Vector3[] scaleValues
-            {
-                get
-                {
-                    var ret = new Vector3[msTransformAGetNumScaleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetScaleValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x); Smooth(y); Smooth(z); Smooth(w);
+                var ret = new AnimationCurve[] {
+                    new AnimationCurve(x),
+                    new AnimationCurve(y),
+                    new AnimationCurve(z),
+                    new AnimationCurve(w),
+                };
+                return ret;
             }
 
-            public float[] visibleTimes
+            public AnimationCurve[] GenScaleCurves()
             {
-                get
+                int n = msTransformAGetNumScaleSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msTransformAGetNumVisibleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibleTime(_this, i); }
-                    return ret;
+                    var t = msTransformAGetScaleTime(_this, i);
+                    var v = msTransformAGetScaleValue(_this, i);
+                    x[i].time = y[i].time = z[i].time = t;
+                    x[i].value = v.x;
+                    y[i].value = v.y;
+                    z[i].value = v.z;
                 }
+                var ret = new AnimationCurve[] {
+                    new AnimationCurve(x),
+                    new AnimationCurve(y),
+                    new AnimationCurve(z),
+                };
+                Smooth(x); Smooth(y); Smooth(z);
+                return ret;
             }
-            public bool[] visibleValues
+
+            public AnimationCurve GenVisibilityCurve()
             {
-                get
+                int n = msTransformAGetNumVisibleSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new bool[msTransformAGetNumVisibleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msTransformAGetVisibleValue(_this, i) != 0; }
-                    return ret;
+                    var t = msTransformAGetVisibleTime(_this, i);
+                    var v = msTransformAGetVisibleValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
 
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
@@ -386,31 +441,41 @@ namespace UTJ.MeshSync
                 var tgo = typeof(GameObject);
 
                 {
-                    var t = AnimationData.ToAnimatinCurve(translateTimes, translateValues, reduce);
                     clip.SetCurve(path, ttrans, "m_LocalPosition", null);
-                    if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
-                    if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
-                    if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
+                    var curves = GenTranslationCurves();
+                    if (curves != null)
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalPosition.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalPosition.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalPosition.z", curves[2]);
+                    }
                 }
                 {
-                    var r = AnimationData.ToAnimatinCurve(rotationTimes, rotationValues, reduce);
                     clip.SetCurve(path, ttrans, "m_LocalRotation", null);
-                    if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
-                    if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
-                    if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
-                    if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
+                    var curves = GenRotationCurves();
+                    if (curves != null)
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.w", curves[3]);
+                    }
                 }
                 {
-                    var s = AnimationData.ToAnimatinCurve(scaleTimes, scaleValues, reduce);
                     clip.SetCurve(path, ttrans, "m_LocalScale", null);
-                    if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
-                    if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
-                    if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
+                    var curves = GenScaleCurves();
+                    if (curves != null)
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalScale.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalScale.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalScale.z", curves[2]);
+                    }
                 }
                 {
-                    //var v = AnimationData.ToAnimatinCurve(visibleTimes, visibleValues, reduce);
-                    //clip.SetCurve(path, ttrans, "m_IsActive", null);
-                    //if (v.length > 0)    clip.SetCurve(path, tgo, "m_IsActive", v);
+                    clip.SetCurve(path, tgo, "m_IsActive", null);
+                    var curve = GenVisibilityCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tgo, "m_IsActive", curve);
                 }
             }
         }
@@ -460,157 +525,82 @@ namespace UTJ.MeshSync
                 return v._this != IntPtr.Zero;
             }
 
-            public float[] fovTimes
+            public AnimationCurve GenFovCurve()
             {
-                get
+                int n = msCameraAGetNumFovSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msCameraAGetNumFovSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFovTime(_this, i); }
-                    return ret;
+                    var t = msCameraAGetFovTime(_this, i);
+                    var v = msCameraAGetFovValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
-            }
-            public float[] fovValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumFovSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFovValue(_this, i); }
-                    return ret;
-                }
-            }
-
-            public float[] nearPlaneTimes
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumNearSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetNearTime(_this, i); }
-                    return ret;
-                }
-            }
-            public float[] nearPlaneValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumNearSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetNearValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
 
-            public float[] farPlaneTimes
+            public AnimationCurve GenNearPlaneCurve()
             {
-                get
+                int n = msCameraAGetNumNearSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msCameraAGetNumFarSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFarTime(_this, i); }
-                    return ret;
+                    var t = msCameraAGetNearTime(_this, i);
+                    var v = msCameraAGetNearValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
-            }
-            public float[] farPlaneValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumFarSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFarValue(_this, i); }
-                    return ret;
-                }
-            }
-
-            public float[] horizontalApertureTimes
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumHApertureSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetHApertureTime(_this, i); }
-                    return ret;
-                }
-            }
-            public float[] horizontalApertureValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumHApertureSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetHApertureValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
 
-            public float[] verticalApertureTimes
+            public AnimationCurve GenFarPlaneCurve()
             {
-                get
+                int n = msCameraAGetNumFarSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetVApertureTime(_this, i); }
-                    return ret;
+                    var t = msCameraAGetFarTime(_this, i);
+                    var v = msCameraAGetFarValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
-            }
-            public float[] verticalApertureValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetVApertureValue(_this, i); }
-                    return ret;
-                }
-            }
-
-            public float[] focalLengthTimes
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumFocalLengthSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocalLengthTime(_this, i); }
-                    return ret;
-                }
-            }
-            public float[] focalLengthValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocalLengthValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
 
-            public float[] focusDistanceTimes
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumFocusDistanceSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocusDistanceTime(_this, i); }
-                    return ret;
-                }
-            }
-            public float[] focusDistanceValues
-            {
-                get
-                {
-                    var ret = new float[msCameraAGetNumVApertureSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msCameraAGetFocusDistanceValue(_this, i); }
-                    return ret;
-                }
-            }
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
                 ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
 
                 var tcam = typeof(Camera);
                 {
-                    var fov = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
                     clip.SetCurve(path, tcam, "field of view", null);
-                    if (fov.length > 0) clip.SetCurve(path, tcam, "field of view", fov);
+                    var curve = GenFovCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tcam, "field of view", curve);
                 }
                 {
-                    var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
                     clip.SetCurve(path, tcam, "near clip plane", null);
-                    if (near.length > 0) clip.SetCurve(path, tcam, "near clip plane", near);
+                    var curve = GenNearPlaneCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tcam, "near clip plane", curve);
                 }
                 {
-                    var far = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
                     clip.SetCurve(path, tcam, "far clip plane", null);
-                    if (far.length > 0) clip.SetCurve(path, tcam, "far clip plane", far);
+                    var curve = GenFarPlaneCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tcam, "far clip plane", curve);
                 }
             }
         }
@@ -649,81 +639,87 @@ namespace UTJ.MeshSync
                 return v._this != IntPtr.Zero;
             }
 
-
-            public float[] colorTimes
+            public AnimationCurve[] GenColorCurves()
             {
-                get
+                int n = msLightAGetNumColorSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                var w = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msLightAGetNumColorSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetColorTime(_this, i); }
-                    return ret;
+                    var t = msLightAGetColorTime(_this, i);
+                    var v = msLightAGetColorValue(_this, i);
+                    x[i].time = y[i].time = z[i].time = w[i].time = t;
+                    x[i].value = v.r;
+                    y[i].value = v.g;
+                    z[i].value = v.b;
+                    w[i].value = v.a;
                 }
-            }
-            public Color[] colorValues
-            {
-                get
-                {
-                    var ret = new Color[msLightAGetNumColorSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetColorValue(_this, i); }
-                    return ret;
-                }
-            }
-
-            public float[] intensityTimes
-            {
-                get
-                {
-                    var ret = new float[msLightAGetNumIntensitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetIntensityTime(_this, i); }
-                    return ret;
-                }
-            }
-            public float[] intensityValues
-            {
-                get
-                {
-                    var ret = new float[msLightAGetNumIntensitySamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetIntensityValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x); Smooth(y); Smooth(z); Smooth(w);
+                var ret = new AnimationCurve[] {
+                    new AnimationCurve(x),
+                    new AnimationCurve(y),
+                    new AnimationCurve(z),
+                    new AnimationCurve(w),
+                };
+                return ret;
             }
 
-            public float[] rangeTimes
+            public AnimationCurve GenIntensityCurve()
             {
-                get
+                int n = msLightAGetNumIntensitySamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msLightAGetNumRangeSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetRangeTime(_this, i); }
-                    return ret;
+                    var t = msLightAGetIntensityTime(_this, i);
+                    var v = msLightAGetIntensityValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
-            }
-            public float[] rangeValues
-            {
-                get
-                {
-                    var ret = new float[msLightAGetNumRangeSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetRangeValue(_this, i); }
-                    return ret;
-                }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
 
-            public float[] spotAngleTimes
+            public AnimationCurve GenRangeCurve()
             {
-                get
+                int n = msLightAGetNumRangeSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msLightAGetNumSpotAngleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetSpotAngleTime(_this, i); }
-                    return ret;
+                    var t = msLightAGetRangeTime(_this, i);
+                    var v = msLightAGetRangeValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
-            public float[] spotAngleValues
+
+            public AnimationCurve GenSpotAngleCurve()
             {
-                get
+                int n = msLightAGetNumSpotAngleSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
                 {
-                    var ret = new float[msLightAGetNumSpotAngleSamples(_this)];
-                    for (int i = 0; i < ret.Length; ++i) { ret[i] = msLightAGetSpotAngleValue(_this, i); }
-                    return ret;
+                    var t = msLightAGetSpotAngleTime(_this, i);
+                    var v = msLightAGetSpotAngleValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
                 }
+                Smooth(x);
+                var ret = new AnimationCurve(x);
+                return ret;
             }
 
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
@@ -732,27 +728,33 @@ namespace UTJ.MeshSync
 
                 var tlight = typeof(Light);
                 {
-                    var color = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
                     clip.SetCurve(path, tlight, "m_Color", null);
-                    if (color[0].length > 0) clip.SetCurve(path, tlight, "m_Color.r", color[0]);
-                    if (color[1].length > 0) clip.SetCurve(path, tlight, "m_Color.g", color[1]);
-                    if (color[2].length > 0) clip.SetCurve(path, tlight, "m_Color.b", color[2]);
-                    if (color[3].length > 0) clip.SetCurve(path, tlight, "m_Color.a", color[3]);
+                    var curves = GenColorCurves();
+                    if (curves != null)
+                    {
+                        clip.SetCurve(path, tlight, "m_Color.r", curves[0]);
+                        clip.SetCurve(path, tlight, "m_Color.g", curves[1]);
+                        clip.SetCurve(path, tlight, "m_Color.b", curves[2]);
+                        clip.SetCurve(path, tlight, "m_Color.a", curves[3]);
+                    }
                 }
                 {
-                    var intensity = AnimationData.ToAnimatinCurve(intensityTimes, intensityValues, reduce);
                     clip.SetCurve(path, tlight, "m_Intensity", null);
-                    if (intensity.length > 0) clip.SetCurve(path, tlight, "m_Intensity", intensity);
+                    var curve = GenIntensityCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tlight, "m_Intensity", curve);
                 }
                 {
-                    var range = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
                     clip.SetCurve(path, tlight, "m_Range", null);
-                    if (range.length > 0) clip.SetCurve(path, tlight, "m_Range", range);
+                    var curve = GenRangeCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tlight, "m_Range", curve);
                 }
                 {
-                    var spot = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
                     clip.SetCurve(path, tlight, "m_SpotAngle", null);
-                    if (spot.length > 0) clip.SetCurve(path, tlight, "m_SpotAngle", spot);
+                    var curve = GenSpotAngleCurve();
+                    if (curve != null)
+                        clip.SetCurve(path, tlight, "m_SpotAngle", curve);
                 }
             }
         }
