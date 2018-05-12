@@ -160,46 +160,76 @@ void setup()
     //auto scene = BContext::get().scene();
 }
 
-template<typename A,  typename R>
-struct param_holder
+template<class R>
+struct ret_holder
 {
-    A args;
-    R ret;
-    param_holder(const A& a) : args(a) {}
-    R& get() { return ret; }
+    using ret_t = R & ;
+    R r;
+    R& get() { return r; }
 };
-
-template<typename A>
-struct param_holder<A, void>
+template<>
+struct ret_holder<void>
 {
-    A args;
-    param_holder(const A& a) : args(a) {}
+    using ret_t = void;
     void get() {}
 };
 
 template<typename R>
-struct param_holder<std::tuple<>, R>
+struct param_holder0
 {
-    R ret;
-    param_holder(const std::tuple<>&) {}
-    R& get() { return ret; }
+    ret_holder<R> ret;
+    typename ret_holder<R>::ret_t get() { return ret.get(); }
+};
+template<typename R, typename A1>
+struct param_holder1
+{
+    A1 a1;
+    ret_holder<R> ret;
+    typename ret_holder<R>::ret_t get() { return ret.get(); }
+};
+template<typename R, typename A1, typename A2>
+struct param_holder2
+{
+    A1 a1;
+    A2 a2;
+    ret_holder<R> ret;
+    typename ret_holder<R>::ret_t get() { return ret.get(); }
 };
 
-template<>
-struct param_holder<std::tuple<>, void>
-{
-    param_holder(const std::tuple<>&) {}
-    void get() {}
-};
 
-
-template<typename T, typename R, typename... A>
-R call(T *self, FunctionRNA *f, const std::tuple<A...>& args)
+template<typename T, typename R>
+R call(T *self, FunctionRNA *f)
 {
     PointerRNA ptr;
     ptr.data = self;
 
-    param_holder<std::tuple<A...>, R> params{args};
+    param_holder0<R> params;
+    ParameterList param_list;
+    param_list.data = &params;
+
+    f->call(g_context, nullptr, &ptr, &param_list);
+    return params.get();
+}
+template<typename T, typename R, typename A1>
+R call(T *self, FunctionRNA *f, const A1& a1)
+{
+    PointerRNA ptr;
+    ptr.data = self;
+
+    param_holder1<R, A1> params = { a1 };
+    ParameterList param_list;
+    param_list.data = &params;
+
+    f->call(g_context, nullptr, &ptr, &param_list);
+    return params.get();
+}
+template<typename T, typename R, typename A1, typename A2>
+R call(T *self, FunctionRNA *f, const A1& a1, const A2& a2)
+{
+    PointerRNA ptr;
+    ptr.data = self;
+
+    param_holder2<R, A1, A2> params = { a1, a2 };
     ParameterList param_list;
     param_list.data = &params;
 
@@ -348,7 +378,7 @@ barray_range<MLoopCol> BMesh::colors()
 
 void BMesh::calc_normals_split()
 {
-    call<Mesh, void>(m_ptr, BMesh_calc_normals_split, {});
+    call<Mesh, void>(m_ptr, BMesh_calc_normals_split);
 }
 
 
@@ -437,7 +467,7 @@ int BScene::frame_current()
 
 void BScene::frame_set(int f, float subf)
 {
-    call<Scene, void, int, float>(m_ptr, BScene_frame_set, { f, subf });
+    call<Scene, void, int, float>(m_ptr, BScene_frame_set, f, subf);
 }
 
 

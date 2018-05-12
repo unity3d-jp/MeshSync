@@ -742,6 +742,7 @@ void msbContext::syncAnimations()
                 kvp.second(this);
             });
         }
+        m_anim_records.clear();
         scene.frame_set(frame_current);
     }
 
@@ -770,6 +771,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     switch (obj->type) {
     case OB_CAMERA:
     {
+        // camera
         exportAnimation(obj->parent, true, base_path);
         auto& rec = m_anim_records[obj];
         rec.extractor = &msbContext::extractCameraAnimationData;
@@ -781,6 +783,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     }
     case OB_LAMP:
     {
+        // lights
         exportAnimation(obj->parent, true, base_path);
         auto& rec = m_anim_records[obj];
         rec.extractor = &msbContext::extractLightAnimationData;
@@ -803,14 +806,14 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         }
 
         if (obj->type == OB_ARMATURE) {
-            // export bones
+            // bones
             auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
             for (auto pose : poses) {
                 auto& rec = m_anim_records[pose];
                 rec.extractor = &msbContext::extractPoseAnimationData;
                 rec.obj = pose;
                 rec.dst = new ms::TransformAnimation();
-                rec.dst->path = get_path(obj, pose->bone);
+                rec.dst->path = base_path + get_path(obj, pose->bone);
                 m_animations.emplace_back(rec.dst);
             }
         }
@@ -818,6 +821,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     }
     }
 
+    // handle dupli group
     if (obj->dup_group) {
         auto local_path = std::string("/") + (obj->dup_group->id.name + 2);
         auto path = base_path + local_path;
@@ -844,7 +848,7 @@ void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    //dst.visible.push_back({ t, vis });
 }
 
 void msbContext::extractPoseAnimationData(ms::Animation& dst_, void * obj)
@@ -981,7 +985,6 @@ void msbContext::send()
 
     m_bones.clear();
     m_added.clear();
-    m_anim_records.clear();
 
     // kick async send
     m_send_future = std::async(std::launch::async, [this]() {

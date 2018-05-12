@@ -382,28 +382,36 @@ namespace UTJ.MeshSync
 
             public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
             {
-                var t = AnimationData.ToAnimatinCurve(translateTimes, translateValues, reduce);
-                var r = AnimationData.ToAnimatinCurve(rotationTimes, rotationValues, reduce);
-                var s = AnimationData.ToAnimatinCurve(scaleTimes, scaleValues, reduce);
-                var v = AnimationData.ToAnimatinCurve(visibleTimes, visibleValues, reduce);
-
                 var ttrans = typeof(Transform);
                 var tgo = typeof(GameObject);
-                clip.SetCurve(path, ttrans, "m_LocalPosition", null);
-                clip.SetCurve(path, ttrans, "m_LocalRotation", null);
-                clip.SetCurve(path, ttrans, "m_LocalScale", null);
-                clip.SetCurve(path, ttrans, "m_IsActive", null);
-                if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
-                if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
-                if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
-                if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
-                if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
-                if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
-                if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
-                if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
-                if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
-                if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
-                if (v.length > 0)    clip.SetCurve(path, tgo, "m_IsActive", v);
+
+                {
+                    var t = AnimationData.ToAnimatinCurve(translateTimes, translateValues, reduce);
+                    clip.SetCurve(path, ttrans, "m_LocalPosition", null);
+                    if (t[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.x", t[0]);
+                    if (t[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.y", t[1]);
+                    if (t[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalPosition.z", t[2]);
+                }
+                {
+                    var r = AnimationData.ToAnimatinCurve(rotationTimes, rotationValues, reduce);
+                    clip.SetCurve(path, ttrans, "m_LocalRotation", null);
+                    if (r[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.x", r[0]);
+                    if (r[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.y", r[1]);
+                    if (r[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.z", r[2]);
+                    if (r[3].length > 0) clip.SetCurve(path, ttrans, "m_LocalRotation.w", r[3]);
+                }
+                {
+                    var s = AnimationData.ToAnimatinCurve(scaleTimes, scaleValues, reduce);
+                    clip.SetCurve(path, ttrans, "m_LocalScale", null);
+                    if (s[0].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.x", s[0]);
+                    if (s[1].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.y", s[1]);
+                    if (s[2].length > 0) clip.SetCurve(path, ttrans, "m_LocalScale.z", s[2]);
+                }
+                {
+                    //var v = AnimationData.ToAnimatinCurve(visibleTimes, visibleValues, reduce);
+                    //clip.SetCurve(path, ttrans, "m_IsActive", null);
+                    //if (v.length > 0)    clip.SetCurve(path, tgo, "m_IsActive", v);
+                }
             }
         }
 
@@ -588,17 +596,22 @@ namespace UTJ.MeshSync
             {
                 ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
 
-                var fov  = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
-                var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
-                var far  = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
-
                 var tcam = typeof(Camera);
-                clip.SetCurve(path, tcam, "field of view", null);
-                clip.SetCurve(path, tcam, "near clip plane", null);
-                clip.SetCurve(path, tcam, "far clip plane", null);
-                if (fov.length > 0)  clip.SetCurve(path, tcam, "field of view", fov);
-                if (near.length > 0) clip.SetCurve(path, tcam, "near clip plane", near);
-                if (far.length > 0)  clip.SetCurve(path, tcam, "far clip plane", far);
+                {
+                    var fov = AnimationData.ToAnimatinCurve(fovTimes, fovValues, reduce);
+                    clip.SetCurve(path, tcam, "field of view", null);
+                    if (fov.length > 0) clip.SetCurve(path, tcam, "field of view", fov);
+                }
+                {
+                    var near = AnimationData.ToAnimatinCurve(nearPlaneTimes, nearPlaneValues, reduce);
+                    clip.SetCurve(path, tcam, "near clip plane", null);
+                    if (near.length > 0) clip.SetCurve(path, tcam, "near clip plane", near);
+                }
+                {
+                    var far = AnimationData.ToAnimatinCurve(farPlaneTimes, farPlaneValues, reduce);
+                    clip.SetCurve(path, tcam, "far clip plane", null);
+                    if (far.length > 0) clip.SetCurve(path, tcam, "far clip plane", far);
+                }
             }
         }
 
@@ -717,23 +730,30 @@ namespace UTJ.MeshSync
             {
                 ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
 
-                var color     = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
-                var intensity = AnimationData.ToAnimatinCurve(intensityTimes, intensityValues, reduce);
-                var range     = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
-                var spot      = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
-
                 var tlight = typeof(Light);
-                clip.SetCurve(path, tlight, "m_Color", null);
-                clip.SetCurve(path, tlight, "m_Intensity", null);
-                clip.SetCurve(path, tlight, "m_Range", null);
-                clip.SetCurve(path, tlight, "m_SpotAngle", null);
-                if (color[0].length > 0)  clip.SetCurve(path, tlight, "m_Color.r", color[0]);
-                if (color[1].length > 0)  clip.SetCurve(path, tlight, "m_Color.g", color[1]);
-                if (color[2].length > 0)  clip.SetCurve(path, tlight, "m_Color.b", color[2]);
-                if (color[3].length > 0)  clip.SetCurve(path, tlight, "m_Color.a", color[3]);
-                if (intensity.length > 0) clip.SetCurve(path, tlight, "m_Intensity", intensity);
-                if (range.length > 0)     clip.SetCurve(path, tlight, "m_Range", range);
-                if (spot.length > 0)      clip.SetCurve(path, tlight, "m_SpotAngle", spot);
+                {
+                    var color = AnimationData.ToAnimatinCurve(colorTimes, colorValues, reduce);
+                    clip.SetCurve(path, tlight, "m_Color", null);
+                    if (color[0].length > 0) clip.SetCurve(path, tlight, "m_Color.r", color[0]);
+                    if (color[1].length > 0) clip.SetCurve(path, tlight, "m_Color.g", color[1]);
+                    if (color[2].length > 0) clip.SetCurve(path, tlight, "m_Color.b", color[2]);
+                    if (color[3].length > 0) clip.SetCurve(path, tlight, "m_Color.a", color[3]);
+                }
+                {
+                    var intensity = AnimationData.ToAnimatinCurve(intensityTimes, intensityValues, reduce);
+                    clip.SetCurve(path, tlight, "m_Intensity", null);
+                    if (intensity.length > 0) clip.SetCurve(path, tlight, "m_Intensity", intensity);
+                }
+                {
+                    var range = AnimationData.ToAnimatinCurve(rangeTimes, rangeValues, reduce);
+                    clip.SetCurve(path, tlight, "m_Range", null);
+                    if (range.length > 0) clip.SetCurve(path, tlight, "m_Range", range);
+                }
+                {
+                    var spot = AnimationData.ToAnimatinCurve(spotAngleTimes, spotAngleValues, reduce);
+                    clip.SetCurve(path, tlight, "m_SpotAngle", null);
+                    if (spot.length > 0) clip.SetCurve(path, tlight, "m_SpotAngle", spot);
+                }
             }
         }
 

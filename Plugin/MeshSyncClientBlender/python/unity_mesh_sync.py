@@ -90,8 +90,8 @@ class MeshSyncPanel(bpy.types.Panel):
         self.layout.separator()
 
         self.layout.label("Animation")
-        b.prop(context.scene, 'meshsync_animation_ts')
-        b.prop(context.scene, 'meshsync_animation_fi')
+        self.layout.prop(context.scene, 'meshsync_animation_ts')
+        self.layout.prop(context.scene, 'meshsync_animation_fi')
         self.layout.operator("meshsync.sync_animations", text="Sync")
 
 
@@ -101,7 +101,7 @@ class MeshSync_OpSyncScene(bpy.types.Operator):
     def execute(self, context):
         msb_apply_settings()
         msb_context.setup()
-        msb_context.syncAnimations()
+        msb_context.syncAll()
         return{'FINISHED'}
     
 
