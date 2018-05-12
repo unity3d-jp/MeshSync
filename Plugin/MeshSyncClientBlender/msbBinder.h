@@ -188,6 +188,11 @@ namespace blender
         Compatible(BID)
 
         blist_range<Base> objects();
+
+        int frame_start();
+        int frame_end();
+        int frame_current();
+        void frame_set(int f);
     };
 
     class BData

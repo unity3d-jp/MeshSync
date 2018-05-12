@@ -9,19 +9,16 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
 
 #define BindMethod(Name) .def(#Name, &self_t::Name)
 #define BindMethod2(Name, ...) .def(#Name, __VA_ARGS__)
-#define BindField(Name) .def_readwrite(#Name, &self_t::Name)
 #define BindProperty(Name, ...) .def_property(#Name, __VA_ARGS__)
     {
         using self_t = msbContext;
         py::class_<msbContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
             BindMethod(setup)
-            BindMethod(isSending)
             BindMethod(flushPendingList)
-            BindMethod(prepare)
             BindMethod(syncAll)
             BindMethod(syncUpdated)
-            BindMethod(send)
+            BindMethod(syncAnimations)
             BindProperty(server_address,
                 [](const msbContext& self) { return self.getSettings().client_settings.server; },
                 [](msbContext& self, const std::string& v) { self.getSettings().client_settings.server = v; })
@@ -58,18 +55,15 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_blendshapes,
                 [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
                 [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
-            BindProperty(sync_animations,
-                [](const msbContext& self) { return self.getSettings().sync_animations; },
-                [](msbContext& self, bool v) { self.getSettings().sync_animations = v; })
             BindProperty(sync_cameras,
                 [](const msbContext& self) { return self.getSettings().sync_cameras; },
                 [](msbContext& self, bool v) { self.getSettings().sync_cameras = v; })
             BindProperty(sync_lights,
                 [](const msbContext& self) { return self.getSettings().sync_lights; },
                 [](msbContext& self, bool v) { self.getSettings().sync_lights = v; })
-            BindProperty(sample_animation,
-                [](const msbContext& self) { return self.getSettings().sample_animation; },
-                [](msbContext& self, bool v) { self.getSettings().sample_animation = v; })
+            BindProperty(animation_ts,
+                [](const msbContext& self) { return self.getSettings().animation_timescale; },
+                [](msbContext& self, float v) { self.getSettings().animation_timescale = v; })
             BindProperty(animation_sps,
                 [](const msbContext& self) { return self.getSettings().animation_sps; },
                 [](msbContext& self, int v) { self.getSettings().animation_sps = v; })
@@ -77,7 +71,6 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
     }
 #undef BindMethod
 #undef BindMethod2
-#undef BindField
 #undef BindProperty
 
     return mod.ptr();

@@ -35,6 +35,10 @@ Def(BCamera);
 Prop(BCamera, angle);
 
 Def(BScene);
+Prop(BScene, frame_start);
+Prop(BScene, frame_end);
+Prop(BScene, frame_current);
+Func(BScene, frame_set);
 
 Def(BData);
 
@@ -120,6 +124,14 @@ void setup()
         }
         else if (match_type("Scene")) {
             BScene::s_type = type;
+            each_prop{
+                if (match_prop("frame_start")) BScene_frame_start = prop;
+                if (match_prop("frame_end")) BScene_frame_end = prop;
+                if (match_prop("frame_current")) BScene_frame_current = prop;
+            }
+            each_func{
+                if (match_func("frame_set")) BScene_frame_set = func;
+            }
         }
         else if (match_type("BlendData")) {
             BData::s_type = type;
@@ -196,40 +208,7 @@ R call(T *self, FunctionRNA *f, const std::tuple<A...>& args)
 }
 
 template<typename T, typename U>
-float getter(T *idd, U *d, PropFloatGetFunc f)
-{
-    PointerRNA ptr;
-    ptr.id.data = idd;
-    ptr.data = d;
-
-    return f(&ptr);
-}
-
-template<typename T, typename U, typename R>
-R getter(T *idd, U *d, PropFloatArrayGetFunc f)
-{
-    PointerRNA ptr;
-    ptr.id.data = idd;
-    ptr.data = d;
-
-    R r;
-    f(&ptr, (float*)&r);
-    return r;
-}
-
-template<typename T, typename U, typename R>
-R getter(T *idd, U *d, PropPointerGetFunc f)
-{
-    PointerRNA ptr;
-    ptr.id.data = idd;
-    ptr.data = d;
-
-    PointerRNA ret = f(&ptr);
-    return (R)ret.data;
-}
-
-template<typename T, typename U>
-bool getter(T *idd, U *d, PropBooleanGetFunc f)
+static inline bool get_bool(T *idd, U *d, PropBooleanGetFunc f)
 {
     PointerRNA ptr;
     ptr.id.data = idd;
@@ -237,17 +216,54 @@ bool getter(T *idd, U *d, PropBooleanGetFunc f)
 
     return f(&ptr) != 0;
 }
+template<typename T, typename U>
+static inline int get_int(T *idd, U *d, PropIntGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    return f(&ptr);
+}
+template<typename T, typename U>
+static inline float get_float(T *idd, U *d, PropFloatGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    return f(&ptr);
+}
+template<typename T, typename U>
+static inline void get_float_array(T *idd, U *d, float *dst, PropFloatArrayGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    f(&ptr, dst);
+}
+template<typename T, typename U>
+static inline void* get_pointer(T *idd, U *d, PropPointerGetFunc f)
+{
+    PointerRNA ptr;
+    ptr.id.data = idd;
+    ptr.data = d;
+
+    PointerRNA ret = f(&ptr);
+    return ret.data;
+}
 
 
 
 const char *BID::name() const { return m_ptr->name + 2; }
 bool BID::is_updated() const
 {
-    return getter<nullptr_t, ID>(nullptr, m_ptr, ((BoolPropertyRNA*)BID_is_updated)->get);
+    return get_bool<nullptr_t, ID>(nullptr, m_ptr, ((BoolPropertyRNA*)BID_is_updated)->get);
 }
 bool BID::is_updated_data() const
 {
-    return getter<nullptr_t, ID>(nullptr, m_ptr, ((BoolPropertyRNA*)BID_is_updated_data)->get);
+    return get_bool<nullptr_t, ID>(nullptr, m_ptr, ((BoolPropertyRNA*)BID_is_updated_data)->get);
 }
 
 
@@ -256,7 +272,9 @@ void* BObject::data() { return m_ptr->data; }
 
 float4x4 BObject::matrix_local() const
 {
-    return getter<Object, nullptr_t, float4x4>(m_ptr, nullptr, ((FloatPropertyRNA*)BObject_matrix_local)->getarray);
+    float4x4 ret;
+    get_float_array<Object, nullptr_t>(m_ptr, nullptr, (float*)&ret, ((FloatPropertyRNA*)BObject_matrix_local)->getarray);
+    return ret;
 }
 
 bool blender::BObject::is_visible(Scene * scene) const
@@ -380,21 +398,31 @@ const float3& BMaterial::color() const
 }
 bool BMaterial::use_nodes() const
 {
-    return getter<nullptr_t, Material>(nullptr, m_ptr, ((BoolPropertyRNA*)BMaterial_use_nodes)->get);
+    return get_bool<nullptr_t, Material>(nullptr, m_ptr, ((BoolPropertyRNA*)BMaterial_use_nodes)->get);
 }
 Material * BMaterial::active_node_material() const
 {
-    return getter<nullptr_t, Material, Material*>(nullptr, m_ptr, ((PointerPropertyRNA*)BMaterial_active_node_material)->get);
+    return (Material*)get_pointer<nullptr_t, Material>(nullptr, m_ptr, ((PointerPropertyRNA*)BMaterial_active_node_material)->get);
 }
 
 float BCamera::fov() const
 {
-    return getter<Camera, nullptr_t>(m_ptr, nullptr, ((FloatPropertyRNA*)BCamera_angle)->get);
+    return get_float<Camera, nullptr_t>(m_ptr, nullptr, ((FloatPropertyRNA*)BCamera_angle)->get);
 }
 
 blist_range<Base> BScene::objects()
 {
     return list_range((Base*)m_ptr->base.first);
+}
+
+int BScene::frame_current()
+{
+    return get_int<Scene, nullptr_t>(m_ptr, nullptr, ((IntPropertyRNA*)BScene_frame_current)->get);
+}
+
+void BScene::frame_set(int f)
+{
+    call<Scene, void, int>(m_ptr, BScene_frame_set, {f});
 }
 
 
@@ -404,11 +432,11 @@ BContext BContext::get()
 }
 Main* BContext::data()
 {
-    return getter<nullptr_t, bContext, Main*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_blend_data)->get);
+    return (Main*)get_pointer<nullptr_t, bContext>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_blend_data)->get);
 }
 Scene* BContext::scene()
 {
-    return getter<nullptr_t, bContext, Scene*>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_scene)->get);
+    return (Scene*)get_pointer<nullptr_t, bContext>(nullptr, m_ptr, ((PointerPropertyRNA*)BContext_scene)->get);
 }
 
 blist_range<Object> BData::objects()
@@ -421,7 +449,7 @@ blist_range<Material> BData::materials()
 }
 bool BData::objects_is_updated()
 {
-    return getter<nullptr_t, Main>(nullptr, m_ptr, ((BoolPropertyRNA*)BlendDataObjects_is_updated)->get);
+    return get_bool<nullptr_t, Main>(nullptr, m_ptr, ((BoolPropertyRNA*)BlendDataObjects_is_updated)->get);
 }
 
 const void* CustomData_get(const CustomData& data, int type)

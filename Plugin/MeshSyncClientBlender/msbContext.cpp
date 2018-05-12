@@ -776,6 +776,14 @@ void msbContext::syncUpdated()
     send();
 }
 
+void msbContext::syncAnimations()
+{
+    if (m_send_future.valid()) {
+        m_send_future.get(); // wait previous request to complete
+    }
+
+}
+
 void msbContext::flushPendingList()
 {
     if (!m_pending.empty() && !isSending()) {
