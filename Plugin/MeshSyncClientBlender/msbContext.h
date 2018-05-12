@@ -130,7 +130,7 @@ private:
             (_this->*extractor)(*dst, obj);
         }
     };
-    using AnimationRecords = std::map<void*, AnimationRecord>;
+    using AnimationRecords = std::map<std::string, AnimationRecord>;
     AnimationRecords m_anim_records;
     float m_current_time = 0.0f;
     bool m_ignore_update = false;

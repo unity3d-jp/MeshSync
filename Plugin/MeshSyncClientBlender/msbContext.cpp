@@ -712,7 +712,6 @@ void msbContext::eraseStaleObjects()
 
 void msbContext::sendAnimations(SendScope scope)
 {
-    bl::setup();
     if (m_send_future.valid()) {
         m_send_future.get(); // wait previous request to complete
     }
@@ -777,7 +776,9 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
 {
     if (!obj)
         return;
-    if (m_anim_records.find(obj) != m_anim_records.end())
+
+    auto path = base_path + get_path(obj);
+    if (m_anim_records.find(path) != m_anim_records.end())
         return;
 
     switch (obj->type) {
@@ -785,11 +786,11 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     {
         // camera
         exportAnimation(obj->parent, true, base_path);
-        auto& rec = m_anim_records[obj];
+        auto& rec = m_anim_records[path];
         rec.extractor = &msbContext::extractCameraAnimationData;
         rec.obj = obj;
         rec.dst = new ms::CameraAnimation();
-        rec.dst->path = base_path + get_path(obj);
+        rec.dst->path = path;
         m_animations.emplace_back(rec.dst);
         break;
     }
@@ -797,11 +798,11 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     {
         // lights
         exportAnimation(obj->parent, true, base_path);
-        auto& rec = m_anim_records[obj];
+        auto& rec = m_anim_records[path];
         rec.extractor = &msbContext::extractLightAnimationData;
         rec.obj = obj;
         rec.dst = new ms::LightAnimation();
-        rec.dst->path = base_path + get_path(obj);
+        rec.dst->path = path;
         m_animations.emplace_back(rec.dst);
         break;
     }
@@ -809,11 +810,11 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     if (force || obj->type == OB_ARMATURE || obj->type == OB_MESH || obj->dup_group) {
         exportAnimation(obj->parent, true, base_path);
         {
-            auto& rec = m_anim_records[obj];
+            auto& rec = m_anim_records[path];
             rec.extractor = &msbContext::extractTransformAnimationData;
             rec.obj = obj;
             rec.dst = new ms::TransformAnimation();
-            rec.dst->path = base_path + get_path(obj);
+            rec.dst->path = path;
             m_animations.emplace_back(rec.dst);
         }
 
@@ -821,11 +822,12 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
             // bones
             auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
             for (auto pose : poses) {
-                auto& rec = m_anim_records[pose];
+                auto pose_path = base_path + get_path(obj, pose->bone);
+                auto& rec = m_anim_records[pose_path];
                 rec.extractor = &msbContext::extractPoseAnimationData;
                 rec.obj = pose;
                 rec.dst = new ms::TransformAnimation();
-                rec.dst->path = base_path + get_path(obj, pose->bone);
+                rec.dst->path = pose_path;
                 m_animations.emplace_back(rec.dst);
             }
         }
@@ -835,12 +837,15 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
 
     // handle dupli group
     if (obj->dup_group) {
-        auto local_path = std::string("/") + (obj->dup_group->id.name + 2);
-        auto path = base_path + local_path;
+        auto group_path = base_path;
+        group_path += '/';
+        group_path += get_name(obj);
+        group_path += '/';
+        group_path += (obj->dup_group->id.name + 2);
 
         auto gobjects = bl::list_range((GroupObject*)obj->dup_group->gobject.first);
         for (auto go : gobjects) {
-            exportAnimation(go->ob, false, path);
+            exportAnimation(go->ob, false, group_path);
         }
     }
 }
@@ -944,7 +949,6 @@ bool msbContext::prepare()
 
 void msbContext::sendScene(SendScope scope)
 {
-    bl::setup();
     if (m_ignore_update || !prepare())
         return;
 

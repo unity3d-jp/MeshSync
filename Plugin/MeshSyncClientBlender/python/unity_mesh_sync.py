@@ -37,8 +37,8 @@ def msb_apply_settings(self = None, context = None):
 
 
 def msb_initialize_properties():
-    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(default = "127.0.0.1", name = "Server Address")
-    bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Server Port")
+    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(default = "127.0.0.1", name = "Address")
+    bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Port")
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor")
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
     bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals")
@@ -54,47 +54,63 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Interval")
 
 
-class MeshSyncPanel(bpy.types.Panel):
+class MeshSyncServerPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = "Mesh Sync"
-    bl_label = "Mesh Sync"
+    bl_label = "Server"
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(context.scene, 'meshsync_server_address')
-        self.layout.prop(context.scene, 'meshsync_server_port')
-        self.layout.separator()
+        self.layout.prop(scene, 'meshsync_server_address')
+        self.layout.prop(scene, 'meshsync_server_port')
 
-        self.layout.label("Scene")
-        self.layout.prop(context.scene, 'meshsync_scale_factor')
-        self.layout.prop(context.scene, 'meshsync_sync_meshes')
+
+class MeshSyncScenePanel(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = "Mesh Sync"
+    bl_label = "Scene"
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        self.layout.prop(scene, 'meshsync_scale_factor')
+        self.layout.prop(scene, 'meshsync_sync_meshes')
         if scene.meshsync_sync_meshes:
             b = self.layout.box()
-            b.prop(context.scene, 'meshsync_sync_normals')
-            b.prop(context.scene, 'meshsync_sync_uvs')
-            b.prop(context.scene, 'meshsync_sync_colors')
-            b.prop(context.scene, 'meshsync_sync_bones')
-            b.prop(context.scene, 'meshsync_sync_blendshapes')
-            b.prop(context.scene, 'meshsync_apply_modifiers')
-        self.layout.prop(context.scene, 'meshsync_sync_cameras')
-        self.layout.prop(context.scene, 'meshsync_sync_lights')
+            b.prop(scene, 'meshsync_sync_normals')
+            b.prop(scene, 'meshsync_sync_uvs')
+            b.prop(scene, 'meshsync_sync_colors')
+            b.prop(scene, 'meshsync_sync_bones')
+            b.prop(scene, 'meshsync_sync_blendshapes')
+            b.prop(scene, 'meshsync_apply_modifiers')
+        self.layout.prop(scene, 'meshsync_sync_cameras')
+        self.layout.prop(scene, 'meshsync_sync_lights')
         self.layout.separator()
-        self.layout.prop(context.scene, 'meshsync_auto_sync')
+        self.layout.prop(scene, 'meshsync_auto_sync')
         self.layout.operator("meshsync.sync_scene", text="Manual Sync")
         self.layout.separator()
 
-        self.layout.label("Animation")
-        self.layout.prop(context.scene, 'meshsync_animation_ts')
-        self.layout.prop(context.scene, 'meshsync_animation_fi')
+
+class MeshSyncAnimationPanel(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = "Mesh Sync"
+    bl_label = "Animation"
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        self.layout.prop(scene, 'meshsync_animation_ts')
+        self.layout.prop(scene, 'meshsync_animation_fi')
         self.layout.operator("meshsync.sync_animations", text="Sync")
-
-
+        
+        
 class MeshSync_OpSyncScene(bpy.types.Operator):
     bl_idname = "meshsync.sync_scene"
     bl_label = "Sync Scene"
     def execute(self, context):
         msb_apply_settings()
+        msb_context.setup(bpy.context);
         msb_context.sendSceneAll()
         return{'FINISHED'}
     
@@ -104,6 +120,7 @@ class MeshSync_OpSyncAnimations(bpy.types.Operator):
     bl_label = "Sync Animations"
     def execute(self, context):
         msb_apply_settings()
+        msb_context.setup(bpy.context);
         msb_context.sendAnimationsAll()
         return{'FINISHED'}
 
@@ -113,6 +130,7 @@ def on_scene_update(context):
     msb_context.flushPendingList();
     if(bpy.context.scene.meshsync_auto_sync):
         msb_apply_settings()
+        msb_context.setup(bpy.context);
         msb_context.sendSceneUpdated()
 
 def register():

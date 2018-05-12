@@ -2,7 +2,7 @@
 
 namespace blender
 {
-    void setup();
+    void setup(py::object bpy_context);
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
     int CustomData_get_offset(const CustomData& data, int type);

@@ -54,18 +54,10 @@ PropertyRNA* BlendDataObjects_is_updated;
 
 
 // context: bpi.context in python
-void setup()
+void setup(py::object bpy_context)
 {
     if (g_context)
         return;
-
-    py::object local = py::dict();
-    py::eval<py::eval_mode::eval_statements>(
-"import _bpy as bpi;"
-"context = bpi.context;"
-, py::object(), local);
-
-    py::object bpy_context = local["context"];
 
     auto rna = (BPy_StructRNA*)bpy_context.ptr();
     auto first_type = &rna->ptr.type->cont;
