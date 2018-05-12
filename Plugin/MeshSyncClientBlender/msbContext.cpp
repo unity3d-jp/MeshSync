@@ -722,6 +722,8 @@ void msbContext::syncAnimations()
         m_send_future.get(); // wait previous request to complete
     }
 
+    m_ignore_update = true;
+
     // list target objects
     auto scene = bl::BScene(bl::BContext::get().scene());
     for (auto *base : scene.objects()) {
@@ -759,6 +761,8 @@ void msbContext::syncAnimations()
     if (!m_animations.empty()) {
         send();
     }
+
+    m_ignore_update = false;
 }
 
 void msbContext::exportAnimation(Object *obj, bool force, const std::string base_path)
@@ -932,6 +936,9 @@ bool msbContext::prepare()
 
 void msbContext::syncAll()
 {
+    if (m_ignore_update)
+        return;
+
     if (!prepare()) return;
 
     exportMaterials();
@@ -946,6 +953,9 @@ void msbContext::syncAll()
 
 void msbContext::syncUpdated()
 {
+    if (m_ignore_update)
+        return;
+
     auto bpy_data = bl::BData(bl::BContext::get().data());
     if (!bpy_data.objects_is_updated() || !prepare()) return;
 

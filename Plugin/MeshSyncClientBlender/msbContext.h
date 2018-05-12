@@ -133,5 +133,6 @@ private:
     using AnimationRecords = std::map<void*, AnimationRecord>;
     AnimationRecords m_anim_records;
     float m_current_time = 0.0f;
+    bool m_ignore_update = false;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;
