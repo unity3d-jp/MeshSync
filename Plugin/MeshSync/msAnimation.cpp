@@ -11,6 +11,7 @@
 #define Clear(V) V.clear();
 #define Empty(V) && V.empty()
 #define Reduce(V) DoReduction(V);
+#define Reserve(V) V.reserve(n);
 
 namespace ms {
 
@@ -141,6 +142,10 @@ void TransformAnimation::reduction()
 {
     EachMembers(Reduce);
 }
+void TransformAnimation::reserve(size_t n)
+{
+    EachMembers(Reserve);
+}
 #undef EachMembers
 
 void TransformAnimation::convertHandedness(bool x, bool yz)
@@ -207,6 +212,11 @@ void CameraAnimation::reduction()
     super::reduction();
     EachMembers(Reduce);
 }
+void CameraAnimation::reserve(size_t n)
+{
+    super::reserve(n);
+    EachMembers(Reserve);
+}
 #undef EachMembers
 
 void CameraAnimation::applyScaleFactor(float s)
@@ -256,6 +266,11 @@ void LightAnimation::reduction()
 {
     super::reduction();
     EachMembers(Reduce);
+}
+void LightAnimation::reserve(size_t n)
+{
+    super::reserve(n);
+    EachMembers(Reserve);
 }
 #undef EachMembers
 

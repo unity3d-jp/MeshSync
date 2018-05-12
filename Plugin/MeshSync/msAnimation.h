@@ -32,6 +32,7 @@ public:
     virtual void clear();
     virtual bool empty() const = 0;
     virtual void reduction() = 0;
+    virtual void reserve(size_t n) = 0;
 
     virtual void convertHandedness(bool x, bool yz) = 0;
     virtual void applyScaleFactor(float scale) = 0;
@@ -55,6 +56,7 @@ public:
     void clear() override;
     bool empty() const override;
     void reduction() override;
+    void reserve(size_t n) override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
@@ -80,6 +82,7 @@ public:
     void clear() override;
     bool empty() const override;
     void reduction() override;
+    void reserve(size_t n) override;
 
     void applyScaleFactor(float scale) override;
 };
@@ -101,6 +104,7 @@ public:
     void clear() override;
     bool empty() const override;
     void reduction() override;
+    void reserve(size_t n) override;
 
     void applyScaleFactor(float scale) override;
 };

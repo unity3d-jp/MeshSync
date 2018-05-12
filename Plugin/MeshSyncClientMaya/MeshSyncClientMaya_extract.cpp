@@ -640,12 +640,18 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     }
 
     // extract
+    auto time_current = MAnimControl::currentTime();
     auto time_begin = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
     auto interval = MTime(1.0 / m_settings.animation_sps, MTime::kSeconds);
 
+    int reserve_size = int((time_end.as(MTime::kSeconds) - time_begin.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
+    for (auto& kvp : m_anim_records) {
+        kvp.second.dst->reserve(reserve_size);
+    };
+
     m_ignore_update = true;
-    for (MTime t = time_begin; t < time_end; t += interval) {
+    for (MTime t = time_begin; t <= time_end; t += interval) {
         m_current_time = (float)t.as(MTime::kSeconds);
         MGlobal::viewFrame(t);
 
@@ -653,6 +659,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
             kvp.second(this);
         });
     }
+    MGlobal::viewFrame(time_current);
     m_ignore_update = false;
 
     // cleanup
@@ -743,10 +750,14 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, MObject
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
+
+    // params for physical camera. not needed for now.
+#if 0
     dst.horizontal_aperture.push_back({ t , horizontal_aperture });
     dst.vertical_aperture.push_back({ t , vertical_aperture });
     dst.focal_length.push_back({ t , focal_length });
     dst.focus_distance.push_back({ t , focus_distance });
+#endif
 }
 
 void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject node, MObject shape)

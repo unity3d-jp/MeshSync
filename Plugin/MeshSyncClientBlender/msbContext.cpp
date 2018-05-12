@@ -737,8 +737,14 @@ void msbContext::sendAnimations(SendScope scope)
         int frame_current = scene.frame_current();
         int frame_start = scene.frame_start();
         int frame_end = scene.frame_end();
+        int interval = m_settings.animation_frame_interval;
         float frame_to_seconds = 1.0f / scene.fps();
-        for (int f = frame_start; f <= frame_end; f += m_settings.animation_frame_interval) {
+        int reserve_size = (frame_end - frame_start) / interval + 1;
+
+        for(auto& kvp : m_anim_records) {
+            kvp.second.dst->reserve(reserve_size);
+        };
+        for (int f = frame_start; f <= frame_end; f += interval) {
             scene.frame_set(f);
 
             m_current_time = frame_to_seconds * f;
