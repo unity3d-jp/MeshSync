@@ -151,7 +151,6 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
         if (shape.hasFn(MFn::kMesh)) {
             MFnMesh fn(shape);
             if (!fn.isIntermediateObject()) {
-                mscTrace("track mesh %s\n", GetName(node).c_str());
                 auto& rec = findOrAddRecord(node);
                 if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
                 if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnMeshUpdated, this);
@@ -161,7 +160,6 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
         else if (shape.hasFn(MFn::kCamera)) {
             MFnCamera fn(shape);
             if (!fn.isIntermediateObject()) {
-                mscTrace("track camera %s\n", GetName(node).c_str());
                 auto& rec = findOrAddRecord(node);
                 if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
                 if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnCameraUpdated, this);
@@ -171,7 +169,6 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
         else if (shape.hasFn(MFn::kLight)) {
             MFnLight fn(shape);
             if (!fn.isIntermediateObject()) {
-                mscTrace("track light %s\n", GetName(node).c_str());
                 auto& rec = findOrAddRecord(node);
                 if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
                 if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnLightUpdated, this);
@@ -182,15 +179,13 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
 
     if (!handled) {
         if (node.hasFn(MFn::kJoint)) {
-            mscTrace("track joint %s\n", GetName(node).c_str());
             auto& rec = findOrAddRecord(node);
-            if (!rec.cid_trans)rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
+            if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
             handled = true;
         }
     }
 
     if (!handled && !leaf && node.hasFn(MFn::kTransform)) {
-        mscTrace("track transform %s\n", GetName(node).c_str());
         auto& rec = findOrAddRecord(node);
         if (!rec.cid_trans)rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
         handled = true;
@@ -297,7 +292,6 @@ MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject no
         rec.name = GetName(node);
         rec.path = GetPath(node);
         rec.index = ++m_index_seed;
-        mscTrace("MeshSyncClientMaya::addRecord(): %s\n", rec.path.c_str());
     }
     return rec;
 }
@@ -408,7 +402,6 @@ void MeshSyncClientMaya::update()
 
     if (m_scene_updated) {
         m_scene_updated = false;
-        mscTrace("MeshSyncClientMaya::update(): handling scene update\n");
 
         registerNodeCallbacks();
         if (m_settings.auto_sync) {
@@ -417,14 +410,10 @@ void MeshSyncClientMaya::update()
     }
 
     if (m_pending_send_scene != SendScope::None) {
-        if (send(m_pending_send_scene)) {
-            mscTrace("MeshSyncClientMaya::update(): handling send scene\n");
-        }
+        send(m_pending_send_scene);
     }
     else if (m_settings.auto_sync) {
-        if (send(SendScope::Updated)) {
-            mscTrace("MeshSyncClientMaya::update(): handling send updated objects\n");
-        }
+        send(SendScope::Updated);
     }
 }
 
@@ -435,14 +424,15 @@ void MeshSyncClientMaya::onSelectionChanged()
 void MeshSyncClientMaya::onSceneUpdated()
 {
     m_scene_updated = true;
-    mscTrace("MeshSyncClientMaya::onSceneUpdated()\n");
 }
 
 void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
-    m_scene_updated = true;
-    update();
-    mscTrace("MeshSyncClientMaya::onTimeChange()\n");
+    if (m_settings.auto_sync) {
+        m_pending_send_scene = SendScope::All;
+        // timer callback won't be called while scrubbing time slider. so call update() immediately
+        update();
+    }
 }
 
 void MeshSyncClientMaya::onNodeRemoved(MObject & node)
@@ -450,7 +440,6 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
     if (node.hasFn(MFn::kTransform)) {
         auto it = m_records.find((void*&)node);
         if (it != m_records.end()) {
-            mscTrace("MeshSyncClientMaya::onNodeRemoved(): %s\n", it->second.path.c_str());
             m_deleted.push_back(it->second.path);
             m_records.erase(it);
         }
@@ -481,7 +470,6 @@ void MeshSyncClientMaya::kickAsyncSend()
     }
 
     m_future_send = std::async(std::launch::async, [this, to_meter]() {
-        mscTrace("MeshSyncClientMaya::kickAsyncSend(): kicked\n");
         ms::Client client(m_settings.client_settings);
 
         ms::SceneSettings scene_settings;
@@ -545,7 +533,6 @@ void MeshSyncClientMaya::kickAsyncSend()
             fence.type = ms::FenceMessage::FenceType::SceneEnd;
             client.send(fence);
         }
-        mscTrace("MeshSyncClientMaya::kickAsyncSend(): done\n");
     });
 }
 

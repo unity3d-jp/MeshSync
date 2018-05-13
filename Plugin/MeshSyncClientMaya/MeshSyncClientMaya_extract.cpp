@@ -4,7 +4,6 @@
 #include "MeshSyncClientMaya.h"
 #include "Commands.h"
 
-#define MAYA_THREADSAFE (MAYA_API_VERSION >= 201700)
 
 void MeshSyncClientMaya::addAnimation(ms::Animation *anim)
 {
@@ -58,41 +57,47 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
         });
     }
 
-#if MAYA_THREADSAFE
-    auto task = [this, &dst, src]() {
-        doExtractTransformData(dst, src);
-    };
-    m_extract_tasks.push_back(task);
-#else
     doExtractTransformData(dst, src);
-#endif
 }
 
 // GetValue: [](MPlug src, MObject& dst)
 static inline void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     MFnTransform mtrans(src);
-
     vis = IsVisible(src);
 
-    auto plug_wmat = mtrans.findPlug("worldMatrix");
-    if (!plug_wmat.isNull()) {
+    // get TRS from world matrix.
+    // note: world matrix is a result of local TRS + parent TRS + constraints.
+    //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
+
+    auto mat = mu::float4x4::identity();
+    {
+        auto plug_wmat = mtrans.findPlug("worldMatrix");
+        auto plug_wmatv = plug_wmat.elementByLogicalIndex(0); 
         MObject obj_wmat;
-        plug_wmat.elementByLogicalIndex(0).getValue(obj_wmat);
-        auto mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
-
-        auto plug_pimat = mtrans.findPlug("parentInverseMatrix");
-        if (!plug_pimat.isNull()) {
-            MObject obj_pimat;
-            plug_pimat.elementByLogicalIndex(0).getValue(obj_pimat);
-            auto pimat = to_float4x4(MFnMatrixData(obj_pimat).matrix());
-            mat *= pimat;
-        }
-
-        pos = extract_position(mat);
-        rot = extract_rotation(mat);
-        scale = extract_scale(mat);
+        plug_wmatv.getValue(obj_wmat);
+        mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
     }
+
+    // multiply inverse parent matrix to calculate local matrix
+    // note: using parentInverseMatrix plug seems more appropriate, but it seems sometimes have broken value on Maya2016...
+    MObject parent = GetParent(src);
+    if (!parent.isNull()) {
+        auto plug_pwmat = MFnTransform(parent).findPlug("worldMatrix");
+        auto plug_pwmatv = plug_pwmat.elementByLogicalIndex(0); // note: this variable must be present to keep reference count
+        if (!plug_pwmatv.isNull()) {
+            MObject obj_pwmat;
+            plug_pwmatv.getValue(obj_pwmat);
+            if (!obj_pwmat.isNull()) {
+                auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
+                mat *= mu::invert(pwmat);
+            }
+        }
+    }
+
+    pos = extract_position(mat);
+    rot = extract_rotation(mat);
+    scale = extract_scale(mat);
 }
 
 void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src)
@@ -104,14 +109,8 @@ void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src
 
 void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
-#if MAYA_THREADSAFE
-    auto task = [this, &dst, src]() {
-        doExtractCameraData(dst, src);
-    };
-    m_extract_tasks.push_back(task);
-#else
+    doExtractTransformData(dst, src);
     doExtractCameraData(dst, src);
-#endif
 
 }
 
@@ -132,7 +131,6 @@ static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane
 
 void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
 {
-    doExtractTransformData(dst, src);
     dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
@@ -148,14 +146,8 @@ void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
 
 void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 {
-#if MAYA_THREADSAFE
-    auto task = [this, &dst, src]() {
-        doExtractLightData(dst, src);
-    };
-    m_extract_tasks.push_back(task);
-#else
+    doExtractTransformData(dst, src);
     doExtractLightData(dst, src);
-#endif
 
 }
 
@@ -174,7 +166,6 @@ static void ExtractLightData(MObject shape, mu::float4& color, float& intensity,
 
 void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
 {
-    doExtractTransformData(dst, src);
     dst.rotation = mu::flipY(dst.rotation);
 
     auto shape = GetShape(src);
@@ -208,20 +199,20 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         exportMaterials();
     }
 
-#if MAYA_THREADSAFE
-    auto task = [this, &dst, src]() {
+    doExtractTransformData(dst, src);
+    if (m_settings.multithreaded) {
+        auto task = [this, &dst, src]() {
+            doExtractMeshData(dst, src);
+        };
+        m_extract_tasks.push_back(task);
+    }
+    else {
         doExtractMeshData(dst, src);
-    };
-    m_extract_tasks.push_back(task);
-#else
-    doExtractMeshData(dst, src);
-#endif
+    }
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
 {
-    doExtractTransformData(dst, src);
-
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return; }
 
@@ -624,14 +615,11 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
 void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, MObject src, MObject node)
 {
     dst.path = GetPath(node);
-
-    auto task = [this, &dst, src, node]() {
-        doExtractConstraintData(dst, src, node);
-    };
-    m_extract_tasks.push_back(task);
+    doExtractConstraintData(dst, src, node);
 }
 void MeshSyncClientMaya::doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node)
 {
+    // todo
 }
 
 int MeshSyncClientMaya::exportAnimations(SendScope scope)
@@ -675,16 +663,9 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
         m_current_time = (float)t.as(MTime::kSeconds);
         MGlobal::viewFrame(t);
 
-#if MAYA_THREADSAFE
-        mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
-            kvp.second(this);
-        });
-#else
-        // parallel evaluation seems work on Maya2018, but cause random crash on Maya201.
         for (auto& kvp : m_anim_records) {
             kvp.second(this);
         }
-#endif
     }
     MGlobal::viewFrame(time_current);
     m_ignore_update = false;

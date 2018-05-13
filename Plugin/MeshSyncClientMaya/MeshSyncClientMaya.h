@@ -25,6 +25,7 @@ public:
         bool sync_lights = true;
         bool sync_constraints = false;
         bool apply_tweak = true;
+        bool multithreaded = true;
 
         // import settings
         bool bake_skin = false;
