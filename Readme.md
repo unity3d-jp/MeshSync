@@ -78,7 +78,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
 - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 
-<img align="right" src="doc/MeshSyncServer.png">
+<img align="right" src="https://user-images.githubusercontent.com/1488611/39972178-45cf48d6-5744-11e8-8722-11fd412c7abd.png">
 
 - マテリアルリスト
   - MesySyncServer はマテリアルのリストを保持しています。このリストにマテリアルを設定すると、対応するオブジェクトに適切にアサインされます。
