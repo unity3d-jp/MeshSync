@@ -129,34 +129,6 @@ MObject FindOrigMesh(MObject node)
     return ret;
 }
 
-MObject FindInputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
-{
-    MObjectArray geoms;
-    gf.getInputGeometry(geoms);
-    for (uint32_t i = 0; i < geoms.length(); ++i) {
-        auto geom = geoms[i];
-        mscTrace("FindInputMesh(): %s & %s\n", GetDagPath(geom).fullPathName().asChar(), path.fullPathName().asChar());
-        if (geom.hasFn(MFn::kMesh) && GetDagPath(geom) == path) {
-            return geom;
-        }
-    }
-    return MObject();
-}
-
-MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
-{
-    MObjectArray geoms;
-    gf.getOutputGeometry(geoms);
-    for (uint32_t i = 0; i < geoms.length(); ++i) {
-        auto geom = geoms[i];
-        if (geom.hasFn(MFn::kMesh) && GetDagPath(geom) == path) {
-            return geom;
-        }
-    }
-
-    return MObject();
-}
-
 float ToSeconds(MTime t)
 {
     t.setUnit(MTime::kSeconds);

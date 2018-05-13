@@ -85,7 +85,7 @@ static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane
 
     near_plane = (float)mcam.nearClippingPlane();
     far_plane = (float)mcam.farClippingPlane();
-    fov = (float)mcam.horizontalFieldOfView() * ms::Rad2Deg * 0.5f;
+    fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
 
     horizontal_aperture = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
     vertical_aperture = (float)mcam.verticalFilmAperture() * InchToMillimeter;
@@ -517,12 +517,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
                 }
             }
         }
-
-        // apply tweaks
-        if (m_settings.apply_tweak) {
-            apply_tweak(fn_blendshape.object(), skin_index);
-            apply_uv_tweak(fn_blendshape.object(), skin_index);
-        }
     }
 
     // get skinning data
@@ -564,12 +558,12 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
             }
             gi.next();
         }
+    }
 
-        // apply tweaks
-        if (m_settings.apply_tweak) {
-            apply_tweak(fn_blendshape.object(), skin_index);
-            apply_uv_tweak(fn_blendshape.object(), skin_index);
-        }
+    // apply tweaks
+    if (m_settings.apply_tweak) {
+        apply_tweak(shape, skin_index);
+        apply_uv_tweak(shape, skin_index);
     }
 
     dst.setupFlags();

@@ -21,8 +21,6 @@ MObject FindMesh(MObject node);
 MObject FindSkinCluster(MObject node);
 MObject FindBlendShape(MObject node);
 MObject FindOrigMesh(MObject node);
-MObject FindInputMesh(const MFnGeometryFilter& gf, const MDagPath& path);
-MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path);
 
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
