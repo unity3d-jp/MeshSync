@@ -935,7 +935,7 @@ bool msbContext::isSending() const
 
 bool msbContext::prepare()
 {
-    if (isSending())
+    if (!bl::ready() || isSending())
         return false;
 
     for (auto& kvp : m_records) {

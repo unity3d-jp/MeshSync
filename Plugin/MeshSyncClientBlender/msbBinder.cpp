@@ -52,6 +52,10 @@ Prop(BContext, scene);
 
 PropertyRNA* BlendDataObjects_is_updated;
 
+bool ready()
+{
+    return g_context != nullptr;
+}
 
 // context: bpi.context in python
 void setup(py::object bpy_context)
@@ -60,10 +64,15 @@ void setup(py::object bpy_context)
         return;
 
     auto rna = (BPy_StructRNA*)bpy_context.ptr();
-    auto first_type = &rna->ptr.type->cont;
-    while (first_type->prev) first_type = (ContainerRNA*)first_type->prev;
-    rna_sdata(bpy_context, g_context);
+    if (strcmp(rna->ob_base.ob_type->tp_name, "Context") != 0) {
+        return;
+    }
 
+    auto first_type = (StructRNA*)&rna->ptr.type->cont;
+    while (first_type->cont.prev) {
+        first_type = (StructRNA*)first_type->cont.prev;
+    }
+    rna_sdata(bpy_context, g_context);
 
     // resolve blender types and functions
 #define match_type(N) strcmp(type->identifier, N) == 0
@@ -72,7 +81,7 @@ void setup(py::object bpy_context)
 #define each_func for (auto *func : list_range((FunctionRNA*)type->functions.first))
 #define each_prop for (auto *prop : list_range((PropertyRNA*)type->cont.properties.first))
 
-    for (auto *type : list_range((StructRNA*)&first_type)) {
+    for (auto *type : list_range((StructRNA*)first_type)) {
         if (match_type("ID")) {
             BID::s_type = type;
             each_prop{
