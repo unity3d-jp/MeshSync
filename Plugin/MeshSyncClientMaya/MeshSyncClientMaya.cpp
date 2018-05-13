@@ -69,7 +69,7 @@ MeshSyncClientMaya& MeshSyncClientMaya::getInstance()
 
 MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
-    , m_iplugin(obj, PLUGIN_VENDOR, PLUGIN_VERSION)
+    , m_iplugin(obj, msVendor, msReleaseDateStr)
 {
 #define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create, CmdType::createSyntax);
     EachCommand(Body)

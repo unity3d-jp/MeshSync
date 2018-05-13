@@ -16,7 +16,11 @@ endif()
 set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES PREFIX "")
 set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES OUTPUT_NAME "MeshSyncClientMaya")
 
-set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya_${PLATFORM}/modules")
+if(LINUX)
+    set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya_${PLATFORM}/modules")
+elseif(MAC)
+    set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya_${PLATFORM}")
+endif()
 set(CONTENT_DIR "${DIST_DIR}/UnityMeshSync/${MAYA_VERSION}")
 
 install(TARGETS ${MESHSYNC_CLIENT_MAYA} DESTINATION "${CONTENT_DIR}/plug-ins/")

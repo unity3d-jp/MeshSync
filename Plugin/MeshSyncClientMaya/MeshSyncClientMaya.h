@@ -1,8 +1,5 @@
 ﻿#pragma once
 
-#define PLUGIN_VENDOR "Unity Technologies"
-#define PLUGIN_VERSION msReleaseDateStr
-
 class MeshSyncClientMaya
 {
 public:

@@ -18,9 +18,9 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /B 1
 )
 
-set DIST_DIR_MQ4_64="dist\UnityMeshSync_Metasequoia4_Windows_64bit"
-set DIST_DIR_MQ4_32="dist\UnityMeshSync_Metasequoia4_Windows_32bit"
-set DIST_DIR_MQ3="dist\UnityMeshSync_Metasequoia3_Windows"
+set DIST_DIR_MQ4_64="dist\UnityMeshSync_Metasequoia_Windows\Metasequoia4_64bit"
+set DIST_DIR_MQ4_32="dist\UnityMeshSync_Metasequoia_Windows\Metasequoia4_32bit"
+set DIST_DIR_MQ3="dist\UnityMeshSync_Metasequoia_Windows\Metasequoia3"
 mkdir "%DIST_DIR_MQ4_64%"
 mkdir "%DIST_DIR_MQ4_32%"
 mkdir "%DIST_DIR_MQ3%"
