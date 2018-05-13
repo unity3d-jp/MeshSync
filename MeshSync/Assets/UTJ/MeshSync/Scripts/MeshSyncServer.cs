@@ -661,10 +661,14 @@ namespace UTJ.MeshSync
         void CreateAsset(UnityEngine.Object obj, string path)
         {
 #if UNITY_EDITOR
-            string assetDir = "Assets/" + m_assetExportPath;
-            if (!AssetDatabase.IsValidFolder(assetDir))
-                AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-            AssetDatabase.CreateAsset(obj, path);
+            try
+            {
+                string assetDir = "Assets/" + m_assetExportPath;
+                if (!AssetDatabase.IsValidFolder(assetDir))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+                AssetDatabase.CreateAsset(obj, path);
+            }
+            catch (Exception e) { Debug.LogError(e); }
 #endif
         }
 
@@ -867,8 +871,12 @@ namespace UTJ.MeshSync
                 if (clips != null && clips.Length > 0)
                 {
                     // note: this is extremely slow. m_animClipTable exists to cache the result and avoid frequent call.
-                    clip = animator.runtimeAnimatorController.animationClips[0];
-                    m_animClipCache[root.gameObject] = clip;
+                    var tmp = animator.runtimeAnimatorController.animationClips[0];
+                    if(tmp != null)
+                    {
+                        clip = tmp;
+                        m_animClipCache[root.gameObject] = tmp;
+                    }
                 }
             }
 
