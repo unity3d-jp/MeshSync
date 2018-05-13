@@ -98,14 +98,14 @@ private:
     void extractMeshData(ms::Mesh& dst, MObject src);
     void doExtractMeshData(ms::Mesh& dst, MObject src);
 
-    void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
-    void doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node);
-
     int exportAnimations(SendScope scope);
     void exportAnimation(MObject src, MObject shape);
     void extractTransformAnimationData(ms::Animation& dst, MObject node, MObject shape);
     void extractCameraAnimationData(ms::Animation& dst, MObject node, MObject shape);
     void extractLightAnimationData(ms::Animation& dst, MObject node, MObject shape);
+
+    void exportConstraint(MObject src);
+    void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
 
     void kickAsyncSend();
 

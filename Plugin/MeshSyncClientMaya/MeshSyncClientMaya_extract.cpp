@@ -32,72 +32,36 @@ void MeshSyncClientMaya::exportMaterials()
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
 {
-    if (m_settings.sync_constraints) {
-        EachConstraints(src, [this, &src](const MObject& constraint) {
-            if (constraint.hasFn(MFn::kAimConstraint)) {
-                auto dst = new ms::AimConstraint();
-                m_client_constraints.emplace_back(dst);
-                extractConstraintData(*dst, constraint, src);
-            }
-            else if (constraint.hasFn(MFn::kParentConstraint)) {
-                auto dst = new ms::ParentConstraint();
-                m_client_constraints.emplace_back(dst);
-                extractConstraintData(*dst, constraint, src);
-            }
-            else if (constraint.hasFn(MFn::kPointConstraint)) {
-                auto dst = new ms::PositionConstraint();
-                m_client_constraints.emplace_back(dst);
-                extractConstraintData(*dst, constraint, src);
-            }
-            else if (constraint.hasFn(MFn::kScaleConstraint)) {
-                auto dst = new ms::ScaleConstraint();
-                m_client_constraints.emplace_back(dst);
-                extractConstraintData(*dst, constraint, src);
-            }
-        });
-    }
-
     doExtractTransformData(dst, src);
 }
 
-// GetValue: [](MPlug src, MObject& dst)
 static inline void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    MFnTransform mtrans(src);
-    vis = IsVisible(src);
-
     // get TRS from world matrix.
     // note: world matrix is a result of local TRS + parent TRS + constraints.
     //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
 
     auto mat = mu::float4x4::identity();
     {
-        auto plug_wmat = mtrans.findPlug("worldMatrix");
-        auto plug_wmatv = plug_wmat.elementByLogicalIndex(0); 
         MObject obj_wmat;
-        plug_wmatv.getValue(obj_wmat);
+        MFnTransform(src).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
         mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
     }
 
-    // multiply inverse parent matrix to calculate local matrix
-    // note: using parentInverseMatrix plug seems more appropriate, but it seems sometimes have broken value on Maya2016...
+    // get inverse parent matrix to calculate local matrix.
+    // note: using parentInverseMatrix plug seems more appropriate, but it seems sometimes have incorrect value on Maya2016...
     MObject parent = GetParent(src);
-    if (!parent.isNull()) {
-        auto plug_pwmat = MFnTransform(parent).findPlug("worldMatrix");
-        auto plug_pwmatv = plug_pwmat.elementByLogicalIndex(0); // note: this variable must be present to keep reference count
-        if (!plug_pwmatv.isNull()) {
-            MObject obj_pwmat;
-            plug_pwmatv.getValue(obj_pwmat);
-            if (!obj_pwmat.isNull()) {
-                auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
-                mat *= mu::invert(pwmat);
-            }
-        }
+    if (!parent.isNull() && parent.hasFn(MFn::kTransform)) {
+        MObject obj_pwmat;
+        MFnTransform(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
+        auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
+        mat *= mu::invert(pwmat);
     }
 
     pos = extract_position(mat);
     rot = extract_rotation(mat);
     scale = extract_scale(mat);
+    vis = IsVisible(src);
 }
 
 void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src)
@@ -612,16 +576,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
 }
 
 
-void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, MObject src, MObject node)
-{
-    dst.path = GetPath(node);
-    doExtractConstraintData(dst, src, node);
-}
-void MeshSyncClientMaya::doExtractConstraintData(ms::Constraint& dst, MObject src, MObject node)
-{
-    // todo
-}
-
 int MeshSyncClientMaya::exportAnimations(SendScope scope)
 {
     // gather target data
@@ -790,3 +744,40 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject 
         dst.spot_angle.push_back({ t, spot_angle });
     }
 }
+
+
+void MeshSyncClientMaya::exportConstraint(MObject src)
+{
+    EachConstraints(src, [this, &src](const MObject& constraint) {
+        if (constraint.hasFn(MFn::kAimConstraint)) {
+            auto dst = new ms::AimConstraint();
+            m_client_constraints.emplace_back(dst);
+            extractConstraintData(*dst, constraint, src);
+        }
+        else if (constraint.hasFn(MFn::kParentConstraint)) {
+            auto dst = new ms::ParentConstraint();
+            m_client_constraints.emplace_back(dst);
+            extractConstraintData(*dst, constraint, src);
+        }
+        else if (constraint.hasFn(MFn::kPointConstraint)) {
+            auto dst = new ms::PositionConstraint();
+            m_client_constraints.emplace_back(dst);
+            extractConstraintData(*dst, constraint, src);
+        }
+        else if (constraint.hasFn(MFn::kScaleConstraint)) {
+            auto dst = new ms::ScaleConstraint();
+            m_client_constraints.emplace_back(dst);
+            extractConstraintData(*dst, constraint, src);
+        }
+        else {
+            // not supported
+        }
+    });
+}
+
+void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, MObject src, MObject node)
+{
+    dst.path = GetPath(node);
+    // todo
+}
+
