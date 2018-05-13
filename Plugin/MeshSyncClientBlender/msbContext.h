@@ -116,7 +116,6 @@ private:
 
     using task_t = std::function<void()>;
     std::vector<task_t> m_extract_tasks;
-    std::mutex m_extract_mutex;
 
     // animation export
     struct AnimationRecord

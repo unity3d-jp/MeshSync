@@ -200,8 +200,6 @@ void msbContext::exportMaterials()
 
 ms::TransformPtr msbContext::exportArmature(Object *src)
 {
-    std::unique_lock<std::mutex> lock(m_extract_mutex);
-
     if (m_added.find(src) != m_added.end())
         return nullptr;
     m_added.insert(src);
@@ -346,28 +344,30 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
 
             auto *arm_obj = arm_mod->object;
-            exportArmature(arm_obj);
-
             int group_index = 0;
             each_deform_group(obj, [&](const bDeformGroup *g) {
+                bool found = false;
                 auto bone = find_bone(arm_obj, g->name);
                 if (bone) {
                     auto trans = findBone(arm_obj, bone);
-                    auto b = dst.addBone(trans->path);
-                    b->bindpose = extract_bindpose(bone);
-                    b->weights.resize_zeroclear(num_vertices);
+                    if (trans) {
+                        found = true;
+                        auto b = dst.addBone(trans->path);
+                        b->bindpose = extract_bindpose(bone);
+                        b->weights.resize_zeroclear(num_vertices);
 
-                    for (int vi = 0; vi < num_vertices; ++vi) {
-                        int num_weights = mesh.dvert[vi].totweight;
-                        auto& dvert = mesh.dvert[vi];
-                        for (int wi = 0; wi < num_weights; ++wi) {
-                            if (dvert.dw[wi].def_nr == group_index) {
-                                b->weights[vi] = dvert.dw[wi].weight;
+                        for (int vi = 0; vi < num_vertices; ++vi) {
+                            int num_weights = mesh.dvert[vi].totweight;
+                            auto& dvert = mesh.dvert[vi];
+                            for (int wi = 0; wi < num_weights; ++wi) {
+                                if (dvert.dw[wi].def_nr == group_index) {
+                                    b->weights[vi] = dvert.dw[wi].weight;
+                                }
                             }
                         }
                     }
                 }
-                else {
+                if (!found) {
                     mscTrace("bone not found %s\n", bone->name);
                 }
                 ++group_index;
@@ -537,8 +537,6 @@ void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
 
 ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
 {
-    std::unique_lock<std::mutex> lock(m_extract_mutex);
-
     auto it = m_bones.find(bone);
     return it != m_bones.end() ? it->second : nullptr;
 }
