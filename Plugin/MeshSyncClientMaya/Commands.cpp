@@ -126,16 +126,16 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 }
 
 
-void* CmdSync::create()
+void* CmdExport::create()
 {
-    return new CmdSync();
+    return new CmdExport();
 }
-const char* CmdSync::name()
+const char* CmdExport::name()
 {
-    return "UnityMeshSync_Sync";
+    return "UnityMeshSync_Export";
 }
 
-MSyntax CmdSync::createSyntax()
+MSyntax CmdExport::createSyntax()
 {
     MSyntax syntax;
     syntax.enableQuery(false);
@@ -145,7 +145,7 @@ MSyntax CmdSync::createSyntax()
     return syntax;
 }
 
-MStatus CmdSync::doIt(const MArgList& args_)
+MStatus CmdExport::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);

@@ -4,6 +4,8 @@
 #include "MeshSyncClientMaya.h"
 #include "Commands.h"
 
+#define MAYA_THREADSAFE (MAYA_API_VERSION >= 201700)
+
 void MeshSyncClientMaya::addAnimation(ms::Animation *anim)
 {
     lock_t l(m_mutex);
@@ -56,10 +58,14 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
         });
     }
 
+#if MAYA_THREADSAFE
     auto task = [this, &dst, src]() {
         doExtractTransformData(dst, src);
     };
     m_extract_tasks.push_back(task);
+#else
+    doExtractTransformData(dst, src);
+#endif
 }
 
 // GetValue: [](MPlug src, MObject& dst)
@@ -98,10 +104,15 @@ void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src
 
 void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
 {
+#if MAYA_THREADSAFE
     auto task = [this, &dst, src]() {
         doExtractCameraData(dst, src);
     };
     m_extract_tasks.push_back(task);
+#else
+    doExtractCameraData(dst, src);
+#endif
+
 }
 
 static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane, float& fov,
@@ -137,10 +148,15 @@ void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
 
 void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
 {
+#if MAYA_THREADSAFE
     auto task = [this, &dst, src]() {
         doExtractLightData(dst, src);
     };
     m_extract_tasks.push_back(task);
+#else
+    doExtractLightData(dst, src);
+#endif
+
 }
 
 static void ExtractLightData(MObject shape, mu::float4& color, float& intensity, float& spot_angle)
@@ -192,10 +208,14 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
         exportMaterials();
     }
 
+#if MAYA_THREADSAFE
     auto task = [this, &dst, src]() {
         doExtractMeshData(dst, src);
     };
     m_extract_tasks.push_back(task);
+#else
+    doExtractMeshData(dst, src);
+#endif
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
@@ -655,9 +675,16 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
         m_current_time = (float)t.as(MTime::kSeconds);
         MGlobal::viewFrame(t);
 
+#if MAYA_THREADSAFE
         mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
             kvp.second(this);
         });
+#else
+        // parallel evaluation seems work on Maya2018, but cause random crash on Maya201.
+        for (auto& kvp : m_anim_records) {
+            kvp.second(this);
+        }
+#endif
     }
     MGlobal::viewFrame(time_current);
     m_ignore_update = false;

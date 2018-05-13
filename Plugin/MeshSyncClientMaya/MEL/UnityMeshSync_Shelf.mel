@@ -9,11 +9,9 @@ global proc UnityMeshSync_Shelf() {
 
     shelfButton
         -enableCommandRepeat 1
-        -flexibleWidthType 1
-        -flexibleWidthValue 32
         -enable 1
-        -width 34
-        -height 34
+        -width 35
+        -height 35
         -manage 1
         -visible 1
         -preventOverride 0
@@ -43,11 +41,9 @@ global proc UnityMeshSync_Shelf() {
     ;
     shelfButton
         -enableCommandRepeat 1
-        -flexibleWidthType 1
-        -flexibleWidthValue 32
         -enable 1
-        -width 34
-        -height 34
+        -width 35
+        -height 35
         -manage 1
         -visible 1
         -preventOverride 0
@@ -70,18 +66,16 @@ global proc UnityMeshSync_Shelf() {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "UnityMeshSync_Sync;" 
+        -command "UnityMeshSync_Export;" 
         -sourceType "mel" 
         -commandRepeatable 1
         -flat 1
     ;
     shelfButton
         -enableCommandRepeat 1
-        -flexibleWidthType 1
-        -flexibleWidthValue 32
         -enable 1
-        -width 34
-        -height 34
+        -width 35
+        -height 35
         -manage 1
         -visible 1
         -preventOverride 0
@@ -104,7 +98,7 @@ global proc UnityMeshSync_Shelf() {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "UnityMeshSync_Sync -target animations;" 
+        -command "UnityMeshSync_Export -target animations;" 
         -sourceType "mel" 
         -commandRepeatable 1
         -flat 1

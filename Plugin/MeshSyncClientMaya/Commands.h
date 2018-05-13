@@ -11,7 +11,7 @@ public:
     virtual MStatus doIt(const MArgList& args);
 };
 
-class CmdSync : public MPxCommand
+class CmdExport : public MPxCommand
 {
 public:
     static void* create();
@@ -33,5 +33,5 @@ public:
 
 #define EachCommand(Body)\
     Body(CmdSettings)\
-    Body(CmdSync)\
+    Body(CmdExport)\
     Body(CmdImport)

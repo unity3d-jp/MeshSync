@@ -144,7 +144,7 @@ global  proc umsCBAutoSync()
 
 global proc umsCBManualSync()
 {
-    string $ret = `UnityMeshSync_Sync`;
+    string $ret = `UnityMeshSync_Export`;
 }
 
 
@@ -162,7 +162,7 @@ global proc umsCBAnimationSPS()
 
 global proc umsCBSyncAnimations()
 {
-    string $ret = `UnityMeshSync_Sync -target animations`;
+    string $ret = `UnityMeshSync_Export -target animations`;
 }
 
 global proc umsCBImport()

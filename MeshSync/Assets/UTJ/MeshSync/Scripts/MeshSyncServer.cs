@@ -74,9 +74,7 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception e) { Debug.LogError(e); }
             keys = null;
             values = null;
         }
@@ -167,7 +165,7 @@ namespace UTJ.MeshSync
                         break;
                 }
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
         }
 
         void OnRecvGet(GetMessage mes)
@@ -272,7 +270,7 @@ namespace UTJ.MeshSync
                 if (numMaterials > 0)
                     UpdateMaterials(scene);
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 
             // objects
             try
@@ -298,7 +296,7 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 
 #if UNITY_2018_1_OR_NEWER
             // constraints
@@ -308,7 +306,7 @@ namespace UTJ.MeshSync
                 for (int i = 0; i < numConstraints; ++i)
                     UpdateConstraint(scene.GetConstraint(i));
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 #endif
             // animations
             try
@@ -317,7 +315,7 @@ namespace UTJ.MeshSync
                 for (int i = 0; i < numAnimations; ++i)
                     UpdateAnimation(scene.GetAnimation(i));
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 
             // update references
             {
@@ -429,7 +427,7 @@ namespace UTJ.MeshSync
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
             {
-                Debug.LogError("Something wrong");
+                Debug.LogError("Something is wrong");
                 return;
             }
 
@@ -1479,12 +1477,5 @@ namespace UTJ.MeshSync
             PollServerEvents();
         }
 #endregion
-
-        void ErrorOnStandaloneBuild()
-        {
-            // error on standalone build - on purpose.
-            // this plugin is intended to use only on editor. if you really want to use on runtime. comment out next line.
-            EditorUtility.SetDirty(this);
-        }
     }
 }

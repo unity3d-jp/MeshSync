@@ -1,5 +1,7 @@
 #pragma once
 
+#define msReleaseDate 20180514
+#define msReleaseDateStr "20180514"
 #define msProtocolVersion 108
 //#define msEnableProfiling
 
