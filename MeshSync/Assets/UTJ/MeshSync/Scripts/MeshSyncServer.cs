@@ -394,12 +394,11 @@ namespace UTJ.MeshSync
                 {
                     dst = new MaterialHolder();
                     dst.id = id;
-#if UNITY_EDITOR
-                    var tmp = Instantiate(GetDefaultMaterial());
+
+                    var tmp = CreateDefaultMaterial();
                     tmp.name = src.name;
                     tmp.color = src.color;
                     dst.material = tmp;
-#endif
                 }
                 dst.name = src.name;
                 dst.color = src.color;
@@ -957,12 +956,10 @@ namespace UTJ.MeshSync
                     else
                     {
                         if(materials[j] == null) {
-#if UNITY_EDITOR
-                            var tmp = Instantiate(GetDefaultMaterial());
+                            var tmp = CreateDefaultMaterial();
                             tmp.name = "DefaultMaterial";
                             materials[j] = tmp;
                             changed = true;
-#endif
                         }
                     }
                 }
@@ -1057,18 +1054,10 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-#if UNITY_EDITOR
-        static MethodInfo s_GetBuiltinExtraResourcesMethod;
-        public static Material GetDefaultMaterial()
+        public static Material CreateDefaultMaterial()
         {
-            if (s_GetBuiltinExtraResourcesMethod == null)
-            {
-                BindingFlags bfs = BindingFlags.NonPublic | BindingFlags.Static;
-                s_GetBuiltinExtraResourcesMethod = typeof(EditorGUIUtility).GetMethod("GetBuiltinExtraResource", bfs);
-            }
-            return (Material)s_GetBuiltinExtraResourcesMethod.Invoke(null, new object[] { typeof(Material), "Default-Material.mat" });
+            return new Material(Shader.Find("Standard"));
         }
-#endif
 
         SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
         {
