@@ -1,4 +1,4 @@
-![demo](https://github.com/unity3d-jp/MeshSync/releases/download/20180514/MeshSync_2018.gif)
+![demo](https://user-images.githubusercontent.com/1488611/39971828-98afa1d8-573d-11e8-9a6f-86263bee8949.gif)
 # MeshSync
 [English](https://translate.google.com/translate?sl=ja&tl=en&u=https://github.com/unity3d-jp/MeshSync)
 
@@ -8,11 +8,13 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 ## 使い方
 
-**プラグイン本体は [releases](releases) からダウンロードしてください。**
+**プラグイン本体は [releases](https://github.com/unity3d-jp/MeshSync/releases) からダウンロードしてください。**
+
+<img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
 ### Maya
 - Maya 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
-- プラグインを Maya の module path が通っているディレクトリにコピーします。
+- インストールするには、プラグインを Maya の module path が通っているディレクトリにコピーします。
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
   - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
   - Linux: ~/maya に modules ディレクトリをそのままコピー。
@@ -21,40 +23,47 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります
 
+  
 
 - 歯車アイコン以外のボタンはそれぞれ手動同期、アニメーション同期相当のボタンになっています
 - ポリゴンメッシュ、カメラ、ライトの同期に対応しています
 - ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています
 
+  
 
 - 負のスケールは対応していません
 - NURBS などポリゴン以外の形状データは対応していません
 
+<img align="right" src="https://user-images.githubusercontent.com/1488611/39971861-81043192-573e-11e8-9945-2bb248d869bd.png" height=400>
+
 ### Blender
 - Blender 2.79 系 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
-- File -> User Preferences -> Add-ons を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip アーカイブを指定します。
+- インストールするには、File -> User Preferences -> Add-ons を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip アーカイブを指定します。
 - "Import-Export: Unity Mesh Sync" が追加されるので、チェックを入れて有効化します。
 - MeshSync パネルが追加されるので、そちらから設定や手動の同期を行います。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
 
+  
 
 - ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
 - ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています。
 - 制限はあるものの Mirror デフォーマも対応しています。
 
+  
 
 - 負のスケールは対応していません。
 - NURBS などポリゴン以外の形状データは対応していません。
 - Armature, BlendShape, Mirror 以外のデフォーマは対応していません。
 
 ### メタセコイア
-- Windows 版メタセコイアの 3 系、4 系 (32bit & 64bit), Mac 版 4 系に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
-- Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
+- Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
+- インストールするには、Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
 - インストール後 パネル -> Unity Mesh Sync が追加されるのでこれを開き、"Auto Sync" をチェックします。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
 
+  
 
 - ミラーリング、スムーシングは Unity にも反映されます。
   - ただし、ミラーリングの "左右を接続した鏡面" は非サポートです。
@@ -66,11 +75,12 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 ### xismo
 - xismo はプラグインの仕組みを提供していないため (2018/05 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～199 で動作を確認済しています。
-- [UnityMeshSync.for.xismo.zip](https://github.com/unity3d-jp/MeshSync/releases/download/20171228/UnityMeshSync.for.xismo.zip) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
+- [UnityMeshSync_xismo_Windows.zip](https://github.com/unity3d-jp/MeshSync/releases) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
 - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態で xismo が起動します。
 - ウィンドウ -> Unity Mesh Sync メニューが追加されており、これで各種設定などを行います。
 - "Auto Sync" をチェックすると編集が自動的に Unity 側に反映されるようになります。
 
+  
 
 - xismo のビューポートに表示されているモデルをそのまま送っているため、モデルは大体同期できるはずです。
 - モデル以外 (オブジェクト/マテリアルの名前、ボーンなど) は未対応です。これらは xismo 側がプラグイン API を用意しない限り対応が困難であり、現状対応予定はありません。
@@ -78,7 +88,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 ### Unity
 - Unity 2017.1 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
-- [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases/download/20171228/MeshSync.unitypackage) をプロジェクトにインポートします。
+- [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases) をプロジェクトにインポートします。
 - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
 - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 
@@ -100,10 +110,10 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 - ランタイム対応
   - 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。
-  
 
-  
-### Tips や注意事項など
+
+
+## Tips や注意事項など
 - 同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
 
 
@@ -118,10 +128,10 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 - Unity の頂点あたりの最大影響ボーン数が 4 であることに注意が必要です。
   これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
 
-  
-###  関連  
-- [NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするツール  
-- [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール  
+
+##  関連  
+- [NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするツール
+- [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール
 
 ## ライセンス
 [MIT](LICENSE.txt), ただし Blender プラグインは [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt) (Blender のソースの一部を使っているため)
