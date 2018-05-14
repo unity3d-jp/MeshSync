@@ -39,19 +39,17 @@ static void OnNodeRemoved(MObject& node, void *_this)
 
 static void OnTransformUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
-    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
+    if (msg == MNodeMessage::kAttributeEval) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateTransform(plug.node());
 }
 
 static void OnCameraUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
-    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateCamera(plug.node());
 }
 
 static void OnLightUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
 {
-    if ((msg & MNodeMessage::kAttributeEval) != 0) { return; }
     reinterpret_cast<MeshSyncClientMaya*>(_this)->notifyUpdateLight(plug.node());
 }
 
@@ -71,7 +69,7 @@ MeshSyncClientMaya& MeshSyncClientMaya::getInstance()
 
 MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
-    , m_iplugin(obj, "Unity Technologies", "20170915")
+    , m_iplugin(obj, msVendor, msReleaseDateStr)
 {
 #define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create, CmdType::createSyntax);
     EachCommand(Body)
@@ -91,7 +89,7 @@ MeshSyncClientMaya::~MeshSyncClientMaya()
 #undef Body
 }
 
-bool MeshSyncClientMaya::isAsyncSendInProgress() const
+bool MeshSyncClientMaya::isSending() const
 {
     if (m_future_send.valid()) {
         return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
@@ -119,39 +117,27 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
     MGlobal::executeCommand("cycleCheck -e off");
 }
 
-void MeshSyncClientMaya::registerNodeCallbacks(TargetScope scope)
+void MeshSyncClientMaya::registerNodeCallbacks()
 {
-    MStatus stat;
-    if (scope == TargetScope::Selection) {
-        MSelectionList list;
-        MGlobal::getActiveSelectionList(list);
-        for (uint32_t i = 0; i < list.length(); i++) {
-            MObject node;
-            list.getDependNode(i, node);
-            registerNodeCallback(node);
-        }
-    }
-    else {
-        //  meshes
-        Enumerate(MFn::kMesh, [this](MObject& node) {
-            registerNodeCallback(GetTransform(node));
-        });
+    // cameras
+    Enumerate(MFn::kCamera, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
+    });
 
-        // cameras
-        Enumerate(MFn::kCamera, [this](MObject& node) {
-            registerNodeCallback(GetTransform(node));
-        });
+    // lights
+    Enumerate(MFn::kLight, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
+    });
 
-        // lights
-        Enumerate(MFn::kLight, [this](MObject& node) {
-            registerNodeCallback(GetTransform(node));
-        });
+    // joints
+    Enumerate(MFn::kJoint, [this](MObject& node) {
+        registerNodeCallback(node);
+    });
 
-        // joints
-        Enumerate(MFn::kJoint, [this](MObject& node) {
-            registerNodeCallback(node);
-        });
-    }
+    //  meshes
+    Enumerate(MFn::kMesh, [this](MObject& shape) {
+        registerNodeCallback(GetTransform(shape));
+    });
 }
 
 bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
@@ -165,7 +151,6 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
         if (shape.hasFn(MFn::kMesh)) {
             MFnMesh fn(shape);
             if (!fn.isIntermediateObject()) {
-                mscTrace("track mesh %s\n", GetName(node).c_str());
                 auto& rec = findOrAddRecord(node);
                 if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
                 if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnMeshUpdated, this);
@@ -175,7 +160,6 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
         else if (shape.hasFn(MFn::kCamera)) {
             MFnCamera fn(shape);
             if (!fn.isIntermediateObject()) {
-                mscTrace("track camera %s\n", GetName(node).c_str());
                 auto& rec = findOrAddRecord(node);
                 if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
                 if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnCameraUpdated, this);
@@ -185,7 +169,6 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
         else if (shape.hasFn(MFn::kLight)) {
             MFnLight fn(shape);
             if (!fn.isIntermediateObject()) {
-                mscTrace("track light %s\n", GetName(node).c_str());
                 auto& rec = findOrAddRecord(node);
                 if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
                 if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnLightUpdated, this);
@@ -196,15 +179,13 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
 
     if (!handled) {
         if (node.hasFn(MFn::kJoint)) {
-            mscTrace("track joint %s\n", GetName(node).c_str());
             auto& rec = findOrAddRecord(node);
-            if (!rec.cid_trans)rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
+            if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
             handled = true;
         }
     }
 
     if (!handled && !leaf && node.hasFn(MFn::kTransform)) {
-        mscTrace("track transform %s\n", GetName(node).c_str());
         auto& rec = findOrAddRecord(node);
         if (!rec.cid_trans)rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
         handled = true;
@@ -240,97 +221,199 @@ void MeshSyncClientMaya::removeNodeCallbacks()
 
 int MeshSyncClientMaya::getMaterialID(MUuid uid)
 {
-    std::unique_lock<std::mutex> lock(m_mutex_extract_mesh);
+    auto it = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
+    return it != m_material_id_table.end() ? (int)std::distance(m_material_id_table.begin(), it) : -1;
+}
 
-    auto i = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
-    if (i != m_material_id_table.end()) {
-        return (int)std::distance(m_material_id_table.begin(), i);
+ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
+{
+    if (node.isNull())
+        return nullptr;
+
+    auto& rec = findOrAddRecord(node);
+    if (rec.added)
+        return nullptr;
+
+    rec.added = true;
+    auto shape = GetShape(node);
+
+    // check rename / re-parenting
+    auto path = GetPath(node);
+    if (rec.path != path) {
+        mscTrace("rename %s -> %s\n", rec.path.c_str(), path.c_str());
+        m_deleted.push_back(rec.path);
+        rec.name = GetName(node);
+        rec.path = path;
+        rec.dirty_transform = true;
+        rec.dirty_shape = true;
     }
-    else {
-        mscTrace("MeshSyncClientMaya::getMaterialID(): new ID\n");
-        int id = (int)m_material_id_table.size();
-        m_material_id_table.push_back(uid);
-        return id;
+
+    ms::TransformPtr ret;
+    if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
+        exportObject(GetParent(node), true);
+        auto dst = ms::MeshPtr(new ms::Mesh());
+        extractMeshData(*dst, node);
+        m_client_meshes.emplace_back(dst);
+        ret = dst;
     }
+    else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
+        exportObject(GetParent(node), true);
+        auto dst = ms::CameraPtr(new ms::Camera());
+        extractCameraData(*dst, node);
+        m_client_objects.emplace_back(dst);
+        ret = dst;
+    }
+    else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
+        exportObject(GetParent(node), true);
+        auto dst = ms::LightPtr(new ms::Light());
+        extractLightData(*dst, node);
+        m_client_objects.emplace_back(dst);
+        ret = dst;
+    }
+    else if((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
+        exportObject(GetParent(node), true);
+        auto dst = ms::TransformPtr(new ms::Transform());
+        extractTransformData(*dst, node);
+        m_client_objects.emplace_back(dst);
+        ret = dst;
+    }
+
+    if (ret) {
+        ret->index = rec.index;
+    }
+    return ret;
 }
 
 MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject node)
 {
-    auto& record = m_records[(void*&)node];
-    if (record.path.empty()) {
-        record.node = node;
-        record.name = GetName(node);
-        record.path = GetPath(node);
-        mscTrace("MeshSyncClientMaya::addRecord(): %s\n", record.path.c_str());
+    auto& rec = m_records[(void*&)node];
+    if (rec.path.empty()) {
+        rec.node = node;
+        rec.name = GetName(node);
+        rec.path = GetPath(node);
+        rec.index = ++m_index_seed;
     }
-    return record;
+    return rec;
 }
 
-bool MeshSyncClientMaya::addToDirtyList(MObject node)
+const MeshSyncClientMaya::ObjectRecord* MeshSyncClientMaya::findRecord(MObject node)
 {
-    if (std::find(m_dirty_objects.begin(), m_dirty_objects.end(), node) == m_dirty_objects.end()) {
-        m_dirty_objects.push_back(node);
+    auto it = m_records.find((void*&)node);
+    return it == m_records.end() ? nullptr : &it->second;
+}
+
+void MeshSyncClientMaya::notifyUpdateTransform(MObject node)
+{
+    findOrAddRecord(node).dirty_transform = true;
+}
+
+void MeshSyncClientMaya::notifyUpdateCamera(MObject shape)
+{
+    auto node = GetTransform(shape);
+    findOrAddRecord(node).dirty_shape = true;
+}
+
+void MeshSyncClientMaya::notifyUpdateLight(MObject shape)
+{
+    auto node = GetTransform(shape);
+    findOrAddRecord(node).dirty_shape = true;
+}
+
+void MeshSyncClientMaya::notifyUpdateMesh(MObject shape)
+{
+    auto node = GetTransform(shape);
+    findOrAddRecord(node).dirty_shape = true;
+}
+
+bool MeshSyncClientMaya::send(SendScope scope)
+{
+    if (isSending()) {
+        m_pending_send_scene = scope;
+        return false;
+    }
+    m_pending_send_scene = SendScope::None;
+
+    int num_exported = 0;
+    if (scope == SendScope::All) {
+        auto exportShape = [this, &num_exported](MObject& shape) {
+            if (exportObject(GetTransform(shape), false))
+                ++num_exported;
+        };
+        auto exportNode = [this, &num_exported](MObject& node) {
+            if (exportObject(node, false))
+                ++num_exported;
+        };
+
+        Enumerate(MFn::kCamera, exportShape);
+        Enumerate(MFn::kLight, exportShape);
+        Enumerate(MFn::kJoint, exportNode);
+        Enumerate(MFn::kMesh, exportShape);
+    }
+    else if (scope == SendScope::Updated) {
+        for (auto& kvp : m_records) {
+            auto& rec = kvp.second;
+            if (rec.dirty_transform || rec.dirty_shape) {
+                if (exportObject(rec.node, false))
+                    ++num_exported;
+            }
+        }
+    }
+    else if (scope == SendScope::Selected) {
+        MSelectionList list;
+        MGlobal::getActiveSelectionList(list);
+        for (uint32_t i = 0; i < list.length(); i++) {
+            MObject node;
+            list.getDependNode(i, node);
+            if (exportObject(node, false))
+                ++num_exported;
+        }
+    }
+
+    if (num_exported > 0 || !m_deleted.empty()) {
+        kickAsyncSend();
         return true;
     }
-    return false;
-}
-
-void MeshSyncClientMaya::notifyUpdateTransform(MObject node, bool force)
-{
-    if ((force || m_settings.auto_sync) && node.hasFn(MFn::kTransform)) {
-        findOrAddRecord(node).dirty_transform = true;
-        addToDirtyList(node);
+    else {
+        return false;
     }
 }
 
-void MeshSyncClientMaya::notifyUpdateCamera(MObject shape, bool force)
+bool MeshSyncClientMaya::sendAnimations(SendScope scope)
 {
-    if ((force || m_settings.auto_sync) && m_settings.sync_cameras && shape.hasFn(MFn::kCamera)) {
-        auto node = GetTransform(shape);
-        findOrAddRecord(node).dirty_shape = true;
-        addToDirtyList(node);
+    // wait for previous request to complete
+    if (m_future_send.valid()) {
+        m_future_send.get();
     }
-}
 
-void MeshSyncClientMaya::notifyUpdateLight(MObject shape, bool force)
-{
-    if ((force || m_settings.auto_sync) && m_settings.sync_lights && shape.hasFn(MFn::kLight)) {
-        auto node = GetTransform(shape);
-        findOrAddRecord(node).dirty_shape = true;
-        addToDirtyList(node);
+    int num_exported = exportAnimations(scope);
+    if (num_exported > 0) {
+        kickAsyncSend();
+        return true;
     }
-}
-
-void MeshSyncClientMaya::notifyUpdateMesh(MObject shape, bool force)
-{
-    if ((force || m_settings.auto_sync) && m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
-        auto node = GetTransform(shape);
-        findOrAddRecord(node).dirty_shape = true;
-        addToDirtyList(node);
+    else {
+        return false;
     }
 }
 
 void MeshSyncClientMaya::update()
 {
+    if (m_ignore_update)
+        return;
+
     if (m_scene_updated) {
         m_scene_updated = false;
-        mscTrace("MeshSyncClientMaya::update(): handling scene update\n");
 
         registerNodeCallbacks();
         if (m_settings.auto_sync) {
-            m_pending_send_scene = true;
+            m_pending_send_scene = SendScope::All;
         }
     }
 
-    if (m_pending_send_scene) {
-        if (sendScene()) {
-            mscTrace("MeshSyncClientMaya::update(): handling send scene\n");
-        }
+    if (m_pending_send_scene != SendScope::None) {
+        send(m_pending_send_scene);
     }
-    else {
-        if (sendMarkedObjects()) {
-            mscTrace("MeshSyncClientMaya::update(): handling send updated objects\n");
-        }
+    else if (m_settings.auto_sync) {
+        send(SendScope::Updated);
     }
 }
 
@@ -341,13 +424,15 @@ void MeshSyncClientMaya::onSelectionChanged()
 void MeshSyncClientMaya::onSceneUpdated()
 {
     m_scene_updated = true;
-    mscTrace("MeshSyncClientMaya::onSceneUpdated()\n");
 }
 
 void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
-    sendScene();
-    mscTrace("MeshSyncClientMaya::onTimeChange()\n");
+    if (m_settings.auto_sync) {
+        m_pending_send_scene = SendScope::All;
+        // timer callback won't be called while scrubbing time slider. so call update() immediately
+        update();
+    }
 }
 
 void MeshSyncClientMaya::onNodeRemoved(MObject & node)
@@ -355,134 +440,103 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
     if (node.hasFn(MFn::kTransform)) {
         auto it = m_records.find((void*&)node);
         if (it != m_records.end()) {
-            mscTrace("MeshSyncClientMaya::onNodeRemoved(): %s\n", it->second.path.c_str());
             m_deleted.push_back(it->second.path);
             m_records.erase(it);
         }
     }
 }
 
-bool MeshSyncClientMaya::sendScene(TargetScope scope)
+void MeshSyncClientMaya::kickAsyncSend()
 {
-    if (isAsyncSendInProgress()) {
-        m_pending_send_scene = true;
-        return false;
+    if (!m_extract_tasks.empty()) {
+        mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {
+            task();
+        });
+        m_extract_tasks.clear();
     }
-    m_pending_send_scene = false;
 
-    // clear dirty list and add all objects
-    m_dirty_objects.clear();
+    m_material_id_table.clear();
 
-    if(scope == TargetScope::All) {
-        // meshes
-        Enumerate(MFn::kMesh, [this](MObject& shape) {
-            MFnMesh fn(shape);
-            if (!fn.isIntermediateObject())
-                notifyUpdateMesh(shape, true);
-        });
-
-        // cameras
-        Enumerate(MFn::kCamera, [this](MObject& shape) {
-            MFnCamera fn(shape);
-            if (!fn.isIntermediateObject())
-                notifyUpdateCamera(shape, true);
-        });
-
-        // lights
-        Enumerate(MFn::kLight, [this](MObject& shape) {
-            MFnLight fn(shape);
-            if (!fn.isIntermediateObject())
-                notifyUpdateLight(shape, true);
-        });
-
-        // joints
-        Enumerate(MFn::kJoint, [this](MObject& node) {
-            notifyUpdateTransform(node, true);
-        });
+    for (auto& kvp : m_records) {
+        auto& rec = kvp.second;
+        rec.added = rec.dirty_shape = rec.dirty_transform = false;
     }
-    else if (scope == TargetScope::Selection) {
-        // selected meshes
-        MStatus stat;
-        MSelectionList list;
-        MGlobal::getActiveSelectionList(list);
 
-        for (uint32_t i = 0; i < list.length(); i++) {
-            MObject node;
-            list.getDependNode(i, node);
-            auto path = GetDagPath(node);
-            if (path.extendToShape() == MStatus::kSuccess) {
-                auto shape = path.node();
-                if (shape.hasFn(MFn::kMesh)) {
-                    MFnMesh fn(shape);
-                    if (!fn.isIntermediateObject()) {
-                        notifyUpdateMesh(node, true);
-                    }
-                }
-            }
+    float to_meter = 1.0f;
+    {
+        MDistance dist;
+        dist.setValue(1.0f);
+        to_meter = (float)dist.asMeters();
+    }
+
+    m_future_send = std::async(std::launch::async, [this, to_meter]() {
+        ms::Client client(m_settings.client_settings);
+
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
         }
-    }
 
-    return sendMarkedObjects();
+        // send delete message
+        if(!m_deleted.empty()) {
+            ms::DeleteMessage del;
+            del.targets.resize(m_deleted.size());
+            for (size_t i = 0; i < m_deleted.size(); ++i) {
+                del.targets[i].path = m_deleted[i];
+            }
+            client.send(del);
+            m_deleted.clear();
+        }
+
+        // send scene data
+        {
+            ms::SetMessage set;
+            set.scene.settings  = scene_settings;
+            set.scene.objects = m_client_objects;
+            set.scene.materials = m_client_materials;
+            client.send(set);
+
+            m_client_objects.clear();
+            m_client_materials.clear();
+        }
+
+        // send meshes one by one to Unity can respond quickly
+        for(auto& mesh : m_client_meshes) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = { mesh };
+            client.send(set);
+        };
+        m_client_meshes.clear();
+
+        // send animations and constraints
+        if (!m_client_animations.empty() || !m_client_constraints.empty()) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.animations = m_client_animations;
+            set.scene.constraints = m_client_constraints;
+            client.send(set);
+
+            m_client_animations.clear();
+            m_client_constraints.clear();
+        }
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
+        }
+    });
 }
 
-bool MeshSyncClientMaya::sendMarkedObjects()
-{
-    if (isAsyncSendInProgress() || (m_dirty_objects.empty() && m_deleted.empty())) {
-        return false;
-    }
-
-    extractSceneData();
-
-    // note: this must be index based because joints maybe added to m_dirty_objects in this loop.
-    for (size_t i = 0; i < m_dirty_objects.size();++i) {
-        auto node = m_dirty_objects[i];
-        auto shape = GetShape(node);
-        auto& record = findOrAddRecord(node);
-
-        // check rename / re-parenting
-        auto path = GetPath(node);
-        if (record.path != path) {
-            mscTrace("rename %s -> %s\n", record.path.c_str(), path.c_str());
-            m_deleted.push_back(record.path);
-            record.name = GetName(node);
-            record.path = path;
-            record.dirty_transform = true;
-            record.dirty_shape = true;
-        }
-
-        if (record.dirty_shape && shape.hasFn(MFn::kMesh)) {
-            auto mesh = ms::MeshPtr(new ms::Mesh());
-            if (extractMeshData(*mesh, node)) {
-                m_client_meshes.emplace_back(mesh);
-            }
-        }
-        else if (record.dirty_shape && shape.hasFn(MFn::kCamera)) {
-            auto dst = ms::CameraPtr(new ms::Camera());
-            if (extractCameraData(*dst, node)) {
-                m_client_cameras.emplace_back(dst);
-            }
-        }
-        else if (record.dirty_shape && shape.hasFn(MFn::kLight)) {
-            auto dst = ms::LightPtr(new ms::Light());
-            if (extractLightData(*dst, node)) {
-                m_client_lights.emplace_back(dst);
-            }
-        }
-        else if(record.dirty_shape || record.dirty_transform) {
-            auto dst = ms::TransformPtr(new ms::Transform());
-            if (extractTransformData(*dst, node)) {
-                m_client_transforms.emplace_back(dst);
-            }
-        }
-        record.dirty_shape = record.dirty_transform = false;
-    }
-    m_dirty_objects.clear();
-
-    kickAsyncSend();
-    return true;
-}
-
-bool MeshSyncClientMaya::importScene()
+bool MeshSyncClientMaya::import()
 {
     waitAsyncSend();
 
@@ -493,7 +547,7 @@ bool MeshSyncClientMaya::importScene()
     gd.flags.get_points = 1;
     gd.flags.get_uv0 = 1;
     gd.flags.get_uv1 = 1;
-    gd.flags.get_material_ids= 1;
+    gd.flags.get_material_ids = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = 1.0f / m_settings.scale_factor;
     gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
@@ -508,69 +562,6 @@ bool MeshSyncClientMaya::importScene()
     // todo: create mesh objects
 
     return true;
-}
-
-void MeshSyncClientMaya::kickAsyncSend()
-{
-    m_future_send = std::async(std::launch::async, [this]() {
-        mscTrace("MeshSyncClientMaya::kickAsyncSend(): kicked\n");
-        ms::Client client(m_settings.client_settings);
-
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = m_settings.scale_factor;
-
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send scene data (except meshes)
-        {
-            ms::SetMessage set;
-            set.scene.settings  = scene_settings;
-            set.scene.transforms= m_client_transforms;
-            set.scene.cameras   = m_client_cameras;
-            set.scene.lights    = m_client_lights;
-            set.scene.materials = m_client_materials;
-            client.send(set);
-
-            m_client_transforms.clear();
-            m_client_cameras.clear();
-            m_client_lights.clear();
-            m_client_materials.clear();
-        }
-
-        // send meshes one by one to Unity can respond quickly
-        for(auto& mesh : m_client_meshes) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.meshes = { mesh };
-            client.send(set);
-        };
-        m_client_meshes.clear();
-
-        // send delete message
-        if(!m_deleted.empty()) {
-            ms::DeleteMessage del;
-            del.targets.resize(m_deleted.size());
-            for (size_t i = 0; i < m_deleted.size(); ++i) {
-                del.targets[i].path = m_deleted[i];
-            }
-            client.send(del);
-            m_deleted.clear();
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-        mscTrace("MeshSyncClientMaya::kickAsyncSend(): done\n");
-    });
 }
 
 

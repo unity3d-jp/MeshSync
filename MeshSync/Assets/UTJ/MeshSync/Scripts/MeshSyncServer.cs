@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Animations;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -17,6 +17,8 @@ namespace UTJ.MeshSync
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
+        [SerializeField] bool m_ignoreVisibility = false;
+        [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
         IntPtr m_server;
@@ -34,6 +36,8 @@ namespace UTJ.MeshSync
         [HideInInspector][SerializeField] Record[] m_hostObjects_values;
         [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector][SerializeField] int[] m_objIDTable_values;
+
+        Dictionary<GameObject, AnimationClip> m_animClipCache;
         #endregion
 
         #region properties
@@ -70,9 +74,7 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception e) { Debug.LogError(e); }
             keys = null;
             values = null;
         }
@@ -134,33 +136,36 @@ namespace UTJ.MeshSync
             if (msServerGetNumMessages(m_server) > 0)
             {
                 msServerProcessMessages(m_server, m_handler);
-                ForceRepaint();
             }
         }
 
         void OnServerMessage(MessageType type, IntPtr data)
         {
-            switch (type)
+            try
             {
-                case MessageType.Get:
-                    OnRecvGet((GetMessage)data);
-                    break;
-                case MessageType.Set:
-                    OnRecvSet((SetMessage)data);
-                    break;
-                case MessageType.Delete:
-                    OnRecvDelete((DeleteMessage)data);
-                    break;
-                case MessageType.Fence:
-                    OnRecvFence((FenceMessage)data);
-                    break;
-                case MessageType.Text:
-                    OnRecvText((TextMessage)data);
-                    break;
-                case MessageType.Screenshot:
-                    OnRecvScreenshot(data);
-                    break;
+                switch (type)
+                {
+                    case MessageType.Get:
+                        OnRecvGet((GetMessage)data);
+                        break;
+                    case MessageType.Set:
+                        OnRecvSet((SetMessage)data);
+                        break;
+                    case MessageType.Delete:
+                        OnRecvDelete((DeleteMessage)data);
+                        break;
+                    case MessageType.Fence:
+                        OnRecvFence((FenceMessage)data);
+                        break;
+                    case MessageType.Text:
+                        OnRecvText((TextMessage)data);
+                        break;
+                    case MessageType.Screenshot:
+                        OnRecvScreenshot(data);
+                        break;
+                }
             }
+            catch (Exception e) { Debug.LogError(e); }
         }
 
         void OnRecvGet(GetMessage mes)
@@ -177,9 +182,6 @@ namespace UTJ.MeshSync
             }
             msServerEndServe(m_server);
 
-#if UNITY_EDITOR
-            Undo.RecordObject(this, "MeshSyncServer");
-#endif
             //Debug.Log("MeshSyncServer: Get");
         }
 
@@ -196,12 +198,7 @@ namespace UTJ.MeshSync
                     var rec = m_hostObjects[id];
                     if (rec.go != null)
                     {
-#if UNITY_EDITOR
-                        Undo.DestroyObjectImmediate(rec.go);
-                        Undo.RecordObject(this, "MeshSyncServer");
-#else
                         DestroyImmediate(rec.go);
-#endif
                     }
                     m_hostObjects.Remove(id);
                 }
@@ -210,12 +207,7 @@ namespace UTJ.MeshSync
                     var rec = m_clientObjects[path];
                     if (rec.go != null)
                     {
-#if UNITY_EDITOR
-                        Undo.DestroyObjectImmediate(rec.go);
-                        Undo.RecordObject(this, "MeshSyncServer");
-#else
                         DestroyImmediate(rec.go);
-#endif
                     }
                     m_clientObjects.Remove(path);
                 }
@@ -228,7 +220,37 @@ namespace UTJ.MeshSync
         {
             if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
-                SortObjects();
+                // sort objects by index
+                {
+                    var rec = m_clientObjects.Values.OrderBy(v => v.index);
+                    foreach (var r in rec)
+                    {
+                        if (r.go != null)
+                        {
+                            r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
+                        }
+                    }
+                }
+
+                // force recalculate skinning
+                foreach (var rec in m_clientObjects)
+                {
+                    if(rec.Value.editMesh)
+                    {
+                        var go = rec.Value.go;
+                        if(go != null && go.activeInHierarchy)
+                        {
+                            go.SetActive(false); // 
+                            go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                        }
+                    }
+                }
+
+                // cleanup animation clip cache
+                m_animClipCache = null;
+
+                ForceRepaint();
+                GC.Collect();
             }
         }
 
@@ -239,9 +261,6 @@ namespace UTJ.MeshSync
 
         void OnRecvSet(SetMessage mes)
         {
-#if UNITY_EDITOR
-            Undo.RecordObject(this, "MeshSyncServer");
-#endif
             var scene = mes.scene;
 
             // sync materials
@@ -251,47 +270,56 @@ namespace UTJ.MeshSync
                 if (numMaterials > 0)
                     UpdateMaterials(scene);
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 
-            // sync transforms
+            // objects
             try
             {
-                int numTransforms = scene.numTransforms;
-                for (int i = 0; i < numTransforms; ++i)
-                    UpdateTransform(scene.GetTransform(i));
+                int numObjects = scene.numObjects;
+                for (int i = 0; i < numObjects; ++i)
+                {
+                    var obj = scene.GetObject(i);
+                    switch(obj.type)
+                    {
+                        case TransformData.Type.Transform:
+                            UpdateTransform(obj);
+                            break;
+                        case TransformData.Type.Camera:
+                            UpdateCamera((CameraData)obj._this);
+                            break;
+                        case TransformData.Type.Light:
+                            UpdateLight((LightData)obj._this);
+                            break;
+                        case TransformData.Type.Mesh:
+                            UpdateMesh((MeshData)obj._this);
+                            break;
+                    }
+                }
             }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 
-            // sync cameras
+#if UNITY_2018_1_OR_NEWER
+            // constraints
             try
             {
-                int numCameras = scene.numCameras;
-                for (int i = 0; i < numCameras; ++i)
-                    UpdateCamera(scene.GetCamera(i));
+                int numConstraints = scene.numConstraints;
+                for (int i = 0; i < numConstraints; ++i)
+                    UpdateConstraint(scene.GetConstraint(i));
             }
-            catch (Exception e) { Debug.Log(e); }
-
-            // sync lights
+            catch (Exception e) { Debug.LogError(e); }
+#endif
+            // animations
             try
             {
-                int numLights = scene.numLights;
-                for (int i = 0; i < numLights; ++i)
-                    UpdateLight(scene.GetLight(i));
+                int numAnimations = scene.numAnimations;
+                for (int i = 0; i < numAnimations; ++i)
+                    UpdateAnimation(scene.GetAnimation(i));
             }
-            catch (Exception e) { Debug.Log(e); }
-
-            // sync meshes
-            try
-            {
-                int numMeshes = scene.numMeshes;
-                for (int i = 0; i < numMeshes; ++i)
-                    UpdateMesh(scene.GetMesh(i));
-            }
-            catch (Exception e) { Debug.Log(e); }
+            catch (Exception e) { Debug.LogError(e); }
 
             // update references
             {
-                foreach(var pair in m_clientObjects)
+                foreach (var pair in m_clientObjects)
                 {
                     var dstrec = pair.Value;
                     if (dstrec.go == null)
@@ -316,7 +344,8 @@ namespace UTJ.MeshSync
                 }
             }
 
-            GC.Collect();
+            if(m_progressiveDisplay)
+                ForceRepaint();
         }
 
         void DestroyIfNotAsset(UnityEngine.Object obj)
@@ -365,12 +394,11 @@ namespace UTJ.MeshSync
                 {
                     dst = new MaterialHolder();
                     dst.id = id;
-#if UNITY_EDITOR
-                    var tmp = Instantiate(GetDefaultMaterial());
+
+                    var tmp = CreateDefaultMaterial();
                     tmp.name = src.name;
                     tmp.color = src.color;
                     dst.material = tmp;
-#endif
                 }
                 dst.name = src.name;
                 dst.color = src.color;
@@ -398,7 +426,7 @@ namespace UTJ.MeshSync
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
             {
-                Debug.LogError("Something wrong");
+                Debug.LogError("Something is wrong");
                 return;
             }
 
@@ -439,11 +467,14 @@ namespace UTJ.MeshSync
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
-                    var old = smr.sharedMesh;
-                    smr.sharedMesh = rec.editMesh;
+                    {
+                        var old = smr.sharedMesh;
+                        smr.sharedMesh = null;
+                        DestroyIfNotAsset(old);
+                        old = null;
+                    }
 
-                    DestroyIfNotAsset(old);
-
+                    bool updateWhenOffscreen = false;
                     if (skinned)
                     {
                         // create bones
@@ -475,10 +506,7 @@ namespace UTJ.MeshSync
                                 root = bones[0];
                             smr.rootBone = root;
                             smr.bones = bones;
-
-                            var bounds = rec.editMesh.bounds;
-                            bounds.center = bounds.center - root.position;
-                            smr.localBounds = bounds;
+                            updateWhenOffscreen = true;
                         }
                     }
                     else
@@ -493,6 +521,9 @@ namespace UTJ.MeshSync
                             smr.localBounds = rec.editMesh.bounds;
                     }
 
+                    smr.sharedMesh = rec.editMesh;
+                    smr.updateWhenOffscreen = updateWhenOffscreen;
+
                     if (flags.hasBlendshapes)
                     {
                         int numBlendShapes = data.numBlendShapes;
@@ -503,6 +534,10 @@ namespace UTJ.MeshSync
                         }
                     }
                 }
+
+                var renderer = trans.gameObject.GetComponent<Renderer>();
+                if (renderer != null && !m_ignoreVisibility)
+                    renderer.enabled = data.transform.visible;
             }
 
             int num_splits = Math.Max(1, data.numSplits);
@@ -512,12 +547,6 @@ namespace UTJ.MeshSync
                 var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
                 if (t == null) { break; }
                 DestroyImmediate(t.gameObject);
-            }
-
-            if (activeInHierarchy)
-            {
-                rec.go.SetActive(false); // 
-                rec.go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
             }
 
             // assign materials if needed
@@ -628,25 +657,17 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
-        void SortObjects()
-        {
-            var rec = m_clientObjects.Values.OrderBy(v => v.index);
-            foreach(var r in rec)
-            {
-                if(r.go != null)
-                {
-                    r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
-                }
-            }
-        }
-
         void CreateAsset(UnityEngine.Object obj, string path)
         {
 #if UNITY_EDITOR
-            string assetDir = "Assets/" + m_assetExportPath;
-            if (!AssetDatabase.IsValidFolder(assetDir))
-                AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-            AssetDatabase.CreateAsset(obj, path);
+            try
+            {
+                string assetDir = "Assets/" + m_assetExportPath;
+                if (!AssetDatabase.IsValidFolder(assetDir))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+                AssetDatabase.CreateAsset(obj, path);
+            }
+            catch (Exception e) { Debug.LogError(e); }
 #endif
         }
 
@@ -700,9 +721,6 @@ namespace UTJ.MeshSync
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
-#if UNITY_EDITOR
-            Undo.RecordObject(trans, "MeshSync");
-#endif
 
             // import TRS
             trans.localPosition = data.position;
@@ -710,57 +728,9 @@ namespace UTJ.MeshSync
             trans.localScale = data.scale;
 
             // visibility
-            var renderer = trans.gameObject.GetComponent<Renderer>();
-            if (renderer != null)
-                renderer.enabled = data.visible;
+            if (!m_ignoreVisibility)
+                trans.gameObject.SetActive(data.visibleHierarchy);
 
-#if UNITY_EDITOR
-            var animData = data.animation;
-            if(animData)
-            {
-                // import TRS animation
-                Transform root = trans;
-                Animator animator = null;
-                AnimationClip clip = null;
-                var assetPath = "Assets/" + m_assetExportPath + "/" + root.name;
-
-                // find or create animator & animation clip
-                while (root.parent != null)
-                {
-                    root = root.parent;
-                }
-                animator = root.GetComponent<Animator>();
-                if(animator == null)
-                {
-                    animator = root.gameObject.AddComponent<Animator>();
-                }
-                else
-                {
-                    if (animator.runtimeAnimatorController != null)
-                    {
-                        var clips = animator.runtimeAnimatorController.animationClips;
-                        if (clips != null && clips.Length > 0)
-                        {
-                            clip = animator.runtimeAnimatorController.animationClips[0];
-                        }
-                    }
-                }
-
-                if (clip == null)
-                {
-                    clip = new AnimationClip();
-                    CreateAsset(clip, assetPath + ".anim");
-                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
-                }
-
-                var animPath = data.path.Replace("/" + root.name, "");
-                if(animPath.Length > 0 && animPath[0] == '/')
-                {
-                    animPath = animPath.Remove(0, 1);
-                }
-                animData.ExportToClip(clip, animPath, false);
-            }
-#endif
             return trans;
         }
 
@@ -776,6 +746,8 @@ namespace UTJ.MeshSync
             cam.fieldOfView = data.fov;
             cam.nearClipPlane = data.nearClipPlane;
             cam.farClipPlane = data.farClipPlane;
+            if (!m_ignoreVisibility)
+                cam.enabled = data.transform.visible;
             return cam;
         }
 
@@ -795,7 +767,134 @@ namespace UTJ.MeshSync
             lt.intensity = data.intensity;
             if (data.range > 0.0f) { lt.range = data.range; }
             if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
+            if (!m_ignoreVisibility)
+                lt.enabled = data.transform.visible;
             return lt;
+        }
+
+        T GetOrAddComponent<T>(GameObject go) where T : Component
+        {
+            var ret = go.GetComponent<T>();
+            if (ret == null)
+                ret = go.AddComponent<T>();
+            return ret;
+        }
+
+        void UpdateConstraint(ConstraintData data)
+        {
+#if UNITY_2018_1_OR_NEWER
+            bool dummy = false;
+            var trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
+            if (trans == null)
+                return;
+
+            Action<IConstraint> basicSetup = (c) =>
+            {
+                int ns = data.numSources;
+                while(c.sourceCount < ns)
+                    c.AddSource(new ConstraintSource());
+                for (int si = 0; si < ns; ++si)
+                {
+                    var s = c.GetSource(si);
+                    s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), true, ref dummy);
+                }
+            };
+
+            switch (data.type)
+            {
+                case ConstraintData.ConstraintType.Aim:
+                    {
+                        var c = GetOrAddComponent<AimConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Parent:
+                    {
+                        var c = GetOrAddComponent<ParentConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Position:
+                    {
+                        var c = GetOrAddComponent<PositionConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Rotation:
+                    {
+                        var c = GetOrAddComponent<RotationConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                case ConstraintData.ConstraintType.Scale:
+                    {
+                        var c = GetOrAddComponent<ScaleConstraint>(trans.gameObject);
+                        basicSetup(c);
+                        break;
+                    }
+                default:
+                    break;
+            }
+#endif
+        }
+
+        void UpdateAnimation(AnimationData data)
+        {
+#if UNITY_EDITOR
+            var path = data.path;
+            bool dummy = false;
+            var trans = FindOrCreateObjectByPath(path, true, ref dummy);
+            if (trans == null)
+                return;
+
+            Transform root = trans;
+            while (root.parent != null)
+                root = root.parent;
+
+            Animator animator = null;
+            AnimationClip clip = null;
+
+            if (m_animClipCache == null)
+                m_animClipCache = new Dictionary<GameObject, AnimationClip>();
+            else if (m_animClipCache.ContainsKey(root.gameObject))
+                clip = m_animClipCache[root.gameObject];
+
+            animator = root.GetComponent<Animator>();
+            if (animator == null)
+            {
+                animator = root.gameObject.AddComponent<Animator>();
+            }
+            else if (clip == null && animator.runtimeAnimatorController != null)
+            {
+                var clips = animator.runtimeAnimatorController.animationClips;
+                if (clips != null && clips.Length > 0)
+                {
+                    // note: this is extremely slow. m_animClipTable exists to cache the result and avoid frequent call.
+                    var tmp = animator.runtimeAnimatorController.animationClips[0];
+                    if(tmp != null)
+                    {
+                        clip = tmp;
+                        m_animClipCache[root.gameObject] = tmp;
+                    }
+                }
+            }
+
+            if (clip == null)
+            {
+                clip = new AnimationClip();
+                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(root.name);
+                CreateAsset(clip, assetPath + ".anim");
+                animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
+                m_animClipCache[root.gameObject] = clip;
+            }
+
+            var animPath = path.Replace("/" + root.name, "");
+            if (animPath.Length > 0 && animPath[0] == '/')
+            {
+                animPath = animPath.Remove(0, 1);
+            }
+            data.ExportToClip(clip, animPath, false);
+#endif
         }
 
         public void ReassignMaterials()
@@ -857,21 +956,16 @@ namespace UTJ.MeshSync
                     else
                     {
                         if(materials[j] == null) {
-#if UNITY_EDITOR
-                            var tmp = Instantiate(GetDefaultMaterial());
+                            var tmp = CreateDefaultMaterial();
                             tmp.name = "DefaultMaterial";
                             materials[j] = tmp;
                             changed = true;
-#endif
                         }
                     }
                 }
 
                 if(changed)
                 {
-#if UNITY_EDITOR
-                    //Undo.RecordObjects( new UnityEngine.Object[] { this, r }, "Update Materials");
-#endif
                     r.sharedMaterials = materials;
                 }
             }
@@ -951,9 +1045,6 @@ namespace UTJ.MeshSync
             if (createIfNotExist && ret == null)
             {
                 var go = new GameObject();
-#if UNITY_EDITOR
-                Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
-#endif
                 go.name = name;
                 ret = go.GetComponent<Transform>();
                 if (parent != null)
@@ -963,18 +1054,10 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-#if UNITY_EDITOR
-        static MethodInfo s_GetBuiltinExtraResourcesMethod;
-        public static Material GetDefaultMaterial()
+        public static Material CreateDefaultMaterial()
         {
-            if (s_GetBuiltinExtraResourcesMethod == null)
-            {
-                BindingFlags bfs = BindingFlags.NonPublic | BindingFlags.Static;
-                s_GetBuiltinExtraResourcesMethod = typeof(EditorGUIUtility).GetMethod("GetBuiltinExtraResource", bfs);
-            }
-            return (Material)s_GetBuiltinExtraResourcesMethod.Invoke(null, new object[] { typeof(Material), "Default-Material.mat" });
+            return new Material(Shader.Find("Standard"));
         }
-#endif
 
         SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
         {
@@ -1182,6 +1265,7 @@ namespace UTJ.MeshSync
 
         void OnRecvScreenshot(IntPtr data)
         {
+            ForceRepaint();
             ScreenCapture.CaptureScreenshot("screenshot.png");
             // actual capture will be done at end of frame. not done immediately.
             // just set flag now.
@@ -1230,7 +1314,7 @@ namespace UTJ.MeshSync
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
-                var path = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
+                var path = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(mf.sharedMesh.name) + ".asset";
                 CreateAsset(mf.sharedMesh, path);
                 if (m_logging)
                 {
@@ -1390,12 +1474,5 @@ namespace UTJ.MeshSync
             PollServerEvents();
         }
 #endregion
-
-        void ErrorOnStandaloneBuild()
-        {
-            // error on standalone build - on purpose.
-            // this plugin is intended to use only on editor. if you really want to use on runtime. comment out next line.
-            EditorUtility.SetDirty(this);
-        }
     }
 }

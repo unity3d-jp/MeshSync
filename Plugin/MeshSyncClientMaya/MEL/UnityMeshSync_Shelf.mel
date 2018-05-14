@@ -10,8 +10,8 @@ global proc UnityMeshSync_Shelf() {
     shelfButton
         -enableCommandRepeat 1
         -enable 1
-        -width 34
-        -height 34
+        -width 35
+        -height 35
         -manage 1
         -visible 1
         -preventOverride 0
@@ -42,17 +42,17 @@ global proc UnityMeshSync_Shelf() {
     shelfButton
         -enableCommandRepeat 1
         -enable 1
-        -width 34
-        -height 34
+        -width 35
+        -height 35
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Manual Sync" 
+        -annotation "Send scene objects to Unity" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "Manual Sync" 
+        -label "Send Scene" 
         -labelOffset 0
         -rotation 0
         -flipX 0
@@ -66,7 +66,39 @@ global proc UnityMeshSync_Shelf() {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "UnityMeshSync_Sync;" 
+        -command "UnityMeshSync_Export;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Send animations to Unity" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Send Animations" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "animateSnapshot.png" 
+        -image1 "animateSnapshot.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "UnityMeshSync_Export -target animations;" 
         -sourceType "mel" 
         -commandRepeatable 1
         -flat 1

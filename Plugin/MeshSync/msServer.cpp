@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msServer.h"
+#include "msAnimation.h"
 
 
 namespace ms {
@@ -24,6 +25,7 @@ static void RespondTextForm(HTTPServerResponse &response, const std::string& mes
             "<body>";
     body += message;
     body +=
+                "<div><img src=\"screenshot\"></div>"
                 "<form action=\"/text\" method=\"post\">"
                     "Message: <input type=\"text\" name=\"t\"><br>"
                     "<input type=\"submit\" value=\"Submit\">"
@@ -31,6 +33,7 @@ static void RespondTextForm(HTTPServerResponse &response, const std::string& mes
             "</body>"
         "</html>";
 
+    response.set("Cache-Control", "no-store, must-revalidate");
     response.setContentType("text/html");
     response.setContentLength(body.size());
     std::ostream &ostr = response.send();
@@ -161,27 +164,27 @@ int Server::processMessages(const MessageHandler& handler)
     for (auto& p : m_recv_history) {
         if (auto *get = dynamic_cast<GetMessage*>(p.get())) {
             m_current_get_request = get;
-            handler(MessageType::Get, *p);
+            handler(Message::Type::Get, *p);
             m_current_get_request = nullptr;
         }
         else if (auto *set = dynamic_cast<SetMessage*>(p.get())) {
-            handler(MessageType::Set, *set);
+            handler(Message::Type::Set, *set);
         }
         else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
-            handler(MessageType::Delete, *p);
+            handler(Message::Type::Delete, *p);
             for (auto& id : del->targets) {
-                m_client_meshes.erase(id.path);
+                m_client_objs.erase(id.path);
             }
         }
         else if (dynamic_cast<FenceMessage*>(p.get())) {
-            handler(MessageType::Fence, *p);
+            handler(Message::Type::Fence, *p);
         }
         else if (dynamic_cast<TextMessage*>(p.get())) {
-            handler(MessageType::Text, *p);
+            handler(Message::Type::Text, *p);
         }
         else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
             m_current_screenshot_request = shot;
-            handler(MessageType::Screenshot, *p);
+            handler(Message::Type::Screenshot, *p);
         }
     }
 
@@ -228,8 +231,12 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    parallel_for_each(m_host_scene->meshes.begin(), m_host_scene->meshes.end(), [&request](MeshPtr& p) {
-        auto& mesh = *p;
+    parallel_for_each(m_host_scene->objects.begin(), m_host_scene->objects.end(), [&request](TransformPtr& p) {
+        auto pmesh = dynamic_cast<Mesh*>(p.get());
+        if (!pmesh)
+            return;
+
+        auto& mesh = *pmesh;
         mesh.flags.has_refine_settings = 1;
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
@@ -290,36 +297,42 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
 
     bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
     bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-    parallel_for_each(mes->scene.meshes.begin(), mes->scene.meshes.end(), [this, &mes, swap_x, swap_yz](MeshPtr& pmesh) {
-        auto& mesh = *pmesh;
-        mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-        mesh.refine_settings.flags.swap_handedness = swap_x;
-        mesh.refine_settings.flags.swap_yz = swap_yz;
-        mesh.refine_settings.flags.triangulate = 1;
-        mesh.refine_settings.flags.split = 1;
-        mesh.refine_settings.flags.optimize_topology = 1;
-        mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
-        mesh.refine(mesh.refine_settings);
-    });
-    {
-        if (swap_x || swap_yz) {
-            for (auto& obj : mes->scene.transforms) { obj->convertHandedness(swap_x, swap_yz); }
-            for (auto& obj : mes->scene.cameras) { obj->convertHandedness(swap_x, swap_yz); }
-            for (auto& obj : mes->scene.lights) { obj->convertHandedness(swap_x, swap_yz); }
+    parallel_for_each(mes->scene.objects.begin(), mes->scene.objects.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
+        if(obj->getType() == Entity::Type::Mesh) {
+            auto& mesh = (Mesh&)*obj;
+            mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
+            mesh.refine_settings.flags.swap_handedness = swap_x;
+            mesh.refine_settings.flags.swap_yz = swap_yz;
+            mesh.refine_settings.flags.triangulate = 1;
+            mesh.refine_settings.flags.split = 1;
+            mesh.refine_settings.flags.optimize_topology = 1;
+            mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
+            mesh.refine(mesh.refine_settings);
         }
-    }
-    if (mes->scene.settings.scale_factor != 1.0f) {
-        float scale = 1.0f / mes->scene.settings.scale_factor;
-        for (auto& obj : mes->scene.transforms) { obj->applyScaleFactor(scale); }
-        for (auto& obj : mes->scene.cameras) { obj->applyScaleFactor(scale); }
-        for (auto& obj : mes->scene.lights) { obj->applyScaleFactor(scale); }
-    }
+        else {
+            if (swap_x || swap_yz) {
+                obj->convertHandedness(swap_x, swap_yz);
+            }
+            if (mes->scene.settings.scale_factor != 1.0f) {
+                float scale = 1.0f / mes->scene.settings.scale_factor;
+                obj->applyScaleFactor(scale);
+            }
+        }
+    });
+    parallel_for_each(mes->scene.animations.begin(), mes->scene.animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+        if (swap_x || swap_yz) {
+            anim->convertHandedness(swap_x, swap_yz);
+        }
+        if (mes->scene.settings.scale_factor != 1.0f) {
+            float scale = 1.0f / mes->scene.settings.scale_factor;
+            anim->applyScaleFactor(scale);
+        }
+    });
 
     {
         lock_t l(m_mutex);
-        for (auto& pmesh : mes->scene.meshes) {
-            auto& dst = m_client_meshes[pmesh->path];
-            dst = pmesh;
+        for (auto& obj : mes->scene.objects) {
+            m_client_objs[obj->path] = obj;
         }
         m_recv_history.emplace_back(mes);
     }
@@ -463,6 +476,7 @@ void Server::recvScreenshot(HTTPServerRequest &request, HTTPServerResponse &resp
     }
 
     // serve data
+    response.set("Cache-Control", "no-store, must-revalidate");
     response.sendFile(m_screenshot_file_path, "image/png");
 }
 

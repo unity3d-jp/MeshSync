@@ -8,99 +8,82 @@ class msbContext;
 namespace bl = blender;
 
 
-enum class msbNormalSyncMode {
-    None,
-    PerVertex,
-    PerIndex,
-};
-
 struct msbSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
-    msbNormalSyncMode sync_normals = msbNormalSyncMode::PerIndex;
     bool sync_meshes = true;
+    bool sync_normals = true;
     bool sync_uvs = true;
     bool sync_colors = true;
     bool sync_bones = true;
-    bool sync_poses = true;
     bool sync_blendshapes = true;
-    bool sync_animations = true;
     bool sync_cameras = true;
     bool sync_lights = true;
     bool calc_per_index_normals = true;
-    bool sample_animation = true;
-    int animation_sps = 5;
+
+    float animation_timescale = 1.0f;
+    int animation_frame_interval = 10;
 };
 
 
 class msbContext : public std::enable_shared_from_this<msbContext>
 {
 public:
-    struct ObjectRecord
+    enum class SendScope
     {
-        void *obj = nullptr; // Object* or Bone*
-        std::string name;
-        std::string path;
-        bool updated = false;
-        bool renamed = false;
-
-        void prepare()
-        {
-            updated = false;
-            renamed = false;
-        }
+        None,
+        All,
+        Updated,
+        Selected,
     };
 
     msbContext();
     ~msbContext();
-    void setup();
 
     msbSettings&        getSettings();
     const msbSettings&  getSettings() const;
-    ms::ScenePtr        getCurrentScene() const;
-
-    ms::TransformPtr    addTransform(py::object obj);
-    ms::TransformPtr    addTransform_(Object *obj);
-    ms::TransformPtr    addTransform_(Object *obj, std::string path);
-    ms::TransformPtr    addTransform_(Object *arm, Bone *obj);
-    ms::CameraPtr       addCamera(py::object obj);
-    ms::CameraPtr       addCamera_(Object *obj);
-    ms::LightPtr        addLight(py::object obj);
-    ms::LightPtr        addLight_(Object *obj);
-    ms::MeshPtr         addMesh(py::object obj);
-    ms::MeshPtr         addMesh_(Object *obj);
-    void                addDeleted(const std::string& path);
-
-    ms::MaterialPtr addMaterial(py::object material);
-    ms::MaterialPtr addMaterial_(Material *material);
-    int getMaterialIndex(const Material *mat);
-    void extractTransformData(ms::TransformPtr dst, py::object src);
-    void extractTransformData_(ms::TransformPtr dst, Object *obj);
-    void extractCameraData(ms::CameraPtr dst, py::object src);
-    void extractCameraData_(ms::CameraPtr dst, Object *obj);
-    void extractLightData(ms::LightPtr dst, py::object src);
-    void extractLightData_(ms::LightPtr dst, Object *obj);
-    void extractMeshData(ms::MeshPtr dst, py::object src);
-    void extractMeshData_(ms::MeshPtr dst, Object *obj);
-
 
     bool isSending() const;
     bool prepare();
-    void syncAll();
-    void syncUpdated();
+    void sendScene(SendScope scope);
+    void sendAnimations(SendScope scope);
     void flushPendingList();
-    void send();
 
 private:
+    struct ObjectRecord
+    {
+        std::string name;
+        std::string path;
+        bool updated = false;
+
+        void clear()
+        {
+            updated = false;
+        }
+    };
+
+    ms::TransformPtr    addTransform(std::string path);
+    ms::CameraPtr       addCamera(std::string path);
+    ms::LightPtr        addLight(std::string path);
+    ms::MeshPtr         addMesh(std::string path);
+    void                addDeleted(const std::string& path);
+    ms::MaterialPtr     addMaterial(Material *material);
+
+    int getMaterialIndex(const Material *mat);
+    void extractTransformData(ms::Transform& dst, Object *obj);
+    void extractCameraData(ms::Camera& dst, Object *obj);
+    void extractLightData(ms::Light& dst, Object *obj);
+    void extractMeshData(ms::Mesh& dst, Object *obj);
+
     void exportMaterials();
     ms::TransformPtr exportArmature(Object *obj);
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
-    void handleDupliGroup(Object * obj, const std::string & base_path);
+    ms::TransformPtr exportDupliGroup(Object *obj, const std::string & base_path);
     bool updateRecord(Object *obj);
-    ObjectRecord & findRecord(Object *obj);
-    ObjectRecord & findRecord(Bone *obj);
+    ObjectRecord& findRecord(Object *obj);
+    ObjectRecord& findRecord(Bone *obj);
     void eraseStaleObjects();
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
@@ -108,26 +91,47 @@ private:
     void doExtractMeshData(ms::Mesh& mesh, Object *obj);
     void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj);
     void doExtractEditMeshData(ms::Mesh& mesh, Object *obj);
-    template<class T>
-    std::shared_ptr<T> getCacheOrCreate(std::vector<std::shared_ptr<T>>& cache);
 
+    void exportAnimation(Object *obj, bool force, const std::string base_path="");
+    void extractTransformAnimationData(ms::Animation& dst, void *obj);
+    void extractPoseAnimationData(ms::Animation& dst, void *obj);
+    void extractCameraAnimationData(ms::Animation& dst, void *obj);
+    void extractLightAnimationData(ms::Animation& dst, void *obj);
+
+    void kickAsyncSend();
+
+private:
     msbSettings m_settings;
     std::set<Object*> m_added;
     std::set<Object*> m_pending, m_pending_tmp;
     std::map<const Bone*, ms::TransformPtr> m_bones;
-    std::vector<ms::TransformPtr> m_transform_cache;
-    std::vector<ms::CameraPtr> m_camera_cache;
-    std::vector<ms::LightPtr> m_light_cache;
-    std::vector<ms::MeshPtr> m_mesh_cache, m_mesh_send;
+    std::vector<ms::TransformPtr> m_objects;
+    std::vector<ms::MeshPtr> m_meshes;
+    std::vector<ms::AnimationPtr> m_animations;
+    std::vector<ms::MaterialPtr> m_materials;
     std::vector<std::string> m_deleted;
-    ms::ScenePtr m_scene = ms::ScenePtr(new ms::Scene());
     std::map<void*, ObjectRecord> m_records;
 
-    ms::SetMessage m_message;
     std::future<void> m_send_future;
 
     using task_t = std::function<void()>;
     std::vector<task_t> m_extract_tasks;
-    std::mutex m_extract_mutex;
+
+    // animation export
+    struct AnimationRecord
+    {
+        void *obj;
+        ms::Animation *dst = nullptr;
+        void (msbContext::*extractor)(ms::Animation& dst, void *obj) = nullptr;
+
+        void operator()(msbContext *_this)
+        {
+            (_this->*extractor)(*dst, obj);
+        }
+    };
+    using AnimationRecords = std::map<std::string, AnimationRecord>;
+    AnimationRecords m_anim_records;
+    float m_current_time = 0.0f;
+    bool m_ignore_update = false;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;

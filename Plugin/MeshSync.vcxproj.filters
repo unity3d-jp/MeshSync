@@ -13,6 +13,12 @@
     <ClCompile Include="MeshSync\msSceneGraph.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\msConstraints.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSync\msAnimation.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -31,6 +37,15 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\MeshSync.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msConstraints.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msSceneGraphImpl.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msAnimation.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>

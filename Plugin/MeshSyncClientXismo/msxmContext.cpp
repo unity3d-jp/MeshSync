@@ -71,7 +71,7 @@ struct BufferData
         int                 material_id = 0;
         float4x4            transform = float4x4::identity();
         RawVector<ms_vertex> vertices_welded;
-        ms::MeshPtr         ms_mesh;
+        ms::MeshPtr         dst_mesh;
 
         void buildMeshData(bool weld_vertices);
     };
@@ -131,17 +131,12 @@ protected:
     float m_camera_near = 0.01f;
     float m_camera_far = 100.0f;
 
-    struct SendTaskData
-    {
-        msxmSettings settings;
-        ms::SetMessage message;
-        std::vector<MaterialData> materials;
-        std::vector<BufferData::SendTaskPtr> meshes;
-        std::vector<GLuint> meshes_deleted;
+    std::vector<MaterialData> m_material_data;
+    std::vector<BufferData::SendTaskPtr> m_mesh_data;
+    std::vector<GLuint> m_deleted;
 
-        void send();
-    };
-    SendTaskData m_send_data;
+    ms::CameraPtr m_camera;
+    std::vector<ms::MaterialPtr> m_materials;
 };
 
 
@@ -210,14 +205,14 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
     int num_indices = num_elements;
     int num_triangles = num_indices / 3;
 
-    if (!ms_mesh) {
-        ms_mesh.reset(new ms::Mesh());
+    if (!dst_mesh) {
+        dst_mesh.reset(new ms::Mesh());
 
         char path[128];
         sprintf(path, "/XismoMesh:ID[%08x]", handle);
-        ms_mesh->path = path;
+        dst_mesh->path = path;
     }
-    auto& mesh = *ms_mesh;
+    auto& mesh = *dst_mesh;
     mesh.visible = visible;
     if (!visible) {
         return;
@@ -323,7 +318,6 @@ void msxmContext::send(bool force)
         return;
     }
 
-    auto& scene = m_send_data.message.scene;
     std::vector<BufferData*> buffers_to_send;
     for (auto& pair : m_buffers) {
         auto& buf = pair.second;
@@ -338,15 +332,15 @@ void msxmContext::send(bool force)
 
     // build material list
     {
-        m_send_data.materials.clear();
+        m_material_data.clear();
         auto findOrAddMaterial = [this](const MaterialData& md) {
-            auto it = std::find(m_send_data.materials.begin(), m_send_data.materials.end(), md);
-            if (it != m_send_data.materials.end()) {
-                return (int)std::distance(m_send_data.materials.begin(), it);
+            auto it = std::find(m_material_data.begin(), m_material_data.end(), md);
+            if (it != m_material_data.end()) {
+                return (int)std::distance(m_material_data.begin(), it);
             }
             else {
-                int ret = (int)m_send_data.materials.size();
-                m_send_data.materials.push_back(md);
+                int ret = (int)m_material_data.size();
+                m_material_data.push_back(md);
                 return ret;
             }
         };
@@ -358,104 +352,102 @@ void msxmContext::send(bool force)
             }
         }
 
-        scene.materials.resize(m_send_data.materials.size());
-        for (int i = 0; i < (int)scene.materials.size(); ++i) {
-            auto& mat = scene.materials[i];
+        m_materials.resize(m_material_data.size());
+        for (int i = 0; i < (int)m_materials.size(); ++i) {
+            auto& mat = m_materials[i];
             if (!mat) mat.reset(new ms::Material());
 
             char name[128];
             sprintf(name, "XismoMaterial:ID[%04x]", i);
             mat->id = i;
             mat->name = name;
-            mat->color = m_send_data.materials[i].diffuse;
+            mat->color = m_material_data[i].diffuse;
         }
     }
 
     // camera
     if (m_settings.sync_camera) {
-        if (scene.cameras.empty()) {
-            auto c = new ms::Camera();
-            c->path = "/Main Camera";
-            scene.cameras.emplace_back(c);
+        if (!m_camera) {
+            m_camera.reset(new ms::Camera());
+            m_camera->path = "/Main Camera";
         }
-        auto& cam = *scene.cameras.back();
-        cam.position = m_camera_pos;
-        cam.rotation = m_camera_rot;
-        cam.fov = m_camera_fov;
-        cam.near_plane = m_camera_near;
-        cam.far_plane = m_camera_far;
+        m_camera->position = m_camera_pos;
+        m_camera->rotation = m_camera_rot;
+        m_camera->fov = m_camera_fov;
+        m_camera->near_plane = m_camera_near;
+        m_camera->far_plane = m_camera_far;
         m_camera_dirty = false;
     }
-    else {
-        scene.cameras.clear();
-    }
 
-    m_send_data.meshes_deleted.swap(m_meshes_deleted);
+    m_deleted.swap(m_meshes_deleted);
     m_meshes_deleted.clear();
-    m_send_data.settings = m_settings;
 
     // build send data
     parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](BufferData *buf) {
         buf->updateSendData();
     });
-    m_send_data.meshes.resize(buffers_to_send.size());
+    m_mesh_data.resize(buffers_to_send.size());
     for (size_t i = 0; i < buffers_to_send.size(); ++i) {
-        m_send_data.meshes[i] = buffers_to_send[i]->send_data;
+        m_mesh_data[i] = buffers_to_send[i]->send_data;
     }
 
     // kick async send
-    m_send_future = std::async(std::launch::async, [this]() { m_send_data.send(); });
-}
+    m_send_future = std::async(std::launch::async, [this]() {
+        ms::Client client(m_settings.client_settings);
 
-void msxmContext::SendTaskData::send()
-{
-    ms::Client client(settings.client_settings);
-
-    ms::SceneSettings scene_settings;
-    scene_settings.handedness = ms::Handedness::Left;
-    scene_settings.scale_factor = settings.scale_factor;
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Left;
+        scene_settings.scale_factor = m_settings.scale_factor;
 
 
-    // notify scene begin
-    {
-        ms::FenceMessage fence;
-        fence.type = ms::FenceMessage::FenceType::SceneBegin;
-        client.send(fence);
-    }
-
-    // send camera & materials
-    message.scene.settings = scene_settings;
-    client.send(message);
-
-    // send deleted
-    if (settings.sync_delete && !meshes_deleted.empty()) {
-        ms::DeleteMessage del;
-        for (auto h : meshes_deleted) {
-            char path[128];
-            sprintf(path, "/XismoMesh:ID[%08x]", h);
-            del.targets.push_back({ path, (int)h });
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
         }
-        client.send(del);
-    }
 
-    // send meshes
-    parallel_for_each(meshes.begin(), meshes.end(), [&](BufferData::SendTaskPtr& v) {
-        v->buildMeshData(settings.weld_vertices);
+        // send deleted
+        if (m_settings.sync_delete && !m_deleted.empty()) {
+            ms::DeleteMessage del;
+            for (auto h : m_deleted) {
+                char path[128];
+                sprintf(path, "/XismoMesh:ID[%08x]", h);
+                del.targets.push_back({ path, (int)h });
+            }
+            client.send(del);
+        }
+
+        // send camera & materials
+        {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            if (m_settings.sync_camera) {
+                set.scene.objects.push_back(std::static_pointer_cast<ms::Transform>(m_camera));
+            }
+            set.scene.materials = m_materials;
+            client.send(set);
+        }
+
+        // send meshes
+        mu::parallel_for_each(m_mesh_data.begin(), m_mesh_data.end(), [&](BufferData::SendTaskPtr& v) {
+            v->buildMeshData(m_settings.weld_vertices);
+        });
+        for (auto& v : m_mesh_data) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = { v->dst_mesh };
+            client.send(set);
+        }
+        m_mesh_data.clear();
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
+        }
     });
-    for (auto& v : meshes) {
-        ms::SetMessage set;
-        set.scene.settings = scene_settings;
-        set.scene.meshes = { v->ms_mesh };
-        client.send(set);
-    }
-    meshes.clear();
-
-    // notify scene end
-    {
-        ms::FenceMessage fence;
-        fence.type = ms::FenceMessage::FenceType::SceneEnd;
-        client.send(fence);
-    }
 }
 
 void msxmContext::onActiveTexture(GLenum texture)

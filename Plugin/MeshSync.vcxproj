@@ -20,14 +20,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\MeshSync.h" />
+    <ClInclude Include="MeshSync\msAnimation.h" />
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
+    <ClInclude Include="MeshSync\msConstraints.h" />
     <ClInclude Include="MeshSync\msSceneGraph.h" />
+    <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MeshSync\msAnimation.cpp" />
     <ClCompile Include="MeshSync\msClient.cpp" />
+    <ClCompile Include="MeshSync\msConstraints.cpp" />
     <ClCompile Include="MeshSync\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />
     <ClCompile Include="MeshSync/pch.cpp">

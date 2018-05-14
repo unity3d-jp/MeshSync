@@ -1,6 +1,9 @@
 #pragma once
 
-#define msProtocolVersion 107
+#define msReleaseDate 20180514
+#define msReleaseDateStr "20180514"
+#define msVendor "Unity Technologies"
+#define msProtocolVersion 108
 //#define msEnableProfiling
 
 

@@ -6,6 +6,7 @@ std::string get_name(const Object *obj);
 std::string get_name(const Bone *obj);
 std::string get_path(const Object *obj);
 std::string get_path(const Object *arm, const Bone *obj);
+bool is_visible(const Object *obj);
 const ModifierData* find_modofier(Object *obj, ModifierType type);
 const Bone* find_bone_recursive(const Bone *bone, const char *name);
 const Bone* find_bone(const Object *obj, const char *name);
@@ -24,7 +25,8 @@ template<class Body>
 static inline void each_child(Object *obj, const Body& body)
 {
     // Object doesn't have children data. need to enumerate all objects and check its parent...
-    for (auto obj : bl::BContext::get().data().objects()) {
+    auto bpy_data = bl::BData(bl::BContext::get().data());;
+    for (auto obj : bpy_data.objects()) {
         if (obj->parent == obj)
             body(obj);
     }

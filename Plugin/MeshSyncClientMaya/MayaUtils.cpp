@@ -3,21 +3,11 @@
 #include "MayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
-template<class Body>
-static inline void EachChild(MObject node, const Body& body)
-{
-    MFnDagNode fn(node);
-    auto num_children = fn.childCount();
-    for (uint32_t i = 0; i < num_children; ++i) {
-        body(fn.child(i));
-    }
-}
-
 bool IsVisible(MObject node)
 {
     MFnDagNode dag(node);
     auto vis = dag.findPlug("visibility");
-    bool visible = false;
+    bool visible = true;
     vis.getValue(visible);
     return visible;
 }
@@ -38,20 +28,15 @@ std::string GetPath(MObject node)
     return GetPath(GetDagPath(node));
 }
 
-std::string GetRootPath(MDagPath path)
+std::string GetRootBonePath(MObject joint)
 {
-    std::string ret = GetPath(path);
-    if (ret.size() > 1) {
-        auto it = std::find(ret.begin() + 1, ret.end(), '/');
-        if (it != ret.end()) {
-            ret.erase(it, ret.end());
-        }
+    for (;;) {
+        MObject parent = GetParent(joint);
+        if (parent.isNull() || !parent.hasFn(MFn::kJoint))
+            break;
+        joint = parent;
     }
-    return ret;
-}
-std::string GetRootPath(MObject node)
-{
-    return GetRootPath(GetDagPath(node));
+    return GetPath(joint);
 }
 
 
@@ -144,55 +129,6 @@ MObject FindOrigMesh(MObject node)
     return ret;
 }
 
-MObject FindInputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
-{
-    MObjectArray geoms;
-    gf.getInputGeometry(geoms);
-    for (uint32_t i = 0; i < geoms.length(); ++i) {
-        auto geom = geoms[i];
-        mscTrace("FindInputMesh(): %s & %s\n", GetDagPath(geom).fullPathName().asChar(), path.fullPathName().asChar());
-        if (geom.hasFn(MFn::kMesh) && GetDagPath(geom) == path) {
-            return geom;
-        }
-    }
-    return MObject();
-}
-
-MObject FindOutputMesh(const MFnGeometryFilter& gf, const MDagPath& path)
-{
-    MObjectArray geoms;
-    gf.getOutputGeometry(geoms);
-    for (uint32_t i = 0; i < geoms.length(); ++i) {
-        auto geom = geoms[i];
-        if (geom.hasFn(MFn::kMesh) && GetDagPath(geom) == path) {
-            return geom;
-        }
-    }
-
-    return MObject();
-}
-
-bool JointGetSegmentScaleCompensate(MObject joint)
-{
-    const MFnIkJoint fn_joint(joint);
-    auto plug = fn_joint.findPlug("segmentScaleCompensate");
-    return plug.asBool();
-}
-
-bool JointGetInverseScale(MObject joint, mu::float3& dst)
-{
-    const MFnIkJoint fn_joint(joint);
-    auto plug = fn_joint.findPlug("inverseScale");
-    if (plug.isNull()) { return false; }
-
-    dst = mu::float3{
-        (float)plug.child(0).asDouble(),
-        (float)plug.child(1).asDouble(),
-        (float)plug.child(2).asDouble()
-    };
-    return true;
-}
-
 float ToSeconds(MTime t)
 {
     t.setUnit(MTime::kSeconds);
@@ -257,6 +193,8 @@ bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src)
     return false;
 }
 
+#define TimeLimit 3600.0f
+
 void DeternineTimeRange(float& time_begin, float& time_end, const MFnAnimCurve& curve)
 {
     if (curve.object().isNull()) { return; }
@@ -266,6 +204,8 @@ void DeternineTimeRange(float& time_begin, float& time_end, const MFnAnimCurve& 
 
     float t1 = ToSeconds(curve.time(0));
     float t2 = ToSeconds(curve.time(num_keys > 0 ? num_keys - 1 : 0));
+    if (t2 - t1 > TimeLimit) { return; }
+
     if (std::isnan(time_begin)) {
         time_begin = t1;
         time_end = t2;
@@ -281,10 +221,11 @@ void GatherTimes(RawVector<float>& dst, const MFnAnimCurve& curve)
     if (curve.object().isNull()) { return; }
 
     int num_keys = curve.numKeys();
-    size_t pos = dst.size();
-    dst.resize(pos + num_keys);
     for (int i = 0; i < num_keys; ++i) {
-        dst[pos + i] = ToSeconds(curve.time(i));
+        float t = ToSeconds(curve.time(i));
+        if (std::abs(t) < TimeLimit) {
+            dst.push_back(t);
+        }
     }
 };
 
@@ -309,13 +250,15 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
 {
     float time_begin = std::numeric_limits<float>::quiet_NaN();
     float time_end = std::numeric_limits<float>::quiet_NaN();
-    float time_range = 0.0f;
 
     // build time range
     for (auto& cv : cvs) {
         DeternineTimeRange(time_begin, time_end, *cv);
     }
-    time_range = time_end - time_begin;
+    if (std::isnan(time_begin) || std::isnan(time_end)) {
+        time_begin = time_end = 0.0f;
+    }
+    float time_range = time_end - time_begin;
 
 
     // build time samples
@@ -332,9 +275,11 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
     if (sps > 0) {
         const float time_resolution = 1.0f / (float)sps;
         int num_samples = int(time_range / time_resolution);
-        sample_times.resize(num_samples - 1);
-        for (int i = 1; i < num_samples; ++i) {
-            sample_times[i - 1] = (time_resolution * i) + time_begin;
+        if (num_samples > 0) {
+            sample_times.resize(num_samples - 1);
+            for (int i = 1; i < num_samples; ++i) {
+                sample_times[i - 1] = (time_resolution * i) + time_begin;
+            }
         }
     }
 
@@ -342,6 +287,9 @@ RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cv
     times.resize(keyframe_times.size() + sample_times.size());
     std::merge(keyframe_times.begin(), keyframe_times.end(), sample_times.begin(), sample_times.end(), times.begin());
     times.erase(std::unique(times.begin(), times.end()), times.end());
+    if (times.size() == 1) {
+        times.clear();
+    }
     return times;
 }
 

@@ -2,7 +2,8 @@
 
 namespace blender
 {
-    void setup();
+    bool ready();
+    void setup(py::object bpy_context);
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
     int CustomData_get_offset(const CustomData& data, int type);
@@ -117,6 +118,7 @@ namespace blender
         const char *name() const;
         void* data();
         float4x4 matrix_local() const;
+        bool is_visible(Scene *scene) const;
     };
 
     class BMesh
@@ -171,13 +173,28 @@ namespace blender
         Material* active_node_material() const;
     };
 
+    class BCamera
+    {
+    public:
+        Boilerplate(Camera)
+        Compatible(BID)
+
+        float fov() const;
+    };
+
     class BScene
     {
     public:
         Boilerplate(Scene)
         Compatible(BID)
 
-        blist_range<Object> objects();
+        blist_range<Base> objects();
+
+        int fps();
+        int frame_start();
+        int frame_end();
+        int frame_current();
+        void frame_set(int f, float subf = 0.0f);
     };
 
     class BData
@@ -197,8 +214,8 @@ namespace blender
         Boilerplate2(BContext, bContext)
 
         static BContext get();
-        BData data();
-        BScene scene();
+        Main* data();
+        Scene* scene();
     };
 
 #undef Compatible

@@ -40,7 +40,7 @@ msAPI int msServerGetNumMessages(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::MessageType type, const ms::Message& data) {
+    return server->processMessages([handler](ms::Message::Type type, const ms::Message& data) {
         handler(type, &data);
     });
 }
@@ -58,22 +58,22 @@ msAPI void msServerEndServe(ms::Server *server)
 msAPI void msServerServeTransform(ms::Server *server, ms::Transform *data)
 {
     if (!server) { return; }
-    server->getHostScene()->transforms.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeCamera(ms::Server *server, ms::Camera *data)
 {
     if (!server) { return; }
-    server->getHostScene()->cameras.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeLight(ms::Server *server, ms::Light *data)
 {
     if (!server) { return; }
-    server->getHostScene()->lights.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
-    server->getHostScene()->meshes.emplace_back(data);
+    server->getHostScene()->objects.emplace_back(data);
 }
 msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
 {
@@ -132,9 +132,8 @@ msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
     _this->color = *v;
 }
 
-msAPI ms::TransformAnimation* msAnimationAsTransform(ms::Animation *_this) { return dynamic_cast<ms::TransformAnimation*>(_this); }
-msAPI ms::CameraAnimation* msAnimationAsCamera(ms::Animation *_this) { return dynamic_cast<ms::CameraAnimation*>(_this); }
-msAPI ms::LightAnimation* msAnimationAsLight(ms::Animation *_this) { return dynamic_cast<ms::LightAnimation*>(_this); }
+msAPI const char* msAnimationGetPath(ms::Animation *_this) { return _this->path.c_str(); }
+msAPI ms::Animation::Type msAnimationGetType(ms::Animation *_this) { return _this->getType(); }
 
 msAPI int       msTransformAGetNumTranslationSamples(ms::TransformAnimation *_this) { return _this ? (int)_this->translation.size() : 0; }
 msAPI float     msTransformAGetTranslationTime(ms::TransformAnimation *_this, int i) { return _this->translation[i].time; }
@@ -234,6 +233,10 @@ msAPI ms::Transform* msTransformCreate()
 {
     return new ms::Transform();
 }
+msAPI ms::Entity::Type msTransformGetType(ms::Transform *_this)
+{
+    return _this->getType();
+}
 msAPI int msTransformGetID(ms::Transform *_this)
 {
     return _this->id;
@@ -290,6 +293,14 @@ msAPI void msTransformSetVisible(ms::Transform *_this, bool v)
 {
     _this->visible = v;
 }
+msAPI bool msTransformGetVisibleHierarchy(ms::Transform *_this)
+{
+    return _this->visible_hierarchy;
+}
+msAPI void msTransformSetVisibleHierarchy(ms::Transform *_this, bool v)
+{
+    _this->visible_hierarchy = v;
+}
 msAPI const char* msTransformGetReference(ms::Transform *_this)
 {
     return _this->reference.c_str();
@@ -297,10 +308,6 @@ msAPI const char* msTransformGetReference(ms::Transform *_this)
 msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
 {
     _this->reference = v;
-}
-msAPI ms::Animation* msTransformGetAnimation(ms::Transform *_this)
-{
-    return _this->animation.get();
 }
 
 msAPI ms::Camera* msCameraCreate()
@@ -376,13 +383,13 @@ msAPI ms::Light* msLightCreate()
 {
     return new ms::Light();
 }
-msAPI ms::Light::Type msLightGetType(ms::Light *_this)
+msAPI ms::Light::LightType msLightGetType(ms::Light *_this)
 {
-    return _this->type;
+    return _this->light_type;
 }
-msAPI void msLightSetType(ms::Light *_this, ms::Light::Type v)
+msAPI void msLightSetType(ms::Light *_this, ms::Light::LightType v)
 {
-    _this->type = v;
+    _this->light_type = v;
 }
 msAPI float4 msLightGetColor(ms::Light *_this)
 {
@@ -751,42 +758,43 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num
     _this->frames.push_back(std::move(frame));
 }
 
+msAPI ms::Constraint::Type msConstraintGetType(ms::Constraint *_this)
+{
+    return _this->getType();
+}
+msAPI const char* msConstraintGetPath(ms::Constraint *_this)
+{
+    return _this->path.c_str();
+}
+msAPI int msConstraintGetNumSources(ms::Constraint *_this)
+{
+    return (int)_this->source_paths.size();
+}
+msAPI const char* msConstraintGetSource(ms::Constraint *_this, int i)
+{
+    return _this->source_paths[i].c_str();
+}
+
+msAPI float3 msParentConstraintGetPositionOffset(ms::ParentConstraint *_this, int i)
+{
+    return _this->source_data[i].position_offset;
+}
+msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this, int i)
+{
+    return _this->source_data[i].rotation_offset;
+}
 
 msAPI const char* msSceneGetName(ms::Scene *_this)
 {
     return _this->settings.name.c_str();
 }
-msAPI int msSceneGetNumMeshes(ms::Scene *_this)
+msAPI int msSceneGetNumObjects(ms::Scene *_this)
 {
-    return (int)_this->meshes.size();
+    return (int)_this->objects.size();
 }
-msAPI ms::Mesh* msSceneGetMeshData(ms::Scene *_this, int i)
+msAPI ms::Transform* msSceneGetObjectData(ms::Scene *_this, int i)
 {
-    return _this->meshes[i].get();
-}
-msAPI int msSceneGetNumTransforms(ms::Scene *_this)
-{
-    return (int)_this->transforms.size();
-}
-msAPI ms::Transform* msSceneGetTransformData(ms::Scene *_this, int i)
-{
-    return _this->transforms[i].get();
-}
-msAPI int msSceneGetNumCameras(ms::Scene *_this)
-{
-    return (int)_this->cameras.size();
-}
-msAPI ms::Camera* msSceneGetCameraData(ms::Scene *_this, int i)
-{
-    return _this->cameras[i].get();
-}
-msAPI int msSceneGetNumLights(ms::Scene *_this)
-{
-    return (int)_this->lights.size();
-}
-msAPI ms::Light* msSceneGetLightData(ms::Scene *_this, int i)
-{
-    return _this->lights[i].get();
+    return _this->objects[i].get();
 }
 msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 {
@@ -795,4 +803,20 @@ msAPI int msSceneGetNumMaterials(ms::Scene *_this)
 msAPI ms::Material* msSceneGetMaterialData(ms::Scene *_this, int i)
 {
     return _this->materials[i].get();
+}
+msAPI int msSceneGetNumAnimations(ms::Scene *_this)
+{
+    return (int)_this->animations.size();
+}
+msAPI ms::Animation* msSceneGetAnimationData(ms::Scene *_this, int i)
+{
+    return _this->animations[i].get();
+}
+msAPI int msSceneGetNumConstraints(ms::Scene *_this)
+{
+    return (int)_this->constraints.size();
+}
+msAPI ms::Constraint* msSceneGetConstraintData(ms::Scene *_this, int i)
+{
+    return _this->constraints[i].get();
 }
