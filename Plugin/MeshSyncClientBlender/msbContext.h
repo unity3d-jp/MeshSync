@@ -55,11 +55,13 @@ private:
     {
         std::string name;
         std::string path;
-        bool updated = false;
+        bool alive = false;
+        bool exported = false;
 
         void clear()
         {
-            updated = false;
+            alive = false;
+            exported = false;
         }
     };
 
@@ -81,9 +83,7 @@ private:
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
     ms::TransformPtr exportDupliGroup(Object *obj, const std::string & base_path);
-    bool updateRecord(Object *obj);
-    ObjectRecord& findRecord(Object *obj);
-    ObjectRecord& findRecord(Bone *obj);
+    ObjectRecord& touchRecord(Object *obj);
     void eraseStaleObjects();
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
@@ -110,7 +110,7 @@ private:
     std::vector<ms::AnimationPtr> m_animations;
     std::vector<ms::MaterialPtr> m_materials;
     std::vector<std::string> m_deleted;
-    std::map<void*, ObjectRecord> m_records;
+    std::map<void*, ObjectRecord> m_obj_records;
 
     std::future<void> m_send_future;
 

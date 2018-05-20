@@ -545,8 +545,12 @@ ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
 ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
 {
     ms::TransformPtr ret;
-    if (!obj || !updateRecord(obj))
+    if (!obj)
         return ret;
+
+    auto& rec = touchRecord(obj);
+    if (rec.exported)
+        return ret; // already exported
 
     switch (obj->type) {
     case OB_ARMATURE:
@@ -600,6 +604,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
 
     if (ret) {
         exportDupliGroup(obj, ret->path);
+        rec.exported = true;
     }
 
     return ret;
@@ -644,11 +649,11 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *obj, const std::string & b
     return dst;
 }
 
-bool msbContext::updateRecord(Object * obj)
+msbContext::ObjectRecord& msbContext::touchRecord(Object * obj)
 {
-    auto& rec = m_records[obj];
-    if (rec.updated)
-        return false; // already updated
+    auto& rec = m_obj_records[obj];
+    if (rec.alive)
+        return rec; // already touched
 
     auto path = get_path(obj);
     if (rec.path != path) {
@@ -660,32 +665,22 @@ bool msbContext::updateRecord(Object * obj)
         rec.path = path;
     }
 
-    rec.updated = true;
+    rec.alive = true;
     if (obj->type == OB_ARMATURE) {
         auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
         for (auto pose : poses) {
-            m_records[pose->bone].updated = true;
+            m_obj_records[pose->bone].alive = true;
         }
     }
-    return true;
-}
-
-msbContext::ObjectRecord& msbContext::findRecord(Object * obj)
-{
-    return m_records[obj];
-}
-
-msbContext::ObjectRecord& msbContext::findRecord(Bone * obj)
-{
-    return m_records[obj];
+    return rec;
 }
 
 void msbContext::eraseStaleObjects()
 {
-    for (auto i = m_records.begin(); i != m_records.end(); /**/) {
-        if (!i->second.updated) {
+    for (auto i = m_obj_records.begin(); i != m_obj_records.end(); /**/) {
+        if (!i->second.alive) {
             m_deleted.push_back(i->second.path);
-            m_records.erase(i++);
+            m_obj_records.erase(i++);
         }
         else {
             ++i;
@@ -698,7 +693,7 @@ void msbContext::eraseStaleObjects()
         // to avoid unneeded delete, erase re-created objects from m_deleted.
         m_deleted.erase(std::remove_if(m_deleted.begin(), m_deleted.end(),
             [this](const std::string& v) {
-            for (auto& kvp : m_records) {
+            for (auto& kvp : m_obj_records) {
                 if (kvp.second.path == v)
                     return true;
             }
@@ -938,10 +933,6 @@ bool msbContext::prepare()
     if (!bl::ready() || isSending())
         return false;
 
-    for (auto& kvp : m_records) {
-        kvp.second.clear();
-    }
-
     return true;
 }
 
@@ -964,7 +955,7 @@ void msbContext::sendScene(SendScope scope)
             if (bid.is_updated() || bid.is_updated_data())
                 exportObject(obj, false);
             else
-                updateRecord(obj);
+                touchRecord(obj);
         }
     }
     if (scope == SendScope::Selected) {
@@ -1001,6 +992,10 @@ void msbContext::kickAsyncSend()
         task();
     });
     m_extract_tasks.clear();
+
+    for (auto& kvp : m_obj_records) {
+        kvp.second.clear();
+    }
 
     m_bones.clear();
     m_added.clear();
