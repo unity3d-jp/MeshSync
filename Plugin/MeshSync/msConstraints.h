@@ -32,6 +32,7 @@ public:
     virtual void deserialize(std::istream& is);
     virtual void clear();
 };
+HasSerializer(Constraint);
 using ConstraintPtr = std::shared_ptr<Constraint>;
 
 
@@ -48,6 +49,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 };
+HasSerializer(AimConstraint);
 
 
 class ParentConstraint : public Constraint
@@ -67,6 +69,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 };
+HasSerializer(ParentConstraint);
 
 
 class PositionConstraint : public Constraint
@@ -81,6 +84,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 };
+HasSerializer(PositionConstraint);
 
 
 class RotationConstraint : public Constraint
@@ -95,6 +99,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 };
+HasSerializer(RotationConstraint);
 
 
 class ScaleConstraint : public Constraint
@@ -109,5 +114,6 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
 };
+HasSerializer(ScaleConstraint);
 
 } // namespace ms

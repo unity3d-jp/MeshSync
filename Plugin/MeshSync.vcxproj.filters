@@ -48,6 +48,9 @@
     <ClInclude Include="MeshSync\msAnimation.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSync\msFoundation.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSync">

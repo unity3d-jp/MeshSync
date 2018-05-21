@@ -3,7 +3,7 @@
 #define msReleaseDate 20180514
 #define msReleaseDateStr "20180514"
 #define msVendor "Unity Technologies"
-#define msProtocolVersion 108
+#define msProtocolVersion 109
 //#define msEnableProfiling
 
 

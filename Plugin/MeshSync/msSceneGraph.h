@@ -7,6 +7,7 @@
 #include <mutex>
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
+#include "msFoundation.h"
 
 #ifdef GetMessage
     #undef GetMessage
@@ -41,6 +42,7 @@ public:
 
     const char* getName() const; // get name (leaf) from path
 };
+HasSerializer(Entity);
 using EntityPtr = std::shared_ptr<Entity>;
 
 
@@ -51,10 +53,12 @@ public:
     std::string name;
     float4 color = float4::one();
 
+    static Material* make(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
+HasSerializer(Material);
 using MaterialPtr = std::shared_ptr<Material>;
 
 
@@ -72,6 +76,7 @@ public:
     std::string reference;
 
 
+    static Transform* make(std::istream& is);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -85,7 +90,9 @@ public:
     virtual void convertHandedness(bool x, bool yz);
     virtual void applyScaleFactor(float scale);
 };
+HasSerializer(Transform);
 using TransformPtr = std::shared_ptr<Transform>;
+
 
 class Camera : public Transform
 {
@@ -110,6 +117,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
+HasSerializer(Camera);
 using CameraPtr = std::shared_ptr<Camera>;
 
 
@@ -140,6 +148,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
+HasSerializer(Light);
 using LightPtr = std::shared_ptr<Light>;
 
 
@@ -246,6 +255,7 @@ struct BlendShapeData
     float weight = 0.0f;
     std::vector<Frame> frames;
 
+    static BlendShapeData* make(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -254,6 +264,8 @@ struct BlendShapeData
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
+HasSerializer(BlendShapeData::Frame);
+HasSerializer(BlendShapeData);
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 
 struct BoneData : public std::enable_shared_from_this<BoneData>
@@ -262,6 +274,7 @@ struct BoneData : public std::enable_shared_from_this<BoneData>
     float4x4 bindpose = float4x4::identity();
     RawVector<float> weights;
 
+    static BoneData* make(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -270,6 +283,7 @@ struct BoneData : public std::enable_shared_from_this<BoneData>
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
+HasSerializer(BoneData);
 using BoneDataPtr = std::shared_ptr<BoneData>;
 
 class Mesh : public Transform
@@ -339,6 +353,7 @@ public:
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);
 };
+HasSerializer(Mesh);
 using MeshPtr = std::shared_ptr<Mesh>;
 
 
@@ -383,6 +398,7 @@ public:
     void deserialize(std::istream& is);
     void clear();
 };
+HasSerializer(Scene);
 using ScenePtr = std::shared_ptr<Scene>;
 
 
@@ -407,6 +423,7 @@ public:
     virtual void serialize(std::ostream& os) const;
     virtual bool deserialize(std::istream& is);
 };
+HasSerializer(Message);
 using MessagePtr = std::shared_ptr<Message>;
 
 
@@ -444,6 +461,7 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
+HasSerializer(GetMessage);
 
 
 class SetMessage : public Message
@@ -458,6 +476,7 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
+HasSerializer(SetMessage);
 
 
 class DeleteMessage : public Message
@@ -480,6 +499,8 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
+HasSerializer(DeleteMessage::Identifier);
+HasSerializer(DeleteMessage);
 
 
 class FenceMessage : public Message
@@ -500,6 +521,7 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
+HasSerializer(FenceMessage);
 
 
 class TextMessage : public Message
@@ -522,6 +544,7 @@ public:
     std::string text;
     Type type = Type::Normal;
 };
+HasSerializer(TextMessage);
 
 
 class ScreenshotMessage : public Message
@@ -538,5 +561,6 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
+HasSerializer(ScreenshotMessage);
 
 } // namespace ms

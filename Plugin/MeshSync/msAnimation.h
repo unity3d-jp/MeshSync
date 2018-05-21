@@ -37,6 +37,7 @@ public:
     virtual void convertHandedness(bool x, bool yz) = 0;
     virtual void applyScaleFactor(float scale) = 0;
 };
+HasSerializer(Animation);
 using AnimationPtr = std::shared_ptr<Animation>;
 
 
@@ -61,6 +62,7 @@ public:
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
 };
+HasSerializer(TransformAnimation);
 
 
 class CameraAnimation : public TransformAnimation
@@ -86,6 +88,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
+HasSerializer(CameraAnimation);
 
 
 class LightAnimation : public TransformAnimation
@@ -108,5 +111,33 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
+HasSerializer(LightAnimation);
+
+
+class MeshAnimation : public TransformAnimation
+{
+using super = TransformAnimation;
+public:
+    struct BlendshapeAnimation
+    {
+        std::string name;
+        RawVector<TVP<float>> weight;
+
+        uint32_t getSerializeSize() const;
+        void serialize(std::ostream& os) const;
+        void deserialize(std::istream& is);
+    };
+    std::vector<BlendshapeAnimation> blendshapes;
+
+    Type getType() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
+    bool empty() const override;
+    void reduction() override;
+};
+HasSerializer(MeshAnimation::BlendshapeAnimation);
+HasSerializer(MeshAnimation);
 
 } // namespace ms

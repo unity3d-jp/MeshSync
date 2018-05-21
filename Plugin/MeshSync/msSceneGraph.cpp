@@ -224,6 +224,13 @@ const char* Entity::getName() const
 
 
 
+Material * Material::make(std::istream & is)
+{
+    auto ret = new Material();
+    ret->deserialize(is);
+    return ret;
+}
+
 uint32_t Material::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -246,6 +253,11 @@ void Material::deserialize(std::istream& is)
 }
 
 
+
+Transform * Transform::make(std::istream & is)
+{
+    return static_cast<Transform*>(super::make(is));
+}
 
 Entity::Type Transform::getType() const
 {
@@ -491,6 +503,13 @@ void BlendShapeData::Frame::clear()
     tangents.clear();
 }
 
+BlendShapeData * BlendShapeData::make(std::istream & is)
+{
+    auto ret = new BlendShapeData();
+    ret->deserialize(is);
+    return ret;
+}
+
 uint32_t BlendShapeData::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -540,6 +559,13 @@ void BlendShapeData::applyScaleFactor(float scale)
     for (auto& f : frames) {
         mu::Scale(f.points.data(), scale, f.points.size());
     }
+}
+
+BoneData * BoneData::make(std::istream & is)
+{
+    auto ret = new BoneData();
+    ret->deserialize(is);
+    return ret;
 }
 
 uint32_t BoneData::getSerializeSize() const

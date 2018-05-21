@@ -57,6 +57,7 @@ Animation * Animation::make(std::istream & is)
     case Type::Transform: ret = new TransformAnimation(); break;
     case Type::Camera: ret = new CameraAnimation(); break;
     case Type::Light: ret = new LightAnimation(); break;
+    case Type::Mesh: ret = new MeshAnimation(); break;
     default: break;
     }
     if (ret) {
@@ -281,5 +282,65 @@ void LightAnimation::applyScaleFactor(float s)
         tvp.value *= s;
 }
 
+
+uint32_t MeshAnimation::BlendshapeAnimation::getSerializeSize() const
+{
+    return ssize(name) + ssize(weight);
+}
+
+void MeshAnimation::BlendshapeAnimation::serialize(std::ostream & os) const
+{
+    write(os, name);
+    write(os, weight);
+}
+
+void MeshAnimation::BlendshapeAnimation::deserialize(std::istream & is)
+{
+    read(is, name);
+    read(is, weight);
+}
+
+Animation::Type MeshAnimation::getType() const
+{
+    return Type::Mesh;
+}
+
+uint32_t MeshAnimation::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(blendshapes);
+    return ret;
+}
+
+void MeshAnimation::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, blendshapes);
+}
+
+void MeshAnimation::deserialize(std::istream & is)
+{
+    super::deserialize(is);
+    read(is, blendshapes);
+}
+
+void MeshAnimation::clear()
+{
+    super::clear();
+    blendshapes.clear();
+}
+
+bool MeshAnimation::empty() const
+{
+    return super::empty() && blendshapes.empty();
+}
+
+void MeshAnimation::reduction()
+{
+    super::reduction();
+    for (auto& bs : blendshapes) {
+        DoReduction(bs.weight);
+    }
+}
 
 } // namespace ms

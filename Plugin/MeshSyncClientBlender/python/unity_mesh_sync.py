@@ -43,7 +43,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
     bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals")
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
-    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
+    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = True, name = "Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
     bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")

@@ -173,7 +173,7 @@ MStatus CmdExport::doIt(const MArgList& args_)
     if (animations)
         MeshSyncClientMaya::getInstance().sendAnimations(scope);
     else
-        MeshSyncClientMaya::getInstance().send(scope);
+        MeshSyncClientMaya::getInstance().sendScene(scope);
     return MStatus::kSuccess;
 }
 

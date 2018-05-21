@@ -24,6 +24,7 @@
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
     <ClInclude Include="MeshSync\msConstraints.h" />
+    <ClInclude Include="MeshSync\msFoundation.h" />
     <ClInclude Include="MeshSync\msSceneGraph.h" />
     <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
     <ClInclude Include="MeshSync\msServer.h" />
