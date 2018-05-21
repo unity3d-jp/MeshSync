@@ -11,8 +11,10 @@ static void RespondText(HTTPServerResponse &response, const std::string& message
 {
     response.setContentType("text/plain");
     response.setContentLength(message.size());
-    std::ostream &ostr = response.send();
-    ostr.write(message.c_str(), message.size());
+
+    auto& os = response.send();
+    os.write(message.c_str(), message.size());
+    os.flush();
 }
 
 static void RespondTextForm(HTTPServerResponse &response, const std::string& message = "")
@@ -36,8 +38,10 @@ static void RespondTextForm(HTTPServerResponse &response, const std::string& mes
     response.set("Cache-Control", "no-store, must-revalidate");
     response.setContentType("text/html");
     response.setContentLength(body.size());
-    std::ostream &ostr = response.send();
-    ostr.write(body.c_str(), body.size());
+
+    auto& os = response.send();
+    os.write(body.c_str(), body.size());
+    os.flush();
 }
 
 
@@ -449,7 +453,10 @@ void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
         if (m_host_scene) {
             response.setContentType("application/octet-stream");
             response.setContentLength(m_host_scene->getSerializeSize());
-            m_host_scene->serialize(response.send());
+
+            auto& os = response.send();
+            m_host_scene->serialize(os);
+            os.flush();
         }
         else {
             response.setContentLength(0);
