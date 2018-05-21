@@ -234,7 +234,6 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
     if (rec.added)
         return nullptr;
 
-    rec.added = true;
     auto shape = GetShape(node);
 
     // check rename / re-parenting
@@ -280,6 +279,7 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
 
     if (ret) {
         ret->index = rec.index;
+        rec.added = true;
     }
     return ret;
 }
@@ -325,7 +325,7 @@ void MeshSyncClientMaya::notifyUpdateMesh(MObject shape)
     findOrAddRecord(node).dirty_shape = true;
 }
 
-bool MeshSyncClientMaya::send(SendScope scope)
+bool MeshSyncClientMaya::sendScene(SendScope scope)
 {
     if (isSending()) {
         m_pending_send_scene = scope;
@@ -410,10 +410,10 @@ void MeshSyncClientMaya::update()
     }
 
     if (m_pending_send_scene != SendScope::None) {
-        send(m_pending_send_scene);
+        sendScene(m_pending_send_scene);
     }
     else if (m_settings.auto_sync) {
-        send(SendScope::Updated);
+        sendScene(SendScope::Updated);
     }
 }
 

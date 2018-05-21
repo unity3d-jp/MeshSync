@@ -53,7 +53,7 @@ public:
     void notifyUpdateCamera(MObject obj);
     void notifyUpdateLight(MObject obj);
     void notifyUpdateMesh(MObject obj);
-    bool send(SendScope scope);
+    bool sendScene(SendScope scope);
     bool sendAnimations(SendScope scope);
     bool import();
 
@@ -100,6 +100,7 @@ private:
     void extractTransformAnimationData(ms::Animation& dst, MObject node, MObject shape);
     void extractCameraAnimationData(ms::Animation& dst, MObject node, MObject shape);
     void extractLightAnimationData(ms::Animation& dst, MObject node, MObject shape);
+    void extractMeshAnimationData(ms::Animation& dst, MObject node, MObject shape);
 
     void exportConstraint(MObject src);
     void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);

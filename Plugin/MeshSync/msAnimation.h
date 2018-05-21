@@ -123,11 +123,13 @@ public:
         std::string name;
         RawVector<TVP<float>> weight;
 
+        static BlendshapeAnimation* make(std::istream & is);
         uint32_t getSerializeSize() const;
         void serialize(std::ostream& os) const;
         void deserialize(std::istream& is);
     };
-    std::vector<BlendshapeAnimation> blendshapes;
+    using BlendshapeAnimationPtr = std::shared_ptr<BlendshapeAnimation>;
+    std::vector<BlendshapeAnimationPtr> blendshapes;
 
     Type getType() const override;
     uint32_t getSerializeSize() const override;

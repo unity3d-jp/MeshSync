@@ -795,18 +795,22 @@ namespace UTJ.MeshSync
                     for (int bi = 0; bi < numBS; ++bi)
                     {
                         string name = "blendShape." + S(msMeshAGetBlendshapeName(_this, bi));
-                        int numKeyframes = msMeshAGetNumBlendshapeSamples(_this, bi);
-                        var kf = new Keyframe[numKeyframes];
-                        for (int ki = 0; ki < numKeyframes; ++ki)
-                        {
-                            kf[ki].time = msMeshAGetNumBlendshapeTime(_this, bi, ki);
-                            kf[ki].value = msMeshAGetNumBlendshapeWeight(_this, bi, ki);
-                        }
-                        Smooth(kf);
-
-                        var curve = new AnimationCurve(kf);
                         clip.SetCurve(path, tsmr, name, null);
-                        clip.SetCurve(path, tsmr, name, curve);
+
+                        int numKeyframes = msMeshAGetNumBlendshapeSamples(_this, bi);
+                        if (numKeyframes > 0)
+                        {
+                            var kf = new Keyframe[numKeyframes];
+                            for (int ki = 0; ki < numKeyframes; ++ki)
+                            {
+                                kf[ki].time = msMeshAGetNumBlendshapeTime(_this, bi, ki);
+                                kf[ki].value = msMeshAGetNumBlendshapeWeight(_this, bi, ki);
+                            }
+                            Smooth(kf);
+
+                            var curve = new AnimationCurve(kf);
+                            clip.SetCurve(path, tsmr, name, curve);
+                        }
                     }
                 }
             }

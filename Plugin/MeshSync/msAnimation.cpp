@@ -1,3 +1,4 @@
+#include "msAnimation.h"
 #include "pch.h"
 #include "msSceneGraph.h"
 #include "msAnimation.h"
@@ -283,6 +284,13 @@ void LightAnimation::applyScaleFactor(float s)
 }
 
 
+MeshAnimation::BlendshapeAnimation * MeshAnimation::BlendshapeAnimation::make(std::istream & is)
+{
+    auto ret = new BlendshapeAnimation();
+    ret->deserialize(is);
+    return ret;
+}
+
 uint32_t MeshAnimation::BlendshapeAnimation::getSerializeSize() const
 {
     return ssize(name) + ssize(weight);
@@ -339,7 +347,7 @@ void MeshAnimation::reduction()
 {
     super::reduction();
     for (auto& bs : blendshapes) {
-        DoReduction(bs.weight);
+        DoReduction(bs->weight);
     }
 }
 

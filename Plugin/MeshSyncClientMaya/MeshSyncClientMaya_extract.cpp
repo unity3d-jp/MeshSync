@@ -650,13 +650,17 @@ void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
     }
 
     bool animated = MAnimUtil::isAnimated(node) || MAnimUtil::isAnimated(shape);
-    if (m_settings.sync_cameras && shape.hasFn(MFn::kCamera) && animated) {
+    if (animated && shape.hasFn(MFn::kCamera)) {
         rec.dst = new ms::CameraAnimation();
         rec.extractor = &MeshSyncClientMaya::extractCameraAnimationData;
     }
-    else if (m_settings.sync_lights && shape.hasFn(MFn::kLight) && animated) {
+    else if (animated && shape.hasFn(MFn::kLight)) {
         rec.dst = new ms::LightAnimation();
         rec.extractor = &MeshSyncClientMaya::extractLightAnimationData;
+    }
+    else if (animated && shape.hasFn(MFn::kMesh)) {
+        rec.dst = new ms::MeshAnimation();
+        rec.extractor = &MeshSyncClientMaya::extractMeshAnimationData;
     }
     else if(animated) {
         rec.dst = new ms::TransformAnimation();
@@ -736,6 +740,53 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, MObject 
     dst.intensity.push_back({ t, intensity });
     if (shape.hasFn(MFn::kSpotLight)) {
         dst.spot_angle.push_back({ t, spot_angle });
+    }
+}
+
+void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, MObject node, MObject shape)
+{
+    extractTransformAnimationData(dst_, node, shape);
+
+    auto& dst = (ms::MeshAnimation&)dst_;
+
+    float t = m_current_time * m_settings.animation_time_scale;
+
+    // get blendshape weights
+    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(shape));
+    if (!fn_blendshape.object().isNull()) {
+        MPlug plug_weight = fn_blendshape.findPlug("weight");
+        MPlug plug_it = fn_blendshape.findPlug("inputTarget");
+        uint32_t num_it = plug_it.evaluateNumElements();
+        for (uint32_t idx_it = 0; idx_it < num_it; ++idx_it) {
+            MPlug plug_itp(plug_it.elementByPhysicalIndex(idx_it));
+            if (plug_itp.logicalIndex() == 0) {
+                MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
+                uint32_t num_itg = plug_itg.evaluateNumElements();
+
+                for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
+                    MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
+                    std::string name = plug_wc.name().asChar();
+
+                    auto dst_bs = ms::MeshAnimation::BlendshapeAnimationPtr();
+                    {
+                        auto it = std::find_if(dst.blendshapes.begin(), dst.blendshapes.end(),
+                            [&name](const ms::MeshAnimation::BlendshapeAnimationPtr& ptr) { return ptr->name == name; });
+                        if (it != dst.blendshapes.end()) {
+                            dst_bs = *it;
+                        }
+                    }
+                    if (!dst_bs) {
+                        dst_bs.reset(new ms::MeshAnimation::BlendshapeAnimation());
+                        dst_bs->name = name;
+                        dst.blendshapes.push_back(dst_bs);
+                    }
+
+                    float weight = 0.0f;
+                    plug_wc.getValue(weight);
+                    dst_bs->weight.push_back({ t, weight * 100.0f });
+                }
+            }
+        }
     }
 }
 
