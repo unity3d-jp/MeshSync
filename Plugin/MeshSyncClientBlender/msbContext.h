@@ -97,6 +97,7 @@ private:
     void extractPoseAnimationData(ms::Animation& dst, void *obj);
     void extractCameraAnimationData(ms::Animation& dst, void *obj);
     void extractLightAnimationData(ms::Animation& dst, void *obj);
+    void extractMeshAnimationData(ms::Animation& dst, void *obj);
 
     void kickAsyncSend();
 

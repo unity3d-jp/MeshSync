@@ -799,8 +799,20 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         m_animations.emplace_back(rec.dst);
         break;
     }
+    case OB_MESH:
+    {
+        // meshes
+        exportAnimation(obj->parent, true, base_path);
+        auto& rec = m_anim_records[path];
+        rec.extractor = &msbContext::extractMeshAnimationData;
+        rec.obj = obj;
+        rec.dst = new ms::MeshAnimation();
+        rec.dst->path = path;
+        m_animations.emplace_back(rec.dst);
+        break;
+    }
     default:
-    if (force || obj->type == OB_ARMATURE || obj->type == OB_MESH || obj->dup_group) {
+    if (force || obj->type == OB_ARMATURE || obj->dup_group) {
         exportAnimation(obj->parent, true, base_path);
         {
             auto& rec = m_anim_records[path];
@@ -917,6 +929,42 @@ void msbContext::extractLightAnimationData(ms::Animation& dst_, void *obj)
     dst.range.push_back({ t, range });
     if (type == ms::Light::LightType::Spot) {
         dst.spot_angle.push_back({ t, spot_angle });
+    }
+}
+
+void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
+{
+    extractTransformAnimationData(dst_, obj);
+
+    auto& dst = (ms::MeshAnimation&)dst_;
+    float t = m_current_time * m_settings.animation_timescale;
+
+    auto& mesh = *(Mesh*)((Object*)obj)->data;
+    if (!mesh.edit_btmesh && mesh.key) {
+        // blendshape weight animation
+        int bi = 0;
+        each_key(&mesh, [&](const KeyBlock *kb) {
+            if (bi == 0) { // Basis
+            }
+            else {
+                auto dst_bs = ms::MeshAnimation::BlendshapeAnimationPtr();
+                {
+                    auto it = std::find_if(dst.blendshapes.begin(), dst.blendshapes.end(),
+                        [kb](const ms::MeshAnimation::BlendshapeAnimationPtr& ptr) { return ptr->name == kb->name; });
+                    if (it != dst.blendshapes.end()) {
+                        dst_bs = *it;
+                    }
+                }
+                if (!dst_bs) {
+                    dst_bs.reset(new ms::MeshAnimation::BlendshapeAnimation());
+                    dst_bs->name = kb->name;
+                    dst.blendshapes.push_back(dst_bs);
+                }
+
+                dst_bs->weight.push_back({ t, kb->curval * 100.0f });
+            }
+            ++bi;
+        });
     }
 }
 
