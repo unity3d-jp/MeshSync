@@ -107,45 +107,45 @@ Animation::Type TransformAnimation::getType() const
     return Type::Transform;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(translation) F(rotation) F(scale) F(visible)
 
 uint32_t TransformAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    EachMembers(Size);
+    EachMember(Size);
     return ret;
 }
 void TransformAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    EachMembers(Write);
+    EachMember(Write);
 }
 void TransformAnimation::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    EachMembers(Read);
+    EachMember(Read);
 }
 void TransformAnimation::clear()
 {
     super::clear();
-    EachMembers(Clear);
+    EachMember(Clear);
 }
 bool TransformAnimation::empty() const
 {
     bool ret = true;
-    ret = ret EachMembers(Empty);
+    ret = ret EachMember(Empty);
     return ret;
 }
 void TransformAnimation::reduction()
 {
-    EachMembers(Reduce);
+    EachMember(Reduce);
 }
 void TransformAnimation::reserve(size_t n)
 {
-    EachMembers(Reserve);
+    EachMember(Reserve);
 }
-#undef EachMembers
+#undef EachMember
 
 void TransformAnimation::convertHandedness(bool x, bool yz)
 {
@@ -178,45 +178,45 @@ Animation::Type CameraAnimation::getType() const
     return Type::Camera;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(fov) F(near_plane) F(far_plane) F(horizontal_aperture) F(vertical_aperture) F(focal_length) F(focus_distance)
 
 uint32_t CameraAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    EachMembers(Size);
+    EachMember(Size);
     return ret;
 }
 void CameraAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    EachMembers(Write);
+    EachMember(Write);
 }
 void CameraAnimation::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    EachMembers(Read);
+    EachMember(Read);
 }
 void CameraAnimation::clear()
 {
     super::clear();
-    EachMembers(Clear);
+    EachMember(Clear);
 }
 bool CameraAnimation::empty() const
 {
-    return super::empty() EachMembers(Empty);
+    return super::empty() EachMember(Empty);
 }
 void CameraAnimation::reduction()
 {
     super::reduction();
-    EachMembers(Reduce);
+    EachMember(Reduce);
 }
 void CameraAnimation::reserve(size_t n)
 {
     super::reserve(n);
-    EachMembers(Reserve);
+    EachMember(Reserve);
 }
-#undef EachMembers
+#undef EachMember
 
 void CameraAnimation::applyScaleFactor(float s)
 {
@@ -233,45 +233,45 @@ Animation::Type LightAnimation::getType() const
     return Type::Light;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(color) F(intensity) F(range) F(spot_angle)
 
 uint32_t LightAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    EachMembers(Size);
+    EachMember(Size);
     return ret;
 }
 void LightAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    EachMembers(Write);
+    EachMember(Write);
 }
 void LightAnimation::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    EachMembers(Read);
+    EachMember(Read);
 }
 void LightAnimation::clear()
 {
     super::clear();
-    EachMembers(Clear);
+    EachMember(Clear);
 }
 bool LightAnimation::empty() const
 {
-    return super::empty() EachMembers(Empty);
+    return super::empty() EachMember(Empty);
 }
 void LightAnimation::reduction()
 {
     super::reduction();
-    EachMembers(Reduce);
+    EachMember(Reduce);
 }
 void LightAnimation::reserve(size_t n)
 {
     super::reserve(n);
-    EachMembers(Reserve);
+    EachMember(Reserve);
 }
-#undef EachMembers
+#undef EachMember
 
 void LightAnimation::applyScaleFactor(float s)
 {

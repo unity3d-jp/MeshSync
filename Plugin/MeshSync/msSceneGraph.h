@@ -324,22 +324,24 @@ public:
     void convertHandedness_BlendShapes(bool x, bool yz);
     void convertHandedness_Bones(bool x, bool yz);
 
-public:
-    // for python binding
-    void addVertex(const float3& v);
-    void addNormal(const float3& v);
-    void addUV(const float2& v);
-    void addColor(const float4& v);
-
-    void addCount(int v);
-    void addIndex(int v);
-    void addMaterialID(int v);
-
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);
 };
 HasSerializer(Mesh);
 using MeshPtr = std::shared_ptr<Mesh>;
+
+
+class Constraint;
+using ConstraintPtr = std::shared_ptr<Constraint>;
+
+class Animation;
+using AnimationPtr = std::shared_ptr<Animation>;
+
+class Texture;
+using TexturePtr = std::shared_ptr<Texture>;
+
+class Material;
+using MaterialPtr = std::shared_ptr<Material>;
 
 
 enum class Handedness
@@ -360,16 +362,7 @@ struct SceneSettings
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
-
-
-class Animation;
-using AnimationPtr = std::shared_ptr<Animation>;
-
-class Constraint;
-using ConstraintPtr = std::shared_ptr<Constraint>;
-
-class Material;
-using MaterialPtr = std::shared_ptr<Material>;
+HasSerializer(SceneSettings);
 
 struct Scene : public std::enable_shared_from_this<Scene>
 {
@@ -378,6 +371,7 @@ public:
     std::vector<TransformPtr> objects;
     std::vector<ConstraintPtr> constraints;
     std::vector<AnimationPtr> animations;
+    std::vector<TexturePtr> textures;
     std::vector<MaterialPtr> materials;
 
 public:

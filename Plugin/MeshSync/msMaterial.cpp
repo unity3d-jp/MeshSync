@@ -13,27 +13,27 @@ Texture * Texture::make(std::istream & is)
     return ret;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(id) F(filename) F(type) F(data)
 
 uint32_t Texture::getSerializeSize() const
 {
     uint32_t ret = 0;
-    EachMembers(Size);
+    EachMember(Size);
     return ret;
 }
 
 void Texture::serialize(std::ostream & os) const
 {
-    EachMembers(Write);
+    EachMember(Write);
 }
 
 void Texture::deserialize(std::istream & is)
 {
-    EachMembers(Read);
+    EachMember(Read);
 }
 
-#undef EachMembers
+#undef EachMember
 
 
 Material * Material::make(std::istream & is)
@@ -43,24 +43,24 @@ Material * Material::make(std::istream & is)
     return ret;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(id) F(name) F(color) F(emission) F(metalic) F(smoothness) F(opacity)
 
 uint32_t Material::getSerializeSize() const
 {
     uint32_t ret = 0;
-    EachMembers(Size);
+    EachMember(Size);
     return ret;
 }
 void Material::serialize(std::ostream& os) const
 {
-    EachMembers(Write);
+    EachMember(Write);
 }
 void Material::deserialize(std::istream& is)
 {
-    EachMembers(Read);
+    EachMember(Read);
 }
 
-#undef EachMembers
+#undef EachMember
 
 } // namespace ms
