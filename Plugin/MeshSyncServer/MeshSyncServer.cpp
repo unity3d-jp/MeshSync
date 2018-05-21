@@ -195,6 +195,12 @@ msAPI int       msLightAGetNumSpotAngleSamples(ms::LightAnimation *_this) { retu
 msAPI float     msLightAGetSpotAngleTime(ms::LightAnimation *_this, int i) { return _this->spot_angle[i].time; }
 msAPI float     msLightAGetSpotAngleValue(ms::LightAnimation *_this, int i) { return _this->spot_angle[i].value; }
 
+msAPI int           msMeshAGetNumBlendshapes(ms::MeshAnimation *_this) { return (int)_this->blendshapes.size(); }
+msAPI const char*   msMeshAGetBlendshapeName(ms::MeshAnimation *_this, int bi) { return _this->blendshapes[bi].name.c_str(); }
+msAPI int           msMeshAGetNumBlendshapeSamples(ms::MeshAnimation *_this, int bi) { return (int)_this->blendshapes[bi].weight.size(); }
+msAPI float         msMeshAGetNumBlendshapeTime(ms::MeshAnimation *_this, int bi, int i) { return _this->blendshapes[bi].weight[i].time; }
+msAPI float         msMeshAGetNumBlendshapeWeight(ms::MeshAnimation *_this, int bi, int i) { return _this->blendshapes[bi].weight[i].value; }
+
 
 msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {

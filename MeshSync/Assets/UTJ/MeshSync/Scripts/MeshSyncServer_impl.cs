@@ -759,6 +759,58 @@ namespace UTJ.MeshSync
             }
         }
 
+        public struct MeshAnimationData
+        {
+            #region internal
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapes(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMeshAGetBlendshapeName(IntPtr _this, int bi);
+            [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapeSamples(IntPtr _this, int bi);
+            [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeTime(IntPtr _this, int bi, int si);
+            [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeWeight(IntPtr _this, int bi, int si);
+            #endregion
+
+
+            public static explicit operator MeshAnimationData(IntPtr v)
+            {
+                MeshAnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(MeshAnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+            {
+                ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+
+                var tsmr = typeof(SkinnedMeshRenderer);
+                {
+                    // blendshape animation
+
+                    int numBS = msMeshAGetNumBlendshapes(_this);
+                    for (int bi = 0; bi < numBS; ++bi)
+                    {
+                        string name = "blendShape." + S(msMeshAGetBlendshapeName(_this, bi));
+                        int numKeyframes = msMeshAGetNumBlendshapeSamples(_this, bi);
+                        var kf = new Keyframe[numKeyframes];
+                        for (int ki = 0; ki < numKeyframes; ++ki)
+                        {
+                            kf[ki].time = msMeshAGetNumBlendshapeTime(_this, bi, ki);
+                            kf[ki].value = msMeshAGetNumBlendshapeWeight(_this, bi, ki);
+                        }
+                        Smooth(kf);
+
+                        var curve = new AnimationCurve(kf);
+                        clip.SetCurve(path, tsmr, name, null);
+                        clip.SetCurve(path, tsmr, name, curve);
+                    }
+                }
+            }
+        }
 
 
         public struct AnimationData
@@ -803,6 +855,9 @@ namespace UTJ.MeshSync
                         break;
                     case TransformData.Type.Light:
                         ((LightAnimationData)_this).ExportToClip(clip, path, reduce);
+                        break;
+                    case TransformData.Type.Mesh:
+                        ((MeshAnimationData)_this).ExportToClip(clip, path, reduce);
                         break;
                 }
             }
