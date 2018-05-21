@@ -6,9 +6,6 @@
 #include "msSceneGraphImpl.h"
 
 
-#define Size(V) ret += ssize(V);
-#define Write(V) write(os, V);
-#define Read(V) read(is, V);
 #define Clear(V) V.clear();
 #define Empty(V) && V.empty()
 #define Reduce(V) DoReduction(V);
