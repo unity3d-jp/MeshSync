@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <atomic>
-#include <mutex>
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
 #include "msFoundation.h"
@@ -337,6 +335,9 @@ using ConstraintPtr = std::shared_ptr<Constraint>;
 class Animation;
 using AnimationPtr = std::shared_ptr<Animation>;
 
+class AnimationClip;
+using AnimationClipPtr = std::shared_ptr<AnimationClip>;
+
 class Texture;
 using TexturePtr = std::shared_ptr<Texture>;
 
@@ -370,7 +371,7 @@ public:
     SceneSettings settings;
     std::vector<TransformPtr> objects;
     std::vector<ConstraintPtr> constraints;
-    std::vector<AnimationPtr> animations;
+    std::vector<AnimationClipPtr> animations;
     std::vector<TexturePtr> textures;
     std::vector<MaterialPtr> materials;
 

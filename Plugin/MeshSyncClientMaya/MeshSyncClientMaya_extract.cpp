@@ -5,12 +5,6 @@
 #include "Commands.h"
 
 
-void MeshSyncClientMaya::addAnimation(ms::Animation *anim)
-{
-    lock_t l(m_mutex);
-    m_client_animations.emplace_back(anim);
-}
-
 void MeshSyncClientMaya::exportMaterials()
 {
     m_material_id_table.clear();
@@ -572,6 +566,9 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
 
 int MeshSyncClientMaya::exportAnimations(SendScope scope)
 {
+    // create default clip
+    m_client_animations.emplace_back(new ms::AnimationClip());
+
     // gather target data
     if (scope == SendScope::Selected) {
         MSelectionList list;
@@ -623,13 +620,12 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     m_anim_records.clear();
 
     // reduction
-    mu::parallel_for_each(m_client_animations.begin(), m_client_animations.end(), [](ms::AnimationPtr& p) {
-        p->reduction();
-    });
-
+    for (auto& clip : m_client_animations) {
+        clip->reduction();
+    }
     // erase empty animation
     m_client_animations.erase(
-        std::remove_if(m_client_animations.begin(), m_client_animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
+        std::remove_if(m_client_animations.begin(), m_client_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_client_animations.end());
     return ret;
 }
@@ -668,7 +664,7 @@ void MeshSyncClientMaya::exportAnimation(MObject node, MObject shape)
     }
 
     if (rec.dst) {
-        m_client_animations.emplace_back(rec.dst);
+        m_client_animations.front()->animations.emplace_back(rec.dst);
         rec.dst->path = GetPath(node);
         rec.node = node;
         rec.shape = shape;

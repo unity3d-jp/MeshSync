@@ -127,6 +127,7 @@ public:
         uint32_t getSerializeSize() const;
         void serialize(std::ostream& os) const;
         void deserialize(std::istream& is);
+        bool empty() const;
     };
     using BlendshapeAnimationPtr = std::shared_ptr<BlendshapeAnimation>;
     std::vector<BlendshapeAnimationPtr> blendshapes;
@@ -141,5 +142,26 @@ public:
 };
 HasSerializer(MeshAnimation::BlendshapeAnimation);
 HasSerializer(MeshAnimation);
+
+
+class AnimationClip : public std::enable_shared_from_this<AnimationClip>
+{
+public:
+    std::string name;
+    std::vector<AnimationPtr> animations;
+
+    static AnimationClip* make(std::istream& is);
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    void clear();
+    bool empty() const;
+    void reduction();
+
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
+};
+HasSerializer(AnimationClip);
+using AnimationClipPtr = std::shared_ptr<AnimationClip>;
 
 } // namespace ms

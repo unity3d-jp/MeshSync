@@ -1,5 +1,9 @@
 #pragma once
 
+#include "MeshUtils/MeshUtils.h"
+#include "msConfig.h"
+#include "msFoundation.h"
+
 namespace ms {
 
 class Texture : public std::enable_shared_from_this<Texture>
@@ -14,7 +18,7 @@ public:
     int id = 0;
     std::string filename;
     TextureType type = TextureType::Default;
-    RawVector<uint8_t> data;
+    RawVector<char> data;
 
     static Texture* make(std::istream& is);
     uint32_t getSerializeSize() const;
@@ -35,12 +39,13 @@ public:
     float4 emission = float4::zero();
     float metalic = 0.0f;
     float smoothness = 0.5f;
-    float opacity = 1.0f;
 
     static Material* make(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    bool operator==(const Material& v) const;
+    bool operator!=(const Material& v) const;
 };
 HasSerializer(Material);
 using MaterialPtr = std::shared_ptr<Material>;

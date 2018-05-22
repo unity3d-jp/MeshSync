@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+#include <mutex>
 #include "msProtocol.h"
 
 namespace Poco {

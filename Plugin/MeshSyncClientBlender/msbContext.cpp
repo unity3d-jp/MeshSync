@@ -712,6 +712,7 @@ void msbContext::sendAnimations(SendScope scope)
     m_ignore_update = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
+    m_animations.emplace_back(new ms::AnimationClip()); // create default clip
 
     // list target objects
     if (scope == SendScope::Selected) {
@@ -749,12 +750,12 @@ void msbContext::sendAnimations(SendScope scope)
     }
 
     // keyframe reduction
-    mu::parallel_for_each(m_animations.begin(), m_animations.end(), [](ms::AnimationPtr& p) {
-        p->reduction();
-    });
-    // erase empty animation
+    for (auto& clip : m_animations) {
+        clip->reduction();
+    }
+    // erase empty clip
     m_animations.erase(
-        std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
+        std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_animations.end());
 
     // send
@@ -774,6 +775,8 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     if (m_anim_records.find(path) != m_anim_records.end())
         return;
 
+    auto& clip = m_animations.front();
+
     switch (obj->type) {
     case OB_CAMERA:
     {
@@ -784,7 +787,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         rec.obj = obj;
         rec.dst = new ms::CameraAnimation();
         rec.dst->path = path;
-        m_animations.emplace_back(rec.dst);
+        clip->animations.emplace_back(rec.dst);
         break;
     }
     case OB_LAMP:
@@ -796,7 +799,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         rec.obj = obj;
         rec.dst = new ms::LightAnimation();
         rec.dst->path = path;
-        m_animations.emplace_back(rec.dst);
+        clip->animations.emplace_back(rec.dst);
         break;
     }
     case OB_MESH:
@@ -808,7 +811,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         rec.obj = obj;
         rec.dst = new ms::MeshAnimation();
         rec.dst->path = path;
-        m_animations.emplace_back(rec.dst);
+        clip->animations.emplace_back(rec.dst);
         break;
     }
     default:
@@ -820,7 +823,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
             rec.obj = obj;
             rec.dst = new ms::TransformAnimation();
             rec.dst->path = path;
-            m_animations.emplace_back(rec.dst);
+            clip->animations.emplace_back(rec.dst);
         }
 
         if (obj->type == OB_ARMATURE) {
@@ -833,7 +836,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
                 rec.obj = pose;
                 rec.dst = new ms::TransformAnimation();
                 rec.dst->path = pose_path;
-                m_animations.emplace_back(rec.dst);
+                clip->animations.emplace_back(rec.dst);
             }
         }
         break;

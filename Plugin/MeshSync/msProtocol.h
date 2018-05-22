@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include "msSceneGraph.h"
 
 namespace ms {

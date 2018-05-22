@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "msSceneGraph.h"
-#include "msAnimation.h"
 #include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 

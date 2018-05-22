@@ -108,8 +108,6 @@ private:
     void kickAsyncSend();
 
 private:
-    void addAnimation(ms::Animation *anim);
-
     using ObjectRecords = std::map<void*, ObjectRecord>;
 
     MObject m_obj;
@@ -118,19 +116,18 @@ private:
     std::vector<MCallbackId> m_cids_global;
     std::vector<MUuid> m_material_id_table;
 
-    std::vector<ms::TransformPtr>   m_client_objects;
-    std::vector<ms::MeshPtr>        m_client_meshes;
-    std::vector<ms::MaterialPtr>    m_client_materials;
-    std::vector<ms::AnimationPtr>   m_client_animations;
-    std::vector<ms::ConstraintPtr>  m_client_constraints;
-    std::vector<std::string>        m_deleted;
+    std::vector<ms::TransformPtr>     m_client_objects;
+    std::vector<ms::MeshPtr>          m_client_meshes;
+    std::vector<ms::MaterialPtr>      m_client_materials;
+    std::vector<ms::AnimationClipPtr> m_client_animations;
+    std::vector<ms::ConstraintPtr>    m_client_constraints;
+    std::vector<std::string>          m_deleted;
     ObjectRecords       m_records;
     std::future<void>   m_future_send;
 
     using task_t = std::function<void()>;
     using lock_t = std::unique_lock<std::mutex>;
     std::vector<task_t> m_extract_tasks;
-    std::mutex m_mutex;
 
     SendScope m_pending_send_scene = SendScope::None;
     bool m_scene_updated = false;

@@ -311,9 +311,9 @@ namespace UTJ.MeshSync
             // animations
             try
             {
-                int numAnimations = scene.numAnimations;
-                for (int i = 0; i < numAnimations; ++i)
-                    UpdateAnimation(scene.GetAnimation(i));
+                int numClips = scene.numAnimationClips;
+                for (int i = 0; i < numClips; ++i)
+                    UpdateAnimation(scene.GetAnimationClip(i));
             }
             catch (Exception e) { Debug.LogError(e); }
 
@@ -375,7 +375,7 @@ namespace UTJ.MeshSync
                 {
                     var src = scene.GetMaterial(i);
                     var dst = m_materialList[i];
-                    if(src.id != dst.id || src.name != dst.name || src.color != dst.color)
+                    if (src.id != dst.id || src.name != dst.name || src.color != dst.color)
                     {
                         needsUpdate = true;
                         break;
@@ -838,80 +838,88 @@ namespace UTJ.MeshSync
 #endif
         }
 
-        void UpdateAnimation(AnimationData data)
+        void UpdateAnimation(AnimationClipData clipData)
         {
 #if UNITY_EDITOR
-            var path = data.path;
-            bool dummy = false;
-            var trans = FindOrCreateObjectByPath(path, true, ref dummy);
-            if (trans == null)
-                return;
-
-            Transform root = trans;
-            while (root.parent != null)
-                root = root.parent;
-
-            Animator animator = null;
-            AnimationClip clip = null;
-
-            if (m_animClipCache == null)
-                m_animClipCache = new Dictionary<GameObject, AnimationClip>();
-            else if (m_animClipCache.ContainsKey(root.gameObject))
-                clip = m_animClipCache[root.gameObject];
-
-            animator = root.GetComponent<Animator>();
-            if (animator == null)
+            int numAnimations = clipData.numAnimations;
+            for (int ai = 0; ai < numAnimations; ++ai)
             {
-                animator = root.gameObject.AddComponent<Animator>();
-            }
-            else if (clip == null && animator.runtimeAnimatorController != null)
-            {
-                var clips = animator.runtimeAnimatorController.animationClips;
-                if (clips != null && clips.Length > 0)
+                AnimationData data = clipData.GetAnimation(ai);
+
+                var path = data.path;
+                bool dummy = false;
+                var trans = FindOrCreateObjectByPath(path, true, ref dummy);
+                if (trans == null)
+                    return;
+
+                Transform root = trans;
+                while (root.parent != null)
+                    root = root.parent;
+
+                Animator animator = null;
+                AnimationClip clip = null;
+
+                if (m_animClipCache == null)
+                    m_animClipCache = new Dictionary<GameObject, AnimationClip>();
+                else if (m_animClipCache.ContainsKey(root.gameObject))
+                    clip = m_animClipCache[root.gameObject];
+
+                animator = root.GetComponent<Animator>();
+                if (animator == null)
                 {
-                    // note: this is extremely slow. m_animClipTable exists to cache the result and avoid frequent call.
-                    var tmp = animator.runtimeAnimatorController.animationClips[0];
-                    if(tmp != null)
+                    animator = root.gameObject.AddComponent<Animator>();
+                }
+                else if (clip == null && animator.runtimeAnimatorController != null)
+                {
+                    var clips = animator.runtimeAnimatorController.animationClips;
+                    if (clips != null && clips.Length > 0)
                     {
-                        clip = tmp;
-                        m_animClipCache[root.gameObject] = tmp;
+                        // note: this is extremely slow. m_animClipTable exists to cache the result and avoid frequent call.
+                        var tmp = animator.runtimeAnimatorController.animationClips[0];
+                        if (tmp != null)
+                        {
+                            clip = tmp;
+                            m_animClipCache[root.gameObject] = tmp;
+                        }
                     }
                 }
-            }
 
-            if (clip == null)
-            {
-                clip = new AnimationClip();
-                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(root.name);
-                CreateAsset(clip, assetPath + ".anim");
-                animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
-                m_animClipCache[root.gameObject] = clip;
-            }
+                if (clip == null)
+                {
+                    clip = new AnimationClip();
+                    var clipName = clipData.name;
+                    if(clipName.Length > 0)
+                        clipName = root.name + "_" + clipName;
+                    else
+                        clipName = root.name;
 
-            var animPath = path.Replace("/" + root.name, "");
-            if (animPath.Length > 0 && animPath[0] == '/')
-            {
-                animPath = animPath.Remove(0, 1);
+                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(clipName);
+                    CreateAsset(clip, assetPath + ".anim");
+                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
+                    m_animClipCache[root.gameObject] = clip;
+                }
+
+                var animPath = path.Replace("/" + root.name, "");
+                if (animPath.Length > 0 && animPath[0] == '/')
+                {
+                    animPath = animPath.Remove(0, 1);
+                }
+                data.ExportToClip(clip, animPath, false);
             }
-            data.ExportToClip(clip, animPath, false);
 #endif
         }
 
         public void ReassignMaterials()
         {
             foreach (var rec in m_clientObjects)
-            {
                 AssignMaterials(rec.Value);
-            }
             foreach (var rec in m_hostObjects)
-            {
                 AssignMaterials(rec.Value);
-            }
         }
 
         void AssignMaterials(Record rec)
         {
-            if(rec.go == null) { return; }
+            if (rec.go == null) { return; }
 
             var materialIDs = rec.materialIDs;
             var submeshCounts = rec.submeshCounts;
@@ -930,7 +938,7 @@ namespace UTJ.MeshSync
                     if (t == null) { break; }
                     r = t.GetComponent<Renderer>();
                 }
-                if( r== null) { continue; }
+                if (r == null) { continue; }
 
                 int submeshCount = submeshCounts[i];
                 var prev = r.sharedMaterials;
@@ -940,14 +948,12 @@ namespace UTJ.MeshSync
                 for (int j = 0; j < submeshCount; ++j)
                 {
                     if (j < prev.Length && prev[j] != null)
-                    {
                         materials[j] = prev[j];
-                    }
 
                     var mid = materialIDs[mi++];
-                    if(mid >= 0 && mid < m_materialList.Count)
+                    if (mid >= 0 && mid < m_materialList.Count)
                     {
-                        if(materials[j] != m_materialList[mid].material)
+                        if (materials[j] != m_materialList[mid].material)
                         {
                             materials[j] = m_materialList[mid].material;
                             changed = true;
@@ -955,7 +961,8 @@ namespace UTJ.MeshSync
                     }
                     else
                     {
-                        if(materials[j] == null) {
+                        if (materials[j] == null)
+                        {
                             var tmp = CreateDefaultMaterial();
                             tmp.name = "DefaultMaterial";
                             materials[j] = tmp;
@@ -964,10 +971,8 @@ namespace UTJ.MeshSync
                     }
                 }
 
-                if(changed)
-                {
+                if (changed)
                     r.sharedMaterials = materials;
-                }
             }
         }
 

@@ -108,7 +108,7 @@ private:
     std::map<const Bone*, ms::TransformPtr> m_bones;
     std::vector<ms::TransformPtr> m_objects;
     std::vector<ms::MeshPtr> m_meshes;
-    std::vector<ms::AnimationPtr> m_animations;
+    std::vector<ms::AnimationClipPtr> m_animations;
     std::vector<ms::MaterialPtr> m_materials;
     std::vector<std::string> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;

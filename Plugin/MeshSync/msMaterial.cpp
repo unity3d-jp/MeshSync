@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "msSceneGraph.h"
 #include "msMaterial.h"
 #include "msSceneGraphImpl.h"
 
@@ -44,7 +43,7 @@ Material * Material::make(std::istream & is)
 }
 
 #define EachMember(F)\
-    F(id) F(name) F(color) F(emission) F(metalic) F(smoothness) F(opacity)
+    F(id) F(name) F(color) F(emission) F(metalic) F(smoothness)
 
 uint32_t Material::getSerializeSize() const
 {
@@ -59,6 +58,20 @@ void Material::serialize(std::ostream& os) const
 void Material::deserialize(std::istream& is)
 {
     EachMember(Read);
+}
+
+bool Material::operator==(const Material& v) const
+{
+    return
+        name == v.name &&
+        color == v.color &&
+        emission == v.emission &&
+        metalic == v.metalic &&
+        smoothness == v.smoothness;
+}
+bool Material::operator!=(const Material& v) const
+{
+    return !(*this == v);
 }
 
 #undef EachMember

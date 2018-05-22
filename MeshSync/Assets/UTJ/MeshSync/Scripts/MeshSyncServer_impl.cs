@@ -253,6 +253,12 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
+            [DllImport("MeshSyncServer")] static extern Color msMaterialGetEmission(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmission(IntPtr _this, ref Color v);
+            [DllImport("MeshSyncServer")] static extern float msMaterialGetMetalic(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetalic(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msMaterialGetSmoothness(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetSmoothness(IntPtr _this, float v);
             #endregion
 
             public static MaterialData Create() { return msMaterialCreate(); }
@@ -268,6 +274,21 @@ namespace UTJ.MeshSync
             public Color color {
                 get { return msMaterialGetColor(_this); }
                 set { msMaterialSetColor(_this, ref value); }
+            }
+            public Color emission
+            {
+                get { return msMaterialGetEmission(_this); }
+                set { msMaterialSetEmission(_this, ref value); }
+            }
+            public float metalic
+            {
+                get { return msMaterialGetMetalic(_this); }
+                set { msMaterialSetMetalic(_this, value); }
+            }
+            public float smoothness
+            {
+                get { return msMaterialGetSmoothness(_this); }
+                set { msMaterialSetSmoothness(_this, value); }
             }
         }
 
@@ -816,7 +837,6 @@ namespace UTJ.MeshSync
             }
         }
 
-
         public struct AnimationData
         {
             #region internal
@@ -865,163 +885,28 @@ namespace UTJ.MeshSync
                         break;
                 }
             }
+        }
 
+        public struct AnimationClipData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msAnimationClipGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msAnimationClipGetNumAnimations(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern AnimationData msAnimationClipGetAnimationData(IntPtr _this, int i);
+            #endregion
 
-
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce)
+            public string name
             {
-                var ret = new AnimationCurve[3] {
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                };
-                if(times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret[0].AddKey(new Keyframe(t, v.x));
-                    ret[1].AddKey(new Keyframe(t, v.y));
-                    ret[2].AddKey(new Keyframe(t, v.z));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if(reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret[0]);
-                    AnimationCurveKeyReducer.DoReduction(ret[1]);
-                    AnimationCurveKeyReducer.DoReduction(ret[2]);
-                }
-                return ret;
+                get { return S(msAnimationClipGetName(_this)); }
             }
-
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce)
+            public int numAnimations
             {
-                var ret = new AnimationCurve[4] {
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                };
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret[0].AddKey(new Keyframe(t, v.x));
-                    ret[1].AddKey(new Keyframe(t, v.y));
-                    ret[2].AddKey(new Keyframe(t, v.z));
-                    ret[3].AddKey(new Keyframe(t, v.w));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret[0]);
-                    AnimationCurveKeyReducer.DoReduction(ret[1]);
-                    AnimationCurveKeyReducer.DoReduction(ret[2]);
-                    AnimationCurveKeyReducer.DoReduction(ret[3]);
-                }
-                return ret;
+                get { return msAnimationClipGetNumAnimations(_this); }
             }
-
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Color[] values, bool reduce)
+            public AnimationData GetAnimation(int i)
             {
-                var ret = new AnimationCurve[4] {
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                };
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret[0].AddKey(new Keyframe(t, v.r));
-                    ret[1].AddKey(new Keyframe(t, v.g));
-                    ret[2].AddKey(new Keyframe(t, v.b));
-                    ret[3].AddKey(new Keyframe(t, v.a));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret[0]);
-                    AnimationCurveKeyReducer.DoReduction(ret[1]);
-                    AnimationCurveKeyReducer.DoReduction(ret[2]);
-                    AnimationCurveKeyReducer.DoReduction(ret[3]);
-                }
-                return ret;
-            }
-
-            public static AnimationCurve ToAnimatinCurve(float[] times, float[] values, bool reduce)
-            {
-                var ret = new AnimationCurve();
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret.AddKey(new Keyframe(t, v));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret);
-                }
-                return ret;
-            }
-
-            public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce)
-            {
-                var ret = new AnimationCurve();
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret.AddKey(new Keyframe(t, v ? 0.0f : 1.0f));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret);
-                }
-                return ret;
+                return msAnimationClipGetAnimationData(_this, i);
             }
         }
 
@@ -1647,20 +1532,20 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimations(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern AnimationData msSceneGetAnimationData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimationClips(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern AnimationClipData msSceneGetAnimationClipData(IntPtr _this, int i);
             #endregion
 
             public string name { get { return S(msSceneGetName(_this)); } }
             public int numObjects { get { return msSceneGetNumObjects(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
             public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
-            public int numAnimations { get { return msSceneGetNumAnimations(_this); } }
+            public int numAnimationClips { get { return msSceneGetNumAnimationClips(_this); } }
 
             public TransformData GetObject(int i) { return msSceneGetObjectData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
             public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
-            public AnimationData GetAnimation(int i) { return msSceneGetAnimationData(_this, i); }
+            public AnimationClipData GetAnimationClip(int i) { return msSceneGetAnimationClipData(_this, i); }
         }
 
 

@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "msSceneGraph.h"
 #include "msAnimation.h"
-#include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 
 
@@ -305,6 +304,11 @@ void MeshAnimation::BlendshapeAnimation::deserialize(std::istream & is)
     read(is, weight);
 }
 
+bool MeshAnimation::BlendshapeAnimation::empty() const
+{
+    return weight.empty();
+}
+
 Animation::Type MeshAnimation::getType() const
 {
     return Type::Mesh;
@@ -343,9 +347,73 @@ bool MeshAnimation::empty() const
 void MeshAnimation::reduction()
 {
     super::reduction();
-    for (auto& bs : blendshapes) {
+
+    for (auto& bs : blendshapes)
         DoReduction(bs->weight);
-    }
+    blendshapes.erase(
+        std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
+        blendshapes.end());
+}
+
+
+AnimationClip* AnimationClip::make(std::istream& is)
+{
+    auto ret = new AnimationClip();
+    ret->deserialize(is);
+    return ret;
+}
+
+#define EachMember(F)\
+    F(name) F(animations)
+
+uint32_t AnimationClip::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    EachMember(Size);
+    return ret;
+}
+void AnimationClip::serialize(std::ostream& os) const
+{
+    EachMember(Write);
+}
+void AnimationClip::deserialize(std::istream& is)
+{
+    EachMember(Read);
+}
+
+#undef EachMember
+
+void AnimationClip::clear()
+{
+    name.clear();
+    animations.clear();
+}
+
+bool AnimationClip::empty() const
+{
+    return animations.empty();
+}
+
+void AnimationClip::reduction()
+{
+    mu::parallel_for_each(animations.begin(), animations.end(), [](ms::AnimationPtr& p) {
+        p->reduction();
+    });
+    animations.erase(
+        std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
+        animations.end());
+}
+
+void AnimationClip::convertHandedness(bool x, bool yz)
+{
+    for (auto& animation : animations)
+        animation->convertHandedness(x, yz);
+}
+
+void AnimationClip::applyScaleFactor(float scale)
+{
+    for (auto& animation : animations)
+        animation->applyScaleFactor(scale);
 }
 
 } // namespace ms

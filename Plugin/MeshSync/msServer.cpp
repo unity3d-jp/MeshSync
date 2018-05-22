@@ -323,15 +323,17 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
             }
         }
     });
-    parallel_for_each(mes->scene.animations.begin(), mes->scene.animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
-        if (swap_x || swap_yz) {
-            anim->convertHandedness(swap_x, swap_yz);
-        }
-        if (mes->scene.settings.scale_factor != 1.0f) {
-            float scale = 1.0f / mes->scene.settings.scale_factor;
-            anim->applyScaleFactor(scale);
-        }
-    });
+    for (auto& clip : mes->scene.animations) {
+        parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+            if (swap_x || swap_yz) {
+                anim->convertHandedness(swap_x, swap_yz);
+            }
+            if (mes->scene.settings.scale_factor != 1.0f) {
+                float scale = 1.0f / mes->scene.settings.scale_factor;
+                anim->applyScaleFactor(scale);
+            }
+        });
+    }
 
     {
         lock_t l(m_mutex);

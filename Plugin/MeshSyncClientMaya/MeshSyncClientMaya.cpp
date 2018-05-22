@@ -385,8 +385,7 @@ bool MeshSyncClientMaya::sendAnimations(SendScope scope)
         m_future_send.get();
     }
 
-    int num_exported = exportAnimations(scope);
-    if (num_exported > 0) {
+    if (exportAnimations(scope) > 0) {
         kickAsyncSend();
         return true;
     }

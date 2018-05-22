@@ -103,34 +103,24 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 }
 
 
-msAPI ms::Material* msMaterialCreate()
-{
-    return new ms::Material();
-}
-msAPI int msMaterialGetID(ms::Material *_this)
-{
-    return _this->id;
-}
-msAPI void msMaterialSetID(ms::Material *_this, int v)
-{
-    _this->id = v;
-}
-msAPI const char* msMaterialGetName(ms::Material *_this)
-{
-    return _this->name.c_str();
-}
-msAPI void msMaterialSetName(ms::Material *_this, const char *v)
-{
-    _this->name = v;
-}
-msAPI float4 msMaterialGetColor(ms::Material *_this)
-{
-    return _this->color;
-}
-msAPI void msMaterialSetColor(ms::Material *_this, const float4 *v)
-{
-    _this->color = *v;
-}
+msAPI ms::Material* msMaterialCreate() { return new ms::Material(); }
+msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
+msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
+msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.c_str(); }
+msAPI void          msMaterialSetName(ms::Material *_this, const char *v) { _this->name = v; }
+msAPI float4        msMaterialGetColor(ms::Material *_this) { return _this->color; }
+msAPI void          msMaterialSetColor(ms::Material *_this, const float4 *v) { _this->color = *v; }
+msAPI float4        msMaterialGetEmission(ms::Material *_this) { return _this->emission; }
+msAPI void          msMaterialSetEmission(ms::Material *_this, const float4 *v) { _this->emission = *v; }
+msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->metalic; }
+msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->metalic = v; }
+msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->smoothness; }
+msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->smoothness = v; }
+
+
+msAPI const char*       msAnimationClipGetName(ms::AnimationClip *_this) { return _this->name.c_str(); }
+msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *_this) { return (int)_this->animations.size(); }
+msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *_this, int i) { return _this->animations[i].get(); }
 
 msAPI const char* msAnimationGetPath(ms::Animation *_this) { return _this->path.c_str(); }
 msAPI ms::Animation::Type msAnimationGetType(ms::Animation *_this) { return _this->getType(); }
@@ -790,39 +780,12 @@ msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this, int
     return _this->source_data[i].rotation_offset;
 }
 
-msAPI const char* msSceneGetName(ms::Scene *_this)
-{
-    return _this->settings.name.c_str();
-}
-msAPI int msSceneGetNumObjects(ms::Scene *_this)
-{
-    return (int)_this->objects.size();
-}
-msAPI ms::Transform* msSceneGetObjectData(ms::Scene *_this, int i)
-{
-    return _this->objects[i].get();
-}
-msAPI int msSceneGetNumMaterials(ms::Scene *_this)
-{
-    return (int)_this->materials.size();
-}
-msAPI ms::Material* msSceneGetMaterialData(ms::Scene *_this, int i)
-{
-    return _this->materials[i].get();
-}
-msAPI int msSceneGetNumAnimations(ms::Scene *_this)
-{
-    return (int)_this->animations.size();
-}
-msAPI ms::Animation* msSceneGetAnimationData(ms::Scene *_this, int i)
-{
-    return _this->animations[i].get();
-}
-msAPI int msSceneGetNumConstraints(ms::Scene *_this)
-{
-    return (int)_this->constraints.size();
-}
-msAPI ms::Constraint* msSceneGetConstraintData(ms::Scene *_this, int i)
-{
-    return _this->constraints[i].get();
-}
+msAPI const char*           msSceneGetName(ms::Scene *_this)                        { return _this->settings.name.c_str(); }
+msAPI int                   msSceneGetNumObjects(ms::Scene *_this)                  { return (int)_this->objects.size(); }
+msAPI ms::Transform*        msSceneGetObjectData(ms::Scene *_this, int i)           { return _this->objects[i].get(); }
+msAPI int                   msSceneGetNumConstraints(ms::Scene *_this)              { return (int)_this->constraints.size(); }
+msAPI ms::Constraint*       msSceneGetConstraintData(ms::Scene *_this, int i)       { return _this->constraints[i].get(); }
+msAPI int                   msSceneGetNumAnimationClips(ms::Scene *_this)           { return (int)_this->animations.size(); }
+msAPI ms::AnimationClip*    msSceneGetAnimationClipData(ms::Scene *_this, int ci)   { return _this->animations[ci].get(); }
+msAPI int                   msSceneGetNumMaterials(ms::Scene *_this)                { return (int)_this->materials.size(); }
+msAPI ms::Material*         msSceneGetMaterialData(ms::Scene *_this, int i)         { return _this->materials[i].get(); }
