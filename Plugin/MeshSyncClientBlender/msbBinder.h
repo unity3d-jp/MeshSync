@@ -83,18 +83,6 @@ namespace blender
     operator Type() { return *(Type*)this; }\
     operator Type() const { return *(const Type*)this; }
 
-    struct TypeCode
-    {
-        uint16_t code;
-
-        TypeCode() : code(0) {}
-        TypeCode(char *s) : code(*(uint16_t*)s) {}
-        TypeCode(char a, char b) { auto *p = (char*)&code; p[0] = a; p[1] = b; }
-        TypeCode(int v) : code((uint16_t)v) {}
-        bool operator==(const TypeCode& v) const { return code == v.code; }
-        bool operator!=(const TypeCode& v) const { return code != v.code; }
-    };
-
     class BID
     {
     public:
@@ -112,7 +100,6 @@ namespace blender
         Compatible(BID)
 
         blist_range<ModifierData> modifiers();
-        blist_range<FCurve> fcurves();
         blist_range<bDeformGroup> deform_groups();
 
         const char *name() const;
@@ -132,7 +119,7 @@ namespace blender
         barray_range<MPoly> polygons();
         barray_range<MVert> vertices();
         barray_range<float3> normals();
-        barray_range<float2> uv();
+        barray_range<MLoopUV> uv();
         barray_range<MLoopCol> colors();
 
         void calc_normals_split();
@@ -148,17 +135,6 @@ namespace blender
         barray_range<BMVert*> vertices();
         barray_range<BMTriangle> triangles();
         int uv_data_offset() const;
-    };
-
-
-    class BFCurve
-    {
-    public:
-        Boilerplate(FCurve)
-
-        const char *path() const;
-        int array_index() const;
-        float evaluate(float time);
     };
 
     class BMaterial
@@ -179,7 +155,8 @@ namespace blender
         Boilerplate(Camera)
         Compatible(BID)
 
-        float fov() const;
+        float fov_vertical() const;
+        float fov_horizontal() const;
     };
 
     class BScene

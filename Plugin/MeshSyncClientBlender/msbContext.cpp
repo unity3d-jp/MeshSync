@@ -106,7 +106,7 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
     ortho = data->type == CAM_ORTHO;
     near_plane = data->clipsta;
     far_plane = data->clipend;
-    fov = bl::BCamera(data).fov() * mu::Rad2Deg;
+    fov = bl::BCamera(data).fov_vertical() * mu::Rad2Deg;
 }
 
 void msbContext::extractCameraData(ms::Camera& dst, Object *src)
@@ -317,11 +317,11 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
 
     // uv
     if (m_settings.sync_uvs) {
-        auto uv = bmesh.uv();
-        if (!uv.empty()) {
+        auto loop_uv = bmesh.uv();
+        if (!loop_uv.empty()) {
             dst.uv0.resize_discard(num_indices);
             for (size_t ii = 0; ii < num_indices; ++ii)
-                dst.uv0[ii] = uv[ii];
+                dst.uv0[ii] = (float2&)loop_uv[ii].uv;
         }
     }
 
