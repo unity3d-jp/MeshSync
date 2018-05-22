@@ -1,3 +1,6 @@
++ MAYAVERSION:2016 UnityMeshSync 20180514 ./UnityMeshSync/2016
+scripts: scripts
+
 + MAYAVERSION:2016.5 UnityMeshSync 20180514 ./UnityMeshSync/2016.5
 scripts: scripts
 

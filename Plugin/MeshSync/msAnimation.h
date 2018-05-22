@@ -4,6 +4,7 @@
 #include <vector>
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
+#include "msSceneGraph.h"
 
 namespace ms {
 

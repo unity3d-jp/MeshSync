@@ -13,7 +13,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
 ### Maya
-- Maya 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
+- Maya 2016 - 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
 - インストールするには、プラグインを Maya の module path が通っているディレクトリにコピーします。
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
   - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
