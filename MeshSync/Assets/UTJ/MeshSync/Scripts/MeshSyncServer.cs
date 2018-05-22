@@ -3,7 +3,9 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+#if UNITY_2017_1_OR_NEWER
 using UnityEngine.Animations;
+#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -13,7 +15,7 @@ namespace UTJ.MeshSync
     [ExecuteInEditMode]
     public partial class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
-        #region fields
+#region fields
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
@@ -38,13 +40,13 @@ namespace UTJ.MeshSync
         [HideInInspector][SerializeField] int[] m_objIDTable_values;
 
         Dictionary<GameObject, AnimationClip> m_animClipCache;
-        #endregion
+#endregion
 
-        #region properties
+#region properties
         public List<MaterialHolder> materialData { get { return m_materialList; } }
-        #endregion
+#endregion
 
-        #region impl
+#region impl
 #if UNITY_EDITOR
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         public static void CreateMeshSyncServer(MenuCommand menuCommand)
@@ -1271,7 +1273,12 @@ namespace UTJ.MeshSync
         void OnRecvScreenshot(IntPtr data)
         {
             ForceRepaint();
+
+#if UNITY_2017_1_OR_NEWER
             ScreenCapture.CaptureScreenshot("screenshot.png");
+#else
+            Application.CaptureScreenshot("screenshot.png");
+#endif
             // actual capture will be done at end of frame. not done immediately.
             // just set flag now.
             m_captureScreenshotInProgress = true;

@@ -81,7 +81,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 
 ### Unity
-- Unity 2017.1 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
+- Unity 5.6 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
 - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases) をプロジェクトにインポートします。
 - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
 - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
@@ -102,11 +102,6 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
   MesySyncServer の "Generate Lightmap UV" ボタンを押すとそのライトマップ用 UV を生成します。この処理は結構時間がかかるのでご注意ください。
 
 
-- ランタイム対応
-  - 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。
-
-
-
 ## Tips や注意事項など
 - 同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
 
@@ -123,7 +118,10 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
   これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
 
 
-##  関連  
+- 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。
+
+
+##  関連
 - [NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするツール
 - [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール
 
