@@ -62,6 +62,45 @@ static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug
 static std::unique_ptr<MeshSyncClientMaya> g_plugin;
 
 
+void MeshSyncClientMaya::ObjectRecord::clear()
+{
+    if (dagpaths.length() > 0) {
+        dagpaths_prev = dagpaths;
+        dagpaths.clear();
+    }
+    dirty_shape = dirty_transform = false;
+}
+bool MeshSyncClientMaya::ObjectRecord::isAdded(const MDagPath& dpath) const
+{
+    return Find(dagpaths, dpath);
+}
+bool MeshSyncClientMaya::ObjectRecord::wasAdded(const MDagPath& dpath) const
+{
+    return Find(dagpaths_prev, dpath);
+}
+void MeshSyncClientMaya::ObjectRecord::addAdded(const MDagPath& dpath)
+{
+    dagpaths.append(dpath);
+}
+
+void MeshSyncClientMaya::ObjectRecord::dbgPrint() const
+{
+    mscTrace("path:\n");
+    EachPath(node, [](const MDagPath& dpath) {
+        mscTrace("  %s\n", GetPath(dpath).c_str());
+    });
+    mscTrace("added:\n");
+    Each(dagpaths, [](const MDagPath& dpath) {
+        mscTrace("  %s\n", GetPath(dpath).c_str());
+    });
+    mscTrace("prev added:\n");
+    Each(dagpaths_prev, [](const MDagPath& dpath) {
+        mscTrace("  %s\n", GetPath(dpath).c_str());
+    });
+}
+
+
+
 MeshSyncClientMaya& MeshSyncClientMaya::getInstance()
 {
     return *g_plugin;
@@ -120,22 +159,22 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
 void MeshSyncClientMaya::registerNodeCallbacks()
 {
     // cameras
-    Enumerate(MFn::kCamera, [this](MObject& shape) {
+    EnumerateNode(MFn::kCamera, [this](MObject& shape) {
         registerNodeCallback(GetTransform(shape));
     });
 
     // lights
-    Enumerate(MFn::kLight, [this](MObject& shape) {
+    EnumerateNode(MFn::kLight, [this](MObject& shape) {
         registerNodeCallback(GetTransform(shape));
     });
 
     // joints
-    Enumerate(MFn::kJoint, [this](MObject& node) {
+    EnumerateNode(MFn::kJoint, [this](MObject& node) {
         registerNodeCallback(node);
     });
 
     //  meshes
-    Enumerate(MFn::kMesh, [this](MObject& shape) {
+    EnumerateNode(MFn::kMesh, [this](MObject& shape) {
         registerNodeCallback(GetTransform(shape));
     });
 }
@@ -225,53 +264,47 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
     return it != m_material_id_table.end() ? (int)std::distance(m_material_id_table.begin(), it) : -1;
 }
 
-ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
+bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
 {
+    auto node = dagpath.transform();
     if (node.isNull())
-        return nullptr;
+        return false;
 
     auto& rec = findOrAddRecord(node);
-    if (rec.added)
-        return nullptr;
+    if (rec.isAdded(dagpath))
+        return false;
 
     auto shape = GetShape(node);
 
-    // check rename / re-parenting
-    auto path = GetPath(node);
-    if (rec.path != path) {
-        mscTrace("rename %s -> %s\n", rec.path.c_str(), path.c_str());
-        m_deleted.push_back(rec.path);
-        rec.name = GetName(node);
-        rec.path = path;
-        rec.dirty_transform = true;
-        rec.dirty_shape = true;
-    }
-
     ms::TransformPtr ret;
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
-        exportObject(GetParent(node), true);
+        exportObject(GetParent(dagpath), true);
         auto dst = ms::MeshPtr(new ms::Mesh());
+        dst->path = GetPath(dagpath);
         extractMeshData(*dst, node);
         m_client_meshes.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
-        exportObject(GetParent(node), true);
+        exportObject(GetParent(dagpath), true);
         auto dst = ms::CameraPtr(new ms::Camera());
+        dst->path = GetPath(dagpath);
         extractCameraData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
-        exportObject(GetParent(node), true);
+        exportObject(GetParent(dagpath), true);
         auto dst = ms::LightPtr(new ms::Light());
+        dst->path = GetPath(dagpath);
         extractLightData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
-    else if((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
-        exportObject(GetParent(node), true);
+    else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
+        exportObject(GetParent(dagpath), true);
         auto dst = ms::TransformPtr(new ms::Transform());
+        dst->path = GetPath(dagpath);
         extractTransformData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
@@ -279,18 +312,19 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(MObject node, bool force)
 
     if (ret) {
         ret->index = rec.index;
-        rec.added = true;
+        rec.addAdded(dagpath);
+        return true;
     }
-    return ret;
+    else {
+        return false;
+    }
 }
 
 MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject node)
 {
     auto& rec = m_records[(void*&)node];
-    if (rec.path.empty()) {
+    if (rec.node.isNull()) {
         rec.node = node;
-        rec.name = GetName(node);
-        rec.path = GetPath(node);
         rec.index = ++m_index_seed;
     }
     return rec;
@@ -335,26 +369,28 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
 
     int num_exported = 0;
     if (scope == SendScope::All) {
-        auto exportShape = [this, &num_exported](MObject& shape) {
-            if (exportObject(GetTransform(shape), false))
+        auto exportShape = [this, &num_exported](const MDagPath& shape) {
+            if (exportObject(GetParent(shape), false))
                 ++num_exported;
         };
-        auto exportNode = [this, &num_exported](MObject& node) {
+        auto exportNode = [this, &num_exported](const MDagPath& node) {
             if (exportObject(node, false))
                 ++num_exported;
         };
 
-        Enumerate(MFn::kCamera, exportShape);
-        Enumerate(MFn::kLight, exportShape);
-        Enumerate(MFn::kJoint, exportNode);
-        Enumerate(MFn::kMesh, exportShape);
+        EnumeratePath(MFn::kJoint, exportNode);
+        EnumeratePath(MFn::kCamera, exportShape);
+        EnumeratePath(MFn::kLight, exportShape);
+        EnumeratePath(MFn::kMesh, exportShape);
     }
     else if (scope == SendScope::Updated) {
         for (auto& kvp : m_records) {
             auto& rec = kvp.second;
             if (rec.dirty_transform || rec.dirty_shape) {
-                if (exportObject(rec.node, false))
-                    ++num_exported;
+                EachPath(rec.node, [&](const MDagPath& node) {
+                    if (exportObject(node, false))
+                        ++num_exported;
+                });
             }
         }
     }
@@ -362,14 +398,14 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
         for (uint32_t i = 0; i < list.length(); i++) {
-            MObject node;
-            list.getDependNode(i, node);
+            MDagPath node;
+            list.getDagPath(i, node);
             if (exportObject(node, false))
                 ++num_exported;
         }
     }
 
-    if (num_exported > 0 || !m_deleted.empty()) {
+    if (num_exported > 0 || m_deleted.length() > 0) {
         kickAsyncSend();
         return true;
     }
@@ -439,7 +475,9 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
     if (node.hasFn(MFn::kTransform)) {
         auto it = m_records.find((void*&)node);
         if (it != m_records.end()) {
-            m_deleted.push_back(it->second.path);
+            Each(it->second.dagpaths_prev, [this](const MDagPath& dp) {
+                m_deleted.append(dp);
+            });
             m_records.erase(it);
         }
     }
@@ -457,8 +495,7 @@ void MeshSyncClientMaya::kickAsyncSend()
     m_material_id_table.clear();
 
     for (auto& kvp : m_records) {
-        auto& rec = kvp.second;
-        rec.added = rec.dirty_shape = rec.dirty_transform = false;
+        kvp.second.clear();
     }
 
     float to_meter = 1.0f;
@@ -483,14 +520,15 @@ void MeshSyncClientMaya::kickAsyncSend()
         }
 
         // send delete message
-        if(!m_deleted.empty()) {
+        uint32_t num_deleted = m_deleted.length();
+        if(num_deleted > 0) {
             ms::DeleteMessage del;
-            del.targets.resize(m_deleted.size());
-            for (size_t i = 0; i < m_deleted.size(); ++i) {
-                del.targets[i].path = m_deleted[i];
-            }
-            client.send(del);
+            del.targets.resize(num_deleted);
+            for (uint32_t i = 0; i < num_deleted; ++i)
+                del.targets[i].path = GetPath(m_deleted[i]);
             m_deleted.clear();
+
+            client.send(del);
         }
 
         // send scene data

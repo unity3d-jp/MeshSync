@@ -3,7 +3,7 @@
 #include "MayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
-bool IsVisible(MObject node)
+bool IsVisible(const MObject& node)
 {
     MFnDagNode dag(node);
     auto vis = dag.findPlug("visibility");
@@ -12,24 +12,25 @@ bool IsVisible(MObject node)
     return visible;
 }
 
-std::string GetName(MObject node)
+std::string GetName(const MObject& node)
 {
     MFnDependencyNode fn_node(node);
     return fn_node.name().asChar();
 }
-std::string GetPath(MDagPath path)
+std::string GetPath(const MDagPath& path)
 {
     std::string ret = path.fullPathName().asChar();
     std::replace(ret.begin(), ret.end(), '|', '/');
     return ret;
 }
-std::string GetPath(MObject node)
+std::string GetPath(const MObject& node)
 {
     return GetPath(GetDagPath(node));
 }
 
-std::string GetRootBonePath(MObject joint)
+std::string GetRootBonePath(const MObject& joint_)
 {
+    auto joint = joint_;
     for (;;) {
         MObject parent = GetParent(joint);
         if (parent.isNull() || !parent.hasFn(MFn::kJoint))
@@ -40,52 +41,66 @@ std::string GetRootBonePath(MObject joint)
 }
 
 
-MUuid GetUUID(MObject node)
+MUuid GetUUID(const MObject& node)
 {
     return MFnDependencyNode(node).uuid();
 }
 
-std::string GetUUIDString(MObject node)
+std::string GetUUIDString(const MObject& node)
 {
     return GetUUID(node).asString().asChar();
 }
 
-MDagPath GetDagPath(MObject node)
+MDagPath GetDagPath(const MObject& node)
 {
     MDagPath ret;
     MDagPath::getAPathTo(node, ret);
     return ret;
 }
 
-MObject GetTransform(MDagPath path)
+MObject GetTransform(const MDagPath& path)
 {
     return path.transform();
 }
-MObject GetTransform(MObject node)
+MObject GetTransform(const MObject& node)
 {
     return GetTransform(GetDagPath(node));
 }
 
-MObject GetShape(MObject node)
+MObject GetShape(const MDagPath& path_)
+{
+    auto path = path_;
+    path.extendToShape();
+    return path.node();
+}
+
+MObject GetShape(const MObject& node)
 {
     auto path = GetDagPath(node);
     path.extendToShape();
     return path.node();
 }
 
-MObject GetParent(MObject node)
+MDagPath GetParent(const MDagPath & node)
+{
+    MDagPath ret = node;
+    ret.pop(1);
+    return ret;
+}
+
+MObject GetParent(const MObject& node)
 {
     MFnDagNode dn(GetDagPath(node));
     return dn.parentCount() > 0 ? dn.parent(0) : MObject();
 }
 
-bool IsInstance(MObject node)
+bool IsInstance(const MObject& node)
 {
     MFnDagNode dn(node);
     return dn.isInstanced(false);
 }
 
-MObject FindMesh(MObject node)
+MObject FindMesh(const MObject& node)
 {
     auto path = GetDagPath(node);
     if (path.extendToShape() == MS::kSuccess) {
@@ -97,8 +112,9 @@ MObject FindMesh(MObject node)
     return MObject();
 }
 
-MObject FindSkinCluster(MObject node)
+MObject FindSkinCluster(const MObject& node_)
 {
+    auto node = node_;
     if (!node.hasFn(MFn::kMesh)) {
         node = FindMesh(GetTransform(node));
     }
@@ -110,8 +126,9 @@ MObject FindSkinCluster(MObject node)
     return MObject();
 }
 
-MObject FindBlendShape(MObject node)
+MObject FindBlendShape(const MObject& node_)
 {
+    auto node = node_;
     if (!node.hasFn(MFn::kMesh)) {
         node = FindMesh(GetTransform(node));
     }
@@ -123,7 +140,7 @@ MObject FindBlendShape(MObject node)
     return MObject();
 }
 
-MObject FindOrigMesh(MObject node)
+MObject FindOrigMesh(const MObject& node)
 {
     MObject ret;
     EachChild(node, [&](MObject child) {

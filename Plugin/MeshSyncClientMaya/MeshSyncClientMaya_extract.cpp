@@ -24,7 +24,7 @@ void MeshSyncClientMaya::exportMaterials()
     }
 }
 
-void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, MObject src)
+void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, const MObject& src)
 {
     doExtractTransformData(dst, src);
 }
@@ -58,14 +58,13 @@ static inline void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf&
     vis = IsVisible(src);
 }
 
-void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, MObject src)
+void MeshSyncClientMaya::doExtractTransformData(ms::Transform & dst, const MObject& src)
 {
-    dst.path = GetPath(src);
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 }
 
 
-void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, MObject src)
+void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, const MObject& src)
 {
     doExtractTransformData(dst, src);
     doExtractCameraData(dst, src);
@@ -87,7 +86,7 @@ static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane
     focus_distance = (float)mcam.focusDistance();
 }
 
-void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
+void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, const MObject& src)
 {
     dst.rotation = mu::flipY(dst.rotation);
 
@@ -102,7 +101,7 @@ void MeshSyncClientMaya::doExtractCameraData(ms::Camera & dst, MObject src)
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 }
 
-void MeshSyncClientMaya::extractLightData(ms::Light& dst, MObject src)
+void MeshSyncClientMaya::extractLightData(ms::Light& dst, const MObject& src)
 {
     doExtractTransformData(dst, src);
     doExtractLightData(dst, src);
@@ -122,7 +121,7 @@ static void ExtractLightData(MObject shape, mu::float4& color, float& intensity,
     intensity = mlight.intensity();
 }
 
-void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
+void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, const MObject& src)
 {
     dst.rotation = mu::flipY(dst.rotation);
 
@@ -151,7 +150,7 @@ void MeshSyncClientMaya::doExtractLightData(ms::Light & dst, MObject src)
 }
 
 
-void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
+void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, const MObject& src)
 {
     if (m_material_id_table.empty()) {
         exportMaterials();
@@ -169,7 +168,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, MObject src)
     }
 }
 
-void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MObject src)
+void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& src)
 {
     auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return; }

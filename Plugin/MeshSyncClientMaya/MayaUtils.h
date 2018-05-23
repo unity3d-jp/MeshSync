@@ -2,26 +2,28 @@
 
 #define InchToMillimeter 25.4f
 
-std::string GetName(MObject node);
-std::string GetPath(MDagPath path);
-std::string GetPath(MObject node);
-std::string GetRootBonePath(MObject joint);
+std::string GetName(const MObject& node);
+std::string GetPath(const MDagPath& path);
+std::string GetPath(const MObject& node);
+std::string GetRootBonePath(const MObject& joint);
 
-MUuid GetUUID(MObject node);
-std::string GetUUIDString(MObject node);
+MUuid GetUUID(const MObject& node);
+std::string GetUUIDString(const MObject& node);
 
-MDagPath GetDagPath(MObject node);
-bool IsVisible(MObject node);
-MObject GetTransform(MDagPath path);
-MObject GetTransform(MObject node);
-MObject GetShape(MObject node);
-MObject GetParent(MObject node);
-bool IsInstance(MObject node);
+MDagPath GetDagPath(const MObject& node);
+bool IsVisible(const MObject& node);
+MObject GetTransform(const MDagPath& path);
+MObject GetTransform(const MObject& node);
+MObject GetShape(const MDagPath& node);
+MObject GetShape(const MObject& node);
+MDagPath GetParent(const MDagPath& node);
+MObject GetParent(const MObject& node);
+bool IsInstance(const MObject& node);
 
-MObject FindMesh(MObject node);
-MObject FindSkinCluster(MObject node);
-MObject FindBlendShape(MObject node);
-MObject FindOrigMesh(MObject node);
+MObject FindMesh(const MObject& node);
+MObject FindSkinCluster(const MObject& node);
+MObject FindBlendShape(const MObject& node);
+MObject FindOrigMesh(const MObject& node);
 
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
@@ -108,10 +110,27 @@ inline mu::float3 to_float3(const MPlug plug)
 }
 
 
+inline bool Find(const MDagPathArray& dagpaths, const MDagPath& dpath)
+{
+    uint32_t len = dagpaths.length();
+    for (uint32_t i = 0; i < len; ++i) {
+        if (dagpaths[i] == dpath)
+            return true;
+    }
+    return false;
+}
+
+template<class Body>
+void Each(const MDagPathArray& dagpaths, const Body& body)
+{
+    uint32_t len = dagpaths.length();
+    for (uint32_t i = 0; i < len; ++i)
+        body(dagpaths[i]);
+}
 
 // body: [](MObject&) -> void
 template<class Body>
-void EnumerateNode(MFn::Type type, const Body& body)
+inline void EnumerateNode(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     while (!it.isDone()) {
@@ -123,7 +142,7 @@ void EnumerateNode(MFn::Type type, const Body& body)
 
 // body: [](MDagPath&) -> void
 template<class Body>
-void EnumeratePath(MFn::Type type, const Body& body)
+inline void EnumeratePath(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     MDagPath path;
@@ -136,7 +155,7 @@ void EnumeratePath(MFn::Type type, const Body& body)
 
 // body: [](MDagPath&) -> void
 template<class Body>
-void EachPath(MObject node, const Body& body)
+inline void EachPath(MObject node, const Body& body)
 {
     MDagPathArray pa;
     MDagPath::getAllPathsTo(node, pa);
@@ -159,7 +178,7 @@ inline void EachChild(MObject node, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-void EachConstraints(MObject node, const Body& body)
+inline void EachConstraints(MObject node, const Body& body)
 {
     MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {

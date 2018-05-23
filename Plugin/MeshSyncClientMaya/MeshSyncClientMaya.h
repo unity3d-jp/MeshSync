@@ -62,14 +62,19 @@ private:
     struct ObjectRecord
     {
         MObject node;
-        std::string name;
-        std::string path;
+        MDagPathArray dagpaths;
+        MDagPathArray dagpaths_prev;
         MCallbackId cid_trans = 0;
         MCallbackId cid_shape = 0;
         int index = 0;
         bool dirty_transform = true;
         bool dirty_shape = true;
-        bool added = false;
+
+        void clear();
+        bool isAdded(const MDagPath& dpath) const;
+        bool wasAdded(const MDagPath& dpath) const;
+        void addAdded(const MDagPath& dpath);
+        void dbgPrint() const;
     };
 
     ObjectRecord& findOrAddRecord(MObject node);
@@ -81,19 +86,19 @@ private:
     bool registerNodeCallback(MObject node, bool leaf = true);
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
-    int getMaterialID(MUuid uid);
 
-    ms::TransformPtr exportObject(MObject obj, bool force);
+    int getMaterialID(MUuid uid);
     void exportMaterials();
 
-    void extractTransformData(ms::Transform& dst, MObject src);
-    void doExtractTransformData(ms::Transform& dst, MObject src);
-    void extractCameraData(ms::Camera& dst, MObject src);
-    void doExtractCameraData(ms::Camera& dst, MObject src);
-    void extractLightData(ms::Light& dst, MObject src);
-    void doExtractLightData(ms::Light& dst, MObject src);
-    void extractMeshData(ms::Mesh& dst, MObject src);
-    void doExtractMeshData(ms::Mesh& dst, MObject src);
+    bool exportObject(MDagPath obj, bool force);
+    void extractTransformData(ms::Transform& dst, const MObject& src);
+    void doExtractTransformData(ms::Transform& dst, const MObject& src);
+    void extractCameraData(ms::Camera& dst, const MObject& src);
+    void doExtractCameraData(ms::Camera& dst, const MObject& src);
+    void extractLightData(ms::Light& dst, const MObject& src);
+    void doExtractLightData(ms::Light& dst, const MObject& src);
+    void extractMeshData(ms::Mesh& dst, const MObject& src);
+    void doExtractMeshData(ms::Mesh& dst, const MObject& src);
 
     int exportAnimations(SendScope scope);
     void exportAnimation(MObject src, MObject shape);
@@ -121,7 +126,7 @@ private:
     std::vector<ms::MaterialPtr>      m_client_materials;
     std::vector<ms::AnimationClipPtr> m_client_animations;
     std::vector<ms::ConstraintPtr>    m_client_constraints;
-    std::vector<std::string>          m_deleted;
+    MDagPathArray                     m_deleted;
     ObjectRecords       m_records;
     std::future<void>   m_future_send;
 
