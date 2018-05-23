@@ -586,10 +586,10 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
         auto exportShape = [this](MObject& shape) {
             exportAnimation(GetTransform(shape), shape);
         };
-        Enumerate(MFn::kJoint, exportNode);
-        Enumerate(MFn::kCamera, exportShape);
-        Enumerate(MFn::kLight, exportShape);
-        Enumerate(MFn::kMesh, exportShape);
+        EnumerateNode(MFn::kJoint, exportNode);
+        EnumerateNode(MFn::kCamera, exportShape);
+        EnumerateNode(MFn::kLight, exportShape);
+        EnumerateNode(MFn::kMesh, exportShape);
     }
 
     // extract

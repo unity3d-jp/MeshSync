@@ -52,7 +52,9 @@ std::string GetUUIDString(MObject node)
 
 MDagPath GetDagPath(MObject node)
 {
-    return MDagPath::getAPathTo(node);
+    MDagPath ret;
+    MDagPath::getAPathTo(node, ret);
+    return ret;
 }
 
 MObject GetTransform(MDagPath path)
@@ -75,6 +77,12 @@ MObject GetParent(MObject node)
 {
     MFnDagNode dn(GetDagPath(node));
     return dn.parentCount() > 0 ? dn.parent(0) : MObject();
+}
+
+bool IsInstance(MObject node)
+{
+    MFnDagNode dn(node);
+    return dn.isInstanced(false);
 }
 
 MObject FindMesh(MObject node)

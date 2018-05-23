@@ -16,6 +16,7 @@ MObject GetTransform(MDagPath path);
 MObject GetTransform(MObject node);
 MObject GetShape(MObject node);
 MObject GetParent(MObject node);
+bool IsInstance(MObject node);
 
 MObject FindMesh(MObject node);
 MObject FindSkinCluster(MObject node);
@@ -110,13 +111,38 @@ inline mu::float3 to_float3(const MPlug plug)
 
 // body: [](MObject&) -> void
 template<class Body>
-void Enumerate(MFn::Type type, const Body& body)
+void EnumerateNode(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     while (!it.isDone()) {
         auto obj = it.item();
         body(obj);
         it.next();
+    }
+}
+
+// body: [](MDagPath&) -> void
+template<class Body>
+void EnumeratePath(MFn::Type type, const Body& body)
+{
+    MItDag it(MItDag::kDepthFirst, type);
+    MDagPath path;
+    while (!it.isDone()) {
+        it.getPath(path);
+        body(path);
+        it.next();
+    }
+}
+
+// body: [](MDagPath&) -> void
+template<class Body>
+void EachPath(MObject node, const Body& body)
+{
+    MDagPathArray pa;
+    MDagPath::getAllPathsTo(node, pa);
+    uint32_t len = pa.length();
+    for (uint32_t i = 0; i < len; ++i) {
+        body(pa[i]);
     }
 }
 
