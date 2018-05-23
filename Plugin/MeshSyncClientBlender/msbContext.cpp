@@ -23,7 +23,7 @@ const msbSettings& msbContext::getSettings() const { return m_settings; }
 
 ms::TransformPtr msbContext::addTransform(std::string path)
 {
-    auto ret = ms::TransformPtr(new ms::Transform());
+    auto ret = ms::Transform::create();
     ret->path = path;
     m_objects.push_back(ret);
     return ret;
@@ -31,7 +31,7 @@ ms::TransformPtr msbContext::addTransform(std::string path)
 
 ms::CameraPtr msbContext::addCamera(std::string path)
 {
-    auto ret = ms::CameraPtr(new ms::Camera());
+    auto ret = ms::Camera::create();
     ret->path = path;
     m_objects.push_back(ret);
     return ret;
@@ -39,7 +39,7 @@ ms::CameraPtr msbContext::addCamera(std::string path)
 
 ms::LightPtr msbContext::addLight(std::string path)
 {
-    auto ret = ms::LightPtr(new ms::Light());
+    auto ret = ms::Light::create();
     ret->path = path;
     m_objects.push_back(ret);
     return ret;
@@ -47,7 +47,7 @@ ms::LightPtr msbContext::addLight(std::string path)
 
 ms::MeshPtr msbContext::addMesh(std::string path)
 {
-    auto ret = ms::MeshPtr(new ms::Mesh());
+    auto ret = ms::Mesh::create();
     ret->path = path;
     m_meshes.push_back(ret);
     return ret;
@@ -61,7 +61,7 @@ void msbContext::addDeleted(const std::string& path)
 
 ms::MaterialPtr msbContext::addMaterial(Material * mat)
 {
-    auto ret = ms::MaterialPtr(new ms::Material());
+    auto ret = ms::Material::create();
     ret->name = mat->id.name + 2;
     ret->id = (int)m_materials.size();
     {
@@ -712,7 +712,7 @@ void msbContext::sendAnimations(SendScope scope)
     m_ignore_update = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
-    m_animations.emplace_back(new ms::AnimationClip()); // create default clip
+    m_animations.push_back(ms::AnimationClip::create()); // create default clip
 
     // list target objects
     if (scope == SendScope::Selected) {
@@ -776,67 +776,51 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         return;
 
     auto& clip = m_animations.front();
+    ms::AnimationPtr dst;
+    AnimationRecord::extractor_t extractor = nullptr;
+
+    auto add_animation = [this, &clip](const std::string& path, void *obj, ms::AnimationPtr dst, AnimationRecord::extractor_t extractor) {
+        dst->path = path;
+        auto& rec = m_anim_records[path];
+        rec.extractor = extractor;
+        rec.obj = obj;
+        rec.dst = dst.get();
+        clip->animations.push_back(dst);
+    };
 
     switch (obj->type) {
     case OB_CAMERA:
     {
         // camera
         exportAnimation(obj->parent, true, base_path);
-        auto& rec = m_anim_records[path];
-        rec.extractor = &msbContext::extractCameraAnimationData;
-        rec.obj = obj;
-        rec.dst = new ms::CameraAnimation();
-        rec.dst->path = path;
-        clip->animations.emplace_back(rec.dst);
+        add_animation(path, obj, ms::CameraAnimation::create(), &msbContext::extractCameraAnimationData);
         break;
     }
     case OB_LAMP:
     {
         // lights
         exportAnimation(obj->parent, true, base_path);
-        auto& rec = m_anim_records[path];
-        rec.extractor = &msbContext::extractLightAnimationData;
-        rec.obj = obj;
-        rec.dst = new ms::LightAnimation();
-        rec.dst->path = path;
-        clip->animations.emplace_back(rec.dst);
+        add_animation(path, obj, ms::LightAnimation::create(), &msbContext::extractLightAnimationData);
         break;
     }
     case OB_MESH:
     {
         // meshes
         exportAnimation(obj->parent, true, base_path);
-        auto& rec = m_anim_records[path];
-        rec.extractor = &msbContext::extractMeshAnimationData;
-        rec.obj = obj;
-        rec.dst = new ms::MeshAnimation();
-        rec.dst->path = path;
-        clip->animations.emplace_back(rec.dst);
+        add_animation(path, obj, ms::MeshAnimation::create(), &msbContext::extractMeshAnimationData);
         break;
     }
     default:
     if (force || obj->type == OB_ARMATURE || obj->dup_group) {
         exportAnimation(obj->parent, true, base_path);
-        {
-            auto& rec = m_anim_records[path];
-            rec.extractor = &msbContext::extractTransformAnimationData;
-            rec.obj = obj;
-            rec.dst = new ms::TransformAnimation();
-            rec.dst->path = path;
-            clip->animations.emplace_back(rec.dst);
-        }
+        add_animation(path, obj, ms::TransformAnimation::create(), &msbContext::extractTransformAnimationData);
 
         if (obj->type == OB_ARMATURE) {
             // bones
             auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
             for (auto pose : poses) {
                 auto pose_path = base_path + get_path(obj, pose->bone);
-                auto& rec = m_anim_records[pose_path];
-                rec.extractor = &msbContext::extractPoseAnimationData;
-                rec.obj = pose;
-                rec.dst = new ms::TransformAnimation();
-                rec.dst->path = pose_path;
-                clip->animations.emplace_back(rec.dst);
+                add_animation(pose_path, pose, ms::TransformAnimation::create(), &msbContext::extractPoseAnimationData);
             }
         }
         break;
@@ -959,7 +943,7 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
                     }
                 }
                 if (!dst_bs) {
-                    dst_bs.reset(new ms::MeshAnimation::BlendshapeAnimation());
+                    dst_bs = ms::MeshAnimation::BlendshapeAnimation::create();
                     dst_bs->name = kb->name;
                     dst.blendshapes.push_back(dst_bs);
                 }

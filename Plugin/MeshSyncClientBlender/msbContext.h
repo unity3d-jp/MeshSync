@@ -121,9 +121,11 @@ private:
     // animation export
     struct AnimationRecord
     {
+        using extractor_t = void (msbContext::*)(ms::Animation& dst, void *obj);
+
         void *obj;
         ms::Animation *dst = nullptr;
-        void (msbContext::*extractor)(ms::Animation& dst, void *obj) = nullptr;
+        extractor_t extractor = nullptr;
 
         void operator()(msbContext *_this)
         {

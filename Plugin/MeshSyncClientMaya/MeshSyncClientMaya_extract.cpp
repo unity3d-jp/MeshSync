@@ -554,7 +554,7 @@ bool MeshSyncClientMaya::AnimationRecord::isAdded(const MDagPath& dp) const
     return false;
 }
 
-void MeshSyncClientMaya::AnimationRecord::add(const MDagPath& dp, ms::Animation *dst, extractror_t extractor)
+void MeshSyncClientMaya::AnimationRecord::add(const MDagPath& dp, ms::Animation *dst, extractor_t extractor)
 {
     paths.push_back({ dp, dst, extractor });
 }
@@ -652,7 +652,7 @@ bool MeshSyncClientMaya::exportAnimation(const MDagPath& src)
     }
 
     ms::AnimationPtr dst;
-    AnimationRecord::extractror_t extractor = nullptr;
+    AnimationRecord::extractor_t extractor = nullptr;
 
     if (MAnimUtil::isAnimated(node) || MAnimUtil::isAnimated(shape)) {
         if (shape.hasFn(MFn::kCamera)) {

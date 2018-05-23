@@ -165,7 +165,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         {
             while ((int)m_client_meshes.size() < num_mesh_data) {
-                m_client_meshes.emplace_back(new ms::Mesh());
+                m_client_meshes.push_back(ms::Mesh::create());
             }
 
             int mi = 0;
@@ -198,24 +198,23 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         int nmat = doc->GetMaterialCount();
         m_materials.reserve(nmat);
         for (int i = 0; i < nmat; ++i) {
+            auto dst = ms::Material::create();
             auto src = doc->GetMaterial(i);
             if (!src) {
                 // add dummy material to keep material index
-                auto dst = new ms::Material();
                 dst->id = -1;
-                m_materials.emplace_back(dst);
-                continue;
             }
-
-            auto dst = new ms::Material();
-            dst->id = src->GetUniqueID();
-            {
-                char name[128];
-                src->GetName(name, sizeof(name));
-                dst->name = ms::ToUTF8(name);
+            else {
+                auto dst = ms::Material::create();
+                dst->id = src->GetUniqueID();
+                {
+                    char name[128];
+                    src->GetName(name, sizeof(name));
+                    dst->name = ms::ToUTF8(name);
+                }
+                (float3&)dst->color = to_float3(src->GetColor());
             }
-            (float3&)dst->color = to_float3(src->GetColor());
-            m_materials.emplace_back(dst);
+            m_materials.push_back(dst);
         }
     }
 
@@ -303,8 +302,8 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                         rel.data->root_bone = it->second.transform->path;
                     }
 
-                    auto data = new ms::BoneData();
-                    rel.data->bones.emplace_back(data);
+                    auto data = ms::BoneData::create();
+                    rel.data->bones.push_back(data);
                     rel.data->flags.has_bones = 1;
                     auto& bone = m_bones[bid];
                     data->path = bone.transform->path;
@@ -441,7 +440,7 @@ void MQSync::sendCamera(MQDocument doc, bool force)
     // gather camera data
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
         if (!m_camera) {
-            m_camera.reset(new ms::Camera());
+            m_camera = ms::Camera::create();
             m_camera->near_plane *= m_scale_factor;
             m_camera->far_plane *= m_scale_factor;
         }

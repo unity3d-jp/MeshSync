@@ -140,19 +140,19 @@ private:
     // animation export
     struct AnimationRecord
     {
-        using extractror_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, const MObject& node, const MObject& shape);
+        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, const MObject& node, const MObject& shape);
         struct Path
         {
             MDagPath dagpath;
             ms::Animation *dst = nullptr;
-            extractror_t extractor = nullptr;
+            extractor_t extractor = nullptr;
         };
 
         MObject node, shape;
         std::vector<Path> paths;
 
         bool isAdded(const MDagPath& dp) const;
-        void add(const MDagPath& dp, ms::Animation *dst, extractror_t extractor);
+        void add(const MDagPath& dp, ms::Animation *dst, extractor_t extractor);
         void operator()(MeshSyncClientMaya *_this);
     };
     using AnimationRecords = std::map<void*, AnimationRecord>;
