@@ -62,6 +62,7 @@ private:
     struct ObjectRecord
     {
         MObject node;
+        MObject shape;
         MDagPathArray dagpaths;
         MDagPathArray dagpaths_prev;
         MCallbackId cid_trans = 0;
@@ -73,8 +74,16 @@ private:
         void clear();
         bool isAdded(const MDagPath& dpath) const;
         bool wasAdded(const MDagPath& dpath) const;
-        void add(const MDagPath& dpath);
+        void addPath(const MDagPath& dpath);
         void dbgPrint() const;
+    };
+    struct ExtractRecord
+    {
+        using task_t = std::function<void()>;
+        std::vector<task_t> tasks;
+
+        void addTask(const task_t& task);
+        void processTasks();
     };
 
     ObjectRecord& findOrAddRecord(const MObject& node);
@@ -92,10 +101,10 @@ private:
 
     bool exportObject(MDagPath obj, bool force);
     void extractTransformData(ms::Transform& dst, const MObject& src);
-    void extractCameraData(ms::Camera& dst, const MObject& src);
-    void extractLightData(ms::Light& dst, const MObject& src);
-    void extractMeshData(ms::Mesh& dst, const MObject& src);
-    void doExtractMeshData(ms::Mesh& dst, const MObject& src);
+    void extractCameraData(ms::Camera& dst, const MObject& node, const MObject& shape);
+    void extractLightData(ms::Light& dst, const MObject& node, const MObject& shape);
+    void extractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape);
+    void doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape);
 
     int exportAnimations(SendScope scope);
     bool exportAnimation(const MDagPath& src);
@@ -111,6 +120,8 @@ private:
 
 private:
     using ObjectRecords = std::map<void*, ObjectRecord>;
+    using ExtractRecords = std::map<void*, ExtractRecord>;
+    using lock_t = std::unique_lock<std::mutex>;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
@@ -124,12 +135,9 @@ private:
     std::vector<ms::AnimationClipPtr> m_client_animations;
     std::vector<ms::ConstraintPtr>    m_client_constraints;
     MDagPathArray                     m_deleted;
-    ObjectRecords       m_records;
-    std::future<void>   m_future_send;
-
-    using task_t = std::function<void()>;
-    using lock_t = std::unique_lock<std::mutex>;
-    std::vector<task_t> m_extract_tasks;
+    ObjectRecords                     m_object_records;
+    ExtractRecords                    m_extract_records;
+    std::future<void>                 m_future_send;
 
     SendScope m_pending_send_scene = SendScope::None;
     bool m_scene_updated = false;

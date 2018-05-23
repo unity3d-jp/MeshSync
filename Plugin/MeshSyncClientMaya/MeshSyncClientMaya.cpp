@@ -78,9 +78,21 @@ bool MeshSyncClientMaya::ObjectRecord::wasAdded(const MDagPath& dpath) const
 {
     return Find(dagpaths_prev, dpath);
 }
-void MeshSyncClientMaya::ObjectRecord::add(const MDagPath& dpath)
+void MeshSyncClientMaya::ObjectRecord::addPath(const MDagPath& dpath)
 {
     dagpaths.append(dpath);
+}
+
+void MeshSyncClientMaya::ExtractRecord::addTask(const task_t & task)
+{
+    tasks.push_back(task);
+}
+
+void MeshSyncClientMaya::ExtractRecord::processTasks()
+{
+    for (auto& t : tasks)
+        t();
+    tasks.clear();
 }
 
 void MeshSyncClientMaya::ObjectRecord::dbgPrint() const
@@ -245,7 +257,7 @@ void MeshSyncClientMaya::removeGlobalCallbacks()
 
 void MeshSyncClientMaya::removeNodeCallbacks()
 {
-    for (auto& rec : m_records) {
+    for (auto& rec : m_object_records) {
         if (rec.second.cid_trans) {
             MMessage::removeCallback(rec.second.cid_trans);
             rec.second.cid_trans = 0;
@@ -274,27 +286,27 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     if (rec.isAdded(dagpath))
         return false;
 
-    auto shape = GetShape(node);
+    auto& shape = rec.shape;
 
     ms::TransformPtr ret;
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::Mesh::create();
-        extractMeshData(*dst, node);
+        extractMeshData(*dst, node, shape);
         m_client_meshes.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::Camera::create();
-        extractCameraData(*dst, node);
+        extractCameraData(*dst, node, shape);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::Light::create();
-        extractLightData(*dst, node);
+        extractLightData(*dst, node, shape);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
@@ -309,7 +321,7 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     if (ret) {
         ret->path = GetPath(dagpath);
         ret->index = rec.index;
-        rec.add(dagpath);
+        rec.addPath(dagpath);
         return true;
     }
     else {
@@ -319,9 +331,10 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
 
 MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(const MObject& node)
 {
-    auto& rec = m_records[(void*&)node];
+    auto& rec = m_object_records[(void*&)node];
     if (rec.node.isNull()) {
         rec.node = node;
+        rec.shape = GetShape(node);
         rec.index = ++m_index_seed;
     }
     return rec;
@@ -329,8 +342,8 @@ MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(const MObj
 
 const MeshSyncClientMaya::ObjectRecord* MeshSyncClientMaya::findRecord(const MObject& node)
 {
-    auto it = m_records.find((void*&)node);
-    return it == m_records.end() ? nullptr : &it->second;
+    auto it = m_object_records.find((void*&)node);
+    return it == m_object_records.end() ? nullptr : &it->second;
 }
 
 void MeshSyncClientMaya::notifyUpdateTransform(MObject node)
@@ -382,13 +395,22 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         EnumeratePath(MFn::kMesh, exportShape);
     }
     else if (scope == SendScope::Updated) {
-        for (auto& kvp : m_records) {
+        for (auto& kvp : m_object_records) {
             auto& rec = kvp.second;
             if (rec.dirty_transform || rec.dirty_shape) {
-                EachPath(rec.node, [&](const MDagPath& node) {
-                    if (exportObject(node, false))
-                        ++num_exported;
-                });
+                if (!rec.shape.isNull()) {
+                    EachPath(rec.shape, [&](MDagPath& shape) {
+                        shape.pop(); // shape to transform
+                        if (exportObject(shape, false))
+                            ++num_exported;
+                    });
+                }
+                else {
+                    EachPath(rec.node, [&](const MDagPath& node) {
+                        if (exportObject(node, false))
+                            ++num_exported;
+                    });
+                }
             }
         }
     }
@@ -471,28 +493,28 @@ void MeshSyncClientMaya::onTimeChange(MTime & time)
 void MeshSyncClientMaya::onNodeRemoved(MObject & node)
 {
     if (node.hasFn(MFn::kTransform)) {
-        auto it = m_records.find((void*&)node);
-        if (it != m_records.end()) {
+        auto it = m_object_records.find((void*&)node);
+        if (it != m_object_records.end()) {
             Each(it->second.dagpaths_prev, [this](const MDagPath& dp) {
                 m_deleted.append(dp);
             });
-            m_records.erase(it);
+            m_object_records.erase(it);
         }
     }
 }
 
 void MeshSyncClientMaya::kickAsyncSend()
 {
-    if (!m_extract_tasks.empty()) {
-        mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {
-            task();
+    if (!m_extract_records.empty()) {
+        mu::parallel_for_each(m_extract_records.begin(), m_extract_records.end(), [](ExtractRecords::value_type& kvp) {
+            kvp.second.processTasks();
         });
-        m_extract_tasks.clear();
+        m_extract_records.clear();
     }
 
     m_material_id_table.clear();
 
-    for (auto& kvp : m_records) {
+    for (auto& kvp : m_object_records) {
         kvp.second.clear();
     }
 

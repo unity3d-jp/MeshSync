@@ -86,12 +86,11 @@ void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, const MObject&
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 }
 
-void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, const MObject& src)
+void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, const MObject& node, const MObject& shape)
 {
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
-    auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kCamera)) {
         return;
     }
@@ -103,12 +102,11 @@ void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, const MObject& src)
 
 }
 
-void MeshSyncClientMaya::extractLightData(ms::Light& dst, const MObject& src)
+void MeshSyncClientMaya::extractLightData(ms::Light& dst, const MObject& node, const MObject& shape)
 {
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
-    auto shape = GetShape(src);
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
         dst.light_type = ms::Light::LightType::Spot;
@@ -132,27 +130,26 @@ void MeshSyncClientMaya::extractLightData(ms::Light& dst, const MObject& src)
     ExtractLightData(shape, dst.color, dst.intensity, dst.spot_angle);
 }
 
-void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, const MObject& src)
+void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape)
 {
     if (m_material_id_table.empty()) {
         exportMaterials();
     }
 
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     if (m_settings.multithreaded) {
-        auto task = [this, &dst, src]() {
-            doExtractMeshData(dst, src);
+        auto task = [this, &dst, node, shape]() {
+            doExtractMeshData(dst, node, shape);
         };
-        m_extract_tasks.push_back(task);
+        m_extract_records[(void*&)shape].addTask(task);
     }
     else {
-        doExtractMeshData(dst, src);
+        doExtractMeshData(dst, node, shape);
     }
 }
 
-void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& src)
+void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape)
 {
-    auto shape = GetShape(src);
     if (!shape.hasFn(MFn::kMesh)) { return; }
 
     dst.visible = IsVisible(shape);
@@ -179,13 +176,13 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& src)
     // * this code assumes blendshape is applied always after skinning, and there is no multiple blendshapes or skinnings.
     // * maybe this cause a problem..
     if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
-        auto orig_mesh = FindOrigMesh(src);
+        auto orig_mesh = FindOrigMesh(node);
         if (orig_mesh.hasFn(MFn::kMesh)) {
             fn_src_mesh.setObject(orig_mesh);
         }
     }
     if (m_settings.sync_bones && !fn_skin.object().isNull()) {
-        auto orig_mesh = FindOrigMesh(src);
+        auto orig_mesh = FindOrigMesh(node);
         if (orig_mesh.hasFn(MFn::kMesh)) {
             fn_src_mesh.setObject(orig_mesh);
             skin_index = fn_skin.indexForOutputShape(mmesh.object());
