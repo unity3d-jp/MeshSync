@@ -145,8 +145,8 @@ template<class Body>
 inline void EnumeratePath(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
-    MDagPath path;
     while (!it.isDone()) {
+        MDagPath path;
         it.getPath(path);
         body(path);
         it.next();

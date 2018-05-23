@@ -78,7 +78,7 @@ bool MeshSyncClientMaya::ObjectRecord::wasAdded(const MDagPath& dpath) const
 {
     return Find(dagpaths_prev, dpath);
 }
-void MeshSyncClientMaya::ObjectRecord::addAdded(const MDagPath& dpath)
+void MeshSyncClientMaya::ObjectRecord::add(const MDagPath& dpath)
 {
     dagpaths.append(dpath);
 }
@@ -179,7 +179,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     });
 }
 
-bool MeshSyncClientMaya::registerNodeCallback(MObject node, bool leaf)
+bool MeshSyncClientMaya::registerNodeCallback(MObject& node, bool leaf)
 {
     if (node.isNull() || node.hasFn(MFn::kWorld))
         return false;
@@ -280,7 +280,6 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::MeshPtr(new ms::Mesh());
-        dst->path = GetPath(dagpath);
         extractMeshData(*dst, node);
         m_client_meshes.emplace_back(dst);
         ret = dst;
@@ -288,7 +287,6 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::CameraPtr(new ms::Camera());
-        dst->path = GetPath(dagpath);
         extractCameraData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
@@ -296,7 +294,6 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::LightPtr(new ms::Light());
-        dst->path = GetPath(dagpath);
         extractLightData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
@@ -304,15 +301,15 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
         exportObject(GetParent(dagpath), true);
         auto dst = ms::TransformPtr(new ms::Transform());
-        dst->path = GetPath(dagpath);
         extractTransformData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
 
     if (ret) {
+        ret->path = GetPath(dagpath);
         ret->index = rec.index;
-        rec.addAdded(dagpath);
+        rec.add(dagpath);
         return true;
     }
     else {
@@ -320,7 +317,7 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     }
 }
 
-MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject node)
+MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(const MObject& node)
 {
     auto& rec = m_records[(void*&)node];
     if (rec.node.isNull()) {
@@ -330,7 +327,7 @@ MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(MObject no
     return rec;
 }
 
-const MeshSyncClientMaya::ObjectRecord* MeshSyncClientMaya::findRecord(MObject node)
+const MeshSyncClientMaya::ObjectRecord* MeshSyncClientMaya::findRecord(const MObject& node)
 {
     auto it = m_records.find((void*&)node);
     return it == m_records.end() ? nullptr : &it->second;
@@ -369,12 +366,13 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
 
     int num_exported = 0;
     if (scope == SendScope::All) {
-        auto exportShape = [this, &num_exported](const MDagPath& shape) {
-            if (exportObject(GetParent(shape), false))
+        auto exportNode = [this, &num_exported](MDagPath& node) {
+            if (exportObject(node, false))
                 ++num_exported;
         };
-        auto exportNode = [this, &num_exported](const MDagPath& node) {
-            if (exportObject(node, false))
+        auto exportShape = [this, &num_exported](MDagPath& shape) {
+            shape.pop(); // shape to transform
+            if (exportObject(shape, false))
                 ++num_exported;
         };
 

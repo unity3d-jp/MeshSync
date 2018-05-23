@@ -73,17 +73,17 @@ private:
         void clear();
         bool isAdded(const MDagPath& dpath) const;
         bool wasAdded(const MDagPath& dpath) const;
-        void addAdded(const MDagPath& dpath);
+        void add(const MDagPath& dpath);
         void dbgPrint() const;
     };
 
-    ObjectRecord& findOrAddRecord(MObject node);
-    const ObjectRecord* findRecord(MObject node);
+    ObjectRecord& findOrAddRecord(const MObject& node);
+    const ObjectRecord* findRecord(const MObject& node);
     bool isSending() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
     void registerNodeCallbacks();
-    bool registerNodeCallback(MObject node, bool leaf = true);
+    bool registerNodeCallback(MObject& node, bool leaf = true);
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
@@ -92,20 +92,17 @@ private:
 
     bool exportObject(MDagPath obj, bool force);
     void extractTransformData(ms::Transform& dst, const MObject& src);
-    void doExtractTransformData(ms::Transform& dst, const MObject& src);
     void extractCameraData(ms::Camera& dst, const MObject& src);
-    void doExtractCameraData(ms::Camera& dst, const MObject& src);
     void extractLightData(ms::Light& dst, const MObject& src);
-    void doExtractLightData(ms::Light& dst, const MObject& src);
     void extractMeshData(ms::Mesh& dst, const MObject& src);
     void doExtractMeshData(ms::Mesh& dst, const MObject& src);
 
     int exportAnimations(SendScope scope);
-    void exportAnimation(MObject src, MObject shape);
-    void extractTransformAnimationData(ms::Animation& dst, MObject node, MObject shape);
-    void extractCameraAnimationData(ms::Animation& dst, MObject node, MObject shape);
-    void extractLightAnimationData(ms::Animation& dst, MObject node, MObject shape);
-    void extractMeshAnimationData(ms::Animation& dst, MObject node, MObject shape);
+    bool exportAnimation(const MDagPath& src);
+    void extractTransformAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
+    void extractCameraAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
+    void extractLightAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
+    void extractMeshAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
 
     void exportConstraint(MObject src);
     void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
@@ -143,14 +140,20 @@ private:
     // animation export
     struct AnimationRecord
     {
-        MObject node, shape;
-        ms::Animation *dst = nullptr;
-        void (MeshSyncClientMaya::*extractor)(ms::Animation& dst, MObject node, MObject shape) = nullptr;
-
-        void operator()(MeshSyncClientMaya *_this)
+        using extractror_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, const MObject& node, const MObject& shape);
+        struct Path
         {
-            (_this->*extractor)(*dst,  node, shape);
-        }
+            MDagPath dagpath;
+            ms::Animation *dst = nullptr;
+            extractror_t extractor = nullptr;
+        };
+
+        MObject node, shape;
+        std::vector<Path> paths;
+
+        bool isAdded(const MDagPath& dp) const;
+        void add(const MDagPath& dp, ms::Animation *dst, extractror_t extractor);
+        void operator()(MeshSyncClientMaya *_this);
     };
     using AnimationRecords = std::map<void*, AnimationRecord>;
     AnimationRecords m_anim_records;
