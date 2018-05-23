@@ -13,12 +13,12 @@ void MeshSyncClientMaya::exportMaterials()
     while (!it.isDone()) {
         MFnLambertShader fn(it.item());
 
-        auto tmp = new ms::Material();
+        auto tmp = ms::Material::create();
         tmp->name = fn.name().asChar();
         tmp->color = to_float4(fn.color());
         tmp->id = (int)m_material_id_table.size();
         m_material_id_table.push_back(fn.uuid());
-        m_client_materials.emplace_back(tmp);
+        m_client_materials.push_back(tmp);
 
         it.next();
     }
@@ -457,8 +457,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& src)
                 //DumpPlugInfo(plug_itg);
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
-                    auto dst_bs = new ms::BlendShapeData();
-                    dst.blendshapes.emplace_back(dst_bs);
+                    auto dst_bs = ms::BlendShapeData::create();
+                    dst.blendshapes.push_back(dst_bs);
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
                     dst_bs->name = plug_wc.name().asChar();
                     plug_wc.getValue(dst_bs->weight);
@@ -508,11 +508,11 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& src)
         for (uint32_t ij = 0; ij < num_joints; ij++) {
             auto joint = joint_paths[ij].node();
 
-            auto bone = new ms::BoneData();
+            auto bone = ms::BoneData::create();
             bone->path = GetPath(joint);
             if (dst.bones.empty())
                 dst.root_bone = GetRootBonePath(joint);
-            dst.bones.emplace_back(bone);
+            dst.bones.push_back(bone);
 
             MObject matrix_obj;
             auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
@@ -569,7 +569,7 @@ void MeshSyncClientMaya::AnimationRecord::operator()(MeshSyncClientMaya *_this)
 int MeshSyncClientMaya::exportAnimations(SendScope scope)
 {
     // create default clip
-    m_client_animations.emplace_back(new ms::AnimationClip());
+    m_client_animations.push_back(ms::AnimationClip::create());
 
     // gather target data
     if (scope == SendScope::Selected) {
@@ -651,34 +651,35 @@ bool MeshSyncClientMaya::exportAnimation(const MDagPath& src)
         rec.shape = shape;
     }
 
-    ms::Animation *dst = nullptr;
+    ms::AnimationPtr dst;
     AnimationRecord::extractror_t extractor = nullptr;
 
-    bool animated = MAnimUtil::isAnimated(node) || MAnimUtil::isAnimated(shape);
-    if (animated && shape.hasFn(MFn::kCamera)) {
-        exportAnimation(GetParent(src));
-        dst = new ms::CameraAnimation();
-        extractor = &MeshSyncClientMaya::extractCameraAnimationData;
-    }
-    else if (animated && shape.hasFn(MFn::kLight)) {
-        exportAnimation(GetParent(src));
-        dst = new ms::LightAnimation();
-        extractor = &MeshSyncClientMaya::extractLightAnimationData;
-    }
-    else if (animated && shape.hasFn(MFn::kMesh)) {
-        exportAnimation(GetParent(src));
-        dst = new ms::MeshAnimation();
-        extractor = &MeshSyncClientMaya::extractMeshAnimationData;
-    }
-    else if(animated) {
-        exportAnimation(GetParent(src));
-        dst = new ms::TransformAnimation();
-        extractor = &MeshSyncClientMaya::extractTransformAnimationData;
+    if (MAnimUtil::isAnimated(node) || MAnimUtil::isAnimated(shape)) {
+        if (shape.hasFn(MFn::kCamera)) {
+            exportAnimation(GetParent(src));
+            dst = ms::CameraAnimation::create();
+            extractor = &MeshSyncClientMaya::extractCameraAnimationData;
+        }
+        else if (shape.hasFn(MFn::kLight)) {
+            exportAnimation(GetParent(src));
+            dst = ms::LightAnimation::create();
+            extractor = &MeshSyncClientMaya::extractLightAnimationData;
+        }
+        else if (shape.hasFn(MFn::kMesh)) {
+            exportAnimation(GetParent(src));
+            dst = ms::MeshAnimation::create();
+            extractor = &MeshSyncClientMaya::extractMeshAnimationData;
+        }
+        else {
+            exportAnimation(GetParent(src));
+            dst = ms::TransformAnimation::create();
+            extractor = &MeshSyncClientMaya::extractTransformAnimationData;
+        }
     }
 
     if (dst) {
         dst->path = GetPath(src);
-        rec.add(src, dst, extractor);
+        rec.add(src, dst.get(), extractor);
         m_client_animations.front()->animations.emplace_back(dst);
         return true;
     }
@@ -787,7 +788,7 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, const MO
                         }
                     }
                     if (!dst_bs) {
-                        dst_bs.reset(new ms::MeshAnimation::BlendshapeAnimation());
+                        dst_bs = ms::MeshAnimation::BlendshapeAnimation::create();
                         dst_bs->name = name;
                         dst.blendshapes.push_back(dst_bs);
                     }
@@ -806,22 +807,22 @@ void MeshSyncClientMaya::exportConstraint(MObject src)
 {
     EachConstraints(src, [this, &src](const MObject& constraint) {
         if (constraint.hasFn(MFn::kAimConstraint)) {
-            auto dst = new ms::AimConstraint();
+            auto dst = ms::AimConstraint::create();
             m_client_constraints.emplace_back(dst);
             extractConstraintData(*dst, constraint, src);
         }
         else if (constraint.hasFn(MFn::kParentConstraint)) {
-            auto dst = new ms::ParentConstraint();
+            auto dst = ms::ParentConstraint::create();
             m_client_constraints.emplace_back(dst);
             extractConstraintData(*dst, constraint, src);
         }
         else if (constraint.hasFn(MFn::kPointConstraint)) {
-            auto dst = new ms::PositionConstraint();
+            auto dst = ms::PositionConstraint::create();
             m_client_constraints.emplace_back(dst);
             extractConstraintData(*dst, constraint, src);
         }
         else if (constraint.hasFn(MFn::kScaleConstraint)) {
-            auto dst = new ms::ScaleConstraint();
+            auto dst = ms::ScaleConstraint::create();
             m_client_constraints.emplace_back(dst);
             extractConstraintData(*dst, constraint, src);
         }

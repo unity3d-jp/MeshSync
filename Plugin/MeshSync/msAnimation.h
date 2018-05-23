@@ -16,16 +16,18 @@ struct TVP
     T value;
 };
 
-class Animation : public std::enable_shared_from_this<Animation>
+class Animation
 {
 public:
     using Type = Entity::Type;
 
     std::string path;
 
-    static Animation* make(std::istream& is);
-
+protected:
+    Animation();
     virtual ~Animation();
+public:
+    static std::shared_ptr<Animation> create(std::istream& is);
     virtual Type getType() const;
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
@@ -38,7 +40,7 @@ public:
     virtual void convertHandedness(bool x, bool yz) = 0;
     virtual void applyScaleFactor(float scale) = 0;
 };
-HasSerializer(Animation);
+msHasSerializer(Animation);
 using AnimationPtr = std::shared_ptr<Animation>;
 
 
@@ -51,6 +53,11 @@ public:
     RawVector<TVP<float3>>  scale;
     RawVector<TVP<bool>>    visible;
 
+protected:
+    TransformAnimation();
+    ~TransformAnimation() override;
+public:
+    msDefinePool(TransformAnimation);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -63,7 +70,7 @@ public:
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
 };
-HasSerializer(TransformAnimation);
+msHasSerializer(TransformAnimation);
 
 
 class CameraAnimation : public TransformAnimation
@@ -78,6 +85,11 @@ public:
     RawVector<TVP<float>>   focal_length;
     RawVector<TVP<float>>   focus_distance;
 
+protected:
+    CameraAnimation();
+    ~CameraAnimation() override;
+public:
+    msDefinePool(CameraAnimation);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -89,7 +101,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
-HasSerializer(CameraAnimation);
+msHasSerializer(CameraAnimation);
 
 
 class LightAnimation : public TransformAnimation
@@ -101,6 +113,11 @@ public:
     RawVector<TVP<float>>   range;
     RawVector<TVP<float>>   spot_angle; // for spot light
 
+protected:
+    LightAnimation();
+    ~LightAnimation() override;
+public:
+    msDefinePool(LightAnimation);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -112,7 +129,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
-HasSerializer(LightAnimation);
+msHasSerializer(LightAnimation);
 
 
 class MeshAnimation : public TransformAnimation
@@ -124,15 +141,26 @@ public:
         std::string name;
         RawVector<TVP<float>> weight;
 
-        static BlendshapeAnimation* make(std::istream & is);
+    protected:
+        BlendshapeAnimation();
+        ~BlendshapeAnimation();
+    public:
+        msDefinePool(BlendshapeAnimation);
+        static std::shared_ptr<BlendshapeAnimation> create(std::istream & is);
         uint32_t getSerializeSize() const;
         void serialize(std::ostream& os) const;
         void deserialize(std::istream& is);
+        void clear();
         bool empty() const;
     };
     using BlendshapeAnimationPtr = std::shared_ptr<BlendshapeAnimation>;
     std::vector<BlendshapeAnimationPtr> blendshapes;
 
+protected:
+    MeshAnimation();
+    ~MeshAnimation() override;
+public:
+    msDefinePool(MeshAnimation);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -141,17 +169,22 @@ public:
     bool empty() const override;
     void reduction() override;
 };
-HasSerializer(MeshAnimation::BlendshapeAnimation);
-HasSerializer(MeshAnimation);
+msHasSerializer(MeshAnimation::BlendshapeAnimation);
+msHasSerializer(MeshAnimation);
 
 
-class AnimationClip : public std::enable_shared_from_this<AnimationClip>
+class AnimationClip
 {
 public:
     std::string name;
     std::vector<AnimationPtr> animations;
 
-    static AnimationClip* make(std::istream& is);
+protected:
+    AnimationClip();
+    ~AnimationClip();
+public:
+    msDefinePool(AnimationClip);
+    static std::shared_ptr<AnimationClip> create(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -162,7 +195,7 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
-HasSerializer(AnimationClip);
+msHasSerializer(AnimationClip);
 using AnimationClipPtr = std::shared_ptr<AnimationClip>;
 
 } // namespace ms

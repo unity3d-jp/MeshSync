@@ -177,7 +177,7 @@ struct read_impl<std::shared_ptr<T>>
 {
     void operator()(std::istream& is, std::shared_ptr<T>& v)
     {
-        v.reset(T::make(is));
+        v = T::create(is);
     }
 };
 template<class T>

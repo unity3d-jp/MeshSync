@@ -24,7 +24,7 @@ public:
     virtual void serialize(std::ostream& os) const;
     virtual bool deserialize(std::istream& is);
 };
-HasSerializer(Message);
+msHasSerializer(Message);
 using MessagePtr = std::shared_ptr<Message>;
 
 
@@ -62,7 +62,7 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
-HasSerializer(GetMessage);
+msHasSerializer(GetMessage);
 
 
 class SetMessage : public Message
@@ -77,7 +77,7 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
-HasSerializer(SetMessage);
+msHasSerializer(SetMessage);
 
 
 class DeleteMessage : public Message
@@ -100,8 +100,8 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
-HasSerializer(DeleteMessage::Identifier);
-HasSerializer(DeleteMessage);
+msHasSerializer(DeleteMessage::Identifier);
+msHasSerializer(DeleteMessage);
 
 
 class FenceMessage : public Message
@@ -122,7 +122,7 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
-HasSerializer(FenceMessage);
+msHasSerializer(FenceMessage);
 
 
 class TextMessage : public Message
@@ -145,7 +145,7 @@ public:
     std::string text;
     Type type = Type::Normal;
 };
-HasSerializer(TextMessage);
+msHasSerializer(TextMessage);
 
 
 class ScreenshotMessage : public Message
@@ -162,6 +162,6 @@ public:
     void serialize(std::ostream& os) const override;
     bool deserialize(std::istream& is) override;
 };
-HasSerializer(ScreenshotMessage);
+msHasSerializer(ScreenshotMessage);
 
 } // namespace ms

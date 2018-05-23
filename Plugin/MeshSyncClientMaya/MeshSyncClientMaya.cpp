@@ -279,28 +279,28 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     ms::TransformPtr ret;
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
         exportObject(GetParent(dagpath), true);
-        auto dst = ms::MeshPtr(new ms::Mesh());
+        auto dst = ms::Mesh::create();
         extractMeshData(*dst, node);
         m_client_meshes.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
         exportObject(GetParent(dagpath), true);
-        auto dst = ms::CameraPtr(new ms::Camera());
+        auto dst = ms::Camera::create();
         extractCameraData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
         exportObject(GetParent(dagpath), true);
-        auto dst = ms::LightPtr(new ms::Light());
+        auto dst = ms::Light::create();
         extractLightData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
         exportObject(GetParent(dagpath), true);
-        auto dst = ms::TransformPtr(new ms::Transform());
+        auto dst = ms::Transform::create();
         extractTransformData(*dst, node);
         m_client_objects.emplace_back(dst);
         ret = dst;

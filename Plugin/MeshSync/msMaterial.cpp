@@ -5,42 +5,56 @@
 
 namespace ms {
 
-Texture * Texture::make(std::istream & is)
+std::shared_ptr<Texture> Texture::create(std::istream & is)
 {
     auto ret = new Texture();
     ret->deserialize(is);
-    return ret;
+    return make_shared_ptr(ret);
 }
 
+Texture::Texture() {}
+Texture::~Texture() {}
+
 #define EachMember(F)\
-    F(id) F(filename) F(type) F(data)
+    F(id) F(type) F(filename) F(data)
 
 uint32_t Texture::getSerializeSize() const
 {
     uint32_t ret = 0;
-    EachMember(Size);
+    EachMember(msSize);
     return ret;
 }
 
 void Texture::serialize(std::ostream & os) const
 {
-    EachMember(Write);
+    EachMember(msWrite);
 }
 
 void Texture::deserialize(std::istream & is)
 {
-    EachMember(Read);
+    EachMember(msRead);
+}
+
+void Texture::clear()
+{
+    id = 0;
+    type = TextureType::Default;
+    filename.clear();
+    data.clear();
 }
 
 #undef EachMember
 
 
-Material * Material::make(std::istream & is)
+std::shared_ptr<Material> Material::create(std::istream & is)
 {
     auto ret = new Material();
     ret->deserialize(is);
-    return ret;
+    return make_shared_ptr(ret);
 }
+
+Material::Material() {}
+Material::~Material() {}
 
 #define EachMember(F)\
     F(id) F(name) F(color) F(emission) F(metalic) F(smoothness)
@@ -48,16 +62,27 @@ Material * Material::make(std::istream & is)
 uint32_t Material::getSerializeSize() const
 {
     uint32_t ret = 0;
-    EachMember(Size);
+    EachMember(msSize);
     return ret;
 }
 void Material::serialize(std::ostream& os) const
 {
-    EachMember(Write);
+    EachMember(msWrite);
 }
 void Material::deserialize(std::istream& is)
 {
-    EachMember(Read);
+    EachMember(msRead);
+}
+
+void Material::clear()
+{
+    id = 0;
+    name.clear();
+
+    color = float4::one();
+    emission = float4::zero();
+    metalic = 0.0f;
+    smoothness = 0.5f;
 }
 
 bool Material::operator==(const Material& v) const

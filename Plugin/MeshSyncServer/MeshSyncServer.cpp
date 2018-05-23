@@ -58,27 +58,27 @@ msAPI void msServerEndServe(ms::Server *server)
 msAPI void msServerServeTransform(ms::Server *server, ms::Transform *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.emplace_back(data);
+    server->getHostScene()->objects.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeCamera(ms::Server *server, ms::Camera *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.emplace_back(data);
+    server->getHostScene()->objects.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeLight(ms::Server *server, ms::Light *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.emplace_back(data);
+    server->getHostScene()->objects.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.emplace_back(data);
+    server->getHostScene()->objects.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
 {
     if (!server) { return; }
-    server->getHostScene()->materials.emplace_back(data);
+    server->getHostScene()->materials.push_back(make_shared_ptr(data));
 }
 
 
@@ -103,7 +103,7 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 }
 
 
-msAPI ms::Material* msMaterialCreate() { return new ms::Material(); }
+msAPI ms::Material* msMaterialCreate() { return ms::Material::create_raw(); }
 msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
 msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
 msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.c_str(); }
@@ -227,7 +227,7 @@ msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_this)
 
 msAPI ms::Transform* msTransformCreate()
 {
-    return new ms::Transform();
+    return ms::Transform::create_raw();
 }
 msAPI ms::Entity::Type msTransformGetType(ms::Transform *_this)
 {
@@ -308,7 +308,7 @@ msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
 
 msAPI ms::Camera* msCameraCreate()
 {
-    return new ms::Camera();
+    return ms::Camera::create_raw();
 }
 msAPI bool msCameraIsOrtho(ms::Camera *_this)
 {
@@ -377,7 +377,7 @@ msAPI void msCameraSetFocusDistance(ms::Camera *_this, float v)
 
 msAPI ms::Light* msLightCreate()
 {
-    return new ms::Light();
+    return ms::Light::create_raw();
 }
 msAPI ms::Light::LightType msLightGetType(ms::Light *_this)
 {
@@ -423,7 +423,7 @@ msAPI void msLightSetSpotAngle(ms::Light *_this, float v)
 
 msAPI ms::Mesh* msMeshCreate()
 {
-    return new ms::Mesh();
+    return ms::Mesh::create_raw();
 }
 msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *_this)
 {
@@ -596,7 +596,7 @@ msAPI const char* msMeshGetBonePath(ms::Mesh *_this, int i)
 msAPI void msMeshSetBonePath(ms::Mesh *_this, const char *v, int i)
 {
     while (_this->bones.size() <= i) {
-        _this->bones.emplace_back(new ms::BoneData());
+        _this->bones.push_back(ms::BoneData::create());
     }
     _this->bones[i]->path = v;
 }
@@ -625,10 +625,10 @@ msAPI ms::BlendShapeData* msMeshGetBlendShapeData(ms::Mesh *_this, int i)
 }
 msAPI ms::BlendShapeData* msMeshAddBlendShape(ms::Mesh *_this, const char *name)
 {
-    auto *ret = new ms::BlendShapeData();
+    auto ret = ms::BlendShapeData::create();
     ret->name = name;
-    _this->blendshapes.emplace_back(ret);
-    return ret;
+    _this->blendshapes.push_back(ret);
+    return ret.get();
 }
 
 msAPI void msMeshSetLocal2World(ms::Mesh *_this, const float4x4 *v)

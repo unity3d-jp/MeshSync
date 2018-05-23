@@ -6,7 +6,7 @@
 
 namespace ms {
 
-class Texture : public std::enable_shared_from_this<Texture>
+class Texture
 {
 public:
     enum class TextureType
@@ -16,20 +16,26 @@ public:
     };
 
     int id = 0;
-    std::string filename;
     TextureType type = TextureType::Default;
+    std::string filename;
     RawVector<char> data;
 
-    static Texture* make(std::istream& is);
+protected:
+    Texture();
+    ~Texture();
+public:
+    msDefinePool(Texture);
+    static std::shared_ptr<Texture> create(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void clear();
 };
-HasSerializer(Texture);
+msHasSerializer(Texture);
 using TexturePtr = std::shared_ptr<Texture>;
 
 
-class Material : public std::enable_shared_from_this<Material>
+class Material
 {
 public:
     int id = 0;
@@ -40,14 +46,20 @@ public:
     float metalic = 0.0f;
     float smoothness = 0.5f;
 
-    static Material* make(std::istream& is);
+protected:
+    Material();
+    ~Material();
+public:
+    msDefinePool(Material);
+    static std::shared_ptr<Material> create(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void clear();
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
 };
-HasSerializer(Material);
+msHasSerializer(Material);
 using MaterialPtr = std::shared_ptr<Material>;
 
 
