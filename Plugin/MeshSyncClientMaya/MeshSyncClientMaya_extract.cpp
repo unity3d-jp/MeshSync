@@ -550,7 +550,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     int num_exported = 0;
-    auto& export_node = [&](TreeNode *tn) {
+    auto export_node = [&](TreeNode *tn) {
         if (exportAnimation(tn))
             ++num_exported;
     };
@@ -776,28 +776,29 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, const MO
 }
 
 
-void MeshSyncClientMaya::exportConstraint(MObject src)
+void MeshSyncClientMaya::exportConstraint(TreeNode *tn)
 {
-    EachConstraints(src, [this, &src](const MObject& constraint) {
+    auto& node = tn->node;
+    EachConstraints(node, [&](const MObject& constraint) {
         if (constraint.hasFn(MFn::kAimConstraint)) {
             auto dst = ms::AimConstraint::create();
             m_constraints.push_back(dst);
-            extractConstraintData(*dst, constraint, src);
+            extractConstraintData(*dst, constraint, node);
         }
         else if (constraint.hasFn(MFn::kParentConstraint)) {
             auto dst = ms::ParentConstraint::create();
             m_constraints.push_back(dst);
-            extractConstraintData(*dst, constraint, src);
+            extractConstraintData(*dst, constraint, node);
         }
         else if (constraint.hasFn(MFn::kPointConstraint)) {
             auto dst = ms::PositionConstraint::create();
             m_constraints.push_back(dst);
-            extractConstraintData(*dst, constraint, src);
+            extractConstraintData(*dst, constraint, node);
         }
         else if (constraint.hasFn(MFn::kScaleConstraint)) {
             auto dst = ms::ScaleConstraint::create();
             m_constraints.push_back(dst);
-            extractConstraintData(*dst, constraint, src);
+            extractConstraintData(*dst, constraint, node);
         }
         else {
             // not supported
@@ -805,9 +806,8 @@ void MeshSyncClientMaya::exportConstraint(MObject src)
     });
 }
 
-void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, MObject src, MObject node)
+void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, const MObject& src, const MObject& node)
 {
-    dst.path = GetPath(node);
     // todo
 }
 

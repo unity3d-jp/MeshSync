@@ -157,8 +157,8 @@ private:
     void extractLightAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
     void extractMeshAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
 
-    void exportConstraint(MObject src);
-    void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
+    void exportConstraint(TreeNode *tn);
+    void extractConstraintData(ms::Constraint& dst, const MObject& src, const MObject& node);
 
     void kickAsyncSend();
 

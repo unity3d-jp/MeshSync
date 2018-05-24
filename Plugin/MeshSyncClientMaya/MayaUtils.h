@@ -36,28 +36,6 @@ MTime ToMTime(float seconds);
 #endif
 
 
-template<class T> T* ptr(T& v) { return (T*)&(int&)v; }
-
-bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src);
-RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cvs, int samples_per_seconds);
-
-void ConvertAnimationBool(
-    RawVector<ms::TVP<bool>>& dst,
-    bool default_value, MPlug& pb, int samples_per_seconds);
-
-void ConvertAnimationFloat(
-    RawVector<ms::TVP<float>>& dst,
-    float default_value, MPlug& pb, int samples_per_seconds);
-
-void ConvertAnimationFloat3(
-    RawVector<ms::TVP<mu::float3>>& dst,
-    const mu::float3& default_value, MPlug& px, MPlug& py, MPlug& pz, int samples_per_seconds);
-
-void ConvertAnimationFloat4(
-    RawVector<ms::TVP<mu::float4>>& dst,
-    const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int samples_per_seconds);
-
-
 inline mu::float3 to_float3(const MPoint& v)
 {
     return { (float)v.x, (float)v.y, (float)v.z };
@@ -110,24 +88,6 @@ inline mu::float3 to_float3(const MPlug plug)
 }
 
 
-inline bool Find(const MDagPathArray& paths, const MDagPath& dpath)
-{
-    uint32_t len = paths.length();
-    for (uint32_t i = 0; i < len; ++i) {
-        if (paths[i] == dpath)
-            return true;
-    }
-    return false;
-}
-
-template<class Body>
-void Each(const MDagPathArray& paths, const Body& body)
-{
-    uint32_t len = paths.length();
-    for (uint32_t i = 0; i < len; ++i)
-        body(paths[i]);
-}
-
 // body: [](MObject&) -> void
 template<class Body>
 inline void EnumerateNode(MFn::Type type, const Body& body)
@@ -138,32 +98,6 @@ inline void EnumerateNode(MFn::Type type, const Body& body)
         body(obj);
         it.next();
     }
-}
-
-// body: [](MDagPath&) -> void
-template<class Body>
-inline void EnumeratePath(MFn::Type type, const Body& body)
-{
-    MItDag it(MItDag::kDepthFirst, type);
-    while (!it.isDone()) {
-        MDagPathArray paths;
-        it.getAllPaths(paths);
-        uint32_t len = paths.length();
-        for (uint32_t i = 0; i < len; ++i)
-            body(paths[i]);
-        it.next();
-    }
-}
-
-// body: [](MDagPath&) -> void
-template<class Body>
-inline void EachPath(MObject node, const Body& body)
-{
-    MDagPathArray paths;
-    MDagPath::getAllPathsTo(node, paths);
-    uint32_t len = paths.length();
-    for (uint32_t i = 0; i < len; ++i)
-        body(paths[i]);
 }
 
 // body: [](MObject&) -> void

@@ -319,7 +319,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     m_pending_scope = SendScope::None;
 
     int num_exported = 0;
-    auto& export_node = [&](TreeNode *tn) {
+    auto export_node = [&](TreeNode *tn) {
         if (exportObject(tn, false))
             ++num_exported;
     };
