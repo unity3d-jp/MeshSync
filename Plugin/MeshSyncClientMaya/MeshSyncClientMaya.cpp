@@ -258,9 +258,9 @@ void MeshSyncClientMaya::removeNodeCallbacks()
 }
 
 
-int MeshSyncClientMaya::getMaterialID(MUuid uid)
+int MeshSyncClientMaya::getMaterialID(const MString& name)
 {
-    auto it = std::find(m_material_id_table.begin(), m_material_id_table.end(), uid);
+    auto it = std::find(m_material_id_table.begin(), m_material_id_table.end(), name);
     return it != m_material_id_table.end() ? (int)std::distance(m_material_id_table.begin(), it) : -1;
 }
 

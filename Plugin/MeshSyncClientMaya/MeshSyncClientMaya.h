@@ -133,7 +133,7 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
-    int getMaterialID(MUuid uid);
+    int getMaterialID(const MString& name);
     void exportMaterials();
 
     bool exportObject(TreeNode *tn, bool force);
@@ -160,7 +160,7 @@ private:
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
 
-    std::vector<MUuid>                  m_material_id_table;
+    std::vector<MString>                m_material_id_table;
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;
     std::vector<ms::MaterialPtr>        m_materials;

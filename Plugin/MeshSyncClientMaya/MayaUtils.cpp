@@ -41,16 +41,6 @@ std::string GetRootBonePath(const MObject& joint_)
 }
 
 
-MUuid GetUUID(const MObject& node)
-{
-    return MFnDependencyNode(node).uuid();
-}
-
-std::string GetUUIDString(const MObject& node)
-{
-    return GetUUID(node).asString().asChar();
-}
-
 MDagPath GetDagPath(const MObject& node)
 {
     MDagPath ret;

@@ -7,9 +7,6 @@ std::string GetPath(const MDagPath& path);
 std::string GetPath(const MObject& node);
 std::string GetRootBonePath(const MObject& joint);
 
-MUuid GetUUID(const MObject& node);
-std::string GetUUIDString(const MObject& node);
-
 MDagPath GetDagPath(const MObject& node);
 bool IsVisible(const MObject& node);
 MObject GetTransform(const MDagPath& path);

@@ -17,7 +17,7 @@ void MeshSyncClientMaya::exportMaterials()
         tmp->name = fn.name().asChar();
         tmp->color = to_float4(fn.color());
         tmp->id = (int)m_material_id_table.size();
-        m_material_id_table.push_back(fn.uuid());
+        m_material_id_table.push_back(fn.name());
         m_materials.push_back(tmp);
 
         it.next();
@@ -362,7 +362,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
             if (!it.isDone()) {
                 MFnLambertShader lambert(it.currentItem());
-                mids[si] = getMaterialID(lambert.uuid());
+                mids[si] = getMaterialID(lambert.name());
             }
         }
 
