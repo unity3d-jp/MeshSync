@@ -43,19 +43,16 @@ public:
     MeshSyncClientMaya(MObject obj);
     ~MeshSyncClientMaya();
 
-    void update();
+    void onNodeUpdated(const MObject& node);
+    void onNodeRemoved(const MObject& node);
     void onSelectionChanged();
     void onSceneUpdated();
-    void onTimeChange(MTime& time);
-    void onNodeRemoved(MObject& node);
+    void onTimeChange(const MTime& time);
 
-    void notifyUpdateTransform(MObject obj);
-    void notifyUpdateCamera(MObject obj);
-    void notifyUpdateLight(MObject obj);
-    void notifyUpdateMesh(MObject obj);
+    void update();
     bool sendScene(SendScope scope);
     bool sendAnimations(SendScope scope);
-    bool import();
+    bool recvScene();
 
 
 private:
@@ -84,20 +81,12 @@ private:
     };
     using TreeNodePtr = std::unique_ptr<TreeNode>;
 
+    // note: because of instance, one dag node can belong to multiple tree nodes.
     struct DagNodeRecord
     {
-        using task_t = std::function<void()>;
-
-        std::vector<TreeNode*> tree_nodes;
+        std::vector<TreeNode*> branches;
         MCallbackId cid = 0;
         bool dirty = true;
-
-        template<class Body>
-        void eachNode(const Body& body)
-        {
-            for (auto tn : tree_nodes)
-                body(tn);
-        }
     };
     using DagNodeRecords = std::map<MObjectKey, DagNodeRecord>;
 
@@ -166,8 +155,8 @@ private:
     MObject                     m_obj;
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
-    std::vector<MUuid>          m_material_id_table;
 
+    std::vector<MUuid>                  m_material_id_table;
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;
     std::vector<ms::MaterialPtr>        m_materials;

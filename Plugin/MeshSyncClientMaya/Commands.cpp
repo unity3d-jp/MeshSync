@@ -197,6 +197,6 @@ MSyntax CmdImport::createSyntax()
 
 MStatus CmdImport::doIt(const MArgList&)
 {
-    MeshSyncClientMaya::getInstance().import();
+    MeshSyncClientMaya::getInstance().recvScene();
     return MStatus::kSuccess;
 }

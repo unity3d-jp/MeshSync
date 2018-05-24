@@ -24,6 +24,55 @@ void MeshSyncClientMaya::exportMaterials()
     }
 }
 
+bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
+{
+    if (!tn || tn->added)
+        return false;
+
+    auto& node = tn->node;
+    auto& shape = tn->shape;
+
+    ms::TransformPtr ret;
+    if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
+        exportObject(tn->parent, true);
+        auto dst = ms::Mesh::create();
+        extractMeshData(*dst, node, shape);
+        m_meshes.emplace_back(dst);
+        ret = dst;
+    }
+    else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
+        exportObject(tn->parent, true);
+        auto dst = ms::Camera::create();
+        extractCameraData(*dst, node, shape);
+        m_objects.emplace_back(dst);
+        ret = dst;
+    }
+    else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
+        exportObject(tn->parent, true);
+        auto dst = ms::Light::create();
+        extractLightData(*dst, node, shape);
+        m_objects.emplace_back(dst);
+        ret = dst;
+    }
+    else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
+        exportObject(tn->parent, true);
+        auto dst = ms::Transform::create();
+        extractTransformData(*dst, node);
+        m_objects.emplace_back(dst);
+        ret = dst;
+    }
+
+    if (ret) {
+        ret->path = tn->path;
+        ret->index = tn->index;
+        tn->added = true;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 static void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     // get TRS from world matrix.
@@ -141,7 +190,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, const MObject& node, con
     auto task = [this, &dst, node, shape]() {
         doExtractMeshData(dst, node, shape);
     };
-    m_task_records[m_dagnode_records[shape].tree_nodes.front()].add(task);
+    m_task_records[m_dagnode_records[shape].branches.front()].add(task);
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape)
@@ -550,9 +599,11 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     int num_exported = 0;
-    auto export_node = [&](TreeNode *tn) {
-        if (exportAnimation(tn))
-            ++num_exported;
+    auto export_branches = [&](DagNodeRecord& rec) {
+        for (auto *tn : rec.branches) {
+            if (exportAnimation(tn))
+                ++num_exported;
+        }
     };
 
 
@@ -563,12 +614,12 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
         for (uint32_t i = 0; i < list.length(); i++) {
             MObject node;
             list.getDependNode(i, node);
-            m_dagnode_records[node].eachNode(export_node);
+            export_branches(m_dagnode_records[node]);
         }
     }
     else { // all
         auto handler = [&](MObject& node) {
-            m_dagnode_records[node].eachNode(export_node);
+            export_branches(m_dagnode_records[node]);
         };
         EnumerateNode(MFn::kJoint, handler);
         EnumerateNode(MFn::kCamera, handler);
@@ -809,5 +860,6 @@ void MeshSyncClientMaya::exportConstraint(TreeNode *tn)
 void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, const MObject& src, const MObject& node)
 {
     // todo
+    // maybe I give up to support this..
 }
 
