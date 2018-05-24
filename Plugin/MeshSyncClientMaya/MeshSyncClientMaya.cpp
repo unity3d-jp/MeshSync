@@ -16,9 +16,19 @@ static void OnIdle(float elapsedTime, float lastTime, void *_this)
     reinterpret_cast<MeshSyncClientMaya*>(_this)->update();
 }
 
-static void OnSelectionChanged(void *_this)
+static void OnSceneLoadBegin(void *_this)
 {
-    reinterpret_cast<MeshSyncClientMaya*>(_this)->onSelectionChanged();
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->onSceneLoadBegin();
+}
+
+static void OnSceneLoadEnd(void *_this)
+{
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->onSceneLoadEnd();
+}
+
+static void OnNodeRenamed(void *_this)
+{
+    reinterpret_cast<MeshSyncClientMaya*>(_this)->onNodeRenamed();
 }
 
 static void OnDagChange(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void *_this)
@@ -58,6 +68,61 @@ static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug
     reinterpret_cast<MeshSyncClientMaya*>(_this)->onNodeUpdated(plug.node());
 }
 
+
+void MeshSyncClientMaya::onNodeUpdated(const MObject & node)
+{
+    m_dagnode_records[node].dirty = true;
+}
+
+void MeshSyncClientMaya::onNodeRemoved(const MObject & node)
+{
+    {
+        auto it = m_dagnode_records.find(node);
+        if (it != m_dagnode_records.end()) {
+            for (auto tn : it->second.branches) {
+                m_deleted.push_back(tn->path);
+            }
+            m_dagnode_records.erase(it);
+        }
+    }
+}
+
+void MeshSyncClientMaya::onNodeRenamed()
+{
+    bool needs_update = false;
+    for (auto& tn : m_tree_pool) {
+        if (checkRename(tn.get()))
+            needs_update = true;
+    }
+
+    if (needs_update) {
+        m_scene_updated = true;
+    }
+}
+
+void MeshSyncClientMaya::onSceneUpdated()
+{
+    m_scene_updated = true;
+}
+
+void MeshSyncClientMaya::onSceneLoadBegin()
+{
+    m_ignore_update = true;
+}
+
+void MeshSyncClientMaya::onSceneLoadEnd()
+{
+    m_ignore_update = false;
+}
+
+void MeshSyncClientMaya::onTimeChange(const MTime & time)
+{
+    if (m_settings.auto_sync) {
+        m_pending_scope = SendScope::All;
+        // timer callback won't be called while scrubbing time slider. so call update() immediately
+        update();
+    }
+}
 
 
 void MeshSyncClientMaya::TaskRecord::add(const task_t & task)
@@ -121,8 +186,12 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
 {
     MStatus stat;
     m_cids_global.push_back(MTimerMessage::addTimerCallback(0.03f, OnIdle, this, &stat));
-    m_cids_global.push_back(MEventMessage::addEventCallback("SelectionChanged", OnSelectionChanged, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kBeforeNew, OnSceneLoadBegin, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kBeforeOpen, OnSceneLoadBegin, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kAfterNew, OnSceneLoadEnd, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kAfterOpen, OnSceneLoadEnd, this, &stat));
     m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnDagChange, this, &stat));
+    m_cids_global.push_back(MEventMessage::addEventCallback("NameChanged", OnNodeRenamed, this, &stat));
     m_cids_global.push_back(MDGMessage::addTimeChangeCallback(OnTimeChange, this));
     m_cids_global.push_back(MDGMessage::addNodeRemovedCallback(OnNodeRemoved, kDefaultNodeType, this));
 
@@ -201,8 +270,8 @@ void MeshSyncClientMaya::constructTree()
 {
     m_tree_roots.clear();
     m_tree_pool.clear();
-    m_dagnode_records.clear();
-    m_task_records.clear();
+    for (auto& kvp : m_dagnode_records)
+        kvp.second.branches.clear();
     m_index_seed = 0;
 
     EnumerateNode(MFn::kTransform, [&](MObject& node) {
@@ -243,40 +312,21 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
     });
 }
 
-void MeshSyncClientMaya::onNodeUpdated(const MObject & node)
+bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 {
-    m_dagnode_records[node].dirty = true;
-}
-
-void MeshSyncClientMaya::onNodeRemoved(const MObject & node)
-{
-    if (node.hasFn(MFn::kTransform)) {
-        auto it = m_dagnode_records.find(node);
-        if (it != m_dagnode_records.end()) {
-            for (auto tn : it->second.branches) {
-                m_deleted.push_back(tn->path);
-            }
+    if (tn->name != GetName(tn->node)) {
+        m_deleted.push_back(tn->path);
+        return true;
+    }
+    else {
+        for (auto child : tn->children) {
+            if (checkRename(child))
+                return true;
         }
     }
+    return false;
 }
 
-void MeshSyncClientMaya::onSelectionChanged()
-{
-}
-
-void MeshSyncClientMaya::onSceneUpdated()
-{
-    m_scene_updated = true;
-}
-
-void MeshSyncClientMaya::onTimeChange(const MTime & time)
-{
-    if (m_settings.auto_sync) {
-        m_pending_scope = SendScope::All;
-        // timer callback won't be called while scrubbing time slider. so call update() immediately
-        update();
-    }
-}
 
 bool MeshSyncClientMaya::sendScene(SendScope scope)
 {
@@ -372,6 +422,7 @@ void MeshSyncClientMaya::update()
 
 void MeshSyncClientMaya::kickAsyncSend()
 {
+    // process parallel extract tasks
     if (!m_task_records.empty()) {
         if (m_settings.multithreaded) {
             mu::parallel_for_each(m_task_records.begin(), m_task_records.end(), [](TaskRecords::value_type& kvp) {
@@ -386,6 +437,7 @@ void MeshSyncClientMaya::kickAsyncSend()
         m_task_records.clear();
     }
 
+    // cleanup
     for (auto& tn : m_tree_pool) {
         tn->added = false;
     }
@@ -399,6 +451,7 @@ void MeshSyncClientMaya::kickAsyncSend()
         to_meter = (float)dist.asMeters();
     }
 
+    // begin async send
     m_future_send = std::async(std::launch::async, [this, to_meter]() {
         ms::Client client(m_settings.client_settings);
 

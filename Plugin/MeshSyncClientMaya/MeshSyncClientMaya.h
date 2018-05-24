@@ -45,13 +45,16 @@ public:
 
     void onNodeUpdated(const MObject& node);
     void onNodeRemoved(const MObject& node);
-    void onSelectionChanged();
+    void onNodeRenamed();
     void onSceneUpdated();
+    void onSceneLoadBegin();
+    void onSceneLoadEnd();
     void onTimeChange(const MTime& time);
 
     void update();
     bool sendScene(SendScope scope);
     bool sendAnimations(SendScope scope);
+
     bool recvScene();
 
 
@@ -121,6 +124,7 @@ private:
 
     void constructTree();
     void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
+    bool checkRename(TreeNode *node);
 
     bool isSending() const;
     void waitAsyncSend();
@@ -166,7 +170,7 @@ private:
     std::future<void>                   m_future_send;
 
     SendScope m_pending_scope = SendScope::None;
-    bool      m_scene_updated = true;
+    bool      m_scene_updated = false;
     bool      m_ignore_update = false;
     int       m_index_seed = 0;
     float     m_anim_time = 0.0f;
