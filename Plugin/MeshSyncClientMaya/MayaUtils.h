@@ -168,13 +168,22 @@ inline void EachPath(MObject node, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
+inline void EachParent(MObject node, const Body& body)
+{
+    MFnDagNode fn(node);
+    auto num_parents = fn.parentCount();
+    for (uint32_t i = 0; i < num_parents; ++i)
+        body(fn.parent(i));
+}
+
+// body: [](MObject&) -> void
+template<class Body>
 inline void EachChild(MObject node, const Body& body)
 {
     MFnDagNode fn(node);
     auto num_children = fn.childCount();
-    for (uint32_t i = 0; i < num_children; ++i) {
+    for (uint32_t i = 0; i < num_children; ++i)
         body(fn.child(i));
-    }
 }
 
 // body: [](MObject&) -> void
@@ -184,5 +193,6 @@ inline void EachConstraints(MObject node, const Body& body)
     MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         body(it.currentItem());
+        it.next();
     }
 }

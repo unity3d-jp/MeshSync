@@ -59,35 +59,65 @@ public:
 
 
 private:
-    struct ObjectRecord
+    struct TreeNode
     {
         MObject node;
         MObject shape;
-        MDagPathArray paths;
-        MCallbackId cid_trans = 0;
-        MCallbackId cid_shape = 0;
+        std::string name;
+        std::string path;
         int index = 0;
-        bool dirty_transform = true;
-        bool dirty_shape = true;
-        std::map<std::string, bool> path_alive;
-        std::vector<std::string> deleted;
+        TreeNode *parent = nullptr;
+        std::vector<TreeNode*> children;
 
-        void clear();
-        bool isAdded(const MDagPath& dpath) const;
-        void addPath(const MDagPath& dpath);
-        void dbgPrint() const;
+        bool added = false;
     };
-    struct ExtractRecord
+    using TreeNodePtr = std::unique_ptr<TreeNode>;
+
+    struct ObjectRecord
     {
         using task_t = std::function<void()>;
-        std::vector<task_t> tasks;
 
-        void addTask(const task_t& task);
-        void processTasks();
+        std::vector<TreeNode*> tree_nodes;
+        MCallbackId cid = 0;
+        bool dirty = true;
+
+        template<class Body>
+        void eachNode(const Body& body)
+        {
+            for (auto tn : tree_nodes)
+                body(tn);
+        }
     };
 
-    ObjectRecord& findOrAddRecord(const MObject& node);
-    const ObjectRecord* findRecord(const MObject& node);
+    using task_t = std::function<void()>;
+    struct TaskRecord
+    {
+        std::vector<task_t> tasks;
+
+        void add(const task_t& task);
+        void process();
+    };
+    using TaskRecords = std::map<TreeNode*, TaskRecord>;
+
+    struct MObjectKey
+    {
+        void *key;
+
+        MObjectKey() : key(nullptr) {}
+        MObjectKey(const MObject& mo) : key((void*&)mo) {}
+        bool operator<(const MObjectKey& v) const { return key < v.key; }
+        bool operator==(const MObjectKey& v) const { return key == v.key; }
+        bool operator!=(const MObjectKey& v) const { return key != v.key; }
+    };
+
+    std::vector<TreeNodePtr> m_tree_pool;
+    std::vector<TreeNode*> m_tree_roots;
+    std::map<MObjectKey, ObjectRecord> m_objects;
+    TaskRecords m_tasks;
+
+    void constructTree();
+    void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
+
     bool isSending() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
@@ -99,7 +129,7 @@ private:
     int getMaterialID(MUuid uid);
     void exportMaterials();
 
-    bool exportObject(MDagPath obj, bool force);
+    bool exportObject(TreeNode *tn, bool force);
     void extractTransformData(ms::Transform& dst, const MObject& src);
     void extractCameraData(ms::Camera& dst, const MObject& node, const MObject& shape);
     void extractLightData(ms::Light& dst, const MObject& node, const MObject& shape);
@@ -119,8 +149,7 @@ private:
     void kickAsyncSend();
 
 private:
-    using ObjectRecords = std::map<void*, ObjectRecord>;
-    using ExtractRecords = std::map<void*, ExtractRecord>;
+    using ExtractRecords = std::map<void*, ObjectRecord>;
     using lock_t = std::unique_lock<std::mutex>;
 
     MObject m_obj;
@@ -135,12 +164,10 @@ private:
     std::vector<ms::AnimationClipPtr> m_client_animations;
     std::vector<ms::ConstraintPtr>    m_client_constraints;
     std::vector<std::string>          m_deleted;
-    ObjectRecords                     m_object_records;
-    ExtractRecords                    m_extract_records;
     std::future<void>                 m_future_send;
 
     SendScope m_pending_send_scene = SendScope::None;
-    bool m_scene_updated = false;
+    bool m_scene_updated = true;
     bool m_ignore_update = false;
     int m_index_seed = 0;
 

@@ -62,60 +62,16 @@ static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug
 static std::unique_ptr<MeshSyncClientMaya> g_plugin;
 
 
-void MeshSyncClientMaya::ObjectRecord::clear()
-{
-    deleted.clear();
-
-    uint32_t len = paths.length();
-    if (len > 0) {
-        for (uint32_t i = 0; i < len; ++i)
-            path_alive[GetPath(paths[i])] = true;
-        paths.clear();
-
-        for (auto i = path_alive.begin(); i != path_alive.end(); /**/) {
-            if (!i->second) {
-                deleted.push_back(i->first);
-                path_alive.erase(i++);
-            }
-            else {
-                i->second = false;
-                ++i;
-            }
-        }
-    }
-    dirty_shape = dirty_transform = false;
-}
-bool MeshSyncClientMaya::ObjectRecord::isAdded(const MDagPath& dpath) const
-{
-    return Find(paths, dpath);
-}
-void MeshSyncClientMaya::ObjectRecord::addPath(const MDagPath& dpath)
-{
-    paths.append(dpath);
-}
-
-void MeshSyncClientMaya::ExtractRecord::addTask(const task_t & task)
+void MeshSyncClientMaya::TaskRecord::add(const task_t & task)
 {
     tasks.push_back(task);
 }
 
-void MeshSyncClientMaya::ExtractRecord::processTasks()
+void MeshSyncClientMaya::TaskRecord::process()
 {
     for (auto& t : tasks)
         t();
     tasks.clear();
-}
-
-void MeshSyncClientMaya::ObjectRecord::dbgPrint() const
-{
-    mscTrace("path:\n");
-    EachPath(node, [](const MDagPath& dpath) {
-        mscTrace("  %s\n", GetPath(dpath).c_str());
-    });
-    mscTrace("added:\n");
-    Each(paths, [](const MDagPath& dpath) {
-        mscTrace("  %s\n", GetPath(dpath).c_str());
-    });
 }
 
 
@@ -134,7 +90,6 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
 #undef Body
 
     registerGlobalCallbacks();
-    registerNodeCallbacks();
 }
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
@@ -179,12 +134,12 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 {
     // cameras
     EnumerateNode(MFn::kCamera, [this](MObject& shape) {
-        registerNodeCallback(GetTransform(shape));
+        registerNodeCallback(shape);
     });
 
     // lights
     EnumerateNode(MFn::kLight, [this](MObject& shape) {
-        registerNodeCallback(GetTransform(shape));
+        registerNodeCallback(shape);
     });
 
     // joints
@@ -194,7 +149,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 
     //  meshes
     EnumerateNode(MFn::kMesh, [this](MObject& shape) {
-        registerNodeCallback(GetTransform(shape));
+        registerNodeCallback(shape);
     });
 }
 
@@ -204,53 +159,49 @@ bool MeshSyncClientMaya::registerNodeCallback(MObject& node, bool leaf)
         return false;
 
     bool handled = false;
-    auto shape = GetShape(node);
-    if (!shape.isNull()) {
-        if (shape.hasFn(MFn::kMesh)) {
-            MFnMesh fn(shape);
-            if (!fn.isIntermediateObject()) {
-                auto& rec = findOrAddRecord(node);
-                if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
-                if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnMeshUpdated, this);
-            }
-            handled = true;
+    if (node.hasFn(MFn::kMesh)) {
+        MFnMesh fn(node);
+        if (!fn.isIntermediateObject()) {
+            auto& rec = m_objects[node];
+            if (!rec.cid)
+                rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
         }
-        else if (shape.hasFn(MFn::kCamera)) {
-            MFnCamera fn(shape);
-            if (!fn.isIntermediateObject()) {
-                auto& rec = findOrAddRecord(node);
-                if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
-                if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnCameraUpdated, this);
-            }
-            handled = true;
-        }
-        else if (shape.hasFn(MFn::kLight)) {
-            MFnLight fn(shape);
-            if (!fn.isIntermediateObject()) {
-                auto& rec = findOrAddRecord(node);
-                if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
-                if (!rec.cid_shape) rec.cid_shape = MNodeMessage::addAttributeChangedCallback(shape, OnLightUpdated, this);
-            }
-            handled = true;
-        }
-    }
-
-    if (!handled) {
-        if (node.hasFn(MFn::kJoint)) {
-            auto& rec = findOrAddRecord(node);
-            if (!rec.cid_trans) rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
-            handled = true;
-        }
-    }
-
-    if (!handled && !leaf && node.hasFn(MFn::kTransform)) {
-        auto& rec = findOrAddRecord(node);
-        if (!rec.cid_trans)rec.cid_trans = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
         handled = true;
     }
-    if (handled) {
-        registerNodeCallback(GetParent(node), false);
+    else if (node.hasFn(MFn::kCamera)) {
+        MFnCamera fn(node);
+        if (!fn.isIntermediateObject()) {
+            auto& rec = m_objects[node];
+            if (!rec.cid)
+                rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
+        }
+        handled = true;
     }
+    else if (node.hasFn(MFn::kLight)) {
+        MFnLight fn(node);
+        if (!fn.isIntermediateObject()) {
+            auto& rec = m_objects[node];
+            if (!rec.cid)
+                rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
+        }
+        handled = true;
+    }
+    else if (node.hasFn(MFn::kJoint)) {
+        auto& rec = m_objects[node];
+        if (!rec.cid)
+            rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
+        handled = true;
+    }
+
+    //if (!handled && !leaf && node.hasFn(MFn::kTransform)) {
+    //    auto& rec = m_objects[node];
+    //    if (!rec.cid)
+    //        rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
+    //    handled = true;
+    //}
+    //if (handled) {
+    //    registerNodeCallback(GetParent(node), false);
+    //}
     return handled;
 }
 
@@ -264,14 +215,10 @@ void MeshSyncClientMaya::removeGlobalCallbacks()
 
 void MeshSyncClientMaya::removeNodeCallbacks()
 {
-    for (auto& rec : m_object_records) {
-        if (rec.second.cid_trans) {
-            MMessage::removeCallback(rec.second.cid_trans);
-            rec.second.cid_trans = 0;
-        }
-        if (rec.second.cid_shape) {
-            MMessage::removeCallback(rec.second.cid_shape);
-            rec.second.cid_shape = 0;
+    for (auto& rec : m_objects) {
+        if (rec.second.cid) {
+            MMessage::removeCallback(rec.second.cid);
+            rec.second.cid = 0;
         }
     }
 }
@@ -283,42 +230,41 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
     return it != m_material_id_table.end() ? (int)std::distance(m_material_id_table.begin(), it) : -1;
 }
 
-bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
+bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
 {
-    auto node = dagpath.transform();
-    if (node.isNull())
+    if (!tn)
         return false;
 
-    auto& rec = findOrAddRecord(node);
-    if (rec.isAdded(dagpath))
+    if (tn->added)
         return false;
 
-    auto& shape = rec.shape;
+    auto& node = tn->node;
+    auto& shape = tn->shape;
 
     ms::TransformPtr ret;
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
-        exportObject(GetParent(dagpath), true);
+        exportObject(tn->parent, true);
         auto dst = ms::Mesh::create();
         extractMeshData(*dst, node, shape);
         m_client_meshes.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
-        exportObject(GetParent(dagpath), true);
+        exportObject(tn->parent, true);
         auto dst = ms::Camera::create();
         extractCameraData(*dst, node, shape);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
-        exportObject(GetParent(dagpath), true);
+        exportObject(tn->parent, true);
         auto dst = ms::Light::create();
         extractLightData(*dst, node, shape);
         m_client_objects.emplace_back(dst);
         ret = dst;
     }
     else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
-        exportObject(GetParent(dagpath), true);
+        exportObject(tn->parent, true);
         auto dst = ms::Transform::create();
         extractTransformData(*dst, node);
         m_client_objects.emplace_back(dst);
@@ -326,9 +272,9 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     }
 
     if (ret) {
-        ret->path = GetPath(dagpath);
-        ret->index = rec.index;
-        rec.addPath(dagpath);
+        ret->path = tn->path;
+        ret->index = tn->index;
+        tn->added = true;
         return true;
     }
     else {
@@ -336,44 +282,70 @@ bool MeshSyncClientMaya::exportObject(MDagPath dagpath, bool force)
     }
 }
 
-MeshSyncClientMaya::ObjectRecord& MeshSyncClientMaya::findOrAddRecord(const MObject& node)
+void MeshSyncClientMaya::constructTree()
 {
-    auto& rec = m_object_records[(void*&)node];
-    if (rec.node.isNull()) {
-        rec.node = node;
-        rec.shape = GetShape(node);
-        rec.index = ++m_index_seed;
-    }
-    return rec;
+    m_tree_roots.clear();
+    m_tree_pool.clear();
+    m_objects.clear();
+    m_tasks.clear();
+    m_index_seed = 0;
+
+    EnumerateNode(MFn::kTransform, [&](MObject& node) {
+        if (MFnDagNode(node).parent(0).hasFn(MFn::kWorld)) {
+            constructTree(node, nullptr, "");
+        }
+    });
 }
 
-const MeshSyncClientMaya::ObjectRecord* MeshSyncClientMaya::findRecord(const MObject& node)
+void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, const std::string& base)
 {
-    auto it = m_object_records.find((void*&)node);
-    return it == m_object_records.end() ? nullptr : &it->second;
+    auto shape = GetShape(node);
+    std::string name = GetName(node);
+    std::string path = base;
+    path += '/';
+    path += name;
+
+    auto *tn = new TreeNode();
+    m_tree_pool.emplace_back(tn);
+    tn->node = node;
+    tn->shape = shape;
+    tn->name = name;
+    tn->path = path;
+    tn->index = ++m_index_seed;
+    tn->parent = parent;
+
+    if (parent)
+        parent->children.push_back(tn);
+    else
+        m_tree_roots.push_back(tn);
+
+    m_objects[node].tree_nodes.push_back(tn);
+    m_objects[shape].tree_nodes.push_back(tn);
+
+    EachChild(node, [&](const MObject & c) {
+        if (c.hasFn(MFn::kTransform))
+            constructTree(c, tn, path);
+    });
 }
 
 void MeshSyncClientMaya::notifyUpdateTransform(MObject node)
 {
-    findOrAddRecord(node).dirty_transform = true;
+    m_objects[node].dirty = true;
 }
 
-void MeshSyncClientMaya::notifyUpdateCamera(MObject shape)
+void MeshSyncClientMaya::notifyUpdateCamera(MObject node)
 {
-    auto node = GetTransform(shape);
-    findOrAddRecord(node).dirty_shape = true;
+    m_objects[node].dirty = true;
 }
 
-void MeshSyncClientMaya::notifyUpdateLight(MObject shape)
+void MeshSyncClientMaya::notifyUpdateLight(MObject node)
 {
-    auto node = GetTransform(shape);
-    findOrAddRecord(node).dirty_shape = true;
+    m_objects[node].dirty = true;
 }
 
-void MeshSyncClientMaya::notifyUpdateMesh(MObject shape)
+void MeshSyncClientMaya::notifyUpdateMesh(MObject node)
 {
-    auto node = GetTransform(shape);
-    findOrAddRecord(node).dirty_shape = true;
+    m_objects[node].dirty = true;
 }
 
 bool MeshSyncClientMaya::sendScene(SendScope scope)
@@ -385,39 +357,25 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     m_pending_send_scene = SendScope::None;
 
     int num_exported = 0;
-    if (scope == SendScope::All) {
-        auto exportNode = [&](MDagPath& node) {
-            if (exportObject(node, false))
-                ++num_exported;
-        };
-        auto exportShape = [&](MDagPath& shape) {
-            shape.pop(); // shape to transform
-            if (exportObject(shape, false))
-                ++num_exported;
-        };
+    auto& export_node = [&](TreeNode *tn) {
+        if (exportObject(tn, false))
+            ++num_exported;
+    };
 
-        EnumeratePath(MFn::kJoint, exportNode);
-        EnumeratePath(MFn::kCamera, exportShape);
-        EnumeratePath(MFn::kLight, exportShape);
-        EnumeratePath(MFn::kMesh, exportShape);
+    if (scope == SendScope::All) {
+        auto handler = [&](MObject& node) {
+            m_objects[node].eachNode(export_node);
+        };
+        EnumerateNode(MFn::kJoint, handler);
+        EnumerateNode(MFn::kCamera, handler);
+        EnumerateNode(MFn::kLight, handler);
+        EnumerateNode(MFn::kMesh, handler);
     }
     else if (scope == SendScope::Updated) {
-        for (auto& kvp : m_object_records) {
+        for (auto& kvp : m_objects) {
             auto& rec = kvp.second;
-            if (rec.dirty_transform || rec.dirty_shape) {
-                if (!rec.shape.isNull()) {
-                    EachPath(rec.shape, [&](MDagPath& shape) {
-                        shape.pop(); // shape to transform
-                        if (exportObject(shape, false))
-                            ++num_exported;
-                    });
-                }
-                else {
-                    EachPath(rec.node, [&](const MDagPath& node) {
-                        if (exportObject(node, false))
-                            ++num_exported;
-                    });
-                }
+            if (rec.dirty) {
+                rec.eachNode(export_node);
             }
         }
     }
@@ -425,10 +383,9 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
         for (uint32_t i = 0; i < list.length(); i++) {
-            MDagPath node;
-            list.getDagPath(i, node);
-            if (exportObject(node, false))
-                ++num_exported;
+            MObject node;
+            list.getDependNode(i, node);
+            m_objects[node].eachNode(export_node);
         }
     }
 
@@ -465,6 +422,7 @@ void MeshSyncClientMaya::update()
     if (m_scene_updated) {
         m_scene_updated = false;
 
+        constructTree();
         registerNodeCallbacks();
         if (m_settings.auto_sync) {
             m_pending_send_scene = SendScope::All;
@@ -500,42 +458,39 @@ void MeshSyncClientMaya::onTimeChange(MTime & time)
 void MeshSyncClientMaya::onNodeRemoved(MObject & node)
 {
     if (node.hasFn(MFn::kTransform)) {
-        auto it = m_object_records.find((void*&)node);
-        if (it != m_object_records.end()) {
-            for (auto& kvp : it->second.path_alive)
-                m_deleted.push_back(kvp.first);
-            m_object_records.erase(it);
+        auto it = m_objects.find(node);
+        if (it != m_objects.end()) {
+            for (auto tn : it->second.tree_nodes) {
+                m_deleted.push_back(tn->path);
+            }
         }
     }
 }
 
 void MeshSyncClientMaya::kickAsyncSend()
 {
-    if (!m_extract_records.empty()) {
+    if (!m_tasks.empty()) {
         if (m_settings.multithreaded) {
-            mu::parallel_for_each(m_extract_records.begin(), m_extract_records.end(), [](ExtractRecords::value_type& kvp) {
-                kvp.second.processTasks();
+            mu::parallel_for_each(m_tasks.begin(), m_tasks.end(), [](TaskRecords::value_type& kvp) {
+                kvp.second.process();
             });
         }
         else {
-            for (auto& kvp : m_extract_records) {
-                kvp.second.processTasks();
+            for (auto& kvp : m_tasks) {
+                kvp.second.process();
             }
         }
-        m_extract_records.clear();
+        m_tasks.clear();
     }
 
+    for (auto& tn : m_tree_pool) {
+        tn->added = false;
+    }
+    for (auto& kvp : m_objects) {
+        kvp.second.dirty = false;
+    }
     m_material_id_table.clear();
 
-    for (auto& kvp : m_object_records) {
-        kvp.second.clear();
-
-        auto& deleted = kvp.second.deleted;
-        if (!deleted.empty()) {
-            m_deleted.insert(m_deleted.end(), deleted.begin(), deleted.end());
-            deleted.clear();
-        }
-    }
 
     float to_meter = 1.0f;
     {

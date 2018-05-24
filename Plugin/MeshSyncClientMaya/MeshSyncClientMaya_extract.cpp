@@ -141,7 +141,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, const MObject& node, con
     auto task = [this, &dst, node, shape]() {
         doExtractMeshData(dst, node, shape);
     };
-    m_extract_records[(void*&)shape].addTask(task);
+    m_tasks[m_objects[shape].tree_nodes.front()].add(task);
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape)
