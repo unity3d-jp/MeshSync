@@ -63,17 +63,17 @@ private:
     {
         MObject node;
         MObject shape;
-        MDagPathArray dagpaths;
-        MDagPathArray dagpaths_prev;
+        MDagPathArray paths;
         MCallbackId cid_trans = 0;
         MCallbackId cid_shape = 0;
         int index = 0;
         bool dirty_transform = true;
         bool dirty_shape = true;
+        std::map<std::string, bool> path_alive;
+        std::vector<std::string> deleted;
 
         void clear();
         bool isAdded(const MDagPath& dpath) const;
-        bool wasAdded(const MDagPath& dpath) const;
         void addPath(const MDagPath& dpath);
         void dbgPrint() const;
     };
@@ -134,7 +134,7 @@ private:
     std::vector<ms::MaterialPtr>      m_client_materials;
     std::vector<ms::AnimationClipPtr> m_client_animations;
     std::vector<ms::ConstraintPtr>    m_client_constraints;
-    MDagPathArray                     m_deleted;
+    std::vector<std::string>          m_deleted;
     ObjectRecords                     m_object_records;
     ExtractRecords                    m_extract_records;
     std::future<void>                 m_future_send;

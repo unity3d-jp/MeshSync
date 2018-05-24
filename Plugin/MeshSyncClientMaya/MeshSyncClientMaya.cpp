@@ -64,23 +64,34 @@ static std::unique_ptr<MeshSyncClientMaya> g_plugin;
 
 void MeshSyncClientMaya::ObjectRecord::clear()
 {
-    if (dagpaths.length() > 0) {
-        dagpaths_prev = dagpaths;
-        dagpaths.clear();
+    deleted.clear();
+
+    uint32_t len = paths.length();
+    if (len > 0) {
+        for (uint32_t i = 0; i < len; ++i)
+            path_alive[GetPath(paths[i])] = true;
+        paths.clear();
+
+        for (auto i = path_alive.begin(); i != path_alive.end(); /**/) {
+            if (!i->second) {
+                deleted.push_back(i->first);
+                path_alive.erase(i++);
+            }
+            else {
+                i->second = false;
+                ++i;
+            }
+        }
     }
     dirty_shape = dirty_transform = false;
 }
 bool MeshSyncClientMaya::ObjectRecord::isAdded(const MDagPath& dpath) const
 {
-    return Find(dagpaths, dpath);
-}
-bool MeshSyncClientMaya::ObjectRecord::wasAdded(const MDagPath& dpath) const
-{
-    return Find(dagpaths_prev, dpath);
+    return Find(paths, dpath);
 }
 void MeshSyncClientMaya::ObjectRecord::addPath(const MDagPath& dpath)
 {
-    dagpaths.append(dpath);
+    paths.append(dpath);
 }
 
 void MeshSyncClientMaya::ExtractRecord::addTask(const task_t & task)
@@ -102,11 +113,7 @@ void MeshSyncClientMaya::ObjectRecord::dbgPrint() const
         mscTrace("  %s\n", GetPath(dpath).c_str());
     });
     mscTrace("added:\n");
-    Each(dagpaths, [](const MDagPath& dpath) {
-        mscTrace("  %s\n", GetPath(dpath).c_str());
-    });
-    mscTrace("prev added:\n");
-    Each(dagpaths_prev, [](const MDagPath& dpath) {
+    Each(paths, [](const MDagPath& dpath) {
         mscTrace("  %s\n", GetPath(dpath).c_str());
     });
 }
@@ -425,7 +432,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         }
     }
 
-    if (num_exported > 0 || m_deleted.length() > 0) {
+    if (num_exported > 0 || !m_deleted.empty()) {
         kickAsyncSend();
         return true;
     }
@@ -495,9 +502,8 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
     if (node.hasFn(MFn::kTransform)) {
         auto it = m_object_records.find((void*&)node);
         if (it != m_object_records.end()) {
-            Each(it->second.dagpaths_prev, [this](const MDagPath& dp) {
-                m_deleted.append(dp);
-            });
+            for (auto& kvp : it->second.path_alive)
+                m_deleted.push_back(kvp.first);
             m_object_records.erase(it);
         }
     }
@@ -523,6 +529,12 @@ void MeshSyncClientMaya::kickAsyncSend()
 
     for (auto& kvp : m_object_records) {
         kvp.second.clear();
+
+        auto& deleted = kvp.second.deleted;
+        if (!deleted.empty()) {
+            m_deleted.insert(m_deleted.end(), deleted.begin(), deleted.end());
+            deleted.clear();
+        }
     }
 
     float to_meter = 1.0f;
@@ -547,12 +559,12 @@ void MeshSyncClientMaya::kickAsyncSend()
         }
 
         // send delete message
-        uint32_t num_deleted = m_deleted.length();
-        if(num_deleted > 0) {
+        size_t num_deleted = m_deleted.size();
+        if (num_deleted) {
             ms::DeleteMessage del;
             del.targets.resize(num_deleted);
             for (uint32_t i = 0; i < num_deleted; ++i)
-                del.targets[i].path = GetPath(m_deleted[i]);
+                del.targets[i].path = m_deleted[i];
             m_deleted.clear();
 
             client.send(del);
