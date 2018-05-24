@@ -110,22 +110,22 @@ inline mu::float3 to_float3(const MPlug plug)
 }
 
 
-inline bool Find(const MDagPathArray& dagpaths, const MDagPath& dpath)
+inline bool Find(const MDagPathArray& paths, const MDagPath& dpath)
 {
-    uint32_t len = dagpaths.length();
+    uint32_t len = paths.length();
     for (uint32_t i = 0; i < len; ++i) {
-        if (dagpaths[i] == dpath)
+        if (paths[i] == dpath)
             return true;
     }
     return false;
 }
 
 template<class Body>
-void Each(const MDagPathArray& dagpaths, const Body& body)
+void Each(const MDagPathArray& paths, const Body& body)
 {
-    uint32_t len = dagpaths.length();
+    uint32_t len = paths.length();
     for (uint32_t i = 0; i < len; ++i)
-        body(dagpaths[i]);
+        body(paths[i]);
 }
 
 // body: [](MObject&) -> void
@@ -146,9 +146,11 @@ inline void EnumeratePath(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     while (!it.isDone()) {
-        MDagPath path;
-        it.getPath(path);
-        body(path);
+        MDagPathArray paths;
+        it.getAllPaths(paths);
+        uint32_t len = paths.length();
+        for (uint32_t i = 0; i < len; ++i)
+            body(paths[i]);
         it.next();
     }
 }
@@ -157,12 +159,11 @@ inline void EnumeratePath(MFn::Type type, const Body& body)
 template<class Body>
 inline void EachPath(MObject node, const Body& body)
 {
-    MDagPathArray pa;
-    MDagPath::getAllPathsTo(node, pa);
-    uint32_t len = pa.length();
-    for (uint32_t i = 0; i < len; ++i) {
-        body(pa[i]);
-    }
+    MDagPathArray paths;
+    MDagPath::getAllPathsTo(node, paths);
+    uint32_t len = paths.length();
+    for (uint32_t i = 0; i < len; ++i)
+        body(paths[i]);
 }
 
 // body: [](MObject&) -> void

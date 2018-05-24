@@ -137,15 +137,11 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, const MObject& node, con
     }
 
     ExtractTransformData(node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
-    if (m_settings.multithreaded) {
-        auto task = [this, &dst, node, shape]() {
-            doExtractMeshData(dst, node, shape);
-        };
-        m_extract_records[(void*&)shape].addTask(task);
-    }
-    else {
+
+    auto task = [this, &dst, node, shape]() {
         doExtractMeshData(dst, node, shape);
-    }
+    };
+    m_extract_records[(void*&)shape].addTask(task);
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape)

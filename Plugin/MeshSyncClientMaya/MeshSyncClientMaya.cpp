@@ -379,11 +379,11 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
 
     int num_exported = 0;
     if (scope == SendScope::All) {
-        auto exportNode = [this, &num_exported](MDagPath& node) {
+        auto exportNode = [&](MDagPath& node) {
             if (exportObject(node, false))
                 ++num_exported;
         };
-        auto exportShape = [this, &num_exported](MDagPath& shape) {
+        auto exportShape = [&](MDagPath& shape) {
             shape.pop(); // shape to transform
             if (exportObject(shape, false))
                 ++num_exported;
@@ -506,9 +506,16 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
 void MeshSyncClientMaya::kickAsyncSend()
 {
     if (!m_extract_records.empty()) {
-        mu::parallel_for_each(m_extract_records.begin(), m_extract_records.end(), [](ExtractRecords::value_type& kvp) {
-            kvp.second.processTasks();
-        });
+        if (m_settings.multithreaded) {
+            mu::parallel_for_each(m_extract_records.begin(), m_extract_records.end(), [](ExtractRecords::value_type& kvp) {
+                kvp.second.processTasks();
+            });
+        }
+        else {
+            for (auto& kvp : m_extract_records) {
+                kvp.second.processTasks();
+            }
+        }
         m_extract_records.clear();
     }
 
