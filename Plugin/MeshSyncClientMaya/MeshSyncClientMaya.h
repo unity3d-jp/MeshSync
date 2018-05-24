@@ -59,6 +59,17 @@ public:
 
 
 private:
+    struct MObjectKey
+    {
+        void *key;
+
+        MObjectKey() : key(nullptr) {}
+        MObjectKey(const MObject& mo) : key((void*&)mo) {}
+        bool operator<(const MObjectKey& v) const { return key < v.key; }
+        bool operator==(const MObjectKey& v) const { return key == v.key; }
+        bool operator!=(const MObjectKey& v) const { return key != v.key; }
+    };
+
     struct TreeNode
     {
         MObject node;
@@ -73,7 +84,7 @@ private:
     };
     using TreeNodePtr = std::unique_ptr<TreeNode>;
 
-    struct ObjectRecord
+    struct DagNodeRecord
     {
         using task_t = std::function<void()>;
 
@@ -88,10 +99,11 @@ private:
                 body(tn);
         }
     };
+    using DagNodeRecords = std::map<MObjectKey, DagNodeRecord>;
 
-    using task_t = std::function<void()>;
     struct TaskRecord
     {
+        using task_t = std::function<void()>;
         std::vector<task_t> tasks;
 
         void add(const task_t& task);
@@ -99,21 +111,24 @@ private:
     };
     using TaskRecords = std::map<TreeNode*, TaskRecord>;
 
-    struct MObjectKey
+    struct AnimationRecord
     {
-        void *key;
+        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, const MObject& node, const MObject& shape);
 
-        MObjectKey() : key(nullptr) {}
-        MObjectKey(const MObject& mo) : key((void*&)mo) {}
-        bool operator<(const MObjectKey& v) const { return key < v.key; }
-        bool operator==(const MObjectKey& v) const { return key == v.key; }
-        bool operator!=(const MObjectKey& v) const { return key != v.key; }
+        TreeNode *tn = nullptr;
+        ms::Animation *dst = nullptr;
+        extractor_t extractor = nullptr;
+
+        void operator()(MeshSyncClientMaya *_this);
     };
+    using AnimationRecords = std::map<TreeNode*, AnimationRecord>;
 
     std::vector<TreeNodePtr> m_tree_pool;
-    std::vector<TreeNode*> m_tree_roots;
-    std::map<MObjectKey, ObjectRecord> m_objects;
-    TaskRecords m_tasks;
+    std::vector<TreeNode*>   m_tree_roots;
+    DagNodeRecords           m_dagnode_records;
+    TaskRecords              m_task_records;
+    AnimationRecords         m_anim_records;
+
 
     void constructTree();
     void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
@@ -122,7 +137,6 @@ private:
     void waitAsyncSend();
     void registerGlobalCallbacks();
     void registerNodeCallbacks();
-    bool registerNodeCallback(MObject& node, bool leaf = true);
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
@@ -137,7 +151,7 @@ private:
     void doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape);
 
     int exportAnimations(SendScope scope);
-    bool exportAnimation(const MDagPath& src);
+    bool exportAnimation(TreeNode *tn);
     void extractTransformAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
     void extractCameraAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
     void extractLightAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
@@ -149,49 +163,22 @@ private:
     void kickAsyncSend();
 
 private:
-    using ExtractRecords = std::map<void*, ObjectRecord>;
-    using lock_t = std::unique_lock<std::mutex>;
+    MObject                     m_obj;
+    MFnPlugin                   m_iplugin;
+    std::vector<MCallbackId>    m_cids_global;
+    std::vector<MUuid>          m_material_id_table;
 
-    MObject m_obj;
-    MFnPlugin m_iplugin;
+    std::vector<ms::TransformPtr>       m_objects;
+    std::vector<ms::MeshPtr>            m_meshes;
+    std::vector<ms::MaterialPtr>        m_materials;
+    std::vector<ms::AnimationClipPtr>   m_animations;
+    std::vector<ms::ConstraintPtr>      m_constraints;
+    std::vector<std::string>            m_deleted;
+    std::future<void>                   m_future_send;
 
-    std::vector<MCallbackId> m_cids_global;
-    std::vector<MUuid> m_material_id_table;
-
-    std::vector<ms::TransformPtr>     m_client_objects;
-    std::vector<ms::MeshPtr>          m_client_meshes;
-    std::vector<ms::MaterialPtr>      m_client_materials;
-    std::vector<ms::AnimationClipPtr> m_client_animations;
-    std::vector<ms::ConstraintPtr>    m_client_constraints;
-    std::vector<std::string>          m_deleted;
-    std::future<void>                 m_future_send;
-
-    SendScope m_pending_send_scene = SendScope::None;
-    bool m_scene_updated = true;
-    bool m_ignore_update = false;
-    int m_index_seed = 0;
-
-
-    // animation export
-    struct AnimationRecord
-    {
-        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, const MObject& node, const MObject& shape);
-        struct Path
-        {
-            MDagPath dagpath;
-            ms::Animation *dst = nullptr;
-            extractor_t extractor = nullptr;
-        };
-
-        MObject node, shape;
-        std::vector<Path> paths;
-
-        bool isAdded(const MDagPath& dp) const;
-        void add(const MDagPath& dp, ms::Animation *dst, extractor_t extractor);
-        void operator()(MeshSyncClientMaya *_this);
-    };
-    using AnimationRecords = std::map<void*, AnimationRecord>;
-    AnimationRecords m_anim_records;
-    float m_current_time = 0.0f;
-    MDGContext m_animation_ctx;
+    SendScope m_pending_scope = SendScope::None;
+    bool      m_scene_updated = true;
+    bool      m_ignore_update = false;
+    int       m_index_seed = 0;
+    float     m_anim_time = 0.0f;
 };

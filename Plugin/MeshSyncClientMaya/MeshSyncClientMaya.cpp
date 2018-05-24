@@ -132,77 +132,42 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
 
 void MeshSyncClientMaya::registerNodeCallbacks()
 {
-    // cameras
-    EnumerateNode(MFn::kCamera, [this](MObject& shape) {
-        registerNodeCallback(shape);
-    });
-
-    // lights
-    EnumerateNode(MFn::kLight, [this](MObject& shape) {
-        registerNodeCallback(shape);
-    });
-
     // joints
     EnumerateNode(MFn::kJoint, [this](MObject& node) {
-        registerNodeCallback(node);
+        auto& rec = m_dagnode_records[node];
+        if (!rec.cid)
+            rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
     });
 
-    //  meshes
-    EnumerateNode(MFn::kMesh, [this](MObject& shape) {
-        registerNodeCallback(shape);
-    });
-}
-
-bool MeshSyncClientMaya::registerNodeCallback(MObject& node, bool leaf)
-{
-    if (node.isNull() || node.hasFn(MFn::kWorld))
-        return false;
-
-    bool handled = false;
-    if (node.hasFn(MFn::kMesh)) {
-        MFnMesh fn(node);
+    // cameras
+    EnumerateNode(MFn::kCamera, [this](MObject& node) {
+        MFnDagNode fn(node);
         if (!fn.isIntermediateObject()) {
-            auto& rec = m_objects[node];
-            if (!rec.cid)
-                rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
-        }
-        handled = true;
-    }
-    else if (node.hasFn(MFn::kCamera)) {
-        MFnCamera fn(node);
-        if (!fn.isIntermediateObject()) {
-            auto& rec = m_objects[node];
+            auto& rec = m_dagnode_records[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
         }
-        handled = true;
-    }
-    else if (node.hasFn(MFn::kLight)) {
-        MFnLight fn(node);
+    });
+
+    // lights
+    EnumerateNode(MFn::kLight, [this](MObject& node) {
+        MFnDagNode fn(node);
         if (!fn.isIntermediateObject()) {
-            auto& rec = m_objects[node];
+            auto& rec = m_dagnode_records[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
         }
-        handled = true;
-    }
-    else if (node.hasFn(MFn::kJoint)) {
-        auto& rec = m_objects[node];
-        if (!rec.cid)
-            rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
-        handled = true;
-    }
+    });
 
-    //if (!handled && !leaf && node.hasFn(MFn::kTransform)) {
-    //    auto& rec = m_objects[node];
-    //    if (!rec.cid)
-    //        rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
-    //    handled = true;
-    //}
-    //if (handled) {
-    //    registerNodeCallback(GetParent(node), false);
-    //}
-    return handled;
+    //  meshes
+    EnumerateNode(MFn::kMesh, [this](MObject& node) {
+        MFnDagNode fn(node);
+        if (!fn.isIntermediateObject()) {
+            auto& rec = m_dagnode_records[node];
+            if (!rec.cid)
+                m_dagnode_records[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
+        }
+    });
 }
 
 void MeshSyncClientMaya::removeGlobalCallbacks()
@@ -215,7 +180,7 @@ void MeshSyncClientMaya::removeGlobalCallbacks()
 
 void MeshSyncClientMaya::removeNodeCallbacks()
 {
-    for (auto& rec : m_objects) {
+    for (auto& rec : m_dagnode_records) {
         if (rec.second.cid) {
             MMessage::removeCallback(rec.second.cid);
             rec.second.cid = 0;
@@ -232,10 +197,7 @@ int MeshSyncClientMaya::getMaterialID(MUuid uid)
 
 bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
 {
-    if (!tn)
-        return false;
-
-    if (tn->added)
+    if (!tn || tn->added)
         return false;
 
     auto& node = tn->node;
@@ -246,28 +208,28 @@ bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
         exportObject(tn->parent, true);
         auto dst = ms::Mesh::create();
         extractMeshData(*dst, node, shape);
-        m_client_meshes.emplace_back(dst);
+        m_meshes.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
         exportObject(tn->parent, true);
         auto dst = ms::Camera::create();
         extractCameraData(*dst, node, shape);
-        m_client_objects.emplace_back(dst);
+        m_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
         exportObject(tn->parent, true);
         auto dst = ms::Light::create();
         extractLightData(*dst, node, shape);
-        m_client_objects.emplace_back(dst);
+        m_objects.emplace_back(dst);
         ret = dst;
     }
     else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
         exportObject(tn->parent, true);
         auto dst = ms::Transform::create();
         extractTransformData(*dst, node);
-        m_client_objects.emplace_back(dst);
+        m_objects.emplace_back(dst);
         ret = dst;
     }
 
@@ -286,8 +248,8 @@ void MeshSyncClientMaya::constructTree()
 {
     m_tree_roots.clear();
     m_tree_pool.clear();
-    m_objects.clear();
-    m_tasks.clear();
+    m_dagnode_records.clear();
+    m_task_records.clear();
     m_index_seed = 0;
 
     EnumerateNode(MFn::kTransform, [&](MObject& node) {
@@ -319,8 +281,8 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
     else
         m_tree_roots.push_back(tn);
 
-    m_objects[node].tree_nodes.push_back(tn);
-    m_objects[shape].tree_nodes.push_back(tn);
+    m_dagnode_records[node].tree_nodes.push_back(tn);
+    m_dagnode_records[shape].tree_nodes.push_back(tn);
 
     EachChild(node, [&](const MObject & c) {
         if (c.hasFn(MFn::kTransform))
@@ -330,31 +292,31 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
 
 void MeshSyncClientMaya::notifyUpdateTransform(MObject node)
 {
-    m_objects[node].dirty = true;
+    m_dagnode_records[node].dirty = true;
 }
 
 void MeshSyncClientMaya::notifyUpdateCamera(MObject node)
 {
-    m_objects[node].dirty = true;
+    m_dagnode_records[node].dirty = true;
 }
 
 void MeshSyncClientMaya::notifyUpdateLight(MObject node)
 {
-    m_objects[node].dirty = true;
+    m_dagnode_records[node].dirty = true;
 }
 
 void MeshSyncClientMaya::notifyUpdateMesh(MObject node)
 {
-    m_objects[node].dirty = true;
+    m_dagnode_records[node].dirty = true;
 }
 
 bool MeshSyncClientMaya::sendScene(SendScope scope)
 {
     if (isSending()) {
-        m_pending_send_scene = scope;
+        m_pending_scope = scope;
         return false;
     }
-    m_pending_send_scene = SendScope::None;
+    m_pending_scope = SendScope::None;
 
     int num_exported = 0;
     auto& export_node = [&](TreeNode *tn) {
@@ -364,7 +326,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
 
     if (scope == SendScope::All) {
         auto handler = [&](MObject& node) {
-            m_objects[node].eachNode(export_node);
+            m_dagnode_records[node].eachNode(export_node);
         };
         EnumerateNode(MFn::kJoint, handler);
         EnumerateNode(MFn::kCamera, handler);
@@ -372,7 +334,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         EnumerateNode(MFn::kMesh, handler);
     }
     else if (scope == SendScope::Updated) {
-        for (auto& kvp : m_objects) {
+        for (auto& kvp : m_dagnode_records) {
             auto& rec = kvp.second;
             if (rec.dirty) {
                 rec.eachNode(export_node);
@@ -385,7 +347,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         for (uint32_t i = 0; i < list.length(); i++) {
             MObject node;
             list.getDependNode(i, node);
-            m_objects[node].eachNode(export_node);
+            m_dagnode_records[node].eachNode(export_node);
         }
     }
 
@@ -425,12 +387,12 @@ void MeshSyncClientMaya::update()
         constructTree();
         registerNodeCallbacks();
         if (m_settings.auto_sync) {
-            m_pending_send_scene = SendScope::All;
+            m_pending_scope = SendScope::All;
         }
     }
 
-    if (m_pending_send_scene != SendScope::None) {
-        sendScene(m_pending_send_scene);
+    if (m_pending_scope != SendScope::None) {
+        sendScene(m_pending_scope);
     }
     else if (m_settings.auto_sync) {
         sendScene(SendScope::Updated);
@@ -449,7 +411,7 @@ void MeshSyncClientMaya::onSceneUpdated()
 void MeshSyncClientMaya::onTimeChange(MTime & time)
 {
     if (m_settings.auto_sync) {
-        m_pending_send_scene = SendScope::All;
+        m_pending_scope = SendScope::All;
         // timer callback won't be called while scrubbing time slider. so call update() immediately
         update();
     }
@@ -458,8 +420,8 @@ void MeshSyncClientMaya::onTimeChange(MTime & time)
 void MeshSyncClientMaya::onNodeRemoved(MObject & node)
 {
     if (node.hasFn(MFn::kTransform)) {
-        auto it = m_objects.find(node);
-        if (it != m_objects.end()) {
+        auto it = m_dagnode_records.find(node);
+        if (it != m_dagnode_records.end()) {
             for (auto tn : it->second.tree_nodes) {
                 m_deleted.push_back(tn->path);
             }
@@ -469,24 +431,24 @@ void MeshSyncClientMaya::onNodeRemoved(MObject & node)
 
 void MeshSyncClientMaya::kickAsyncSend()
 {
-    if (!m_tasks.empty()) {
+    if (!m_task_records.empty()) {
         if (m_settings.multithreaded) {
-            mu::parallel_for_each(m_tasks.begin(), m_tasks.end(), [](TaskRecords::value_type& kvp) {
+            mu::parallel_for_each(m_task_records.begin(), m_task_records.end(), [](TaskRecords::value_type& kvp) {
                 kvp.second.process();
             });
         }
         else {
-            for (auto& kvp : m_tasks) {
+            for (auto& kvp : m_task_records) {
                 kvp.second.process();
             }
         }
-        m_tasks.clear();
+        m_task_records.clear();
     }
 
     for (auto& tn : m_tree_pool) {
         tn->added = false;
     }
-    for (auto& kvp : m_objects) {
+    for (auto& kvp : m_dagnode_records) {
         kvp.second.dirty = false;
     }
     m_material_id_table.clear();
@@ -529,33 +491,33 @@ void MeshSyncClientMaya::kickAsyncSend()
         {
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
-            set.scene.objects = m_client_objects;
-            set.scene.materials = m_client_materials;
+            set.scene.objects = m_objects;
+            set.scene.materials = m_materials;
             client.send(set);
 
-            m_client_objects.clear();
-            m_client_materials.clear();
+            m_objects.clear();
+            m_materials.clear();
         }
 
         // send meshes one by one to Unity can respond quickly
-        for(auto& mesh : m_client_meshes) {
+        for(auto& mesh : m_meshes) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.objects = { mesh };
             client.send(set);
         };
-        m_client_meshes.clear();
+        m_meshes.clear();
 
         // send animations and constraints
-        if (!m_client_animations.empty() || !m_client_constraints.empty()) {
+        if (!m_animations.empty() || !m_constraints.empty()) {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.animations = m_client_animations;
-            set.scene.constraints = m_client_constraints;
+            set.scene.animations = m_animations;
+            set.scene.constraints = m_constraints;
             client.send(set);
 
-            m_client_animations.clear();
-            m_client_constraints.clear();
+            m_animations.clear();
+            m_constraints.clear();
         }
 
         // notify scene end
