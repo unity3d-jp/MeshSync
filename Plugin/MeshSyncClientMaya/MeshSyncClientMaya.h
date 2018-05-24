@@ -105,7 +105,7 @@ private:
 
     struct AnimationRecord
     {
-        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, const MObject& node, const MObject& shape);
+        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, TreeNode *n);
 
         TreeNode *tn = nullptr;
         ms::Animation *dst = nullptr;
@@ -137,21 +137,21 @@ private:
     void exportMaterials();
 
     bool exportObject(TreeNode *tn, bool force);
-    void extractTransformData(ms::Transform& dst, const MObject& src);
-    void extractCameraData(ms::Camera& dst, const MObject& node, const MObject& shape);
-    void extractLightData(ms::Light& dst, const MObject& node, const MObject& shape);
-    void extractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape);
-    void doExtractMeshData(ms::Mesh& dst, const MObject& node, const MObject& shape);
+    void extractTransformData(ms::Transform& dst, TreeNode *n);
+    void extractCameraData(ms::Camera& dst, TreeNode *n);
+    void extractLightData(ms::Light& dst, TreeNode *n);
+    void extractMeshData(ms::Mesh& dst, TreeNode *n);
+    void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
 
     int exportAnimations(SendScope scope);
     bool exportAnimation(TreeNode *tn);
-    void extractTransformAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
-    void extractCameraAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
-    void extractLightAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
-    void extractMeshAnimationData(ms::Animation& dst, const MObject& node, const MObject& shape);
+    void extractTransformAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractCameraAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractLightAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractMeshAnimationData(ms::Animation& dst, TreeNode *n);
 
     void exportConstraint(TreeNode *tn);
-    void extractConstraintData(ms::Constraint& dst, const MObject& src, const MObject& node);
+    void extractConstraintData(ms::Constraint& dst, TreeNode *n);
 
     void kickAsyncSend();
 
