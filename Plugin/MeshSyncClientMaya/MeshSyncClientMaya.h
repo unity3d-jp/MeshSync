@@ -1,5 +1,40 @@
 ﻿#pragma once
 
+struct MObjectKey
+{
+    void *key;
+
+    MObjectKey() : key(nullptr) {}
+    MObjectKey(const MObject& mo) : key((void*&)mo) {}
+    bool operator<(const MObjectKey& v) const { return key < v.key; }
+    bool operator==(const MObjectKey& v) const { return key == v.key; }
+    bool operator!=(const MObjectKey& v) const { return key != v.key; }
+};
+
+// note: because of instance, one dag node can belong to multiple tree nodes.
+struct TreeNode;
+struct DAGNode
+{
+    MObject node;
+    std::vector<TreeNode*> branches;
+    MCallbackId cid = 0;
+    bool dirty = true;
+};
+
+struct TreeNode
+{
+    DAGNode *trans = nullptr;
+    DAGNode *shape = nullptr;
+    std::string name;
+    std::string path;
+    int index = 0;
+    TreeNode *parent = nullptr;
+    std::vector<TreeNode*> children;
+
+    bool added = false;
+};
+
+
 class MeshSyncClientMaya
 {
 public:
@@ -59,39 +94,8 @@ public:
 
 
 private:
-    struct MObjectKey
-    {
-        void *key;
-
-        MObjectKey() : key(nullptr) {}
-        MObjectKey(const MObject& mo) : key((void*&)mo) {}
-        bool operator<(const MObjectKey& v) const { return key < v.key; }
-        bool operator==(const MObjectKey& v) const { return key == v.key; }
-        bool operator!=(const MObjectKey& v) const { return key != v.key; }
-    };
-
-    struct TreeNode
-    {
-        MObject node;
-        MObject shape;
-        std::string name;
-        std::string path;
-        int index = 0;
-        TreeNode *parent = nullptr;
-        std::vector<TreeNode*> children;
-
-        bool added = false;
-    };
+    using DagNodeRecords = std::map<MObjectKey, DAGNode>;
     using TreeNodePtr = std::unique_ptr<TreeNode>;
-
-    // note: because of instance, one dag node can belong to multiple tree nodes.
-    struct DagNodeRecord
-    {
-        std::vector<TreeNode*> branches;
-        MCallbackId cid = 0;
-        bool dirty = true;
-    };
-    using DagNodeRecords = std::map<MObjectKey, DagNodeRecord>;
 
     struct TaskRecord
     {
@@ -118,7 +122,7 @@ private:
     std::vector<TreeNodePtr> m_tree_pool;
     std::vector<TreeNode*>   m_tree_roots;
     DagNodeRecords           m_dagnode_records;
-    TaskRecords              m_task_records;
+    TaskRecords              m_extract_tasks;
     AnimationRecords         m_anim_records;
 
 

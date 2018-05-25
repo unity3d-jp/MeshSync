@@ -1,6 +1,7 @@
 #pragma once
 
 #include "muConfig.h"
+#include <atomic>
 #if defined(muEnablePPL)
     #include <ppl.h>
 #elif defined(muEnableTBB)
@@ -94,6 +95,24 @@ void parallel_invoke(const Body& first, Args... args) {
 }
 
 #endif
+
+
+class spin_mutex
+{
+public:
+    void lock()
+    {
+        while (lck.test_and_set(std::memory_order_acquire)) {}
+    }
+
+    void unlock()
+    {
+        lck.clear(std::memory_order_release);
+    }
+
+private:
+    std::atomic_flag lck = ATOMIC_FLAG_INIT;
+};
 
 } // namespace ms
 

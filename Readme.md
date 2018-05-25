@@ -13,7 +13,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
 ### Maya
-- Maya 2016 - 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
+- Maya 2015 - 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
 - インストールするには、プラグインを Maya の module path が通っているディレクトリにコピーします。
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
   - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
@@ -81,8 +81,10 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 
 ### Unity
-- Unity 5.6 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
+- Unity 5.5 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
 - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases) をプロジェクトにインポートします。
+  - Unity 5.5 の場合、インポート後にプラグイン dll の設定を下記画像のように変更してください (5.6 を堺に .meta ファイルの仕様が変わっているため)
+  ![](https://user-images.githubusercontent.com/1488611/40534280-7ef6ecd6-6040-11e8-9f55-ea2f509a2383.png)
 - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
 - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
 
@@ -118,7 +120,8 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
   これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
 
 
-- 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。
+- 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。  
+  ランタイムではアニメーションの同期は機能しませんが、モデルの同期は一通り動作します。
 
 
 ##  関連

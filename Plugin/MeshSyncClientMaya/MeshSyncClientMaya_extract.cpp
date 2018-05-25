@@ -29,8 +29,8 @@ bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
     if (!tn || tn->added)
         return false;
 
-    auto& node = tn->node;
-    auto& shape = tn->shape;
+    auto& trans = tn->trans->node;
+    auto& shape = tn->shape->node;
 
     ms::TransformPtr ret;
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
@@ -73,23 +73,24 @@ bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
     }
 }
 
-static void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     // get TRS from world matrix.
     // note: world matrix is a result of local TRS + parent TRS + constraints.
     //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
 
+    auto& trans = n->trans->node;
     auto mat = mu::float4x4::identity();
     {
         MObject obj_wmat;
-        MFnTransform(src).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
+        MFnTransform(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
         mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
     }
 
     // get inverse parent matrix to calculate local matrix.
     // note: using parentInverseMatrix plug seems more appropriate, but it seems sometimes have incorrect value on Maya2016...
-    MObject parent = GetParent(src);
-    if (!parent.isNull() && parent.hasFn(MFn::kTransform)) {
+    if (n->parent) {
+        auto& parent = n->parent->trans->node;
         MObject obj_pwmat;
         MFnTransform(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
         auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
@@ -99,12 +100,13 @@ static void ExtractTransformData(MObject src, mu::float3& pos, mu::quatf& rot, m
     pos = extract_position(mat);
     rot = extract_rotation(mat);
     scale = extract_scale(mat);
-    vis = IsVisible(src);
+    vis = IsVisible(trans);
 }
 
-static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane, float& fov,
+static void ExtractCameraData(TreeNode *n, float& near_plane, float& far_plane, float& fov,
     float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
 {
+    auto& shape = n->shape->node;
     MFnCamera mcam(shape);
 
     near_plane = (float)mcam.nearClippingPlane();
@@ -117,8 +119,9 @@ static void ExtractCameraData(MObject shape, float& near_plane, float& far_plane
     focus_distance = (float)mcam.focusDistance();
 }
 
-static void ExtractLightData(MObject shape, mu::float4& color, float& intensity, float& spot_angle)
+static void ExtractLightData(TreeNode *n, mu::float4& color, float& intensity, float& spot_angle)
 {
+    auto& shape = n->shape->node;
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
         spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
@@ -132,32 +135,32 @@ static void ExtractLightData(MObject shape, mu::float4& color, float& intensity,
 
 void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, TreeNode *n)
 {
-    ExtractTransformData(n->node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 }
 
 void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, TreeNode *n)
 {
-    ExtractTransformData(n->node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
-    auto& shape = n->shape;
+    auto& shape = n->shape->node;
     if (!shape.hasFn(MFn::kCamera)) {
         return;
     }
 
     MFnCamera mcam(shape);
     dst.is_ortho = mcam.isOrtho();
-    ExtractCameraData(shape, dst.near_plane, dst.far_plane, dst.fov,
+    ExtractCameraData(n, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
 }
 
 void MeshSyncClientMaya::extractLightData(ms::Light& dst, TreeNode *n)
 {
-    ExtractTransformData(n->node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
-    auto& shape = n->shape;
+    auto& shape = n->shape->node;
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
         dst.light_type = ms::Light::LightType::Spot;
@@ -178,7 +181,7 @@ void MeshSyncClientMaya::extractLightData(ms::Light& dst, TreeNode *n)
         return;
     }
 
-    ExtractLightData(shape, dst.color, dst.intensity, dst.spot_angle);
+    ExtractLightData(n, dst.color, dst.intensity, dst.spot_angle);
 }
 
 void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
@@ -187,18 +190,19 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
         exportMaterials();
     }
 
-    ExtractTransformData(n->node, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 
     auto task = [this, &dst, n]() {
         doExtractMeshData(dst, n);
     };
-    m_task_records[m_dagnode_records[n->shape].branches.front()].add(task);
+    m_extract_tasks[n->shape->branches.front()].add(task);
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 {
-    auto& node = n->node;
-    auto& shape = n->shape;
+    auto& trans = n->trans->node;
+    auto& shape = n->shape->node;
+
     if (!shape.hasFn(MFn::kMesh)) { return; }
 
     dst.visible = IsVisible(shape);
@@ -225,13 +229,13 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     // * this code assumes blendshape is applied always after skinning, and there is no multiple blendshapes or skinnings.
     // * maybe this cause a problem..
     if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
-        auto orig_mesh = FindOrigMesh(node);
+        auto orig_mesh = FindOrigMesh(trans);
         if (orig_mesh.hasFn(MFn::kMesh)) {
             fn_src_mesh.setObject(orig_mesh);
         }
     }
     if (m_settings.sync_bones && !fn_skin.object().isNull()) {
-        auto orig_mesh = FindOrigMesh(node);
+        auto orig_mesh = FindOrigMesh(trans);
         if (orig_mesh.hasFn(MFn::kMesh)) {
             fn_src_mesh.setObject(orig_mesh);
             skin_index = fn_skin.indexForOutputShape(mmesh.object());
@@ -603,7 +607,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     int num_exported = 0;
-    auto export_branches = [&](DagNodeRecord& rec) {
+    auto export_branches = [&](DAGNode& rec) {
         for (auto *tn : rec.branches) {
             if (exportAnimation(tn))
                 ++num_exported;
@@ -667,47 +671,47 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     return num_exported;
 }
 
-bool MeshSyncClientMaya::exportAnimation(TreeNode *tn)
+bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
 {
-    if (!tn || tn->added)
+    if (!n || n->added)
         return false;
 
-    auto& node = tn->node;
-    auto& shape = tn->shape;
+    auto& trans = n->trans->node;
+    auto& shape = n->shape->node;
 
     ms::AnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
 
-    if (MAnimUtil::isAnimated(node) || MAnimUtil::isAnimated(shape)) {
+    if (MAnimUtil::isAnimated(trans) || MAnimUtil::isAnimated(shape)) {
         if (shape.hasFn(MFn::kCamera)) {
-            exportAnimation(tn->parent);
+            exportAnimation(n->parent);
             dst = ms::CameraAnimation::create();
             extractor = &MeshSyncClientMaya::extractCameraAnimationData;
         }
         else if (shape.hasFn(MFn::kLight)) {
-            exportAnimation(tn->parent);
+            exportAnimation(n->parent);
             dst = ms::LightAnimation::create();
             extractor = &MeshSyncClientMaya::extractLightAnimationData;
         }
         else if (shape.hasFn(MFn::kMesh)) {
-            exportAnimation(tn->parent);
+            exportAnimation(n->parent);
             dst = ms::MeshAnimation::create();
             extractor = &MeshSyncClientMaya::extractMeshAnimationData;
         }
         else {
-            exportAnimation(tn->parent);
+            exportAnimation(n->parent);
             dst = ms::TransformAnimation::create();
             extractor = &MeshSyncClientMaya::extractTransformAnimationData;
         }
     }
 
     if (dst) {
-        dst->path = tn->path;
-        auto& rec = m_anim_records[tn];
-        rec.tn = tn;
+        dst->path = n->path;
+        auto& rec = m_anim_records[n];
+        rec.tn = n;
         rec.dst = dst.get();
         rec.extractor = extractor;
-        tn->added = true;
+        n->added = true;
         m_animations.front()->animations.emplace_back(dst);
         return true;
     }
@@ -724,7 +728,7 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, Tree
     auto rot = mu::quatf::identity();
     auto scale = mu::float3::one();
     bool vis = true;
-    ExtractTransformData(n->node, pos, rot, scale, vis);
+    ExtractTransformData(n, pos, rot, scale, vis);
 
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.translation.push_back({ t, pos });
@@ -744,7 +748,7 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, TreeNod
     }
 
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
-    ExtractCameraData(n->shape, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+    ExtractCameraData(n, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.near_plane.push_back({ t , near_plane });
@@ -764,7 +768,6 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
 {
     extractTransformAnimationData(dst_, n);
 
-    auto& shape = n->shape;
     auto& dst = (ms::LightAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -774,11 +777,13 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
     mu::float4 color;
     float intensity;
     float spot_angle;
-    ExtractLightData(shape, color, intensity, spot_angle);
+    ExtractLightData(n, color, intensity, spot_angle);
 
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
+
+    auto& shape = n->shape->node;
     if (shape.hasFn(MFn::kSpotLight)) {
         dst.spot_angle.push_back({ t, spot_angle });
     }
@@ -789,9 +794,9 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
     extractTransformAnimationData(dst_, n);
 
     auto& dst = (ms::MeshAnimation&)dst_;
+    auto& shape = n->shape->node;
 
     float t = m_anim_time * m_settings.animation_time_scale;
-    auto& shape = n->shape;
 
     // get blendshape weights
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(shape));
@@ -835,8 +840,10 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
 
 void MeshSyncClientMaya::exportConstraint(TreeNode *n)
 {
-    auto& node = n->node;
-    EachConstraints(node, [&](const MObject& constraint) {
+    auto& trans = n->trans->node;
+    auto& shape = n->shape->node;
+
+    EachConstraints(trans, [&](const MObject& constraint) {
         if (constraint.hasFn(MFn::kAimConstraint)) {
             auto dst = ms::AimConstraint::create();
             m_constraints.push_back(dst);

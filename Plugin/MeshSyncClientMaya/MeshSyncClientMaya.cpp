@@ -289,10 +289,17 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
     path += '/';
     path += name;
 
+    auto& rec_node = m_dagnode_records[node];
+    auto& rec_shape = m_dagnode_records[shape];
+    if (rec_node.node.isNull()) {
+        rec_node.node = node;
+        rec_shape.node = shape;
+    }
+
     auto *tn = new TreeNode();
     m_tree_pool.emplace_back(tn);
-    tn->node = node;
-    tn->shape = shape;
+    tn->trans = &rec_node;
+    tn->shape = &rec_shape;
     tn->name = name;
     tn->path = path;
     tn->index = ++m_index_seed;
@@ -303,8 +310,8 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
     else
         m_tree_roots.push_back(tn);
 
-    m_dagnode_records[node].branches.push_back(tn);
-    m_dagnode_records[shape].branches.push_back(tn);
+    rec_node.branches.push_back(tn);
+    rec_shape.branches.push_back(tn);
 
     EachChild(node, [&](const MObject & c) {
         if (c.hasFn(MFn::kTransform))
@@ -314,7 +321,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
 
 bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 {
-    if (tn->name != GetName(tn->node)) {
+    if (tn->name != GetName(tn->trans->node)) {
         m_deleted.push_back(tn->path);
         return true;
     }
@@ -337,7 +344,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     m_pending_scope = SendScope::None;
 
     int num_exported = 0;
-    auto export_branches = [&](DagNodeRecord& rec) {
+    auto export_branches = [&](DAGNode& rec) {
         for (auto *tn : rec.branches) {
             if (exportObject(tn, false))
                 ++num_exported;
@@ -423,18 +430,18 @@ void MeshSyncClientMaya::update()
 void MeshSyncClientMaya::kickAsyncSend()
 {
     // process parallel extract tasks
-    if (!m_task_records.empty()) {
+    if (!m_extract_tasks.empty()) {
         if (m_settings.multithreaded) {
-            mu::parallel_for_each(m_task_records.begin(), m_task_records.end(), [](TaskRecords::value_type& kvp) {
+            mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](TaskRecords::value_type& kvp) {
                 kvp.second.process();
             });
         }
         else {
-            for (auto& kvp : m_task_records) {
+            for (auto& kvp : m_extract_tasks) {
                 kvp.second.process();
             }
         }
-        m_task_records.clear();
+        m_extract_tasks.clear();
     }
 
     // cleanup
