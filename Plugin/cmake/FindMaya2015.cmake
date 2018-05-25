@@ -4,7 +4,7 @@
 set(CMAKE_PREFIX_PATH
     "/Applications/Autodesk/maya2015/Maya.app/Contents"
     "/Applications/Autodesk/maya2015/devkit"
-    "/usr/autodesk/maya2015"
+    "/usr/autodesk/maya2015-x64"
     "/opt/autodesk/maya2015"
 )
 
