@@ -79,12 +79,13 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     // note: world matrix is a result of local TRS + parent TRS + constraints.
     //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
 
-    auto& trans = n->trans->node;
     auto mat = mu::float4x4::identity();
     {
+        auto& trans = n->trans->node;
         MObject obj_wmat;
         MFnTransform(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
         mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
+        vis = IsVisible(trans);
     }
 
     // get inverse parent matrix to calculate local matrix.
@@ -100,15 +101,15 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     pos = extract_position(mat);
     rot = extract_rotation(mat);
     scale = extract_scale(mat);
-    vis = IsVisible(trans);
 }
 
-static void ExtractCameraData(TreeNode *n, float& near_plane, float& far_plane, float& fov,
+static void ExtractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
 {
     auto& shape = n->shape->node;
     MFnCamera mcam(shape);
 
+    ortho = mcam.isOrtho();
     near_plane = (float)mcam.nearClippingPlane();
     far_plane = (float)mcam.farClippingPlane();
     fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
@@ -119,12 +120,25 @@ static void ExtractCameraData(TreeNode *n, float& near_plane, float& far_plane, 
     focus_distance = (float)mcam.focusDistance();
 }
 
-static void ExtractLightData(TreeNode *n, mu::float4& color, float& intensity, float& spot_angle)
+static void ExtractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
 {
     auto& shape = n->shape->node;
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
+        type = ms::Light::LightType::Spot;
         spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
+    }
+    else if (shape.hasFn(MFn::kDirectionalLight)) {
+        MFnDirectionalLight mlight(shape);
+        type = ms::Light::LightType::Directional;
+    }
+    else if (shape.hasFn(MFn::kPointLight)) {
+        MFnPointLight mlight(shape);
+        type = ms::Light::LightType::Point;
+    }
+    else if (shape.hasFn(MFn::kAreaLight)) {
+        MFnAreaLight mlight(shape);
+        type = ms::Light::LightType::Area;
     }
 
     MFnLight mlight(shape);
@@ -143,14 +157,7 @@ void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, TreeNode *n)
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
-    auto& shape = n->shape->node;
-    if (!shape.hasFn(MFn::kCamera)) {
-        return;
-    }
-
-    MFnCamera mcam(shape);
-    dst.is_ortho = mcam.isOrtho();
-    ExtractCameraData(n, dst.near_plane, dst.far_plane, dst.fov,
+    ExtractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
 }
@@ -160,28 +167,7 @@ void MeshSyncClientMaya::extractLightData(ms::Light& dst, TreeNode *n)
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
-    auto& shape = n->shape->node;
-    if (shape.hasFn(MFn::kSpotLight)) {
-        MFnSpotLight mlight(shape);
-        dst.light_type = ms::Light::LightType::Spot;
-    }
-    else if (shape.hasFn(MFn::kDirectionalLight)) {
-        MFnDirectionalLight mlight(shape);
-        dst.light_type = ms::Light::LightType::Directional;
-    }
-    else if (shape.hasFn(MFn::kPointLight)) {
-        MFnPointLight mlight(shape);
-        dst.light_type = ms::Light::LightType::Point;
-    }
-    else if (shape.hasFn(MFn::kAreaLight)) {
-        MFnAreaLight mlight(shape);
-        dst.light_type = ms::Light::LightType::Area;
-    }
-    else {
-        return;
-    }
-
-    ExtractLightData(n, dst.color, dst.intensity, dst.spot_angle);
+    ExtractLightData(n, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
 }
 
 void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
@@ -747,8 +733,9 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, TreeNod
         last.value = mu::flipY(last.value);
     }
 
+    bool ortho;
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
-    ExtractCameraData(n, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+    ExtractCameraData(n, ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.near_plane.push_back({ t , near_plane });
@@ -774,10 +761,11 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
         last.value = mu::flipY(last.value);
     }
 
+    ms::Light::LightType type;
     mu::float4 color;
     float intensity;
     float spot_angle;
-    ExtractLightData(n, color, intensity, spot_angle);
+    ExtractLightData(n, type, color, intensity, spot_angle);
 
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.color.push_back({ t, color });

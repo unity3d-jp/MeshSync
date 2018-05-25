@@ -96,10 +96,28 @@ void parallel_invoke(const Body& first, Args... args) {
 
 #endif
 
+template<class T>
+class scoped_lock
+{
+public:
+    scoped_lock(T& mutex) : m_mutex(mutex)
+    {
+        mutex.lock();
+    }
+    ~scoped_lock()
+    {
+        m_mutex.unlock();
+    }
+
+public:
+    T& m_mutex;
+};
 
 class spin_mutex
 {
 public:
+    using lock_t = scoped_lock<spin_mutex>;
+
     void lock()
     {
         while (lck.test_and_set(std::memory_order_acquire)) {}
