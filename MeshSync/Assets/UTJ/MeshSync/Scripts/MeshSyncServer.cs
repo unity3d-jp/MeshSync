@@ -19,6 +19,7 @@ namespace UTJ.MeshSync
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
+        [SerializeField] string m_rootObjectName = "";
         //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
         [SerializeField] bool m_ignoreVisibility = false;
         [SerializeField] bool m_progressiveDisplay = true;
@@ -196,22 +197,17 @@ namespace UTJ.MeshSync
                 var id = mes.GetID(i);
                 var path = mes.GetPath(i);
 
-                if (id != 0 && m_hostObjects.ContainsKey(id))
+                Record rec = null;
+                if (id != 0 && m_hostObjects.TryGetValue(id, out rec))
                 {
-                    var rec = m_hostObjects[id];
                     if (rec.go != null)
-                    {
                         DestroyImmediate(rec.go);
-                    }
                     m_hostObjects.Remove(id);
                 }
-                else if (m_clientObjects.ContainsKey(path))
+                else if (m_clientObjects.TryGetValue(path, out rec))
                 {
-                    var rec = m_clientObjects[path];
                     if (rec.go != null)
-                    {
                         DestroyImmediate(rec.go);
-                    }
                     m_clientObjects.Remove(path);
                 }
             }
@@ -478,12 +474,12 @@ namespace UTJ.MeshSync
                     if (skinned)
                     {
                         // create bones
-                        var paths = data.GetBonePaths();
+                        var bonePaths = data.GetBonePaths();
                         var bones = new Transform[data.numBones];
                         for (int bi = 0; bi < bones.Length; ++bi)
                         {
                             bool created = false;
-                            bones[bi] = FindOrCreateObjectByPath(paths[bi], true, ref created);
+                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], true, ref created);
                             if (created)
                             {
                                 var newrec = new Record
@@ -491,10 +487,10 @@ namespace UTJ.MeshSync
                                     go = bones[bi].gameObject,
                                     recved = true,
                                 };
-                                if (m_clientObjects.ContainsKey(paths[bi]))
-                                    m_clientObjects[paths[bi]] = newrec;
+                                if (m_clientObjects.ContainsKey(bonePaths[bi]))
+                                    m_clientObjects[bonePaths[bi]] = newrec;
                                 else
-                                    m_clientObjects.Add(paths[bi], newrec);
+                                    m_clientObjects.Add(bonePaths[bi], newrec);
                             }
                         }
 
@@ -657,7 +653,7 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
-        void CreateAsset(UnityEngine.Object obj, string path)
+        void CreateAsset(UnityEngine.Object obj, string assetPath)
         {
 #if UNITY_EDITOR
             try
@@ -665,10 +661,16 @@ namespace UTJ.MeshSync
                 string assetDir = "Assets/" + m_assetExportPath;
                 if (!AssetDatabase.IsValidFolder(assetDir))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-                AssetDatabase.CreateAsset(obj, path);
+                AssetDatabase.CreateAsset(obj, assetPath);
             }
             catch (Exception e) { Debug.LogError(e); }
 #endif
+        }
+
+        string GetGlobalPath(string basePath)
+        {
+            return m_rootObjectName.Length > 0 ?
+                '/' + m_rootObjectName + basePath : basePath;
         }
 
         Transform UpdateTransform(TransformData data)
@@ -853,7 +855,7 @@ namespace UTJ.MeshSync
                     return;
 
                 Transform root = target;
-                while (root.parent != null)
+                while (root.parent != null && root.parent.name != m_rootObjectName)
                     root = root.parent;
 
                 Animator animator = null;
@@ -1037,6 +1039,8 @@ namespace UTJ.MeshSync
 
         Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
         {
+            if (m_rootObjectName.Length > 0)
+                path = '/' + m_rootObjectName + path;
             var names = path.Split('/');
             Transform t = null;
             foreach (var name in names)
@@ -1109,10 +1113,10 @@ namespace UTJ.MeshSync
 #endif
         }
 
-        static string BuildPath(Transform t)
+        string BuildPath(Transform t)
         {
             var parent = t.parent;
-            if (parent != null)
+            if (parent != null && (m_rootObjectName.Length == 0 || parent.name != m_rootObjectName))
             {
                 return BuildPath(parent) + "/" + t.name;
             }
@@ -1213,7 +1217,7 @@ namespace UTJ.MeshSync
 
                 if (mes.flags.getBones)
                 {
-                    dst.SetBonePaths(smr.bones);
+                    dst.SetBonePaths(this, smr.bones);
                     dst.bindposes = mesh.bindposes;
                     dst.WriteWeights(mesh.boneWeights);
                 }
@@ -1345,11 +1349,11 @@ namespace UTJ.MeshSync
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
-                var path = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(mf.sharedMesh.name) + ".asset";
-                CreateAsset(mf.sharedMesh, path);
+                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(mf.sharedMesh.name) + ".asset";
+                CreateAsset(mf.sharedMesh, assetPath);
                 if (m_logging)
                 {
-                    Debug.Log("exported mesh " + path);
+                    Debug.Log("exported mesh " + assetPath);
                 }
 
                 for (int i=1; ; ++i)

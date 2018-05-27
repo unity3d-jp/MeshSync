@@ -1299,12 +1299,12 @@ namespace UTJ.MeshSync
                 }
                 set { msMeshWriteBindPoses(_this, value, value.Length); }
             }
-            public void SetBonePaths(Transform[] bones)
+            public void SetBonePaths(MeshSyncServer mss, Transform[] bones)
             {
                 int n = bones.Length;
                 for (int i = 0; i < n; ++i)
                 {
-                    string path = BuildPath(bones[i]);
+                    string path = mss.BuildPath(bones[i]);
                     msMeshSetBonePath(_this, path, i);
                 }
             }
