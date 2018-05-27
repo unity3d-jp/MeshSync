@@ -19,6 +19,7 @@ namespace UTJ.MeshSync
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
+        //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
         [SerializeField] bool m_ignoreVisibility = false;
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -247,9 +248,6 @@ namespace UTJ.MeshSync
                         }
                     }
                 }
-
-                // cleanup animation clip cache
-                m_animClipCache = null;
 
                 ForceRepaint();
                 GC.Collect();
@@ -850,11 +848,11 @@ namespace UTJ.MeshSync
 
                 var path = data.path;
                 bool dummy = false;
-                var trans = FindOrCreateObjectByPath(path, true, ref dummy);
-                if (trans == null)
+                var target = FindOrCreateObjectByPath(path, true, ref dummy);
+                if (target == null)
                     return;
 
-                Transform root = trans;
+                Transform root = target;
                 while (root.parent != null)
                     root = root.parent;
 
@@ -906,8 +904,29 @@ namespace UTJ.MeshSync
                 {
                     animPath = animPath.Remove(0, 1);
                 }
-                data.ExportToClip(clip, animPath, false);
+
+                InterpolationMethod im = SmoothInterpolation;
+                //switch (m_animtionInterpolation)
+                //{
+                //    case InterpolationType.Linear:
+                //        im = LinearInterpolation;
+                //        break;
+                //    default:
+                //        im = SmoothInterpolation;
+                //        break;
+                //}
+                data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, im);
             }
+
+            if (m_animClipCache != null)
+            {
+                // call EnsureQuaternionContinuity() to smooth rotation
+                foreach (var kvp in m_animClipCache)
+                    kvp.Value.EnsureQuaternionContinuity();
+            }
+
+            // clear clip cache
+            m_animClipCache = null;
 #endif
         }
 
