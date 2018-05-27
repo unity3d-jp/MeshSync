@@ -318,38 +318,19 @@ namespace UTJ.MeshSync
                 foreach (var pair in m_clientObjects)
                 {
                     var dstrec = pair.Value;
+                    if (dstrec.reference == null)
+                        continue;
+
                     var dstgo = dstrec.go;
                     if (dstgo == null)
-                        continue;
-                    else if (dstrec.reference == null)
                         continue;
 
                     Record srcrec = null;
                     if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
                     {
                         var srcgo = srcrec.go;
-                        if (srcgo == null)
-                            continue;
-                        var src = srcgo.GetComponent<SkinnedMeshRenderer>();
-                        if (src == null)
-                            continue;
-                        var dst = dstgo.GetComponent<SkinnedMeshRenderer>();
-                        if (dst == null)
-                            dst = dstgo.AddComponent<SkinnedMeshRenderer>();
-
-                        var mesh = src.sharedMesh;
-                        dst.sharedMesh = mesh;
-                        dst.sharedMaterials = src.sharedMaterials;
-                        dst.bones = src.bones;
-                        dst.rootBone = src.rootBone;
-                        dst.updateWhenOffscreen = src.updateWhenOffscreen;
-
-                        int blendShapeCount = mesh.blendShapeCount;
-                        for (int bi = 0; bi < blendShapeCount; ++bi)
-                            dst.SetBlendShapeWeight(bi, src.GetBlendShapeWeight(bi));
-
-                        dstgo.SetActive(false); // 
-                        dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+                        if (srcgo != null)
+                            UpdateReference(dstgo, srcgo);
                     }
                 }
             }
@@ -500,15 +481,14 @@ namespace UTJ.MeshSync
                             bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], true, ref created);
                             if (created)
                             {
-                                var newrec = new Record
+                                Record recBone = null;
+                                if (!m_clientObjects.TryGetValue(bonePaths[bi], out recBone))
                                 {
-                                    go = bones[bi].gameObject,
-                                    recved = true,
-                                };
-                                if (m_clientObjects.ContainsKey(bonePaths[bi]))
-                                    m_clientObjects[bonePaths[bi]] = newrec;
-                                else
-                                    m_clientObjects.Add(bonePaths[bi], newrec);
+                                    recBone = new Record();
+                                    m_clientObjects.Add(bonePaths[bi], recBone);
+                                }
+                                recBone.go = bones[bi].gameObject;
+                                recBone.recved = true;
                             }
                         }
 
@@ -791,6 +771,32 @@ namespace UTJ.MeshSync
                 lt.enabled = data.transform.visible;
             return lt;
         }
+
+        void UpdateReference(GameObject dstgo, GameObject srcgo)
+        {
+            var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
+            if (srcsmr != null)
+            {
+                var dstsmr = dstgo.GetComponent<SkinnedMeshRenderer>();
+                if (dstsmr == null)
+                    dstsmr = dstgo.AddComponent<SkinnedMeshRenderer>();
+
+                var mesh = srcsmr.sharedMesh;
+                dstsmr.sharedMesh = mesh;
+                dstsmr.sharedMaterials = srcsmr.sharedMaterials;
+                dstsmr.bones = srcsmr.bones;
+                dstsmr.rootBone = srcsmr.rootBone;
+                dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
+
+                int blendShapeCount = mesh.blendShapeCount;
+                for (int bi = 0; bi < blendShapeCount; ++bi)
+                    dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+
+                dstgo.SetActive(false); // 
+                dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+            }
+        }
+
 
         T GetOrAddComponent<T>(GameObject go) where T : Component
         {
