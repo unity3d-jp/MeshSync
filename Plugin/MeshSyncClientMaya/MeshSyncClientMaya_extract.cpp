@@ -199,6 +199,17 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     if (!dst.visible) { return; }
 
     MFnMesh mmesh(shape);
+    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
+    bool is_instance = n->isInstance();
+    bool is_skinned = !fn_skin.object().isNull();
+
+    if (is_instance && (!is_skinned || !m_settings.sync_bones)) {
+        auto primary = n->getPrimaryInstanceNode();
+        if (n != primary) {
+            dst.reference = primary->path;
+            return;
+        }
+    }
 
     dst.flags.has_refine_settings = 1;
     dst.flags.apply_trs = 1;
@@ -212,7 +223,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
     MFnMesh fn_src_mesh(mmesh.object());
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
-    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     int skin_index = 0;
 
     // if target has skinning or blendshape, use pre-deformed mesh as source.
@@ -224,7 +234,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             fn_src_mesh.setObject(orig_mesh);
         }
     }
-    if (m_settings.sync_bones && !fn_skin.object().isNull()) {
+    if (m_settings.sync_bones && is_skinned) {
         auto orig_mesh = FindOrigMesh(trans);
         if (orig_mesh.hasFn(MFn::kMesh)) {
             fn_src_mesh.setObject(orig_mesh);

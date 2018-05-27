@@ -318,7 +318,8 @@ namespace UTJ.MeshSync
                 foreach (var pair in m_clientObjects)
                 {
                     var dstrec = pair.Value;
-                    if (dstrec.go == null)
+                    var dstgo = dstrec.go;
+                    if (dstgo == null)
                         continue;
                     else if (dstrec.reference == null)
                         continue;
@@ -326,16 +327,29 @@ namespace UTJ.MeshSync
                     Record srcrec = null;
                     if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
                     {
-                        if (srcrec.go == null)
+                        var srcgo = srcrec.go;
+                        if (srcgo == null)
                             continue;
-                        var src = srcrec.go.GetComponent<SkinnedMeshRenderer>();
+                        var src = srcgo.GetComponent<SkinnedMeshRenderer>();
                         if (src == null)
                             continue;
-                        var dst = dstrec.go.GetComponent<SkinnedMeshRenderer>();
+                        var dst = dstgo.GetComponent<SkinnedMeshRenderer>();
                         if (dst == null)
-                            dst = dstrec.go.AddComponent<SkinnedMeshRenderer>();
-                        dst.sharedMesh = src.sharedMesh;
+                            dst = dstgo.AddComponent<SkinnedMeshRenderer>();
+
+                        var mesh = src.sharedMesh;
+                        dst.sharedMesh = mesh;
                         dst.sharedMaterials = src.sharedMaterials;
+                        dst.bones = src.bones;
+                        dst.rootBone = src.rootBone;
+                        dst.updateWhenOffscreen = src.updateWhenOffscreen;
+
+                        int blendShapeCount = mesh.blendShapeCount;
+                        for (int bi = 0; bi < blendShapeCount; ++bi)
+                            dst.SetBlendShapeWeight(bi, src.GetBlendShapeWeight(bi));
+
+                        dstgo.SetActive(false); // 
+                        dstgo.SetActive(true);  // force recalculate skinned mesh on editor
                     }
                 }
             }
@@ -423,6 +437,10 @@ namespace UTJ.MeshSync
             if (rec == null)
             {
                 Debug.LogError("Something is wrong");
+                return;
+            }
+            else if(rec.reference != null)
+            {
                 return;
             }
 
