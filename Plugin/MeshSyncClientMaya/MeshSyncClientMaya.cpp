@@ -10,6 +10,36 @@
 #endif
 
 
+bool DAGNode::isInstance() const
+{
+    return branches.size() > 1;
+}
+
+bool TreeNode::isInstance() const
+{
+    return shape->branches.size() > 1 ||
+        trans->branches.size() > 1;
+}
+
+TreeNode* TreeNode::getPrimaryInstanceNode() const
+{
+    if (trans->branches.size() > 1) {
+        auto primary = GetParent(trans->node);
+        for (auto b : trans->branches) {
+            if (b->parent->trans->node == primary)
+                return b;
+        }
+    }
+    if (shape->branches.size() > 1) {
+        auto primary = GetParent(shape->node);
+        for (auto b : shape->branches) {
+            if (b->trans->node == primary)
+                return b;
+        }
+    }
+    return nullptr;
+}
+
 
 static void OnIdle(float elapsedTime, float lastTime, void *_this)
 {
@@ -71,18 +101,18 @@ static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug
 
 void MeshSyncClientMaya::onNodeUpdated(const MObject & node)
 {
-    m_dagnode_records[node].dirty = true;
+    m_dag_nodes[node].dirty = true;
 }
 
 void MeshSyncClientMaya::onNodeRemoved(const MObject & node)
 {
     {
-        auto it = m_dagnode_records.find(node);
-        if (it != m_dagnode_records.end()) {
+        auto it = m_dag_nodes.find(node);
+        if (it != m_dag_nodes.end()) {
             for (auto tn : it->second.branches) {
                 m_deleted.push_back(tn->path);
             }
-            m_dagnode_records.erase(it);
+            m_dag_nodes.erase(it);
         }
     }
 }
@@ -90,7 +120,7 @@ void MeshSyncClientMaya::onNodeRemoved(const MObject & node)
 void MeshSyncClientMaya::onNodeRenamed()
 {
     bool needs_update = false;
-    for (auto& tn : m_tree_pool) {
+    for (auto& tn : m_tree_nodes) {
         if (checkRename(tn.get()))
             needs_update = true;
     }
@@ -203,7 +233,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 {
     // joints
     EnumerateNode(MFn::kJoint, [this](MObject& node) {
-        auto& rec = m_dagnode_records[node];
+        auto& rec = m_dag_nodes[node];
         if (!rec.cid)
             rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
     });
@@ -212,7 +242,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     EnumerateNode(MFn::kCamera, [this](MObject& node) {
         MFnDagNode fn(node);
         if (!fn.isIntermediateObject()) {
-            auto& rec = m_dagnode_records[node];
+            auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
         }
@@ -222,7 +252,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     EnumerateNode(MFn::kLight, [this](MObject& node) {
         MFnDagNode fn(node);
         if (!fn.isIntermediateObject()) {
-            auto& rec = m_dagnode_records[node];
+            auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
         }
@@ -232,9 +262,9 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     EnumerateNode(MFn::kMesh, [this](MObject& node) {
         MFnDagNode fn(node);
         if (!fn.isIntermediateObject()) {
-            auto& rec = m_dagnode_records[node];
+            auto& rec = m_dag_nodes[node];
             if (!rec.cid)
-                m_dagnode_records[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
+                m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
         }
     });
 }
@@ -249,7 +279,7 @@ void MeshSyncClientMaya::removeGlobalCallbacks()
 
 void MeshSyncClientMaya::removeNodeCallbacks()
 {
-    for (auto& rec : m_dagnode_records) {
+    for (auto& rec : m_dag_nodes) {
         if (rec.second.cid) {
             MMessage::removeCallback(rec.second.cid);
             rec.second.cid = 0;
@@ -269,8 +299,8 @@ int MeshSyncClientMaya::getMaterialID(const MString& name)
 void MeshSyncClientMaya::constructTree()
 {
     m_tree_roots.clear();
-    m_tree_pool.clear();
-    for (auto& kvp : m_dagnode_records)
+    m_tree_nodes.clear();
+    for (auto& kvp : m_dag_nodes)
         kvp.second.branches.clear();
     m_index_seed = 0;
 
@@ -289,15 +319,15 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
     path += '/';
     path += name;
 
-    auto& rec_node = m_dagnode_records[node];
-    auto& rec_shape = m_dagnode_records[shape];
+    auto& rec_node = m_dag_nodes[node];
+    auto& rec_shape = m_dag_nodes[shape];
     if (rec_node.node.isNull()) {
         rec_node.node = node;
         rec_shape.node = shape;
     }
 
     auto *tn = new TreeNode();
-    m_tree_pool.emplace_back(tn);
+    m_tree_nodes.emplace_back(tn);
     tn->trans = &rec_node;
     tn->shape = &rec_shape;
     tn->name = name;
@@ -311,7 +341,8 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
         m_tree_roots.push_back(tn);
 
     rec_node.branches.push_back(tn);
-    rec_shape.branches.push_back(tn);
+    if (!shape.hasFn(MFn::kJoint))
+        rec_shape.branches.push_back(tn);
 
     EachChild(node, [&](const MObject & c) {
         if (c.hasFn(MFn::kTransform))
@@ -354,7 +385,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
 
     if (scope == SendScope::All) {
         auto handler = [&](MObject& node) {
-            export_branches(m_dagnode_records[node]);
+            export_branches(m_dag_nodes[node]);
         };
         EnumerateNode(MFn::kJoint, handler);
         EnumerateNode(MFn::kCamera, handler);
@@ -362,7 +393,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         EnumerateNode(MFn::kMesh, handler);
     }
     else if (scope == SendScope::Updated) {
-        for (auto& kvp : m_dagnode_records) {
+        for (auto& kvp : m_dag_nodes) {
             auto& rec = kvp.second;
             if (rec.dirty)
                 export_branches(rec);
@@ -374,7 +405,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         for (uint32_t i = 0; i < list.length(); i++) {
             MObject node;
             list.getDependNode(i, node);
-            export_branches(m_dagnode_records[node]);
+            export_branches(m_dag_nodes[node]);
         }
     }
 
@@ -445,7 +476,7 @@ void MeshSyncClientMaya::kickAsyncSend()
     }
 
     // cleanup
-    for (auto& tn : m_tree_pool) {
+    for (auto& tn : m_tree_nodes) {
         tn->added = false;
     }
     m_material_id_table.clear();

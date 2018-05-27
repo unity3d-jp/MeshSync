@@ -75,6 +75,10 @@ bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
 
 static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
+    if (n->trans->isInstance()) {
+        n = n->getPrimaryInstanceNode();
+    }
+
     // get TRS from world matrix.
     // note: world matrix is a result of local TRS + parent TRS + constraints.
     //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
@@ -608,12 +612,12 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
         for (uint32_t i = 0; i < list.length(); i++) {
             MObject node;
             list.getDependNode(i, node);
-            export_branches(m_dagnode_records[node]);
+            export_branches(m_dag_nodes[node]);
         }
     }
     else { // all
         auto handler = [&](MObject& node) {
-            export_branches(m_dagnode_records[node]);
+            export_branches(m_dag_nodes[node]);
         };
         EnumerateNode(MFn::kJoint, handler);
         EnumerateNode(MFn::kCamera, handler);

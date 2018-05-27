@@ -19,6 +19,8 @@ struct DAGNode
     std::vector<TreeNode*> branches;
     MCallbackId cid = 0;
     bool dirty = true;
+
+    bool isInstance() const;
 };
 
 struct TreeNode
@@ -32,6 +34,9 @@ struct TreeNode
     std::vector<TreeNode*> children;
 
     bool added = false;
+
+    bool isInstance() const;
+    TreeNode* getPrimaryInstanceNode() const;
 };
 
 
@@ -119,9 +124,9 @@ private:
     };
     using AnimationRecords = std::map<TreeNode*, AnimationRecord>;
 
-    std::vector<TreeNodePtr> m_tree_pool;
+    std::vector<TreeNodePtr> m_tree_nodes;
     std::vector<TreeNode*>   m_tree_roots;
-    DagNodeRecords           m_dagnode_records;
+    DagNodeRecords           m_dag_nodes;
     TaskRecords              m_extract_tasks;
     AnimationRecords         m_anim_records;
 
