@@ -24,48 +24,48 @@ void MeshSyncClientMaya::exportMaterials()
     }
 }
 
-bool MeshSyncClientMaya::exportObject(TreeNode *tn, bool force)
+bool MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
 {
-    if (!tn || tn->added)
+    if (!n || n->dst_obj)
         return false;
 
-    auto& trans = tn->trans->node;
-    auto& shape = tn->shape->node;
+    auto& trans = n->trans->node;
+    auto& shape = n->shape->node;
 
     ms::TransformPtr ret;
     if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
-        exportObject(tn->parent, true);
+        exportObject(n->parent, true);
         auto dst = ms::Mesh::create();
-        extractMeshData(*dst, tn);
+        extractMeshData(*dst, n);
         m_meshes.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
-        exportObject(tn->parent, true);
+        exportObject(n->parent, true);
         auto dst = ms::Camera::create();
-        extractCameraData(*dst, tn);
+        extractCameraData(*dst, n);
         m_objects.emplace_back(dst);
         ret = dst;
     }
     else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
-        exportObject(tn->parent, true);
+        exportObject(n->parent, true);
         auto dst = ms::Light::create();
-        extractLightData(*dst, tn);
+        extractLightData(*dst, n);
         m_objects.emplace_back(dst);
         ret = dst;
     }
     else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
-        exportObject(tn->parent, true);
+        exportObject(n->parent, true);
         auto dst = ms::Transform::create();
-        extractTransformData(*dst, tn);
+        extractTransformData(*dst, n);
         m_objects.emplace_back(dst);
         ret = dst;
     }
 
     if (ret) {
-        ret->path = tn->path;
-        ret->index = tn->index;
-        tn->added = true;
+        ret->path = n->path;
+        ret->index = n->index;
+        n->dst_obj = ret.get();
         return true;
     }
     else {
@@ -185,7 +185,7 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
     auto task = [this, &dst, n]() {
         doExtractMeshData(dst, n);
     };
-    m_extract_tasks[n->shape->branches.front()].add(task);
+    m_extract_tasks[n->shape->branches.front()].add(n, task);
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
@@ -200,10 +200,9 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
     MFnMesh mmesh(shape);
     MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
-    bool is_instance = n->isInstance();
     bool is_skinned = !fn_skin.object().isNull();
 
-    if (is_instance && (!is_skinned || !m_settings.sync_bones)) {
+    if (n->isInstance()) {
         auto primary = n->getPrimaryInstanceNode();
         if (n != primary) {
             dst.reference = primary->path;
@@ -673,7 +672,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
 
 bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
 {
-    if (!n || n->added)
+    if (!n || n->dst_anim)
         return false;
 
     auto& trans = n->trans->node;
@@ -711,7 +710,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
         rec.tn = n;
         rec.dst = dst.get();
         rec.extractor = extractor;
-        n->added = true;
+        n->dst_anim = dst.get();
         m_animations.front()->animations.emplace_back(dst);
         return true;
     }

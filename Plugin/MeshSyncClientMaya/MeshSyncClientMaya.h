@@ -33,8 +33,10 @@ struct TreeNode
     TreeNode *parent = nullptr;
     std::vector<TreeNode*> children;
 
-    bool added = false;
+    ms::Transform *dst_obj = nullptr;
+    ms::Animation *dst_anim = nullptr;
 
+    void clearState();
     bool isInstance() const;
     TreeNode* getPrimaryInstanceNode() const;
 };
@@ -105,9 +107,9 @@ private:
     struct TaskRecord
     {
         using task_t = std::function<void()>;
-        std::vector<task_t> tasks;
+        std::vector<std::tuple<TreeNode*, task_t>> tasks;
 
-        void add(const task_t& task);
+        void add(TreeNode *n, const task_t& task);
         void process();
     };
     using TaskRecords = std::map<TreeNode*, TaskRecord>;
@@ -179,7 +181,7 @@ private:
     std::future<void>                   m_future_send;
 
     SendScope m_pending_scope = SendScope::None;
-    bool      m_scene_updated = false;
+    bool      m_scene_updated = true;
     bool      m_ignore_update = false;
     int       m_index_seed = 0;
     float     m_anim_time = 0.0f;

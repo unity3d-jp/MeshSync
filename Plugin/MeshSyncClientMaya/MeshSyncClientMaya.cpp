@@ -15,6 +15,12 @@ bool DAGNode::isInstance() const
     return branches.size() > 1;
 }
 
+void TreeNode::clearState()
+{
+    dst_obj = nullptr;
+    dst_anim = nullptr;
+}
+
 bool TreeNode::isInstance() const
 {
     return shape->branches.size() > 1 ||
@@ -155,15 +161,34 @@ void MeshSyncClientMaya::onTimeChange(const MTime & time)
 }
 
 
-void MeshSyncClientMaya::TaskRecord::add(const task_t & task)
+void MeshSyncClientMaya::TaskRecord::add(TreeNode *n, const task_t & task)
 {
-    tasks.push_back(task);
+    tasks.push_back({ n, task });
 }
 
 void MeshSyncClientMaya::TaskRecord::process()
 {
-    for (auto& t : tasks)
-        t();
+    if (tasks.size() > 1) {
+        auto primary = std::get<0>(tasks[0])->getPrimaryInstanceNode();
+
+        // process primary node first
+        for (auto& t : tasks) {
+            if (std::get<0>(t) == primary) {
+                std::get<1>(t)();
+                break;
+            }
+        }
+        // process others
+        for (auto& t : tasks) {
+            if (std::get<0>(t) != primary)
+                std::get<1>(t)();
+        }
+    }
+    else {
+        for (auto& t : tasks)
+            std::get<1>(t)();
+    }
+
     tasks.clear();
 }
 
@@ -341,7 +366,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
         m_tree_roots.push_back(tn);
 
     rec_node.branches.push_back(tn);
-    if (!shape.hasFn(MFn::kJoint))
+    if (shape != node)
         rec_shape.branches.push_back(tn);
 
     EachChild(node, [&](const MObject & c) {
@@ -476,9 +501,8 @@ void MeshSyncClientMaya::kickAsyncSend()
     }
 
     // cleanup
-    for (auto& tn : m_tree_nodes) {
-        tn->added = false;
-    }
+    for (auto& n : m_tree_nodes)
+        n->clearState();
     m_material_id_table.clear();
 
 
