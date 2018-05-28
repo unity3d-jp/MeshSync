@@ -1,5 +1,4 @@
-﻿#ifdef _WIN32
-// created by i-saint
+﻿// created by i-saint
 // distributed under Creative Commons Attribution (CC BY) license.
 // https://github.com/i-saint/MemoryLeakBuster
 
@@ -45,6 +44,7 @@
 // CRT を static link したモジュールの場合追加の手順が必要で、下の g_crtdllnames に対象モジュールを追加する必要があります。
 
 #include "pch.h"
+#ifdef _WIN32
 #ifdef msDebug
 
 // 設定
@@ -808,3 +808,4 @@ mlbInitializer g_initializer;
 
 #endif // mlbDLL
 #endif // msDebug
+#endif // _WIN32
