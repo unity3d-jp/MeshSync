@@ -44,6 +44,9 @@
 // リークチェックの仕組みは CRT の HeapAlloc/Free を hook することによって実現しています。
 // CRT を static link したモジュールの場合追加の手順が必要で、下の g_crtdllnames に対象モジュールを追加する必要があります。
 
+#include "pch.h"
+#ifdef msDebug
+
 // 設定
 namespace mlb {
 
@@ -85,6 +88,7 @@ const char *g_ignore_list[] = {
 #include <dbghelp.h>
 #include <psapi.h>
 #include <tlhelp32.h>
+#include <intrin.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -94,19 +98,26 @@ const char *g_ignore_list[] = {
 
 namespace mlb {
 
-typedef unsigned int        uint32;
-typedef unsigned long long  uint64;
-using aligned_malloc_t = void*(*)(size_t size, size_t align);
-using aligned_free_t = void(*)(void *addr);
+using uint32 = unsigned int;
+using uint64 = unsigned long long;
+
+using aligned_malloc_t  = void*(*)(size_t size, size_t align);
+using aligned_free_t    = void(*)(void *addr);
+using malloc_t          = void*(*)(size_t size);
+using free_t            = void(*)(void *addr);
 
 aligned_malloc_t    aligned_malloc_orig = nullptr;
 aligned_free_t      aligned_free_orig = nullptr;
+malloc_t            malloc_orig = nullptr;
+free_t              free_orig = nullptr;
 
 void* aligned_malloc_hook(size_t size, size_t align);
-void aligned_free_hook(void *addr);
+void  aligned_free_hook(void *addr);
+void* malloc_hook(size_t size);
+void  free_hook(void *addr);
 
-void* mlbMalloc(size_t size)    { return aligned_malloc_orig(size, 0x10); }
-void  mlbFree(void *p)          { aligned_free_orig(p); }
+void* mlbMalloc(size_t size)    { return malloc_orig(size); }
+void  mlbFree(void *p)          { free_orig(p); }
 
 template<class T> T* mlbNew()
 {
@@ -370,6 +381,8 @@ void SaveOrigHeapAlloc()
 {
     aligned_malloc_orig = &_aligned_malloc;
     aligned_free_orig = &_aligned_free;
+    malloc_orig = &malloc;
+    free_orig = &free;
 }
 
 void HookHeapAlloc(const char *modulename)
@@ -380,6 +393,12 @@ void HookHeapAlloc(const char *modulename)
         }
         else if (strcmp(funcname, "_aligned_free") == 0) {
             ForceWrite<void*>(func, aligned_free_hook);
+        }
+        else if (strcmp(funcname, "malloc") == 0) {
+            ForceWrite<void*>(func, malloc_hook);
+        }
+        else if (strcmp(funcname, "free") == 0) {
+            ForceWrite<void*>(func, free_hook);
         }
     });
 }
@@ -743,6 +762,17 @@ void aligned_free_hook(void *addr)
     g_mlb->eraseHeapInfo(addr);
     aligned_free_orig(addr);
 }
+void* malloc_hook(size_t size)
+{
+    auto ret = malloc_orig(size);
+    g_mlb->addHeapInfo(ret, size);
+    return ret;
+}
+void free_hook(void *addr)
+{
+    g_mlb->eraseHeapInfo(addr);
+    free_orig(addr);
+}
 
 } /// namespace mlb
 
@@ -777,4 +807,4 @@ mlbInitializer g_initializer;
 } // namespace mlb
 
 #endif // mlbDLL
-#endif
+#endif // msDebug
