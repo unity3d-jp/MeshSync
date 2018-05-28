@@ -422,6 +422,7 @@ namespace UTJ.MeshSync
             }
             else if(rec.reference != null)
             {
+                // update later on UpdateReference()
                 return;
             }
 
@@ -477,25 +478,14 @@ namespace UTJ.MeshSync
                         var bones = new Transform[data.numBones];
                         for (int bi = 0; bi < bones.Length; ++bi)
                         {
-                            bool created = false;
-                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], true, ref created);
-                            if (created)
-                            {
-                                Record recBone = null;
-                                if (!m_clientObjects.TryGetValue(bonePaths[bi], out recBone))
-                                {
-                                    recBone = new Record();
-                                    m_clientObjects.Add(bonePaths[bi], recBone);
-                                }
-                                recBone.go = bones[bi].gameObject;
-                                recBone.recved = true;
-                            }
+                            bool dummy = false;
+                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
                         }
 
                         if (bones.Length > 0)
                         {
-                            bool created = false;
-                            var root = FindOrCreateObjectByPath(data.rootBonePath, true, ref created);
+                            bool dummy = false;
+                            var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
                             if (root == null)
                                 root = bones[0];
                             smr.rootBone = root;
@@ -548,10 +538,11 @@ namespace UTJ.MeshSync
                 AssignMaterials(rec);
         }
 
-        PinnedList<Vector2> tmpV2 = new PinnedList<Vector2>();
-        PinnedList<Vector3> tmpV3 = new PinnedList<Vector3>();
-        PinnedList<Vector4> tmpV4 = new PinnedList<Vector4>();
-        PinnedList<Color> tmpC = new PinnedList<Color>();
+        PinnedList<int> m_tmpI = new PinnedList<int>();
+        PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
+        PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
+        PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
+        PinnedList<Color> m_tmpC = new PinnedList<Color>();
 
         Mesh CreateEditedMesh(MeshData data, SplitData split)
         {
@@ -563,39 +554,39 @@ namespace UTJ.MeshSync
             var flags = data.flags;
             if (flags.hasPoints)
             {
-                tmpV3.Resize(split.numPoints);
-                data.ReadPoints(tmpV3, split);
-                mesh.SetVertices(tmpV3.List);
+                m_tmpV3.Resize(split.numPoints);
+                data.ReadPoints(m_tmpV3, split);
+                mesh.SetVertices(m_tmpV3.List);
             }
             if (flags.hasNormals)
             {
-                tmpV3.Resize(split.numPoints);
-                data.ReadNormals(tmpV3, split);
-                mesh.SetNormals(tmpV3.List);
+                m_tmpV3.Resize(split.numPoints);
+                data.ReadNormals(m_tmpV3, split);
+                mesh.SetNormals(m_tmpV3.List);
             }
             if (flags.hasTangents)
             {
-                tmpV4.Resize(split.numPoints);
-                data.ReadTangents(tmpV4, split);
-                mesh.SetTangents(tmpV4.List);
+                m_tmpV4.Resize(split.numPoints);
+                data.ReadTangents(m_tmpV4, split);
+                mesh.SetTangents(m_tmpV4.List);
             }
             if (flags.hasUV0)
             {
-                tmpV2.Resize(split.numPoints);
-                data.ReadUV0(tmpV2, split);
-                mesh.SetUVs(0, tmpV2.List);
+                m_tmpV2.Resize(split.numPoints);
+                data.ReadUV0(m_tmpV2, split);
+                mesh.SetUVs(0, m_tmpV2.List);
             }
             if (flags.hasUV1)
             {
-                tmpV2.Resize(split.numPoints);
-                data.ReadUV1(tmpV2, split);
-                mesh.SetUVs(1, tmpV2.List);
+                m_tmpV2.Resize(split.numPoints);
+                data.ReadUV1(m_tmpV2, split);
+                mesh.SetUVs(1, m_tmpV2.List);
             }
             if (flags.hasColors)
             {
-                tmpC.Resize(split.numPoints);
-                data.ReadColors(tmpC, split);
-                mesh.SetColors(tmpC.List);
+                m_tmpC.Resize(split.numPoints);
+                data.ReadColors(m_tmpC, split);
+                mesh.SetColors(m_tmpC.List);
             }
             if (flags.hasBones)
             {
@@ -604,6 +595,7 @@ namespace UTJ.MeshSync
                 data.ReadBoneWeights(tmpW, split);
                 mesh.bindposes = data.bindposes;
                 mesh.boneWeights = tmpW.Array;
+                tmpW.Dispose();
             }
             if(flags.hasIndices)
             {
@@ -613,22 +605,33 @@ namespace UTJ.MeshSync
                     var submesh = split.GetSubmesh(smi);
                     var topology = submesh.topology;
 
+                    m_tmpI.Resize(submesh.numIndices);
+                    submesh.ReadIndices(m_tmpI);
+
                     if (topology == SubmeshData.Topology.Triangles)
-                        mesh.SetTriangles(submesh.indices, smi, false);
-                    else if (topology == SubmeshData.Topology.Lines)
-                        mesh.SetIndices(submesh.indices, MeshTopology.Lines, smi, false);
-                    else if (topology == SubmeshData.Topology.Points)
-                        mesh.SetIndices(submesh.indices, MeshTopology.Points, smi, false);
-                    else if (topology == SubmeshData.Topology.Quads)
-                        mesh.SetIndices(submesh.indices, MeshTopology.Quads, smi, false);
+                    {
+                        mesh.SetTriangles(m_tmpI.List, smi, false);
+                    }
+                    else
+                    {
+                        var mt = MeshTopology.Points;
+                        switch (topology)
+                        {
+                            case SubmeshData.Topology.Lines: mt = MeshTopology.Lines; break;
+                            case SubmeshData.Topology.Quads: mt = MeshTopology.Quads; break;
+                            default: break;
+                        }
+                        // note: tmpI.Array can't be used because its length is not current size but capacity.
+                        mesh.SetIndices(m_tmpI.List.ToArray(), mt, smi, false);
+                    }
 
                 }
             }
             if (flags.hasBlendshapes)
             {
-                PinnedList<Vector3> tmpBSP = new PinnedList<Vector3>(split.numPoints);
-                PinnedList<Vector3> tmpBSN = new PinnedList<Vector3>(split.numPoints);
-                PinnedList<Vector3> tmpBST = new PinnedList<Vector3>(split.numPoints);
+                var tmpBSP = new PinnedList<Vector3>(split.numPoints);
+                var tmpBSN = new PinnedList<Vector3>(split.numPoints);
+                var tmpBST = new PinnedList<Vector3>(split.numPoints);
 
                 int numBlendShapes = data.numBlendShapes;
                 for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -638,12 +641,16 @@ namespace UTJ.MeshSync
                     var numFrames = bsd.numFrames;
                     for (int fi = 0; fi < numFrames; ++fi)
                     {
-                        bsd.ReadPoints(fi, tmpBSP.Array, split);
-                        bsd.ReadNormals(fi, tmpBSN.Array, split);
-                        bsd.ReadTangents(fi, tmpBST.Array, split);
+                        bsd.ReadPoints(fi, tmpBSP, split);
+                        bsd.ReadNormals(fi, tmpBSN, split);
+                        bsd.ReadTangents(fi, tmpBST, split);
                         mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP.Array, tmpBSN.Array, tmpBST.Array);
                     }
                 }
+
+                tmpBSP.Dispose();
+                tmpBSN.Dispose();
+                tmpBST.Dispose();
             }
 
             mesh.bounds = split.bounds;
@@ -1501,6 +1508,12 @@ namespace UTJ.MeshSync
         void OnDestroy()
         {
             StopServer();
+
+            m_tmpI.Dispose();
+            m_tmpV2.Dispose();
+            m_tmpV3.Dispose();
+            m_tmpV4.Dispose();
+            m_tmpC.Dispose();
         }
 
 

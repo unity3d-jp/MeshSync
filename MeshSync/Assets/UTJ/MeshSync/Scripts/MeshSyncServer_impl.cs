@@ -1364,7 +1364,7 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, IntPtr dst);
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr _this);
             #endregion
@@ -1381,15 +1381,7 @@ namespace UTJ.MeshSync
             public int numIndices { get { return msSubmeshGetNumIndices(_this); } }
             public Topology topology { get { return msSubmeshGetTopology(_this); } }
             public int materialID { get { return msSubmeshGetMaterialID(_this); } }
-            public int[] indices
-            {
-                get
-                {
-                    var ret = new int[numIndices];
-                    msSubmeshReadIndices(_this, ret);
-                    return ret;
-                }
-            }
+            public void ReadIndices(PinnedList<int> dst) { msSubmeshReadIndices(_this, dst); }
         }
 
         public struct BlendShapeData
@@ -1400,9 +1392,9 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msBlendShapeGetFrameWeight(IntPtr _this, int f);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, int f, Vector3[] dst, SplitData split);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, Vector3[] dst, SplitData split);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, Vector3[] dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, int f, IntPtr dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, IntPtr dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, IntPtr dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msBlendShapeAddFrame(IntPtr _this, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
             #endregion
 
@@ -1419,9 +1411,9 @@ namespace UTJ.MeshSync
                 get { return msBlendShapeGetNumFrames(_this); }
             }
             public float GetWeight(int f) { return msBlendShapeGetFrameWeight(_this, f); }
-            public void ReadPoints(int f, Vector3[] dst, SplitData split) { msBlendShapeReadPoints(_this, f, dst, split); }
-            public void ReadNormals(int f, Vector3[] dst, SplitData split) { msBlendShapeReadNormals(_this, f, dst, split); }
-            public void ReadTangents(int f, Vector3[] dst, SplitData split) { msBlendShapeReadTangents(_this, f, dst, split); }
+            public void ReadPoints(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadPoints(_this, f, dst, split); }
+            public void ReadNormals(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadNormals(_this, f, dst, split); }
+            public void ReadTangents(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadTangents(_this, f, dst, split); }
 
             public void AddFrame(float w, Vector3[] v, Vector3[] n, Vector3[] t)
             {
