@@ -5,7 +5,6 @@ set(CMAKE_PREFIX_PATH
     "/Applications/Autodesk/maya2015/Maya.app/Contents"
     "/Applications/Autodesk/maya2015/devkit"
     "/usr/autodesk/maya2015-x64"
-    "/opt/autodesk/maya2015"
 )
 
 find_path(MAYA2015_INCLUDE_DIR NAMES maya/MGlobal.h)

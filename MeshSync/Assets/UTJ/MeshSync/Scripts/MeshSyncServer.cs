@@ -781,10 +781,12 @@ namespace UTJ.MeshSync
                 dstsmr.bones = srcsmr.bones;
                 dstsmr.rootBone = srcsmr.rootBone;
                 dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
-
-                int blendShapeCount = mesh.blendShapeCount;
-                for (int bi = 0; bi < blendShapeCount; ++bi)
-                    dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+                if (mesh != null)
+                {
+                    int blendShapeCount = mesh.blendShapeCount;
+                    for (int bi = 0; bi < blendShapeCount; ++bi)
+                        dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+                }
 
                 dstgo.SetActive(false); // 
                 dstgo.SetActive(true);  // force recalculate skinned mesh on editor
