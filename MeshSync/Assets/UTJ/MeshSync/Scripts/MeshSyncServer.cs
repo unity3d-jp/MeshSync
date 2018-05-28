@@ -19,7 +19,7 @@ namespace UTJ.MeshSync
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
-        [SerializeField] string m_rootObjectName = "";
+        [SerializeField] Transform m_rootObject;
         //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
         [SerializeField] bool m_ignoreVisibility = false;
         [SerializeField] bool m_progressiveDisplay = true;
@@ -665,12 +665,6 @@ namespace UTJ.MeshSync
 #endif
         }
 
-        string GetGlobalPath(string basePath)
-        {
-            return m_rootObjectName.Length > 0 ?
-                '/' + m_rootObjectName + basePath : basePath;
-        }
-
         Transform UpdateTransform(TransformData data)
         {
             var path = data.path;
@@ -879,7 +873,7 @@ namespace UTJ.MeshSync
                     return;
 
                 Transform root = target;
-                while (root.parent != null && root.parent.name != m_rootObjectName)
+                while (root.parent != null && root.parent != m_rootObject)
                     root = root.parent;
 
                 Animator animator = null;
@@ -1063,10 +1057,8 @@ namespace UTJ.MeshSync
 
         Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
         {
-            if (m_rootObjectName.Length > 0)
-                path = '/' + m_rootObjectName + path;
             var names = path.Split('/');
-            Transform t = null;
+            Transform t = m_rootObject;
             foreach (var name in names)
             {
                 if (name.Length == 0) { continue; }
@@ -1140,7 +1132,7 @@ namespace UTJ.MeshSync
         string BuildPath(Transform t)
         {
             var parent = t.parent;
-            if (parent != null && (m_rootObjectName.Length == 0 || parent.name != m_rootObjectName))
+            if (parent != null && parent != m_rootObject)
             {
                 return BuildPath(parent) + "/" + t.name;
             }
