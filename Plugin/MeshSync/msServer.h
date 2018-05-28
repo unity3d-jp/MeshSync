@@ -31,6 +31,7 @@ public:
 
     bool start();
     void stop();
+    void clear();
     ServerSettings& getSettings();
 
     using MessageHandler = std::function<void(Message::Type type, const Message& data)>;

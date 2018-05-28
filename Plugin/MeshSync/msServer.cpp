@@ -123,6 +123,7 @@ Server::Server(const ServerSettings& settings)
 Server::~Server()
 {
     stop();
+    clear();
 }
 
 bool Server::start()
@@ -150,6 +151,14 @@ bool Server::start()
 void Server::stop()
 {
     m_server.reset();
+}
+
+void Server::clear()
+{
+    lock_t lock(m_mutex);
+    m_client_objs.clear();
+    m_recv_history.clear();
+    m_host_scene.reset();
 }
 
 ServerSettings& Server::getSettings()
@@ -200,6 +209,9 @@ int Server::processMessages(const MessageHandler& handler)
 void Server::setServe(bool v)
 {
     m_serving = v;
+    if (!v) {
+        clear();
+    }
 }
 bool Server::isServing() const
 {
