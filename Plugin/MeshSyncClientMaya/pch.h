@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <set>
 #include <functional>
 #include <future>
 #include <mutex>
@@ -34,6 +35,10 @@
 
 // avoid multiple definition of `MApiVersion'
 //#define _MApiVersion
+
+// avoid redefinition of bool on maya 2015
+#define _BOOL
+
 #include <maya/MAnimControl.h>
 #include <maya/MGlobal.h>
 #include <maya/MDistance.h>
@@ -51,7 +56,6 @@
 #include <maya/MMatrixArray.h>
 #include <maya/MQuaternion.h>
 #include <maya/MPlugArray.h>
-#include <maya/MUuid.h>
 #include <maya/MItDag.h>
 #include <maya/MItSelectionList.h>
 #include <maya/MItMeshVertex.h>

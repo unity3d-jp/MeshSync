@@ -1,5 +1,47 @@
 ﻿#pragma once
 
+struct MObjectKey
+{
+    void *key;
+
+    MObjectKey() : key(nullptr) {}
+    MObjectKey(const MObject& mo) : key((void*&)mo) {}
+    bool operator<(const MObjectKey& v) const { return key < v.key; }
+    bool operator==(const MObjectKey& v) const { return key == v.key; }
+    bool operator!=(const MObjectKey& v) const { return key != v.key; }
+};
+
+// note: because of instance, one dag node can belong to multiple tree nodes.
+struct TreeNode;
+struct DAGNode
+{
+    MObject node;
+    std::vector<TreeNode*> branches;
+    MCallbackId cid = 0;
+    bool dirty = true;
+
+    bool isInstance() const;
+};
+
+struct TreeNode
+{
+    DAGNode *trans = nullptr;
+    DAGNode *shape = nullptr;
+    std::string name;
+    std::string path;
+    int index = 0;
+    TreeNode *parent = nullptr;
+    std::vector<TreeNode*> children;
+
+    ms::Transform *dst_obj = nullptr;
+    ms::Animation *dst_anim = nullptr;
+
+    void clearState();
+    bool isInstance() const;
+    TreeNode* getPrimaryInstanceNode() const;
+};
+
+
 class MeshSyncClientMaya
 {
 public:
@@ -22,7 +64,7 @@ public:
         bool sync_lights = true;
         bool sync_constraints = false;
         bool apply_tweak = true;
-        bool multithreaded = true;
+        bool multithreaded = false;
 
         // import settings
         bool bake_skin = false;
@@ -43,114 +85,104 @@ public:
     MeshSyncClientMaya(MObject obj);
     ~MeshSyncClientMaya();
 
-    void update();
-    void onSelectionChanged();
+    void onNodeUpdated(const MObject& node);
+    void onNodeRemoved(const MObject& node);
+    void onNodeRenamed();
     void onSceneUpdated();
-    void onTimeChange(MTime& time);
-    void onNodeRemoved(MObject& node);
+    void onSceneLoadBegin();
+    void onSceneLoadEnd();
+    void onTimeChange(const MTime& time);
 
-    void notifyUpdateTransform(MObject obj);
-    void notifyUpdateCamera(MObject obj);
-    void notifyUpdateLight(MObject obj);
-    void notifyUpdateMesh(MObject obj);
-    bool send(SendScope scope);
+    void update();
+    bool sendScene(SendScope scope);
     bool sendAnimations(SendScope scope);
-    bool import();
+
+    bool recvScene();
 
 
 private:
-    struct ObjectRecord
-    {
-        MObject node;
-        std::string name;
-        std::string path;
-        MCallbackId cid_trans = 0;
-        MCallbackId cid_shape = 0;
-        int index = 0;
-        bool dirty_transform = true;
-        bool dirty_shape = true;
-        bool added = false;
-    };
+    using DagNodeRecords = std::map<MObjectKey, DAGNode>;
+    using TreeNodePtr = std::unique_ptr<TreeNode>;
 
-    ObjectRecord& findOrAddRecord(MObject node);
-    const ObjectRecord* findRecord(MObject node);
+    struct TaskRecord
+    {
+        using task_t = std::function<void()>;
+        std::vector<std::tuple<TreeNode*, task_t>> tasks;
+
+        void add(TreeNode *n, const task_t& task);
+        void process();
+    };
+    using TaskRecords = std::map<TreeNode*, TaskRecord>;
+
+    struct AnimationRecord
+    {
+        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, TreeNode *n);
+
+        TreeNode *tn = nullptr;
+        ms::Animation *dst = nullptr;
+        extractor_t extractor = nullptr;
+
+        void operator()(MeshSyncClientMaya *_this);
+    };
+    using AnimationRecords = std::map<TreeNode*, AnimationRecord>;
+
+    std::vector<TreeNodePtr> m_tree_nodes;
+    std::vector<TreeNode*>   m_tree_roots;
+    DagNodeRecords           m_dag_nodes;
+    TaskRecords              m_extract_tasks;
+    AnimationRecords         m_anim_records;
+
+
+    void constructTree();
+    void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
+    bool checkRename(TreeNode *node);
+
     bool isSending() const;
     void waitAsyncSend();
     void registerGlobalCallbacks();
     void registerNodeCallbacks();
-    bool registerNodeCallback(MObject node, bool leaf = true);
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
-    int getMaterialID(MUuid uid);
 
-    ms::TransformPtr exportObject(MObject obj, bool force);
+    int getMaterialID(const MString& name);
     void exportMaterials();
 
-    void extractTransformData(ms::Transform& dst, MObject src);
-    void doExtractTransformData(ms::Transform& dst, MObject src);
-    void extractCameraData(ms::Camera& dst, MObject src);
-    void doExtractCameraData(ms::Camera& dst, MObject src);
-    void extractLightData(ms::Light& dst, MObject src);
-    void doExtractLightData(ms::Light& dst, MObject src);
-    void extractMeshData(ms::Mesh& dst, MObject src);
-    void doExtractMeshData(ms::Mesh& dst, MObject src);
+    bool exportObject(TreeNode *tn, bool force);
+    void extractTransformData(ms::Transform& dst, TreeNode *n);
+    void extractCameraData(ms::Camera& dst, TreeNode *n);
+    void extractLightData(ms::Light& dst, TreeNode *n);
+    void extractMeshData(ms::Mesh& dst, TreeNode *n);
+    void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
 
     int exportAnimations(SendScope scope);
-    void exportAnimation(MObject src, MObject shape);
-    void extractTransformAnimationData(ms::Animation& dst, MObject node, MObject shape);
-    void extractCameraAnimationData(ms::Animation& dst, MObject node, MObject shape);
-    void extractLightAnimationData(ms::Animation& dst, MObject node, MObject shape);
+    bool exportAnimation(TreeNode *tn);
+    void extractTransformAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractCameraAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractLightAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractMeshAnimationData(ms::Animation& dst, TreeNode *n);
 
-    void exportConstraint(MObject src);
-    void extractConstraintData(ms::Constraint& dst, MObject src, MObject node);
+    void exportConstraint(TreeNode *tn);
+    void extractConstraintData(ms::Constraint& dst, TreeNode *n);
 
     void kickAsyncSend();
 
 private:
-    void addAnimation(ms::Animation *anim);
+    MObject                     m_obj;
+    MFnPlugin                   m_iplugin;
+    std::vector<MCallbackId>    m_cids_global;
 
-    using ObjectRecords = std::map<void*, ObjectRecord>;
+    std::vector<MString>                m_material_id_table;
+    std::vector<ms::TransformPtr>       m_objects;
+    std::vector<ms::MeshPtr>            m_meshes;
+    std::vector<ms::MaterialPtr>        m_materials;
+    std::vector<ms::AnimationClipPtr>   m_animations;
+    std::vector<ms::ConstraintPtr>      m_constraints;
+    std::vector<std::string>            m_deleted;
+    std::future<void>                   m_future_send;
 
-    MObject m_obj;
-    MFnPlugin m_iplugin;
-
-    std::vector<MCallbackId> m_cids_global;
-    std::vector<MUuid> m_material_id_table;
-
-    std::vector<ms::TransformPtr>   m_client_objects;
-    std::vector<ms::MeshPtr>        m_client_meshes;
-    std::vector<ms::MaterialPtr>    m_client_materials;
-    std::vector<ms::AnimationPtr>   m_client_animations;
-    std::vector<ms::ConstraintPtr>  m_client_constraints;
-    std::vector<std::string>        m_deleted;
-    ObjectRecords       m_records;
-    std::future<void>   m_future_send;
-
-    using task_t = std::function<void()>;
-    using lock_t = std::unique_lock<std::mutex>;
-    std::vector<task_t> m_extract_tasks;
-    std::mutex m_mutex;
-
-    SendScope m_pending_send_scene = SendScope::None;
-    bool m_scene_updated = false;
-    bool m_ignore_update = false;
-    int m_index_seed = 0;
-
-
-    // animation export
-    struct AnimationRecord
-    {
-        MObject node, shape;
-        ms::Animation *dst = nullptr;
-        void (MeshSyncClientMaya::*extractor)(ms::Animation& dst, MObject node, MObject shape) = nullptr;
-
-        void operator()(MeshSyncClientMaya *_this)
-        {
-            (_this->*extractor)(*dst,  node, shape);
-        }
-    };
-    using AnimationRecords = std::map<void*, AnimationRecord>;
-    AnimationRecords m_anim_records;
-    float m_current_time = 0.0f;
-    MDGContext m_animation_ctx;
+    SendScope m_pending_scope = SendScope::None;
+    bool      m_scene_updated = true;
+    bool      m_ignore_update = false;
+    int       m_index_seed = 0;
+    float     m_anim_time = 0.0f;
 };

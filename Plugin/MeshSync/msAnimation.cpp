@@ -1,13 +1,10 @@
+#include "msAnimation.h"
 #include "pch.h"
 #include "msSceneGraph.h"
 #include "msAnimation.h"
-#include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 
 
-#define Size(V) ret += ssize(V);
-#define Write(V) write(os, V);
-#define Read(V) read(is, V);
 #define Clear(V) V.clear();
 #define Empty(V) && V.empty()
 #define Reduce(V) DoReduction(V);
@@ -47,16 +44,17 @@ static void DoReduction(RawVector<TVP<T>>& data)
 }
 
 
-Animation * Animation::make(std::istream & is)
+std::shared_ptr<Animation> Animation::create(std::istream & is)
 {
-    Animation *ret = nullptr;
+    std::shared_ptr<Animation> ret;
 
     int type;
     read(is, type);
     switch ((Type)type) {
-    case Type::Transform: ret = new TransformAnimation(); break;
-    case Type::Camera: ret = new CameraAnimation(); break;
-    case Type::Light: ret = new LightAnimation(); break;
+    case Type::Transform: ret = TransformAnimation::create(); break;
+    case Type::Camera: ret = CameraAnimation::create(); break;
+    case Type::Light: ret = LightAnimation::create(); break;
+    case Type::Mesh: ret = MeshAnimation::create(); break;
     default: break;
     }
     if (ret) {
@@ -66,9 +64,8 @@ Animation * Animation::make(std::istream & is)
 }
 
 
-Animation::~Animation()
-{
-}
+Animation::Animation() {}
+Animation::~Animation() {}
 
 Animation::Type Animation::getType() const
 {
@@ -103,50 +100,53 @@ void Animation::clear()
 
 
 
+TransformAnimation::TransformAnimation() {}
+TransformAnimation::~TransformAnimation() {}
+
 Animation::Type TransformAnimation::getType() const
 {
     return Type::Transform;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(translation) F(rotation) F(scale) F(visible)
 
 uint32_t TransformAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    EachMembers(Size);
+    EachMember(msSize);
     return ret;
 }
 void TransformAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    EachMembers(Write);
+    EachMember(msWrite);
 }
 void TransformAnimation::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    EachMembers(Read);
+    EachMember(msRead);
 }
 void TransformAnimation::clear()
 {
     super::clear();
-    EachMembers(Clear);
+    EachMember(Clear);
 }
 bool TransformAnimation::empty() const
 {
     bool ret = true;
-    ret = ret EachMembers(Empty);
+    ret = ret EachMember(Empty);
     return ret;
 }
 void TransformAnimation::reduction()
 {
-    EachMembers(Reduce);
+    EachMember(Reduce);
 }
 void TransformAnimation::reserve(size_t n)
 {
-    EachMembers(Reserve);
+    EachMember(Reserve);
 }
-#undef EachMembers
+#undef EachMember
 
 void TransformAnimation::convertHandedness(bool x, bool yz)
 {
@@ -174,50 +174,53 @@ void TransformAnimation::applyScaleFactor(float s)
 
 
 
+CameraAnimation::CameraAnimation() {}
+CameraAnimation::~CameraAnimation() {}
+
 Animation::Type CameraAnimation::getType() const
 {
     return Type::Camera;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(fov) F(near_plane) F(far_plane) F(horizontal_aperture) F(vertical_aperture) F(focal_length) F(focus_distance)
 
 uint32_t CameraAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    EachMembers(Size);
+    EachMember(msSize);
     return ret;
 }
 void CameraAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    EachMembers(Write);
+    EachMember(msWrite);
 }
 void CameraAnimation::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    EachMembers(Read);
+    EachMember(msRead);
 }
 void CameraAnimation::clear()
 {
     super::clear();
-    EachMembers(Clear);
+    EachMember(Clear);
 }
 bool CameraAnimation::empty() const
 {
-    return super::empty() EachMembers(Empty);
+    return super::empty() EachMember(Empty);
 }
 void CameraAnimation::reduction()
 {
     super::reduction();
-    EachMembers(Reduce);
+    EachMember(Reduce);
 }
 void CameraAnimation::reserve(size_t n)
 {
     super::reserve(n);
-    EachMembers(Reserve);
+    EachMember(Reserve);
 }
-#undef EachMembers
+#undef EachMember
 
 void CameraAnimation::applyScaleFactor(float s)
 {
@@ -229,50 +232,53 @@ void CameraAnimation::applyScaleFactor(float s)
 }
 
 
+LightAnimation::LightAnimation() {}
+LightAnimation::~LightAnimation() {}
+
 Animation::Type LightAnimation::getType() const
 {
     return Type::Light;
 }
 
-#define EachMembers(F)\
+#define EachMember(F)\
     F(color) F(intensity) F(range) F(spot_angle)
 
 uint32_t LightAnimation::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    EachMembers(Size);
+    EachMember(msSize);
     return ret;
 }
 void LightAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    EachMembers(Write);
+    EachMember(msWrite);
 }
 void LightAnimation::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    EachMembers(Read);
+    EachMember(msRead);
 }
 void LightAnimation::clear()
 {
     super::clear();
-    EachMembers(Clear);
+    EachMember(Clear);
 }
 bool LightAnimation::empty() const
 {
-    return super::empty() EachMembers(Empty);
+    return super::empty() EachMember(Empty);
 }
 void LightAnimation::reduction()
 {
     super::reduction();
-    EachMembers(Reduce);
+    EachMember(Reduce);
 }
 void LightAnimation::reserve(size_t n)
 {
     super::reserve(n);
-    EachMembers(Reserve);
+    EachMember(Reserve);
 }
-#undef EachMembers
+#undef EachMember
 
 void LightAnimation::applyScaleFactor(float s)
 {
@@ -281,5 +287,156 @@ void LightAnimation::applyScaleFactor(float s)
         tvp.value *= s;
 }
 
+
+std::shared_ptr<MeshAnimation::BlendshapeAnimation> MeshAnimation::BlendshapeAnimation::create(std::istream & is)
+{
+    auto ret = new BlendshapeAnimation();
+    ret->deserialize(is);
+    return make_shared_ptr(ret);
+}
+
+MeshAnimation::BlendshapeAnimation::BlendshapeAnimation() {}
+MeshAnimation::BlendshapeAnimation::~BlendshapeAnimation() {}
+
+uint32_t MeshAnimation::BlendshapeAnimation::getSerializeSize() const
+{
+    return ssize(name) + ssize(weight);
+}
+
+void MeshAnimation::BlendshapeAnimation::serialize(std::ostream & os) const
+{
+    write(os, name);
+    write(os, weight);
+}
+
+void MeshAnimation::BlendshapeAnimation::deserialize(std::istream & is)
+{
+    read(is, name);
+    read(is, weight);
+}
+
+void MeshAnimation::BlendshapeAnimation::clear()
+{
+    name.clear();
+    weight.clear();
+}
+
+bool MeshAnimation::BlendshapeAnimation::empty() const
+{
+    return weight.empty();
+}
+
+MeshAnimation::MeshAnimation() {}
+MeshAnimation::~MeshAnimation() {}
+
+Animation::Type MeshAnimation::getType() const
+{
+    return Type::Mesh;
+}
+
+uint32_t MeshAnimation::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    ret += ssize(blendshapes);
+    return ret;
+}
+
+void MeshAnimation::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, blendshapes);
+}
+
+void MeshAnimation::deserialize(std::istream & is)
+{
+    super::deserialize(is);
+    read(is, blendshapes);
+}
+
+void MeshAnimation::clear()
+{
+    super::clear();
+    blendshapes.clear();
+}
+
+bool MeshAnimation::empty() const
+{
+    return super::empty() && blendshapes.empty();
+}
+
+void MeshAnimation::reduction()
+{
+    super::reduction();
+
+    for (auto& bs : blendshapes)
+        DoReduction(bs->weight);
+    blendshapes.erase(
+        std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
+        blendshapes.end());
+}
+
+
+std::shared_ptr<AnimationClip> AnimationClip::create(std::istream& is)
+{
+    auto ret = new AnimationClip();
+    ret->deserialize(is);
+    return make_shared_ptr(ret);
+}
+
+AnimationClip::AnimationClip() {}
+AnimationClip::~AnimationClip() {}
+
+#define EachMember(F)\
+    F(name) F(animations)
+
+uint32_t AnimationClip::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    EachMember(msSize);
+    return ret;
+}
+void AnimationClip::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+void AnimationClip::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+
+#undef EachMember
+
+void AnimationClip::clear()
+{
+    name.clear();
+    animations.clear();
+}
+
+bool AnimationClip::empty() const
+{
+    return animations.empty();
+}
+
+void AnimationClip::reduction()
+{
+    mu::parallel_for_each(animations.begin(), animations.end(), [](ms::AnimationPtr& p) {
+        p->reduction();
+    });
+    animations.erase(
+        std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
+        animations.end());
+}
+
+void AnimationClip::convertHandedness(bool x, bool yz)
+{
+    for (auto& animation : animations)
+        animation->convertHandedness(x, yz);
+}
+
+void AnimationClip::applyScaleFactor(float scale)
+{
+    for (auto& animation : animations)
+        animation->applyScaleFactor(scale);
+}
 
 } // namespace ms

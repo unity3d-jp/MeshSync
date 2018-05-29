@@ -1,174 +1,25 @@
 #include "pch.h"
 #include "msSceneGraph.h"
-#include "msAnimation.h"
 #include "msConstraints.h"
+#include "msAnimation.h"
+#include "msMaterial.h"
 #include "msSceneGraphImpl.h"
 
 
 namespace ms {
 
-Message::~Message()
-{
-}
-uint32_t Message::getSerializeSize() const
-{
-    return ssize(msProtocolVersion);
-}
-void Message::serialize(std::ostream& os) const
-{
-    write(os, msProtocolVersion);
-}
-bool Message::deserialize(std::istream& is)
-{
-    int protocol_version = 0;
-    read(is, protocol_version);
-    if (protocol_version != msProtocolVersion)
-        return false;
-    return true;
-}
 
-GetMessage::GetMessage()
+std::shared_ptr<Entity> Entity::create(std::istream & is)
 {
-}
-uint32_t GetMessage::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(flags);
-    ret += ssize(scene_settings);
-    ret += ssize(refine_settings);
-    return ret;
-}
-void GetMessage::serialize(std::ostream& os) const
-{
-    super::serialize(os);
-    write(os, flags);
-    write(os, scene_settings);
-    write(os, refine_settings);
-}
-bool GetMessage::deserialize(std::istream& is)
-{
-    if (!super::deserialize(is)) { return false; }
-    read(is, flags);
-    read(is, scene_settings);
-    read(is, refine_settings);
-    return true;
-}
-
-
-SetMessage::SetMessage()
-{
-}
-uint32_t SetMessage::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += scene.getSerializeSize();
-    return ret;
-}
-void SetMessage::serialize(std::ostream& os) const
-{
-    super::serialize(os);
-    scene.serialize(os);
-}
-bool SetMessage::deserialize(std::istream& is)
-{
-    if (!super::deserialize(is)) { return false; }
-    scene.deserialize(is);
-    return true;
-}
-
-
-uint32_t DeleteMessage::Identifier::getSerializeSize() const
-{
-    return ssize(path) + ssize(id);
-}
-void DeleteMessage::Identifier::serialize(std::ostream& os) const
-{
-    write(os, path); write(os, id);
-}
-void DeleteMessage::Identifier::deserialize(std::istream& is)
-{
-    read(is, path); read(is, id);
-}
-
-DeleteMessage::DeleteMessage()
-{
-}
-uint32_t DeleteMessage::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(targets);
-    return ret;
-}
-void DeleteMessage::serialize(std::ostream& os) const
-{
-    super::serialize(os);
-    write(os, targets);
-}
-bool DeleteMessage::deserialize(std::istream& is)
-{
-    if (!super::deserialize(is)) { return false; }
-    read(is, targets);
-    return true;
-}
-
-
-FenceMessage::~FenceMessage() {}
-uint32_t FenceMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(type);
-}
-void FenceMessage::serialize(std::ostream& os) const
-{
-    super::serialize(os);
-    write(os, type);
-}
-bool FenceMessage::deserialize(std::istream& is)
-{
-    if (!super::deserialize(is)) { return false; }
-    read(is, type);
-    return true;
-}
-
-TextMessage::~TextMessage() {}
-uint32_t TextMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(text)
-        + ssize(type);
-}
-void TextMessage::serialize(std::ostream& os) const
-{
-    super::serialize(os);
-    write(os, text);
-    write(os, type);
-}
-bool TextMessage::deserialize(std::istream& is)
-{
-    if (!super::deserialize(is)) { return false; }
-    read(is, text);
-    read(is, type);
-    return true;
-}
-
-
-ScreenshotMessage::ScreenshotMessage() {}
-uint32_t ScreenshotMessage::getSerializeSize() const { return super::getSerializeSize(); }
-void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os); }
-bool ScreenshotMessage::deserialize(std::istream& is) { return super::deserialize(is); }
-
-
-Entity * Entity::make(std::istream & is)
-{
-    Entity *ret = nullptr;
+    std::shared_ptr<Entity> ret;
 
     int type;
     read(is, type);
     switch ((Type)type) {
-    case Type::Transform: ret = new Transform(); break;
-    case Type::Camera: ret = new Camera(); break;
-    case Type::Light: ret = new Light(); break;
-    case Type::Mesh: ret = new Mesh(); break;
+    case Type::Transform: ret = Transform::create(); break;
+    case Type::Camera: ret = Camera::create(); break;
+    case Type::Light: ret = Light::create(); break;
+    case Type::Mesh: ret = Mesh::create(); break;
     default: break;
     }
     if (ret) {
@@ -177,9 +28,8 @@ Entity * Entity::make(std::istream & is)
     return ret;
 }
 
-Entity::~Entity()
-{
-}
+Entity::Entity() {}
+Entity::~Entity() {}
 
 Entity::Type Entity::getType() const
 {
@@ -224,68 +74,41 @@ const char* Entity::getName() const
 
 
 
-uint32_t Material::getSerializeSize() const
+
+std::shared_ptr<Transform> Transform::create(std::istream & is)
 {
-    uint32_t ret = 0;
-    ret += ssize(id);
-    ret += ssize(name);
-    ret += ssize(color);
-    return ret;
-}
-void Material::serialize(std::ostream& os) const
-{
-    write(os, id);
-    write(os, name);
-    write(os, color);
-}
-void Material::deserialize(std::istream& is)
-{
-    read(is, id);
-    read(is, name);
-    read(is, color);
+    return std::static_pointer_cast<Transform>(super::create(is));
 }
 
-
+Transform::Transform() {}
+Transform::~Transform() {}
 
 Entity::Type Transform::getType() const
 {
     return Type::Transform;
 }
 
+#define EachMember(F)\
+    F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(reference)
+
 uint32_t Transform::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += ssize(position);
-    ret += ssize(rotation);
-    ret += ssize(scale);
-    ret += ssize(index);
-    ret += ssize(visible);
-    ret += ssize(visible_hierarchy);
-    ret += ssize(reference);
+    EachMember(msSize);
     return ret;
 }
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    write(os, position);
-    write(os, rotation);
-    write(os, scale);
-    write(os, index);
-    write(os, visible);
-    write(os, visible_hierarchy);
-    write(os, reference);
+    EachMember(msWrite);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    read(is, position);
-    read(is, rotation);
-    read(is, scale);
-    read(is, index);
-    read(is, visible);
-    read(is, visible_hierarchy);
-    read(is, reference);
+    EachMember(msRead);
 }
+
+#undef EachMember
 
 void Transform::clear()
 {
@@ -339,48 +162,35 @@ void Transform::applyScaleFactor(float v)
 
 
 
+Camera::Camera() {}
+Camera::~Camera() {}
+
 Entity::Type Camera::getType() const
 {
     return Type::Camera;
 }
 
+#define EachMember(F)\
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(vertical_aperture) F(horizontal_aperture) F(focal_length) F(focus_distance)
+
 uint32_t Camera::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += ssize(is_ortho);
-    ret += ssize(fov);
-    ret += ssize(near_plane);
-    ret += ssize(far_plane);
-    ret += ssize(vertical_aperture);
-    ret += ssize(horizontal_aperture);
-    ret += ssize(focal_length);
-    ret += ssize(focus_distance);
+    EachMember(msSize);
     return ret;
 }
 void Camera::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    write(os, is_ortho);
-    write(os, fov);
-    write(os, near_plane);
-    write(os, far_plane);
-    write(os, vertical_aperture);
-    write(os, horizontal_aperture);
-    write(os, focal_length);
-    write(os, focus_distance);
+    EachMember(msWrite);
 }
 void Camera::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    read(is, is_ortho);
-    read(is, fov);
-    read(is, near_plane);
-    read(is, far_plane);
-    read(is, vertical_aperture);
-    read(is, horizontal_aperture);
-    read(is, focal_length);
-    read(is, focus_distance);
+    EachMember(msRead);
 }
+
+#undef EachMember
 
 void Camera::clear()
 {
@@ -406,41 +216,35 @@ void Camera::applyScaleFactor(float v)
 
 
 
+Light::Light() {}
+Light::~Light() {}
+
 Entity::Type Light::getType() const
 {
     return Type::Light;
 }
 
+#define EachMember(F)\
+    F(light_type) F(color) F(intensity) F(range) F(spot_angle)
+
 uint32_t Light::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += ssize(light_type);
-    ret += ssize(color);
-    ret += ssize(intensity);
-    ret += ssize(range);
-    ret += ssize(spot_angle);
+    EachMember(msSize);
     return ret;
 }
-
 void Light::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    write(os, light_type);
-    write(os, color);
-    write(os, intensity);
-    write(os, range);
-    write(os, spot_angle);
+    EachMember(msWrite);
 }
-
 void Light::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    read(is, light_type);
-    read(is, color);
-    read(is, intensity);
-    read(is, range);
-    read(is, spot_angle);
+    EachMember(msRead);
 }
+
+#undef EachMember
 
 void Light::clear()
 {
@@ -459,29 +263,22 @@ void Light::applyScaleFactor(float v)
 }
 
 
+#define EachMember(F)\
+    F(weight) F(points) F(normals) F(tangents)
 
 uint32_t BlendShapeData::Frame::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(weight);
-    ret += ssize(points);
-    ret += ssize(normals);
-    ret += ssize(tangents);
+    EachMember(msSize);
     return ret;
 }
 void BlendShapeData::Frame::serialize(std::ostream& os) const
 {
-    write(os, weight);
-    write(os, points);
-    write(os, normals);
-    write(os, tangents);
+    EachMember(msWrite);
 }
 void BlendShapeData::Frame::deserialize(std::istream& is)
 {
-    read(is, weight);
-    read(is, points);
-    read(is, normals);
-    read(is, tangents);
+    EachMember(msRead);
 }
 void BlendShapeData::Frame::clear()
 {
@@ -491,25 +288,35 @@ void BlendShapeData::Frame::clear()
     tangents.clear();
 }
 
+#undef EachMember
+
+
+std::shared_ptr<BlendShapeData> BlendShapeData::create(std::istream & is)
+{
+    auto ret = new BlendShapeData();
+    ret->deserialize(is);
+    return make_shared_ptr(ret);
+}
+
+BlendShapeData::BlendShapeData() {}
+BlendShapeData::~BlendShapeData() {}
+
+#define EachMember(F)\
+    F(name) F(weight) F(frames)
+
 uint32_t BlendShapeData::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(name);
-    ret += ssize(weight);
-    ret += ssize(frames);
+    EachMember(msSize);
     return ret;
 }
 void BlendShapeData::serialize(std::ostream& os) const
 {
-    write(os, name);
-    write(os, weight);
-    write(os, frames);
+    EachMember(msWrite);
 }
 void BlendShapeData::deserialize(std::istream& is)
 {
-    read(is, name);
-    read(is, weight);
-    read(is, frames);
+    EachMember(msRead);
 }
 void BlendShapeData::clear()
 {
@@ -517,6 +324,9 @@ void BlendShapeData::clear()
     weight = 0.0f;
     frames.clear();
 }
+
+#undef EachMember
+
 void BlendShapeData::convertHandedness(bool x, bool yz)
 {
     if (x) {
@@ -541,6 +351,16 @@ void BlendShapeData::applyScaleFactor(float scale)
         mu::Scale(f.points.data(), scale, f.points.size());
     }
 }
+
+std::shared_ptr<BoneData> BoneData::create(std::istream & is)
+{
+    auto ret = new BoneData();
+    ret->deserialize(is);
+    return make_shared_ptr(ret);
+}
+
+BoneData::BoneData() {}
+BoneData::~BoneData() {}
 
 uint32_t BoneData::getSerializeSize() const
 {
@@ -591,9 +411,8 @@ void BoneData::applyScaleFactor(float scale)
 #define EachVertexProperty(Body)\
     Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(counts) Body(indices) Body(material_ids)
 
-Mesh::Mesh()
-{
-}
+Mesh::Mesh() {}
+Mesh::~Mesh() {}
 
 Entity::Type Mesh::getType() const
 {
@@ -1129,38 +948,9 @@ void Mesh::setupFlags()
     flags.has_blendshapes = !blendshapes.empty();
 }
 
-void Mesh::addVertex(const float3& v)
-{
-    points.push_back(v);
-}
-void Mesh::addNormal(const float3& v)
-{
-    normals.push_back(v);
-}
-void Mesh::addUV(const float2& v)
-{
-    uv0.push_back(v);
-}
-void Mesh::addColor(const float4& v)
-{
-    colors.push_back(v);
-}
-void Mesh::addCount(int v)
-{
-    counts.push_back(v);
-}
-void Mesh::addIndex(int v)
-{
-    indices.push_back(v);
-}
-void Mesh::addMaterialID(int v)
-{
-    material_ids.push_back(v);
-}
-
 BoneDataPtr Mesh::addBone(const std::string& _path)
 {
-    BoneDataPtr ret(new BoneData());
+    auto ret = BoneData::create();
     ret->path = _path;
     bones.push_back(ret);
     return ret;
@@ -1168,7 +958,7 @@ BoneDataPtr Mesh::addBone(const std::string& _path)
 
 BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
 {
-    BlendShapeDataPtr ret(new BlendShapeData());
+    auto ret = BlendShapeData::create();
     ret->name = _name;
     blendshapes.push_back(ret);
     return ret;
@@ -1197,39 +987,34 @@ void SceneSettings::deserialize(std::istream& is)
     read(is, scale_factor);
 }
 
+
+#define EachMember(F)\
+    F(settings) F(objects) F(constraints) F(animations) F(textures) F(materials)
+
 uint32_t Scene::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += settings.getSerializeSize();
-    ret += ssize(objects);
-    ret += ssize(materials);
-    ret += ssize(animations);
-    ret += ssize(constraints);
+    EachMember(msSize);
     return ret;
 }
 void Scene::serialize(std::ostream& os) const
 {
-    settings.serialize(os);
-    write(os, objects);
-    write(os, materials);
-    write(os, animations);
-    write(os, constraints);
+    EachMember(msWrite);
 }
 void Scene::deserialize(std::istream& is)
 {
-    settings.deserialize(is);
-    read(is, objects);
-    read(is, materials);
-    read(is, animations);
-    read(is, constraints);
+    EachMember(msRead);
 }
 
 void Scene::clear()
 {
     objects.clear();
-    materials.clear();
-    animations.clear();
     constraints.clear();
+    animations.clear();
+    textures.clear();
+    materials.clear();
 }
+
+#undef EachMember
 
 } // namespace ms

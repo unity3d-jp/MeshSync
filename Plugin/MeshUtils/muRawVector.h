@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <initializer_list>
 #include "muAllocator.h"

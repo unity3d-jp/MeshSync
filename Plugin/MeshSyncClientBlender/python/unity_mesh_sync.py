@@ -5,7 +5,7 @@ import MeshSyncClientBlender as ms
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2018, 5, 14),
+    "version": (2018, 5, 29),
     "blender": (2, 79),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -43,10 +43,9 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes")
     bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals")
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
-    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = False, name = "Colors")
+    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = True, name = "Colors")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
-    bpy.types.Scene.meshsync_apply_modifiers = bpy.props.BoolProperty(default = False, name = "Apply Modifiers")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync")
@@ -83,7 +82,6 @@ class MeshSyncScenePanel(bpy.types.Panel):
             b.prop(scene, 'meshsync_sync_colors')
             b.prop(scene, 'meshsync_sync_bones')
             b.prop(scene, 'meshsync_sync_blendshapes')
-            b.prop(scene, 'meshsync_apply_modifiers')
         self.layout.prop(scene, 'meshsync_sync_cameras')
         self.layout.prop(scene, 'meshsync_sync_lights')
         self.layout.separator()

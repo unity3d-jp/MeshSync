@@ -42,7 +42,7 @@ private:
         float3 world_pos = float3::zero();
         quatf world_rot = quatf::identity();
 
-        ms::TransformPtr transform = ms::TransformPtr(new ms::Transform());
+        ms::TransformPtr transform = ms::Transform::create();
         float4x4 bindpose = float4x4::identity();
     };
 

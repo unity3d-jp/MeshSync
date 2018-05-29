@@ -73,21 +73,24 @@ MSyntax CmdSettings::createSyntax()
     MSyntax syntax;
     syntax.enableQuery(true);
     syntax.enableEdit(false);
-    syntax.addFlag("-a",   "-address",            MSyntax::kString);
-    syntax.addFlag("-p",   "-port",               MSyntax::kLong);
-    syntax.addFlag("-sf",  "-scaleFactor",        MSyntax::kDouble);
-    syntax.addFlag("-as",  "-autosync",           MSyntax::kBoolean);
-    syntax.addFlag("-sm",  "-syncMeshes",         MSyntax::kBoolean);
-    syntax.addFlag("-smn", "-syncNormals",        MSyntax::kBoolean);
-    syntax.addFlag("-smu", "-syncUVs",            MSyntax::kBoolean);
-    syntax.addFlag("-smc", "-syncColors",         MSyntax::kBoolean);
-    syntax.addFlag("-sms", "-syncBlendShapes",    MSyntax::kBoolean);
-    syntax.addFlag("-smb", "-syncBones",          MSyntax::kBoolean);
-    syntax.addFlag("-sc",  "-syncCameras",        MSyntax::kBoolean);
-    syntax.addFlag("-sl",  "-syncLights",         MSyntax::kBoolean);
-    syntax.addFlag("-sco", "-syncConstraints",    MSyntax::kBoolean);
-    syntax.addFlag("-ats", "-animationTS",        MSyntax::kDouble);
-    syntax.addFlag("-asp", "-animationSPS",       MSyntax::kLong);
+    syntax.addFlag("-a",   "-address",          MSyntax::kString);
+    syntax.addFlag("-p",   "-port",             MSyntax::kLong);
+    syntax.addFlag("-sf",  "-scaleFactor",      MSyntax::kDouble);
+    syntax.addFlag("-as",  "-autosync",         MSyntax::kBoolean);
+    syntax.addFlag("-sm",  "-syncMeshes",       MSyntax::kBoolean);
+    syntax.addFlag("-smn", "-syncNormals",      MSyntax::kBoolean);
+    syntax.addFlag("-smu", "-syncUVs",          MSyntax::kBoolean);
+    syntax.addFlag("-smc", "-syncColors",       MSyntax::kBoolean);
+    syntax.addFlag("-sms", "-syncBlendShapes",  MSyntax::kBoolean);
+    syntax.addFlag("-smb", "-syncBones",        MSyntax::kBoolean);
+    syntax.addFlag("-sc",  "-syncCameras",      MSyntax::kBoolean);
+    syntax.addFlag("-sl",  "-syncLights",       MSyntax::kBoolean);
+    syntax.addFlag("-sco", "-syncConstraints",  MSyntax::kBoolean);
+    syntax.addFlag("-ats", "-animationTS",      MSyntax::kDouble);
+    syntax.addFlag("-asp", "-animationSPS",     MSyntax::kLong);
+    syntax.addFlag("-tw",  "-applyTweak",       MSyntax::kBoolean);
+    syntax.addFlag("-mt",  "-multithreaded",    MSyntax::kBoolean);
+
     return syntax;
 }
 
@@ -119,6 +122,8 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncConstraints", settings.sync_constraints);
     Handle("animationTS", settings.animation_time_scale);
     Handle("animationSPS", settings.animation_sps);
+    Handle("applyTweak", settings.apply_tweak);
+    Handle("multithreaded", settings.multithreaded);
 #undef Handle
 
     MPxCommand::setResult(result);
@@ -173,7 +178,7 @@ MStatus CmdExport::doIt(const MArgList& args_)
     if (animations)
         MeshSyncClientMaya::getInstance().sendAnimations(scope);
     else
-        MeshSyncClientMaya::getInstance().send(scope);
+        MeshSyncClientMaya::getInstance().sendScene(scope);
     return MStatus::kSuccess;
 }
 
@@ -197,6 +202,6 @@ MSyntax CmdImport::createSyntax()
 
 MStatus CmdImport::doIt(const MArgList&)
 {
-    MeshSyncClientMaya::getInstance().import();
+    MeshSyncClientMaya::getInstance().recvScene();
     return MStatus::kSuccess;
 }

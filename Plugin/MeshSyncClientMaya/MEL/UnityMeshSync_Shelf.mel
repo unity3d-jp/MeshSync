@@ -8,7 +8,6 @@ global proc UnityMeshSync_Shelf() {
     shelfLayout -p $gShelfTopLevel UnityMeshSync;
 
     shelfButton
-        -enableCommandRepeat 1
         -enable 1
         -width 35
         -height 35
@@ -18,14 +17,9 @@ global proc UnityMeshSync_Shelf() {
         -annotation "Settings" 
         -enableBackground 0
         -backgroundColor 0 0 0 
-        -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
         -label "Settings" 
         -labelOffset 0
-        -rotation 0
-        -flipX 0
-        -flipY 0
-        -useAlpha 1
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
@@ -40,7 +34,6 @@ global proc UnityMeshSync_Shelf() {
         -flat 1
     ;
     shelfButton
-        -enableCommandRepeat 1
         -enable 1
         -width 35
         -height 35
@@ -50,14 +43,9 @@ global proc UnityMeshSync_Shelf() {
         -annotation "Send scene objects to Unity" 
         -enableBackground 0
         -backgroundColor 0 0 0 
-        -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
         -label "Send Scene" 
         -labelOffset 0
-        -rotation 0
-        -flipX 0
-        -flipY 0
-        -useAlpha 1
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 
@@ -72,7 +60,6 @@ global proc UnityMeshSync_Shelf() {
         -flat 1
     ;
     shelfButton
-        -enableCommandRepeat 1
         -enable 1
         -width 35
         -height 35
@@ -82,14 +69,9 @@ global proc UnityMeshSync_Shelf() {
         -annotation "Send animations to Unity" 
         -enableBackground 0
         -backgroundColor 0 0 0 
-        -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
         -label "Send Animations" 
         -labelOffset 0
-        -rotation 0
-        -flipX 0
-        -flipY 0
-        -useAlpha 1
         -font "plainLabelFont" 
         -overlayLabelColor 0.8 0.8 0.8 
         -overlayLabelBackColor 0 0 0 0.5 

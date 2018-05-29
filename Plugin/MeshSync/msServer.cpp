@@ -11,8 +11,10 @@ static void RespondText(HTTPServerResponse &response, const std::string& message
 {
     response.setContentType("text/plain");
     response.setContentLength(message.size());
-    std::ostream &ostr = response.send();
-    ostr.write(message.c_str(), message.size());
+
+    auto& os = response.send();
+    os.write(message.c_str(), message.size());
+    os.flush();
 }
 
 static void RespondTextForm(HTTPServerResponse &response, const std::string& message = "")
@@ -36,8 +38,10 @@ static void RespondTextForm(HTTPServerResponse &response, const std::string& mes
     response.set("Cache-Control", "no-store, must-revalidate");
     response.setContentType("text/html");
     response.setContentLength(body.size());
-    std::ostream &ostr = response.send();
-    ostr.write(body.c_str(), body.size());
+
+    auto& os = response.send();
+    os.write(body.c_str(), body.size());
+    os.flush();
 }
 
 
@@ -119,6 +123,7 @@ Server::Server(const ServerSettings& settings)
 Server::~Server()
 {
     stop();
+    clear();
 }
 
 bool Server::start()
@@ -146,6 +151,14 @@ bool Server::start()
 void Server::stop()
 {
     m_server.reset();
+}
+
+void Server::clear()
+{
+    lock_t lock(m_mutex);
+    m_client_objs.clear();
+    m_recv_history.clear();
+    m_host_scene.reset();
 }
 
 ServerSettings& Server::getSettings()
@@ -196,6 +209,9 @@ int Server::processMessages(const MessageHandler& handler)
 void Server::setServe(bool v)
 {
     m_serving = v;
+    if (!v) {
+        clear();
+    }
 }
 bool Server::isServing() const
 {
@@ -319,15 +335,17 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
             }
         }
     });
-    parallel_for_each(mes->scene.animations.begin(), mes->scene.animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
-        if (swap_x || swap_yz) {
-            anim->convertHandedness(swap_x, swap_yz);
-        }
-        if (mes->scene.settings.scale_factor != 1.0f) {
-            float scale = 1.0f / mes->scene.settings.scale_factor;
-            anim->applyScaleFactor(scale);
-        }
-    });
+    for (auto& clip : mes->scene.animations) {
+        parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+            if (swap_x || swap_yz) {
+                anim->convertHandedness(swap_x, swap_yz);
+            }
+            if (mes->scene.settings.scale_factor != 1.0f) {
+                float scale = 1.0f / mes->scene.settings.scale_factor;
+                anim->applyScaleFactor(scale);
+            }
+        });
+    }
 
     {
         lock_t l(m_mutex);
@@ -449,7 +467,10 @@ void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
         if (m_host_scene) {
             response.setContentType("application/octet-stream");
             response.setContentLength(m_host_scene->getSerializeSize());
-            m_host_scene->serialize(response.send());
+
+            auto& os = response.send();
+            m_host_scene->serialize(os);
+            os.flush();
         }
         else {
             response.setContentLength(0);

@@ -1,7 +1,9 @@
 call toolchain.bat
-call :Build 2016.5
-call :Build 2017
 call :Build 2018
+call :Build 2017
+call :Build 2016.5
+call :Build 2016
+call :Build 2015
 exit /B 0
 
 :Build

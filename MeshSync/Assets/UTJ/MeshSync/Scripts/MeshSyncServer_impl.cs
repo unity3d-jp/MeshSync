@@ -253,6 +253,12 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
+            [DllImport("MeshSyncServer")] static extern Color msMaterialGetEmission(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmission(IntPtr _this, ref Color v);
+            [DllImport("MeshSyncServer")] static extern float msMaterialGetMetalic(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetalic(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern float msMaterialGetSmoothness(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetSmoothness(IntPtr _this, float v);
             #endregion
 
             public static MaterialData Create() { return msMaterialCreate(); }
@@ -269,38 +275,51 @@ namespace UTJ.MeshSync
                 get { return msMaterialGetColor(_this); }
                 set { msMaterialSetColor(_this, ref value); }
             }
-        }
-
-        static void Smooth(Keyframe[] keys)
-        {
-            int len = keys.Length;
-            for (int i = 0; i < len; ++i)
+            public Color emission
             {
-                if(i > 0 && i < len - 1)
-                {
-                    float diff = keys[i + 1].value - keys[i - 1].value;
-                    float dt = keys[i + 1].time - keys[i - 1].time;
-                    float tan = diff / dt;
-                    keys[i].outTangent = tan;
-                    keys[i].inTangent = tan;
-                }
-                else
-                {
-                    if (i < len - 1)
-                    {
-                        float diff = keys[i + 1].value - keys[i].value;
-                        float dt = keys[i + 1].time - keys[i].time;
-                        keys[i].outTangent = diff / dt;
-                    }
-                    if (i > 0)
-                    {
-                        float diff = keys[i - 1].value - keys[i].value;
-                        float dt = keys[i - 1].time - keys[i].time;
-                        keys[i].inTangent = diff / dt;
-                    }
-                }
+                get { return msMaterialGetEmission(_this); }
+                set { msMaterialSetEmission(_this, ref value); }
+            }
+            public float metalic
+            {
+                get { return msMaterialGetMetalic(_this); }
+                set { msMaterialSetMetalic(_this, value); }
+            }
+            public float smoothness
+            {
+                get { return msMaterialGetSmoothness(_this); }
+                set { msMaterialSetSmoothness(_this, value); }
             }
         }
+
+
+        public enum InterpolationType {
+            Linear,
+            Smooth,
+        }
+        public delegate void InterpolationMethod(AnimationCurve curve);
+
+#if UNITY_EDITOR
+        static void LinearInterpolation(AnimationCurve curve)
+        {
+            int len = curve.length;
+            for (int i = 0; i < len; ++i)
+            {
+                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Linear);
+                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.Linear);
+            }
+        }
+
+        static void SmoothInterpolation(AnimationCurve curve)
+        {
+            int len = curve.length;
+            for (int i = 0; i < len; ++i)
+            {
+                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
+                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
+            }
+        }
+#endif
 
 
         public struct TransformAnimationData
@@ -353,7 +372,6 @@ namespace UTJ.MeshSync
                     y[i].value = v.y;
                     z[i].value = v.z;
                 }
-                Smooth(x); Smooth(y); Smooth(z);
                 var ret = new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
@@ -381,7 +399,6 @@ namespace UTJ.MeshSync
                     z[i].value = v.z;
                     w[i].value = v.w;
                 }
-                Smooth(x); Smooth(y); Smooth(z); Smooth(w);
                 var ret = new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
@@ -413,7 +430,6 @@ namespace UTJ.MeshSync
                     new AnimationCurve(y),
                     new AnimationCurve(z),
                 };
-                Smooth(x); Smooth(y); Smooth(z);
                 return ret;
             }
 
@@ -430,12 +446,12 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
 
-            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+#if UNITY_EDITOR
+            public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
             {
                 var ttrans = typeof(Transform);
                 var tgo = typeof(GameObject);
@@ -445,6 +461,8 @@ namespace UTJ.MeshSync
                     var curves = GenTranslationCurves();
                     if (curves != null)
                     {
+                        foreach (var c in curves)
+                            im(c);
                         clip.SetCurve(path, ttrans, "m_LocalPosition.x", curves[0]);
                         clip.SetCurve(path, ttrans, "m_LocalPosition.y", curves[1]);
                         clip.SetCurve(path, ttrans, "m_LocalPosition.z", curves[2]);
@@ -455,6 +473,7 @@ namespace UTJ.MeshSync
                     var curves = GenRotationCurves();
                     if (curves != null)
                     {
+                        // no need to call im. (clip.EnsureQuaternionContinuity() later)
                         clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
                         clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
                         clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
@@ -466,6 +485,8 @@ namespace UTJ.MeshSync
                     var curves = GenScaleCurves();
                     if (curves != null)
                     {
+                        foreach (var c in curves)
+                            im(c);
                         clip.SetCurve(path, ttrans, "m_LocalScale.x", curves[0]);
                         clip.SetCurve(path, ttrans, "m_LocalScale.y", curves[1]);
                         clip.SetCurve(path, ttrans, "m_LocalScale.z", curves[2]);
@@ -475,9 +496,11 @@ namespace UTJ.MeshSync
                     clip.SetCurve(path, tgo, "m_IsActive", null);
                     var curve = GenVisibilityCurve();
                     if (curve != null)
+                        im(curve);
                         clip.SetCurve(path, tgo, "m_IsActive", curve);
                 }
             }
+#endif
         }
 
         public struct CameraAnimationData
@@ -538,7 +561,6 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
@@ -556,7 +578,6 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
@@ -574,35 +595,45 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
 
-            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+#if UNITY_EDITOR
+            public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
             {
-                ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+                ((TransformAnimationData)_this).ExportToClip(clip, root, target, path, im);
 
                 var tcam = typeof(Camera);
                 {
                     clip.SetCurve(path, tcam, "field of view", null);
                     var curve = GenFovCurve();
                     if (curve != null)
+                    {
+                        im(curve);
                         clip.SetCurve(path, tcam, "field of view", curve);
+                    }
                 }
                 {
                     clip.SetCurve(path, tcam, "near clip plane", null);
                     var curve = GenNearPlaneCurve();
                     if (curve != null)
+                    {
+                        im(curve);
                         clip.SetCurve(path, tcam, "near clip plane", curve);
+                    }
                 }
                 {
                     clip.SetCurve(path, tcam, "far clip plane", null);
                     var curve = GenFarPlaneCurve();
                     if (curve != null)
+                    {
+                        im(curve);
                         clip.SetCurve(path, tcam, "far clip plane", curve);
+                    }
                 }
             }
+#endif
         }
 
         public struct LightAnimationData
@@ -658,7 +689,6 @@ namespace UTJ.MeshSync
                     z[i].value = v.b;
                     w[i].value = v.a;
                 }
-                Smooth(x); Smooth(y); Smooth(z); Smooth(w);
                 var ret = new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
@@ -681,7 +711,6 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
@@ -699,7 +728,6 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
@@ -717,14 +745,14 @@ namespace UTJ.MeshSync
                     x[i].time = t;
                     x[i].value = v;
                 }
-                Smooth(x);
                 var ret = new AnimationCurve(x);
                 return ret;
             }
 
-            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+#if UNITY_EDITOR
+            public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
             {
-                ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+                ((TransformAnimationData)_this).ExportToClip(clip, root, target, path, im);
 
                 var tlight = typeof(Light);
                 {
@@ -732,6 +760,8 @@ namespace UTJ.MeshSync
                     var curves = GenColorCurves();
                     if (curves != null)
                     {
+                        foreach (var c in curves)
+                            im(c);
                         clip.SetCurve(path, tlight, "m_Color.r", curves[0]);
                         clip.SetCurve(path, tlight, "m_Color.g", curves[1]);
                         clip.SetCurve(path, tlight, "m_Color.b", curves[2]);
@@ -742,24 +772,91 @@ namespace UTJ.MeshSync
                     clip.SetCurve(path, tlight, "m_Intensity", null);
                     var curve = GenIntensityCurve();
                     if (curve != null)
+                    {
+                        im(curve);
                         clip.SetCurve(path, tlight, "m_Intensity", curve);
+                    }
                 }
                 {
                     clip.SetCurve(path, tlight, "m_Range", null);
                     var curve = GenRangeCurve();
                     if (curve != null)
+                    {
+                        im(curve);
                         clip.SetCurve(path, tlight, "m_Range", curve);
+                    }
                 }
                 {
                     clip.SetCurve(path, tlight, "m_SpotAngle", null);
                     var curve = GenSpotAngleCurve();
                     if (curve != null)
+                    {
+                        im(curve);
                         clip.SetCurve(path, tlight, "m_SpotAngle", curve);
+                    }
                 }
             }
+#endif
         }
 
+        public struct MeshAnimationData
+        {
+            #region internal
+            internal IntPtr _this;
 
+            [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapes(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMeshAGetBlendshapeName(IntPtr _this, int bi);
+            [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapeSamples(IntPtr _this, int bi);
+            [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeTime(IntPtr _this, int bi, int si);
+            [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeWeight(IntPtr _this, int bi, int si);
+            #endregion
+
+
+            public static explicit operator MeshAnimationData(IntPtr v)
+            {
+                MeshAnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(MeshAnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+#if UNITY_EDITOR
+            public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
+            {
+                ((TransformAnimationData)_this).ExportToClip(clip, root, target, path, im);
+
+                var tsmr = typeof(SkinnedMeshRenderer);
+                {
+                    // blendshape animation
+
+                    int numBS = msMeshAGetNumBlendshapes(_this);
+                    for (int bi = 0; bi < numBS; ++bi)
+                    {
+                        string name = "blendShape." + S(msMeshAGetBlendshapeName(_this, bi));
+                        clip.SetCurve(path, tsmr, name, null);
+
+                        int numKeyframes = msMeshAGetNumBlendshapeSamples(_this, bi);
+                        if (numKeyframes > 0)
+                        {
+                            var kf = new Keyframe[numKeyframes];
+                            for (int ki = 0; ki < numKeyframes; ++ki)
+                            {
+                                kf[ki].time = msMeshAGetNumBlendshapeTime(_this, bi, ki);
+                                kf[ki].value = msMeshAGetNumBlendshapeWeight(_this, bi, ki);
+                            }
+
+                            var curve = new AnimationCurve(kf);
+                            im(curve);
+                            clip.SetCurve(path, tsmr, name, curve);
+                        }
+                    }
+                }
+            }
+#endif
+        }
 
         public struct AnimationData
         {
@@ -791,178 +888,48 @@ namespace UTJ.MeshSync
                 get { return msAnimationGetType(_this); }
             }
 
-            public void ExportToClip(AnimationClip clip, string path, bool reduce = false)
+#if UNITY_EDITOR
+            public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
             {
                 switch(type)
                 {
                     case TransformData.Type.Transform:
-                        ((TransformAnimationData)_this).ExportToClip(clip, path, reduce);
+                        ((TransformAnimationData)_this).ExportToClip(clip, root, target, path, im);
                         break;
                     case TransformData.Type.Camera:
-                        ((CameraAnimationData)_this).ExportToClip(clip, path, reduce);
+                        ((CameraAnimationData)_this).ExportToClip(clip, root, target, path, im);
                         break;
                     case TransformData.Type.Light:
-                        ((LightAnimationData)_this).ExportToClip(clip, path, reduce);
+                        ((LightAnimationData)_this).ExportToClip(clip, root, target, path, im);
+                        break;
+                    case TransformData.Type.Mesh:
+                        ((MeshAnimationData)_this).ExportToClip(clip, root, target, path, im);
                         break;
                 }
             }
-
-
-
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Vector3[] values, bool reduce)
-            {
-                var ret = new AnimationCurve[3] {
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                };
-                if(times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret[0].AddKey(new Keyframe(t, v.x));
-                    ret[1].AddKey(new Keyframe(t, v.y));
-                    ret[2].AddKey(new Keyframe(t, v.z));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
 #endif
-                }
-                if(reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret[0]);
-                    AnimationCurveKeyReducer.DoReduction(ret[1]);
-                    AnimationCurveKeyReducer.DoReduction(ret[2]);
-                }
-                return ret;
+        }
+
+        public struct AnimationClipData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msAnimationClipGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msAnimationClipGetNumAnimations(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern AnimationData msAnimationClipGetAnimationData(IntPtr _this, int i);
+            #endregion
+
+            public string name
+            {
+                get { return S(msAnimationClipGetName(_this)); }
             }
-
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Quaternion[] values, bool reduce)
+            public int numAnimations
             {
-                var ret = new AnimationCurve[4] {
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                };
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret[0].AddKey(new Keyframe(t, v.x));
-                    ret[1].AddKey(new Keyframe(t, v.y));
-                    ret[2].AddKey(new Keyframe(t, v.z));
-                    ret[3].AddKey(new Keyframe(t, v.w));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret[0]);
-                    AnimationCurveKeyReducer.DoReduction(ret[1]);
-                    AnimationCurveKeyReducer.DoReduction(ret[2]);
-                    AnimationCurveKeyReducer.DoReduction(ret[3]);
-                }
-                return ret;
+                get { return msAnimationClipGetNumAnimations(_this); }
             }
-
-            public static AnimationCurve[] ToAnimatinCurve(float[] times, Color[] values, bool reduce)
+            public AnimationData GetAnimation(int i)
             {
-                var ret = new AnimationCurve[4] {
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                    new AnimationCurve(),
-                };
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret[0].AddKey(new Keyframe(t, v.r));
-                    ret[1].AddKey(new Keyframe(t, v.g));
-                    ret[2].AddKey(new Keyframe(t, v.b));
-                    ret[3].AddKey(new Keyframe(t, v.a));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[0], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[1], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[2], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyLeftTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret[3], i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret[0]);
-                    AnimationCurveKeyReducer.DoReduction(ret[1]);
-                    AnimationCurveKeyReducer.DoReduction(ret[2]);
-                    AnimationCurveKeyReducer.DoReduction(ret[3]);
-                }
-                return ret;
-            }
-
-            public static AnimationCurve ToAnimatinCurve(float[] times, float[] values, bool reduce)
-            {
-                var ret = new AnimationCurve();
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret.AddKey(new Keyframe(t, v));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Auto);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Auto);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret);
-                }
-                return ret;
-            }
-
-            public static AnimationCurve ToAnimatinCurve(float[] times, bool[] values, bool reduce)
-            {
-                var ret = new AnimationCurve();
-                if (times.Length == 0) { return ret; }
-
-                for (int i = 0; i < times.Length; ++i)
-                {
-                    var t = times[i];
-                    var v = values[i];
-                    ret.AddKey(new Keyframe(t, v ? 0.0f : 1.0f));
-#if UNITY_EDITOR
-                    AnimationUtility.SetKeyLeftTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
-                    AnimationUtility.SetKeyRightTangentMode(ret, i, AnimationUtility.TangentMode.Constant);
-#endif
-                }
-                if (reduce)
-                {
-                    AnimationCurveKeyReducer.DoReduction(ret);
-                }
-                return ret;
+                return msAnimationClipGetAnimationData(_this, i);
             }
         }
 
@@ -1332,12 +1299,12 @@ namespace UTJ.MeshSync
                 }
                 set { msMeshWriteBindPoses(_this, value, value.Length); }
             }
-            public void SetBonePaths(Transform[] bones)
+            public void SetBonePaths(MeshSyncServer mss, Transform[] bones)
             {
                 int n = bones.Length;
                 for (int i = 0; i < n; ++i)
                 {
-                    string path = BuildPath(bones[i]);
+                    string path = mss.BuildPath(bones[i]);
                     msMeshSetBonePath(_this, path, i);
                 }
             }
@@ -1397,7 +1364,7 @@ namespace UTJ.MeshSync
             #region internal
             internal IntPtr _this;
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr _this, IntPtr dst);
             [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr _this);
             #endregion
@@ -1414,15 +1381,7 @@ namespace UTJ.MeshSync
             public int numIndices { get { return msSubmeshGetNumIndices(_this); } }
             public Topology topology { get { return msSubmeshGetTopology(_this); } }
             public int materialID { get { return msSubmeshGetMaterialID(_this); } }
-            public int[] indices
-            {
-                get
-                {
-                    var ret = new int[numIndices];
-                    msSubmeshReadIndices(_this, ret);
-                    return ret;
-                }
-            }
+            public void ReadIndices(PinnedList<int> dst) { msSubmeshReadIndices(_this, dst); }
         }
 
         public struct BlendShapeData
@@ -1433,9 +1392,9 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msBlendShapeGetFrameWeight(IntPtr _this, int f);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, int f, Vector3[] dst, SplitData split);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, Vector3[] dst, SplitData split);
-            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, Vector3[] dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr _this, int f, IntPtr dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr _this, int f, IntPtr dst, SplitData split);
+            [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr _this, int f, IntPtr dst, SplitData split);
             [DllImport("MeshSyncServer")] static extern void msBlendShapeAddFrame(IntPtr _this, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
             #endregion
 
@@ -1452,9 +1411,9 @@ namespace UTJ.MeshSync
                 get { return msBlendShapeGetNumFrames(_this); }
             }
             public float GetWeight(int f) { return msBlendShapeGetFrameWeight(_this, f); }
-            public void ReadPoints(int f, Vector3[] dst, SplitData split) { msBlendShapeReadPoints(_this, f, dst, split); }
-            public void ReadNormals(int f, Vector3[] dst, SplitData split) { msBlendShapeReadNormals(_this, f, dst, split); }
-            public void ReadTangents(int f, Vector3[] dst, SplitData split) { msBlendShapeReadTangents(_this, f, dst, split); }
+            public void ReadPoints(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadPoints(_this, f, dst, split); }
+            public void ReadNormals(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadNormals(_this, f, dst, split); }
+            public void ReadTangents(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadTangents(_this, f, dst, split); }
 
             public void AddFrame(float w, Vector3[] v, Vector3[] n, Vector3[] t)
             {
@@ -1588,20 +1547,20 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimations(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern AnimationData msSceneGetAnimationData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimationClips(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern AnimationClipData msSceneGetAnimationClipData(IntPtr _this, int i);
             #endregion
 
             public string name { get { return S(msSceneGetName(_this)); } }
             public int numObjects { get { return msSceneGetNumObjects(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
             public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
-            public int numAnimations { get { return msSceneGetNumAnimations(_this); } }
+            public int numAnimationClips { get { return msSceneGetNumAnimationClips(_this); } }
 
             public TransformData GetObject(int i) { return msSceneGetObjectData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
             public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
-            public AnimationData GetAnimation(int i) { return msSceneGetAnimationData(_this, i); }
+            public AnimationClipData GetAnimationClip(int i) { return msSceneGetAnimationClipData(_this, i); }
         }
 
 
@@ -1632,21 +1591,22 @@ namespace UTJ.MeshSync
             }
         }
 
+        [DllImport("MeshSyncServer")] static extern IntPtr msServerGetVersion();
         [DllImport("MeshSyncServer")] static extern IntPtr msServerStart(ref ServerSettings settings);
-        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr sv);
+        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr _this);
 
         delegate void msMessageHandler(MessageType type, IntPtr data);
-        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
+        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr _this, msMessageHandler handler);
 
-        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr sv, TransformData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr sv, CameraData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr sv, LightData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr sv, MeshData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr sv, MaterialData data);
-        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);
+        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr _this, TransformData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr _this, CameraData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr _this, LightData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr _this, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
+        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
 
         static void SwitchBits(ref int flags, bool f, int bit)
         {

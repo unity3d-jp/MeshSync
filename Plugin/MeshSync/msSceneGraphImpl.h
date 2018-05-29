@@ -1,16 +1,33 @@
 namespace ms {
 
+
+template<class T, bool hs = has_serializer<T>::result> struct ssize_impl2;
+template<class T> struct ssize_impl2<T, true> { uint32_t operator()(const T& v) { return v.getSerializeSize(); } };
+template<class T> struct ssize_impl2<T, false> { uint32_t operator()(const T&) { return sizeof(T); } };
+
+template<class T, bool hs = has_serializer<T>::result> struct write_impl2;
+template<class T> struct write_impl2<T, true> { void operator()(std::ostream& os, const T& v) { v.serialize(os); } };
+template<class T> struct write_impl2<T, false> { void operator()(std::ostream& os, const T& v) { os.write((const char*)&v, sizeof(T)); } };
+
+template<class T, bool hs = has_serializer<T>::result> struct read_impl2;
+template<class T> struct read_impl2<T, true> { void operator()(std::istream& is, T& v) { v.deserialize(is); } };
+template<class T> struct read_impl2<T, false> { void operator()(std::istream& is, T& v) { is.read((char*)&v, sizeof(T)); } };
+
+
 template<class T>
 struct ssize_impl
 {
-    uint32_t operator()(const T&) { return sizeof(T); }
+    uint32_t operator()(const T& v)
+    {
+        return ssize_impl2<T>()(v);
+    }
 };
 template<class T>
 struct write_impl
 {
     void operator()(std::ostream& os, const T& v)
     {
-        os.write((const char*)&v, sizeof(T));
+        write_impl2<T>()(os, v);
     }
 };
 template<class T>
@@ -18,43 +35,7 @@ struct read_impl
 {
     void operator()(std::istream& is, T& v)
     {
-        is.read((char*)&v, sizeof(T));
-    }
-};
-
-#define DefSpecialize(T)\
-    template<> struct ssize_impl<T> { uint32_t operator()(const T& v) { return v.getSerializeSize(); } };\
-    template<> struct write_impl<T> { void operator()(std::ostream& os, const T& v) { return v.serialize(os); } };\
-    template<> struct read_impl<T>  { void operator()(std::istream& is, T& v) { return v.deserialize(is); } };\
-
-DefSpecialize(BlendShapeData::Frame)
-DefSpecialize(Material)
-DefSpecialize(DeleteMessage::Identifier)
-#undef DefSpecialize
-
-template<> struct read_impl<std::shared_ptr<Entity>>
-{
-    void operator()(std::istream& is, std::shared_ptr<Entity>& v) {
-        v.reset(Entity::make(is));
-    }
-};
-template<> struct read_impl<std::shared_ptr<Transform>>
-{
-    void operator()(std::istream& is, std::shared_ptr<Transform>& v) {
-        v.reset((Transform*)Transform::make(is));
-    }
-};
-
-template<> struct read_impl<std::shared_ptr<Animation>>
-{
-    void operator()(std::istream& is, std::shared_ptr<Animation>& v) {
-        v.reset(Animation::make(is));
-    }
-};
-template<> struct read_impl<std::shared_ptr<Constraint>>
-{
-    void operator()(std::istream& is, std::shared_ptr<Constraint>& v) {
-        v.reset(Constraint::make(is));
+        read_impl2<T>()(is, v);
     }
 };
 
@@ -75,7 +56,7 @@ struct ssize_impl<std::vector<T>>
 {
     uint32_t operator()(const std::vector<T>& v) {
         uint32_t ret = 4;
-        for (const auto& e  :v) {
+        for (const auto& e : v) {
             ret += ssize_impl<T>()(e);
         }
         return ret;
@@ -196,8 +177,7 @@ struct read_impl<std::shared_ptr<T>>
 {
     void operator()(std::istream& is, std::shared_ptr<T>& v)
     {
-        v.reset(new T());
-        v->deserialize(is);
+        v = T::create(is);
     }
 };
 template<class T>

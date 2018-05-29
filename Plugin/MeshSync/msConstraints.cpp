@@ -1,24 +1,23 @@
 #include "pch.h"
 #include "msSceneGraph.h"
-#include "msAnimation.h"
 #include "msConstraints.h"
 #include "msSceneGraphImpl.h"
 
 namespace ms
 {
 
-Constraint* Constraint::make(std::istream & is)
+std::shared_ptr<Constraint> Constraint::create(std::istream & is)
 {
-    Constraint *ret = nullptr;
+    std::shared_ptr<Constraint> ret;
 
     int type;
     read(is, type);
     switch ((Type)type) {
-    case Type::Aim: ret = new AimConstraint(); break;
-    case Type::Parent: ret = new ParentConstraint(); break;
-    case Type::Position: ret = new PositionConstraint(); break;
-    case Type::Rotation: ret = new RotationConstraint(); break;
-    case Type::Scale: ret = new ScaleConstraint(); break;
+    case Type::Aim: ret = AimConstraint::create(); break;
+    case Type::Parent: ret = ParentConstraint::create(); break;
+    case Type::Position: ret = PositionConstraint::create(); break;
+    case Type::Rotation: ret = RotationConstraint::create(); break;
+    case Type::Scale: ret = ScaleConstraint::create(); break;
     default: break;
     }
     if (ret) {
@@ -27,9 +26,8 @@ Constraint* Constraint::make(std::istream & is)
     return ret;
 }
 
-Constraint::~Constraint()
-{
-}
+Constraint::Constraint() {}
+Constraint::~Constraint() {}
 
 Constraint::Type Constraint::getType() const
 {
@@ -68,6 +66,9 @@ void Constraint::clear()
 
 
 
+AimConstraint::AimConstraint() {}
+AimConstraint::~AimConstraint() {}
+
 Constraint::Type AimConstraint::getType() const
 {
     return Type::Aim;
@@ -95,6 +96,9 @@ void AimConstraint::clear()
 }
 
 
+
+ParentConstraint::ParentConstraint() {}
+ParentConstraint::~ParentConstraint() {}
 
 Constraint::Type ParentConstraint::getType() const
 {
@@ -128,6 +132,9 @@ void ParentConstraint::clear()
 
 
 
+PositionConstraint::PositionConstraint() {}
+PositionConstraint::~PositionConstraint(){}
+
 Constraint::Type PositionConstraint::getType() const
 {
     return Type::Position;
@@ -156,6 +163,9 @@ void PositionConstraint::clear()
 
 
 
+RotationConstraint::RotationConstraint() {}
+RotationConstraint::~RotationConstraint() {}
+
 Constraint::Type RotationConstraint::getType() const
 {
     return Type::Rotation;
@@ -183,6 +193,9 @@ void RotationConstraint::clear()
 }
 
 
+
+ScaleConstraint::ScaleConstraint() {}
+ScaleConstraint::~ScaleConstraint() {}
 
 Constraint::Type ScaleConstraint::getType() const
 {

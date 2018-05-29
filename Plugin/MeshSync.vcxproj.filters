@@ -19,6 +19,12 @@
     <ClCompile Include="MeshSync\msAnimation.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\msMaterial.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSync\msProtocol.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -46,6 +52,15 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msAnimation.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msFoundation.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msMaterial.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msProtocol.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>

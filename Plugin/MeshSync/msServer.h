@@ -1,6 +1,8 @@
 #pragma once
 
-#include "msSceneGraph.h"
+#include <map>
+#include <mutex>
+#include "msProtocol.h"
 
 namespace Poco {
     namespace Net {
@@ -29,6 +31,7 @@ public:
 
     bool start();
     void stop();
+    void clear();
     ServerSettings& getSettings();
 
     using MessageHandler = std::function<void(Message::Type type, const Message& data)>;

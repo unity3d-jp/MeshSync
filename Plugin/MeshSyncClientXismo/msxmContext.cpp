@@ -206,7 +206,7 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
     int num_triangles = num_indices / 3;
 
     if (!dst_mesh) {
-        dst_mesh.reset(new ms::Mesh());
+        dst_mesh = ms::Mesh::create();
 
         char path[128];
         sprintf(path, "/XismoMesh:ID[%08x]", handle);
@@ -355,7 +355,8 @@ void msxmContext::send(bool force)
         m_materials.resize(m_material_data.size());
         for (int i = 0; i < (int)m_materials.size(); ++i) {
             auto& mat = m_materials[i];
-            if (!mat) mat.reset(new ms::Material());
+            if (!mat)
+                mat = ms::Material::create();
 
             char name[128];
             sprintf(name, "XismoMaterial:ID[%04x]", i);
@@ -368,7 +369,7 @@ void msxmContext::send(bool force)
     // camera
     if (m_settings.sync_camera) {
         if (!m_camera) {
-            m_camera.reset(new ms::Camera());
+            m_camera = ms::Camera::create();
             m_camera->path = "/Main Camera";
         }
         m_camera->position = m_camera_pos;

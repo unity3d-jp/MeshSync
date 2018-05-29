@@ -2,25 +2,25 @@
 
 #define InchToMillimeter 25.4f
 
-std::string GetName(MObject node);
-std::string GetPath(MDagPath path);
-std::string GetPath(MObject node);
-std::string GetRootBonePath(MObject joint);
+std::string GetName(const MObject& node);
+std::string GetPath(const MDagPath& path);
+std::string GetPath(const MObject& node);
+std::string GetRootBonePath(const MObject& joint);
 
-MUuid GetUUID(MObject node);
-std::string GetUUIDString(MObject node);
+MDagPath GetDagPath(const MObject& node);
+bool IsVisible(const MObject& node);
+MObject GetTransform(const MDagPath& path);
+MObject GetTransform(const MObject& node);
+MObject GetShape(const MDagPath& node);
+MObject GetShape(const MObject& node);
+MDagPath GetParent(const MDagPath& node);
+MObject GetParent(const MObject& node);
+bool IsInstance(const MObject& node);
 
-MDagPath GetDagPath(MObject node);
-bool IsVisible(MObject node);
-MObject GetTransform(MDagPath path);
-MObject GetTransform(MObject node);
-MObject GetShape(MObject node);
-MObject GetParent(MObject node);
-
-MObject FindMesh(MObject node);
-MObject FindSkinCluster(MObject node);
-MObject FindBlendShape(MObject node);
-MObject FindOrigMesh(MObject node);
+MObject FindMesh(const MObject& node);
+MObject FindSkinCluster(const MObject& node);
+MObject FindBlendShape(const MObject& node);
+MObject FindOrigMesh(const MObject& node);
 
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
@@ -31,28 +31,6 @@ MTime ToMTime(float seconds);
 #else
     #define DumpPlugInfo
 #endif
-
-
-template<class T> T* ptr(T& v) { return (T*)&(int&)v; }
-
-bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src);
-RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cvs, int samples_per_seconds);
-
-void ConvertAnimationBool(
-    RawVector<ms::TVP<bool>>& dst,
-    bool default_value, MPlug& pb, int samples_per_seconds);
-
-void ConvertAnimationFloat(
-    RawVector<ms::TVP<float>>& dst,
-    float default_value, MPlug& pb, int samples_per_seconds);
-
-void ConvertAnimationFloat3(
-    RawVector<ms::TVP<mu::float3>>& dst,
-    const mu::float3& default_value, MPlug& px, MPlug& py, MPlug& pz, int samples_per_seconds);
-
-void ConvertAnimationFloat4(
-    RawVector<ms::TVP<mu::float4>>& dst,
-    const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int samples_per_seconds);
 
 
 inline mu::float3 to_float3(const MPoint& v)
@@ -107,10 +85,9 @@ inline mu::float3 to_float3(const MPlug plug)
 }
 
 
-
 // body: [](MObject&) -> void
 template<class Body>
-void Enumerate(MFn::Type type, const Body& body)
+inline void EnumerateNode(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     while (!it.isDone()) {
@@ -122,21 +99,31 @@ void Enumerate(MFn::Type type, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachChild(MObject node, const Body& body)
+inline void EachParent(MObject node, const Body& body)
 {
     MFnDagNode fn(node);
-    auto num_children = fn.childCount();
-    for (uint32_t i = 0; i < num_children; ++i) {
-        body(fn.child(i));
-    }
+    auto num_parents = fn.parentCount();
+    for (uint32_t i = 0; i < num_parents; ++i)
+        body(fn.parent(i));
 }
 
 // body: [](MObject&) -> void
 template<class Body>
-void EachConstraints(MObject node, const Body& body)
+inline void EachChild(MObject node, const Body& body)
+{
+    MFnDagNode fn(node);
+    auto num_children = fn.childCount();
+    for (uint32_t i = 0; i < num_children; ++i)
+        body(fn.child(i));
+}
+
+// body: [](MObject&) -> void
+template<class Body>
+inline void EachConstraints(MObject node, const Body& body)
 {
     MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         body(it.currentItem());
+        it.next();
     }
 }

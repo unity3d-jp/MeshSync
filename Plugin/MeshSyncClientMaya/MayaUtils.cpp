@@ -3,7 +3,7 @@
 #include "MayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
-bool IsVisible(MObject node)
+bool IsVisible(const MObject& node)
 {
     MFnDagNode dag(node);
     auto vis = dag.findPlug("visibility");
@@ -12,24 +12,25 @@ bool IsVisible(MObject node)
     return visible;
 }
 
-std::string GetName(MObject node)
+std::string GetName(const MObject& node)
 {
     MFnDependencyNode fn_node(node);
     return fn_node.name().asChar();
 }
-std::string GetPath(MDagPath path)
+std::string GetPath(const MDagPath& path)
 {
     std::string ret = path.fullPathName().asChar();
     std::replace(ret.begin(), ret.end(), '|', '/');
     return ret;
 }
-std::string GetPath(MObject node)
+std::string GetPath(const MObject& node)
 {
     return GetPath(GetDagPath(node));
 }
 
-std::string GetRootBonePath(MObject joint)
+std::string GetRootBonePath(const MObject& joint_)
 {
+    auto joint = joint_;
     for (;;) {
         MObject parent = GetParent(joint);
         if (parent.isNull() || !parent.hasFn(MFn::kJoint))
@@ -40,44 +41,56 @@ std::string GetRootBonePath(MObject joint)
 }
 
 
-MUuid GetUUID(MObject node)
+MDagPath GetDagPath(const MObject& node)
 {
-    return MFnDependencyNode(node).uuid();
+    MDagPath ret;
+    MDagPath::getAPathTo(node, ret);
+    return ret;
 }
 
-std::string GetUUIDString(MObject node)
-{
-    return GetUUID(node).asString().asChar();
-}
-
-MDagPath GetDagPath(MObject node)
-{
-    return MDagPath::getAPathTo(node);
-}
-
-MObject GetTransform(MDagPath path)
+MObject GetTransform(const MDagPath& path)
 {
     return path.transform();
 }
-MObject GetTransform(MObject node)
+MObject GetTransform(const MObject& node)
 {
     return GetTransform(GetDagPath(node));
 }
 
-MObject GetShape(MObject node)
+MObject GetShape(const MDagPath& path_)
+{
+    auto path = path_;
+    path.extendToShape();
+    return path.node();
+}
+
+MObject GetShape(const MObject& node)
 {
     auto path = GetDagPath(node);
     path.extendToShape();
     return path.node();
 }
 
-MObject GetParent(MObject node)
+MDagPath GetParent(const MDagPath & node)
+{
+    MDagPath ret = node;
+    ret.pop(1);
+    return ret;
+}
+
+MObject GetParent(const MObject& node)
 {
     MFnDagNode dn(GetDagPath(node));
     return dn.parentCount() > 0 ? dn.parent(0) : MObject();
 }
 
-MObject FindMesh(MObject node)
+bool IsInstance(const MObject& node)
+{
+    MFnDagNode dn(node);
+    return dn.isInstanced(false);
+}
+
+MObject FindMesh(const MObject& node)
 {
     auto path = GetDagPath(node);
     if (path.extendToShape() == MS::kSuccess) {
@@ -89,8 +102,9 @@ MObject FindMesh(MObject node)
     return MObject();
 }
 
-MObject FindSkinCluster(MObject node)
+MObject FindSkinCluster(const MObject& node_)
 {
+    auto node = node_;
     if (!node.hasFn(MFn::kMesh)) {
         node = FindMesh(GetTransform(node));
     }
@@ -102,8 +116,9 @@ MObject FindSkinCluster(MObject node)
     return MObject();
 }
 
-MObject FindBlendShape(MObject node)
+MObject FindBlendShape(const MObject& node_)
 {
+    auto node = node_;
     if (!node.hasFn(MFn::kMesh)) {
         node = FindMesh(GetTransform(node));
     }
@@ -115,7 +130,7 @@ MObject FindBlendShape(MObject node)
     return MObject();
 }
 
-MObject FindOrigMesh(MObject node)
+MObject FindOrigMesh(const MObject& node)
 {
     MObject ret;
     EachChild(node, [&](MObject child) {
@@ -179,187 +194,3 @@ void DumpPlugInfoImpl(MPlug plug)
 }
 #endif
 
-
-
-
-bool GetAnimationCurve(MFnAnimCurve& dst, MPlug& src)
-{
-    MObjectArray atb;
-    MAnimUtil::findAnimation(src, atb);
-    if (atb.length() > 0) {
-        dst.setObject(atb[0]);
-        return true;
-    }
-    return false;
-}
-
-#define TimeLimit 3600.0f
-
-void DeternineTimeRange(float& time_begin, float& time_end, const MFnAnimCurve& curve)
-{
-    if (curve.object().isNull()) { return; }
-
-    int num_keys = curve.numKeys();
-    if (num_keys == 0) { return; }
-
-    float t1 = ToSeconds(curve.time(0));
-    float t2 = ToSeconds(curve.time(num_keys > 0 ? num_keys - 1 : 0));
-    if (t2 - t1 > TimeLimit) { return; }
-
-    if (std::isnan(time_begin)) {
-        time_begin = t1;
-        time_end = t2;
-    }
-    else {
-        time_begin = std::min(time_begin, t1);
-        time_end = std::max(time_end, t2);
-    }
-};
-
-void GatherTimes(RawVector<float>& dst, const MFnAnimCurve& curve)
-{
-    if (curve.object().isNull()) { return; }
-
-    int num_keys = curve.numKeys();
-    for (int i = 0; i < num_keys; ++i) {
-        float t = ToSeconds(curve.time(i));
-        if (std::abs(t) < TimeLimit) {
-            dst.push_back(t);
-        }
-    }
-};
-
-template<class ValueType, class Assign>
-void GatherSamples(
-    RawVector<ms::TVP<ValueType>>& dst, MFnAnimCurve& curve,
-    const RawVector<float>& time_samples, const Assign& assign)
-{
-    if (curve.object().isNull()) { return; }
-    assert(dst.size() == time_samples.size());
-
-    auto num_samples = time_samples.size();
-    for (size_t i = 0; i < num_samples; ++i) {
-        auto& tvp = dst[i];
-        float t = time_samples[i];
-        tvp.time = t;
-        assign(tvp.value, curve.evaluate(ToMTime(t)));
-    }
-}
-
-RawVector<float> BuildTimeSamples(const std::initializer_list<MFnAnimCurve*>& cvs, int sps)
-{
-    float time_begin = std::numeric_limits<float>::quiet_NaN();
-    float time_end = std::numeric_limits<float>::quiet_NaN();
-
-    // build time range
-    for (auto& cv : cvs) {
-        DeternineTimeRange(time_begin, time_end, *cv);
-    }
-    if (std::isnan(time_begin) || std::isnan(time_end)) {
-        time_begin = time_end = 0.0f;
-    }
-    float time_range = time_end - time_begin;
-
-
-    // build time samples
-    RawVector<float> keyframe_times;
-    for (auto& cv : cvs) {
-        GatherTimes(keyframe_times, *cv);
-    }
-    if (cvs.size() > 1) {
-        std::sort(keyframe_times.begin(), keyframe_times.end());
-        keyframe_times.erase(std::unique(keyframe_times.begin(), keyframe_times.end()), keyframe_times.end());
-    }
-
-    RawVector<float> sample_times;
-    if (sps > 0) {
-        const float time_resolution = 1.0f / (float)sps;
-        int num_samples = int(time_range / time_resolution);
-        if (num_samples > 0) {
-            sample_times.resize(num_samples - 1);
-            for (int i = 1; i < num_samples; ++i) {
-                sample_times[i - 1] = (time_resolution * i) + time_begin;
-            }
-        }
-    }
-
-    RawVector<float> times;
-    times.resize(keyframe_times.size() + sample_times.size());
-    std::merge(keyframe_times.begin(), keyframe_times.end(), sample_times.begin(), sample_times.end(), times.begin());
-    times.erase(std::unique(times.begin(), times.end()), times.end());
-    if (times.size() == 1) {
-        times.clear();
-    }
-    return times;
-}
-
-
-void ConvertAnimationBool(
-    RawVector<ms::TVP<bool>>& dst,
-    bool default_value, MPlug& pb, int sps)
-{
-    if (pb.isNull()) { return; }
-
-    MFnAnimCurve acv;
-    if (!GetAnimationCurve(acv, pb)) { return; }
-
-    auto time_samples = BuildTimeSamples({ ptr(acv) }, sps);
-    dst.resize(time_samples.size(), { 0.0f, default_value });
-    GatherSamples(dst, acv, time_samples, [](bool& v, double s) { v = s > 0.0; });
-}
-
-void ConvertAnimationFloat(
-    RawVector<ms::TVP<float>>& dst,
-    float default_value, MPlug& pb, int sps)
-{
-    if (pb.isNull()) { return; }
-
-    MFnAnimCurve acv;
-    if (!GetAnimationCurve(acv, pb)) { return; }
-
-    auto time_samples = BuildTimeSamples({ ptr(acv) }, sps);
-    dst.resize(time_samples.size(), { 0.0f, default_value });
-    GatherSamples(dst, acv, time_samples, [](float& v, double s) { v = (float)s; });
-}
-
-void ConvertAnimationFloat3(
-    RawVector<ms::TVP<mu::float3>>& dst,
-    const mu::float3& default_value, MPlug& px, MPlug& py, MPlug& pz, int sps)
-{
-    if (px.isNull() && py.isNull() && pz.isNull()) { return; }
-
-    MFnAnimCurve acx, acy, acz;
-    int num_valid_curves = 0;
-    if (GetAnimationCurve(acx, px)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acy, py)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acz, pz)) { ++num_valid_curves; }
-    if (num_valid_curves == 0) { return; }
-
-    auto time_samples = BuildTimeSamples({ ptr(acx), ptr(acy), ptr(acz) }, sps);
-    dst.resize(time_samples.size(), { 0.0f, default_value });
-    GatherSamples(dst, acx, time_samples, [](mu::float3& v, double s) { v.x = (float)s; });
-    GatherSamples(dst, acy, time_samples, [](mu::float3& v, double s) { v.y = (float)s; });
-    GatherSamples(dst, acz, time_samples, [](mu::float3& v, double s) { v.z = (float)s; });
-}
-
-void ConvertAnimationFloat4(
-    RawVector<ms::TVP<mu::float4>>& dst,
-    const mu::float4& default_value, MPlug& px, MPlug& py, MPlug& pz, MPlug& pw, int sps)
-{
-    if (px.isNull() && py.isNull() && pz.isNull() && pw.isNull()) { return; }
-
-    MFnAnimCurve acx, acy, acz, acw;
-    int num_valid_curves = 0;
-    if (GetAnimationCurve(acx, px)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acy, py)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acz, pz)) { ++num_valid_curves; }
-    if (GetAnimationCurve(acw, pw)) { ++num_valid_curves; }
-    if (num_valid_curves == 0) { return; }
-
-    auto time_samples = BuildTimeSamples({ ptr(acx), ptr(acy), ptr(acz), ptr(acw) }, sps);
-    dst.resize(time_samples.size(), { 0.0f, default_value });
-    GatherSamples(dst, acx, time_samples, [](mu::float4& v, double s) { v.x = (float)s; });
-    GatherSamples(dst, acy, time_samples, [](mu::float4& v, double s) { v.y = (float)s; });
-    GatherSamples(dst, acz, time_samples, [](mu::float4& v, double s) { v.z = (float)s; });
-    GatherSamples(dst, acw, time_samples, [](mu::float4& v, double s) { v.w = (float)s; });
-}

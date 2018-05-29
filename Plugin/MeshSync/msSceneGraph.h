@@ -3,10 +3,9 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <atomic>
-#include <mutex>
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
+#include "msFoundation.h"
 
 #ifdef GetMessage
     #undef GetMessage
@@ -15,7 +14,7 @@
 namespace ms {
 
 
-class Entity : public std::enable_shared_from_this<Entity>
+class Entity
 {
 public:
     enum class Type
@@ -30,9 +29,12 @@ public:
     int id = 0;
     std::string path;
 
-    static Entity* make(std::istream& is);
-
+protected:
+    Entity();
     virtual ~Entity();
+public:
+    msDefinePool(Entity);
+    static std::shared_ptr<Entity> create(std::istream& is);
     virtual Type getType() const;
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
@@ -40,22 +42,11 @@ public:
     virtual void clear();
 
     const char* getName() const; // get name (leaf) from path
+
 };
+msHasSerializer(Entity);
 using EntityPtr = std::shared_ptr<Entity>;
 
-
-class Material : public std::enable_shared_from_this<Material>
-{
-public:
-    int id = 0;
-    std::string name;
-    float4 color = float4::one();
-
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-};
-using MaterialPtr = std::shared_ptr<Material>;
 
 
 class Transform : public Entity
@@ -72,6 +63,12 @@ public:
     std::string reference;
 
 
+protected:
+    Transform();
+    ~Transform() override;
+public:
+    msDefinePool(Transform);
+    static std::shared_ptr<Transform> create(std::istream& is);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -85,7 +82,9 @@ public:
     virtual void convertHandedness(bool x, bool yz);
     virtual void applyScaleFactor(float scale);
 };
+msHasSerializer(Transform);
 using TransformPtr = std::shared_ptr<Transform>;
+
 
 class Camera : public Transform
 {
@@ -102,6 +101,11 @@ public:
     float focal_length = 0.0f;
     float focus_distance = 0.0f;
 
+protected:
+    Camera();
+    ~Camera() override;
+public:
+    msDefinePool(Camera);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -110,6 +114,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
+msHasSerializer(Camera);
 using CameraPtr = std::shared_ptr<Camera>;
 
 
@@ -132,6 +137,11 @@ public:
     float range = 0.0f;
     float spot_angle = 30.0f; // for spot light
 
+protected:
+    Light();
+    ~Light() override;
+public:
+    msDefinePool(Light);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -140,6 +150,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
+msHasSerializer(Light);
 using LightPtr = std::shared_ptr<Light>;
 
 
@@ -246,6 +257,12 @@ struct BlendShapeData
     float weight = 0.0f;
     std::vector<Frame> frames;
 
+protected:
+    BlendShapeData();
+    ~BlendShapeData();
+public:
+    msDefinePool(BlendShapeData);
+    static std::shared_ptr<BlendShapeData> create(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -254,14 +271,22 @@ struct BlendShapeData
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
+msHasSerializer(BlendShapeData::Frame);
+msHasSerializer(BlendShapeData);
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 
-struct BoneData : public std::enable_shared_from_this<BoneData>
+struct BoneData 
 {
     std::string path;
     float4x4 bindpose = float4x4::identity();
     RawVector<float> weights;
 
+protected:
+    BoneData();
+    ~BoneData();
+public:
+    msDefinePool(BoneData);
+    static std::shared_ptr<BoneData> create(std::istream& is);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -270,6 +295,7 @@ struct BoneData : public std::enable_shared_from_this<BoneData>
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
+msHasSerializer(BoneData);
 using BoneDataPtr = std::shared_ptr<BoneData>;
 
 class Mesh : public Transform
@@ -303,8 +329,12 @@ public:
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
 
-public:
+
+protected:
     Mesh();
+    ~Mesh() override;
+public:
+    msDefinePool(Mesh);
     Type getType() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
@@ -325,21 +355,27 @@ public:
     void convertHandedness_BlendShapes(bool x, bool yz);
     void convertHandedness_Bones(bool x, bool yz);
 
-public:
-    // for python binding
-    void addVertex(const float3& v);
-    void addNormal(const float3& v);
-    void addUV(const float2& v);
-    void addColor(const float4& v);
-
-    void addCount(int v);
-    void addIndex(int v);
-    void addMaterialID(int v);
-
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);
 };
+msHasSerializer(Mesh);
 using MeshPtr = std::shared_ptr<Mesh>;
+
+
+class Constraint;
+using ConstraintPtr = std::shared_ptr<Constraint>;
+
+class Animation;
+using AnimationPtr = std::shared_ptr<Animation>;
+
+class AnimationClip;
+using AnimationClipPtr = std::shared_ptr<AnimationClip>;
+
+class Texture;
+using TexturePtr = std::shared_ptr<Texture>;
+
+class Material;
+using MaterialPtr = std::shared_ptr<Material>;
 
 
 enum class Handedness
@@ -360,22 +396,17 @@ struct SceneSettings
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
+msHasSerializer(SceneSettings);
 
-
-class Animation;
-using AnimationPtr = std::shared_ptr<Animation>;
-
-class Constraint;
-using ConstraintPtr = std::shared_ptr<Constraint>;
-
-struct Scene : public std::enable_shared_from_this<Scene>
+struct Scene
 {
 public:
     SceneSettings settings;
     std::vector<TransformPtr> objects;
-    std::vector<MaterialPtr> materials;
-    std::vector<AnimationPtr> animations;
     std::vector<ConstraintPtr> constraints;
+    std::vector<AnimationClipPtr> animations;
+    std::vector<TexturePtr> textures;
+    std::vector<MaterialPtr> materials;
 
 public:
     uint32_t getSerializeSize() const;
@@ -383,160 +414,8 @@ public:
     void deserialize(std::istream& is);
     void clear();
 };
+msHasSerializer(Scene);
 using ScenePtr = std::shared_ptr<Scene>;
 
-
-
-
-class Message
-{
-public:
-    enum class Type
-    {
-        Unknown,
-        Get,
-        Set,
-        Delete,
-        Fence,
-        Text,
-        Screenshot,
-    };
-
-    virtual ~Message();
-    virtual uint32_t getSerializeSize() const;
-    virtual void serialize(std::ostream& os) const;
-    virtual bool deserialize(std::istream& is);
-};
-using MessagePtr = std::shared_ptr<Message>;
-
-
-struct GetFlags
-{
-    uint32_t get_transform : 1;
-    uint32_t get_points : 1;
-    uint32_t get_normals : 1;
-    uint32_t get_tangents : 1;
-    uint32_t get_uv0 : 1;
-    uint32_t get_uv1 : 1;
-    uint32_t get_colors : 1;
-    uint32_t get_indices : 1;
-    uint32_t get_material_ids : 1;
-    uint32_t get_bones : 1;
-    uint32_t get_blendshapes : 1;
-    uint32_t apply_culling : 1;
-};
-
-
-class GetMessage : public Message
-{
-using super = Message;
-public:
-    GetFlags flags = {0};
-    SceneSettings scene_settings;
-    MeshRefineSettings refine_settings;
-
-    // non-serializable
-    std::shared_ptr<std::atomic_int> wait_flag;
-
-public:
-    GetMessage();
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
-};
-
-
-class SetMessage : public Message
-{
-using super = Message;
-public:
-    Scene scene;
-
-public:
-    SetMessage();
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
-};
-
-
-class DeleteMessage : public Message
-{
-using super = Message;
-public:
-    struct Identifier
-    {
-        std::string path;
-        int id;
-
-        uint32_t getSerializeSize() const;
-        void serialize(std::ostream& os) const;
-        void deserialize(std::istream& is);
-    };
-    std::vector<Identifier> targets;
-
-    DeleteMessage();
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
-};
-
-
-class FenceMessage : public Message
-{
-using super = Message;
-public:
-    enum class FenceType
-    {
-        Unknown,
-        SceneBegin,
-        SceneEnd,
-    };
-
-    FenceType type = FenceType::Unknown;
-
-    ~FenceMessage() override;
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
-};
-
-
-class TextMessage : public Message
-{
-using super = Message;
-public:
-    enum class Type
-    {
-        Normal,
-        Warning,
-        Error,
-    };
-
-    ~TextMessage() override;
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
-
-public:
-    std::string text;
-    Type type = Type::Normal;
-};
-
-
-class ScreenshotMessage : public Message
-{
-using super = Message;
-public:
-
-    // non-serializable
-    std::shared_ptr<std::atomic_int> wait_flag;
-
-public:
-    ScreenshotMessage();
-    uint32_t getSerializeSize() const override;
-    void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
-};
 
 } // namespace ms
