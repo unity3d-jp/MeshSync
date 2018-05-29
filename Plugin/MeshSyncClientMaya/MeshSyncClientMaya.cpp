@@ -157,6 +157,9 @@ void MeshSyncClientMaya::onTimeChange(const MTime & time)
         m_pending_scope = SendScope::All;
         // timer callback won't be called while scrubbing time slider. so call update() immediately
         update();
+
+        // for timer callback
+        m_pending_scope = SendScope::All;
     }
 }
 
@@ -247,7 +250,7 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
     m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kAfterOpen, OnSceneLoadEnd, this, &stat));
     m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnDagChange, this, &stat));
     m_cids_global.push_back(MEventMessage::addEventCallback("NameChanged", OnNodeRenamed, this, &stat));
-    m_cids_global.push_back(MDGMessage::addTimeChangeCallback(OnTimeChange, this));
+    m_cids_global.push_back(MDGMessage::addForceUpdateCallback(OnTimeChange, this));
     m_cids_global.push_back(MDGMessage::addNodeRemovedCallback(OnNodeRemoved, kDefaultNodeType, this));
 
     // shut up warning about blendshape
