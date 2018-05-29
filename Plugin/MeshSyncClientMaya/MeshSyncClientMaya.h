@@ -64,12 +64,7 @@ public:
         bool sync_lights = true;
         bool sync_constraints = false;
         bool apply_tweak = true;
-        bool multithreaded =
-#if MAYA_API_VERSION >= 201650
-        true;
-#else
-        false;
-#endif
+        bool multithreaded = false;
 
         // import settings
         bool bake_skin = false;

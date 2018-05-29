@@ -1,7 +1,5 @@
 fileFormatVersion: 2
 guid: 5f8ec80ccac3c594eb9521fb08ee04b1
-timeCreated: 1515474404
-licenseType: Pro
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -16,7 +14,7 @@ PluginImporter:
       enabled: 0
       settings:
         Exclude Editor: 0
-        Exclude Linux: 0
+        Exclude Linux: 1
         Exclude Linux64: 0
         Exclude LinuxUniversal: 0
         Exclude OSXUniversal: 1
@@ -62,7 +60,7 @@ PluginImporter:
   - first:
       Standalone: Linux
     second:
-      enabled: 1
+      enabled: 0
       settings:
         CPU: None
   - first:
@@ -76,7 +74,7 @@ PluginImporter:
     second:
       enabled: 1
       settings:
-        CPU: AnyCPU
+        CPU: x86_64
   - first:
       Standalone: OSXUniversal
     second:
