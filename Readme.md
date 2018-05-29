@@ -16,8 +16,9 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 - Maya 2015 - 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
 - インストールするには、プラグインを Maya の module path が通っているディレクトリにコピーします。
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
+    - 2016 以前の場合はバージョン名のディレクトリへコピーします。(%MAYA_APP_DIR%\2016 など)
   - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
-  - Linux: ~/maya に modules ディレクトリをそのままコピー。
+  - Linux: ~/maya/(Maya のバージョン) に modules ディレクトリをそのままコピー。
 - Maya を起動し、Windows -> Settings/Preferences -> Plug-in Manager を開き、MeshSyncClient の Loaded にチェックを入れてプラグインを有効化します。
 - UnityMeshSync シェルフが追加されているので、それの歯車アイコンで設定メニューを開きます。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
@@ -30,12 +31,14 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 - ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています
 - 負のスケールは対応していません
 - NURBS などポリゴン以外の形状データは対応していません
+- インスタンシングは対応していますが、スキニングされたメッシュのインスタンスは現在未対応です (Unity 側では全て元インスタンスと同じ位置になっていまいます)
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971861-81043192-573e-11e8-9945-2bb248d869bd.png" height=400>
 
 ### Blender
 - Blender 2.79 系 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
 - インストールするには、File -> User Preferences -> Add-ons を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip アーカイブを指定します。
+  - **古いバージョンをインストール済みの場合、事前に削除しておく必要があります**。Add-ons メニューから "Import-Export: Unity Mesh Sync" を選択して Remove した後、blender を再起動してから上記手順を踏んでください。
 - "Import-Export: Unity Mesh Sync" が追加されるので、チェックを入れて有効化します。
 - MeshSync パネルが追加されるので、そちらから設定や手動の同期を行います。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
@@ -53,6 +56,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 ### メタセコイア
 - Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
 - インストールするには、Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
+  - **古いバージョンをインストール済みの場合、事前に手動で削除しておく必要があります**。メタセコイアを起動していない状態で該当ファイルを削除してください。
 - インストール後 パネル -> Unity Mesh Sync が追加されるのでこれを開き、"Auto Sync" をチェックします。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
@@ -83,7 +87,8 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 ### Unity
 - Unity 5.5 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
 - [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases) をプロジェクトにインポートします。
-  - Unity 5.5 の場合、インポート後にプラグイン dll の設定を下記画像のように変更してください (5.6 を堺に .meta ファイルの仕様が変わっているため)
+  - 古いバージョンをインストール済みの場合、**パッケージインポート前に一度 Unity を終了し、Assets/UTJ/MeshSync を削除** しておくと確実です。プラグインがロードされていると更新に失敗するためです。
+  - Unity 5.5 の場合、インポート後にプラグイン dll の設定を下記画像のように変更する必要があります (5.6 を堺に .meta ファイルの仕様が変わっているため)
   ![](https://user-images.githubusercontent.com/1488611/40534280-7ef6ecd6-6040-11e8-9f55-ea2f509a2383.png)
 - メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
 - このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
