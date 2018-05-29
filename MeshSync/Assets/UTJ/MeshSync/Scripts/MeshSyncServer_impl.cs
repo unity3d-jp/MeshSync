@@ -1591,21 +1591,22 @@ namespace UTJ.MeshSync
             }
         }
 
+        [DllImport("MeshSyncServer")] static extern IntPtr msServerGetVersion();
         [DllImport("MeshSyncServer")] static extern IntPtr msServerStart(ref ServerSettings settings);
-        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr sv);
+        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr _this);
 
         delegate void msMessageHandler(MessageType type, IntPtr data);
-        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr sv, msMessageHandler handler);
+        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr _this, msMessageHandler handler);
 
-        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr sv);
-        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr sv, TransformData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr sv, CameraData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr sv, LightData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr sv, MeshData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr sv, MaterialData data);
-        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr sv, string path);
+        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr _this, TransformData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr _this, CameraData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr _this, LightData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr _this, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
+        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
 
         static void SwitchBits(ref int flags, bool f, int bit)
         {

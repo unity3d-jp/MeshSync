@@ -8,6 +8,11 @@ using namespace mu;
 using ServerPtr = std::shared_ptr<ms::Server>;
 static std::map<uint16_t, ServerPtr> g_servers;
 
+msAPI const char* msServerGetVersion()
+{
+    return msReleaseDateStr;
+}
+
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
     if (!settings) { return nullptr; }

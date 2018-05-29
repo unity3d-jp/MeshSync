@@ -5,7 +5,7 @@ import MeshSyncClientBlender as ms
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2018, 5, 28),
+    "version": (2018, 5, 29),
     "blender": (2, 79),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",

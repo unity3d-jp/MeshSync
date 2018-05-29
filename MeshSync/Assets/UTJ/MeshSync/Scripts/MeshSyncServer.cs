@@ -45,6 +45,7 @@ namespace UTJ.MeshSync
 #endregion
 
 #region properties
+        public static string version { get { return S(msServerGetVersion()); } }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
 #endregion
 
