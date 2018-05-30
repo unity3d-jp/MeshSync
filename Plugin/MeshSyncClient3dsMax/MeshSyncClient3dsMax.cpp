@@ -32,89 +32,150 @@ public:
 } g_msmaxTimeChangeCallback;
 
 
-static void DumpNodes(NodeEventNamespace::NodeKeyTab& nkt)
+// Body: [](INode *node) -> void
+template<class Body>
+void EachNode(NodeEventNamespace::NodeKeyTab& nkt, const Body& body)
 {
     int count = nkt.Count();
     for (int i = 0; i < count; ++i) {
-        auto node = NodeEventNamespace::GetNodeByKey(nkt[i]);
-        if (node) {
-            mscTraceW(L"node: %s\n", node->GetName());
+        if (auto *n = NodeEventNamespace::GetNodeByKey(nkt[i])) {
+            body(n);
         }
     }
 }
 
+static void DumpNodes(NodeEventNamespace::NodeKeyTab& nkt)
+{
+    EachNode(nkt, [](INode *node) {
+        mscTraceW(L"node: %s\n", node->GetName());
+    });
+}
+
 void msmaxNodeCallback::Added(NodeKeyTab & nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::Added()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeAdded(n);
+    });
 }
 
 void msmaxNodeCallback::Deleted(NodeKeyTab & nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::Deleted()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
 }
 
 void msmaxNodeCallback::LinkChanged(NodeKeyTab & nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::LinkChanged()\n");
-}
-
-void msmaxTimeChangeCallback::TimeChanged(TimeValue t)
-{
-    mscTrace("msmaxTimeChangeCallback::TimeChanged()\n");
+    MeshSyncClient3dsMax::getInstance().onSceneUpdated();
 }
 
 void msmaxNodeCallback::ModelStructured(NodeKeyTab& nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::ModelStructured()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
 }
 void msmaxNodeCallback::GeometryChanged(NodeKeyTab& nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::GeometryChanged()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
 }
 void msmaxNodeCallback::TopologyChanged(NodeKeyTab& nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::TopologyChanged()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
 }
 void msmaxNodeCallback::MappingChanged(NodeKeyTab& nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::MappingChanged()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
 }
 void msmaxNodeCallback::ExtentionChannelChanged(NodeKeyTab& nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::ExtentionChannelChanged()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
 }
 void msmaxNodeCallback::ModelOtherEvent(NodeKeyTab& nodes)
 {
-    DumpNodes(nodes);
-    mscTrace("msmaxNodeCallback::ModelOtherEvent()\n");
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+    });
+}
+
+void msmaxTimeChangeCallback::TimeChanged(TimeValue t)
+{
+    MeshSyncClient3dsMax::getInstance().onTimeChanged();
+}
+
+static void OnStartup(void *param, NotifyInfo *info)
+{
+    ((MeshSyncClient3dsMax*)param)->onStartup();
+}
+static void OnNodeRenamed(void *param, NotifyInfo *info)
+{
+    ((MeshSyncClient3dsMax*)param)->onSceneUpdated();
 }
 
 
-
-static std::unique_ptr<MeshSyncClient3dsMax> g_plugin;
-
 MeshSyncClient3dsMax & MeshSyncClient3dsMax::getInstance()
 {
-    return *g_plugin;
+    static MeshSyncClient3dsMax s_plugin;
+    return s_plugin;
 }
 
 MeshSyncClient3dsMax::MeshSyncClient3dsMax()
 {
     GetCOREInterface()->RegisterTimeChangeCallback(&g_msmaxTimeChangeCallback);
-    m_cbkey = GetISceneEventManager()->RegisterCallback(g_msmaxNodeCallback.GetINodeEventCallback());
+    RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
+    RegisterNotification(OnNodeRenamed, this, NOTIFY_NODE_RENAMED);
 }
 
 MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
 {
 }
+
+void MeshSyncClient3dsMax::registerNodeCallback()
+{
+    if (m_cbkey == 0) {
+        m_cbkey = GetISceneEventManager()->RegisterCallback(g_msmaxNodeCallback.GetINodeEventCallback());
+    }
+}
+
+void MeshSyncClient3dsMax::onStartup()
+{
+    registerNodeCallback();
+}
+
+void MeshSyncClient3dsMax::onSceneUpdated()
+{
+    mscTraceW(L"MeshSyncClient3dsMax::onSceneUpdated()\n");
+}
+
+void MeshSyncClient3dsMax::onTimeChanged()
+{
+    mscTraceW(L"MeshSyncClient3dsMax::onTimeChanged()\n");
+}
+
+void MeshSyncClient3dsMax::onNodeAdded(INode * n)
+{
+    mscTraceW(L"MeshSyncClient3dsMax::onNodeAdded(): %s\n", n->GetName());
+}
+
+void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
+{
+    mscTraceW(L"MeshSyncClient3dsMax::onNodeDeleted(): %s\n", n->GetName());
+}
+
+void MeshSyncClient3dsMax::onNodeUpdated(INode * n)
+{
+    mscTraceW(L"MeshSyncClient3dsMax::onNodeUpdated(): %s\n", n->GetName());
+}
+
 
 void MeshSyncClient3dsMax::update()
 {
@@ -136,17 +197,6 @@ bool MeshSyncClient3dsMax::recvScene()
 }
 
 
-class msmaxNodeCallbackDesc :public ClassDesc2 {
-public:
-    int             IsPublic() { return 1; }
-    void*           Create(BOOL) { return new msmaxNodeCallback(); }
-    const TCHAR*    ClassName() { return _T("msmaxNodeCallback"); }
-    SClass_ID       SuperClassID() { return GUP_CLASS_ID; }
-    Class_ID        ClassID() { return Class_ID(0xdd174b35, 0x9fc48134); }
-    const TCHAR*    Category() { return _T("Global Utility PlugIn"); }
-} g_msmaxNodeCallbackDesc;
-
-
 
 def_visible_primitive(UnityMeshSync_Export, "UnityMeshSync_Export");
 Value* UnityMeshSync_Export_cf(Value** arg_list, int count)
@@ -164,7 +214,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, ULONG fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_ATTACH:
         g_hinstance = hinstDLL;
         MaxSDK::Util::UseLanguagePackLocale();
-        g_plugin.reset(new MeshSyncClient3dsMax());
         DisableThreadLibraryCalls(hinstDLL);
         break;
     }

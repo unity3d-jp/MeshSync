@@ -47,6 +47,14 @@ public:
     MeshSyncClient3dsMax();
     ~MeshSyncClient3dsMax();
 
+    void registerNodeCallback();
+    void onStartup();
+    void onSceneUpdated();
+    void onTimeChanged();
+    void onNodeAdded(INode *n);
+    void onNodeDeleted(INode *n);
+    void onNodeUpdated(INode *n);
+
     void update();
     bool sendScene(SendScope scope);
     bool sendAnimations(SendScope scope);

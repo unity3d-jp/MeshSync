@@ -21,15 +21,11 @@
 // 3ds Max headers
 #include <max.h>
 #include <maxapi.h>
-#include <guplib.h>
+#include <notify.h>
 #include <ISceneEventManager.h>
 #include <systemutilities.h>
 #include <maxscript/maxscript.h>
-#include <maxscript/foundation/numbers.h>
-#include <maxscript/foundation/3dmath.h>
-#include <maxscript/foundation/name.h>
-#include <maxscript/foundation/strings.h>
-#include <maxscript/maxwrapper/mxsobjects.h>
+#include <maxscript/macros/define_instantiation_functions.h>
 
 #ifdef PI
     #undef PI
