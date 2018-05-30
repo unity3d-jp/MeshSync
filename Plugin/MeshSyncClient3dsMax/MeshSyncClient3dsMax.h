@@ -47,13 +47,13 @@ public:
     MeshSyncClient3dsMax();
     ~MeshSyncClient3dsMax();
 
-    void registerNodeCallback();
     void onStartup();
     void onSceneUpdated();
     void onTimeChanged();
     void onNodeAdded(INode *n);
     void onNodeDeleted(INode *n);
     void onNodeUpdated(INode *n);
+    void onRepaint();
 
     void update();
     bool sendScene(SendScope scope);
@@ -62,6 +62,13 @@ public:
     bool recvScene();
 
 private:
+    bool isSending() const;
+    void waitSendComplete();
+    void kickAsyncSend();
+
+private:
     Settings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
+
+    std::future<void> m_future_send;
 };

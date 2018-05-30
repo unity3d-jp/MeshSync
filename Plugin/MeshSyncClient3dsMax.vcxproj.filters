@@ -12,12 +12,21 @@
     <ClInclude Include="MeshSyncClient3dsMax\pch.h">
       <Filter>MeshSyncClient3dsMax</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClient3dsMax\msmaxCallbacks.h">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClient3dsMax\msmaxUtils.h">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClient3dsMax\pch.cpp">
       <Filter>MeshSyncClient3dsMax</Filter>
     </ClCompile>
     <ClCompile Include="MeshSyncClient3dsMax\MeshSyncClient3dsMax.cpp">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClient3dsMax\msmaxCallbacks.cpp">
       <Filter>MeshSyncClient3dsMax</Filter>
     </ClCompile>
   </ItemGroup>
