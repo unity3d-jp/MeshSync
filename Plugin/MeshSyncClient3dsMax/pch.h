@@ -19,5 +19,18 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 // 3ds Max headers
+#include <max.h>
 #include <maxapi.h>
+#include <guplib.h>
+#include <ISceneEventManager.h>
 #include <systemutilities.h>
+#include <maxscript/maxscript.h>
+#include <maxscript/foundation/numbers.h>
+#include <maxscript/foundation/3dmath.h>
+#include <maxscript/foundation/name.h>
+#include <maxscript/foundation/strings.h>
+#include <maxscript/maxwrapper/mxsobjects.h>
+
+#ifdef PI
+    #undef PI
+#endif

@@ -2,7 +2,7 @@
 
 #include "MeshSync/MeshSync.h"
 
-#define msmaxAPI __declspec(dllexport)
+#define msmaxAPI extern "C" __declspec(dllexport)
 
 
 class MeshSyncClient3dsMax
@@ -47,8 +47,6 @@ public:
     MeshSyncClient3dsMax();
     ~MeshSyncClient3dsMax();
 
-    HINSTANCE getHInstance() const;
-
     void update();
     bool sendScene(SendScope scope);
     bool sendAnimations(SendScope scope);
@@ -57,4 +55,5 @@ public:
 
 private:
     Settings m_settings;
+    ISceneEventManager::CallbackKey m_cbkey = 0;
 };
