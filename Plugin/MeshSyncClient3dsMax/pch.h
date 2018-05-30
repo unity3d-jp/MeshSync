@@ -15,3 +15,9 @@
 #include <mutex>
 #include <memory>
 #include <cassert>
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+// 3ds Max headers
+#include <maxapi.h>
+#include <systemutilities.h>

@@ -2,6 +2,9 @@
 
 #include "MeshSync/MeshSync.h"
 
+#define msmaxAPI __declspec(dllexport)
+
+
 class MeshSyncClient3dsMax
 {
 public:
@@ -43,6 +46,8 @@ public:
 
     MeshSyncClient3dsMax();
     ~MeshSyncClient3dsMax();
+
+    HINSTANCE getHInstance() const;
 
     void update();
     bool sendScene(SendScope scope);
