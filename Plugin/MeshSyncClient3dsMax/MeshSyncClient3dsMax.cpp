@@ -221,7 +221,7 @@ void MeshSyncClient3dsMax::kickAsyncSend()
         ms::Client client(m_settings.client_settings);
 
         ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.handedness = ms::Handedness::Left;
         scene_settings.scale_factor = m_settings.scale_factor;
 
         // notify scene begin
@@ -293,10 +293,9 @@ static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::qua
         auto pmat = to_float4x4(parent->GetObjTMAfterWSM(t));
         mat *= mu::invert(pmat);
     }
-    mat = to_lhs(mat);
-    pos = mu::extract_position(mat);
-    rot = mu::extract_rotation(mat);
-    scale = mu::extract_scale(mat);
+    pos = to_lhs(mu::extract_position(mat));
+    rot = to_lhs(mu::extract_rotation(mat));
+    scale = to_lhs(mu::extract_scale(mat));
 }
 
 
@@ -389,7 +388,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             auto& face = faces[fi];
             dst.material_ids[fi] = const_cast<Face&>(face).getMatID(); // :(
             for (int i = 0; i < 3; ++i)
-                dst.indices[fi * 3 + i] = face.v[2 - i];
+                dst.indices[fi * 3 + i] = face.v[i];
         }
     }
 
@@ -448,7 +447,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             auto& face = faces[fi];
             for (int i = 0; i < 3; ++i) {
                 int vi = face.v[i];
-                dst.normals[fi * 3 + i] = get_normal(fi, face.v[2 - i]);
+                dst.normals[fi * 3 + i] = get_normal(fi, face.v[i]);
             }
         }
 
@@ -465,7 +464,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             dst.uv0.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 for (int i = 0; i < 3; ++i) {
-                    dst.uv0[fi * 3 + i] = to_float2(uv_vertices[uv_faces[fi].t[2 - i]]);
+                    dst.uv0[fi * 3 + i] = to_float2(uv_vertices[uv_faces[fi].t[i]]);
                 }
             }
         }
@@ -480,7 +479,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             dst.colors.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 for (int i = 0; i < 3; ++i) {
-                    dst.colors[fi * 3 + i] = to_color(vc_vertices[vc_faces[fi].t[2 - i]]);
+                    dst.colors[fi * 3 + i] = to_color(vc_vertices[vc_faces[fi].t[i]]);
                 }
             }
         }
