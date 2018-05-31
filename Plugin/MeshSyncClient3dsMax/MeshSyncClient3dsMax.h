@@ -12,7 +12,7 @@ public:
     {
         ms::ClientSettings client_settings;
 
-        float scale_factor = 0.01f;
+        float scale_factor = 100.0f;
         float animation_time_scale = 1.0f;
         int  animation_sps = 2;
         int  timeout_ms = 5000;

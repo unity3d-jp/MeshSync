@@ -5,12 +5,12 @@
 
 #ifdef _WIN32
 #pragma comment(lib, "core.lib")
-#pragma comment(lib, "gup.lib")
+#pragma comment(lib, "geom.lib")
+#pragma comment(lib, "mesh.lib")
 #pragma comment(lib, "maxutil.lib")
 #pragma comment(lib, "maxscrpt.lib")
 #pragma comment(lib, "paramblk2.lib")
 #endif
-
 
 
 static void OnStartup(void *param, NotifyInfo *info)
@@ -20,6 +20,18 @@ static void OnStartup(void *param, NotifyInfo *info)
 static void OnNodeRenamed(void *param, NotifyInfo *info)
 {
     ((MeshSyncClient3dsMax*)param)->onSceneUpdated();
+}
+
+
+void MeshSyncClient3dsMax::NodeRecord::clearState()
+{
+    dst_obj = nullptr;
+    dst_anim = nullptr;
+}
+
+void MeshSyncClient3dsMax::AnimationRecord::operator()(MeshSyncClient3dsMax * _this)
+{
+    (_this->*extractor)(*dst, src);
 }
 
 
@@ -377,7 +389,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             auto& face = faces[fi];
             dst.material_ids[fi] = const_cast<Face&>(face).getMatID(); // :(
             for (int i = 0; i < 3; ++i)
-                dst.indices[fi * 3 + i] = face.v[i];
+                dst.indices[fi * 3 + i] = face.v[2 - i];
         }
     }
 
@@ -385,8 +397,63 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
     int num_vertices = mesh.numVerts;
     dst.points.resize_discard(num_vertices);
     dst.points.assign((mu::float3*)mesh.verts, (mu::float3*)mesh.verts + num_vertices);
-    for (auto& v : dst.points) {
+    for (auto& v : dst.points)
         v = to_lhs(v);
+
+    // normals
+    if (m_settings.sync_normals) {
+        auto get_normal = [&mesh](int face_index, int vertex_index) -> mu::float3 {
+            const auto& rv = mesh.getRVert(vertex_index);
+            const auto& face = mesh.faces[face_index];
+            DWORD smGroup = face.smGroup;
+            int num_normals = 0;
+            Point3 ret;
+
+            // Is normal specified
+            // SPCIFIED is not currently used, but may be used in future versions.
+            if (rv.rFlags & SPECIFIED_NORMAL) {
+                ret = rv.rn.getNormal();
+            }
+            // If normal is not specified it's only available if the face belongs
+            // to a smoothing group
+            else if ((num_normals = rv.rFlags & NORCT_MASK) != 0 && smGroup) {
+                // If there is only one vertex is found in the rn member.
+                if (num_normals == 1) {
+                    ret = rv.rn.getNormal();
+                }
+                else {
+                    // If two or more vertices are there you need to step through them
+                    // and find the vertex with the same smoothing group as the current face.
+                    // You will find multiple normals in the ern member.
+                    for (int i = 0; i < num_normals; i++) {
+                        if (rv.ern[i].getSmGroup() & smGroup) {
+                            ret = rv.ern[i].getNormal();
+                        }
+                    }
+                }
+            }
+            else {
+                // Get the normal from the Face if no smoothing groups are there
+                ret = mesh.getFaceNormal(face_index);
+            }
+            return to_float3(ret);
+        };
+
+        // make sure normal is allocated
+        mesh.checkNormals(TRUE);
+
+        const auto *faces = mesh.faces;
+        dst.normals.resize_discard(num_indices);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto& face = faces[fi];
+            for (int i = 0; i < 3; ++i) {
+                int vi = face.v[i];
+                dst.normals[fi * 3 + i] = get_normal(fi, face.v[2 - i]);
+            }
+        }
+
+        for (auto& v : dst.normals)
+            v = to_lhs(v);
     }
 
     // uv
@@ -398,7 +465,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             dst.uv0.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 for (int i = 0; i < 3; ++i) {
-                    dst.uv0[fi * 3 + i] = to_float2(uv_vertices[uv_faces[fi].t[i]]);
+                    dst.uv0[fi * 3 + i] = to_float2(uv_vertices[uv_faces[fi].t[2 - i]]);
                 }
             }
         }
@@ -413,7 +480,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             dst.colors.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 for (int i = 0; i < 3; ++i) {
-                    dst.colors[fi * 3 + i] = to_color(vc_vertices[vc_faces[fi].t[i]]);
+                    dst.colors[fi * 3 + i] = to_color(vc_vertices[vc_faces[fi].t[2 - i]]);
                 }
             }
         }
@@ -515,15 +582,4 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
     extractTransformAnimation(dst_, src);
 
     auto& dst = (ms::MeshAnimation&)dst_;
-}
-
-void MeshSyncClient3dsMax::NodeRecord::clearState()
-{
-    dst_obj = nullptr;
-    dst_anim = nullptr;
-}
-
-void MeshSyncClient3dsMax::AnimationRecord::operator()(MeshSyncClient3dsMax * _this)
-{
-    (_this->*extractor)(*dst, src);
 }
