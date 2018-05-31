@@ -36,6 +36,7 @@ MeshSyncClient3dsMax::MeshSyncClient3dsMax()
 
 MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
 {
+    waitAsyncSend();
 }
 
 void MeshSyncClient3dsMax::onStartup()
@@ -106,7 +107,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
             if (it != m_node_records.end())
                 it->second.dirty = false;
 
-            if (exportNode(n))
+            if (exportObject(n))
                 ++num_exported;
         });
     }
@@ -115,7 +116,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
             auto& rec = kvp.second;
             if (rec.dirty) {
                 rec.dirty = false;
-                if (exportNode(kvp.first))
+                if (exportObject(kvp.first))
                     ++num_exported;
             }
         }
@@ -129,7 +130,52 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
 
 bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
 {
-    return false;
+    if (isSending()) {
+        waitAsyncSend();
+    }
+
+    // create default clip
+    m_animations.push_back(ms::AnimationClip::create());
+
+    // gather target data
+    int num_exported = 0;
+    if (scope == SendScope::All) {
+        EnumerateAllNode([&](INode *n) {
+            if (exportAnimations(n))
+                ++num_exported;
+        });
+    }
+    else {
+        // todo:
+    }
+
+    // advance frame and record animation
+    auto time_range = GetCOREInterface()->GetAnimRange();
+    auto interval = SecToTicks(1.0f / m_settings.animation_sps);
+    for (TimeValue t = time_range.Start(); t <= time_range.End(); t += interval) {
+        // advance frame and record
+        m_current_time = t;
+        for (auto& kvp : m_anim_records)
+            kvp.second(this);
+    }
+
+    // cleanup intermediate data
+    m_anim_records.clear();
+
+    // keyframe reduction
+    for (auto& clip : m_animations)
+        clip->reduction();
+
+    // erase empty animation
+    m_animations.erase(
+        std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
+        m_animations.end());
+
+    if (num_exported > 0)
+        kickAsyncSend();
+    else
+        m_animations.clear();
+    return true;
 }
 
 bool MeshSyncClient3dsMax::recvScene()
@@ -146,16 +192,89 @@ bool MeshSyncClient3dsMax::isSending() const
     return false;
 }
 
-void MeshSyncClient3dsMax::waitSendComplete()
+void MeshSyncClient3dsMax::waitAsyncSend()
 {
+    if (m_future_send.valid()) {
+        m_future_send.wait_for(std::chrono::milliseconds(m_settings.timeout_ms));
+    }
 }
 
 void MeshSyncClient3dsMax::kickAsyncSend()
 {
+    for (auto& kvp : m_node_records)
+        kvp.second.clearState();
+
+    // begin async send
+    m_future_send = std::async(std::launch::async, [this]() {
+        ms::Client client(m_settings.client_settings);
+
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = m_settings.scale_factor;
+
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
+        }
+
+        // send delete message
+        size_t num_deleted = m_deleted.size();
+        if (num_deleted) {
+            ms::DeleteMessage del;
+            del.targets.resize(num_deleted);
+            for (uint32_t i = 0; i < num_deleted; ++i)
+                del.targets[i].path = m_deleted[i];
+            m_deleted.clear();
+
+            client.send(del);
+        }
+
+        // send scene data
+        {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = m_objects;
+            set.scene.materials = m_materials;
+            client.send(set);
+
+            m_objects.clear();
+            m_materials.clear();
+        }
+
+        // send meshes one by one to Unity can respond quickly
+        for (auto& mesh : m_meshes) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = { mesh };
+            client.send(set);
+        };
+        m_meshes.clear();
+
+        // send animations and constraints
+        if (!m_animations.empty() || !m_constraints.empty()) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.animations = m_animations;
+            set.scene.constraints = m_constraints;
+            client.send(set);
+
+            m_animations.clear();
+            m_constraints.clear();
+        }
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
+        }
+    });
 }
 
 
-void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
+static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
 {
     auto mat = to_float4x4(node->GetObjTMAfterWSM(t));
     if (auto parent = node->GetParentNode()) {
@@ -169,64 +288,76 @@ void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot
 }
 
 
-ms::TransformPtr MeshSyncClient3dsMax::exportNode(INode * node)
+ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
 {
     ms::TransformPtr ret;
 
-    auto obj = node->GetObjectRef();
+    auto obj = n->GetObjectRef();
     if (obj->CanConvertToType(triObjectClassID)) {
-
+        auto dst = ms::Mesh::create();
+        ret = dst;
+        m_meshes.push_back(dst);
+        extractMeshData(*dst, n);
     }
 
     if (!ret) {
-        switch (node->SuperClassID()) {
+        switch (n->SuperClassID()) {
         case CAMERA_CLASS_ID:
             if (m_settings.sync_cameras) {
                 auto dst = ms::Camera::create();
                 ret = dst;
-                extractCamera(*dst, node);
+                m_objects.push_back(dst);
+                extractCameraData(*dst, n);
             }
             break;
         case LIGHT_CLASS_ID:
             if (m_settings.sync_lights) {
                 auto dst = ms::Light::create();
                 ret = dst;
-                extractLight(*dst, node);
+                m_objects.push_back(dst);
+                extractLightData(*dst, n);
             }
             break;
         default:
             if (m_settings.sync_meshes) {
                 auto dst = ms::Transform::create();
                 ret = dst;
-                extractTransform(*dst, node);
+                m_objects.push_back(dst);
+                extractTransformData(*dst, n);
             }
             break;
         }
     }
+
+    if (ret) {
+        ret->path = GetPath(n);
+        ret->index = ++m_index_seed;
+        m_node_records[n].dst_obj = ret.get();
+    }
     return ret;
 }
 
-bool MeshSyncClient3dsMax::extractTransform(ms::Transform & dst, INode * src)
+bool MeshSyncClient3dsMax::extractTransformData(ms::Transform & dst, INode * src)
 {
     ExtractTransform(src, GetTime(), dst.position, dst.rotation, dst.scale);
     return true;
 }
 
-bool MeshSyncClient3dsMax::extractCamera(ms::Camera & dst, INode * src)
+bool MeshSyncClient3dsMax::extractCameraData(ms::Camera & dst, INode * src)
 {
-    extractTransform(dst, src);
+    extractTransformData(dst, src);
     return true;
 }
 
-bool MeshSyncClient3dsMax::extractLight(ms::Light & dst, INode * src)
+bool MeshSyncClient3dsMax::extractLightData(ms::Light & dst, INode * src)
 {
-    extractTransform(dst, src);
+    extractTransformData(dst, src);
     return true;
 }
 
-bool MeshSyncClient3dsMax::extractMesh(ms::Mesh & dst, INode * src)
+bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
 {
-    extractTransform(dst, src);
+    extractTransformData(dst, src);
 
     auto obj = src->GetObjectRef();
     auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
@@ -292,56 +423,107 @@ bool MeshSyncClient3dsMax::extractMesh(ms::Mesh & dst, INode * src)
     return true;
 }
 
-
-
-def_visible_primitive(UnityMeshSync_ExportScene, "UnityMeshSync_ExportScene");
-Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
+ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode * n)
 {
-    MeshSyncClient3dsMax::getInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
-    return &ok;
-}
+    auto it = m_anim_records.find(n);
+    if (it != m_anim_records.end())
+        return ms::AnimationPtr();
 
-def_visible_primitive(UnityMeshSync_ExportAnimations, "UnityMeshSync_ExportAnimations");
-Value* UnityMeshSync_ExportAnimations_cf(Value** arg_list, int count)
-{
-    MeshSyncClient3dsMax::getInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
-    return &ok;
-}
+    auto& animations = m_animations[0]->animations;
+    ms::AnimationPtr ret;
+    AnimationRecord::extractor_t extractor = nullptr;
 
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, ULONG fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
-        MaxSDK::Util::UseLanguagePackLocale();
-        MeshSyncClient3dsMax::getInstance(); // initialize instance
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
+    auto obj = n->GetObjectRef();
+    if (obj->CanConvertToType(triObjectClassID)) {
+        auto dst = ms::MeshAnimation::create();
+        animations.push_back(dst);
+        ret = dst;
+        extractor = &MeshSyncClient3dsMax::extractMeshAnimation;
     }
-    return(TRUE);
+
+    if (!ret) {
+        switch (n->SuperClassID()) {
+        case CAMERA_CLASS_ID:
+            if (m_settings.sync_cameras) {
+                auto dst = ms::CameraAnimation::create();
+                animations.push_back(dst);
+                ret = dst;
+                extractor = &MeshSyncClient3dsMax::extractCameraAnimation;
+            }
+            break;
+        case LIGHT_CLASS_ID:
+            if (m_settings.sync_lights) {
+                auto dst = ms::LightAnimation::create();
+                animations.push_back(dst);
+                ret = dst;
+                extractor = &MeshSyncClient3dsMax::extractLightAnimation;
+            }
+            break;
+        default:
+            if (m_settings.sync_meshes) {
+                auto dst = ms::TransformAnimation::create();
+                animations.push_back(dst);
+                ret = dst;
+                extractor = &MeshSyncClient3dsMax::extractTransformAnimation;
+            }
+            break;
+        }
+    }
+
+    if (ret) {
+        ret->path = GetPath(n);
+
+        auto& rec = m_anim_records[n];
+        rec.dst = ret.get();
+        rec.src = n;
+        rec.extractor = extractor;
+    }
+    return ret;
 }
 
-msmaxAPI const TCHAR* LibDescription()
+void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode *src)
 {
-    return _T("UnityMeshSync for 3ds Max (Release " msReleaseDateStr ") (Unity Technologies)");
+    auto& dst = (ms::TransformAnimation&)dst_;
+
+    mu::float3 pos;
+    mu::quatf rot;
+    mu::float3 scale;
+    ExtractTransform(src, m_current_time, pos, rot, scale);
+
+    float t = TicksToSec(m_current_time) * m_settings.animation_time_scale;
+    dst.translation.push_back({ t, pos });
+    dst.rotation.push_back({ t, rot });
+    dst.scale.push_back({ t, scale });
 }
 
-msmaxAPI int LibNumberClasses()
+void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *src)
 {
-    return 0;
+    extractTransformAnimation(dst_, src);
+
+    auto& dst = (ms::CameraAnimation&)dst_;
 }
 
-msmaxAPI ClassDesc* LibClassDesc(int i)
+void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src)
 {
-    return nullptr;
+    extractTransformAnimation(dst_, src);
+
+    auto& dst = (ms::LightAnimation&)dst_;
 }
 
-msmaxAPI ULONG LibVersion()
+void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
 {
-    return VERSION_3DSMAX;
+    extractTransformAnimation(dst_, src);
+
+    auto& dst = (ms::MeshAnimation&)dst_;
 }
 
-msmaxAPI ULONG CanAutoDefer()
+void MeshSyncClient3dsMax::NodeRecord::clearState()
 {
-    return 0;
+    dst_obj = nullptr;
+    dst_anim = nullptr;
+}
+
+void MeshSyncClient3dsMax::AnimationRecord::operator()(MeshSyncClient3dsMax * _this)
+{
+    (_this->*extractor)(*dst, src);
 }

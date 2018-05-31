@@ -30,6 +30,7 @@
   <ItemGroup>
     <ClCompile Include="MeshSyncClient3dsMax\msmaxCallbacks.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\MeshSyncClient3dsMax.cpp" />
+    <ClCompile Include="MeshSyncClient3dsMax\msmaxEntryPoint.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\msmaxUtils.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

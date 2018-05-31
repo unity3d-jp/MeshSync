@@ -63,22 +63,22 @@ public:
 
 private:
     bool isSending() const;
-    void waitSendComplete();
+    void waitAsyncSend();
     void kickAsyncSend();
 
 
-    ms::TransformPtr exportNode(INode *node);
-    bool extractTransform(ms::Transform& dst, INode *src);
-    bool extractCamera(ms::Camera& dst, INode *src);
-    bool extractLight(ms::Light& dst, INode *src);
-    bool extractMesh(ms::Mesh& dst, INode *src);
+    ms::TransformPtr exportObject(INode *node);
+    bool extractTransformData(ms::Transform& dst, INode *src);
+    bool extractCameraData(ms::Camera& dst, INode *src);
+    bool extractLightData(ms::Light& dst, INode *src);
+    bool extractMeshData(ms::Mesh& dst, INode *src);
 
 
     ms::AnimationPtr exportAnimations(INode *node);
-    bool extractTransformAnimation(ms::Animation& dst, INode *src);
-    bool extractCameraAnimation(ms::Animation& dst, INode *src);
-    bool extractLightAnimation(ms::Animation& dst, INode *src);
-    bool extractMeshAnimation(ms::Animation& dst, INode *src);
+    void extractTransformAnimation(ms::Animation& dst, INode *src);
+    void extractCameraAnimation(ms::Animation& dst, INode *src);
+    void extractLightAnimation(ms::Animation& dst, INode *src);
+    void extractMeshAnimation(ms::Animation& dst, INode *src);
 
 private:
     using task_t = std::function<void()>;
@@ -87,21 +87,41 @@ private:
         INode *node;
         bool dirty = true;
 
+        ms::Transform *dst_obj = nullptr;
+        ms::Animation *dst_anim = nullptr;
         task_t extract_task;
+
+        void clearState();
+    };
+
+    struct AnimationRecord
+    {
+        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *src);
+        extractor_t extractor;
+        INode *src;
+        ms::Animation *dst;
+
+        void operator()(MeshSyncClient3dsMax *_this);
     };
 
     Settings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
     std::map<INode*, NodeRecord> m_node_records;
+    int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;
     SendScope m_pending_request = SendScope::None;
+
+    std::map<INode*, AnimationRecord> m_anim_records;
+    TimeValue m_current_time;
+
 
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
+    std::vector<ms::ConstraintPtr>      m_constraints;
     std::vector<std::string>            m_deleted;
     std::future<void>                   m_future_send;
 };

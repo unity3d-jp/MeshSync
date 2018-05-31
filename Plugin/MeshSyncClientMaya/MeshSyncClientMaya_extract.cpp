@@ -667,6 +667,10 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     m_animations.erase(
         std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_animations.end());
+
+    if (num_exported == 0)
+        m_animations.clear();
+
     return num_exported;
 }
 
