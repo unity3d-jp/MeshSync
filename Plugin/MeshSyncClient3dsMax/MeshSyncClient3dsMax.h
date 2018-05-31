@@ -66,6 +66,7 @@ private:
     void waitAsyncSend();
     void kickAsyncSend();
 
+    void exportMaterials();
 
     ms::TransformPtr exportObject(INode *node);
     bool extractTransformData(ms::Transform& dst, INode *src);

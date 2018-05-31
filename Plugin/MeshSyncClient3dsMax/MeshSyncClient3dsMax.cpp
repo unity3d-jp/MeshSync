@@ -285,6 +285,21 @@ void MeshSyncClient3dsMax::kickAsyncSend()
     });
 }
 
+void MeshSyncClient3dsMax::exportMaterials()
+{
+    auto mtllib = GetCOREInterface()->GetSceneMtls();
+    int count = mtllib->Count();
+
+    m_materials.clear();
+    for (int mi = 0; mi < count; ++mi) {
+        auto mtl = (Mtl*)(*mtllib)[mi];
+        auto dst = ms::Material::create();
+        m_materials.push_back(dst);
+        dst->name = mu::ToMBS(mtl->GetName().data());
+        dst->color = to_color(mtl->GetDiffuse());
+    }
+}
+
 
 static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
 {
@@ -369,6 +384,10 @@ bool MeshSyncClient3dsMax::extractLightData(ms::Light & dst, INode * src)
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
 {
     extractTransformData(dst, src);
+
+    if (m_materials.empty()) {
+        exportMaterials();
+    }
 
     auto obj = src->GetObjectRef();
     auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
