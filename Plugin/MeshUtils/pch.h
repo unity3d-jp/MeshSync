@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <numeric>
 #include <chrono>
+#include <codecvt>
+#include <locale>
 
 #include "muConfig.h"
 #ifdef muEnableHalf

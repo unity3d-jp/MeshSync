@@ -48,7 +48,7 @@ void MeshSyncClient3dsMax::onStartup()
 
 void MeshSyncClient3dsMax::onSceneUpdated()
 {
-    mscTraceW(L"MeshSyncClient3dsMax::onSceneUpdated()\n");
+    m_scene_updated = true;
 }
 
 void MeshSyncClient3dsMax::onTimeChanged()
@@ -58,28 +58,21 @@ void MeshSyncClient3dsMax::onTimeChanged()
 
 void MeshSyncClient3dsMax::onNodeAdded(INode * n)
 {
-    mscTraceW(L"MeshSyncClient3dsMax::onNodeAdded(): %s\n", n->GetName());
+    m_scene_updated = true;
 }
 
 void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 {
-    mscTraceW(L"MeshSyncClient3dsMax::onNodeDeleted(): %s\n", n->GetName());
+    m_scene_updated = true;
+
+    m_deleted.push_back(GetPath(n));
+    m_node_records.erase(n);
 }
 
 void MeshSyncClient3dsMax::onNodeUpdated(INode * n)
 {
     mscTraceW(L"MeshSyncClient3dsMax::onNodeUpdated(): %s\n", n->GetName());
-
-    auto obj = n->GetObjectRef();
-
-    switch (obj->SuperClassID()) {
-    case GEOMOBJECT_CLASS_ID:
-        break;
-    case CAMERA_CLASS_ID:
-        break;
-    case LIGHT_CLASS_ID:
-        break;
-    }
+    m_node_records[n].dirty = true;
 }
 
 void MeshSyncClient3dsMax::onRepaint()
@@ -90,11 +83,48 @@ void MeshSyncClient3dsMax::onRepaint()
 
 void MeshSyncClient3dsMax::update()
 {
+    if (m_pending_request != SendScope::None) {
+        if (sendScene(m_pending_request)) {
+            m_pending_request = SendScope::None;
+        }
+    }
+    else if (m_settings.auto_sync && m_dirty) {
+        sendScene(SendScope::Updated);
+    }
 }
 
 bool MeshSyncClient3dsMax::sendScene(SendScope scope)
 {
-    return false;
+    if (isSending()) {
+        return false;
+    }
+
+    int num_exported = 0;
+    if (scope == SendScope::All) {
+        EnumerateAllNode([&](INode *n) {
+            auto it = m_node_records.find(n);
+            if (it != m_node_records.end())
+                it->second.dirty = false;
+
+            if(exportNode(n))
+                ++num_exported;
+        });
+    }
+    else if (scope == SendScope::Updated) {
+        for (auto& kvp : m_node_records) {
+            auto& rec = kvp.second;
+            if (rec.dirty) {
+                rec.dirty = false;
+                if (exportNode(kvp.first))
+                    ++num_exported;
+            }
+        }
+    }
+    m_dirty = false;
+
+    if (num_exported > 0)
+        kickAsyncSend();
+    return true;
 }
 
 bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
@@ -110,6 +140,9 @@ bool MeshSyncClient3dsMax::recvScene()
 
 bool MeshSyncClient3dsMax::isSending() const
 {
+    if (m_future_send.valid()) {
+        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
+    }
     return false;
 }
 
@@ -119,6 +152,32 @@ void MeshSyncClient3dsMax::waitSendComplete()
 
 void MeshSyncClient3dsMax::kickAsyncSend()
 {
+}
+
+
+ms::TransformPtr MeshSyncClient3dsMax::exportNode(INode * node)
+{
+    return ms::TransformPtr();
+}
+
+bool MeshSyncClient3dsMax::extractTransform(ms::Transform & dst, INode * src)
+{
+    return false;
+}
+
+bool MeshSyncClient3dsMax::extractCamera(ms::Camera & dst, INode * src)
+{
+    return false;
+}
+
+bool MeshSyncClient3dsMax::extractLight(ms::Light & dst, INode * src)
+{
+    return false;
+}
+
+bool MeshSyncClient3dsMax::extractMesh(ms::Mesh & dst, INode * src)
+{
+    return false;
 }
 
 

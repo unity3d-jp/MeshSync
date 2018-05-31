@@ -16,6 +16,8 @@ std::string ToUTF8(const char *src);
 std::string ToUTF8(const std::string& src);
 std::string ToANSI(const char *src);
 std::string ToANSI(const std::string& src);
+std::string ToMBS(const wchar_t *src);
+std::string ToMBS(const std::wstring& src);
 
 
 void AddDLLSearchPath(const char *v);

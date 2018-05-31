@@ -66,9 +66,42 @@ private:
     void waitSendComplete();
     void kickAsyncSend();
 
+
+    ms::TransformPtr exportNode(INode *node);
+    bool extractTransform(ms::Transform& dst, INode *src);
+    bool extractCamera(ms::Camera& dst, INode *src);
+    bool extractLight(ms::Light& dst, INode *src);
+    bool extractMesh(ms::Mesh& dst, INode *src);
+
+
+    ms::AnimationPtr exportAnimations(INode *node);
+    bool extractTransformAnimation(ms::Animation& dst, INode *src);
+    bool extractCameraAnimation(ms::Animation& dst, INode *src);
+    bool extractLightAnimation(ms::Animation& dst, INode *src);
+    bool extractMeshAnimation(ms::Animation& dst, INode *src);
+
 private:
+    using task_t = std::function<void()>;
+    struct NodeRecord
+    {
+        INode *node;
+        bool dirty = true;
+
+        task_t extract_task;
+    };
+
     Settings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
-    std::future<void> m_future_send;
+    std::map<INode*, NodeRecord> m_node_records;
+    bool m_dirty = true;
+    bool m_scene_updated = true;
+    SendScope m_pending_request = SendScope::None;
+
+    std::vector<ms::TransformPtr>       m_objects;
+    std::vector<ms::MeshPtr>            m_meshes;
+    std::vector<ms::MaterialPtr>        m_materials;
+    std::vector<ms::AnimationClipPtr>   m_animations;
+    std::vector<std::string>            m_deleted;
+    std::future<void>                   m_future_send;
 };

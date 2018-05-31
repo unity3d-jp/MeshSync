@@ -20,7 +20,7 @@
 #define NOMINMAX
 // 3ds Max headers
 #include <max.h>
-#include <maxapi.h>
+#include <triobj.h>
 #include <notify.h>
 #include <ISceneEventManager.h>
 #include <systemutilities.h>

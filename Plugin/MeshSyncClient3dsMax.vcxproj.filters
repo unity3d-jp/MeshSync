@@ -29,5 +29,8 @@
     <ClCompile Include="MeshSyncClient3dsMax\msmaxCallbacks.cpp">
       <Filter>MeshSyncClient3dsMax</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClient3dsMax\msmaxUtils.cpp">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
