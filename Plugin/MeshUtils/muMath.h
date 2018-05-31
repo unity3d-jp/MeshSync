@@ -290,6 +290,40 @@ template<class T> inline tvec4<T> operator*(const tmat4x4<T>& m, const tvec4<T>&
         m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + m[3][3] * v[3],
     };
 }
+template<class T> inline tmat3x3<T> operator*(const tmat3x3<T> &a, const tmat3x3<T> &b)
+{
+    tmat3x3<T> c;
+    const T *ap = &a[0][0];
+    const T *bp = &b[0][0];
+    T *cp = &c[0][0];
+    T a0, a1, a2;
+
+    a0 = ap[0];
+    a1 = ap[1];
+    a2 = ap[2];
+
+    cp[0] = a0 * bp[0] + a1 * bp[3] + a2 * bp[6];
+    cp[1] = a0 * bp[1] + a1 * bp[4] + a2 * bp[7];
+    cp[2] = a0 * bp[2] + a1 * bp[5] + a2 * bp[9];
+
+    a0 = ap[3];
+    a1 = ap[4];
+    a2 = ap[5];
+
+    cp[3] = a0 * bp[0] + a1 * bp[4] + a2 * bp[7];
+    cp[4] = a0 * bp[1] + a1 * bp[5] + a2 * bp[8];
+    cp[5] = a0 * bp[2] + a1 * bp[6] + a2 * bp[9];
+
+    a0 = ap[6];
+    a1 = ap[7];
+    a2 = ap[8];
+
+    cp[6] = a0 * bp[0] + a1 * bp[4] + a2 * bp[7];
+    cp[7] = a0 * bp[1] + a1 * bp[5] + a2 * bp[8];
+    cp[8] = a0 * bp[2] + a1 * bp[6] + a2 * bp[9];
+
+    return c;
+}
 template<class T> inline tmat4x4<T> operator*(const tmat4x4<T> &a, const tmat4x4<T> &b)
 {
     tmat4x4<T> c;
