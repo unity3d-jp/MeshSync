@@ -25,3 +25,8 @@ std::string GetPath(INode *n)
 {
     return mu::ToMBS(GetPathW(n));
 }
+
+Object * GetBottomObject(INode * n)
+{
+    return EachObject(n, [](Object*) {});
+}

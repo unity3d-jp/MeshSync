@@ -320,7 +320,7 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
 {
     ms::TransformPtr ret;
 
-    auto obj = n->GetObjectRef();
+    auto obj = GetBottomObject(n);
     if (obj->IsSubClassOf(polyObjectClassID) || obj->CanConvertToType(triObjectClassID)) {
         auto dst = ms::Mesh::create();
         ret = dst;
@@ -394,12 +394,11 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
     }
 
     bool ret = false;
-    auto obj = src->GetObjectRef();
+    auto obj = GetBottomObject(src);
     if (obj->IsSubClassOf(polyObjectClassID)) {
         ret = extractMeshData(dst, static_cast<PolyObject*>(obj)->GetMesh());
     }
-    else {
-        auto obj = src->GetObjectRef();
+    else if(obj->CanConvertToType(triObjectClassID)) {
         if (auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID)) {
             ret = extractMeshData(dst, tri->GetMesh());
         }

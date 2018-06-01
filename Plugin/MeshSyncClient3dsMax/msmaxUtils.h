@@ -6,6 +6,7 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
+Object* GetBottomObject(INode *n);
 
 inline TimeValue GetTime()
 {
@@ -55,6 +56,54 @@ inline void EachNode(NodeEventNamespace::NodeKeyTab& nkt, const Body& body)
         }
     }
 }
+
+// Body: [](Object *obj) -> void
+// return bottom object
+template<class Body>
+inline Object* EachObject(INode *n, const Body& body)
+{
+    Object* obj = n->GetObjectRef();
+    while (obj) {
+        body(obj);
+        if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID)
+            obj = ((IDerivedObject*)obj)->GetObjRef();
+        else
+            break;
+    }
+    return obj;
+}
+
+// Body: [](Object *obj, Modifier *mod) -> void
+template<class Body>
+inline void EachModifier(INode *n, const Body& body)
+{
+    Object* obj = n->GetObjectRef();
+    while (obj) {
+        if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
+            auto dobj = (IDerivedObject*)obj;
+            int num_mod = dobj->NumModifiers();
+            for (int mi = 0; mi < num_mod; ++mi)
+                body(obj, dobj->GetModifier(mi));
+            obj = dobj->GetObjRef();
+        }
+        else
+            break;
+    }
+    return obj;
+}
+
+// Body: [](Modifier *mod) -> void
+template<class Body>
+inline void EachModifier(Object *obj, const Body& body)
+{
+    if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
+        auto dobj = (IDerivedObject*)obj;
+        int num_mod = dobj->NumModifiers();
+        for (int mi = 0; mi < num_mod; ++mi)
+            body(obj, dobj->GetModifier(mi));
+    }
+}
+
 
 
 namespace detail {
