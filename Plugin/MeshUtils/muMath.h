@@ -761,19 +761,19 @@ template<class T> inline tvec4<T> swap_yz(const tvec4<T>& v) { return { v.x, v.z
 template<class T> inline tquat<T> swap_yz(const tquat<T>& v) { return {-v.x,-v.z,-v.y, v.w }; }
 template<class T> inline tmat3x3<T> swap_yz(const tmat3x3<T>& m)
 {
-    return m * tmat3x3<T> {
-        1, 0, 0,
-        0, 0, 1,
-        0, 1, 0,
+    return tmat3x3<T> {
+        m[0].x, m[0].z, m[0].y,
+        m[2].x, m[2].z, m[2].y,
+        m[1].x, m[1].z, m[1].y,
     };
 }
 template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
 {
-    return m * tmat4x4<T> {
-        1, 0, 0, 0,
-        0, 0, 1, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 1,
+    return tmat4x4<T> {
+        m[0].x, m[0].z, m[0].y, m[0].w,
+        m[2].x, m[2].z, m[2].y, m[1].w,
+        m[1].x, m[1].z, m[1].y, m[2].w,
+        m[3].x, m[3].z, m[3].y, m[3].w,
     };
 }
 

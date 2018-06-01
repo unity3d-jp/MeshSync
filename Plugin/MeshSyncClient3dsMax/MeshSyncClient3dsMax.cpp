@@ -223,7 +223,7 @@ void MeshSyncClient3dsMax::kickAsyncSend()
         ms::Client client(m_settings.client_settings);
 
         ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Left;
+        scene_settings.handedness = ms::Handedness::LeftZUp;
         scene_settings.scale_factor = m_settings.scale_factor;
 
         // notify scene begin
@@ -303,25 +303,12 @@ void MeshSyncClient3dsMax::exportMaterials()
 }
 
 
-static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
-{
-    auto mat = to_float4x4(node->GetObjTMAfterWSM(t));
-    if (auto parent = node->GetParentNode()) {
-        auto pmat = to_float4x4(parent->GetObjTMAfterWSM(t));
-        mat *= mu::invert(pmat);
-    }
-    pos = to_lhs(mu::extract_position(mat));
-    rot = to_lhs(mu::extract_rotation(mat));
-    scale = to_lhs(mu::extract_scale(mat));
-}
-
-
 ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
 {
     ms::TransformPtr ret;
 
     auto obj = GetBaseObject(n);
-    if (obj->CanConvertToType(triObjectClassID)) {
+    if (obj->IsSubClassOf(polyObjectClassID)) {
         auto dst = ms::Mesh::create();
         ret = dst;
         m_meshes.push_back(dst);
@@ -363,6 +350,19 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
         m_node_records[n].dst_obj = ret.get();
     }
     return ret;
+}
+
+
+static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
+{
+    auto mat = to_float4x4(node->GetObjTMAfterWSM(t));
+    if (auto parent = node->GetParentNode()) {
+        auto pmat = to_float4x4(parent->GetObjTMAfterWSM(t));
+        mat *= mu::invert(pmat);
+    }
+    pos = mu::extract_position(mat);
+    rot = mu::extract_rotation(mat);
+    scale = mu::extract_scale(mat);
 }
 
 bool MeshSyncClient3dsMax::extractTransformData(ms::Transform & dst, INode * src)
@@ -412,10 +412,13 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             int num_bones = skin->GetNumBones();
             for (int bi = 0; bi < num_bones; ++bi) {
                 auto bone = skin->GetBone(bi);
+                Matrix3 bone_matrix;
+                skin->GetBoneInitTM(bone, bone_matrix);
 
                 auto bd = ms::BoneData::create();
                 dst.bones.push_back(bd);
                 bd->path = GetPath(bone);
+                bd->bindpose = mu::invert(to_float4x4(bone_matrix));
                 bd->weights.resize_zeroclear(dst.points.size());
             }
 
@@ -433,9 +436,9 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
     }
 
     if (ret) {
-        for (auto& v : dst.points) v = to_lhs(v);
-        for (auto& v : dst.normals) v = to_lhs(v);
         dst.setupFlags();
+        dst.flags.has_refine_settings = 1;
+        dst.refine_settings.flags.swap_faces = 1;
     }
     return ret;
 }

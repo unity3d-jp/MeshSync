@@ -39,12 +39,6 @@ inline mu::float4x4 to_float4x4(const Matrix3& v)
     } };
 }
 
-inline mu::float3   to_lhs(const mu::float3& v)   { return swap_handedness(swap_yz(v)); }
-inline mu::quatf    to_lhs(const mu::quatf& v)    { return swap_handedness(swap_yz(v)); }
-inline mu::float3x3 to_lhs(const mu::float3x3& v) { return swap_handedness(swap_yz(v)); }
-inline mu::float4x4 to_lhs(const mu::float4x4& v) { return swap_handedness(swap_yz(v)); }
-
-
 
 
 // Body: [](INode *node) -> void
