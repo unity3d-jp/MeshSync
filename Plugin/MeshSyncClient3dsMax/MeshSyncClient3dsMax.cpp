@@ -7,6 +7,8 @@
 #pragma comment(lib, "core.lib")
 #pragma comment(lib, "geom.lib")
 #pragma comment(lib, "mesh.lib")
+#pragma comment(lib, "poly.lib")
+#pragma comment(lib, "mnmath.lib")
 #pragma comment(lib, "maxutil.lib")
 #pragma comment(lib, "maxscrpt.lib")
 #pragma comment(lib, "paramblk2.lib")
@@ -319,7 +321,7 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
     ms::TransformPtr ret;
 
     auto obj = n->GetObjectRef();
-    if (obj->CanConvertToType(triObjectClassID)) {
+    if (obj->IsSubClassOf(polyObjectClassID) || obj->CanConvertToType(triObjectClassID)) {
         auto dst = ms::Mesh::create();
         ret = dst;
         m_meshes.push_back(dst);
@@ -372,6 +374,8 @@ bool MeshSyncClient3dsMax::extractTransformData(ms::Transform & dst, INode * src
 bool MeshSyncClient3dsMax::extractCameraData(ms::Camera & dst, INode * src)
 {
     extractTransformData(dst, src);
+
+    auto cam = (CameraObject*)src->GetObjectRef();
     return true;
 }
 
@@ -389,10 +393,96 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         exportMaterials();
     }
 
+    bool ret = false;
     auto obj = src->GetObjectRef();
-    auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
-    auto& mesh = tri->GetMesh();
+    if (obj->IsSubClassOf(polyObjectClassID)) {
+        ret = extractMeshData(dst, static_cast<PolyObject*>(obj)->GetMesh());
+    }
+    else {
+        auto obj = src->GetObjectRef();
+        if (auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID)) {
+            ret = extractMeshData(dst, tri->GetMesh());
+        }
+    }
 
+    if (ret) {
+        for (auto& v : dst.points) v = to_lhs(v);
+        for (auto& v : dst.normals) v = to_lhs(v);
+        dst.setupFlags();
+    }
+    return ret;
+}
+
+bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, MNMesh & mesh)
+{
+    // faces
+    int num_faces = mesh.numf;
+    int num_indices = 0;
+    {
+        dst.counts.resize_discard(num_faces);
+        dst.material_ids.resize_discard(num_faces);
+        dst.indices.reserve(num_faces * 4);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto& face = mesh.f[fi];
+            dst.counts[fi] = face.deg;
+            dst.material_ids[fi] = face.material;
+            for (int i = 0; i < face.deg; ++i)
+                dst.indices.push_back(face.vtx[i]);
+            num_indices += face.deg;
+        }
+    }
+
+    // points
+    int num_vertices = mesh.numv;
+    dst.points.resize_discard(num_vertices);
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        dst.points[vi] = to_float3(mesh.v[vi].p);
+    }
+
+    if (m_settings.sync_normals) {
+        auto *nspec = mesh.GetSpecifiedNormals();
+        if (nspec) {
+            if (num_faces != nspec->GetNumFaces()) {
+                mscTrace("should not be here\n");
+            }
+            else {
+                dst.normals.resize_discard(num_indices);
+                auto *faces = nspec->GetFaceArray();
+                auto *normals = nspec->GetNormalArray();
+                int ii = 0;
+                for (int fi = 0; fi < num_faces; ++fi) {
+                    auto& face = faces[fi];
+                    int num = face.GetDegree();
+                    auto *nids = face.GetNormalIDArray();
+                    for (int i = 0; i < num; ++i)
+                        dst.normals[ii++] = to_float3(normals[nids[i]]);
+                }
+            }
+        }
+    }
+
+    // uv
+    if (m_settings.sync_uvs && mesh.MNum() > 0) {
+        auto *map = mesh.M(0);
+        if (num_faces != map->numf) {
+            mscTrace("should not be here\n");
+        }
+        else {
+            dst.uv0.resize_discard(num_indices);
+            int ii = 0;
+            for (int fi = 0; fi < num_faces; ++fi) {
+                auto& face = map->f[fi];
+                for (int i = 0; i < face.deg; ++i)
+                    dst.uv0[ii++] = to_float2(map->v[face.tv[i]]);
+            }
+        }
+    }
+
+    return true;
+}
+
+bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
+{
     // faces
     int num_faces = mesh.numFaces;
     int num_indices = num_faces * 3; // Max's Face is triangle
@@ -415,8 +505,6 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
     int num_vertices = mesh.numVerts;
     dst.points.resize_discard(num_vertices);
     dst.points.assign((mu::float3*)mesh.verts, (mu::float3*)mesh.verts + num_vertices);
-    for (auto& v : dst.points)
-        v = to_lhs(v);
 
     // normals
     if (m_settings.sync_normals) {
@@ -469,9 +557,6 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
                 dst.normals[fi * 3 + i] = get_normal(fi, face.v[i]);
             }
         }
-
-        for (auto& v : dst.normals)
-            v = to_lhs(v);
     }
 
     // uv
@@ -504,7 +589,6 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         }
     }
 
-    dst.setupFlags();
     return true;
 }
 

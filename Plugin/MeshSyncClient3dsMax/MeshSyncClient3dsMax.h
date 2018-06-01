@@ -73,6 +73,8 @@ private:
     bool extractCameraData(ms::Camera& dst, INode *src);
     bool extractLightData(ms::Light& dst, INode *src);
     bool extractMeshData(ms::Mesh& dst, INode *src);
+    bool extractMeshData(ms::Mesh& dst, MNMesh &src);
+    bool extractMeshData(ms::Mesh& dst, Mesh &src);
 
 
     ms::AnimationPtr exportAnimations(INode *node);

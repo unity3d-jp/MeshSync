@@ -93,9 +93,12 @@ inline void EnumerateAllNode(const Body& body)
     }
 }
 
-inline void DumpNodes(NodeEventNamespace::NodeKeyTab& nkt)
+
+#ifdef mscDebug
+inline void DbgPrintNode(INode *node)
 {
-    EachNode(nkt, [](INode *node) {
-        mscTraceW(L"node: %s\n", node->GetName());
-    });
+    mscTraceW(L"node: %s\n", node->GetName());
 }
+#else
+#define DbgPrintNode(...)
+#endif
