@@ -26,7 +26,19 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
-Object * GetBottomObject(INode * n)
+Object * GetBaseObject(INode * n)
 {
     return EachObject(n, [](Object*) {});
 }
+
+ISkin* FindSkin(INode *n)
+{
+    ISkin *ret = nullptr;
+    EachModifier(n, [&ret](Object *obj, Modifier *mod) {
+        if (mod->ClassID() == SKIN_CLASSID) {
+            ret = (ISkin*)mod->GetInterface(I_SKIN);
+        }
+    });
+    return ret;
+}
+

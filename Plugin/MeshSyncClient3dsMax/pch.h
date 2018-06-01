@@ -21,6 +21,7 @@
 // 3ds Max headers
 #include <max.h>
 #include <modstack.h>
+#include <iskin.h>
 #include <triobj.h>
 #include <notify.h>
 #include <ISceneEventManager.h>

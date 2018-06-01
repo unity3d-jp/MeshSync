@@ -25,7 +25,7 @@ static void OnNodeRenamed(void *param, NotifyInfo *info)
 }
 
 
-void MeshSyncClient3dsMax::NodeRecord::clearState()
+void MeshSyncClient3dsMax::TreeNode::clearState()
 {
     dst_obj = nullptr;
     dst_anim = nullptr;
@@ -320,8 +320,8 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
 {
     ms::TransformPtr ret;
 
-    auto obj = GetBottomObject(n);
-    if (obj->IsSubClassOf(polyObjectClassID) || obj->CanConvertToType(triObjectClassID)) {
+    auto obj = GetBaseObject(n);
+    if (obj->CanConvertToType(triObjectClassID)) {
         auto dst = ms::Mesh::create();
         ret = dst;
         m_meshes.push_back(dst);
@@ -329,7 +329,7 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
     }
 
     if (!ret) {
-        switch (n->SuperClassID()) {
+        switch (obj->SuperClassID()) {
         case CAMERA_CLASS_ID:
             if (m_settings.sync_cameras) {
                 auto dst = ms::Camera::create();
@@ -394,13 +394,41 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
     }
 
     bool ret = false;
-    auto obj = GetBottomObject(src);
+    auto obj = GetBaseObject(src);
+    /*
     if (obj->IsSubClassOf(polyObjectClassID)) {
         ret = extractMeshData(dst, static_cast<PolyObject*>(obj)->GetMesh());
     }
-    else if(obj->CanConvertToType(triObjectClassID)) {
+    else
+    */
+    if(obj->CanConvertToType(triObjectClassID)) {
         if (auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID)) {
             ret = extractMeshData(dst, tri->GetMesh());
+        }
+    }
+
+    if (m_settings.sync_bones) {
+        if (auto *skin = FindSkin(src)) {
+            int num_bones = skin->GetNumBones();
+            for (int bi = 0; bi < num_bones; ++bi) {
+                auto bone = skin->GetBone(bi);
+
+                auto bd = ms::BoneData::create();
+                dst.bones.push_back(bd);
+                bd->path = GetPath(bone);
+                bd->weights.resize_zeroclear(dst.points.size());
+            }
+
+            auto ctx = skin->GetContextInterface(src);
+            int num_vertices = ctx->GetNumPoints();
+            for (int vi = 0; vi < num_vertices; ++vi) {
+                int num_affected_bones = ctx->GetNumAssignedBones(vi);
+                for (int bi = 0; bi < num_affected_bones; ++bi) {
+                    int bone_index = ctx->GetAssignedBone(vi, bi);
+                    float bone_weight = ctx->GetBoneWeight(vi, bi);
+                    dst.bones[bone_index]->weights[vi] = bone_weight;
+                }
+            }
         }
     }
 

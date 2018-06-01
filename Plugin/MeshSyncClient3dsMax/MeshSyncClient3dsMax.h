@@ -85,11 +85,14 @@ private:
 
 private:
     using task_t = std::function<void()>;
-    struct NodeRecord
+    struct TreeNode
     {
-        INode *node;
-        bool dirty = true;
+        INode *nod = nullptr;
+        Object *obj = nullptr; // base (bottom) object
+        std::string name;
+        std::string path;
 
+        bool dirty = true;
         ms::Transform *dst_obj = nullptr;
         ms::Animation *dst_anim = nullptr;
         task_t extract_task;
@@ -110,7 +113,7 @@ private:
     Settings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
-    std::map<INode*, NodeRecord> m_node_records;
+    std::map<INode*, TreeNode> m_node_records;
     int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;

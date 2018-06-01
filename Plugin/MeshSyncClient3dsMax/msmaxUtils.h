@@ -6,7 +6,9 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
-Object* GetBottomObject(INode *n);
+Object* GetBaseObject(INode *n);
+ISkin* FindSkin(INode *n);
+
 
 inline TimeValue GetTime()
 {
@@ -89,7 +91,6 @@ inline void EachModifier(INode *n, const Body& body)
         else
             break;
     }
-    return obj;
 }
 
 // Body: [](Modifier *mod) -> void
