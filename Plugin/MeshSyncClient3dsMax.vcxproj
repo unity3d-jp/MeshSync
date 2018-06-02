@@ -26,16 +26,21 @@
     <ClInclude Include="MeshSyncClient3dsMax\MeshSyncClient3dsMax.h" />
     <ClInclude Include="MeshSyncClient3dsMax\msmaxUtils.h" />
     <ClInclude Include="MeshSyncClient3dsMax\pch.h" />
+    <ClInclude Include="MeshSyncClient3dsMax\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClient3dsMax\msmaxCallbacks.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\MeshSyncClient3dsMax.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\msmaxEntryPoint.cpp" />
+    <ClCompile Include="MeshSyncClient3dsMax\msmaxUI.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\msmaxUtils.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MeshSyncClient3dsMax\msmaxUI.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ACA96D8E-EC72-4DCD-94A2-BF2499FD7C9D}</ProjectGuid>

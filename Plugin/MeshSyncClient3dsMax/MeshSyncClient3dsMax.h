@@ -60,6 +60,9 @@ public:
 
     bool recvScene();
 
+    void showSettingsWindow();
+    void closeSettingsWindow();
+
 private:
     bool isSending() const;
     void waitAsyncSend();

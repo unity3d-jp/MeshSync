@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "MeshSyncClient3dsMax.h"
 
+HINSTANCE g_msmax_hinstance;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, ULONG fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+        g_msmax_hinstance = hinstDLL;
         MaxSDK::Util::UseLanguagePackLocale();
         MeshSyncClient3dsMax::getInstance(); // initialize instance
         DisableThreadLibraryCalls(hinstDLL);
@@ -104,6 +106,18 @@ def_visible_primitive(UnityMeshSync_ExportAnimations, "UnityMeshSync_ExportAnima
 Value* UnityMeshSync_ExportAnimations_cf(Value** arg_list, int count)
 {
     MeshSyncClient3dsMax::getInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
+    return &ok;
+}
+
+def_visible_primitive(UnityMeshSync_GUI, "UnityMeshSync_GUI");
+Value* UnityMeshSync_GUI_cf(Value** arg_list, int count)
+{
+    if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
+        MeshSyncClient3dsMax::getInstance().closeSettingsWindow();
+    }
+    else {
+        MeshSyncClient3dsMax::getInstance().showSettingsWindow();
+    }
     return &ok;
 }
 

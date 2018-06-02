@@ -18,6 +18,9 @@
     <ClInclude Include="MeshSyncClient3dsMax\msmaxUtils.h">
       <Filter>MeshSyncClient3dsMax</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClient3dsMax\resource.h">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClient3dsMax\pch.cpp">
@@ -35,5 +38,13 @@
     <ClCompile Include="MeshSyncClient3dsMax\msmaxEntryPoint.cpp">
       <Filter>MeshSyncClient3dsMax</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClient3dsMax\msmaxUI.cpp">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MeshSyncClient3dsMax\msmaxUI.rc">
+      <Filter>MeshSyncClient3dsMax</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
