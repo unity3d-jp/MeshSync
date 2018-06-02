@@ -7,6 +7,54 @@
 extern HINSTANCE g_msmax_hinstance;
 HWND g_msmax_settings_window;
 
+static bool CtrlGetBool(int cid)
+{
+    return IsDlgButtonChecked(g_msmax_settings_window, cid);
+};
+static void CtrlSetBool(int cid, bool v)
+{
+    CheckDlgButton(g_msmax_settings_window, cid, v);
+};
+
+static int CtrlGetInt(int cid, int default_value, bool sign = false)
+{
+    BOOL valid;
+    int v = GetDlgItemInt(g_msmax_settings_window, cid, &valid, sign);
+    return valid ? v : default_value;
+};
+
+static float CtrlGetFloat(int cid, float default_value)
+{
+    BOOL valid;
+    float v = GetDlgItemFloat(g_msmax_settings_window, cid, &valid);
+    return valid ? v : default_value;
+};
+
+
+static std::string CtrlGetText(int cid)
+{
+    wchar_t buf[256];
+    GetDlgItemText(g_msmax_settings_window, IDC_EDIT_SERVER, buf, _countof(buf));
+    return mu::ToMBS(buf);
+}
+static void CtrlSetText(int cid, const std::string& v)
+{
+    SetDlgItemText(g_msmax_settings_window, cid, mu::ToWCS(v).c_str());
+}
+static void CtrlSetText(int cid, int v)
+{
+    wchar_t buf[256];
+    swprintf(buf, L"%d", v);
+    SetDlgItemText(g_msmax_settings_window, cid, buf);
+
+}
+static void CtrlSetText(int cid, float v)
+{
+    wchar_t buf[256];
+    swprintf(buf, L"%.3f", v);
+    SetDlgItemText(g_msmax_settings_window, cid, buf);
+}
+
 static void PositionWindowNearCursor(HWND hwnd)
 {
     RECT rect;
@@ -29,6 +77,8 @@ static void PositionWindowNearCursor(HWND hwnd)
 static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     auto *_this = &MeshSyncClient3dsMax::getInstance();
+    auto& s = _this->getSettings();
+
     switch (msg) {
     case WM_INITDIALOG:
     {
@@ -50,14 +100,29 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hWnd, UINT msg, WPARAM wParam,
     {
         int code = HIWORD(wParam);
         int cid = LOWORD(wParam);
-        if (cid == IDC_BUTTON_MANUAL_SYNC && code == BN_CLICKED) {
+        if (cid == IDC_BUTTON_MANUAL_SYNC && code == BN_CLICKED)
             _this->sendScene(MeshSyncClient3dsMax::SendScope::All);
-            break;
-        }
-        else if (cid == IDC_BUTTON_SYNC_ANIMATIONS && code == BN_CLICKED) {
+        else if (cid == IDC_BUTTON_SYNC_ANIMATIONS && code == BN_CLICKED)
             _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All);
-            break;
-        }
+        else if (cid == IDC_CHECK_MESHES && code == BN_CLICKED)
+            s.sync_meshes = CtrlGetBool(IDC_CHECK_MESHES);
+        else if (cid == IDC_CHECK_NORMALS && code == BN_CLICKED)
+            s.sync_normals = CtrlGetBool(IDC_CHECK_NORMALS);
+        else if (cid == IDC_CHECK_UVS && code == BN_CLICKED)
+            s.sync_uvs = CtrlGetBool(IDC_CHECK_UVS);
+        else if (cid == IDC_CHECK_COLORS && code == BN_CLICKED)
+            s.sync_colors = CtrlGetBool(IDC_CHECK_COLORS);
+        else if (cid == IDC_CHECK_BLENDSHAPES && code == BN_CLICKED)
+            s.sync_blendshapes = CtrlGetBool(IDC_CHECK_BLENDSHAPES);
+        else if (cid == IDC_CHECK_BONES && code == BN_CLICKED)
+            s.sync_bones = CtrlGetBool(IDC_CHECK_BONES);
+        else if (cid == IDC_CHECK_CAMERAS && code == BN_CLICKED)
+            s.sync_cameras = CtrlGetBool(IDC_CHECK_CAMERAS);
+        else if (cid == IDC_CHECK_LIGHTS && code == BN_CLICKED)
+            s.sync_lights = CtrlGetBool(IDC_CHECK_LIGHTS);
+        else if (cid == IDC_CHECK_AUTO_SYNC && code == BN_CLICKED)
+            s.auto_sync = CtrlGetBool(IDC_CHECK_AUTO_SYNC);
+        break;
     }
 
     default:
@@ -81,69 +146,47 @@ void MeshSyncClient3dsMax::closeSettingsWindow()
     }
 }
 
-static wchar_t g_buf[256];
-
-static inline const wchar_t* to_wstr(int v)
-{
-    swprintf(g_buf, L"%d", v);
-    return g_buf;
-}
-static inline const wchar_t* to_wstr(float v)
-{
-    swprintf(g_buf, L"%.3f", v);
-    return g_buf;
-}
-
 void MeshSyncClient3dsMax::updateUIText()
 {
     auto& s = m_settings;
-    SetDlgItemText(g_msmax_settings_window, IDC_EDIT_SERVER, mu::ToWCS(s.client_settings.server).c_str());
-    SetDlgItemText(g_msmax_settings_window, IDC_EDIT_PORT, to_wstr((int)s.client_settings.port));
+    CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);
+    CtrlSetText(IDC_EDIT_PORT, (int)s.client_settings.port);
 
-    SetDlgItemText(g_msmax_settings_window, IDC_EDIT_SCALE_FACTOR, to_wstr(s.scale_factor));
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_MESHES,       s.sync_meshes);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_NORMALS,      s.sync_normals);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_UVS,          s.sync_uvs);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_COLORS,       s.sync_colors);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_BONES,        s.sync_bones);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_CAMERAS,      s.sync_cameras);
-    CheckDlgButton(g_msmax_settings_window, IDC_CHECK_LIGHTS,       s.sync_lights);
+    CtrlSetText(IDC_EDIT_SCALE_FACTOR,  s.scale_factor);
+    CtrlSetBool(IDC_CHECK_MESHES,       s.sync_meshes);
+    CtrlSetBool(IDC_CHECK_NORMALS,      s.sync_normals);
+    CtrlSetBool(IDC_CHECK_UVS,          s.sync_uvs);
+    CtrlSetBool(IDC_CHECK_COLORS,       s.sync_colors);
+    CtrlSetBool(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
+    CtrlSetBool(IDC_CHECK_BONES,        s.sync_bones);
+    CtrlSetBool(IDC_CHECK_CAMERAS,      s.sync_cameras);
+    CtrlSetBool(IDC_CHECK_LIGHTS,       s.sync_lights);
+    CtrlSetBool(IDC_CHECK_AUTO_SYNC,    s.auto_sync);
 
-    SetDlgItemText(g_msmax_settings_window, IDC_EDIT_ANIMATION_TIME_SCALE, to_wstr(s.animation_time_scale));
-    SetDlgItemText(g_msmax_settings_window, IDC_EDIT_ANIMATION_SPS, to_wstr(s.animation_sps));
+    CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
+    CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
 }
 
 
 void MeshSyncClient3dsMax::applyUISettings()
 {
     auto& s = m_settings;
-    BOOL valid;
-    int iv;
-    float fv;
 
-    GetDlgItemText(g_msmax_settings_window, IDC_EDIT_SERVER, g_buf, _countof(g_buf));
-    s.client_settings.server = mu::ToMBS(g_buf);
+    s.client_settings.server= CtrlGetText(IDC_EDIT_SERVER);
+    s.client_settings.port  = CtrlGetInt(IDC_EDIT_PORT, s.client_settings.port);
 
-    iv = GetDlgItemInt(g_msmax_settings_window, IDC_EDIT_PORT, &valid, false);
-    if (valid) s.client_settings.port = iv;
+    s.scale_factor          = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor);
+    s.sync_meshes           = CtrlGetBool(IDC_CHECK_MESHES);
+    s.sync_normals          = CtrlGetBool(IDC_CHECK_NORMALS);
+    s.sync_uvs              = CtrlGetBool(IDC_CHECK_UVS);
+    s.sync_colors           = CtrlGetBool(IDC_CHECK_COLORS);
+    s.sync_blendshapes      = CtrlGetBool(IDC_CHECK_BLENDSHAPES);
+    s.sync_bones            = CtrlGetBool(IDC_CHECK_BONES);
+    s.sync_cameras          = CtrlGetBool(IDC_CHECK_CAMERAS);
+    s.sync_lights           = CtrlGetBool(IDC_CHECK_LIGHTS);
+    s.auto_sync             = CtrlGetBool(IDC_CHECK_AUTO_SYNC);
 
-    fv = GetDlgItemFloat(g_msmax_settings_window, IDC_EDIT_SCALE_FACTOR, &valid);
-    if (valid) s.scale_factor = fv;
-
-    s.sync_meshes       = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_MESHES);
-    s.sync_normals      = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_NORMALS);
-    s.sync_uvs          = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_UVS);
-    s.sync_colors       = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_COLORS);
-    s.sync_blendshapes  = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_BLENDSHAPES);
-    s.sync_bones        = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_BONES);
-    s.sync_cameras      = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_CAMERAS);
-    s.sync_lights       = IsDlgButtonChecked(g_msmax_settings_window, IDC_CHECK_LIGHTS);
-
-    fv = GetDlgItemFloat(g_msmax_settings_window, IDC_EDIT_ANIMATION_TIME_SCALE, &valid);
-    if (valid) s.animation_time_scale = fv;
-
-    fv = GetDlgItemFloat(g_msmax_settings_window, IDC_EDIT_ANIMATION_SPS, &valid);
-    if (valid) s.animation_sps = fv;
+    s.animation_time_scale  = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
+    s.animation_sps         = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
 }
 

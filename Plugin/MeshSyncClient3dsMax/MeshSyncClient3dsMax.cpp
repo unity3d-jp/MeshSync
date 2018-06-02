@@ -92,13 +92,13 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 
 void MeshSyncClient3dsMax::onNodeUpdated(INode * n)
 {
-    mscTraceW(L"MeshSyncClient3dsMax::onNodeUpdated(): %s\n", n->GetName());
     m_node_records[n].dirty = true;
+    m_dirty = true;
 }
 
 void MeshSyncClient3dsMax::onRepaint()
 {
-    mscTraceW(L"MeshSyncClient3dsMax::onRepaint()\n");
+    update();
 }
 
 
