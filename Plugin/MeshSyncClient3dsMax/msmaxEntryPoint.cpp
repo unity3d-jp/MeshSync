@@ -76,9 +76,11 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
 
     auto& settings = MeshSyncClient3dsMax::getInstance().getSettings();
     if (count == 2 && wcscmp(arg_list[0]->to_string(), L"-q") == 0) {
+        one_value_local(result);
         auto it = s_table.find(arg_list[1]->to_string());
         if (it != s_table.end()) {
-            return_value(it->second.getter());
+            vl.result = it->second.getter();
+            return_value(vl.result);
         }
         else {
             return &undefined;
