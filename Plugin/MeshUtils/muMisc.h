@@ -18,6 +18,8 @@ std::string ToANSI(const char *src);
 std::string ToANSI(const std::string& src);
 std::string ToMBS(const wchar_t *src);
 std::string ToMBS(const std::wstring& src);
+std::wstring ToWCS(const char *src);
+std::wstring ToWCS(const std::string& src);
 
 
 void AddDLLSearchPath(const char *v);

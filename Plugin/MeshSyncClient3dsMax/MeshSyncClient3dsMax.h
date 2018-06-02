@@ -62,6 +62,8 @@ public:
 
     void showSettingsWindow();
     void closeSettingsWindow();
+    void updateUIText();
+    void applyUISettings();
 
 private:
     bool isSending() const;
