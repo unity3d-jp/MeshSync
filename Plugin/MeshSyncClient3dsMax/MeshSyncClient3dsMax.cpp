@@ -54,6 +54,11 @@ MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
     waitAsyncSend();
 }
 
+MeshSyncClient3dsMax::Settings & MeshSyncClient3dsMax::getSettings()
+{
+    return m_settings;
+}
+
 void MeshSyncClient3dsMax::onStartup()
 {
     GetCOREInterface()->RegisterViewportDisplayCallback(TRUE, &msmaxViewportDisplayCallback::getInstance());

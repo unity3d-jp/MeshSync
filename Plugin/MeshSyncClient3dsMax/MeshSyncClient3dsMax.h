@@ -12,10 +12,10 @@ public:
     {
         ms::ClientSettings client_settings;
 
+        int timeout_ms = 5000;
         float scale_factor = 100.0f;
         float animation_time_scale = 1.0f;
-        int  animation_sps = 2;
-        int  timeout_ms = 5000;
+        float animation_sps = 2;
         bool auto_sync = false;
         bool sync_meshes = true;
         bool sync_normals = true;
@@ -25,8 +25,6 @@ public:
         bool sync_blendshapes = true;
         bool sync_cameras = true;
         bool sync_lights = true;
-        bool sync_constraints = false;
-        bool apply_tweak = true;
         bool multithreaded = false;
 
         // import settings
@@ -46,6 +44,7 @@ public:
 
     MeshSyncClient3dsMax();
     ~MeshSyncClient3dsMax();
+    Settings& getSettings();
 
     void onStartup();
     void onSceneUpdated();
