@@ -12,6 +12,7 @@
 #pragma comment(lib, "maxutil.lib")
 #pragma comment(lib, "maxscrpt.lib")
 #pragma comment(lib, "paramblk2.lib")
+#pragma comment(lib, "Morpher.lib")
 #endif
 
 
@@ -385,6 +386,61 @@ bool MeshSyncClient3dsMax::extractLightData(ms::Light & dst, INode * src)
     return true;
 }
 
+
+// dst must be allocated with length of indices
+static void ExtractNormals(RawVector<mu::float3> & dst, Mesh & mesh)
+{
+    auto get_normal = [&mesh](int face_index, int vertex_index) -> mu::float3 {
+        const auto& rv = mesh.getRVert(vertex_index);
+        const auto& face = mesh.faces[face_index];
+        DWORD smGroup = face.smGroup;
+        int num_normals = 0;
+        Point3 ret;
+
+        // Is normal specified
+        // SPCIFIED is not currently used, but may be used in future versions.
+        if (rv.rFlags & SPECIFIED_NORMAL) {
+            ret = rv.rn.getNormal();
+        }
+        // If normal is not specified it's only available if the face belongs
+        // to a smoothing group
+        else if ((num_normals = rv.rFlags & NORCT_MASK) != 0 && smGroup) {
+            // If there is only one vertex is found in the rn member.
+            if (num_normals == 1) {
+                ret = rv.rn.getNormal();
+            }
+            else {
+                // If two or more vertices are there you need to step through them
+                // and find the vertex with the same smoothing group as the current face.
+                // You will find multiple normals in the ern member.
+                for (int i = 0; i < num_normals; i++) {
+                    if (rv.ern[i].getSmGroup() & smGroup) {
+                        ret = rv.ern[i].getNormal();
+                    }
+                }
+            }
+        }
+        else {
+            // Get the normal from the Face if no smoothing groups are there
+            ret = mesh.getFaceNormal(face_index);
+        }
+        return to_float3(ret);
+    };
+
+    // make sure normal is allocated
+    mesh.checkNormals(TRUE);
+
+    int num_faces = mesh.numFaces;
+    const auto *faces = mesh.faces;
+    for (int fi = 0; fi < num_faces; ++fi) {
+        auto& face = faces[fi];
+        for (int i = 0; i < 3; ++i) {
+            int vi = face.v[i];
+            dst[fi * 3 + i] = get_normal(fi, face.v[i]);
+        }
+    }
+}
+
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
 {
     extractTransformData(dst, src);
@@ -407,29 +463,76 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         }
     }
 
-    if (m_settings.sync_bones) {
-        if (auto *skin = FindSkin(src)) {
-            int num_bones = skin->GetNumBones();
-            for (int bi = 0; bi < num_bones; ++bi) {
-                auto bone = skin->GetBone(bi);
-                Matrix3 bone_matrix;
-                skin->GetBoneInitTM(bone, bone_matrix);
+    if (m_settings.sync_blendshapes) {
+        auto *mod = FindMorph(src);
+        if (mod) {
+            int num_faces = (int)dst.counts.size();
+            int num_points = (int)dst.points.size();
+            int num_normals = (int)dst.normals.size();
 
-                auto bd = ms::BoneData::create();
-                dst.bones.push_back(bd);
-                bd->path = GetPath(bone);
-                bd->bindpose = mu::invert(to_float4x4(bone_matrix));
-                bd->weights.resize_zeroclear(dst.points.size());
+            MaxMorphModifier morph(mod);
+            int num_channels = morph.NumMorphChannels();
+            for (int ci = 0; ci < num_channels; ++ci) {
+                auto channel = morph.GetMorphChannel(ci);
+                auto tnode = channel.GetMorphTarget();
+                if (!tnode || !channel.IsActive() || !channel.IsValid())
+                    continue;
+
+                auto tobj = GetBaseObject(tnode);
+                if (!tobj->CanConvertToType(triObjectClassID))
+                    continue;
+
+                auto& tmesh = ((TriObject*)tobj->ConvertToType(GetTime(), triObjectClassID))->GetMesh();
+                if (tmesh.numFaces != num_faces || tmesh.numVerts != num_points)
+                    continue;
+
+                auto dbs = ms::BlendShapeData::create();
+                dst.blendshapes.push_back(dbs);
+                dbs->name = mu::ToMBS(channel.GetName());
+
+                dbs->frames.push_back(ms::BlendShapeData::Frame());
+                auto& frame = dbs->frames.back();
+                frame.weight = 100.0f;
+                frame.points.assign((mu::float3*)tmesh.verts, (mu::float3*)tmesh.verts + num_points);
+                frame.normals.resize_discard(dst.normals.size());
+                ExtractNormals(frame.normals, tmesh);
+
+                for (int i = 0; i < num_points; ++i)
+                    frame.points[i] = frame.points[i] - dst.points[i];
+                for (int i = 0; i < num_normals; ++i)
+                    frame.normals[i] = frame.normals[i] - dst.normals[i];
             }
+        }
+    }
 
+    if (m_settings.sync_bones) {
+        auto *skin = FindSkin(src);
+        if (skin) {
             auto ctx = skin->GetContextInterface(src);
+            int num_bones = skin->GetNumBones();
             int num_vertices = ctx->GetNumPoints();
-            for (int vi = 0; vi < num_vertices; ++vi) {
-                int num_affected_bones = ctx->GetNumAssignedBones(vi);
-                for (int bi = 0; bi < num_affected_bones; ++bi) {
-                    int bone_index = ctx->GetAssignedBone(vi, bi);
-                    float bone_weight = ctx->GetBoneWeight(vi, bi);
-                    dst.bones[bone_index]->weights[vi] = bone_weight;
+            if (num_vertices >= dst.points.size()) {
+                // vertices are increased by modifiers. this case is not supported.
+            }
+            else {
+                for (int bi = 0; bi < num_bones; ++bi) {
+                    auto bone = skin->GetBone(bi);
+                    Matrix3 bone_matrix;
+                    skin->GetBoneInitTM(bone, bone_matrix);
+
+                    auto bd = ms::BoneData::create();
+                    dst.bones.push_back(bd);
+                    bd->path = GetPath(bone);
+                    bd->bindpose = mu::invert(to_float4x4(bone_matrix));
+                    bd->weights.resize_zeroclear(dst.points.size());
+                }
+                for (int vi = 0; vi < num_vertices; ++vi) {
+                    int num_affected_bones = ctx->GetNumAssignedBones(vi);
+                    for (int bi = 0; bi < num_affected_bones; ++bi) {
+                        int bone_index = ctx->GetAssignedBone(vi, bi);
+                        float bone_weight = ctx->GetBoneWeight(vi, bi);
+                        dst.bones[bone_index]->weights[vi] = bone_weight;
+                    }
                 }
             }
         }
@@ -538,55 +641,8 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
 
     // normals
     if (m_settings.sync_normals) {
-        auto get_normal = [&mesh](int face_index, int vertex_index) -> mu::float3 {
-            const auto& rv = mesh.getRVert(vertex_index);
-            const auto& face = mesh.faces[face_index];
-            DWORD smGroup = face.smGroup;
-            int num_normals = 0;
-            Point3 ret;
-
-            // Is normal specified
-            // SPCIFIED is not currently used, but may be used in future versions.
-            if (rv.rFlags & SPECIFIED_NORMAL) {
-                ret = rv.rn.getNormal();
-            }
-            // If normal is not specified it's only available if the face belongs
-            // to a smoothing group
-            else if ((num_normals = rv.rFlags & NORCT_MASK) != 0 && smGroup) {
-                // If there is only one vertex is found in the rn member.
-                if (num_normals == 1) {
-                    ret = rv.rn.getNormal();
-                }
-                else {
-                    // If two or more vertices are there you need to step through them
-                    // and find the vertex with the same smoothing group as the current face.
-                    // You will find multiple normals in the ern member.
-                    for (int i = 0; i < num_normals; i++) {
-                        if (rv.ern[i].getSmGroup() & smGroup) {
-                            ret = rv.ern[i].getNormal();
-                        }
-                    }
-                }
-            }
-            else {
-                // Get the normal from the Face if no smoothing groups are there
-                ret = mesh.getFaceNormal(face_index);
-            }
-            return to_float3(ret);
-        };
-
-        // make sure normal is allocated
-        mesh.checkNormals(TRUE);
-
-        const auto *faces = mesh.faces;
         dst.normals.resize_discard(num_indices);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            auto& face = faces[fi];
-            for (int i = 0; i < 3; ++i) {
-                int vi = face.v[i];
-                dst.normals[fi * 3 + i] = get_normal(fi, face.v[i]);
-            }
-        }
+        ExtractNormals(dst.normals, mesh);
     }
 
     // uv

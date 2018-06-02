@@ -8,6 +8,7 @@ std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
 Object* GetBaseObject(INode *n);
 ISkin* FindSkin(INode *n);
+Modifier* FindMorph(INode * n);
 
 
 inline TimeValue GetTime()

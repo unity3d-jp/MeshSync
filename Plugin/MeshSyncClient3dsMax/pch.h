@@ -28,6 +28,7 @@
 #include <systemutilities.h>
 #include <maxscript/maxscript.h>
 #include <maxscript/macros/define_instantiation_functions.h>
+#include <MorpherApi.h>
 
 #ifdef PI
     #undef PI

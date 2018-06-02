@@ -42,3 +42,14 @@ ISkin* FindSkin(INode *n)
     return ret;
 }
 
+Modifier* FindMorph(INode * n)
+{
+    Modifier *ret = nullptr;
+    EachModifier(n, [&ret](Object *obj, Modifier *mod) {
+        if (mod->ClassID() == MR3_CLASS_ID) {
+            ret = mod;
+        }
+    });
+    return ret;
+}
+
