@@ -74,22 +74,22 @@ static void PositionWindowNearCursor(HWND hwnd)
     MoveWindow(hwnd, cur.x, cur.y, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 }
 
-static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     auto *_this = &MeshSyncClient3dsMax::getInstance();
     auto& s = _this->getSettings();
 
+    INT_PTR ret = FALSE;
     switch (msg) {
     case WM_INITDIALOG:
-    {
-        g_msmax_settings_window = hWnd;
-        PositionWindowNearCursor(hWnd);
+        ret = TRUE;
+        g_msmax_settings_window = hDlg;
+        PositionWindowNearCursor(hDlg);
         _this->updateUIText();
         break;
-    }
+
     case WM_CLOSE:
-        g_msmax_settings_window = nullptr;
-        DestroyWindow(hWnd);
+        DestroyWindow(hDlg);
         break;
 
     case WM_DESTROY:
@@ -100,35 +100,71 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hWnd, UINT msg, WPARAM wParam,
     {
         int code = HIWORD(wParam);
         int cid = LOWORD(wParam);
-        if (cid == IDC_BUTTON_MANUAL_SYNC && code == BN_CLICKED)
-            _this->sendScene(MeshSyncClient3dsMax::SendScope::All);
-        else if (cid == IDC_BUTTON_SYNC_ANIMATIONS && code == BN_CLICKED)
-            _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All);
-        else if (cid == IDC_CHECK_MESHES && code == BN_CLICKED)
-            s.sync_meshes = CtrlGetBool(IDC_CHECK_MESHES);
-        else if (cid == IDC_CHECK_NORMALS && code == BN_CLICKED)
-            s.sync_normals = CtrlGetBool(IDC_CHECK_NORMALS);
-        else if (cid == IDC_CHECK_UVS && code == BN_CLICKED)
-            s.sync_uvs = CtrlGetBool(IDC_CHECK_UVS);
-        else if (cid == IDC_CHECK_COLORS && code == BN_CLICKED)
-            s.sync_colors = CtrlGetBool(IDC_CHECK_COLORS);
-        else if (cid == IDC_CHECK_BLENDSHAPES && code == BN_CLICKED)
-            s.sync_blendshapes = CtrlGetBool(IDC_CHECK_BLENDSHAPES);
-        else if (cid == IDC_CHECK_BONES && code == BN_CLICKED)
-            s.sync_bones = CtrlGetBool(IDC_CHECK_BONES);
-        else if (cid == IDC_CHECK_CAMERAS && code == BN_CLICKED)
-            s.sync_cameras = CtrlGetBool(IDC_CHECK_CAMERAS);
-        else if (cid == IDC_CHECK_LIGHTS && code == BN_CLICKED)
-            s.sync_lights = CtrlGetBool(IDC_CHECK_LIGHTS);
-        else if (cid == IDC_CHECK_AUTO_SYNC && code == BN_CLICKED)
-            s.auto_sync = CtrlGetBool(IDC_CHECK_AUTO_SYNC);
+
+        auto handle_edit = [&](const std::function<void()>& body) {
+            switch (code) {
+            case EN_SETFOCUS:
+                DisableAccelerators();
+                ret = TRUE;
+                break;
+            case EN_KILLFOCUS:
+                EnableAccelerators();
+                ret = TRUE;
+                break;
+            case EN_CHANGE:
+                ret = TRUE;
+                body();
+                break;
+            }
+        };
+
+        auto handle_button = [&](const std::function<void()>& body) {
+            switch (code) {
+            case BN_CLICKED:
+                body();
+                ret = TRUE;
+                break;
+            }
+        };
+
+        if (cid == IDC_EDIT_SERVER)
+            handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
+        else if (cid == IDC_EDIT_PORT)
+            handle_edit([&]() { s.client_settings.port = CtrlGetInt(IDC_EDIT_SERVER, s.client_settings.port); });
+        else if (cid == IDC_EDIT_SCALE_FACTOR)
+            handle_edit([&]() { s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor); });
+        else if (cid == IDC_CHECK_MESHES)
+            handle_button([&]() { s.sync_meshes = CtrlGetBool(IDC_CHECK_MESHES); });
+        else if (cid == IDC_CHECK_NORMALS)
+            handle_button([&]() { s.sync_normals = CtrlGetBool(IDC_CHECK_NORMALS); });
+        else if (cid == IDC_CHECK_UVS)
+            handle_button([&]() { s.sync_uvs = CtrlGetBool(IDC_CHECK_UVS); });
+        else if (cid == IDC_CHECK_COLORS)
+            handle_button([&]() { s.sync_colors = CtrlGetBool(IDC_CHECK_COLORS); });
+        else if (cid == IDC_CHECK_BLENDSHAPES)
+            handle_button([&]() { s.sync_blendshapes = CtrlGetBool(IDC_CHECK_BLENDSHAPES); });
+        else if (cid == IDC_CHECK_BONES)
+            handle_button([&]() { s.sync_bones = CtrlGetBool(IDC_CHECK_BONES); });
+        else if (cid == IDC_CHECK_CAMERAS)
+            handle_button([&]() { s.sync_cameras = CtrlGetBool(IDC_CHECK_CAMERAS); });
+        else if (cid == IDC_CHECK_LIGHTS)
+            handle_button([&]() { s.sync_lights = CtrlGetBool(IDC_CHECK_LIGHTS); });
+        else if (cid == IDC_CHECK_AUTO_SYNC)
+            handle_button([&]() { s.auto_sync = CtrlGetBool(IDC_CHECK_AUTO_SYNC); });
+        else if (cid == IDC_EDIT_ANIMATION_TIME_SCALE)
+            handle_edit([&]() { s.animation_time_scale = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale); });
+        else if (cid == IDC_EDIT_ANIMATION_SPS)
+            handle_edit([&]() { s.animation_sps = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps); });
+        else if (cid == IDC_BUTTON_MANUAL_SYNC)
+            handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All); });
+        else if (cid == IDC_BUTTON_SYNC_ANIMATIONS)
+            handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
         break;
     }
-
     default:
-        return 0;
+        break;
     }
-    return 1;
+    return ret;
 }
 
 void MeshSyncClient3dsMax::showSettingsWindow()
@@ -189,4 +225,3 @@ void MeshSyncClient3dsMax::applyUISettings()
     s.animation_time_scale  = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     s.animation_sps         = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
 }
-
