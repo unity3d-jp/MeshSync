@@ -12,6 +12,7 @@
 #pragma comment(lib, "maxutil.lib")
 #pragma comment(lib, "maxscrpt.lib")
 #pragma comment(lib, "paramblk2.lib")
+#pragma comment(lib, "menus.lib")
 #pragma comment(lib, "Morpher.lib")
 #endif
 
@@ -51,6 +52,7 @@ MeshSyncClient3dsMax::MeshSyncClient3dsMax()
 
 MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
 {
+    unregisterMenu();
     waitAsyncSend();
 }
 
@@ -65,6 +67,7 @@ void MeshSyncClient3dsMax::onStartup()
     GetCOREInterface()->RegisterTimeChangeCallback(&msmaxTimeChangeCallback::getInstance());
     RegisterNotification(OnNodeRenamed, this, NOTIFY_NODE_RENAMED);
     m_cbkey = GetISceneEventManager()->RegisterCallback(msmaxNodeCallback::getInstance().GetINodeEventCallback());
+    registerMenu();
 }
 
 void MeshSyncClient3dsMax::onSceneUpdated()

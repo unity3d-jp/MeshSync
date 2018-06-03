@@ -3,6 +3,129 @@
 #include "msmaxUtils.h"
 #include "resource.h"
 
+#define msmaxTitle L"MeshSync"
+
+#define msmaxMenuTitle_GUI              L"MeshSync GUI"
+#define msmaxMenuTitle_ExportScene      L"MeshSync Export Scene"
+#define msmaxMenuTitle_ExportAnimations L"MeshSync Export Animations"
+#define msmaxActionID_GUI               0
+#define msmaxActionID_ExportScene       1
+#define msmaxActionID_ExportAnimations  2
+
+static const ActionTableId kTableActions = 0xec29063a;
+static const ActionContextId kTableContext = 0xec29063a;
+
+class msmaxAction_GUI : public ActionItem
+{
+public:
+    int GetId() override { return msmaxActionID_GUI; }
+    void GetButtonText(MSTR& buttonText) override   { buttonText.FromBSTR(msmaxMenuTitle_GUI); }
+    void GetMenuText(MSTR& menuText) override       { menuText.FromBSTR(msmaxMenuTitle_GUI); }
+    void GetDescriptionText(MSTR& descText) override{ descText.FromBSTR(msmaxMenuTitle_GUI); }
+    void GetCategoryText(MSTR& catText) override    { catText.FromBSTR(msmaxMenuTitle_GUI); }
+    BOOL IsChecked() override       { return FALSE; }
+    BOOL IsItemVisible() override   { return TRUE; }
+    BOOL IsEnabled() override       { return TRUE; }
+    void DeleteThis() override      { delete this; }
+
+    BOOL ExecuteAction() override
+    {
+        MeshSyncClient3dsMax::getInstance().showSettingsWindow();
+        return TRUE;
+    }
+};
+
+class msmaxAction_ExportScene : public ActionItem
+{
+public:
+    int GetId() override { return msmaxActionID_ExportScene; }
+    void GetButtonText(MSTR& buttonText) override { buttonText.FromBSTR(msmaxMenuTitle_ExportScene); }
+    void GetMenuText(MSTR& menuText) override { menuText.FromBSTR(msmaxMenuTitle_ExportScene); }
+    void GetDescriptionText(MSTR& descText) override { descText.FromBSTR(msmaxMenuTitle_ExportScene); }
+    void GetCategoryText(MSTR& catText) override { catText.FromBSTR(msmaxMenuTitle_ExportScene); }
+    BOOL IsChecked() override { return FALSE; }
+    BOOL IsItemVisible() override { return TRUE; }
+    BOOL IsEnabled() override { return TRUE; }
+    void DeleteThis() override { delete this; }
+
+    BOOL ExecuteAction() override
+    {
+        MeshSyncClient3dsMax::getInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
+        return TRUE;
+    }
+};
+
+class msmaxAction_ExportAnimations : public ActionItem
+{
+public:
+    int GetId() override { return msmaxActionID_ExportAnimations; }
+    void GetButtonText(MSTR& buttonText) override { buttonText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
+    void GetMenuText(MSTR& menuText) override { menuText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
+    void GetDescriptionText(MSTR& descText) override { descText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
+    void GetCategoryText(MSTR& catText) override { catText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
+    BOOL IsChecked() override { return FALSE; }
+    BOOL IsItemVisible() override { return TRUE; }
+    BOOL IsEnabled() override { return TRUE; }
+    void DeleteThis() override { delete this; }
+
+    BOOL ExecuteAction() override
+    {
+        MeshSyncClient3dsMax::getInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
+        return TRUE;
+    }
+};
+
+class msmaxActionCallback : public ActionCallback
+{
+public:
+};
+static msmaxActionCallback g_msmaxActionCallback;
+
+void MeshSyncClient3dsMax::registerMenu()
+{
+    unregisterMenu();
+
+    {
+        auto *table = new ActionTable(kTableActions, kTableContext, TSTR(msmaxTitle));
+        table->AppendOperation(new msmaxAction_GUI());
+        table->AppendOperation(new msmaxAction_ExportScene());
+        table->AppendOperation(new msmaxAction_ExportAnimations());
+        GetCOREInterface()->GetActionManager()->RegisterActionTable(table);
+        GetCOREInterface()->GetActionManager()->ActivateActionTable(&g_msmaxActionCallback, kTableActions);
+    }
+
+    //auto *table = GetCOREInterface()->GetActionManager()->FindTable(kTableActions);
+    //auto *mainmenu = GetCOREInterface()->GetMenuManager()->GetMainMenuBar();
+
+    //auto item = GetIMenuItem();
+    //item->SetEnabled(true);
+    //item->SetVisible(true);
+    //item->SetTitle(msmaxMenuTitle_GUI);
+    //item->SetActionItem(table->GetAction(msmaxActionID_GUI));
+
+    //{
+    //    for (int i = 0; i < mainmenu->NumItems(); ++i) {
+    //        mscTraceW(L"  menu item: %s\n", mainmenu->GetItem(i)->GetTitle().data());
+    //        if (wcscmp(mainmenu->GetItem(i)->GetTitle().data(), L"&Tools") == 0) {
+    //            mainmenu->GetItem(i)->GetSubMenu()->AddItem(item);
+    //        }
+
+    //        auto submenu = mainmenu->GetItem(i)->GetSubMenu();
+    //        if (submenu) {
+    //            for (int j = 0; j < submenu->NumItems(); ++j) {
+    //                mscTraceW(L"    menu item: %s\n", submenu->GetItem(j)->GetTitle().data());
+    //            }
+    //        }
+    //    }
+    //}
+}
+
+void MeshSyncClient3dsMax::unregisterMenu()
+{
+    if (auto *menu = GetCOREInterface()->GetMenuManager()->FindMenu(msmaxTitle))
+        GetCOREInterface()->GetMenuManager()->UnRegisterMenu(menu);
+}
+
 
 extern HINSTANCE g_msmax_hinstance;
 HWND g_msmax_settings_window;
@@ -76,6 +199,9 @@ static void PositionWindowNearCursor(HWND hwnd)
 
 static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    // see this about DisableAccelerators(), EnableAccelerators() and GetCOREInterface()->RegisterDlgWnd()
+    // https://help.autodesk.com/view/3DSMAX/2018/ENU/?guid=__developer_3ds_max_sdk_features_user_interface_action_system_keyboard_accelerators_and_dialog_html
+
     auto *_this = &MeshSyncClient3dsMax::getInstance();
     auto& s = _this->getSettings();
 
@@ -84,6 +210,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     case WM_INITDIALOG:
         ret = TRUE;
         g_msmax_settings_window = hDlg;
+        GetCOREInterface()->RegisterDlgWnd(g_msmax_settings_window);
         PositionWindowNearCursor(hDlg);
         _this->updateUIText();
         break;
@@ -93,6 +220,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         break;
 
     case WM_DESTROY:
+        GetCOREInterface()->UnRegisterDlgWnd(g_msmax_settings_window);
         g_msmax_settings_window = nullptr;
         break;
 
@@ -161,6 +289,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
         break;
     }
+
     default:
         break;
     }

@@ -60,6 +60,9 @@ public:
 
     bool recvScene();
 
+    // UI
+    void registerMenu();
+    void unregisterMenu();
     void showSettingsWindow();
     void closeSettingsWindow();
     void updateUIText();
