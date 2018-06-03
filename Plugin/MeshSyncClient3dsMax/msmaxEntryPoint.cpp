@@ -111,8 +111,15 @@ Value* UnityMeshSync_ExportAnimations_cf(Value** arg_list, int count)
     return &ok;
 }
 
-def_visible_primitive(UnityMeshSync_GUI, "UnityMeshSync_GUI");
-Value* UnityMeshSync_GUI_cf(Value** arg_list, int count)
+def_visible_primitive(UnityMeshSync_Import, "UnityMeshSync_Import");
+Value* UnityMeshSync_Import_cf(Value** arg_list, int count)
+{
+    MeshSyncClient3dsMax::getInstance().recvScene();
+    return &ok;
+}
+
+def_visible_primitive(UnityMeshSync, "UnityMeshSync");
+Value* UnityMeshSync_cf(Value** arg_list, int count)
 {
     if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
         MeshSyncClient3dsMax::getInstance().closeSettingsWindow();

@@ -52,7 +52,7 @@ MeshSyncClient3dsMax::MeshSyncClient3dsMax()
 
 MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
 {
-    unregisterMenu();
+    //unregisterMenu();
     waitAsyncSend();
 }
 

@@ -3,14 +3,16 @@
 #include "msmaxUtils.h"
 #include "resource.h"
 
-#define msmaxTitle L"MeshSync"
+#define msmaxTitle L"UnityMeshSync"
 
-#define msmaxMenuTitle_GUI              L"MeshSync GUI"
-#define msmaxMenuTitle_ExportScene      L"MeshSync Export Scene"
-#define msmaxMenuTitle_ExportAnimations L"MeshSync Export Animations"
-#define msmaxActionID_GUI               0
+#define msmaxMenuTitle_Window           L"Unity Mesh Sync"
+#define msmaxMenuTitle_ExportScene      L"Unity Mesh Sync - Export Scene"
+#define msmaxMenuTitle_ExportAnimations L"Unity Mesh Sync - Export Animations"
+#define msmaxMenuTitle_Import           L"Unity Mesh Sync - Import"
+#define msmaxActionID_Window            0
 #define msmaxActionID_ExportScene       1
 #define msmaxActionID_ExportAnimations  2
+#define msmaxActionID_Import            3
 
 static const ActionTableId kTableActions = 0xec29063a;
 static const ActionContextId kTableContext = 0xec29063a;
@@ -18,11 +20,11 @@ static const ActionContextId kTableContext = 0xec29063a;
 class msmaxAction_GUI : public ActionItem
 {
 public:
-    int GetId() override { return msmaxActionID_GUI; }
-    void GetButtonText(MSTR& buttonText) override   { buttonText.FromBSTR(msmaxMenuTitle_GUI); }
-    void GetMenuText(MSTR& menuText) override       { menuText.FromBSTR(msmaxMenuTitle_GUI); }
-    void GetDescriptionText(MSTR& descText) override{ descText.FromBSTR(msmaxMenuTitle_GUI); }
-    void GetCategoryText(MSTR& catText) override    { catText.FromBSTR(msmaxMenuTitle_GUI); }
+    int GetId() override { return msmaxActionID_Window; }
+    void GetButtonText(MSTR& buttonText) override   { buttonText = MSTR(msmaxMenuTitle_Window); }
+    void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Window); }
+    void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Window); }
+    void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
     BOOL IsChecked() override       { return FALSE; }
     BOOL IsItemVisible() override   { return TRUE; }
     BOOL IsEnabled() override       { return TRUE; }
@@ -39,14 +41,14 @@ class msmaxAction_ExportScene : public ActionItem
 {
 public:
     int GetId() override { return msmaxActionID_ExportScene; }
-    void GetButtonText(MSTR& buttonText) override { buttonText.FromBSTR(msmaxMenuTitle_ExportScene); }
-    void GetMenuText(MSTR& menuText) override { menuText.FromBSTR(msmaxMenuTitle_ExportScene); }
-    void GetDescriptionText(MSTR& descText) override { descText.FromBSTR(msmaxMenuTitle_ExportScene); }
-    void GetCategoryText(MSTR& catText) override { catText.FromBSTR(msmaxMenuTitle_ExportScene); }
-    BOOL IsChecked() override { return FALSE; }
-    BOOL IsItemVisible() override { return TRUE; }
-    BOOL IsEnabled() override { return TRUE; }
-    void DeleteThis() override { delete this; }
+    void GetButtonText(MSTR& buttonText) override   { buttonText = MSTR(msmaxMenuTitle_ExportScene); }
+    void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_ExportScene); }
+    void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_ExportScene); }
+    void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
+    BOOL IsChecked() override       { return FALSE; }
+    BOOL IsItemVisible() override   { return TRUE; }
+    BOOL IsEnabled() override       { return TRUE; }
+    void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
@@ -59,18 +61,38 @@ class msmaxAction_ExportAnimations : public ActionItem
 {
 public:
     int GetId() override { return msmaxActionID_ExportAnimations; }
-    void GetButtonText(MSTR& buttonText) override { buttonText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
-    void GetMenuText(MSTR& menuText) override { menuText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
-    void GetDescriptionText(MSTR& descText) override { descText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
-    void GetCategoryText(MSTR& catText) override { catText.FromBSTR(msmaxMenuTitle_ExportAnimations); }
-    BOOL IsChecked() override { return FALSE; }
-    BOOL IsItemVisible() override { return TRUE; }
-    BOOL IsEnabled() override { return TRUE; }
-    void DeleteThis() override { delete this; }
+    void GetButtonText(MSTR& buttonText) override   { buttonText = MSTR(msmaxMenuTitle_ExportAnimations); }
+    void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_ExportAnimations); }
+    void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_ExportAnimations); }
+    void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
+    BOOL IsChecked() override       { return FALSE; }
+    BOOL IsItemVisible() override   { return TRUE; }
+    BOOL IsEnabled() override       { return TRUE; }
+    void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
         MeshSyncClient3dsMax::getInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
+        return TRUE;
+    }
+};
+
+class msmaxAction_Import : public ActionItem
+{
+public:
+    int GetId() override { return msmaxActionID_Import; }
+    void GetButtonText(MSTR& buttonText) override   { buttonText = MSTR(msmaxMenuTitle_Import); }
+    void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Import); }
+    void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Import); }
+    void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
+    BOOL IsChecked() override       { return FALSE; }
+    BOOL IsItemVisible() override   { return TRUE; }
+    BOOL IsEnabled() override       { return TRUE; }
+    void DeleteThis() override      { delete this; }
+
+    BOOL ExecuteAction() override
+    {
+        MeshSyncClient3dsMax::getInstance().recvScene();
         return TRUE;
     }
 };
@@ -90,40 +112,61 @@ void MeshSyncClient3dsMax::registerMenu()
         table->AppendOperation(new msmaxAction_GUI());
         table->AppendOperation(new msmaxAction_ExportScene());
         table->AppendOperation(new msmaxAction_ExportAnimations());
+        table->AppendOperation(new msmaxAction_Import());
         GetCOREInterface()->GetActionManager()->RegisterActionTable(table);
         GetCOREInterface()->GetActionManager()->ActivateActionTable(&g_msmaxActionCallback, kTableActions);
+        GetCOREInterface()->GetActionManager()->RegisterActionContext(kTableContext, msmaxTitle);
     }
 
-    //auto *table = GetCOREInterface()->GetActionManager()->FindTable(kTableActions);
-    //auto *mainmenu = GetCOREInterface()->GetMenuManager()->GetMainMenuBar();
-
-    //auto item = GetIMenuItem();
-    //item->SetEnabled(true);
-    //item->SetVisible(true);
-    //item->SetTitle(msmaxMenuTitle_GUI);
-    //item->SetActionItem(table->GetAction(msmaxActionID_GUI));
-
-    //{
-    //    for (int i = 0; i < mainmenu->NumItems(); ++i) {
-    //        mscTraceW(L"  menu item: %s\n", mainmenu->GetItem(i)->GetTitle().data());
-    //        if (wcscmp(mainmenu->GetItem(i)->GetTitle().data(), L"&Tools") == 0) {
-    //            mainmenu->GetItem(i)->GetSubMenu()->AddItem(item);
-    //        }
-
-    //        auto submenu = mainmenu->GetItem(i)->GetSubMenu();
-    //        if (submenu) {
-    //            for (int j = 0; j < submenu->NumItems(); ++j) {
-    //                mscTraceW(L"    menu item: %s\n", submenu->GetItem(j)->GetTitle().data());
-    //            }
-    //        }
-    //    }
-    //}
+    auto *table = GetCOREInterface()->GetActionManager()->FindTable(kTableActions);
+    auto *main_menu = GetCOREInterface()->GetMenuManager()->GetMainMenuBar();
+    if (table && main_menu) {
+        int num_menus = main_menu->NumItems();
+        if (num_menus >= 3) {
+            auto *tools = main_menu->GetItem(2); // 2nd menu is "Tools" by default
+            auto *tools_submenu = tools->GetSubMenu();
+            if (tools_submenu) {
+                auto *item = GetIMenuItem();
+                item->SetActionItem(table->GetAction(msmaxActionID_Window));
+                tools_submenu->AddItem(item);
+            }
+        }
+    }
 }
+
 
 void MeshSyncClient3dsMax::unregisterMenu()
 {
-    if (auto *menu = GetCOREInterface()->GetMenuManager()->FindMenu(msmaxTitle))
+    if (auto *menu = GetCOREInterface()->GetMenuManager()->FindMenu(msmaxTitle)) {
         GetCOREInterface()->GetMenuManager()->UnRegisterMenu(menu);
+    }
+
+    auto *main_menu = GetCOREInterface()->GetMenuManager()->GetMainMenuBar();
+    if (main_menu) {
+        int num_menus = main_menu->NumItems();
+        if (num_menus >= 3) {
+            auto *tools = main_menu->GetItem(2); // 2nd menu is "Tools" by default
+            auto *tools_submenu = tools->GetSubMenu();
+            if (tools_submenu) {
+                int n = tools_submenu->NumItems();
+                for (int i = 0; i < n; /**/) {
+                    auto *item = tools_submenu->GetItem(i);
+                    auto *action_item = item->GetActionItem();
+                    if (action_item) {
+                        MSTR tmp;
+                        action_item->GetMenuText(tmp);
+                        if (wcscmp(tmp.data(), L"Missing: 0") == 0) {
+                            tools_submenu->RemoveItem(item);
+                            n = tools_submenu->NumItems();
+                            continue;
+                        }
+                    }
+                    ++i;
+                }
+            }
+            //tools_submenu->
+        }
+    }
 }
 
 
