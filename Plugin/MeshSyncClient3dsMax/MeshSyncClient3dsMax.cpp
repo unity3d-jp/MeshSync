@@ -21,6 +21,10 @@ static void OnStartup(void *param, NotifyInfo *info)
 {
     ((MeshSyncClient3dsMax*)param)->onStartup();
 }
+static void OnShutdown(void *param, NotifyInfo *info)
+{
+    ((MeshSyncClient3dsMax*)param)->onShutdown();
+}
 static void OnNodeRenamed(void *param, NotifyInfo *info)
 {
     ((MeshSyncClient3dsMax*)param)->onSceneUpdated();
@@ -48,12 +52,11 @@ MeshSyncClient3dsMax & MeshSyncClient3dsMax::getInstance()
 MeshSyncClient3dsMax::MeshSyncClient3dsMax()
 {
     RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
+    RegisterNotification(OnShutdown, this, NOTIFY_SYSTEM_SHUTDOWN);
 }
 
 MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
 {
-    //unregisterMenu();
-    waitAsyncSend();
 }
 
 MeshSyncClient3dsMax::Settings & MeshSyncClient3dsMax::getSettings()
@@ -68,6 +71,12 @@ void MeshSyncClient3dsMax::onStartup()
     RegisterNotification(OnNodeRenamed, this, NOTIFY_NODE_RENAMED);
     m_cbkey = GetISceneEventManager()->RegisterCallback(msmaxNodeCallback::getInstance().GetINodeEventCallback());
     registerMenu();
+}
+
+void MeshSyncClient3dsMax::onShutdown()
+{
+    waitAsyncSend();
+    unregisterMenu();
 }
 
 void MeshSyncClient3dsMax::onSceneUpdated()

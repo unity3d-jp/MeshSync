@@ -15,7 +15,8 @@
 #define msmaxActionID_Import            3
 
 static const ActionTableId kTableActions = 0xec29063a;
-static const ActionContextId kTableContext = 0xec29063a;
+static const ActionContextId kTableContext = 0xec29063b;
+static const MenuContextId kMenuContext = 0xec29063c;
 
 class msmaxAction_GUI : public ActionItem
 {
@@ -107,66 +108,68 @@ void MeshSyncClient3dsMax::registerMenu()
 {
     unregisterMenu();
 
+    auto *action_manager = GetCOREInterface()->GetActionManager();
+    auto *menu_manager = GetCOREInterface()->GetMenuManager();
     {
         auto *table = new ActionTable(kTableActions, kTableContext, TSTR(msmaxTitle));
         table->AppendOperation(new msmaxAction_GUI());
         table->AppendOperation(new msmaxAction_ExportScene());
         table->AppendOperation(new msmaxAction_ExportAnimations());
         table->AppendOperation(new msmaxAction_Import());
-        GetCOREInterface()->GetActionManager()->RegisterActionTable(table);
-        GetCOREInterface()->GetActionManager()->ActivateActionTable(&g_msmaxActionCallback, kTableActions);
-        GetCOREInterface()->GetActionManager()->RegisterActionContext(kTableContext, msmaxTitle);
+        action_manager->RegisterActionTable(table);
+        action_manager->ActivateActionTable(&g_msmaxActionCallback, kTableActions);
+        action_manager->RegisterActionContext(kTableContext, msmaxTitle);
     }
 
-    auto *table = GetCOREInterface()->GetActionManager()->FindTable(kTableActions);
-    auto *main_menu = GetCOREInterface()->GetMenuManager()->GetMainMenuBar();
-    if (table && main_menu) {
-        int num_menus = main_menu->NumItems();
-        if (num_menus >= 3) {
-            auto *tools = main_menu->GetItem(2); // 2nd menu is "Tools" by default
-            auto *tools_submenu = tools->GetSubMenu();
-            if (tools_submenu) {
-                auto *item = GetIMenuItem();
-                item->SetActionItem(table->GetAction(msmaxActionID_Window));
-                tools_submenu->AddItem(item);
-            }
-        }
+    auto *table = action_manager->FindTable(kTableActions);
+    auto *main_menu = menu_manager->GetMainMenuBar();
+
+    bool first_time = menu_manager->RegisterMenuBarContext(kMenuContext, msmaxTitle);
+    auto* menu = menu_manager->FindMenu(msmaxTitle);
+    if (menu) {
+        while (menu->NumItems() > 0)
+            menu->RemoveItem(0);
     }
+    else {
+        menu = GetIMenu();
+        menu->SetTitle(msmaxTitle);
+        menu_manager->RegisterMenu(menu);
+    }
+
+    if (first_time) {
+        // add menu to main menu bar if first time
+        auto item = GetIMenuItem();
+        item->SetActionItem(table->GetAction(msmaxActionID_Window));
+        item->SetSubMenu(menu);
+        main_menu->AddItem(item);
+    }
+
+    {
+        auto item = GetIMenuItem();
+        item->SetActionItem(table->GetAction(msmaxActionID_Window));
+        menu->AddItem(item);
+    }
+    {
+        auto item = GetIMenuItem();
+        item->SetActionItem(table->GetAction(msmaxActionID_ExportScene));
+        menu->AddItem(item);
+    }
+    {
+        auto item = GetIMenuItem();
+        item->SetActionItem(table->GetAction(msmaxActionID_ExportAnimations));
+        menu->AddItem(item);
+    }
+    //{
+    //    auto item = GetIMenuItem();
+    //    item->SetActionItem(table->GetAction(msmaxActionID_Import));
+    //    menu->AddItem(item);
+    //}
 }
 
 
 void MeshSyncClient3dsMax::unregisterMenu()
 {
-    if (auto *menu = GetCOREInterface()->GetMenuManager()->FindMenu(msmaxTitle)) {
-        GetCOREInterface()->GetMenuManager()->UnRegisterMenu(menu);
-    }
-
-    auto *main_menu = GetCOREInterface()->GetMenuManager()->GetMainMenuBar();
-    if (main_menu) {
-        int num_menus = main_menu->NumItems();
-        if (num_menus >= 3) {
-            auto *tools = main_menu->GetItem(2); // 2nd menu is "Tools" by default
-            auto *tools_submenu = tools->GetSubMenu();
-            if (tools_submenu) {
-                int n = tools_submenu->NumItems();
-                for (int i = 0; i < n; /**/) {
-                    auto *item = tools_submenu->GetItem(i);
-                    auto *action_item = item->GetActionItem();
-                    if (action_item) {
-                        MSTR tmp;
-                        action_item->GetMenuText(tmp);
-                        if (wcscmp(tmp.data(), L"Missing: 0") == 0) {
-                            tools_submenu->RemoveItem(item);
-                            n = tools_submenu->NumItems();
-                            continue;
-                        }
-                    }
-                    ++i;
-                }
-            }
-            //tools_submenu->
-        }
-    }
+    // nothing to do for now
 }
 
 

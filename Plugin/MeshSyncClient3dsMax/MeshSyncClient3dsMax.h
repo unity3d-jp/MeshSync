@@ -47,6 +47,7 @@ public:
     Settings& getSettings();
 
     void onStartup();
+    void onShutdown();
     void onSceneUpdated();
     void onTimeChanged();
     void onNodeAdded(INode *n);
