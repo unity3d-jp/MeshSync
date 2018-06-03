@@ -122,10 +122,10 @@ def_visible_primitive(UnityMeshSync, "UnityMeshSync");
 Value* UnityMeshSync_cf(Value** arg_list, int count)
 {
     if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
-        MeshSyncClient3dsMax::getInstance().closeSettingsWindow();
+        MeshSyncClient3dsMax::getInstance().closeWindow();
     }
     else {
-        MeshSyncClient3dsMax::getInstance().showSettingsWindow();
+        MeshSyncClient3dsMax::getInstance().openWindow();
     }
     return &ok;
 }

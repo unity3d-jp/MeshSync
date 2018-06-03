@@ -64,8 +64,10 @@ public:
     // UI
     void registerMenu();
     void unregisterMenu();
-    void showSettingsWindow();
-    void closeSettingsWindow();
+
+    void openWindow();
+    void closeWindow();
+    bool isWindowOpened() const;
     void updateUIText();
     void applyUISettings();
 

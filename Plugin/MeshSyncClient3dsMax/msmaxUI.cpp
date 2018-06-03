@@ -5,20 +5,20 @@
 
 #define msmaxTitle L"UnityMeshSync"
 
-#define msmaxMenuTitle_Window           L"Unity Mesh Sync"
-#define msmaxMenuTitle_ExportScene      L"Unity Mesh Sync - Export Scene"
-#define msmaxMenuTitle_ExportAnimations L"Unity Mesh Sync - Export Animations"
-#define msmaxMenuTitle_Import           L"Unity Mesh Sync - Import"
-#define msmaxActionID_Window            0
-#define msmaxActionID_ExportScene       1
-#define msmaxActionID_ExportAnimations  2
-#define msmaxActionID_Import            3
+#define msmaxMenuTitle_Window           L"Window"
+#define msmaxMenuTitle_ExportScene      L"Export Scene"
+#define msmaxMenuTitle_ExportAnimations L"Export Animations"
+#define msmaxMenuTitle_Import           L"Import"
+#define msmaxActionID_Window            1
+#define msmaxActionID_ExportScene       2
+#define msmaxActionID_ExportAnimations  3
+#define msmaxActionID_Import            4
 
-static const ActionTableId kTableActions = 0xec29063a;
-static const ActionContextId kTableContext = 0xec29063b;
-static const MenuContextId kMenuContext = 0xec29063c;
+static const ActionTableId      kTableActions = 0xec29063a;
+static const ActionContextId    kTableContext = 0xec29063b;
+static const MenuContextId      kMenuContext  = 0xec29063c;
 
-class msmaxAction_GUI : public ActionItem
+class msmaxAction_Window : public ActionItem
 {
 public:
     int GetId() override { return msmaxActionID_Window; }
@@ -26,14 +26,17 @@ public:
     void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Window); }
     void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Window); }
     void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
-    BOOL IsChecked() override       { return FALSE; }
+    BOOL IsChecked() override       { return MeshSyncClient3dsMax::getInstance().isWindowOpened(); }
     BOOL IsItemVisible() override   { return TRUE; }
     BOOL IsEnabled() override       { return TRUE; }
     void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
-        MeshSyncClient3dsMax::getInstance().showSettingsWindow();
+        if(MeshSyncClient3dsMax::getInstance().isWindowOpened())
+            MeshSyncClient3dsMax::getInstance().closeWindow();
+        else
+            MeshSyncClient3dsMax::getInstance().openWindow();
         return TRUE;
     }
 };
@@ -112,7 +115,7 @@ void MeshSyncClient3dsMax::registerMenu()
     auto *menu_manager = GetCOREInterface()->GetMenuManager();
     {
         auto *table = new ActionTable(kTableActions, kTableContext, TSTR(msmaxTitle));
-        table->AppendOperation(new msmaxAction_GUI());
+        table->AppendOperation(new msmaxAction_Window());
         table->AppendOperation(new msmaxAction_ExportScene());
         table->AppendOperation(new msmaxAction_ExportAnimations());
         table->AppendOperation(new msmaxAction_Import());
@@ -342,7 +345,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     return ret;
 }
 
-void MeshSyncClient3dsMax::showSettingsWindow()
+void MeshSyncClient3dsMax::openWindow()
 {
     if (!g_msmax_settings_window) {
         CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_SETTINGS_WINDOW),
@@ -350,11 +353,16 @@ void MeshSyncClient3dsMax::showSettingsWindow()
     }
 }
 
-void MeshSyncClient3dsMax::closeSettingsWindow()
+void MeshSyncClient3dsMax::closeWindow()
 {
     if (g_msmax_settings_window) {
         PostMessage(g_msmax_settings_window, WM_CLOSE, 0, 0);
     }
+}
+
+bool MeshSyncClient3dsMax::isWindowOpened() const
+{
+    return g_msmax_settings_window != nullptr;
 }
 
 void MeshSyncClient3dsMax::updateUIText()
