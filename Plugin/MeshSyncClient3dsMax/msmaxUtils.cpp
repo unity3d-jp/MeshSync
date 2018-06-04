@@ -14,8 +14,10 @@ std::string GetName(INode *n)
 std::wstring GetPathW(INode *n)
 {
     std::wstring ret;
-    if (auto parent = n->GetParentNode())
+    auto parent = n->GetParentNode();
+    if (parent && parent->GetObjectRef()) {
         ret = GetPathW(parent);
+    }
     ret += L'/';
     ret += n->GetName();
     return ret;
@@ -24,6 +26,11 @@ std::wstring GetPathW(INode *n)
 std::string GetPath(INode *n)
 {
     return mu::ToMBS(GetPathW(n));
+}
+
+Object * GetTopObject(INode * n)
+{
+    return n->GetObjectRef();
 }
 
 Object * GetBaseObject(INode * n)

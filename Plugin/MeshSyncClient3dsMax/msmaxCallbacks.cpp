@@ -53,37 +53,37 @@ void msmaxNodeCallback::LinkChanged(NodeKeyTab & nodes)
 void msmaxNodeCallback::ModelStructured(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
     });
 }
 void msmaxNodeCallback::GeometryChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
     });
 }
 void msmaxNodeCallback::TopologyChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
     });
 }
 void msmaxNodeCallback::MappingChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
     });
 }
 void msmaxNodeCallback::ExtentionChannelChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
     });
 }
 void msmaxNodeCallback::ModelOtherEvent(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
     });
 }
 

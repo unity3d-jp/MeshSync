@@ -78,7 +78,7 @@ private:
 
     void exportMaterials();
 
-    ms::TransformPtr exportObject(INode *node);
+    ms::Transform* exportObject(INode *node, bool force);
     bool extractTransformData(ms::Transform& dst, INode *src);
     bool extractCameraData(ms::Camera& dst, INode *src);
     bool extractLightData(ms::Light& dst, INode *src);
@@ -87,7 +87,7 @@ private:
     bool extractMeshData(ms::Mesh& dst, Mesh &src);
 
 
-    ms::AnimationPtr exportAnimations(INode *node);
+    ms::Animation* exportAnimations(INode *node);
     void extractTransformAnimation(ms::Animation& dst, INode *src);
     void extractCameraAnimation(ms::Animation& dst, INode *src);
     void extractLightAnimation(ms::Animation& dst, INode *src);

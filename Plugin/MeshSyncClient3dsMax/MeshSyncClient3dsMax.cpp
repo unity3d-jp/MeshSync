@@ -139,7 +139,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
             if (it != m_node_records.end())
                 it->second.dirty = false;
 
-            if (exportObject(n))
+            if (exportObject(n, false))
                 ++num_exported;
         });
     }
@@ -148,7 +148,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
             auto& rec = kvp.second;
             if (rec.dirty) {
                 rec.dirty = false;
-                if (exportObject(kvp.first))
+                if (exportObject(kvp.first, true))
                     ++num_exported;
             }
         }
@@ -321,12 +321,23 @@ void MeshSyncClient3dsMax::exportMaterials()
 }
 
 
-ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
+ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
 {
-    ms::TransformPtr ret;
+    if (!n || !n->GetObjectRef())
+        return nullptr;
 
     auto obj = GetBaseObject(n);
-    if (obj->IsSubClassOf(polyObjectClassID)) {
+    if (!obj)
+        return nullptr;
+
+    auto& rec = m_node_records[n];
+    if (rec.dst_obj)
+        return rec.dst_obj;
+
+    ms::TransformPtr ret;
+
+    if (m_settings.sync_meshes && obj->IsSubClassOf(polyObjectClassID)) {
+        exportObject(n->GetParentNode(), true);
         auto dst = ms::Mesh::create();
         ret = dst;
         m_meshes.push_back(dst);
@@ -337,6 +348,7 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
         switch (obj->SuperClassID()) {
         case CAMERA_CLASS_ID:
             if (m_settings.sync_cameras) {
+                exportObject(n->GetParentNode(), true);
                 auto dst = ms::Camera::create();
                 ret = dst;
                 m_objects.push_back(dst);
@@ -345,6 +357,7 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
             break;
         case LIGHT_CLASS_ID:
             if (m_settings.sync_lights) {
+                exportObject(n->GetParentNode(), true);
                 auto dst = ms::Light::create();
                 ret = dst;
                 m_objects.push_back(dst);
@@ -352,7 +365,8 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
             }
             break;
         default:
-            if (m_settings.sync_meshes) {
+            if (force) {
+                exportObject(n->GetParentNode(), true);
                 auto dst = ms::Transform::create();
                 ret = dst;
                 m_objects.push_back(dst);
@@ -365,9 +379,9 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n)
     if (ret) {
         ret->path = GetPath(n);
         ret->index = ++m_index_seed;
-        m_node_records[n].dst_obj = ret.get();
+        rec.dst_obj = ret.get();
     }
-    return ret;
+    return ret.get();
 }
 
 
@@ -466,6 +480,19 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         exportMaterials();
     }
 
+    ISkin *skin = nullptr;
+    if (m_settings.sync_bones) {
+        skin = FindSkin(src);
+    }
+    if (skin) {
+        // export bone nodes
+        int num_bones = skin->GetNumBones();
+        for (int bi = 0; bi < num_bones; ++bi) {
+            exportObject(skin->GetBone(bi), true);
+        }
+    }
+
+
     bool ret = false;
     auto obj = GetBaseObject(src);
     /*
@@ -506,6 +533,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
                 auto dbs = ms::BlendShapeData::create();
                 dst.blendshapes.push_back(dbs);
                 dbs->name = mu::ToMBS(channel.GetName());
+                dbs->weight = channel.GetMorphWeight(GetTime());
 
                 dbs->frames.push_back(ms::BlendShapeData::Frame());
                 auto& frame = dbs->frames.back();
@@ -522,34 +550,31 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         }
     }
 
-    if (m_settings.sync_bones) {
-        auto *skin = FindSkin(src);
-        if (skin) {
-            auto ctx = skin->GetContextInterface(src);
-            int num_bones = skin->GetNumBones();
-            int num_vertices = ctx->GetNumPoints();
-            if (num_vertices >= dst.points.size()) {
-                // vertices are increased by modifiers. this case is not supported.
-            }
-            else {
-                for (int bi = 0; bi < num_bones; ++bi) {
-                    auto bone = skin->GetBone(bi);
-                    Matrix3 bone_matrix;
-                    skin->GetBoneInitTM(bone, bone_matrix);
+    if (m_settings.sync_bones && skin) {
+        auto ctx = skin->GetContextInterface(src);
+        int num_bones = skin->GetNumBones();
+        int num_vertices = ctx->GetNumPoints();
+        if (num_vertices != dst.points.size()) {
+            // vertices are increased or decreased by modifiers. this case is not supported.
+        }
+        else {
+            for (int bi = 0; bi < num_bones; ++bi) {
+                auto bone = skin->GetBone(bi);
+                Matrix3 bone_matrix;
+                skin->GetBoneInitTM(bone, bone_matrix);
 
-                    auto bd = ms::BoneData::create();
-                    dst.bones.push_back(bd);
-                    bd->path = GetPath(bone);
-                    bd->bindpose = mu::invert(to_float4x4(bone_matrix));
-                    bd->weights.resize_zeroclear(dst.points.size());
-                }
-                for (int vi = 0; vi < num_vertices; ++vi) {
-                    int num_affected_bones = ctx->GetNumAssignedBones(vi);
-                    for (int bi = 0; bi < num_affected_bones; ++bi) {
-                        int bone_index = ctx->GetAssignedBone(vi, bi);
-                        float bone_weight = ctx->GetBoneWeight(vi, bi);
-                        dst.bones[bone_index]->weights[vi] = bone_weight;
-                    }
+                auto bd = ms::BoneData::create();
+                dst.bones.push_back(bd);
+                bd->path = GetPath(bone);
+                bd->bindpose = mu::invert(to_float4x4(bone_matrix));
+                bd->weights.resize_zeroclear(dst.points.size());
+            }
+            for (int vi = 0; vi < num_vertices; ++vi) {
+                int num_affected_bones = ctx->GetNumAssignedBones(vi);
+                for (int bi = 0; bi < num_affected_bones; ++bi) {
+                    int bone_index = ctx->GetAssignedBone(vi, bi);
+                    float bone_weight = ctx->GetBoneWeight(vi, bi);
+                    dst.bones[bone_index]->weights[vi] = bone_weight;
                 }
             }
         }
@@ -695,11 +720,11 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
     return true;
 }
 
-ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode * n)
+ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n)
 {
     auto it = m_anim_records.find(n);
     if (it != m_anim_records.end())
-        return ms::AnimationPtr();
+        return it->second.dst;
 
     auto& animations = m_animations[0]->animations;
     ms::AnimationPtr ret;
@@ -750,7 +775,7 @@ ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode * n)
         rec.src = n;
         rec.extractor = extractor;
     }
-    return ret;
+    return ret.get();
 }
 
 void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode *src)
