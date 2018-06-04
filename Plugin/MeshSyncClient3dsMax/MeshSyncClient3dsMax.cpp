@@ -563,6 +563,9 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
             // vertices are increased or decreased by modifiers. this case is not supported.
         }
         else {
+            Matrix3 skin_matrix;
+            skin->GetSkinInitTM(src, skin_matrix);
+
             for (int bi = 0; bi < num_bones; ++bi) {
                 auto bone = skin->GetBone(bi);
                 Matrix3 bone_matrix;
@@ -571,7 +574,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
                 auto bd = ms::BoneData::create();
                 dst.bones.push_back(bd);
                 bd->path = GetPath(bone);
-                bd->bindpose = mu::invert(to_float4x4(bone_matrix));
+                bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
                 bd->weights.resize_zeroclear(dst.points.size());
             }
             for (int vi = 0; vi < num_vertices; ++vi) {

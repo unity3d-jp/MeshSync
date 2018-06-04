@@ -179,11 +179,11 @@ void MeshSyncClient3dsMax::unregisterMenu()
 extern HINSTANCE g_msmax_hinstance;
 HWND g_msmax_settings_window;
 
-static bool CtrlGetBool(int cid)
+static bool CtrlIsChecked(int cid)
 {
     return IsDlgButtonChecked(g_msmax_settings_window, cid);
 };
-static void CtrlSetBool(int cid, bool v)
+static void CtrlSetCheck(int cid, bool v)
 {
     CheckDlgButton(g_msmax_settings_window, cid, v);
 };
@@ -304,38 +304,57 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             }
         };
 
-        if (cid == IDC_EDIT_SERVER)
+        switch (cid) {
+        case IDC_EDIT_SERVER:
             handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
-        else if (cid == IDC_EDIT_PORT)
+            break;
+        case IDC_EDIT_PORT:
             handle_edit([&]() { s.client_settings.port = CtrlGetInt(IDC_EDIT_SERVER, s.client_settings.port); });
-        else if (cid == IDC_EDIT_SCALE_FACTOR)
+            break;
+        case IDC_EDIT_SCALE_FACTOR:
             handle_edit([&]() { s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor); });
-        else if (cid == IDC_CHECK_MESHES)
-            handle_button([&]() { s.sync_meshes = CtrlGetBool(IDC_CHECK_MESHES); });
-        else if (cid == IDC_CHECK_NORMALS)
-            handle_button([&]() { s.sync_normals = CtrlGetBool(IDC_CHECK_NORMALS); });
-        else if (cid == IDC_CHECK_UVS)
-            handle_button([&]() { s.sync_uvs = CtrlGetBool(IDC_CHECK_UVS); });
-        else if (cid == IDC_CHECK_COLORS)
-            handle_button([&]() { s.sync_colors = CtrlGetBool(IDC_CHECK_COLORS); });
-        else if (cid == IDC_CHECK_BLENDSHAPES)
-            handle_button([&]() { s.sync_blendshapes = CtrlGetBool(IDC_CHECK_BLENDSHAPES); });
-        else if (cid == IDC_CHECK_BONES)
-            handle_button([&]() { s.sync_bones = CtrlGetBool(IDC_CHECK_BONES); });
-        else if (cid == IDC_CHECK_CAMERAS)
-            handle_button([&]() { s.sync_cameras = CtrlGetBool(IDC_CHECK_CAMERAS); });
-        else if (cid == IDC_CHECK_LIGHTS)
-            handle_button([&]() { s.sync_lights = CtrlGetBool(IDC_CHECK_LIGHTS); });
-        else if (cid == IDC_CHECK_AUTO_SYNC)
-            handle_button([&]() { s.auto_sync = CtrlGetBool(IDC_CHECK_AUTO_SYNC); });
-        else if (cid == IDC_EDIT_ANIMATION_TIME_SCALE)
+            break;
+        case IDC_CHECK_MESHES:
+            handle_button([&]() { s.sync_meshes = CtrlIsChecked(IDC_CHECK_MESHES); });
+            break;
+        case IDC_CHECK_NORMALS:
+            handle_button([&]() { s.sync_normals = CtrlIsChecked(IDC_CHECK_NORMALS); });
+            break;
+        case IDC_CHECK_UVS:
+            handle_button([&]() { s.sync_uvs = CtrlIsChecked(IDC_CHECK_UVS); });
+            break;
+        case IDC_CHECK_COLORS:
+            handle_button([&]() { s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS); });
+            break;
+        case IDC_CHECK_BLENDSHAPES:
+            handle_button([&]() { s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES); });
+            break;
+        case IDC_CHECK_BONES:
+            handle_button([&]() { s.sync_bones = CtrlIsChecked(IDC_CHECK_BONES); });
+            break;
+        case IDC_CHECK_CAMERAS:
+            handle_button([&]() { s.sync_cameras = CtrlIsChecked(IDC_CHECK_CAMERAS); });
+            break;
+        case IDC_CHECK_LIGHTS:
+            handle_button([&]() { s.sync_lights = CtrlIsChecked(IDC_CHECK_LIGHTS); });
+            break;
+        case IDC_CHECK_AUTO_SYNC:
+            handle_button([&]() { s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC); });
+            break;
+        case IDC_EDIT_ANIMATION_TIME_SCALE:
             handle_edit([&]() { s.animation_time_scale = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale); });
-        else if (cid == IDC_EDIT_ANIMATION_SPS)
+            break;
+        case IDC_EDIT_ANIMATION_SPS:
             handle_edit([&]() { s.animation_sps = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps); });
-        else if (cid == IDC_BUTTON_MANUAL_SYNC)
+            break;
+        case IDC_BUTTON_MANUAL_SYNC:
             handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All); });
-        else if (cid == IDC_BUTTON_SYNC_ANIMATIONS)
+            break;
+        case IDC_BUTTON_SYNC_ANIMATIONS:
             handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
+            break;
+        default: break;
+        }
         break;
     }
 
@@ -372,15 +391,15 @@ void MeshSyncClient3dsMax::updateUIText()
     CtrlSetText(IDC_EDIT_PORT, (int)s.client_settings.port);
 
     CtrlSetText(IDC_EDIT_SCALE_FACTOR,  s.scale_factor);
-    CtrlSetBool(IDC_CHECK_MESHES,       s.sync_meshes);
-    CtrlSetBool(IDC_CHECK_NORMALS,      s.sync_normals);
-    CtrlSetBool(IDC_CHECK_UVS,          s.sync_uvs);
-    CtrlSetBool(IDC_CHECK_COLORS,       s.sync_colors);
-    CtrlSetBool(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
-    CtrlSetBool(IDC_CHECK_BONES,        s.sync_bones);
-    CtrlSetBool(IDC_CHECK_CAMERAS,      s.sync_cameras);
-    CtrlSetBool(IDC_CHECK_LIGHTS,       s.sync_lights);
-    CtrlSetBool(IDC_CHECK_AUTO_SYNC,    s.auto_sync);
+    CtrlSetCheck(IDC_CHECK_MESHES,       s.sync_meshes);
+    CtrlSetCheck(IDC_CHECK_NORMALS,      s.sync_normals);
+    CtrlSetCheck(IDC_CHECK_UVS,          s.sync_uvs);
+    CtrlSetCheck(IDC_CHECK_COLORS,       s.sync_colors);
+    CtrlSetCheck(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
+    CtrlSetCheck(IDC_CHECK_BONES,        s.sync_bones);
+    CtrlSetCheck(IDC_CHECK_CAMERAS,      s.sync_cameras);
+    CtrlSetCheck(IDC_CHECK_LIGHTS,       s.sync_lights);
+    CtrlSetCheck(IDC_CHECK_AUTO_SYNC,    s.auto_sync);
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
@@ -395,15 +414,15 @@ void MeshSyncClient3dsMax::applyUISettings()
     s.client_settings.port  = CtrlGetInt(IDC_EDIT_PORT, s.client_settings.port);
 
     s.scale_factor          = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor);
-    s.sync_meshes           = CtrlGetBool(IDC_CHECK_MESHES);
-    s.sync_normals          = CtrlGetBool(IDC_CHECK_NORMALS);
-    s.sync_uvs              = CtrlGetBool(IDC_CHECK_UVS);
-    s.sync_colors           = CtrlGetBool(IDC_CHECK_COLORS);
-    s.sync_blendshapes      = CtrlGetBool(IDC_CHECK_BLENDSHAPES);
-    s.sync_bones            = CtrlGetBool(IDC_CHECK_BONES);
-    s.sync_cameras          = CtrlGetBool(IDC_CHECK_CAMERAS);
-    s.sync_lights           = CtrlGetBool(IDC_CHECK_LIGHTS);
-    s.auto_sync             = CtrlGetBool(IDC_CHECK_AUTO_SYNC);
+    s.sync_meshes           = CtrlIsChecked(IDC_CHECK_MESHES);
+    s.sync_normals          = CtrlIsChecked(IDC_CHECK_NORMALS);
+    s.sync_uvs              = CtrlIsChecked(IDC_CHECK_UVS);
+    s.sync_colors           = CtrlIsChecked(IDC_CHECK_COLORS);
+    s.sync_blendshapes      = CtrlIsChecked(IDC_CHECK_BLENDSHAPES);
+    s.sync_bones            = CtrlIsChecked(IDC_CHECK_BONES);
+    s.sync_cameras          = CtrlIsChecked(IDC_CHECK_CAMERAS);
+    s.sync_lights           = CtrlIsChecked(IDC_CHECK_LIGHTS);
+    s.auto_sync             = CtrlIsChecked(IDC_CHECK_AUTO_SYNC);
 
     s.animation_time_scale  = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     s.animation_sps         = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
