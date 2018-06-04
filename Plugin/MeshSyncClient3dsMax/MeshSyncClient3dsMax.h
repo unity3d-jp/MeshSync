@@ -86,12 +86,13 @@ private:
     bool extractMeshData(ms::Mesh& dst, MNMesh &src);
     bool extractMeshData(ms::Mesh& dst, Mesh &src);
 
-
-    ms::Animation* exportAnimations(INode *node);
+    ms::Animation* exportAnimations(INode *node, bool force);
     void extractTransformAnimation(ms::Animation& dst, INode *src);
     void extractCameraAnimation(ms::Animation& dst, INode *src);
     void extractLightAnimation(ms::Animation& dst, INode *src);
     void extractMeshAnimation(ms::Animation& dst, INode *src);
+
+    float getCurrentTimeInSeconds() const;
 
 private:
     using task_t = std::function<void()>;

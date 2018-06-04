@@ -1,11 +1,23 @@
 #include "pch.h"
 #include "msmaxUtils.h"
 
+TimeValue GetTime()
+{
+    return GetCOREInterface()->GetTime();
+}
+float ToSeconds(TimeValue tics)
+{
+    return TicksToSec(tics);
+}
+TimeValue ToTicks(float sec)
+{
+    return SecToTicks(sec);
+}
+
 std::wstring GetNameW(INode *n)
 {
     return n->GetName();
 }
-
 std::string GetName(INode *n)
 {
     return mu::ToMBS(n->GetName());
@@ -22,7 +34,6 @@ std::wstring GetPathW(INode *n)
     ret += n->GetName();
     return ret;
 }
-
 std::string GetPath(INode *n)
 {
     return mu::ToMBS(GetPathW(n));
@@ -62,5 +73,5 @@ Modifier* FindMorph(INode * n)
 
 bool IsMesh(Object *obj)
 {
-    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID;
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID && obj->ClassID() != BONE_OBJ_CLASSID;
 }

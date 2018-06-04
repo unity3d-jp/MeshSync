@@ -2,6 +2,10 @@
 
 #include "MeshSync/MeshSync.h"
 
+TimeValue GetTime();
+float ToSeconds(TimeValue tics);
+TimeValue ToTicks(float sec);
+
 std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
@@ -12,11 +16,6 @@ ISkin* FindSkin(INode *n);
 Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
 
-
-inline TimeValue GetTime()
-{
-    return GetCOREInterface()->GetTime();
-}
 
 inline mu::float2 to_float2(const Point3& v)
 {
@@ -138,6 +137,15 @@ inline void EnumerateAllNode(const Body& body)
     else {
         mscTrace("EnumerateAllNode() failed!!!\n");
     }
+}
+
+// Body : [](INode *bone) -> void
+template<class Body>
+inline void EachBone(ISkin *skin, const Body& body)
+{
+    int num_bones = skin->GetNumBones();
+    for (int bi = 0; bi < num_bones; ++bi)
+        body(skin->GetBone(bi));
 }
 
 

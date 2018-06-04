@@ -174,7 +174,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     int num_exported = 0;
     if (scope == SendScope::All) {
         EnumerateAllNode([&](INode *n) {
-            if (exportAnimations(n))
+            if (exportAnimations(n, false))
                 ++num_exported;
         });
     }
@@ -184,7 +184,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
 
     // advance frame and record animation
     auto time_range = GetCOREInterface()->GetAnimRange();
-    auto interval = SecToTicks(1.0f / m_settings.animation_sps);
+    auto interval = ToTicks(1.0f / m_settings.animation_sps);
     for (TimeValue t = time_range.Start(); t <= time_range.End(); t += interval) {
         // advance frame and record
         m_current_time = t;
@@ -204,10 +204,8 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
         std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_animations.end());
 
-    if (num_exported > 0)
+    if (!m_animations.empty())
         kickAsyncSend();
-    else
-        m_animations.clear();
     return true;
 }
 
@@ -338,18 +336,17 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
         return rec.dst_obj;
 
     ms::TransformPtr ret;
-
-    if (m_settings.sync_meshes && IsMesh(obj)) {
+    if (IsMesh(obj) && m_settings.sync_meshes) {
         exportObject(n->GetParentNode(), true);
         auto dst = ms::Mesh::create();
         ret = dst;
         m_meshes.push_back(dst);
         extractMeshData(*dst, n);
     }
-
-    if (!ret) {
+    else {
         switch (obj->SuperClassID()) {
         case CAMERA_CLASS_ID:
+        {
             if (m_settings.sync_cameras) {
                 exportObject(n->GetParentNode(), true);
                 auto dst = ms::Camera::create();
@@ -358,7 +355,9 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
                 extractCameraData(*dst, n);
             }
             break;
+        }
         case LIGHT_CLASS_ID:
+        {
             if (m_settings.sync_lights) {
                 exportObject(n->GetParentNode(), true);
                 auto dst = ms::Light::create();
@@ -367,7 +366,9 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
                 extractLightData(*dst, n);
             }
             break;
+        }
         default:
+        {
             if (force) {
                 exportObject(n->GetParentNode(), true);
                 auto dst = ms::Transform::create();
@@ -376,6 +377,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
                 extractTransformData(*dst, n);
             }
             break;
+        }
         }
     }
 
@@ -489,10 +491,9 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
     }
     if (skin) {
         // export bone nodes
-        int num_bones = skin->GetNumBones();
-        for (int bi = 0; bi < num_bones; ++bi) {
-            exportObject(skin->GetBone(bi), true);
-        }
+        EachBone(skin, [this](INode *bone) {
+            exportObject(bone, true);
+        });
     }
 
 
@@ -724,8 +725,15 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
     return true;
 }
 
-ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n)
+ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
 {
+    if (!n || !n->GetObjectRef())
+        return nullptr;
+
+    auto obj = GetBaseObject(n);
+    if (!obj)
+        return nullptr;
+
     auto it = m_anim_records.find(n);
     if (it != m_anim_records.end())
         return it->second.dst;
@@ -734,44 +742,50 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n)
     ms::AnimationPtr ret;
     AnimationRecord::extractor_t extractor = nullptr;
 
-    auto obj = n->GetObjectRef();
-    if (obj->CanConvertToType(triObjectClassID)) {
+    if (IsMesh(obj)) {
+        exportAnimations(n->GetParentNode(), true);
+        if (auto *skin = FindSkin(n)) {
+            EachBone(skin, [this](INode *bone) {
+                exportAnimations(bone, true);
+            });
+        }
         auto dst = ms::MeshAnimation::create();
-        animations.push_back(dst);
         ret = dst;
         extractor = &MeshSyncClient3dsMax::extractMeshAnimation;
     }
-
-    if (!ret) {
-        switch (n->SuperClassID()) {
+    else {
+        switch (obj->SuperClassID()) {
         case CAMERA_CLASS_ID:
-            if (m_settings.sync_cameras) {
-                auto dst = ms::CameraAnimation::create();
-                animations.push_back(dst);
-                ret = dst;
-                extractor = &MeshSyncClient3dsMax::extractCameraAnimation;
-            }
+        {
+            exportAnimations(n->GetParentNode(), true);
+            auto dst = ms::CameraAnimation::create();
+            ret = dst;
+            extractor = &MeshSyncClient3dsMax::extractCameraAnimation;
             break;
+        }
         case LIGHT_CLASS_ID:
-            if (m_settings.sync_lights) {
-                auto dst = ms::LightAnimation::create();
-                animations.push_back(dst);
-                ret = dst;
-                extractor = &MeshSyncClient3dsMax::extractLightAnimation;
-            }
+        {
+            exportAnimations(n->GetParentNode(), true);
+            auto dst = ms::LightAnimation::create();
+            ret = dst;
+            extractor = &MeshSyncClient3dsMax::extractLightAnimation;
             break;
+        }
         default:
-            if (m_settings.sync_meshes) {
+        {
+            if (force) {
+                exportAnimations(n->GetParentNode(), true);
                 auto dst = ms::TransformAnimation::create();
-                animations.push_back(dst);
                 ret = dst;
                 extractor = &MeshSyncClient3dsMax::extractTransformAnimation;
             }
             break;
         }
+        }
     }
 
     if (ret) {
+        animations.push_back(ret);
         ret->path = GetPath(n);
 
         auto& rec = m_anim_records[n];
@@ -791,7 +805,7 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     mu::float3 scale;
     ExtractTransform(src, m_current_time, pos, rot, scale);
 
-    float t = TicksToSec(m_current_time) * m_settings.animation_time_scale;
+    float t = getCurrentTimeInSeconds();
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -801,6 +815,7 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
 {
     extractTransformAnimation(dst_, src);
 
+    float t = getCurrentTimeInSeconds();
     auto& dst = (ms::CameraAnimation&)dst_;
 }
 
@@ -808,6 +823,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
 {
     extractTransformAnimation(dst_, src);
 
+    float t = getCurrentTimeInSeconds();
     auto& dst = (ms::LightAnimation&)dst_;
 }
 
@@ -815,7 +831,7 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
 {
     extractTransformAnimation(dst_, src);
 
-    float t = TicksToSec(m_current_time) * m_settings.animation_time_scale;
+    float t = getCurrentTimeInSeconds();
     auto obj = GetBaseObject(src);
     auto& dst = (ms::MeshAnimation&)dst_;
 
@@ -832,8 +848,13 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
 
                 auto name = mu::ToMBS(channel.GetName());
                 auto dbs = dst.findOrCreateBlendshapeAnimation(name.c_str());
-                dbs->weight.push_back({ t, channel.GetMorphWeight(GetTime()) });
+                dbs->weight.push_back({ t, channel.GetMorphWeight(m_current_time) });
             }
         }
     }
+}
+
+float MeshSyncClient3dsMax::getCurrentTimeInSeconds() const
+{
+    return (float)ToSeconds(m_current_time) * m_settings.animation_time_scale;;
 }
