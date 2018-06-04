@@ -27,6 +27,7 @@
 #include <triobj.h>
 #include <notify.h>
 #include <ISceneEventManager.h>
+#include <MeshNormalSpec.h>
 #include <systemutilities.h>
 #include <maxscript/maxscript.h>
 #include <maxscript/foundation/numbers.h>

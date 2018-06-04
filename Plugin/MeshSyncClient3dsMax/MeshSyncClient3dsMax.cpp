@@ -328,9 +328,6 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
         return nullptr;
 
     auto obj = GetBaseObject(n);
-    if (!obj)
-        return nullptr;
-
     auto& rec = m_node_records[n];
     if (rec.dst_obj)
         return rec.dst_obj;
@@ -426,53 +423,29 @@ bool MeshSyncClient3dsMax::extractLightData(ms::Light & dst, INode * src)
 // dst must be allocated with length of indices
 static void ExtractNormals(RawVector<mu::float3> & dst, Mesh & mesh)
 {
-    auto get_normal = [&mesh](int face_index, int vertex_index) -> mu::float3 {
-        const auto& rv = mesh.getRVert(vertex_index);
-        const auto& face = mesh.faces[face_index];
-        DWORD smGroup = face.smGroup;
-        int num_normals = 0;
-        Point3 ret;
-
-        // Is normal specified
-        // SPCIFIED is not currently used, but may be used in future versions.
-        if (rv.rFlags & SPECIFIED_NORMAL) {
-            ret = rv.rn.getNormal();
-        }
-        // If normal is not specified it's only available if the face belongs
-        // to a smoothing group
-        else if ((num_normals = rv.rFlags & NORCT_MASK) != 0 && smGroup) {
-            // If there is only one vertex is found in the rn member.
-            if (num_normals == 1) {
-                ret = rv.rn.getNormal();
-            }
-            else {
-                // If two or more vertices are there you need to step through them
-                // and find the vertex with the same smoothing group as the current face.
-                // You will find multiple normals in the ern member.
-                for (int i = 0; i < num_normals; i++) {
-                    if (rv.ern[i].getSmGroup() & smGroup) {
-                        ret = rv.ern[i].getNormal();
-                    }
-                }
+    auto* nspec = (MeshNormalSpec*)mesh.GetInterface(MESH_NORMAL_SPEC_INTERFACE);
+    if (nspec && nspec->GetFlag(MESH_NORMAL_NORMALS_BUILT)) {
+        int num_faces = nspec->GetNumFaces();
+        auto *faces = nspec->GetFaceArray();
+        auto *normals = nspec->GetNormalArray();
+        int ii = 0;
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto *idx = faces[fi].GetNormalIDArray();
+            for (int ci = 0; ci < 3; ++ci) {
+                dst[ii++] = to_float3(normals[idx[ci]]);
             }
         }
-        else {
-            // Get the normal from the Face if no smoothing groups are there
-            ret = mesh.getFaceNormal(face_index);
-        }
-        return to_float3(ret);
-    };
-
-    // make sure normal is allocated
-    mesh.checkNormals(TRUE);
-
-    int num_faces = mesh.numFaces;
-    const auto *faces = mesh.faces;
-    for (int fi = 0; fi < num_faces; ++fi) {
-        auto& face = faces[fi];
-        for (int i = 0; i < 3; ++i) {
-            int vi = face.v[i];
-            dst[fi * 3 + i] = get_normal(fi, face.v[i]);
+    }
+    else {
+        int num_faces = mesh.numFaces;
+        const auto *faces = mesh.faces;
+        const auto *face_normals = mesh.getFaceNormalPtr(0);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto& face = faces[fi];
+            // todo: support smooth group (face.smGroup)
+            for (int i = 0; i < 3; ++i) {
+                dst[fi * 3 + i] = to_float3(face_normals[fi]);
+            }
         }
     }
 }
@@ -733,14 +706,11 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
     if (!n || !n->GetObjectRef())
         return nullptr;
 
-    auto obj = GetBaseObject(n);
-    if (!obj)
-        return nullptr;
-
     auto it = m_anim_records.find(n);
     if (it != m_anim_records.end())
         return it->second.dst;
 
+    auto obj = GetBaseObject(n);
     auto& animations = m_animations[0]->animations;
     ms::AnimationPtr ret;
     AnimationRecord::extractor_t extractor = nullptr;
