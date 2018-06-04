@@ -60,3 +60,7 @@ Modifier* FindMorph(INode * n)
     return ret;
 }
 
+bool IsMesh(Object *obj)
+{
+    return obj->IsSubClassOf(triObjectClassID) || obj->IsSubClassOf(polyObjectClassID);
+}

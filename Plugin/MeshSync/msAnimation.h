@@ -132,28 +132,30 @@ public:
 msHasSerializer(LightAnimation);
 
 
+struct BlendshapeAnimation
+{
+    std::string name;
+    RawVector<TVP<float>> weight;
+
+protected:
+    BlendshapeAnimation();
+    ~BlendshapeAnimation();
+public:
+    msDefinePool(BlendshapeAnimation);
+    static std::shared_ptr<BlendshapeAnimation> create(std::istream & is);
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    void clear();
+    bool empty() const;
+};
+msHasSerializer(BlendshapeAnimation);
+using BlendshapeAnimationPtr = std::shared_ptr<BlendshapeAnimation>;
+
 class MeshAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
-    struct BlendshapeAnimation
-    {
-        std::string name;
-        RawVector<TVP<float>> weight;
-
-    protected:
-        BlendshapeAnimation();
-        ~BlendshapeAnimation();
-    public:
-        msDefinePool(BlendshapeAnimation);
-        static std::shared_ptr<BlendshapeAnimation> create(std::istream & is);
-        uint32_t getSerializeSize() const;
-        void serialize(std::ostream& os) const;
-        void deserialize(std::istream& is);
-        void clear();
-        bool empty() const;
-    };
-    using BlendshapeAnimationPtr = std::shared_ptr<BlendshapeAnimation>;
     std::vector<BlendshapeAnimationPtr> blendshapes;
 
 protected:
@@ -168,8 +170,9 @@ public:
     void clear() override;
     bool empty() const override;
     void reduction() override;
+
+    BlendshapeAnimation* findOrCreateBlendshapeAnimation(const char *name);
 };
-msHasSerializer(MeshAnimation::BlendshapeAnimation);
 msHasSerializer(MeshAnimation);
 
 

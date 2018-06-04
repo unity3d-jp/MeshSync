@@ -35,8 +35,7 @@
     <ClCompile Include="MeshSyncClient3dsMax\msmaxUI.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\msmaxUtils.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

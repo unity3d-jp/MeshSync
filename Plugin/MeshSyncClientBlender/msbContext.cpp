@@ -934,21 +934,8 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
             if (bi == 0) { // Basis
             }
             else {
-                auto dst_bs = ms::MeshAnimation::BlendshapeAnimationPtr();
-                {
-                    auto it = std::find_if(dst.blendshapes.begin(), dst.blendshapes.end(),
-                        [kb](const ms::MeshAnimation::BlendshapeAnimationPtr& ptr) { return ptr->name == kb->name; });
-                    if (it != dst.blendshapes.end()) {
-                        dst_bs = *it;
-                    }
-                }
-                if (!dst_bs) {
-                    dst_bs = ms::MeshAnimation::BlendshapeAnimation::create();
-                    dst_bs->name = kb->name;
-                    dst.blendshapes.push_back(dst_bs);
-                }
-
-                dst_bs->weight.push_back({ t, kb->curval * 100.0f });
+                auto bsa = dst.findOrCreateBlendshapeAnimation(kb->name);
+                bsa->weight.push_back({ t, kb->curval * 100.0f });
             }
             ++bi;
         });

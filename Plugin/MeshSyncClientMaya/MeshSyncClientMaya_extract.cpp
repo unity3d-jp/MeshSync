@@ -819,23 +819,10 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
                     std::string name = plug_wc.name().asChar();
 
-                    auto dst_bs = ms::MeshAnimation::BlendshapeAnimationPtr();
-                    {
-                        auto it = std::find_if(dst.blendshapes.begin(), dst.blendshapes.end(),
-                            [&name](const ms::MeshAnimation::BlendshapeAnimationPtr& ptr) { return ptr->name == name; });
-                        if (it != dst.blendshapes.end()) {
-                            dst_bs = *it;
-                        }
-                    }
-                    if (!dst_bs) {
-                        dst_bs = ms::MeshAnimation::BlendshapeAnimation::create();
-                        dst_bs->name = name;
-                        dst.blendshapes.push_back(dst_bs);
-                    }
-
+                    auto bsa = dst.findOrCreateBlendshapeAnimation(name.c_str());
                     float weight = 0.0f;
                     plug_wc.getValue(weight);
-                    dst_bs->weight.push_back({ t, weight * 100.0f });
+                    bsa->weight.push_back({ t, weight * 100.0f });
                 }
             }
         }

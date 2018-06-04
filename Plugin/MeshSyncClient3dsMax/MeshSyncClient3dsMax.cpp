@@ -336,7 +336,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
 
     ms::TransformPtr ret;
 
-    if (m_settings.sync_meshes && obj->IsSubClassOf(polyObjectClassID)) {
+    if (m_settings.sync_meshes && IsMesh(obj)) {
         exportObject(n->GetParentNode(), true);
         auto dst = ms::Mesh::create();
         ret = dst;
@@ -495,6 +495,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
 
     bool ret = false;
     auto obj = GetBaseObject(src);
+    auto cid = obj->SuperClassID();
     /*
     if (obj->IsSubClassOf(polyObjectClassID)) {
         ret = extractMeshData(dst, static_cast<PolyObject*>(obj)->GetMesh());
@@ -811,5 +812,25 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
 {
     extractTransformAnimation(dst_, src);
 
+    float t = TicksToSec(m_current_time) * m_settings.animation_time_scale;
+    auto obj = GetBaseObject(src);
     auto& dst = (ms::MeshAnimation&)dst_;
+
+    if (m_settings.sync_blendshapes) {
+        auto *mod = FindMorph(src);
+        if (mod) {
+            MaxMorphModifier morph(mod);
+            int num_channels = morph.NumMorphChannels();
+            for (int ci = 0; ci < num_channels; ++ci) {
+                auto channel = morph.GetMorphChannel(ci);
+                auto tnode = channel.GetMorphTarget();
+                if (!tnode || !channel.IsActive() || !channel.IsValid())
+                    continue;
+
+                auto name = mu::ToMBS(channel.GetName());
+                auto dbs = dst.findOrCreateBlendshapeAnimation(name.c_str());
+                dbs->weight.push_back({ t, channel.GetMorphWeight(GetTime()) });
+            }
+        }
+    }
 }

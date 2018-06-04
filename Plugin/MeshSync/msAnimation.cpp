@@ -1,4 +1,3 @@
-#include "msAnimation.h"
 #include "pch.h"
 #include "msSceneGraph.h"
 #include "msAnimation.h"
@@ -288,40 +287,40 @@ void LightAnimation::applyScaleFactor(float s)
 }
 
 
-std::shared_ptr<MeshAnimation::BlendshapeAnimation> MeshAnimation::BlendshapeAnimation::create(std::istream & is)
+std::shared_ptr<BlendshapeAnimation> BlendshapeAnimation::create(std::istream & is)
 {
     auto ret = new BlendshapeAnimation();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
 
-MeshAnimation::BlendshapeAnimation::BlendshapeAnimation() {}
-MeshAnimation::BlendshapeAnimation::~BlendshapeAnimation() {}
+BlendshapeAnimation::BlendshapeAnimation() {}
+BlendshapeAnimation::~BlendshapeAnimation() {}
 
-uint32_t MeshAnimation::BlendshapeAnimation::getSerializeSize() const
+uint32_t BlendshapeAnimation::getSerializeSize() const
 {
     return ssize(name) + ssize(weight);
 }
 
-void MeshAnimation::BlendshapeAnimation::serialize(std::ostream & os) const
+void BlendshapeAnimation::serialize(std::ostream & os) const
 {
     write(os, name);
     write(os, weight);
 }
 
-void MeshAnimation::BlendshapeAnimation::deserialize(std::istream & is)
+void BlendshapeAnimation::deserialize(std::istream & is)
 {
     read(is, name);
     read(is, weight);
 }
 
-void MeshAnimation::BlendshapeAnimation::clear()
+void BlendshapeAnimation::clear()
 {
     name.clear();
     weight.clear();
 }
 
-bool MeshAnimation::BlendshapeAnimation::empty() const
+bool BlendshapeAnimation::empty() const
 {
     return weight.empty();
 }
@@ -373,6 +372,25 @@ void MeshAnimation::reduction()
     blendshapes.erase(
         std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
         blendshapes.end());
+}
+
+BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char * name)
+{
+    BlendshapeAnimation *ret = nullptr;
+    {
+        auto it = std::find_if(blendshapes.begin(), blendshapes.end(),
+            [name](const ms::BlendshapeAnimationPtr& ptr) { return ptr->name == name; });
+        if (it != blendshapes.end()) {
+            ret = it->get();
+        }
+    }
+    if (!ret) {
+        auto bsa = ms::BlendshapeAnimation::create();
+        bsa->name = name;
+        blendshapes.push_back(bsa);
+        ret = bsa.get();
+    }
+    return ret;
 }
 
 

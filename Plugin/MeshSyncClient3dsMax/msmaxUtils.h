@@ -10,6 +10,7 @@ Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);
 ISkin* FindSkin(INode *n);
 Modifier* FindMorph(INode * n);
+bool IsMesh(Object *obj);
 
 
 inline TimeValue GetTime()
