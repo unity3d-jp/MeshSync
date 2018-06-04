@@ -27,6 +27,8 @@ public:
     void MappingChanged(NodeKeyTab& nodes) override;
     void ExtentionChannelChanged(NodeKeyTab& nodes) override;
     void ModelOtherEvent(NodeKeyTab& nodes) override;
+
+    void ControllerOtherEvent(NodeKeyTab& nodes) override; // transform change callback
 };
 
 class msmaxTimeChangeCallback : public TimeChangeCallback

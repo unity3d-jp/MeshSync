@@ -87,6 +87,13 @@ void msmaxNodeCallback::ModelOtherEvent(NodeKeyTab& nodes)
     });
 }
 
+void msmaxNodeCallback::ControllerOtherEvent(NodeKeyTab & nodes)
+{
+    EachNode(nodes, [](INode *n) {
+        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
+    });
+}
+
 
 msmaxTimeChangeCallback & msmaxTimeChangeCallback::getInstance()
 {
