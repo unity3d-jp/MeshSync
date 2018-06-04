@@ -77,6 +77,7 @@ void MeshSyncClient3dsMax::onShutdown()
 {
     waitAsyncSend();
     unregisterMenu();
+    m_node_records.clear();
 }
 
 void MeshSyncClient3dsMax::onSceneUpdated()
@@ -236,13 +237,15 @@ void MeshSyncClient3dsMax::kickAsyncSend()
     for (auto& kvp : m_node_records)
         kvp.second.clearState();
 
+    float to_meter = (float)GetMasterScale(UNITS_METERS);
+
     // begin async send
-    m_future_send = std::async(std::launch::async, [this]() {
+    m_future_send = std::async(std::launch::async, [this, to_meter]() {
         ms::Client client(m_settings.client_settings);
 
         ms::SceneSettings scene_settings;
         scene_settings.handedness = ms::Handedness::LeftZUp;
-        scene_settings.scale_factor = m_settings.scale_factor;
+        scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
         // notify scene begin
         {

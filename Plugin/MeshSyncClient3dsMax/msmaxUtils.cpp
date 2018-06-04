@@ -62,5 +62,5 @@ Modifier* FindMorph(INode * n)
 
 bool IsMesh(Object *obj)
 {
-    return obj->IsSubClassOf(triObjectClassID) || obj->IsSubClassOf(polyObjectClassID);
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID;
 }
