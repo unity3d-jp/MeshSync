@@ -1,6 +1,6 @@
 #define _MApiVersion
 #include "pch.h"
-#include "MayaUtils.h"
+#include "msmayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
 bool IsVisible(const MObject& node)

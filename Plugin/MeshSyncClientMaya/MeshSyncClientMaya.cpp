@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
-#include "MayaUtils.h"
+#include "msmayaUtils.h"
 #include "MeshSyncClientMaya.h"
-#include "Commands.h"
+#include "msmayaCommands.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "Foundation.lib")

@@ -1,8 +1,8 @@
 #define _MApiVersion
 #include "pch.h"
-#include "MayaUtils.h"
+#include "msmayaUtils.h"
 #include "MeshSyncClientMaya.h"
-#include "Commands.h"
+#include "msmayaCommands.h"
 
 
 void MeshSyncClientMaya::exportMaterials()

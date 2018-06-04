@@ -595,6 +595,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, MNMesh & mesh)
         dst.points[vi] = to_float3(mesh.v[vi].p);
     }
 
+    // normals
     if (m_settings.sync_normals) {
         auto *nspec = mesh.GetSpecifiedNormals();
         if (nspec) {

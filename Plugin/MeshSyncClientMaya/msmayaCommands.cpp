@@ -1,7 +1,7 @@
 #define _MApiVersion
 #include "pch.h"
 #include "MeshSyncClientMaya.h"
-#include "Commands.h"
+#include "msmayaCommands.h"
 
 
 template<class T> void get_arg(T& dst, const char *name, MArgParser& args);
