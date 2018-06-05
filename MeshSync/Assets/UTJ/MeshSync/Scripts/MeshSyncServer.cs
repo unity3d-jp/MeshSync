@@ -744,10 +744,21 @@ namespace UTJ.MeshSync
             var cam = trans.GetComponent<Camera>();
             if(cam == null)
                 cam = trans.gameObject.AddComponent<Camera>();
+
             cam.orthographic = data.orthographic;
-            cam.fieldOfView = data.fov;
-            cam.nearClipPlane = data.nearClipPlane;
-            cam.farClipPlane = data.farClipPlane;
+
+            float fov = data.fov;
+            if (fov > 0.0f)
+                cam.fieldOfView = fov;
+
+            float nearClipPlane = data.nearClipPlane;
+            float farClipPlane = data.farClipPlane;
+            if (nearClipPlane > 0.0f && farClipPlane > 0.0f)
+            {
+                cam.nearClipPlane = data.nearClipPlane;
+                cam.farClipPlane = data.farClipPlane;
+            }
+
             if (!m_ignoreVisibility)
                 cam.enabled = data.transform.visible;
             return cam;
@@ -767,8 +778,10 @@ namespace UTJ.MeshSync
             lt.type = data.type;
             lt.color = data.color;
             lt.intensity = data.intensity;
-            if (data.range > 0.0f) { lt.range = data.range; }
-            if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
+            if (data.range > 0.0f)
+                lt.range = data.range;
+            if (data.spotAngle > 0.0f)
+                lt.spotAngle = data.spotAngle;
             if (!m_ignoreVisibility)
                 lt.enabled = data.transform.visible;
             return lt;

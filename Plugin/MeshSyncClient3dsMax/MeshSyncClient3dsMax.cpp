@@ -442,7 +442,7 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
     ortho = cam->IsOrtho();
     {
         float hfov = cam->GetFOV(t);
-        // CameraObject::GetFOV() returns horizontal one. we need vertical one.
+        // CameraObject::GetFOV() returns horizontal fov. we need vertical one.
         float vfov = 2.0f * std::atan(std::tan(hfov / 2.0f) / (GetCOREInterface()->GetRendImageAspect()));
         fov = vfov * mu::Rad2Deg;
     }
@@ -451,7 +451,7 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
         far_plane = cam->GetClipDist(t, 1);
     }
     else {
-        // todo
+        near_plane = far_plane = 0.0f;
     }
 }
 
@@ -594,7 +594,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *
         }
     }
 
-    // handle blendshape weight animation
+    // handle blendshape
     if (m_settings.sync_blendshapes) {
         auto *mod = FindMorph(src);
         if (mod) {
@@ -640,7 +640,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *
     }
 
     if (m_settings.sync_bones) {
-        if (ISkin *skin = FindSkin(src)) {
+        if (auto *skin = FindSkin(src)) {
             auto ctx = skin->GetContextInterface(src);
             int num_bones = skin->GetNumBones();
             int num_vertices = ctx->GetNumPoints();
