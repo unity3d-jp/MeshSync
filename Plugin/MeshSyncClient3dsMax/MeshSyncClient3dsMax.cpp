@@ -105,7 +105,7 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 
 void MeshSyncClient3dsMax::onNodeUpdated(INode * n)
 {
-    m_node_records[n].dirty = true;
+    getNodeRecord(n).dirty = true;
     m_dirty = true;
 }
 
@@ -224,6 +224,15 @@ bool MeshSyncClient3dsMax::recvScene()
 }
 
 
+MeshSyncClient3dsMax::TreeNode & MeshSyncClient3dsMax::getNodeRecord(INode *n)
+{
+    auto& rec = m_node_records[n];
+    if (rec.index == 0) {
+        rec.index = ++m_index_seed;
+    }
+    return rec;
+}
+
 bool MeshSyncClient3dsMax::isSending() const
 {
     if (m_future_send.valid()) {
@@ -337,7 +346,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
         return nullptr;
 
     auto obj = GetBaseObject(n);
-    auto& rec = m_node_records[n];
+    auto& rec = getNodeRecord(n);
     if (rec.dst_obj)
         return rec.dst_obj;
 
@@ -407,7 +416,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
 
     if (ret) {
         ret->path = GetPath(n);
-        ret->index = ++m_index_seed;
+        ret->index = rec.index;
         rec.dst_obj = ret.get();
     }
     return ret.get();
@@ -435,16 +444,49 @@ bool MeshSyncClient3dsMax::extractTransformData(ms::Transform &dst, INode *n, Ob
 bool MeshSyncClient3dsMax::extractCameraData(ms::Camera &dst, INode *n, Object *obj)
 {
     extractTransformData(dst, n, obj);
+    dst.rotation *= mu::rotateX(-90.0f * mu::Deg2Rad);
 
     auto cam = (CameraObject*)obj;
     return true;
 }
 
+void ExtractLightData(GenLight *light, TimeValue t,
+    ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+{
+    switch (light->Type()) {
+    case TSPOT_LIGHT:
+    case FSPOT_LIGHT: // fall through
+    {
+        type = ms::Light::LightType::Spot;
+        spot_angle = light->GetHotspot(t);
+        break;
+    }
+    case DIR_LIGHT:
+    case TDIR_LIGHT: // fall through
+    {
+        type = ms::Light::LightType::Directional;
+        break;
+    }
+    case OMNI_LIGHT:
+    default: // fall through
+    {
+        type = ms::Light::LightType::Point;
+        break;
+    }
+    }
+
+    (mu::float3&)color = to_float3(light->GetRGBColor(t));
+    intensity = light->GetIntensity(t);
+
+}
+
 bool MeshSyncClient3dsMax::extractLightData(ms::Light &dst, INode *n, Object *obj)
 {
     extractTransformData(dst, n, obj);
+    dst.rotation *= mu::rotateX(-90.0f * mu::Deg2Rad);
 
-    auto* light = (GenLight*)obj;
+    ExtractLightData((GenLight*)obj, GetTime(),
+        dst.light_type, dst.color, dst.intensity, dst.spot_angle);
     return true;
 }
 
@@ -694,11 +736,9 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, MNMesh & mesh)
 
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
 {
-    // note: Mesh is triangulated mesh
-
     // faces
     int num_faces = mesh.numFaces;
-    int num_indices = num_faces * 3;
+    int num_indices = num_faces * 3; // all faces in Mesh are triangle
     {
         dst.counts.clear();
         dst.counts.resize(num_faces, 3);
@@ -848,6 +888,11 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
 
     float t = m_current_time_sec;
     auto& dst = (ms::CameraAnimation&)dst_;
+    {
+        auto& last = dst.rotation.back();
+        last.value *= mu::rotateX(-90.0f * mu::Deg2Rad);
+    }
+
 }
 
 void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src, Object *obj)
@@ -856,6 +901,19 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
 
     float t = m_current_time_sec;
     auto& dst = (ms::LightAnimation&)dst_;
+    {
+        auto& last = dst.rotation.back();
+        last.value *= mu::rotateX(-90.0f * mu::Deg2Rad);
+    }
+    ms::Light::LightType type;
+    mu::float4 color;
+    float intensity, spot_angle;
+    ExtractLightData((GenLight*)obj, m_current_time, type, color, intensity, spot_angle);
+
+    dst.color.push_back({ t, color });
+    dst.intensity.push_back({ t, intensity });
+    if (type == ms::Light::LightType::Spot)
+        dst.spot_angle.push_back({ t, spot_angle });
 }
 
 void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src, Object *obj)

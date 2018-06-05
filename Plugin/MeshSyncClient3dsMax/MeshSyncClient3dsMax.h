@@ -72,6 +72,35 @@ public:
     void applyUISettings();
 
 private:
+    using task_t = std::function<void()>;
+    struct TreeNode
+    {
+        INode *nod = nullptr;
+        Object *obj = nullptr; // base (bottom) object
+        std::string name;
+        std::string path;
+
+        bool dirty = true;
+        ms::Transform *dst_obj = nullptr;
+        ms::Animation *dst_anim = nullptr;
+        int index = 0;
+
+        void clearState();
+    };
+
+    struct AnimationRecord
+    {
+        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *n, Object *obj);
+        extractor_t extractor;
+        INode *node;
+        Object *obj;
+        ms::Animation *dst;
+
+        void operator()(MeshSyncClient3dsMax *_this);
+    };
+
+    TreeNode & getNodeRecord(INode *n);
+
     bool isSending() const;
     void waitAsyncSend();
     void kickAsyncSend();
@@ -93,33 +122,6 @@ private:
     void extractMeshAnimation(ms::Animation& dst, INode *n, Object *obj);
 
 private:
-    using task_t = std::function<void()>;
-    struct TreeNode
-    {
-        INode *nod = nullptr;
-        Object *obj = nullptr; // base (bottom) object
-        std::string name;
-        std::string path;
-
-        bool dirty = true;
-        ms::Transform *dst_obj = nullptr;
-        ms::Animation *dst_anim = nullptr;
-        task_t extract_task;
-
-        void clearState();
-    };
-
-    struct AnimationRecord
-    {
-        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *src, Object *obj);
-        extractor_t extractor;
-        INode *node;
-        Object *obj;
-        ms::Animation *dst;
-
-        void operator()(MeshSyncClient3dsMax *_this);
-    };
-
     Settings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
