@@ -79,20 +79,18 @@ private:
     void exportMaterials();
 
     ms::Transform* exportObject(INode *node, bool force);
-    bool extractTransformData(ms::Transform& dst, INode *src);
-    bool extractCameraData(ms::Camera& dst, INode *src);
-    bool extractLightData(ms::Light& dst, INode *src);
-    bool extractMeshData(ms::Mesh& dst, INode *src);
-    bool extractMeshData(ms::Mesh& dst, MNMesh &src);
-    bool extractMeshData(ms::Mesh& dst, Mesh &src);
+    bool extractTransformData(ms::Transform& dst, INode *src, Object *obj);
+    bool extractCameraData(ms::Camera& dst, INode *n, Object *obj);
+    bool extractLightData(ms::Light& dst, INode *n, Object *obj);
+    bool extractMeshData(ms::Mesh& dst, INode *n, Object *obj);
+    bool extractMeshData(ms::Mesh& dst, MNMesh &mesh);
+    bool extractMeshData(ms::Mesh& dst, Mesh &mesh);
 
     ms::Animation* exportAnimations(INode *node, bool force);
-    void extractTransformAnimation(ms::Animation& dst, INode *src);
-    void extractCameraAnimation(ms::Animation& dst, INode *src);
-    void extractLightAnimation(ms::Animation& dst, INode *src);
-    void extractMeshAnimation(ms::Animation& dst, INode *src);
-
-    float getCurrentTimeInSeconds() const;
+    void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
+    void extractCameraAnimation(ms::Animation& dst, INode *n, Object *obj);
+    void extractLightAnimation(ms::Animation& dst, INode *n, Object *obj);
+    void extractMeshAnimation(ms::Animation& dst, INode *n, Object *obj);
 
 private:
     using task_t = std::function<void()>;
@@ -113,9 +111,10 @@ private:
 
     struct AnimationRecord
     {
-        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *src);
+        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *src, Object *obj);
         extractor_t extractor;
-        INode *src;
+        INode *node;
+        Object *obj;
         ms::Animation *dst;
 
         void operator()(MeshSyncClient3dsMax *_this);
@@ -132,6 +131,7 @@ private:
 
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time;
+    float m_current_time_sec;
 
 
     std::vector<ms::TransformPtr>       m_objects;

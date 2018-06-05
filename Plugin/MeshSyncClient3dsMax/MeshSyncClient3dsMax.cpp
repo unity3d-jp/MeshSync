@@ -39,7 +39,7 @@ void MeshSyncClient3dsMax::TreeNode::clearState()
 
 void MeshSyncClient3dsMax::AnimationRecord::operator()(MeshSyncClient3dsMax * _this)
 {
-    (_this->*extractor)(*dst, src);
+    (_this->*extractor)(*dst, node, obj);
 }
 
 
@@ -196,6 +196,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     for (TimeValue t = time_range.Start(); t <= time_range.End(); t += interval) {
         // advance frame and record
         m_current_time = t;
+        m_current_time_sec = ToSeconds(t);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
     }
@@ -348,13 +349,13 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
             auto dst = ms::Mesh::create();
             ret = dst;
             m_meshes.push_back(dst);
-            extractMeshData(*dst, n);
+            extractMeshData(*dst, n, obj);
         }
         else {
             auto dst = ms::Transform::create();
             ret = dst;
             m_objects.push_back(dst);
-            extractTransformData(*dst, n);
+            extractTransformData(*dst, n, obj);
         }
 
         if (m_settings.sync_bones) {
@@ -375,7 +376,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
                 auto dst = ms::Camera::create();
                 ret = dst;
                 m_objects.push_back(dst);
-                extractCameraData(*dst, n);
+                extractCameraData(*dst, n, obj);
             }
             break;
         }
@@ -386,7 +387,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
                 auto dst = ms::Light::create();
                 ret = dst;
                 m_objects.push_back(dst);
-                extractLightData(*dst, n);
+                extractLightData(*dst, n, obj);
             }
             break;
         }
@@ -397,7 +398,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
                 auto dst = ms::Transform::create();
                 ret = dst;
                 m_objects.push_back(dst);
-                extractTransformData(*dst, n);
+                extractTransformData(*dst, n, obj);
             }
             break;
         }
@@ -425,29 +426,31 @@ static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::qua
     scale = mu::extract_scale(mat);
 }
 
-bool MeshSyncClient3dsMax::extractTransformData(ms::Transform & dst, INode * src)
+bool MeshSyncClient3dsMax::extractTransformData(ms::Transform &dst, INode *n, Object * /*obj*/)
 {
-    ExtractTransform(src, GetTime(), dst.position, dst.rotation, dst.scale);
+    ExtractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale);
     return true;
 }
 
-bool MeshSyncClient3dsMax::extractCameraData(ms::Camera & dst, INode * src)
+bool MeshSyncClient3dsMax::extractCameraData(ms::Camera &dst, INode *n, Object *obj)
 {
-    extractTransformData(dst, src);
+    extractTransformData(dst, n, obj);
 
-    auto cam = (CameraObject*)src->GetObjectRef();
+    auto cam = (CameraObject*)obj;
     return true;
 }
 
-bool MeshSyncClient3dsMax::extractLightData(ms::Light & dst, INode * src)
+bool MeshSyncClient3dsMax::extractLightData(ms::Light &dst, INode *n, Object *obj)
 {
-    extractTransformData(dst, src);
+    extractTransformData(dst, n, obj);
+
+    auto* light = (GenLight*)obj;
     return true;
 }
 
 
 // dst must be allocated with length of indices
-static void ExtractNormals(RawVector<mu::float3> & dst, Mesh & mesh)
+static void ExtractNormals(RawVector<mu::float3> &dst, Mesh & mesh)
 {
     auto* nspec = (MeshNormalSpec*)mesh.GetInterface(MESH_NORMAL_SPEC_INTERFACE);
     if (nspec && nspec->GetFlag(MESH_NORMAL_NORMALS_BUILT)) {
@@ -463,29 +466,58 @@ static void ExtractNormals(RawVector<mu::float3> & dst, Mesh & mesh)
         }
     }
     else {
+        // copied from SDK samples...
+        auto get_normal = [&mesh](int face_index, int vertex_index) -> mu::float3 {
+            const auto& rv = mesh.getRVert(vertex_index);
+            const auto& face = mesh.faces[face_index];
+            DWORD smGroup = face.smGroup;
+            int num_normals = 0;
+            Point3 ret;
+
+            if (rv.rFlags & SPECIFIED_NORMAL) {
+                ret = rv.rn.getNormal();
+            }
+            else if ((num_normals = rv.rFlags & NORCT_MASK) != 0 && smGroup) {
+                if (num_normals == 1) {
+                    ret = rv.rn.getNormal();
+                }
+                else {
+                    for (int i = 0; i < num_normals; i++) {
+                        if (rv.ern[i].getSmGroup() & smGroup) {
+                            ret = rv.ern[i].getNormal();
+                        }
+                    }
+                }
+            }
+            else {
+                ret = mesh.getFaceNormal(face_index);
+            }
+            return to_float3(ret);
+        };
+
+        // make sure normal is allocated
+        mesh.checkNormals(TRUE);
+
         int num_faces = mesh.numFaces;
         const auto *faces = mesh.faces;
-        const auto *face_normals = mesh.getFaceNormalPtr(0);
         for (int fi = 0; fi < num_faces; ++fi) {
             auto& face = faces[fi];
-            // todo: support smooth group (face.smGroup)
             for (int i = 0; i < 3; ++i) {
-                dst[fi * 3 + i] = to_float3(face_normals[fi]);
+                dst[fi * 3 + i] = get_normal(fi, face.v[i]);
             }
         }
     }
 }
 
-bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
+bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *obj)
 {
-    extractTransformData(dst, src);
+    extractTransformData(dst, src, obj);
 
     if (m_materials.empty()) {
         exportMaterials();
     }
 
     bool ret = false;
-    auto obj = GetBaseObject(src);
     auto cid = obj->SuperClassID();
     /*
     if (obj->IsSubClassOf(polyObjectClassID)) {
@@ -499,6 +531,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         }
     }
 
+    // handle blendshape weight animation
     if (m_settings.sync_blendshapes) {
         auto *mod = FindMorph(src);
         if (mod) {
@@ -534,10 +567,11 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
                 frame.normals.resize_discard(dst.normals.size());
                 ExtractNormals(frame.normals, tmesh);
 
+                // convert to delta
                 for (int i = 0; i < num_points; ++i)
-                    frame.points[i] = frame.points[i] - dst.points[i];
+                    frame.points[i] -= dst.points[i];
                 for (int i = 0; i < num_normals; ++i)
-                    frame.normals[i] = frame.normals[i] - dst.normals[i];
+                    frame.normals[i] -= dst.normals[i];
             }
         }
     }
@@ -551,9 +585,10 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
                 // vertices are increased or decreased by modifiers. this case is not supported.
             }
             else {
+                // allocate bones and extract bindposes
+                // note: in max, bindpose is [skin_matrix * inv_bone_matrix]
                 Matrix3 skin_matrix;
                 skin->GetSkinInitTM(src, skin_matrix);
-
                 for (int bi = 0; bi < num_bones; ++bi) {
                     auto bone = skin->GetBone(bi);
                     Matrix3 bone_matrix;
@@ -563,8 +598,10 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
                     dst.bones.push_back(bd);
                     bd->path = GetPath(bone);
                     bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
-                    bd->weights.resize_zeroclear(dst.points.size());
+                    bd->weights.resize_zeroclear(dst.points.size()); // allocate weights
                 }
+
+                // get weights
                 for (int vi = 0; vi < num_vertices; ++vi) {
                     int num_affected_bones = ctx->GetNumAssignedBones(vi);
                     for (int bi = 0; bi < num_affected_bones; ++bi) {
@@ -579,6 +616,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
 
     if (ret) {
         dst.setupFlags();
+        // request flip faces
         dst.flags.has_refine_settings = 1;
         dst.refine_settings.flags.swap_faces = 1;
     }
@@ -782,13 +820,14 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
 
         auto& rec = m_anim_records[n];
         rec.dst = ret.get();
-        rec.src = n;
+        rec.node = n;
+        rec.obj = obj;
         rec.extractor = extractor;
     }
     return ret.get();
 }
 
-void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode *src)
+void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode *src, Object *obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -797,34 +836,33 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     mu::float3 scale;
     ExtractTransform(src, m_current_time, pos, rot, scale);
 
-    float t = getCurrentTimeInSeconds();
+    float t = m_current_time_sec;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
 }
 
-void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *src)
+void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *src, Object *obj)
 {
-    extractTransformAnimation(dst_, src);
+    extractTransformAnimation(dst_, src, obj);
 
-    float t = getCurrentTimeInSeconds();
+    float t = m_current_time_sec;
     auto& dst = (ms::CameraAnimation&)dst_;
 }
 
-void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src)
+void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src, Object *obj)
 {
-    extractTransformAnimation(dst_, src);
+    extractTransformAnimation(dst_, src, obj);
 
-    float t = getCurrentTimeInSeconds();
+    float t = m_current_time_sec;
     auto& dst = (ms::LightAnimation&)dst_;
 }
 
-void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
+void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src, Object *obj)
 {
-    extractTransformAnimation(dst_, src);
+    extractTransformAnimation(dst_, src, obj);
 
-    float t = getCurrentTimeInSeconds();
-    auto obj = GetBaseObject(src);
+    float t = m_current_time_sec;
     auto& dst = (ms::MeshAnimation&)dst_;
 
     if (m_settings.sync_blendshapes) {
@@ -844,9 +882,4 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src)
             }
         }
     }
-}
-
-float MeshSyncClient3dsMax::getCurrentTimeInSeconds() const
-{
-    return (float)ToSeconds(m_current_time) * m_settings.animation_time_scale;;
 }
