@@ -87,7 +87,7 @@ void MeshSyncClient3dsMax::onSceneUpdated()
 
 void MeshSyncClient3dsMax::onTimeChanged()
 {
-    mscTraceW(L"MeshSyncClient3dsMax::onTimeChanged()\n");
+    //m_scene_updated = true;
 }
 
 void MeshSyncClient3dsMax::onNodeAdded(INode * n)
@@ -117,13 +117,20 @@ void MeshSyncClient3dsMax::onRepaint()
 
 void MeshSyncClient3dsMax::update()
 {
-    if (m_pending_request != SendScope::None) {
+    if (m_pending_request == SendScope::None) {
+        if (m_settings.auto_sync) {
+            if (m_scene_updated) {
+                m_pending_request = SendScope::All;
+            }
+            else if (m_dirty) {
+                m_pending_request = SendScope::Updated;
+            }
+        }
+    }
+    else {
         if (sendScene(m_pending_request)) {
             m_pending_request = SendScope::None;
         }
-    }
-    else if (m_settings.auto_sync && m_dirty) {
-        sendScene(SendScope::Updated);
     }
 }
 
@@ -155,6 +162,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
         }
     }
     m_dirty = false;
+    m_scene_updated = false;
 
     if (num_exported > 0)
         kickAsyncSend();
@@ -333,12 +341,30 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
         return rec.dst_obj;
 
     ms::TransformPtr ret;
-    if (IsMesh(obj) && m_settings.sync_meshes) {
+    if (IsMesh(obj) && (m_settings.sync_meshes || m_settings.sync_bones)) {
         exportObject(n->GetParentNode(), true);
-        auto dst = ms::Mesh::create();
-        ret = dst;
-        m_meshes.push_back(dst);
-        extractMeshData(*dst, n);
+
+        if (m_settings.sync_meshes) {
+            auto dst = ms::Mesh::create();
+            ret = dst;
+            m_meshes.push_back(dst);
+            extractMeshData(*dst, n);
+        }
+        else {
+            auto dst = ms::Transform::create();
+            ret = dst;
+            m_objects.push_back(dst);
+            extractTransformData(*dst, n);
+        }
+
+        if (m_settings.sync_bones) {
+            if (ISkin *skin = FindSkin(n)) {
+                // export bone nodes
+                EachBone(skin, [this](INode *bone) {
+                    exportObject(bone, true);
+                });
+            }
+        }
     }
     else {
         switch (obj->SuperClassID()) {
@@ -458,18 +484,6 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         exportMaterials();
     }
 
-    ISkin *skin = nullptr;
-    if (m_settings.sync_bones) {
-        skin = FindSkin(src);
-    }
-    if (skin) {
-        // export bone nodes
-        EachBone(skin, [this](INode *bone) {
-            exportObject(bone, true);
-        });
-    }
-
-
     bool ret = false;
     auto obj = GetBaseObject(src);
     auto cid = obj->SuperClassID();
@@ -528,34 +542,36 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src)
         }
     }
 
-    if (m_settings.sync_bones && skin) {
-        auto ctx = skin->GetContextInterface(src);
-        int num_bones = skin->GetNumBones();
-        int num_vertices = ctx->GetNumPoints();
-        if (num_vertices != dst.points.size()) {
-            // vertices are increased or decreased by modifiers. this case is not supported.
-        }
-        else {
-            Matrix3 skin_matrix;
-            skin->GetSkinInitTM(src, skin_matrix);
-
-            for (int bi = 0; bi < num_bones; ++bi) {
-                auto bone = skin->GetBone(bi);
-                Matrix3 bone_matrix;
-                skin->GetBoneInitTM(bone, bone_matrix);
-
-                auto bd = ms::BoneData::create();
-                dst.bones.push_back(bd);
-                bd->path = GetPath(bone);
-                bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
-                bd->weights.resize_zeroclear(dst.points.size());
+    if (m_settings.sync_bones) {
+        if (ISkin *skin = FindSkin(src)) {
+            auto ctx = skin->GetContextInterface(src);
+            int num_bones = skin->GetNumBones();
+            int num_vertices = ctx->GetNumPoints();
+            if (num_vertices != dst.points.size()) {
+                // vertices are increased or decreased by modifiers. this case is not supported.
             }
-            for (int vi = 0; vi < num_vertices; ++vi) {
-                int num_affected_bones = ctx->GetNumAssignedBones(vi);
-                for (int bi = 0; bi < num_affected_bones; ++bi) {
-                    int bone_index = ctx->GetAssignedBone(vi, bi);
-                    float bone_weight = ctx->GetBoneWeight(vi, bi);
-                    dst.bones[bone_index]->weights[vi] = bone_weight;
+            else {
+                Matrix3 skin_matrix;
+                skin->GetSkinInitTM(src, skin_matrix);
+
+                for (int bi = 0; bi < num_bones; ++bi) {
+                    auto bone = skin->GetBone(bi);
+                    Matrix3 bone_matrix;
+                    skin->GetBoneInitTM(bone, bone_matrix);
+
+                    auto bd = ms::BoneData::create();
+                    dst.bones.push_back(bd);
+                    bd->path = GetPath(bone);
+                    bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
+                    bd->weights.resize_zeroclear(dst.points.size());
+                }
+                for (int vi = 0; vi < num_vertices; ++vi) {
+                    int num_affected_bones = ctx->GetNumAssignedBones(vi);
+                    for (int bi = 0; bi < num_affected_bones; ++bi) {
+                        int bone_index = ctx->GetAssignedBone(vi, bi);
+                        float bone_weight = ctx->GetBoneWeight(vi, bi);
+                        dst.bones[bone_index]->weights[vi] = bone_weight;
+                    }
                 }
             }
         }
@@ -640,9 +656,11 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, MNMesh & mesh)
 
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
 {
+    // note: Mesh is triangulated mesh
+
     // faces
     int num_faces = mesh.numFaces;
-    int num_indices = num_faces * 3; // Max's Face is triangle
+    int num_indices = num_faces * 3;
     {
         dst.counts.clear();
         dst.counts.resize(num_faces, 3);
