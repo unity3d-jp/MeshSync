@@ -127,7 +127,8 @@ void MeshSyncClient3dsMax::update()
             }
         }
     }
-    else {
+
+    if (m_pending_request != SendScope::None) {
         if (sendScene(m_pending_request)) {
             m_pending_request = SendScope::None;
         }
@@ -435,22 +436,26 @@ static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::qua
     scale = mu::extract_scale(mat);
 }
 
-bool MeshSyncClient3dsMax::extractTransformData(ms::Transform &dst, INode *n, Object * /*obj*/)
+static void ExtractCameraData(GenCamera *cam, TimeValue t,
+    bool& ortho, float& fov, float& near_plane, float& far_plane)
 {
-    ExtractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale);
-    return true;
+    ortho = cam->IsOrtho();
+    {
+        float hfov = cam->GetFOV(t);
+        // CameraObject::GetFOV() returns horizontal one. we need vertical one.
+        float vfov = 2.0f * std::atan(std::tan(hfov / 2.0f) / (GetCOREInterface()->GetRendImageAspect()));
+        fov = vfov * mu::Rad2Deg;
+    }
+    if (cam->GetManualClip()) {
+        near_plane = cam->GetClipDist(t, 0);
+        far_plane = cam->GetClipDist(t, 1);
+    }
+    else {
+        // todo
+    }
 }
 
-bool MeshSyncClient3dsMax::extractCameraData(ms::Camera &dst, INode *n, Object *obj)
-{
-    extractTransformData(dst, n, obj);
-    dst.rotation *= mu::rotateX(-90.0f * mu::Deg2Rad);
-
-    auto cam = (CameraObject*)obj;
-    return true;
-}
-
-void ExtractLightData(GenLight *light, TimeValue t,
+static void ExtractLightData(GenLight *light, TimeValue t,
     ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
 {
     switch (light->Type()) {
@@ -477,7 +482,23 @@ void ExtractLightData(GenLight *light, TimeValue t,
 
     (mu::float3&)color = to_float3(light->GetRGBColor(t));
     intensity = light->GetIntensity(t);
+}
 
+
+bool MeshSyncClient3dsMax::extractTransformData(ms::Transform &dst, INode *n, Object * /*obj*/)
+{
+    ExtractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale);
+    return true;
+}
+
+bool MeshSyncClient3dsMax::extractCameraData(ms::Camera &dst, INode *n, Object *obj)
+{
+    extractTransformData(dst, n, obj);
+    dst.rotation *= mu::rotateX(-90.0f * mu::Deg2Rad);
+
+    ExtractCameraData((GenCamera*)obj, GetTime(),
+        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane);
+    return true;
 }
 
 bool MeshSyncClient3dsMax::extractLightData(ms::Light &dst, INode *n, Object *obj)
@@ -893,6 +914,13 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
         last.value *= mu::rotateX(-90.0f * mu::Deg2Rad);
     }
 
+    bool ortho;
+    float fov, near_plane, far_plane;
+    ExtractCameraData((GenCamera*)obj, m_current_time, ortho, fov, near_plane, far_plane);
+
+    dst.fov.push_back({ t, fov });
+    dst.near_plane.push_back({ t, near_plane });
+    dst.far_plane.push_back({ t, far_plane });
 }
 
 void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src, Object *obj)
