@@ -87,7 +87,7 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     {
         auto& trans = n->trans->node;
         MObject obj_wmat;
-        MFnTransform(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
+        MFnDependencyNode(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
         mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
         vis = IsVisible(trans);
     }
@@ -97,7 +97,7 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     if (n->parent) {
         auto& parent = n->parent->trans->node;
         MObject obj_pwmat;
-        MFnTransform(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
+        MFnDependencyNode(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
         auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
         mat *= mu::invert(pwmat);
     }

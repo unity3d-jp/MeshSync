@@ -30,6 +30,9 @@
     <ClInclude Include="MeshSyncClientMaya\msmayaCommands.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClientMaya\MayaLT.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSyncClientMaya">

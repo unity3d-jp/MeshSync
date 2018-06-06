@@ -39,6 +39,9 @@
 // avoid redefinition of bool on maya 2015
 #define _BOOL
 
+#ifdef MAYA_LT
+    #include "MayaLT.h"
+#endif
 #include <maya/MAnimControl.h>
 #include <maya/MGlobal.h>
 #include <maya/MDistance.h>
