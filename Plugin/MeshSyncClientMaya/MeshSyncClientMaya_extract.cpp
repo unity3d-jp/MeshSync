@@ -133,15 +133,15 @@ static void ExtractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4
         spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
     }
     else if (shape.hasFn(MFn::kDirectionalLight)) {
-        MFnDirectionalLight mlight(shape);
+        //MFnDirectionalLight mlight(shape);
         type = ms::Light::LightType::Directional;
     }
     else if (shape.hasFn(MFn::kPointLight)) {
-        MFnPointLight mlight(shape);
+        //MFnPointLight mlight(shape);
         type = ms::Light::LightType::Point;
     }
     else if (shape.hasFn(MFn::kAreaLight)) {
-        MFnAreaLight mlight(shape);
+        //MFnAreaLight mlight(shape);
         type = ms::Light::LightType::Area;
     }
 
