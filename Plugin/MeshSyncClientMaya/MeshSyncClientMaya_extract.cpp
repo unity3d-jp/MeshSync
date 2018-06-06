@@ -243,17 +243,16 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
     // get points
     {
-        MFloatPointArray points;
-        if (fn_src_mesh.getPoints(points) != MStatus::kSuccess) {
+        int num_vertices = fn_src_mesh.numVertices();
+        if (num_vertices == 0) {
             // return empty mesh
             return;
         }
 
-        auto len = points.length();
-        dst.points.resize(len);
-        const MFloatPoint *points_ptr = &points[0];
-        for (uint32_t i = 0; i < len; ++i) {
-            dst.points[i] = to_float3(points_ptr[i]);
+        dst.points.resize_discard(num_vertices);
+        auto *points = (const mu::float3*)fn_src_mesh.getRawPoints(nullptr);
+        for (int i = 0; i < num_vertices; ++i) {
+            dst.points[i] = points[i];
         }
     }
 
@@ -279,17 +278,17 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
     // get normals
     if (m_settings.sync_normals) {
-        MFloatVectorArray normals;
-        if (fn_src_mesh.getNormals(normals) == MStatus::kSuccess) {
-            dst.normals.resize_zeroclear(index_count);
-            const MFloatVector *normals_ptr = &normals[0];
+        int num_normals = fn_src_mesh.numNormals();
+        if (num_normals > 0) {
+            dst.normals.resize_discard(index_count);
+            auto *normals = (const mu::float3*)fn_src_mesh.getRawNormals(nullptr);
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
-                    dst.normals[ii] = to_float3(normals_ptr[it_poly.normalIndex(i)]);
+                    dst.normals[ii] = normals[it_poly.normalIndex(i)];
                     ++ii;
                 }
                 it_poly.next();
@@ -308,8 +307,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             MFloatArray u;
             MFloatArray v;
             fn_src_mesh.getUVs(u, v, &uvsets[0]);
-            const float *u_ptr = &u[0];
-            const float *v_ptr = &v[0];
+            const auto *u_ptr = &u[0];
+            const auto *v_ptr = &v[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
@@ -336,7 +335,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
             MColorArray colors;
             fn_src_mesh.getColors(colors, &color_sets[0]);
-            const MColor *colors_ptr = &colors[0];
+            const auto *colors_ptr = &colors[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
@@ -370,10 +369,11 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         }
 
         if (mids.size() > 0) {
+            const auto* indices_ptr = &indices[0];
             dst.material_ids.resize_zeroclear(face_count);
             uint32_t len = std::min(face_count, indices.length());
             for (uint32_t i = 0; i < len; ++i) {
-                dst.material_ids[i] = mids[indices[i]];
+                dst.material_ids[i] = mids[indices_ptr[i]];
             }
         }
     }
@@ -443,13 +443,11 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
 
                 MFnMesh fn_geom(obj_geom);
-                MFloatPointArray points;
-                fn_geom.getPoints(points);
+                auto *points = (const mu::float3*)fn_geom.getRawPoints(nullptr);
 
-                uint32_t len = std::min(points.length(), (uint32_t)dst.points.size());
-                MFloatPoint *points_ptr = &points[0];
-                for (uint32_t pi = 0; pi < len; ++pi) {
-                    dst_frame.points[pi] = to_float3(points_ptr[pi]) - dst.points[pi];
+                int len = std::min(fn_geom.numVertices(), (int)dst.points.size());
+                for (int pi = 0; pi < len; ++pi) {
+                    dst_frame.points[pi] = points[pi] - dst.points[pi];
                 }
             }
         };
@@ -483,10 +481,10 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                 MIntArray indices;
                 MFnSingleIndexedComponent fn_indices(obj_component_list);
                 fn_indices.getElements(indices);
-                int *indices_ptr = &indices[0];
+                const auto *indices_ptr = &indices[0];
 
                 MFnPointArrayData fn_points(obj_points);
-                MPoint *points_ptr = &fn_points[0];
+                const auto *points_ptr = &fn_points[0];
 
                 uint32_t len = std::min(fn_points.length(), (uint32_t)dst.points.size());
                 for (uint32_t pi = 0; pi < len; ++pi) {
@@ -503,7 +501,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             if (plug_itp.logicalIndex() == 0) {
                 MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
                 uint32_t num_itg = plug_itg.evaluateNumElements();
-                //DumpPlugInfo(plug_itg);
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     auto dst_bs = ms::BlendShapeData::create();

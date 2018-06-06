@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "msmayaUtils.h"
+
 struct MObjectKey
 {
     void *key;

@@ -208,7 +208,7 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
     : m_obj(obj)
     , m_iplugin(obj, msVendor, msReleaseDateStr)
 {
-#define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create, CmdType::createSyntax);
+#define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create);
     EachCommand(Body)
 #undef Body
 
@@ -268,8 +268,8 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 
     // cameras
     EnumerateNode(MFn::kCamera, [this](MObject& node) {
-        MFnDagNode fn(node);
-        if (!fn.isIntermediateObject()) {
+        Pad<MFnDagNode> fn(node);
+        if (!fn->isIntermediateObject()) {
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
@@ -278,8 +278,8 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 
     // lights
     EnumerateNode(MFn::kLight, [this](MObject& node) {
-        MFnDagNode fn(node);
-        if (!fn.isIntermediateObject()) {
+        Pad<MFnDagNode> fn(node);
+        if (!fn->isIntermediateObject()) {
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
@@ -288,8 +288,8 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 
     //  meshes
     EnumerateNode(MFn::kMesh, [this](MObject& node) {
-        MFnDagNode fn(node);
-        if (!fn.isIntermediateObject()) {
+        Pad<MFnDagNode> fn(node);
+        if (!fn->isIntermediateObject()) {
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
@@ -333,7 +333,7 @@ void MeshSyncClientMaya::constructTree()
     m_index_seed = 0;
 
     EnumerateNode(MFn::kTransform, [&](MObject& node) {
-        if (MFnDagNode(node).parent(0).hasFn(MFn::kWorld)) {
+        if (Pad<MFnDagNode>(node)->parent(0).hasFn(MFn::kWorld)) {
             constructTree(node, nullptr, "");
         }
     });
@@ -412,9 +412,9 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     };
 
     if (scope == SendScope::All) {
-        EnumerateAllNode([](MObject& obj) {
-            mscTrace("  %d (%s) %s\n", obj.apiType(), obj.apiTypeStr(), GetPath(obj).c_str());
-        });
+        //EnumerateAllNode([](MObject& obj) {
+        //    mscTrace("  %d (%s) %s\n", obj.apiType(), obj.apiTypeStr(), GetPath(obj).c_str());
+        //});
 
         auto handler = [&](MObject& node) {
             export_branches(m_dag_nodes[node]);

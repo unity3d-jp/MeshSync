@@ -49,7 +49,6 @@
 #define MFnLight                    ___IlI1I
 #define MFnSpotLight                ___IO0Il
 #define MFnDirectionalLight         ___00Il0
-#define MFnDagNode                  ___O1l0O
 #define MFnMatrixData               ___001l0
 #define MFnMesh                     ___10IOO
 #define MFnSkinCluster              ___I0lO1

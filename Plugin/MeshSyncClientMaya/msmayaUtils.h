@@ -85,6 +85,76 @@ inline mu::float3 to_float3(const MPlug plug)
 }
 
 
+template<class T, size_t size = 128>
+struct Pad
+{
+#if MAYA_LT
+    Pad()
+    {
+#ifdef mscDebug
+        memset(data, 0xee, size);
+#endif
+        new(data) T();
+#ifdef mscDebug
+        checkWrittenBytes();
+#endif
+    }
+
+    template <typename... Args>
+    Pad(Args&&... args)
+    {
+#ifdef mscDebug
+        memset(data, 0xee, size);
+#endif
+        new(data) T(std::forward<Args>(args)...);
+#ifdef mscDebug
+        checkWrittenBytes();
+#endif
+    }
+
+#ifdef mscDebug
+    void checkWrittenBytes()
+    {
+        int n = 127;
+        for (; n >= 0; --n) {
+            if (data[n] != 0xee)
+                break;
+        }
+        if (n > sizeof(T)) {
+            mscTrace("!!! %d : %d\n", n, (int)sizeof(T));
+        }
+    }
+#endif
+
+
+    ~Pad()
+    {
+        ((T*)data)->~T();
+    }
+
+    T* operator->() { return (T*)data; }
+    T& operator*() { return *(T*)data; }
+    uint8_t data[size];
+#else
+    Pad() : data() {}
+
+    template <typename... Args>
+    Pad(Args&&... args) : data(std::forward<Args>(args)...) {}
+
+    T* operator->() { return (T*)&(void*&)data; }
+    T& operator*() { return data; }
+    T data;
+#endif
+
+    T& operator=(const T& v) { *this = v; return *this; }
+    T& operator=(const Pad& v) { *this = *v; return *this; }
+
+    Pad(const Pad&) = delete;
+    Pad(Pad&&) = delete;
+    Pad& operator=(Pad&&) = delete;
+};
+
+
 // body: [](MObject&) -> void
 template<class Body>
 inline void EnumerateNode(MFn::Type type, const Body& body)
@@ -114,20 +184,20 @@ inline void EnumerateAllNode(const Body& body)
 template<class Body>
 inline void EachParent(MObject node, const Body& body)
 {
-    MFnDagNode fn(node);
-    auto num_parents = fn.parentCount();
+    Pad<MFnDagNode> fn(node);
+    auto num_parents = fn->parentCount();
     for (uint32_t i = 0; i < num_parents; ++i)
-        body(fn.parent(i));
+        body(fn->parent(i));
 }
 
 // body: [](MObject&) -> void
 template<class Body>
 inline void EachChild(MObject node, const Body& body)
 {
-    MFnDagNode fn(node);
-    auto num_children = fn.childCount();
+    Pad<MFnDagNode> fn(node);
+    auto num_children = fn->childCount();
     for (uint32_t i = 0; i < num_children; ++i)
-        body(fn.child(i));
+        body(fn->child(i));
 }
 
 // body: [](MObject&) -> void

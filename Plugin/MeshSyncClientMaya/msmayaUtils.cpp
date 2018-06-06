@@ -5,8 +5,8 @@
 
 bool IsVisible(const MObject& node)
 {
-    MFnDagNode dag(node);
-    auto vis = dag.findPlug("visibility");
+    Pad<MFnDagNode> dag(node);
+    auto vis = dag->findPlug("visibility");
     bool visible = true;
     vis.getValue(visible);
     return visible;
@@ -80,14 +80,14 @@ MDagPath GetParent(const MDagPath & node)
 
 MObject GetParent(const MObject& node)
 {
-    MFnDagNode dn(GetDagPath(node));
-    return dn.parentCount() > 0 ? dn.parent(0) : MObject();
+    Pad<MFnDagNode> dn(GetDagPath(node));
+    return dn->parentCount() > 0 ? dn->parent(0) : MObject();
 }
 
 bool IsInstance(const MObject& node)
 {
-    MFnDagNode dn(node);
-    return dn.isInstanced(false);
+    Pad<MFnDagNode> dn(node);
+    return dn->isInstanced(false);
 }
 
 MObject FindMesh(const MObject& node)
