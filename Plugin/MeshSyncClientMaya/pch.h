@@ -39,7 +39,7 @@
 // avoid redefinition of bool on maya 2015
 #define _BOOL
 
-#if msmayaLT
+#if MAYA_LT
     #include "MayaLT.h"
 #endif
 #include <maya/MAnimControl.h>

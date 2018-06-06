@@ -99,6 +99,19 @@ inline void EnumerateNode(MFn::Type type, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
+inline void EnumerateAllNode(const Body& body)
+{
+    MItDag it(MItDag::kDepthFirst, MFn::kInvalid);
+    while (!it.isDone()) {
+        auto obj = it.item();
+        body(obj);
+        it.next();
+    }
+}
+
+
+// body: [](MObject&) -> void
+template<class Body>
 inline void EachParent(MObject node, const Body& body)
 {
     MFnDagNode fn(node);

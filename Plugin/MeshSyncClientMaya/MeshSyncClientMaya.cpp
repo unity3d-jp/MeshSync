@@ -412,6 +412,10 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     };
 
     if (scope == SendScope::All) {
+        EnumerateAllNode([](MObject& obj) {
+            mscTrace("  %d (%s) %s\n", obj.apiType(), obj.apiTypeStr(), GetPath(obj).c_str());
+        });
+
         auto handler = [&](MObject& node) {
             export_branches(m_dag_nodes[node]);
         };
