@@ -118,7 +118,7 @@ private:
     bool extractCameraData(ms::Camera& dst, INode *n, Object *obj);
     bool extractLightData(ms::Light& dst, INode *n, Object *obj);
     bool extractMeshData(ms::Mesh& dst, INode *n, Object *obj);
-    bool extractMeshData(ms::Mesh& dst, INode *n, Mesh &mesh);
+    void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh &mesh);
 
     ms::Animation* exportAnimations(INode *node, bool force);
     void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
@@ -140,7 +140,6 @@ private:
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time;
     float m_current_time_sec;
-
 
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;

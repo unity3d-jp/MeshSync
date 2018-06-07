@@ -328,43 +328,38 @@ void MeshSyncClient3dsMax::kickAsyncSend()
 
 void MeshSyncClient3dsMax::exportMaterials()
 {
-    auto mtllib = GetCOREInterface()->GetSceneMtls();
+    auto *mtllib = GetCOREInterface()->GetSceneMtls();
     int count = mtllib->Count();
 
     m_materials.clear();
     for (int mi = 0; mi < count; ++mi) {
-        MaterialRecord rec;
-
-        auto mtl = (Mtl*)(*mtllib)[mi];
-        int num_submtls = mtl->NumSubMtls();
-        if (num_submtls == 0) {
-            rec.material_id = (int)m_materials.size();
-
+        auto do_export = [this](Mtl *mtl) -> int // return material id
+        {
+            int mid = (int)m_materials.size();
             auto dst = ms::Material::create();
             m_materials.push_back(dst);
             dst->name = mu::ToMBS(mtl->GetName().data());
             dst->color = to_color(mtl->GetDiffuse());
+            return mid;
+        };
+
+        auto mtl = (Mtl*)(*mtllib)[mi];
+        auto& rec = m_material_records[mtl];
+
+        int num_submtls = mtl->NumSubMtls();
+        if (num_submtls == 0) {
+            rec.material_id = do_export(mtl);
         }
         else {
             for (int si = 0; si < num_submtls; ++si) {
                 auto submtl = mtl->GetSubMtl(si);
-
                 auto it = m_material_records.find(submtl);
-                if (it != m_material_records.end()) {
+                if (it != m_material_records.end())
                     rec.submaterial_ids.push_back(it->second.material_id);
-                }
-                else {
-                    rec.submaterial_ids.push_back((int)m_materials.size());
-
-                    auto dst = ms::Material::create();
-                    m_materials.push_back(dst);
-                    dst->name = mu::ToMBS(submtl->GetName().data());
-                    dst->color = to_color(submtl->GetDiffuse());
-                }
+                else
+                    rec.submaterial_ids.push_back(do_export(submtl));
             }
         }
-
-        m_material_records[mtl] = std::move(rec);
     }
 }
 
@@ -602,17 +597,89 @@ static void ExtractNormals(RawVector<mu::float3> &dst, Mesh & mesh)
 
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *obj)
 {
+    if (!obj->CanConvertToType(triObjectClassID))
+        return false;
+
     extractTransformData(dst, n, obj);
 
-    if (m_materials.empty()) {
+    if (m_materials.empty())
         exportMaterials();
+
+    auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+    auto& mesh = tri->GetMesh();
+
+    doExtractMeshData(dst, n, mesh);
+
+    return true;
+}
+
+void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & mesh)
+{
+    // faces
+    int num_faces = mesh.numFaces;
+    int num_indices = num_faces * 3; // all faces in Mesh are triangle
+    {
+        dst.counts.clear();
+        dst.counts.resize(num_faces, 3);
+        dst.material_ids.resize_discard(num_faces);
+
+        const auto& mrec = m_material_records[n->GetMtl()];
+
+        auto *faces = mesh.faces;
+        dst.indices.resize_discard(num_indices);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto& face = faces[fi];
+            if (!mrec.submaterial_ids.empty()) { // multi-materials
+                int mid = std::min((int)mesh.getFaceMtlIndex(fi), (int)mrec.submaterial_ids.size() - 1);
+                dst.material_ids[fi] = mrec.submaterial_ids[mid];
+            }
+            else { // single material
+                dst.material_ids[fi] = mrec.material_id;
+            }
+
+            for (int i = 0; i < 3; ++i)
+                dst.indices[fi * 3 + i] = face.v[i];
+        }
     }
 
-    bool ret = false;
-    auto cid = obj->SuperClassID();
-    if(obj->CanConvertToType(triObjectClassID)) {
-        if (auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID)) {
-            ret = extractMeshData(dst, n, tri->GetMesh());
+    // points
+    int num_vertices = mesh.numVerts;
+    dst.points.resize_discard(num_vertices);
+    dst.points.assign((mu::float3*)mesh.verts, (mu::float3*)mesh.verts + num_vertices);
+
+    // normals
+    if (m_settings.sync_normals) {
+        dst.normals.resize_discard(num_indices);
+        ExtractNormals(dst.normals, mesh);
+    }
+
+    // uv
+    if (m_settings.sync_uvs) {
+        int num_uv = mesh.numTVerts;
+        auto *uv_faces = mesh.tvFace;
+        auto *uv_vertices = mesh.tVerts;
+        if (num_uv && uv_faces && uv_vertices) {
+            dst.uv0.resize_discard(num_indices);
+            for (int fi = 0; fi < num_faces; ++fi) {
+                for (int i = 0; i < 3; ++i) {
+                    dst.uv0[fi * 3 + i] = to_float2(uv_vertices[uv_faces[fi].t[i]]);
+                }
+            }
+        }
+    }
+
+    // colors
+    if (m_settings.sync_colors) {
+        int num_colors = mesh.numCVerts;
+        auto *vc_faces = mesh.vcFace;
+        auto *vc_vertices = mesh.vertCol;
+        if (num_colors && vc_faces && vc_vertices) {
+            dst.colors.resize_discard(num_indices);
+            for (int fi = 0; fi < num_faces; ++fi) {
+                for (int i = 0; i < 3; ++i) {
+                    dst.colors[fi * 3 + i] = to_color(vc_vertices[vc_faces[fi].t[i]]);
+                }
+            }
         }
     }
 
@@ -699,85 +766,12 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
         }
     }
 
-    if (ret) {
+    {
         dst.setupFlags();
         // request flip faces
         dst.flags.has_refine_settings = 1;
         dst.refine_settings.flags.swap_faces = 1;
     }
-    return ret;
-}
-
-bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode *n, Mesh & mesh)
-{
-    // faces
-    int num_faces = mesh.numFaces;
-    int num_indices = num_faces * 3; // all faces in Mesh are triangle
-    {
-        dst.counts.clear();
-        dst.counts.resize(num_faces, 3);
-        dst.material_ids.resize_discard(num_faces);
-
-        const auto& mrec = m_material_records[n->GetMtl()];
-        bool multi_materials = !mrec.submaterial_ids.empty();
-
-        auto *faces = mesh.faces;
-        dst.indices.resize_discard(num_indices);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            auto& face = faces[fi];
-            if (multi_materials) {
-                dst.material_ids[fi] = mrec.submaterial_ids[(int)mesh.getFaceMtlIndex(fi) % mrec.submaterial_ids.size()];
-            }
-            else {
-                dst.material_ids[fi] = mrec.material_id;
-            }
-            for (int i = 0; i < 3; ++i)
-                dst.indices[fi * 3 + i] = face.v[i];
-        }
-    }
-
-    // points
-    int num_vertices = mesh.numVerts;
-    dst.points.resize_discard(num_vertices);
-    dst.points.assign((mu::float3*)mesh.verts, (mu::float3*)mesh.verts + num_vertices);
-
-    // normals
-    if (m_settings.sync_normals) {
-        dst.normals.resize_discard(num_indices);
-        ExtractNormals(dst.normals, mesh);
-    }
-
-    // uv
-    if (m_settings.sync_uvs) {
-        int num_uv = mesh.numTVerts;
-        auto *uv_faces = mesh.tvFace;
-        auto *uv_vertices = mesh.tVerts;
-        if (num_uv && uv_faces && uv_vertices) {
-            dst.uv0.resize_discard(num_indices);
-            for (int fi = 0; fi < num_faces; ++fi) {
-                for (int i = 0; i < 3; ++i) {
-                    dst.uv0[fi * 3 + i] = to_float2(uv_vertices[uv_faces[fi].t[i]]);
-                }
-            }
-        }
-    }
-
-    // colors
-    if (m_settings.sync_colors) {
-        int num_colors = mesh.numCVerts;
-        auto *vc_faces = mesh.vcFace;
-        auto *vc_vertices = mesh.vertCol;
-        if (num_colors && vc_faces && vc_vertices) {
-            dst.colors.resize_discard(num_indices);
-            for (int fi = 0; fi < num_faces; ++fi) {
-                for (int i = 0; i < 3; ++i) {
-                    dst.colors[fi * 3 + i] = to_color(vc_vertices[vc_faces[fi].t[i]]);
-                }
-            }
-        }
-    }
-
-    return true;
 }
 
 ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)

@@ -75,7 +75,7 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
     }
 
     auto& settings = MeshSyncClient3dsMax::getInstance().getSettings();
-    if (count == 2 && wcscmp(arg_list[0]->to_string(), L"-q") == 0) {
+    if (count >= 2 && wcscmp(arg_list[0]->to_string(), L"-q") == 0) {
         one_value_local(result);
         auto it = s_table.find(arg_list[1]->to_string());
         if (it != s_table.end()) {
@@ -97,17 +97,34 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
     return &ok;
 }
 
-def_visible_primitive(UnityMeshSync_ExportScene, "UnityMeshSync_ExportScene");
+def_visible_primitive(UnityMeshSync_ExportScene, "UnityMeshSync_Export");
 Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
 {
-    MeshSyncClient3dsMax::getInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
-    return &ok;
-}
+    bool animations = false;
+    auto scope = MeshSyncClient3dsMax::SendScope::All;
 
-def_visible_primitive(UnityMeshSync_ExportAnimations, "UnityMeshSync_ExportAnimations");
-Value* UnityMeshSync_ExportAnimations_cf(Value** arg_list, int count)
-{
-    MeshSyncClient3dsMax::getInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
+    for (int i = 0; i < count; /**/) {
+        std::wstring name = arg_list[i++]->to_string();
+        if (i + 1 < count) {
+            if (name == L"-target") {
+                std::wstring value = arg_list[i++]->to_string();
+                if (value == L"animations")
+                    animations = true;
+            }
+            else if (name == L"-scope") {
+                std::wstring value = arg_list[i++]->to_string();
+                if (value == L"selected")
+                    scope = MeshSyncClient3dsMax::SendScope::Selected;
+                else if (value == L"updated")
+                    scope = MeshSyncClient3dsMax::SendScope::Updated;
+            }
+        }
+    }
+
+    if (animations)
+        MeshSyncClient3dsMax::getInstance().sendAnimations(scope);
+    else
+        MeshSyncClient3dsMax::getInstance().sendScene(scope);
     return &ok;
 }
 
