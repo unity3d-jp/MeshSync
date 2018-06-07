@@ -130,6 +130,7 @@ const char* CmdExport::name()
     return "UnityMeshSync_Export";
 }
 
+
 MStatus CmdExport::doIt(const MArgList& args)
 {
     MStatus status;
@@ -179,6 +180,7 @@ const char* CmdImport::name()
 {
     return "UnityMeshSync_Import";
 }
+
 
 MStatus CmdImport::doIt(const MArgList&)
 {
