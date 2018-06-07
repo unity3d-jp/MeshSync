@@ -392,7 +392,9 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
         }
 
         if (m_settings.sync_bones) {
-            if (ISkin *skin = FindSkin(n)) {
+            auto mod = FindSkin(n);
+            if (mod && mod->IsEnabled()) {
+                auto skin = (ISkin*)mod->GetInterface(I_SKIN);
                 // export bone nodes
                 EachBone(skin, [this](INode *bone) {
                     exportObject(bone, true);
@@ -447,16 +449,17 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
 }
 
 
-static void ExtractTransform(INode * node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
+static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    auto mat = to_float4x4(node->GetObjTMAfterWSM(t));
-    if (auto parent = node->GetParentNode()) {
+    auto mat = to_float4x4(n->GetObjTMAfterWSM(t));
+    if (auto parent = n->GetParentNode()) {
         auto pmat = to_float4x4(parent->GetObjTMAfterWSM(t));
         mat *= mu::invert(pmat);
     }
     pos = mu::extract_position(mat);
     rot = mu::extract_rotation(mat);
     scale = mu::extract_scale(mat);
+    vis = !n->IsHidden();
 }
 
 static void ExtractCameraData(GenCamera *cam, TimeValue t,
@@ -510,7 +513,7 @@ static void ExtractLightData(GenLight *light, TimeValue t,
 
 bool MeshSyncClient3dsMax::extractTransformData(ms::Transform &dst, INode *n, Object * /*obj*/)
 {
-    ExtractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale);
+    ExtractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
     return true;
 }
 
@@ -601,6 +604,8 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
         return false;
 
     extractTransformData(dst, n, obj);
+    if (!dst.visible)
+        return true;
 
     if (m_materials.empty())
         exportMaterials();
@@ -686,7 +691,7 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
     // handle blendshape
     if (m_settings.sync_blendshapes) {
         auto *mod = FindMorph(n);
-        if (mod) {
+        if (mod && mod->IsEnabled()) {
             int num_faces = (int)dst.counts.size();
             int num_points = (int)dst.points.size();
             int num_normals = (int)dst.normals.size();
@@ -729,7 +734,9 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
     }
 
     if (m_settings.sync_bones) {
-        if (auto *skin = FindSkin(n)) {
+        auto *mod = FindSkin(n);
+        if (mod && mod->IsEnabled()) {
+            auto skin = (ISkin*)mod->GetInterface(I_SKIN);
             auto ctx = skin->GetContextInterface(n);
             int num_bones = skin->GetNumBones();
             int num_vertices = ctx->GetNumPoints();
@@ -790,7 +797,9 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
 
     if (IsMesh(obj)) {
         exportAnimations(n->GetParentNode(), true);
-        if (auto *skin = FindSkin(n)) {
+        auto mod = FindSkin(n);
+        if (mod && mod->IsEnabled()) {
+            auto skin = (ISkin*)mod->GetInterface(I_SKIN);
             EachBone(skin, [this](INode *bone) {
                 exportAnimations(bone, true);
             });
@@ -850,7 +859,8 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    ExtractTransform(src, m_current_time, pos, rot, scale);
+    bool vis;
+    ExtractTransform(src, m_current_time, pos, rot, scale, vis);
 
     float t = m_current_time_sec;
     dst.translation.push_back({ t, pos });

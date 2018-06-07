@@ -12,7 +12,7 @@ std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
 Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);
-ISkin* FindSkin(INode *n);
+Modifier* FindSkin(INode *n);
 Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
 

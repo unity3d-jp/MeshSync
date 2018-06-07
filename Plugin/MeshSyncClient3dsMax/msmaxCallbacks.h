@@ -29,6 +29,7 @@ public:
     void ModelOtherEvent(NodeKeyTab& nodes) override;
 
     void ControllerOtherEvent(NodeKeyTab& nodes) override; // transform change callback
+    void HideChanged(NodeKeyTab& nodes) override;
 };
 
 class msmaxTimeChangeCallback : public TimeChangeCallback

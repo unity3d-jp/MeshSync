@@ -49,12 +49,12 @@ Object * GetBaseObject(INode * n)
     return EachObject(n, [](Object*) {});
 }
 
-ISkin* FindSkin(INode *n)
+Modifier* FindSkin(INode *n)
 {
-    ISkin *ret = nullptr;
+    Modifier *ret = nullptr;
     EachModifier(n, [&ret](Object *obj, Modifier *mod) {
         if (mod->ClassID() == SKIN_CLASSID) {
-            ret = (ISkin*)mod->GetInterface(I_SKIN);
+            ret = mod;
         }
     });
     return ret;
