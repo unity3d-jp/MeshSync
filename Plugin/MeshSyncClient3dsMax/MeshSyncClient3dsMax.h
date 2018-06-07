@@ -99,6 +99,12 @@ private:
         void operator()(MeshSyncClient3dsMax *_this);
     };
 
+    struct MaterialRecord
+    {
+        int material_id = 0;
+        std::vector<int> submaterial_ids;
+    };
+
     TreeNode & getNodeRecord(INode *n);
 
     bool isSending() const;
@@ -112,8 +118,7 @@ private:
     bool extractCameraData(ms::Camera& dst, INode *n, Object *obj);
     bool extractLightData(ms::Light& dst, INode *n, Object *obj);
     bool extractMeshData(ms::Mesh& dst, INode *n, Object *obj);
-    bool extractMeshData(ms::Mesh& dst, MNMesh &mesh);
-    bool extractMeshData(ms::Mesh& dst, Mesh &mesh);
+    bool extractMeshData(ms::Mesh& dst, INode *n, Mesh &mesh);
 
     ms::Animation* exportAnimations(INode *node, bool force);
     void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
@@ -126,6 +131,7 @@ private:
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
     std::map<INode*, TreeNode> m_node_records;
+    std::map<Mtl*, MaterialRecord> m_material_records;
     int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;

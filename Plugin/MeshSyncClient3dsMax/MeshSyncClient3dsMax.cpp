@@ -203,6 +203,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     }
 
     // cleanup intermediate data
+    m_material_records.clear();
     m_anim_records.clear();
 
     // keyframe reduction
@@ -332,11 +333,38 @@ void MeshSyncClient3dsMax::exportMaterials()
 
     m_materials.clear();
     for (int mi = 0; mi < count; ++mi) {
+        MaterialRecord rec;
+
         auto mtl = (Mtl*)(*mtllib)[mi];
-        auto dst = ms::Material::create();
-        m_materials.push_back(dst);
-        dst->name = mu::ToMBS(mtl->GetName().data());
-        dst->color = to_color(mtl->GetDiffuse());
+        int num_submtls = mtl->NumSubMtls();
+        if (num_submtls == 0) {
+            rec.material_id = (int)m_materials.size();
+
+            auto dst = ms::Material::create();
+            m_materials.push_back(dst);
+            dst->name = mu::ToMBS(mtl->GetName().data());
+            dst->color = to_color(mtl->GetDiffuse());
+        }
+        else {
+            for (int si = 0; si < num_submtls; ++si) {
+                auto submtl = mtl->GetSubMtl(si);
+
+                auto it = m_material_records.find(submtl);
+                if (it != m_material_records.end()) {
+                    rec.submaterial_ids.push_back(it->second.material_id);
+                }
+                else {
+                    rec.submaterial_ids.push_back((int)m_materials.size());
+
+                    auto dst = ms::Material::create();
+                    m_materials.push_back(dst);
+                    dst->name = mu::ToMBS(submtl->GetName().data());
+                    dst->color = to_color(submtl->GetDiffuse());
+                }
+            }
+        }
+
+        m_material_records[mtl] = std::move(rec);
     }
 }
 
@@ -572,9 +600,9 @@ static void ExtractNormals(RawVector<mu::float3> &dst, Mesh & mesh)
     }
 }
 
-bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *obj)
+bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *obj)
 {
-    extractTransformData(dst, src, obj);
+    extractTransformData(dst, n, obj);
 
     if (m_materials.empty()) {
         exportMaterials();
@@ -582,21 +610,15 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *
 
     bool ret = false;
     auto cid = obj->SuperClassID();
-    /*
-    if (obj->IsSubClassOf(polyObjectClassID)) {
-        ret = extractMeshData(dst, static_cast<PolyObject*>(obj)->GetMesh());
-    }
-    else
-    */
     if(obj->CanConvertToType(triObjectClassID)) {
         if (auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID)) {
-            ret = extractMeshData(dst, tri->GetMesh());
+            ret = extractMeshData(dst, n, tri->GetMesh());
         }
     }
 
     // handle blendshape
     if (m_settings.sync_blendshapes) {
-        auto *mod = FindMorph(src);
+        auto *mod = FindMorph(n);
         if (mod) {
             int num_faces = (int)dst.counts.size();
             int num_points = (int)dst.points.size();
@@ -640,8 +662,8 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *
     }
 
     if (m_settings.sync_bones) {
-        if (auto *skin = FindSkin(src)) {
-            auto ctx = skin->GetContextInterface(src);
+        if (auto *skin = FindSkin(n)) {
+            auto ctx = skin->GetContextInterface(n);
             int num_bones = skin->GetNumBones();
             int num_vertices = ctx->GetNumPoints();
             if (num_vertices != dst.points.size()) {
@@ -651,7 +673,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *
                 // allocate bones and extract bindposes
                 // note: in max, bindpose is [skin_matrix * inv_bone_matrix]
                 Matrix3 skin_matrix;
-                skin->GetSkinInitTM(src, skin_matrix);
+                skin->GetSkinInitTM(n, skin_matrix);
                 for (int bi = 0; bi < num_bones; ++bi) {
                     auto bone = skin->GetBone(bi);
                     Matrix3 bone_matrix;
@@ -686,76 +708,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * src, Object *
     return ret;
 }
 
-bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, MNMesh & mesh)
-{
-    // faces
-    int num_faces = mesh.numf;
-    int num_indices = 0;
-    {
-        dst.counts.resize_discard(num_faces);
-        dst.material_ids.resize_discard(num_faces);
-        dst.indices.reserve(num_faces * 4);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            auto& face = mesh.f[fi];
-            dst.counts[fi] = face.deg;
-            dst.material_ids[fi] = face.material;
-            for (int i = 0; i < face.deg; ++i)
-                dst.indices.push_back(face.vtx[i]);
-            num_indices += face.deg;
-        }
-    }
-
-    // points
-    int num_vertices = mesh.numv;
-    dst.points.resize_discard(num_vertices);
-    for (int vi = 0; vi < num_vertices; ++vi) {
-        dst.points[vi] = to_float3(mesh.v[vi].p);
-    }
-
-    // normals
-    if (m_settings.sync_normals) {
-        auto *nspec = mesh.GetSpecifiedNormals();
-        if (nspec) {
-            if (num_faces != nspec->GetNumFaces()) {
-                mscTrace("should not be here\n");
-            }
-            else {
-                dst.normals.resize_discard(num_indices);
-                auto *faces = nspec->GetFaceArray();
-                auto *normals = nspec->GetNormalArray();
-                int ii = 0;
-                for (int fi = 0; fi < num_faces; ++fi) {
-                    auto& face = faces[fi];
-                    int num = face.GetDegree();
-                    auto *nids = face.GetNormalIDArray();
-                    for (int i = 0; i < num; ++i)
-                        dst.normals[ii++] = to_float3(normals[nids[i]]);
-                }
-            }
-        }
-    }
-
-    // uv
-    if (m_settings.sync_uvs && mesh.MNum() > 0) {
-        auto *map = mesh.M(0);
-        if (num_faces != map->numf) {
-            mscTrace("should not be here\n");
-        }
-        else {
-            dst.uv0.resize_discard(num_indices);
-            int ii = 0;
-            for (int fi = 0; fi < num_faces; ++fi) {
-                auto& face = map->f[fi];
-                for (int i = 0; i < face.deg; ++i)
-                    dst.uv0[ii++] = to_float2(map->v[face.tv[i]]);
-            }
-        }
-    }
-
-    return true;
-}
-
-bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
+bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode *n, Mesh & mesh)
 {
     // faces
     int num_faces = mesh.numFaces;
@@ -765,11 +718,19 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, Mesh & mesh)
         dst.counts.resize(num_faces, 3);
         dst.material_ids.resize_discard(num_faces);
 
-        const auto *faces = mesh.faces;
+        const auto& mrec = m_material_records[n->GetMtl()];
+        bool multi_materials = !mrec.submaterial_ids.empty();
+
+        auto *faces = mesh.faces;
         dst.indices.resize_discard(num_indices);
         for (int fi = 0; fi < num_faces; ++fi) {
             auto& face = faces[fi];
-            dst.material_ids[fi] = const_cast<Face&>(face).getMatID(); // :(
+            if (multi_materials) {
+                dst.material_ids[fi] = mrec.submaterial_ids[(int)mesh.getFaceMtlIndex(fi) % mrec.submaterial_ids.size()];
+            }
+            else {
+                dst.material_ids[fi] = mrec.material_id;
+            }
             for (int i = 0; i < 3; ++i)
                 dst.indices[fi * 3 + i] = face.v[i];
         }
