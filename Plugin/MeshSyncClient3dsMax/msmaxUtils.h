@@ -13,6 +13,7 @@ std::string  GetPath(INode *n);
 Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);
 Modifier* FindSkin(INode *n);
+ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
 
@@ -146,6 +147,14 @@ inline void EachBone(ISkin *skin, const Body& body)
     int num_bones = skin->GetNumBones();
     for (int bi = 0; bi < num_bones; ++bi)
         body(skin->GetBone(bi));
+}
+
+// Body : [](INode *bone) -> void
+template<class Body>
+inline void EachBone(INode *n, const Body& body)
+{
+    if (auto *skin = FindSkinInterface(n))
+        EachBone(skin, body);
 }
 
 

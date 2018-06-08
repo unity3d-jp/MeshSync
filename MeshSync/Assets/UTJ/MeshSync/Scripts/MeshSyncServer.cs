@@ -731,7 +731,21 @@ namespace UTJ.MeshSync
 
             // visibility
             if (!m_ignoreVisibility)
+            {
                 trans.gameObject.SetActive(data.visibleHierarchy);
+
+                var smr = trans.GetComponent<SkinnedMeshRenderer>();
+                if (smr != null)
+                    smr.enabled = data.visible;
+
+                var cam = trans.GetComponent<Camera>();
+                if (cam != null)
+                    cam.enabled = data.visible;
+
+                var light = trans.GetComponent<Light>();
+                if (light != null)
+                    light.enabled = data.visible;
+            }
 
             return trans;
         }

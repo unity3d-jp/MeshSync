@@ -48,7 +48,6 @@ void MeshSyncClient3dsMax::TreeNode::clearDirty()
 void MeshSyncClient3dsMax::TreeNode::clearState()
 {
     dst_obj = nullptr;
-    dst_anim = nullptr;
 }
 
 void MeshSyncClient3dsMax::AnimationRecord::operator()(MeshSyncClient3dsMax * _this)
@@ -71,6 +70,7 @@ MeshSyncClient3dsMax::MeshSyncClient3dsMax()
 
 MeshSyncClient3dsMax::~MeshSyncClient3dsMax()
 {
+    // releasing resources is done by onShutdown()
 }
 
 MeshSyncClient3dsMax::Settings & MeshSyncClient3dsMax::getSettings()
@@ -82,13 +82,13 @@ void MeshSyncClient3dsMax::onStartup()
 {
     GetCOREInterface()->RegisterViewportDisplayCallback(TRUE, &msmaxViewportDisplayCallback::getInstance());
     GetCOREInterface()->RegisterTimeChangeCallback(&msmaxTimeChangeCallback::getInstance());
-    RegisterNotification(OnNodeRenamed, this, NOTIFY_NODE_RENAMED);
-    RegisterNotification(OnPreNewScene,  this, NOTIFY_SYSTEM_PRE_RESET );
-    RegisterNotification(OnPostNewScene, this, NOTIFY_SYSTEM_POST_RESET);
-    RegisterNotification(OnPreNewScene,  this, NOTIFY_SYSTEM_PRE_NEW );
-    RegisterNotification(OnPostNewScene, this, NOTIFY_SYSTEM_POST_NEW);
-    RegisterNotification(OnPreNewScene,  this, NOTIFY_FILE_PRE_OPEN );
-    RegisterNotification(OnPostNewScene, this, NOTIFY_FILE_POST_OPEN);
+    RegisterNotification(&OnNodeRenamed, this, NOTIFY_NODE_RENAMED);
+    RegisterNotification(&OnPreNewScene,  this, NOTIFY_SYSTEM_PRE_RESET );
+    RegisterNotification(&OnPostNewScene, this, NOTIFY_SYSTEM_POST_RESET);
+    RegisterNotification(&OnPreNewScene,  this, NOTIFY_SYSTEM_PRE_NEW );
+    RegisterNotification(&OnPostNewScene, this, NOTIFY_SYSTEM_POST_NEW);
+    RegisterNotification(&OnPreNewScene,  this, NOTIFY_FILE_PRE_OPEN );
+    RegisterNotification(&OnPostNewScene, this, NOTIFY_FILE_POST_OPEN);
     m_cbkey = GetISceneEventManager()->RegisterCallback(msmaxNodeCallback::getInstance().GetINodeEventCallback());
     registerMenu();
 }
@@ -184,19 +184,15 @@ void MeshSyncClient3dsMax::onRepaint()
 
 void MeshSyncClient3dsMax::update()
 {
-    if (m_pending_request == SendScope::None) {
-        if (m_scene_updated) {
-            updateRecords();
-            m_scene_updated = false;
-            if (m_settings.auto_sync) {
-                m_pending_request = SendScope::All;
-                m_dirty = false;
-            }
+    if (m_scene_updated) {
+        updateRecords();
+        m_scene_updated = false;
+        if (m_settings.auto_sync) {
+            m_pending_request = SendScope::All;
         }
-        else if (m_dirty) {
-            m_pending_request = SendScope::Updated;
-            m_dirty = false;
-        }
+    }
+    if (m_settings.auto_sync && m_pending_request == SendScope::None && m_dirty) {
+        m_pending_request = SendScope::Updated;
     }
 
     if (m_pending_request != SendScope::None) {
@@ -214,7 +210,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
 
     int num_exported = 0;
     if (scope == SendScope::All) {
-        for (auto kvp : m_node_records) {
+        for (auto& kvp : m_node_records) {
             kvp.second.dirty_trans = kvp.second.dirty_geom = true;
             if (exportObject(kvp.first, false))
                 ++num_exported;
@@ -232,6 +228,11 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
 
     if (num_exported > 0)
         kickAsyncSend();
+
+    // cleanup intermediate data
+    m_material_records.clear();
+
+    m_dirty = false;
     return true;
 }
 
@@ -260,15 +261,13 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     auto time_range = GetCOREInterface()->GetAnimRange();
     auto interval = ToTicks(1.0f / m_settings.animation_sps);
     for (TimeValue t = time_range.Start(); t <= time_range.End(); t += interval) {
-        // advance frame and record
-        m_current_time = t;
+        m_current_time_tick = t;
         m_current_time_sec = ToSeconds(t);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
     }
 
     // cleanup intermediate data
-    m_material_records.clear();
     m_anim_records.clear();
 
     // keyframe reduction
@@ -294,8 +293,13 @@ bool MeshSyncClient3dsMax::recvScene()
 void MeshSyncClient3dsMax::updateRecords()
 {
     m_node_records.clear();
-    EnumerateAllNode([&](INode *n) {
+    EnumerateAllNode([this](INode *n) {
         getNodeRecord(n);
+        if (IsMesh(GetBaseObject(n))) {
+            EachBone(n, [this](INode *bone) {
+                getNodeRecord(bone).is_bone = true;
+            });
+        }
     });
 }
 
@@ -941,7 +945,7 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     mu::quatf rot;
     mu::float3 scale;
     bool vis;
-    ExtractTransform(src, m_current_time, pos, rot, scale, vis);
+    ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis);
 
     float t = m_current_time_sec;
     dst.translation.push_back({ t, pos });
@@ -962,7 +966,7 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
 
     bool ortho;
     float fov, near_plane, far_plane;
-    ExtractCameraData((GenCamera*)obj, m_current_time, ortho, fov, near_plane, far_plane);
+    ExtractCameraData((GenCamera*)obj, m_current_time_tick, ortho, fov, near_plane, far_plane);
 
     dst.fov.push_back({ t, fov });
     dst.near_plane.push_back({ t, near_plane });
@@ -982,7 +986,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
     ms::Light::LightType type;
     mu::float4 color;
     float intensity, spot_angle;
-    ExtractLightData((GenLight*)obj, m_current_time, type, color, intensity, spot_angle);
+    ExtractLightData((GenLight*)obj, m_current_time_tick, type, color, intensity, spot_angle);
 
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
@@ -1010,7 +1014,7 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src,
 
                 auto name = mu::ToMBS(channel.GetName());
                 auto dbs = dst.findOrCreateBlendshapeAnimation(name.c_str());
-                dbs->weight.push_back({ t, channel.GetMorphWeight(m_current_time) });
+                dbs->weight.push_back({ t, channel.GetMorphWeight(m_current_time_tick) });
             }
         }
     }

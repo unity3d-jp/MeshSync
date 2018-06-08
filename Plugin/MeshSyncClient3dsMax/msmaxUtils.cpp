@@ -39,12 +39,12 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
-Object * GetTopObject(INode * n)
+Object* GetTopObject(INode *n)
 {
     return n->GetObjectRef();
 }
 
-Object * GetBaseObject(INode * n)
+Object* GetBaseObject(INode *n)
 {
     return EachObject(n, [](Object*) {});
 }
@@ -60,7 +60,14 @@ Modifier* FindSkin(INode *n)
     return ret;
 }
 
-Modifier* FindMorph(INode * n)
+ISkin* FindSkinInterface(INode *n)
+{
+    if (auto mod = FindSkin(n))
+        return (ISkin*)mod->GetInterface(I_SKIN);
+    return nullptr;
+}
+
+Modifier* FindMorph(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](Object *obj, Modifier *mod) {
@@ -73,5 +80,5 @@ Modifier* FindMorph(INode * n)
 
 bool IsMesh(Object *obj)
 {
-    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID && obj->ClassID() != BONE_OBJ_CLASSID;
+    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID && obj->ClassID() != BONE_OBJ_CLASSID;
 }

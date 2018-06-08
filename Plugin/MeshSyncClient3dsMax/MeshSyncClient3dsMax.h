@@ -82,13 +82,13 @@ private:
         int index = 0;
         INode *node = nullptr;
         Object *obj = nullptr; // base (bottom) object
+        bool is_bone = false;
         std::wstring name;
         std::string path;
 
         bool dirty_trans = true;
         bool dirty_geom = true;
         ms::Transform *dst_obj = nullptr;
-        ms::Animation *dst_anim = nullptr;
 
         void clearDirty();
         void clearState();
@@ -112,7 +112,7 @@ private:
     };
 
     void updateRecords();
-    TreeNode & getNodeRecord(INode *n);
+    TreeNode& getNodeRecord(INode *n);
 
     bool isSending() const;
     void waitAsyncSend();
@@ -145,7 +145,7 @@ private:
     SendScope m_pending_request = SendScope::None;
 
     std::map<INode*, AnimationRecord> m_anim_records;
-    TimeValue m_current_time;
+    TimeValue m_current_time_tick;
     float m_current_time_sec;
 
     std::vector<ms::TransformPtr>       m_objects;
