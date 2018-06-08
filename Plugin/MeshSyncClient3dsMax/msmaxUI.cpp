@@ -26,17 +26,17 @@ public:
     void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Window); }
     void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Window); }
     void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
-    BOOL IsChecked() override       { return MeshSyncClient3dsMax::getInstance().isWindowOpened(); }
+    BOOL IsChecked() override       { return msmaxInstance().isWindowOpened(); }
     BOOL IsItemVisible() override   { return TRUE; }
     BOOL IsEnabled() override       { return TRUE; }
     void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
-        if(MeshSyncClient3dsMax::getInstance().isWindowOpened())
-            MeshSyncClient3dsMax::getInstance().closeWindow();
+        if(msmaxInstance().isWindowOpened())
+            msmaxInstance().closeWindow();
         else
-            MeshSyncClient3dsMax::getInstance().openWindow();
+            msmaxInstance().openWindow();
         return TRUE;
     }
 };
@@ -56,7 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        MeshSyncClient3dsMax::getInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
+        msmaxInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
         return TRUE;
     }
 };
@@ -76,7 +76,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        MeshSyncClient3dsMax::getInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
+        msmaxInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
         return TRUE;
     }
 };
@@ -96,7 +96,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        MeshSyncClient3dsMax::getInstance().recvScene();
+        msmaxInstance().recvScene();
         return TRUE;
     }
 };
@@ -251,7 +251,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     // see this about DisableAccelerators(), EnableAccelerators() and GetCOREInterface()->RegisterDlgWnd()
     // https://help.autodesk.com/view/3DSMAX/2018/ENU/?guid=__developer_3ds_max_sdk_features_user_interface_action_system_keyboard_accelerators_and_dialog_html
 
-    auto *_this = &MeshSyncClient3dsMax::getInstance();
+    auto *_this = &msmaxInstance();
     auto& s = _this->getSettings();
 
     INT_PTR ret = FALSE;
@@ -340,6 +340,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             break;
         case IDC_CHECK_AUTO_SYNC:
             handle_button([&]() { s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC); });
+            msmaxInstance().update();
             break;
         case IDC_EDIT_ANIMATION_TIME_SCALE:
             handle_edit([&]() { s.animation_time_scale = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale); });

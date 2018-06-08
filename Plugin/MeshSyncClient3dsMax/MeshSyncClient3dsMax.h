@@ -48,11 +48,15 @@ public:
 
     void onStartup();
     void onShutdown();
+    void onNewScene();
     void onSceneUpdated();
     void onTimeChanged();
     void onNodeAdded(INode *n);
     void onNodeDeleted(INode *n);
+    void onNodeRenamed();
+    void onNodeLinkChanged(INode *n);
     void onNodeUpdated(INode *n);
+    void onGeometryUpdated(INode *n);
     void onRepaint();
 
     void update();
@@ -75,16 +79,18 @@ private:
     using task_t = std::function<void()>;
     struct TreeNode
     {
-        INode *nod = nullptr;
+        int index = 0;
+        INode *node = nullptr;
         Object *obj = nullptr; // base (bottom) object
-        std::string name;
+        std::wstring name;
         std::string path;
 
-        bool dirty = true;
+        bool dirty_trans = true;
+        bool dirty_geom = true;
         ms::Transform *dst_obj = nullptr;
         ms::Animation *dst_anim = nullptr;
-        int index = 0;
 
+        void clearDirty();
         void clearState();
     };
 
@@ -105,6 +111,7 @@ private:
         std::vector<int> submaterial_ids;
     };
 
+    void updateRecords();
     TreeNode & getNodeRecord(INode *n);
 
     bool isSending() const;
@@ -149,3 +156,6 @@ private:
     std::vector<std::string>            m_deleted;
     std::future<void>                   m_future_send;
 };
+
+#define msmaxInstance() MeshSyncClient3dsMax::getInstance()
+

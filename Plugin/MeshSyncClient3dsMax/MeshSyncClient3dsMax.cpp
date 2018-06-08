@@ -19,17 +19,31 @@
 
 static void OnStartup(void *param, NotifyInfo *info)
 {
-    ((MeshSyncClient3dsMax*)param)->onStartup();
+    msmaxInstance().onStartup();
 }
 static void OnShutdown(void *param, NotifyInfo *info)
 {
-    ((MeshSyncClient3dsMax*)param)->onShutdown();
+    msmaxInstance().onShutdown();
 }
 static void OnNodeRenamed(void *param, NotifyInfo *info)
 {
-    ((MeshSyncClient3dsMax*)param)->onSceneUpdated();
+    msmaxInstance().onNodeRenamed();
+    msmaxInstance().update();
+}
+static void OnPreNewScene(void *param, NotifyInfo *info)
+{
+    msmaxInstance().onNewScene();
+}
+static void OnPostNewScene(void *param, NotifyInfo *info)
+{
+    msmaxInstance().update();
 }
 
+
+void MeshSyncClient3dsMax::TreeNode::clearDirty()
+{
+    dirty_trans = dirty_geom = false;
+}
 
 void MeshSyncClient3dsMax::TreeNode::clearState()
 {
@@ -69,6 +83,12 @@ void MeshSyncClient3dsMax::onStartup()
     GetCOREInterface()->RegisterViewportDisplayCallback(TRUE, &msmaxViewportDisplayCallback::getInstance());
     GetCOREInterface()->RegisterTimeChangeCallback(&msmaxTimeChangeCallback::getInstance());
     RegisterNotification(OnNodeRenamed, this, NOTIFY_NODE_RENAMED);
+    RegisterNotification(OnPreNewScene,  this, NOTIFY_SYSTEM_PRE_RESET );
+    RegisterNotification(OnPostNewScene, this, NOTIFY_SYSTEM_POST_RESET);
+    RegisterNotification(OnPreNewScene,  this, NOTIFY_SYSTEM_PRE_NEW );
+    RegisterNotification(OnPostNewScene, this, NOTIFY_SYSTEM_POST_NEW);
+    RegisterNotification(OnPreNewScene,  this, NOTIFY_FILE_PRE_OPEN );
+    RegisterNotification(OnPostNewScene, this, NOTIFY_FILE_POST_OPEN);
     m_cbkey = GetISceneEventManager()->RegisterCallback(msmaxNodeCallback::getInstance().GetINodeEventCallback());
     registerMenu();
 }
@@ -77,7 +97,22 @@ void MeshSyncClient3dsMax::onShutdown()
 {
     waitAsyncSend();
     unregisterMenu();
+
+    m_objects.clear();
+    m_meshes.clear();
+    m_materials.clear();
+    m_animations.clear();
+    m_constraints.clear();
     m_node_records.clear();
+}
+
+void MeshSyncClient3dsMax::onNewScene()
+{
+    for (auto kvp : m_node_records) {
+        m_deleted.push_back(kvp.second.path);
+    }
+    m_node_records.clear();
+    m_scene_updated = true;
 }
 
 void MeshSyncClient3dsMax::onSceneUpdated()
@@ -99,14 +134,46 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 {
     m_scene_updated = true;
 
-    m_deleted.push_back(GetPath(n));
-    m_node_records.erase(n);
+    auto it = m_node_records.find(n);
+    if (it != m_node_records.end()) {
+        m_deleted.push_back(it->second.path);
+        m_node_records.erase(it);
+    }
+}
+
+void MeshSyncClient3dsMax::onNodeRenamed()
+{
+    m_scene_updated = true;
+
+    // search renamed node
+    // (event callback tells name of before & after rename, but doesn't tell node itself...)
+    for (auto kvp : m_node_records) {
+        if (kvp.second.name != kvp.first->GetName()) {
+            m_deleted.push_back(kvp.second.path);
+        }
+    }
+}
+
+void MeshSyncClient3dsMax::onNodeLinkChanged(INode * n)
+{
+    m_scene_updated = true;
+
+    auto it = m_node_records.find(n);
+    if (it != m_node_records.end()) {
+        m_deleted.push_back(it->second.path);
+    }
 }
 
 void MeshSyncClient3dsMax::onNodeUpdated(INode * n)
 {
-    getNodeRecord(n).dirty = true;
-    m_dirty = true;
+    auto& rec = getNodeRecord(n);
+    m_dirty = rec.dirty_trans = true;
+}
+
+void MeshSyncClient3dsMax::onGeometryUpdated(INode * n)
+{
+    auto& rec = getNodeRecord(n);
+    m_dirty = rec.dirty_trans = rec.dirty_geom = true;
 }
 
 void MeshSyncClient3dsMax::onRepaint()
@@ -118,13 +185,17 @@ void MeshSyncClient3dsMax::onRepaint()
 void MeshSyncClient3dsMax::update()
 {
     if (m_pending_request == SendScope::None) {
-        if (m_settings.auto_sync) {
-            if (m_scene_updated) {
+        if (m_scene_updated) {
+            updateRecords();
+            m_scene_updated = false;
+            if (m_settings.auto_sync) {
                 m_pending_request = SendScope::All;
+                m_dirty = false;
             }
-            else if (m_dirty) {
-                m_pending_request = SendScope::Updated;
-            }
+        }
+        else if (m_dirty) {
+            m_pending_request = SendScope::Updated;
+            m_dirty = false;
         }
     }
 
@@ -143,27 +214,21 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
 
     int num_exported = 0;
     if (scope == SendScope::All) {
-        EnumerateAllNode([&](INode *n) {
-            auto it = m_node_records.find(n);
-            if (it != m_node_records.end())
-                it->second.dirty = false;
-
-            if (exportObject(n, false))
+        for (auto kvp : m_node_records) {
+            kvp.second.dirty_trans = kvp.second.dirty_geom = true;
+            if (exportObject(kvp.first, false))
                 ++num_exported;
-        });
+        }
     }
     else if (scope == SendScope::Updated) {
         for (auto& kvp : m_node_records) {
             auto& rec = kvp.second;
-            if (rec.dirty) {
-                rec.dirty = false;
+            if (rec.dirty_trans || rec.dirty_geom) {
                 if (exportObject(kvp.first, true))
                     ++num_exported;
             }
         }
     }
-    m_dirty = false;
-    m_scene_updated = false;
 
     if (num_exported > 0)
         kickAsyncSend();
@@ -226,11 +291,22 @@ bool MeshSyncClient3dsMax::recvScene()
 }
 
 
+void MeshSyncClient3dsMax::updateRecords()
+{
+    m_node_records.clear();
+    EnumerateAllNode([&](INode *n) {
+        getNodeRecord(n);
+    });
+}
+
 MeshSyncClient3dsMax::TreeNode & MeshSyncClient3dsMax::getNodeRecord(INode *n)
 {
     auto& rec = m_node_records[n];
     if (rec.index == 0) {
         rec.index = ++m_index_seed;
+        rec.node = n;
+        rec.name = GetNameW(n);
+        rec.path = GetPath(n);
     }
     return rec;
 }
@@ -378,7 +454,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
     if (IsMesh(obj) && (m_settings.sync_meshes || m_settings.sync_bones)) {
         exportObject(n->GetParentNode(), true);
 
-        if (m_settings.sync_meshes) {
+        if (m_settings.sync_meshes && rec.dirty_geom) {
             auto dst = ms::Mesh::create();
             ret = dst;
             m_meshes.push_back(dst);
@@ -441,10 +517,11 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
     }
 
     if (ret) {
-        ret->path = GetPath(n);
+        ret->path = rec.path;
         ret->index = rec.index;
         rec.dst_obj = ret.get();
     }
+    rec.clearDirty();
     return ret.get();
 }
 
@@ -755,9 +832,13 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
 
                     auto bd = ms::BoneData::create();
                     dst.bones.push_back(bd);
-                    bd->path = GetPath(bone);
                     bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
                     bd->weights.resize_zeroclear(dst.points.size()); // allocate weights
+
+                    auto bit = m_node_records.find(bone);
+                    if (bit != m_node_records.end()) {
+                        bd->path = bit->second.path;
+                    }
                 }
 
                 // get weights

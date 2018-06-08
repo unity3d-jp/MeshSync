@@ -12,7 +12,7 @@ msmaxViewportDisplayCallback & msmaxViewportDisplayCallback::getInstance()
 
 void msmaxViewportDisplayCallback::Display(TimeValue t, ViewExp * vpt, int flags)
 {
-    MeshSyncClient3dsMax::getInstance().onRepaint();
+    msmaxInstance().onRepaint();
 }
 
 void msmaxViewportDisplayCallback::GetViewportRect(TimeValue t, ViewExp * vpt, Rect * rect)
@@ -24,7 +24,6 @@ BOOL msmaxViewportDisplayCallback::Foreground()
     return 0;
 }
 
-
 msmaxNodeCallback & msmaxNodeCallback::getInstance()
 {
     static msmaxNodeCallback s_instance;
@@ -33,74 +32,63 @@ msmaxNodeCallback & msmaxNodeCallback::getInstance()
 
 void msmaxNodeCallback::Added(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeAdded(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeAdded(n); });
+    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::Deleted(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeDeleted(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeDeleted(n); });
+    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::LinkChanged(NodeKeyTab & nodes)
 {
-    MeshSyncClient3dsMax::getInstance().onSceneUpdated();
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeLinkChanged(n); });
+    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::ModelStructured(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    msmaxInstance().update();
 }
 void msmaxNodeCallback::GeometryChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    msmaxInstance().update();
 }
 void msmaxNodeCallback::TopologyChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    msmaxInstance().update();
 }
 void msmaxNodeCallback::MappingChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    msmaxInstance().update();
 }
 void msmaxNodeCallback::ExtentionChannelChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    msmaxInstance().update();
 }
 void msmaxNodeCallback::ModelOtherEvent(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::ControllerOtherEvent(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::HideChanged(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) {
-        MeshSyncClient3dsMax::getInstance().onNodeUpdated(n);
-    });
-    // send immediately
-    MeshSyncClient3dsMax::getInstance().update();
+    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    msmaxInstance().update();
 }
 
 
@@ -112,6 +100,6 @@ msmaxTimeChangeCallback & msmaxTimeChangeCallback::getInstance()
 
 void msmaxTimeChangeCallback::TimeChanged(TimeValue t)
 {
-    MeshSyncClient3dsMax::getInstance().onTimeChanged();
+    msmaxInstance().onTimeChanged();
 }
 
