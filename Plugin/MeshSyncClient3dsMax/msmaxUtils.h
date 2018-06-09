@@ -62,6 +62,8 @@ inline void EachNode(NodeEventNamespace::NodeKeyTab& nkt, const Body& body)
 template<class Body>
 inline Object* EachObject(INode *n, const Body& body)
 {
+    if (!n)
+        return nullptr;
     Object* obj = n->GetObjectRef();
     while (obj) {
         body(obj);
@@ -77,6 +79,8 @@ inline Object* EachObject(INode *n, const Body& body)
 template<class Body>
 inline void EachModifier(INode *n, const Body& body)
 {
+    if (!n)
+        return;
     Object* obj = n->GetObjectRef();
     while (obj) {
         if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
@@ -95,6 +99,8 @@ inline void EachModifier(INode *n, const Body& body)
 template<class Body>
 inline void EachModifier(Object *obj, const Body& body)
 {
+    if (!obj)
+        return;
     if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
         auto dobj = (IDerivedObject*)obj;
         int num_mod = dobj->NumModifiers();
@@ -145,6 +151,8 @@ inline void EnumerateAllNode(const Body& body)
 template<class Body>
 inline void EachBone(ISkin *skin, const Body& body)
 {
+    if (!skin)
+        return;
     int num_bones = skin->GetNumBones();
     for (int bi = 0; bi < num_bones; ++bi)
         body(skin->GetBone(bi));
@@ -154,6 +162,8 @@ inline void EachBone(ISkin *skin, const Body& body)
 template<class Body>
 inline void EachBone(INode *n, const Body& body)
 {
+    if (!n)
+        return;
     if (auto *skin = FindSkinInterface(n))
         EachBone(skin, body);
 }

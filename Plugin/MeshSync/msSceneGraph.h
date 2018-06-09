@@ -238,24 +238,35 @@ struct SplitData
     float3 bound_size = float3::zero();
 };
 
+struct BlendShapeFrameData
+{
+    float weight = 0.0f;
+    RawVector<float3> points;
+    RawVector<float3> normals;
+    RawVector<float3> tangents;
+
+protected:
+    BlendShapeFrameData();
+    ~BlendShapeFrameData();
+public:
+    msDefinePool(BlendShapeFrameData);
+    static std::shared_ptr<BlendShapeFrameData> create(std::istream& is);
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    void clear();
+
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
+};
+msHasSerializer(BlendShapeFrameData);
+using BlendShapeFrameDataPtr = std::shared_ptr<BlendShapeFrameData>;
+
 struct BlendShapeData
 {
-    struct Frame
-    {
-        float weight = 0.0f;
-        RawVector<float3> points;
-        RawVector<float3> normals;
-        RawVector<float3> tangents;
-
-        uint32_t getSerializeSize() const;
-        void serialize(std::ostream& os) const;
-        void deserialize(std::istream& is);
-        void clear();
-    };
-
     std::string name;
     float weight = 0.0f;
-    std::vector<Frame> frames;
+    std::vector<BlendShapeFrameDataPtr> frames;
 
 protected:
     BlendShapeData();
@@ -268,10 +279,10 @@ public:
     void deserialize(std::istream& is);
     void clear();
 
+    void sort();
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
-msHasSerializer(BlendShapeData::Frame);
 msHasSerializer(BlendShapeData);
 using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
 

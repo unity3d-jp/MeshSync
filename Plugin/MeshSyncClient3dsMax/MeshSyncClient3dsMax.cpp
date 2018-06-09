@@ -449,7 +449,7 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
     if (!n || !n->GetObjectRef())
         return nullptr;
 
-    auto obj = GetBaseObject(n);
+    auto *obj = GetBaseObject(n);
     auto& rec = getNodeRecord(n);
     if (rec.dst_obj)
         return rec.dst_obj;
@@ -785,31 +785,28 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
                     continue;
 
                 auto dbs = ms::BlendShapeData::create();
-                dst.blendshapes.push_back(dbs);
-                dbs->name = mu::ToMBS(channel.GetName());
-                dbs->weight = channel.GetMorphWeight(GetTime());
-
                 for (int ti = 0; ti < num_targets; ++ti) {
-                    auto tnode = channel.GetProgressiveMorphTarget(ti);
-                    if (!tnode)
-                        continue;
-
-                    auto tobj = GetBaseObject(tnode);
-                    if (!tobj->CanConvertToType(triObjectClassID))
+                    auto tobj = GetBaseObject(channel.GetProgressiveMorphTarget(ti));
+                    if (!tobj || !tobj->CanConvertToType(triObjectClassID))
                         continue;
 
                     auto& tmesh = ((TriObject*)tobj->ConvertToType(GetTime(), triObjectClassID))->GetMesh();
                     if (tmesh.numFaces != num_faces || tmesh.numVerts != num_points)
                         continue; // topology doesn't match
 
-                    dbs->frames.push_back(ms::BlendShapeData::Frame());
-                    auto& frame = dbs->frames.back();
+                    dbs->frames.push_back(ms::BlendShapeFrameData::create());
+                    auto& frame = *dbs->frames.back();
                     frame.weight = channel.GetProgressiveMorphWeight(ti);
 
                     // gen delta
                     frame.points.assign((mu::float3*)tmesh.verts, (mu::float3*)tmesh.verts + num_points);
                     for (int i = 0; i < num_points; ++i)
                         frame.points[i] -= dst.points[i];
+                }
+                if (!dbs->frames.empty()) {
+                    dbs->name = mu::ToMBS(channel.GetName());
+                    dbs->weight = channel.GetMorphWeight(GetTime());
+                    dst.blendshapes.push_back(dbs);
                 }
             }
         }

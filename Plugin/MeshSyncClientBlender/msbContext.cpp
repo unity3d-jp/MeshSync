@@ -387,8 +387,9 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             else {
                 auto bsd = dst.addBlendShape(kb->name);
                 bsd->weight = kb->curval * 100.0f;
-                bsd->frames.resize(1);
-                auto& frame = bsd->frames.back();
+
+                bsd->frames.push_back(ms::BlendShapeFrameData::create());
+                auto& frame = *bsd->frames.back();
                 frame.weight = 100.0f;
                 frame.points.resize_discard(kb->totelem);
                 memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));

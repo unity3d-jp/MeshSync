@@ -53,7 +53,7 @@ Modifier* FindSkin(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (mod->ClassID() == SKIN_CLASSID) {
+        if (mod->ClassID() == SKIN_CLASSID && !ret) {
             ret = mod;
         }
     });
@@ -71,7 +71,7 @@ Modifier* FindMorph(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (mod->ClassID() == MR3_CLASS_ID) {
+        if (mod->ClassID() == MR3_CLASS_ID && !ret) {
             ret = mod;
         }
     });
@@ -87,6 +87,8 @@ TriObject* GetSourceMesh(INode * n)
 {
     IDerivedObject *dobj = nullptr;
     int mod_index = 0;
+
+    Modifier *skin_top = nullptr, *morph_top = nullptr;
     bool return_next = true;
     EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
         if (return_next) {
@@ -94,7 +96,13 @@ TriObject* GetSourceMesh(INode * n)
             dobj = obj;
             mod_index = mi;
         }
-        if (mod->ClassID() == MR3_CLASS_ID || mod->ClassID() == SKIN_CLASSID) {
+
+        if (mod->ClassID() == SKIN_CLASSID && !skin_top) {
+            skin_top = mod;
+            return_next = true;
+        }
+        else if (mod->ClassID() == MR3_CLASS_ID && !morph_top) {
+            morph_top = mod;
             return_next = true;
         }
     });

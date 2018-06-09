@@ -437,7 +437,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
         // https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2018/ENU/Maya-Tech-Docs/Nodes/blendShape-html.html
 
-        auto gen_delta = [&dst](ms::BlendShapeData::Frame& dst_frame, MPlug plug_geom) {
+        auto gen_delta = [&dst](ms::BlendShapeFrameData& dst_frame, MPlug plug_geom) {
             MObject obj_geom;
             plug_geom.getValue(obj_geom);
             if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
@@ -452,7 +452,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             }
         };
 
-        auto retrieve_delta = [&dst](ms::BlendShapeData::Frame& dst_frame, MPlug plug_ipt, MPlug plug_ict) {
+        auto retrieve_delta = [&dst](ms::BlendShapeFrameData& dst_frame, MPlug plug_ipt, MPlug plug_ict) {
             MObject obj_component_list;
             MObject obj_points;
             {
@@ -518,8 +518,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     for (uint32_t idx_iti = 0; idx_iti != num_iti; ++idx_iti) {
                         MPlug plug_itip(plug_iti.elementByPhysicalIndex(idx_iti));
 
-                        dst_bs->frames.push_back(ms::BlendShapeData::Frame());
-                        auto& dst_frame = dst_bs->frames.back();
+                        dst_bs->frames.push_back(ms::BlendShapeFrameData::create());
+                        auto& dst_frame = *dst_bs->frames.back();
                         dst_frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f; // index 5000-6000 -> weight 0.0f-100.0f
                         dst_frame.points.resize_zeroclear(dst.points.size());
 
