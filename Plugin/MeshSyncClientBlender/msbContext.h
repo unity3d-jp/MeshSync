@@ -51,7 +51,7 @@ public:
     void flushPendingList();
 
 private:
-    struct ObjectRecord
+    struct ObjectRecord : public mu::noncopyable
     {
         std::string name;
         std::string path;
@@ -62,6 +62,20 @@ private:
         {
             alive = false;
             exported = false;
+        }
+    };
+
+    struct AnimationRecord : public mu::noncopyable
+    {
+        using extractor_t = void (msbContext::*)(ms::Animation& dst, void *obj);
+
+        void *obj = nullptr;
+        ms::Animation *dst = nullptr;
+        extractor_t extractor = nullptr;
+
+        void operator()(msbContext *_this)
+        {
+            (_this->*extractor)(*dst, obj);
         }
     };
 
@@ -119,19 +133,6 @@ private:
     std::vector<task_t> m_extract_tasks;
 
     // animation export
-    struct AnimationRecord
-    {
-        using extractor_t = void (msbContext::*)(ms::Animation& dst, void *obj);
-
-        void *obj;
-        ms::Animation *dst = nullptr;
-        extractor_t extractor = nullptr;
-
-        void operator()(msbContext *_this)
-        {
-            (_this->*extractor)(*dst, obj);
-        }
-    };
     using AnimationRecords = std::map<std::string, AnimationRecord>;
     AnimationRecords m_anim_records;
     float m_current_time = 0.0f;

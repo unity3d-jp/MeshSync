@@ -77,7 +77,7 @@ public:
 
 private:
     using task_t = std::function<void()>;
-    struct TreeNode
+    struct TreeNode : public mu::noncopyable
     {
         int index = 0;
         INode *node = nullptr;
@@ -94,18 +94,18 @@ private:
         void clearState();
     };
 
-    struct AnimationRecord
+    struct AnimationRecord : public mu::noncopyable
     {
         using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *n, Object *obj);
-        extractor_t extractor;
-        INode *node;
-        Object *obj;
-        ms::Animation *dst;
+        extractor_t extractor = nullptr;
+        INode *node = nullptr;
+        Object *obj = nullptr;
+        ms::Animation *dst = nullptr;
 
         void operator()(MeshSyncClient3dsMax *_this);
     };
 
-    struct MaterialRecord
+    struct MaterialRecord : public mu::noncopyable
     {
         int material_id = 0;
         std::vector<int> submaterial_ids;
