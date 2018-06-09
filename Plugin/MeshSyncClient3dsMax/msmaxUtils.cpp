@@ -52,7 +52,7 @@ Object* GetBaseObject(INode *n)
 Modifier* FindSkin(INode *n)
 {
     Modifier *ret = nullptr;
-    EachModifier(n, [&ret](Object *obj, Modifier *mod) {
+    EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
         if (mod->ClassID() == SKIN_CLASSID) {
             ret = mod;
         }
@@ -70,7 +70,7 @@ ISkin* FindSkinInterface(INode *n)
 Modifier* FindMorph(INode *n)
 {
     Modifier *ret = nullptr;
-    EachModifier(n, [&ret](Object *obj, Modifier *mod) {
+    EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
         if (mod->ClassID() == MR3_CLASS_ID) {
             ret = mod;
         }
@@ -81,4 +81,22 @@ Modifier* FindMorph(INode *n)
 bool IsMesh(Object *obj)
 {
     return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID && obj->ClassID() != BONE_OBJ_CLASSID;
+}
+
+std::tuple<IDerivedObject*, int> GetSourceMesh(INode * n)
+{
+    std::tuple<IDerivedObject*, int> ret = { nullptr, 0 };
+    bool return_next = true;
+    EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
+        if (return_next) {
+            std::get<0>(ret) = obj;
+            std::get<1>(ret) = mi;
+        }
+        else {
+            if (mod->ClassID() == MR3_CLASS_ID || mod->ClassID() == SKIN_CLASSID) {
+                return_next = true;
+            }
+        }
+    });
+    return ret;
 }

@@ -108,7 +108,7 @@ void MeshSyncClient3dsMax::onShutdown()
 
 void MeshSyncClient3dsMax::onNewScene()
 {
-    for (auto kvp : m_node_records) {
+    for (auto& kvp : m_node_records) {
         m_deleted.push_back(kvp.second.path);
     }
     m_node_records.clear();
@@ -147,7 +147,7 @@ void MeshSyncClient3dsMax::onNodeRenamed()
 
     // search renamed node
     // (event callback tells name of before & after rename, but doesn't tell node itself...)
-    for (auto kvp : m_node_records) {
+    for (auto& kvp : m_node_records) {
         if (kvp.second.name != kvp.first->GetName()) {
             m_deleted.push_back(kvp.second.path);
         }
@@ -681,7 +681,23 @@ static void ExtractNormals(RawVector<mu::float3> &dst, Mesh & mesh)
 
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *obj)
 {
-    if (!obj->CanConvertToType(triObjectClassID))
+    TriObject *tri = nullptr;
+    {
+        IDerivedObject *dobj = nullptr;
+        int mod_index = 0;
+        std::tie(dobj, mod_index) = GetSourceMesh(n);
+
+        if (dobj && dobj != obj) {
+            auto os = dobj->Eval(GetTime(), mod_index);
+            if (os.obj->CanConvertToType(triObjectClassID))
+                tri = (TriObject*)os.obj->ConvertToType(GetTime(), triObjectClassID);
+        }
+    }
+    if (!tri) {
+        if (obj->CanConvertToType(triObjectClassID))
+            tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+    }
+    if (!tri)
         return false;
 
     extractTransformData(dst, n, obj);
@@ -691,9 +707,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
     if (m_materials.empty())
         exportMaterials();
 
-    auto tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
     auto& mesh = tri->GetMesh();
-
     doExtractMeshData(dst, n, mesh);
 
     return true;

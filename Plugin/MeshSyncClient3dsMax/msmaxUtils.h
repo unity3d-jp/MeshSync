@@ -16,6 +16,7 @@ Modifier* FindSkin(INode *n);
 ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
+std::tuple<IDerivedObject*, int> GetSourceMesh(INode *n);
 
 
 inline mu::float2 to_float2(const Point3& v)
@@ -56,7 +57,7 @@ inline void EachNode(NodeEventNamespace::NodeKeyTab& nkt, const Body& body)
     }
 }
 
-// Body: [](Object *obj) -> void
+// Body: [](IDerivedObject *obj) -> void
 // return bottom object
 template<class Body>
 inline Object* EachObject(INode *n, const Body& body)
@@ -72,7 +73,7 @@ inline Object* EachObject(INode *n, const Body& body)
     return obj;
 }
 
-// Body: [](Object *obj, Modifier *mod) -> void
+// Body: [](IDerivedObject *obj, Modifier *mod, int mod_index) -> void
 template<class Body>
 inline void EachModifier(INode *n, const Body& body)
 {
@@ -82,7 +83,7 @@ inline void EachModifier(INode *n, const Body& body)
             auto dobj = (IDerivedObject*)obj;
             int num_mod = dobj->NumModifiers();
             for (int mi = 0; mi < num_mod; ++mi)
-                body(obj, dobj->GetModifier(mi));
+                body(dobj, dobj->GetModifier(mi), mi);
             obj = dobj->GetObjRef();
         }
         else
@@ -90,7 +91,7 @@ inline void EachModifier(INode *n, const Body& body)
     }
 }
 
-// Body: [](Modifier *mod) -> void
+// Body: [](IDerivedObject *obj, Modifier *mod, int mod_index) -> void
 template<class Body>
 inline void EachModifier(Object *obj, const Body& body)
 {
@@ -98,7 +99,7 @@ inline void EachModifier(Object *obj, const Body& body)
         auto dobj = (IDerivedObject*)obj;
         int num_mod = dobj->NumModifiers();
         for (int mi = 0; mi < num_mod; ++mi)
-            body(obj, dobj->GetModifier(mi));
+            body(obj, dobj->GetModifier(mi), mi);
     }
 }
 
