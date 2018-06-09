@@ -77,10 +77,10 @@ inline Object* EachObject(INode *n, const Body& body)
 
 // Body: [](IDerivedObject *obj, Modifier *mod, int mod_index) -> void
 template<class Body>
-inline void EachModifier(INode *n, const Body& body)
+inline Object* EachModifier(INode *n, const Body& body)
 {
     if (!n)
-        return;
+        return nullptr;
     Object* obj = n->GetObjectRef();
     while (obj) {
         if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
@@ -93,6 +93,7 @@ inline void EachModifier(INode *n, const Body& body)
         else
             break;
     }
+    return obj;
 }
 
 // Body: [](IDerivedObject *obj, Modifier *mod, int mod_index) -> void
