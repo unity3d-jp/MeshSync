@@ -10,7 +10,7 @@ exit /B 0
 :Build
     set MAYA_VERSION=%~2%~1
     echo target: %MAYA_VERSION%
-    echo %MAYA_VERSION% | findstr /C:"LT">null && (set MAYA_LT=1) || (set MAYA_LT=0)
+    echo %MAYA_VERSION% | findstr /C:"LT">nul && (set MAYA_LT=1) || (set MAYA_LT=0)
     set MAYA_LIB_DIR=%cd%\External\Maya%~2%~1\lib
     set MAYA_INCLUDE_DIR=%cd%\External\Maya%~1\include
     msbuild MeshSyncClientMaya.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
