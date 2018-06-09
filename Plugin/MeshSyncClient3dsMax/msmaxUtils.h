@@ -16,7 +16,7 @@ Modifier* FindSkin(INode *n);
 ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
-std::tuple<IDerivedObject*, int> GetSourceMesh(INode *n);
+TriObject* GetSourceMesh(INode *n);
 
 
 inline mu::float2 to_float2(const Point3& v)

@@ -83,20 +83,31 @@ bool IsMesh(Object *obj)
     return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID && obj->ClassID() != BONE_OBJ_CLASSID;
 }
 
-std::tuple<IDerivedObject*, int> GetSourceMesh(INode * n)
+TriObject* GetSourceMesh(INode * n)
 {
-    std::tuple<IDerivedObject*, int> ret = { nullptr, 0 };
+    IDerivedObject *dobj = nullptr;
+    int mod_index = 0;
     bool return_next = true;
     EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
         if (return_next) {
-            std::get<0>(ret) = obj;
-            std::get<1>(ret) = mi;
+            return_next = false;
+            dobj = obj;
+            mod_index = mi;
         }
-        else {
-            if (mod->ClassID() == MR3_CLASS_ID || mod->ClassID() == SKIN_CLASSID) {
-                return_next = true;
-            }
+        if (mod->ClassID() == MR3_CLASS_ID || mod->ClassID() == SKIN_CLASSID) {
+            return_next = true;
         }
     });
-    return ret;
+
+    if (dobj) {
+        auto os = dobj->Eval(GetTime(), mod_index);
+        if (os.obj->CanConvertToType(triObjectClassID))
+            return (TriObject*)os.obj->ConvertToType(GetTime(), triObjectClassID);
+    }
+
+    auto obj = n->GetObjectRef();
+    if (obj->CanConvertToType(triObjectClassID))
+        return (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+
+    return nullptr;
 }

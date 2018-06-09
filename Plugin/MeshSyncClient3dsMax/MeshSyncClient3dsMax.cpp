@@ -681,28 +681,13 @@ static void ExtractNormals(RawVector<mu::float3> &dst, Mesh & mesh)
 
 bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *obj)
 {
-    TriObject *tri = nullptr;
-    {
-        IDerivedObject *dobj = nullptr;
-        int mod_index = 0;
-        std::tie(dobj, mod_index) = GetSourceMesh(n);
-
-        if (dobj && dobj != obj) {
-            auto os = dobj->Eval(GetTime(), mod_index);
-            if (os.obj->CanConvertToType(triObjectClassID))
-                tri = (TriObject*)os.obj->ConvertToType(GetTime(), triObjectClassID);
-        }
-    }
-    if (!tri) {
-        if (obj->CanConvertToType(triObjectClassID))
-            tri = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
-    }
-    if (!tri)
-        return false;
-
     extractTransformData(dst, n, obj);
     if (!dst.visible)
         return true;
+
+    auto *tri = GetSourceMesh(n);
+    if (!tri)
+        return false;
 
     if (m_materials.empty())
         exportMaterials();
@@ -795,16 +780,8 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
             int num_channels = morph.NumMorphChannels();
             for (int ci = 0; ci < num_channels; ++ci) {
                 auto channel = morph.GetMorphChannel(ci);
-                auto tnode = channel.GetMorphTarget();
-                if (!tnode || !channel.IsActive() || !channel.IsValid())
-                    continue;
-
-                auto tobj = GetBaseObject(tnode);
-                if (!tobj->CanConvertToType(triObjectClassID))
-                    continue;
-
-                auto& tmesh = ((TriObject*)tobj->ConvertToType(GetTime(), triObjectClassID))->GetMesh();
-                if (tmesh.numFaces != num_faces || tmesh.numVerts != num_points)
+                auto num_targets = channel.NumProgressiveMorphTargets();
+                if (!channel.IsActive() || !channel.IsValid() || num_targets == 0)
                     continue;
 
                 auto dbs = ms::BlendShapeData::create();
@@ -812,18 +789,28 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
                 dbs->name = mu::ToMBS(channel.GetName());
                 dbs->weight = channel.GetMorphWeight(GetTime());
 
-                dbs->frames.push_back(ms::BlendShapeData::Frame());
-                auto& frame = dbs->frames.back();
-                frame.weight = 100.0f;
-                frame.points.assign((mu::float3*)tmesh.verts, (mu::float3*)tmesh.verts + num_points);
-                frame.normals.resize_discard(dst.normals.size());
-                ExtractNormals(frame.normals, tmesh);
+                for (int ti = 0; ti < num_targets; ++ti) {
+                    auto tnode = channel.GetProgressiveMorphTarget(ti);
+                    if (!tnode)
+                        continue;
 
-                // convert to delta
-                for (int i = 0; i < num_points; ++i)
-                    frame.points[i] -= dst.points[i];
-                for (int i = 0; i < num_normals; ++i)
-                    frame.normals[i] -= dst.normals[i];
+                    auto tobj = GetBaseObject(tnode);
+                    if (!tobj->CanConvertToType(triObjectClassID))
+                        continue;
+
+                    auto& tmesh = ((TriObject*)tobj->ConvertToType(GetTime(), triObjectClassID))->GetMesh();
+                    if (tmesh.numFaces != num_faces || tmesh.numVerts != num_points)
+                        continue; // topology doesn't match
+
+                    dbs->frames.push_back(ms::BlendShapeData::Frame());
+                    auto& frame = dbs->frames.back();
+                    frame.weight = channel.GetProgressiveMorphWeight(ti);
+
+                    // gen delta
+                    frame.points.assign((mu::float3*)tmesh.verts, (mu::float3*)tmesh.verts + num_points);
+                    for (int i = 0; i < num_points; ++i)
+                        frame.points[i] -= dst.points[i];
+                }
             }
         }
     }
@@ -836,7 +823,7 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
             int num_bones = skin->GetNumBones();
             int num_vertices = ctx->GetNumPoints();
             if (num_vertices != dst.points.size()) {
-                // vertices are increased or decreased by modifiers. this case is not supported.
+                // topology is changed by modifiers. this case is not supported.
             }
             else {
                 // allocate bones and extract bindposes
