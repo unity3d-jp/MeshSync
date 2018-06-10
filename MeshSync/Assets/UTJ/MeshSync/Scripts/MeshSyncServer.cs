@@ -233,19 +233,24 @@ namespace UTJ.MeshSync
                     }
                 }
 
-                // force recalculate skinning
-                foreach (var rec in m_clientObjects)
+#if UNITY_EDITOR
+                if (!EditorApplication.isPlaying)
                 {
-                    if(rec.Value.editMesh)
+                    // force recalculate skinning
+                    foreach (var rec in m_clientObjects)
                     {
-                        var go = rec.Value.go;
-                        if(go != null && go.activeInHierarchy)
+                        if (rec.Value.editMesh)
                         {
-                            go.SetActive(false); // 
-                            go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                            var go = rec.Value.go;
+                            if (go != null && go.activeInHierarchy)
+                            {
+                                go.SetActive(false); // 
+                                go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                            }
                         }
                     }
                 }
+#endif
 
                 ForceRepaint();
                 GC.Collect();
@@ -831,8 +836,13 @@ namespace UTJ.MeshSync
                         dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
                 }
 
-                dstgo.SetActive(false); // 
-                dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+#if UNITY_EDITOR
+                if (!EditorApplication.isPlaying)
+                {
+                    dstgo.SetActive(false); // 
+                    dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+                }
+#endif
             }
         }
 

@@ -7,6 +7,7 @@ dist_dir = os.path.dirname(os.path.realpath(__file__)) + "/dist"
 os.chdir(dist_dir)
 
 targets = []
+targets += glob.glob('UnityMeshSync_3dsMax*')
 targets += glob.glob('UnityMeshSync_blender*')
 targets += glob.glob('UnityMeshSync_maya*')
 targets += glob.glob('UnityMeshSync_Metasequoia*')
