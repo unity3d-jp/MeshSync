@@ -21,6 +21,7 @@ namespace UTJ.MeshSync
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
         //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
+        [SerializeField] bool m_updateMeshCollider = false;
         [SerializeField] bool m_ignoreVisibility = false;
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -517,6 +518,13 @@ namespace UTJ.MeshSync
                             var bsd = data.GetBlendShapeData(bi);
                             smr.SetBlendShapeWeight(bi, bsd.weight);
                         }
+                    }
+
+                    if(m_updateMeshCollider)
+                    {
+                        var collider = t.GetComponent<MeshCollider>();
+                        if (collider != null)
+                            collider.sharedMesh = rec.editMesh;
                     }
                 }
 
