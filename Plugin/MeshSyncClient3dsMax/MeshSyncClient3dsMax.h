@@ -81,8 +81,6 @@ private:
     {
         int index = 0;
         INode *node = nullptr;
-        Object *obj = nullptr; // base (bottom) object
-        bool is_bone = false;
         std::wstring name;
         std::string path;
 

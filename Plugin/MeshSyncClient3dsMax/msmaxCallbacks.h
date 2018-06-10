@@ -20,6 +20,7 @@ public:
     void Added(NodeKeyTab& nodes) override;
     void Deleted(NodeKeyTab& nodes) override;
     void LinkChanged(NodeKeyTab& nodes) override;
+    void HierarchyOtherEvent(NodeKeyTab& nodes) override;
 
     void ModelStructured(NodeKeyTab& nodes) override;
     void GeometryChanged(NodeKeyTab& nodes) override;

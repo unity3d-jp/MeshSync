@@ -295,11 +295,6 @@ void MeshSyncClient3dsMax::updateRecords()
     m_node_records.clear();
     EnumerateAllNode([this](INode *n) {
         getNodeRecord(n);
-        if (IsMesh(GetBaseObject(n))) {
-            EachBone(n, [this](INode *bone) {
-                getNodeRecord(bone).is_bone = true;
-            });
-        }
     });
 }
 
@@ -532,9 +527,9 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
 
 static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    auto mat = to_float4x4(n->GetObjTMAfterWSM(t));
+    auto mat = to_float4x4(n->GetNodeTM(t));
     if (auto parent = n->GetParentNode()) {
-        auto pmat = to_float4x4(parent->GetObjTMAfterWSM(t));
+        auto pmat = to_float4x4(parent->GetNodeTM(t));
         mat *= mu::invert(pmat);
     }
     pos = mu::extract_position(mat);

@@ -33,62 +33,56 @@ msmaxNodeCallback & msmaxNodeCallback::getInstance()
 void msmaxNodeCallback::Added(NodeKeyTab & nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onNodeAdded(n); });
-    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::Deleted(NodeKeyTab & nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onNodeDeleted(n); });
-    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::LinkChanged(NodeKeyTab & nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onNodeLinkChanged(n); });
-    msmaxInstance().update();
+}
+
+void msmaxNodeCallback::HierarchyOtherEvent(NodeKeyTab & nodes)
+{
+    msmaxInstance().onSceneUpdated();
 }
 
 void msmaxNodeCallback::ModelStructured(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
-    msmaxInstance().update();
 }
 void msmaxNodeCallback::GeometryChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
-    msmaxInstance().update();
 }
 void msmaxNodeCallback::TopologyChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
-    msmaxInstance().update();
 }
 void msmaxNodeCallback::MappingChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
-    msmaxInstance().update();
 }
 void msmaxNodeCallback::ExtentionChannelChanged(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
-    msmaxInstance().update();
 }
 void msmaxNodeCallback::ModelOtherEvent(NodeKeyTab& nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
-    msmaxInstance().update();
 }
 
 void msmaxNodeCallback::ControllerOtherEvent(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
-    msmaxInstance().update();
+    msmaxInstance().onSceneUpdated();
 }
 
 void msmaxNodeCallback::HideChanged(NodeKeyTab & nodes)
 {
     EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
-    msmaxInstance().update();
 }
 
 
