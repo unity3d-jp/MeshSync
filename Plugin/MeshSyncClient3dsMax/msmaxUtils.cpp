@@ -108,18 +108,15 @@ TriObject* GetSourceMesh(INode * n)
     });
 
     if (return_next) {
-        // there is skin and/or morph at the bottom of modifier stack. return base object.
         if (base->CanConvertToType(triObjectClassID))
             return (TriObject*)base->ConvertToType(GetTime(), triObjectClassID);
     }
     else if (dobj) {
-        // there is skin and/or morph. apply modifiers under it.
         auto os = dobj->Eval(GetTime(), mod_index);
         if (os.obj->CanConvertToType(triObjectClassID))
             return (TriObject*)os.obj->ConvertToType(GetTime(), triObjectClassID);
     }
     else {
-        // no skin, no morph. apply all modifiers.
         auto obj = n->GetObjectRef();
         if (obj->CanConvertToType(triObjectClassID))
             return (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
