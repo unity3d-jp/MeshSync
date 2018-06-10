@@ -776,27 +776,19 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
             for (int ci = 0; ci < num_channels; ++ci) {
                 auto channel = morph.GetMorphChannel(ci);
                 auto num_targets = channel.NumProgressiveMorphTargets();
-                if (!channel.IsActive() || !channel.IsValid() || num_targets == 0)
+                if (!channel.IsActive() || !channel.IsValid() || num_targets == 0 || channel.NumMorphPoints() != num_points)
                     continue;
 
                 auto dbs = ms::BlendShapeData::create();
                 for (int ti = 0; ti < num_targets; ++ti) {
-                    auto tobj = GetBaseObject(channel.GetProgressiveMorphTarget(ti));
-                    if (!tobj || !tobj->CanConvertToType(triObjectClassID))
-                        continue;
-
-                    auto& tmesh = ((TriObject*)tobj->ConvertToType(GetTime(), triObjectClassID))->GetMesh();
-                    if (tmesh.numFaces != num_faces || tmesh.numVerts != num_points)
-                        continue; // topology doesn't match
-
                     dbs->frames.push_back(ms::BlendShapeFrameData::create());
                     auto& frame = *dbs->frames.back();
                     frame.weight = channel.GetProgressiveMorphWeight(ti);
 
                     // gen delta
-                    frame.points.assign((mu::float3*)tmesh.verts, (mu::float3*)tmesh.verts + num_points);
-                    for (int i = 0; i < num_points; ++i)
-                        frame.points[i] -= dst.points[i];
+                    frame.points.resize_discard(num_points);
+                    for (int vi = 0; vi < num_points; ++vi)
+                        frame.points[vi] = to_float3(channel.GetProgressiveMorphPoint(ti, vi)) - dst.points[vi];
                 }
                 if (!dbs->frames.empty()) {
                     dbs->name = mu::ToMBS(channel.GetName());
