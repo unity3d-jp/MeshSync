@@ -74,21 +74,21 @@
 #define kMFnTransform           (MFn::Type)15422
 #define kMFnJoint               (MFn::Type)15433
 #define kMFnCamera              (MFn::Type)32834
-#define kMFnLight               MFn::kLight
-#define kMFnPointLight          MFn::kPointLight
-#define kMFnSpotLight           MFn::kSpotLight
-#define kMFnDirectionalLight    MFn::kDirectionalLight
-#define kMFnAreaLight           MFn::kAreaLight
+#define kMFnLight               (MFn::Type)32886
+#define kMFnPointLight          (MFn::Type)32893
+#define kMFnSpotLight           (MFn::Type)32894
+#define kMFnDirectionalLight    (MFn::Type)32892
+#define kMFnAreaLight           (MFn::Type)32889
 #define kMFnMesh                (MFn::Type)32880
 
-#define kMFnSkinClusterFilter   MFn::kSkinClusterFilter
-#define kMFnBlendShape          MFn::kBlendShape
-#define kMFnLambert             MFn::kLambert
-#define kMFnTweak               MFn::kTweak
-#define kMFnPolyTweakUV         MFn::kPolyTweakUV
-#define kMFnComponentListData   MFn::kComponentListData
-#define kMFnMeshVertComponent   MFn::kMeshVertComponent
-#define kMFnPointArrayData      MFn::kPointArrayData
+#define kMFnSkinClusterFilter   (MFn::Type)18188
+#define kMFnBlendShape          (MFn::Type)61825
+#define kMFnLambert             (MFn::Type)61858
+#define kMFnTweak               (MFn::Type)61834
+#define kMFnPolyTweakUV         (MFn::Type)18211
+#define kMFnComponentListData   (MFn::Type)49571
+#define kMFnMeshVertComponent   (MFn::Type)49542
+#define kMFnPointArrayData      (MFn::Type)30813
 
 #define kMFnConstraint          MFn::kConstraint
 #define kMFnAimConstraint       MFn::kAimConstraint

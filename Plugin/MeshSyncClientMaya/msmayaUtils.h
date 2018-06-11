@@ -71,11 +71,11 @@ inline mu::quatf to_quatf(const MQuaternion& v)
     return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };
 }
 
-inline bool to_bool(const MPlug plug)
+inline bool to_bool(const MPlug& plug)
 {
     return plug.asBool();
 }
-inline mu::float3 to_float3(const MPlug plug)
+inline mu::float3 to_float3(const MPlug& plug)
 {
     return mu::float3{
         (float)plug.child(0).asDouble(),
@@ -86,72 +86,25 @@ inline mu::float3 to_float3(const MPlug plug)
 
 
 template<class T, size_t size = 128>
-struct Pad
+struct Pad : public T
 {
 #if MAYA_LT
-    Pad()
-    {
-#ifdef mscDebug
-        memset(data, 0xee, size);
-#endif
-        new(data) T();
-#ifdef mscDebug
-        checkWrittenBytes();
-#endif
-    }
+    static const size_t pad_size = size - sizeof(T);
+
+    Pad() {}
 
     template <typename... Args>
-    Pad(Args&&... args)
-    {
-#ifdef mscDebug
-        memset(data, 0xee, size);
-#endif
-        new(data) T(std::forward<Args>(args)...);
-#ifdef mscDebug
-        checkWrittenBytes();
-#endif
-    }
+    Pad(Args&&... args) : T(std::forward<Args>(args)...) {}
 
-#ifdef mscDebug
-    void checkWrittenBytes()
-    {
-        int n = 127;
-        for (; n >= 0; --n) {
-            if (data[n] != 0xee)
-                break;
-        }
-        if (n > sizeof(T)) {
-            mscTrace("!!! %d : %d\n", n, (int)sizeof(T));
-        }
-    }
-#endif
+    uint8_t padding[pad_size];
 
-
-    ~Pad()
-    {
-        ((T*)data)->~T();
-    }
-
-    T* operator->() { return (T*)data; }
-    T& operator*() { return *(T*)data; }
-    uint8_t data[size];
 #else
-    Pad() : data() {}
+    Pad() {}
 
     template <typename... Args>
-    Pad(Args&&... args) : data(std::forward<Args>(args)...) {}
+    Pad(Args&&... args) : T(std::forward<Args>(args)...) {}
 
-    T* operator->() { return (T*)&(void*&)data; }
-    T& operator*() { return data; }
-    T data;
 #endif
-
-    T& operator=(const T& v) { *this = v; return *this; }
-    T& operator=(const Pad& v) { *this = *v; return *this; }
-
-    Pad(const Pad&) = delete;
-    Pad(Pad&&) = delete;
-    Pad& operator=(Pad&&) = delete;
 };
 
 
@@ -182,7 +135,7 @@ inline void EnumerateAllNode(const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachParent(MObject node, const Body& body)
+inline void EachParent(const MObject& node, const Body& body)
 {
     Pad<MFnDagNode> fn(node);
     auto num_parents = fn->parentCount();
@@ -192,17 +145,17 @@ inline void EachParent(MObject node, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachChild(MObject node, const Body& body)
+inline void EachChild(const MObject& node, const Body& body)
 {
     Pad<MFnDagNode> fn(node);
-    auto num_children = fn->childCount();
+    auto num_children = fn.childCount();
     for (uint32_t i = 0; i < num_children; ++i)
-        body(fn->child(i));
+        body(fn.child(i));
 }
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachConstraints(MObject node, const Body& body)
+inline void EachConstraints(MObject& node, const Body& body)
 {
     MItDependencyGraph it(node, kMFnConstraint, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
@@ -210,3 +163,30 @@ inline void EachConstraints(MObject node, const Body& body)
         it.next();
     }
 }
+
+#ifdef mscDebug
+    inline void PrintNodeInfo(MObject node, int depth = 0)
+    {
+        char indent[64];
+        int d = 0;
+        for (; d < depth; ++d) {
+            indent[d] = ' ';
+        }
+        indent[d] = '\0';
+
+        mscTrace("%s%s %d\n", indent, node.apiTypeStr(), node.apiType());
+        for (MItDependencyGraph iter(node); !iter.isDone(); iter.next()) {
+            if (iter.thisNode() != node) {
+                auto item = iter.currentItem();
+                mscTrace("%s* %s %d\n", indent, item.apiTypeStr(), item.apiType());
+            }
+        }
+
+        EachChild(node, [&](const MObject& child) {
+            PrintNodeInfo(child, depth + 1);
+        });
+    }
+#else
+    #define PrintNodeInfo(...)
+#endif
+

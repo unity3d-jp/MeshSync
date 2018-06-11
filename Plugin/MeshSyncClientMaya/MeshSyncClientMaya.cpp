@@ -269,7 +269,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     // cameras
     EnumerateNode(kMFnCamera, [this](MObject& node) {
         Pad<MFnDagNode> fn(node);
-        if (!fn->isIntermediateObject()) {
+        if (!fn.isIntermediateObject()) {
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
@@ -279,7 +279,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     // lights
     EnumerateNode(kMFnLight, [this](MObject& node) {
         Pad<MFnDagNode> fn(node);
-        if (!fn->isIntermediateObject()) {
+        if (!fn.isIntermediateObject()) {
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
@@ -289,7 +289,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     //  meshes
     EnumerateNode(kMFnMesh, [this](MObject& node) {
         Pad<MFnDagNode> fn(node);
-        if (!fn->isIntermediateObject()) {
+        if (!fn.isIntermediateObject()) {
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
@@ -333,7 +333,7 @@ void MeshSyncClientMaya::constructTree()
     m_index_seed = 0;
 
     EnumerateNode(kMFnTransform, [&](MObject& node) {
-        if (Pad<MFnDagNode>(node)->parent(0).hasFn(kMFnWorld)) {
+        if (Pad<MFnDagNode>(node).parent(0).hasFn(kMFnWorld)) {
             constructTree(node, nullptr, "");
         }
     });
@@ -412,9 +412,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     };
 
     if (scope == SendScope::All) {
-        //EnumerateAllNode([](MObject& obj) {
-        //    mscTrace("  %d (%s) %s\n", obj.apiType(), obj.apiTypeStr(), GetPath(obj).c_str());
-        //});
+        //EnumerateAllNode([](MObject& obj) { PrintNodeInfo(obj); });
 
         auto handler = [&](MObject& node) {
             export_branches(m_dag_nodes[node]);
