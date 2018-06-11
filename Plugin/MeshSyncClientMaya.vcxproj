@@ -21,7 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMaya/pch.h" />
-    <ClInclude Include="MeshSyncClientMaya\MayaLT.h" />
+    <ClInclude Include="MeshSyncClientMaya\MayaLTSupport.h" />
     <ClInclude Include="MeshSyncClientMaya\MeshSyncClientMaya.h" />
     <ClInclude Include="MeshSyncClientMaya\msmayaCommands.h" />
     <ClInclude Include="MeshSyncClientMaya\msmayaUtils.h" />
