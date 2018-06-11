@@ -21,7 +21,7 @@ namespace UTJ.MeshSync
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
         //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
-        [SerializeField] bool m_updateMeshCollider = false;
+        [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_ignoreVisibility = false;
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -470,12 +470,19 @@ namespace UTJ.MeshSync
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
+                    var collider = t.GetComponent<MeshCollider>();
+                    bool updateCollider = m_updateMeshColliders && collider != null &&
+                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
+
                     {
                         var old = smr.sharedMesh;
                         smr.sharedMesh = null;
                         DestroyIfNotAsset(old);
                         old = null;
                     }
+
+                    if (updateCollider)
+                        collider.sharedMesh = rec.editMesh;
 
                     bool updateWhenOffscreen = false;
                     if (skinned)
@@ -523,13 +530,6 @@ namespace UTJ.MeshSync
                             var bsd = data.GetBlendShapeData(bi);
                             smr.SetBlendShapeWeight(bi, bsd.weight);
                         }
-                    }
-
-                    if(m_updateMeshCollider)
-                    {
-                        var collider = t.GetComponent<MeshCollider>();
-                        if (collider != null)
-                            collider.sharedMesh = rec.editMesh;
                     }
                 }
 
