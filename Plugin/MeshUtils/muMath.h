@@ -1131,6 +1131,46 @@ template<class T> inline tvec3<T> extract_position(const tmat4x4<T>& m)
 }
 
 
+template<class T> inline tvec3<T> extract_scale_unsigned(const tmat3x3<T>& m)
+{
+    return tvec3<T>{length(m[0]), length(m[1]), length(m[2])};
+}
+template<class T> inline tvec3<T> extract_scale_unsigned(const tmat4x4<T>& m)
+{
+    return tvec3<T>{length((tvec3<T>&)m[0]), length((tvec3<T>&)m[1]), length((tvec3<T>&)m[2])};
+}
+
+template<class TMat>
+inline tvec3<typename TMat::scalar_t> extract_scale_sign(const TMat& m)
+{
+    using T = typename TMat::scalar_t;
+    auto ax = (const tvec3<T>&)m[0];
+    auto ay = (const tvec3<T>&)m[1];
+    auto az = (const tvec3<T>&)m[2];
+    return tvec3<T>{
+        sign(dot(cross(ax, ay), az)),
+        sign(dot(cross(az, ax), ay)),
+        sign(dot(cross(ay, az), ax))
+    };
+}
+
+template<class TMat>
+inline tvec3<typename TMat::scalar_t> extract_scale_signed_impl(const TMat& m)
+{
+    using T = typename TMat::scalar_t;
+    auto s = extract_scale_sign(m);
+    return tvec3<T>{ length(m[0]) * s.x, length(m[1]) * s.y, length(m[2]) * s.z };
+}
+
+template<class T> inline tvec3<T> extract_scale(const tmat3x3<T>& m)
+{
+    return extract_scale_signed_impl(m);
+}
+template<class T> inline tvec3<T> extract_scale(const tmat4x4<T>& m)
+{
+    return extract_scale_signed_impl(m);
+}
+
 template<class TMat>
 inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m_)
 {
@@ -1140,6 +1180,12 @@ inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m_)
         normalize((tvec3<T>&)m_[1]),
         normalize((tvec3<T>&)m_[2])
     };
+    {
+        auto s = extract_scale_sign(m_);
+        m[0] *= s.x;
+        m[1] *= s.y;
+        m[2] *= s.z;
+    }
 
     tquat<T> q;
     T tr, s;
@@ -1192,28 +1238,6 @@ template<class T> inline tquat<T> extract_rotation(const tmat3x3<T>& m)
 template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
 {
     return extract_rotation_impl(m);
-}
-
-//template<class T> inline tquat<T> extract_rotation(const tmat3x3<T>& m)
-//{
-//    auto forward = (tvec3<T>&)m[2];
-//    auto upwards = (tvec3<T>&)m[1];
-//    return to_quat(look33(forward, upwards));
-//}
-//template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
-//{
-//    auto forward = (tvec3<T>&)m[2];
-//    auto upwards = (tvec3<T>&)m[1];
-//    return to_quat(look33(forward, upwards));
-//}
-
-template<class T> inline tvec3<T> extract_scale(const tmat3x3<T>& m)
-{
-    return tvec3<T>{length(m[0]), length(m[1]), length(m[2])};
-}
-template<class T> inline tvec3<T> extract_scale(const tmat4x4<T>& m)
-{
-    return tvec3<T>{length((tvec3<T>&)m[0]), length((tvec3<T>&)m[1]), length((tvec3<T>&)m[2])};
 }
 
 // aperture and focal_length must be millimeter. return fov in degree
