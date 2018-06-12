@@ -20,9 +20,14 @@ namespace UTJ.MeshSync
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
-        //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
+        [Space(10)]
+        [SerializeField] bool m_syncTransform = true;
+        [SerializeField] bool m_syncVisibility = true;
+        [SerializeField] bool m_syncCameras = true;
+        [SerializeField] bool m_syncLights = true;
+        [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_updateMeshColliders = true;
-        [SerializeField] bool m_ignoreVisibility = false;
+        [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
@@ -413,7 +418,8 @@ namespace UTJ.MeshSync
         void UpdateMesh(MeshData data)
         {
             var trans = UpdateTransform(data.transform);
-            if (trans == null) { return; }
+            if (trans == null || !m_syncMeshes)
+                return;
 
             var data_trans = data.transform;
             var data_id = data_trans.id;
@@ -437,7 +443,8 @@ namespace UTJ.MeshSync
             var go = target.gameObject;
 
             bool activeInHierarchy = go.activeInHierarchy;
-            if (!activeInHierarchy && !data.flags.hasPoints) { return; }
+            if (!activeInHierarchy && !data.flags.hasPoints)
+                return;
 
 
             // allocate material list
@@ -534,7 +541,7 @@ namespace UTJ.MeshSync
                 }
 
                 var renderer = trans.gameObject.GetComponent<Renderer>();
-                if (renderer != null && !m_ignoreVisibility)
+                if (renderer != null && m_syncVisibility)
                     renderer.enabled = data.transform.visible;
             }
 
@@ -737,13 +744,16 @@ namespace UTJ.MeshSync
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
 
-            // import TRS
-            trans.localPosition = data.position;
-            trans.localRotation = data.rotation;
-            trans.localScale = data.scale;
+            // sync TRS
+            if (m_syncTransform)
+            {
+                trans.localPosition = data.position;
+                trans.localRotation = data.rotation;
+                trans.localScale = data.scale;
+            }
 
             // visibility
-            if (!m_ignoreVisibility)
+            if (m_syncVisibility)
             {
                 trans.gameObject.SetActive(data.visibleHierarchy);
 
@@ -766,7 +776,8 @@ namespace UTJ.MeshSync
         Camera UpdateCamera(CameraData data)
         {
             var trans = UpdateTransform(data.transform);
-            if (trans == null) { return null; }
+            if (trans == null || !m_syncCameras)
+                return null;
 
             var cam = trans.GetComponent<Camera>();
             if(cam == null)
@@ -786,7 +797,7 @@ namespace UTJ.MeshSync
                 cam.farClipPlane = data.farClipPlane;
             }
 
-            if (!m_ignoreVisibility)
+            if (m_syncVisibility)
                 cam.enabled = data.transform.visible;
             return cam;
         }
@@ -794,13 +805,12 @@ namespace UTJ.MeshSync
         Light UpdateLight(LightData data)
         {
             var trans = UpdateTransform(data.transform);
-            if (trans == null) { return null; }
+            if (trans == null || !m_syncLights)
+                return null;
 
             var lt = trans.GetComponent<Light>();
             if (lt == null)
-            {
                 lt = trans.gameObject.AddComponent<Light>();
-            }
 
             lt.type = data.type;
             lt.color = data.color;
@@ -809,7 +819,7 @@ namespace UTJ.MeshSync
                 lt.range = data.range;
             if (data.spotAngle > 0.0f)
                 lt.spotAngle = data.spotAngle;
-            if (!m_ignoreVisibility)
+            if (m_syncVisibility)
                 lt.enabled = data.transform.visible;
             return lt;
         }
