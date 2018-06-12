@@ -138,9 +138,9 @@ template<class Body>
 inline void EachParent(const MObject& node, const Body& body)
 {
     Pad<MFnDagNode> fn(node);
-    auto num_parents = fn->parentCount();
+    auto num_parents = fn.parentCount();
     for (uint32_t i = 0; i < num_parents; ++i)
-        body(fn->parent(i));
+        body(fn.parent(i));
 }
 
 // body: [](MObject&) -> void
