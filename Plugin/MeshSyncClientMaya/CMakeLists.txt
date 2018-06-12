@@ -1,4 +1,6 @@
 string(REGEX MATCH "([LT0-9.]+)$" MAYA_VERSION "${CMAKE_CURRENT_SOURCE_DIR}")
+string(REGEX MATCH "([0-9.]+)$" MAYA_YEAR ${MAYA_VERSION})
+string(REGEX MATCH "LT" MAYA_LT ${MAYA_VERSION})
 set(MESHSYNC_CLIENT_MAYA "MeshSyncClientMaya${MAYA_VERSION}")
 find_package(Maya${MAYA_VERSION})
 
@@ -22,11 +24,11 @@ set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES PREFIX "")
 set_target_properties(${MESHSYNC_CLIENT_MAYA} PROPERTIES OUTPUT_NAME "MeshSyncClientMaya")
 
 if(LINUX)
-    set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya_${PLATFORM}/modules")
+    set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya${MAYA_LT}_${PLATFORM}/modules")
 elseif(MAC)
-    set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya_${PLATFORM}")
+    set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Maya${MAYA_LT}_${PLATFORM}")
 endif()
-set(CONTENT_DIR "${DIST_DIR}/UnityMeshSync/${MAYA_VERSION}")
+set(CONTENT_DIR "${DIST_DIR}/UnityMeshSync/${MAYA_YEAR}${MAYA_LT}")
 
 install(TARGETS ${MESHSYNC_CLIENT_MAYA} DESTINATION "${CONTENT_DIR}/plug-ins/")
 install(DIRECTORY MEL/ DESTINATION "${CONTENT_DIR}/scripts/" FILES_MATCHING PATTERN "*.mel")

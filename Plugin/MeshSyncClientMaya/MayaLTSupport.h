@@ -1,46 +1,47 @@
 #pragma once
 
 #if MAYA_LT
+#if _WIN32
 
-#define MGlobal         ___1I0ll
-#define MTypeId         ___0lIIO
-#define MStatus         ___l1I00
-#define MTime           ___ll0l0
-#define MMatrix         ___lIl1O
-#define MDistance       ___11llI
-#define MSelectionList  ___IlIlI
-#define MSyntax         ___1lIll
-#define MArgList        ___lI101
-#define MArgParser      ___1IO1O
-#define MPxCommand      ___IlOl1
-#define MAnimControl    ___10lIl
-#define MSpace          ___1IOIl
-#define MAnimUtil       ___O1IlI
+#define MGlobal                     ___1I0ll
+#define MTypeId                     ___0lIIO
+#define MStatus                     ___l1I00
+#define MTime                       ___ll0l0
+#define MMatrix                     ___lIl1O
+#define MDistance                   ___11llI
+#define MSelectionList              ___IlIlI
+#define MSyntax                     ___1lIll
+#define MArgList                    ___lI101
+#define MArgParser                  ___1IO1O
+#define MPxCommand                  ___IlOl1
+#define MAnimControl                ___10lIl
+#define MSpace                      ___1IOIl
+#define MAnimUtil                   ___O1IlI
 
-#define MObject             ___1IIOI
-#define MObjectArray        ___0O11l
-#define MDagPath            ___llOl1
-#define MDagPathArray       ___lII0O
-#define MPlug               ___l0ll0
-#define MPlugArray          ___O0l11
-#define MString             ___IOl1I
-#define MStringArray        ___lO0lI
-#define MIntArray           ___Il11O
-#define MPoint              ___1Il1l
-#define MPointArray         ___lII01
-#define MFloatArray         ___1Oll0
-#define MFloatPoint         ___O1011
-#define MFloatPointArray    ___lI1OO
-#define MFloatVector        ___O11I0
-#define MFloatVectorArray   ___O1O0O
-#define MColor              ___110lO
-#define MColorArray         ___IIIIl
+#define MObject                     ___1IIOI
+#define MObjectArray                ___0O11l
+#define MDagPath                    ___llOl1
+#define MDagPathArray               ___lII0O
+#define MPlug                       ___l0ll0
+#define MPlugArray                  ___O0l11
+#define MString                     ___IOl1I
+#define MStringArray                ___lO0lI
+#define MIntArray                   ___Il11O
+#define MPoint                      ___1Il1l
+#define MPointArray                 ___lII01
+#define MFloatArray                 ___1Oll0
+#define MFloatPoint                 ___O1011
+#define MFloatPointArray            ___lI1OO
+#define MFloatVector                ___O11I0
+#define MFloatVectorArray           ___O1O0O
+#define MColor                      ___110lO
+#define MColorArray                 ___IIIIl
 
-#define MItDag              ___l0l1l
-#define MItMeshPolygon      ___IOl1O
-#define MItDependencyNodes  ___II0I1
-#define MItDependencyGraph  ___0OIOI
-#define MItGeometry         ___IOOI1
+#define MItDag                      ___l0l1l
+#define MItMeshPolygon              ___IOl1O
+#define MItDependencyNodes          ___II0I1
+#define MItDependencyGraph          ___0OIOI
+#define MItGeometry                 ___IOOI1
 
 #define MFn                         ___11lOO
 #define MFnBase                     ___1IlO1
@@ -61,12 +62,12 @@
 #define MFnLambertShader            ___0Illl
 #define MFnSingleIndexedComponent   ___1O0ll
 
-#define MMessage        ___O01lI
-#define MSceneMessage   ___0OIIl
-#define MDagMessage     ___l10OI
-#define MEventMessage   ___11111
-#define MDGMessage      ___10IOl
-#define MNodeMessage    ___11IlI
+#define MMessage                    ___O01lI
+#define MSceneMessage               ___0OIIl
+#define MDagMessage                 ___l10OI
+#define MEventMessage               ___11111
+#define MDGMessage                  ___10IOl
+#define MNodeMessage                ___11IlI
 
 
 #define kMFnInvalid             MFn::kInvalid
@@ -95,6 +96,7 @@
 #define kMFnParentConstraint    MFn::kParentConstraint
 #define kMFnPointConstraint     MFn::kPointConstraint
 #define kMFnScaleConstraint     MFn::kScaleConstraint
+#endif // _WIN32
 
 #else // MAYA_LT
 

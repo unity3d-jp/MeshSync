@@ -85,12 +85,10 @@ inline mu::float3 to_float3(const MPlug& plug)
 }
 
 
-template<class T, size_t size = 128>
+template<class T, size_t pad_size = 64>
 struct Pad : public T
 {
 #if MAYA_LT
-    static const size_t pad_size = size - sizeof(T);
-
     Pad() {}
 
     template <typename... Args>
