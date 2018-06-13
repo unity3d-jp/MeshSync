@@ -198,6 +198,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     dst.visible = IsVisible(shape);
     if (!dst.visible) { return; }
 
+    MStatus mstat;
     MFnMesh mmesh(shape);
     MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     bool is_skinned = !fn_skin.object().isNull();
@@ -547,37 +548,47 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         dst.refine_settings.local2world = dst.toMatrix();
 
         // get bone data
-        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix");
-        MDagPathArray joint_paths;
-        auto num_joints = fn_skin.influenceObjects(joint_paths);
+        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix", &mstat);
+        if (mstat == MStatus::kSuccess) {
+            MDagPathArray joint_paths;
+            auto num_joints = fn_skin.influenceObjects(joint_paths);
 
-        for (uint32_t ij = 0; ij < num_joints; ij++) {
-            auto joint = joint_paths[ij].node();
+            for (uint32_t ij = 0; ij < num_joints; ij++) {
+                auto bone = ms::BoneData::create();
+                dst.bones.push_back(bone);
 
-            auto bone = ms::BoneData::create();
-            bone->path = GetPath(joint);
-            if (dst.bones.empty())
-                dst.root_bone = GetRootBonePath(joint);
-            dst.bones.push_back(bone);
+                auto joint = joint_paths[ij].node();
+                if (joint.isNull())
+                    continue;
 
-            MObject matrix_obj;
-            auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
-            plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
-            bone->bindpose = to_float4x4(MFnMatrixData(matrix_obj).matrix());
-        }
+                bone->path = GetPath(joint);
+                if (dst.bones.empty())
+                    dst.root_bone = GetRootBonePath(joint);
 
-        // get weights
-        MDagPath mesh_path = GetDagPath(mmesh.object());
-        MItGeometry gi(mesh_path);
-        while (!gi.isDone()) {
-            MFloatArray weights;
-            uint32_t influence_count;
-            fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count);
-
-            for (uint32_t ij = 0; ij < influence_count; ij++) {
-                dst.bones[ij]->weights.push_back(weights[ij]);
+                MObject matrix_obj;
+                auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], &mstat);
+                if (mstat == MStatus::kSuccess) {
+                    auto matrix_plug = plug_bindprematrix.elementByLogicalIndex(ijoint, &mstat);
+                    if (mstat == MStatus::kSuccess) {
+                        matrix_plug.getValue(matrix_obj);
+                        bone->bindpose = to_float4x4(MFnMatrixData(matrix_obj).matrix());
+                    }
+                }
             }
-            gi.next();
+
+            // get weights
+            MDagPath mesh_path = GetDagPath(mmesh.object());
+            MItGeometry gi(mesh_path);
+            while (!gi.isDone()) {
+                MFloatArray weights;
+                uint32_t influence_count = 0;
+                if (fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count) == MStatus::kSuccess) {
+                    for (uint32_t ij = 0; ij < influence_count; ij++) {
+                        dst.bones[ij]->weights.push_back(weights[ij]);
+                    }
+                }
+                gi.next();
+            }
         }
     }
 
