@@ -266,10 +266,22 @@ void MeshSyncClientMaya::registerNodeCallbacks()
             rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
     });
 
+
+    auto register_transforms = [this](MObject& n) {
+        EachParent(n, [this](MObject& parent) {
+            if (parent.hasFn(kMFnTransform)) {
+                auto& rec = m_dag_nodes[parent];
+                if (!rec.cid)
+                    rec.cid = MNodeMessage::addAttributeChangedCallback(parent, OnTransformUpdated, this);
+            }
+        });
+    };
+
     // cameras
-    EnumerateNode(kMFnCamera, [this](MObject& node) {
+    EnumerateNode(kMFnCamera, [&](MObject& node) {
         Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
+            register_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
@@ -277,9 +289,10 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     });
 
     // lights
-    EnumerateNode(kMFnLight, [this](MObject& node) {
+    EnumerateNode(kMFnLight, [&](MObject& node) {
         Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
+            register_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
@@ -287,9 +300,10 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     });
 
     //  meshes
-    EnumerateNode(kMFnMesh, [this](MObject& node) {
+    EnumerateNode(kMFnMesh, [&](MObject& node) {
         Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
+            register_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
