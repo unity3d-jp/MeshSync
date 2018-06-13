@@ -122,7 +122,8 @@ void MeshSyncClient3dsMax::onSceneUpdated()
 
 void MeshSyncClient3dsMax::onTimeChanged()
 {
-    //m_scene_updated = true;
+    if (m_settings.auto_sync)
+        m_pending_request = SendScope::All;
 }
 
 void MeshSyncClient3dsMax::onNodeAdded(INode * n)
