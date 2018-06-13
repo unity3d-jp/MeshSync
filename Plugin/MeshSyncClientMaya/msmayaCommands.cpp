@@ -4,32 +4,32 @@
 #include "msmayaCommands.h"
 
 
-template<class T> void get_arg(T& dst, const MArgList& args, uint32_t i);
+template<class T> void get_arg(T& dst, const char *name, MArgParser& args);
 
-template<> void get_arg(std::string& dst, const MArgList& args, uint32_t i)
+template<> void get_arg(std::string& dst, const char *name, MArgParser& args)
 {
     MString tmp;
-    args.get(i, tmp);
+    args.getFlagArgument(name, 0, tmp);
     dst = tmp.asChar();
 }
-template<> void get_arg(bool& dst, const MArgList& args, uint32_t i)
+template<> void get_arg(bool& dst, const char *name, MArgParser& args)
 {
-    args.get(i, dst);
+    args.getFlagArgument(name, 0, dst);
 }
-template<> void get_arg(int& dst, const MArgList& args, uint32_t i)
+template<> void get_arg(int& dst, const char *name, MArgParser& args)
 {
-    args.get(i, dst);
+    args.getFlagArgument(name, 0, dst);
 }
-template<> void get_arg(uint16_t& dst, const MArgList& args, uint32_t i)
+template<> void get_arg(uint16_t& dst, const char *name, MArgParser& args)
 {
     int tmp;
-    args.get(i, tmp);
+    args.getFlagArgument(name, 0, tmp);
     dst = (uint16_t)tmp;
 }
-template<> void get_arg(float& dst, const MArgList& args, uint32_t i)
+template<> void get_arg(float& dst, const char *name, MArgParser& args)
 {
     double tmp;
-    args.get(i, tmp);
+    args.getFlagArgument(name, 0, tmp);
     dst = (float)tmp;
 }
 
@@ -68,53 +68,64 @@ const char* CmdSettings::name()
     return "UnityMeshSync_Settings";
 }
 
-MStatus CmdSettings::doIt(const MArgList& args)
+
+MSyntax CmdSettings::createSyntax()
 {
-    MString result;
+    MSyntax syntax;
+    syntax.enableQuery(true);
+    syntax.enableEdit(false);
+    syntax.addFlag("-a", "-address", MSyntax::kString);
+    syntax.addFlag("-p", "-port", MSyntax::kLong);
+    syntax.addFlag("-sf", "-scaleFactor", MSyntax::kDouble);
+    syntax.addFlag("-as", "-autosync", MSyntax::kBoolean);
+    syntax.addFlag("-sm", "-syncMeshes", MSyntax::kBoolean);
+    syntax.addFlag("-smn", "-syncNormals", MSyntax::kBoolean);
+    syntax.addFlag("-smu", "-syncUVs", MSyntax::kBoolean);
+    syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
+    syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
+    syntax.addFlag("-smb", "-syncBones", MSyntax::kBoolean);
+    syntax.addFlag("-sc", "-syncCameras", MSyntax::kBoolean);
+    syntax.addFlag("-sl", "-syncLights", MSyntax::kBoolean);
+    syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
+    syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
+    syntax.addFlag("-asp", "-animationSPS", MSyntax::kLong);
+    syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
+    syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
+
+    return syntax;
+}
+
+MStatus CmdSettings::doIt(const MArgList& args_)
+{
+    MStatus status;
+    MArgParser args(syntax(), args_, &status);
     auto& settings = MeshSyncClientMaya::getInstance().m_settings;
 
-    // parse args
-    uint32_t len = args.length();
-    if (len > 0) {
-        uint32_t i = 0;
-        bool query = false;
-
-        MString name;
-        {
-            args.get(0, name);
-            if (name == "-q") {
-                ++i;
-                query = true;
-            }
-        }
-        for (; i < len; ) {
-            args.get(i++, name);
-#define Body(Name, Value)\
-            if (name == Name) {\
-                if(query) { to_MString(result, Value); break; }\
-                else if (i < len) { get_arg(Value, args, i++); }\
-            }
-
-            Body("-address", settings.client_settings.server);
-            Body("-port", settings.client_settings.port);
-            Body("-scaleFactor", settings.scale_factor);
-            Body("-autosync", settings.auto_sync);
-            Body("-syncMeshes", settings.sync_meshes);
-            Body("-syncNormals", settings.sync_normals);
-            Body("-syncUVs", settings.sync_uvs);
-            Body("-syncColors", settings.sync_colors);
-            Body("-syncBlendShapes", settings.sync_blendshapes);
-            Body("-syncBones", settings.sync_bones);
-            Body("-syncCameras", settings.sync_cameras);
-            Body("-syncLights", settings.sync_lights);
-            Body("-syncConstraints", settings.sync_constraints);
-            Body("-animationTS", settings.animation_time_scale);
-            Body("-animationSPS", settings.animation_sps);
-            Body("-applyTweak", settings.apply_tweak);
-            Body("-multithreaded", settings.multithreaded);
-#undef Body
-        }
+    MString result;
+#define Handle(Name, Value)\
+    if (args.isFlagSet(Name)) {\
+        if(args.isQuery()) to_MString(result, Value);\
+        else get_arg(Value, Name, args);\
     }
+
+    Handle("address", settings.client_settings.server);
+    Handle("port", settings.client_settings.port);
+    Handle("scaleFactor", settings.scale_factor);
+    Handle("autosync", settings.auto_sync);
+    Handle("syncMeshes", settings.sync_meshes);
+    Handle("syncNormals", settings.sync_normals);
+    Handle("syncUVs", settings.sync_uvs);
+    Handle("syncColors", settings.sync_colors);
+    Handle("syncBlendShapes", settings.sync_blendshapes);
+    Handle("syncBones", settings.sync_bones);
+    Handle("syncCameras", settings.sync_cameras);
+    Handle("syncLights", settings.sync_lights);
+    Handle("syncConstraints", settings.sync_constraints);
+    Handle("animationTS", settings.animation_time_scale);
+    Handle("animationSPS", settings.animation_sps);
+    Handle("applyTweak", settings.apply_tweak);
+    Handle("multithreaded", settings.multithreaded);
+#undef Handle
 
     MPxCommand::setResult(result);
     return MStatus::kSuccess;
@@ -130,36 +141,39 @@ const char* CmdExport::name()
     return "UnityMeshSync_Export";
 }
 
+MSyntax CmdExport::createSyntax()
+{
+    MSyntax syntax;
+    syntax.enableQuery(false);
+    syntax.enableEdit(false);
+    syntax.addFlag("-s", "-scope", MSyntax::kString);
+    syntax.addFlag("-t", "-target", MSyntax::kString);
+    return syntax;
+}
 
-MStatus CmdExport::doIt(const MArgList& args)
+MStatus CmdExport::doIt(const MArgList& args_)
 {
     MStatus status;
+    MArgParser args(syntax(), args_, &status);
     auto& instance = MeshSyncClientMaya::getInstance();
 
     bool animations = false;
     auto scope = MeshSyncClientMaya::SendScope::All;
 
-    // parse args
-    uint32_t len = args.length();
-    if (len > 0) {
-        MString name;
-        for (uint32_t i = 0; i < len - 1; ) {
-            args.get(i++, name);
-            if (name == "-target") {
-                std::string t;
-                get_arg(t, args, i++);
-                if (t == "animations")
-                    animations = true;
-            }
-            else if (name == "-scope") {
-                std::string s;
-                get_arg(s, args, i++);
-                if (s == "selection")
-                    scope = MeshSyncClientMaya::SendScope::Selected;
-                else if (s == "updated")
-                    scope = MeshSyncClientMaya::SendScope::Updated;
-            }
-        }
+    if (args.isFlagSet("target")) {
+        std::string t;
+        get_arg(t, "target", args);
+        if (t == "animations")
+            animations = true;
+    }
+
+    if (args.isFlagSet("scope")) {
+        std::string s;
+        get_arg(s, "scope", args);
+        if (s == "selection")
+            scope = MeshSyncClientMaya::SendScope::Selected;
+        else if (s == "updated")
+            scope = MeshSyncClientMaya::SendScope::Updated;
     }
 
     if (animations)
@@ -181,6 +195,11 @@ const char* CmdImport::name()
     return "UnityMeshSync_Import";
 }
 
+MSyntax CmdImport::createSyntax()
+{
+    MSyntax syntax;
+    return syntax;
+}
 
 MStatus CmdImport::doIt(const MArgList&)
 {

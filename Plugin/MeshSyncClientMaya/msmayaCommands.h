@@ -12,6 +12,7 @@ class CmdSettings : public MPxCommand
 public:
     static void* create();
     static const char* name();
+    static MSyntax createSyntax();
 
     MStatus doIt(const MArgList& args) override;
     LT_PAD64;
@@ -22,6 +23,7 @@ class CmdExport : public MPxCommand
 public:
     static void* create();
     static const char* name();
+    static MSyntax createSyntax();
 
     MStatus doIt(const MArgList&) override;
     LT_PAD64;
@@ -32,6 +34,7 @@ class CmdImport : public MPxCommand
 public:
     static void* create();
     static const char* name();
+    static MSyntax createSyntax();
 
     MStatus doIt(const MArgList&) override;
     LT_PAD64;
