@@ -265,7 +265,7 @@ void Light::applyScaleFactor(float v)
 
 std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
 {
-    auto ret = new BlendShapeFrameData();
+    auto ret = Pool<BlendShapeFrameData>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
@@ -322,7 +322,7 @@ void BlendShapeFrameData::applyScaleFactor(float scale)
 
 std::shared_ptr<BlendShapeData> BlendShapeData::create(std::istream & is)
 {
-    auto ret = new BlendShapeData();
+    auto ret = Pool<BlendShapeData>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
@@ -377,7 +377,7 @@ void BlendShapeData::applyScaleFactor(float scale)
 
 std::shared_ptr<BoneData> BoneData::create(std::istream & is)
 {
-    auto ret = new BoneData();
+    auto ret = Pool<BoneData>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }

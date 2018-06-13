@@ -289,7 +289,7 @@ void LightAnimation::applyScaleFactor(float s)
 
 std::shared_ptr<BlendshapeAnimation> BlendshapeAnimation::create(std::istream & is)
 {
-    auto ret = new BlendshapeAnimation();
+    auto ret = Pool<BlendshapeAnimation>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
@@ -396,7 +396,7 @@ BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char *
 
 std::shared_ptr<AnimationClip> AnimationClip::create(std::istream& is)
 {
-    auto ret = new AnimationClip();
+    auto ret = Pool<AnimationClip>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }

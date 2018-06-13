@@ -7,7 +7,7 @@ namespace ms {
 
 std::shared_ptr<Texture> Texture::create(std::istream & is)
 {
-    auto ret = new Texture();
+    auto ret = Pool<Texture>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
@@ -48,7 +48,7 @@ void Texture::clear()
 
 std::shared_ptr<Material> Material::create(std::istream & is)
 {
-    auto ret = new Material();
+    auto ret = Pool<Material>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
