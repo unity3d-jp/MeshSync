@@ -633,51 +633,94 @@ static void ExtractNormals(ms::Mesh& dst, Mesh& mesh)
         }
     }
     else {
-        // there is no nspec. generate smooth normals by myself...
-        int num_faces = mesh.numFaces;
-        const auto *points = (mu::float3*)mesh.verts;
-        const auto *faces = mesh.faces;
+        auto get_normal = [&mesh](int face_index, int vertex_index) -> mu::float3 {
+            const auto& rv = mesh.getRVert(vertex_index);
+            const auto& face = mesh.faces[face_index];
+            DWORD smGroup = face.smGroup;
+            int num_normals = 0;
+            Point3 ret;
 
-        // gen face normals
-        RawVector<mu::float3> face_normals;
-        face_normals.resize_discard(num_faces);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            const auto& face = faces[fi];
-            auto p0 = points[face.v[0]];
-            auto p1 = points[face.v[1]];
-            auto p2 = points[face.v[2]];
-            auto n = mu::cross(p1 - p0, p2 - p0);
-            face_normals[fi] = n; // note: not normalized at this point
-        }
-
-        // build vertex -> faces connection info
-        mu::MeshConnectionInfo connection;
-        connection.buildConnection(dst.indices, 3, dst.points);
-
-        dst.normals.resize_discard(dst.indices.size());
-        int ii = 0;
-        for (int fi = 0; fi < num_faces; ++fi) {
-            const auto& face = faces[fi];
-            if (face.smGroup != 0) {
-                // average normals with neighbor faces that have same smoothing group
-                for (int ci = 0; ci < 3; ++ci) {
-                    auto n = face_normals[fi];
-                    connection.eachConnectedFaces(face.v[ci], [&](int fi2, int) {
-                        if (fi2 == fi)
-                            return;
-                        const auto& face2 = faces[fi2];
-                        if (face.smGroup & face2.smGroup) {
-                            n += face_normals[fi2];
+            if (rv.rFlags & SPECIFIED_NORMAL) {
+                ret = rv.rn.getNormal();
+            }
+            else if ((num_normals = rv.rFlags & NORCT_MASK) != 0 && smGroup) {
+                if (num_normals == 1) {
+                    ret = rv.rn.getNormal();
+                }
+                else {
+                    for (int i = 0; i < num_normals; i++) {
+                        if (rv.ern[i].getSmGroup() & smGroup) {
+                            ret = rv.ern[i].getNormal();
                         }
-                    });
-                    dst.normals[ii++] = mu::normalize(n);
+                    }
                 }
             }
             else {
-                for (int ci = 0; ci < 3; ++ci) {
-                    auto n = face_normals[fi];
-                    dst.normals[ii++] = mu::normalize(n);
-                }
+                ret = mesh.getFaceNormal(face_index);
+            }
+            return to_float3(ret);
+        };
+
+        // make sure normal is allocated
+        mesh.checkNormals(TRUE);
+        dst.normals.resize_discard(dst.indices.size());
+
+        int num_faces = mesh.numFaces;
+        const auto *faces = mesh.faces;
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto& face = faces[fi];
+            for (int i = 0; i < 3; ++i) {
+                dst.normals[fi * 3 + i] = get_normal(fi, face.v[i]);
+            }
+        }
+    }
+}
+
+static void GenSmoothNormals(ms::Mesh& dst, Mesh& mesh)
+{
+    int num_faces = mesh.numFaces;
+    const auto *points = (mu::float3*)mesh.verts;
+    const auto *faces = mesh.faces;
+
+    // gen face normals
+    RawVector<mu::float3> face_normals;
+    face_normals.resize_discard(num_faces);
+    for (int fi = 0; fi < num_faces; ++fi) {
+        const auto& face = faces[fi];
+        auto p0 = points[face.v[0]];
+        auto p1 = points[face.v[1]];
+        auto p2 = points[face.v[2]];
+        auto n = mu::cross(p1 - p0, p2 - p0);
+        face_normals[fi] = n; // note: not normalized at this point
+    }
+
+    // build vertex -> faces connection info
+    mu::MeshConnectionInfo connection;
+    connection.buildConnection(dst.indices, 3, dst.points);
+
+    dst.normals.resize_discard(dst.indices.size());
+    int ii = 0;
+    for (int fi = 0; fi < num_faces; ++fi) {
+        const auto& face = faces[fi];
+        if (face.smGroup != 0) {
+            // average normals with neighbor faces that have same smoothing group
+            for (int ci = 0; ci < 3; ++ci) {
+                auto n = face_normals[fi];
+                connection.eachConnectedFaces(face.v[ci], [&](int fi2, int) {
+                    if (fi2 == fi)
+                        return;
+                    const auto& face2 = faces[fi2];
+                    if (face.smGroup & face2.smGroup) {
+                        n += face_normals[fi2];
+                    }
+                });
+                dst.normals[ii++] = mu::normalize(n);
+            }
+        }
+        else {
+            for (int ci = 0; ci < 3; ++ci) {
+                auto n = face_normals[fi];
+                dst.normals[ii++] = mu::normalize(n);
             }
         }
     }
