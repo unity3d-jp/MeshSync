@@ -1141,17 +1141,13 @@ template<class T> inline tvec3<T> extract_scale_unsigned(const tmat4x4<T>& m)
 }
 
 template<class TMat>
-inline tvec3<typename TMat::scalar_t> extract_scale_sign(const TMat& m)
+inline typename TMat::scalar_t extract_scale_sign(const TMat& m)
 {
     using T = typename TMat::scalar_t;
     auto ax = (const tvec3<T>&)m[0];
     auto ay = (const tvec3<T>&)m[1];
     auto az = (const tvec3<T>&)m[2];
-    return tvec3<T>{
-        sign(dot(cross(ax, ay), az)),
-        sign(dot(cross(az, ax), ay)),
-        sign(dot(cross(ay, az), ax))
-    };
+    return sign(dot(cross(ax, ay), az));
 }
 
 template<class TMat>
@@ -1159,7 +1155,7 @@ inline tvec3<typename TMat::scalar_t> extract_scale_signed_impl(const TMat& m)
 {
     using T = typename TMat::scalar_t;
     auto s = extract_scale_sign(m);
-    return tvec3<T>{ length(m[0]) * s.x, length(m[1]) * s.y, length(m[2]) * s.z };
+    return tvec3<T>{ length(m[0]) * s, length(m[1]) * s, length(m[2]) * s };
 }
 
 template<class T> inline tvec3<T> extract_scale(const tmat3x3<T>& m)
@@ -1182,9 +1178,9 @@ inline tquat<typename TMat::scalar_t> extract_rotation_impl(const TMat& m_)
     };
     {
         auto s = extract_scale_sign(m_);
-        m[0] *= s.x;
-        m[1] *= s.y;
-        m[2] *= s.z;
+        m[0] *= s;
+        m[1] *= s;
+        m[2] *= s;
     }
 
     tquat<T> q;
