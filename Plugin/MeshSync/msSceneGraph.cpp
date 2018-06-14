@@ -263,24 +263,34 @@ void Light::applyScaleFactor(float v)
 }
 
 
+std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
+{
+    auto ret = Pool<BlendShapeFrameData>::instance().pull();
+    ret->deserialize(is);
+    return make_shared_ptr(ret);
+}
+
+BlendShapeFrameData::BlendShapeFrameData() {}
+BlendShapeFrameData::~BlendShapeFrameData() {}
+
 #define EachMember(F)\
     F(weight) F(points) F(normals) F(tangents)
 
-uint32_t BlendShapeData::Frame::getSerializeSize() const
+uint32_t BlendShapeFrameData::getSerializeSize() const
 {
     uint32_t ret = 0;
     EachMember(msSize);
     return ret;
 }
-void BlendShapeData::Frame::serialize(std::ostream& os) const
+void BlendShapeFrameData::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
 }
-void BlendShapeData::Frame::deserialize(std::istream& is)
+void BlendShapeFrameData::deserialize(std::istream& is)
 {
     EachMember(msRead);
 }
-void BlendShapeData::Frame::clear()
+void BlendShapeFrameData::clear()
 {
     weight = 0.0f;
     points.clear();
@@ -290,13 +300,33 @@ void BlendShapeData::Frame::clear()
 
 #undef EachMember
 
+void BlendShapeFrameData::convertHandedness(bool x, bool yz)
+{
+    if (x) {
+        for (auto& v : points) { v = swap_handedness(v); }
+        for (auto& v : normals) { v = swap_handedness(v); }
+        for (auto& v : tangents) { v = swap_handedness(v); }
+    }
+    if (yz) {
+        for (auto& v : points) { v = swap_yz(v); }
+        for (auto& v : normals) { v = swap_yz(v); }
+        for (auto& v : tangents) { v = swap_yz(v); }
+    }
+}
+
+void BlendShapeFrameData::applyScaleFactor(float scale)
+{
+    mu::Scale(points.data(), scale, points.size());
+}
+
 
 std::shared_ptr<BlendShapeData> BlendShapeData::create(std::istream & is)
 {
-    auto ret = new BlendShapeData();
+    auto ret = Pool<BlendShapeData>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
+
 
 BlendShapeData::BlendShapeData() {}
 BlendShapeData::~BlendShapeData() {}
@@ -327,34 +357,27 @@ void BlendShapeData::clear()
 
 #undef EachMember
 
+void BlendShapeData::sort()
+{
+    std::sort(frames.begin(), frames.end(),
+        [](BlendShapeFrameDataPtr& a, BlendShapeFrameDataPtr& b) { return a->weight < b->weight; });
+}
+
 void BlendShapeData::convertHandedness(bool x, bool yz)
 {
-    if (x) {
-        for (auto& f : frames) {
-            for (auto& v : f.points) { v = swap_handedness(v); }
-            for (auto& v : f.normals) { v = swap_handedness(v); }
-            for (auto& v : f.tangents) { v = swap_handedness(v); }
-        }
-    }
-    if (yz) {
-        for (auto& f : frames) {
-            for (auto& v : f.points) { v = swap_yz(v); }
-            for (auto& v : f.normals) { v = swap_yz(v); }
-            for (auto& v : f.tangents) { v = swap_yz(v); }
-        }
-    }
+    for (auto& fp : frames)
+        fp->convertHandedness(x, yz);
 }
 
 void BlendShapeData::applyScaleFactor(float scale)
 {
-    for (auto& f : frames) {
-        mu::Scale(f.points.data(), scale, f.points.size());
-    }
+    for (auto& fp : frames)
+        fp->applyScaleFactor(scale);
 }
 
 std::shared_ptr<BoneData> BoneData::create(std::istream & is)
 {
-    auto ret = new BoneData();
+    auto ret = Pool<BoneData>::instance().pull();
     ret->deserialize(is);
     return make_shared_ptr(ret);
 }
@@ -724,24 +747,27 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         CopyWithIndices(tmp_weights4.data(), weights4.data(), refiner.new2old_points);
         weights4.swap(tmp_weights4);
     }
+
     if (!blendshapes.empty()) {
         RawVector<float3> tmp;
         for (auto& bs : blendshapes) {
-            for (auto& frame : bs->frames) {
-                if (!frame.points.empty()) {
+            bs->sort();
+            for (auto& fp : bs->frames) {
+                auto& f = *fp;
+                if (!f.points.empty()) {
                     tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), frame.points.data(), refiner.new2old_points);
-                    frame.points.swap(tmp);
+                    CopyWithIndices(tmp.data(), f.points.data(), refiner.new2old_points);
+                    f.points.swap(tmp);
                 }
-                if (!frame.normals.empty()) {
+                if (!f.normals.empty()) {
                     tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), frame.normals.data(), refiner.new2old_points);
-                    frame.normals.swap(tmp);
+                    CopyWithIndices(tmp.data(), f.normals.data(), refiner.new2old_points);
+                    f.normals.swap(tmp);
                 }
-                if (!frame.tangents.empty()) {
+                if (!f.tangents.empty()) {
                     tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), frame.tangents.data(), refiner.new2old_points);
-                    frame.tangents.swap(tmp);
+                    CopyWithIndices(tmp.data(), f.tangents.data(), refiner.new2old_points);
+                    f.tangents.swap(tmp);
                 }
             }
         }
@@ -864,7 +890,8 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 
     // blend shapes
     for (auto& bs : blendshapes) {
-        for (auto& f : bs->frames) {
+        for (auto& fp : bs->frames) {
+            auto& f = *fp;
             if (!f.points.empty()) {
                 f.points.resize(points.size());
                 mu::CopyWithIndices(&f.points[num_points_old], &f.points[0], copylist);

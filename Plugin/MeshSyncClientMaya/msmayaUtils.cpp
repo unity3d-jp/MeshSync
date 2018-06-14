@@ -1,11 +1,11 @@
 #define _MApiVersion
 #include "pch.h"
-#include "MayaUtils.h"
+#include "msmayaUtils.h"
 #include "MeshSyncClientMaya.h"
 
 bool IsVisible(const MObject& node)
 {
-    MFnDagNode dag(node);
+    Pad<MFnDagNode> dag(node);
     auto vis = dag.findPlug("visibility");
     bool visible = true;
     vis.getValue(visible);
@@ -33,7 +33,7 @@ std::string GetRootBonePath(const MObject& joint_)
     auto joint = joint_;
     for (;;) {
         MObject parent = GetParent(joint);
-        if (parent.isNull() || !parent.hasFn(MFn::kJoint))
+        if (parent.isNull() || !parent.hasFn(kMFnJoint))
             break;
         joint = parent;
     }
@@ -80,13 +80,13 @@ MDagPath GetParent(const MDagPath & node)
 
 MObject GetParent(const MObject& node)
 {
-    MFnDagNode dn(GetDagPath(node));
+    Pad<MFnDagNode> dn(GetDagPath(node));
     return dn.parentCount() > 0 ? dn.parent(0) : MObject();
 }
 
 bool IsInstance(const MObject& node)
 {
-    MFnDagNode dn(node);
+    Pad<MFnDagNode> dn(node);
     return dn.isInstanced(false);
 }
 
@@ -95,7 +95,7 @@ MObject FindMesh(const MObject& node)
     auto path = GetDagPath(node);
     if (path.extendToShape() == MS::kSuccess) {
         auto shape = path.node();
-        if (shape.hasFn(MFn::kMesh)) {
+        if (shape.hasFn(kMFnMesh)) {
             return shape;
         }
     }
@@ -105,11 +105,11 @@ MObject FindMesh(const MObject& node)
 MObject FindSkinCluster(const MObject& node_)
 {
     auto node = node_;
-    if (!node.hasFn(MFn::kMesh)) {
+    if (!node.hasFn(kMFnMesh)) {
         node = FindMesh(GetTransform(node));
     }
 
-    MItDependencyGraph it(node, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
+    MItDependencyGraph it(node, kMFnSkinClusterFilter, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         return it.currentItem();
     }
@@ -119,11 +119,11 @@ MObject FindSkinCluster(const MObject& node_)
 MObject FindBlendShape(const MObject& node_)
 {
     auto node = node_;
-    if (!node.hasFn(MFn::kMesh)) {
+    if (!node.hasFn(kMFnMesh)) {
         node = FindMesh(GetTransform(node));
     }
 
-    MItDependencyGraph it(node, MFn::kBlendShape, MItDependencyGraph::kUpstream);
+    MItDependencyGraph it(node, kMFnBlendShape, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         return it.currentItem();
     }
@@ -133,8 +133,8 @@ MObject FindBlendShape(const MObject& node_)
 MObject FindOrigMesh(const MObject& node)
 {
     MObject ret;
-    EachChild(node, [&](MObject child) {
-        if (child.hasFn(MFn::kMesh)) {
+    EachChild(node, [&](const MObject& child) {
+        if (child.hasFn(kMFnMesh)) {
             MFnMesh fn(child);
             if (ret.isNull() || fn.isIntermediateObject()) {
                 ret = child;

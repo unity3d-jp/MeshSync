@@ -20,8 +20,14 @@ namespace UTJ.MeshSync
         [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
-        //[SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
-        [SerializeField] bool m_ignoreVisibility = false;
+        [Space(10)]
+        [SerializeField] bool m_syncTransform = true;
+        [SerializeField] bool m_syncVisibility = true;
+        [SerializeField] bool m_syncCameras = true;
+        [SerializeField] bool m_syncLights = true;
+        [SerializeField] bool m_syncMeshes = true;
+        [SerializeField] bool m_updateMeshColliders = true;
+        [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
@@ -232,19 +238,24 @@ namespace UTJ.MeshSync
                     }
                 }
 
-                // force recalculate skinning
-                foreach (var rec in m_clientObjects)
+#if UNITY_EDITOR
+                if (!EditorApplication.isPlaying)
                 {
-                    if(rec.Value.editMesh)
+                    // force recalculate skinning
+                    foreach (var rec in m_clientObjects)
                     {
-                        var go = rec.Value.go;
-                        if(go != null && go.activeInHierarchy)
+                        if (rec.Value.editMesh)
                         {
-                            go.SetActive(false); // 
-                            go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                            var go = rec.Value.go;
+                            if (go != null && go.activeInHierarchy)
+                            {
+                                go.SetActive(false); // 
+                                go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                            }
                         }
                     }
                 }
+#endif
 
                 ForceRepaint();
                 GC.Collect();
@@ -407,7 +418,8 @@ namespace UTJ.MeshSync
         void UpdateMesh(MeshData data)
         {
             var trans = UpdateTransform(data.transform);
-            if (trans == null) { return; }
+            if (trans == null || !m_syncMeshes)
+                return;
 
             var data_trans = data.transform;
             var data_id = data_trans.id;
@@ -431,7 +443,8 @@ namespace UTJ.MeshSync
             var go = target.gameObject;
 
             bool activeInHierarchy = go.activeInHierarchy;
-            if (!activeInHierarchy && !data.flags.hasPoints) { return; }
+            if (!activeInHierarchy && !data.flags.hasPoints)
+                return;
 
 
             // allocate material list
@@ -464,12 +477,19 @@ namespace UTJ.MeshSync
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
+                    var collider = t.GetComponent<MeshCollider>();
+                    bool updateCollider = m_updateMeshColliders && collider != null &&
+                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
+
                     {
                         var old = smr.sharedMesh;
                         smr.sharedMesh = null;
                         DestroyIfNotAsset(old);
                         old = null;
                     }
+
+                    if (updateCollider)
+                        collider.sharedMesh = rec.editMesh;
 
                     bool updateWhenOffscreen = false;
                     if (skinned)
@@ -521,7 +541,7 @@ namespace UTJ.MeshSync
                 }
 
                 var renderer = trans.gameObject.GetComponent<Renderer>();
-                if (renderer != null && !m_ignoreVisibility)
+                if (renderer != null && m_syncVisibility)
                     renderer.enabled = data.transform.visible;
             }
 
@@ -724,14 +744,31 @@ namespace UTJ.MeshSync
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
 
-            // import TRS
-            trans.localPosition = data.position;
-            trans.localRotation = data.rotation;
-            trans.localScale = data.scale;
+            // sync TRS
+            if (m_syncTransform)
+            {
+                trans.localPosition = data.position;
+                trans.localRotation = data.rotation;
+                trans.localScale = data.scale;
+            }
 
             // visibility
-            if (!m_ignoreVisibility)
+            if (m_syncVisibility)
+            {
                 trans.gameObject.SetActive(data.visibleHierarchy);
+
+                var smr = trans.GetComponent<SkinnedMeshRenderer>();
+                if (smr != null)
+                    smr.enabled = data.visible;
+
+                var cam = trans.GetComponent<Camera>();
+                if (cam != null)
+                    cam.enabled = data.visible;
+
+                var light = trans.GetComponent<Light>();
+                if (light != null)
+                    light.enabled = data.visible;
+            }
 
             return trans;
         }
@@ -739,16 +776,28 @@ namespace UTJ.MeshSync
         Camera UpdateCamera(CameraData data)
         {
             var trans = UpdateTransform(data.transform);
-            if (trans == null) { return null; }
+            if (trans == null || !m_syncCameras)
+                return null;
 
             var cam = trans.GetComponent<Camera>();
             if(cam == null)
                 cam = trans.gameObject.AddComponent<Camera>();
+
             cam.orthographic = data.orthographic;
-            cam.fieldOfView = data.fov;
-            cam.nearClipPlane = data.nearClipPlane;
-            cam.farClipPlane = data.farClipPlane;
-            if (!m_ignoreVisibility)
+
+            float fov = data.fov;
+            if (fov > 0.0f)
+                cam.fieldOfView = fov;
+
+            float nearClipPlane = data.nearClipPlane;
+            float farClipPlane = data.farClipPlane;
+            if (nearClipPlane > 0.0f && farClipPlane > 0.0f)
+            {
+                cam.nearClipPlane = data.nearClipPlane;
+                cam.farClipPlane = data.farClipPlane;
+            }
+
+            if (m_syncVisibility)
                 cam.enabled = data.transform.visible;
             return cam;
         }
@@ -756,20 +805,21 @@ namespace UTJ.MeshSync
         Light UpdateLight(LightData data)
         {
             var trans = UpdateTransform(data.transform);
-            if (trans == null) { return null; }
+            if (trans == null || !m_syncLights)
+                return null;
 
             var lt = trans.GetComponent<Light>();
             if (lt == null)
-            {
                 lt = trans.gameObject.AddComponent<Light>();
-            }
 
             lt.type = data.type;
             lt.color = data.color;
             lt.intensity = data.intensity;
-            if (data.range > 0.0f) { lt.range = data.range; }
-            if (data.spotAngle > 0.0f) { lt.spotAngle = data.spotAngle; }
-            if (!m_ignoreVisibility)
+            if (data.range > 0.0f)
+                lt.range = data.range;
+            if (data.spotAngle > 0.0f)
+                lt.spotAngle = data.spotAngle;
+            if (m_syncVisibility)
                 lt.enabled = data.transform.visible;
             return lt;
         }
@@ -796,8 +846,13 @@ namespace UTJ.MeshSync
                         dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
                 }
 
-                dstgo.SetActive(false); // 
-                dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+#if UNITY_EDITOR
+                if (!EditorApplication.isPlaying)
+                {
+                    dstgo.SetActive(false); // 
+                    dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+                }
+#endif
             }
         }
 

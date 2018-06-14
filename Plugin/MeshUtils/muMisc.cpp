@@ -93,6 +93,25 @@ std::string ToANSI(const std::string& src)
     return ToANSI(src.c_str());
 }
 
+std::string ToMBS(const wchar_t * src)
+{
+    using converter_t = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>;
+    return converter_t().to_bytes(src);
+}
+std::string ToMBS(const std::wstring& src)
+{
+    return ToMBS(src.c_str());
+}
+
+std::wstring ToWCS(const char * src)
+{
+    using converter_t = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
+    return converter_t().from_bytes(src);
+}
+std::wstring ToWCS(const std::string & src)
+{
+    return ToWCS(src.c_str());
+}
 
 
 void AddDLLSearchPath(const char *v)

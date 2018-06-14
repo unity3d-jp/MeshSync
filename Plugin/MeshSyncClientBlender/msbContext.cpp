@@ -387,8 +387,9 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             else {
                 auto bsd = dst.addBlendShape(kb->name);
                 bsd->weight = kb->curval * 100.0f;
-                bsd->frames.resize(1);
-                auto& frame = bsd->frames.back();
+
+                bsd->frames.push_back(ms::BlendShapeFrameData::create());
+                auto& frame = *bsd->frames.back();
                 frame.weight = 100.0f;
                 frame.points.resize_discard(kb->totelem);
                 memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));
@@ -934,21 +935,8 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
             if (bi == 0) { // Basis
             }
             else {
-                auto dst_bs = ms::MeshAnimation::BlendshapeAnimationPtr();
-                {
-                    auto it = std::find_if(dst.blendshapes.begin(), dst.blendshapes.end(),
-                        [kb](const ms::MeshAnimation::BlendshapeAnimationPtr& ptr) { return ptr->name == kb->name; });
-                    if (it != dst.blendshapes.end()) {
-                        dst_bs = *it;
-                    }
-                }
-                if (!dst_bs) {
-                    dst_bs = ms::MeshAnimation::BlendshapeAnimation::create();
-                    dst_bs->name = kb->name;
-                    dst.blendshapes.push_back(dst_bs);
-                }
-
-                dst_bs->weight.push_back({ t, kb->curval * 100.0f });
+                auto bsa = dst.findOrCreateBlendshapeAnimation(kb->name);
+                bsa->weight.push_back({ t, kb->curval * 100.0f });
             }
             ++bi;
         });

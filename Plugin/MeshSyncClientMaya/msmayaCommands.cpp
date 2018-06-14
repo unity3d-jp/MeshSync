@@ -1,7 +1,7 @@
 #define _MApiVersion
 #include "pch.h"
 #include "MeshSyncClientMaya.h"
-#include "Commands.h"
+#include "msmayaCommands.h"
 
 
 template<class T> void get_arg(T& dst, const char *name, MArgParser& args);
@@ -68,28 +68,29 @@ const char* CmdSettings::name()
     return "UnityMeshSync_Settings";
 }
 
+
 MSyntax CmdSettings::createSyntax()
 {
     MSyntax syntax;
     syntax.enableQuery(true);
     syntax.enableEdit(false);
-    syntax.addFlag("-a",   "-address",          MSyntax::kString);
-    syntax.addFlag("-p",   "-port",             MSyntax::kLong);
-    syntax.addFlag("-sf",  "-scaleFactor",      MSyntax::kDouble);
-    syntax.addFlag("-as",  "-autosync",         MSyntax::kBoolean);
-    syntax.addFlag("-sm",  "-syncMeshes",       MSyntax::kBoolean);
-    syntax.addFlag("-smn", "-syncNormals",      MSyntax::kBoolean);
-    syntax.addFlag("-smu", "-syncUVs",          MSyntax::kBoolean);
-    syntax.addFlag("-smc", "-syncColors",       MSyntax::kBoolean);
-    syntax.addFlag("-sms", "-syncBlendShapes",  MSyntax::kBoolean);
-    syntax.addFlag("-smb", "-syncBones",        MSyntax::kBoolean);
-    syntax.addFlag("-sc",  "-syncCameras",      MSyntax::kBoolean);
-    syntax.addFlag("-sl",  "-syncLights",       MSyntax::kBoolean);
-    syntax.addFlag("-sco", "-syncConstraints",  MSyntax::kBoolean);
-    syntax.addFlag("-ats", "-animationTS",      MSyntax::kDouble);
-    syntax.addFlag("-asp", "-animationSPS",     MSyntax::kLong);
-    syntax.addFlag("-tw",  "-applyTweak",       MSyntax::kBoolean);
-    syntax.addFlag("-mt",  "-multithreaded",    MSyntax::kBoolean);
+    syntax.addFlag("-a", "-address", MSyntax::kString);
+    syntax.addFlag("-p", "-port", MSyntax::kLong);
+    syntax.addFlag("-sf", "-scaleFactor", MSyntax::kDouble);
+    syntax.addFlag("-as", "-autosync", MSyntax::kBoolean);
+    syntax.addFlag("-sm", "-syncMeshes", MSyntax::kBoolean);
+    syntax.addFlag("-smn", "-syncNormals", MSyntax::kBoolean);
+    syntax.addFlag("-smu", "-syncUVs", MSyntax::kBoolean);
+    syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
+    syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
+    syntax.addFlag("-smb", "-syncBones", MSyntax::kBoolean);
+    syntax.addFlag("-sc", "-syncCameras", MSyntax::kBoolean);
+    syntax.addFlag("-sl", "-syncLights", MSyntax::kBoolean);
+    syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
+    syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
+    syntax.addFlag("-asp", "-animationSPS", MSyntax::kLong);
+    syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
+    syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
 
     return syntax;
 }

@@ -16,6 +16,10 @@ std::string ToUTF8(const char *src);
 std::string ToUTF8(const std::string& src);
 std::string ToANSI(const char *src);
 std::string ToANSI(const std::string& src);
+std::string ToMBS(const wchar_t *src);
+std::string ToMBS(const std::wstring& src);
+std::wstring ToWCS(const char *src);
+std::wstring ToWCS(const std::string& src);
 
 
 void AddDLLSearchPath(const char *v);
@@ -26,6 +30,15 @@ bool ResolveImports(void *module);
 void InitializeSymbols(const char *path = nullptr);
 void* FindSymbolByName(const char *name);
 void* FindSymbolByName(const char *name, const char *module_name);
+
+
+struct noncopyable
+{
+    noncopyable() {}
+    noncopyable(noncopyable&&) {}
+    noncopyable(const noncopyable&) = delete;
+    noncopyable& operator=(const noncopyable&) = delete;
+};
 
 
 enum class MemoryFlags

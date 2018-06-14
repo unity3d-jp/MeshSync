@@ -705,12 +705,13 @@ msAPI int msBlendShapeGetNumFrames(ms::BlendShapeData *_this)
 }
 msAPI float msBlendShapeGetFrameWeight(ms::BlendShapeData *_this, int f)
 {
-    return _this ? _this->frames[f].weight : 0.0f;
+    return _this ? _this->frames[f]->weight : 0.0f;
 }
 msAPI void msBlendShapeReadPoints(ms::BlendShapeData *_this, int f, float3 *dst, ms::SplitData *split)
 {
-    size_t size = std::max(_this->frames[f].points.size(), std::max(_this->frames[f].normals.size(), _this->frames[f].tangents.size()));
-    auto& src = _this->frames[f].points;
+    auto& frame = *_this->frames[f];
+    size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
+    auto& src = frame.points;
     if (split)
         if (src.empty())
             memset(dst, 0, sizeof(float3)*split->vertex_count);
@@ -724,8 +725,9 @@ msAPI void msBlendShapeReadPoints(ms::BlendShapeData *_this, int f, float3 *dst,
 }
 msAPI void msBlendShapeReadNormals(ms::BlendShapeData *_this, int f, float3 *dst, ms::SplitData *split)
 {
-    size_t size = std::max(_this->frames[f].points.size(), std::max(_this->frames[f].normals.size(), _this->frames[f].tangents.size()));
-    auto& src = _this->frames[f].normals;
+    auto& frame = *_this->frames[f];
+    size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
+    auto& src = frame.normals;
     if (split)
         if (src.empty())
             memset(dst, 0, sizeof(float3)*split->vertex_count);
@@ -739,8 +741,9 @@ msAPI void msBlendShapeReadNormals(ms::BlendShapeData *_this, int f, float3 *dst
 }
 msAPI void msBlendShapeReadTangents(ms::BlendShapeData *_this, int f, float3 *dst, ms::SplitData *split)
 {
-    size_t size = std::max(_this->frames[f].points.size(), std::max(_this->frames[f].normals.size(), _this->frames[f].tangents.size()));
-    auto& src = _this->frames[f].tangents;
+    auto& frame = *_this->frames[f];
+    size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
+    auto& src = frame.tangents;
     if (split)
         if (src.empty())
             memset(dst, 0, sizeof(float3)*split->vertex_count);
@@ -754,12 +757,12 @@ msAPI void msBlendShapeReadTangents(ms::BlendShapeData *_this, int f, float3 *ds
 }
 msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num, const float3 *v, const float3 *n, const float3 *t)
 {
-    ms::BlendShapeData::Frame frame;
+    _this->frames.push_back(ms::BlendShapeFrameData::create());
+    auto& frame = *_this->frames.back();
     frame.weight = weight;
     if (v) frame.points.assign(v, v + num);
     if (n) frame.normals.assign(n, n + num);
     if (t) frame.tangents.assign(t, t + num);
-    _this->frames.push_back(std::move(frame));
 }
 
 msAPI ms::Constraint::Type msConstraintGetType(ms::Constraint *_this)

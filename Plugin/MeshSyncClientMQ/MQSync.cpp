@@ -157,9 +157,9 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             char name[MaxNameBuffer];
             obj->GetName(name, sizeof(name));
 
-            auto rel = MeshData();
+            MeshData rel;
             rel.obj = obj;
-            m_meshes.push_back(rel);
+            m_meshes.push_back(std::move(rel));
             ++num_mesh_data;
         }
 

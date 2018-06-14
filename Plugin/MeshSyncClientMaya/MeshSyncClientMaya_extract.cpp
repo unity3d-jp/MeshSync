@@ -1,15 +1,15 @@
 #define _MApiVersion
 #include "pch.h"
-#include "MayaUtils.h"
+#include "msmayaUtils.h"
 #include "MeshSyncClientMaya.h"
-#include "Commands.h"
+#include "msmayaCommands.h"
 
 
 void MeshSyncClientMaya::exportMaterials()
 {
     m_material_id_table.clear();
 
-    MItDependencyNodes it(MFn::kLambert);
+    MItDependencyNodes it(kMFnLambert);
     while (!it.isDone()) {
         MFnLambertShader fn(it.item());
 
@@ -33,28 +33,28 @@ bool MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
     auto& shape = n->shape->node;
 
     ms::TransformPtr ret;
-    if (m_settings.sync_meshes && shape.hasFn(MFn::kMesh)) {
+    if (m_settings.sync_meshes && shape.hasFn(kMFnMesh)) {
         exportObject(n->parent, true);
         auto dst = ms::Mesh::create();
         extractMeshData(*dst, n);
         m_meshes.emplace_back(dst);
         ret = dst;
     }
-    else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
+    else if (m_settings.sync_cameras &&shape.hasFn(kMFnCamera)) {
         exportObject(n->parent, true);
         auto dst = ms::Camera::create();
         extractCameraData(*dst, n);
         m_objects.emplace_back(dst);
         ret = dst;
     }
-    else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
+    else if (m_settings.sync_lights &&shape.hasFn(kMFnLight)) {
         exportObject(n->parent, true);
         auto dst = ms::Light::create();
         extractLightData(*dst, n);
         m_objects.emplace_back(dst);
         ret = dst;
     }
-    else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
+    else if ((m_settings.sync_bones && shape.hasFn(kMFnJoint)) || force) {
         exportObject(n->parent, true);
         auto dst = ms::Transform::create();
         extractTransformData(*dst, n);
@@ -87,7 +87,7 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     {
         auto& trans = n->trans->node;
         MObject obj_wmat;
-        MFnTransform(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
+        MFnDependencyNode(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
         mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
         vis = IsVisible(trans);
     }
@@ -97,7 +97,7 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     if (n->parent) {
         auto& parent = n->parent->trans->node;
         MObject obj_pwmat;
-        MFnTransform(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
+        MFnDependencyNode(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
         auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
         mat *= mu::invert(pwmat);
     }
@@ -127,21 +127,21 @@ static void ExtractCameraData(TreeNode *n, bool& ortho, float& near_plane, float
 static void ExtractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
 {
     auto& shape = n->shape->node;
-    if (shape.hasFn(MFn::kSpotLight)) {
+    if (shape.hasFn(kMFnSpotLight)) {
         MFnSpotLight mlight(shape);
         type = ms::Light::LightType::Spot;
         spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
     }
-    else if (shape.hasFn(MFn::kDirectionalLight)) {
-        MFnDirectionalLight mlight(shape);
+    else if (shape.hasFn(kMFnDirectionalLight)) {
+        //MFnDirectionalLight mlight(shape);
         type = ms::Light::LightType::Directional;
     }
-    else if (shape.hasFn(MFn::kPointLight)) {
-        MFnPointLight mlight(shape);
+    else if (shape.hasFn(kMFnPointLight)) {
+        //MFnPointLight mlight(shape);
         type = ms::Light::LightType::Point;
     }
-    else if (shape.hasFn(MFn::kAreaLight)) {
-        MFnAreaLight mlight(shape);
+    else if (shape.hasFn(kMFnAreaLight)) {
+        //MFnAreaLight mlight(shape);
         type = ms::Light::LightType::Area;
     }
 
@@ -193,11 +193,12 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
 
-    if (!shape.hasFn(MFn::kMesh)) { return; }
+    if (!shape.hasFn(kMFnMesh)) { return; }
 
     dst.visible = IsVisible(shape);
     if (!dst.visible) { return; }
 
+    MStatus mstat;
     MFnMesh mmesh(shape);
     MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
     bool is_skinned = !fn_skin.object().isNull();
@@ -215,7 +216,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.swap_faces = 1;
 
-    if (!mmesh.object().hasFn(MFn::kMesh)) {
+    if (!mmesh.object().hasFn(kMFnMesh)) {
         // return empty mesh
         return;
     }
@@ -229,13 +230,13 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     // * maybe this cause a problem..
     if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
         auto orig_mesh = FindOrigMesh(trans);
-        if (orig_mesh.hasFn(MFn::kMesh)) {
+        if (orig_mesh.hasFn(kMFnMesh)) {
             fn_src_mesh.setObject(orig_mesh);
         }
     }
     if (m_settings.sync_bones && is_skinned) {
         auto orig_mesh = FindOrigMesh(trans);
-        if (orig_mesh.hasFn(MFn::kMesh)) {
+        if (orig_mesh.hasFn(kMFnMesh)) {
             fn_src_mesh.setObject(orig_mesh);
             skin_index = fn_skin.indexForOutputShape(mmesh.object());
         }
@@ -243,17 +244,16 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
     // get points
     {
-        MFloatPointArray points;
-        if (fn_src_mesh.getPoints(points) != MStatus::kSuccess) {
+        int num_vertices = fn_src_mesh.numVertices();
+        if (num_vertices == 0) {
             // return empty mesh
             return;
         }
 
-        auto len = points.length();
-        dst.points.resize(len);
-        const MFloatPoint *points_ptr = &points[0];
-        for (uint32_t i = 0; i < len; ++i) {
-            dst.points[i] = to_float3(points_ptr[i]);
+        dst.points.resize_discard(num_vertices);
+        auto *points = (const mu::float3*)fn_src_mesh.getRawPoints(nullptr);
+        for (int i = 0; i < num_vertices; ++i) {
+            dst.points[i] = points[i];
         }
     }
 
@@ -279,17 +279,17 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
     // get normals
     if (m_settings.sync_normals) {
-        MFloatVectorArray normals;
-        if (fn_src_mesh.getNormals(normals) == MStatus::kSuccess) {
-            dst.normals.resize_zeroclear(index_count);
-            const MFloatVector *normals_ptr = &normals[0];
+        int num_normals = fn_src_mesh.numNormals();
+        if (num_normals > 0) {
+            dst.normals.resize_discard(index_count);
+            auto *normals = (const mu::float3*)fn_src_mesh.getRawNormals(nullptr);
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
             while (!it_poly.isDone()) {
                 int count = it_poly.polygonVertexCount();
                 for (int i = 0; i < count; ++i) {
-                    dst.normals[ii] = to_float3(normals_ptr[it_poly.normalIndex(i)]);
+                    dst.normals[ii] = normals[it_poly.normalIndex(i)];
                     ++ii;
                 }
                 it_poly.next();
@@ -308,8 +308,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             MFloatArray u;
             MFloatArray v;
             fn_src_mesh.getUVs(u, v, &uvsets[0]);
-            const float *u_ptr = &u[0];
-            const float *v_ptr = &v[0];
+            const auto *u_ptr = &u[0];
+            const auto *v_ptr = &v[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
@@ -336,7 +336,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
             MColorArray colors;
             fn_src_mesh.getColors(colors, &color_sets[0]);
-            const MColor *colors_ptr = &colors[0];
+            const auto *colors_ptr = &colors[0];
 
             size_t ii = 0;
             MItMeshPolygon it_poly(fn_src_mesh.object());
@@ -362,7 +362,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         mmesh.getConnectedShaders(0, shaders, indices);
         mids.resize(shaders.length(), -1);
         for (uint32_t si = 0; si < shaders.length(); si++) {
-            MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
+            MItDependencyGraph it(shaders[si], kMFnLambert, MItDependencyGraph::kUpstream);
             if (!it.isDone()) {
                 MFnLambertShader lambert(it.currentItem());
                 mids[si] = getMaterialID(lambert.name());
@@ -370,10 +370,11 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         }
 
         if (mids.size() > 0) {
+            const auto* indices_ptr = &indices[0];
             dst.material_ids.resize_zeroclear(face_count);
             uint32_t len = std::min(face_count, indices.length());
             for (uint32_t i = 0; i < len; ++i) {
-                dst.material_ids[i] = mids[indices[i]];
+                dst.material_ids[i] = mids[indices_ptr[i]];
             }
         }
     }
@@ -381,7 +382,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
 
     auto apply_tweak = [&dst](MObject deformer, int obj_index) {
-        MItDependencyGraph it(deformer, MFn::kTweak, MItDependencyGraph::kUpstream);
+        MItDependencyGraph it(deformer, kMFnTweak, MItDependencyGraph::kUpstream);
         if (!it.isDone()) {
             MObject tweak = it.currentItem();
             if (!tweak.isNull()) {
@@ -407,7 +408,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     };
 
     auto apply_uv_tweak = [&dst](MObject deformer, int obj_index) {
-        MItDependencyGraph it(deformer, MFn::kPolyTweakUV, MItDependencyGraph::kDownstream);
+        MItDependencyGraph it(deformer, kMFnPolyTweakUV, MItDependencyGraph::kDownstream);
         if (!it.isDone()) {
             MObject tweak = it.currentItem();
             if (!tweak.isNull()) {
@@ -437,35 +438,33 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
         // https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2018/ENU/Maya-Tech-Docs/Nodes/blendShape-html.html
 
-        auto gen_delta = [&dst](ms::BlendShapeData::Frame& dst_frame, MPlug plug_geom) {
+        auto gen_delta = [&dst](ms::BlendShapeFrameData& dst_frame, MPlug plug_geom) {
             MObject obj_geom;
             plug_geom.getValue(obj_geom);
-            if (!obj_geom.isNull() && obj_geom.hasFn(MFn::kMesh)) {
+            if (!obj_geom.isNull() && obj_geom.hasFn(kMFnMesh)) {
 
                 MFnMesh fn_geom(obj_geom);
-                MFloatPointArray points;
-                fn_geom.getPoints(points);
+                auto *points = (const mu::float3*)fn_geom.getRawPoints(nullptr);
 
-                uint32_t len = std::min(points.length(), (uint32_t)dst.points.size());
-                MFloatPoint *points_ptr = &points[0];
-                for (uint32_t pi = 0; pi < len; ++pi) {
-                    dst_frame.points[pi] = to_float3(points_ptr[pi]) - dst.points[pi];
+                int len = std::min(fn_geom.numVertices(), (int)dst.points.size());
+                for (int pi = 0; pi < len; ++pi) {
+                    dst_frame.points[pi] = points[pi] - dst.points[pi];
                 }
             }
         };
 
-        auto retrieve_delta = [&dst](ms::BlendShapeData::Frame& dst_frame, MPlug plug_ipt, MPlug plug_ict) {
+        auto retrieve_delta = [&dst](ms::BlendShapeFrameData& dst_frame, MPlug plug_ipt, MPlug plug_ict) {
             MObject obj_component_list;
             MObject obj_points;
             {
                 MObject obj_cld;
                 plug_ict.getValue(obj_cld);
-                if (!obj_cld.isNull() && obj_cld.hasFn(MFn::kComponentListData)) {
+                if (!obj_cld.isNull() && obj_cld.hasFn(kMFnComponentListData)) {
                     MFnComponentListData fn_cld(obj_cld);
                     uint32_t len = fn_cld.length();
                     for (uint32_t ci = 0; ci < len; ++ci) {
                         MObject tmp = fn_cld[ci];
-                        if (tmp.apiType() == MFn::kMeshVertComponent) {
+                        if (tmp.apiType() == kMFnMeshVertComponent) {
                             obj_component_list = tmp;
                             break;
                         }
@@ -475,7 +474,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             {
                 MObject tmp;
                 plug_ipt.getValue(tmp);
-                if (!tmp.isNull() && tmp.hasFn(MFn::kPointArrayData)) {
+                if (!tmp.isNull() && tmp.hasFn(kMFnPointArrayData)) {
                     obj_points = tmp;
                 }
             }
@@ -483,10 +482,10 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                 MIntArray indices;
                 MFnSingleIndexedComponent fn_indices(obj_component_list);
                 fn_indices.getElements(indices);
-                int *indices_ptr = &indices[0];
+                const auto *indices_ptr = &indices[0];
 
                 MFnPointArrayData fn_points(obj_points);
-                MPoint *points_ptr = &fn_points[0];
+                const auto *points_ptr = &fn_points[0];
 
                 uint32_t len = std::min(fn_points.length(), (uint32_t)dst.points.size());
                 for (uint32_t pi = 0; pi < len; ++pi) {
@@ -503,7 +502,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             if (plug_itp.logicalIndex() == 0) {
                 MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
                 uint32_t num_itg = plug_itg.evaluateNumElements();
-                //DumpPlugInfo(plug_itg);
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     auto dst_bs = ms::BlendShapeData::create();
@@ -521,8 +519,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     for (uint32_t idx_iti = 0; idx_iti != num_iti; ++idx_iti) {
                         MPlug plug_itip(plug_iti.elementByPhysicalIndex(idx_iti));
 
-                        dst_bs->frames.push_back(ms::BlendShapeData::Frame());
-                        auto& dst_frame = dst_bs->frames.back();
+                        dst_bs->frames.push_back(ms::BlendShapeFrameData::create());
+                        auto& dst_frame = *dst_bs->frames.back();
                         dst_frame.weight = float(plug_itip.logicalIndex() - 5000) / 10.0f; // index 5000-6000 -> weight 0.0f-100.0f
                         dst_frame.points.resize_zeroclear(dst.points.size());
 
@@ -550,37 +548,47 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         dst.refine_settings.local2world = dst.toMatrix();
 
         // get bone data
-        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix");
-        MDagPathArray joint_paths;
-        auto num_joints = fn_skin.influenceObjects(joint_paths);
+        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix", &mstat);
+        if (mstat == MStatus::kSuccess) {
+            MDagPathArray joint_paths;
+            auto num_joints = fn_skin.influenceObjects(joint_paths);
 
-        for (uint32_t ij = 0; ij < num_joints; ij++) {
-            auto joint = joint_paths[ij].node();
+            for (uint32_t ij = 0; ij < num_joints; ij++) {
+                auto bone = ms::BoneData::create();
+                dst.bones.push_back(bone);
 
-            auto bone = ms::BoneData::create();
-            bone->path = GetPath(joint);
-            if (dst.bones.empty())
-                dst.root_bone = GetRootBonePath(joint);
-            dst.bones.push_back(bone);
+                auto joint = joint_paths[ij].node();
+                if (joint.isNull())
+                    continue;
 
-            MObject matrix_obj;
-            auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], nullptr);
-            plug_bindprematrix.elementByLogicalIndex(ijoint).getValue(matrix_obj);
-            bone->bindpose = to_float4x4(MFnMatrixData(matrix_obj).matrix());
-        }
+                bone->path = GetPath(joint);
+                if (dst.bones.empty())
+                    dst.root_bone = GetRootBonePath(joint);
 
-        // get weights
-        MDagPath mesh_path = GetDagPath(mmesh.object());
-        MItGeometry gi(mesh_path);
-        while (!gi.isDone()) {
-            MFloatArray weights;
-            uint32_t influence_count;
-            fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count);
-
-            for (uint32_t ij = 0; ij < influence_count; ij++) {
-                dst.bones[ij]->weights.push_back(weights[ij]);
+                MObject matrix_obj;
+                auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], &mstat);
+                if (mstat == MStatus::kSuccess) {
+                    auto matrix_plug = plug_bindprematrix.elementByLogicalIndex(ijoint, &mstat);
+                    if (mstat == MStatus::kSuccess) {
+                        matrix_plug.getValue(matrix_obj);
+                        bone->bindpose = to_float4x4(MFnMatrixData(matrix_obj).matrix());
+                    }
+                }
             }
-            gi.next();
+
+            // get weights
+            MDagPath mesh_path = GetDagPath(mmesh.object());
+            MItGeometry gi(mesh_path);
+            while (!gi.isDone()) {
+                MFloatArray weights;
+                uint32_t influence_count = 0;
+                if (fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count) == MStatus::kSuccess) {
+                    for (uint32_t ij = 0; ij < influence_count; ij++) {
+                        dst.bones[ij]->weights.push_back(weights[ij]);
+                    }
+                }
+                gi.next();
+            }
         }
     }
 
@@ -628,10 +636,10 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
         auto handler = [&](MObject& node) {
             export_branches(m_dag_nodes[node]);
         };
-        EnumerateNode(MFn::kJoint, handler);
-        EnumerateNode(MFn::kCamera, handler);
-        EnumerateNode(MFn::kLight, handler);
-        EnumerateNode(MFn::kMesh, handler);
+        EnumerateNode(kMFnJoint, handler);
+        EnumerateNode(kMFnCamera, handler);
+        EnumerateNode(kMFnLight, handler);
+        EnumerateNode(kMFnMesh, handler);
     }
 
     // extract
@@ -667,6 +675,10 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     m_animations.erase(
         std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_animations.end());
+
+    if (num_exported == 0)
+        m_animations.clear();
+
     return num_exported;
 }
 
@@ -682,17 +694,17 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
     AnimationRecord::extractor_t extractor = nullptr;
 
     if (MAnimUtil::isAnimated(trans) || MAnimUtil::isAnimated(shape)) {
-        if (shape.hasFn(MFn::kCamera)) {
+        if (shape.hasFn(kMFnCamera)) {
             exportAnimation(n->parent);
             dst = ms::CameraAnimation::create();
             extractor = &MeshSyncClientMaya::extractCameraAnimationData;
         }
-        else if (shape.hasFn(MFn::kLight)) {
+        else if (shape.hasFn(kMFnLight)) {
             exportAnimation(n->parent);
             dst = ms::LightAnimation::create();
             extractor = &MeshSyncClientMaya::extractLightAnimationData;
         }
-        else if (shape.hasFn(MFn::kMesh)) {
+        else if (shape.hasFn(kMFnMesh)) {
             exportAnimation(n->parent);
             dst = ms::MeshAnimation::create();
             extractor = &MeshSyncClientMaya::extractMeshAnimationData;
@@ -785,7 +797,7 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
     dst.intensity.push_back({ t, intensity });
 
     auto& shape = n->shape->node;
-    if (shape.hasFn(MFn::kSpotLight)) {
+    if (shape.hasFn(kMFnSpotLight)) {
         dst.spot_angle.push_back({ t, spot_angle });
     }
 }
@@ -815,23 +827,10 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
                     std::string name = plug_wc.name().asChar();
 
-                    auto dst_bs = ms::MeshAnimation::BlendshapeAnimationPtr();
-                    {
-                        auto it = std::find_if(dst.blendshapes.begin(), dst.blendshapes.end(),
-                            [&name](const ms::MeshAnimation::BlendshapeAnimationPtr& ptr) { return ptr->name == name; });
-                        if (it != dst.blendshapes.end()) {
-                            dst_bs = *it;
-                        }
-                    }
-                    if (!dst_bs) {
-                        dst_bs = ms::MeshAnimation::BlendshapeAnimation::create();
-                        dst_bs->name = name;
-                        dst.blendshapes.push_back(dst_bs);
-                    }
-
+                    auto bsa = dst.findOrCreateBlendshapeAnimation(name.c_str());
                     float weight = 0.0f;
                     plug_wc.getValue(weight);
-                    dst_bs->weight.push_back({ t, weight * 100.0f });
+                    bsa->weight.push_back({ t, weight * 100.0f });
                 }
             }
         }
@@ -845,22 +844,22 @@ void MeshSyncClientMaya::exportConstraint(TreeNode *n)
     auto& shape = n->shape->node;
 
     EachConstraints(trans, [&](const MObject& constraint) {
-        if (constraint.hasFn(MFn::kAimConstraint)) {
+        if (constraint.hasFn(kMFnAimConstraint)) {
             auto dst = ms::AimConstraint::create();
             m_constraints.push_back(dst);
             extractConstraintData(*dst, n);
         }
-        else if (constraint.hasFn(MFn::kParentConstraint)) {
+        else if (constraint.hasFn(kMFnParentConstraint)) {
             auto dst = ms::ParentConstraint::create();
             m_constraints.push_back(dst);
             extractConstraintData(*dst, n);
         }
-        else if (constraint.hasFn(MFn::kPointConstraint)) {
+        else if (constraint.hasFn(kMFnPointConstraint)) {
             auto dst = ms::PositionConstraint::create();
             m_constraints.push_back(dst);
             extractConstraintData(*dst, n);
         }
-        else if (constraint.hasFn(MFn::kScaleConstraint)) {
+        else if (constraint.hasFn(kMFnScaleConstraint)) {
             auto dst = ms::ScaleConstraint::create();
             m_constraints.push_back(dst);
             extractConstraintData(*dst, n);

@@ -1,0 +1,9 @@
+msConfig.h (Server)
+  - update msReleaseDate and msReleaseDateStr
+  - increment msProtocolVersion if format changed
+
+UnityMeshSync.mod (Maya)
+  - update version number
+
+unity_mesh_sync.py (Blender)
+  - update version number

@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
-#include "MayaUtils.h"
+#include "msmayaUtils.h"
 #include "MeshSyncClientMaya.h"
-#include "Commands.h"
+#include "msmayaCommands.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "Foundation.lib")
@@ -260,16 +260,28 @@ void MeshSyncClientMaya::registerGlobalCallbacks()
 void MeshSyncClientMaya::registerNodeCallbacks()
 {
     // joints
-    EnumerateNode(MFn::kJoint, [this](MObject& node) {
+    EnumerateNode(kMFnJoint, [this](MObject& node) {
         auto& rec = m_dag_nodes[node];
         if (!rec.cid)
             rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
     });
 
+
+    auto register_transforms = [this](MObject& n) {
+        EachParent(n, [this](MObject parent) {
+            if (parent.hasFn(kMFnTransform)) {
+                auto& rec = m_dag_nodes[parent];
+                if (!rec.cid)
+                    rec.cid = MNodeMessage::addAttributeChangedCallback(parent, OnTransformUpdated, this);
+            }
+        });
+    };
+
     // cameras
-    EnumerateNode(MFn::kCamera, [this](MObject& node) {
-        MFnDagNode fn(node);
+    EnumerateNode(kMFnCamera, [&](MObject& node) {
+        Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
+            register_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
@@ -277,9 +289,10 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     });
 
     // lights
-    EnumerateNode(MFn::kLight, [this](MObject& node) {
-        MFnDagNode fn(node);
+    EnumerateNode(kMFnLight, [&](MObject& node) {
+        Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
+            register_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
@@ -287,9 +300,10 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     });
 
     //  meshes
-    EnumerateNode(MFn::kMesh, [this](MObject& node) {
-        MFnDagNode fn(node);
+    EnumerateNode(kMFnMesh, [&](MObject& node) {
+        Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
+            register_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
@@ -332,8 +346,8 @@ void MeshSyncClientMaya::constructTree()
         kvp.second.branches.clear();
     m_index_seed = 0;
 
-    EnumerateNode(MFn::kTransform, [&](MObject& node) {
-        if (MFnDagNode(node).parent(0).hasFn(MFn::kWorld)) {
+    EnumerateNode(kMFnTransform, [&](MObject& node) {
+        if (Pad<MFnDagNode>(node).parent(0).hasFn(kMFnWorld)) {
             constructTree(node, nullptr, "");
         }
     });
@@ -373,7 +387,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
         rec_shape.branches.push_back(tn);
 
     EachChild(node, [&](const MObject & c) {
-        if (c.hasFn(MFn::kTransform))
+        if (c.hasFn(kMFnTransform))
             constructTree(c, tn, path);
     });
 }
@@ -412,13 +426,15 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
     };
 
     if (scope == SendScope::All) {
+        //EnumerateAllNode([](MObject& obj) { PrintNodeInfo(obj); });
+
         auto handler = [&](MObject& node) {
             export_branches(m_dag_nodes[node]);
         };
-        EnumerateNode(MFn::kJoint, handler);
-        EnumerateNode(MFn::kCamera, handler);
-        EnumerateNode(MFn::kLight, handler);
-        EnumerateNode(MFn::kMesh, handler);
+        EnumerateNode(kMFnJoint, handler);
+        EnumerateNode(kMFnCamera, handler);
+        EnumerateNode(kMFnLight, handler);
+        EnumerateNode(kMFnMesh, handler);
     }
     else if (scope == SendScope::Updated) {
         for (auto& kvp : m_dag_nodes) {

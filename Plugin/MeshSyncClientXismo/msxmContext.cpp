@@ -48,7 +48,7 @@ struct MaterialData
 };
 
 
-struct BufferData
+struct BufferData : public mu::noncopyable
 {
     RawVector<char> data, tmp_data;
     void        *mapped_data;
@@ -62,7 +62,7 @@ struct BufferData
     MaterialData material;
     float4x4    transform = float4x4::identity();
 
-    struct SendTaskData
+    struct SendTaskData : public mu::noncopyable
     {
         RawVector<char>     data;
         GLuint              handle = 0;

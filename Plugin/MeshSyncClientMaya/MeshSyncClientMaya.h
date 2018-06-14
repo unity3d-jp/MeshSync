@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "msmayaUtils.h"
+
 struct MObjectKey
 {
     void *key;
@@ -13,7 +15,7 @@ struct MObjectKey
 
 // note: because of instance, one dag node can belong to multiple tree nodes.
 struct TreeNode;
-struct DAGNode
+struct DAGNode : public mu::noncopyable
 {
     MObject node;
     std::vector<TreeNode*> branches;
@@ -23,7 +25,7 @@ struct DAGNode
     bool isInstance() const;
 };
 
-struct TreeNode
+struct TreeNode : public mu::noncopyable
 {
     DAGNode *trans = nullptr;
     DAGNode *shape = nullptr;
@@ -104,7 +106,7 @@ private:
     using DagNodeRecords = std::map<MObjectKey, DAGNode>;
     using TreeNodePtr = std::unique_ptr<TreeNode>;
 
-    struct TaskRecord
+    struct TaskRecord : public mu::noncopyable
     {
         using task_t = std::function<void()>;
         std::vector<std::tuple<TreeNode*, task_t>> tasks;
@@ -114,7 +116,7 @@ private:
     };
     using TaskRecords = std::map<TreeNode*, TaskRecord>;
 
-    struct AnimationRecord
+    struct AnimationRecord : public mu::noncopyable
     {
         using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, TreeNode *n);
 

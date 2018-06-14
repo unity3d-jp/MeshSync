@@ -71,11 +71,11 @@ inline mu::quatf to_quatf(const MQuaternion& v)
     return { (float)v.x, (float)v.y, (float)v.z, (float)v.w };
 }
 
-inline bool to_bool(const MPlug plug)
+inline bool to_bool(const MPlug& plug)
 {
     return plug.asBool();
 }
-inline mu::float3 to_float3(const MPlug plug)
+inline mu::float3 to_float3(const MPlug& plug)
 {
     return mu::float3{
         (float)plug.child(0).asDouble(),
@@ -83,6 +83,27 @@ inline mu::float3 to_float3(const MPlug plug)
         (float)plug.child(2).asDouble()
     };
 }
+
+
+template<class T, size_t pad_size = 64>
+struct Pad : public T
+{
+#if MAYA_LT
+    Pad() {}
+
+    template <typename... Args>
+    Pad(Args&&... args) : T(std::forward<Args>(args)...) {}
+
+    uint8_t padding[pad_size];
+
+#else
+    Pad() {}
+
+    template <typename... Args>
+    Pad(Args&&... args) : T(std::forward<Args>(args)...) {}
+
+#endif
+};
 
 
 // body: [](MObject&) -> void
@@ -99,9 +120,22 @@ inline void EnumerateNode(MFn::Type type, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachParent(MObject node, const Body& body)
+inline void EnumerateAllNode(const Body& body)
 {
-    MFnDagNode fn(node);
+    MItDag it(MItDag::kDepthFirst, kMFnInvalid);
+    while (!it.isDone()) {
+        auto obj = it.item();
+        body(obj);
+        it.next();
+    }
+}
+
+
+// body: [](MObject&) -> void
+template<class Body>
+inline void EachParent(const MObject& node, const Body& body)
+{
+    Pad<MFnDagNode> fn(node);
     auto num_parents = fn.parentCount();
     for (uint32_t i = 0; i < num_parents; ++i)
         body(fn.parent(i));
@@ -109,9 +143,9 @@ inline void EachParent(MObject node, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachChild(MObject node, const Body& body)
+inline void EachChild(const MObject& node, const Body& body)
 {
-    MFnDagNode fn(node);
+    Pad<MFnDagNode> fn(node);
     auto num_children = fn.childCount();
     for (uint32_t i = 0; i < num_children; ++i)
         body(fn.child(i));
@@ -119,11 +153,38 @@ inline void EachChild(MObject node, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
-inline void EachConstraints(MObject node, const Body& body)
+inline void EachConstraints(MObject& node, const Body& body)
 {
-    MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);
+    MItDependencyGraph it(node, kMFnConstraint, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         body(it.currentItem());
         it.next();
     }
 }
+
+#ifdef mscDebug
+    inline void PrintNodeInfo(MObject node, int depth = 0)
+    {
+        char indent[64];
+        int d = 0;
+        for (; d < depth; ++d) {
+            indent[d] = ' ';
+        }
+        indent[d] = '\0';
+
+        mscTrace("%s%s %d\n", indent, node.apiTypeStr(), node.apiType());
+        for (MItDependencyGraph iter(node); !iter.isDone(); iter.next()) {
+            if (iter.thisNode() != node) {
+                auto item = iter.currentItem();
+                mscTrace("%s* %s %d\n", indent, item.apiTypeStr(), item.apiType());
+            }
+        }
+
+        EachChild(node, [&](const MObject& child) {
+            PrintNodeInfo(child, depth + 1);
+        });
+    }
+#else
+    #define PrintNodeInfo(...)
+#endif
+

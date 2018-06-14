@@ -28,13 +28,13 @@ public:
     bool importMeshes(MQDocument doc);
 
 private:
-    struct MeshData
+    struct MeshData : public mu::noncopyable
     {
         ms::MeshPtr data;
         MQObject obj = nullptr;
     };
 
-    struct BoneData
+    struct BoneData : public mu::noncopyable
     {
         UINT id = -1;
         UINT parent = -1;
