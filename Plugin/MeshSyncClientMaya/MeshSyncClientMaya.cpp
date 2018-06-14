@@ -268,7 +268,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
 
 
     auto register_transforms = [this](MObject& n) {
-        EachParent(n, [this](MObject& parent) {
+        EachParent(n, [this](MObject parent) {
             if (parent.hasFn(kMFnTransform)) {
                 auto& rec = m_dag_nodes[parent];
                 if (!rec.cid)
