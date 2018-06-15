@@ -3,23 +3,14 @@
 #define InchToMillimeter 25.4f
 
 std::string GetName(const MObject& node);
-std::string GetPath(const MDagPath& path);
-std::string GetPath(const MObject& node);
-std::string GetRootBonePath(const MObject& joint);
+std::string ToString(const MDagPath& path);
 
-MDagPath GetDagPath(const MObject& node);
 bool IsVisible(const MObject& node);
-MObject GetTransform(const MDagPath& path);
-MObject GetTransform(const MObject& node);
-MObject GetShape(const MDagPath& node);
-MObject GetShape(const MObject& node);
 MDagPath GetParent(const MDagPath& node);
-MObject GetParent(const MObject& node);
 bool IsInstance(const MObject& node);
 
-MObject FindMesh(const MObject& node);
-MObject FindSkinCluster(const MObject& node);
-MObject FindBlendShape(const MObject& node);
+MObject FindSkinCluster(MObject node);
+MObject FindBlendShape(MObject node);
 MObject FindOrigMesh(const MObject& node);
 
 float ToSeconds(MTime t);

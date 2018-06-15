@@ -24,6 +24,7 @@ struct DAGNode : public mu::noncopyable
 
     bool isInstance() const;
 };
+using DAGNodeMap = std::map<MObjectKey, DAGNode>;
 
 struct TreeNode : public mu::noncopyable
 {
@@ -41,7 +42,16 @@ struct TreeNode : public mu::noncopyable
     void clearState();
     bool isInstance() const;
     TreeNode* getPrimaryInstanceNode() const;
+
+    MDagPath getDagPath() const;
+    void getDagPath_(MDagPath& dst) const;
+    MObject getTrans() const;
+    MObject getShape() const;
 };
+using TreeNodePtr = std::unique_ptr<TreeNode>;
+
+MDagPath GetDagPath(const TreeNode *branch, const MObject& node);
+TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath);
 
 
 class MeshSyncClientMaya
@@ -103,8 +113,6 @@ public:
 
 
 private:
-    using DagNodeRecords = std::map<MObjectKey, DAGNode>;
-    using TreeNodePtr = std::unique_ptr<TreeNode>;
 
     struct TaskRecord : public mu::noncopyable
     {
@@ -130,7 +138,7 @@ private:
 
     std::vector<TreeNodePtr> m_tree_nodes;
     std::vector<TreeNode*>   m_tree_roots;
-    DagNodeRecords           m_dag_nodes;
+    DAGNodeMap               m_dag_nodes;
     TaskRecords              m_extract_tasks;
     AnimationRecords         m_anim_records;
 

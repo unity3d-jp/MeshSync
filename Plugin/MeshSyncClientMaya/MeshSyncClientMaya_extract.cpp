@@ -555,15 +555,29 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
             for (uint32_t ij = 0; ij < num_joints; ij++) {
                 auto bone = ms::BoneData::create();
+                bone->weights.resize_zeroclear(dst.points.size());
                 dst.bones.push_back(bone);
 
-                auto joint = joint_paths[ij].node();
-                if (joint.isNull())
+                const auto& joint_path = joint_paths[ij];
+                auto joint_branch = FindBranch(m_dag_nodes, joint_path);
+                if (!joint_branch || !joint_branch->trans || joint_branch->trans->node.isNull())
                     continue;
 
-                bone->path = GetPath(joint);
-                if (dst.bones.empty())
-                    dst.root_bone = GetRootBonePath(joint);
+                auto joint_node = joint_branch->trans->node;
+                bone->path = ToString(joint_path);
+                if (dst.bones.empty()) {
+                    // get root bone path
+                    auto dpath = joint_branch->getDagPath();
+                    for (;;) {
+                        auto tmp = dpath;
+                        tmp.pop();
+                        auto t = tmp.node();
+                        if (!t.hasFn(kMFnJoint))
+                            break;
+                        dpath = tmp;
+                    }
+                    dst.root_bone = ToString(dpath);
+                }
 
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], &mstat);
@@ -577,17 +591,19 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             }
 
             // get weights
-            MDagPath mesh_path = GetDagPath(mmesh.object());
+            MDagPath mesh_path = GetDagPath(n, mmesh.object());
+            MFloatArray weights;
             MItGeometry gi(mesh_path);
-            while (!gi.isDone()) {
-                MFloatArray weights;
+            uint32_t vi = 0;
+            while (!gi.isDone() && vi < vertex_count) {
                 uint32_t influence_count = 0;
                 if (fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count) == MStatus::kSuccess) {
                     for (uint32_t ij = 0; ij < influence_count; ij++) {
-                        dst.bones[ij]->weights.push_back(weights[ij]);
+                        dst.bones[ij]->weights[vi] = weights[ij];
                     }
                 }
                 gi.next();
+                ++vi;
             }
         }
     }
