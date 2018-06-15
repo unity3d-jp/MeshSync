@@ -309,7 +309,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
             break;
         case IDC_EDIT_PORT:
-            handle_edit([&]() { s.client_settings.port = CtrlGetInt(IDC_EDIT_SERVER, s.client_settings.port); });
+            handle_edit([&]() { s.client_settings.port = CtrlGetInt(IDC_EDIT_PORT, s.client_settings.port); });
             break;
         case IDC_EDIT_SCALE_FACTOR:
             handle_edit([&]() { s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor); });
