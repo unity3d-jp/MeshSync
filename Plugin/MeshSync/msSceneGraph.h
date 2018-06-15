@@ -359,7 +359,7 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 
-    void generateWeights4();
+    void setupBoneData();
     void setupFlags();
 
     void convertHandedness_Mesh(bool x, bool yz);

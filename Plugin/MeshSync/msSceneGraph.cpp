@@ -623,7 +623,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
     if (weights4.empty() && !bones.empty()) {
-        generateWeights4();
+        setupBoneData();
     }
 
     mu::MeshRefiner refiner;
@@ -915,7 +915,7 @@ void Mesh::applyTransform(const float4x4& m)
     mu::Normalize(normals.data(), normals.size());
 }
 
-void Mesh::generateWeights4()
+void Mesh::setupBoneData()
 {
     if (bones.empty()) { return; }
 
@@ -923,6 +923,7 @@ void Mesh::generateWeights4()
     int num_vertices = (int)points.size();
     weights4.resize_discard(num_vertices);
 
+    bool valid = false;
     if (num_bones <= 4) {
         weights4.zeroclear();
         for (int vi = 0; vi < num_vertices; ++vi) {
@@ -931,7 +932,8 @@ void Mesh::generateWeights4()
                 w4.indices[bi] = bi;
                 w4.weights[bi] = bones[bi]->weights[vi];
             }
-            w4.normalize();
+            if (w4.normalize() > 0.0f)
+                valid = true;
         }
     }
     else {
@@ -955,8 +957,15 @@ void Mesh::generateWeights4()
                 w4.indices[bi] = tmp[bi].index;
                 w4.weights[bi] = tmp[bi].weight;
             }
-            w4.normalize();
+            if (w4.normalize() > 0.0f)
+                valid = true;
         }
+    }
+
+    if (!valid) {
+        // no weights. clear bone data
+        bones.clear();
+        root_bone.clear();
     }
 }
 
