@@ -113,6 +113,39 @@ std::wstring ToWCS(const std::string & src)
     return ToWCS(src.c_str());
 }
 
+std::string SanitizeNodeName(const std::string& src)
+{
+    try {
+        using to_utf16_t = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
+        using to_utf8_t = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>;
+
+        std::wstring wret = to_utf16_t().from_bytes(src);
+        return to_utf8_t().to_bytes(wret);
+    }
+    catch (const std::exception&) {
+        std::string ret;
+        char buf[32];
+
+        size_t len = src.size();
+        for (size_t i = 0; i < len;) {
+            char c = src[i];
+            if (std::isprint(c, std::locale::classic())) {
+                ret += c;
+                ++i;
+            }
+            else {
+                for (int j = 0; j < 2; ++j) {
+                    sprintf(buf, "%02x", (uint32_t)(uint8_t)src[i]);
+                    ret += buf;
+                    ++i;
+                    if (i == len - 1)
+                        break;
+                }
+            }
+        }
+        return ret;
+    }
+}
 
 void AddDLLSearchPath(const char *v)
 {
