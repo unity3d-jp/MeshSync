@@ -205,7 +205,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 dst->id = -1;
             }
             else {
-                auto dst = ms::Material::create();
                 dst->id = src->GetUniqueID();
                 {
                     char name[128];
