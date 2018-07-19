@@ -4,6 +4,7 @@
     #pragma warning(disable:4996)
     #define NOMINMAX
     #include <windows.h>
+    #include <dbghelp.h>
 #else 
 #endif
 
