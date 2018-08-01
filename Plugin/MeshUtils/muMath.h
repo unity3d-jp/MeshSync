@@ -8,6 +8,7 @@
     #include <OpenEXR/half.h>
 #endif // muEnableHalf
 #include "muIntrusiveArray.h"
+#include "muHalf.h"
 
 #define muEpsilon 1e-4f
 
@@ -152,14 +153,12 @@ struct tmat4x4
     }
 };
 
-#ifdef muEnableHalf
 using half2 = tvec2<half>;
 using half3 = tvec3<half>;
 using half4 = tvec4<half>;
 using quath = tquat<half>;
 using half3x3 = tmat3x3<half>;
 using half4x4 = tmat4x4<half>;
-#endif
 
 using float2 = tvec2<float>;
 using float3 = tvec3<float>;

@@ -26,6 +26,7 @@
     <ClInclude Include="MeshUtils\ampmath_impl.h" />
     <ClInclude Include="MeshUtils\muConcurrency.h" />
     <ClInclude Include="MeshUtils\muConfig.h" />
+    <ClInclude Include="MeshUtils\muHalf.h" />
     <ClInclude Include="MeshUtils\muIntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
     <ClInclude Include="MeshUtils\muIterator.h" />

@@ -61,6 +61,9 @@
     <ClInclude Include="CrashReporter\CrashReporter.h">
       <Filter>CrashReporter</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\muHalf.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
