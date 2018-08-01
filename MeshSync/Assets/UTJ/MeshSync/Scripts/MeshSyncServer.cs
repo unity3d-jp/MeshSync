@@ -469,39 +469,66 @@ namespace UTJ.MeshSync
                     dst.material = tmp;
                 }
                 dst.name = src.name;
+
+                // base color
                 dst.color = src.color;
                 if (dst.material.name == src.name)
-                {
                     dst.material.color = dst.color;
-                }
 
                 var mainTex = FindTexture(src.colorTID);
                 if (mainTex != null)
                     dst.material.mainTexture = mainTex;
 
+                // emission
+                const string _EmissionColor = "_EmissionColor";
+                const string _EmissionMap = "_EmissionMap";
+
                 var emission = src.emission;
-                if (emission != Color.black)
+                if (emission.a >= 0.0f && dst.material.HasProperty(_EmissionColor))
                 {
-                    dst.material.EnableKeyword("_EMISSION");
-                    dst.material.SetColor("_EmissionColor", emission);
-                    var emissionTex = FindTexture(src.emissionTID);
-                    if (emissionTex != null)
+                    dst.material.SetColor(_EmissionColor, emission);
+
+                    if (dst.material.HasProperty(_EmissionMap))
                     {
-                        dst.material.SetTexture("_EmissionMap", emissionTex);
+                        var emissionTex = FindTexture(src.emissionTID);
+                        if (emissionTex != null)
+                            dst.material.SetTexture(_EmissionMap, emissionTex);
+                    }
+
+                    if (emission != Color.black)
+                    {
+                        if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                            dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    }
+                    else
+                    {
+                        if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.RealtimeEmissive)
+                            dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
                     }
                 }
-                else
-                {
-                    dst.material.DisableKeyword("_EMISSION");
-                }
+
+                // metallic
+                const string _Metallic = "_Metallic";
+                const string _Glossiness = "_Glossiness";
+                const string _MetallicGlossMap = "_MetallicGlossMap";
+
+                var metallic = src.metalic;
+                if (metallic >= 0.0f && dst.material.HasProperty(_Metallic))
+                    dst.material.SetFloat(_Metallic, metallic);
+
+                var smoothness = src.smoothness;
+                if (smoothness >= 0.0f && dst.material.HasProperty(_Glossiness))
+                    dst.material.SetFloat(_Glossiness, smoothness);
 
                 var metallicTex = FindTexture(src.metallicTID);
-                if (metallicTex != null)
-                    dst.material.SetTexture("_MetallicGlossMap", metallicTex);
+                if (metallicTex != null && dst.material.HasProperty(_MetallicGlossMap))
+                    dst.material.SetTexture(_MetallicGlossMap, metallicTex);
 
+                // normal map
+                const string _BumpMap = "_BumpMap";
                 var normalTex = FindTexture(src.normalTID);
-                if (normalTex != null)
-                    dst.material.SetTexture("_BumpMap", normalTex);
+                if (normalTex != null && dst.material.HasProperty(_BumpMap))
+                    dst.material.SetTexture(_BumpMap, normalTex);
 
                 newlist.Add(dst);
             }

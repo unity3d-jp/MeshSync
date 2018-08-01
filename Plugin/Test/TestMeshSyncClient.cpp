@@ -162,7 +162,10 @@ TestCase(Test_SendTexture)
             mat->name = "TextMaterial1";
             mat->color = { 0.3f, 0.3f, 0.5f, 1.0f };
             mat->emission = { 0.7f, 0.1f, 0.2f, 1.0f };
+            mat->metalic = 0.2f;
+            mat->smoothness = 0.8f;
             mat->color_tid = 1;
+            mat->metallic_tid = 5;
             mat->emission_tid = 4;
         }
 

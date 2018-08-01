@@ -90,9 +90,9 @@ public:
     std::string name;
 
     float4 color = float4::one();
-    float4 emission = float4::zero();
-    float metalic = 0.0f;
-    float smoothness = 0.5f;
+    float4 emission = { 0.0f, 0.0f, 0.0f, -1.0f }; // if w is negative, will be ignored
+    float metalic = -1.0f;      // if these are negative, will be ignored
+    float smoothness = -1.0f;   // 
 
     // texture ids
     int color_tid = 0;

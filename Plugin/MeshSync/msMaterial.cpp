@@ -152,9 +152,9 @@ void Material::clear()
     name.clear();
 
     color = float4::one();
-    emission = float4::zero();
-    metalic = 0.0f;
-    smoothness = 0.5f;
+    emission = { 0.0f, 0.0f, 0.0f, -1.0f };
+    metalic = -1.0f;
+    smoothness = -1.0f;
 
     color_tid = 0;
     metallic_tid = 0;
