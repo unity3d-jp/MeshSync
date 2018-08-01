@@ -17,9 +17,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Master|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Test.cpp" />
+    <ClCompile Include="TestMeshSyncClient.cpp" />
     <ClCompile Include="TestMeshUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MeshSync.vcxproj">
+      <Project>{7d79cf0c-f0b6-4d4e-bbee-822e4bda4061}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
     </ProjectReference>
@@ -53,7 +57,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)External\libs\win64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
