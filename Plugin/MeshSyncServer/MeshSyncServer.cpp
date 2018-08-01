@@ -122,6 +122,22 @@ msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _
 msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->smoothness; }
 msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->smoothness = v; }
 
+msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
+msAPI int               msTextureGetID(ms::Texture *_this) { return _this->id; }
+msAPI void              msTextureSetID(ms::Texture *_this, int v) { _this->id = v; }
+msAPI const char*       msTextureGetName(ms::Texture *_this) { return _this->name.c_str(); }
+msAPI void              msTextureSetName(ms::Texture *_this, const char *v) { _this->name = v; }
+msAPI ms::TextureType   msTextureGetType(ms::Texture *_this) { return _this->type; }
+msAPI void              msTextureSetType(ms::Texture *_this, ms::TextureType v) { _this->type = v; }
+msAPI ms::TextureFormat msTextureGetFormat(ms::Texture *_this) { return _this->format; }
+msAPI void              msTextureSetFormat(ms::Texture *_this, ms::TextureFormat v) { _this->format = v; }
+msAPI int               msTextureGetWidth(ms::Texture *_this) { return _this->width; }
+msAPI void              msTextureSetWidth(ms::Texture *_this, int v) { _this->width = v; }
+msAPI int               msTextureGetHeight(ms::Texture *_this) { return _this->height; }
+msAPI void              msTextureSetHeight(ms::Texture *_this, int v) { _this->height = v; }
+msAPI void              msTextureGetData(ms::Texture *_this, void *v) { _this->getData(v); }
+msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _this->setData(v); }
+
 
 msAPI const char*       msAnimationClipGetName(ms::AnimationClip *_this) { return _this->name.c_str(); }
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *_this) { return (int)_this->animations.size(); }
@@ -800,3 +816,5 @@ msAPI int                   msSceneGetNumAnimationClips(ms::Scene *_this)       
 msAPI ms::AnimationClip*    msSceneGetAnimationClipData(ms::Scene *_this, int ci)   { return _this->animations[ci].get(); }
 msAPI int                   msSceneGetNumMaterials(ms::Scene *_this)                { return (int)_this->materials.size(); }
 msAPI ms::Material*         msSceneGetMaterialData(ms::Scene *_this, int i)         { return _this->materials[i].get(); }
+msAPI int                   msSceneGetNumTextures(ms::Scene *_this)                 { return (int)_this->textures.size(); }
+msAPI ms::Texture*          msSceneGetTextureData(ms::Scene *_this, int i)          { return _this->textures[i].get(); }
