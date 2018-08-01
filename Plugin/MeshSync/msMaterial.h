@@ -39,9 +39,7 @@ enum class TextureFormat
     RGBi32    = Type_i32 | 3,
     RGBAi32   = Type_i32 | 4,
 
-    RawPNG = 0x10 << 4,
-    RawTGA = 0x11 << 4,
-    RawEXR = 0x12 << 4,
+    RawFile = 0x10 << 4,
 };
 
 enum class TextureType
@@ -57,7 +55,7 @@ class Texture
 {
 public:
     int id = 0;
-    std::string name;
+    std::string name; // if format is RawFile, this must be file name
     TextureType type = TextureType::Default;
     TextureFormat format = TextureFormat::Unknown;
     int width = 0;

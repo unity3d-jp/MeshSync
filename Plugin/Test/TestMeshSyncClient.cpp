@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Test.h"
 #include "MeshGenerator.h"
-#include "../MeshSync//msClient.h"
+#include "../MeshSync/MeshSync.h"
 using namespace mu;
 
 static void Send(ms::Scene& scene)
@@ -20,6 +20,21 @@ static void Send(ms::Scene& scene)
     client.send(mes);
 }
 
+static bool FileToByteArray(const char *path, RawVector<char> &out)
+{
+    FILE *fin = fopen(path, "rb");
+    if (!fin)
+        return false;
+
+    fseek(fin, 0, SEEK_END);
+    out.resize_discard((size_t)ftell(fin));
+    fseek(fin, 0, SEEK_SET);
+    fread(&out[0], 1, out.size(), fin);
+    fclose(fin);
+    return true;
+}
+
+
 TestCase(Test_SendMesh)
 {
     ms::Scene scene;
@@ -29,7 +44,6 @@ TestCase(Test_SendMesh)
         scene.objects.push_back(mesh);
 
         mesh->path = "/Test/Quad";
-        mesh->flags.has_refine_settings = 1;
         mesh->refine_settings.flags.gen_normals = 1;
         mesh->refine_settings.flags.gen_tangents = 1;
 
@@ -69,7 +83,6 @@ TestCase(Test_SendMeshAnimated)
         scene.objects.push_back(mesh);
 
         mesh->path = "/Test/Wave";
-        mesh->flags.has_refine_settings = 1;
         mesh->refine_settings.flags.gen_normals = 1;
         mesh->refine_settings.flags.gen_tangents = 1;
 
@@ -90,5 +103,25 @@ TestCase(Test_SendMeshAnimated)
 
 TestCase(Test_SendTexture)
 {
+    // raw file textures
+    {
+        const char *raw_files[] = {
+            "Texture_RGBA_u8.png",
+            "Texture_RGBA_f16.exr",
+        };
 
+        ms::Scene scene;
+        for (auto filename : raw_files) {
+            RawVector<char> data;
+            if (FileToByteArray(filename, data)) {
+                auto tex = ms::Texture::create();
+                scene.textures.push_back(tex);
+                tex->name = filename;
+                tex->format = ms::TextureFormat::RawFile;
+                tex->data = std::move(data);
+            }
+        }
+        if (!scene.textures.empty())
+            Send(scene);
+    }
 }

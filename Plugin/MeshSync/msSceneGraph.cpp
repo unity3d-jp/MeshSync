@@ -982,6 +982,10 @@ void Mesh::setupFlags()
     flags.has_material_ids = !material_ids.empty();
     flags.has_bones = !bones.empty();
     flags.has_blendshapes = !blendshapes.empty();
+
+    flags.has_refine_settings =
+        (uint32_t&)refine_settings.flags != 0 ||
+        refine_settings.scale_factor != 1.0f;
 }
 
 BoneDataPtr Mesh::addBone(const std::string& _path)
