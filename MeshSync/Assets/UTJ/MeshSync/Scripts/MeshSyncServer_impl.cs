@@ -259,6 +259,15 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetMetalic(IntPtr _this, float v);
             [DllImport("MeshSyncServer")] static extern float msMaterialGetSmoothness(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetSmoothness(IntPtr _this, float v);
+
+            [DllImport("MeshSyncServer")] static extern int  msMaterialGetColorTID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetColorTID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int  msMaterialGetMetallicTID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetallicTID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int  msMaterialGetEmissionTID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmissionTID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int  msMaterialGetNormalTID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetNormalTID(IntPtr _this, int v);
             #endregion
 
             public static MaterialData Create() { return msMaterialCreate(); }
@@ -289,6 +298,27 @@ namespace UTJ.MeshSync
             {
                 get { return msMaterialGetSmoothness(_this); }
                 set { msMaterialSetSmoothness(_this, value); }
+            }
+
+            public int colorTID
+            {
+                get { return msMaterialGetColorTID(_this); }
+                set { msMaterialSetColorTID(_this, value); }
+            }
+            public int metallicTID
+            {
+                get { return msMaterialGetMetallicTID(_this); }
+                set { msMaterialSetMetallicTID(_this, value); }
+            }
+            public int emissionTID
+            {
+                get { return msMaterialGetEmissionTID(_this); }
+                set { msMaterialSetEmissionTID(_this, value); }
+            }
+            public int normalTID
+            {
+                get { return msMaterialGetNormalTID(_this); }
+                set { msMaterialSetNormalTID(_this, value); }
             }
         }
 
@@ -348,6 +378,22 @@ namespace UTJ.MeshSync
                 case TextureFormat.RGf32: return UnityEngine.TextureFormat.RGFloat;
                 case TextureFormat.RGBAf32: return UnityEngine.TextureFormat.RGBAFloat;
                 default: return UnityEngine.TextureFormat.Alpha8;
+            }
+        }
+        public static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v)
+        {
+            switch (v)
+            {
+                case UnityEngine.TextureFormat.Alpha8: return TextureFormat.Ru8;
+                case UnityEngine.TextureFormat.RGB24: return TextureFormat.RGBu8;
+                case UnityEngine.TextureFormat.RGBA32: return TextureFormat.RGBAu8;
+                case UnityEngine.TextureFormat.RHalf: return TextureFormat.Rf16;
+                case UnityEngine.TextureFormat.RGHalf: return TextureFormat.RGf16;
+                case UnityEngine.TextureFormat.RGBAHalf: return TextureFormat.RGBAf16;
+                case UnityEngine.TextureFormat.RFloat: return TextureFormat.Rf32;
+                case UnityEngine.TextureFormat.RGFloat: return TextureFormat.RGf32;
+                case UnityEngine.TextureFormat.RGBAFloat: return TextureFormat.RGBAf32;
+                default: return TextureFormat.Ru8;
             }
         }
 
@@ -1738,6 +1784,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr _this, CameraData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr _this, LightData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr _this, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTexture(IntPtr _this, TextureData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
 

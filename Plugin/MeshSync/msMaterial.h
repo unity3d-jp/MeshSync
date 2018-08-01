@@ -94,6 +94,12 @@ public:
     float metalic = 0.0f;
     float smoothness = 0.5f;
 
+    // texture ids
+    int color_tid = 0;
+    int metallic_tid = 0;
+    int emission_tid = 0;
+    int normal_tid = 0;
+
 protected:
     Material();
     ~Material();

@@ -85,6 +85,11 @@ msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
     if (!server) { return; }
     server->getHostScene()->materials.push_back(make_shared_ptr(data));
 }
+msAPI void msServerServeTexture(ms::Server *server, ms::Texture *data)
+{
+    if (!server) { return; }
+    server->getHostScene()->textures.push_back(make_shared_ptr(data));
+}
 
 
 msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
@@ -121,6 +126,14 @@ msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->me
 msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->metalic = v; }
 msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->smoothness; }
 msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->smoothness = v; }
+msAPI int           msMaterialGetColorTID(ms::Material *_this) { return _this->color_tid; }
+msAPI void          msMaterialSetColorTID(ms::Material *_this, int v) { _this->color_tid = v; }
+msAPI int           msMaterialGetMetallicTID(ms::Material *_this) { return _this->metallic_tid; }
+msAPI void          msMaterialSetMetallicTID(ms::Material *_this, int v) { _this->metallic_tid = v; }
+msAPI int           msMaterialGetEmissionTID(ms::Material *_this) { return _this->emission_tid; }
+msAPI void          msMaterialSetEmissionTID(ms::Material *_this, int v) { _this->emission_tid = v; }
+msAPI int           msMaterialGetNormalTID(ms::Material *_this) { return _this->normal_tid; }
+msAPI void          msMaterialSetNormalTID(ms::Material *_this, int v) { _this->normal_tid = v; }
 
 msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
 msAPI int               msTextureGetID(ms::Texture *_this) { return _this->id; }

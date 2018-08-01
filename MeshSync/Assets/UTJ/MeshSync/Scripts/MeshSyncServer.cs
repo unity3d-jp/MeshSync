@@ -1301,6 +1301,14 @@ namespace UTJ.MeshSync
             }
             return ret;
         }
+        bool ServeTexture(Texture2D v, GetMessage mes)
+        {
+            var data = TextureData.Create();
+            data.name = v.name;
+            // todo
+            msServerServeTexture(m_server, data);
+            return true;
+        }
         bool ServeMaterial(Material mat, GetMessage mes)
         {
             var data = MaterialData.Create();

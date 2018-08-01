@@ -128,7 +128,8 @@ Material::Material() {}
 Material::~Material() {}
 
 #define EachMember(F)\
-    F(id) F(name) F(color) F(emission) F(metalic) F(smoothness)
+    F(id) F(name) F(color) F(emission) F(metalic) F(smoothness)\
+    F(color_tid) F(metallic_tid) F(emission_tid) F(normal_tid)
 
 uint32_t Material::getSerializeSize() const
 {
@@ -154,6 +155,11 @@ void Material::clear()
     emission = float4::zero();
     metalic = 0.0f;
     smoothness = 0.5f;
+
+    color_tid = 0;
+    metallic_tid = 0;
+    emission_tid = 0;
+    normal_tid = 0;
 }
 
 bool Material::operator==(const Material& v) const
