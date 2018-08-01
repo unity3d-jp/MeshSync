@@ -292,6 +292,48 @@ namespace UTJ.MeshSync
             }
         }
 
+        public enum TextureType
+        {
+            Default,
+            NormalMap,
+        }
+
+        public enum TextureFormat
+        {
+            Unknown = 0,
+
+            ChannelMask = 0xF,
+            TypeMask = 0xF << 4,
+            Type_f16 = 0x1 << 4,
+            Type_f32 = 0x2 << 4,
+            Type_u8  = 0x3 << 4,
+            Type_i16 = 0x4 << 4,
+            Type_i32 = 0x5 << 4,
+
+            Rf16      = Type_f16 | 1,
+            RGf16     = Type_f16 | 2,
+            RGBf16    = Type_f16 | 3,
+            RGBAf16   = Type_f16 | 4,
+            Rf32      = Type_f32 | 1,
+            RGf32     = Type_f32 | 2,
+            RGBf32    = Type_f32 | 3,
+            RGBAf32   = Type_f32 | 4,
+            Ru8       = Type_u8  | 1,
+            RGu8      = Type_u8  | 2,
+            RGBu8     = Type_u8  | 3,
+            RGBAu8    = Type_u8  | 4,
+            Ri16      = Type_i16 | 1,
+            RGi16     = Type_i16 | 2,
+            RGBi16    = Type_i16 | 3,
+            RGBAi16   = Type_i16 | 4,
+            Ri32      = Type_i32 | 1,
+            RGi32     = Type_i32 | 2,
+            RGBi32    = Type_i32 | 3,
+            RGBAi32   = Type_i32 | 4,
+
+            RawFile = 0x10 << 4,
+        }
+
         public struct TextureData
         {
             #region internal
@@ -301,15 +343,16 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTextureSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTextureSetName(IntPtr _this, string v);
-            [DllImport("MeshSyncServer")] static extern int msTextureGetType(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msTextureSetType(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int msTextureGetFormat(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msTextureSetFormat(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern TextureType msTextureGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetType(IntPtr _this, TextureType v);
+            [DllImport("MeshSyncServer")] static extern TextureFormat msTextureGetFormat(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetFormat(IntPtr _this, TextureFormat v);
             [DllImport("MeshSyncServer")] static extern int msTextureGetWidth(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTextureSetWidth(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern int msTextureGetHeight(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string v);
             #endregion
 
             public static TextureData Create() { return msTextureCreate(); }
@@ -324,12 +367,12 @@ namespace UTJ.MeshSync
                 get { return S(msTextureGetName(_this)); }
                 set { msTextureSetName(_this, value); }
             }
-            public int type
+            public TextureType type
             {
                 get { return msTextureGetType(_this); }
                 set { msTextureSetType(_this, value); }
             }
-            public int format
+            public TextureFormat format
             {
                 get { return msTextureGetFormat(_this); }
                 set { msTextureSetFormat(_this, value); }
@@ -347,6 +390,11 @@ namespace UTJ.MeshSync
             public IntPtr dataPtr
             {
                 get { return msTextureGetDataPtr(_this); }
+            }
+
+            public bool WriteToFile(string path)
+            {
+                return msTextureWriteToFile(_this, path) != 0;
             }
         }
 

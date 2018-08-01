@@ -37,45 +37,6 @@ static bool FileToByteArray(const char *path, RawVector<char> &out)
 
 TestCase(Test_SendMesh)
 {
-    ms::Scene scene;
-
-    {
-        auto mesh = ms::Mesh::create();
-        scene.objects.push_back(mesh);
-
-        mesh->path = "/Test/Quad";
-        mesh->refine_settings.flags.gen_normals = 1;
-        mesh->refine_settings.flags.gen_tangents = 1;
-
-        auto& points = mesh->points;
-        auto& uv = mesh->uv0;
-        auto& counts = mesh->counts;
-        auto& indices = mesh->indices;
-        auto& mids = mesh->material_ids;
-
-        points.push_back({ 0.0f, 0.0f, 0.0f });
-        points.push_back({ 0.0f, 0.0f, 1.0f });
-        points.push_back({ 1.0f, 0.0f, 1.0f });
-        points.push_back({ 1.0f, 0.0f, 0.0f });
-
-        uv.push_back({ 0.0f, 0.0f });
-        uv.push_back({ 0.0f, 1.0f });
-        uv.push_back({ 1.0f, 1.0f });
-        uv.push_back({ 1.0f, 0.0f });
-
-        counts.push_back(4);
-        mids.push_back(0);
-        indices.push_back(0);
-        indices.push_back(1);
-        indices.push_back(2);
-        indices.push_back(3);
-    }
-
-    Send(scene);
-}
-
-TestCase(Test_SendMeshAnimated)
-{
     for (int i = 0; i < 8; ++i) {
         ms::Scene scene;
 

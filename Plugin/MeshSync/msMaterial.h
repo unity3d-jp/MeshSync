@@ -50,6 +50,8 @@ enum class TextureType
 
 // in byte
 int GetPixelSize(TextureFormat format);
+bool FileToByteArray(const char *path, RawVector<char> &out);
+bool ByteArrayToFile(const char *path, const RawVector<char> &data);
 
 class Texture
 {
@@ -75,6 +77,7 @@ public:
 
     void setData(const void *src);
     void getData(void *dst) const;
+    bool writeToFile(const char *path);
 };
 msHasSerializer(Texture);
 using TexturePtr = std::shared_ptr<Texture>;

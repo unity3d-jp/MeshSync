@@ -27,6 +27,31 @@ int GetPixelSize(TextureFormat format)
     return 0;
 }
 
+bool FileToByteArray(const char *path, RawVector<char> &dst)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f)
+        return false;
+
+    fseek(f, 0, SEEK_END);
+    dst.resize_discard((size_t)ftell(f));
+    fseek(f, 0, SEEK_SET);
+    fread(dst.data(), 1, dst.size(), f);
+    fclose(f);
+    return true;
+}
+
+bool ByteArrayToFile(const char *path, const RawVector<char> &data)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f)
+        return false;
+    fwrite(data.data(), 1, data.size(), f);
+    fclose(f);
+    return true;
+}
+
+
 
 std::shared_ptr<Texture> Texture::create(std::istream & is)
 {
@@ -80,6 +105,13 @@ void Texture::getData(void * dst) const
     if (!dst)
         return;
     data.copy_to((char*)dst);
+}
+
+bool Texture::writeToFile(const char * path)
+{
+    if (data.empty())
+        return false;
+    return ByteArrayToFile(path, data);
 }
 
 #undef EachMember

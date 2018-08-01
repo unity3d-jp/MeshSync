@@ -273,7 +273,16 @@ namespace UTJ.MeshSync
         {
             var scene = mes.scene;
 
-            // sync materials
+            // sync textures
+            try
+            {
+                int numTextures = scene.numTextures;
+                if (numTextures > 0)
+                    UpdateTextures(scene);
+            }
+            catch (Exception e) { Debug.LogError(e); }
+
+            // materials
             try
             {
                 int numMaterials = scene.numMaterials;
@@ -362,6 +371,27 @@ namespace UTJ.MeshSync
                 )
             {
                 DestroyImmediate(obj, false);
+            }
+        }
+
+        void UpdateTextures(SceneData scene)
+        {
+            MakeSureAssetDirectoryExists();
+            string assetDir = "Assets/" + m_assetExportPath;
+
+            int numTextures = scene.numTextures;
+            for (int i = 0; i < numTextures; ++i)
+            {
+                var src = scene.GetTexture(i);
+                var format = src.format;
+                if (format == TextureFormat.RawFile)
+                {
+#if UNITY_EDITOR
+                    string path = assetDir + "/" + src.name;
+                    src.WriteToFile(path);
+                    AssetDatabase.ImportAsset(path);
+#endif
+                }
             }
         }
 
@@ -679,6 +709,19 @@ namespace UTJ.MeshSync
             mesh.bounds = split.bounds;
             mesh.UploadMeshData(false);
             return mesh;
+        }
+
+        void MakeSureAssetDirectoryExists()
+        {
+#if UNITY_EDITOR
+            try
+            {
+                string assetDir = "Assets/" + m_assetExportPath;
+                if (!AssetDatabase.IsValidFolder(assetDir))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+            }
+            catch (Exception e) { Debug.LogError(e); }
+#endif
         }
 
         void CreateAsset(UnityEngine.Object obj, string assetPath)
