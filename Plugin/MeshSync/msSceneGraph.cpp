@@ -662,7 +662,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     // refine
     {
         refiner.refine();
-        refiner.retopology(mrs.flags.swap_faces, false /*mrs.flags.turn_quad_edges*/);
+        refiner.retopology(mrs.flags.swap_faces);
         refiner.genSubmeshes(material_ids);
 
         refiner.new_points.swap(points);

@@ -134,7 +134,7 @@ struct MeshRefiner
     }
 
     void refine();
-    void retopology(bool swap_faces, bool turn_quads);
+    void retopology(bool swap_faces);
     void genSubmeshes(IArray<int> material_ids);
     void genSubmeshes();
     void clear();
