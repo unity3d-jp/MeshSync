@@ -99,8 +99,8 @@ TestCase(Test_SendTexture)
         const int height = 512;
         {
             // RGBAu8
-            tvec4<unorm8> black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            tvec4<unorm8> white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
 
             RawVector<char> data;
             CreateCheckerImage(data, black, white, width, height);

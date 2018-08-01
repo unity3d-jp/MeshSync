@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "muMath.h"
 
 namespace mu {
 
@@ -113,5 +114,26 @@ struct unorm16
     static unorm16 zero() { return unorm16(0.0f); }
     static unorm16 one() { return unorm16(1.0f); }
 };
+
+using half2 = tvec2<half>;
+using half3 = tvec3<half>;
+using half4 = tvec4<half>;
+using quath = tquat<half>;
+using half3x3 = tmat3x3<half>;
+using half4x4 = tmat4x4<half>;
+
+using snorm8x2 = tvec2<snorm8>;
+using snorm8x3 = tvec3<snorm8>;
+using snorm8x4 = tvec4<snorm8>;
+using unorm8x2 = tvec2<unorm8>;
+using unorm8x3 = tvec3<unorm8>;
+using unorm8x4 = tvec4<unorm8>;
+
+using snorm16x2 = tvec2<snorm16>;
+using snorm16x3 = tvec3<snorm16>;
+using snorm16x4 = tvec4<snorm16>;
+using unorm16x2 = tvec2<unorm16>;
+using unorm16x3 = tvec3<unorm16>;
+using unorm16x4 = tvec4<unorm16>;
 
 } // namespace mu
