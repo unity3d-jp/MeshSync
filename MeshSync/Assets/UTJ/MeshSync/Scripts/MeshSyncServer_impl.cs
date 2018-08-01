@@ -1746,6 +1746,13 @@ namespace UTJ.MeshSync
             public Material material;
         }
 
+        [Serializable]
+        public class TextureHolder
+        {
+            public int id;
+            public string name;
+            public Texture2D texture;
+        }
 
 
         // thanks: http://techblog.sega.jp/entry/2016/11/28/100000

@@ -19,6 +19,11 @@ namespace UTJ.MeshSync
 
             EditorGUILayout.Space();
 
+            GUILayout.Label("Texture List", EditorStyles.boldLabel);
+            DrawTextureList(t);
+
+            EditorGUILayout.Space();
+
             if (GUILayout.Button("Open Material Window"))
             {
                 MaterialWindow.Open(t);
@@ -65,6 +70,11 @@ namespace UTJ.MeshSync
 
                 EditorGUILayout.EndHorizontal();
             }
+        }
+
+        public static void DrawTextureList(MeshSyncServer t)
+        {
+
         }
     }
 }

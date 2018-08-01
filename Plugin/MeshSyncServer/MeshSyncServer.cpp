@@ -137,7 +137,7 @@ msAPI int               msTextureGetHeight(ms::Texture *_this) { return _this->h
 msAPI void              msTextureSetHeight(ms::Texture *_this, int v) { _this->height = v; }
 msAPI void              msTextureGetData(ms::Texture *_this, void *v) { _this->getData(v); }
 msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _this->setData(v); }
-msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { _this->data.data(); }
+msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
 
 
 msAPI const char*       msAnimationClipGetName(ms::AnimationClip *_this) { return _this->name.c_str(); }

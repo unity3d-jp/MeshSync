@@ -56,8 +56,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\NormalPainter\Assets\Tests\Plugins\x86_64\
-xcopy /Y $(SolutionDir)External\libs\win64\*.dll $(SolutionDir)..\NormalPainter\Assets\Tests\Plugins\x86_64\</Command>
+      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\MeshSync\Assets\Tests\Plugins\x86_64\</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -74,8 +73,7 @@ xcopy /Y $(SolutionDir)External\libs\win64\*.dll $(SolutionDir)..\NormalPainter\
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Master|x64'">
     <PostBuildEvent>
-      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\NormalPainter\Assets\Tests\Plugins\x86_64\
-xcopy /Y $(SolutionDir)External\libs\win64\*.dll $(SolutionDir)..\NormalPainter\Assets\Tests\Plugins\x86_64\</Command>
+      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\MeshSync\Assets\Tests\Plugins\x86_64\</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>

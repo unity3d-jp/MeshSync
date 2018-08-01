@@ -38,6 +38,10 @@ enum class TextureFormat
     RGi32     = Type_i32 | 2,
     RGBi32    = Type_i32 | 3,
     RGBAi32   = Type_i32 | 4,
+
+    RawPNG = 0x10 << 4,
+    RawTGA = 0x11 << 4,
+    RawEXR = 0x12 << 4,
 };
 
 enum class TextureType

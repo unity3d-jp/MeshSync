@@ -17,7 +17,8 @@ namespace UTJ.MeshSync
     {
 #region fields
         [SerializeField] int m_serverPort = 8080;
-        [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
         [Space(10)]
@@ -53,6 +54,7 @@ namespace UTJ.MeshSync
 #region properties
         public static string version { get { return S(msServerGetVersion()); } }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
+        public List<TextureHolder> textureData { get { return m_textureList; } }
 #endregion
 
 #region impl
