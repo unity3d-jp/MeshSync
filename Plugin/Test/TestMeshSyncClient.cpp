@@ -20,20 +20,6 @@ static void Send(ms::Scene& scene)
     client.send(mes);
 }
 
-static bool FileToByteArray(const char *path, RawVector<char> &out)
-{
-    FILE *fin = fopen(path, "rb");
-    if (!fin)
-        return false;
-
-    fseek(fin, 0, SEEK_END);
-    out.resize_discard((size_t)ftell(fin));
-    fseek(fin, 0, SEEK_SET);
-    fread(&out[0], 1, out.size(), fin);
-    fclose(fin);
-    return true;
-}
-
 
 TestCase(Test_SendMesh)
 {
@@ -62,6 +48,26 @@ TestCase(Test_SendMesh)
     }
 }
 
+
+template<class color_t>
+void CreateCheckerImage(RawVector<char>& dst, color_t black, color_t white, int width, int height)
+{
+    int num_pixels = width * height;
+    int checker_size = 8;
+    dst.resize_discard(num_pixels * sizeof(color_t));
+    color_t *data = (color_t*)dst.data();
+    for (int iy = 0; iy < height; ++iy) {
+        for (int ix = 0; ix < width; ++ix) {
+            bool cy = (iy / checker_size) % 2 == 0;
+            bool cx = (ix / checker_size) % 2 == 0;
+            if (cy)
+                *data++ = cx ? white : black;
+            else
+                *data++ = cx ? black : white;
+        }
+    }
+}
+
 TestCase(Test_SendTexture)
 {
     // raw file textures
@@ -74,7 +80,7 @@ TestCase(Test_SendTexture)
         ms::Scene scene;
         for (auto filename : raw_files) {
             RawVector<char> data;
-            if (FileToByteArray(filename, data)) {
+            if (ms::FileToByteArray(filename, data)) {
                 auto tex = ms::Texture::create();
                 scene.textures.push_back(tex);
                 tex->name = filename;
@@ -84,5 +90,62 @@ TestCase(Test_SendTexture)
         }
         if (!scene.textures.empty())
             Send(scene);
+    }
+
+    {
+        ms::Scene scene;
+
+        const int width = 512;
+        const int height = 512;
+        {
+            // RGBAu8
+            tvec4<unorm8> black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            tvec4<unorm8> white{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+            RawVector<char> data;
+            CreateCheckerImage(data, black, white, width, height);
+
+            auto tex = ms::Texture::create();
+            scene.textures.push_back(tex);
+            tex->name = "RGBAu8";
+            tex->format = ms::TextureFormat::RGBAu8;
+            tex->width = width;
+            tex->height = height;
+            tex->data = std::move(data);
+        }
+        {
+            // RGBAf16
+            half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+            RawVector<char> data;
+            CreateCheckerImage(data, black, white, width, height);
+
+            auto tex = ms::Texture::create();
+            scene.textures.push_back(tex);
+            tex->name = "RGBAf16";
+            tex->format = ms::TextureFormat::RGBAf16;
+            tex->width = width;
+            tex->height = height;
+            tex->data = std::move(data);
+        }
+        {
+            // RGBAf32
+            float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+            RawVector<char> data;
+            CreateCheckerImage(data, black, white, width, height);
+
+            auto tex = ms::Texture::create();
+            scene.textures.push_back(tex);
+            tex->name = "RGBAf32";
+            tex->format = ms::TextureFormat::RGBAf32;
+            tex->width = width;
+            tex->height = height;
+            tex->data = std::move(data);
+        }
+
+        Send(scene);
     }
 }

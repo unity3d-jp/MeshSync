@@ -138,6 +138,7 @@ msAPI void              msTextureSetHeight(ms::Texture *_this, int v) { _this->h
 msAPI void              msTextureGetData(ms::Texture *_this, void *v) { _this->getData(v); }
 msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _this->setData(v); }
 msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
+msAPI int               msTextureGetSizeInByte(ms::Texture *_this) { return (int)_this->data.size(); }
 msAPI bool              msTextureWriteToFile(ms::Texture *_this, const char *path) { return _this->writeToFile(path); }
 
 

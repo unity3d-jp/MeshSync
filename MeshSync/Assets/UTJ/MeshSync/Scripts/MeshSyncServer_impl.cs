@@ -334,6 +334,24 @@ namespace UTJ.MeshSync
             RawFile = 0x10 << 4,
         }
 
+        public static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
+        {
+            switch (v)
+            {
+                case TextureFormat.Ru8: return UnityEngine.TextureFormat.Alpha8;
+                case TextureFormat.RGBu8: return UnityEngine.TextureFormat.RGB24;
+                case TextureFormat.RGBAu8: return UnityEngine.TextureFormat.RGBA32;
+                case TextureFormat.Rf16: return UnityEngine.TextureFormat.RHalf;
+                case TextureFormat.RGf16: return UnityEngine.TextureFormat.RGHalf;
+                case TextureFormat.RGBAf16: return UnityEngine.TextureFormat.RGBAHalf;
+                case TextureFormat.Rf32: return UnityEngine.TextureFormat.RFloat;
+                case TextureFormat.RGf32: return UnityEngine.TextureFormat.RGFloat;
+                case TextureFormat.RGBAf32: return UnityEngine.TextureFormat.RGBAFloat;
+                default: return UnityEngine.TextureFormat.Alpha8;
+            }
+        }
+
+
         public struct TextureData
         {
             #region internal
@@ -352,6 +370,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern int msTextureGetHeight(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetSizeInByte(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string v);
             #endregion
 
@@ -386,6 +405,10 @@ namespace UTJ.MeshSync
             {
                 get { return msTextureGetHeight(_this); }
                 set { msTextureSetHeight(_this, value); }
+            }
+            public int sizeInByte
+            {
+                get { return msTextureGetSizeInByte(_this); }
             }
             public IntPtr dataPtr
             {

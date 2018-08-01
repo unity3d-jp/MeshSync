@@ -15,7 +15,7 @@ struct half
     {
         uint32_t n = (uint32_t&)v;
         uint16_t sign_bit = (n >> 16) & 0x8000;
-        uint16_t exponent = (((n >> 23) - 127 + 15) & 0x1f) << 10;
+        uint16_t exponent = (std::max<int>((n >> 23) - 127 + 15, 0) & 0x1f) << 10;
         uint16_t mantissa = (n >> (23 - 10)) & 0x3ff;
 
         data = sign_bit | exponent | mantissa;
@@ -36,6 +36,44 @@ struct half
         uint32_t r = sign_bit | exponent | mantissa;
         return (float&)r;
     }
+};
+
+struct snorm8
+{
+    int8_t data;
+
+    snorm8() : data(0) {}
+    snorm8(const snorm8& v) : data(v.data) {}
+    snorm8(float v) : data(int8_t(v * 127.0f)) {}
+
+    snorm8& operator=(float v)
+    {
+        *this = snorm8(v);
+        return *this;
+    }
+    float to_float() const { return (float)data / 127.0f; }
+
+    static snorm8 zero() { return snorm8(0.0f); }
+    static snorm8 one() { return snorm8(1.0f); }
+};
+
+struct unorm8
+{
+    uint8_t data;
+
+    unorm8() : data(0) {}
+    unorm8(const unorm8& v) : data(v.data) {}
+    unorm8(float v) : data(uint8_t(v * 255.0f)) {}
+
+    unorm8 & operator=(float v)
+    {
+        *this = unorm8(v);
+        return *this;
+    }
+    float to_float() const { return (float)data / 255.0f; }
+
+    static unorm8 zero() { return unorm8(0.0f); }
+    static unorm8 one() { return unorm8(1.0f); }
 };
 
 struct snorm16

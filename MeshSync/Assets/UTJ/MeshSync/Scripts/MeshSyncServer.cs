@@ -392,6 +392,16 @@ namespace UTJ.MeshSync
                     AssetDatabase.ImportAsset(path);
 #endif
                 }
+                else
+                {
+                    var asset = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
+                    asset.LoadRawTextureData(src.dataPtr, src.sizeInByte);
+                    asset.Apply();
+#if UNITY_EDITOR
+                    string path = assetDir + "/" + src.name + ".asset";
+                    CreateAsset(asset, path);
+#endif
+                }
             }
         }
 
