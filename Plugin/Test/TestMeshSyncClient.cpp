@@ -70,6 +70,11 @@ void CreateCheckerImage(RawVector<char>& dst, color_t black, color_t white, int 
 
 TestCase(Test_SendTexture)
 {
+    auto gen_id = []() {
+        static int id_seed = 0;
+        return ++id_seed;
+    };
+
     // raw file textures
     {
         const char *raw_files[] = {
@@ -83,6 +88,7 @@ TestCase(Test_SendTexture)
             if (ms::FileToByteArray(filename, data)) {
                 auto tex = ms::Texture::create();
                 scene.textures.push_back(tex);
+                tex->id = gen_id();
                 tex->name = filename;
                 tex->format = ms::TextureFormat::RawFile;
                 tex->data = std::move(data);
@@ -107,6 +113,7 @@ TestCase(Test_SendTexture)
 
             auto tex = ms::Texture::create();
             scene.textures.push_back(tex);
+            tex->id = gen_id();
             tex->name = "RGBAu8";
             tex->format = ms::TextureFormat::RGBAu8;
             tex->width = width;
@@ -123,6 +130,7 @@ TestCase(Test_SendTexture)
 
             auto tex = ms::Texture::create();
             scene.textures.push_back(tex);
+            tex->id = gen_id();
             tex->name = "RGBAf16";
             tex->format = ms::TextureFormat::RGBAf16;
             tex->width = width;
@@ -139,11 +147,23 @@ TestCase(Test_SendTexture)
 
             auto tex = ms::Texture::create();
             scene.textures.push_back(tex);
+            tex->id = gen_id();
             tex->name = "RGBAf32";
             tex->format = ms::TextureFormat::RGBAf32;
             tex->width = width;
             tex->height = height;
             tex->data = std::move(data);
+        }
+
+        // material
+        {
+            auto mat = ms::Material::create();
+            scene.materials.push_back(mat);
+            mat->name = "TextMaterial1";
+            mat->color = { 0.3f, 0.3f, 0.5f, 1.0f };
+            mat->emission = { 0.7f, 0.1f, 0.2f, 1.0f };
+            mat->color_tid = 1;
+            mat->emission_tid = 4;
         }
 
         Send(scene);

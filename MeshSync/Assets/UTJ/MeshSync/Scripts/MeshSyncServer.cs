@@ -374,6 +374,14 @@ namespace UTJ.MeshSync
             }
         }
 
+        public Texture2D FindTexture(int tid)
+        {
+            if (tid == 0)
+                return null;
+            var rec = m_textureList.Find(a => a.id == tid);
+            return rec != null ? rec.texture : null;
+        }
+
         void UpdateTextures(SceneData scene)
         {
             MakeSureAssetDirectoryExists();
@@ -382,6 +390,8 @@ namespace UTJ.MeshSync
             int numTextures = scene.numTextures;
             for (int i = 0; i < numTextures; ++i)
             {
+                Texture2D texture = null;
+
                 var src = scene.GetTexture(i);
                 var format = src.format;
                 if (format == TextureFormat.RawFile)
@@ -390,17 +400,31 @@ namespace UTJ.MeshSync
                     string path = assetDir + "/" + src.name;
                     src.WriteToFile(path);
                     AssetDatabase.ImportAsset(path);
+                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
 #endif
                 }
                 else
                 {
-                    var asset = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
-                    asset.LoadRawTextureData(src.dataPtr, src.sizeInByte);
-                    asset.Apply();
+                    texture = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
+                    texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
+                    texture.Apply();
 #if UNITY_EDITOR
                     string path = assetDir + "/" + src.name + ".asset";
-                    CreateAsset(asset, path);
+                    CreateAsset(texture, path);
 #endif
+                }
+
+                int id = src.id;
+                if (id != 0 && texture != null)
+                {
+                    var dst = m_textureList.Find(a => a.id == id);
+                    if (dst == null)
+                    {
+                        dst = new TextureHolder();
+                        dst.id = id;
+                        m_textureList.Add(dst);
+                    }
+                    dst.texture = texture;
                 }
             }
         }
@@ -427,7 +451,6 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            if(!needsUpdate) { return; }
 
             var newlist = new List<MaterialHolder>();
             for (int i = 0; i < numMaterials; ++i)
@@ -451,10 +474,42 @@ namespace UTJ.MeshSync
                 {
                     dst.material.color = dst.color;
                 }
+
+                var mainTex = FindTexture(src.colorTID);
+                if (mainTex != null)
+                    dst.material.mainTexture = mainTex;
+
+                var emission = src.emission;
+                if (emission != Color.black)
+                {
+                    dst.material.EnableKeyword("_EMISSION");
+                    dst.material.SetColor("_EmissionColor", emission);
+                    var emissionTex = FindTexture(src.emissionTID);
+                    if (emissionTex != null)
+                    {
+                        dst.material.SetTexture("_EmissionMap", emissionTex);
+                    }
+                }
+                else
+                {
+                    dst.material.DisableKeyword("_EMISSION");
+                }
+
+                var metallicTex = FindTexture(src.metallicTID);
+                if (metallicTex != null)
+                    dst.material.SetTexture("_MetallicGlossMap", metallicTex);
+
+                var normalTex = FindTexture(src.normalTID);
+                if (normalTex != null)
+                    dst.material.SetTexture("_BumpMap", normalTex);
+
                 newlist.Add(dst);
             }
-            m_materialList = newlist;
-            ReassignMaterials();
+
+            if (needsUpdate) {
+                m_materialList = newlist;
+                ReassignMaterials();
+            }
         }
 
         void UpdateMesh(MeshData data)
