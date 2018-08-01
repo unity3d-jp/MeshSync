@@ -292,6 +292,64 @@ namespace UTJ.MeshSync
             }
         }
 
+        public struct TextureData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern TextureData msTextureCreate();
+            [DllImport("MeshSyncServer")] static extern int msTextureGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetName(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetType(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetFormat(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetFormat(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetWidth(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetWidth(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetHeight(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr _this);
+            #endregion
+
+            public static TextureData Create() { return msTextureCreate(); }
+
+            public int id
+            {
+                get { return msTextureGetID(_this); }
+                set { msTextureSetID(_this, value); }
+            }
+            public string name
+            {
+                get { return S(msTextureGetName(_this)); }
+                set { msTextureSetName(_this, value); }
+            }
+            public int type
+            {
+                get { return msTextureGetType(_this); }
+                set { msTextureSetType(_this, value); }
+            }
+            public int format
+            {
+                get { return msTextureGetFormat(_this); }
+                set { msTextureSetFormat(_this, value); }
+            }
+            public int width
+            {
+                get { return msTextureGetWidth(_this); }
+                set { msTextureSetWidth(_this, value); }
+            }
+            public int height
+            {
+                get { return msTextureGetHeight(_this); }
+                set { msTextureSetHeight(_this, value); }
+            }
+            public IntPtr dataPtr
+            {
+                get { return msTextureGetDataPtr(_this); }
+            }
+        }
+
 
         public enum InterpolationType {
             Linear,
@@ -1545,6 +1603,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern TransformData msSceneGetObjectData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumTextures(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TextureData msSceneGetTextureData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimationClips(IntPtr _this);
@@ -1554,11 +1614,13 @@ namespace UTJ.MeshSync
             public string name { get { return S(msSceneGetName(_this)); } }
             public int numObjects { get { return msSceneGetNumObjects(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
+            public int numTextures { get { return msSceneGetNumTextures(_this); } }
             public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
             public int numAnimationClips { get { return msSceneGetNumAnimationClips(_this); } }
 
             public TransformData GetObject(int i) { return msSceneGetObjectData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
+            public TextureData GetTexture(int i) { return msSceneGetTextureData(_this, i); }
             public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
             public AnimationClipData GetAnimationClip(int i) { return msSceneGetAnimationClipData(_this, i); }
         }
