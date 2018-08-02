@@ -73,7 +73,7 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
                 color_src = node.ptr();
             }
         }
-        ret->color = float4{ color_src->r, color_src->g, color_src->b, 1.0f };
+        ret->setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
     }
     m_materials.push_back(ret);
     return ret;

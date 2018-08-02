@@ -174,12 +174,35 @@ bool Material::operator==(const Material& v) const
         color == v.color &&
         emission == v.emission &&
         metalic == v.metalic &&
-        smoothness == v.smoothness;
+        smoothness == v.smoothness &&
+        color_map == v.color_map &&
+        emission_map == v.emission_map &&
+        metallic_map == v.metallic_map &&
+        normal_map == v.normal_map;
 }
 bool Material::operator!=(const Material& v) const
 {
     return !(*this == v);
 }
+
+void    Material::setColor(float4 v)    { color = v; flags.has_color = 1; }
+float4  Material::getColor() const      { return color; }
+void    Material::setEmission(float4 v) { emission = v; flags.has_emission = 1; }
+float4  Material::getEmission() const   { return emission; }
+void    Material::setMetallic(float v)  { metalic = v; flags.has_metallic = 1; }
+float   Material::getMetallic() const   { return metalic; }
+void    Material::setSmoothness(float v){ smoothness = v; flags.has_smoothness = 1; }
+float   Material::getSmoothness() const { return smoothness; }
+
+void    Material::setColorMap(int v)    { color_map = v; flags.has_color_map = 1; }
+int     Material::getColorMap() const   { return color_map; }
+void    Material::setEmissionMap(int v) { emission_map = v; flags.has_emission_map = 1; }
+int     Material::getEmissionMap() const{ return emission_map; }
+void    Material::setMetallicMap(int v) { metallic_map = v; flags.has_metallic_map = 1; }
+int     Material::getMetallicMap() const{ return metallic_map; }
+void    Material::setNormalMap(int v)   { normal_map = v; flags.has_normal_map = 1; }
+int     Material::getNormalMap() const  { return normal_map; }
+
 
 #undef EachMember
 

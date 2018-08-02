@@ -120,22 +120,22 @@ msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.
 msAPI void          msMaterialSetName(ms::Material *_this, const char *v) { _this->name = v; }
 msAPI ms::MaterialDataFlags msMaterialGetFlags(ms::Material *_this) { return _this->flags; }
 msAPI void          msMaterialSetFlags(ms::Material *_this, ms::MaterialDataFlags v) { _this->flags = v; }
-msAPI float4        msMaterialGetColor(ms::Material *_this) { return _this->color; }
-msAPI void          msMaterialSetColor(ms::Material *_this, const float4 *v) { _this->color = *v; }
-msAPI float4        msMaterialGetEmission(ms::Material *_this) { return _this->emission; }
-msAPI void          msMaterialSetEmission(ms::Material *_this, const float4 *v) { _this->emission = *v; }
-msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->metalic; }
-msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->metalic = v; }
-msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->smoothness; }
-msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->smoothness = v; }
-msAPI int           msMaterialGetColorMap(ms::Material *_this) { return _this->color_map; }
-msAPI void          msMaterialSetColorMap(ms::Material *_this, int v) { _this->color_map = v; }
-msAPI int           msMaterialGetMetallicMap(ms::Material *_this) { return _this->metallic_map; }
-msAPI void          msMaterialSetMetallicMap(ms::Material *_this, int v) { _this->metallic_map = v; }
-msAPI int           msMaterialGetEmissionMap(ms::Material *_this) { return _this->emission_map; }
-msAPI void          msMaterialSetEmissionMap(ms::Material *_this, int v) { _this->emission_map = v; }
-msAPI int           msMaterialGetNormalMap(ms::Material *_this) { return _this->normal_map; }
-msAPI void          msMaterialSetNormalMap(ms::Material *_this, int v) { _this->normal_map = v; }
+msAPI float4        msMaterialGetColor(ms::Material *_this) { return _this->getColor(); }
+msAPI void          msMaterialSetColor(ms::Material *_this, const float4 *v) { _this->setColor(*v); }
+msAPI float4        msMaterialGetEmission(ms::Material *_this) { return _this->getEmission(); }
+msAPI void          msMaterialSetEmission(ms::Material *_this, const float4 *v) { _this->setEmission(*v); }
+msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->getMetallic(); }
+msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->setMetallic(v); }
+msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->getSmoothness(); }
+msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->setSmoothness(v); }
+msAPI int           msMaterialGetColorMap(ms::Material *_this) { return _this->getColorMap(); }
+msAPI void          msMaterialSetColorMap(ms::Material *_this, int v) { _this->setColorMap(v); }
+msAPI int           msMaterialGetMetallicMap(ms::Material *_this) { return _this->getMetallicMap(); }
+msAPI void          msMaterialSetMetallicMap(ms::Material *_this, int v) { _this->setMetallicMap(v); }
+msAPI int           msMaterialGetEmissionMap(ms::Material *_this) { return _this->getEmissionMap(); }
+msAPI void          msMaterialSetEmissionMap(ms::Material *_this, int v) { _this->setEmissionMap(v); }
+msAPI int           msMaterialGetNormalMap(ms::Material *_this) { return _this->getNormalMap(); }
+msAPI void          msMaterialSetNormalMap(ms::Material *_this, int v) { _this->setNormalMap(v); }
 
 msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
 msAPI int               msTextureGetID(ms::Texture *_this) { return _this->id; }

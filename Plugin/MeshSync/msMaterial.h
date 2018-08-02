@@ -102,6 +102,7 @@ public:
     std::string name;
     MaterialDataFlags flags = { 0 };
 
+protected:
     float4 color = float4::one();
     float4 emission = float4::zero();
     float metalic = 0.0f;
@@ -125,6 +126,24 @@ public:
     void clear();
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
+
+    void    setColor(float4 v);
+    float4  getColor() const;
+    void    setEmission(float4 v);
+    float4  getEmission() const;
+    void    setMetallic(float v);
+    float   getMetallic() const;
+    void    setSmoothness(float v);
+    float   getSmoothness() const;
+
+    void    setColorMap(int v);
+    int     getColorMap() const;
+    void    setEmissionMap(int v);
+    int     getEmissionMap() const;
+    void    setMetallicMap(int v);
+    int     getMetallicMap() const;
+    void    setNormalMap(int v);
+    int     getNormalMap() const;
 };
 msHasSerializer(Material);
 using MaterialPtr = std::shared_ptr<Material>;

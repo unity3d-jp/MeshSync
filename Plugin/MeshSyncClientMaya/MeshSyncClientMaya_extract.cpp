@@ -15,8 +15,9 @@ void MeshSyncClientMaya::exportMaterials()
 
         auto tmp = ms::Material::create();
         tmp->name = fn.name().asChar();
-        tmp->color = to_float4(fn.color());
         tmp->id = (int)m_material_id_table.size();
+        tmp->setColor(to_float4(fn.color()));
+
         m_material_id_table.push_back(fn.name());
         m_materials.push_back(tmp);
 

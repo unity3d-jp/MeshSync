@@ -362,7 +362,7 @@ void msxmContext::send(bool force)
             sprintf(name, "XismoMaterial:ID[%04x]", i);
             mat->id = i;
             mat->name = name;
-            mat->color = m_material_data[i].diffuse;
+            mat->setColor(m_material_data[i].diffuse);
         }
     }
 
