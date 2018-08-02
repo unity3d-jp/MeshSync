@@ -124,12 +124,15 @@ std::shared_ptr<Material> Material::create(std::istream & is)
     return make_shared_ptr(ret);
 }
 
-Material::Material() {}
+Material::Material()
+{
+    flags.has_color = 1;
+}
 Material::~Material() {}
 
 #define EachMember(F)\
-    F(id) F(name) F(color) F(emission) F(metalic) F(smoothness)\
-    F(color_tid) F(metallic_tid) F(emission_tid) F(normal_tid)
+    F(id) F(name) F(flags) F(color) F(emission) F(metalic) F(smoothness)\
+    F(color_map) F(metallic_map) F(emission_map) F(normal_map)
 
 uint32_t Material::getSerializeSize() const
 {
@@ -150,16 +153,18 @@ void Material::clear()
 {
     id = 0;
     name.clear();
+    flags = { 0 };
+    flags.has_color = 1;
 
     color = float4::one();
-    emission = { 0.0f, 0.0f, 0.0f, -1.0f };
-    metalic = -1.0f;
-    smoothness = -1.0f;
+    emission = float4::zero();
+    metalic = 0.0f;
+    smoothness = 0.5f;
 
-    color_tid = 0;
-    metallic_tid = 0;
-    emission_tid = 0;
-    normal_tid = 0;
+    color_map = 0;
+    metallic_map = 0;
+    emission_map = 0;
+    normal_map = 0;
 }
 
 bool Material::operator==(const Material& v) const

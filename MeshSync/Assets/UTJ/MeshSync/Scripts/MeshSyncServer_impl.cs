@@ -242,6 +242,51 @@ namespace UTJ.MeshSync
             }
         };
 
+        public struct MaterialDataFlags
+        {
+            public int flags;
+            public bool hasColor
+            {
+                get { return (flags & (1 << 0)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 0)); }
+            }
+            public bool hasColorMap
+            {
+                get { return (flags & (1 << 1)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 1)); }
+            }
+            public bool hasEmission
+            {
+                get { return (flags & (1 << 2)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 2)); }
+            }
+            public bool hasEmissionMap
+            {
+                get { return (flags & (1 << 3)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 3)); }
+            }
+            public bool hasMetallic
+            {
+                get { return (flags & (1 << 4)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 4)); }
+            }
+            public bool hasSmoothness
+            {
+                get { return (flags & (1 << 5)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 5)); }
+            }
+            public bool hasMetallicMap
+            {
+                get { return (flags & (1 << 6)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 6)); }
+            }
+            public bool hasNormalMap
+            {
+                get { return (flags & (1 << 7)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 7)); }
+            }
+        };
+
         public struct MaterialData
         {
             #region internal
@@ -251,6 +296,9 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern MaterialDataFlags msMaterialGetFlags(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetFlags(IntPtr _this, MaterialDataFlags v);
+
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetEmission(IntPtr _this);
@@ -260,27 +308,36 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern float msMaterialGetSmoothness(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetSmoothness(IntPtr _this, float v);
 
-            [DllImport("MeshSyncServer")] static extern int  msMaterialGetColorTID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetColorTID(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int  msMaterialGetMetallicTID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetallicTID(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int  msMaterialGetEmissionTID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmissionTID(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int  msMaterialGetNormalTID(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetNormalTID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetColorMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetColorMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetMetallicMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetallicMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetEmissionMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmissionMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetNormalMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetNormalMap(IntPtr _this, int v);
             #endregion
 
             public static MaterialData Create() { return msMaterialCreate(); }
 
-            public int id {
+            public int id
+            {
                 get { return msMaterialGetID(_this); }
                 set { msMaterialSetID(_this, value); }
             }
-            public string name {
+            public string name
+            {
                 get { return S(msMaterialGetName(_this)); }
                 set { msMaterialSetName(_this, value); }
             }
-            public Color color {
+            public MaterialDataFlags flags
+            {
+                get { return msMaterialGetFlags(_this); }
+                set { msMaterialSetFlags(_this, value); }
+            }
+
+            public Color color
+            {
                 get { return msMaterialGetColor(_this); }
                 set { msMaterialSetColor(_this, ref value); }
             }
@@ -300,25 +357,25 @@ namespace UTJ.MeshSync
                 set { msMaterialSetSmoothness(_this, value); }
             }
 
-            public int colorTID
+            public int colorMap
             {
-                get { return msMaterialGetColorTID(_this); }
-                set { msMaterialSetColorTID(_this, value); }
+                get { return msMaterialGetColorMap(_this); }
+                set { msMaterialSetColorMap(_this, value); }
             }
-            public int metallicTID
+            public int metallicMap
             {
-                get { return msMaterialGetMetallicTID(_this); }
-                set { msMaterialSetMetallicTID(_this, value); }
+                get { return msMaterialGetMetallicMap(_this); }
+                set { msMaterialSetMetallicMap(_this, value); }
             }
-            public int emissionTID
+            public int emissionMap
             {
-                get { return msMaterialGetEmissionTID(_this); }
-                set { msMaterialSetEmissionTID(_this, value); }
+                get { return msMaterialGetEmissionMap(_this); }
+                set { msMaterialSetEmissionMap(_this, value); }
             }
-            public int normalTID
+            public int normalMap
             {
-                get { return msMaterialGetNormalTID(_this); }
-                set { msMaterialSetNormalTID(_this, value); }
+                get { return msMaterialGetNormalMap(_this); }
+                set { msMaterialSetNormalMap(_this, value); }
             }
         }
 

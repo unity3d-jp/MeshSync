@@ -83,22 +83,35 @@ msHasSerializer(Texture);
 using TexturePtr = std::shared_ptr<Texture>;
 
 
+struct MaterialDataFlags
+{
+    uint32_t has_color : 1;
+    uint32_t has_color_map : 1;
+    uint32_t has_emission : 1;
+    uint32_t has_emission_map : 1;
+    uint32_t has_metallic : 1;
+    uint32_t has_smoothness : 1;
+    uint32_t has_metallic_map : 1;
+    uint32_t has_normal_map : 1;
+};
+
 class Material
 {
 public:
     int id = 0;
     std::string name;
+    MaterialDataFlags flags = { 0 };
 
     float4 color = float4::one();
-    float4 emission = { 0.0f, 0.0f, 0.0f, -1.0f }; // if w is negative, will be ignored
-    float metalic = -1.0f;      // if these are negative, will be ignored
-    float smoothness = -1.0f;   // 
+    float4 emission = float4::zero();
+    float metalic = 0.0f;
+    float smoothness = 0.5f;
 
     // texture ids
-    int color_tid = 0;
-    int metallic_tid = 0;
-    int emission_tid = 0;
-    int normal_tid = 0;
+    int color_map = 0;
+    int metallic_map = 0;
+    int emission_map = 0;
+    int normal_map = 0;
 
 protected:
     Material();

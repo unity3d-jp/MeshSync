@@ -176,9 +176,16 @@ TestCase(Test_SendTexture)
             mat->emission = { 0.7f, 0.1f, 0.2f, 1.0f };
             mat->metalic = 0.2f;
             mat->smoothness = 0.8f;
-            mat->color_tid = 1;
-            mat->metallic_tid = 5;
-            mat->emission_tid = 4;
+            mat->color_map = 1;
+            mat->metallic_map = 5;
+            mat->emission_map = 4;
+
+            mat->flags.has_color_map = 1;
+            mat->flags.has_emission = 1;
+            mat->flags.has_emission_map = 1;
+            mat->flags.has_metallic = 1;
+            mat->flags.has_smoothness = 1;
+            mat->flags.has_metallic_map = 1;
         }
 
         Send(scene);

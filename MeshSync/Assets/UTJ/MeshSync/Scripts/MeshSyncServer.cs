@@ -473,29 +473,28 @@ namespace UTJ.MeshSync
 
                 if (dst.material.name == src.name)
                 {
-                    // base color
-                    dst.material.color = dst.color;
+                    var flags = src.flags;
 
-                    var mainTex = FindTexture(src.colorTID);
-                    if (mainTex != null)
-                        dst.material.mainTexture = mainTex;
+                    // base color
+                    if (flags.hasColor)
+                        dst.material.color = dst.color;
+
+                    if (flags.hasColorMap)
+                    {
+                        var mainTex = FindTexture(src.colorMap);
+                        if (mainTex != null)
+                            dst.material.mainTexture = mainTex;
+                    }
 
                     // emission
                     const string _EmissionColor = "_EmissionColor";
                     const string _EmissionMap = "_EmissionMap";
                     const string _EMISSION = "_EMISSION";
 
-                    var emission = src.emission;
-                    if (emission.a >= 0.0f && dst.material.HasProperty(_EmissionColor))
+                    if (flags.hasEmission && dst.material.HasProperty(_EmissionColor))
                     {
+                        var emission = src.emission;
                         dst.material.SetColor(_EmissionColor, emission);
-
-                        if (dst.material.HasProperty(_EmissionMap))
-                        {
-                            var emissionTex = FindTexture(src.emissionTID);
-                            if (emissionTex != null)
-                                dst.material.SetTexture(_EmissionMap, emissionTex);
-                        }
 
                         if (emission != Color.black)
                         {
@@ -515,23 +514,28 @@ namespace UTJ.MeshSync
                         }
                     }
 
+                    if (flags.hasEmissionMap && dst.material.HasProperty(_EmissionMap))
+                    {
+                        var emissionTex = FindTexture(src.emissionMap);
+                        if (emissionTex != null)
+                            dst.material.SetTexture(_EmissionMap, emissionTex);
+                    }
+
                     // metallic
                     const string _Metallic = "_Metallic";
                     const string _Glossiness = "_Glossiness";
                     const string _MetallicGlossMap = "_MetallicGlossMap";
                     const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
 
-                    var metallic = src.metalic;
-                    if (metallic >= 0.0f && dst.material.HasProperty(_Metallic))
-                        dst.material.SetFloat(_Metallic, metallic);
+                    if (flags.hasMetallic && dst.material.HasProperty(_Metallic))
+                        dst.material.SetFloat(_Metallic, src.metalic);
 
-                    var smoothness = src.smoothness;
-                    if (smoothness >= 0.0f && dst.material.HasProperty(_Glossiness))
-                        dst.material.SetFloat(_Glossiness, smoothness);
+                    if (flags.hasSmoothness && dst.material.HasProperty(_Glossiness))
+                        dst.material.SetFloat(_Glossiness, src.smoothness);
 
-                    if (dst.material.HasProperty(_MetallicGlossMap))
+                    if (flags.hasMetallicMap && dst.material.HasProperty(_MetallicGlossMap))
                     {
-                        var metallicTex = FindTexture(src.metallicTID);
+                        var metallicTex = FindTexture(src.metallicMap);
                         if (metallicTex != null)
                         {
                             dst.material.EnableKeyword(_METALLICGLOSSMAP);
@@ -547,9 +551,9 @@ namespace UTJ.MeshSync
                     const string _BumpMap = "_BumpMap";
                     const string _NORMALMAP = "_NORMALMAP";
 
-                    if (dst.material.HasProperty(_BumpMap))
+                    if (flags.hasNormalMap && dst.material.HasProperty(_BumpMap))
                     {
-                        var normalTex = FindTexture(src.normalTID);
+                        var normalTex = FindTexture(src.normalMap);
                         if (normalTex != null)
                         {
                             dst.material.EnableKeyword(_NORMALMAP);
