@@ -469,66 +469,98 @@ namespace UTJ.MeshSync
                     dst.material = tmp;
                 }
                 dst.name = src.name;
-
-                // base color
                 dst.color = src.color;
+
                 if (dst.material.name == src.name)
+                {
+                    // base color
                     dst.material.color = dst.color;
 
-                var mainTex = FindTexture(src.colorTID);
-                if (mainTex != null)
-                    dst.material.mainTexture = mainTex;
+                    var mainTex = FindTexture(src.colorTID);
+                    if (mainTex != null)
+                        dst.material.mainTexture = mainTex;
 
-                // emission
-                const string _EmissionColor = "_EmissionColor";
-                const string _EmissionMap = "_EmissionMap";
+                    // emission
+                    const string _EmissionColor = "_EmissionColor";
+                    const string _EmissionMap = "_EmissionMap";
+                    const string _EMISSION = "_EMISSION";
 
-                var emission = src.emission;
-                if (emission.a >= 0.0f && dst.material.HasProperty(_EmissionColor))
-                {
-                    dst.material.SetColor(_EmissionColor, emission);
-
-                    if (dst.material.HasProperty(_EmissionMap))
+                    var emission = src.emission;
+                    if (emission.a >= 0.0f && dst.material.HasProperty(_EmissionColor))
                     {
-                        var emissionTex = FindTexture(src.emissionTID);
-                        if (emissionTex != null)
-                            dst.material.SetTexture(_EmissionMap, emissionTex);
+                        dst.material.SetColor(_EmissionColor, emission);
+
+                        if (dst.material.HasProperty(_EmissionMap))
+                        {
+                            var emissionTex = FindTexture(src.emissionTID);
+                            if (emissionTex != null)
+                                dst.material.SetTexture(_EmissionMap, emissionTex);
+                        }
+
+                        if (emission != Color.black)
+                        {
+                            if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                            {
+                                dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                                dst.material.EnableKeyword(_EMISSION);
+                            }
+                        }
+                        else
+                        {
+                            if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.RealtimeEmissive)
+                            {
+                                dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                                dst.material.DisableKeyword(_EMISSION);
+                            }
+                        }
                     }
 
-                    if (emission != Color.black)
+                    // metallic
+                    const string _Metallic = "_Metallic";
+                    const string _Glossiness = "_Glossiness";
+                    const string _MetallicGlossMap = "_MetallicGlossMap";
+                    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+
+                    var metallic = src.metalic;
+                    if (metallic >= 0.0f && dst.material.HasProperty(_Metallic))
+                        dst.material.SetFloat(_Metallic, metallic);
+
+                    var smoothness = src.smoothness;
+                    if (smoothness >= 0.0f && dst.material.HasProperty(_Glossiness))
+                        dst.material.SetFloat(_Glossiness, smoothness);
+
+                    if (dst.material.HasProperty(_MetallicGlossMap))
                     {
-                        if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
-                            dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                        var metallicTex = FindTexture(src.metallicTID);
+                        if (metallicTex != null)
+                        {
+                            dst.material.EnableKeyword(_METALLICGLOSSMAP);
+                            dst.material.SetTexture(_MetallicGlossMap, metallicTex);
+                        }
+                        else
+                        {
+                            dst.material.DisableKeyword(_METALLICGLOSSMAP);
+                        }
                     }
-                    else
+
+                    // normal map
+                    const string _BumpMap = "_BumpMap";
+                    const string _NORMALMAP = "_NORMALMAP";
+
+                    if (dst.material.HasProperty(_BumpMap))
                     {
-                        if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.RealtimeEmissive)
-                            dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                        var normalTex = FindTexture(src.normalTID);
+                        if (normalTex != null)
+                        {
+                            dst.material.EnableKeyword(_NORMALMAP);
+                            dst.material.SetTexture(_BumpMap, normalTex);
+                        }
+                        else
+                        {
+                            dst.material.DisableKeyword(_NORMALMAP);
+                        }
                     }
                 }
-
-                // metallic
-                const string _Metallic = "_Metallic";
-                const string _Glossiness = "_Glossiness";
-                const string _MetallicGlossMap = "_MetallicGlossMap";
-
-                var metallic = src.metalic;
-                if (metallic >= 0.0f && dst.material.HasProperty(_Metallic))
-                    dst.material.SetFloat(_Metallic, metallic);
-
-                var smoothness = src.smoothness;
-                if (smoothness >= 0.0f && dst.material.HasProperty(_Glossiness))
-                    dst.material.SetFloat(_Glossiness, smoothness);
-
-                var metallicTex = FindTexture(src.metallicTID);
-                if (metallicTex != null && dst.material.HasProperty(_MetallicGlossMap))
-                    dst.material.SetTexture(_MetallicGlossMap, metallicTex);
-
-                // normal map
-                const string _BumpMap = "_BumpMap";
-                var normalTex = FindTexture(src.normalTID);
-                if (normalTex != null && dst.material.HasProperty(_BumpMap))
-                    dst.material.SetTexture(_BumpMap, normalTex);
 
                 newlist.Add(dst);
             }

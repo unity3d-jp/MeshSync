@@ -15,9 +15,21 @@ static void Send(ms::Scene& scene)
     ms::ClientSettings settings;
     ms::Client client(settings);
 
-    ms::SetMessage mes;
-    mes.scene = std::move(scene);
-    client.send(mes);
+    {
+        ms::FenceMessage mes;
+        mes.type = ms::FenceMessage::FenceType::SceneBegin;
+        client.send(mes);
+    }
+    {
+        ms::SetMessage mes;
+        mes.scene = scene;
+        client.send(mes);
+    }
+    {
+        ms::FenceMessage mes;
+        mes.type = ms::FenceMessage::FenceType::SceneEnd;
+        client.send(mes);
+    }
 }
 
 
