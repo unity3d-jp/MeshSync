@@ -17,6 +17,8 @@ public:
         Fence,
         Text,
         Screenshot,
+        Query,
+        Response,
     };
 
     virtual ~Message();
@@ -63,6 +65,7 @@ public:
     bool deserialize(std::istream& is) override;
 };
 msHasSerializer(GetMessage);
+using GetMessagePtr = std::shared_ptr<GetMessage>;
 
 
 class SetMessage : public Message
@@ -78,6 +81,7 @@ public:
     bool deserialize(std::istream& is) override;
 };
 msHasSerializer(SetMessage);
+using SetMessagePtr = std::shared_ptr<SetMessage>;
 
 
 class DeleteMessage : public Message
@@ -102,6 +106,7 @@ public:
 };
 msHasSerializer(DeleteMessage::Identifier);
 msHasSerializer(DeleteMessage);
+using DeleteMessagePtr = std::shared_ptr<DeleteMessage>;
 
 
 class FenceMessage : public Message
@@ -123,6 +128,7 @@ public:
     bool deserialize(std::istream& is) override;
 };
 msHasSerializer(FenceMessage);
+using FenceMessagePtr = std::shared_ptr<FenceMessage>;
 
 
 class TextMessage : public Message
@@ -146,6 +152,7 @@ public:
     Type type = Type::Normal;
 };
 msHasSerializer(TextMessage);
+using TextMessagePtr = std::shared_ptr<TextMessage>;
 
 
 class ScreenshotMessage : public Message
@@ -163,5 +170,48 @@ public:
     bool deserialize(std::istream& is) override;
 };
 msHasSerializer(ScreenshotMessage);
+using ScreenshotMessagePtr = std::shared_ptr<ScreenshotMessage>;
+
+
+class QueryMessage : public Message
+{
+using super = Message;
+public:
+    enum class QueryType
+    {
+        Unknown,
+        ClientName,
+        RootNodes,
+        AllNodes,
+    };
+
+public:
+    QueryType type = QueryType::Unknown;
+
+    std::shared_ptr<std::atomic_int> wait_flag; // non-serializable
+    MessagePtr response;                        // 
+
+    QueryMessage();
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    bool deserialize(std::istream& is) override;
+};
+msHasSerializer(QueryMessage);
+using QueryMessagePtr = std::shared_ptr<QueryMessage>;
+
+
+class ResponseMessage : public Message
+{
+using super = Message;
+public:
+    std::vector<std::string> text;
+
+    ResponseMessage();
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    bool deserialize(std::istream& is) override;
+};
+msHasSerializer(ResponseMessage);
+using ResponseMessagePtr = std::shared_ptr<ResponseMessage>;
 
 } // namespace ms

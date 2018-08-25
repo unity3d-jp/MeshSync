@@ -20,6 +20,7 @@ public:
     bool send(const SetMessage& mes);
     bool send(const DeleteMessage& mes);
     bool send(const FenceMessage& mes);
+    MessagePtr send(const QueryMessage& mes);
 
 private:
     ClientSettings m_settings;

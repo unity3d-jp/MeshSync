@@ -114,4 +114,32 @@ bool Client::send(const FenceMessage & mes)
     }
 }
 
+MessagePtr Client::send(const QueryMessage & mes)
+{
+    MessagePtr ret;
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+        session.setTimeout(5000 * 1000);
+
+        {
+            HTTPRequest request{ HTTPRequest::HTTP_POST, "query" };
+            request.setContentType("application/octet-stream");
+            request.setContentLength(mes.getSerializeSize());
+            auto& os = session.sendRequest(request);
+            mes.serialize(os);
+            os.flush();
+        }
+
+        {
+            HTTPResponse response;
+            auto& is = session.receiveResponse(response);
+            ret.reset(new ResponseMessage());
+            ret->deserialize(is);
+        }
+    }
+    catch (...) {
+    }
+    return ret;
+}
+
 } // namespace ms

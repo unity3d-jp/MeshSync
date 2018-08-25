@@ -176,6 +176,11 @@ namespace UTJ.MeshSync
                     case MessageType.Screenshot:
                         OnRecvScreenshot(data);
                         break;
+                    case MessageType.Query:
+                        OnRecvQuery((QueryMessage)data);
+                        break;
+                    default:
+                        break;
                 }
             }
             catch (Exception e) { Debug.LogError(e); }
@@ -1567,6 +1572,33 @@ namespace UTJ.MeshSync
             // actual capture will be done at end of frame. not done immediately.
             // just set flag now.
             m_captureScreenshotInProgress = true;
+        }
+
+        void OnRecvQuery(QueryMessage data)
+        {
+            switch (data.queryType)
+            {
+                case QueryMessage.QueryType.ClientName:
+                    data.AddResponseText("Unity");
+                    break;
+                case QueryMessage.QueryType.AllNodes:
+                    {
+                        var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                        foreach (var go in roots)
+                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    }
+                    break;
+                case QueryMessage.QueryType.RootNodes:
+                    {
+                        var objects = FindObjectsOfType<Transform>();
+                        foreach (var go in objects)
+                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    }
+                    break;
+                default:
+                    break;
+            }
+            data.FinishRespond();
         }
 
 #if UNITY_EDITOR

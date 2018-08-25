@@ -97,6 +97,9 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
     else if (uri.find("/screenshot") != std::string::npos) {
         m_server->recvScreenshot(request, response);
     }
+    else if (uri == "query") {
+        m_server->recvQuery(request, response);
+    }
     else {
         RespondTextForm(response);
     }
@@ -175,29 +178,32 @@ int Server::processMessages(const MessageHandler& handler)
 {
     lock_t l(m_mutex);
     for (auto& p : m_recv_history) {
-        if (auto *get = dynamic_cast<GetMessage*>(p.get())) {
+        if (auto get = std::dynamic_pointer_cast<GetMessage>(p)) {
             m_current_get_request = get;
             handler(Message::Type::Get, *p);
             m_current_get_request = nullptr;
         }
-        else if (auto *set = dynamic_cast<SetMessage*>(p.get())) {
+        else if (auto set = std::dynamic_pointer_cast<SetMessage>(p)) {
             handler(Message::Type::Set, *set);
         }
-        else if (auto *del = dynamic_cast<DeleteMessage*>(p.get())) {
+        else if (auto del = std::dynamic_pointer_cast<DeleteMessage>(p)) {
             handler(Message::Type::Delete, *p);
             for (auto& id : del->targets) {
                 m_client_objs.erase(id.path);
             }
         }
-        else if (dynamic_cast<FenceMessage*>(p.get())) {
+        else if (std::dynamic_pointer_cast<FenceMessage>(p)) {
             handler(Message::Type::Fence, *p);
         }
-        else if (dynamic_cast<TextMessage*>(p.get())) {
+        else if (std::dynamic_pointer_cast<TextMessage>(p)) {
             handler(Message::Type::Text, *p);
         }
-        else if (auto *shot = dynamic_cast<ScreenshotMessage*>(p.get())) {
+        else if (auto shot = std::dynamic_pointer_cast<ScreenshotMessage>(p)) {
             m_current_screenshot_request = shot;
             handler(Message::Type::Screenshot, *p);
+        }
+        else if (auto q = std::dynamic_pointer_cast<QueryMessage>(p)) {
+            handler(Message::Type::Query, *p);
         }
     }
 
@@ -281,11 +287,6 @@ void Server::queueVersionNotMatchedMessage()
     txt->type = TextMessage::Type::Error;
     txt->text = "protocol version not matched";
     m_recv_history.emplace_back(txt);
-}
-
-GetMessage* Server::getCurrentGetRequest()
-{
-    return m_current_get_request;
 }
 
 Scene* Server::getHostScene()
@@ -499,6 +500,44 @@ void Server::recvScreenshot(HTTPServerRequest &request, HTTPServerResponse &resp
     // serve data
     response.set("Cache-Control", "no-store, must-revalidate");
     response.sendFile(m_screenshot_file_path, "image/png");
+}
+
+void Server::recvQuery(Poco::Net::HTTPServerRequest & request, Poco::Net::HTTPServerResponse & response)
+{
+    auto mes = QueryMessagePtr(new QueryMessage());
+    mes->deserialize(request.stream());
+    mes->wait_flag.reset(new std::atomic_int(1));
+    mes->response = ResponseMessagePtr(new ResponseMessage());
+
+    // queue request
+    queueMessage(mes);
+
+    // wait for data arrive (or timeout)
+    for (int i = 0; i < 300; ++i) {
+        if (*mes->wait_flag == 0) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // serve data
+    if (mes->response) {
+        response.setContentType("application/octet-stream");
+        response.setContentLength(mes->response->getSerializeSize());
+
+        auto& os = response.send();
+        mes->response->serialize(os);
+        os.flush();
+
+        mes->response.reset();
+    }
+    else {
+        response.setContentType("application/octet-stream");
+        response.setContentLength(0);
+
+        auto& os = response.send();
+        os.flush();
+    }
 }
 
 } // namespace ms

@@ -21,6 +21,8 @@ namespace UTJ.MeshSync
             Fence,
             Text,
             Screenshot,
+            Query,
+            Response,
         }
 
         public struct GetFlags
@@ -170,6 +172,42 @@ namespace UTJ.MeshSync
             }
         }
 
+
+        public struct QueryMessage
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern QueryType msQueryGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msQueryFinishRespond(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msQueryAddResponseText(IntPtr _this, string text);
+            #endregion
+
+            public enum QueryType
+            {
+                Unknown,
+                ClientName,
+                RootNodes,
+                AllNodes,
+            }
+
+            public static explicit operator QueryMessage(IntPtr v)
+            {
+                QueryMessage ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public QueryType queryType { get { return msQueryGetType(_this); } }
+
+            public void FinishRespond()
+            {
+                msQueryFinishRespond(_this);
+            }
+            public void AddResponseText(string text)
+            {
+                msQueryAddResponseText(_this, text);
+            }
+        }
 
 
         public struct MeshDataFlags

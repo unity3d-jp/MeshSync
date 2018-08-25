@@ -45,7 +45,7 @@ msAPI int msServerGetNumMessages(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::Message::Type type, const ms::Message& data) {
+    return server->processMessages([handler](ms::Message::Type type, ms::Message& data) {
         handler(type, &data);
     });
 }
@@ -262,6 +262,25 @@ msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_this)
 {
     return _this->type;
 }
+
+msAPI ms::QueryMessage::QueryType msQueryGetType(ms::QueryMessage *_this)
+{
+    return _this->type;
+}
+msAPI void msQueryFinishRespond(ms::QueryMessage *_this)
+{
+    *_this->wait_flag = 0;
+}
+msAPI void msQueryAddResponseText(ms::QueryMessage *_this, const char *text)
+{
+    ms::ResponseMessagePtr res = std::dynamic_pointer_cast<ms::ResponseMessage>(_this->response);
+    if (!res) {
+        res.reset(new ms::ResponseMessage());
+        _this->response = res;
+    }
+    res->text.push_back(text);
+}
+
 
 
 msAPI ms::Transform* msTransformCreate()

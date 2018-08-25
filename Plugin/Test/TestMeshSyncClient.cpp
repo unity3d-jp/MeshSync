@@ -184,3 +184,29 @@ TestCase(Test_SendTexture)
         Send(scene);
     }
 }
+
+TestCase(Test_Query)
+{
+    auto send_query = [](ms::QueryMessage::QueryType qt) {
+        ms::ClientSettings settings;
+        ms::Client client(settings);
+
+        ms::QueryMessage query;
+        query.type = qt;
+        auto response = std::dynamic_pointer_cast<ms::ResponseMessage>(client.send(query));
+
+        printf("querty: %d\n", (int)qt);
+        printf("response:\n");
+        if (response) {
+            for (auto& t : response->text)
+                printf("  %s\n", t.c_str());
+        }
+        else {
+            printf("  (null)\n");
+        }
+    };
+
+    send_query(ms::QueryMessage::QueryType::ClientName);
+    send_query(ms::QueryMessage::QueryType::RootNodes);
+    send_query(ms::QueryMessage::QueryType::AllNodes);
+}
