@@ -15,10 +15,12 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.cpp" />
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmbUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMotionBuilder/pch.h" />
     <ClInclude Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.h" />
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmbUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">

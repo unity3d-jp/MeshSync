@@ -1,7 +1,5 @@
 #pragma once
 
-#define MOBULIVELINK__CLASSNAME		FMobuLiveLink
-#define MOBULIVELINK__CLASSSTR		"MobuLiveLink"
 
 class msmbDevice : public FBDevice
 {
@@ -19,8 +17,24 @@ private:
     void update();
     void send();
 
+    void extract(FBModel* src, ms::Scene& dst);
+    void extractTransform(FBModel* src, ms::Transform& dst);
+    void extractCamera(FBCamera* src, ms::Camera& dst);
+    void extractLight(FBLight* src, ms::Light& dst);
+    void extractMesh(FBModel* src, ms::Mesh& dst);
+    void extractTexture(FBModel* src, ms::Texture& dst);
+    void extractMaterial(FBModel* src, ms::Material& dst);
+    void extractAnimation(FBAnimationNode* src, ms::Animation& dst);
+
 private:
     bool m_dirty = true;
+
+    bool m_auto_sync = false;
+    bool m_sync_cameras = false;
+    bool m_sync_lights = false;
+    bool m_sync_meshes = false;
+    bool m_sync_textures = false;
+    bool m_sync_material = false;
 };
 
 
