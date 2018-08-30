@@ -30,6 +30,10 @@ private:
 
 public:
     ms::ClientSettings client_settings;
+    float scale_factor = 1.0f;
+    float animation_timescale = 1.0f;
+    float animation_sps = 3.0f;
+
     bool auto_sync = false;
     bool sync_cameras = false;
     bool sync_lights = false;

@@ -9,8 +9,6 @@ FBRegisterDeviceLayout(msmbLayout, "msmbDevice", FB_DEFAULT_SDK_ICON);
 
 bool msmbLayout::FBCreate()
 {
-    m_device = (msmbDevice*)(FBDevice*)Device;
-
     const int lS = 5;
     const int lS2 = 10;
     const int lW = 100;
@@ -18,174 +16,209 @@ bool msmbLayout::FBCreate()
     const int lH = 18;
     const int lH2 = 200;
 
+    const char *idLabelServer = "idLabelServer";
+    const char *idLabelAddress = "idLabelAddress";
+    const char *idEditAddress = "idEditAddress";
+    const char *idLabelPort = "idLabelPort";
+    const char *idEditPort = "idEditPort";
+
+    const char *idLabelScene = "idLabelScene";
+    const char *idLabelScale = "idLabelScale";
+    const char *idEditlScale = "idEditlScale";
+    const char *idButtonSyncMeshes = "idButtonSyncMeshes";
+    const char *idButtonSyncCameras = "idButtonSyncCameras";
+    const char *idButtonSyncLights = "idButtonSyncLights";
+    const char *idButtonAutoSync = "idButtonAutoSync";
+    const char *idButtonManualSync = "idButtonManualSync";
+
+    const char *idLabelAnimation = "idLabelAnimation";
+    const char *idLabelTimeScale = "idLabelTimeScale";
+    const char *idEditTimeScale = "idEditTimeScale";
+    const char *idLabelSPS = "idLabelSPS";
+    const char *idEditSPS = "idEditSPS";
+    const char *idButtonSyncAnimations = "idButtonSyncAnimations";
+
+    m_device = (msmbDevice*)(FBDevice*)Device;
+
     // server settings
     {
-        AddRegion("LabelServer", "LabelServer",
+        AddRegion(idLabelServer, idLabelServer,
             lS, kFBAttachLeft, "", 1.0,
             lS, kFBAttachTop, "", 1.0,
             lW, kFBAttachNone, NULL, 1.0,
             lH, kFBAttachNone, NULL, 1.0);
-        SetControl("LabelServer", m_lb_server);
+        SetControl(idLabelServer, m_lb_server);
         m_lb_server.Caption = "Server";
 
-        AddRegion("LabelAddress", "LabelAddress",
-            0, kFBAttachLeft, "LabelServer", 1.0,
-            lS, kFBAttachBottom, "LabelServer", 1.0,
-            0, kFBAttachWidth, "LabelServer", 1.0,
-            0, kFBAttachHeight, "LabelServer", 1.0);
-        SetControl("LabelAddress", m_lb_address);
+        AddRegion(idLabelAddress, idLabelAddress,
+            0, kFBAttachLeft, idLabelServer, 1.0,
+            lS, kFBAttachBottom, idLabelServer, 1.0,
+            0, kFBAttachWidth, idLabelServer, 1.0,
+            0, kFBAttachHeight, idLabelServer, 1.0);
+        SetControl(idLabelAddress, m_lb_address);
         m_lb_address.Caption = "Address ";
 
-        AddRegion("EditAddress", "EditAddress",
-            lS, kFBAttachRight, "LabelAddress", 1.0,
-            0, kFBAttachTop, "LabelAddress", 1.0,
+        AddRegion(idEditAddress, idEditAddress,
+            lS, kFBAttachRight, idLabelAddress, 1.0,
+            0, kFBAttachTop, idLabelAddress, 1.0,
             lW, kFBAttachNone, NULL, 1.0,
-            0, kFBAttachHeight, "LabelAddress", 1.0);
-        SetControl("EditAddress", m_ed_address);
+            0, kFBAttachHeight, idLabelAddress, 1.0);
+        SetControl(idEditAddress, m_ed_address);
         m_ed_address.Text = m_device->client_settings.server.c_str();
+        m_ed_address.OnChange.Add(this, (FBCallback)&msmbLayout::onServerSettingsChange);
 
-        AddRegion("LabelPort", "LabelPort",
-            0, kFBAttachLeft, "LabelAddress", 1.0,
-            lS, kFBAttachBottom, "LabelAddress", 1.0,
-            0, kFBAttachWidth, "LabelAddress", 1.0,
-            0, kFBAttachHeight, "LabelAddress", 1.0);
-        SetControl("LabelPort", m_lb_port);
+        AddRegion(idLabelPort, idLabelPort,
+            0, kFBAttachLeft, idLabelAddress, 1.0,
+            lS, kFBAttachBottom, idLabelAddress, 1.0,
+            0, kFBAttachWidth, idLabelAddress, 1.0,
+            0, kFBAttachHeight, idLabelAddress, 1.0);
+        SetControl(idLabelPort, m_lb_port);
         m_lb_port.Caption = "Port ";
 
-        AddRegion("EditPort", "EditPort",
-            lS, kFBAttachRight, "LabelPort", 1.0,
-            0, kFBAttachTop, "LabelPort", 1.0,
+        AddRegion(idEditPort, idEditPort,
+            lS, kFBAttachRight, idLabelPort, 1.0,
+            0, kFBAttachTop, idLabelPort, 1.0,
             lW, kFBAttachNone, NULL, 1.0,
-            0, kFBAttachHeight, "LabelPort", 1.0);
-        SetControl("EditPort", m_ed_port);
-        m_ed_port.Text = "8080";
+            0, kFBAttachHeight, idLabelPort, 1.0);
+        SetControl(idEditPort, m_ed_port);
+        m_ed_port.Value = 8080;
+        m_ed_port.OnChange.Add(this, (FBCallback)&msmbLayout::onServerSettingsChange);
     }
 
     // scene settings
     {
-        AddRegion("LabelScene", "LabelScene",
-            0, kFBAttachLeft, "LabelPort", 1.0,
-            lS2, kFBAttachBottom, "LabelPort", 1.0,
-            0, kFBAttachWidth, "LabelPort", 1.0,
-            0, kFBAttachHeight, "LabelPort", 1.0);
-        SetControl("LabelScene", m_lb_scene);
+        AddRegion(idLabelScene, idLabelScene,
+            0, kFBAttachLeft, idLabelPort, 1.0,
+            lS2, kFBAttachBottom, idLabelPort, 1.0,
+            0, kFBAttachWidth, idLabelPort, 1.0,
+            0, kFBAttachHeight, idLabelPort, 1.0);
+        SetControl(idLabelScene, m_lb_scene);
         m_lb_scene.Caption = "Scene";
 
-        AddRegion("LabelScale", "LabelScale",
-            0, kFBAttachLeft, "LabelScene", 1.0,
-            lS, kFBAttachBottom, "LabelScene", 1.0,
-            0, kFBAttachWidth, "LabelScene", 1.0,
-            0, kFBAttachHeight, "LabelScene", 1.0);
-        SetControl("LabelScale", m_lb_scale);
+        AddRegion(idLabelScale, idLabelScale,
+            0, kFBAttachLeft, idLabelScene, 1.0,
+            lS, kFBAttachBottom, idLabelScene, 1.0,
+            0, kFBAttachWidth, idLabelScene, 1.0,
+            0, kFBAttachHeight, idLabelScene, 1.0);
+        SetControl(idLabelScale, m_lb_scale);
         m_lb_scale.Caption = "Scale Factor";
 
-        AddRegion("EditScale", "EditScale",
-            lS, kFBAttachRight, "LabelScale", 1.0,
-            0, kFBAttachTop, "LabelScale", 1.0,
+        AddRegion(idEditlScale, idEditlScale,
+            lS, kFBAttachRight, idLabelScale, 1.0,
+            0, kFBAttachTop, idLabelScale, 1.0,
             lW, kFBAttachNone, NULL, 1.0,
-            0, kFBAttachHeight, "LabelScale", 1.0);
-        SetControl("EditScale", m_ed_scale);
+            0, kFBAttachHeight, idLabelScale, 1.0);
+        SetControl(idEditlScale, m_ed_scale);
         m_ed_scale.Value = 1.0;
+        m_ed_scale.OnChange.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
 
-        AddRegion("ButtonSyncMeshes", "ButtonSyncMeshes",
-            0, kFBAttachLeft, "LabelScale", 1.0,
-            lS, kFBAttachBottom, "LabelScale", 1.0,
-            0, kFBAttachWidth, "LabelScale", 1.0,
-            0, kFBAttachHeight, "LabelScale", 1.0);
-        SetControl("ButtonSyncMeshes", m_bu_sync_meshes);
+        AddRegion(idButtonSyncMeshes, idButtonSyncMeshes,
+            0, kFBAttachLeft, idLabelScale, 1.0,
+            lS, kFBAttachBottom, idLabelScale, 1.0,
+            0, kFBAttachWidth, idLabelScale, 1.0,
+            0, kFBAttachHeight, idLabelScale, 1.0);
+        SetControl(idButtonSyncMeshes, m_bu_sync_meshes);
         m_bu_sync_meshes.Caption = "Sync Meshes";
         m_bu_sync_meshes.Style = kFBCheckbox;
+        m_bu_sync_meshes.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
-        AddRegion("ButtonSyncCameras", "ButtonSyncCameras",
-            0, kFBAttachLeft, "ButtonSyncMeshes", 1.0,
-            lS, kFBAttachBottom, "ButtonSyncMeshes", 1.0,
-            0, kFBAttachWidth, "ButtonSyncMeshes", 1.0,
-            0, kFBAttachHeight, "ButtonSyncMeshes", 1.0);
-        SetControl("ButtonSyncCameras", m_bu_sync_cameras);
+        AddRegion(idButtonSyncCameras, idButtonSyncCameras,
+            0, kFBAttachLeft, idButtonSyncMeshes, 1.0,
+            lS, kFBAttachBottom, idButtonSyncMeshes, 1.0,
+            0, kFBAttachWidth, idButtonSyncMeshes, 1.0,
+            0, kFBAttachHeight, idButtonSyncMeshes, 1.0);
+        SetControl(idButtonSyncCameras, m_bu_sync_cameras);
         m_bu_sync_cameras.Caption = "Sync Cameras";
         m_bu_sync_cameras.Style = kFBCheckbox;
+        m_bu_sync_cameras.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
-        AddRegion("ButtonSyncLights", "ButtonSyncLights",
-            0, kFBAttachLeft, "ButtonSyncCameras", 1.0,
-            lS, kFBAttachBottom, "ButtonSyncCameras", 1.0,
-            0, kFBAttachWidth, "ButtonSyncCameras", 1.0,
-            0, kFBAttachHeight, "ButtonSyncCameras", 1.0);
-        SetControl("ButtonSyncLights", m_bu_sync_lights);
+        AddRegion(idButtonSyncLights, idButtonSyncLights,
+            0, kFBAttachLeft, idButtonSyncCameras, 1.0,
+            lS, kFBAttachBottom, idButtonSyncCameras, 1.0,
+            0, kFBAttachWidth, idButtonSyncCameras, 1.0,
+            0, kFBAttachHeight, idButtonSyncCameras, 1.0);
+        SetControl(idButtonSyncLights, m_bu_sync_lights);
         m_bu_sync_lights.Caption = "Sync Lights";
         m_bu_sync_lights.Style = kFBCheckbox;
+        m_bu_sync_lights.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
 
-        AddRegion("ButtonAutoSync", "ButtonAutoSync",
-            0, kFBAttachLeft, "ButtonSyncLights", 1.0,
-            lS2, kFBAttachBottom, "ButtonSyncLights", 1.0,
-            0, kFBAttachWidth, "ButtonSyncLights", 1.0,
-            0, kFBAttachHeight, "ButtonSyncLights", 1.0);
-        SetControl("ButtonAutoSync", m_bu_auto_sync);
+        AddRegion(idButtonAutoSync, idButtonAutoSync,
+            0, kFBAttachLeft, idButtonSyncLights, 1.0,
+            lS2, kFBAttachBottom, idButtonSyncLights, 1.0,
+            0, kFBAttachWidth, idButtonSyncLights, 1.0,
+            0, kFBAttachHeight, idButtonSyncLights, 1.0);
+        SetControl(idButtonAutoSync, m_bu_auto_sync);
         m_bu_auto_sync.Caption = "Auto Sync";
         m_bu_auto_sync.Style = kFBCheckbox;
+        m_bu_auto_sync.OnClick.Add(this, (FBCallback)&msmbLayout::onAutoSync);
 
-        AddRegion("ButtonManualSync", "ButtonManualSync",
-            0, kFBAttachLeft, "ButtonAutoSync", 1.0,
-            lS, kFBAttachBottom, "ButtonAutoSync", 1.0,
-            0, kFBAttachWidth, "ButtonAutoSync", 1.0,
-            0, kFBAttachHeight, "ButtonAutoSync", 1.0);
-        SetControl("ButtonManualSync", m_bu_manual_sync);
+        AddRegion(idButtonManualSync, idButtonManualSync,
+            0, kFBAttachLeft, idButtonAutoSync, 1.0,
+            lS, kFBAttachBottom, idButtonAutoSync, 1.0,
+            0, kFBAttachWidth, idButtonAutoSync, 1.0,
+            0, kFBAttachHeight, idButtonAutoSync, 1.0);
+        SetControl(idButtonManualSync, m_bu_manual_sync);
         m_bu_manual_sync.Caption = "Manual Sync";
+        m_bu_manual_sync.OnClick.Add(this, (FBCallback)&msmbLayout::onManualSync);
     }
 
     // animation settings
     {
-        AddRegion("LabelAnimation", "LabelAnimation",
-            0, kFBAttachLeft, "ButtonManualSync", 1.0,
-            lS2, kFBAttachBottom, "ButtonManualSync", 1.0,
-            0, kFBAttachWidth, "ButtonManualSync", 1.0,
-            0, kFBAttachHeight, "ButtonManualSync", 1.0);
-        SetControl("LabelAnimation", m_lb_animation);
+        AddRegion(idLabelAnimation, idLabelAnimation,
+            0, kFBAttachLeft, idButtonManualSync, 1.0,
+            lS2, kFBAttachBottom, idButtonManualSync, 1.0,
+            0, kFBAttachWidth, idButtonManualSync, 1.0,
+            0, kFBAttachHeight, idButtonManualSync, 1.0);
+        SetControl(idLabelAnimation, m_lb_animation);
         m_lb_animation.Caption = "Animation";
 
 
-        AddRegion("LabelTimeScale", "LabelTimeScale",
-            0, kFBAttachLeft, "LabelAnimation", 1.0,
-            lS, kFBAttachBottom, "LabelAnimation", 1.0,
-            0, kFBAttachWidth, "LabelAnimation", 1.0,
-            0, kFBAttachHeight, "LabelAnimation", 1.0);
-        SetControl("LabelTimeScale", m_lb_time_scale);
+        AddRegion(idLabelTimeScale, idLabelTimeScale,
+            0, kFBAttachLeft, idLabelAnimation, 1.0,
+            lS, kFBAttachBottom, idLabelAnimation, 1.0,
+            0, kFBAttachWidth, idLabelAnimation, 1.0,
+            0, kFBAttachHeight, idLabelAnimation, 1.0);
+        SetControl(idLabelTimeScale, m_lb_time_scale);
         m_lb_time_scale.Caption = "Time Scale";
 
-        AddRegion("EditTimeScale", "EditTimeScale",
-            lS, kFBAttachRight, "LabelTimeScale", 1.0,
-            0, kFBAttachTop, "LabelTimeScale", 1.0,
+        AddRegion(idEditTimeScale, idEditTimeScale,
+            lS, kFBAttachRight, idLabelTimeScale, 1.0,
+            0, kFBAttachTop, idLabelTimeScale, 1.0,
             lW, kFBAttachNone, NULL, 1.0,
-            0, kFBAttachHeight, "LabelTimeScale", 1.0);
-        SetControl("EditTimeScale", m_ed_time_scale);
+            0, kFBAttachHeight, idLabelTimeScale, 1.0);
+        SetControl(idEditTimeScale, m_ed_time_scale);
         m_ed_time_scale.Value = 1.0;
+        m_ed_time_scale.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
 
-        AddRegion("LabelSPS", "LabelSPS",
-            0, kFBAttachLeft, "LabelTimeScale", 1.0,
-            lS, kFBAttachBottom, "LabelTimeScale", 1.0,
-            0, kFBAttachWidth, "LabelTimeScale", 1.0,
-            0, kFBAttachHeight, "LabelTimeScale", 1.0);
-        SetControl("LabelSPS", m_lb_sps);
+        AddRegion(idLabelSPS, idLabelSPS,
+            0, kFBAttachLeft, idLabelTimeScale, 1.0,
+            lS, kFBAttachBottom, idLabelTimeScale, 1.0,
+            0, kFBAttachWidth, idLabelTimeScale, 1.0,
+            0, kFBAttachHeight, idLabelTimeScale, 1.0);
+        SetControl(idLabelSPS, m_lb_sps);
         m_lb_sps.Caption = "Samples Per Second";
 
-        AddRegion("EditSPS", "EditSPS",
-            lS, kFBAttachRight, "LabelSPS", 1.0,
-            0, kFBAttachTop, "LabelSPS", 1.0,
+        AddRegion(idEditSPS, idEditSPS,
+            lS, kFBAttachRight, idLabelSPS, 1.0,
+            0, kFBAttachTop, idLabelSPS, 1.0,
             lW, kFBAttachNone, NULL, 1.0,
-            0, kFBAttachHeight, "LabelSPS", 1.0);
-        SetControl("EditSPS", m_ed_sps);
+            0, kFBAttachHeight, idLabelSPS, 1.0);
+        SetControl(idEditSPS, m_ed_sps);
         m_ed_sps.Value = 3.0;
+        m_ed_sps.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
 
-        AddRegion("ButtonSyncAnimations", "ButtonSyncAnimations",
-            0, kFBAttachLeft, "LabelSPS", 1.0,
-            lS2, kFBAttachBottom, "LabelSPS", 1.0,
-            0, kFBAttachWidth, "LabelSPS", 1.0,
-            0, kFBAttachHeight, "LabelSPS", 1.0);
-        SetControl("ButtonSyncAnimations", m_bu_sync_animations);
+        AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
+            0, kFBAttachLeft, idLabelSPS, 1.0,
+            lS2, kFBAttachBottom, idLabelSPS, 1.0,
+            0, kFBAttachWidth, idLabelSPS, 1.0,
+            0, kFBAttachHeight, idLabelSPS, 1.0);
+        SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";
+        m_bu_sync_animations.OnClick.Add(this, (FBCallback)&msmbLayout::onSyncAnimation);
     }
 
     return true;
@@ -193,4 +226,41 @@ bool msmbLayout::FBCreate()
 
 void msmbLayout::FBDestroy()
 {
+}
+
+
+void msmbLayout::onServerSettingsChange(HIRegister pCaller, HKEventBase pEvent)
+{
+    m_device->client_settings.server = m_ed_address.Text;
+    m_device->client_settings.port = (uint16_t)m_ed_port.Value;
+}
+
+void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
+{
+    m_device->scale_factor = (float)m_ed_scale.Value;
+    m_device->sync_meshes = (bool)(int)m_bu_sync_meshes.State;
+    m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
+    m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
+}
+
+void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
+{
+    m_device->animation_timescale = (float)m_ed_time_scale.Value;
+    m_device->animation_sps = (float)m_ed_sps.Value;
+}
+
+void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
+{
+    m_device->auto_sync = (bool)(int)m_bu_sync_lights.State;
+    // todo
+}
+
+void msmbLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)
+{
+    // todo
+}
+
+void msmbLayout::onSyncAnimation(HIRegister pCaller, HKEventBase pEvent)
+{
+    // todo
 }

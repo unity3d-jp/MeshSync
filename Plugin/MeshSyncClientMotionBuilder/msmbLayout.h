@@ -9,6 +9,14 @@ public:
     void FBDestroy() override;
 
 private:
+    void onServerSettingsChange(HIRegister pCaller, HKEventBase pEvent);
+    void onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent);
+    void onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent);
+    void onAutoSync(HIRegister pCaller, HKEventBase pEvent);
+    void onManualSync(HIRegister pCaller, HKEventBase pEvent);
+    void onSyncAnimation(HIRegister pCaller, HKEventBase pEvent);
+
+private:
     FBSystem    m_system;
     msmbDevice* m_device;
 
@@ -16,7 +24,7 @@ private:
     FBLabel m_lb_address;
     FBEdit m_ed_address;
     FBLabel m_lb_port;
-    FBEdit m_ed_port;
+    FBEditNumber m_ed_port;
 
     FBLabel m_lb_scene;
     FBLabel m_lb_scale;
