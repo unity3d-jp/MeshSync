@@ -12,9 +12,8 @@ bool msmbLayout::FBCreate()
     const int lS = 5;
     const int lS2 = 10;
     const int lW = 100;
-    const int lW2 = 150;
+    const int lW2 = 200;
     const int lH = 18;
-    const int lH2 = 200;
 
     const char *idLabelServer = "idLabelServer";
     const char *idLabelAddress = "idLabelAddress";
@@ -45,8 +44,8 @@ bool msmbLayout::FBCreate()
         AddRegion(idLabelServer, idLabelServer,
             lS, kFBAttachLeft, "", 1.0,
             lS, kFBAttachTop, "", 1.0,
-            lW, kFBAttachNone, NULL, 1.0,
-            lH, kFBAttachNone, NULL, 1.0);
+            lW, kFBAttachNone, nullptr, 1.0,
+            lH, kFBAttachNone, nullptr, 1.0);
         SetControl(idLabelServer, m_lb_server);
         m_lb_server.Caption = "Server";
 
@@ -61,7 +60,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idEditAddress, idEditAddress,
             lS, kFBAttachRight, idLabelAddress, 1.0,
             0, kFBAttachTop, idLabelAddress, 1.0,
-            lW, kFBAttachNone, NULL, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelAddress, 1.0);
         SetControl(idEditAddress, m_ed_address);
         m_ed_address.Text = m_device->client_settings.server.c_str();
@@ -78,7 +77,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idEditPort, idEditPort,
             lS, kFBAttachRight, idLabelPort, 1.0,
             0, kFBAttachTop, idLabelPort, 1.0,
-            lW, kFBAttachNone, NULL, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelPort, 1.0);
         SetControl(idEditPort, m_ed_port);
         m_ed_port.Value = 8080;
@@ -106,7 +105,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idEditlScale, idEditlScale,
             lS, kFBAttachRight, idLabelScale, 1.0,
             0, kFBAttachTop, idLabelScale, 1.0,
-            lW, kFBAttachNone, NULL, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelScale, 1.0);
         SetControl(idEditlScale, m_ed_scale);
         m_ed_scale.Value = 1.0;
@@ -116,7 +115,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idButtonSyncMeshes, idButtonSyncMeshes,
             0, kFBAttachLeft, idLabelScale, 1.0,
             lS, kFBAttachBottom, idLabelScale, 1.0,
-            0, kFBAttachWidth, idLabelScale, 1.0,
+            lW2, kFBAttachWidth, idLabelScale, 1.0,
             0, kFBAttachHeight, idLabelScale, 1.0);
         SetControl(idButtonSyncMeshes, m_bu_sync_meshes);
         m_bu_sync_meshes.Caption = "Sync Meshes";
@@ -186,7 +185,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idEditTimeScale, idEditTimeScale,
             lS, kFBAttachRight, idLabelTimeScale, 1.0,
             0, kFBAttachTop, idLabelTimeScale, 1.0,
-            lW, kFBAttachNone, NULL, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelTimeScale, 1.0);
         SetControl(idEditTimeScale, m_ed_time_scale);
         m_ed_time_scale.Value = 1.0;
@@ -204,7 +203,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idEditSPS, idEditSPS,
             lS, kFBAttachRight, idLabelSPS, 1.0,
             0, kFBAttachTop, idLabelSPS, 1.0,
-            lW, kFBAttachNone, NULL, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelSPS, 1.0);
         SetControl(idEditSPS, m_ed_sps);
         m_ed_sps.Value = 3.0;

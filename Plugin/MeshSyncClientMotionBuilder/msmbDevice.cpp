@@ -142,17 +142,73 @@ void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
 void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
 {
     extractTransform(dst, src);
-    // todo
+
+    auto vd = (FBModelVertexData*)src->ModelVertexData;
+    int num_vertices = vd->GetVertexCount();
+    auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
+    auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, false);
+    auto uvs = (const FBUV*)vd->GetUVSetArray();
+
+    if (!points)
+        return;
+
+    // get vertex arrays
+    {
+        dst.points.resize_discard(num_vertices);
+        for (int vi = 0; vi < num_vertices; ++vi)
+            dst.points[vi] = to_float3(points[vi]);
+    }
+
+    if (normals) {
+        dst.normals.resize_discard(num_vertices);
+        for (int vi = 0; vi < num_vertices; ++vi)
+            dst.normals[vi] = to_float3(normals[vi]);
+    }
+    else {
+        dst.refine_settings.flags.gen_normals = 1;
+    }
+
+    if (uvs) {
+        dst.uv0.resize_discard(num_vertices);
+        for (int vi = 0; vi < num_vertices; ++vi)
+            dst.uv0[vi] = to_float2(uvs[vi]);
+        dst.refine_settings.flags.gen_tangents = 1;
+    }
+
+    // enumerate subpatches ("submeshes" in Unity's term) and generate indices
+    int num_subpatches = vd->GetSubPatchCount();
+    auto indices = (const int*)vd->GetIndexArray();
+    for (int spi = 0; spi < num_subpatches; ++spi) {
+        int offset = vd->GetSubPatchIndexOffset(spi);
+        int count = vd->GetSubPatchIndexSize(spi);
+        int mid = vd->GetSubPatchMaterialId(spi);
+        auto idx_begin = indices + offset;
+        auto idx_end = idx_begin + count;
+
+        int ngon = 1;
+        switch (vd->GetSubPatchPrimitiveType(spi)) {
+        case kFBGeometry_POINTS:    ngon = 1; break;
+        case kFBGeometry_LINES:     ngon = 2; break;
+        case kFBGeometry_TRIANGLES: ngon = 3; break;
+        case kFBGeometry_QUADS:     ngon = 4; break;
+        default: continue;
+        }
+        int prim_count = count / ngon;
+
+        dst.indices.insert(dst.indices.end(), idx_begin, idx_end);
+        dst.counts.resize(dst.counts.size() + prim_count, ngon);
+        dst.material_ids.resize(dst.counts.size() + prim_count, mid);
+    }
 }
 
 void msmbDevice::extractTexture(ms::Texture& dst, FBTexture* src)
 {
-
+    // todo
 }
-
 
 void msmbDevice::extractMaterial(ms::Material& dst, FBMaterial* src)
 {
+    // todo
 }
 
 

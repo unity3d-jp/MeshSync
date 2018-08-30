@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "MeshSyncClientMotionBuilder.h"
 
+#ifdef _WIN32
+#pragma comment(lib, "fbsdk.lib")
+#endif
+
 
 FBLibraryDeclare(msmbDevice)
 {
