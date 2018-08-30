@@ -61,6 +61,52 @@ TestCase(Test_SendMesh)
 }
 
 
+TestCase(Test_Animation)
+{
+    ms::ClientSettings settings;
+    ms::Client client(settings);
+
+    ms::Scene scene;
+
+    {
+        auto node = ms::Mesh::create();
+        scene.objects.push_back(node);
+
+        node->path = "/Test/Animation";
+        node->position = { 0.0f, 0.0f, 0.0f };
+        node->rotation = quatf::identity();
+        node->scale = { 1.0f, 1.0f, 1.0f };
+        GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->uv0, 0.5f, 1);
+        node->refine_settings.flags.gen_normals = 1;
+        node->refine_settings.flags.gen_tangents = 1;
+    }
+    {
+        auto clip = ms::AnimationClip::create();
+        scene.animations.push_back(clip);
+
+        auto anim = ms::TransformAnimation::create();
+        clip->animations.push_back(anim);
+
+        anim->path = "/Test/Animation";
+        anim->translation.push_back({ 0.0f, {0.0f, 0.0f, 0.0f} });
+        anim->translation.push_back({ 1.0f, {1.0f, 0.0f, 0.0f} });
+        anim->translation.push_back({ 2.0f, {1.0f, 1.0f, 0.0f} });
+        anim->translation.push_back({ 3.0f, {1.0f, 1.0f, 1.0f} });
+
+        anim->rotation.push_back({ 0.0f, ms::rotateX(0.0f) });
+        anim->rotation.push_back({ 1.0f, ms::rotateX(90.0f) });
+        anim->rotation.push_back({ 2.0f, ms::rotateX(180.0f) });
+        anim->rotation.push_back({ 3.0f, ms::rotateX(270.0f) });
+
+        anim->scale.push_back({ 0.0f, {1.0f, 1.0f, 1.0f} });
+        anim->scale.push_back({ 1.0f, {2.0f, 2.0f, 2.0f} });
+        anim->scale.push_back({ 2.0f, {1.0f, 1.0f, 1.0f} });
+        anim->scale.push_back({ 3.0f, {2.0f, 2.0f, 2.0f} });
+    }
+    Send(scene);
+}
+
+
 template<class color_t>
 void CreateCheckerImage(RawVector<char>& dst, color_t black, color_t white, int width, int height)
 {
@@ -184,6 +230,7 @@ TestCase(Test_SendTexture)
         Send(scene);
     }
 }
+
 
 TestCase(Test_Query)
 {
