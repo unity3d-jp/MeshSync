@@ -70,14 +70,14 @@ void msmbDevice::send()
 void msmbDevice::extract(FBModel* src, ms::Scene& dst)
 {
     if (src->Is(FBCamera::TypeInfo)) { // camera
-        if (m_sync_cameras) {
+        if (sync_cameras) {
             auto obj = ms::Camera::create();
             dst.objects.push_back(obj);
             extractCamera(static_cast<FBCamera*>(src), *obj);
         }
     }
     else if (src->Is(FBLight::TypeInfo)) { // light
-        if (m_sync_lights) {
+        if (sync_lights) {
             auto obj = ms::Light::create();
             dst.objects.push_back(obj);
             extractLight(static_cast<FBLight*>(src), *obj);
@@ -87,7 +87,7 @@ void msmbDevice::extract(FBModel* src, ms::Scene& dst)
         // ignore
     }
     else {
-        if (m_sync_meshes) {
+        if (sync_meshes) {
             auto obj = ms::Mesh::create();
             dst.objects.push_back(obj);
             extractMesh(src, *obj);

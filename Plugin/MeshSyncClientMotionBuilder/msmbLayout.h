@@ -13,19 +13,24 @@ private:
     msmbDevice* m_device;
 
     FBLabel m_lb_server;
-    FBEdit m_ed_server_address;
-    FBEditNumber m_ed_server_port;
+    FBLabel m_lb_address;
+    FBEdit m_ed_address;
+    FBLabel m_lb_port;
+    FBEdit m_ed_port;
 
     FBLabel m_lb_scene;
-    FBEditNumber m_ed_scale_factor;
+    FBLabel m_lb_scale;
+    FBEditNumber m_ed_scale;
     FBButton m_bu_auto_sync;
     FBButton m_bu_manual_sync;
     FBButton m_bu_sync_cameras;
     FBButton m_bu_sync_lights;
     FBButton m_bu_sync_meshes;
 
-    FBLabel m_lb_animations;
+    FBLabel m_lb_animation;
+    FBLabel m_lb_time_scale;
     FBEditNumber m_ed_time_scale;
-    FBEditNumber m_ed_samples_par_per_second;
+    FBLabel m_lb_sps;
+    FBEditNumber m_ed_sps;
     FBButton m_bu_sync_animations;
 };

@@ -29,10 +29,11 @@ private:
     bool m_dirty = true;
 
 public:
-    bool m_auto_sync = false;
-    bool m_sync_cameras = false;
-    bool m_sync_lights = false;
-    bool m_sync_meshes = false;
-    bool m_sync_textures = false;
-    bool m_sync_material = false;
+    ms::ClientSettings client_settings;
+    bool auto_sync = false;
+    bool sync_cameras = false;
+    bool sync_lights = false;
+    bool sync_meshes = false;
+    bool sync_textures = false;
+    bool sync_material = false;
 };
