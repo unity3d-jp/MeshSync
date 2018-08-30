@@ -740,7 +740,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
         rec.dst = dst.get();
         rec.extractor = extractor;
         n->dst_anim = dst.get();
-        m_animations.front()->animations.emplace_back(dst);
+        m_animations.front()->animations.push_back(dst);
         return true;
     }
     else {
