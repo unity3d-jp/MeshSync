@@ -1,6 +1,33 @@
 #include "pch.h"
 #include "msmbUtils.h"
 
+bool IsCamera(FBModel* src)
+{
+    return src->Is(FBCamera::TypeInfo);
+}
+
+bool IsLight(FBModel* src)
+{
+    return src->Is(FBLight::TypeInfo);
+}
+
+bool IsBone(FBModel* src)
+{
+    return src->Is(FBModelSkeleton::TypeInfo);
+}
+
+bool IsMesh(FBModel* src)
+{
+    return src->ModelVertexData;
+    //return !IsCamera(src) && !IsCamera(src) && !IsBone(src) && (
+    //    !src->Is(FBModelOptical::TypeInfo) &&
+    //    !src->Is(FBModelPath3D::TypeInfo) &&
+    //    !src->Is(FBModelMarker::TypeInfo) &&
+    //    !src->Is(FBCameraSwitcher::TypeInfo)
+    //    );
+}
+
+
 ms::float4x4 to_float4x4(const FBMatrix& src)
 {
     auto *m = src.GetData();

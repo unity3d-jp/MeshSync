@@ -9,26 +9,29 @@ public:
 
     bool DeviceEvaluationNotify(kTransportMode pMode, FBEvaluateInfo* pEvaluateInfo) override;
 
+    bool sendScene();
+    bool sendAnimations();
+
 private:
     void onSceneChange(HIRegister pCaller, HKEventBase pEvent);
     void onRenderUpdate(HIRegister pCaller, HKEventBase pEvent);
 
     void update();
-    void kickAsyncSend();
     bool isSending() const;
     void waitAsyncSend();
+    void kickAsyncSend();
 
-    void extractScene();
-    void extract(FBModel* src);
+    int exportObject(FBModel* src);
     void extractTransform(ms::Transform& dst, FBModel* src);
     void extractCamera(ms::Camera& dst, FBCamera* src);
     void extractLight(ms::Light& dst, FBLight* src);
-    void extractMesh(ms::Mesh& dst, FBModel* src);
     void extractTexture(ms::Texture& dst, FBTexture* src);
     void extractMaterial(ms::Material& dst, FBMaterial* src);
+    void extractMesh(ms::Mesh& dst, FBModel* src);
+    void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
-    void extractAnimations();
-    void extractAnimation(FBModel* src);
+    int exportAnimations();
+    int exportAnimation(FBModel* src);
     void extractTransformAnimation(ms::Animation& dst, FBModel* src);
     void extractCameraAnimation(ms::Animation& dst, FBModel* src);
     void extractLightAnimation(ms::Animation& dst, FBModel* src);
@@ -53,6 +56,7 @@ private:
     FBPlayerControl m_player_control;
 
     bool m_dirty = true;
+    bool m_pending = false;
     float m_anim_time = 0.0f;
     float m_time_end = 0.0f; // todo
 
@@ -78,6 +82,7 @@ public:
     bool auto_sync = false;
     bool sync_cameras = false;
     bool sync_lights = false;
+    bool sync_bones = true;
     bool sync_meshes = false;
     bool sync_textures = false;
     bool sync_material = false;

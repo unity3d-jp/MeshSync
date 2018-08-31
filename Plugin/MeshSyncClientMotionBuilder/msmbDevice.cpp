@@ -159,46 +159,59 @@ void msmbDevice::kickAsyncSend()
 }
 
 
-void msmbDevice::extractScene()
+bool msmbDevice::sendScene()
 {
-    extract(m_system.Scene->RootModel);
+    if (isSending()) {
+        m_pending = true;
+        return false;
+    }
+    if (exportObject(m_system.Scene->RootModel)) {
+        kickAsyncSend();
+    }
+    return true;
 }
 
-void msmbDevice::extract(FBModel* src)
+int msmbDevice::exportObject(FBModel* src)
 {
-    if (src->Is(FBCamera::TypeInfo)) { // camera
+    int ret = 0;
+    if (IsCamera(src)) { // camera
         if (sync_cameras) {
             auto obj = ms::Camera::create();
             m_objects.push_back(obj);
             extractCamera(*obj, static_cast<FBCamera*>(src));
+            ++ret;
         }
     }
-    else if (src->Is(FBLight::TypeInfo)) { // light
+    else if (IsLight(src)) { // light
         if (sync_lights) {
             auto obj = ms::Light::create();
             m_objects.push_back(obj);
             extractLight(*obj, static_cast<FBLight*>(src));
+            ++ret;
         }
     }
-    else if (src->Is(FBModelOptical::TypeInfo)) { // optional model
-        // ignore
-    }
-    else {
-        if (src->ModelVertexData && sync_meshes) {
-            auto obj = ms::Mesh::create();
-            m_meshes.push_back(obj);
-            extractMesh(*obj, src);
-        }
-        else {
+    else if (IsBone(src)) { // bone
+        if (sync_bones) {
             auto obj = ms::Transform::create();
             m_objects.push_back(obj);
             extractTransform(*obj, src);
+            ++ret;
+        }
+    }
+    else if (IsMesh(src)) { // mesh
+        if (sync_meshes) {
+            auto obj = ms::Mesh::create();
+            m_meshes.push_back(obj);
+            extractMesh(*obj, src);
+            ++ret;
         }
     }
 
     int num_children = src->Children.GetCount();
     for (int i = 0; i < num_children; i++)
-        extract(src->Children[i]);
+        ret += exportObject(src->Children[i]);
+
+    return ret;
 }
 
 
@@ -234,7 +247,11 @@ void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
 void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
 {
     extractTransform(dst, src);
+    doExtractMesh(dst, src);
+}
 
+void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
+{
     auto vd = (FBModelVertexData*)src->ModelVertexData;
     int num_vertices = vd->GetVertexCount();
     auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
@@ -283,7 +300,7 @@ void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
         case kFBGeometry_LINES:     ngon = 2; break;
         case kFBGeometry_TRIANGLES: ngon = 3; break;
         case kFBGeometry_QUADS:     ngon = 4; break;
-        // todo: support other topologies (triangle strip, etc)
+            // todo: support other topologies (triangle strip, etc)
         default: continue;
         }
         int prim_count = count / ngon;
@@ -305,13 +322,31 @@ void msmbDevice::extractMaterial(ms::Material& dst, FBMaterial* src)
 }
 
 
-void msmbDevice::extractAnimations()
+bool msmbDevice::sendAnimations()
+{
+    // wait for previous request to complete
+    if (m_future_send.valid()) {
+        m_future_send.get();
+    }
+
+    if (exportAnimations()) {
+        kickAsyncSend();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+int msmbDevice::exportAnimations()
 {
     // create default clip
     m_animations.push_back(ms::AnimationClip::create());
 
     // gather models
-    extractAnimation(m_system.Scene->RootModel);
+    int num_animations = exportAnimation(m_system.Scene->RootModel);
+    if (num_animations == 0)
+        return 0;
 
 
     FBTime time_current = m_system.LocalTime;
@@ -343,25 +378,25 @@ void msmbDevice::extractAnimations()
     m_animations.erase(
         std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_animations.end());
+
+    return num_animations;
 }
 
-void msmbDevice::extractAnimation(FBModel * src)
+int msmbDevice::exportAnimation(FBModel * src)
 {
+    int ret = 0;
     ms::AnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
 
-    if (src->Is(FBCamera::TypeInfo)) { // camera
+    if (IsCamera(src)) { // camera
         dst = ms::CameraAnimation::create();
         extractor = &msmbDevice::extractCameraAnimation;
     }
-    else if (src->Is(FBLight::TypeInfo)) { // light
+    else if (IsLight(src)) { // light
         dst = ms::LightAnimation::create();
         extractor = &msmbDevice::extractLightAnimation;
     }
-    else if (src->Is(FBModelOptical::TypeInfo)) { // optional model
-        // ignore
-    }
-    else {
+    else if (IsBone(src) || IsMesh(src)) { // other
         dst = ms::TransformAnimation::create();
         extractor = &msmbDevice::extractTransformAnimation;
     }
@@ -372,11 +407,13 @@ void msmbDevice::extractAnimation(FBModel * src)
         rec.dst = dst.get();
         rec.extractor = extractor;
         m_animations.front()->animations.push_back(dst);
+        ret += 1;
     }
 
     int num_children = src->Children.GetCount();
     for (int i = 0; i < num_children; i++)
-        extractAnimation(src->Children[i]);
+        ret += exportAnimation(src->Children[i]);
+    return ret;
 }
 
 void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)

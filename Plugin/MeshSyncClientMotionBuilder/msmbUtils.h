@@ -1,5 +1,11 @@
 #pragma once
 
+bool IsCamera(FBModel* src);
+bool IsLight(FBModel* src);
+bool IsBone(FBModel* src);
+bool IsMesh(FBModel* src);
+
+
 inline ms::float2 to_float2(const FBVector2<float>& v)
 {
     return { v.mValue[0], v.mValue[1] };
