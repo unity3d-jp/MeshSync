@@ -9,14 +9,14 @@ public:
 
     bool DeviceOperation(kDeviceOperations pOperation) override;
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
-    bool DeviceEvaluationNotify(kTransportMode pMode, FBEvaluateInfo* pEvaluateInfo) override;
 
     bool sendScene();
     bool sendAnimations();
 
 private:
     void onSceneChange(HIRegister pCaller, HKEventBase pEvent);
-    void onRenderUpdate(HIRegister pCaller, HKEventBase pEvent);
+    void onDataUpdate(HIRegister pCaller, HKEventBase pEvent);
+    void onSynchronization(HIRegister pCaller, HKEventBase pEvent);
 
     void update();
     bool isSending() const;
@@ -55,8 +55,9 @@ private:
     using AnimationRecords = std::map<FBModel*, AnimationRecord>;
 
 private:
-    bool m_dirty = true;
+    bool m_dirty = false;
     bool m_pending = false;
+    bool m_on_transaction = false;
     float m_anim_time = 0.0f;
 
     NodeRecords m_node_records;

@@ -8,15 +8,17 @@ FBRegisterDevice("msmbDevice", msmbDevice, "UnityMeshSync", "UnityMeshSync for M
 
 bool msmbDevice::FBCreate()
 {
-    FBSystem().Scene->OnChange.Add(this, (FBCallback)&msmbDevice::onSceneChange);
-    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Add(this, (FBCallback)&msmbDevice::onRenderUpdate);
+    FBSystem::TheOne().Scene->OnChange.Add(this, (FBCallback)&msmbDevice::onSceneChange);
+    FBSystem::TheOne().OnConnectionDataNotify.Add(this, (FBCallback)&msmbDevice::onDataUpdate);
+    FBEvaluateManager::TheOne().OnSynchronizationEvent.Add(this, (FBCallback)&msmbDevice::onSynchronization);
     return true;
 }
 
 void msmbDevice::FBDestroy()
 {
-    FBSystem().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
-    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Remove(this, (FBCallback)&msmbDevice::onRenderUpdate);
+    FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
+    FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
+    FBEvaluateManager::TheOne().OnSynchronizationEvent.Remove(this, (FBCallback)&msmbDevice::onSynchronization);
 }
 
 bool msmbDevice::DeviceOperation(kDeviceOperations pOperation)
@@ -26,14 +28,8 @@ bool msmbDevice::DeviceOperation(kDeviceOperations pOperation)
 
 void msmbDevice::DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem)
 {
-    m_dirty = true;
-    update();
-}
-
-bool msmbDevice::DeviceEvaluationNotify(kTransportMode pMode, FBEvaluateInfo * pEvaluateInfo)
-{
-    update();
-    return true;
+    if (auto_sync)
+        m_dirty = true;
 }
 
 void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
@@ -42,34 +38,58 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     FBSceneChangeType type = SceneChangeEvent.Type;
     switch (type)
     {
-    case kFBSceneChangeSelect:
-    case kFBSceneChangeUnselect:
-    case kFBSceneChangeReSelect:
-    case kFBSceneChangeFocus:
-    case kFBSceneChangeSoftSelect:
-    case kFBSceneChangeSoftUnselect:
-    case kFBSceneChangeHardSelect:
-    case kFBSceneChangeTransactionBegin:
+    case kFBSceneChangeDestroy:
+    case kFBSceneChangeAttach:
+    case kFBSceneChangeDetach:
+    case kFBSceneChangeAddChild:
+    case kFBSceneChangeRemoveChild:
+    case kFBSceneChangeRenamed:
+    case kFBSceneChangeRenamedPrefix:
+    case kFBSceneChangeRenamedUnique:
+    case kFBSceneChangeRenamedUniquePrefix:
+    case kFBSceneChangeLoadEnd:
+    case kFBSceneChangeClearEnd:
     case kFBSceneChangeTransactionEnd:
-        return;
-    case kFBSceneChangeLoadBegin:
-        DeviceOperation(FBDevice::kOpStop);
-        return;
+    case kFBSceneChangeMergeTransactionEnd:
+    case kFBSceneChangeChangeName:
+    case kFBSceneChangeChangedName:
+        if (auto_sync)
+            m_dirty = true;
+        break;
+
     default:
-        m_dirty = true;
         break;
     }
+
+    if (type == kFBSceneChangeTransactionBegin)
+        m_on_transaction = true;
+    else if(type == kFBSceneChangeTransactionEnd)
+        m_on_transaction = false;
 }
 
-void msmbDevice::onRenderUpdate(HIRegister pCaller, HKEventBase pEvent)
+void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
+    // todo: get dirty node
+
+    //FBEventConnectionDataNotify	lEvent(pEvent);
+    //if (auto_sync)
+    //    m_dirty = true;
+}
+
+void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
+{
+    FBEventEvalGlobalCallback lFBEvent(pEvent);
+    FBGlobalEvalCallbackTiming timing = lFBEvent.GetTiming();
+    if (timing == kFBGlobalEvalCallbackSyn) {
+        if (auto_sync)
+            update();
+    }
 }
 
 void msmbDevice::update()
 {
-    if (!m_dirty && m_pending)
+    if (!m_dirty && !m_pending)
         return;
-    m_dirty = m_pending = false;
     sendScene();
 }
 
@@ -173,6 +193,7 @@ void msmbDevice::kickAsyncSend()
 
 bool msmbDevice::sendScene()
 {
+    m_dirty = m_pending = false;
     if (isSending()) {
         m_pending = true;
         return false;
