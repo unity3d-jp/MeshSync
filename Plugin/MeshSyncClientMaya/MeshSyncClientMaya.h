@@ -184,6 +184,7 @@ private:
     std::vector<MString>                m_material_id_table;
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;
+    std::vector<ms::TexturePtr>         m_textures;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
     std::vector<ms::ConstraintPtr>      m_constraints;

@@ -668,11 +668,11 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     int reserve_size = int((time_end.as(MTime::kSeconds) - time_begin.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {
         kvp.second.dst->reserve(reserve_size);
-    };
+    }
 
+    // advance frame and record
     m_ignore_update = true;
     for (MTime t = time_begin; t <= time_end; t += interval) {
-        // advance frame and record
         m_anim_time = (float)t.as(MTime::kSeconds);
         MGlobal::viewFrame(t);
         for (auto& kvp : m_anim_records)
@@ -684,7 +684,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     // cleanup
     m_anim_records.clear();
 
-    // reduction
+    // keyframe reduction
     for (auto& clip : m_animations)
         clip->reduction();
 

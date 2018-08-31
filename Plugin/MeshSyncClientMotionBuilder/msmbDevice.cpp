@@ -58,33 +58,125 @@ void msmbDevice::update()
     if (!m_dirty)
         return;
     m_dirty = false;
-    send();
+    kickAsyncSend();
 }
 
-void msmbDevice::send()
+bool msmbDevice::isSending() const
 {
-    // todo:
+    if (m_future_send.valid()) {
+        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
+    }
+    return false;
+}
+
+void msmbDevice::waitAsyncSend()
+{
+    if (m_future_send.valid()) {
+        m_future_send.wait_for(std::chrono::milliseconds(timeout_ms));
+    }
+}
+
+void msmbDevice::kickAsyncSend()
+{
+    // process parallel extract tasks
+    if (!m_extract_tasks.empty()) {
+        mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](ModelRecords::value_type& kvp) {
+            kvp.second();
+        });
+        m_extract_tasks.clear();
+    }
+
+
+    // begin async send
+    m_future_send = std::async(std::launch::async, [this]() {
+        ms::Client client(client_settings);
+
+        ms::SceneSettings scene_settings;
+        scene_settings.handedness = ms::Handedness::Right;
+        scene_settings.scale_factor = scale_factor;
+
+        // notify scene begin
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneBegin;
+            client.send(fence);
+        }
+
+        // send delete message
+        size_t num_deleted = m_deleted.size();
+        if (num_deleted) {
+            ms::DeleteMessage del;
+            del.targets.resize(num_deleted);
+            for (uint32_t i = 0; i < num_deleted; ++i)
+                del.targets[i].path = m_deleted[i];
+
+            client.send(del);
+            m_deleted.clear();
+        }
+
+        // send scene data
+        {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = m_objects;
+            set.scene.textures = m_textures;
+            set.scene.materials = m_materials;
+            client.send(set);
+
+            m_objects.clear();
+            m_textures.clear();
+            m_materials.clear();
+        }
+
+        // send meshes one by one to Unity can respond quickly
+        for (auto& mesh : m_meshes) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.objects = { mesh };
+            client.send(set);
+        };
+        m_meshes.clear();
+
+        // send animations and constraints
+        if (!m_animations.empty() || !m_constraints.empty()) {
+            ms::SetMessage set;
+            set.scene.settings = scene_settings;
+            set.scene.animations = m_animations;
+            set.scene.constraints = m_constraints;
+            client.send(set);
+
+            m_animations.clear();
+            m_constraints.clear();
+        }
+
+        // notify scene end
+        {
+            ms::FenceMessage fence;
+            fence.type = ms::FenceMessage::FenceType::SceneEnd;
+            client.send(fence);
+        }
+    });
 }
 
 
 void msmbDevice::extractScene()
 {
-    m_system.Scene;
+    extract(m_system.Scene->RootModel);
 }
 
-void msmbDevice::extract(ms::Scene& dst, FBModel* src)
+void msmbDevice::extract(FBModel* src)
 {
     if (src->Is(FBCamera::TypeInfo)) { // camera
         if (sync_cameras) {
             auto obj = ms::Camera::create();
-            dst.objects.push_back(obj);
+            m_objects.push_back(obj);
             extractCamera(*obj, static_cast<FBCamera*>(src));
         }
     }
     else if (src->Is(FBLight::TypeInfo)) { // light
         if (sync_lights) {
             auto obj = ms::Light::create();
-            dst.objects.push_back(obj);
+            m_objects.push_back(obj);
             extractLight(*obj, static_cast<FBLight*>(src));
         }
     }
@@ -92,21 +184,21 @@ void msmbDevice::extract(ms::Scene& dst, FBModel* src)
         // ignore
     }
     else {
-        if (sync_meshes) {
+        if (src->ModelVertexData && sync_meshes) {
             auto obj = ms::Mesh::create();
-            dst.objects.push_back(obj);
+            m_meshes.push_back(obj);
             extractMesh(*obj, src);
         }
         else {
             auto obj = ms::Transform::create();
-            dst.objects.push_back(obj);
+            m_objects.push_back(obj);
             extractTransform(*obj, src);
         }
     }
 
     int num_children = src->Children.GetCount();
     for (int i = 0; i < num_children; i++)
-        extract(dst, src->Children[i]);
+        extract(src->Children[i]);
 }
 
 
@@ -191,6 +283,7 @@ void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
         case kFBGeometry_LINES:     ngon = 2; break;
         case kFBGeometry_TRIANGLES: ngon = 3; break;
         case kFBGeometry_QUADS:     ngon = 4; break;
+        // todo: support other topologies (triangle strip, etc)
         default: continue;
         }
         int prim_count = count / ngon;
@@ -221,20 +314,28 @@ void msmbDevice::extractAnimations()
     extractAnimation(m_system.Scene->RootModel);
 
 
-    float time_step = 1.0f / animation_sps;
-    float time_end = m_time_end; // 
-    for (float t = 0.0f; t < time_end; t += time_step) {
-        // advance time and record
+    FBTime time_current = m_system.LocalTime;
+    double interval = 1.0 / animation_sps;
+
+    int reserve_size = int(m_time_end / interval) + 1;
+    for (auto& kvp : m_anim_tasks) {
+        kvp.second.dst->reserve(reserve_size);
+    }
+
+    // advance frame and record
+    for (double t = 0.0; t < m_time_end; t += interval) {
         FBTime fbt;
         fbt.SetSecondDouble(t);
         m_player_control.Goto(fbt);
         for (auto& kvp : m_anim_tasks)
             kvp.second(this);
     }
+
     // cleanup
     m_anim_tasks.clear();
+    m_player_control.Goto(time_current);
 
-    // reduction
+    // keyframe reduction
     for (auto& clip : m_animations)
         clip->reduction();
 

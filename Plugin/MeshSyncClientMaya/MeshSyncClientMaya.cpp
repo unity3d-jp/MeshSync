@@ -617,9 +617,9 @@ void MeshSyncClientMaya::kickAsyncSend()
             del.targets.resize(num_deleted);
             for (uint32_t i = 0; i < num_deleted; ++i)
                 del.targets[i].path = m_deleted[i];
-            m_deleted.clear();
 
             client.send(del);
+            m_deleted.clear();
         }
 
         // send scene data
@@ -627,10 +627,12 @@ void MeshSyncClientMaya::kickAsyncSend()
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
             set.scene.objects = m_objects;
+            set.scene.textures = m_textures;
             set.scene.materials = m_materials;
             client.send(set);
 
             m_objects.clear();
+            m_textures.clear();
             m_materials.clear();
         }
 

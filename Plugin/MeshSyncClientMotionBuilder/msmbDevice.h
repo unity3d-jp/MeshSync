@@ -14,10 +14,12 @@ private:
     void onRenderUpdate(HIRegister pCaller, HKEventBase pEvent);
 
     void update();
-    void send();
+    void kickAsyncSend();
+    bool isSending() const;
+    void waitAsyncSend();
 
     void extractScene();
-    void extract(ms::Scene& dst, FBModel* src);
+    void extract(FBModel* src);
     void extractTransform(ms::Transform& dst, FBModel* src);
     void extractCamera(ms::Camera& dst, FBCamera* src);
     void extractLight(ms::Light& dst, FBLight* src);
@@ -57,10 +59,18 @@ private:
     ModelRecords m_extract_tasks;
     AnimationRecords m_anim_tasks;
 
-    std::vector<ms::AnimationClipPtr> m_animations;
+    std::vector<ms::TransformPtr>       m_objects;
+    std::vector<ms::MeshPtr>            m_meshes;
+    std::vector<ms::TexturePtr>         m_textures;
+    std::vector<ms::MaterialPtr>        m_materials;
+    std::vector<ms::AnimationClipPtr>   m_animations;
+    std::vector<ms::ConstraintPtr>      m_constraints;
+    std::vector<std::string>            m_deleted;
+    std::future<void>                   m_future_send;
 
 public:
     ms::ClientSettings client_settings;
+    int  timeout_ms = 5000;
     float scale_factor = 1.0f;
     float animation_timescale = 1.0f;
     float animation_sps = 3.0f;
