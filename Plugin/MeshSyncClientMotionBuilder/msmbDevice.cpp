@@ -227,6 +227,37 @@ static void ExtractTransformData(FBModel* src, mu::float3& pos, mu::quatf& rot, 
     vis = src->Visibility;
 }
 
+static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+    float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
+{
+    ortho = src->Type == kFBCameraTypeOrthogonal;
+    near_plane = (float)src->NearPlaneDistance;
+    far_plane = (float)src->FarPlaneDistance;
+    fov = (float)src->FieldOfViewY;
+}
+
+static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+{
+    FBLightType light_type = src->LightType;
+    if (light_type == kFBLightTypePoint) {
+        type = ms::Light::LightType::Point;
+    }
+    else if (light_type == kFBLightTypeInfinite) {
+        type = ms::Light::LightType::Directional;
+    }
+    else if (light_type == kFBLightTypeSpot) {
+        type = ms::Light::LightType::Spot;
+        spot_angle = (float)src->OuterAngle;
+    }
+    else if (light_type == kFBLightTypeArea) {
+        type = ms::Light::LightType::Area;
+    }
+
+    color = to_float4(src->DiffuseColor);
+    intensity = (float)src->Intensity;
+}
+
+
 void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
 {
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
@@ -235,13 +266,18 @@ void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
 void msmbDevice::extractCamera(ms::Camera& dst, FBCamera* src)
 {
     extractTransform(dst, src);
-    // todo
+    dst.rotation = mu::flipY(dst.rotation);
+
+    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
+        dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 }
 
 void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
 {
     extractTransform(dst, src);
-    // todo
+    dst.rotation = mu::flipY(dst.rotation);
+
+    ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
 }
 
 void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
@@ -424,7 +460,7 @@ void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
     bool vis = true;
     ExtractTransformData(src, pos, rot, scale, vis);
 
-    float t = m_anim_time * animation_timescale;
+    float t = m_anim_time * animation_time_scale;
     auto& dst = (ms::TransformAnimation&)dst_;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
@@ -437,7 +473,19 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     extractTransformAnimation(dst_, src);
 
     auto& dst = static_cast<ms::CameraAnimation&>(dst_);
-    // todo
+    {
+        auto& last = dst.rotation.back();
+        last.value = mu::flipY(last.value);
+    }
+
+    bool ortho;
+    float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
+    ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+
+    float t = m_anim_time * animation_time_scale;
+    dst.near_plane.push_back({ t , near_plane });
+    dst.far_plane.push_back({ t , far_plane });
+    dst.fov.push_back({ t , fov });
 }
 
 void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
@@ -445,7 +493,22 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     extractTransformAnimation(dst_, src);
 
     auto& dst = static_cast<ms::LightAnimation&>(dst_);
-    // todo
+    {
+        auto& last = dst.rotation.back();
+        last.value = mu::flipY(last.value);
+    }
+
+    ms::Light::LightType type;
+    mu::float4 color;
+    float intensity;
+    float spot_angle;
+    ExtractLightData(static_cast<FBLight*>(src), type, color, intensity, spot_angle);
+
+    float t = m_anim_time * animation_time_scale;
+    dst.color.push_back({ t, color });
+    dst.intensity.push_back({ t, intensity });
+    if (type == ms::Light::LightType::Spot)
+        dst.spot_angle.push_back({ t, spot_angle });
 }
 
 void msmbDevice::AnimationRecord::operator()(msmbDevice *_this)

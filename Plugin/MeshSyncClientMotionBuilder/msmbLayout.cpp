@@ -244,7 +244,7 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->animation_timescale = (float)m_ed_time_scale.Value;
+    m_device->animation_time_scale = (float)m_ed_time_scale.Value;
     m_device->animation_sps = (float)m_ed_sps.Value;
 }
 

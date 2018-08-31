@@ -812,11 +812,8 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-
-    auto& shape = n->shape->node;
-    if (shape.hasFn(kMFnSpotLight)) {
+    if (type == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
-    }
 }
 
 void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode *n)
