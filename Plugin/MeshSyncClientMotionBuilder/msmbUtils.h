@@ -2,11 +2,13 @@
 
 bool IsCamera(FBModel *src);
 bool IsLight(FBModel *src);
-bool IsTransform(FBModel *src);
+bool IsBone(FBModel *src);
 bool IsMesh(FBModel *src);
 
 std::string GetPath(FBModel *src);
 std::tuple<double, double> GetTimeRange(FBTake *take);
+
+void EnumerateAllNodes(const std::function<void(FBModel*)>& body);
 
 
 inline ms::float2 to_float2(const FBVector2<float>& v)

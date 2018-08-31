@@ -19,6 +19,17 @@ void msmbDevice::FBDestroy()
     FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Remove(this, (FBCallback)&msmbDevice::onRenderUpdate);
 }
 
+bool msmbDevice::DeviceOperation(kDeviceOperations pOperation)
+{
+    return false;
+}
+
+void msmbDevice::DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem)
+{
+    m_dirty = true;
+    update();
+}
+
 bool msmbDevice::DeviceEvaluationNotify(kTransportMode pMode, FBEvaluateInfo * pEvaluateInfo)
 {
     update();
@@ -28,7 +39,8 @@ bool msmbDevice::DeviceEvaluationNotify(kTransportMode pMode, FBEvaluateInfo * p
 void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 {
     FBEventSceneChange SceneChangeEvent = pEvent;
-    switch (SceneChangeEvent.Type)
+    FBSceneChangeType type = SceneChangeEvent.Type;
+    switch (type)
     {
     case kFBSceneChangeSelect:
     case kFBSceneChangeUnselect:
@@ -55,10 +67,10 @@ void msmbDevice::onRenderUpdate(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbDevice::update()
 {
-    if (!m_dirty)
+    if (!m_dirty && m_pending)
         return;
-    m_dirty = false;
-    kickAsyncSend();
+    m_dirty = m_pending = false;
+    sendScene();
 }
 
 bool msmbDevice::isSending() const
@@ -80,8 +92,8 @@ void msmbDevice::kickAsyncSend()
 {
     // process parallel extract tasks
     if (!m_extract_tasks.empty()) {
-        mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](ModelRecords::value_type& kvp) {
-            kvp.second();
+        mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](ExtractTasks::value_type& task) {
+            task();
         });
         m_extract_tasks.clear();
     }
@@ -165,51 +177,67 @@ bool msmbDevice::sendScene()
         m_pending = true;
         return false;
     }
-    if (exportObject(FBSystem::TheOne().Scene->RootModel)) {
+
+    int num_exported = 0;
+    EnumerateAllNodes([this, &num_exported](FBModel* node) {
+        if (exportObject(node, false))
+            ++num_exported;
+    });
+    m_node_records.clear();
+
+    if (num_exported) {
         kickAsyncSend();
+        return true;
     }
-    return true;
+    else {
+        return false;
+    }
 }
 
-int msmbDevice::exportObject(FBModel* src)
+bool msmbDevice::exportObject(FBModel* src, bool force)
 {
-    int ret = 0;
+    if (!src)
+        return false;
+    auto& rec = m_node_records[src];
+    if (rec)
+        return false;
+
     if (IsCamera(src)) { // camera
         if (sync_cameras) {
+            exportObject(src->Parent, true);
             auto obj = ms::Camera::create();
+            rec = obj;
             m_objects.push_back(obj);
             extractCamera(*obj, static_cast<FBCamera*>(src));
-            ++ret;
         }
     }
     else if (IsLight(src)) { // light
         if (sync_lights) {
+            exportObject(src->Parent, true);
             auto obj = ms::Light::create();
+            rec = obj;
             m_objects.push_back(obj);
             extractLight(*obj, static_cast<FBLight*>(src));
-            ++ret;
         }
     }
     else if (IsMesh(src)) { // mesh
         if (sync_meshes) {
+            exportObject(src->Parent, true);
             auto obj = ms::Mesh::create();
+            rec = obj;
             m_meshes.push_back(obj);
             extractMesh(*obj, src);
-            ++ret;
         }
     }
-    else if (IsTransform(src)) {
+    else if (IsBone(src) || force) {
+        exportObject(src->Parent, true);
         auto obj = ms::Transform::create();
+        rec = obj;
         m_objects.push_back(obj);
         extractTransform(*obj, src);
-        ++ret;
     }
 
-    int num_children = src->Children.GetCount();
-    for (int i = 0; i < num_children; i++)
-        ret += exportObject(src->Children[i]);
-
-    return ret;
+    return rec != nullptr;
 }
 
 
@@ -399,7 +427,7 @@ bool msmbDevice::sendAnimations()
     }
 }
 
-int msmbDevice::exportAnimations()
+bool msmbDevice::exportAnimations()
 {
     auto& system = FBSystem::TheOne();
     FBPlayerControl control;
@@ -408,9 +436,13 @@ int msmbDevice::exportAnimations()
     m_animations.push_back(ms::AnimationClip::create());
 
     // gather models
-    int num_animations = exportAnimation(system.Scene->RootModel);
+    int num_animations = 0;
+    EnumerateAllNodes([this, &num_animations](FBModel *node) {
+        if (exportAnimation(node, false))
+            ++num_animations;
+    });
     if (num_animations == 0)
-        return 0;
+        return false;
 
 
     FBTime time_current = system.LocalTime;
@@ -419,7 +451,7 @@ int msmbDevice::exportAnimations()
     double interval = 1.0 / samples_per_second;
 
     int reserve_size = int((time_end - time_begin) / interval) + 1;
-    for (auto& kvp : m_anim_tasks) {
+    for (auto& kvp : m_anim_records) {
         kvp.second.dst->reserve(reserve_size);
     }
 
@@ -428,58 +460,62 @@ int msmbDevice::exportAnimations()
         FBTime fbt;
         fbt.SetSecondDouble(t);
         control.Goto(fbt);
-        for (auto& kvp : m_anim_tasks)
+        m_anim_time = (float)t;
+        for (auto& kvp : m_anim_records)
             kvp.second(this);
     }
 
     // cleanup
-    m_anim_tasks.clear();
+    m_anim_records.clear();
     control.Goto(time_current);
 
     // keyframe reduction
     for (auto& clip : m_animations)
         clip->reduction();
 
-    // erase empty animation
+    // erase empty clip
     m_animations.erase(
         std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
         m_animations.end());
 
-    return num_animations;
+    return !m_animations.empty();
 }
 
-int msmbDevice::exportAnimation(FBModel * src)
+bool msmbDevice::exportAnimation(FBModel *src, bool force)
 {
-    int ret = 0;
+    if (!src || m_anim_records.find(src) != m_anim_records.end())
+        return 0;
+
     ms::AnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
 
     if (IsCamera(src)) { // camera
+        exportAnimation(src->Parent, true);
         dst = ms::CameraAnimation::create();
         extractor = &msmbDevice::extractCameraAnimation;
     }
     else if (IsLight(src)) { // light
+        exportAnimation(src->Parent, true);
         dst = ms::LightAnimation::create();
         extractor = &msmbDevice::extractLightAnimation;
     }
-    else if (IsTransform(src) || IsMesh(src)) { // other
+    else if (IsBone(src) || IsMesh(src) || force) { // other
+        exportAnimation(src->Parent, true);
         dst = ms::TransformAnimation::create();
         extractor = &msmbDevice::extractTransformAnimation;
     }
 
     if (dst) {
-        auto& rec = m_anim_tasks[src];
+        auto& rec = m_anim_records[src];
         rec.src = src;
         rec.dst = dst.get();
         rec.extractor = extractor;
         m_animations.front()->animations.push_back(dst);
-        ret += 1;
+        return true;
     }
-
-    int num_children = src->Children.GetCount();
-    for (int i = 0; i < num_children; i++)
-        ret += exportAnimation(src->Children[i]);
-    return ret;
+    else {
+        return false;
+    }
 }
 
 void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)

@@ -7,6 +7,8 @@ public:
     bool FBCreate() override;
     void FBDestroy() override;
 
+    bool DeviceOperation(kDeviceOperations pOperation) override;
+    void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
     bool DeviceEvaluationNotify(kTransportMode pMode, FBEvaluateInfo* pEvaluateInfo) override;
 
     bool sendScene();
@@ -21,7 +23,7 @@ private:
     void waitAsyncSend();
     void kickAsyncSend();
 
-    int exportObject(FBModel* src);
+    bool exportObject(FBModel* src, bool force);
     void extractTransform(ms::Transform& dst, FBModel* src);
     void extractCamera(ms::Camera& dst, FBCamera* src);
     void extractLight(ms::Light& dst, FBLight* src);
@@ -30,14 +32,15 @@ private:
     void extractMesh(ms::Mesh& dst, FBModel* src);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
-    int exportAnimations();
-    int exportAnimation(FBModel* src);
+    bool exportAnimations();
+    bool exportAnimation(FBModel* src, bool force);
     void extractTransformAnimation(ms::Animation& dst, FBModel* src);
     void extractCameraAnimation(ms::Animation& dst, FBModel* src);
     void extractLightAnimation(ms::Animation& dst, FBModel* src);
 
 
-    using ModelRecords = std::map<FBModel*, std::function<void()>>;
+    using NodeRecords = std::map<FBModel*, ms::TransformPtr>;
+    using ExtractTasks = std::vector<std::function<void()>>;
 
     struct AnimationRecord : public mu::noncopyable
     {
@@ -56,8 +59,9 @@ private:
     bool m_pending = false;
     float m_anim_time = 0.0f;
 
-    ModelRecords m_extract_tasks;
-    AnimationRecords m_anim_tasks;
+    NodeRecords m_node_records;
+    ExtractTasks m_extract_tasks;
+    AnimationRecords m_anim_records;
 
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;

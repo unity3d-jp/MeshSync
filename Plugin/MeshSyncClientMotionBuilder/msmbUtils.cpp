@@ -11,9 +11,9 @@ bool IsLight(FBModel *src)
     return src->Is(FBLight::TypeInfo);
 }
 
-bool IsTransform(FBModel *src)
+bool IsBone(FBModel *src)
 {
-    return src->Is(FBModelSkeleton::TypeInfo) || src->Is(FBModelNull::TypeInfo);
+    return src->Is(FBModelSkeleton::TypeInfo);
 }
 
 bool IsMesh(FBModel* src)
@@ -35,6 +35,19 @@ std::tuple<double, double> GetTimeRange(FBTake *take)
 {
     FBTimeSpan timespan = take->LocalTimeSpan;
     return { timespan.GetStart().GetSecondDouble(), timespan.GetStop().GetSecondDouble() };
+}
+
+static void EnumerateAllNodesImpl(FBModel *node, const std::function<void(FBModel*)>& body)
+{
+    body(node);
+
+    int num_children = node->Children.GetCount();
+    for (int i = 0; i < num_children; i++)
+        EnumerateAllNodesImpl(node->Children[i], body);
+}
+void EnumerateAllNodes(const std::function<void(FBModel*)>& body)
+{
+    EnumerateAllNodesImpl(FBSystem::TheOne().RootModel, body);
 }
 
 
