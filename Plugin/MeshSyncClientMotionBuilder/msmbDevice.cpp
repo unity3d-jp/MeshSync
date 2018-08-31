@@ -344,8 +344,10 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
         dst.indices.insert(dst.indices.end(), idx_begin, idx_end);
         dst.counts.resize(dst.counts.size() + prim_count, ngon);
-        dst.material_ids.resize(dst.counts.size() + prim_count, mid);
+        dst.material_ids.resize(dst.material_ids.size() + prim_count, mid);
     }
+    dst.refine_settings.flags.swap_faces = 1;
+    dst.setupFlags();
 }
 
 void msmbDevice::extractTexture(ms::Texture& dst, FBTexture* src)

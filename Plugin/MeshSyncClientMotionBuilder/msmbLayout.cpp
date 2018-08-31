@@ -120,6 +120,7 @@ bool msmbLayout::FBCreate()
         SetControl(idButtonSyncMeshes, m_bu_sync_meshes);
         m_bu_sync_meshes.Caption = "Sync Meshes";
         m_bu_sync_meshes.Style = kFBCheckbox;
+        m_bu_sync_meshes.State = (int)m_device->sync_meshes;
         m_bu_sync_meshes.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
         AddRegion(idButtonSyncCameras, idButtonSyncCameras,
@@ -130,6 +131,7 @@ bool msmbLayout::FBCreate()
         SetControl(idButtonSyncCameras, m_bu_sync_cameras);
         m_bu_sync_cameras.Caption = "Sync Cameras";
         m_bu_sync_cameras.Style = kFBCheckbox;
+        m_bu_sync_cameras.State = (int)m_device->sync_cameras;
         m_bu_sync_cameras.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
         AddRegion(idButtonSyncLights, idButtonSyncLights,
@@ -140,6 +142,7 @@ bool msmbLayout::FBCreate()
         SetControl(idButtonSyncLights, m_bu_sync_lights);
         m_bu_sync_lights.Caption = "Sync Lights";
         m_bu_sync_lights.Style = kFBCheckbox;
+        m_bu_sync_lights.State = (int)m_device->sync_lights;
         m_bu_sync_lights.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
 
@@ -151,12 +154,13 @@ bool msmbLayout::FBCreate()
         SetControl(idButtonAutoSync, m_bu_auto_sync);
         m_bu_auto_sync.Caption = "Auto Sync";
         m_bu_auto_sync.Style = kFBCheckbox;
+        m_bu_auto_sync.State = (int)m_device->auto_sync;
         m_bu_auto_sync.OnClick.Add(this, (FBCallback)&msmbLayout::onAutoSync);
 
         AddRegion(idButtonManualSync, idButtonManualSync,
             0, kFBAttachLeft, idButtonAutoSync, 1.0,
             lS, kFBAttachBottom, idButtonAutoSync, 1.0,
-            0, kFBAttachWidth, idButtonAutoSync, 1.0,
+            lW2, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idButtonAutoSync, 1.0);
         SetControl(idButtonManualSync, m_bu_manual_sync);
         m_bu_manual_sync.Caption = "Manual Sync";
@@ -168,7 +172,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idLabelAnimation, idLabelAnimation,
             0, kFBAttachLeft, idButtonManualSync, 1.0,
             lS2, kFBAttachBottom, idButtonManualSync, 1.0,
-            0, kFBAttachWidth, idButtonManualSync, 1.0,
+            lW2, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idButtonManualSync, 1.0);
         SetControl(idLabelAnimation, m_lb_animation);
         m_lb_animation.Caption = "Animation";
@@ -177,7 +181,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idLabelTimeScale, idLabelTimeScale,
             0, kFBAttachLeft, idLabelAnimation, 1.0,
             lS, kFBAttachBottom, idLabelAnimation, 1.0,
-            0, kFBAttachWidth, idLabelAnimation, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelAnimation, 1.0);
         SetControl(idLabelTimeScale, m_lb_time_scale);
         m_lb_time_scale.Caption = "Time Scale";
@@ -195,10 +199,10 @@ bool msmbLayout::FBCreate()
         AddRegion(idLabelSPS, idLabelSPS,
             0, kFBAttachLeft, idLabelTimeScale, 1.0,
             lS, kFBAttachBottom, idLabelTimeScale, 1.0,
-            0, kFBAttachWidth, idLabelTimeScale, 1.0,
+            lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelTimeScale, 1.0);
         SetControl(idLabelSPS, m_lb_sps);
-        m_lb_sps.Caption = "Samples Per Second";
+        m_lb_sps.Caption = "Samples Per Sec";
 
         AddRegion(idEditSPS, idEditSPS,
             lS, kFBAttachRight, idLabelSPS, 1.0,
@@ -213,7 +217,7 @@ bool msmbLayout::FBCreate()
         AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
             0, kFBAttachLeft, idLabelSPS, 1.0,
             lS2, kFBAttachBottom, idLabelSPS, 1.0,
-            0, kFBAttachWidth, idLabelSPS, 1.0,
+            lW2, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelSPS, 1.0);
         SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";

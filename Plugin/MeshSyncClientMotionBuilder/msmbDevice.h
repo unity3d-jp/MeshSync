@@ -76,10 +76,10 @@ public:
     float samples_per_second = 3.0f;
 
     bool auto_sync = false;
-    bool sync_cameras = false;
-    bool sync_lights = false;
+    bool sync_cameras = true;
+    bool sync_lights = true;
     bool sync_bones = true;
-    bool sync_meshes = false;
+    bool sync_meshes = true;
     bool sync_textures = false;
     bool sync_material = false;
 };
