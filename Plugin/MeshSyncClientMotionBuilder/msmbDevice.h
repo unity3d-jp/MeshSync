@@ -52,13 +52,9 @@ private:
     using AnimationRecords = std::map<FBModel*, AnimationRecord>;
 
 private:
-    FBSystem m_system;
-    FBPlayerControl m_player_control;
-
     bool m_dirty = true;
     bool m_pending = false;
     float m_anim_time = 0.0f;
-    float m_time_end = 0.0f; // todo
 
     ModelRecords m_extract_tasks;
     AnimationRecords m_anim_tasks;
@@ -76,8 +72,8 @@ public:
     ms::ClientSettings client_settings;
     int  timeout_ms = 5000;
     float scale_factor = 1.0f;
-    float animation_time_scale = 1.0f;
-    float animation_sps = 3.0f;
+    float time_scale = 1.0f;
+    float samples_per_second = 3.0f;
 
     bool auto_sync = false;
     bool sync_cameras = false;

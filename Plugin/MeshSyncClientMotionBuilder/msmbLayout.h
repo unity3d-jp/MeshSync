@@ -17,7 +17,6 @@ private:
     void onSyncAnimation(HIRegister pCaller, HKEventBase pEvent);
 
 private:
-    FBSystem    m_system;
     msmbDevice* m_device;
 
     FBLabel m_lb_server;

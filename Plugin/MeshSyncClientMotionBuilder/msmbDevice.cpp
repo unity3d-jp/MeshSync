@@ -165,7 +165,7 @@ bool msmbDevice::sendScene()
         m_pending = true;
         return false;
     }
-    if (exportObject(m_system.Scene->RootModel)) {
+    if (exportObject(FBSystem::TheOne().Scene->RootModel)) {
         kickAsyncSend();
     }
     return true;
@@ -260,6 +260,7 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
 
 void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
 {
+    dst.path = GetPath(src);
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
 }
 
@@ -376,35 +377,40 @@ bool msmbDevice::sendAnimations()
 
 int msmbDevice::exportAnimations()
 {
+    auto& system = FBSystem::TheOne();
+    FBPlayerControl control;
+
     // create default clip
     m_animations.push_back(ms::AnimationClip::create());
 
     // gather models
-    int num_animations = exportAnimation(m_system.Scene->RootModel);
+    int num_animations = exportAnimation(system.Scene->RootModel);
     if (num_animations == 0)
         return 0;
 
 
-    FBTime time_current = m_system.LocalTime;
-    double interval = 1.0 / animation_sps;
+    FBTime time_current = system.LocalTime;
+    double time_begin, time_end;
+    std::tie(time_begin, time_end) = GetTimeRange(system.CurrentTake);
+    double interval = 1.0 / samples_per_second;
 
-    int reserve_size = int(m_time_end / interval) + 1;
+    int reserve_size = int((time_end - time_begin) / interval) + 1;
     for (auto& kvp : m_anim_tasks) {
         kvp.second.dst->reserve(reserve_size);
     }
 
     // advance frame and record
-    for (double t = 0.0; t < m_time_end; t += interval) {
+    for (double t = time_begin; t < time_end; t += interval) {
         FBTime fbt;
         fbt.SetSecondDouble(t);
-        m_player_control.Goto(fbt);
+        control.Goto(fbt);
         for (auto& kvp : m_anim_tasks)
             kvp.second(this);
     }
 
     // cleanup
     m_anim_tasks.clear();
-    m_player_control.Goto(time_current);
+    control.Goto(time_current);
 
     // keyframe reduction
     for (auto& clip : m_animations)
@@ -460,12 +466,14 @@ void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
     bool vis = true;
     ExtractTransformData(src, pos, rot, scale, vis);
 
-    float t = m_anim_time * animation_time_scale;
+    float t = m_anim_time * time_scale;
     auto& dst = (ms::TransformAnimation&)dst_;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
     //dst.visible.push_back({ t, vis });
+
+    dst.path = GetPath(src);
 }
 
 void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
@@ -482,7 +490,7 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
     ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
-    float t = m_anim_time * animation_time_scale;
+    float t = m_anim_time * time_scale;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
@@ -504,7 +512,7 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     float spot_angle;
     ExtractLightData(static_cast<FBLight*>(src), type, color, intensity, spot_angle);
 
-    float t = m_anim_time * animation_time_scale;
+    float t = m_anim_time * time_scale;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     if (type == ms::Light::LightType::Spot)

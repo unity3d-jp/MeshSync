@@ -5,6 +5,9 @@ bool IsLight(FBModel* src);
 bool IsBone(FBModel* src);
 bool IsMesh(FBModel* src);
 
+std::string GetPath(FBModel *src);
+std::tuple<double, double> GetTimeRange(FBTake *take);
+
 
 inline ms::float2 to_float2(const FBVector2<float>& v)
 {

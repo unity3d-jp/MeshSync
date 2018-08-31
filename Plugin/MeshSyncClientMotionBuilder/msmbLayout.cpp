@@ -244,22 +244,23 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->animation_time_scale = (float)m_ed_time_scale.Value;
-    m_device->animation_sps = (float)m_ed_sps.Value;
+    m_device->time_scale = (float)m_ed_time_scale.Value;
+    m_device->samples_per_second = (float)m_ed_sps.Value;
 }
 
 void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->auto_sync = (bool)(int)m_bu_sync_lights.State;
-    // todo
+    if (m_device->auto_sync)
+        m_device->sendScene();
 }
 
 void msmbLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    // todo
+    m_device->sendScene();
 }
 
 void msmbLayout::onSyncAnimation(HIRegister pCaller, HKEventBase pEvent)
 {
-    // todo
+    m_device->sendAnimations();
 }

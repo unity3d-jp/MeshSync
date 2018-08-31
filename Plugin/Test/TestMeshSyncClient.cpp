@@ -63,11 +63,7 @@ TestCase(Test_SendMesh)
 
 TestCase(Test_Animation)
 {
-    ms::ClientSettings settings;
-    ms::Client client(settings);
-
     ms::Scene scene;
-
     {
         auto node = ms::Mesh::create();
         scene.objects.push_back(node);
