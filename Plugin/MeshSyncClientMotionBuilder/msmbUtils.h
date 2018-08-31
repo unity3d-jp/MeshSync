@@ -1,9 +1,9 @@
 #pragma once
 
-bool IsCamera(FBModel* src);
-bool IsLight(FBModel* src);
-bool IsBone(FBModel* src);
-bool IsMesh(FBModel* src);
+bool IsCamera(FBModel *src);
+bool IsLight(FBModel *src);
+bool IsTransform(FBModel *src);
+bool IsMesh(FBModel *src);
 
 std::string GetPath(FBModel *src);
 std::tuple<double, double> GetTimeRange(FBTake *take);

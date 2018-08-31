@@ -580,6 +580,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     dst.root_bone = ToString(dpath);
                 }
 
+                // get bindpose
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], &mstat);
                 if (mstat == MStatus::kSuccess) {

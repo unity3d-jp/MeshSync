@@ -190,14 +190,6 @@ int msmbDevice::exportObject(FBModel* src)
             ++ret;
         }
     }
-    else if (IsBone(src)) { // bone
-        if (sync_bones) {
-            auto obj = ms::Transform::create();
-            m_objects.push_back(obj);
-            extractTransform(*obj, src);
-            ++ret;
-        }
-    }
     else if (IsMesh(src)) { // mesh
         if (sync_meshes) {
             auto obj = ms::Mesh::create();
@@ -205,6 +197,12 @@ int msmbDevice::exportObject(FBModel* src)
             extractMesh(*obj, src);
             ++ret;
         }
+    }
+    else if (IsTransform(src)) {
+        auto obj = ms::Transform::create();
+        m_objects.push_back(obj);
+        extractTransform(*obj, src);
+        ++ret;
     }
 
     int num_children = src->Children.GetCount();
@@ -321,6 +319,29 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         dst.refine_settings.flags.gen_tangents = 1;
     }
 
+    // process skin cluster
+    if (FBCluster *cluster = src->Cluster) {
+        int num_links = cluster->LinkGetCount();
+        for (int li = 0; li < num_links; ++li) {
+            cluster->ClusterBegin(li);
+
+            auto bd = ms::BoneData::create();
+            dst.bones.push_back(bd);
+
+            auto bone = cluster->LinkGetModel(li);
+            bd->path = GetPath(bone);
+            bd->weights.resize_zeroclear(num_vertices);
+            // todo: where is bindpose???
+
+            int n = cluster->VertexGetCount();
+            for (int vi = 0; vi < n; ++vi)
+                bd->weights[cluster->VertexGetNumber(vi)] = (float)cluster->VertexGetWeight(vi);
+
+            cluster->ClusterEnd();
+        }
+    }
+
+
     // enumerate subpatches ("submeshes" in Unity's term) and generate indices
     int num_subpatches = vd->GetSubPatchCount();
     auto indices = (const int*)vd->GetIndexArray();
@@ -337,7 +358,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         case kFBGeometry_LINES:     ngon = 2; break;
         case kFBGeometry_TRIANGLES: ngon = 3; break;
         case kFBGeometry_QUADS:     ngon = 4; break;
-            // todo: support other topologies (triangle strip, etc)
+        // todo: support other topologies (triangle strip, etc)
         default: continue;
         }
         int prim_count = count / ngon;
@@ -346,6 +367,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         dst.counts.resize(dst.counts.size() + prim_count, ngon);
         dst.material_ids.resize(dst.material_ids.size() + prim_count, mid);
     }
+
     dst.refine_settings.flags.swap_faces = 1;
     dst.setupFlags();
 }
@@ -440,7 +462,7 @@ int msmbDevice::exportAnimation(FBModel * src)
         dst = ms::LightAnimation::create();
         extractor = &msmbDevice::extractLightAnimation;
     }
-    else if (IsBone(src) || IsMesh(src)) { // other
+    else if (IsTransform(src) || IsMesh(src)) { // other
         dst = ms::TransformAnimation::create();
         extractor = &msmbDevice::extractTransformAnimation;
     }

@@ -108,7 +108,7 @@ bool msmbLayout::FBCreate()
             lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelScale, 1.0);
         SetControl(idEditlScale, m_ed_scale);
-        m_ed_scale.Value = 1.0;
+        m_ed_scale.Value = (double)m_device->scale_factor;
         m_ed_scale.OnChange.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
 

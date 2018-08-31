@@ -1,33 +1,27 @@
 #include "pch.h"
 #include "msmbUtils.h"
 
-bool IsCamera(FBModel* src)
+bool IsCamera(FBModel *src)
 {
     return src->Is(FBCamera::TypeInfo);
 }
 
-bool IsLight(FBModel* src)
+bool IsLight(FBModel *src)
 {
     return src->Is(FBLight::TypeInfo);
 }
 
-bool IsBone(FBModel* src)
+bool IsTransform(FBModel *src)
 {
-    return src->Is(FBModelSkeleton::TypeInfo);
+    return src->Is(FBModelSkeleton::TypeInfo) || src->Is(FBModelNull::TypeInfo);
 }
 
 bool IsMesh(FBModel* src)
 {
     return src->ModelVertexData;
-    //return !IsCamera(src) && !IsCamera(src) && !IsBone(src) && (
-    //    !src->Is(FBModelOptical::TypeInfo) &&
-    //    !src->Is(FBModelPath3D::TypeInfo) &&
-    //    !src->Is(FBModelMarker::TypeInfo) &&
-    //    !src->Is(FBCameraSwitcher::TypeInfo)
-    //    );
 }
 
-std::string GetPath(FBModel * src)
+std::string GetPath(FBModel *src)
 {
     std::string ret;
     if (src->Parent)
@@ -37,7 +31,7 @@ std::string GetPath(FBModel * src)
     return ret;
 }
 
-std::tuple<double, double> GetTimeRange(FBTake * take)
+std::tuple<double, double> GetTimeRange(FBTake *take)
 {
     FBTimeSpan timespan = take->LocalTimeSpan;
     return { timespan.GetStart().GetSecondDouble(), timespan.GetStop().GetSecondDouble() };
