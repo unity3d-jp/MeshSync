@@ -561,8 +561,8 @@ template<class T> inline T angle_between2_signed(const tvec3<T>& p1, const tvec3
 
 template<class T> inline tvec3<T> apply_rotation(const tquat<T>& q, const tvec3<T>& p)
 {
-    auto a = cross(reinterpret_cast<tvec3<T>&>(q), p);
-    auto b = cross(reinterpret_cast<tvec3<T>&>(q), a);
+    auto a = cross(reinterpret_cast<const tvec3<T>&>(q), p);
+    auto b = cross(reinterpret_cast<const tvec3<T>&>(q), a);
     return p + (a * q.w + b) * T(2.0);
 }
 

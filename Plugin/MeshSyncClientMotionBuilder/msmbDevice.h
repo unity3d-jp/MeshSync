@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MeshSync/MeshSync.h"
+
 class msmbDevice : public FBDevice
 {
     FBDeviceDeclare(msmbDevice, FBDevice);
@@ -11,6 +13,7 @@ public:
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
 
     bool sendScene();
+    bool exportMaterials(bool textures);
     bool sendAnimations();
 
 private:
@@ -27,10 +30,11 @@ private:
     void extractTransform(ms::Transform& dst, FBModel* src);
     void extractCamera(ms::Camera& dst, FBCamera* src);
     void extractLight(ms::Light& dst, FBLight* src);
-    void extractTexture(ms::Texture& dst, FBTexture* src);
-    void extractMaterial(ms::Material& dst, FBMaterial* src);
     void extractMesh(ms::Mesh& dst, FBModel* src);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
+
+    int exportTexture(FBTexture* src, FBMaterialTextureType type);
+    bool exportMaterial(FBMaterial* src, bool textures);
 
     bool exportAnimations();
     bool exportAnimation(FBModel* src, bool force);
@@ -41,6 +45,20 @@ private:
 
     using NodeRecords = std::map<FBModel*, ms::TransformPtr>;
     using ExtractTasks = std::vector<std::function<void()>>;
+
+    struct TextureRecord : public mu::noncopyable
+    {
+        int id = 0;
+        ms::Texture *dst = nullptr;
+    };
+    using TextureRecords = std::map<FBTexture*, TextureRecord>;
+
+    struct MaterialRecord : public mu::noncopyable
+    {
+        int id = 0;
+        ms::Material *dst = nullptr;
+    };
+    using MaterialRecords = std::map<FBMaterial*, MaterialRecord>;
 
     struct AnimationRecord : public mu::noncopyable
     {
@@ -57,10 +75,14 @@ private:
 private:
     bool m_dirty = false;
     bool m_pending = false;
-    bool m_on_transaction = false;
+    bool m_dirty_meshes = true;
+
     float m_anim_time = 0.0f;
+    int m_texture_id_seed = 0;
 
     NodeRecords m_node_records;
+    TextureRecords m_texture_records;
+    MaterialRecords m_material_records;
     ExtractTasks m_extract_tasks;
     AnimationRecords m_anim_records;
 

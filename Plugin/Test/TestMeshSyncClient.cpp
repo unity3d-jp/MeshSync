@@ -89,10 +89,10 @@ TestCase(Test_Animation)
         anim->translation.push_back({ 2.0f, {1.0f, 1.0f, 0.0f} });
         anim->translation.push_back({ 3.0f, {1.0f, 1.0f, 1.0f} });
 
-        anim->rotation.push_back({ 0.0f, ms::rotateX(0.0f) });
-        anim->rotation.push_back({ 1.0f, ms::rotateX(90.0f) });
-        anim->rotation.push_back({ 2.0f, ms::rotateX(180.0f) });
-        anim->rotation.push_back({ 3.0f, ms::rotateX(270.0f) });
+        anim->rotation.push_back({ 0.0f, ms::rotateX(0.0f * mu::Deg2Rad) });
+        anim->rotation.push_back({ 1.0f, ms::rotateX(90.0f * mu::Deg2Rad) });
+        anim->rotation.push_back({ 2.0f, ms::rotateX(180.0f * mu::Deg2Rad) });
+        anim->rotation.push_back({ 3.0f, ms::rotateX(270.0f * mu::Deg2Rad) });
 
         anim->scale.push_back({ 0.0f, {1.0f, 1.0f, 1.0f} });
         anim->scale.push_back({ 1.0f, {2.0f, 2.0f, 2.0f} });

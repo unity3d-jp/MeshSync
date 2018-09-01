@@ -16,10 +16,6 @@
 #include <memory>
 #include <cassert>
 
-
-// this must be before maya includes
-#include "MeshSync/MeshSync.h"
-
 #pragma warning(push)
 #pragma warning(disable:4263 4264)
     #include <fbsdk/fbsdk.h>

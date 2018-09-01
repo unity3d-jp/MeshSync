@@ -60,11 +60,6 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     default:
         break;
     }
-
-    if (type == kFBSceneChangeTransactionBegin)
-        m_on_transaction = true;
-    else if(type == kFBSceneChangeTransactionEnd)
-        m_on_transaction = false;
 }
 
 void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
@@ -197,6 +192,14 @@ bool msmbDevice::sendScene()
     if (isSending()) {
         m_pending = true;
         return false;
+    }
+
+    if (m_dirty_meshes) {
+        m_dirty_meshes = false;
+        exportMaterials(true);
+    }
+    else if (sync_meshes) {
+        exportMaterials(false);
     }
 
     int num_exported = 0;
@@ -379,9 +382,23 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
             auto bone = cluster->LinkGetModel(li);
             bd->path = GetPath(bone);
-            bd->weights.resize_zeroclear(num_vertices);
-            // todo: where is bindpose???
 
+            // bindpose
+            {
+                FBVector3d pos_, rot_, scale_;
+                cluster->VertexGetTransform(pos_, rot_, scale_);
+                FBModelRotationOrder order = bone->RotationOrder;
+
+                auto pos = to_float3(pos_);
+                auto rot = mu::rotateZYX(to_float3(rot_) * mu::Deg2Rad);
+                auto scale = to_float3(scale_);
+                auto mat = mu::transform(pos, rot, scale);
+                // todo
+                //bd->bindpose = mat;
+            }
+
+            // weights
+            bd->weights.resize_zeroclear(num_vertices);
             int n = cluster->VertexGetCount();
             for (int vi = 0; vi < n; ++vi)
                 bd->weights[cluster->VertexGetNumber(vi)] = (float)cluster->VertexGetWeight(vi);
@@ -397,7 +414,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     for (int spi = 0; spi < num_subpatches; ++spi) {
         int offset = vd->GetSubPatchIndexOffset(spi);
         int count = vd->GetSubPatchIndexSize(spi);
-        int mid = vd->GetSubPatchMaterialId(spi);
+        int mid = m_material_records[vd->GetSubPatchMaterial(spi)].id;
         auto idx_begin = indices + offset;
         auto idx_end = idx_begin + count;
 
@@ -421,14 +438,132 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     dst.setupFlags();
 }
 
-void msmbDevice::extractTexture(ms::Texture& dst, FBTexture* src)
+
+bool msmbDevice::exportMaterials(bool textures)
 {
-    // todo
+    int num_exported = 0;
+
+    auto& materials = FBSystem::TheOne().Scene->Materials;
+    const int num_materials = materials.GetCount();
+    for (int mi = 0; mi < num_materials; ++mi) {
+        if (exportMaterial(materials[mi], textures))
+            ++num_exported;
+    }
+
+    for (auto& kvp : m_texture_records)
+        kvp.second.dst = nullptr;
+    for (auto& kvp : m_material_records)
+        kvp.second.dst = nullptr;
+
+    return num_exported > 0;
 }
 
-void msmbDevice::extractMaterial(ms::Material& dst, FBMaterial* src)
+int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 {
-    // todo
+    if (!src)
+        return 0;
+
+    FBVideoClip* video = FBCast<FBVideoClip>(src->Video);
+    if (!video)
+        return 0;
+
+    auto& rec = m_texture_records[src];
+    if (rec.dst)
+        return rec.id; // already exported
+
+    auto dst = ms::Texture::create();
+    m_textures.push_back(dst);
+    rec.dst = dst.get();
+
+    if (rec.id == 0)
+        rec.id = ++m_texture_id_seed;
+
+    dst->id = rec.id;
+    if (type == kFBMaterialTextureNormalMap)
+        dst->type = ms::TextureType::NormalMap;
+
+    RawVector<char> data;
+    if (ms::FileToByteArray(video->Filename, data)) {
+        dst->name = GetFilename(video->Filename);
+        dst->format = ms::TextureFormat::RawFile;
+        dst->data = std::move(data);
+    }
+    else {
+        dst->name = GetFilenameWithoutExtension(video->Filename);
+        dst->width = video->Width;
+        dst->height = video->Height;
+
+        int num_pixels = dst->width * dst->height;
+        auto image = (const char*)video->GetImage();
+
+        switch (video->Format) {
+        case kFBVideoFormat_RGBA_32:
+            dst->format = ms::TextureFormat::RGBAu8;
+            data.assign(image, image + (num_pixels * 4));
+            break;
+        case kFBVideoFormat_ABGR_32:
+            dst->format = ms::TextureFormat::RGBAu8;
+            data.resize_discard(num_pixels * 4);
+            ABGR2RGBA(data.data(), image, num_pixels);
+            break;
+        case kFBVideoFormat_ARGB_32:
+            dst->format = ms::TextureFormat::RGBAu8;
+            data.resize_discard(num_pixels * 4);
+            ARGB2RGBA(data.data(), image, num_pixels);
+            break;
+        case kFBVideoFormat_BGRA_32:
+            dst->format = ms::TextureFormat::RGBAu8;
+            data.resize_discard(num_pixels * 4);
+            BGRA2RGBA(data.data(), image, num_pixels);
+            break;
+        case kFBVideoFormat_RGB_24:
+            dst->format = ms::TextureFormat::RGBu8;
+            data.assign(image, image + (num_pixels * 3));
+            break;
+        case kFBVideoFormat_BGR_24:
+            dst->format = ms::TextureFormat::RGBu8;
+            data.resize_discard(num_pixels * 3);
+            BGR2RGB(data.data(), image, num_pixels);
+            break;
+        default:
+            // not supported
+            dst->format = ms::TextureFormat::RGBAu8;
+            data.resize_zeroclear(num_pixels * 4);
+            break;
+        }
+    }
+
+    return dst->id;
+}
+
+bool msmbDevice::exportMaterial(FBMaterial* src, bool textures)
+{
+    if (!src)
+        return false;
+
+    auto& rec = m_material_records[src];
+    if (rec.dst)
+        return rec.id; // already exported
+
+    auto dst = ms::Material::create();
+    m_materials.push_back(dst);
+    rec.dst = dst.get();
+    rec.id = (int)m_materials.size() - 1;
+
+    dst->id = rec.id;
+    dst->name = src->LongName;
+    dst->setColor(to_float4(src->Diffuse));
+
+    auto emissive = to_float4(src->Emissive);
+    if ((mu::float3&)emissive != mu::float3::zero())
+        dst->setEmission(emissive);
+
+    if (textures) {
+        dst->setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
+        dst->setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
+        dst->setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
+    }
+    return true;
 }
 
 
