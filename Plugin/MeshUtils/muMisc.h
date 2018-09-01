@@ -20,7 +20,10 @@ std::string ToMBS(const wchar_t *src);
 std::string ToMBS(const std::wstring& src);
 std::wstring ToWCS(const char *src);
 std::wstring ToWCS(const std::string& src);
+
 std::string SanitizeNodeName(const std::string& src);
+std::string GetFilename(const char *src);
+std::string GetFilename_NoExtension(const char * src);
 
 
 void AddDLLSearchPath(const char *v);

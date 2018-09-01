@@ -48,14 +48,14 @@ private:
 
     struct TextureRecord : public mu::noncopyable
     {
-        int id = 0;
+        int id = -1;
         ms::Texture *dst = nullptr;
     };
     using TextureRecords = std::map<FBTexture*, TextureRecord>;
 
     struct MaterialRecord : public mu::noncopyable
     {
-        int id = 0;
+        int id = -1;
         ms::Material *dst = nullptr;
     };
     using MaterialRecords = std::map<FBMaterial*, MaterialRecord>;

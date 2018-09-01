@@ -474,9 +474,8 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
     auto dst = ms::Texture::create();
     m_textures.push_back(dst);
     rec.dst = dst.get();
-
-    if (rec.id == 0)
-        rec.id = ++m_texture_id_seed;
+    if (rec.id == -1)
+        rec.id = (int)m_texture_records.size() - 1;
 
     dst->id = rec.id;
     if (type == kFBMaterialTextureNormalMap)
@@ -484,12 +483,16 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 
     RawVector<char> data;
     if (ms::FileToByteArray(video->Filename, data)) {
-        dst->name = GetFilename(video->Filename);
+        // send raw file contents
+
+        dst->name = mu::GetFilename(video->Filename);
         dst->format = ms::TextureFormat::RawFile;
         dst->data = std::move(data);
     }
     else {
-        dst->name = GetFilenameWithoutExtension(video->Filename);
+        // send texture data in FBVideoClip
+
+        dst->name = mu::GetFilename_NoExtension(video->Filename);
         dst->width = video->Width;
         dst->height = video->Height;
 
@@ -504,17 +507,17 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
         case kFBVideoFormat_ABGR_32:
             dst->format = ms::TextureFormat::RGBAu8;
             data.resize_discard(num_pixels * 4);
-            ABGR2RGBA(data.data(), image, num_pixels);
+            mu::ABGR2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
             break;
         case kFBVideoFormat_ARGB_32:
             dst->format = ms::TextureFormat::RGBAu8;
             data.resize_discard(num_pixels * 4);
-            ARGB2RGBA(data.data(), image, num_pixels);
+            mu::ARGB2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
             break;
         case kFBVideoFormat_BGRA_32:
             dst->format = ms::TextureFormat::RGBAu8;
             data.resize_discard(num_pixels * 4);
-            BGRA2RGBA(data.data(), image, num_pixels);
+            mu::BGRA2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
             break;
         case kFBVideoFormat_RGB_24:
             dst->format = ms::TextureFormat::RGBu8;
@@ -523,7 +526,7 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
         case kFBVideoFormat_BGR_24:
             dst->format = ms::TextureFormat::RGBu8;
             data.resize_discard(num_pixels * 3);
-            BGR2RGB(data.data(), image, num_pixels);
+            mu::BGR2RGB((mu::unorm8x3*)data.data(), (mu::unorm8x3*)image, num_pixels);
             break;
         default:
             // not supported
@@ -548,7 +551,8 @@ bool msmbDevice::exportMaterial(FBMaterial* src, bool textures)
     auto dst = ms::Material::create();
     m_materials.push_back(dst);
     rec.dst = dst.get();
-    rec.id = (int)m_materials.size() - 1;
+    if (rec.id == -1)
+        rec.id = (int)m_material_records.size() - 1;
 
     dst->id = rec.id;
     dst->name = src->LongName;

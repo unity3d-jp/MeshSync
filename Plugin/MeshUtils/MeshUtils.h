@@ -8,6 +8,7 @@
 #include "muHalf.h"
 #include "muSIMD.h"
 #include "muVertex.h"
+#include "muColor.h"
 #include "muTLS.h"
 #include "muMisc.h"
 #include "muConcurrency.h"

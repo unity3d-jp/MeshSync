@@ -147,6 +147,34 @@ std::string SanitizeNodeName(const std::string& src)
     }
 }
 
+std::string GetFilename(const char *src)
+{
+    int last_separator = 0;
+    for (int i = 0; src[i] != '\0'; ++i) {
+        if (src[i] == '\\' || src[i] == '/')
+            last_separator = i + 1;
+    }
+    return std::string(src + last_separator);
+}
+
+std::string GetFilename_NoExtension(const char * src)
+{
+    int last_separator = 0;
+    int last_comma = 0;
+    for (int i = 0; src[i] != '\0'; ++i) {
+        if (src[i] == '\\' || src[i] == '/')
+            last_separator = i + 1;
+        if (src[i] == '.')
+            last_comma = i;
+    }
+
+    if (last_comma > last_separator)
+        return std::string(src + last_separator, src + last_comma);
+    else
+        return std::string(src + last_separator);
+}
+
+
 void AddDLLSearchPath(const char *v)
 {
 #if defined(_WIN32)
