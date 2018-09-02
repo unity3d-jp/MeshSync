@@ -379,13 +379,22 @@ namespace UTJ.MeshSync
             }
         }
 
-        public Texture2D FindTexture(int tid)
+        public Texture2D FindTexture(int id)
         {
-            if (tid == 0)
+            if (id < 0)
                 return null;
-            var rec = m_textureList.Find(a => a.id == tid);
+            var rec = m_textureList.Find(a => a.id == id);
             return rec != null ? rec.texture : null;
         }
+
+        public Material FindMaterial(int id)
+        {
+            if (id < 0)
+                return null;
+            var rec = m_materialList.Find(a => a.id == id);
+            return rec != null ? rec.material : null;
+        }
+
 
         void UpdateTextures(SceneData scene)
         {
@@ -419,9 +428,9 @@ namespace UTJ.MeshSync
 #endif
                 }
 
-                int id = src.id;
-                if (id != 0 && texture != null)
+                if (texture != null)
                 {
+                    int id = src.id;
                     var dst = m_textureList.Find(a => a.id == id);
                     if (dst == null)
                     {
@@ -1235,11 +1244,12 @@ namespace UTJ.MeshSync
                         materials[j] = prev[j];
 
                     var mid = materialIDs[mi++];
-                    if (mid >= 0 && mid < m_materialList.Count)
+                    var material = FindMaterial(mid);
+                    if (material != null)
                     {
-                        if (materials[j] != m_materialList[mid].material)
+                        if (materials[j] != material)
                         {
-                            materials[j] = m_materialList[mid].material;
+                            materials[j] = material;
                             changed = true;
                         }
                     }

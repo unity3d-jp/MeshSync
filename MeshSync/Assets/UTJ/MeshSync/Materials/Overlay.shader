@@ -1,7 +1,10 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "MeshSync/Overlay" {
 Properties
 {
     [Enum(Normals,0,Tangents,1,UV0,2,UV1,3,UV2,4,UV3,5,Colors,6)] _Type("Attribute", Int) = 6
+    [Enum(Local,0,World,1)] _WorldSpace("Coordinate", Int) = 0
     _Scale("Scale", Float) = 1.0
     _Offset("Offset", Float) = 0.0
     [Toggle] _Abs("Abs", Float) = 0.0
@@ -10,6 +13,7 @@ Properties
 CGINCLUDE
 #include "UnityCG.cginc"
 int _Type;
+int _WorldSpace;
 int _Abs;
 float _Scale;
 float _Offset;
@@ -39,12 +43,19 @@ vs_out vert(ia_out v)
 {
     vs_out o;
     o.vertex = UnityObjectToClipPos(v.vertex);
+
     if (_Type == 0) { // normals
-        o.color.rgb = (v.normal.xyz * 0.5 + 0.5) * _Scale + _Offset;
+        float3 normal = v.normal.xyz;
+        if (_WorldSpace)
+            normal = mul(unity_ObjectToWorld, float4(normal.xyz, 0.0)).xyz;
+        o.color.rgb = (normal * 0.5 + 0.5) * _Scale + _Offset;
         o.color.a = 1.0;
     }
     else if (_Type == 1) { // tangents
-        o.color.rgb = ((v.tangent.xyz * v.tangent.w) * 0.5 + 0.5) * _Scale + _Offset;
+        float3 tangent = v.tangent.xyz * v.tangent.w;
+        if (_WorldSpace)
+            tangent = mul(unity_ObjectToWorld, float4(tangent.xyz, 0.0)).xyz;
+        o.color.rgb = (tangent * 0.5 + 0.5) * _Scale + _Offset;
         o.color.a = 1.0;
     }
     else if (_Type == 2) { // uv0
@@ -82,6 +93,7 @@ ENDCG
         Tags{ "RenderType" = "Transparent" "Queue" = "Transparent+100" }
         //Blend SrcAlpha OneMinusSrcAlpha
         //ZWrite Off
+        Cull Off
 
         Pass
         {
