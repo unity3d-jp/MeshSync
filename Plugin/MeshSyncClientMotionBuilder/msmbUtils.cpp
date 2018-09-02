@@ -3,22 +3,22 @@
 
 bool IsCamera(FBModel *src)
 {
-    return src->Is(FBCamera::TypeInfo);
+    return src && src->Is(FBCamera::TypeInfo);
 }
 
 bool IsLight(FBModel *src)
 {
-    return src->Is(FBLight::TypeInfo);
+    return src && src->Is(FBLight::TypeInfo);
 }
 
 bool IsBone(FBModel *src)
 {
-    return src->Is(FBModelSkeleton::TypeInfo);
+    return src && src->Is(FBModelSkeleton::TypeInfo);
 }
 
 bool IsMesh(FBModel* src)
 {
-    return src->ModelVertexData;
+    return src && src->ModelVertexData;
 }
 
 std::string GetPath(FBModel *src)

@@ -75,7 +75,7 @@ private:
 private:
     bool m_dirty = false;
     bool m_pending = false;
-    bool m_dirty_meshes = true;
+    bool m_dirty_scene = true;
 
     float m_anim_time = 0.0f;
     int m_texture_id_seed = 0;

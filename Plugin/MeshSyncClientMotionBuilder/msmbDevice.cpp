@@ -194,8 +194,8 @@ bool msmbDevice::sendScene()
         return false;
     }
 
-    if (m_dirty_meshes) {
-        m_dirty_meshes = false;
+    if (m_dirty_scene) {
+        m_dirty_scene = false;
         exportMaterials(true);
     }
     else if (sync_meshes) {
@@ -388,12 +388,21 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
             auto bone = cluster->LinkGetModel(li);
             bd->path = GetPath(bone);
 
+            // root bone
+            if (li == 0) {
+                auto root = bone;
+                while (IsBone(root->Parent))
+                    root = root->Parent;
+                dst.root_bone = GetPath(root);
+            }
+
             // bindpose
             {
+                // should consider rotation order?
+                //FBModelRotationOrder order = bone->RotationOrder;
+
                 FBVector3d t,r,s;
                 cluster->VertexGetTransform(t, r, s);
-                // todo: should consider rotation order?
-                // FBModelRotationOrder order = bone->RotationOrder;
                 mu::quatf q = mu::rotateZYX(-to_float3(r) * mu::Deg2Rad);
                 bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
             }
