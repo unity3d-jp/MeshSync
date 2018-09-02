@@ -268,9 +268,14 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
 static void ExtractTransformData(FBModel* src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     FBMatrix tmp;
-    src->GetMatrix(tmp, kModelTransformation, false, nullptr);
-
+    src->GetMatrix(tmp, kModelTransformation, true, nullptr);
     auto trs = to_float4x4(tmp);
+
+    if (src->Parent) {
+        src->Parent->GetMatrix(tmp, kModelTransformation, true, nullptr);
+        trs *= mu::invert(to_float4x4(tmp));
+    }
+
     pos = extract_position(trs);
     rot = extract_rotation(trs);
     scale = extract_scale(trs);
@@ -385,16 +390,12 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
             // bindpose
             {
-                FBVector3d pos_, rot_, scale_;
-                cluster->VertexGetTransform(pos_, rot_, scale_);
-                FBModelRotationOrder order = bone->RotationOrder;
-
-                auto pos = to_float3(pos_);
-                auto rot = mu::rotateZYX(to_float3(rot_) * mu::Deg2Rad);
-                auto scale = to_float3(scale_);
-                auto mat = mu::transform(pos, rot, scale);
-                // todo
-                //bd->bindpose = mat;
+                FBVector3d t,r,s;
+                cluster->VertexGetTransform(t, r, s);
+                // todo: should consider rotation order?
+                // FBModelRotationOrder order = bone->RotationOrder;
+                mu::quatf q = mu::rotateZYX(-to_float3(r) * mu::Deg2Rad);
+                bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
             }
 
             // weights
@@ -406,7 +407,6 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
             cluster->ClusterEnd();
         }
     }
-
 
     // enumerate subpatches ("submeshes" in Unity's term) and generate indices
     int num_subpatches = vd->GetSubPatchCount();
@@ -461,11 +461,11 @@ bool msmbDevice::exportMaterials(bool textures)
 int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 {
     if (!src)
-        return 0;
+        return -1;
 
     FBVideoClip* video = FBCast<FBVideoClip>(src->Video);
     if (!video)
-        return 0;
+        return -1;
 
     auto& rec = m_texture_records[src];
     if (rec.dst)

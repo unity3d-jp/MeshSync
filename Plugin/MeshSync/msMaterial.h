@@ -109,10 +109,10 @@ protected:
     float smoothness = 0.5f;
 
     // texture ids
-    int color_map = 0;
-    int metallic_map = 0;
-    int emission_map = 0;
-    int normal_map = 0;
+    int color_map = -1;
+    int metallic_map = -1;
+    int emission_map = -1;
+    int normal_map = -1;
 
 protected:
     Material();
