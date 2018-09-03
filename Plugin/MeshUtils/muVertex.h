@@ -14,10 +14,7 @@ struct Weights
         for (auto w : weights)
             total += w;
 
-        if (total == 0.0f) {
-            weights[0] = 1.0f;
-        }
-        else {
+        if (total != 0.0f) {
             float rcp_total = 1.0f / total;
             for (auto& w : weights)
                 w *= rcp_total;

@@ -51,6 +51,42 @@ void EnumerateAllNodes(const std::function<void(FBModel*)>& body)
 }
 
 
+void DbgPrintCluster(FBModel *model)
+{
+    FBCluster *cluster = model->Cluster;
+    if (!cluster)
+        return;
+
+    FBModelVertexData *vd = model->ModelVertexData;
+    RawVector<float> total_weights;
+    total_weights.resize_zeroclear(vd->GetVertexCount());
+
+    mu::Print("Cluster %s:\n", cluster->LongName.AsString());
+    int num_links = cluster->LinkGetCount();
+    for (int li = 0; li < num_links; ++li) {
+        ClusterScope scope(cluster, li);
+
+        auto bone = cluster->LinkGetModel(li);
+        mu::Print("  Bone %s:\n", bone->LongName.AsString());
+
+        // weights
+        int n = cluster->VertexGetCount();
+        mu::Print("    %d vertices:\n", n);
+        for (int vi = 0; vi < n; ++vi) {
+            int i = cluster->VertexGetNumber(vi);
+            float w = (float)cluster->VertexGetWeight(vi);
+            mu::Print("      %d - %f:\n", i, w);
+            total_weights[i] += w;
+        }
+    }
+
+    mu::Print("  Weights %s:\n", cluster->LongName.AsString());
+    for (float v : total_weights) {
+        mu::Print("    %f\n", v);
+    }
+}
+
+
 ms::float4x4 to_float4x4(const FBMatrix& src)
 {
     auto m = (const double*)&src;

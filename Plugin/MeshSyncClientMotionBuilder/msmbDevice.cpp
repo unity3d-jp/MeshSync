@@ -344,7 +344,7 @@ void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
 
 void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 {
-    auto vd = (FBModelVertexData*)src->ModelVertexData;
+    FBModelVertexData *vd = src->ModelVertexData;
     int num_vertices = vd->GetVertexCount();
     auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
     auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, false);
@@ -378,9 +378,15 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
     // process skin cluster
     if (FBCluster *cluster = src->Cluster) {
+        //DbgPrintCluster(src);
+
         int num_links = cluster->LinkGetCount();
         for (int li = 0; li < num_links; ++li) {
-            cluster->ClusterBegin(li);
+            ClusterScope scope(cluster, li);
+
+            int n = cluster->VertexGetCount();
+            if (n == 0)
+                continue;;
 
             auto bd = ms::BoneData::create();
             dst.bones.push_back(bd);
@@ -409,11 +415,11 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
             // weights
             bd->weights.resize_zeroclear(num_vertices);
-            int n = cluster->VertexGetCount();
-            for (int vi = 0; vi < n; ++vi)
-                bd->weights[cluster->VertexGetNumber(vi)] = (float)cluster->VertexGetWeight(vi);
-
-            cluster->ClusterEnd();
+            for (int vi = 0; vi < n; ++vi) {
+                int i = cluster->VertexGetNumber(vi);
+                float w = (float)cluster->VertexGetWeight(vi);
+                bd->weights[i] = w;
+            }
         }
     }
 

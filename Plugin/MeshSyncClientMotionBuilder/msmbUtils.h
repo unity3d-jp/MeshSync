@@ -2,6 +2,13 @@
 
 #include "MeshSync/MeshSync.h"
 
+struct ClusterScope
+{
+    FBCluster *cluster;
+    ClusterScope(FBCluster *c, int li) : cluster(c) { cluster->ClusterBegin(li); }
+    ~ClusterScope() { cluster->ClusterEnd(); }
+};
+
 bool IsCamera(FBModel *src);
 bool IsLight(FBModel *src);
 bool IsBone(FBModel *src);
@@ -12,6 +19,7 @@ std::tuple<double, double> GetTimeRange(FBTake *take);
 
 void EnumerateAllNodes(const std::function<void(FBModel*)>& body);
 
+void DbgPrintCluster(FBModel *model);
 
 inline ms::float2 to_float2(const FBVector2<float>& v) { return { v.mValue[0], v.mValue[1] }; }
 inline ms::float3 to_float3(const FBVector3<float>& v) { return { v.mValue[0], v.mValue[1], v.mValue[2] }; }

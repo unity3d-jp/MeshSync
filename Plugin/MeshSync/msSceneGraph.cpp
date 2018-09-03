@@ -917,11 +917,28 @@ void Mesh::applyTransform(const float4x4& m)
 
 void Mesh::setupBoneData()
 {
-    if (bones.empty()) { return; }
+    if (bones.empty())
+        return;
 
     int num_bones = (int)bones.size();
     int num_vertices = (int)points.size();
     weights4.resize_discard(num_vertices);
+
+    auto search_weight = [this](int vi) {
+        // some DCC tools (mainly MotionBuilder) omit weight data if there are vertices with identical position. so find it.
+        auto& dst = weights4[vi];
+        auto beg = points.begin();
+        auto end = beg + vi;
+        auto it = std::find(beg, end, points[vi]);
+        if (it != end) {
+            // found
+            dst = weights4[std::distance(beg, it)];
+        }
+        else {
+            // not found. assign 1 to void divide-by-zero...
+            dst.weights[0] = 1.0f;
+        }
+    };
 
     bool valid = false;
     if (num_bones <= 4) {
@@ -932,8 +949,8 @@ void Mesh::setupBoneData()
                 w4.indices[bi] = bi;
                 w4.weights[bi] = bones[bi]->weights[vi];
             }
-            if (w4.normalize() > 0.0f)
-                valid = true;
+            if (w4.normalize() == 0.0f)
+                search_weight(vi);
         }
     }
     else {
@@ -957,15 +974,9 @@ void Mesh::setupBoneData()
                 w4.indices[bi] = tmp[bi].index;
                 w4.weights[bi] = tmp[bi].weight;
             }
-            if (w4.normalize() > 0.0f)
-                valid = true;
+            if (w4.normalize() == 0.0f)
+                search_weight(vi);
         }
-    }
-
-    if (!valid) {
-        // no weights. clear bone data
-        bones.clear();
-        root_bone.clear();
     }
 }
 
