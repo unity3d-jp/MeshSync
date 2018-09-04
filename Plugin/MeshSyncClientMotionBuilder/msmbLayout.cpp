@@ -256,12 +256,12 @@ void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->auto_sync = (bool)(int)m_bu_sync_lights.State;
     if (m_device->auto_sync)
-        m_device->sendScene();
+        m_device->sendScene(true);
 }
 
 void msmbLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->sendScene();
+    m_device->sendScene(true);
 }
 
 void msmbLayout::onSyncAnimation(HIRegister pCaller, HKEventBase pEvent)

@@ -12,8 +12,8 @@ public:
     bool DeviceOperation(kDeviceOperations pOperation) override;
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
 
-    bool sendScene();
-    bool exportMaterials(bool textures);
+    bool sendScene(bool force_all);
+    bool exportMaterials();
     bool sendAnimations();
 
 private:
@@ -34,7 +34,7 @@ private:
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
     int exportTexture(FBTexture* src, FBMaterialTextureType type);
-    bool exportMaterial(FBMaterial* src, bool textures);
+    bool exportMaterial(FBMaterial* src);
 
     bool exportAnimations();
     bool exportAnimation(FBModel* src, bool force);
@@ -42,8 +42,15 @@ private:
     void extractCameraAnimation(ms::Animation& dst, FBModel* src);
     void extractLightAnimation(ms::Animation& dst, FBModel* src);
 
-
-    using NodeRecords = std::map<FBModel*, ms::TransformPtr>;
+    struct NodeRecord
+    {
+        std::string name;
+        std::string path;
+        int index = 0;
+        ms::Transform *dst = nullptr;
+        bool exist = false;
+    };
+    using NodeRecords = std::map<FBModel*, NodeRecord>;
     using ExtractTasks = std::vector<std::function<void()>>;
 
     struct TextureRecord : public mu::noncopyable
@@ -74,11 +81,13 @@ private:
 
 private:
     bool m_dirty = false;
+    bool m_dirty_meshes = true;
+    bool m_dirty_textures = true;
     bool m_pending = false;
-    bool m_dirty_scene = true;
 
     float m_anim_time = 0.0f;
     int m_texture_id_seed = 0;
+    int m_node_index_seed = 0;
 
     NodeRecords m_node_records;
     TextureRecords m_texture_records;

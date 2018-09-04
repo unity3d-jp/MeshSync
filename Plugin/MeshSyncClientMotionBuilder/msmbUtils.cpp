@@ -21,13 +21,18 @@ bool IsMesh(FBModel* src)
     return src && src->ModelVertexData;
 }
 
+const char* GetName(FBModel *src)
+{
+    return src->LongName;
+}
+
 std::string GetPath(FBModel *src)
 {
     std::string ret;
     if (src->Parent)
         ret = GetPath(src->Parent);
     ret += '/';
-    ret += src->LongName;
+    ret += GetName(src);
     return ret;
 }
 

@@ -14,6 +14,7 @@ bool IsLight(FBModel *src);
 bool IsBone(FBModel *src);
 bool IsMesh(FBModel *src);
 
+const char* GetName(FBModel *src);
 std::string GetPath(FBModel *src);
 std::tuple<double, double> GetTimeRange(FBTake *take);
 

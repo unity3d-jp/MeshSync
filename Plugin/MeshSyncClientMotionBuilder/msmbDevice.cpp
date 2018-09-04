@@ -53,6 +53,11 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     case kFBSceneChangeMergeTransactionEnd:
     case kFBSceneChangeChangeName:
     case kFBSceneChangeChangedName:
+        if (type == kFBSceneChangeLoadEnd ||
+            type == kFBSceneChangeAddChild)
+        {
+            m_dirty_meshes = m_dirty_textures = true;
+        }
         if (auto_sync)
             m_dirty = true;
         break;
@@ -64,11 +69,9 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
-    // todo: get dirty node
-
     //FBEventConnectionDataNotify	lEvent(pEvent);
-    //if (auto_sync)
-    //    m_dirty = true;
+    if (auto_sync)
+        m_dirty = true;
 }
 
 void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
@@ -85,7 +88,7 @@ void msmbDevice::update()
 {
     if (!m_dirty && !m_pending)
         return;
-    sendScene();
+    sendScene(false);
 }
 
 bool msmbDevice::isSending() const
@@ -186,30 +189,47 @@ void msmbDevice::kickAsyncSend()
 }
 
 
-bool msmbDevice::sendScene()
+bool msmbDevice::sendScene(bool force_all)
 {
+    if (force_all)
+        m_dirty_meshes = m_dirty_textures = true;
+
     m_dirty = m_pending = false;
     if (isSending()) {
         m_pending = true;
         return false;
     }
 
-    if (m_dirty_scene) {
-        m_dirty_scene = false;
-        exportMaterials(true);
-    }
-    else if (sync_meshes) {
-        exportMaterials(false);
-    }
+    if (sync_meshes)
+        exportMaterials();
 
+    // export nodes
     int num_exported = 0;
     EnumerateAllNodes([this, &num_exported](FBModel* node) {
         if (exportObject(node, false))
             ++num_exported;
     });
-    m_node_records.clear();
 
-    if (num_exported) {
+    // check deleted objects
+    for (auto it = m_node_records.begin(); it != m_node_records.end(); /**/) {
+        if (!it->second.exist) {
+            m_deleted.push_back(it->second.path);
+            m_node_records.erase(it++);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // clear state
+    for (auto& kvp : m_node_records) {
+        kvp.second.dst = nullptr;
+        kvp.second.exist = false;
+    }
+    m_dirty_meshes = m_dirty_textures = false;
+
+    // send
+    if (num_exported || !m_deleted.empty()) {
         kickAsyncSend();
         return true;
     }
@@ -222,15 +242,28 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
 {
     if (!src)
         return false;
+
     auto& rec = m_node_records[src];
-    if (rec)
+    if (rec.dst) {
         return false;
+    }
+    else if (rec.name.empty()) {
+        rec.name = GetName(src);
+        rec.path = GetPath(src);
+        rec.index = ++m_node_index_seed;
+    }
+    else if (rec.name != GetName(src)) {
+        m_deleted.push_back(rec.path);
+        rec.name = GetName(src);
+        rec.path = GetPath(src);
+    }
+    rec.exist = true;
 
     if (IsCamera(src)) { // camera
         if (sync_cameras) {
             exportObject(src->Parent, true);
             auto obj = ms::Camera::create();
-            rec = obj;
+            rec.dst = obj.get();
             m_objects.push_back(obj);
             extractCamera(*obj, static_cast<FBCamera*>(src));
         }
@@ -239,16 +272,16 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
         if (sync_lights) {
             exportObject(src->Parent, true);
             auto obj = ms::Light::create();
-            rec = obj;
+            rec.dst = obj.get();
             m_objects.push_back(obj);
             extractLight(*obj, static_cast<FBLight*>(src));
         }
     }
     else if (IsMesh(src)) { // mesh
-        if (sync_meshes) {
+        if (sync_meshes && m_dirty_meshes) {
             exportObject(src->Parent, true);
             auto obj = ms::Mesh::create();
-            rec = obj;
+            rec.dst = obj.get();
             m_meshes.push_back(obj);
             extractMesh(*obj, src);
         }
@@ -256,12 +289,12 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
     else if (IsBone(src) || force) {
         exportObject(src->Parent, true);
         auto obj = ms::Transform::create();
-        rec = obj;
+        rec.dst = obj.get();
         m_objects.push_back(obj);
         extractTransform(*obj, src);
     }
 
-    return rec != nullptr;
+    return rec.dst != nullptr;
 }
 
 
@@ -409,7 +442,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
                 FBVector3d t,r,s;
                 cluster->VertexGetTransform(t, r, s);
-                mu::quatf q = mu::rotateZYX(-to_float3(r) * mu::Deg2Rad);
+                mu::quatf q = mu::invert(mu::rotateXYZ(to_float3(r) * mu::Deg2Rad));
                 bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
             }
 
@@ -454,14 +487,14 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 }
 
 
-bool msmbDevice::exportMaterials(bool textures)
+bool msmbDevice::exportMaterials()
 {
     int num_exported = 0;
 
     auto& materials = FBSystem::TheOne().Scene->Materials;
     const int num_materials = materials.GetCount();
     for (int mi = 0; mi < num_materials; ++mi) {
-        if (exportMaterial(materials[mi], textures))
+        if (exportMaterial(materials[mi]))
             ++num_exported;
     }
 
@@ -554,7 +587,7 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
     return dst->id;
 }
 
-bool msmbDevice::exportMaterial(FBMaterial* src, bool textures)
+bool msmbDevice::exportMaterial(FBMaterial* src)
 {
     if (!src)
         return false;
@@ -577,7 +610,7 @@ bool msmbDevice::exportMaterial(FBMaterial* src, bool textures)
     if ((mu::float3&)emissive != mu::float3::zero())
         dst->setEmission(emissive);
 
-    if (textures) {
+    if (m_dirty_textures) {
         dst->setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
         dst->setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
         dst->setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
