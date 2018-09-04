@@ -41,6 +41,8 @@ option(BUILD_MAYA2018_CLIENT "Build MeshSyncClient for Maya 2018" OFF)
 
 # MotionBuilder
 if(LINUX)
+    option(BUILD_MOTIONBUILDER2015_CLIENT "Build MeshSyncClient for MotionBuilder 2015" OFF)
+    option(BUILD_MOTIONBUILDER2016_CLIENT "Build MeshSyncClient for MotionBuilder 2016" OFF)
     option(BUILD_MOTIONBUILDER2017_CLIENT "Build MeshSyncClient for MotionBuilder 2017" OFF)
     option(BUILD_MOTIONBUILDER2018_CLIENT "Build MeshSyncClient for MotionBuilder 2018" OFF)
 endif()
@@ -50,7 +52,7 @@ option(BUILD_TESTS "Tests" OFF)
 
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11 -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-deprecated")
 
 function(add_subdirectory_link to from)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")
@@ -102,6 +104,12 @@ if(BUILD_MAYALT2018_CLIENT)
 endif()
 
 # MotionBuilder
+if(BUILD_MOTIONBUILDER2015_CLIENT)
+    add_subdirectory_link(MeshSyncClientMotionBuilder2015 MeshSyncClientMotionBuilder)
+endif()
+if(BUILD_MOTIONBUILDER2016_CLIENT)
+    add_subdirectory_link(MeshSyncClientMotionBuilder2016 MeshSyncClientMotionBuilder)
+endif()
 if(BUILD_MOTIONBUILDER2017_CLIENT)
     add_subdirectory_link(MeshSyncClientMotionBuilder2017 MeshSyncClientMotionBuilder)
 endif()

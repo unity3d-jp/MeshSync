@@ -1,0 +1,24 @@
+# * MOTIONBUILDER2016_INCLUDE_DIR
+# * MOTIONBUILDER2016_LIBRARIES
+
+set(CMAKE_PREFIX_PATH
+    "/usr/autodesk/MotionBuilder2016/OpenRealitySDK"
+    "/opt/autodesk/MotionBuilder2016/OpenRealitySDK"
+)
+
+find_path(MOTIONBUILDER2016_INCLUDE_DIR fbsdk/fbsdk.h)
+mark_as_advanced(MOTIONBUILDER2016_INCLUDE_DIR)
+foreach(MOBU_LIB fbsdk)
+    find_file(MOTIONBUILDER2016_${MOBU_LIB}_LIBRARY lib${MOBU_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX} PATH_SUFFIXES lib/linux_64)
+    mark_as_advanced(MOTIONBUILDER2016_${MOBU_LIB}_LIBRARY)
+    if(MOTIONBUILDER2016_${MOBU_LIB}_LIBRARY)
+        list(APPEND MOTIONBUILDER2016_LIBRARIES ${MOTIONBUILDER2016_${MOBU_LIB}_LIBRARY})
+    endif()
+endforeach()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args("MotionBuilder2016"
+    DEFAULT_MSG
+    MOTIONBUILDER2016_INCLUDE_DIR
+    MOTIONBUILDER2016_LIBRARIES
+)
