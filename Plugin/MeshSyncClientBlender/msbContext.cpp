@@ -243,6 +243,12 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
         if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
         if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
         if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+        if (mirror->mirror_ob) {
+            dst.refine_settings.flags.mirror_basis = 1;
+            float4x4 wm = bobj.matrix_world();
+            float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
+            dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
+        }
     }
 
     dst.convertHandedness_Mesh(false, true);

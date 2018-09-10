@@ -105,6 +105,7 @@ namespace blender
         const char *name() const;
         void* data();
         float4x4 matrix_local() const;
+        float4x4 matrix_world() const;
         bool is_visible(Scene *scene) const;
     };
 

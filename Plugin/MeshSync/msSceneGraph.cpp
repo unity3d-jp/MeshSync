@@ -807,8 +807,12 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     // points
+    if (refine_settings.flags.mirror_basis)
+        mu::MulPoints(refine_settings.mirror_basis, points.data(), points.data(), points.size());
     points.resize(num_points_old + copylist.size());
     mu::MirrorPoints(points.data() + num_points_old, IArray<float3>{points.data(), num_points_old}, copylist, plane_n, plane_d);
+    if (refine_settings.flags.mirror_basis)
+        mu::MulPoints(mu::invert(refine_settings.mirror_basis), points.data(), points.data(), points.size());
 
     // indices
     counts.resize(num_faces_old * 2);

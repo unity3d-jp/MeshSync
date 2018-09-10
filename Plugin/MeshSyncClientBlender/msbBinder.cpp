@@ -19,6 +19,7 @@ Prop(BID, is_updated_data);
 
 Def(BObject);
 Prop(BObject, matrix_local);
+Prop(BObject, matrix_world);
 Func(BObject, is_visible);
 
 Def(BMesh);
@@ -93,6 +94,7 @@ void setup(py::object bpy_context)
             BObject::s_type = type;
             each_prop{
                 if (match_prop("matrix_local")) BObject_matrix_local = prop;
+                if (match_prop("matrix_world")) BObject_matrix_world = prop;
             }
             each_func {
                 if (match_func("is_visible")) BObject_is_visible = func;
@@ -305,6 +307,13 @@ float4x4 BObject::matrix_local() const
 {
     float4x4 ret;
     get_float_array(m_ptr, (float*)&ret, ((FloatPropertyRNA*)BObject_matrix_local)->getarray);
+    return ret;
+}
+
+float4x4 BObject::matrix_world() const
+{
+    float4x4 ret;
+    get_float_array(m_ptr, (float*)&ret, ((FloatPropertyRNA*)BObject_matrix_world)->getarray);
     return ret;
 }
 
