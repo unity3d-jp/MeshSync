@@ -260,7 +260,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
 
     // advance frame and record animation
     auto time_range = GetCOREInterface()->GetAnimRange();
-    auto interval = ToTicks(1.0f / m_settings.animation_sps);
+    auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 1));
     for (TimeValue t = time_range.Start(); t <= time_range.End(); t += interval) {
         m_current_time_tick = t;
         m_current_time_sec = ToSeconds(t);

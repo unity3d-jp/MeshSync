@@ -731,7 +731,7 @@ void msbContext::sendAnimations(SendScope scope)
         int frame_current = scene.frame_current();
         int frame_start = scene.frame_start();
         int frame_end = scene.frame_end();
-        int interval = m_settings.animation_frame_interval;
+        int interval = std::max(m_settings.animation_frame_interval, 1);
         float frame_to_seconds = 1.0f / scene.fps();
         int reserve_size = (frame_end - frame_start) / interval + 1;
 

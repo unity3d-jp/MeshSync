@@ -23,7 +23,7 @@ global proc UnityMeshSync_GUI()
     rowLayout -numberOfColumns 3;
     text -label "Server:Port";
     textField -text $address -w 120 -cc "umsCBServerAddress" umsCtrlAddress;
-    intField -value $port -w 60  -cc "umsCBServerPort" umsCtrlPort;
+    intField -value $port -w 60  -cc "umsCBServerPort" -minValue 0 -maxValue 65535 umsCtrlPort;
     setParent ..;
 
     separator -h 20 -w 250;
@@ -58,7 +58,7 @@ global proc UnityMeshSync_GUI()
         text -label "Time Scale"; floatField -w 60 -v $animationTS -cc "umsCBAnimationTS" umsCtrlAnimationTS;
     setParent ..;
     rowLayout -numberOfColumns 2;
-        text -label "Samples Per Second"; intField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" umsCtrlAnimationSPS;
+        text -label "Samples Per Second"; intField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 1 -maxValue 120 umsCtrlAnimationSPS;
     setParent ..;
     button -l "Sync" -c "umsCBSyncAnimations";
     

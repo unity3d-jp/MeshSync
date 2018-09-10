@@ -371,6 +371,7 @@ template<class T> inline tmat4x4<T>& operator*=(tmat4x4<T>& a, const tmat4x4<T> 
 }
 
 inline int ceildiv(int v, int d) { return (v + (d - 1)) / d; }
+inline int clamp(int v, int vmin, int vmax) { return std::min(std::max(v, vmin), vmax); }
 
 #define SF(T)                                                                                       \
     inline T sign(T v) { return v < T(0.0) ? T(-1.0) : T(1.0); }                                    \

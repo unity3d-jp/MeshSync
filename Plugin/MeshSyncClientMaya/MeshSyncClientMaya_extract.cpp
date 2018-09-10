@@ -664,7 +664,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     auto time_current = MAnimControl::currentTime();
     auto time_begin = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
-    auto interval = MTime(1.0 / m_settings.animation_sps, MTime::kSeconds);
+    auto interval = MTime(1.0 / std::max(m_settings.animation_sps, 1), MTime::kSeconds);
 
     int reserve_size = int((time_end.as(MTime::kSeconds) - time_begin.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {

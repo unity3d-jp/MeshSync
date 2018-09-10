@@ -81,6 +81,9 @@ bool msmbLayout::FBCreate()
             0, kFBAttachHeight, idLabelPort, 1.0);
         SetControl(idEditPort, m_ed_port);
         m_ed_port.Value = 8080;
+        m_ed_port.Min = 0;
+        m_ed_port.Max = 65535;
+        m_ed_port.Precision = 1;
         m_ed_port.OnChange.Add(this, (FBCallback)&msmbLayout::onServerSettingsChange);
     }
 
@@ -210,7 +213,10 @@ bool msmbLayout::FBCreate()
             lW, kFBAttachNone, nullptr, 1.0,
             0, kFBAttachHeight, idLabelSPS, 1.0);
         SetControl(idEditSPS, m_ed_sps);
-        m_ed_sps.Value = 3.0;
+        m_ed_sps.Value = 3;
+        m_ed_sps.Min = 1;
+        m_ed_sps.Max = 120;
+        m_ed_sps.Precision = 1;
         m_ed_sps.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
 

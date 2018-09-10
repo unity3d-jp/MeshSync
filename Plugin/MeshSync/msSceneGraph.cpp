@@ -940,7 +940,6 @@ void Mesh::setupBoneData()
         }
     };
 
-    bool valid = false;
     if (num_bones <= 4) {
         weights4.zeroclear();
         for (int vi = 0; vi < num_vertices; ++vi) {
