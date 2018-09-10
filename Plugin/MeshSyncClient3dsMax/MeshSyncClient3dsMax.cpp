@@ -414,6 +414,7 @@ void MeshSyncClient3dsMax::exportMaterials()
             int mid = (int)m_materials.size();
             auto dst = ms::Material::create();
             m_materials.push_back(dst);
+            dst->id = mid;
             dst->name = mu::ToMBS(mtl->GetName().data());
             dst->setColor(to_color(mtl->GetDiffuse()));
             return mid;

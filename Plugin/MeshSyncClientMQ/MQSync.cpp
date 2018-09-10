@@ -201,23 +201,18 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         // gather material data
         int nmat = doc->GetMaterialCount();
         m_materials.reserve(nmat);
-        for (int i = 0; i < nmat; ++i) {
-            auto dst = ms::Material::create();
-            auto src = doc->GetMaterial(i);
-            if (!src) {
-                // add dummy material to keep material index
-                dst->id = -1;
-            }
-            else {
-                dst->id = src->GetUniqueID();
+        for (int mi = 0; mi < nmat; ++mi) {
+            if (auto src = doc->GetMaterial(mi)) {
+                auto dst = ms::Material::create();
+                dst->id = mi;
                 {
                     char name[128];
                     src->GetName(name, sizeof(name));
                     dst->name = ms::ToUTF8(name);
                 }
                 dst->setColor(to_float4(src->GetColor()));
+                m_materials.push_back(dst);
             }
-            m_materials.push_back(dst);
         }
     }
 

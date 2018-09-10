@@ -19,8 +19,8 @@ namespace UTJ.MeshSync
 
             EditorGUILayout.Space();
 
-            GUILayout.Label("Texture List", EditorStyles.boldLabel);
-            DrawTextureList(t);
+            //GUILayout.Label("Texture List", EditorStyles.boldLabel);
+            //DrawTextureList(t);
 
             EditorGUILayout.Space();
 

@@ -372,7 +372,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
         if (mids.size() > 0) {
             const auto* indices_ptr = &indices[0];
-            dst.material_ids.resize_zeroclear(face_count);
+            dst.material_ids.resize(face_count, -1);
             uint32_t len = std::min(face_count, indices.length());
             for (uint32_t i = 0; i < len; ++i) {
                 dst.material_ids[i] = mids[indices_ptr[i]];

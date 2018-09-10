@@ -79,7 +79,7 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
     return ret;
 }
 
-int msbContext::getMaterialIndex(const Material *mat)
+int msbContext::getMaterialID(const Material *mat)
 {
     if (mat == nullptr)
         return 0;
@@ -263,11 +263,11 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
     size_t num_polygons = polygons.size();
     size_t num_vertices = vertices.size();
 
-    std::vector<int> material_ids(mesh.totcol);
+    std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        material_ids[mi] = getMaterialIndex(mesh.mat[mi]);
-    if (material_ids.empty())
-        material_ids.push_back(0);
+        mid_table[mi] = getMaterialID(mesh.mat[mi]);
+    if (mid_table.empty())
+        mid_table.push_back(-1);
 
     // vertices
     dst.points.resize_discard(num_vertices);
@@ -286,7 +286,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
             int material_index = polygon.mat_nr;
             int count = polygon.totloop;
             dst.counts[pi] = count;
-            dst.material_ids[pi] = material_ids[material_index];
+            dst.material_ids[pi] = mid_table[material_index];
             dst.indices.resize(dst.indices.size() + count);
 
             auto *idx = &indices[polygon.loopstart];
@@ -468,11 +468,11 @@ void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
     size_t num_vertices = vertices.size();
     size_t num_indices = triangles.size() * 3;
 
-    std::vector<int> material_ids(mesh.totcol);
+    std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        material_ids[mi] = getMaterialIndex(mesh.mat[mi]);
-    if (material_ids.empty())
-        material_ids.push_back(0);
+        mid_table[mi] = getMaterialID(mesh.mat[mi]);
+    if (mid_table.empty())
+        mid_table.push_back(-1);
 
     // vertices
     dst.points.resize_discard(num_vertices);
@@ -493,7 +493,7 @@ void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
             int material_index = 0;
             int polygon_index = triangle[0]->f->head.index;
             if (polygon_index < polygons.size())
-                material_index = material_ids[polygons[polygon_index]->mat_nr];
+                material_index = mid_table[polygons[polygon_index]->mat_nr];
             dst.material_ids[ti] = material_index;
 
             dst.counts[ti] = 3;
