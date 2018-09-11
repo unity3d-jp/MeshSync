@@ -457,8 +457,46 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     }
 
     // blendshapes
-    {
-        // todo
+    if (FBGeometry *geom = src->Geometry) {
+        int num_shapes = geom->ShapeGetCount();
+        if (num_shapes) {
+            RawVector<mu::float3> tmp_points, tmp_normals;
+            for (int si = 0; si < num_shapes; ++si) {
+                auto bsd = ms::BlendShapeData::create();
+                dst.blendshapes.push_back(bsd);
+                bsd->name = geom->ShapeGetName(si);
+
+                auto bsfd = ms::BlendShapeFrameData::create();
+                bsd->frames.push_back(bsfd);
+
+                tmp_points = dst.points;
+                tmp_normals = dst.normals;
+
+                int num_points = geom->ShapeGetDiffPointCount(si);
+                if (!tmp_normals.empty()) {
+                    for (int pi = 0; pi < num_points; ++pi) {
+                        int vi;
+                        FBVertex p, n;
+                        if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
+                            tmp_points[vi] += to_float3(p);
+                            tmp_normals[vi] += to_float3(n);
+                        }
+                    }
+                    bsfd->points = std::move(tmp_points);
+                    bsfd->normals = std::move(tmp_normals);
+                }
+                else {
+                    for (int pi = 0; pi < num_points; ++pi) {
+                        int vi;
+                        FBVertex p;
+                        if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
+                            tmp_points[vi] += to_float3(p);
+                        }
+                    }
+                    bsfd->points = std::move(tmp_points);
+                }
+            }
+        }
     }
 
     // enumerate subpatches ("submeshes" in Unity's term) and generate indices
