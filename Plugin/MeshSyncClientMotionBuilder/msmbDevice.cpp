@@ -342,7 +342,7 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
     }
 
     color = to_float4(src->DiffuseColor);
-    intensity = (float)src->Intensity;
+    intensity = (float)src->Intensity * 0.01f;
 }
 
 
@@ -355,7 +355,7 @@ void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
 void msmbDevice::extractCamera(ms::Camera& dst, FBCamera* src)
 {
     extractTransform(dst, src);
-    dst.rotation = mu::flipY(dst.rotation);
+    dst.rotation *= mu::rotateY(90.0f * mu::Deg2Rad);
 
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
@@ -364,7 +364,7 @@ void msmbDevice::extractCamera(ms::Camera& dst, FBCamera* src)
 void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
 {
     extractTransform(dst, src);
-    dst.rotation = mu::flipY(dst.rotation);
+    dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
 
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
 }
@@ -454,6 +454,11 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 bd->weights[i] = w;
             }
         }
+    }
+
+    // blendshapes
+    {
+        // todo
     }
 
     // enumerate subpatches ("submeshes" in Unity's term) and generate indices
@@ -656,7 +661,7 @@ bool msmbDevice::exportAnimations()
     FBTime time_current = system.LocalTime;
     double time_begin, time_end;
     std::tie(time_begin, time_end) = GetTimeRange(system.CurrentTake);
-    double interval = 1.0 / samples_per_second;
+    double interval = 1.0 / std::max(samples_per_second, 1.0f);
 
     int reserve_size = int((time_end - time_begin) / interval) + 1;
     for (auto& kvp : m_anim_records) {
@@ -751,7 +756,7 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     auto& dst = static_cast<ms::CameraAnimation&>(dst_);
     {
         auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
+        last.value *= mu::rotateY(90.0f * mu::Deg2Rad);
     }
 
     bool ortho;
@@ -771,7 +776,7 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     auto& dst = static_cast<ms::LightAnimation&>(dst_);
     {
         auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
+        last.value *= mu::rotateX(90.0f * mu::Deg2Rad);
     }
 
     ms::Light::LightType type;
