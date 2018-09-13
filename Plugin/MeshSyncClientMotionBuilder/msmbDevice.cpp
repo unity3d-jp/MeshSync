@@ -614,22 +614,12 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
         return rec.id; // already exported
 
     auto dst = ms::Texture::create();
-    m_textures.push_back(dst);
-    rec.dst = dst.get();
-    if (rec.id == -1)
-        rec.id = (int)m_texture_records.size() - 1;
-
-    dst->id = rec.id;
-    if (type == kFBMaterialTextureNormalMap)
-        dst->type = ms::TextureType::NormalMap;
-
-    RawVector<char> data;
+    auto& data = dst->data;
     if (ms::FileToByteArray(video->Filename, data)) {
         // send raw file contents
 
         dst->name = mu::GetFilename(video->Filename);
         dst->format = ms::TextureFormat::RawFile;
-        dst->data = std::move(data);
     }
     else {
         // send texture data in FBVideoClip
@@ -640,45 +630,58 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 
         int num_pixels = dst->width * dst->height;
         auto image = (const char*)video->GetImage();
-
-        switch (video->Format) {
-        case kFBVideoFormat_RGBA_32:
-            dst->format = ms::TextureFormat::RGBAu8;
-            data.assign(image, image + (num_pixels * 4));
-            break;
-        case kFBVideoFormat_ABGR_32:
-            dst->format = ms::TextureFormat::RGBAu8;
-            data.resize_discard(num_pixels * 4);
-            mu::ABGR2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-            break;
-        case kFBVideoFormat_ARGB_32:
-            dst->format = ms::TextureFormat::RGBAu8;
-            data.resize_discard(num_pixels * 4);
-            mu::ARGB2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-            break;
-        case kFBVideoFormat_BGRA_32:
-            dst->format = ms::TextureFormat::RGBAu8;
-            data.resize_discard(num_pixels * 4);
-            mu::BGRA2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-            break;
-        case kFBVideoFormat_RGB_24:
-            dst->format = ms::TextureFormat::RGBu8;
-            data.assign(image, image + (num_pixels * 3));
-            break;
-        case kFBVideoFormat_BGR_24:
-            dst->format = ms::TextureFormat::RGBu8;
-            data.resize_discard(num_pixels * 3);
-            mu::BGR2RGB((mu::unorm8x3*)data.data(), (mu::unorm8x3*)image, num_pixels);
-            break;
-        default:
-            // not supported
-            dst->format = ms::TextureFormat::RGBAu8;
-            data.resize_zeroclear(num_pixels * 4);
-            break;
+        if (num_pixels > 0 && image) {
+            switch (video->Format) {
+            case kFBVideoFormat_RGBA_32:
+                dst->format = ms::TextureFormat::RGBAu8;
+                data.assign(image, image + (num_pixels * 4));
+                break;
+            case kFBVideoFormat_ABGR_32:
+                dst->format = ms::TextureFormat::RGBAu8;
+                data.resize_discard(num_pixels * 4);
+                mu::ABGR2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
+                break;
+            case kFBVideoFormat_ARGB_32:
+                dst->format = ms::TextureFormat::RGBAu8;
+                data.resize_discard(num_pixels * 4);
+                mu::ARGB2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
+                break;
+            case kFBVideoFormat_BGRA_32:
+                dst->format = ms::TextureFormat::RGBAu8;
+                data.resize_discard(num_pixels * 4);
+                mu::BGRA2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
+                break;
+            case kFBVideoFormat_RGB_24:
+                dst->format = ms::TextureFormat::RGBu8;
+                data.assign(image, image + (num_pixels * 3));
+                break;
+            case kFBVideoFormat_BGR_24:
+                dst->format = ms::TextureFormat::RGBu8;
+                data.resize_discard(num_pixels * 3);
+                mu::BGR2RGB((mu::unorm8x3*)data.data(), (mu::unorm8x3*)image, num_pixels);
+                break;
+            default:
+                // not supported
+                break;
+            }
         }
     }
 
-    return dst->id;
+    if (!data.empty()) {
+        m_textures.push_back(dst);
+        rec.dst = dst.get();
+        if (rec.id == -1)
+            rec.id = (int)m_texture_records.size() - 1;
+
+        dst->id = rec.id;
+        if (type == kFBMaterialTextureNormalMap)
+            dst->type = ms::TextureType::NormalMap;
+
+        return dst->id;
+    }
+    else {
+        return -1;
+    }
 }
 
 bool msmbDevice::exportMaterial(FBMaterial* src)
