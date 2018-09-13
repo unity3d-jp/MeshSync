@@ -352,6 +352,7 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
 template<class Body>
 static void EnumerateShapeKVP(FBModel *src, const Body& body)
 {
+#if MOTIONBUILDER_VERSION >= 2018
     int c = src->GetInConnectorCount();
     for (int ci = 0; ci < c; ++ci) {
         auto n = src->GetInConnector(ci);
@@ -362,6 +363,7 @@ static void EnumerateShapeKVP(FBModel *src, const Body& body)
             body(name, value);
         }
     }
+#endif
 }
 
 
