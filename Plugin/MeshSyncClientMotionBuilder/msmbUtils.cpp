@@ -96,14 +96,37 @@ void DbgPrintCluster(FBModel *model)
     }
 }
 
-
-ms::float4x4 to_float4x4(const FBMatrix& src)
+static void DbgPrintAnimationNodeRecursive(FBAnimationNode * node, int depth = 0)
 {
-    auto m = (const double*)&src;
-    return { {
-         (float)m[0], (float)m[1], (float)m[2], (float)m[3],
-         (float)m[4], (float)m[5], (float)m[6], (float)m[7],
-         (float)m[8], (float)m[9], (float)m[10], (float)m[11],
-         (float)m[12], (float)m[13], (float)m[14], (float)m[15],
-    } };
+    if (!node)
+        return;
+
+    char indent[256];
+    int i;
+    for (i = 0; i < depth; ++i)
+        indent[i] = ' ';
+    indent[i] = '\0';
+
+    const char *folder = "";
+    FBFolder *fbf = node->Folder;
+    if (fbf)
+        folder = fbf->Name.AsString();
+    const char *name = node->Name.AsString();
+
+    double value;
+    node->ReadData(&value);
+    mu::Print("%sAnimationNode %s/%s - %lf:\n", indent, folder, name, value);
+
+    Each(node->Nodes, [depth](FBAnimationNode *n) {
+        DbgPrintAnimationNodeRecursive(n, depth + 1);
+    });
+}
+
+void DbgPrintAnimationNode(FBAnimationNode * node)
+{
+    if (!node)
+        return;
+    while (node->Parent)
+        node = node->Parent;
+    DbgPrintAnimationNodeRecursive(node);
 }

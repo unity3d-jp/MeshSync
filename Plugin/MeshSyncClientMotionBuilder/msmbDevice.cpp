@@ -352,18 +352,17 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
 template<class Body>
 static void EnumerateShapeNVP(FBModel *src, const Body& body)
 {
-#if MOTIONBUILDER_VERSION >= 2018
-    int c = src->GetInConnectorCount();
-    for (int ci = 0; ci < c; ++ci) {
-        auto n = src->GetInConnector(ci);
-        const char *name = n->Name;
-        if (name) {
-            double value;
-            n->ReadData(&value);
-            body(name, value);
-        }
+    FBAnimationNode *anode = src->AnimationNode;
+    if (anode) {
+        Each(anode->Nodes, [&body](FBAnimationNode *n) {
+            const char *name = n->Name;
+            if (name) {
+                double value;
+                n->ReadData(&value);
+                body(name, value);
+            }
+        });
     }
-#endif
 }
 
 
