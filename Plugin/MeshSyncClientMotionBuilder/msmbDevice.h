@@ -41,6 +41,7 @@ private:
     void extractTransformAnimation(ms::Animation& dst, FBModel* src);
     void extractCameraAnimation(ms::Animation& dst, FBModel* src);
     void extractLightAnimation(ms::Animation& dst, FBModel* src);
+    void extractMeshAnimation(ms::Animation& dst, FBModel* src);
 
     struct NodeRecord
     {

@@ -345,6 +345,22 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
     intensity = (float)src->Intensity * 0.01f;
 }
 
+// Body: [](const char *name, double value)->void
+template<class Body>
+static void EnumerateShapeKVP(FBModel *src, const Body& body)
+{
+    int c = src->GetInConnectorCount();
+    for (int ci = 0; ci < c; ++ci) {
+        auto n = src->GetInConnector(ci);
+        const char *name = n->Name;
+        if (name) {
+            double value;
+            n->ReadData(&value);
+            body(name, value);
+        }
+    }
+}
+
 
 void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
 {
@@ -460,6 +476,12 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     if (FBGeometry *geom = src->Geometry) {
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
+            std::map<std::string, float> weight_table;
+            EnumerateShapeKVP(src, [&weight_table](const char *name, double value) {
+                weight_table[name] = (float)value;
+            });
+
+
             RawVector<mu::float3> tmp_points, tmp_normals;
             for (int si = 0; si < num_shapes; ++si) {
                 auto bsd = ms::BlendShapeData::create();
@@ -469,6 +491,12 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 auto bsfd = ms::BlendShapeFrameData::create();
                 bsfd->weight = 100.0f;
                 bsd->frames.push_back(bsfd);
+
+                {
+                    auto it = weight_table.find(bsd->name);
+                    if (it != weight_table.end())
+                        bsd->weight = it->second;
+                }
 
                 tmp_points.resize_zeroclear(dst.points.size());
                 tmp_normals.resize_zeroclear(dst.normals.size());
@@ -751,7 +779,12 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
         dst = ms::LightAnimation::create();
         extractor = &msmbDevice::extractLightAnimation;
     }
-    else if (IsBone(src) || IsMesh(src) || force) { // other
+    else if (IsMesh(src)) { // mesh
+        exportAnimation(src->Parent, true);
+        dst = ms::MeshAnimation::create();
+        extractor = &msmbDevice::extractMeshAnimation;
+    }
+    else if (IsBone(src) || force) { // other
         exportAnimation(src->Parent, true);
         dst = ms::TransformAnimation::create();
         extractor = &msmbDevice::extractTransformAnimation;
@@ -829,6 +862,33 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     dst.intensity.push_back({ t, intensity });
     if (type == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
+}
+
+void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
+{
+    extractTransformAnimation(dst_, src);
+
+    auto& dst = static_cast<ms::MeshAnimation&>(dst_);
+
+    // blendshape animations
+    if (FBGeometry *geom = src->Geometry) {
+        int num_shapes = geom->ShapeGetCount();
+        if (num_shapes) {
+            if (dst.blendshapes.empty()) {
+                EnumerateShapeKVP(src, [&dst](const char *name, double value) {
+                    auto bsa = ms::BlendshapeAnimation::create();
+                    bsa->name = name;
+                    dst.blendshapes.push_back(bsa);
+                });
+            }
+
+            float t = m_anim_time * time_scale;
+            int idx = 0;
+            EnumerateShapeKVP(src, [&dst, &idx, t](const char *name, double value) {
+                dst.blendshapes[idx++]->weight.push_back({ t, (float)value });
+            });
+        }
+    }
 }
 
 void msmbDevice::AnimationRecord::operator()(msmbDevice *_this)
