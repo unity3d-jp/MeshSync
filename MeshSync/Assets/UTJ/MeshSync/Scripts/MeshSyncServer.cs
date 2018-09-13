@@ -637,73 +637,79 @@ namespace UTJ.MeshSync
                     t.gameObject.SetActive(true);
                 }
 
-                var split = data.GetSplit(si);
-                if(split.numPoints == 0 || split.numIndices == 0)
+                if (flags.hasIndices)
                 {
-                    rec.editMesh = null;
-                }
-                else
-                {
-                    rec.editMesh = CreateEditedMesh(data, split);
-                    rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                    var split = data.GetSplit(si);
+                    if (split.numPoints == 0 || split.numIndices == 0)
+                    {
+                        rec.editMesh = null;
+                    }
+                    else
+                    {
+                        rec.editMesh = CreateEditedMesh(data, split);
+                        rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                    }
                 }
 
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
-                    var collider = t.GetComponent<MeshCollider>();
-                    bool updateCollider = m_updateMeshColliders && collider != null &&
-                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
-
+                    if (flags.hasIndices)
                     {
-                        var old = smr.sharedMesh;
-                        smr.sharedMesh = null;
-                        DestroyIfNotAsset(old);
-                        old = null;
-                    }
+                        var collider = t.GetComponent<MeshCollider>();
+                        bool updateCollider = m_updateMeshColliders && collider != null &&
+                            (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
 
-                    if (updateCollider)
-                        collider.sharedMesh = rec.editMesh;
-
-                    bool updateWhenOffscreen = false;
-                    if (skinned)
-                    {
-                        // create bones
-                        var bonePaths = data.GetBonePaths();
-                        var bones = new Transform[data.numBones];
-                        for (int bi = 0; bi < bones.Length; ++bi)
                         {
-                            bool dummy = false;
-                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
+                            var old = smr.sharedMesh;
+                            smr.sharedMesh = null;
+                            DestroyIfNotAsset(old);
+                            old = null;
                         }
 
-                        if (bones.Length > 0)
+                        if (updateCollider)
+                            collider.sharedMesh = rec.editMesh;
+
+                        bool updateWhenOffscreen = false;
+                        if (skinned)
                         {
-                            bool dummy = false;
-                            var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
-                            if (root == null)
-                                root = bones[0];
-                            smr.rootBone = root;
-                            smr.bones = bones;
-                            updateWhenOffscreen = true;
+                            // create bones
+                            var bonePaths = data.GetBonePaths();
+                            var bones = new Transform[data.numBones];
+                            for (int bi = 0; bi < bones.Length; ++bi)
+                            {
+                                bool dummy = false;
+                                bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
+                            }
+
+                            if (bones.Length > 0)
+                            {
+                                bool dummy = false;
+                                var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
+                                if (root == null)
+                                    root = bones[0];
+                                smr.rootBone = root;
+                                smr.bones = bones;
+                                updateWhenOffscreen = true;
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (smr.rootBone != null)
+                        else
                         {
-                            smr.bones = null;
-                            smr.rootBone = null;
+                            if (smr.rootBone != null)
+                            {
+                                smr.bones = null;
+                                smr.rootBone = null;
+                            }
+
+                            if (rec.editMesh != null)
+                                smr.localBounds = rec.editMesh.bounds;
                         }
 
-                        if (rec.editMesh != null)
-                            smr.localBounds = rec.editMesh.bounds;
+                        smr.sharedMesh = rec.editMesh;
+                        smr.updateWhenOffscreen = updateWhenOffscreen;
                     }
 
-                    smr.sharedMesh = rec.editMesh;
-                    smr.updateWhenOffscreen = updateWhenOffscreen;
-
-                    if (flags.hasBlendshapes)
+                    if (flags.hasBlendshapeWeights)
                     {
                         int numBlendShapes = data.numBlendShapes;
                         for (int bi = 0; bi < numBlendShapes; ++bi)

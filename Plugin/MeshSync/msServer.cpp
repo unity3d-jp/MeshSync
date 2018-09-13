@@ -133,9 +133,10 @@ bool Server::start()
 {
     if (!m_server) {
         auto* params = new Poco::Net::HTTPServerParams;
-        params->setMaxQueued(m_settings.max_queue);
-        params->setMaxThreads(m_settings.max_threads);
-        params->setThreadIdleTime(Poco::Timespan(3, 0));
+        if (m_settings.max_queue > 0)
+            params->setMaxQueued(m_settings.max_queue);
+        if (m_settings.max_threads > 0)
+            params->setMaxThreads(m_settings.max_threads);
 
         try {
             Poco::Net::ServerSocket svs(m_settings.port);

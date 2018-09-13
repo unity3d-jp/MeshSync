@@ -278,12 +278,15 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
         }
     }
     else if (IsMesh(src)) { // mesh
-        if (sync_meshes && m_dirty_meshes) {
+        if (sync_meshes) {
             exportObject(src->Parent, true);
             auto obj = ms::Mesh::create();
             rec.dst = obj.get();
             m_meshes.push_back(obj);
-            extractMesh(*obj, src);
+            if (m_dirty_meshes)
+                extractMesh(*obj, src);
+            else
+                extractMeshSimple(*obj, src);
         }
     }
     else if (IsBone(src) || force) {
@@ -383,6 +386,25 @@ void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
     dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
 
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+}
+
+void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
+{
+    extractTransform(dst, src);
+
+    // blendshape weights
+    if (FBGeometry *geom = src->Geometry) {
+        int num_shapes = geom->ShapeGetCount();
+        if (num_shapes) {
+            EnumerateShapeKVP(src, [&dst](const char *name, double value) {
+                auto bsd = ms::BlendShapeData::create();
+                dst.blendshapes.push_back(bsd);
+                bsd->name = name;
+                bsd->weight = (float)value;
+            });
+        }
+    }
+    dst.setupFlags();
 }
 
 void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)

@@ -21,6 +21,7 @@ ScenePtr Client::send(const GetMessage& mes)
         {
             HTTPRequest request{ HTTPRequest::HTTP_POST, "get" };
             request.setContentType("application/octet-stream");
+            request.setExpectContinue(true);
             request.setContentLength(mes.getSerializeSize());
             auto& os = session.sendRequest(request);
             mes.serialize(os);
@@ -47,7 +48,7 @@ bool Client::send(const SetMessage& mes)
 
         HTTPRequest request{ HTTPRequest::HTTP_POST, "set" };
         request.setContentType("application/octet-stream");
-
+        request.setExpectContinue(true);
         request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
         mes.serialize(os);
@@ -72,7 +73,7 @@ bool Client::send(const DeleteMessage& mes)
 
         HTTPRequest request{ HTTPRequest::HTTP_POST, "delete" };
         request.setContentType("application/octet-stream");
-
+        request.setExpectContinue(true);
         request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
         mes.serialize(os);
@@ -97,7 +98,7 @@ bool Client::send(const FenceMessage & mes)
 
         HTTPRequest request{ HTTPRequest::HTTP_POST, "fence" };
         request.setContentType("application/octet-stream");
-
+        request.setExpectContinue(true);
         request.setContentLength(mes.getSerializeSize());
         auto& os = session.sendRequest(request);
         mes.serialize(os);
@@ -124,6 +125,7 @@ MessagePtr Client::send(const QueryMessage & mes)
         {
             HTTPRequest request{ HTTPRequest::HTTP_POST, "query" };
             request.setContentType("application/octet-stream");
+            request.setExpectContinue(true);
             request.setContentLength(mes.getSerializeSize());
             auto& os = session.sendRequest(request);
             mes.serialize(os);

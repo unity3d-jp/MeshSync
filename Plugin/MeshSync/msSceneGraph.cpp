@@ -457,7 +457,7 @@ uint32_t Mesh::getSerializeSize() const
         ret += ssize(root_bone);
         ret += ssize(bones);
     }
-    if (flags.has_blendshapes) {
+    if (flags.has_blendshape_weights) {
         ret += ssize(blendshapes);
     }
     return ret;
@@ -478,7 +478,7 @@ void Mesh::serialize(std::ostream& os) const
         write(os, root_bone);
         write(os, bones);
     }
-    if (flags.has_blendshapes) {
+    if (flags.has_blendshape_weights) {
         write(os, blendshapes);
     }
 }
@@ -507,7 +507,7 @@ void Mesh::deserialize(std::istream& is)
             }
         }
     }
-    if (flags.has_blendshapes) {
+    if (flags.has_blendshape_weights) {
         read(is, blendshapes);
     }
 }
@@ -995,7 +995,8 @@ void Mesh::setupFlags()
     flags.has_indices = !indices.empty();
     flags.has_material_ids = !material_ids.empty();
     flags.has_bones = !bones.empty();
-    flags.has_blendshapes = !blendshapes.empty();
+    flags.has_blendshape_weights = !blendshapes.empty();
+    flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
 
     flags.has_refine_settings =
         (uint32_t&)refine_settings.flags != 0 ||

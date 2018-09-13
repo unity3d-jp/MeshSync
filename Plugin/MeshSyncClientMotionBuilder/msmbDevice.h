@@ -30,6 +30,7 @@ private:
     void extractTransform(ms::Transform& dst, FBModel* src);
     void extractCamera(ms::Camera& dst, FBCamera* src);
     void extractLight(ms::Light& dst, FBLight* src);
+    void extractMeshSimple(ms::Mesh& dst, FBModel* src);
     void extractMesh(ms::Mesh& dst, FBModel* src);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 

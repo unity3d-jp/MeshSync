@@ -268,15 +268,20 @@ namespace UTJ.MeshSync
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
             }
-            public bool hasBlendshapes
+            public bool hasBlendshapeWeights
             {
                 get { return (flags & (1 << 11)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 11)); }
             }
-            public bool applyTRS
+            public bool hasBlendshapes
             {
                 get { return (flags & (1 << 12)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 12)); }
+            }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 13)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 13)); }
             }
         };
 
@@ -1852,7 +1857,7 @@ namespace UTJ.MeshSync
                 {
                     return new ServerSettings
                     {
-                        max_queue = 256,
+                        max_queue = 512,
                         max_threads = 8,
                         port = 8080,
 #if UNITY_2017_3_OR_NEWER

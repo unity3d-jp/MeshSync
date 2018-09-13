@@ -168,8 +168,9 @@ struct MeshDataFlags
     uint32_t has_uv0 : 1;
     uint32_t has_uv1 : 1;
     uint32_t has_colors : 1;
-    uint32_t has_material_ids : 1;
+    uint32_t has_material_ids : 1; // 10
     uint32_t has_bones : 1;
+    uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;
     uint32_t apply_trs : 1;
 };
