@@ -52,7 +52,12 @@ static void EnumerateAllNodesImpl(FBModel *node, const std::function<void(FBMode
 }
 void EnumerateAllNodes(const std::function<void(FBModel*)>& body)
 {
-    EnumerateAllNodesImpl(FBSystem::TheOne().RootModel, body);
+    auto& scene = FBSystem::TheOne().Scene;
+    Each(scene->Cameras, [&body](FBCamera *cam) {
+        if (cam->LongName == "Producer Perspective")
+            body(cam);
+    });
+    EnumerateAllNodesImpl(scene->RootModel, body);
 }
 
 

@@ -350,7 +350,7 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
 
 // Body: [](const char *name, double value)->void
 template<class Body>
-static void EnumerateShapeKVP(FBModel *src, const Body& body)
+static void EnumerateShapeNVP(FBModel *src, const Body& body)
 {
 #if MOTIONBUILDER_VERSION >= 2018
     int c = src->GetInConnectorCount();
@@ -398,7 +398,7 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
     if (FBGeometry *geom = src->Geometry) {
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
-            EnumerateShapeKVP(src, [&dst](const char *name, double value) {
+            EnumerateShapeNVP(src, [&dst](const char *name, double value) {
                 auto bsd = ms::BlendShapeData::create();
                 dst.blendshapes.push_back(bsd);
                 bsd->name = name;
@@ -412,7 +412,9 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
 void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
 {
     extractTransform(dst, src);
-    doExtractMesh(dst, src);
+    m_extract_tasks.push_back([this, &dst, src]() {
+        doExtractMesh(dst, src);
+    });
 }
 
 void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
@@ -501,7 +503,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             std::map<std::string, float> weight_table;
-            EnumerateShapeKVP(src, [&weight_table](const char *name, double value) {
+            EnumerateShapeNVP(src, [&weight_table](const char *name, double value) {
                 weight_table[name] = (float)value;
             });
 
@@ -511,16 +513,15 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 auto bsd = ms::BlendShapeData::create();
                 dst.blendshapes.push_back(bsd);
                 bsd->name = geom->ShapeGetName(si);
-
-                auto bsfd = ms::BlendShapeFrameData::create();
-                bsfd->weight = 100.0f;
-                bsd->frames.push_back(bsfd);
-
                 {
                     auto it = weight_table.find(bsd->name);
                     if (it != weight_table.end())
                         bsd->weight = it->second;
                 }
+
+                auto bsfd = ms::BlendShapeFrameData::create();
+                bsfd->weight = 100.0f;
+                bsd->frames.push_back(bsfd);
 
                 tmp_points.resize_zeroclear(dst.points.size());
                 tmp_normals.resize_zeroclear(dst.normals.size());
@@ -528,7 +529,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 int num_points = geom->ShapeGetDiffPointCount(si);
                 if (!tmp_normals.empty()) {
                     for (int pi = 0; pi < num_points; ++pi) {
-                        int vi = 0; // this is needed or ShapeGetDiffPoint() fails
+                        int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
                         FBVertex p, n;
                         if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
                             tmp_points[vi] = to_float3(p);
@@ -540,7 +541,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 }
                 else {
                     for (int pi = 0; pi < num_points; ++pi) {
-                        int vi = 0; // this is needed or ShapeGetDiffPoint() fails
+                        int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
                         FBVertex p;
                         if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
                             tmp_points[vi] = to_float3(p);
@@ -902,7 +903,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             if (dst.blendshapes.empty()) {
-                EnumerateShapeKVP(src, [&dst](const char *name, double value) {
+                EnumerateShapeNVP(src, [&dst](const char *name, double value) {
                     auto bsa = ms::BlendshapeAnimation::create();
                     bsa->name = name;
                     dst.blendshapes.push_back(bsa);
@@ -911,7 +912,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
 
             float t = m_anim_time * time_scale;
             int idx = 0;
-            EnumerateShapeKVP(src, [&dst, &idx, t](const char *name, double value) {
+            EnumerateShapeNVP(src, [&dst, &idx, t](const char *name, double value) {
                 dst.blendshapes[idx++]->weight.push_back({ t, (float)value });
             });
         }
