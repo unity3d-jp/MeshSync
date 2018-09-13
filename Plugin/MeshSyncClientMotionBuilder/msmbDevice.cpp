@@ -467,19 +467,20 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 bsd->name = geom->ShapeGetName(si);
 
                 auto bsfd = ms::BlendShapeFrameData::create();
+                bsfd->weight = 100.0f;
                 bsd->frames.push_back(bsfd);
 
-                tmp_points = dst.points;
-                tmp_normals = dst.normals;
+                tmp_points.resize_zeroclear(dst.points.size());
+                tmp_normals.resize_zeroclear(dst.normals.size());
 
                 int num_points = geom->ShapeGetDiffPointCount(si);
                 if (!tmp_normals.empty()) {
                     for (int pi = 0; pi < num_points; ++pi) {
-                        int vi;
+                        int vi = 0; // this is needed or ShapeGetDiffPoint() fails
                         FBVertex p, n;
                         if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
-                            tmp_points[vi] += to_float3(p);
-                            tmp_normals[vi] += to_float3(n);
+                            tmp_points[vi] = to_float3(p);
+                            tmp_normals[vi] = to_float3(n);
                         }
                     }
                     bsfd->points = std::move(tmp_points);
@@ -487,10 +488,10 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
                 }
                 else {
                     for (int pi = 0; pi < num_points; ++pi) {
-                        int vi;
+                        int vi = 0; // this is needed or ShapeGetDiffPoint() fails
                         FBVertex p;
                         if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
-                            tmp_points[vi] += to_float3(p);
+                            tmp_points[vi] = to_float3(p);
                         }
                     }
                     bsfd->points = std::move(tmp_points);

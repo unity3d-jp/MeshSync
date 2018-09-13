@@ -29,6 +29,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <numeric>
 #include <mutex>
 #include <atomic>

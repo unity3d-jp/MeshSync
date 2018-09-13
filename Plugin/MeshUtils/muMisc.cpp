@@ -147,6 +147,16 @@ std::string SanitizeNodeName(const std::string& src)
     }
 }
 
+std::string SanitizeFileName(const std::string & src)
+{
+    std::string ret = src;
+    for (auto& c : ret) {
+        if (c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+            c = '_';
+    }
+    return ret;
+}
+
 std::string GetFilename(const char *src)
 {
     int last_separator = 0;

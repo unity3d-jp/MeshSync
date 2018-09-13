@@ -9,6 +9,13 @@ struct ClusterScope
     ~ClusterScope() { cluster->ClusterEnd(); }
 };
 
+struct GeometryScope
+{
+    FBGeometry *geom;
+    GeometryScope(FBGeometry *g) : geom(g) { geom->GeometryBegin(); }
+    ~GeometryScope() { geom->GeometryEnd(); }
+};
+
 bool IsCamera(FBModel *src);
 bool IsLight(FBModel *src);
 bool IsBone(FBModel *src);
