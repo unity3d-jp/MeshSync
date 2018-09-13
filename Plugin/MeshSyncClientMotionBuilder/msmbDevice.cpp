@@ -350,7 +350,7 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
 
 // Body: [](const char *name, double value)->void
 template<class Body>
-static void EnumerateShapeNVP(FBModel *src, const Body& body)
+static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
 {
     FBAnimationNode *anode = src->AnimationNode;
     if (anode) {
@@ -397,7 +397,7 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
     if (FBGeometry *geom = src->Geometry) {
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
-            EnumerateShapeNVP(src, [&dst](const char *name, double value) {
+            EnumerateAnimationNVP(src, [&dst](const char *name, double value) {
                 auto bsd = ms::BlendShapeData::create();
                 dst.blendshapes.push_back(bsd);
                 bsd->name = name;
@@ -502,7 +502,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             std::map<std::string, float> weight_table;
-            EnumerateShapeNVP(src, [&weight_table](const char *name, double value) {
+            EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
                 weight_table[name] = (float)value;
             });
 
@@ -902,7 +902,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             if (dst.blendshapes.empty()) {
-                EnumerateShapeNVP(src, [&dst](const char *name, double value) {
+                EnumerateAnimationNVP(src, [&dst](const char *name, double value) {
                     auto bsa = ms::BlendshapeAnimation::create();
                     bsa->name = name;
                     dst.blendshapes.push_back(bsa);
@@ -911,7 +911,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
 
             float t = m_anim_time * time_scale;
             int idx = 0;
-            EnumerateShapeNVP(src, [&dst, &idx, t](const char *name, double value) {
+            EnumerateAnimationNVP(src, [&dst, &idx, t](const char *name, double value) {
                 dst.blendshapes[idx++]->weight.push_back({ t, (float)value });
             });
         }

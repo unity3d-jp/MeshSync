@@ -61,6 +61,64 @@ void EnumerateAllNodes(const std::function<void(FBModel*)>& body)
 }
 
 
+#ifdef mscDebug
+
+void DbgPrintProperties(FBPropertyManager& properties)
+{
+    Each(properties, [](FBProperty *p) {
+        const char *name = p->GetName();
+        const char *value = p->AsString();
+        const char *tname = p->GetPropertyTypeName();
+        mu::Print(" %s : %s (%s)\n", name, value, tname);
+    });
+}
+
+static void DbgPrintAnimationNodeRecursive(FBAnimationNode * node, int depth = 0)
+{
+    if (!node)
+        return;
+
+    char indent[256];
+    int i;
+    for (i = 0; i < depth; ++i)
+        indent[i] = ' ';
+    indent[i] = '\0';
+
+    const char *folder = nullptr;
+    const char *ns = nullptr;
+    {
+        FBFolder *fbfolder = node->Folder;
+        if (fbfolder)
+            folder = fbfolder->Name.AsString();
+    }
+    {
+        auto *fbns = node->GetOwnerNamespace();
+        if (fbns)
+            ns = fbns->Name.AsString();
+    }
+    const char *name = node->Name.AsString();
+    const char *fullname = node->GetFullName();
+    const char *classname = node->ClassName();
+
+    double value;
+    node->ReadData(&value);
+    mu::Print("%sAnimationNode %s : %lf (classname:%s fullname:%s namespace:%s folder:%s)\n",
+        indent, name, value, classname, fullname, ns, folder);
+
+    Each(node->Nodes, [depth](FBAnimationNode *n) {
+        DbgPrintAnimationNodeRecursive(n, depth + 1);
+    });
+}
+
+void DbgPrintAnimationNode(FBAnimationNode * node)
+{
+    if (!node)
+        return;
+    while (node->Parent)
+        node = node->Parent;
+    DbgPrintAnimationNodeRecursive(node);
+}
+
 void DbgPrintCluster(FBModel *model)
 {
     FBCluster *cluster = model->Cluster;
@@ -96,37 +154,4 @@ void DbgPrintCluster(FBModel *model)
     }
 }
 
-static void DbgPrintAnimationNodeRecursive(FBAnimationNode * node, int depth = 0)
-{
-    if (!node)
-        return;
-
-    char indent[256];
-    int i;
-    for (i = 0; i < depth; ++i)
-        indent[i] = ' ';
-    indent[i] = '\0';
-
-    const char *folder = "";
-    FBFolder *fbf = node->Folder;
-    if (fbf)
-        folder = fbf->Name.AsString();
-    const char *name = node->Name.AsString();
-
-    double value;
-    node->ReadData(&value);
-    mu::Print("%sAnimationNode %s/%s - %lf:\n", indent, folder, name, value);
-
-    Each(node->Nodes, [depth](FBAnimationNode *n) {
-        DbgPrintAnimationNodeRecursive(n, depth + 1);
-    });
-}
-
-void DbgPrintAnimationNode(FBAnimationNode * node)
-{
-    if (!node)
-        return;
-    while (node->Parent)
-        node = node->Parent;
-    DbgPrintAnimationNodeRecursive(node);
-}
+#endif

@@ -53,5 +53,12 @@ inline void Each(T& list, const Body& body)
         body(list[i]);
 }
 
-void DbgPrintCluster(FBModel *model);
+#ifdef mscDebug
+void DbgPrintProperties(FBPropertyManager& properties);
 void DbgPrintAnimationNode(FBAnimationNode *node);
+void DbgPrintCluster(FBModel *model);
+#else
+#define DbgPrintProperties(...)
+#define DbgPrintAnimationNode(...);
+#define DbgPrintCluster(...);
+#endif
