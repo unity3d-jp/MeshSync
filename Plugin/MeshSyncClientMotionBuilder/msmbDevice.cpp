@@ -10,6 +10,7 @@ bool msmbDevice::FBCreate()
 {
     FBSystem::TheOne().Scene->OnChange.Add(this, (FBCallback)&msmbDevice::onSceneChange);
     FBSystem::TheOne().OnConnectionDataNotify.Add(this, (FBCallback)&msmbDevice::onDataUpdate);
+    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Add(this, (FBCallback)&msmbDevice::onRender);
     FBEvaluateManager::TheOne().OnSynchronizationEvent.Add(this, (FBCallback)&msmbDevice::onSynchronization);
     return true;
 }
@@ -18,6 +19,7 @@ void msmbDevice::FBDestroy()
 {
     FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
     FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
+    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Remove(this, (FBCallback)&msmbDevice::onRender);
     FBEvaluateManager::TheOne().OnSynchronizationEvent.Remove(this, (FBCallback)&msmbDevice::onSynchronization);
 }
 
@@ -29,7 +31,7 @@ bool msmbDevice::DeviceOperation(kDeviceOperations pOperation)
 void msmbDevice::DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem)
 {
     if (auto_sync)
-        m_dirty = true;
+        m_data_updated = true;
 }
 
 void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
@@ -53,13 +55,9 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     case kFBSceneChangeMergeTransactionEnd:
     case kFBSceneChangeChangeName:
     case kFBSceneChangeChangedName:
-        if (type == kFBSceneChangeLoadEnd ||
-            type == kFBSceneChangeAddChild)
-        {
+        if (type == kFBSceneChangeLoadEnd)
             m_dirty_meshes = m_dirty_textures = true;
-        }
-        if (auto_sync)
-            m_dirty = true;
+        m_data_updated = true;
         break;
 
     default:
@@ -69,9 +67,13 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
-    //FBEventConnectionDataNotify	lEvent(pEvent);
-    if (auto_sync)
-        m_dirty = true;
+    m_data_updated = true;
+}
+
+void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
+{
+    if (auto_sync && m_data_updated)
+        m_pending = true;
 }
 
 void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
@@ -86,7 +88,7 @@ void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbDevice::update()
 {
-    if (!m_dirty && !m_pending)
+    if (!m_pending)
         return;
     sendScene(false);
 }
@@ -201,13 +203,13 @@ bool msmbDevice::sendScene(bool force_all)
     if (force_all)
         m_dirty_meshes = m_dirty_textures = true;
 
-    m_dirty = m_pending = false;
+    m_data_updated = m_pending = false;
     if (isSending()) {
         m_pending = true;
         return false;
     }
 
-    if (sync_meshes)
+    if (sync_meshes && sync_materials)
         exportMaterials();
 
     // export nodes
@@ -763,7 +765,7 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
     if ((mu::float3&)emissive != mu::float3::zero())
         dst->setEmission(emissive);
 
-    if (m_dirty_textures) {
+    if (sync_textures && m_dirty_textures) {
         dst->setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
         dst->setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
         dst->setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));

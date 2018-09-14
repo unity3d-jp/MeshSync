@@ -19,6 +19,7 @@ public:
 private:
     void onSceneChange(HIRegister pCaller, HKEventBase pEvent);
     void onDataUpdate(HIRegister pCaller, HKEventBase pEvent);
+    void onRender(HIRegister pCaller, HKEventBase pEvent);
     void onSynchronization(HIRegister pCaller, HKEventBase pEvent);
 
     void update();
@@ -82,7 +83,7 @@ private:
     using AnimationRecords = std::map<FBModel*, AnimationRecord>;
 
 private:
-    bool m_dirty = false;
+    bool m_data_updated = false;
     bool m_dirty_meshes = true;
     bool m_dirty_textures = true;
     bool m_pending = false;
@@ -118,7 +119,7 @@ public:
     bool sync_lights = true;
     bool sync_bones = true;
     bool sync_meshes = true;
-    bool sync_textures = false;
-    bool sync_material = false;
+    bool sync_textures = true;
+    bool sync_materials = true;
     bool parallel_extraction = true;
 };
