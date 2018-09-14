@@ -120,4 +120,5 @@ public:
     bool sync_meshes = true;
     bool sync_textures = false;
     bool sync_material = false;
+    bool parallel_extraction = true;
 };

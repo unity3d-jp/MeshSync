@@ -108,11 +108,18 @@ void msmbDevice::waitAsyncSend()
 
 void msmbDevice::kickAsyncSend()
 {
-    // process parallel extract tasks
+    // process extract tasks
     if (!m_extract_tasks.empty()) {
-        mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](ExtractTasks::value_type& task) {
-            task();
-        });
+        if (parallel_extraction) {
+            mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](ExtractTasks::value_type& task) {
+                task();
+            });
+        }
+        else {
+            for (auto& task : m_extract_tasks) {
+                task();
+            }
+        }
         m_extract_tasks.clear();
     }
 
@@ -397,12 +404,21 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
     if (FBGeometry *geom = src->Geometry) {
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
-            EnumerateAnimationNVP(src, [&dst](const char *name, double value) {
-                auto bsd = ms::BlendShapeData::create();
-                dst.blendshapes.push_back(bsd);
-                bsd->name = name;
-                bsd->weight = (float)value;
+            std::map<std::string, float> weight_table;
+            EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
+                weight_table[name] = (float)value;
             });
+
+            for (int si = 0; si < num_shapes; ++si) {
+                auto name = geom->ShapeGetName(si);
+                auto it = weight_table.find(name);
+                if (it != weight_table.end()) {
+                    auto bsd = ms::BlendShapeData::create();
+                    dst.blendshapes.push_back(bsd);
+                    bsd->name = it->first;
+                    bsd->weight = it->second;
+                }
+            }
         }
     }
     dst.setupFlags();
@@ -411,6 +427,7 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
 void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
 {
     extractTransform(dst, src);
+
     m_extract_tasks.push_back([this, &dst, src]() {
         doExtractMesh(dst, src);
     });
@@ -420,47 +437,84 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 {
     FBModelVertexData *vd = src->ModelVertexData;
     int num_vertices = vd->GetVertexCount();
-    auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
-    auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, false);
-    auto uvs = (const FBUV*)vd->GetUVSetArray();
 
-    if (!points)
-        return;
-
-    // get vertex arrays
+    // points
     {
+        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
+        if (!points)
+            return;
+
         dst.points.resize_discard(num_vertices);
         for (int vi = 0; vi < num_vertices; ++vi)
             dst.points[vi] = to_float3(points[vi]);
     }
 
-    if (normals) {
-        dst.normals.resize_discard(num_vertices);
-        for (int vi = 0; vi < num_vertices; ++vi)
-            dst.normals[vi] = to_float3(normals[vi]);
-    }
-    else {
-        dst.refine_settings.flags.gen_normals = 1;
-    }
-
-    if (uvs) {
-        dst.uv0.resize_discard(num_vertices);
-        for (int vi = 0; vi < num_vertices; ++vi)
-            dst.uv0[vi] = to_float2(uvs[vi]);
-        dst.refine_settings.flags.gen_tangents = 1;
+    // normals
+    {
+        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, false);
+        if (normals) {
+            dst.normals.resize_discard(num_vertices);
+            for (int vi = 0; vi < num_vertices; ++vi)
+                dst.normals[vi] = to_float3(normals[vi]);
+        }
+        else {
+            dst.refine_settings.flags.gen_normals = 1;
+        }
     }
 
-    // process skin cluster
+    // uv
+    {
+        auto uv_ = vd->GetUVSetArray();
+        if (uv_) {
+            auto type = vd->GetUVSetArrayFormat();
+            if (type == kFBGeometryArrayElementType_Float2) {
+                auto uv = (const mu::float2*)uv_;
+                dst.uv0.assign(uv, uv + num_vertices);
+                dst.refine_settings.flags.gen_tangents = 1;
+            }
+            else if (type == kFBGeometryArrayElementType_Float3) {
+                auto uv = (const mu::float3*)uv_;
+                dst.uv0.resize_discard(num_vertices);
+                for (int vi = 0; vi < num_vertices; ++vi)
+                    dst.uv0[vi] = (mu::float2&)uv[vi];
+                dst.refine_settings.flags.gen_tangents = 1;
+            }
+            else if (type == kFBGeometryArrayElementType_Float4) {
+                auto uv = (const mu::float4*)uv_;
+                dst.uv0.resize_discard(num_vertices);
+                for (int vi = 0; vi < num_vertices; ++vi)
+                    dst.uv0[vi] = (mu::float2&)uv[vi];
+                dst.refine_settings.flags.gen_tangents = 1;
+            }
+        }
+    }
+
+    // colors
+    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, false)) {
+        auto type = vd->GetVertexArrayType(kFBGeometryArrayID_Color);
+        if (type == kFBGeometryArrayElementType_Float4) {
+            auto colors = (const mu::float4*)colors_;
+            dst.colors.assign(colors, colors + num_vertices);
+        }
+        else if (type == kFBGeometryArrayElementType_Float3) {
+            dst.colors.resize_discard(num_vertices);
+            auto colors = (const mu::float3*)colors_;
+            for (int vi = 0; vi < num_vertices; ++vi) {
+                auto t = colors[vi];
+                dst.colors[vi] = { t[0], t[1], t[2], 1.0f };
+            }
+        }
+    }
+
+    // skin cluster
     if (FBCluster *cluster = src->Cluster) {
-        //DbgPrintCluster(src);
-
         int num_links = cluster->LinkGetCount();
         for (int li = 0; li < num_links; ++li) {
             ClusterScope scope(cluster, li);
 
             int n = cluster->VertexGetCount();
             if (n == 0)
-                continue;;
+                continue;
 
             auto bd = ms::BoneData::create();
             dst.bones.push_back(bd);
