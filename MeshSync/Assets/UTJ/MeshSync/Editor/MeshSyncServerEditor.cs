@@ -25,23 +25,22 @@ namespace UTJ.MeshSync
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Open Material Window"))
-            {
                 MaterialWindow.Open(t);
-            }
 
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Generate Lightmap UV"))
-            {
                 t.GenerateLightmapUV();
-            }
 
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Export Meshes"))
-            {
                 t.ExportMeshes();
-            }
+
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button("Export Materials"))
+                t.ExportMaterials();
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.version);

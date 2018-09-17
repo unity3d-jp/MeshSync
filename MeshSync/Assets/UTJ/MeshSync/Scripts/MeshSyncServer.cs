@@ -880,7 +880,7 @@ namespace UTJ.MeshSync
                 string assetDir = "Assets/" + m_assetExportPath;
                 if (!AssetDatabase.IsValidFolder(assetDir))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-                AssetDatabase.CreateAsset(obj, assetPath);
+                AssetDatabase.CreateAsset(obj, SanitizeFileName(assetPath));
             }
             catch (Exception e) { Debug.LogError(e); }
 #endif
@@ -1171,8 +1171,8 @@ namespace UTJ.MeshSync
                     else
                         clipName = root.name;
 
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(clipName);
-                    CreateAsset(clip, assetPath + ".anim");
+                    var assetPath = "Assets/" + m_assetExportPath + "/" + clipName + ".anim";
+                    CreateAsset(clip, assetPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
                     m_animClipCache[root.gameObject] = clip;
                 }
@@ -1650,6 +1650,23 @@ namespace UTJ.MeshSync
             }
         }
 
+        public void ExportMaterials()
+        {
+            if (m_materialList == null)
+                return;
+
+            string assetDir = "Assets/" + m_assetExportPath;
+            foreach (var m in m_materialList)
+            {
+                var material = m.material;
+                if (AssetDatabase.GetAssetPath(material) == "")
+                {
+                    string path = assetDir + "/" + material.name + ".mat";
+                    CreateAsset(material, path);
+                }
+            }
+        }
+
         public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
@@ -1659,7 +1676,7 @@ namespace UTJ.MeshSync
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
-                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(mf.sharedMesh.name) + ".asset";
+                var assetPath = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
                 CreateAsset(mf.sharedMesh, assetPath);
                 if (m_logging)
                 {
