@@ -17,6 +17,8 @@ bool msmbDevice::FBCreate()
 
 void msmbDevice::FBDestroy()
 {
+    waitAsyncSend();
+
     FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
     FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
     FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Remove(this, (FBCallback)&msmbDevice::onRender);
@@ -55,7 +57,8 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     case kFBSceneChangeMergeTransactionEnd:
     case kFBSceneChangeChangeName:
     case kFBSceneChangeChangedName:
-        if (type == kFBSceneChangeLoadEnd)
+        if (type == kFBSceneChangeLoadEnd ||
+            type == kFBSceneChangeAddChild)
             m_dirty_meshes = m_dirty_textures = true;
         m_data_updated = true;
         break;
