@@ -168,8 +168,9 @@ struct MeshDataFlags
     uint32_t has_uv0 : 1;
     uint32_t has_uv1 : 1;
     uint32_t has_colors : 1;
-    uint32_t has_material_ids : 1;
+    uint32_t has_material_ids : 1; // 10
     uint32_t has_bones : 1;
+    uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;
     uint32_t apply_trs : 1;
 };
@@ -199,6 +200,7 @@ struct MeshRefineFlags
     uint32_t mirror_x_weld : 1; // 20
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
+    uint32_t mirror_basis : 1;
 };
 
 struct MeshRefineSettings
@@ -210,6 +212,7 @@ struct MeshRefineSettings
     uint32_t max_bones_par_vertices = 4;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
+    float4x4 mirror_basis = float4x4::identity();
 };
 
 struct SubmeshData
@@ -359,7 +362,7 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 
-    void generateWeights4();
+    void setupBoneData();
     void setupFlags();
 
     void convertHandedness_Mesh(bool x, bool yz);

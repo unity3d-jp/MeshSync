@@ -14,7 +14,7 @@
 #define muSIMD_MinMax3
 
 //#define muSIMD_MulVectors3
-//#define muSIMD_MulPoints3
+#define muSIMD_MulPoints3
 
 //#define muSIMD_RayTrianglesIntersectionIndexed
 //#define muSIMD_RayTrianglesIntersectionFlattened

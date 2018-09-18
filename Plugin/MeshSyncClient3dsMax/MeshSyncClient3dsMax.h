@@ -15,7 +15,7 @@ public:
         int timeout_ms = 5000;
         float scale_factor = 1.0f;
         float animation_time_scale = 1.0f;
-        float animation_sps = 2;
+        int animation_sps = 2;
         bool auto_sync = false;
         bool sync_meshes = true;
         bool sync_normals = true;
@@ -73,7 +73,6 @@ public:
     void closeWindow();
     bool isWindowOpened() const;
     void updateUIText();
-    void applyUISettings();
 
 private:
     using task_t = std::function<void()>;

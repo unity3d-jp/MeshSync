@@ -154,4 +154,51 @@ uint32_t ScreenshotMessage::getSerializeSize() const { return super::getSerializ
 void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os); }
 bool ScreenshotMessage::deserialize(std::istream& is) { return super::deserialize(is); }
 
+
+QueryMessage::QueryMessage()
+{
+}
+
+uint32_t QueryMessage::getSerializeSize() const
+{
+    return super::getSerializeSize()
+        + ssize(type);
+}
+
+void QueryMessage::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, type);
+}
+
+bool QueryMessage::deserialize(std::istream & is)
+{
+    if (!super::deserialize(is)) { return false; }
+    read(is, type);
+    return true;
+}
+
+ResponseMessage::ResponseMessage()
+{
+}
+
+uint32_t ResponseMessage::getSerializeSize() const
+{
+    return super::getSerializeSize()
+        + ssize(text);
+}
+
+void ResponseMessage::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, text);
+}
+
+bool ResponseMessage::deserialize(std::istream & is)
+{
+    if (!super::deserialize(is)) { return false; }
+    read(is, text);
+    return true;
+}
+
 } // namespace ms

@@ -8,8 +8,9 @@ os.chdir(dist_dir)
 
 targets = []
 targets += glob.glob('UnityMeshSync_3dsMax*')
-targets += glob.glob('UnityMeshSync_blender*')
-targets += glob.glob('UnityMeshSync_maya*')
+targets += glob.glob('UnityMeshSync_Blender*')
+targets += glob.glob('UnityMeshSync_Maya*')
+targets += glob.glob('UnityMeshSync_MotionBuilder*')
 targets += glob.glob('UnityMeshSync_Metasequoia*')
 targets += glob.glob('UnityMeshSync_xismo*')
 for target in targets:

@@ -16,7 +16,8 @@ Modifier* FindSkin(INode *n);
 ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
-TriObject* GetSourceMesh(INode *n);
+bool IsBoneMesh(Object *obj);
+TriObject* GetSourceMesh(INode *n, bool& needs_delete);
 
 
 inline mu::float2 to_float2(const Point3& v)

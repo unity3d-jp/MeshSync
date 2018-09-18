@@ -457,7 +457,7 @@ uint32_t Mesh::getSerializeSize() const
         ret += ssize(root_bone);
         ret += ssize(bones);
     }
-    if (flags.has_blendshapes) {
+    if (flags.has_blendshape_weights) {
         ret += ssize(blendshapes);
     }
     return ret;
@@ -478,7 +478,7 @@ void Mesh::serialize(std::ostream& os) const
         write(os, root_bone);
         write(os, bones);
     }
-    if (flags.has_blendshapes) {
+    if (flags.has_blendshape_weights) {
         write(os, blendshapes);
     }
 }
@@ -507,7 +507,7 @@ void Mesh::deserialize(std::istream& is)
             }
         }
     }
-    if (flags.has_blendshapes) {
+    if (flags.has_blendshape_weights) {
         read(is, blendshapes);
     }
 }
@@ -623,7 +623,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
     if (weights4.empty() && !bones.empty()) {
-        generateWeights4();
+        setupBoneData();
     }
 
     mu::MeshRefiner refiner;
@@ -662,7 +662,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     // refine
     {
         refiner.refine();
-        refiner.retopology(mrs.flags.swap_faces, false /*mrs.flags.turn_quad_edges*/);
+        refiner.retopology(mrs.flags.swap_faces);
         refiner.genSubmeshes(material_ids);
 
         refiner.new_points.swap(points);
@@ -807,8 +807,12 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     // points
+    if (refine_settings.flags.mirror_basis)
+        mu::MulPoints(refine_settings.mirror_basis, points.data(), points.data(), points.size());
     points.resize(num_points_old + copylist.size());
     mu::MirrorPoints(points.data() + num_points_old, IArray<float3>{points.data(), num_points_old}, copylist, plane_n, plane_d);
+    if (refine_settings.flags.mirror_basis)
+        mu::MulPoints(mu::invert(refine_settings.mirror_basis), points.data(), points.data(), points.size());
 
     // indices
     counts.resize(num_faces_old * 2);
@@ -915,13 +919,30 @@ void Mesh::applyTransform(const float4x4& m)
     mu::Normalize(normals.data(), normals.size());
 }
 
-void Mesh::generateWeights4()
+void Mesh::setupBoneData()
 {
-    if (bones.empty()) { return; }
+    if (bones.empty())
+        return;
 
     int num_bones = (int)bones.size();
     int num_vertices = (int)points.size();
     weights4.resize_discard(num_vertices);
+
+    auto search_weight = [this](int vi) {
+        // some DCC tools (mainly MotionBuilder) omit weight data if there are vertices with identical position. so find it.
+        auto& dst = weights4[vi];
+        auto beg = points.begin();
+        auto end = beg + vi;
+        auto it = std::find(beg, end, points[vi]);
+        if (it != end) {
+            // found
+            dst = weights4[std::distance(beg, it)];
+        }
+        else {
+            // not found. assign 1 to void divide-by-zero...
+            dst.weights[0] = 1.0f;
+        }
+    };
 
     if (num_bones <= 4) {
         weights4.zeroclear();
@@ -931,7 +952,8 @@ void Mesh::generateWeights4()
                 w4.indices[bi] = bi;
                 w4.weights[bi] = bones[bi]->weights[vi];
             }
-            w4.normalize();
+            if (w4.normalize() == 0.0f)
+                search_weight(vi);
         }
     }
     else {
@@ -955,7 +977,8 @@ void Mesh::generateWeights4()
                 w4.indices[bi] = tmp[bi].index;
                 w4.weights[bi] = tmp[bi].weight;
             }
-            w4.normalize();
+            if (w4.normalize() == 0.0f)
+                search_weight(vi);
         }
     }
 }
@@ -972,7 +995,12 @@ void Mesh::setupFlags()
     flags.has_indices = !indices.empty();
     flags.has_material_ids = !material_ids.empty();
     flags.has_bones = !bones.empty();
-    flags.has_blendshapes = !blendshapes.empty();
+    flags.has_blendshape_weights = !blendshapes.empty();
+    flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
+
+    flags.has_refine_settings =
+        (uint32_t&)refine_settings.flags != 0 ||
+        refine_settings.scale_factor != 1.0f;
 }
 
 BoneDataPtr Mesh::addBone(const std::string& _path)

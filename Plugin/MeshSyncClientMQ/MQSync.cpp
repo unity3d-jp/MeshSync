@@ -13,9 +13,9 @@ std::string S(const std::wstring& w)
     return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(w);
 }
 
-static inline float3 to_float3(const MQColor& v)
+static inline float4 to_float4(const MQColor& v)
 {
-    return (const float3&)v;
+    return { v.r, v.g, v.b, 1.0f };
 }
 static inline float3 to_float3(const MQPoint& v)
 {
@@ -24,6 +24,10 @@ static inline float3 to_float3(const MQPoint& v)
 static inline float4x4 to_float4x4(const MQMatrix& v)
 {
     return (const float4x4&)v;
+}
+static inline MQColor to_MQColor(const float4& v)
+{
+    return MQColor(v[0], v[1], v[2]);
 }
 
 static inline std::string BuildPath(MQDocument doc, MQObject obj)
@@ -197,24 +201,18 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         // gather material data
         int nmat = doc->GetMaterialCount();
         m_materials.reserve(nmat);
-        for (int i = 0; i < nmat; ++i) {
-            auto dst = ms::Material::create();
-            auto src = doc->GetMaterial(i);
-            if (!src) {
-                // add dummy material to keep material index
-                dst->id = -1;
-            }
-            else {
+        for (int mi = 0; mi < nmat; ++mi) {
+            if (auto src = doc->GetMaterial(mi)) {
                 auto dst = ms::Material::create();
-                dst->id = src->GetUniqueID();
+                dst->id = mi;
                 {
                     char name[128];
                     src->GetName(name, sizeof(name));
                     dst->name = ms::ToUTF8(name);
                 }
-                (float3&)dst->color = to_float3(src->GetColor());
+                dst->setColor(to_float4(src->GetColor()));
+                m_materials.push_back(dst);
             }
-            m_materials.push_back(dst);
         }
     }
 
@@ -535,7 +533,7 @@ bool MQSync::importMeshes(MQDocument doc)
         for (int i = 0; i < (int)ret->materials.size(); ++i) {
             auto dst = doc->GetMaterial(i);
             dst->SetName(ms::ToANSI(names[i]).c_str());
-            dst->SetColor((const MQColor&)ret->materials[i]->color);
+            dst->SetColor(to_MQColor(ret->materials[i]->getColor()));
         }
     }
     

@@ -99,7 +99,7 @@ int MeshRefiner::getPointsIndexCountTotal() const
 }
 
 
-void MeshRefiner::retopology(bool swap_faces, bool turn_quads)
+void MeshRefiner::retopology(bool swap_faces)
 {
     new_indices_tri.resize_discard(getTrianglesIndexCountTotal());
     new_indices_lines.resize_discard(getLinesIndexCountTotal());
@@ -115,66 +115,26 @@ void MeshRefiner::retopology(bool swap_faces, bool turn_quads)
     size_t num_faces = new_counts.size();
 
     int n = 0;
-    if (turn_quads) {
-        for (size_t fi = 0; fi < num_faces; ++fi) {
-            int count = new_counts[fi];
-            if (count >= 3) {
-                if (!gen_triangles)continue;
-                if (count == 4) {
-                    int quad[4] = {
-                        src[n + 3],
-                        src[n + 0],
-                        src[n + 1],
-                        src[n + 2],
-                    };
-                    for (int ni = 0; ni < count - 2; ++ni) {
-                        *(dst_tri++) = quad[0];
-                        *(dst_tri++) = quad[ni + i1];
-                        *(dst_tri++) = quad[ni + i2];
-                    }
-                }
-                else {
-                    for (int ni = 0; ni < count - 2; ++ni) {
-                        *(dst_tri++) = src[n + 0];
-                        *(dst_tri++) = src[n + ni + i1];
-                        *(dst_tri++) = src[n + ni + i2];
-                    }
-                }
+    for (size_t fi = 0; fi < num_faces; ++fi) {
+        int count = new_counts[fi];
+        if (count >= 3) {
+            if (!gen_triangles)continue;
+            for (int ni = 0; ni < count - 2; ++ni) {
+                *(dst_tri++) = src[n + 0];
+                *(dst_tri++) = src[n + ni + i1];
+                *(dst_tri++) = src[n + ni + i2];
             }
-            else if (count == 2) {
-                if (!gen_lines)continue;
-                for (int ni = 0; ni < 2; ++ni)
-                    *(dst_lines++) = src[n + ni];
-            }
-            else if (count == 1) {
-                if (!gen_points)continue;
-                *(dst_points++) = src[n];
-            }
-            n += count;
         }
-    }
-    else {
-        for (size_t fi = 0; fi < num_faces; ++fi) {
-            int count = new_counts[fi];
-            if (count >= 3) {
-                if (!gen_triangles)continue;
-                for (int ni = 0; ni < count - 2; ++ni) {
-                    *(dst_tri++) = src[n + 0];
-                    *(dst_tri++) = src[n + ni + i1];
-                    *(dst_tri++) = src[n + ni + i2];
-                }
-            }
-            else if (count == 2) {
-                if (!gen_lines)continue;
-                for (int ni = 0; ni < 2; ++ni)
-                    *(dst_lines++) = src[n + ni];
-            }
-            else if (count == 1) {
-                if (!gen_points)continue;
-                *(dst_points++) = src[n];
-            }
-            n += count;
+        else if (count == 2) {
+            if (!gen_lines)continue;
+            for (int ni = 0; ni < 2; ++ni)
+                *(dst_lines++) = src[n + ni];
         }
+        else if (count == 1) {
+            if (!gen_points)continue;
+            *(dst_points++) = src[n];
+        }
+        n += count;
     }
 }
 

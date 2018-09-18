@@ -34,7 +34,7 @@ public:
     void clear();
     ServerSettings& getSettings();
 
-    using MessageHandler = std::function<void(Message::Type type, const Message& data)>;
+    using MessageHandler = std::function<void(Message::Type type, Message& data)>;
     int getNumMessages() const;
     int processMessages(const MessageHandler& handler);
 
@@ -47,7 +47,6 @@ public:
     void setScrrenshotFilePath(const std::string path);
 
 public:
-    GetMessage* getCurrentGetRequest();
     Scene* getHostScene();
     void queueMessage(const MessagePtr& v);
     void queueVersionNotMatchedMessage();
@@ -57,6 +56,7 @@ public:
     void recvText(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
     void recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    void recvQuery(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
 
     struct RecvSceneScope
     {
@@ -83,9 +83,11 @@ private:
     History m_recv_history;
 
     ScenePtr m_host_scene;
-    GetMessage *m_current_get_request = nullptr;
-    ScreenshotMessage *m_current_screenshot_request = nullptr;
+    GetMessagePtr m_current_get_request;
+    ScreenshotMessagePtr m_current_screenshot_request;
     std::string m_screenshot_file_path;
+
+    QueryMessagePtr m_current_query;
 };
 
 } // namespace ms

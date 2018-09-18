@@ -21,6 +21,8 @@ namespace UTJ.MeshSync
             Fence,
             Text,
             Screenshot,
+            Query,
+            Response,
         }
 
         public struct GetFlags
@@ -171,6 +173,42 @@ namespace UTJ.MeshSync
         }
 
 
+        public struct QueryMessage
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern QueryType msQueryGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msQueryFinishRespond(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msQueryAddResponseText(IntPtr _this, string text);
+            #endregion
+
+            public enum QueryType
+            {
+                Unknown,
+                ClientName,
+                RootNodes,
+                AllNodes,
+            }
+
+            public static explicit operator QueryMessage(IntPtr v)
+            {
+                QueryMessage ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public QueryType queryType { get { return msQueryGetType(_this); } }
+
+            public void FinishRespond()
+            {
+                msQueryFinishRespond(_this);
+            }
+            public void AddResponseText(string text)
+            {
+                msQueryAddResponseText(_this, text);
+            }
+        }
+
 
         public struct MeshDataFlags
         {
@@ -230,15 +268,65 @@ namespace UTJ.MeshSync
                 get { return (flags & (1 << 10)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 10)); }
             }
-            public bool hasBlendshapes
+            public bool hasBlendshapeWeights
             {
                 get { return (flags & (1 << 11)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 11)); }
             }
-            public bool applyTRS
+            public bool hasBlendshapes
             {
                 get { return (flags & (1 << 12)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 12)); }
+            }
+            public bool applyTRS
+            {
+                get { return (flags & (1 << 13)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 13)); }
+            }
+        };
+
+        public struct MaterialDataFlags
+        {
+            public int flags;
+            public bool hasColor
+            {
+                get { return (flags & (1 << 0)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 0)); }
+            }
+            public bool hasColorMap
+            {
+                get { return (flags & (1 << 1)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 1)); }
+            }
+            public bool hasEmission
+            {
+                get { return (flags & (1 << 2)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 2)); }
+            }
+            public bool hasEmissionMap
+            {
+                get { return (flags & (1 << 3)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 3)); }
+            }
+            public bool hasMetallic
+            {
+                get { return (flags & (1 << 4)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 4)); }
+            }
+            public bool hasSmoothness
+            {
+                get { return (flags & (1 << 5)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 5)); }
+            }
+            public bool hasMetallicMap
+            {
+                get { return (flags & (1 << 6)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 6)); }
+            }
+            public bool hasNormalMap
+            {
+                get { return (flags & (1 << 7)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 7)); }
             }
         };
 
@@ -251,6 +339,9 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern MaterialDataFlags msMaterialGetFlags(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetFlags(IntPtr _this, MaterialDataFlags v);
+
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
             [DllImport("MeshSyncServer")] static extern Color msMaterialGetEmission(IntPtr _this);
@@ -259,19 +350,37 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetMetalic(IntPtr _this, float v);
             [DllImport("MeshSyncServer")] static extern float msMaterialGetSmoothness(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetSmoothness(IntPtr _this, float v);
+
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetColorMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetColorMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetMetallicMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetallicMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetEmissionMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmissionMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetNormalMap(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetNormalMap(IntPtr _this, int v);
             #endregion
 
             public static MaterialData Create() { return msMaterialCreate(); }
 
-            public int id {
+            public int id
+            {
                 get { return msMaterialGetID(_this); }
                 set { msMaterialSetID(_this, value); }
             }
-            public string name {
+            public string name
+            {
                 get { return S(msMaterialGetName(_this)); }
                 set { msMaterialSetName(_this, value); }
             }
-            public Color color {
+            public MaterialDataFlags flags
+            {
+                get { return msMaterialGetFlags(_this); }
+                set { msMaterialSetFlags(_this, value); }
+            }
+
+            public Color color
+            {
                 get { return msMaterialGetColor(_this); }
                 set { msMaterialSetColor(_this, ref value); }
             }
@@ -289,6 +398,172 @@ namespace UTJ.MeshSync
             {
                 get { return msMaterialGetSmoothness(_this); }
                 set { msMaterialSetSmoothness(_this, value); }
+            }
+
+            public int colorMap
+            {
+                get { return msMaterialGetColorMap(_this); }
+                set { msMaterialSetColorMap(_this, value); }
+            }
+            public int metallicMap
+            {
+                get { return msMaterialGetMetallicMap(_this); }
+                set { msMaterialSetMetallicMap(_this, value); }
+            }
+            public int emissionMap
+            {
+                get { return msMaterialGetEmissionMap(_this); }
+                set { msMaterialSetEmissionMap(_this, value); }
+            }
+            public int normalMap
+            {
+                get { return msMaterialGetNormalMap(_this); }
+                set { msMaterialSetNormalMap(_this, value); }
+            }
+        }
+
+        public enum TextureType
+        {
+            Default,
+            NormalMap,
+        }
+
+        public enum TextureFormat
+        {
+            Unknown = 0,
+
+            ChannelMask = 0xF,
+            TypeMask = 0xF << 4,
+            Type_f16 = 0x1 << 4,
+            Type_f32 = 0x2 << 4,
+            Type_u8  = 0x3 << 4,
+            Type_i16 = 0x4 << 4,
+            Type_i32 = 0x5 << 4,
+
+            Rf16      = Type_f16 | 1,
+            RGf16     = Type_f16 | 2,
+            RGBf16    = Type_f16 | 3,
+            RGBAf16   = Type_f16 | 4,
+            Rf32      = Type_f32 | 1,
+            RGf32     = Type_f32 | 2,
+            RGBf32    = Type_f32 | 3,
+            RGBAf32   = Type_f32 | 4,
+            Ru8       = Type_u8  | 1,
+            RGu8      = Type_u8  | 2,
+            RGBu8     = Type_u8  | 3,
+            RGBAu8    = Type_u8  | 4,
+            Ri16      = Type_i16 | 1,
+            RGi16     = Type_i16 | 2,
+            RGBi16    = Type_i16 | 3,
+            RGBAi16   = Type_i16 | 4,
+            Ri32      = Type_i32 | 1,
+            RGi32     = Type_i32 | 2,
+            RGBi32    = Type_i32 | 3,
+            RGBAi32   = Type_i32 | 4,
+
+            RawFile = 0x10 << 4,
+        }
+
+        public static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
+        {
+            switch (v)
+            {
+                case TextureFormat.Ru8: return UnityEngine.TextureFormat.Alpha8;
+                case TextureFormat.RGBu8: return UnityEngine.TextureFormat.RGB24;
+                case TextureFormat.RGBAu8: return UnityEngine.TextureFormat.RGBA32;
+                case TextureFormat.Rf16: return UnityEngine.TextureFormat.RHalf;
+                case TextureFormat.RGf16: return UnityEngine.TextureFormat.RGHalf;
+                case TextureFormat.RGBAf16: return UnityEngine.TextureFormat.RGBAHalf;
+                case TextureFormat.Rf32: return UnityEngine.TextureFormat.RFloat;
+                case TextureFormat.RGf32: return UnityEngine.TextureFormat.RGFloat;
+                case TextureFormat.RGBAf32: return UnityEngine.TextureFormat.RGBAFloat;
+                default: return UnityEngine.TextureFormat.Alpha8;
+            }
+        }
+        public static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v)
+        {
+            switch (v)
+            {
+                case UnityEngine.TextureFormat.Alpha8: return TextureFormat.Ru8;
+                case UnityEngine.TextureFormat.RGB24: return TextureFormat.RGBu8;
+                case UnityEngine.TextureFormat.RGBA32: return TextureFormat.RGBAu8;
+                case UnityEngine.TextureFormat.RHalf: return TextureFormat.Rf16;
+                case UnityEngine.TextureFormat.RGHalf: return TextureFormat.RGf16;
+                case UnityEngine.TextureFormat.RGBAHalf: return TextureFormat.RGBAf16;
+                case UnityEngine.TextureFormat.RFloat: return TextureFormat.Rf32;
+                case UnityEngine.TextureFormat.RGFloat: return TextureFormat.RGf32;
+                case UnityEngine.TextureFormat.RGBAFloat: return TextureFormat.RGBAf32;
+                default: return TextureFormat.Ru8;
+            }
+        }
+
+
+        public struct TextureData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern TextureData msTextureCreate();
+            [DllImport("MeshSyncServer")] static extern int msTextureGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetID(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetName(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern TextureType msTextureGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetType(IntPtr _this, TextureType v);
+            [DllImport("MeshSyncServer")] static extern TextureFormat msTextureGetFormat(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetFormat(IntPtr _this, TextureFormat v);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetWidth(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetWidth(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetHeight(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msTextureGetSizeInByte(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string v);
+            #endregion
+
+            public static TextureData Create() { return msTextureCreate(); }
+
+            public int id
+            {
+                get { return msTextureGetID(_this); }
+                set { msTextureSetID(_this, value); }
+            }
+            public string name
+            {
+                get { return S(msTextureGetName(_this)); }
+                set { msTextureSetName(_this, value); }
+            }
+            public TextureType type
+            {
+                get { return msTextureGetType(_this); }
+                set { msTextureSetType(_this, value); }
+            }
+            public TextureFormat format
+            {
+                get { return msTextureGetFormat(_this); }
+                set { msTextureSetFormat(_this, value); }
+            }
+            public int width
+            {
+                get { return msTextureGetWidth(_this); }
+                set { msTextureSetWidth(_this, value); }
+            }
+            public int height
+            {
+                get { return msTextureGetHeight(_this); }
+                set { msTextureSetHeight(_this, value); }
+            }
+            public int sizeInByte
+            {
+                get { return msTextureGetSizeInByte(_this); }
+            }
+            public IntPtr dataPtr
+            {
+                get { return msTextureGetDataPtr(_this); }
+            }
+
+            public bool WriteToFile(string path)
+            {
+                return msTextureWriteToFile(_this, path) != 0;
             }
         }
 
@@ -1545,6 +1820,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern TransformData msSceneGetObjectData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msSceneGetNumTextures(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern TextureData msSceneGetTextureData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr _this, int i);
             [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimationClips(IntPtr _this);
@@ -1554,11 +1831,13 @@ namespace UTJ.MeshSync
             public string name { get { return S(msSceneGetName(_this)); } }
             public int numObjects { get { return msSceneGetNumObjects(_this); } }
             public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
+            public int numTextures { get { return msSceneGetNumTextures(_this); } }
             public int numConstraints { get { return msSceneGetNumConstraints(_this); } }
             public int numAnimationClips { get { return msSceneGetNumAnimationClips(_this); } }
 
             public TransformData GetObject(int i) { return msSceneGetObjectData(_this, i); }
             public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(_this, i); }
+            public TextureData GetTexture(int i) { return msSceneGetTextureData(_this, i); }
             public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(_this, i); }
             public AnimationClipData GetAnimationClip(int i) { return msSceneGetAnimationClipData(_this, i); }
         }
@@ -1578,7 +1857,7 @@ namespace UTJ.MeshSync
                 {
                     return new ServerSettings
                     {
-                        max_queue = 256,
+                        max_queue = 512,
                         max_threads = 8,
                         port = 8080,
 #if UNITY_2017_3_OR_NEWER
@@ -1605,6 +1884,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr _this, CameraData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr _this, LightData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr _this, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTexture(IntPtr _this, TextureData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
 
@@ -1684,6 +1964,13 @@ namespace UTJ.MeshSync
             public Material material;
         }
 
+        [Serializable]
+        public class TextureHolder
+        {
+            public int id;
+            public string name;
+            public Texture2D texture;
+        }
 
 
         // thanks: http://techblog.sega.jp/entry/2016/11/28/100000

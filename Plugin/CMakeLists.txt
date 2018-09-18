@@ -17,24 +17,42 @@ endif()
 include(AddPlugin)
 include(ISPC)
 
+# Server
 option(BUILD_SERVER "Build MeshSyncServer" ON)
+
+# Metasequoia
 if(MAC)
     option(BUILD_METASEQUOIA4_CLIENT "Build MeshSyncClient for Metasequoia 4" OFF)
 endif()
+
+# Blender
 option(BUILD_BLENDER2.79_CLIENT "Build MeshSyncClient for Blender 2.79" OFF)
 option(BUILD_BLENDER2.8_CLIENT "Build MeshSyncClient for Blender 2.8" OFF)
+
+# Maya
 option(BUILD_MAYA2015_CLIENT "Build MeshSyncClient for Maya 2015" OFF)
 option(BUILD_MAYA2016_CLIENT "Build MeshSyncClient for Maya 2016" OFF)
 option(BUILD_MAYA2016.5_CLIENT "Build MeshSyncClient for Maya 2016.5" OFF)
 option(BUILD_MAYA2017_CLIENT "Build MeshSyncClient for Maya 2017" OFF)
 option(BUILD_MAYA2018_CLIENT "Build MeshSyncClient for Maya 2018" OFF)
-if(MAC)
-    option(BUILD_MAYALT2018_CLIENT "Build MeshSyncClient for Maya LT 2018" OFF)
+#if(MAC)
+#    option(BUILD_MAYALT2018_CLIENT "Build MeshSyncClient for Maya LT 2018" OFF)
+#endif()
+
+# MotionBuilder
+if(LINUX)
+    option(BUILD_MOTIONBUILDER2015_CLIENT "Build MeshSyncClient for MotionBuilder 2015" OFF)
+    option(BUILD_MOTIONBUILDER2016_CLIENT "Build MeshSyncClient for MotionBuilder 2016" OFF)
+    option(BUILD_MOTIONBUILDER2017_CLIENT "Build MeshSyncClient for MotionBuilder 2017" OFF)
+    option(BUILD_MOTIONBUILDER2018_CLIENT "Build MeshSyncClient for MotionBuilder 2018" OFF)
 endif()
+
+# Tests
 option(BUILD_TESTS "Tests" OFF)
 
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11 -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-deprecated")
 
 function(add_subdirectory_link to from)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")
@@ -46,14 +64,18 @@ endfunction()
 add_subdirectory(MeshUtils)
 add_subdirectory(MeshSync)
 
+
+# Server
 if(BUILD_SERVER)
     add_subdirectory(MeshSyncServer)
 endif()
 
+# Metasequoia
 if(BUILD_METASEQUOIA4_CLIENT)
     add_subdirectory(MeshSyncClientMQ)
 endif()
 
+# Blender
 if(BUILD_BLENDER2.79_CLIENT)
     add_subdirectory_link(MeshSyncClientBlender2.79 MeshSyncClientBlender)
 endif()
@@ -61,6 +83,7 @@ if(BUILD_BLENDER2.8_CLIENT)
     add_subdirectory_link(MeshSyncClientBlender2.8 MeshSyncClientBlender)
 endif()
 
+# Maya
 if(BUILD_MAYA2015_CLIENT)
     add_subdirectory_link(MeshSyncClientMaya2015 MeshSyncClientMaya)
 endif()
@@ -80,6 +103,21 @@ if(BUILD_MAYALT2018_CLIENT)
     add_subdirectory_link(MeshSyncClientMayaLT2018 MeshSyncClientMaya)
 endif()
 
+# MotionBuilder
+if(BUILD_MOTIONBUILDER2015_CLIENT)
+    add_subdirectory_link(MeshSyncClientMotionBuilder2015 MeshSyncClientMotionBuilder)
+endif()
+if(BUILD_MOTIONBUILDER2016_CLIENT)
+    add_subdirectory_link(MeshSyncClientMotionBuilder2016 MeshSyncClientMotionBuilder)
+endif()
+if(BUILD_MOTIONBUILDER2017_CLIENT)
+    add_subdirectory_link(MeshSyncClientMotionBuilder2017 MeshSyncClientMotionBuilder)
+endif()
+if(BUILD_MOTIONBUILDER2018_CLIENT)
+    add_subdirectory_link(MeshSyncClientMotionBuilder2018 MeshSyncClientMotionBuilder)
+endif()
+
+# Tests
 if(BUILD_TESTS)
     add_subdirectory(Test)
 endif()

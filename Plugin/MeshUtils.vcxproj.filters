@@ -58,10 +58,22 @@
     <ClInclude Include="MeshUtils\muSIMDConfig.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="CrashReporter\CrashReporter.h">
+      <Filter>CrashReporter</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils\muHalf.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils\muColor.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
       <UniqueIdentifier>{7c7e8a56-7f18-4fed-967a-dd734cc4db8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CrashReporter">
+      <UniqueIdentifier>{c6d4c476-60fa-4b42-b375-3226b0a654cf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +99,12 @@
       <Filter>MeshUtils</Filter>
     </ClCompile>
     <ClCompile Include="MeshUtils\muMath.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="CrashReporter\CrashReporter.cpp">
+      <Filter>CrashReporter</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshUtils\muColor.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
   </ItemGroup>

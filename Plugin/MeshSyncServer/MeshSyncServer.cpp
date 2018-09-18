@@ -45,7 +45,7 @@ msAPI int msServerGetNumMessages(ms::Server *server)
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
     if (!server || !handler) { return 0; }
-    return server->processMessages([handler](ms::Message::Type type, const ms::Message& data) {
+    return server->processMessages([handler](ms::Message::Type type, ms::Message& data) {
         handler(type, &data);
     });
 }
@@ -85,6 +85,11 @@ msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
     if (!server) { return; }
     server->getHostScene()->materials.push_back(make_shared_ptr(data));
 }
+msAPI void msServerServeTexture(ms::Server *server, ms::Texture *data)
+{
+    if (!server) { return; }
+    server->getHostScene()->textures.push_back(make_shared_ptr(data));
+}
 
 
 msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
@@ -113,14 +118,43 @@ msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
 msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
 msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.c_str(); }
 msAPI void          msMaterialSetName(ms::Material *_this, const char *v) { _this->name = v; }
-msAPI float4        msMaterialGetColor(ms::Material *_this) { return _this->color; }
-msAPI void          msMaterialSetColor(ms::Material *_this, const float4 *v) { _this->color = *v; }
-msAPI float4        msMaterialGetEmission(ms::Material *_this) { return _this->emission; }
-msAPI void          msMaterialSetEmission(ms::Material *_this, const float4 *v) { _this->emission = *v; }
-msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->metalic; }
-msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->metalic = v; }
-msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->smoothness; }
-msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->smoothness = v; }
+msAPI ms::MaterialDataFlags msMaterialGetFlags(ms::Material *_this) { return _this->flags; }
+msAPI void          msMaterialSetFlags(ms::Material *_this, ms::MaterialDataFlags v) { _this->flags = v; }
+msAPI float4        msMaterialGetColor(ms::Material *_this) { return _this->getColor(); }
+msAPI void          msMaterialSetColor(ms::Material *_this, const float4 *v) { _this->setColor(*v); }
+msAPI float4        msMaterialGetEmission(ms::Material *_this) { return _this->getEmission(); }
+msAPI void          msMaterialSetEmission(ms::Material *_this, const float4 *v) { _this->setEmission(*v); }
+msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->getMetallic(); }
+msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->setMetallic(v); }
+msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->getSmoothness(); }
+msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->setSmoothness(v); }
+msAPI int           msMaterialGetColorMap(ms::Material *_this) { return _this->getColorMap(); }
+msAPI void          msMaterialSetColorMap(ms::Material *_this, int v) { _this->setColorMap(v); }
+msAPI int           msMaterialGetMetallicMap(ms::Material *_this) { return _this->getMetallicMap(); }
+msAPI void          msMaterialSetMetallicMap(ms::Material *_this, int v) { _this->setMetallicMap(v); }
+msAPI int           msMaterialGetEmissionMap(ms::Material *_this) { return _this->getEmissionMap(); }
+msAPI void          msMaterialSetEmissionMap(ms::Material *_this, int v) { _this->setEmissionMap(v); }
+msAPI int           msMaterialGetNormalMap(ms::Material *_this) { return _this->getNormalMap(); }
+msAPI void          msMaterialSetNormalMap(ms::Material *_this, int v) { _this->setNormalMap(v); }
+
+msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
+msAPI int               msTextureGetID(ms::Texture *_this) { return _this->id; }
+msAPI void              msTextureSetID(ms::Texture *_this, int v) { _this->id = v; }
+msAPI const char*       msTextureGetName(ms::Texture *_this) { return _this->name.c_str(); }
+msAPI void              msTextureSetName(ms::Texture *_this, const char *v) { _this->name = v; }
+msAPI ms::TextureType   msTextureGetType(ms::Texture *_this) { return _this->type; }
+msAPI void              msTextureSetType(ms::Texture *_this, ms::TextureType v) { _this->type = v; }
+msAPI ms::TextureFormat msTextureGetFormat(ms::Texture *_this) { return _this->format; }
+msAPI void              msTextureSetFormat(ms::Texture *_this, ms::TextureFormat v) { _this->format = v; }
+msAPI int               msTextureGetWidth(ms::Texture *_this) { return _this->width; }
+msAPI void              msTextureSetWidth(ms::Texture *_this, int v) { _this->width = v; }
+msAPI int               msTextureGetHeight(ms::Texture *_this) { return _this->height; }
+msAPI void              msTextureSetHeight(ms::Texture *_this, int v) { _this->height = v; }
+msAPI void              msTextureGetData(ms::Texture *_this, void *v) { _this->getData(v); }
+msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _this->setData(v); }
+msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
+msAPI int               msTextureGetSizeInByte(ms::Texture *_this) { return (int)_this->data.size(); }
+msAPI bool              msTextureWriteToFile(ms::Texture *_this, const char *path) { return _this->writeToFile(path); }
 
 
 msAPI const char*       msAnimationClipGetName(ms::AnimationClip *_this) { return _this->name.c_str(); }
@@ -228,6 +262,25 @@ msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *_this)
 {
     return _this->type;
 }
+
+msAPI ms::QueryMessage::QueryType msQueryGetType(ms::QueryMessage *_this)
+{
+    return _this->type;
+}
+msAPI void msQueryFinishRespond(ms::QueryMessage *_this)
+{
+    *_this->wait_flag = 0;
+}
+msAPI void msQueryAddResponseText(ms::QueryMessage *_this, const char *text)
+{
+    ms::ResponseMessagePtr res = std::dynamic_pointer_cast<ms::ResponseMessage>(_this->response);
+    if (!res) {
+        res.reset(new ms::ResponseMessage());
+        _this->response = res;
+    }
+    res->text.push_back(text);
+}
+
 
 
 msAPI ms::Transform* msTransformCreate()
@@ -800,3 +853,5 @@ msAPI int                   msSceneGetNumAnimationClips(ms::Scene *_this)       
 msAPI ms::AnimationClip*    msSceneGetAnimationClipData(ms::Scene *_this, int ci)   { return _this->animations[ci].get(); }
 msAPI int                   msSceneGetNumMaterials(ms::Scene *_this)                { return (int)_this->materials.size(); }
 msAPI ms::Material*         msSceneGetMaterialData(ms::Scene *_this, int i)         { return _this->materials[i].get(); }
+msAPI int                   msSceneGetNumTextures(ms::Scene *_this)                 { return (int)_this->textures.size(); }
+msAPI ms::Texture*          msSceneGetTextureData(ms::Scene *_this, int i)          { return _this->textures[i].get(); }

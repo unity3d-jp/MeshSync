@@ -15,8 +15,9 @@ void MeshSyncClientMaya::exportMaterials()
 
         auto tmp = ms::Material::create();
         tmp->name = fn.name().asChar();
-        tmp->color = to_float4(fn.color());
         tmp->id = (int)m_material_id_table.size();
+        tmp->setColor(to_float4(fn.color()));
+
         m_material_id_table.push_back(fn.name());
         m_materials.push_back(tmp);
 
@@ -371,7 +372,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
         if (mids.size() > 0) {
             const auto* indices_ptr = &indices[0];
-            dst.material_ids.resize_zeroclear(face_count);
+            dst.material_ids.resize(face_count, -1);
             uint32_t len = std::min(face_count, indices.length());
             for (uint32_t i = 0; i < len; ++i) {
                 dst.material_ids[i] = mids[indices_ptr[i]];
@@ -555,16 +556,31 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 
             for (uint32_t ij = 0; ij < num_joints; ij++) {
                 auto bone = ms::BoneData::create();
+                bone->weights.resize_zeroclear(dst.points.size());
                 dst.bones.push_back(bone);
 
-                auto joint = joint_paths[ij].node();
-                if (joint.isNull())
+                const auto& joint_path = joint_paths[ij];
+                auto joint_branch = FindBranch(m_dag_nodes, joint_path);
+                if (!joint_branch || !joint_branch->trans || joint_branch->trans->node.isNull())
                     continue;
 
-                bone->path = GetPath(joint);
-                if (dst.bones.empty())
-                    dst.root_bone = GetRootBonePath(joint);
+                auto joint_node = joint_branch->trans->node;
+                bone->path = ToString(joint_path);
+                if (dst.bones.empty()) {
+                    // get root bone path
+                    auto dpath = joint_branch->getDagPath();
+                    for (;;) {
+                        auto tmp = dpath;
+                        tmp.pop();
+                        auto t = tmp.node();
+                        if (!t.hasFn(kMFnJoint))
+                            break;
+                        dpath = tmp;
+                    }
+                    dst.root_bone = ToString(dpath);
+                }
 
+                // get bindpose
                 MObject matrix_obj;
                 auto ijoint = fn_skin.indexForInfluenceObject(joint_paths[ij], &mstat);
                 if (mstat == MStatus::kSuccess) {
@@ -577,17 +593,19 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             }
 
             // get weights
-            MDagPath mesh_path = GetDagPath(mmesh.object());
+            MDagPath mesh_path = GetDagPath(n, mmesh.object());
+            MFloatArray weights;
             MItGeometry gi(mesh_path);
-            while (!gi.isDone()) {
-                MFloatArray weights;
+            uint32_t vi = 0;
+            while (!gi.isDone() && vi < vertex_count) {
                 uint32_t influence_count = 0;
                 if (fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count) == MStatus::kSuccess) {
                     for (uint32_t ij = 0; ij < influence_count; ij++) {
-                        dst.bones[ij]->weights.push_back(weights[ij]);
+                        dst.bones[ij]->weights[vi] = weights[ij];
                     }
                 }
                 gi.next();
+                ++vi;
             }
         }
     }
@@ -646,16 +664,16 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     auto time_current = MAnimControl::currentTime();
     auto time_begin = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
-    auto interval = MTime(1.0 / m_settings.animation_sps, MTime::kSeconds);
+    auto interval = MTime(1.0 / std::max(m_settings.animation_sps, 1), MTime::kSeconds);
 
     int reserve_size = int((time_end.as(MTime::kSeconds) - time_begin.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {
         kvp.second.dst->reserve(reserve_size);
-    };
+    }
 
+    // advance frame and record
     m_ignore_update = true;
     for (MTime t = time_begin; t <= time_end; t += interval) {
-        // advance frame and record
         m_anim_time = (float)t.as(MTime::kSeconds);
         MGlobal::viewFrame(t);
         for (auto& kvp : m_anim_records)
@@ -667,7 +685,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     // cleanup
     m_anim_records.clear();
 
-    // reduction
+    // keyframe reduction
     for (auto& clip : m_animations)
         clip->reduction();
 
@@ -723,7 +741,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
         rec.dst = dst.get();
         rec.extractor = extractor;
         n->dst_anim = dst.get();
-        m_animations.front()->animations.emplace_back(dst);
+        m_animations.front()->animations.push_back(dst);
         return true;
     }
     else {
@@ -795,11 +813,8 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
     float t = m_anim_time * m_settings.animation_time_scale;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-
-    auto& shape = n->shape->node;
-    if (shape.hasFn(kMFnSpotLight)) {
+    if (type == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
-    }
 }
 
 void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode *n)

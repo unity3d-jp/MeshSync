@@ -17,7 +17,8 @@ namespace UTJ.MeshSync
     {
 #region fields
         [SerializeField] int m_serverPort = 8080;
-        [HideInInspector][SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] string m_assetExportPath = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
         [Space(10)]
@@ -53,6 +54,7 @@ namespace UTJ.MeshSync
 #region properties
         public static string version { get { return S(msServerGetVersion()); } }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
+        public List<TextureHolder> textureData { get { return m_textureList; } }
 #endregion
 
 #region impl
@@ -174,6 +176,11 @@ namespace UTJ.MeshSync
                     case MessageType.Screenshot:
                         OnRecvScreenshot(data);
                         break;
+                    case MessageType.Query:
+                        OnRecvQuery((QueryMessage)data);
+                        break;
+                    default:
+                        break;
                 }
             }
             catch (Exception e) { Debug.LogError(e); }
@@ -271,7 +278,16 @@ namespace UTJ.MeshSync
         {
             var scene = mes.scene;
 
-            // sync materials
+            // sync textures
+            try
+            {
+                int numTextures = scene.numTextures;
+                if (numTextures > 0)
+                    UpdateTextures(scene);
+            }
+            catch (Exception e) { Debug.LogError(e); }
+
+            // materials
             try
             {
                 int numMaterials = scene.numMaterials;
@@ -363,6 +379,70 @@ namespace UTJ.MeshSync
             }
         }
 
+        public Texture2D FindTexture(int id)
+        {
+            if (id < 0)
+                return null;
+            var rec = m_textureList.Find(a => a.id == id);
+            return rec != null ? rec.texture : null;
+        }
+
+        public Material FindMaterial(int id)
+        {
+            if (id < 0)
+                return null;
+            var rec = m_materialList.Find(a => a.id == id);
+            return rec != null ? rec.material : null;
+        }
+
+
+        void UpdateTextures(SceneData scene)
+        {
+            MakeSureAssetDirectoryExists();
+            string assetDir = "Assets/" + m_assetExportPath;
+
+            int numTextures = scene.numTextures;
+            for (int i = 0; i < numTextures; ++i)
+            {
+                Texture2D texture = null;
+
+                var src = scene.GetTexture(i);
+                var format = src.format;
+                if (format == TextureFormat.RawFile)
+                {
+#if UNITY_EDITOR
+                    string path = assetDir + "/" + src.name;
+                    src.WriteToFile(path);
+                    AssetDatabase.ImportAsset(path);
+                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+#endif
+                }
+                else
+                {
+                    texture = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
+                    texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
+                    texture.Apply();
+#if UNITY_EDITOR
+                    string path = assetDir + "/" + src.name + ".asset";
+                    CreateAsset(texture, path);
+#endif
+                }
+
+                if (texture != null)
+                {
+                    int id = src.id;
+                    var dst = m_textureList.Find(a => a.id == id);
+                    if (dst == null)
+                    {
+                        dst = new TextureHolder();
+                        dst.id = id;
+                        m_textureList.Add(dst);
+                    }
+                    dst.texture = texture;
+                }
+            }
+        }
+
         void UpdateMaterials(SceneData scene)
         {
             int numMaterials = scene.numMaterials;
@@ -385,7 +465,6 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            if(!needsUpdate) { return; }
 
             var newlist = new List<MaterialHolder>();
             for (int i = 0; i < numMaterials; ++i)
@@ -405,14 +484,109 @@ namespace UTJ.MeshSync
                 }
                 dst.name = src.name;
                 dst.color = src.color;
+
                 if (dst.material.name == src.name)
                 {
-                    dst.material.color = dst.color;
+                    var flags = src.flags;
+
+                    // base color
+                    if (flags.hasColor)
+                        dst.material.color = dst.color;
+
+                    if (flags.hasColorMap)
+                    {
+                        var mainTex = FindTexture(src.colorMap);
+                        if (mainTex != null)
+                            dst.material.mainTexture = mainTex;
+                    }
+
+                    // emission
+                    const string _EmissionColor = "_EmissionColor";
+                    const string _EmissionMap = "_EmissionMap";
+                    const string _EMISSION = "_EMISSION";
+
+                    if (flags.hasEmission && dst.material.HasProperty(_EmissionColor))
+                    {
+                        var emission = src.emission;
+                        dst.material.SetColor(_EmissionColor, emission);
+
+                        if (emission != Color.black)
+                        {
+                            if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                            {
+                                dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                                dst.material.EnableKeyword(_EMISSION);
+                            }
+                        }
+                        else
+                        {
+                            if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.RealtimeEmissive)
+                            {
+                                dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                                dst.material.DisableKeyword(_EMISSION);
+                            }
+                        }
+                    }
+
+                    if (flags.hasEmissionMap && dst.material.HasProperty(_EmissionMap))
+                    {
+                        var emissionTex = FindTexture(src.emissionMap);
+                        if (emissionTex != null)
+                            dst.material.SetTexture(_EmissionMap, emissionTex);
+                    }
+
+                    // metallic
+                    const string _Metallic = "_Metallic";
+                    const string _Glossiness = "_Glossiness";
+                    const string _MetallicGlossMap = "_MetallicGlossMap";
+                    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+
+                    if (flags.hasMetallic && dst.material.HasProperty(_Metallic))
+                        dst.material.SetFloat(_Metallic, src.metalic);
+
+                    if (flags.hasSmoothness && dst.material.HasProperty(_Glossiness))
+                        dst.material.SetFloat(_Glossiness, src.smoothness);
+
+                    if (flags.hasMetallicMap && dst.material.HasProperty(_MetallicGlossMap))
+                    {
+                        var metallicTex = FindTexture(src.metallicMap);
+                        if (metallicTex != null)
+                        {
+                            dst.material.EnableKeyword(_METALLICGLOSSMAP);
+                            dst.material.SetTexture(_MetallicGlossMap, metallicTex);
+                        }
+                        else
+                        {
+                            dst.material.DisableKeyword(_METALLICGLOSSMAP);
+                        }
+                    }
+
+                    // normal map
+                    const string _BumpMap = "_BumpMap";
+                    const string _NORMALMAP = "_NORMALMAP";
+
+                    if (flags.hasNormalMap && dst.material.HasProperty(_BumpMap))
+                    {
+                        var normalTex = FindTexture(src.normalMap);
+                        if (normalTex != null)
+                        {
+                            dst.material.EnableKeyword(_NORMALMAP);
+                            dst.material.SetTexture(_BumpMap, normalTex);
+                        }
+                        else
+                        {
+                            dst.material.DisableKeyword(_NORMALMAP);
+                        }
+                    }
                 }
+
                 newlist.Add(dst);
             }
-            m_materialList = newlist;
-            ReassignMaterials();
+
+            if (needsUpdate) {
+                m_materialList = newlist;
+                ReassignMaterials();
+            }
         }
 
         void UpdateMesh(MeshData data)
@@ -463,73 +637,79 @@ namespace UTJ.MeshSync
                     t.gameObject.SetActive(true);
                 }
 
-                var split = data.GetSplit(si);
-                if(split.numPoints == 0 || split.numIndices == 0)
+                if (flags.hasIndices)
                 {
-                    rec.editMesh = null;
-                }
-                else
-                {
-                    rec.editMesh = CreateEditedMesh(data, split);
-                    rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                    var split = data.GetSplit(si);
+                    if (split.numPoints == 0 || split.numIndices == 0)
+                    {
+                        rec.editMesh = null;
+                    }
+                    else
+                    {
+                        rec.editMesh = CreateEditedMesh(data, split);
+                        rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                    }
                 }
 
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
-                    var collider = t.GetComponent<MeshCollider>();
-                    bool updateCollider = m_updateMeshColliders && collider != null &&
-                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
-
+                    if (flags.hasIndices)
                     {
-                        var old = smr.sharedMesh;
-                        smr.sharedMesh = null;
-                        DestroyIfNotAsset(old);
-                        old = null;
-                    }
+                        var collider = t.GetComponent<MeshCollider>();
+                        bool updateCollider = m_updateMeshColliders && collider != null &&
+                            (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
 
-                    if (updateCollider)
-                        collider.sharedMesh = rec.editMesh;
-
-                    bool updateWhenOffscreen = false;
-                    if (skinned)
-                    {
-                        // create bones
-                        var bonePaths = data.GetBonePaths();
-                        var bones = new Transform[data.numBones];
-                        for (int bi = 0; bi < bones.Length; ++bi)
                         {
-                            bool dummy = false;
-                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
+                            var old = smr.sharedMesh;
+                            smr.sharedMesh = null;
+                            DestroyIfNotAsset(old);
+                            old = null;
                         }
 
-                        if (bones.Length > 0)
+                        if (updateCollider)
+                            collider.sharedMesh = rec.editMesh;
+
+                        bool updateWhenOffscreen = false;
+                        if (skinned)
                         {
-                            bool dummy = false;
-                            var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
-                            if (root == null)
-                                root = bones[0];
-                            smr.rootBone = root;
-                            smr.bones = bones;
-                            updateWhenOffscreen = true;
+                            // create bones
+                            var bonePaths = data.GetBonePaths();
+                            var bones = new Transform[data.numBones];
+                            for (int bi = 0; bi < bones.Length; ++bi)
+                            {
+                                bool dummy = false;
+                                bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
+                            }
+
+                            if (bones.Length > 0)
+                            {
+                                bool dummy = false;
+                                var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
+                                if (root == null)
+                                    root = bones[0];
+                                smr.rootBone = root;
+                                smr.bones = bones;
+                                updateWhenOffscreen = true;
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (smr.rootBone != null)
+                        else
                         {
-                            smr.bones = null;
-                            smr.rootBone = null;
+                            if (smr.rootBone != null)
+                            {
+                                smr.bones = null;
+                                smr.rootBone = null;
+                            }
+
+                            if (rec.editMesh != null)
+                                smr.localBounds = rec.editMesh.bounds;
                         }
 
-                        if (rec.editMesh != null)
-                            smr.localBounds = rec.editMesh.bounds;
+                        smr.sharedMesh = rec.editMesh;
+                        smr.updateWhenOffscreen = updateWhenOffscreen;
                     }
 
-                    smr.sharedMesh = rec.editMesh;
-                    smr.updateWhenOffscreen = updateWhenOffscreen;
-
-                    if (flags.hasBlendshapes)
+                    if (flags.hasBlendshapeWeights)
                     {
                         int numBlendShapes = data.numBlendShapes;
                         for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -679,6 +859,19 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
+        void MakeSureAssetDirectoryExists()
+        {
+#if UNITY_EDITOR
+            try
+            {
+                string assetDir = "Assets/" + m_assetExportPath;
+                if (!AssetDatabase.IsValidFolder(assetDir))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+            }
+            catch (Exception e) { Debug.LogError(e); }
+#endif
+        }
+
         void CreateAsset(UnityEngine.Object obj, string assetPath)
         {
 #if UNITY_EDITOR
@@ -687,7 +880,7 @@ namespace UTJ.MeshSync
                 string assetDir = "Assets/" + m_assetExportPath;
                 if (!AssetDatabase.IsValidFolder(assetDir))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-                AssetDatabase.CreateAsset(obj, assetPath);
+                AssetDatabase.CreateAsset(obj, SanitizeFileName(assetPath));
             }
             catch (Exception e) { Debug.LogError(e); }
 #endif
@@ -978,8 +1171,8 @@ namespace UTJ.MeshSync
                     else
                         clipName = root.name;
 
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(clipName);
-                    CreateAsset(clip, assetPath + ".anim");
+                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(clipName) + ".anim";
+                    CreateAsset(clip, assetPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
                     m_animClipCache[root.gameObject] = clip;
                 }
@@ -1057,11 +1250,12 @@ namespace UTJ.MeshSync
                         materials[j] = prev[j];
 
                     var mid = materialIDs[mi++];
-                    if (mid >= 0 && mid < m_materialList.Count)
+                    var material = FindMaterial(mid);
+                    if (material != null)
                     {
-                        if (materials[j] != m_materialList[mid].material)
+                        if (materials[j] != material)
                         {
-                            materials[j] = m_materialList[mid].material;
+                            materials[j] = material;
                             changed = true;
                         }
                     }
@@ -1246,6 +1440,14 @@ namespace UTJ.MeshSync
             }
             return ret;
         }
+        bool ServeTexture(Texture2D v, GetMessage mes)
+        {
+            var data = TextureData.Create();
+            data.name = v.name;
+            // todo
+            msServerServeTexture(m_server, data);
+            return true;
+        }
         bool ServeMaterial(Material mat, GetMessage mes)
         {
             var data = MaterialData.Create();
@@ -1388,6 +1590,33 @@ namespace UTJ.MeshSync
             m_captureScreenshotInProgress = true;
         }
 
+        void OnRecvQuery(QueryMessage data)
+        {
+            switch (data.queryType)
+            {
+                case QueryMessage.QueryType.ClientName:
+                    data.AddResponseText("Unity");
+                    break;
+                case QueryMessage.QueryType.AllNodes:
+                    {
+                        var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                        foreach (var go in roots)
+                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    }
+                    break;
+                case QueryMessage.QueryType.RootNodes:
+                    {
+                        var objects = FindObjectsOfType<Transform>();
+                        foreach (var go in objects)
+                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    }
+                    break;
+                default:
+                    break;
+            }
+            data.FinishRespond();
+        }
+
 #if UNITY_EDITOR
         public void GenerateLightmapUV(GameObject go)
         {
@@ -1421,6 +1650,23 @@ namespace UTJ.MeshSync
             }
         }
 
+        public void ExportMaterials()
+        {
+            if (m_materialList == null)
+                return;
+
+            string assetDir = "Assets/" + m_assetExportPath;
+            foreach (var m in m_materialList)
+            {
+                var material = m.material;
+                if (AssetDatabase.GetAssetPath(material) == "")
+                {
+                    string path = assetDir + "/" + material.name + ".mat";
+                    CreateAsset(material, path);
+                }
+            }
+        }
+
         public void ExportMeshes(GameObject go)
         {
             if(go == null) { return; }
@@ -1430,7 +1676,7 @@ namespace UTJ.MeshSync
             var mf = go.GetComponent<SkinnedMeshRenderer>();
             if (mf != null && mf.sharedMesh != null)
             {
-                var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(mf.sharedMesh.name) + ".asset";
+                var assetPath = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
                 CreateAsset(mf.sharedMesh, assetPath);
                 if (m_logging)
                 {

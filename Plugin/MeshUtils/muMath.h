@@ -152,15 +152,6 @@ struct tmat4x4
     }
 };
 
-#ifdef muEnableHalf
-using half2 = tvec2<half>;
-using half3 = tvec3<half>;
-using half4 = tvec4<half>;
-using quath = tquat<half>;
-using half3x3 = tmat3x3<half>;
-using half4x4 = tmat4x4<half>;
-#endif
-
 using float2 = tvec2<float>;
 using float3 = tvec3<float>;
 using float4 = tvec4<float>;
@@ -380,6 +371,7 @@ template<class T> inline tmat4x4<T>& operator*=(tmat4x4<T>& a, const tmat4x4<T> 
 }
 
 inline int ceildiv(int v, int d) { return (v + (d - 1)) / d; }
+inline int clamp(int v, int vmin, int vmax) { return std::min(std::max(v, vmin), vmax); }
 
 #define SF(T)                                                                                       \
     inline T sign(T v) { return v < T(0.0) ? T(-1.0) : T(1.0); }                                    \
@@ -570,8 +562,8 @@ template<class T> inline T angle_between2_signed(const tvec3<T>& p1, const tvec3
 
 template<class T> inline tvec3<T> apply_rotation(const tquat<T>& q, const tvec3<T>& p)
 {
-    auto a = cross(reinterpret_cast<tvec3<T>&>(q), p);
-    auto b = cross(reinterpret_cast<tvec3<T>&>(q), a);
+    auto a = cross(reinterpret_cast<const tvec3<T>&>(q), p);
+    auto b = cross(reinterpret_cast<const tvec3<T>&>(q), a);
     return p + (a * q.w + b) * T(2.0);
 }
 

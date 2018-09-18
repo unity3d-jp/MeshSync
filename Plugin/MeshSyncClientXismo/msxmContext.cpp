@@ -58,7 +58,7 @@ struct BufferData : public mu::noncopyable
     bool        triangle = false;
     bool        dirty = false;
     bool        visible = true;
-    int         material_id = 0;
+    int         material_id = -1;
     MaterialData material;
     float4x4    transform = float4x4::identity();
 
@@ -68,7 +68,7 @@ struct BufferData : public mu::noncopyable
         GLuint              handle = 0;
         int                 num_elements = 0;
         bool                visible = true;
-        int                 material_id = 0;
+        int                 material_id = -1;
         float4x4            transform = float4x4::identity();
         RawVector<ms_vertex> vertices_welded;
         ms::MeshPtr         dst_mesh;
@@ -362,7 +362,7 @@ void msxmContext::send(bool force)
             sprintf(name, "XismoMaterial:ID[%04x]", i);
             mat->id = i;
             mat->name = name;
-            mat->color = m_material_data[i].diffuse;
+            mat->setColor(m_material_data[i].diffuse);
         }
     }
 

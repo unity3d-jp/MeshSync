@@ -188,7 +188,7 @@ static void CtrlSetCheck(int cid, bool v)
     CheckDlgButton(g_msmax_settings_window, cid, v);
 };
 
-static int CtrlGetInt(int cid, int default_value, bool sign = false)
+static int CtrlGetInt(int cid, int default_value, bool sign = true)
 {
     BOOL valid;
     int v = GetDlgItemInt(g_msmax_settings_window, cid, &valid, sign);
@@ -309,7 +309,14 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
             break;
         case IDC_EDIT_PORT:
-            handle_edit([&]() { s.client_settings.port = CtrlGetInt(IDC_EDIT_SERVER, s.client_settings.port); });
+            handle_edit([&]() {
+                int tmp = CtrlGetInt(IDC_EDIT_PORT, s.client_settings.port);
+                if (tmp < 0 || tmp > 63335) {
+                    tmp = mu::clamp((int)tmp, 0, 63335);
+                    CtrlSetText(IDC_EDIT_PORT, tmp);
+                }
+                s.client_settings.port = tmp;
+            });
             break;
         case IDC_EDIT_SCALE_FACTOR:
             handle_edit([&]() { s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor); });
@@ -343,10 +350,24 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             msmaxInstance().update();
             break;
         case IDC_EDIT_ANIMATION_TIME_SCALE:
-            handle_edit([&]() { s.animation_time_scale = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale); });
+            handle_edit([&]() {
+                float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
+                if (tmp < 0.01f) {
+                    tmp = mu::max(tmp, 0.01f);
+                    CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, tmp);
+                }
+                s.animation_time_scale = tmp;
+            });
             break;
         case IDC_EDIT_ANIMATION_SPS:
-            handle_edit([&]() { s.animation_sps = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps); });
+            handle_edit([&]() {
+                int tmp = CtrlGetInt(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
+                if (tmp < 1 || tmp > 120) {
+                    tmp = mu::clamp(tmp, 1, 120);
+                    CtrlSetText(IDC_EDIT_ANIMATION_SPS, tmp);
+                }
+                s.animation_sps = tmp;
+            });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
             handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All); });
@@ -404,27 +425,4 @@ void MeshSyncClient3dsMax::updateUIText()
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
-}
-
-
-void MeshSyncClient3dsMax::applyUISettings()
-{
-    auto& s = m_settings;
-
-    s.client_settings.server= CtrlGetText(IDC_EDIT_SERVER);
-    s.client_settings.port  = CtrlGetInt(IDC_EDIT_PORT, s.client_settings.port);
-
-    s.scale_factor          = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor);
-    s.sync_meshes           = CtrlIsChecked(IDC_CHECK_MESHES);
-    s.sync_normals          = CtrlIsChecked(IDC_CHECK_NORMALS);
-    s.sync_uvs              = CtrlIsChecked(IDC_CHECK_UVS);
-    s.sync_colors           = CtrlIsChecked(IDC_CHECK_COLORS);
-    s.sync_blendshapes      = CtrlIsChecked(IDC_CHECK_BLENDSHAPES);
-    s.sync_bones            = CtrlIsChecked(IDC_CHECK_BONES);
-    s.sync_cameras          = CtrlIsChecked(IDC_CHECK_CAMERAS);
-    s.sync_lights           = CtrlIsChecked(IDC_CHECK_LIGHTS);
-    s.auto_sync             = CtrlIsChecked(IDC_CHECK_AUTO_SYNC);
-
-    s.animation_time_scale  = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
-    s.animation_sps         = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
 }

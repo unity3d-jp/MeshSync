@@ -84,10 +84,17 @@ bool IsMesh(Object *obj)
         (!obj->IsSubClassOf(BONE_OBJ_CLASSID) && !obj->IsSubClassOf(SKELOBJ_CLASS_ID));
 }
 
-TriObject* GetSourceMesh(INode * n)
+bool IsBoneMesh(Object * obj)
+{
+    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID &&
+        (obj->IsSubClassOf(BONE_OBJ_CLASSID) || obj->IsSubClassOf(SKELOBJ_CLASS_ID));
+}
+
+TriObject* GetSourceMesh(INode * n, bool& needs_delete)
 {
     IDerivedObject *dobj = nullptr;
     int mod_index = 0;
+    needs_delete = false;
 
     Modifier *skin_top = nullptr, *morph_top = nullptr;
     bool return_next = true;
@@ -108,19 +115,25 @@ TriObject* GetSourceMesh(INode * n)
         }
     });
 
+    TriObject *ret = nullptr;
+    auto to_triobject = [&needs_delete, &ret](Object *obj) {
+        if (obj->CanConvertToType(triObjectClassID)) {
+            auto old = obj;
+            ret = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+            if (ret != old)
+                needs_delete = true;
+        }
+    };
+
     if (return_next) {
-        if (base->CanConvertToType(triObjectClassID))
-            return (TriObject*)base->ConvertToType(GetTime(), triObjectClassID);
+        to_triobject(base);
     }
     else if (dobj) {
         auto os = dobj->Eval(GetTime(), mod_index);
-        if (os.obj->CanConvertToType(triObjectClassID))
-            return (TriObject*)os.obj->ConvertToType(GetTime(), triObjectClassID);
+        to_triobject(os.obj);
     }
     else {
-        auto obj = n->GetObjectRef();
-        if (obj->CanConvertToType(triObjectClassID))
-            return (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+        to_triobject(n->GetObjectRef());
     }
-    return nullptr;
+    return ret;
 }

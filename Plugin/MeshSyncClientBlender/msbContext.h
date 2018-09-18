@@ -86,7 +86,7 @@ private:
     void                addDeleted(const std::string& path);
     ms::MaterialPtr     addMaterial(Material *material);
 
-    int getMaterialIndex(const Material *mat);
+    int getMaterialID(const Material *mat);
     void extractTransformData(ms::Transform& dst, Object *obj);
     void extractCameraData(ms::Camera& dst, Object *obj);
     void extractLightData(ms::Light& dst, Object *obj);

@@ -260,7 +260,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
 
     // advance frame and record animation
     auto time_range = GetCOREInterface()->GetAnimRange();
-    auto interval = ToTicks(1.0f / m_settings.animation_sps);
+    auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 1));
     for (TimeValue t = time_range.Start(); t <= time_range.End(); t += interval) {
         m_current_time_tick = t;
         m_current_time_sec = ToSeconds(t);
@@ -414,8 +414,9 @@ void MeshSyncClient3dsMax::exportMaterials()
             int mid = (int)m_materials.size();
             auto dst = ms::Material::create();
             m_materials.push_back(dst);
+            dst->id = mid;
             dst->name = mu::ToMBS(mtl->GetName().data());
-            dst->color = to_color(mtl->GetDiffuse());
+            dst->setColor(to_color(mtl->GetDiffuse()));
             return mid;
         };
 
@@ -429,6 +430,9 @@ void MeshSyncClient3dsMax::exportMaterials()
         else {
             for (int si = 0; si < num_submtls; ++si) {
                 auto submtl = mtl->GetSubMtl(si);
+                if (!submtl)
+                    continue;
+
                 auto it = m_material_records.find(submtl);
                 if (it != m_material_records.end())
                     rec.submaterial_ids.push_back(it->second.material_id);
@@ -733,7 +737,8 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
     if (!dst.visible)
         return true;
 
-    auto *tri = GetSourceMesh(n);
+    bool needs_delete;
+    auto *tri = GetSourceMesh(n, needs_delete);
     if (!tri)
         return false;
 
@@ -742,7 +747,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
 
     auto& mesh = tri->GetMesh();
     doExtractMeshData(dst, n, mesh);
-    if (tri != obj)
+    if (needs_delete)
         tri->DeleteThis();
 
     return true;
@@ -986,7 +991,7 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     bool vis;
     ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -996,7 +1001,7 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     auto& dst = (ms::CameraAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -1016,7 +1021,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     auto& dst = (ms::LightAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -1037,7 +1042,7 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src,
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     auto& dst = (ms::MeshAnimation&)dst_;
 
     if (m_settings.sync_blendshapes) {

@@ -2,9 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="TestMeshUtils.cpp" />
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="MeshGenerator.cpp" />
+    <ClCompile Include="TestMeshSyncClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

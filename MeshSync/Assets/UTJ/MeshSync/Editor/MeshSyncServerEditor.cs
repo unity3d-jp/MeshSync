@@ -19,24 +19,28 @@ namespace UTJ.MeshSync
 
             EditorGUILayout.Space();
 
+            //GUILayout.Label("Texture List", EditorStyles.boldLabel);
+            //DrawTextureList(t);
+
+            EditorGUILayout.Space();
+
             if (GUILayout.Button("Open Material Window"))
-            {
                 MaterialWindow.Open(t);
-            }
 
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Generate Lightmap UV"))
-            {
                 t.GenerateLightmapUV();
-            }
 
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Export Meshes"))
-            {
                 t.ExportMeshes();
-            }
+
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button("Export Materials"))
+                t.ExportMaterials();
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.version);
@@ -65,6 +69,11 @@ namespace UTJ.MeshSync
 
                 EditorGUILayout.EndHorizontal();
             }
+        }
+
+        public static void DrawTextureList(MeshSyncServer t)
+        {
+
         }
     }
 }

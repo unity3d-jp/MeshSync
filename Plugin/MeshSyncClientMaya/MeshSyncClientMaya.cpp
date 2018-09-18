@@ -29,20 +29,76 @@ bool TreeNode::isInstance() const
 
 TreeNode* TreeNode::getPrimaryInstanceNode() const
 {
+    auto get_primary_parent = [](const MObject& node) -> MObject {
+        Pad<MFnDagNode> dn(node);
+        return dn.parentCount() > 0 ? dn.parent(0) : MObject();
+    };
+
     if (trans->branches.size() > 1) {
-        auto primary = GetParent(trans->node);
+        auto primary = get_primary_parent(trans->node);
         for (auto b : trans->branches) {
             if (b->parent->trans->node == primary)
                 return b;
         }
     }
     if (shape->branches.size() > 1) {
-        auto primary = GetParent(shape->node);
+        auto primary = get_primary_parent(shape->node);
         for (auto b : shape->branches) {
             if (b->trans->node == primary)
                 return b;
         }
     }
+    return nullptr;
+}
+
+MDagPath TreeNode::getDagPath() const
+{
+    MDagPath ret;
+    getDagPath_(ret);
+    if (shape)
+        ret.push(shape->node);
+    return ret;
+}
+void TreeNode::getDagPath_(MDagPath & dst) const
+{
+    if (parent) {
+        parent->getDagPath_(dst);
+        dst.push(trans->node);
+    }
+    else {
+        MDagPath::getAPathTo(trans->node, dst);
+    }
+}
+
+MObject TreeNode::getTrans() const { return trans ? trans->node : MObject(); }
+MObject TreeNode::getShape() const { return shape ? shape->node : MObject(); }
+
+MDagPath GetDagPath(const TreeNode *branch, const MObject& node)
+{
+    MDagPath ret;
+    branch->getDagPath_(ret);
+    ret.push(node);
+    return ret;
+}
+
+TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath)
+{
+    auto node = dagpath.node();
+    auto it = dnmap.find(node);
+    if (it != dnmap.end()) {
+        const auto& dn = it->second;
+        if (dn.branches.size() == 1) {
+            return dn.branches.front();
+        }
+        else {
+            for (auto *branch : dn.branches) {
+                if (branch->getDagPath() == dagpath) {
+                    return branch;
+                }
+            }
+        }
+    }
+
     return nullptr;
 }
 
@@ -355,7 +411,14 @@ void MeshSyncClientMaya::constructTree()
 
 void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, const std::string& base)
 {
-    auto shape = GetShape(node);
+    MObject shape;
+    {
+        MDagPath dpath;
+        MDagPath::getAPathTo(node, dpath);
+        dpath.extendToShape();
+        shape = dpath.node();
+    }
+
     std::string name = GetName(node);
     std::string path = base;
     path += '/';
@@ -554,9 +617,9 @@ void MeshSyncClientMaya::kickAsyncSend()
             del.targets.resize(num_deleted);
             for (uint32_t i = 0; i < num_deleted; ++i)
                 del.targets[i].path = m_deleted[i];
-            m_deleted.clear();
 
             client.send(del);
+            m_deleted.clear();
         }
 
         // send scene data
@@ -564,10 +627,12 @@ void MeshSyncClientMaya::kickAsyncSend()
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
             set.scene.objects = m_objects;
+            set.scene.textures = m_textures;
             set.scene.materials = m_materials;
             client.send(set);
 
             m_objects.clear();
+            m_textures.clear();
             m_materials.clear();
         }
 

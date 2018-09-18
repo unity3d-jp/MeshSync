@@ -6,4 +6,4 @@
     #define msAPI extern "C" 
 #endif
 
-using msMessageHandler = void(*)(ms::Message::Type type, const void *data);
+using msMessageHandler = void(*)(ms::Message::Type type, void *data);
