@@ -734,7 +734,8 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
     if (!dst.visible)
         return true;
 
-    auto *tri = GetSourceMesh(n);
+    bool needs_delete;
+    auto *tri = GetSourceMesh(n, needs_delete);
     if (!tri)
         return false;
 
@@ -743,7 +744,7 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
 
     auto& mesh = tri->GetMesh();
     doExtractMeshData(dst, n, mesh);
-    if (tri != obj)
+    if (needs_delete)
         tri->DeleteThis();
 
     return true;
