@@ -430,6 +430,9 @@ void MeshSyncClient3dsMax::exportMaterials()
         else {
             for (int si = 0; si < num_submtls; ++si) {
                 auto submtl = mtl->GetSubMtl(si);
+                if (!submtl)
+                    continue;
+
                 auto it = m_material_records.find(submtl);
                 if (it != m_material_records.end())
                     rec.submaterial_ids.push_back(it->second.material_id);
