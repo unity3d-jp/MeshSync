@@ -13,6 +13,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 1. [Maya](#maya)
 2. [Maya LT](#maya-lt)
 3. [3ds Max](#3ds-max)
+3. [Motion Builder](#motion-builder)
 4. [Blender](#blender)
 5. [メタセコイア](#メタセコイア)
 5. [xismo](#xismo)
@@ -70,10 +71,26 @@ Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作�
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
 - NURBS などポリゴン以外の形状データは対応していません
-- Max script にもコマンドが追加されており、全ての機能に Max script 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin/MeshSyncClient3dsdMax/msmaxEntryPoint.cpp)
+- Max script にもコマンドが追加されており、全ての機能に Max script 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp)
+
+
+### Motion Builder
+Motion Builder 2015, 2016, 2017, 2018 + Windows, Linux (CentOS 7) で動作を確認しています
+- インストールするには、プラグインの zip を適当な場所に展開後、Motion Builder 内の Settings -> Preferences -> SDK メニューからプラグイン dll ファイルがあるディレクトリを追加します
+- インストール後、Asset Browser 内の Templates -> Devices に UnityMeshSync というオブジェクトが追加されているので、それをシーンに追加します
+- Navigator 内の Devices -> UnityMeshSync を選択することで各種設定や機能にアクセスできます 
+- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
+- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります
+
+&nbsp;  
+
+- ポリゴンメッシュ、カメラ、ライトの同期に対応しています
+- ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています
+- 負のスケールは部分的にしかサポートしていないので注意が必要です
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
+- NURBS などポリゴン以外の形状データは対応していません
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971861-81043192-573e-11e8-9945-2bb248d869bd.png" height=400>
-
 
 ### Blender
 Blender 2.79(a,b) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。 対応は容易なので、気付き次第対応版を出す予定ではあります。
