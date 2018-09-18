@@ -1171,7 +1171,7 @@ namespace UTJ.MeshSync
                     else
                         clipName = root.name;
 
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + clipName + ".anim";
+                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(clipName) + ".anim";
                     CreateAsset(clip, assetPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
                     m_animClipCache[root.gameObject] = clip;
