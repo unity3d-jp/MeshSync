@@ -74,6 +74,7 @@ Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作�
 - Max script にもコマンドが追加されており、全ての機能に Max script 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp)
 
 
+<img align="right" src="https://user-images.githubusercontent.com/1488611/45682175-8a919100-bb7a-11e8-96a1-efe2e28146c3.png" height=200>
 ### Motion Builder
 Motion Builder 2015, 2016, 2017, 2018 + Windows, Linux (CentOS 7) で動作を確認しています
 - インストールするには、プラグインの zip を適当な場所に展開後、Motion Builder 内の Settings -> Preferences -> SDK メニューからプラグイン dll ファイルがあるディレクトリを追加します
