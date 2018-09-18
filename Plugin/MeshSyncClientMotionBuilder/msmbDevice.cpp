@@ -290,6 +290,11 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
         }
     }
     else if (IsMesh(src)) { // mesh
+        if (sync_bones) {
+            EachBones(src, [this](FBModel *bone) {
+                exportObject(bone, true);
+            });
+        }
         if (sync_meshes) {
             exportObject(src->Parent, true);
             auto obj = ms::Mesh::create();
@@ -301,7 +306,7 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
                 extractMeshSimple(*obj, src);
         }
     }
-    else if (IsBone(src) || force) {
+    else if (force) {
         exportObject(src->Parent, true);
         auto obj = ms::Transform::create();
         rec.dst = obj.get();
@@ -866,11 +871,14 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
         extractor = &msmbDevice::extractLightAnimation;
     }
     else if (IsMesh(src)) { // mesh
+        EachBones(src, [this](FBModel *bone) {
+            exportAnimation(bone, true);
+        });
         exportAnimation(src->Parent, true);
         dst = ms::MeshAnimation::create();
         extractor = &msmbDevice::extractMeshAnimation;
     }
-    else if (IsBone(src) || force) { // other
+    else if (force) { // other
         exportAnimation(src->Parent, true);
         dst = ms::TransformAnimation::create();
         extractor = &msmbDevice::extractTransformAnimation;

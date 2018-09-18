@@ -16,6 +16,7 @@ struct GeometryScope
     ~GeometryScope() { geom->GeometryEnd(); }
 };
 
+bool IsNull(FBModel *src);
 bool IsCamera(FBModel *src);
 bool IsLight(FBModel *src);
 bool IsBone(FBModel *src);
@@ -51,6 +52,18 @@ inline void Each(T& list, const Body& body)
     int n = list.GetCount();
     for (int i = 0; i < n; ++i)
         body(list[i]);
+}
+
+template<class Body>
+inline void EachBones(FBModel *model, const Body& body)
+{
+    if (FBCluster *cluster = model->Cluster) {
+        int num_links = cluster->LinkGetCount();
+        for (int li = 0; li < num_links; ++li) {
+            auto bone = cluster->LinkGetModel(li);
+            body(bone);
+        }
+    }
 }
 
 #ifdef mscDebug

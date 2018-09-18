@@ -262,7 +262,7 @@ void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->auto_sync = (bool)(int)m_bu_sync_lights.State;
     if (m_device->auto_sync)
-        m_device->sendScene(true);
+        m_device->sendScene(false);
 }
 
 void msmbLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)

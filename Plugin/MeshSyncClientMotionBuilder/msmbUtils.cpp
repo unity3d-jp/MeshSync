@@ -1,6 +1,11 @@
 #include "pch.h"
 #include "msmbUtils.h"
 
+bool IsNull(FBModel * src)
+{
+    return src && src->Is(FBModelNull::TypeInfo);
+}
+
 bool IsCamera(FBModel *src)
 {
     return src && src->Is(FBCamera::TypeInfo);
@@ -13,7 +18,8 @@ bool IsLight(FBModel *src)
 
 bool IsBone(FBModel *src)
 {
-    return src && src->Is(FBModelSkeleton::TypeInfo);
+    return src &&
+        (src->Is(FBModelSkeleton::TypeInfo) || IsNull(src));
 }
 
 bool IsMesh(FBModel* src)
