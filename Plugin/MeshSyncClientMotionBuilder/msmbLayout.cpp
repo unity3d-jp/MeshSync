@@ -196,6 +196,9 @@ bool msmbLayout::FBCreate()
             0, kFBAttachHeight, idLabelTimeScale, 1.0);
         SetControl(idEditTimeScale, m_ed_time_scale);
         m_ed_time_scale.Value = 1.0;
+        m_ed_time_scale.Min = 0.01;
+        m_ed_time_scale.SmallStep = 0.01;
+        m_ed_time_scale.LargeStep = 0.1;
         m_ed_time_scale.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
 

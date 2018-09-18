@@ -350,7 +350,14 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             msmaxInstance().update();
             break;
         case IDC_EDIT_ANIMATION_TIME_SCALE:
-            handle_edit([&]() { s.animation_time_scale = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale); });
+            handle_edit([&]() {
+                float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
+                if (tmp < 0.01f) {
+                    tmp = mu::max(tmp, 0.01f);
+                    CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, tmp);
+                }
+                s.animation_time_scale = tmp;
+            });
             break;
         case IDC_EDIT_ANIMATION_SPS:
             handle_edit([&]() {

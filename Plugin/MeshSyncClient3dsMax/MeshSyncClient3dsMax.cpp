@@ -991,7 +991,7 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     bool vis;
     ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -1001,7 +1001,7 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     auto& dst = (ms::CameraAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -1021,7 +1021,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     auto& dst = (ms::LightAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -1042,7 +1042,7 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src,
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec;
+    float t = m_current_time_sec * m_settings.animation_time_scale;
     auto& dst = (ms::MeshAnimation&)dst_;
 
     if (m_settings.sync_blendshapes) {

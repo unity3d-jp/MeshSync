@@ -80,8 +80,8 @@ Modifier* FindMorph(INode *n)
 
 bool IsMesh(Object *obj)
 {
-    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID &&
-        (!obj->IsSubClassOf(BONE_OBJ_CLASSID) && !obj->IsSubClassOf(SKELOBJ_CLASS_ID));
+    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID
+        /*&& (!obj->IsSubClassOf(BONE_OBJ_CLASSID) && !obj->IsSubClassOf(SKELOBJ_CLASS_ID))*/;
 }
 
 TriObject* GetSourceMesh(INode * n, bool& needs_delete)
