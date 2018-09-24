@@ -40,6 +40,7 @@ public:
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
+    virtual uint64_t hash() const;
 
     const char* getName() const; // get name (leaf) from path
 
@@ -354,6 +355,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t hash() const override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
@@ -402,6 +404,7 @@ enum class Handedness
 
 struct SceneSettings
 {
+    mutable uint64_t validation_hash = ~0llu;
     std::string name = "Untitled";
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;
@@ -425,8 +428,9 @@ public:
 public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    bool deserialize(std::istream& is);
     void clear();
+    uint64_t hash() const;
 };
 msHasSerializer(Scene);
 using ScenePtr = std::shared_ptr<Scene>;

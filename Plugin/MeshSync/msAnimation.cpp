@@ -5,6 +5,7 @@
 
 
 #define Clear(V) V.clear();
+#define Hash(V) ret += vhash(V);
 #define Empty(V) && V.empty()
 #define Reduce(V) DoReduction(V);
 #define Reserve(V) V.reserve(n);
@@ -131,6 +132,12 @@ void TransformAnimation::clear()
     super::clear();
     EachMember(Clear);
 }
+uint64_t TransformAnimation::hash() const
+{
+    uint64_t ret = 0;
+    EachMember(Hash);
+    return ret;
+}
 bool TransformAnimation::empty() const
 {
     bool ret = true;
@@ -205,6 +212,12 @@ void CameraAnimation::clear()
     super::clear();
     EachMember(Clear);
 }
+uint64_t CameraAnimation::hash() const
+{
+    uint64_t ret = super::hash();
+    EachMember(Hash);
+    return ret;
+}
 bool CameraAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
@@ -262,6 +275,12 @@ void LightAnimation::clear()
 {
     super::clear();
     EachMember(Clear);
+}
+uint64_t LightAnimation::hash() const
+{
+    uint64_t ret = super::hash();
+    EachMember(Hash);
+    return ret;
 }
 bool LightAnimation::empty() const
 {
@@ -358,6 +377,14 @@ void MeshAnimation::clear()
     blendshapes.clear();
 }
 
+uint64_t MeshAnimation::hash() const
+{
+    uint64_t ret = super::hash();
+    for (auto& bs : blendshapes)
+        ret += vhash(bs->weight);
+    return ret;
+}
+
 bool MeshAnimation::empty() const
 {
     return super::empty() && blendshapes.empty();
@@ -428,6 +455,14 @@ void AnimationClip::clear()
 {
     name.clear();
     animations.clear();
+}
+
+uint64_t AnimationClip::hash() const
+{
+    uint64_t ret = 0;
+    for (auto& anim : animations)
+        ret += anim->hash();
+    return ret;
 }
 
 bool AnimationClip::empty() const

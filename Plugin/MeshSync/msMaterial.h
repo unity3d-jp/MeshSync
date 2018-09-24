@@ -74,6 +74,7 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
+    uint64_t hash() const;
 
     void setData(const void *src);
     void getData(void *dst) const;

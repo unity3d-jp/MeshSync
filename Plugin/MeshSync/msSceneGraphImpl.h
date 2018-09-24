@@ -211,10 +211,26 @@ struct clear_impl<std::vector<T>>
     void operator()(std::vector<T>& v) { v.clear(); }
 };
 
+template<class T>
+struct vhash_impl;
+
+template<class T>
+struct vhash_impl<RawVector<T>>
+{
+    uint64_t operator()(const RawVector<T>& v)
+    {
+        uint64_t ret = 0;
+        if (sizeof(T) * v.size() >= 8)
+            ret = *(const uint64_t*)((const char*)v.end() - 8);
+        return ret;
+    }
+};
+
 
 template<class T> inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
 template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
+template<class T> inline uint64_t vhash(const T& v) { return vhash_impl<T>()(v); }
 
 } // namespace ms

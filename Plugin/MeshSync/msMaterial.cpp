@@ -94,6 +94,11 @@ void Texture::clear()
     data.clear();
 }
 
+uint64_t Texture::hash() const
+{
+    return vhash(data);
+}
+
 void Texture::setData(const void * src)
 {
     size_t data_size = width * height * GetPixelSize(format);

@@ -20,6 +20,7 @@ public:
         Query,
         Response,
     };
+    int protocol_version = msProtocolVersion;
 
     virtual ~Message();
     virtual uint32_t getSerializeSize() const;

@@ -9,15 +9,14 @@ Message::~Message()
 }
 uint32_t Message::getSerializeSize() const
 {
-    return ssize(msProtocolVersion);
+    return ssize(protocol_version);
 }
 void Message::serialize(std::ostream& os) const
 {
-    write(os, msProtocolVersion);
+    write(os, protocol_version);
 }
 bool Message::deserialize(std::istream& is)
 {
-    int protocol_version = 0;
     read(is, protocol_version);
     if (protocol_version != msProtocolVersion)
         return false;
@@ -69,7 +68,7 @@ void SetMessage::serialize(std::ostream& os) const
 bool SetMessage::deserialize(std::istream& is)
 {
     if (!super::deserialize(is)) { return false; }
-    scene.deserialize(is);
+    if (!scene.deserialize(is)) { return false; }
     return true;
 }
 

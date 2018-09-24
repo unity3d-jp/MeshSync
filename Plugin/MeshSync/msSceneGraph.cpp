@@ -64,6 +64,11 @@ void Entity::clear()
     path.clear();
 }
 
+uint64_t Entity::hash() const
+{
+    return 0;
+}
+
 const char* Entity::getName() const
 {
     size_t name_pos = path.find_last_of('/');
@@ -532,6 +537,15 @@ void Mesh::clear()
     weights4.clear();
 
     remap_normals.clear(); remap_uv0.clear(); remap_uv1.clear(); remap_colors.clear();
+}
+
+uint64_t Mesh::hash() const
+{
+    uint64_t ret = super::hash();
+#define Body(A) ret += vhash(A);
+    EachVertexProperty(Body);
+#undef Body
+    return ret;
 }
 
 #undef EachVertexProperty
@@ -1024,6 +1038,7 @@ BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
 uint32_t SceneSettings::getSerializeSize() const
 {
     uint32_t ret = 0;
+    ret += ssize(validation_hash);
     ret += ssize(name);
     ret += ssize(handedness);
     ret += ssize(scale_factor);
@@ -1031,12 +1046,14 @@ uint32_t SceneSettings::getSerializeSize() const
 }
 void SceneSettings::serialize(std::ostream& os) const
 {
+    write(os, validation_hash);
     write(os, name);
     write(os, handedness);
     write(os, scale_factor);
 }
 void SceneSettings::deserialize(std::istream& is)
 {
+    read(is, validation_hash);
     read(is, name);
     read(is, handedness);
     read(is, scale_factor);
@@ -1054,20 +1071,39 @@ uint32_t Scene::getSerializeSize() const
 }
 void Scene::serialize(std::ostream& os) const
 {
+    settings.validation_hash = hash();
     EachMember(msWrite);
 }
-void Scene::deserialize(std::istream& is)
+bool Scene::deserialize(std::istream& is)
 {
     EachMember(msRead);
+    bool ret = settings.validation_hash == hash();
+    if (!ret) {
+        msLogError("Scene::deserialize(): hash error!");
+    }
+    return ret;
 }
 
 void Scene::clear()
 {
+    settings = SceneSettings();
     objects.clear();
     constraints.clear();
     animations.clear();
     textures.clear();
     materials.clear();
+}
+
+uint64_t Scene::hash() const
+{
+    uint64_t ret = 0;
+    for (auto& obj : objects)
+        ret += obj->hash();
+    for (auto& obj : animations)
+        ret += obj->hash();
+    for (auto& obj : textures)
+        ret += obj->hash();
+    return ret;
 }
 
 #undef EachMember

@@ -33,6 +33,7 @@ public:
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
+    virtual uint64_t hash() const = 0;
     virtual bool empty() const = 0;
     virtual void reduction() = 0;
     virtual void reserve(size_t n) = 0;
@@ -63,6 +64,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t hash() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -95,6 +97,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t hash() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -123,6 +126,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t hash() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -168,6 +172,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t hash() const override;
     bool empty() const override;
     void reduction() override;
 
@@ -192,6 +197,7 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
+    uint64_t hash() const;
     bool empty() const;
     void reduction();
 
