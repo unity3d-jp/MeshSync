@@ -91,11 +91,15 @@ msAPI void msServerServeTexture(ms::Server *server, ms::Texture *data)
     server->getHostScene()->textures.push_back(make_shared_ptr(data));
 }
 
-
 msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
 {
     if (!server) { return; }
     server->setScrrenshotFilePath(path);
+}
+msAPI void msServerNotifyPoll(ms::Server *server, ms::PollMessage::PollType t)
+{
+    if (!server) { return; }
+    server->notifyPoll(t);
 }
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *_this)

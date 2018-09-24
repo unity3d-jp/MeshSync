@@ -266,6 +266,8 @@ namespace UTJ.MeshSync
 
                 ForceRepaint();
                 GC.Collect();
+
+                msServerNotifyPoll(m_server, PollMessage.PollType.SceneUpdate);
             }
         }
 

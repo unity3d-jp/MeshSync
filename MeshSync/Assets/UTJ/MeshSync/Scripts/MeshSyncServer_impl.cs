@@ -209,6 +209,15 @@ namespace UTJ.MeshSync
             }
         }
 
+        public struct PollMessage
+        {
+            public enum PollType
+            {
+                Unknown,
+                SceneUpdate,
+            }
+        }
+
 
         public struct MeshDataFlags
         {
@@ -1887,6 +1896,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msServerServeTexture(IntPtr _this, TextureData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
+        [DllImport("MeshSyncServer")] static extern void msServerNotifyPoll(IntPtr _this, PollMessage.PollType t);
 
         static void SwitchBits(ref int flags, bool f, int bit)
         {

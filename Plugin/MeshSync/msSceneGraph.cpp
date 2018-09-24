@@ -1074,14 +1074,12 @@ void Scene::serialize(std::ostream& os) const
     settings.validation_hash = hash();
     EachMember(msWrite);
 }
-bool Scene::deserialize(std::istream& is)
+void Scene::deserialize(std::istream& is)
 {
     EachMember(msRead);
-    bool ret = settings.validation_hash == hash();
-    if (!ret) {
-        msLogError("Scene::deserialize(): hash error!");
+    if (settings.validation_hash != hash()) {
+        throw std::exception("scene hash doesn't match");
     }
-    return ret;
 }
 
 void Scene::clear()

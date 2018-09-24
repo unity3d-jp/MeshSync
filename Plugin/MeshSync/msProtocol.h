@@ -25,7 +25,7 @@ public:
     virtual ~Message();
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
-    virtual bool deserialize(std::istream& is);
+    virtual void deserialize(std::istream& is); // throw
 };
 msHasSerializer(Message);
 using MessagePtr = std::shared_ptr<Message>;
@@ -63,7 +63,7 @@ public:
     GetMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(GetMessage);
 using GetMessagePtr = std::shared_ptr<GetMessage>;
@@ -79,7 +79,7 @@ public:
     SetMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(SetMessage);
 using SetMessagePtr = std::shared_ptr<SetMessage>;
@@ -103,7 +103,7 @@ public:
     DeleteMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(DeleteMessage::Identifier);
 msHasSerializer(DeleteMessage);
@@ -126,7 +126,7 @@ public:
     ~FenceMessage() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(FenceMessage);
 using FenceMessagePtr = std::shared_ptr<FenceMessage>;
@@ -146,7 +146,7 @@ public:
     ~TextMessage() override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 
 public:
     std::string text;
@@ -168,7 +168,7 @@ public:
     ScreenshotMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(ScreenshotMessage);
 using ScreenshotMessagePtr = std::shared_ptr<ScreenshotMessage>;
@@ -195,7 +195,7 @@ public:
     QueryMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(QueryMessage);
 using QueryMessagePtr = std::shared_ptr<QueryMessage>;
@@ -210,9 +210,30 @@ public:
     ResponseMessage();
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
-    bool deserialize(std::istream& is) override;
+    void deserialize(std::istream& is) override;
 };
 msHasSerializer(ResponseMessage);
 using ResponseMessagePtr = std::shared_ptr<ResponseMessage>;
+
+
+class PollMessage : public Message
+{
+using super = Message;
+public:
+    enum class PollType
+    {
+        Unknown,
+        SceneUpdate,
+    };
+    PollType type = PollType::Unknown;
+    std::shared_ptr<std::atomic_int> wait_flag; // non-serializable
+
+    PollMessage();
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+msHasSerializer(PollMessage);
+using PollMessagePtr = std::shared_ptr<PollMessage>;
 
 } // namespace ms

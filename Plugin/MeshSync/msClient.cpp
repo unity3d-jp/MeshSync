@@ -31,8 +31,13 @@ ScenePtr Client::send(const GetMessage& mes)
         {
             HTTPResponse response;
             auto& is = session.receiveResponse(response);
-            ret.reset(new Scene());
-            ret->deserialize(is);
+            try {
+                ret.reset(new Scene());
+                ret->deserialize(is);
+            }
+            catch (const std::exception&) {
+                ret.reset();
+            }
         }
     }
     catch (...) {

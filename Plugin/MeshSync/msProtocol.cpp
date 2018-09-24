@@ -15,12 +15,12 @@ void Message::serialize(std::ostream& os) const
 {
     write(os, protocol_version);
 }
-bool Message::deserialize(std::istream& is)
+void Message::deserialize(std::istream& is)
 {
     read(is, protocol_version);
-    if (protocol_version != msProtocolVersion)
-        return false;
-    return true;
+    if (protocol_version != msProtocolVersion) {
+        throw std::exception("protocol version not matched");
+    }
 }
 
 GetMessage::GetMessage()
@@ -41,13 +41,12 @@ void GetMessage::serialize(std::ostream& os) const
     write(os, scene_settings);
     write(os, refine_settings);
 }
-bool GetMessage::deserialize(std::istream& is)
+void GetMessage::deserialize(std::istream& is)
 {
-    if (!super::deserialize(is)) { return false; }
+    super::deserialize(is);
     read(is, flags);
     read(is, scene_settings);
     read(is, refine_settings);
-    return true;
 }
 
 
@@ -65,11 +64,10 @@ void SetMessage::serialize(std::ostream& os) const
     super::serialize(os);
     scene.serialize(os);
 }
-bool SetMessage::deserialize(std::istream& is)
+void SetMessage::deserialize(std::istream& is)
 {
-    if (!super::deserialize(is)) { return false; }
-    if (!scene.deserialize(is)) { return false; }
-    return true;
+    super::deserialize(is);
+    scene.deserialize(is);
 }
 
 
@@ -100,11 +98,10 @@ void DeleteMessage::serialize(std::ostream& os) const
     super::serialize(os);
     write(os, targets);
 }
-bool DeleteMessage::deserialize(std::istream& is)
+void DeleteMessage::deserialize(std::istream& is)
 {
-    if (!super::deserialize(is)) { return false; }
+    super::deserialize(is);
     read(is, targets);
-    return true;
 }
 
 
@@ -119,11 +116,10 @@ void FenceMessage::serialize(std::ostream& os) const
     super::serialize(os);
     write(os, type);
 }
-bool FenceMessage::deserialize(std::istream& is)
+void FenceMessage::deserialize(std::istream& is)
 {
-    if (!super::deserialize(is)) { return false; }
+    super::deserialize(is);
     read(is, type);
-    return true;
 }
 
 TextMessage::~TextMessage() {}
@@ -139,19 +135,18 @@ void TextMessage::serialize(std::ostream& os) const
     write(os, text);
     write(os, type);
 }
-bool TextMessage::deserialize(std::istream& is)
+void TextMessage::deserialize(std::istream& is)
 {
-    if (!super::deserialize(is)) { return false; }
+    super::deserialize(is);
     read(is, text);
     read(is, type);
-    return true;
 }
 
 
 ScreenshotMessage::ScreenshotMessage() {}
 uint32_t ScreenshotMessage::getSerializeSize() const { return super::getSerializeSize(); }
 void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os); }
-bool ScreenshotMessage::deserialize(std::istream& is) { return super::deserialize(is); }
+void ScreenshotMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
 
 QueryMessage::QueryMessage()
@@ -170,11 +165,10 @@ void QueryMessage::serialize(std::ostream & os) const
     write(os, type);
 }
 
-bool QueryMessage::deserialize(std::istream & is)
+void QueryMessage::deserialize(std::istream & is)
 {
-    if (!super::deserialize(is)) { return false; }
+    super::deserialize(is);
     read(is, type);
-    return true;
 }
 
 ResponseMessage::ResponseMessage()
@@ -193,11 +187,33 @@ void ResponseMessage::serialize(std::ostream & os) const
     write(os, text);
 }
 
-bool ResponseMessage::deserialize(std::istream & is)
+void ResponseMessage::deserialize(std::istream & is)
 {
-    if (!super::deserialize(is)) { return false; }
+    super::deserialize(is);
     read(is, text);
-    return true;
 }
+
+
+PollMessage::PollMessage()
+{}
+
+uint32_t PollMessage::getSerializeSize() const
+{
+    return super::getSerializeSize()
+        + ssize(type);
+}
+
+void PollMessage::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+    write(os, type);
+}
+
+void PollMessage::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+    read(is, type);
+}
+
 
 } // namespace ms

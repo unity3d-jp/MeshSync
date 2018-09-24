@@ -428,7 +428,7 @@ public:
 public:
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
-    bool deserialize(std::istream& is);
+    void deserialize(std::istream& is); // throw
     void clear();
     uint64_t hash() const;
 };
