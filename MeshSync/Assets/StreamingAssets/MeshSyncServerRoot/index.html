@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>MeshSync Server</title>
-    <script src="jquery.js_"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <script>
 function poll()
 {
@@ -16,8 +16,13 @@ function poll()
         $('#screenshot').attr('src', '/screenshot');
         poll();
     })
-    .fail(function() {
-        setTimeout(poll, 3000);
+    .fail(function(xhr) {
+        if(xhr.statusText == "timeout") { // scene is not updated
+            poll();
+        }
+        else { // server not found, etc.
+            setTimeout(poll, 5000);
+        }
     });
 }
 

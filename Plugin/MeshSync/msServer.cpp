@@ -138,10 +138,8 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
         //      "../../secret_file" -> "/"
 
         std::string path = m_server->getFileRootPath();
-        if (path.back() != '/')
-            path += '/';
         if (uri.empty() || uri == "/")
-            path += "index.html";
+            path += "/index.html";
         else
             path += uri;
 

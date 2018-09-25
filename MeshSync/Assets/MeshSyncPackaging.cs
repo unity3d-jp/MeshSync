@@ -11,6 +11,7 @@ public class MeshSyncPackaging
         string[] files = new string[]
         {
             "Assets/UTJ/MeshSync",
+            "Assets/StreamingAssets/MeshSyncServerRoot",
         };
         AssetDatabase.ExportPackage(files, "MeshSync.unitypackage", ExportPackageOptions.Recurse);
     }
