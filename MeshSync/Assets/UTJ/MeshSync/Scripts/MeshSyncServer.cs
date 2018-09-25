@@ -113,6 +113,7 @@ namespace UTJ.MeshSync
             var settings = ServerSettings.default_value;
             settings.port = (ushort)m_serverPort;
             m_server = msServerStart(ref settings);
+            msServerSetFileRootPath(m_server, Application.streamingAssetsPath + "/MeshSyncServerRoot");
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;

@@ -1895,6 +1895,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr _this, MeshData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeTexture(IntPtr _this, TextureData data);
         [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
+        [DllImport("MeshSyncServer")] static extern void msServerSetFileRootPath(IntPtr _this, string path);
         [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
         [DllImport("MeshSyncServer")] static extern void msServerNotifyPoll(IntPtr _this, PollMessage.PollType t);
 

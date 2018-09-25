@@ -91,6 +91,11 @@ msAPI void msServerServeTexture(ms::Server *server, ms::Texture *data)
     server->getHostScene()->textures.push_back(make_shared_ptr(data));
 }
 
+msAPI void msServerSetFileRootPath(ms::Server *server, const char *path)
+{
+    if (!server) { return; }
+    server->setFileRootPath(path);
+}
 msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
 {
     if (!server) { return; }

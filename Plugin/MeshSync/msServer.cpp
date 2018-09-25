@@ -74,6 +74,31 @@ RequestHandler::RequestHandler(Server *server)
 {
 }
 
+
+static const std::string& GetMIMEType(const std::string& filename)
+{
+    auto pos = filename.find_last_of('.');
+    if (pos != std::string::npos) {
+        static std::map<std::string, std::string> s_types = {
+            {".html", "text/html"},
+            {".txt", "text/plain"},
+            {".js", "application/javascript"},
+            {".js_", "application/javascript"},
+            {".json", "application/json"},
+            {".png", "image/png"},
+            {".jpg", "image/jpeg"},
+        };
+
+        auto it = s_types.find(&filename[pos]);
+        if (it != s_types.end()) {
+            return it->second;
+        }
+    }
+
+    static std::string s_dummy = "text/plain";
+    return s_dummy;
+}
+
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     if (!m_server->isServing()) {
@@ -82,10 +107,7 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
     }
 
     auto& uri = request.getURI();
-    if (uri == "get") {
-        m_server->recvGet(request, response);
-    }
-    else if (uri == "set") {
+    if (uri == "set") {
         m_server->recvSet(request, response);
     }
     else if (uri == "delete") {
@@ -93,6 +115,9 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
     }
     else if (uri == "fence") {
         m_server->recvFence(request, response);
+    }
+    else if (uri == "get") {
+        m_server->recvGet(request, response);
     }
     else if (uri == "query") {
         m_server->recvQuery(request, response);
@@ -107,7 +132,18 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
         m_server->recvPoll(request, response);
     }
     else {
-        RespondTextForm(response);
+        // note: Poco handles commas in URI
+        // e.g. "hoge/hage/../hige" -> "hoge/hige"
+        //      "../../secret_file" -> "/"
+
+        std::string path = m_server->getFileRootPath();
+        if (path.back() != '/')
+            path += '/';
+        if (uri.empty() || uri == "/")
+            path += "index.html";
+        else
+            path += uri;
+        response.sendFile(path, GetMIMEType(path));
     }
 }
 
@@ -277,7 +313,7 @@ void Server::endServe()
     }
 }
 
-void Server::setScrrenshotFilePath(const std::string path)
+void Server::setScrrenshotFilePath(const std::string& path)
 {
     if (m_current_screenshot_request) {
         m_screenshot_file_path = path;
@@ -285,6 +321,16 @@ void Server::setScrrenshotFilePath(const std::string path)
             *m_current_screenshot_request->wait_flag = 0;
         }
     }
+}
+
+void Server::setFileRootPath(const std::string& path)
+{
+    m_file_root_path = path;
+}
+
+const std::string& Server::getFileRootPath() const
+{
+    return m_file_root_path;
 }
 
 Scene* Server::getHostScene()

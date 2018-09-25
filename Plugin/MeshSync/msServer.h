@@ -44,7 +44,10 @@ public:
     void beginServe();
     void endServe();
 
-    void setScrrenshotFilePath(const std::string path);
+    void setScrrenshotFilePath(const std::string& path);
+    void setFileRootPath(const std::string& path);
+    const std::string& getFileRootPath() const;
+
     void notifyPoll(PollMessage::PollType t);
 
 public:
@@ -94,6 +97,7 @@ private:
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
     std::string m_screenshot_file_path;
+    std::string m_file_root_path;
 
     QueryMessagePtr m_current_query;
     std::vector<QueryMessagePtr> m_poll_messages;
