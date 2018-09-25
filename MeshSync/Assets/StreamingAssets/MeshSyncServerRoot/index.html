@@ -1,12 +1,37 @@
 <!DOCTYPE html>
 <html>
-<meta charset="UTF-8">
-<title>MeshSync Server</title>
+<head>
+    <meta charset="UTF-8">
+    <title>MeshSync Server</title>
+    <script src="jquery.js_"></script>
+    <script>
+function poll()
+{
+    $.ajax({
+        url: '/poll/scene_update',
+        type: 'GET',
+        timeout: 10000,
+    })
+    .done(function(data) {
+        $('#screenshot').attr('src', '/screenshot');
+        poll();
+    })
+    .fail(function() {
+        setTimeout(poll, 3000);
+    });
+}
+
+$(function() {
+    poll();
+});
+    </script>
+</head>
 <body>
-<div><img src="/screenshot" id="screenshot"></div>
-<form action="/text" method="post">
-Message: <input type="text" name="t"><br>
-<input type="submit" value="Submit">
-</form>
+    <div><img src="/screenshot" id="screenshot"></div>
+    <form action="/text" method="post">
+    Message: <input type="text" name="t"><br>
+    <input type="submit" value="Submit">
+    </form>
+    <div id='output'></div>
 </body>
 </html>

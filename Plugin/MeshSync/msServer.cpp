@@ -87,6 +87,7 @@ static const std::string& GetMIMEType(const std::string& filename)
             {".json", "application/json"},
             {".png", "image/png"},
             {".jpg", "image/jpeg"},
+            {".ico", "image/x-icon"},
         };
 
         auto it = s_types.find(&filename[pos]);
@@ -143,7 +144,12 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
             path += "index.html";
         else
             path += uri;
-        response.sendFile(path, GetMIMEType(path));
+
+        Poco::File f(path);
+        if(f.exists())
+            response.sendFile(path, GetMIMEType(path));
+        else
+            RespondText(response, "", HTTPResponse::HTTP_NOT_FOUND);
     }
 }
 
