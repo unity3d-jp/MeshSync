@@ -121,5 +121,6 @@ public:
     bool sync_meshes = true;
     bool sync_textures = true;
     bool sync_materials = true;
+    bool bake_deformars = false;
     bool parallel_extraction = true;
 };

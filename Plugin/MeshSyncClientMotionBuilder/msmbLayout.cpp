@@ -25,6 +25,7 @@ bool msmbLayout::FBCreate()
     const char *idLabelScale = "idLabelScale";
     const char *idEditlScale = "idEditlScale";
     const char *idButtonSyncMeshes = "idButtonSyncMeshes";
+    const char *idButtonBakeDeformers = "idButtonBakeDeformers";
     const char *idButtonSyncCameras = "idButtonSyncCameras";
     const char *idButtonSyncLights = "idButtonSyncLights";
     const char *idButtonAutoSync = "idButtonAutoSync";
@@ -126,11 +127,22 @@ bool msmbLayout::FBCreate()
         m_bu_sync_meshes.State = (int)m_device->sync_meshes;
         m_bu_sync_meshes.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
-        AddRegion(idButtonSyncCameras, idButtonSyncCameras,
+        AddRegion(idButtonBakeDeformers, idButtonBakeDeformers,
             0, kFBAttachLeft, idButtonSyncMeshes, 1.0,
             lS, kFBAttachBottom, idButtonSyncMeshes, 1.0,
             0, kFBAttachWidth, idButtonSyncMeshes, 1.0,
             0, kFBAttachHeight, idButtonSyncMeshes, 1.0);
+        SetControl(idButtonBakeDeformers, m_bu_bake_deformers);
+        m_bu_bake_deformers.Caption = "Bake Deformers";
+        m_bu_bake_deformers.Style = kFBCheckbox;
+        m_bu_bake_deformers.State = (int)m_device->bake_deformars;
+        m_bu_bake_deformers.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
+
+        AddRegion(idButtonSyncCameras, idButtonSyncCameras,
+            0, kFBAttachLeft, idButtonBakeDeformers, 1.0,
+            lS, kFBAttachBottom, idButtonBakeDeformers, 1.0,
+            0, kFBAttachWidth, idButtonBakeDeformers, 1.0,
+            0, kFBAttachHeight, idButtonBakeDeformers, 1.0);
         SetControl(idButtonSyncCameras, m_bu_sync_cameras);
         m_bu_sync_cameras.Caption = "Sync Cameras";
         m_bu_sync_cameras.Style = kFBCheckbox;
@@ -251,6 +263,7 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->scale_factor = (float)m_ed_scale.Value;
     m_device->sync_meshes = (bool)(int)m_bu_sync_meshes.State;
+    m_device->bake_deformars = (bool)(int)m_bu_bake_deformers.State;
     m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
     m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
 }

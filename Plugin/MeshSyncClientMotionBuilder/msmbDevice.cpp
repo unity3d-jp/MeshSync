@@ -71,6 +71,8 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
     m_data_updated = true;
+    if (bake_deformars)
+        m_dirty_meshes = true;
 }
 
 void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
@@ -450,7 +452,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
     // points
     {
-        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
+        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, bake_deformars);
         if (!points)
             return;
 
@@ -461,7 +463,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
     // normals
     {
-        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, false);
+        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, bake_deformars);
         if (normals) {
             dst.normals.resize_discard(num_vertices);
             for (int vi = 0; vi < num_vertices; ++vi)
@@ -500,7 +502,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     }
 
     // colors
-    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, false)) {
+    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, bake_deformars)) {
         auto type = vd->GetVertexArrayType(kFBGeometryArrayID_Color);
         if (type == kFBGeometryArrayElementType_Float4) {
             auto colors = (const mu::float4*)colors_;
@@ -516,101 +518,103 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         }
     }
 
-    // skin cluster
-    if (FBCluster *cluster = src->Cluster) {
-        int num_links = cluster->LinkGetCount();
-        for (int li = 0; li < num_links; ++li) {
-            ClusterScope scope(cluster, li);
+    if (!bake_deformars) {
+        // skin cluster
+        if (FBCluster *cluster = src->Cluster) {
+            int num_links = cluster->LinkGetCount();
+            for (int li = 0; li < num_links; ++li) {
+                ClusterScope scope(cluster, li);
 
-            int n = cluster->VertexGetCount();
-            if (n == 0)
-                continue;
+                int n = cluster->VertexGetCount();
+                if (n == 0)
+                    continue;
 
-            auto bd = ms::BoneData::create();
-            dst.bones.push_back(bd);
+                auto bd = ms::BoneData::create();
+                dst.bones.push_back(bd);
 
-            auto bone = cluster->LinkGetModel(li);
-            bd->path = GetPath(bone);
+                auto bone = cluster->LinkGetModel(li);
+                bd->path = GetPath(bone);
 
-            // root bone
-            if (li == 0) {
-                auto root = bone;
-                while (IsBone(root->Parent))
-                    root = root->Parent;
-                dst.root_bone = GetPath(root);
-            }
+                // root bone
+                if (li == 0) {
+                    auto root = bone;
+                    while (IsBone(root->Parent))
+                        root = root->Parent;
+                    dst.root_bone = GetPath(root);
+                }
 
-            // bindpose
-            {
-                // should consider rotation order?
-                //FBModelRotationOrder order = bone->RotationOrder;
+                // bindpose
+                {
+                    // should consider rotation order?
+                    //FBModelRotationOrder order = bone->RotationOrder;
 
-                FBVector3d t,r,s;
-                cluster->VertexGetTransform(t, r, s);
-                mu::quatf q = mu::invert(mu::rotateXYZ(to_float3(r) * mu::Deg2Rad));
-                bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
-            }
+                    FBVector3d t, r, s;
+                    cluster->VertexGetTransform(t, r, s);
+                    mu::quatf q = mu::invert(mu::rotateXYZ(to_float3(r) * mu::Deg2Rad));
+                    bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
+                }
 
-            // weights
-            bd->weights.resize_zeroclear(num_vertices);
-            for (int vi = 0; vi < n; ++vi) {
-                int i = cluster->VertexGetNumber(vi);
-                float w = (float)cluster->VertexGetWeight(vi);
-                bd->weights[i] = w;
+                // weights
+                bd->weights.resize_zeroclear(num_vertices);
+                for (int vi = 0; vi < n; ++vi) {
+                    int i = cluster->VertexGetNumber(vi);
+                    float w = (float)cluster->VertexGetWeight(vi);
+                    bd->weights[i] = w;
+                }
             }
         }
-    }
 
-    // blendshapes
-    if (FBGeometry *geom = src->Geometry) {
-        int num_shapes = geom->ShapeGetCount();
-        if (num_shapes) {
-            std::map<std::string, float> weight_table;
-            EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
-                weight_table[name] = (float)value;
-            });
+        // blendshapes
+        if (FBGeometry *geom = src->Geometry) {
+            int num_shapes = geom->ShapeGetCount();
+            if (num_shapes) {
+                std::map<std::string, float> weight_table;
+                EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
+                    weight_table[name] = (float)value;
+                });
 
 
-            RawVector<mu::float3> tmp_points, tmp_normals;
-            for (int si = 0; si < num_shapes; ++si) {
-                auto bsd = ms::BlendShapeData::create();
-                dst.blendshapes.push_back(bsd);
-                bsd->name = geom->ShapeGetName(si);
-                {
-                    auto it = weight_table.find(bsd->name);
-                    if (it != weight_table.end())
-                        bsd->weight = it->second;
-                }
-
-                auto bsfd = ms::BlendShapeFrameData::create();
-                bsfd->weight = 100.0f;
-                bsd->frames.push_back(bsfd);
-
-                tmp_points.resize_zeroclear(dst.points.size());
-                tmp_normals.resize_zeroclear(dst.normals.size());
-
-                int num_points = geom->ShapeGetDiffPointCount(si);
-                if (!tmp_normals.empty()) {
-                    for (int pi = 0; pi < num_points; ++pi) {
-                        int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
-                        FBVertex p, n;
-                        if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
-                            tmp_points[vi] = to_float3(p);
-                            tmp_normals[vi] = to_float3(n);
-                        }
+                RawVector<mu::float3> tmp_points, tmp_normals;
+                for (int si = 0; si < num_shapes; ++si) {
+                    auto bsd = ms::BlendShapeData::create();
+                    dst.blendshapes.push_back(bsd);
+                    bsd->name = geom->ShapeGetName(si);
+                    {
+                        auto it = weight_table.find(bsd->name);
+                        if (it != weight_table.end())
+                            bsd->weight = it->second;
                     }
-                    bsfd->points = std::move(tmp_points);
-                    bsfd->normals = std::move(tmp_normals);
-                }
-                else {
-                    for (int pi = 0; pi < num_points; ++pi) {
-                        int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
-                        FBVertex p;
-                        if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
-                            tmp_points[vi] = to_float3(p);
+
+                    auto bsfd = ms::BlendShapeFrameData::create();
+                    bsfd->weight = 100.0f;
+                    bsd->frames.push_back(bsfd);
+
+                    tmp_points.resize_zeroclear(dst.points.size());
+                    tmp_normals.resize_zeroclear(dst.normals.size());
+
+                    int num_points = geom->ShapeGetDiffPointCount(si);
+                    if (!tmp_normals.empty()) {
+                        for (int pi = 0; pi < num_points; ++pi) {
+                            int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
+                            FBVertex p, n;
+                            if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
+                                tmp_points[vi] = to_float3(p);
+                                tmp_normals[vi] = to_float3(n);
+                            }
                         }
+                        bsfd->points = std::move(tmp_points);
+                        bsfd->normals = std::move(tmp_normals);
                     }
-                    bsfd->points = std::move(tmp_points);
+                    else {
+                        for (int pi = 0; pi < num_points; ++pi) {
+                            int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
+                            FBVertex p;
+                            if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
+                                tmp_points[vi] = to_float3(p);
+                            }
+                        }
+                        bsfd->points = std::move(tmp_points);
+                    }
                 }
             }
         }
