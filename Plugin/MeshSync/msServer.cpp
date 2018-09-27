@@ -8,46 +8,6 @@ namespace ms {
 
 using namespace Poco::Net;
 
-static void RespondText(HTTPServerResponse &response, const std::string& message, HTTPResponse::HTTPStatus stat = HTTPResponse::HTTP_OK)
-{
-    response.setStatus(stat);
-    response.setContentType("text/plain");
-    response.setContentLength(message.size());
-
-    auto& os = response.send();
-    os.write(message.c_str(), message.size());
-    os.flush();
-}
-
-static void RespondTextForm(HTTPServerResponse &response, const std::string& message = "", HTTPResponse::HTTPStatus stat = HTTPResponse::HTTP_OK)
-{
-    std::string body =
-        "<!DOCTYPE html>"
-        "<html>"
-            "<meta charset=\"UTF-8\">"
-            "<title>MeshSync Server</title>"
-            "<body>";
-    body += message;
-    body +=
-                "<div><img src=\"screenshot\"></div>"
-                "<form action=\"/text\" method=\"post\">"
-                    "Message: <input type=\"text\" name=\"t\"><br>"
-                    "<input type=\"submit\" value=\"Submit\">"
-                "</form>"
-            "</body>"
-        "</html>";
-
-    response.set("Cache-Control", "no-store, must-revalidate");
-    response.setStatus(stat);
-    response.setContentType("text/html");
-    response.setContentLength(body.size());
-
-    auto& os = response.send();
-    os.write(body.c_str(), body.size());
-    os.flush();
-}
-
-
 class RequestHandler : public HTTPRequestHandler
 {
 public:
@@ -75,35 +35,10 @@ RequestHandler::RequestHandler(Server *server)
 }
 
 
-static const std::string& GetMIMEType(const std::string& filename)
-{
-    auto pos = filename.find_last_of('.');
-    if (pos != std::string::npos) {
-        static std::map<std::string, std::string> s_types = {
-            {".html", "text/html"},
-            {".txt", "text/plain"},
-            {".js", "application/javascript"},
-            {".js_", "application/javascript"},
-            {".json", "application/json"},
-            {".png", "image/png"},
-            {".jpg", "image/jpeg"},
-            {".ico", "image/x-icon"},
-        };
-
-        auto it = s_types.find(&filename[pos]);
-        if (it != s_types.end()) {
-            return it->second;
-        }
-    }
-
-    static std::string s_dummy = "text/plain";
-    return s_dummy;
-}
-
 void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
 {
     if (!m_server->isServing()) {
-        RespondText(response, "");
+        m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
         return;
     }
 
@@ -136,18 +71,7 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
         // note: Poco handles commas in URI
         // e.g. "hoge/hage/../hige" -> "hoge/hige"
         //      "../../secret_file" -> "/"
-
-        std::string path = m_server->getFileRootPath();
-        if (uri.empty() || uri == "/")
-            path += "/index.html";
-        else
-            path += uri;
-
-        Poco::File f(path);
-        if(f.exists())
-            response.sendFile(path, GetMIMEType(path));
-        else
-            RespondText(response, "", HTTPResponse::HTTP_NOT_FOUND);
+        m_server->serveFiles(response, uri);
     }
 }
 
@@ -259,6 +183,69 @@ int Server::processMessages(const MessageHandler& handler)
     return ret;
 }
 
+void Server::serveText(HTTPServerResponse &response, const char* text, int stat)
+{
+    size_t size = std::strlen(text);
+
+    response.setStatus((HTTPResponse::HTTPStatus)stat);
+    response.setContentType("text/plain");
+    response.setContentLength(size);
+
+    auto& os = response.send();
+    os.write(text, size);
+    os.flush();
+}
+
+void Server::serveBinary(Poco::Net::HTTPServerResponse & response, const void *data, size_t size, int stat)
+{
+    response.setStatus((HTTPResponse::HTTPStatus)stat);
+    response.setContentType("application/octet-stream");
+    response.setContentLength(size);
+
+    auto& os = response.send();
+    os.write((const char*)data, size);
+    os.flush();
+}
+
+const char* Server::getMIMEType(const std::string& filename)
+{
+    auto pos = filename.find_last_of('.');
+    if (pos != std::string::npos) {
+        static std::map<std::string, std::string> s_types = {
+            {".html", "text/html"},
+            {".txt", "text/plain"},
+            {".js", "application/javascript"},
+            {".js_", "application/javascript"},
+            {".json", "application/json"},
+            {".png", "image/png"},
+            {".jpg", "image/jpeg"},
+            {".ico", "image/x-icon"},
+        };
+
+        auto it = s_types.find(&filename[pos]);
+        if (it != s_types.end()) {
+            return it->second.c_str();
+        }
+    }
+
+    return "text/plain";
+}
+
+void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::string& uri)
+{
+    std::string path = getFileRootPath();
+    if (uri.empty() || uri == "/")
+        path += "/index.html";
+    else
+        path += uri;
+
+    Poco::File f(path);
+    if (f.exists())
+        response.sendFile(path, getMIMEType(path));
+    else
+        serveText(response, "", HTTPResponse::HTTP_NOT_FOUND);
+}
+
 void Server::setServe(bool v)
 {
     m_serving = v;
@@ -368,7 +355,7 @@ std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest &request,
     }
     catch (const std::exception& e) {
         queueMessage(e.what(), TextMessage::Type::Error);
-        RespondText(response, e.what(), HTTPResponse::HTTP_BAD_REQUEST);
+        serveText(response, e.what(), HTTPResponse::HTTP_BAD_REQUEST);
         return std::shared_ptr<MessageT>();
     }
 }
@@ -424,7 +411,7 @@ void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
         }
         m_recv_history.emplace_back(mes);
     }
-    RespondText(response, "ok");
+    serveText(response, "ok");
 }
 
 void Server::recvDelete(HTTPServerRequest &request, HTTPServerResponse &response)
@@ -436,7 +423,7 @@ void Server::recvDelete(HTTPServerRequest &request, HTTPServerResponse &response
         return;
 
     queueMessage(mes);
-    RespondText(response, "ok");
+    serveText(response, "ok");
 }
 
 void Server::recvFence(HTTPServerRequest &request, HTTPServerResponse &response)
@@ -460,7 +447,7 @@ void Server::recvFence(HTTPServerRequest &request, HTTPServerResponse &response)
         }
     }
     queueMessage(mes);
-    RespondText(response, "ok");
+    serveText(response, "ok");
 }
 
 void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
@@ -577,9 +564,9 @@ void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
         queueMessage(mes);
 
     if (respond_form)
-        RespondTextForm(response);
+        serveFiles(response, "");
     else
-        RespondText(response, "ok");
+        serveText(response, "ok");
 }
 
 void Server::recvScreenshot(HTTPServerRequest &/*request*/, HTTPServerResponse &response)
@@ -613,7 +600,7 @@ void Server::recvPoll(HTTPServerRequest &request, HTTPServerResponse & response)
     // ...
 
     if (mes->type == PollMessage::PollType::Unknown) {
-        RespondText(response, "", HTTPResponse::HTTP_BAD_REQUEST);
+        serveText(response, "", HTTPResponse::HTTP_BAD_REQUEST);
         return;
     }
 
@@ -633,10 +620,10 @@ void Server::recvPoll(HTTPServerRequest &request, HTTPServerResponse & response)
 
     // serve data
     if (*mes->wait_flag == 0) {
-        RespondText(response, "ok", HTTPResponse::HTTP_OK);
+        serveText(response, "ok", HTTPResponse::HTTP_OK);
     }
     else {
-        RespondText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
+        serveText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
     }
 }
 

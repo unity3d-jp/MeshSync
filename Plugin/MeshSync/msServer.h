@@ -38,6 +38,11 @@ public:
     int getNumMessages() const;
     int processMessages(const MessageHandler& handler);
 
+    void serveText(Poco::Net::HTTPServerResponse &response, const char* text, int stat = 200);
+    void serveBinary(Poco::Net::HTTPServerResponse &response, const void *data, size_t size, int stat = 200);
+    const char* getMIMEType(const std::string& filename);
+    void serveFiles(Poco::Net::HTTPServerResponse &response, const std::string& uri);
+
     void setServe(bool v);
     bool isServing() const;
 

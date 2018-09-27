@@ -33,6 +33,7 @@ _build_*/
 external/
 Library/
 Temp/
+obj/
 TestLocal/
 TestLocal.meta
 MeshSyncAssets/
