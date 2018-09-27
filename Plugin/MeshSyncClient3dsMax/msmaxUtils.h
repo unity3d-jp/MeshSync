@@ -18,6 +18,7 @@ Modifier* FindMorph(INode * n);
 bool IsMesh(Object *obj);
 bool IsBoneMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
+TriObject* GetFinalMesh(INode *n, bool& needs_delete);
 
 
 inline mu::float2 to_float2(const Point3& v)
@@ -96,21 +97,6 @@ inline Object* EachModifier(INode *n, const Body& body)
     }
     return obj;
 }
-
-// Body: [](IDerivedObject *obj, Modifier *mod, int mod_index) -> void
-template<class Body>
-inline void EachModifier(Object *obj, const Body& body)
-{
-    if (!obj)
-        return;
-    if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
-        auto dobj = (IDerivedObject*)obj;
-        int num_mod = dobj->NumModifiers();
-        for (int mi = 0; mi < num_mod; ++mi)
-            body(obj, dobj->GetModifier(mi), mi);
-    }
-}
-
 
 
 namespace detail {

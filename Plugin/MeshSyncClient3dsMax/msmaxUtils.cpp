@@ -137,3 +137,36 @@ TriObject* GetSourceMesh(INode * n, bool& needs_delete)
     }
     return ret;
 }
+
+TriObject* GetFinalMesh(INode * n, bool & needs_delete)
+{
+    IDerivedObject *dobj = nullptr;
+    int mod_index = 0;
+    needs_delete = false;
+
+    Object *base = EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
+        if (!dobj) {
+            dobj = obj;
+            mod_index = mi;
+        }
+    });
+
+    TriObject *ret = nullptr;
+    auto to_triobject = [&needs_delete, &ret](Object *obj) {
+        if (obj->CanConvertToType(triObjectClassID)) {
+            auto old = obj;
+            ret = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+            if (ret != old)
+                needs_delete = true;
+        }
+    };
+
+    if (dobj) {
+        auto os = dobj->Eval(GetTime(), mod_index);
+        to_triobject(os.obj);
+    }
+    else {
+        to_triobject(base);
+    }
+    return ret;
+}

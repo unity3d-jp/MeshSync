@@ -26,6 +26,7 @@
 #define IDC_CHECK_UVS                   1020
 #define IDC_CHECK_COLORS                1021
 #define IDC_CHECK_BLENDSHAPES           1022
+#define IDC_CHECK_BAKEMODIFIERS         1023
 
 // Next default values for new objects
 // 

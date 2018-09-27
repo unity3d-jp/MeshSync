@@ -333,6 +333,9 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         case IDC_CHECK_COLORS:
             handle_button([&]() { s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS); });
             break;
+        case IDC_CHECK_BAKEMODIFIERS:
+            handle_button([&]() { s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKEMODIFIERS); });
+            break;
         case IDC_CHECK_BLENDSHAPES:
             handle_button([&]() { s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES); });
             break;
@@ -417,6 +420,7 @@ void MeshSyncClient3dsMax::updateUIText()
     CtrlSetCheck(IDC_CHECK_NORMALS,      s.sync_normals);
     CtrlSetCheck(IDC_CHECK_UVS,          s.sync_uvs);
     CtrlSetCheck(IDC_CHECK_COLORS,       s.sync_colors);
+    CtrlSetCheck(IDC_CHECK_BAKEMODIFIERS, s.bake_modifiers);
     CtrlSetCheck(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
     CtrlSetCheck(IDC_CHECK_BONES,        s.sync_bones);
     CtrlSetCheck(IDC_CHECK_CAMERAS,      s.sync_cameras);

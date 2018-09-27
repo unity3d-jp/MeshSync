@@ -25,6 +25,7 @@ public:
         bool sync_blendshapes = true;
         bool sync_cameras = true;
         bool sync_lights = true;
+        bool bake_modifiers = false;
         bool multithreaded = false;
 
         // import settings

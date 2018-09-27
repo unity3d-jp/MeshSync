@@ -737,13 +737,15 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
     if (!dst.visible)
         return true;
 
-    bool needs_delete;
-    auto *tri = GetSourceMesh(n, needs_delete);
-    if (!tri)
-        return false;
-
     if (m_materials.empty())
         exportMaterials();
+
+    bool needs_delete;
+    auto *tri = m_settings.bake_modifiers ?
+        GetFinalMesh(n, needs_delete) :
+        GetSourceMesh(n, needs_delete);
+    if (!tri)
+        return false;
 
     auto& mesh = tri->GetMesh();
     doExtractMeshData(dst, n, mesh);
@@ -822,80 +824,82 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & m
         }
     }
 
-    // handle blendshape
-    if (m_settings.sync_blendshapes) {
-        auto *mod = FindMorph(n);
-        if (mod && mod->IsEnabled()) {
-            int num_faces = (int)dst.counts.size();
-            int num_points = (int)dst.points.size();
-            int num_normals = (int)dst.normals.size();
+    if (!m_settings.bake_modifiers) {
+        // handle blendshape
+        if (m_settings.sync_blendshapes) {
+            auto *mod = FindMorph(n);
+            if (mod && mod->IsEnabled()) {
+                int num_faces = (int)dst.counts.size();
+                int num_points = (int)dst.points.size();
+                int num_normals = (int)dst.normals.size();
 
-            MaxMorphModifier morph(mod);
-            int num_channels = morph.NumMorphChannels();
-            for (int ci = 0; ci < num_channels; ++ci) {
-                auto channel = morph.GetMorphChannel(ci);
-                auto num_targets = channel.NumProgressiveMorphTargets();
-                if (!channel.IsActive() || !channel.IsValid() || num_targets == 0 || channel.NumMorphPoints() != num_points)
-                    continue;
+                MaxMorphModifier morph(mod);
+                int num_channels = morph.NumMorphChannels();
+                for (int ci = 0; ci < num_channels; ++ci) {
+                    auto channel = morph.GetMorphChannel(ci);
+                    auto num_targets = channel.NumProgressiveMorphTargets();
+                    if (!channel.IsActive() || !channel.IsValid() || num_targets == 0 || channel.NumMorphPoints() != num_points)
+                        continue;
 
-                auto dbs = ms::BlendShapeData::create();
-                for (int ti = 0; ti < num_targets; ++ti) {
-                    dbs->frames.push_back(ms::BlendShapeFrameData::create());
-                    auto& frame = *dbs->frames.back();
-                    frame.weight = channel.GetProgressiveMorphWeight(ti);
+                    auto dbs = ms::BlendShapeData::create();
+                    for (int ti = 0; ti < num_targets; ++ti) {
+                        dbs->frames.push_back(ms::BlendShapeFrameData::create());
+                        auto& frame = *dbs->frames.back();
+                        frame.weight = channel.GetProgressiveMorphWeight(ti);
 
-                    // gen delta
-                    frame.points.resize_discard(num_points);
-                    for (int vi = 0; vi < num_points; ++vi)
-                        frame.points[vi] = to_float3(channel.GetProgressiveMorphPoint(ti, vi)) - dst.points[vi];
-                }
-                if (!dbs->frames.empty()) {
-                    dbs->name = mu::ToMBS(channel.GetName());
-                    dbs->weight = channel.GetMorphWeight(GetTime());
-                    dst.blendshapes.push_back(dbs);
+                        // gen delta
+                        frame.points.resize_discard(num_points);
+                        for (int vi = 0; vi < num_points; ++vi)
+                            frame.points[vi] = to_float3(channel.GetProgressiveMorphPoint(ti, vi)) - dst.points[vi];
+                    }
+                    if (!dbs->frames.empty()) {
+                        dbs->name = mu::ToMBS(channel.GetName());
+                        dbs->weight = channel.GetMorphWeight(GetTime());
+                        dst.blendshapes.push_back(dbs);
+                    }
                 }
             }
         }
-    }
 
-    if (m_settings.sync_bones) {
-        auto *mod = FindSkin(n);
-        if (mod && mod->IsEnabled()) {
-            auto skin = (ISkin*)mod->GetInterface(I_SKIN);
-            auto ctx = skin->GetContextInterface(n);
-            int num_bones = skin->GetNumBones();
-            int num_vertices = ctx->GetNumPoints();
-            if (num_vertices != dst.points.size()) {
-                // topology is changed by modifiers. this case is not supported.
-            }
-            else {
-                // allocate bones and extract bindposes
-                // note: in max, bindpose is [skin_matrix * inv_bone_matrix]
-                Matrix3 skin_matrix;
-                skin->GetSkinInitTM(n, skin_matrix);
-                for (int bi = 0; bi < num_bones; ++bi) {
-                    auto bone = skin->GetBone(bi);
-                    Matrix3 bone_matrix;
-                    skin->GetBoneInitTM(bone, bone_matrix);
-
-                    auto bd = ms::BoneData::create();
-                    dst.bones.push_back(bd);
-                    bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
-                    bd->weights.resize_zeroclear(dst.points.size()); // allocate weights
-
-                    auto bit = m_node_records.find(bone);
-                    if (bit != m_node_records.end()) {
-                        bd->path = bit->second.path;
-                    }
+        if (m_settings.sync_bones) {
+            auto *mod = FindSkin(n);
+            if (mod && mod->IsEnabled()) {
+                auto skin = (ISkin*)mod->GetInterface(I_SKIN);
+                auto ctx = skin->GetContextInterface(n);
+                int num_bones = skin->GetNumBones();
+                int num_vertices = ctx->GetNumPoints();
+                if (num_vertices != dst.points.size()) {
+                    // topology is changed by modifiers. this case is not supported.
                 }
+                else {
+                    // allocate bones and extract bindposes
+                    // note: in max, bindpose is [skin_matrix * inv_bone_matrix]
+                    Matrix3 skin_matrix;
+                    skin->GetSkinInitTM(n, skin_matrix);
+                    for (int bi = 0; bi < num_bones; ++bi) {
+                        auto bone = skin->GetBone(bi);
+                        Matrix3 bone_matrix;
+                        skin->GetBoneInitTM(bone, bone_matrix);
 
-                // get weights
-                for (int vi = 0; vi < num_vertices; ++vi) {
-                    int num_affected_bones = ctx->GetNumAssignedBones(vi);
-                    for (int bi = 0; bi < num_affected_bones; ++bi) {
-                        int bone_index = ctx->GetAssignedBone(vi, bi);
-                        float bone_weight = ctx->GetBoneWeight(vi, bi);
-                        dst.bones[bone_index]->weights[vi] = bone_weight;
+                        auto bd = ms::BoneData::create();
+                        dst.bones.push_back(bd);
+                        bd->bindpose = to_float4x4(skin_matrix) * mu::invert(to_float4x4(bone_matrix));
+                        bd->weights.resize_zeroclear(dst.points.size()); // allocate weights
+
+                        auto bit = m_node_records.find(bone);
+                        if (bit != m_node_records.end()) {
+                            bd->path = bit->second.path;
+                        }
+                    }
+
+                    // get weights
+                    for (int vi = 0; vi < num_vertices; ++vi) {
+                        int num_affected_bones = ctx->GetNumAssignedBones(vi);
+                        for (int bi = 0; bi < num_affected_bones; ++bi) {
+                            int bone_index = ctx->GetAssignedBone(vi, bi);
+                            float bone_weight = ctx->GetBoneWeight(vi, bi);
+                            dst.bones[bone_index]->weights[vi] = bone_weight;
+                        }
                     }
                 }
             }
