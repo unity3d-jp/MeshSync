@@ -184,9 +184,153 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 
     auto task = [this, &dst, n]() {
-        doExtractMeshData(dst, n);
+        if(m_settings.bake_deformers)
+            doExtractMeshDataBaked(dst, n);
+        else
+            doExtractMeshData(dst, n);
     };
     m_extract_tasks[n->shape->branches.front()].add(n, task);
+}
+
+
+void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape)
+{
+    // get points
+    {
+        int num_vertices = mmesh.numVertices();
+        if (num_vertices == 0) {
+            // return empty mesh
+            return;
+        }
+
+        dst.points.resize_discard(num_vertices);
+        auto *points = (const mu::float3*)mmesh.getRawPoints(nullptr);
+        for (int i = 0; i < num_vertices; ++i) {
+            dst.points[i] = points[i];
+        }
+    }
+
+    // get faces
+    {
+        MItMeshPolygon it_poly(mmesh.object());
+        dst.counts.reserve(it_poly.count());
+        dst.indices.reserve(it_poly.count() * 4);
+
+        while (!it_poly.isDone()) {
+            int count = it_poly.polygonVertexCount();
+            dst.counts.push_back(count);
+            for (int i = 0; i < count; ++i) {
+                dst.indices.push_back(it_poly.vertexIndex(i));
+            }
+            it_poly.next();
+        }
+    }
+
+    uint32_t vertex_count = (uint32_t)dst.points.size();
+    uint32_t index_count = (uint32_t)dst.indices.size();
+    uint32_t face_count = (uint32_t)dst.counts.size();
+
+    // get normals
+    if (m_settings.sync_normals) {
+        int num_normals = mmesh.numNormals();
+        if (num_normals > 0) {
+            dst.normals.resize_discard(index_count);
+            auto *normals = (const mu::float3*)mmesh.getRawNormals(nullptr);
+
+            size_t ii = 0;
+            MItMeshPolygon it_poly(mmesh.object());
+            while (!it_poly.isDone()) {
+                int count = it_poly.polygonVertexCount();
+                for (int i = 0; i < count; ++i) {
+                    dst.normals[ii] = normals[it_poly.normalIndex(i)];
+                    ++ii;
+                }
+                it_poly.next();
+            }
+        }
+    }
+
+    // get uv
+    if (m_settings.sync_uvs) {
+        MStringArray uvsets;
+        mmesh.getUVSetNames(uvsets);
+
+        if (uvsets.length() > 0 && mmesh.numUVs(uvsets[0]) > 0) {
+            dst.uv0.resize_zeroclear(index_count);
+
+            MFloatArray u;
+            MFloatArray v;
+            mmesh.getUVs(u, v, &uvsets[0]);
+            const auto *u_ptr = &u[0];
+            const auto *v_ptr = &v[0];
+
+            size_t ii = 0;
+            MItMeshPolygon it_poly(mmesh.object());
+            while (!it_poly.isDone()) {
+                int count = it_poly.polygonVertexCount();
+                for (int i = 0; i < count; ++i) {
+                    int iu;
+                    if (it_poly.getUVIndex(i, iu, &uvsets[0]) == MStatus::kSuccess && iu >= 0)
+                        dst.uv0[ii] = mu::float2{ u_ptr[iu], v_ptr[iu] };
+                    ++ii;
+                }
+                it_poly.next();
+            }
+        }
+    }
+
+    // get vertex colors
+    if (m_settings.sync_colors) {
+        MStringArray color_sets;
+        mmesh.getColorSetNames(color_sets);
+
+        if (color_sets.length() > 0 && mmesh.numColors(color_sets[0]) > 0) {
+            dst.colors.resize(index_count, mu::float4::one());
+
+            MColorArray colors;
+            mmesh.getColors(colors, &color_sets[0]);
+            const auto *colors_ptr = &colors[0];
+
+            size_t ii = 0;
+            MItMeshPolygon it_poly(mmesh.object());
+            while (!it_poly.isDone()) {
+                int count = it_poly.polygonVertexCount();
+                for (int i = 0; i < count; ++i) {
+                    int ic;
+                    if (it_poly.getColorIndex(i, ic, &color_sets[0]) == MStatus::kSuccess && ic >= 0)
+                        dst.colors[ii] = (const mu::float4&)colors_ptr[ic];
+                    ++ii;
+                }
+                it_poly.next();
+            }
+        }
+    }
+
+
+    // get face material id
+    {
+        std::vector<int> mids;
+        MObjectArray shaders;
+        MIntArray indices;
+        mshape.getConnectedShaders(0, shaders, indices);
+        mids.resize(shaders.length(), -1);
+        for (uint32_t si = 0; si < shaders.length(); si++) {
+            MItDependencyGraph it(shaders[si], kMFnLambert, MItDependencyGraph::kUpstream);
+            if (!it.isDone()) {
+                MFnLambertShader lambert(it.currentItem());
+                mids[si] = getMaterialID(lambert.name());
+            }
+        }
+
+        if (mids.size() > 0) {
+            const auto* indices_ptr = &indices[0];
+            dst.material_ids.resize(face_count, -1);
+            uint32_t len = std::min(face_count, indices.length());
+            for (uint32_t i = 0; i < len; ++i) {
+                dst.material_ids[i] = mids[indices_ptr[i]];
+            }
+        }
+    }
 }
 
 void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
@@ -243,144 +387,9 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         }
     }
 
-    // get points
-    {
-        int num_vertices = fn_src_mesh.numVertices();
-        if (num_vertices == 0) {
-            // return empty mesh
-            return;
-        }
-
-        dst.points.resize_discard(num_vertices);
-        auto *points = (const mu::float3*)fn_src_mesh.getRawPoints(nullptr);
-        for (int i = 0; i < num_vertices; ++i) {
-            dst.points[i] = points[i];
-        }
-    }
-
-    // get faces
-    {
-        MItMeshPolygon it_poly(fn_src_mesh.object());
-        dst.counts.reserve(it_poly.count());
-        dst.indices.reserve(it_poly.count() * 4);
-
-        while (!it_poly.isDone()) {
-            int count = it_poly.polygonVertexCount();
-            dst.counts.push_back(count);
-            for (int i = 0; i < count; ++i) {
-                dst.indices.push_back(it_poly.vertexIndex(i));
-            }
-            it_poly.next();
-        }
-    }
+    doExtractMeshData(dst, fn_src_mesh, mmesh);
 
     uint32_t vertex_count = (uint32_t)dst.points.size();
-    uint32_t index_count = (uint32_t)dst.indices.size();
-    uint32_t face_count = (uint32_t)dst.counts.size();
-
-    // get normals
-    if (m_settings.sync_normals) {
-        int num_normals = fn_src_mesh.numNormals();
-        if (num_normals > 0) {
-            dst.normals.resize_discard(index_count);
-            auto *normals = (const mu::float3*)fn_src_mesh.getRawNormals(nullptr);
-
-            size_t ii = 0;
-            MItMeshPolygon it_poly(fn_src_mesh.object());
-            while (!it_poly.isDone()) {
-                int count = it_poly.polygonVertexCount();
-                for (int i = 0; i < count; ++i) {
-                    dst.normals[ii] = normals[it_poly.normalIndex(i)];
-                    ++ii;
-                }
-                it_poly.next();
-            }
-        }
-    }
-
-    // get uv
-    if (m_settings.sync_uvs) {
-        MStringArray uvsets;
-        fn_src_mesh.getUVSetNames(uvsets);
-
-        if (uvsets.length() > 0 && fn_src_mesh.numUVs(uvsets[0]) > 0) {
-            dst.uv0.resize_zeroclear(index_count);
-
-            MFloatArray u;
-            MFloatArray v;
-            fn_src_mesh.getUVs(u, v, &uvsets[0]);
-            const auto *u_ptr = &u[0];
-            const auto *v_ptr = &v[0];
-
-            size_t ii = 0;
-            MItMeshPolygon it_poly(fn_src_mesh.object());
-            while (!it_poly.isDone()) {
-                int count = it_poly.polygonVertexCount();
-                for (int i = 0; i < count; ++i) {
-                    int iu;
-                    if (it_poly.getUVIndex(i, iu, &uvsets[0]) == MStatus::kSuccess && iu >= 0)
-                        dst.uv0[ii] = mu::float2{ u_ptr[iu], v_ptr[iu] };
-                    ++ii;
-                }
-                it_poly.next();
-            }
-        }
-    }
-
-    // get vertex colors
-    if (m_settings.sync_colors) {
-        MStringArray color_sets;
-        fn_src_mesh.getColorSetNames(color_sets);
-
-        if (color_sets.length() > 0 && fn_src_mesh.numColors(color_sets[0]) > 0) {
-            dst.colors.resize(index_count, mu::float4::one());
-
-            MColorArray colors;
-            fn_src_mesh.getColors(colors, &color_sets[0]);
-            const auto *colors_ptr = &colors[0];
-
-            size_t ii = 0;
-            MItMeshPolygon it_poly(fn_src_mesh.object());
-            while (!it_poly.isDone()) {
-                int count = it_poly.polygonVertexCount();
-                for (int i = 0; i < count; ++i) {
-                    int ic;
-                    if (it_poly.getColorIndex(i, ic, &color_sets[0]) == MStatus::kSuccess && ic >= 0)
-                        dst.colors[ii] = (const mu::float4&)colors_ptr[ic];
-                    ++ii;
-                }
-                it_poly.next();
-            }
-        }
-    }
-
-
-    // get face material id
-    {
-        std::vector<int> mids;
-        MObjectArray shaders;
-        MIntArray indices;
-        mmesh.getConnectedShaders(0, shaders, indices);
-        mids.resize(shaders.length(), -1);
-        for (uint32_t si = 0; si < shaders.length(); si++) {
-            MItDependencyGraph it(shaders[si], kMFnLambert, MItDependencyGraph::kUpstream);
-            if (!it.isDone()) {
-                MFnLambertShader lambert(it.currentItem());
-                mids[si] = getMaterialID(lambert.name());
-            }
-        }
-
-        if (mids.size() > 0) {
-            const auto* indices_ptr = &indices[0];
-            dst.material_ids.resize(face_count, -1);
-            uint32_t len = std::min(face_count, indices.length());
-            for (uint32_t i = 0; i < len; ++i) {
-                dst.material_ids[i] = mids[indices_ptr[i]];
-            }
-        }
-    }
-
-
 
     auto apply_tweak = [&dst](MObject deformer, int obj_index) {
         MItDependencyGraph it(deformer, kMFnTweak, MItDependencyGraph::kUpstream);
@@ -616,6 +625,41 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         apply_uv_tweak(shape, skin_index);
     }
 
+    dst.setupFlags();
+}
+
+void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
+{
+    auto& trans = n->trans->node;
+    auto& shape = n->shape->node;
+
+    if (!shape.hasFn(kMFnMesh)) { return; }
+
+    dst.visible = IsVisible(shape);
+    if (!dst.visible) { return; }
+
+    MStatus mstat;
+    MFnMesh mmesh(shape);
+
+    if (n->isInstance()) {
+        auto primary = n->getPrimaryInstanceNode();
+        if (n != primary) {
+            dst.reference = primary->path;
+            return;
+        }
+    }
+
+    dst.flags.has_refine_settings = 1;
+    dst.flags.apply_trs = 1;
+    dst.refine_settings.flags.gen_tangents = 1;
+    dst.refine_settings.flags.swap_faces = 1;
+
+    if (!mmesh.object().hasFn(kMFnMesh)) {
+        // return empty mesh
+        return;
+    }
+
+    doExtractMeshData(dst, mmesh, mmesh);
     dst.setupFlags();
 }
 

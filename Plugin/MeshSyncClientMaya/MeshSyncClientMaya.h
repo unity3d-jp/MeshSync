@@ -75,6 +75,7 @@ public:
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
+        bool bake_deformers = false;
         bool apply_tweak = true;
         bool multithreaded = false;
 
@@ -162,7 +163,9 @@ private:
     void extractCameraData(ms::Camera& dst, TreeNode *n);
     void extractLightData(ms::Light& dst, TreeNode *n);
     void extractMeshData(ms::Mesh& dst, TreeNode *n);
+    void doExtractMeshData(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape);
     void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
+    void doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n);
 
     int exportAnimations(SendScope scope);
     bool exportAnimation(TreeNode *tn);

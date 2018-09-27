@@ -90,6 +90,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
     syntax.addFlag("-asp", "-animationSPS", MSyntax::kLong);
     syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
+    syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
 
     return syntax;
@@ -124,6 +125,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("animationTS", settings.animation_time_scale);
     Handle("animationSPS", settings.animation_sps);
     Handle("applyTweak", settings.apply_tweak);
+    Handle("bakeDeformers", settings.bake_deformers);
     Handle("multithreaded", settings.multithreaded);
 #undef Handle
 
