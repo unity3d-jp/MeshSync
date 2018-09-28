@@ -16,6 +16,7 @@ struct msbSettings
     bool sync_normals = true;
     bool sync_uvs = true;
     bool sync_colors = true;
+    bool bake_modifiers = false;
     bool sync_bones = true;
     bool sync_blendshapes = true;
     bool sync_cameras = true;
@@ -102,9 +103,9 @@ private:
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
 
-    void doExtractMeshData(ms::Mesh& mesh, Object *obj);
-    void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj);
-    void doExtractEditMeshData(ms::Mesh& mesh, Object *obj);
+    void doExtractMeshData(ms::Mesh& mesh, Object *obj, Mesh *data);
+    void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj, Mesh *data);
+    void doExtractEditMeshData(ms::Mesh& mesh, Object *obj, Mesh *data);
 
     void exportAnimation(Object *obj, bool force, const std::string base_path="");
     void extractTransformAnimationData(ms::Animation& dst, void *obj);
@@ -126,6 +127,7 @@ private:
     std::vector<ms::MaterialPtr> m_materials;
     std::vector<std::string> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;
+    std::vector<Mesh*> m_tmp_bmeshes;
 
     std::future<void> m_send_future;
 

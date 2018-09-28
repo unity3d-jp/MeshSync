@@ -160,11 +160,14 @@ void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
         return;
     m_added.insert(src);
 
+    bool is_editing = false;
+    bl::BObject bobj(src);
+
     // check if mesh is dirty
     {
-        bl::BObject bobj(src);
         bl::BMesh bmesh(bobj.data());
         if (bmesh.ptr()->edit_btmesh) {
+            is_editing = true;
             auto bm = bmesh.ptr()->edit_btmesh->bm;
             if (bm->elem_table_dirty) {
                 // mesh is editing and dirty. just add to pending list
@@ -175,11 +178,21 @@ void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
         }
     }
 
-
+    // transform
     extractTransformData(dst, src);
 
-    auto task = [this, &dst, src]() {
-        doExtractMeshData(dst, src);
+    // bake modifiers if needed
+    Mesh *data = nullptr;
+    if (!is_editing && m_settings.bake_modifiers) {
+        data = bobj.to_mesh(bl::BContext::get().scene());
+        m_tmp_bmeshes.push_back(data);
+    }
+    else {
+        data = (Mesh*)src->data;
+    }
+
+    auto task = [this, &dst, src, data]() {
+        doExtractMeshData(dst, src, data);
     };
 #ifdef msDebug
     // force single-threaded
@@ -219,15 +232,15 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
     return ret;
 }
 
-void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
+void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     dst.refine_settings.flags.swap_faces = true;
 
     bl::BObject bobj(obj);
-    bl::BMesh bmesh(bobj.data());
+    bl::BMesh bmesh(data);
 
     if (bmesh.ptr()->edit_btmesh) {
-        doExtractEditMeshData(dst, obj);
+        doExtractEditMeshData(dst, obj, data);
     }
     else {
         // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
@@ -235,19 +248,21 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
         if (m_settings.calc_per_index_normals)
             bmesh.calc_normals_split();
 
-        doExtractNonEditMeshData(dst, obj);
+        doExtractNonEditMeshData(dst, obj, data);
     }
 
-    // mirror
-    if(auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
-        if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
-        if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
-        if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
-        if (mirror->mirror_ob) {
-            dst.refine_settings.flags.mirror_basis = 1;
-            float4x4 wm = bobj.matrix_world();
-            float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
-            dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
+    if (!m_settings.bake_modifiers) {
+        // mirror
+        if (auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
+            if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
+            if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
+            if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+            if (mirror->mirror_ob) {
+                dst.refine_settings.flags.mirror_basis = 1;
+                float4x4 wm = bobj.matrix_world();
+                float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
+                dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
+            }
         }
     }
 
@@ -255,11 +270,11 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj)
     dst.convertHandedness_BlendShapes(false, true);
 }
 
-void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
+void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     bl::BObject bobj(obj);
-    bl::BMesh bmesh(bobj.data());
-    auto& mesh = *(Mesh*)obj->data;
+    bl::BMesh bmesh(data);
+    auto& mesh = *data;
 
     auto indices = bmesh.indices();
     auto polygons = bmesh.polygons();
@@ -341,74 +356,75 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
         }
     }
 
-    // bones
-    if (m_settings.sync_bones) {
-        auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
-        if (arm_mod) {
-            // request bake TRS
-            dst.refine_settings.flags.apply_local2world = 1;
-            dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
+    if (!m_settings.bake_modifiers) {
+        // bones
+        if (m_settings.sync_bones) {
+            auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
+            if (arm_mod) {
+                // request bake TRS
+                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
 
-            auto *arm_obj = arm_mod->object;
-            int group_index = 0;
-            each_deform_group(obj, [&](const bDeformGroup *g) {
-                bool found = false;
-                auto bone = find_bone(arm_obj, g->name);
-                if (bone) {
-                    auto trans = findBone(arm_obj, bone);
-                    if (trans) {
-                        found = true;
-                        auto b = dst.addBone(trans->path);
-                        b->bindpose = extract_bindpose(bone);
-                        b->weights.resize_zeroclear(num_vertices);
+                auto *arm_obj = arm_mod->object;
+                int group_index = 0;
+                each_deform_group(obj, [&](const bDeformGroup *g) {
+                    bool found = false;
+                    auto bone = find_bone(arm_obj, g->name);
+                    if (bone) {
+                        auto trans = findBone(arm_obj, bone);
+                        if (trans) {
+                            found = true;
+                            auto b = dst.addBone(trans->path);
+                            b->bindpose = extract_bindpose(bone);
+                            b->weights.resize_zeroclear(num_vertices);
 
-                        for (int vi = 0; vi < num_vertices; ++vi) {
-                            int num_weights = mesh.dvert[vi].totweight;
-                            auto& dvert = mesh.dvert[vi];
-                            for (int wi = 0; wi < num_weights; ++wi) {
-                                if (dvert.dw[wi].def_nr == group_index) {
-                                    b->weights[vi] = dvert.dw[wi].weight;
+                            for (int vi = 0; vi < num_vertices; ++vi) {
+                                int num_weights = mesh.dvert[vi].totweight;
+                                auto& dvert = mesh.dvert[vi];
+                                for (int wi = 0; wi < num_weights; ++wi) {
+                                    if (dvert.dw[wi].def_nr == group_index) {
+                                        b->weights[vi] = dvert.dw[wi].weight;
+                                    }
                                 }
                             }
                         }
                     }
+                    if (!found) {
+                        mscTrace("bone not found %s\n", bone->name);
+                    }
+                    ++group_index;
+                });
+            }
+        }
+
+        // blend shapes
+        if (m_settings.sync_blendshapes && mesh.key) {
+            RawVector<float3> basis;
+            int bi = 0;
+            each_key(&mesh, [&](const KeyBlock *kb) {
+                if (bi == 0) { // Basis
+                    basis.resize_discard(kb->totelem);
+                    memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
                 }
-                if (!found) {
-                    mscTrace("bone not found %s\n", bone->name);
+                else {
+                    auto bsd = dst.addBlendShape(kb->name);
+                    bsd->weight = kb->curval * 100.0f;
+
+                    bsd->frames.push_back(ms::BlendShapeFrameData::create());
+                    auto& frame = *bsd->frames.back();
+                    frame.weight = 100.0f;
+                    frame.points.resize_discard(kb->totelem);
+                    memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));
+
+                    size_t len = frame.points.size();
+                    for (size_t i = 0; i < len; ++i) {
+                        frame.points[i] -= basis[i];
+                    }
                 }
-                ++group_index;
+                ++bi;
             });
         }
     }
-
-    // blend shapes
-    if (m_settings.sync_blendshapes && mesh.key) {
-        RawVector<float3> basis;
-        int bi = 0;
-        each_key(&mesh, [&](const KeyBlock *kb) {
-            if (bi == 0) { // Basis
-                basis.resize_discard(kb->totelem);
-                memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
-            }
-            else {
-                auto bsd = dst.addBlendShape(kb->name);
-                bsd->weight = kb->curval * 100.0f;
-
-                bsd->frames.push_back(ms::BlendShapeFrameData::create());
-                auto& frame = *bsd->frames.back();
-                frame.weight = 100.0f;
-                frame.points.resize_discard(kb->totelem);
-                memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));
-
-                size_t len = frame.points.size();
-                for (size_t i = 0; i < len; ++i) {
-                    frame.points[i] -= basis[i];
-                }
-            }
-            ++bi;
-        });
-    }
-
 
 #if 0
     // lines
@@ -459,12 +475,12 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh & dst, Object * obj)
 #endif
 }
 
-void msbContext::doExtractEditMeshData(ms::Mesh & dst, Object * obj)
+void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     bl::BObject bobj(obj);
-    bl::BMesh bmesh(bobj.data());
+    bl::BMesh bmesh(data);
     bl::BEditMesh emesh(bmesh.ptr()->edit_btmesh);
-    auto& mesh = *(Mesh*)obj->data;
+    auto& mesh = *data;
 
     auto polygons = emesh.polygons();
     auto triangles = emesh.triangles();
@@ -1021,6 +1037,14 @@ void msbContext::kickAsyncSend()
         task();
     });
     m_extract_tasks.clear();
+
+    // clear baked meshes
+    if (!m_tmp_bmeshes.empty()) {
+        bl::BData bd(bl::BContext::get().data());
+        for (auto *v : m_tmp_bmeshes)
+            bd.remove(v);
+        m_tmp_bmeshes.clear();
+    }
 
     for (auto& kvp : m_obj_records) {
         kvp.second.clear();

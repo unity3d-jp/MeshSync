@@ -565,7 +565,9 @@ bool BData::objects_is_updated()
 
 void BData::remove(Mesh * v)
 {
-    call<Main, void, Mesh*>(m_ptr, BlendDataMeshes_remove, v);
+    PointerRNA t = {};
+    t.data = v;
+    call<Main, void, PointerRNA*>(m_ptr, BlendDataMeshes_remove, &t);
 }
 
 const void* CustomData_get(const CustomData& data, int type)

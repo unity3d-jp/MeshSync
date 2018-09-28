@@ -27,6 +27,7 @@ def msb_apply_settings(self = None, context = None):
     ctx.sync_normals = scene.meshsync_sync_normals
     ctx.sync_uvs = scene.meshsync_sync_uvs
     ctx.sync_colors = scene.meshsync_sync_colors
+    ctx.bake_modifiers = scene.meshsync_bake_modifiers
     ctx.sync_bones = scene.meshsync_sync_bones
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
     ctx.sync_cameras = scene.meshsync_sync_cameras
@@ -44,6 +45,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals")
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = True, name = "Colors")
+    bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(default = False, name = "Bake Modifiers")
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
@@ -80,8 +82,9 @@ class MeshSyncScenePanel(bpy.types.Panel):
             b.prop(scene, 'meshsync_sync_normals')
             b.prop(scene, 'meshsync_sync_uvs')
             b.prop(scene, 'meshsync_sync_colors')
-            b.prop(scene, 'meshsync_sync_bones')
-            b.prop(scene, 'meshsync_sync_blendshapes')
+            b.prop(scene, 'meshsync_bake_modifiers')
+        self.layout.prop(scene, 'meshsync_sync_bones')
+        self.layout.prop(scene, 'meshsync_sync_blendshapes')
         self.layout.prop(scene, 'meshsync_sync_cameras')
         self.layout.prop(scene, 'meshsync_sync_lights')
         self.layout.separator()
