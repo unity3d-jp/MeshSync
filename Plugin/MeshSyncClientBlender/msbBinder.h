@@ -107,6 +107,7 @@ namespace blender
         float4x4 matrix_local() const;
         float4x4 matrix_world() const;
         bool is_visible(Scene *scene) const;
+        Mesh* to_mesh(Scene *scene) const;
     };
 
     class BMesh
@@ -180,10 +181,12 @@ namespace blender
     public:
         Boilerplate2(BData, Main)
 
-        blist_range<Object> objects();
+        blist_range<Object>   objects();
+        blist_range<Mesh>     meshes();
         blist_range<Material> materials();
 
         bool objects_is_updated();
+        void remove(Mesh *v);
     };
 
     class BContext

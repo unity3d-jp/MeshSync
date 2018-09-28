@@ -21,6 +21,7 @@ Def(BObject);
 Prop(BObject, matrix_local);
 Prop(BObject, matrix_world);
 Func(BObject, is_visible);
+Func(BObject, to_mesh);
 
 Def(BMesh);
 Func(BMesh, calc_normals_split);
@@ -42,6 +43,8 @@ Prop(BScene, frame_current);
 Func(BScene, frame_set);
 
 Def(BData);
+static PropertyRNA* BlendDataObjects_is_updated;
+static FunctionRNA* BlendDataMeshes_remove;
 
 Def(BContext);
 Prop(BContext, blend_data);
@@ -51,7 +54,6 @@ Prop(BContext, scene);
 #undef Func
 #undef Def
 
-PropertyRNA* BlendDataObjects_is_updated;
 
 bool ready()
 {
@@ -98,6 +100,7 @@ void setup(py::object bpy_context)
             }
             each_func {
                 if (match_func("is_visible")) BObject_is_visible = func;
+                if (match_func("to_mesh")) BObject_to_mesh = func;
             }
         }
         else if (match_type("Mesh")) {
@@ -149,8 +152,13 @@ void setup(py::object bpy_context)
                 if (match_prop("is_updated")) BlendDataObjects_is_updated = prop;
             }
         }
+        else if (match_type("BlendDataMeshes")) {
+            each_func{
+                if (match_func("remove")) BlendDataMeshes_remove = func;
+            }
+        }
         else if (match_type("Context")) {
-            BData::s_type = type;
+            BContext::s_type = type;
             each_prop{
                 if (match_prop("blend_data")) BContext_blend_data = prop;
                 if (match_prop("scene")) BContext_scene = prop;
@@ -198,8 +206,28 @@ struct param_holder1
 template<typename R, typename A1, typename A2>
 struct param_holder2
 {
-    A1 a1;
-    A2 a2;
+    A1 a1; A2 a2;
+    ret_holder<R> ret;
+    typename ret_holder<R>::ret_t get() { return ret.get(); }
+};
+template<typename R, typename A1, typename A2, typename A3>
+struct param_holder3
+{
+    A1 a1; A2 a2; A3 a3;
+    ret_holder<R> ret;
+    typename ret_holder<R>::ret_t get() { return ret.get(); }
+};
+template<typename R, typename A1, typename A2, typename A3, typename A4>
+struct param_holder4
+{
+    A1 a1; A2 a2; A3 a3; A4 a4;
+    ret_holder<R> ret;
+    typename ret_holder<R>::ret_t get() { return ret.get(); }
+};
+template<typename R, typename A1, typename A2, typename A3, typename A4, typename A5>
+struct param_holder5
+{
+    A1 a1; A2 a2; A3 a3; A4 a4; A5 a5;
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
 };
@@ -238,6 +266,45 @@ R call(T *self, FunctionRNA *f, const A1& a1, const A2& a2)
     ptr.data = self;
 
     param_holder2<R, A1, A2> params = { a1, a2 };
+    ParameterList param_list;
+    param_list.data = &params;
+
+    f->call(g_context, nullptr, &ptr, &param_list);
+    return params.get();
+}
+template<typename T, typename R, typename A1, typename A2, typename A3>
+R call(T *self, FunctionRNA *f, const A1& a1, const A2& a2, const A3& a3)
+{
+    PointerRNA ptr;
+    ptr.data = self;
+
+    param_holder3<R, A1, A2, A3> params = { a1, a2, a3 };
+    ParameterList param_list;
+    param_list.data = &params;
+
+    f->call(g_context, nullptr, &ptr, &param_list);
+    return params.get();
+}
+template<typename T, typename R, typename A1, typename A2, typename A3, typename A4>
+R call(T *self, FunctionRNA *f, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
+{
+    PointerRNA ptr;
+    ptr.data = self;
+
+    param_holder4<R, A1, A2, A3, A4> params = { a1, a2, a3, a4 };
+    ParameterList param_list;
+    param_list.data = &params;
+
+    f->call(g_context, nullptr, &ptr, &param_list);
+    return params.get();
+}
+template<typename T, typename R, typename A1, typename A2, typename A3, typename A4, typename A5>
+R call(T *self, FunctionRNA *f, const A1& a1, const A2& a2, const A3& a3, const A4& a4, const A5& a5)
+{
+    PointerRNA ptr;
+    ptr.data = self;
+
+    param_holder5<R, A1, A2, A3, A4, A5> params = { a1, a2, a3, a4, a5 };
     ParameterList param_list;
     param_list.data = &params;
 
@@ -319,7 +386,12 @@ float4x4 BObject::matrix_world() const
 
 bool BObject::is_visible(Scene * scene) const
 {
-    return call<Object, int, Scene*>(m_ptr, BObject_is_visible, { scene }) != 0;
+    return call<Object, int, Scene*>(m_ptr, BObject_is_visible, scene) != 0;
+}
+
+Mesh* BObject::to_mesh(Scene *scene) const
+{
+    return call<Object, Mesh*, Scene*, int, int, int, int>(m_ptr, BObject_to_mesh, scene, 1, 1, 1, 0);
 }
 
 blist_range<ModifierData> BObject::modifiers()
@@ -478,6 +550,10 @@ blist_range<Object> BData::objects()
 {
     return list_range((Object*)m_ptr->object.first);
 }
+blist_range<Mesh> blender::BData::meshes()
+{
+    return list_range((Mesh*)m_ptr->mesh.first);
+}
 blist_range<Material> BData::materials()
 {
     return list_range((Material*)m_ptr->mat.first);
@@ -485,6 +561,11 @@ blist_range<Material> BData::materials()
 bool BData::objects_is_updated()
 {
     return get_bool(m_ptr, ((BoolPropertyRNA*)BlendDataObjects_is_updated)->get);
+}
+
+void BData::remove(Mesh * v)
+{
+    call<Main, void, Mesh*>(m_ptr, BlendDataMeshes_remove, v);
 }
 
 const void* CustomData_get(const CustomData& data, int type)

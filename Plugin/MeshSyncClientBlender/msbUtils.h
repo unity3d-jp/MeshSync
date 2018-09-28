@@ -25,7 +25,7 @@ template<class Body>
 static inline void each_child(Object *obj, const Body& body)
 {
     // Object doesn't have children data. need to enumerate all objects and check its parent...
-    auto bpy_data = bl::BData(bl::BContext::get().data());;
+    auto bpy_data = bl::BData(bl::BContext::get().data());
     for (auto obj : bpy_data.objects()) {
         if (obj->parent == obj)
             body(obj);
