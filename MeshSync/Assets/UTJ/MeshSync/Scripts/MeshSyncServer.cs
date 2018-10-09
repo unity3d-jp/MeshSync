@@ -320,6 +320,9 @@ namespace UTJ.MeshSync
                         case TransformData.Type.Mesh:
                             UpdateMesh((MeshData)obj._this);
                             break;
+                        case TransformData.Type.Points:
+                            UpdatePoints((PointsData)obj._this);
+                            break;
                     }
                 }
             }
@@ -860,6 +863,11 @@ namespace UTJ.MeshSync
             mesh.bounds = split.bounds;
             mesh.UploadMeshData(false);
             return mesh;
+        }
+
+        void UpdatePoints(PointsData data)
+        {
+            // todo
         }
 
         void MakeSureAssetDirectoryExists()

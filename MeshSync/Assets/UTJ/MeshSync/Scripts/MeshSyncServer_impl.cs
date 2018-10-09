@@ -1251,6 +1251,7 @@ namespace UTJ.MeshSync
                 Camera,
                 Light,
                 Mesh,
+                Points,
             };
 
             public static explicit operator TransformData(IntPtr v)
@@ -1703,6 +1704,53 @@ namespace UTJ.MeshSync
             {
                 msBlendShapeAddFrame(_this, w, v.Length, v, n, t);
             }
+        }
+
+        public struct PointsData
+        {
+            #region internal
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern PointsData msPointsCreate();
+            [DllImport("MeshSyncServer")] static extern int msPointsGetNumPoints(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadPoints(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsWritePoints(IntPtr _this, Vector3[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadRotations(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsWriteRotations(IntPtr _this, Quaternion[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadScales(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsWriteScales(IntPtr _this, Vector3[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadColors(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsWriteColors(IntPtr _this, Color[] v, int size);
+            #endregion
+
+            public static PointsData Create()
+            {
+                return msPointsCreate();
+            }
+
+            public static explicit operator PointsData(IntPtr v)
+            {
+                PointsData ret;
+                ret._this = v;
+                return ret;
+            }
+
+            public TransformData transform
+            {
+                get { return (TransformData)_this; }
+            }
+
+            public int numPoints { get { return msPointsGetNumPoints(_this); } }
+
+            public void ReadPoints(PinnedList<Vector3> dst) { msPointsReadPoints(_this, dst); }
+            public void ReadRotations(PinnedList<Quaternion> dst) { msPointsReadRotations(_this, dst); }
+            public void ReadScales(PinnedList<Vector3> dst) { msPointsReadScales(_this, dst); }
+            public void ReadColors(PinnedList<Color> dst) { msPointsReadColors(_this, dst); }
+
+            public void WritePoints(Vector3[] v) { msPointsWritePoints(_this, v, v.Length); }
+            public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(_this, v, v.Length); }
+            public void WriteScales(Vector3[] v) { msPointsWriteScales(_this, v, v.Length); }
+            public void WriteColors(Color[] v) { msPointsWriteColors(_this, v, v.Length); }
         }
 
 
