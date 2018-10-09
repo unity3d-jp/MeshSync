@@ -8,7 +8,8 @@
 
 namespace ms {
 
-
+// Entity
+#pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream & is)
 {
     std::shared_ptr<Entity> ret;
@@ -20,6 +21,7 @@ std::shared_ptr<Entity> Entity::create(std::istream & is)
     case Type::Camera: ret = Camera::create(); break;
     case Type::Light: ret = Light::create(); break;
     case Type::Mesh: ret = Mesh::create(); break;
+    case Type::Points: ret = Points::create(); break;
     default: break;
     }
     if (ret) {
@@ -76,10 +78,11 @@ const char* Entity::getName() const
     else { name_pos = 0; }
     return path.c_str() + name_pos;
 }
+#pragma endregion
 
 
-
-
+// Transform
+#pragma region Transform
 std::shared_ptr<Transform> Transform::create(std::istream & is)
 {
     return std::static_pointer_cast<Transform>(super::create(is));
@@ -164,9 +167,11 @@ void Transform::applyScaleFactor(float v)
 {
     position *= v;
 }
+#pragma endregion
 
 
-
+// Camera
+#pragma region Camera
 Camera::Camera() {}
 Camera::~Camera() {}
 
@@ -218,9 +223,11 @@ void Camera::applyScaleFactor(float v)
     near_plane *= v;
     far_plane *= v;
 }
+#pragma endregion
 
 
-
+// Light
+#pragma region Light
 Light::Light() {}
 Light::~Light() {}
 
@@ -266,7 +273,11 @@ void Light::applyScaleFactor(float v)
     super::applyScaleFactor(v);
     range *= v;
 }
+#pragma endregion
 
+
+// Mesh
+#pragma region Mesh
 
 std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
 {
@@ -1032,9 +1043,77 @@ BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
     blendshapes.push_back(ret);
     return ret;
 }
+#pragma endregion
 
 
+// Points
+#pragma region Points
 
+Points::Points() {}
+Points::~Points() {}
+
+Entity::Type Points::getType() const
+{
+    return Type::Points;
+}
+
+#define EachMember(F)\
+    F(points) F(rotations) F(scales) F(colors)
+
+uint32_t Points::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    EachMember(msSize);
+    return ret;
+}
+
+void Points::serialize(std::ostream & os) const
+{
+    EachMember(msWrite);
+}
+
+void Points::deserialize(std::istream & is)
+{
+    EachMember(msRead);
+}
+
+void Points::clear()
+{
+    EachMember(msClear);
+}
+
+uint64_t Points::hash() const
+{
+    uint64_t ret = 0;
+    EachMember(msHash);
+    return ret;
+}
+
+void Points::convertHandedness(bool x, bool yz)
+{
+    if (x) {
+        mu::InvertX(points.data(), points.size());
+        for (auto& v : rotations) v = swap_handedness(v);
+        mu::InvertX(scales.data(), scales.size());
+    }
+    if (yz) {
+        for (auto& v : points) v = swap_yz(v);
+        for (auto& v : rotations) v = swap_yz(v);
+        for (auto& v : scales) v = swap_yz(v);
+    }
+}
+
+void Points::applyScaleFactor(float v)
+{
+    mu::Scale(points.data(), v, points.size());
+}
+
+#undef EachMember
+#pragma endregion
+
+
+// Scene
+#pragma region Scene
 uint32_t SceneSettings::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -1105,5 +1184,6 @@ uint64_t Scene::hash() const
 }
 
 #undef EachMember
+#pragma endregion
 
 } // namespace ms

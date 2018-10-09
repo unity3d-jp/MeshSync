@@ -82,6 +82,8 @@ std::shared_ptr<T> make_shared_ptr(T *p)
 #define msSize(V) ret += ssize(V);
 #define msWrite(V) write(os, V);
 #define msRead(V) read(is, V);
+#define msClear(V) V.clear();
+#define msHash(V) ret += vhash(V);
 
 #define msDefinePool(T)\
     friend class Pool<T>;\

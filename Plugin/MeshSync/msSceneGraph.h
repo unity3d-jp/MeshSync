@@ -24,6 +24,7 @@ public:
         Camera,
         Light,
         Mesh,
+        Points,
     };
 
     int id = 0;
@@ -376,6 +377,36 @@ public:
 };
 msHasSerializer(Mesh);
 using MeshPtr = std::shared_ptr<Mesh>;
+
+
+// Points
+class Points : public Transform
+{
+using super = Transform;
+public:
+    // Transform::reference is used for reference for Mesh
+    RawVector<float3> points;
+    RawVector<quatf>  rotations;
+    RawVector<float3> scales;
+    RawVector<float4> colors;
+
+protected:
+    Points();
+    ~Points() override;
+public:
+    msDefinePool(Points);
+    Type getType() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
+    uint64_t hash() const override;
+
+    void convertHandedness(bool x, bool yz) override;
+    void applyScaleFactor(float scale) override;
+};
+msHasSerializer(Points);
+using PointsPtr = std::shared_ptr<Points>;
 
 
 class Constraint;
