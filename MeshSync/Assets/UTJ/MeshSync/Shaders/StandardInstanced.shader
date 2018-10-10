@@ -40,7 +40,7 @@
         {
             float4 color = _Color;
 #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-            color *= GetPointColor(unity_InstanceID);
+            color *= GetColor(unity_InstanceID);
 #endif
 
             fixed4 c = tex2D(_MainTex, IN.uv_MainTex) * color;

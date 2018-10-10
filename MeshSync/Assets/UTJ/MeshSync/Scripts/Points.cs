@@ -16,6 +16,17 @@ namespace UTJ.MeshSync
         public Color[] colors;
         public int[] ids;
         public Bounds bounds;
+
+        public void Clear()
+        {
+            time = 0.0f;
+            points = null;
+            rotations = null;
+            scales = null;
+            colors = null;
+            ids = null;
+            bounds = default(Bounds);
+        }
     }
 
     [ExecuteInEditMode]

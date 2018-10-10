@@ -1066,23 +1066,26 @@ Entity::Type Points::getType() const
 
 uint32_t Points::getSerializeSize() const
 {
-    uint32_t ret = 0;
+    uint32_t ret = super::getSerializeSize();
     EachMember(msSize);
     return ret;
 }
 
 void Points::serialize(std::ostream & os) const
 {
+    super::serialize(os);
     EachMember(msWrite);
 }
 
 void Points::deserialize(std::istream & is)
 {
+    super::deserialize(is);
     EachMember(msRead);
 }
 
 void Points::clear()
 {
+    super::clear();
     flags = { 0 };
     EachArray(msClear);
 }

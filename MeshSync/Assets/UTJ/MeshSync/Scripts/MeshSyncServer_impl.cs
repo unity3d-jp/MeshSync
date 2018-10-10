@@ -1745,15 +1745,15 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsGetFlags(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msPointsSetFlags(IntPtr _this, PointsDataFlags v);
             [DllImport("MeshSyncServer")] static extern int msPointsGetNumPoints(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadPoints(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadPoints(IntPtr _this, Vector3[] dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWritePoints(IntPtr _this, Vector3[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadRotations(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadRotations(IntPtr _this, Quaternion[] dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWriteRotations(IntPtr _this, Quaternion[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadScales(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadScales(IntPtr _this, Vector3[] dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWriteScales(IntPtr _this, Vector3[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadColors(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadColors(IntPtr _this, Color[] dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWriteColors(IntPtr _this, Color[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadIDs(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadIDs(IntPtr _this, int[] dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWriteIDs(IntPtr _this, int[] v, int size);
             #endregion
 
@@ -1781,11 +1781,11 @@ namespace UTJ.MeshSync
             }
             public int numPoints { get { return msPointsGetNumPoints(_this); } }
 
-            public void ReadPoints(PinnedList<Vector3> dst) { msPointsReadPoints(_this, dst); }
-            public void ReadRotations(PinnedList<Quaternion> dst) { msPointsReadRotations(_this, dst); }
-            public void ReadScales(PinnedList<Vector3> dst) { msPointsReadScales(_this, dst); }
-            public void ReadColors(PinnedList<Color> dst) { msPointsReadColors(_this, dst); }
-            public void ReadIDs(PinnedList<int> dst) { msPointsReadIDs(_this, dst); }
+            public void ReadPoints(Vector3[] dst) { msPointsReadPoints(_this, dst); }
+            public void ReadRotations(Quaternion[] dst) { msPointsReadRotations(_this, dst); }
+            public void ReadScales(Vector3[] dst) { msPointsReadScales(_this, dst); }
+            public void ReadColors(Color[] dst) { msPointsReadColors(_this, dst); }
+            public void ReadIDs(int[] dst) { msPointsReadIDs(_this, dst); }
 
             public void WritePoints(Vector3[] v) { msPointsWritePoints(_this, v, v.Length); }
             public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(_this, v, v.Length); }

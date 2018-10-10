@@ -27,6 +27,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncCameras = true;
         [SerializeField] bool m_syncLights = true;
         [SerializeField] bool m_syncMeshes = true;
+        [SerializeField] bool m_syncPoints = true;
         [SerializeField] bool m_updateMeshColliders = true;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
@@ -867,7 +868,47 @@ namespace UTJ.MeshSync
 
         void UpdatePoints(PointsData data)
         {
-            // todo
+            var trans = UpdateTransform(data.transform);
+            if (trans == null || !m_syncPoints)
+                return;
+
+            // note: reference will be resolved in UpdateReference()
+
+            var data_trans = data.transform;
+            var data_id = data_trans.id;
+            var path = data_trans.path;
+            var go = trans.gameObject;
+
+            var pr = go.GetComponent<PointsRenderer>();
+            if (pr == null)
+                pr = go.AddComponent<PointsRenderer>();
+            var pts = go.GetComponent<Points>();
+            var dst = pts.current;
+
+            var flags = data.flags;
+            var num = data.numPoints;
+            dst.Clear();
+
+            if (flags.hasPoints)
+            {
+                dst.points = new Vector3[num];
+                data.ReadPoints(dst.points);
+            }
+            if (flags.hasRotations)
+            {
+                dst.rotations = new Quaternion[num];
+                data.ReadRotations(dst.rotations);
+            }
+            if (flags.hasScales)
+            {
+                dst.scales = new Vector3[num];
+                data.ReadScales(dst.scales);
+            }
+            if (flags.hasColors)
+            {
+                dst.colors = new Color[num];
+                data.ReadColors(dst.colors);
+            }
         }
 
         void MakeSureAssetDirectoryExists()
@@ -1033,30 +1074,43 @@ namespace UTJ.MeshSync
             var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
             if (srcsmr != null)
             {
-                var dstsmr = dstgo.GetComponent<SkinnedMeshRenderer>();
-                if (dstsmr == null)
-                    dstsmr = dstgo.AddComponent<SkinnedMeshRenderer>();
-
-                var mesh = srcsmr.sharedMesh;
-                dstsmr.sharedMesh = mesh;
-                dstsmr.sharedMaterials = srcsmr.sharedMaterials;
-                dstsmr.bones = srcsmr.bones;
-                dstsmr.rootBone = srcsmr.rootBone;
-                dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
-                if (mesh != null)
+                var dstpr = dstgo.GetComponent<PointsRenderer>();
+                if (dstpr != null)
                 {
-                    int blendShapeCount = mesh.blendShapeCount;
-                    for (int bi = 0; bi < blendShapeCount; ++bi)
-                        dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+                    dstpr.sharedMesh = srcsmr.sharedMesh;
+
+                    var materials = new Material[srcsmr.sharedMaterials.Length];
+                    for (int i = 0; i < materials.Length; ++i)
+                        materials[i] = new Material(Shader.Find("MeshSync/Points Standard"));
+                    dstpr.sharedMaterials = materials;
                 }
+                else
+                {
+                    var dstsmr = dstgo.GetComponent<SkinnedMeshRenderer>();
+                    if (dstsmr == null)
+                        dstsmr = dstgo.AddComponent<SkinnedMeshRenderer>();
+
+                    var mesh = srcsmr.sharedMesh;
+                    dstsmr.sharedMesh = mesh;
+                    dstsmr.sharedMaterials = srcsmr.sharedMaterials;
+                    dstsmr.bones = srcsmr.bones;
+                    dstsmr.rootBone = srcsmr.rootBone;
+                    dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
+                    if (mesh != null)
+                    {
+                        int blendShapeCount = mesh.blendShapeCount;
+                        for (int bi = 0; bi < blendShapeCount; ++bi)
+                            dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+                    }
 
 #if UNITY_EDITOR
-                if (!EditorApplication.isPlaying)
-                {
-                    dstgo.SetActive(false); // 
-                    dstgo.SetActive(true);  // force recalculate skinned mesh on editor
-                }
+                    if (!EditorApplication.isPlaying)
+                    {
+                        dstgo.SetActive(false); // 
+                        dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+                    }
 #endif
+                }
             }
         }
 

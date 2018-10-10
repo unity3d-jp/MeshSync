@@ -14,7 +14,7 @@ namespace UTJ.MeshSync
         [SerializeField] ShadowCastingMode m_castShadows = ShadowCastingMode.On;
         [SerializeField] bool m_applyTransform = true;
         [SerializeField] bool m_receiveShadows = true;
-        [SerializeField] float m_pointSize = 0.2f;
+        [SerializeField] float m_pointSize = 1.0f;
 
         Mesh m_prevMesh;
         ComputeBuffer m_cbPoints;
@@ -39,6 +39,10 @@ namespace UTJ.MeshSync
             set { m_materials = value; }
         }
 
+        bool IsValidArray<T>(T[] a)
+        {
+            return a != null && a.Length > 0;
+        }
 
         public void Flush(PointsData data)
         {
@@ -69,44 +73,77 @@ namespace UTJ.MeshSync
                 }
             }
 
+            if (m_mpb == null)
+                m_mpb = new MaterialPropertyBlock();
 
             // update buffers
+            // points
             if (m_cbPoints != null && m_cbPoints.count < numInstances)
             {
                 m_cbPoints.Release();
                 m_cbPoints = null;
             }
-            if (m_cbPoints == null)
-                m_cbPoints = new ComputeBuffer(numInstances, 12);
+            if(IsValidArray(data.points))
+            {
+                if (m_cbPoints == null)
+                    m_cbPoints = new ComputeBuffer(numInstances, 12);
+                m_cbPoints.SetData(data.points);
+                m_mpb.SetBuffer("_Points", m_cbPoints);
+                m_mpb.SetInt("_HasPoints", 1);
+            }
+            else
+                m_mpb.SetInt("_HasPoints", 0);
 
+            // rotations
             if (m_cbRotations != null && m_cbRotations.count < numInstances)
             {
                 m_cbRotations.Release();
                 m_cbRotations = null;
             }
-            if (m_cbRotations == null)
-                m_cbRotations = new ComputeBuffer(numInstances, 16);
+            if (IsValidArray(data.rotations))
+            {
+                if (m_cbRotations == null)
+                    m_cbRotations = new ComputeBuffer(numInstances, 16);
+                m_cbRotations.SetData(data.rotations);
+                m_mpb.SetBuffer("_Rotations", m_cbRotations);
+                m_mpb.SetInt("_HasRotations", 1);
+            }
+            else
+                m_mpb.SetInt("_HasRotations", 0);
 
+            // scales
             if (m_cbScales != null && m_cbScales.count < numInstances)
             {
                 m_cbScales.Release();
                 m_cbScales = null;
             }
-            if (m_cbScales == null)
-                m_cbScales = new ComputeBuffer(numInstances, 12);
+            if (IsValidArray(data.scales))
+            {
+                if (m_cbScales == null)
+                    m_cbScales = new ComputeBuffer(numInstances, 12);
+                m_cbScales.SetData(data.scales);
+                m_mpb.SetBuffer("_Scales", m_cbScales);
+                m_mpb.SetInt("_HasScales", 1);
+            }
+            else
+                m_mpb.SetInt("_HasScales", 0);
 
+            // colors
             if (m_cbColors != null && m_cbColors.count < numInstances)
             {
                 m_cbColors.Release();
                 m_cbColors = null;
             }
-            if (m_cbColors == null)
-                m_cbColors = new ComputeBuffer(numInstances, 16);
-
-            m_cbPoints.SetData(data.points);
-            m_cbRotations.SetData(data.rotations);
-            m_cbScales.SetData(data.scales);
-            m_cbColors.SetData(data.colors);
+            if (IsValidArray(data.scales))
+            {
+                if (m_cbColors == null)
+                    m_cbColors = new ComputeBuffer(numInstances, 16);
+                m_cbColors.SetData(data.colors);
+                m_mpb.SetBuffer("_Colors", m_cbColors);
+                m_mpb.SetInt("_HasColors", 1);
+            }
+            else
+                m_mpb.SetInt("_HasColors", 0);
 
 
             var trans = GetComponent<Transform>();
@@ -114,9 +151,6 @@ namespace UTJ.MeshSync
             var rot = trans.rotation;
             var scl = trans.lossyScale;
 
-            // update materials
-            if (m_mpb == null)
-                m_mpb = new MaterialPropertyBlock();
             if (m_applyTransform)
             {
                 m_mpb.SetVector("_Position", pos);
@@ -130,10 +164,6 @@ namespace UTJ.MeshSync
                 m_mpb.SetVector("_Scale", Vector3.one);
             }
             m_mpb.SetFloat("_PointSize", m_pointSize);
-            m_mpb.SetBuffer("_Points", m_cbPoints);
-            m_mpb.SetBuffer("_Rotations", m_cbRotations);
-            m_mpb.SetBuffer("_Scales", m_cbScales);
-            m_mpb.SetBuffer("_Colors", m_cbColors);
 
             // update argument buffer
             if (m_cbArgs == null || m_cbArgs.Length != submeshCount)

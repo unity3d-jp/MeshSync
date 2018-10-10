@@ -12,6 +12,10 @@ float3 _Scale;
 float _PointSize;
 
 #if STRUCTURED_BUFFER_SUPPORT
+int _HasPoints;
+int _HasRotations;
+int _HasScales;
+int _HasColors;
 StructuredBuffer<float3> _Points;
 StructuredBuffer<float4> _Rotations;
 StructuredBuffer<float3> _Scales;
@@ -77,23 +81,60 @@ float3 Rotate(float4 q, float3 p)
     return p + (a * q.w + b) * 2.0;
 }
 
-float4x4 GetPointMatrix(int iid)
+float4 RotateQ(float4 l, float4 r)
+{
+    return float4(
+        l.w*r.x + l.x*r.w + l.y*r.z - l.z*r.y,
+        l.w*r.y + l.y*r.w + l.z*r.x - l.x*r.z,
+        l.w*r.z + l.z*r.w + l.x*r.y - l.y*r.x,
+        l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z );
+}
+
+
+float3 GetPoint(int iid)
 {
 #if STRUCTURED_BUFFER_SUPPORT
-    float3 ppos = Rotate(_Rotation, _Points[iid] * _Scale) + _Position;
-    float4 prot = _Rotation;
-    float3 pscale = _Scale * _PointSize;
-    return mul(mul(Translate44(ppos), Rotate44(prot)), Scale44(pscale));
+    return _HasPoints ? _Points[iid] : float3(0, 0, 0);
 #else
-    return unity_ObjectToWorld;
+    return float3(0, 0, 0);
 #endif
 }
 
-float4 GetPointColor(int iid)
+float4 GetRotation(int iid)
 {
 #if STRUCTURED_BUFFER_SUPPORT
-    return _Colors[iid];
+    return _HasRotations? _Rotations[iid] : float4(0, 0, 0, 1);
 #else
-    return float4(1,1,1,1);
+    return float4(0, 0, 0, 1);
+#endif
+}
+
+float3 GetScale(int iid)
+{
+#if STRUCTURED_BUFFER_SUPPORT
+    return _HasScales ? _Scales[iid] : float3(1, 1, 1);
+#else
+    return float3(1, 1, 1);
+#endif
+}
+
+float4 GetColor(int iid)
+{
+#if STRUCTURED_BUFFER_SUPPORT
+    return _HasColors ? _Colors[iid] : float4(1, 1, 1, 1);
+#else
+    return float4(1, 1, 1, 1);
+#endif
+}
+
+float4x4 GetPointMatrix(int iid)
+{
+#if STRUCTURED_BUFFER_SUPPORT
+    float3 ppos = Rotate(_Rotation, GetPoint(iid) * _Scale) + _Position;
+    float4 prot = RotateQ(_Rotation, GetRotation(iid));
+    float3 pscale = _Scale * _PointSize * GetScale(iid);
+    return mul(mul(Translate44(ppos), Rotate44(prot)), Scale44(pscale));
+#else
+    return unity_ObjectToWorld;
 #endif
 }
