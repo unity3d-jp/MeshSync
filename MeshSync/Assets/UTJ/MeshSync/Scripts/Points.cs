@@ -13,8 +13,6 @@ namespace UTJ.MeshSync
         public Vector3[] points;
         public Quaternion[] rotations;
         public Vector3[] scales;
-        public Color[] colors;
-        public int[] ids;
         public Bounds bounds;
 
         public void Clear()
@@ -23,8 +21,6 @@ namespace UTJ.MeshSync
             points = null;
             rotations = null;
             scales = null;
-            colors = null;
-            ids = null;
             bounds = default(Bounds);
         }
     }
@@ -40,6 +36,7 @@ namespace UTJ.MeshSync
             get { return m_time; }
             set { m_time = value; }
         }
+
         public List<PointsData> records
         {
             get { return m_records; }

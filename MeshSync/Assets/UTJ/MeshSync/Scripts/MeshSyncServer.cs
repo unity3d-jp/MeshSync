@@ -904,11 +904,6 @@ namespace UTJ.MeshSync
                 dst.scales = new Vector3[num];
                 data.ReadScales(dst.scales);
             }
-            if (flags.hasColors)
-            {
-                dst.colors = new Color[num];
-                data.ReadColors(dst.colors);
-            }
         }
 
         void MakeSureAssetDirectoryExists()
@@ -1079,9 +1074,9 @@ namespace UTJ.MeshSync
                 {
                     dstpr.sharedMesh = srcsmr.sharedMesh;
 
-                    var materials = new Material[srcsmr.sharedMaterials.Length];
+                    var materials = srcsmr.sharedMaterials;
                     for (int i = 0; i < materials.Length; ++i)
-                        materials[i] = new Material(Shader.Find("MeshSync/Points Standard"));
+                        materials[i].enableInstancing = true;
                     dstpr.sharedMaterials = materials;
                 }
                 else
@@ -1426,7 +1421,8 @@ namespace UTJ.MeshSync
 
         public static Material CreateDefaultMaterial()
         {
-            return new Material(Shader.Find("Standard"));
+            var ret = new Material(Shader.Find("Standard"));
+            return ret;
         }
 
         SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
