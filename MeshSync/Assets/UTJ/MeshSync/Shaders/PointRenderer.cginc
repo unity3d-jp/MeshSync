@@ -6,9 +6,9 @@
     #define STRUCTURED_BUFFER_SUPPORT 0
 #endif
 
-float3 _Position, _PositionOld;
-float4 _Rotation, _RotationOld;
-float3 _Scale, _ScaleOld;
+float3 _Position;
+float4 _Rotation;
+float3 _Scale;
 float _PointSize;
 
 #if STRUCTURED_BUFFER_SUPPORT

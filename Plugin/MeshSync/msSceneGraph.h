@@ -318,7 +318,7 @@ class Mesh : public Transform
 {
 using super = Transform;
 public:
-    MeshDataFlags     flags = { 0 };
+    MeshDataFlags      flags = { 0 };
     MeshRefineSettings refine_settings;
 
     RawVector<float3> points;
@@ -380,15 +380,26 @@ using MeshPtr = std::shared_ptr<Mesh>;
 
 
 // Points
+struct PointsDataFlags
+{
+    uint32_t has_points : 1;
+    uint32_t has_rotations : 1;
+    uint32_t has_scales : 1;
+    uint32_t has_colors : 1;
+    uint32_t has_ids : 1;
+};
+
 class Points : public Transform
 {
 using super = Transform;
 public:
     // Transform::reference is used for reference for Mesh
+    PointsDataFlags   flags = { 0 };
     RawVector<float3> points;
     RawVector<quatf>  rotations;
     RawVector<float3> scales;
     RawVector<float4> colors;
+    RawVector<int>    ids;
 
 protected:
     Points();
@@ -404,6 +415,8 @@ public:
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
+
+    void setupFlags();
 };
 msHasSerializer(Points);
 using PointsPtr = std::shared_ptr<Points>;

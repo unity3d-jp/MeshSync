@@ -294,6 +294,36 @@ namespace UTJ.MeshSync
             }
         };
 
+        public struct PointsDataFlags
+        {
+            public int flags;
+            public bool hasPoints
+            {
+                get { return (flags & (1 << 0)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 0)); }
+            }
+            public bool hasRotations
+            {
+                get { return (flags & (1 << 1)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 1)); }
+            }
+            public bool hasScales
+            {
+                get { return (flags & (1 << 2)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 2)); }
+            }
+            public bool hasColors
+            {
+                get { return (flags & (1 << 3)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 3)); }
+            }
+            public bool hasIDs
+            {
+                get { return (flags & (1 << 4)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 4)); }
+            }
+        };
+
         public struct MaterialDataFlags
         {
             public int flags;
@@ -1712,6 +1742,8 @@ namespace UTJ.MeshSync
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern PointsData msPointsCreate();
+            [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsGetFlags(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msPointsSetFlags(IntPtr _this, PointsDataFlags v);
             [DllImport("MeshSyncServer")] static extern int msPointsGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msPointsReadPoints(IntPtr _this, IntPtr dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWritePoints(IntPtr _this, Vector3[] v, int size);
@@ -1721,6 +1753,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msPointsWriteScales(IntPtr _this, Vector3[] v, int size);
             [DllImport("MeshSyncServer")] static extern void msPointsReadColors(IntPtr _this, IntPtr dst);
             [DllImport("MeshSyncServer")] static extern void msPointsWriteColors(IntPtr _this, Color[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsReadIDs(IntPtr _this, IntPtr dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsWriteIDs(IntPtr _this, int[] v, int size);
             #endregion
 
             public static PointsData Create()
@@ -1740,17 +1774,24 @@ namespace UTJ.MeshSync
                 get { return (TransformData)_this; }
             }
 
+            public PointsDataFlags flags
+            {
+                get { return msPointsGetFlags(_this); }
+                set { msPointsSetFlags(_this, value); }
+            }
             public int numPoints { get { return msPointsGetNumPoints(_this); } }
 
             public void ReadPoints(PinnedList<Vector3> dst) { msPointsReadPoints(_this, dst); }
             public void ReadRotations(PinnedList<Quaternion> dst) { msPointsReadRotations(_this, dst); }
             public void ReadScales(PinnedList<Vector3> dst) { msPointsReadScales(_this, dst); }
             public void ReadColors(PinnedList<Color> dst) { msPointsReadColors(_this, dst); }
+            public void ReadIDs(PinnedList<int> dst) { msPointsReadIDs(_this, dst); }
 
             public void WritePoints(Vector3[] v) { msPointsWritePoints(_this, v, v.Length); }
             public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(_this, v, v.Length); }
             public void WriteScales(Vector3[] v) { msPointsWriteScales(_this, v, v.Length); }
             public void WriteColors(Color[] v) { msPointsWriteColors(_this, v, v.Length); }
+            public void WriteIDs(int[] v) { msPointsWriteIDs(_this, v, v.Length); }
         }
 
 

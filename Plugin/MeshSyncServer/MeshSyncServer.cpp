@@ -8,6 +8,7 @@ using namespace mu;
 using ServerPtr = std::shared_ptr<ms::Server>;
 static std::map<uint16_t, ServerPtr> g_servers;
 
+#pragma region Server
 msAPI const char* msServerGetVersion()
 {
     return msReleaseDateStr;
@@ -120,8 +121,10 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 {
     return &_this->scene;
 }
+#pragma endregion
 
 
+#pragma region Material
 msAPI ms::Material* msMaterialCreate() { return ms::Material::create_raw(); }
 msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
 msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
@@ -145,7 +148,10 @@ msAPI int           msMaterialGetEmissionMap(ms::Material *_this) { return _this
 msAPI void          msMaterialSetEmissionMap(ms::Material *_this, int v) { _this->setEmissionMap(v); }
 msAPI int           msMaterialGetNormalMap(ms::Material *_this) { return _this->getNormalMap(); }
 msAPI void          msMaterialSetNormalMap(ms::Material *_this, int v) { _this->setNormalMap(v); }
+#pragma endregion
 
+
+#pragma region Texture
 msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
 msAPI int               msTextureGetID(ms::Texture *_this) { return _this->id; }
 msAPI void              msTextureSetID(ms::Texture *_this, int v) { _this->id = v; }
@@ -164,8 +170,10 @@ msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _t
 msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
 msAPI int               msTextureGetSizeInByte(ms::Texture *_this) { return (int)_this->data.size(); }
 msAPI bool              msTextureWriteToFile(ms::Texture *_this, const char *path) { return _this->writeToFile(path); }
+#pragma endregion
 
 
+#pragma region Animations
 msAPI const char*       msAnimationClipGetName(ms::AnimationClip *_this) { return _this->name.c_str(); }
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *_this) { return (int)_this->animations.size(); }
 msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *_this, int i) { return _this->animations[i].get(); }
@@ -238,8 +246,10 @@ msAPI const char*   msMeshAGetBlendshapeName(ms::MeshAnimation *_this, int bi) {
 msAPI int           msMeshAGetNumBlendshapeSamples(ms::MeshAnimation *_this, int bi) { return (int)_this->blendshapes[bi]->weight.size(); }
 msAPI float         msMeshAGetNumBlendshapeTime(ms::MeshAnimation *_this, int bi, int i) { return _this->blendshapes[bi]->weight[i].time; }
 msAPI float         msMeshAGetNumBlendshapeWeight(ms::MeshAnimation *_this, int bi, int i) { return _this->blendshapes[bi]->weight[i].value; }
+#pragma endregion
 
 
+#pragma region Messages
 msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {
     return _this->flags;
@@ -289,9 +299,10 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *_this, const char *text)
     }
     res->text.push_back(text);
 }
+#pragma endregion
 
 
-
+#pragma region Transform
 msAPI ms::Transform* msTransformCreate()
 {
     return ms::Transform::create_raw();
@@ -372,7 +383,10 @@ msAPI void msTransformSetReference(ms::Transform *_this, const char *v)
 {
     _this->reference = v;
 }
+#pragma endregion
 
+
+#pragma region Camera
 msAPI ms::Camera* msCameraCreate()
 {
     return ms::Camera::create_raw();
@@ -441,7 +455,10 @@ msAPI void msCameraSetFocusDistance(ms::Camera *_this, float v)
 {
     _this->focus_distance = v;
 }
+#pragma endregion
 
+
+#pragma region Light
 msAPI ms::Light* msLightCreate()
 {
     return ms::Light::create_raw();
@@ -486,8 +503,10 @@ msAPI void msLightSetSpotAngle(ms::Light *_this, float v)
 {
     _this->spot_angle = v;
 }
+#pragma endregion
 
 
+#pragma region Mesh
 msAPI ms::Mesh* msMeshCreate()
 {
     return ms::Mesh::create_raw();
@@ -826,7 +845,68 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num
     if (n) frame.normals.assign(n, n + num);
     if (t) frame.tangents.assign(t, t + num);
 }
+#pragma endregion
 
+#pragma region Points
+msAPI ms::Points* msPointsCreate()
+{
+    return ms::Points::create_raw();
+}
+msAPI ms::PointsDataFlags msPointsGetFlags(ms::Points *_this)
+{
+    return _this->flags;
+}
+msAPI void msPointsSetFlags(ms::Points *_this, ms::PointsDataFlags v)
+{
+    _this->flags = v;
+}
+msAPI int msPointsGetNumPoints(ms::Points *_this, float3 *dst)
+{
+    return (int)_this->points.size();
+}
+msAPI void msPointsReadPoints(ms::Points *_this, float3 *dst)
+{
+    _this->points.copy_to(dst);
+}
+msAPI void msPointsWritePoints(ms::Points *_this, const float3 *v, int size)
+{
+    _this->points.assign(v, v + size);
+}
+msAPI void msPointsReadRotations(ms::Points *_this, quatf *dst)
+{
+    _this->rotations.copy_to(dst);
+}
+msAPI void msPointsWriteRotations(ms::Points *_this, const quatf *v, int size)
+{
+    _this->rotations.assign(v, v + size);
+}
+msAPI void msPointsReadScales(ms::Points *_this, float3 *dst)
+{
+    _this->scales.copy_to(dst);
+}
+msAPI void msPointsWriteScales(ms::Points *_this, const float3 *v, int size)
+{
+    _this->scales.assign(v, v + size);
+}
+msAPI void msPointsReadColors(ms::Points *_this, float4 *dst)
+{
+    _this->colors.copy_to(dst);
+}
+msAPI void msPointsWriteColors(ms::Points *_this, const float4 *v, int size)
+{
+    _this->colors.assign(v, v + size);
+}
+msAPI void msPointsReadIDs(ms::Points *_this, int *dst)
+{
+    _this->ids.copy_to(dst);
+}
+msAPI void msPointsWriteIDs(ms::Points *_this, const int *v, int size)
+{
+    _this->ids.assign(v, v + size);
+}
+#pragma endregion
+
+#pragma region Constraints
 msAPI ms::Constraint::Type msConstraintGetType(ms::Constraint *_this)
 {
     return _this->getType();
@@ -852,7 +932,9 @@ msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this, int
 {
     return _this->source_data[i].rotation_offset;
 }
+#pragma endregion
 
+#pragma region Scene
 msAPI const char*           msSceneGetName(ms::Scene *_this)                        { return _this->settings.name.c_str(); }
 msAPI int                   msSceneGetNumObjects(ms::Scene *_this)                  { return (int)_this->objects.size(); }
 msAPI ms::Transform*        msSceneGetObjectData(ms::Scene *_this, int i)           { return _this->objects[i].get(); }
@@ -864,3 +946,4 @@ msAPI int                   msSceneGetNumMaterials(ms::Scene *_this)            
 msAPI ms::Material*         msSceneGetMaterialData(ms::Scene *_this, int i)         { return _this->materials[i].get(); }
 msAPI int                   msSceneGetNumTextures(ms::Scene *_this)                 { return (int)_this->textures.size(); }
 msAPI ms::Texture*          msSceneGetTextureData(ms::Scene *_this, int i)          { return _this->textures[i].get(); }
+#pragma endregion

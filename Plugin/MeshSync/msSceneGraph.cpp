@@ -1057,8 +1057,12 @@ Entity::Type Points::getType() const
     return Type::Points;
 }
 
+#define EachArray(F)\
+    F(points) F(rotations) F(scales) F(colors) F(ids)
+
+
 #define EachMember(F)\
-    F(points) F(rotations) F(scales) F(colors)
+    F(flags) EachArray(F)
 
 uint32_t Points::getSerializeSize() const
 {
@@ -1079,15 +1083,19 @@ void Points::deserialize(std::istream & is)
 
 void Points::clear()
 {
-    EachMember(msClear);
+    flags = { 0 };
+    EachArray(msClear);
 }
 
 uint64_t Points::hash() const
 {
     uint64_t ret = 0;
-    EachMember(msHash);
+    EachArray(msHash);
     return ret;
 }
+
+#undef EachArrays
+#undef EachMember
 
 void Points::convertHandedness(bool x, bool yz)
 {
@@ -1108,7 +1116,14 @@ void Points::applyScaleFactor(float v)
     mu::Scale(points.data(), v, points.size());
 }
 
-#undef EachMember
+void Points::setupFlags()
+{
+    flags.has_points = !points.empty();
+    flags.has_rotations = !rotations.empty();
+    flags.has_scales = !scales.empty();
+    flags.has_colors = !colors.empty();
+    flags.has_ids = !ids.empty();
+}
 #pragma endregion
 
 
