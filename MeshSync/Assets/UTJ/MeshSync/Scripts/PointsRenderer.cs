@@ -9,30 +9,58 @@ namespace UTJ.MeshSync
     [RequireComponent(typeof(Points))]
     public class PointsRenderer : MonoBehaviour
     {
+        #region fields
         [SerializeField] Mesh m_mesh;
         [SerializeField] Material[] m_materials;
-        [SerializeField] ShadowCastingMode m_castShadows = ShadowCastingMode.On;
-        [SerializeField] bool m_applyTransform = true;
-        [SerializeField] bool m_receiveShadows = true;
         [SerializeField] float m_pointSize = 1.0f;
+        [SerializeField] bool m_applyTransform = true;
+        [SerializeField] ShadowCastingMode m_castShadows = ShadowCastingMode.On;
+        [SerializeField] bool m_receiveShadows = true;
         [SerializeField] int m_batchSize = 1024;
         MaterialPropertyBlock m_mpb;
         Matrix4x4[] m_matrices;
+        #endregion
 
-
-
+        #region properties
         public Mesh sharedMesh
         {
             get { return m_mesh; }
             set { m_mesh = value; }
         }
-
         public Material[] sharedMaterials
         {
             get { return m_materials; }
             set { m_materials = value; }
         }
+        public float pointSize
+        {
+            get { return m_pointSize; }
+            set { m_pointSize = value; }
+        }
+        public bool applyTransform
+        {
+            get { return m_applyTransform; }
+            set { m_applyTransform = value; }
+        }
+        public ShadowCastingMode castShadows
+        {
+            get { return m_castShadows; }
+            set { m_castShadows = value; }
+        }
+        public bool receiveShadows
+        {
+            get { return m_receiveShadows; }
+            set { m_receiveShadows = value; }
+        }
+        public int batchSize
+        {
+            get { return m_batchSize; }
+            set { m_batchSize = value; OnValidate(); }
+        }
+        #endregion
 
+
+        #region impl
         bool IsValidArray<T>(T[] a)
         {
             return a != null && a.Length > 0;
@@ -93,17 +121,16 @@ namespace UTJ.MeshSync
             }
         }
 
-#if UNITY_EDITOR
         void OnValidate()
         {
             m_batchSize = Mathf.Clamp(m_batchSize, 1, 1024);
         }
-#endif
 
         void LateUpdate()
         {
             var points = GetComponent<Points>();
             Flush(points.current);
         }
+        #endregion
     }
 }
