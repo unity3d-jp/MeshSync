@@ -246,6 +246,10 @@ msAPI const char*   msMeshAGetBlendshapeName(ms::MeshAnimation *_this, int bi) {
 msAPI int           msMeshAGetNumBlendshapeSamples(ms::MeshAnimation *_this, int bi) { return (int)_this->blendshapes[bi]->weight.size(); }
 msAPI float         msMeshAGetNumBlendshapeTime(ms::MeshAnimation *_this, int bi, int i) { return _this->blendshapes[bi]->weight[i].time; }
 msAPI float         msMeshAGetNumBlendshapeWeight(ms::MeshAnimation *_this, int bi, int i) { return _this->blendshapes[bi]->weight[i].value; }
+
+msAPI int   msPointsAGetNumTimeSamples(ms::PointsAnimation *_this) { return (int)_this->time.size(); }
+msAPI float msPointsAGetTimeTime(ms::PointsAnimation *_this, int i) { return _this->time[i].time; }
+msAPI float msPointsAGetTimeValue(ms::PointsAnimation *_this, int i) { return _this->time[i].value; }
 #pragma endregion
 
 

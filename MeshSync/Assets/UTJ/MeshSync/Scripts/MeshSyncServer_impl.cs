@@ -1177,6 +1177,64 @@ namespace UTJ.MeshSync
 #endif
         }
 
+        public struct PointsAnimationData
+        {
+            #region internal
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern int msPointsAGetNumTimeSamples(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeTime(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeValue(IntPtr _this, int i);
+            #endregion
+
+
+            public static explicit operator PointsAnimationData(IntPtr v)
+            {
+                PointsAnimationData ret;
+                ret._this = v;
+                return ret;
+            }
+            public static implicit operator bool(PointsAnimationData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
+
+            public AnimationCurve GenTimeCurve()
+            {
+                int n = msPointsAGetNumTimeSamples(_this);
+                if (n == 0)
+                    return null;
+                var x = new Keyframe[n];
+                for (int i = 0; i < n; ++i)
+                {
+                    var t = msPointsAGetTimeTime(_this, i);
+                    var v = msPointsAGetTimeValue(_this, i);
+                    x[i].time = t;
+                    x[i].value = v;
+                }
+                var ret = new AnimationCurve(x);
+                return ret;
+            }
+
+#if UNITY_EDITOR
+            public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
+            {
+                ((TransformAnimationData)_this).ExportToClip(clip, root, target, path, im);
+
+                var tpoints = typeof(Points);
+                {
+                    clip.SetCurve(path, tpoints, "m_time", null);
+                    var curve = GenTimeCurve();
+                    if (curve != null)
+                    {
+                        im(curve);
+                        clip.SetCurve(path, tpoints, "m_time", curve);
+                    }
+                }
+            }
+#endif
+        }
+
         public struct AnimationData
         {
             #region internal
@@ -1223,6 +1281,9 @@ namespace UTJ.MeshSync
                         break;
                     case TransformData.Type.Mesh:
                         ((MeshAnimationData)_this).ExportToClip(clip, root, target, path, im);
+                        break;
+                    case TransformData.Type.Points:
+                        ((PointsAnimationData)_this).ExportToClip(clip, root, target, path, im);
                         break;
                 }
             }
@@ -2047,7 +2108,9 @@ namespace UTJ.MeshSync
             {
                 if (n > list.Capacity)
                     list.Capacity = n;
-                list.AddRange(Enumerable.Repeat(new T(), n - cur));
+                int a = n - cur;
+                for (int i = 0; i < a; ++i)
+                    list.Add(new T());
             }
         }
 

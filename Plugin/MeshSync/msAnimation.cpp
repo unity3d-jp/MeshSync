@@ -55,6 +55,7 @@ std::shared_ptr<Animation> Animation::create(std::istream & is)
     case Type::Camera: ret = CameraAnimation::create(); break;
     case Type::Light: ret = LightAnimation::create(); break;
     case Type::Mesh: ret = MeshAnimation::create(); break;
+    case Type::Points: ret = PointsAnimation::create(); break;
     default: break;
     }
     if (ret) {
@@ -419,6 +420,67 @@ BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char *
     }
     return ret;
 }
+
+
+PointsAnimation::PointsAnimation() {}
+PointsAnimation::~PointsAnimation() {}
+
+Animation::Type PointsAnimation::getType() const
+{
+    return Type::Points;
+}
+#define EachMember(F)\
+    F(time)
+
+uint32_t PointsAnimation::getSerializeSize() const
+{
+    uint32_t ret = super::getSerializeSize();
+    EachMember(msSize);
+    return ret;
+}
+
+void PointsAnimation::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    EachMember(msWrite);
+}
+
+void PointsAnimation::deserialize(std::istream & is)
+{
+    super::deserialize(is);
+    EachMember(msRead);
+}
+
+void PointsAnimation::clear()
+{
+    super::clear();
+    EachMember(Clear);
+}
+
+uint64_t PointsAnimation::hash() const
+{
+    uint64_t ret = super::hash();
+    EachMember(Hash);
+    return ret;
+}
+
+bool PointsAnimation::empty() const
+{
+    return super::empty() EachMember(Empty);
+}
+
+void PointsAnimation::reduction()
+{
+    super::reduction();
+    EachMember(Reduce);
+}
+
+void PointsAnimation::reserve(size_t n)
+{
+    super::reserve(n);
+    EachMember(Reserve);
+}
+#undef EachMember
 
 
 std::shared_ptr<AnimationClip> AnimationClip::create(std::istream& is)

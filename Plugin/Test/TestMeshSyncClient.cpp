@@ -191,6 +191,13 @@ TestCase(Test_Points)
         auto node = ms::Points::create();
         scene.objects.push_back(node);
 
+        auto clip = ms::AnimationClip::create();
+        scene.animations.push_back(clip);
+
+        auto anim = ms::PointsAnimation::create();
+        clip->animations.push_back(anim);
+
+        anim->path = "/Test/PointsTRS";
         node->path = "/Test/PointsTRS";
         node->reference = "/Test/PointMesh";
         node->position = { 2.5f, 0.0f, 0.0f };
@@ -216,7 +223,9 @@ TestCase(Test_Points)
             auto data = ms::PointsData::create();
             node->data.push_back(data);
 
-            data->time = (1.0f / 30.0f)*fi;
+            float t = (1.0f / 30.0f) * fi;
+            anim->time.push_back({ t, {t} });
+            data->time = t;
             data->points = points;
             data->rotations = rotations;
             data->scales = scales;
@@ -228,6 +237,7 @@ TestCase(Test_Points)
         }
         node->setupFlags();
     }
+
     Send(scene);
 }
 

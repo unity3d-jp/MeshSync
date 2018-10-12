@@ -181,6 +181,30 @@ public:
 msHasSerializer(MeshAnimation);
 
 
+class PointsAnimation : public TransformAnimation
+{
+using super = TransformAnimation;
+public:
+    RawVector<TVP<float>> time;
+
+protected:
+    PointsAnimation();
+    ~PointsAnimation() override;
+public:
+    msDefinePool(PointsAnimation);
+    Type getType() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
+    uint64_t hash() const override;
+    bool empty() const override;
+    void reduction() override;
+    void reserve(size_t n) override;
+};
+msHasSerializer(PointsAnimation);
+
+
 class AnimationClip
 {
 public:
