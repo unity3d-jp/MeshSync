@@ -1126,6 +1126,13 @@ void PointsData::setupFlags()
     flags.has_ids = !ids.empty();
 }
 
+void PointsData::getBounds(float3 & center, float3 & extents)
+{
+    float3 bmin, bmax;
+    mu::MinMax(points.data(), points.size(), bmin, bmax);
+    center = (bmax + bmin) * 0.5f;
+    extents = abs(bmax - bmin);
+}
 
 
 Points::Points() {}

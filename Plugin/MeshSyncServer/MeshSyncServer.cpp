@@ -864,6 +864,10 @@ msAPI void msPointsDataSetTime(ms::PointsData *_this, float v)
 {
     _this->time = v;
 }
+msAPI void msPointsDataGetBounds(ms::PointsData *_this, float3 *center, float3 *extents)
+{
+    _this->getBounds(*center, *extents);
+}
 msAPI int msPointsDataGetNumPoints(ms::PointsData *_this, float3 *dst)
 {
     return (int)_this->points.size();

@@ -417,6 +417,8 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
     void setupFlags();
+
+    void getBounds(float3& center, float3& extents);
 };
 msHasSerializer(PointsData);
 using PointsDataPtr = std::shared_ptr<PointsData>;

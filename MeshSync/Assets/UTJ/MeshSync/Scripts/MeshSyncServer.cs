@@ -908,7 +908,7 @@ namespace UTJ.MeshSync
 
             if (time >= 0.0f)
                 dst.time = time;
-
+            dst.bounds = src.bounds;
             if (flags.hasPoints)
             {
                 dst.points = new Vector3[num];

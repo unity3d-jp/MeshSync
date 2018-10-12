@@ -1810,6 +1810,7 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsDataGetFlags(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern float msPointsDataGetTime(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msPointsDataSetTime(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataGetBounds(IntPtr _this, ref Vector3 center, ref Vector3 extents);
             [DllImport("MeshSyncServer")] static extern int msPointsDataGetNumPoints(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msPointsDataReadPoints(IntPtr _this, Vector3[] dst);
             [DllImport("MeshSyncServer")] static extern void msPointsDataWritePoints(IntPtr _this, Vector3[] v, int size);
@@ -1833,6 +1834,16 @@ namespace UTJ.MeshSync
             {
                 get { return msPointsDataGetTime(_this); }
                 set { msPointsDataSetTime(_this, value); }
+            }
+            public Bounds bounds
+            {
+                get
+                {
+                    Vector3 c = default(Vector3);
+                    Vector3 e = default(Vector3);
+                    msPointsDataGetBounds(_this, ref c, ref e);
+                    return new Bounds(c, e);
+                }
             }
             public int numPoints { get { return msPointsDataGetNumPoints(_this); } }
 
