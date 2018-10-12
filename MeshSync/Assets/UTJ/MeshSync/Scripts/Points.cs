@@ -6,30 +6,30 @@ using UnityEngine.Rendering;
 
 namespace UTJ.MeshSync
 {
-    [Serializable]
-    public class PointsData
-    {
-        public float time;
-        public Vector3[] points;
-        public Quaternion[] rotations;
-        public Vector3[] scales;
-        public Bounds bounds;
-
-        public void Clear()
-        {
-            time = 0.0f;
-            points = null;
-            rotations = null;
-            scales = null;
-            bounds = default(Bounds);
-        }
-    }
-
     [ExecuteInEditMode]
     public class Points : MonoBehaviour
     {
+        [Serializable]
+        public class Data
+        {
+            public float time;
+            public Vector3[] points;
+            public Quaternion[] rotations;
+            public Vector3[] scales;
+            public Bounds bounds;
+
+            public void Clear()
+            {
+                time = 0.0f;
+                points = null;
+                rotations = null;
+                scales = null;
+                bounds = default(Bounds);
+            }
+        }
+
         [SerializeField] float m_time;
-        [SerializeField] List<PointsData> m_records = new List<PointsData> { new PointsData() };
+        [SerializeField] List<Data> m_data = new List<Data> { new Data() };
 
         public float time
         {
@@ -37,16 +37,21 @@ namespace UTJ.MeshSync
             set { m_time = value; }
         }
 
-        public List<PointsData> records
+        public List<Data> data
         {
-            get { return m_records; }
+            get { return m_data; }
         }
 
-        public PointsData current
+        public Data current
         {
             get
             {
-                return m_records.FirstOrDefault(x => x.time >= m_time);
+                if (m_time <= m_data[0].time)
+                    return m_data[0];
+                else if (m_time >= m_data[m_data.Count - 1].time)
+                    return m_data[m_data.Count - 1];
+                else
+                    return m_data.FirstOrDefault(x => x.time >= m_time);
             }
         }
     }

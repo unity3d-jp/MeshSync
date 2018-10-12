@@ -848,61 +848,89 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *_this, float weight, int num
 #pragma endregion
 
 #pragma region Points
+msAPI ms::PointsDataFlags msPointsDataGetFlags(ms::PointsData *_this)
+{
+    return _this->flags;
+}
+msAPI float msPointsDataGetTime(ms::PointsData *_this)
+{
+    return _this->time;
+}
+msAPI void msPointsDataSetTime(ms::PointsData *_this, float v)
+{
+    _this->time = v;
+}
+msAPI int msPointsDataGetNumPoints(ms::PointsData *_this, float3 *dst)
+{
+    return (int)_this->points.size();
+}
+msAPI void msPointsDataReadPoints(ms::PointsData *_this, float3 *dst)
+{
+    _this->points.copy_to(dst);
+}
+msAPI void msPointsDataWritePoints(ms::PointsData *_this, const float3 *v, int size)
+{
+    _this->points.assign(v, v + size);
+}
+msAPI void msPointsDataReadRotations(ms::PointsData *_this, quatf *dst)
+{
+    _this->rotations.copy_to(dst);
+}
+msAPI void msPointsDataWriteRotations(ms::PointsData *_this, const quatf *v, int size)
+{
+    _this->rotations.assign(v, v + size);
+}
+msAPI void msPointsDataReadScales(ms::PointsData *_this, float3 *dst)
+{
+    _this->scales.copy_to(dst);
+}
+msAPI void msPointsDataWriteScales(ms::PointsData *_this, const float3 *v, int size)
+{
+    _this->scales.assign(v, v + size);
+}
+msAPI void msPointsDataReadVelocities(ms::PointsData *_this, float3 *dst)
+{
+    _this->velocities.copy_to(dst);
+}
+msAPI void msPointsDataWriteVelocities(ms::PointsData *_this, const float3 *v, int size)
+{
+    _this->velocities.assign(v, v + size);
+}
+
+msAPI void msPointsDataReadColors(ms::PointsData *_this, float4 *dst)
+{
+    _this->colors.copy_to(dst);
+}
+msAPI void msPointsDataWriteColors(ms::PointsData *_this, const float4 *v, int size)
+{
+    _this->colors.assign(v, v + size);
+}
+msAPI void msPointsDataReadIDs(ms::PointsData *_this, int *dst)
+{
+    _this->ids.copy_to(dst);
+}
+msAPI void msPointsDataWriteIDs(ms::PointsData *_this, const int *v, int size)
+{
+    _this->ids.assign(v, v + size);
+}
+
 msAPI ms::Points* msPointsCreate()
 {
     return ms::Points::create_raw();
 }
-msAPI ms::PointsDataFlags msPointsGetFlags(ms::Points *_this)
+msAPI int msPointsGetNumData(ms::Points *_this)
 {
-    return _this->flags;
+    return (int)_this->data.size();
 }
-msAPI void msPointsSetFlags(ms::Points *_this, ms::PointsDataFlags v)
+msAPI ms::PointsData* msPointsGetData(ms::Points *_this, int i)
 {
-    _this->flags = v;
+    return _this->data[i].get();
 }
-msAPI int msPointsGetNumPoints(ms::Points *_this, float3 *dst)
+msAPI ms::PointsData* msPointsAddData(ms::Points *_this)
 {
-    return (int)_this->points.size();
-}
-msAPI void msPointsReadPoints(ms::Points *_this, float3 *dst)
-{
-    _this->points.copy_to(dst);
-}
-msAPI void msPointsWritePoints(ms::Points *_this, const float3 *v, int size)
-{
-    _this->points.assign(v, v + size);
-}
-msAPI void msPointsReadRotations(ms::Points *_this, quatf *dst)
-{
-    _this->rotations.copy_to(dst);
-}
-msAPI void msPointsWriteRotations(ms::Points *_this, const quatf *v, int size)
-{
-    _this->rotations.assign(v, v + size);
-}
-msAPI void msPointsReadScales(ms::Points *_this, float3 *dst)
-{
-    _this->scales.copy_to(dst);
-}
-msAPI void msPointsWriteScales(ms::Points *_this, const float3 *v, int size)
-{
-    _this->scales.assign(v, v + size);
-}
-msAPI void msPointsReadColors(ms::Points *_this, float4 *dst)
-{
-    _this->colors.copy_to(dst);
-}
-msAPI void msPointsWriteColors(ms::Points *_this, const float4 *v, int size)
-{
-    _this->colors.assign(v, v + size);
-}
-msAPI void msPointsReadIDs(ms::Points *_this, int *dst)
-{
-    _this->ids.copy_to(dst);
-}
-msAPI void msPointsWriteIDs(ms::Points *_this, const int *v, int size)
-{
-    _this->ids.assign(v, v + size);
+    auto ret = ms::PointsData::create();
+    _this->data.push_back(ret);
+    return ret.get();
 }
 #pragma endregion
 

@@ -385,21 +385,48 @@ struct PointsDataFlags
     uint32_t has_points : 1;
     uint32_t has_rotations : 1;
     uint32_t has_scales : 1;
+    uint32_t has_velocities : 1;
     uint32_t has_colors : 1;
     uint32_t has_ids : 1;
 };
+
+struct PointsData
+{
+    PointsDataFlags flags = { 0 };
+    float time = -1.0f;
+    RawVector<float3> points;
+    RawVector<quatf>  rotations;
+    RawVector<float3> scales;
+    RawVector<float3> velocities;
+    RawVector<float4> colors;
+    RawVector<int>    ids;
+
+protected:
+    PointsData();
+    ~PointsData();
+public:
+    msDefinePool(PointsData);
+    static std::shared_ptr<PointsData> create(std::istream& is);
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    void clear();
+    uint64_t hash() const;
+
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
+    void setupFlags();
+};
+msHasSerializer(PointsData);
+using PointsDataPtr = std::shared_ptr<PointsData>;
 
 class Points : public Transform
 {
 using super = Transform;
 public:
     // Transform::reference is used for reference for Mesh
-    PointsDataFlags   flags = { 0 };
-    RawVector<float3> points;
-    RawVector<quatf>  rotations;
-    RawVector<float3> scales;
-    RawVector<float4> colors;
-    RawVector<int>    ids;
+    std::vector<PointsDataPtr> data;
 
 protected:
     Points();

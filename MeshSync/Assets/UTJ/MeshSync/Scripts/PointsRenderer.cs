@@ -66,9 +66,9 @@ namespace UTJ.MeshSync
             return a != null && a.Length > 0;
         }
 
-        public void Flush(PointsData data)
+        public void Flush(Points.Data data)
         {
-            if (data == null || data.points.Length == 0)
+            if (data == null || data.points == null || data.points.Length == 0)
                 return;
             if (m_mesh == null || m_materials == null)
                 return;

@@ -883,26 +883,46 @@ namespace UTJ.MeshSync
             if (pr == null)
                 pr = go.AddComponent<PointsRenderer>();
             var pts = go.GetComponent<Points>();
-            var dst = pts.current;
 
-            var flags = data.flags;
-            var num = data.numPoints;
+            int numData = data.numData;
+            if (numData == 1)
+            {
+                ReadPointsData(data.GetData(0), pts.current);
+            }
+            else
+            {
+                var dst = pts.data;
+                Resize(dst, numData);
+                for (int di = 0; di < numData; ++di)
+                    ReadPointsData(data.GetData(di), dst[di]);
+            }
+        }
+
+        void ReadPointsData(PointsCacheData src, Points.Data dst)
+        {
             dst.Clear();
+
+            var flags = src.flags;
+            var time = src.time;
+            var num = src.numPoints;
+
+            if (time >= 0.0f)
+                dst.time = time;
 
             if (flags.hasPoints)
             {
                 dst.points = new Vector3[num];
-                data.ReadPoints(dst.points);
+                src.ReadPoints(dst.points);
             }
             if (flags.hasRotations)
             {
                 dst.rotations = new Quaternion[num];
-                data.ReadRotations(dst.rotations);
+                src.ReadRotations(dst.rotations);
             }
             if (flags.hasScales)
             {
                 dst.scales = new Vector3[num];
-                data.ReadScales(dst.scales);
+                src.ReadScales(dst.scales);
             }
         }
 

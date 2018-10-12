@@ -1049,6 +1049,85 @@ BlendShapeDataPtr Mesh::addBlendShape(const std::string& _name)
 // Points
 #pragma region Points
 
+PointsData::PointsData() {}
+PointsData::~PointsData() {}
+
+std::shared_ptr<PointsData> PointsData::create(std::istream & is)
+{
+    auto ret = Pool<PointsData>::instance().pull();
+    ret->deserialize(is);
+    return make_shared_ptr(ret);
+}
+
+#define EachArray(F)\
+    F(points) F(rotations) F(scales) F(velocities) F(colors) F(ids)
+#define EachMember(F)\
+    F(flags) F(time) EachArray(F)
+
+uint32_t PointsData::getSerializeSize() const
+{
+    uint32_t ret = 0;
+    EachMember(msSize);
+    return ret;
+}
+
+void PointsData::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+
+void PointsData::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+
+void PointsData::clear()
+{
+    flags = { 0 };
+    time = 0.0f;
+    EachArray(msClear);
+}
+
+uint64_t PointsData::hash() const
+{
+    uint64_t ret = 0;
+    EachArray(msHash);
+    return ret;
+}
+#undef EachArrays
+#undef EachMember
+
+void PointsData::convertHandedness(bool x, bool yz)
+{
+    if (x) {
+        mu::InvertX(points.data(), points.size());
+        for (auto& v : rotations) v = swap_handedness(v);
+        mu::InvertX(scales.data(), scales.size());
+    }
+    if (yz) {
+        for (auto& v : points) v = swap_yz(v);
+        for (auto& v : rotations) v = swap_yz(v);
+        for (auto& v : scales) v = swap_yz(v);
+    }
+}
+
+void PointsData::applyScaleFactor(float v)
+{
+    mu::Scale(points.data(), v, points.size());
+}
+
+void PointsData::setupFlags()
+{
+    flags.has_points = !points.empty();
+    flags.has_rotations = !rotations.empty();
+    flags.has_scales = !scales.empty();
+    flags.has_velocities = !velocities.empty();
+    flags.has_colors = !colors.empty();
+    flags.has_ids = !ids.empty();
+}
+
+
+
 Points::Points() {}
 Points::~Points() {}
 
@@ -1057,12 +1136,8 @@ Entity::Type Points::getType() const
     return Type::Points;
 }
 
-#define EachArray(F)\
-    F(points) F(rotations) F(scales) F(colors) F(ids)
-
-
 #define EachMember(F)\
-    F(flags) EachArray(F)
+    F(data)
 
 uint32_t Points::getSerializeSize() const
 {
@@ -1086,14 +1161,14 @@ void Points::deserialize(std::istream & is)
 void Points::clear()
 {
     super::clear();
-    flags = { 0 };
-    EachArray(msClear);
+    data.clear();
 }
 
 uint64_t Points::hash() const
 {
     uint64_t ret = 0;
-    EachArray(msHash);
+    for (auto& p : data)
+        ret += p->hash();
     return ret;
 }
 
@@ -1102,31 +1177,22 @@ uint64_t Points::hash() const
 
 void Points::convertHandedness(bool x, bool yz)
 {
-    if (x) {
-        mu::InvertX(points.data(), points.size());
-        for (auto& v : rotations) v = swap_handedness(v);
-        mu::InvertX(scales.data(), scales.size());
-    }
-    if (yz) {
-        for (auto& v : points) v = swap_yz(v);
-        for (auto& v : rotations) v = swap_yz(v);
-        for (auto& v : scales) v = swap_yz(v);
-    }
+    for (auto& p : data)
+        p->convertHandedness(x, yz);
 }
 
 void Points::applyScaleFactor(float v)
 {
-    mu::Scale(points.data(), v, points.size());
+    for (auto& p : data)
+        p->applyScaleFactor(v);
 }
 
 void Points::setupFlags()
 {
-    flags.has_points = !points.empty();
-    flags.has_rotations = !rotations.empty();
-    flags.has_scales = !scales.empty();
-    flags.has_colors = !colors.empty();
-    flags.has_ids = !ids.empty();
+    for (auto& p : data)
+        p->setupFlags();
 }
+
 #pragma endregion
 
 

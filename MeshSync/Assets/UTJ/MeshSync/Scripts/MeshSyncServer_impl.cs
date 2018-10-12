@@ -312,15 +312,20 @@ namespace UTJ.MeshSync
                 get { return (flags & (1 << 2)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 2)); }
             }
-            public bool hasColors
+            public bool hasVelocities
             {
                 get { return (flags & (1 << 3)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 3)); }
             }
-            public bool hasIDs
+            public bool hasColors
             {
                 get { return (flags & (1 << 4)) != 0; }
                 set { SwitchBits(ref flags, value, (1 << 4)); }
+            }
+            public bool hasIDs
+            {
+                get { return (flags & (1 << 5)) != 0; }
+                set { SwitchBits(ref flags, value, (1 << 5)); }
             }
         };
 
@@ -1736,25 +1741,65 @@ namespace UTJ.MeshSync
             }
         }
 
+        public struct PointsCacheData
+        {
+            #region internal
+            internal IntPtr _this;
+
+            [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsDataGetFlags(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msPointsDataGetTime(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataSetTime(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern int msPointsDataGetNumPoints(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataReadPoints(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataWritePoints(IntPtr _this, Vector3[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataReadRotations(IntPtr _this, Quaternion[] dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataWriteRotations(IntPtr _this, Quaternion[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataReadScales(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataWriteScales(IntPtr _this, Vector3[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataReadVelocities(IntPtr _this, Vector3[] dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataWriteVelocities(IntPtr _this, Vector3[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataReadColors(IntPtr _this, Color[] dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataWriteColors(IntPtr _this, Color[] v, int size);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataReadIDs(IntPtr _this, int[] dst);
+            [DllImport("MeshSyncServer")] static extern void msPointsDataWriteIDs(IntPtr _this, int[] v, int size);
+            #endregion
+
+            public PointsDataFlags flags
+            {
+                get { return msPointsDataGetFlags(_this); }
+            }
+            public float time
+            {
+                get { return msPointsDataGetTime(_this); }
+                set { msPointsDataSetTime(_this, value); }
+            }
+            public int numPoints { get { return msPointsDataGetNumPoints(_this); } }
+
+            public void ReadPoints(Vector3[] dst) { msPointsDataReadPoints(_this, dst); }
+            public void ReadRotations(Quaternion[] dst) { msPointsDataReadRotations(_this, dst); }
+            public void ReadScales(Vector3[] dst) { msPointsDataReadScales(_this, dst); }
+            public void ReadVelocities(Vector3[] dst) { msPointsDataReadVelocities(_this, dst); }
+            public void ReadColors(Color[] dst) { msPointsDataReadColors(_this, dst); }
+            public void ReadIDs(int[] dst) { msPointsDataReadIDs(_this, dst); }
+
+            public void WritePoints(Vector3[] v) { msPointsDataWritePoints(_this, v, v.Length); }
+            public void WriteRotations(Quaternion[] v) { msPointsDataWriteRotations(_this, v, v.Length); }
+            public void WriteScales(Vector3[] v) { msPointsDataWriteScales(_this, v, v.Length); }
+            public void WriteVelocities(Vector3[] v) { msPointsDataWriteVelocities(_this, v, v.Length); }
+            public void WriteColors(Color[] v) { msPointsDataWriteColors(_this, v, v.Length); }
+            public void WriteIDs(int[] v) { msPointsDataWriteIDs(_this, v, v.Length); }
+        }
+
+
         public struct PointsData
         {
             #region internal
             internal IntPtr _this;
 
             [DllImport("MeshSyncServer")] static extern PointsData msPointsCreate();
-            [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsGetFlags(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msPointsSetFlags(IntPtr _this, PointsDataFlags v);
-            [DllImport("MeshSyncServer")] static extern int msPointsGetNumPoints(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadPoints(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern void msPointsWritePoints(IntPtr _this, Vector3[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadRotations(IntPtr _this, Quaternion[] dst);
-            [DllImport("MeshSyncServer")] static extern void msPointsWriteRotations(IntPtr _this, Quaternion[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadScales(IntPtr _this, Vector3[] dst);
-            [DllImport("MeshSyncServer")] static extern void msPointsWriteScales(IntPtr _this, Vector3[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadColors(IntPtr _this, Color[] dst);
-            [DllImport("MeshSyncServer")] static extern void msPointsWriteColors(IntPtr _this, Color[] v, int size);
-            [DllImport("MeshSyncServer")] static extern void msPointsReadIDs(IntPtr _this, int[] dst);
-            [DllImport("MeshSyncServer")] static extern void msPointsWriteIDs(IntPtr _this, int[] v, int size);
+            [DllImport("MeshSyncServer")] static extern int msPointsGetNumData(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern PointsCacheData msPointsGetData(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern PointsCacheData msPointsAddData(IntPtr _this);
             #endregion
 
             public static PointsData Create()
@@ -1774,26 +1819,10 @@ namespace UTJ.MeshSync
                 get { return (TransformData)_this; }
             }
 
-            public PointsDataFlags flags
-            {
-                get { return msPointsGetFlags(_this); }
-                set { msPointsSetFlags(_this, value); }
-            }
-            public int numPoints { get { return msPointsGetNumPoints(_this); } }
-
-            public void ReadPoints(Vector3[] dst) { msPointsReadPoints(_this, dst); }
-            public void ReadRotations(Quaternion[] dst) { msPointsReadRotations(_this, dst); }
-            public void ReadScales(Vector3[] dst) { msPointsReadScales(_this, dst); }
-            public void ReadColors(Color[] dst) { msPointsReadColors(_this, dst); }
-            public void ReadIDs(int[] dst) { msPointsReadIDs(_this, dst); }
-
-            public void WritePoints(Vector3[] v) { msPointsWritePoints(_this, v, v.Length); }
-            public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(_this, v, v.Length); }
-            public void WriteScales(Vector3[] v) { msPointsWriteScales(_this, v, v.Length); }
-            public void WriteColors(Color[] v) { msPointsWriteColors(_this, v, v.Length); }
-            public void WriteIDs(int[] v) { msPointsWriteIDs(_this, v, v.Length); }
+            public int numData { get { return msPointsGetNumData(_this); } }
+            public PointsCacheData GetData(int i) { return msPointsGetData(_this, i); }
+            public PointsCacheData AddData(int i) { return msPointsAddData(_this); }
         }
-
 
 
 
@@ -2008,6 +2037,20 @@ namespace UTJ.MeshSync
             var reg = new Regex("[:<>|\\*\\?]");
             return reg.Replace(name, "_");
         }
+
+        public static void Resize<T>(List<T> list, int n) where T : new()
+        {
+            int cur = list.Count;
+            if (n < cur)
+                list.RemoveRange(n, cur - n);
+            else if (n > cur)
+            {
+                if (n > list.Capacity)
+                    list.Capacity = n;
+                list.AddRange(Enumerable.Repeat(new T(), n - cur));
+            }
+        }
+
 
         [Serializable]
         public class Record
