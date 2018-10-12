@@ -40,7 +40,6 @@ public:
 
     void serveText(Poco::Net::HTTPServerResponse &response, const char* text, int stat = 200);
     void serveBinary(Poco::Net::HTTPServerResponse &response, const void *data, size_t size, int stat = 200);
-    const char* getMIMEType(const std::string& filename);
     void serveFiles(Poco::Net::HTTPServerResponse &response, const std::string& uri);
 
     void setServe(bool v);
@@ -77,6 +76,8 @@ public:
 private:
     template<class MessageT>
     std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
+    bool loadMIMETypes(const std::string& path);
+    const std::string& getMIMEType(const std::string& filename);
 
 private:
     using GetPtr    = std::shared_ptr<GetMessage>;
@@ -90,6 +91,7 @@ private:
     bool m_serving = true;
     ServerSettings m_settings;
     HTTPServerPtr m_server;
+    std::map<std::string, std::string> m_mimetypes;
     std::mutex m_message_mutex;
     std::mutex m_poll_mutex;
     std::atomic_int m_request_count{0};

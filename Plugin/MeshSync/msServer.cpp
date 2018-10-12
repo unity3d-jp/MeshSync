@@ -207,32 +207,15 @@ void Server::serveBinary(Poco::Net::HTTPServerResponse & response, const void *d
     os.flush();
 }
 
-const char* Server::getMIMEType(const std::string& filename)
-{
-    auto pos = filename.find_last_of('.');
-    if (pos != std::string::npos) {
-        static std::map<std::string, std::string> s_types = {
-            {".html", "text/html"},
-            {".txt", "text/plain"},
-            {".js", "application/javascript"},
-            {".js_", "application/javascript"},
-            {".json", "application/json"},
-            {".png", "image/png"},
-            {".jpg", "image/jpeg"},
-            {".ico", "image/x-icon"},
-        };
-
-        auto it = s_types.find(&filename[pos]);
-        if (it != s_types.end()) {
-            return it->second.c_str();
-        }
-    }
-
-    return "text/plain";
-}
-
 void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::string& uri)
 {
+    // filename start with '.' is treated as hidden file. just return 404
+    auto filename = GetFilename(uri.c_str());
+    if (filename[0] == '.') {
+        serveText(response, "", HTTPResponse::HTTP_NOT_FOUND);
+        return;
+    }
+
     std::string path = getFileRootPath();
     if (uri.empty() || uri == "/")
         path += "/index.html";
@@ -314,9 +297,53 @@ void Server::setScrrenshotFilePath(const std::string& path)
     }
 }
 
+bool Server::loadMIMETypes(const std::string& path)
+{
+    std::fstream fs(path, std::ios::in);
+    if (!fs)
+        return false;
+
+    char buf[1024];
+    while (!fs.eof()) {
+        fs.getline(buf, sizeof(buf));
+
+        int separator = 0;
+        for (int i = 0; i < sizeof(buf); ++i) {
+            if (buf[i] == '\0')
+                break;
+            if (buf[i] == ' ') {
+                separator = i;
+                break;
+            }
+        }
+        if (separator != 0) {
+            buf[separator] = '\0';
+            auto extension = buf;
+            auto mimetype = buf + (separator + 1);
+            m_mimetypes[extension] = mimetype;
+        }
+    }
+    return true;
+}
+
+const std::string& Server::getMIMEType(const std::string& filename)
+{
+    auto pos = filename.find_last_of('.');
+    if (pos != std::string::npos) {
+        auto it = m_mimetypes.find(&filename[pos]);
+        if (it != m_mimetypes.end()) {
+            return it->second;
+        }
+    }
+
+    static const std::string s_dummy = "text/plain";
+    return s_dummy;
+}
+
 void Server::setFileRootPath(const std::string& path)
 {
     m_file_root_path = path;
+    loadMIMETypes(m_file_root_path + "/.mimetypes");
 }
 
 const std::string& Server::getFileRootPath() const
