@@ -656,6 +656,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.points = points;
     refiner.indices = indices;
     refiner.counts = counts;
+    refiner.buildConnection();
 
     if (uv0.size() == indices.size())
         refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);

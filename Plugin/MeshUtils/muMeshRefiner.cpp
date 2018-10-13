@@ -1,3 +1,4 @@
+#include "muMeshRefiner.h"
 #include "pch.h"
 #include "MeshUtils.h"
 
@@ -334,9 +335,7 @@ void MeshRefiner::clear()
 
 void MeshRefiner::refine()
 {
-    if (connection.v2f_counts.size() != points.size()) {
-        connection.buildConnection(indices, counts, points);
-    }
+    buildConnection();
 
     int num_indices = (int)indices.size();
     new_points.reserve(num_indices);
@@ -433,6 +432,13 @@ void MeshRefiner::refine()
         offset += count;
     }
     add_new_split();
+}
+
+void MeshRefiner::buildConnection()
+{
+    if (connection.v2f_counts.size() != points.size()) {
+        connection.buildConnection(indices, counts, points);
+    }
 }
 
 } // namespace mu
