@@ -60,6 +60,9 @@
     <ClInclude Include="External\mqsdk4\MQBoneManager.h">
       <Filter>External\mqsdk4</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\MQUtils.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSyncClientMQ">

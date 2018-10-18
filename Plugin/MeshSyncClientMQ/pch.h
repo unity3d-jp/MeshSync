@@ -38,4 +38,4 @@
 #endif
 
 #define MQPluginProduct 0x483ADF11
-#define MQPluginID 0xB0CC9999;
+#define MQPluginID 0xB0CC9999

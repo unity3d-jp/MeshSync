@@ -54,6 +54,7 @@
     <ClInclude Include="MeshSyncClientMQ\DialogMQ4.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ4.h" />
     <ClInclude Include="MeshSyncClientMQ\MQSync.h" />
+    <ClInclude Include="MeshSyncClientMQ\MQUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
