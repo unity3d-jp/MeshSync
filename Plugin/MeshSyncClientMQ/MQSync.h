@@ -18,6 +18,7 @@ public:
     bool& getSyncCamera();
     bool& getSyncBones();
     bool& getSyncPoses();
+    bool& getSyncTextures();
     bool& getBakeSkin();
     bool& getBakeCloth();
 
@@ -51,6 +52,7 @@ private:
     using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::MaterialPtr>;
 
+    int exportTexture(const std::string& path);
     MQObject findMesh(MQDocument doc, const char *name);
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
@@ -64,16 +66,21 @@ private:
     std::string m_host_camera_path = "/Main Camera";
     bool m_auto_sync = false;
     bool m_sync_normals = true;
-    bool m_sync_vertex_color = false;
-    bool m_sync_camera = false;
+    bool m_sync_vertex_color = true;
+    bool m_sync_camera = true;
     bool m_sync_bones = true;
     bool m_sync_poses = true;
+    bool m_sync_textures = true;
 
     bool m_bake_skin = false;
     bool m_bake_cloth = false;
 
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
+
+    int m_texture_id_seed = 0;
+    std::map<std::string, ms::TexturePtr> m_textures;
+    std::vector<ms::TexturePtr> m_textures_to_send;
     Materials m_materials;
     ms::CameraPtr m_camera;
 

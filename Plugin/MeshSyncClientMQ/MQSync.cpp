@@ -31,6 +31,7 @@ bool & MQSync::getSyncVertexColor() { return m_sync_vertex_color; }
 bool& MQSync::getSyncCamera() { return m_sync_camera; }
 bool& MQSync::getSyncBones() { return m_sync_bones; }
 bool& MQSync::getSyncPoses() { return m_sync_poses; }
+bool& MQSync::getSyncTextures() { return m_sync_textures; }
 
 bool& MQSync::getBakeSkin() { return m_bake_skin; }
 bool& MQSync::getBakeCloth() { return m_bake_cloth; }
@@ -41,6 +42,10 @@ void MQSync::clear()
     m_bones.clear();
     m_client_meshes.clear();
     m_host_meshes.clear();
+
+    m_texture_id_seed = 01;
+    m_textures.clear();
+    m_textures_to_send.clear();
     m_materials.clear();
     m_camera.reset();
     m_mesh_exists.clear();
@@ -72,6 +77,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
     m_pending_send_meshes = false;
     m_meshes.clear();
+    m_textures_to_send.clear();
     m_materials.clear();
     m_bones.clear();
 
@@ -130,14 +136,19 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         for (int mi = 0; mi < nmat; ++mi) {
             if (auto src = doc->GetMaterial(mi)) {
                 auto dst = ms::Material::create();
+                m_materials.push_back(dst);
+
+                char buf[1024];
                 dst->id = mi;
                 {
-                    char name[128];
-                    src->GetName(name, sizeof(name));
-                    dst->name = ms::ToUTF8(name);
+                    src->GetName(buf, sizeof(buf));
+                    dst->name = ms::ToUTF8(buf);
                 }
                 dst->setColor(to_float4(src->GetColor()));
-                m_materials.push_back(dst);
+                if (m_sync_textures) {
+                    src->GetTextureName(buf, sizeof(buf));
+                    dst->setColorMap(exportTexture(buf));
+                }
             }
         }
     }
@@ -269,6 +280,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.materials = m_materials;
+            set.scene.textures = m_textures_to_send;
             for (auto& pair : m_bones) {
                 set.scene.objects.push_back(pair.second.transform);
             }
@@ -482,6 +494,27 @@ bool MQSync::importMeshes(MQDocument doc)
         }
     }
     return true;
+}
+
+int MQSync::exportTexture(const std::string& path)
+{
+    auto& tex = m_textures[path];
+    if (tex)
+        return tex->id;
+
+    tex = ms::Texture::create();
+    auto& data = tex->data;
+    if (ms::FileToByteArray(path.c_str(), data)) {
+        tex->id = ++m_texture_id_seed;
+        tex->name = mu::GetFilename(path.c_str());
+        tex->format = ms::TextureFormat::RawFile;
+        m_textures_to_send.push_back(tex);
+    }
+    else {
+        tex->id = -1;
+    }
+
+    return tex->id;
 }
 
 MQObject MQSync::findMesh(MQDocument doc, const char *name)

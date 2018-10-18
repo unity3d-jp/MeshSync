@@ -667,17 +667,12 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
     // normals
     bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.swap_faces;
-    if (mrs.flags.gen_normals_with_smooth_angle) {
-        if (mrs.smooth_angle < 180.0f) {
-            GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, flip_normals);
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
-        }
-        else {
-            GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
-        }
-    }
-    else if (mrs.flags.gen_normals) {
+    if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
         GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
+    }
+    else if (mrs.flags.gen_normals_with_smooth_angle) {
+        GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, flip_normals);
+        refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
     }
     else {
         if (normals.size() == indices.size()) {

@@ -633,6 +633,7 @@ msAPI void msMeshWriteIndices(ms::Mesh *_this, const int *v, int size)
         _this->counts.clear();
         _this->counts.resize(size / 3, 3);
         _this->flags.has_indices = 1;
+        _this->flags.has_counts = 1;
     }
 }
 msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *_this, const int *v, int size, int materialID)
@@ -642,6 +643,7 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *_this, const int *v, int size, 
         _this->counts.resize(_this->counts.size() + (size / 3), 3);
         _this->material_ids.resize(_this->material_ids.size() + (size / 3), materialID);
         _this->flags.has_indices = 1;
+        _this->flags.has_counts = 1;
         _this->flags.has_material_ids = 1;
     }
 }

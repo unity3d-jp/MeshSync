@@ -82,6 +82,10 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_edit_camera_path->AddChangedEvent(this, &SettingsDlg::OnCameraPathChange);
         m_edit_camera_path->SetHorzLayout(LAYOUT_FILL);
         m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
+
+        m_check_textures = CreateCheckBox(vf, L"Sync Textures");
+        m_check_textures->SetChecked(m_plugin->getSync().getSyncTextures());
+        m_check_textures->AddChangedEvent(this, &SettingsDlg::OnSyncTexturesChange);
     }
 
     {
@@ -192,6 +196,12 @@ BOOL SettingsDlg::OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->getSync().getSyncPoses() = m_check_poses->GetChecked();
     m_plugin->SendAll();
+    return 0;
+}
+
+BOOL SettingsDlg::OnSyncTexturesChange(MQWidgetBase *sender, MQDocument doc)
+{
+    m_plugin->getSync().getSyncTextures() = m_check_textures->GetChecked();
     return 0;
 }
 
