@@ -12,10 +12,22 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
+    #region types
+    public enum SceneEventType
+    {
+        UpdateBegin,
+        UpdateInProgress,
+        UpdateEnd,
+    }
+    public delegate void SceneEventHandler(SceneEventType e, params object[] args);
+    #endregion
+
     [ExecuteInEditMode]
     public partial class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
-#region fields
+        #region fields
+        public event SceneEventHandler sceneEvents;
+
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
@@ -59,6 +71,12 @@ namespace UTJ.MeshSync
 #endregion
 
 #region impl
+        void FireEvent(SceneEventType t, params object[] args)
+        {
+            if (sceneEvents != null)
+                sceneEvents(t, args);
+        }
+
 #if UNITY_EDITOR
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         public static void CreateMeshSyncServer(MenuCommand menuCommand)
@@ -233,7 +251,11 @@ namespace UTJ.MeshSync
 
         void OnRecvFence(FenceMessage mes)
         {
-            if(mes.type == FenceMessage.FenceType.SceneEnd)
+            if(mes.type == FenceMessage.FenceType.SceneBegin)
+            {
+                FireEvent(SceneEventType.UpdateBegin);
+            }
+            else if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
                 // sort objects by index
                 {
@@ -270,6 +292,7 @@ namespace UTJ.MeshSync
                 GC.Collect();
 
                 msServerNotifyPoll(m_server, PollMessage.PollType.SceneUpdate);
+                FireEvent(SceneEventType.UpdateEnd);
             }
         }
 
@@ -372,6 +395,8 @@ namespace UTJ.MeshSync
 
             if(m_progressiveDisplay)
                 ForceRepaint();
+
+            FireEvent(SceneEventType.UpdateInProgress);
         }
 
         void DestroyIfNotAsset(UnityEngine.Object obj)
