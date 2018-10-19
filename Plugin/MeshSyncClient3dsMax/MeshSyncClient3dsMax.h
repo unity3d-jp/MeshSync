@@ -25,6 +25,7 @@ public:
         bool sync_blendshapes = true;
         bool sync_cameras = true;
         bool sync_lights = true;
+        bool sync_textures = true;
         bool bake_modifiers = false;
         bool multithreaded = false;
 
@@ -116,6 +117,7 @@ private:
     void waitAsyncSend();
     void kickAsyncSend();
 
+    int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
     ms::Transform* exportObject(INode *node, bool force);
@@ -145,6 +147,10 @@ private:
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time_tick;
     float m_current_time_sec;
+
+    int m_texture_id_seed = 0;
+    std::map<std::string, ms::TexturePtr> m_textures;
+    std::vector<ms::TexturePtr> m_textures_to_send;
 
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;

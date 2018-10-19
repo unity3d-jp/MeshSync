@@ -100,6 +100,7 @@ void MeshSyncClient3dsMax::onShutdown()
 
     m_objects.clear();
     m_meshes.clear();
+    m_textures.clear();
     m_materials.clear();
     m_animations.clear();
     m_constraints.clear();
@@ -368,10 +369,12 @@ void MeshSyncClient3dsMax::kickAsyncSend()
             ms::SetMessage set;
             set.scene.settings = scene_settings;
             set.scene.objects = m_objects;
+            set.scene.textures = m_textures_to_send;
             set.scene.materials = m_materials;
             client.send(set);
 
             m_objects.clear();
+            m_textures_to_send.clear();
             m_materials.clear();
         }
 
@@ -405,6 +408,28 @@ void MeshSyncClient3dsMax::kickAsyncSend()
     });
 }
 
+int MeshSyncClient3dsMax::exportTexture(const std::string & path, ms::TextureType type)
+{
+    auto& tex = m_textures[path];
+    if (tex)
+        return tex->id;
+
+    tex = ms::Texture::create();
+    auto& data = tex->data;
+    if (ms::FileToByteArray(path.c_str(), data)) {
+        tex->id = ++m_texture_id_seed;
+        tex->name = mu::GetFilename(path.c_str());
+        tex->format = ms::TextureFormat::RawFile;
+        tex->type = type;
+        m_textures_to_send.push_back(tex);
+    }
+    else {
+        tex->id = -1;
+    }
+
+    return tex->id;
+}
+
 void MeshSyncClient3dsMax::exportMaterials()
 {
     auto *mtllib = GetCOREInterface()->GetSceneMtls();
@@ -420,6 +445,30 @@ void MeshSyncClient3dsMax::exportMaterials()
             dst->id = mid;
             dst->name = mu::ToMBS(mtl->GetName().data());
             dst->setColor(to_color(mtl->GetDiffuse()));
+
+            // export textures
+            if (m_settings.sync_textures && mtl->ClassID() == Class_ID(DMTL_CLASS_ID, 0)) {
+                auto stdmat = (StdMat*)mtl;
+                auto export_texture = [this, stdmat](int tid, ms::TextureType ttype) -> int {
+                    if (stdmat->MapEnabled(tid)) {
+                        auto tex = stdmat->GetSubTexmap(tid);
+                        if (tex && tex->ClassID() == Class_ID(BMTEX_CLASS_ID, 0x00)) {
+                            MaxSDK::Util::Path path(((BitmapTex*)tex)->GetMapName());
+                            path.ConvertToAbsolute();
+                            if (path.Exists()) {
+                                return exportTexture(mu::ToMBS(path.GetCStr()), ttype);
+                            }
+                        }
+                    }
+                    return -1;
+                };
+                const int DIFFUSE_MAP_ID = 1;
+                const int NORMAL_MAP_ID = 8;
+
+                dst->setColorMap(export_texture(DIFFUSE_MAP_ID, ms::TextureType::Default));
+                dst->setNormalMap(export_texture(NORMAL_MAP_ID, ms::TextureType::NormalMap));
+            }
+
             return mid;
         };
 

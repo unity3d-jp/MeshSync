@@ -22,6 +22,7 @@
 // 3ds Max headers
 #include <max.h>
 #include <modstack.h>
+#include <stdmat.h>
 #include <imenuman.h>
 #include <iskin.h>
 #include <triobj.h>
