@@ -447,6 +447,16 @@ namespace UTJ.MeshSync
                     src.WriteToFile(path);
                     AssetDatabase.ImportAsset(path);
                     texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+
+                    if (texture != null)
+                    {
+                        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                        if (importer != null)
+                        {
+                            if (src.type == TextureType.NormalMap)
+                                importer.textureType = TextureImporterType.NormalMap;
+                        }
+                    }
 #endif
                 }
                 else
