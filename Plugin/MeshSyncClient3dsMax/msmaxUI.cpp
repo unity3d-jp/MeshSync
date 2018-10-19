@@ -304,6 +304,12 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             }
         };
 
+        auto notify_scene_update = []() {
+            auto& self = msmaxInstance();
+            self.onSceneUpdated();
+            self.update();
+        };
+
         switch (cid) {
         case IDC_EDIT_SERVER:
             handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
@@ -319,39 +325,72 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_EDIT_SCALE_FACTOR:
-            handle_edit([&]() { s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor); });
+            handle_edit([&]() {
+                s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_MESHES:
-            handle_button([&]() { s.sync_meshes = CtrlIsChecked(IDC_CHECK_MESHES); });
+            handle_button([&]() {
+                s.sync_meshes = CtrlIsChecked(IDC_CHECK_MESHES);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_NORMALS:
-            handle_button([&]() { s.sync_normals = CtrlIsChecked(IDC_CHECK_NORMALS); });
+            handle_button([&]() {
+                s.sync_normals = CtrlIsChecked(IDC_CHECK_NORMALS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_UVS:
-            handle_button([&]() { s.sync_uvs = CtrlIsChecked(IDC_CHECK_UVS); });
+            handle_button([&]() {
+                s.sync_uvs = CtrlIsChecked(IDC_CHECK_UVS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_COLORS:
-            handle_button([&]() { s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS); });
+            handle_button([&]() {
+                s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_BAKEMODIFIERS:
-            handle_button([&]() { s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKEMODIFIERS); });
+            handle_button([&]() {
+                s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKEMODIFIERS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_BLENDSHAPES:
-            handle_button([&]() { s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES); });
+            handle_button([&]() {
+                s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_BONES:
-            handle_button([&]() { s.sync_bones = CtrlIsChecked(IDC_CHECK_BONES); });
+            handle_button([&]() {
+                s.sync_bones = CtrlIsChecked(IDC_CHECK_BONES);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_CAMERAS:
-            handle_button([&]() { s.sync_cameras = CtrlIsChecked(IDC_CHECK_CAMERAS); });
+            handle_button([&]() {
+                s.sync_cameras = CtrlIsChecked(IDC_CHECK_CAMERAS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_LIGHTS:
-            handle_button([&]() { s.sync_lights = CtrlIsChecked(IDC_CHECK_LIGHTS); });
+            handle_button([&]() {
+                s.sync_lights = CtrlIsChecked(IDC_CHECK_LIGHTS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_AUTO_SYNC:
-            handle_button([&]() { s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC); });
-            msmaxInstance().update();
+            handle_button([&]() {
+                s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC);
+                notify_scene_update();
+            });
             break;
+
         case IDC_EDIT_ANIMATION_TIME_SCALE:
             handle_edit([&]() {
                 float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);

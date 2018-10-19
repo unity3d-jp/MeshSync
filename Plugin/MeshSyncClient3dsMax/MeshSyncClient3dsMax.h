@@ -123,7 +123,7 @@ private:
     bool extractCameraData(ms::Camera& dst, INode *n, Object *obj);
     bool extractLightData(ms::Light& dst, INode *n, Object *obj);
     bool extractMeshData(ms::Mesh& dst, INode *n, Object *obj);
-    void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh &mesh);
+    void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
     ms::Animation* exportAnimations(INode *node, bool force);
     void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
