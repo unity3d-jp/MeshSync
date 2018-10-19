@@ -529,14 +529,23 @@ ms::Transform* MeshSyncClient3dsMax::exportObject(INode * n, bool force)
     return ret.get();
 }
 
+static mu::float4x4 GetPivotMatrix(INode *n)
+{
+    auto t = to_float3(n->GetObjOffsetPos());
+    auto r = to_quatf(n->GetObjOffsetRot());
+    return mu::transform(t, r, mu::float3::one());
+}
 
 static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     auto mat = to_float4x4(n->GetNodeTM(t));
+
+    // handle parents
     if (auto parent = n->GetParentNode()) {
         auto pmat = to_float4x4(parent->GetNodeTM(t));
         mat *= mu::invert(pmat);
     }
+
     pos = mu::extract_position(mat);
     rot = mu::extract_rotation(mat);
     scale = mu::extract_scale(mat);
@@ -757,6 +766,10 @@ bool MeshSyncClient3dsMax::extractMeshData(ms::Mesh & dst, INode * n, Object *ob
 
 void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode * n, Mesh & mesh)
 {
+    // handle pivot
+    dst.refine_settings.flags.apply_local2world = 1;
+    dst.refine_settings.local2world = GetPivotMatrix(n);
+
     // faces
     int num_faces = mesh.numFaces;
     int num_indices = num_faces * 3; // all faces in Mesh are triangle

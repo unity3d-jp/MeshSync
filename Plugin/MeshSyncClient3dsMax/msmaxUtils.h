@@ -33,6 +33,10 @@ inline mu::float4 to_color(const Point3& v)
 {
     return { v.x, v.y, v.z, 1.0f };
 }
+inline mu::quatf to_quatf(const Quat& v)
+{
+    return { v.x, v.y, v.z, v.w };
+}
 
 inline mu::float4x4 to_float4x4(const Matrix3& v)
 {
