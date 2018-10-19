@@ -19,7 +19,16 @@ namespace UTJ.MeshSync
         UpdateInProgress,
         UpdateEnd,
     }
-    public delegate void SceneEventHandler(SceneEventType e, params object[] args);
+
+    public class SceneUpdateArgs
+    {
+        public List<GameObject> gameObjects;
+        public List<Texture> textures;
+        public List<Material> materials;
+        public List<AnimationClip> animations;
+    }
+
+    public delegate void SceneEventHandler(SceneEventType e, object arg);
     #endregion
 
     [ExecuteInEditMode]
@@ -61,20 +70,24 @@ namespace UTJ.MeshSync
         [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector][SerializeField] int[] m_objIDTable_values;
 
+        List<GameObject> m_tmpGameObjects = new List<GameObject>();
+        List<Texture> m_tmpTextures = new List<Texture>();
+        List<Material> m_tmpMaterials = new List<Material>();
+        List<AnimationClip> m_tmpAnimations = new List<AnimationClip>();
         Dictionary<GameObject, AnimationClip> m_animClipCache;
-#endregion
+        #endregion
 
-#region properties
+        #region properties
         public static string version { get { return S(msServerGetVersion()); } }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
         public List<TextureHolder> textureData { get { return m_textureList; } }
-#endregion
+        #endregion
 
-#region impl
-        void FireEvent(SceneEventType t, params object[] args)
+        #region impl
+        void FireEvent(SceneEventType t, object arg = null)
         {
             if (sceneEvents != null)
-                sceneEvents(t, args);
+                sceneEvents(t, arg);
         }
 
 #if UNITY_EDITOR
@@ -303,6 +316,11 @@ namespace UTJ.MeshSync
 
         void OnRecvSet(SetMessage mes)
         {
+            m_tmpTextures.Clear();
+            m_tmpMaterials.Clear();
+            m_tmpGameObjects.Clear();
+            m_tmpAnimations.Clear();
+
             var scene = mes.scene;
 
             // sync textures
@@ -329,25 +347,28 @@ namespace UTJ.MeshSync
                 int numObjects = scene.numObjects;
                 for (int i = 0; i < numObjects; ++i)
                 {
+                    Component dst = null;
                     var obj = scene.GetObject(i);
                     switch(obj.type)
                     {
                         case TransformData.Type.Transform:
-                            UpdateTransform(obj);
+                            dst = UpdateTransform(obj);
                             break;
                         case TransformData.Type.Camera:
-                            UpdateCamera((CameraData)obj._this);
+                            dst = UpdateCamera((CameraData)obj._this);
                             break;
                         case TransformData.Type.Light:
-                            UpdateLight((LightData)obj._this);
+                            dst = UpdateLight((LightData)obj._this);
                             break;
                         case TransformData.Type.Mesh:
-                            UpdateMesh((MeshData)obj._this);
+                            dst = UpdateMesh((MeshData)obj._this);
                             break;
                         case TransformData.Type.Points:
-                            UpdatePoints((PointsData)obj._this);
+                            dst = UpdatePoints((PointsData)obj._this);
                             break;
                     }
+                    if (dst != null)
+                        m_tmpGameObjects.Add(dst.gameObject);
                 }
             }
             catch (Exception e) { Debug.LogError(e); }
@@ -396,7 +417,13 @@ namespace UTJ.MeshSync
             if(m_progressiveDisplay)
                 ForceRepaint();
 
-            FireEvent(SceneEventType.UpdateInProgress);
+            var args = new SceneUpdateArgs {
+                gameObjects = m_tmpGameObjects,
+                textures = m_tmpTextures,
+                materials = m_tmpMaterials,
+                animations = m_tmpAnimations,
+            };
+            FireEvent(SceneEventType.UpdateInProgress, args);
         }
 
         void DestroyIfNotAsset(UnityEngine.Object obj)
@@ -481,6 +508,7 @@ namespace UTJ.MeshSync
                         m_textureList.Add(dst);
                     }
                     dst.texture = texture;
+                    m_tmpTextures.Add(texture);
                 }
             }
         }
@@ -488,7 +516,6 @@ namespace UTJ.MeshSync
         void UpdateMaterials(SceneData scene)
         {
             int numMaterials = scene.numMaterials;
-
             bool needsUpdate = false;
             if(m_materialList.Count != numMaterials)
             {
@@ -623,6 +650,7 @@ namespace UTJ.MeshSync
                 }
 
                 newlist.Add(dst);
+                m_tmpMaterials.Add(dst.material);
             }
 
             if (needsUpdate) {
@@ -631,11 +659,11 @@ namespace UTJ.MeshSync
             }
         }
 
-        void UpdateMesh(MeshData data)
+        SkinnedMeshRenderer UpdateMesh(MeshData data)
         {
             var trans = UpdateTransform(data.transform);
             if (trans == null || !m_syncMeshes)
-                return;
+                return null;
 
             var data_trans = data.transform;
             var data_id = data_trans.id;
@@ -647,12 +675,12 @@ namespace UTJ.MeshSync
             if (rec == null)
             {
                 Debug.LogError("Something is wrong");
-                return;
+                return null;
             }
             else if(rec.reference != null)
             {
                 // update later on UpdateReference()
-                return;
+                return null;
             }
 
             var target = rec.go.GetComponent<Transform>();
@@ -660,7 +688,7 @@ namespace UTJ.MeshSync
 
             bool activeInHierarchy = go.activeInHierarchy;
             if (!activeInHierarchy && !data.flags.hasPoints)
-                return;
+                return null;
 
 
             // allocate material list
@@ -779,6 +807,8 @@ namespace UTJ.MeshSync
             // assign materials if needed
             if (materialsUpdated)
                 AssignMaterials(rec);
+
+            return trans.GetComponent<SkinnedMeshRenderer>();
         }
 
         PinnedList<int> m_tmpI = new PinnedList<int>();
@@ -901,11 +931,11 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
-        void UpdatePoints(PointsData data)
+        Points UpdatePoints(PointsData data)
         {
             var trans = UpdateTransform(data.transform);
             if (trans == null || !m_syncPoints)
-                return;
+                return null;
 
             // note: reference will be resolved in UpdateReference()
 
@@ -931,6 +961,7 @@ namespace UTJ.MeshSync
                 for (int di = 0; di < numData; ++di)
                     ReadPointsData(data.GetData(di), dst[di]);
             }
+            return pts;
         }
 
         void ReadPointsData(PointsCacheData src, Points.Data dst)
@@ -1309,6 +1340,7 @@ namespace UTJ.MeshSync
                 //        break;
                 //}
                 data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, im);
+                m_tmpAnimations.Add(clip);
             }
 
             if (m_animClipCache != null)
@@ -1957,6 +1989,6 @@ namespace UTJ.MeshSync
 #endif
             PollServerEvents();
         }
-#endregion
+        #endregion
     }
 }

@@ -6,9 +6,18 @@ using UTJ.MeshSync;
 [ExecuteInEditMode]
 public class SceneEventHandler : MonoBehaviour
 {
-    void OnSceneEvents(SceneEventType t, params object[] args)
+    void OnSceneEvents(SceneEventType t, object arg)
     {
         Debug.Log(t);
+
+        if(t == SceneEventType.UpdateInProgress)
+        {
+            var a = arg as SceneUpdateArgs;
+            //Debug.Log(a.textures);
+            //Debug.Log(a.materials);
+            //Debug.Log(a.gameObjects);
+            //Debug.Log(a.animations);
+        }
     }
 
     void OnEnable()
