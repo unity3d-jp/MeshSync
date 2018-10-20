@@ -12,6 +12,7 @@ uint16_t& GetPort(MeshSyncClientPlugin *plugin);
 float& GetScaleFactor(MeshSyncClientPlugin *plugin);
 bool& GetAutoSync(MeshSyncClientPlugin *plugin);
 bool& GetSyncVertexColor(MeshSyncClientPlugin *plugin);
+bool& GetSyncTextures(MeshSyncClientPlugin *plugin);
 bool& GetSyncCamera(MeshSyncClientPlugin *plugin);
 std::string& GetCameraPath(MeshSyncClientPlugin *plugin);
 bool& GetBakeSkin(MeshSyncClientPlugin *plugin);
@@ -55,6 +56,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_port.Attach(GetDlgItem(IDC_EDIT_PORT));
     m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
     m_check_vcolor.Attach(GetDlgItem(IDC_CHECK_VCOLOR));
+    m_check_textures.Attach(GetDlgItem(IDC_CHECK_TEXTURE));
     m_check_camera.Attach(GetDlgItem(IDC_CHECK_CAMERA));
     m_edit_camera_path.Attach(GetDlgItem(IDC_EDIT_CAMERA_PATH));
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));
@@ -68,6 +70,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     sprintf(buf, "%.3f", GetScaleFactor(m_plugin));
     m_edit_scale.SetWindowText(buf);
     m_check_vcolor.SetCheck(GetSyncVertexColor(m_plugin));
+    m_check_textures.SetCheck(GetSyncTextures(m_plugin));
     m_check_camera.SetCheck(GetSyncCamera(m_plugin));
     m_edit_camera_path.SetWindowText(GetCameraPath(m_plugin).c_str());
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
@@ -134,6 +137,14 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
 LRESULT CMainDlg::OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     GetSyncVertexColor(m_plugin) = m_check_vcolor.GetCheck() != 0;
+    if (!m_initializing)
+        SendAll(m_plugin);
+    return 0;
+}
+
+LRESULT CMainDlg::OnBnClickedCheckTexture(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    GetSyncTextures(m_plugin) = m_check_textures.GetCheck() != 0;
     if (!m_initializing)
         SendAll(m_plugin);
     return 0;

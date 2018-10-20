@@ -13,9 +13,9 @@ public class SceneEventHandler : MonoBehaviour
         if(t == SceneEventType.UpdateInProgress)
         {
             var a = arg as SceneUpdateArgs;
+            Debug.Log(a.gameObjects);
             //Debug.Log(a.textures);
             //Debug.Log(a.materials);
-            //Debug.Log(a.gameObjects);
             //Debug.Log(a.animations);
         }
     }

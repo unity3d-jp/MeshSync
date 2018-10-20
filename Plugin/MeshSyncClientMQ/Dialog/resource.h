@@ -8,7 +8,6 @@
 #define IDC_EDIT_PORT                   1002
 #define IDC_CHECK_AUTOSYNC              1003
 #define IDC_BUTTON_SYNC                 1004
-#define IDC_BUTTON2                     1005
 #define IDC_BUTTON_IMPORT               1005
 #define IDC_EDIT_SCALEFACTOR            1006
 #define IDC_STATIC_SCALEFACTOR          1007
@@ -17,9 +16,9 @@
 #define IDC_CHECK_BAKE_CLOTH            1010
 #define IDC_CHECK_CAMERA                1011
 #define IDC_CHECK_VCOLOR                1012
-#define IDC_STATIC_SCALEFACTOR2         1013
 #define IDC_STATIC_CAMERA_PATH          1013
 #define IDC_EDIT_CAMERA_PATH            1014
+#define IDC_CHECK_TEXTURE               1015
 
 // Next default values for new objects
 // 

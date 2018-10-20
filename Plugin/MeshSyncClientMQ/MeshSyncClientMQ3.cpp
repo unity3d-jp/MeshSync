@@ -288,6 +288,10 @@ bool& GetSyncVertexColor(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getSyncVertexColor();
 }
+bool& GetSyncTextures(MeshSyncClientPlugin *plugin)
+{
+    return plugin->getSync().getSyncTextures();
+}
 bool& GetSyncCamera(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getSyncCamera();
