@@ -300,14 +300,16 @@ MQSync& MeshSyncClientPlugin::getSync()
     return m_sync;
 }
 
-void MeshSyncClientPlugin::SendAll()
+void MeshSyncClientPlugin::SendAll(bool only_when_autosync)
 {
-    Execute(&MeshSyncClientPlugin::SendAllImpl);
+    if (!only_when_autosync || m_sync.getAutoSync())
+        Execute(&MeshSyncClientPlugin::SendAllImpl);
 }
 
-void MeshSyncClientPlugin::SendCamera()
+void MeshSyncClientPlugin::SendCamera(bool only_when_autosync)
 {
-    Execute(&MeshSyncClientPlugin::SendCameraImpl);
+    if (!only_when_autosync || m_sync.getAutoSync())
+        Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 
 void MeshSyncClientPlugin::Import()

@@ -17,8 +17,8 @@ bool& GetSyncCamera(MeshSyncClientPlugin *plugin);
 std::string& GetCameraPath(MeshSyncClientPlugin *plugin);
 bool& GetBakeSkin(MeshSyncClientPlugin *plugin);
 bool& GetBakeCloth(MeshSyncClientPlugin *plugin);
-void SendAll(MeshSyncClientPlugin *plugin);
-void SendCamera(MeshSyncClientPlugin *plugin);
+void SendAll(MeshSyncClientPlugin *plugin, bool only_when_autosync);
+void SendCamera(MeshSyncClientPlugin *plugin, bool only_when_autosync);
 void Import(MeshSyncClientPlugin *plugin);
 void CloseWindow(MeshSyncClientPlugin *plugin);
 
@@ -129,7 +129,7 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
     if (scale != 0.0) {
         GetScaleFactor(m_plugin) = (float)scale;
         if (!m_initializing)
-            SendAll(m_plugin);
+            SendAll(m_plugin, true);
     }
     return 0;
 }
@@ -138,7 +138,7 @@ LRESULT CMainDlg::OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 {
     GetSyncVertexColor(m_plugin) = m_check_vcolor.GetCheck() != 0;
     if (!m_initializing)
-        SendAll(m_plugin);
+        SendAll(m_plugin, true);
     return 0;
 }
 
@@ -146,7 +146,7 @@ LRESULT CMainDlg::OnBnClickedCheckTexture(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 {
     GetSyncTextures(m_plugin) = m_check_textures.GetCheck() != 0;
     if (!m_initializing)
-        SendAll(m_plugin);
+        SendAll(m_plugin, true);
     return 0;
 }
 
@@ -154,7 +154,7 @@ LRESULT CMainDlg::OnBnClickedCheckCamera(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 {
     GetSyncCamera(m_plugin) = m_check_camera.GetCheck() != 0;
     if (m_check_camera.GetCheck() != 0 && !m_initializing) {
-        SendCamera(m_plugin);
+        SendCamera(m_plugin, true);
     }
     return 0;
 }
@@ -172,17 +172,16 @@ LRESULT CMainDlg::OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
 LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
     GetAutoSync(m_plugin) = m_check_autosync.GetCheck() != 0;
-    if (m_check_autosync.GetCheck() != 0)
-        SendAll(m_plugin);
+    SendAll(m_plugin, true);
     return 0;
 }
-
 
 LRESULT CMainDlg::OnBnClickedButtonSync(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    SendAll(m_plugin);
+    SendAll(m_plugin, false);
     return 0;
 }
+
 
 LRESULT CMainDlg::OnBnClickedCheckBakeSkin(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {

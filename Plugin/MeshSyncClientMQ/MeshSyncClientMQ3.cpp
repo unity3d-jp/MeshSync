@@ -237,14 +237,16 @@ bool& MeshSyncClientPlugin::getActive()
     return m_active;
 }
 
-void MeshSyncClientPlugin::SendAll()
+void MeshSyncClientPlugin::SendAll(bool only_when_autosync)
 {
-    Execute(&MeshSyncClientPlugin::SendAllImpl);
+    if (!only_when_autosync || m_sync.getAutoSync())
+        Execute(&MeshSyncClientPlugin::SendAllImpl);
 }
 
-void MeshSyncClientPlugin::SendCamera()
+void MeshSyncClientPlugin::SendCamera(bool only_when_autosync)
 {
-    Execute(&MeshSyncClientPlugin::SendCameraImpl);
+    if (!only_when_autosync || m_sync.getAutoSync())
+        Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 
 void MeshSyncClientPlugin::Import()
@@ -312,13 +314,13 @@ float& GetScaleFactor(MeshSyncClientPlugin *plugin)
 {
     return plugin->getSync().getScaleFactor();
 }
-void SendAll(MeshSyncClientPlugin *plugin)
+void SendAll(MeshSyncClientPlugin *plugin, bool only_when_autosync)
 {
-    plugin->SendAll();
+    plugin->SendAll(only_when_autosync);
 }
-void SendCamera(MeshSyncClientPlugin *plugin)
+void SendCamera(MeshSyncClientPlugin *plugin, bool only_when_autosync)
 {
-    plugin->SendCamera();
+    plugin->SendCamera(only_when_autosync);
 }
 void Import(MeshSyncClientPlugin *plugin)
 {

@@ -85,8 +85,8 @@ public:
     MQSync& getSync();
     bool& getActive();
 
-    void SendAll();
-    void SendCamera();
+    void SendAll(bool only_when_autosync);
+    void SendCamera(bool only_when_autosync);
     void Import();
 
 private:
