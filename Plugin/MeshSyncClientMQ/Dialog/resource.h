@@ -18,7 +18,7 @@
 #define IDC_CHECK_VCOLOR                1012
 #define IDC_STATIC_CAMERA_PATH          1013
 #define IDC_EDIT_CAMERA_PATH            1014
-#define IDC_CHECK_TEXTURE               1015
+#define IDC_CHECK_TEXTURES              1015
 
 // Next default values for new objects
 // 

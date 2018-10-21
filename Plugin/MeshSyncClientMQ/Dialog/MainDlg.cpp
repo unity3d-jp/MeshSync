@@ -56,7 +56,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_port.Attach(GetDlgItem(IDC_EDIT_PORT));
     m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
     m_check_vcolor.Attach(GetDlgItem(IDC_CHECK_VCOLOR));
-    m_check_textures.Attach(GetDlgItem(IDC_CHECK_TEXTURE));
+    m_check_textures.Attach(GetDlgItem(IDC_CHECK_TEXTURES));
     m_check_camera.Attach(GetDlgItem(IDC_CHECK_CAMERA));
     m_edit_camera_path.Attach(GetDlgItem(IDC_EDIT_CAMERA_PATH));
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));

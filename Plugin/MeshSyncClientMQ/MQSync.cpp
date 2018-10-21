@@ -76,10 +76,6 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
 
     m_pending_send_meshes = false;
-    m_meshes.clear();
-    m_textures_to_send.clear();
-    m_materials.clear();
-    m_bones.clear();
 
     {
         int nobj = doc->GetObjectCount();
@@ -279,12 +275,16 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.materials = m_materials;
             set.scene.textures = m_textures_to_send;
+            set.scene.materials = m_materials;
             for (auto& pair : m_bones) {
                 set.scene.objects.push_back(pair.second.transform);
             }
             client.send(set);
+
+            m_textures_to_send.clear();
+            m_materials.clear();
+            m_bones.clear();
         }
 
         // send meshes one by one to Unity can respond quickly
@@ -294,6 +294,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             set.scene.objects = { rel.data };
             client.send(set);
         };
+        m_meshes.clear();
 
         // detect deleted objects and send delete message
         {

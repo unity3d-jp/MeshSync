@@ -27,6 +27,7 @@
 #define IDC_CHECK_COLORS                1021
 #define IDC_CHECK_BLENDSHAPES           1022
 #define IDC_CHECK_BAKEMODIFIERS         1023
+#define IDC_CHECK_TEXTURES              1024
 
 // Next default values for new objects
 // 
