@@ -613,4 +613,16 @@ float3 BM_loop_calc_face_normal(const BMLoop& l)
     return (float3&)r_normal;
 }
 
+std::string abspath(const std::string& path)
+{
+    py::object local = py::dict();
+    local["path"] = py::str(path);
+    py::eval<py::eval_mode::eval_statements>(
+        "import bpy.path;"
+        "ret = bpy.path.abspath(path);"
+        , py::object(), local);
+    py::str ret = local["ret"];
+    return ret;
+}
+
 } // namespace blender

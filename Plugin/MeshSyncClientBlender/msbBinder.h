@@ -8,6 +8,7 @@ namespace blender
     int CustomData_number_of_layers(const CustomData& data, int type);
     int CustomData_get_offset(const CustomData& data, int type);
     float3 BM_loop_calc_face_normal(const BMLoop& l);
+    std::string abspath(const std::string& path);
 
 
     struct ListHeader { ListHeader *next, *prev; };

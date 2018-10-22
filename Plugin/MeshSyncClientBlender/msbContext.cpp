@@ -78,7 +78,7 @@ int msbContext::exportTexture(const std::string & path, ms::TextureType type)
         tex->id = -1;
     }
 
-    return -1;
+    return tex->id;
 }
 
 ms::MaterialPtr msbContext::addMaterial(Material * mat)
@@ -97,12 +97,14 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
         }
         ret->setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
 
-        auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
-            if (!mtex || !mtex->tex || !mtex->tex->ima)
-                return -1;
-            return exportTexture(mtex->tex->ima->name, type);
-        };
-        //ret->setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
+        if (m_settings.sync_textures) {
+            auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
+                if (!mtex || !mtex->tex || !mtex->tex->ima)
+                    return -1;
+                return exportTexture(bl::abspath(mtex->tex->ima->name), type);
+            };
+            ret->setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
+        }
     }
     m_materials.push_back(ret);
     return ret;
