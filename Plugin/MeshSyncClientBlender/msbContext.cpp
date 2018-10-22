@@ -207,22 +207,27 @@ void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
                 return;
             }
         }
-        else {
-            // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
-            // todo: calculate normals by myself to be multi-threaded
-            if (m_settings.calc_per_index_normals)
-                bmesh.calc_normals_split();
-        }
     }
 
     // transform
     extractTransformData(dst, src);
 
-    // bake modifiers if needed
     Mesh *data = (Mesh*)src->data;
-    if (m_settings.sync_meshes && !is_editing && m_settings.bake_modifiers) {
-        data = bobj.to_mesh(bl::BContext::get().scene());
-        m_tmp_bmeshes.push_back(data);
+    if (m_settings.sync_meshes) {
+        // bake modifiers
+        if (!is_editing && m_settings.bake_modifiers) {
+            // make baked meshes
+            data = bobj.to_mesh(bl::BContext::get().scene());
+            m_tmp_bmeshes.push_back(data); // need to delete baked meshes later
+        }
+
+        // calculate per index normals
+        // note: when bake_modifiers is enabled, it is done for baked meshes
+        if (m_settings.calc_per_index_normals) {
+            // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
+            // todo: calculate normals by myself to be multi-threaded
+            bl::BMesh(data).calc_normals_split();
+        }
     }
 
     auto task = [this, &dst, src, data]() {
@@ -266,38 +271,41 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
 
 void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
-    dst.refine_settings.flags.swap_faces = true;
+    if (m_settings.sync_meshes) {
+        bl::BObject bobj(obj);
+        bl::BMesh bmesh(data);
+        bool is_editing = bmesh.ptr()->edit_btmesh;
 
-    bl::BObject bobj(obj);
-    bl::BMesh bmesh(data);
+        dst.refine_settings.flags.swap_faces = true;
+        if (is_editing) {
+            doExtractEditMeshData(dst, obj, data);
+        }
+        else {
+            doExtractNonEditMeshData(dst, obj, data);
+        }
 
-    if (!m_settings.bake_modifiers && !m_settings.sync_meshes && m_settings.sync_blendshapes) {
-        doExtractBlendshapeWeights(dst, obj, data);
-    }
-    else if (bmesh.ptr()->edit_btmesh) {
-        doExtractEditMeshData(dst, obj, data);
-    }
-    else {
-        doExtractNonEditMeshData(dst, obj, data);
-    }
-
-    if (!m_settings.bake_modifiers) {
-        // mirror
-        if (auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
-            if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
-            if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
-            if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
-            if (mirror->mirror_ob) {
-                dst.refine_settings.flags.mirror_basis = 1;
-                float4x4 wm = bobj.matrix_world();
-                float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
-                dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
+        if (!m_settings.bake_modifiers && !is_editing) {
+            // mirror
+            if (auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
+                if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
+                if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
+                if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+                if (mirror->mirror_ob) {
+                    dst.refine_settings.flags.mirror_basis = 1;
+                    float4x4 wm = bobj.matrix_world();
+                    float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
+                    dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
+                }
             }
         }
+        dst.convertHandedness_Mesh(false, true);
+        dst.convertHandedness_BlendShapes(false, true);
     }
-
-    dst.convertHandedness_Mesh(false, true);
-    dst.convertHandedness_BlendShapes(false, true);
+    else {
+        if (!m_settings.bake_modifiers && m_settings.sync_blendshapes) {
+            doExtractBlendshapeWeights(dst, obj, data);
+        }
+    }
 }
 
 void msbContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data)
