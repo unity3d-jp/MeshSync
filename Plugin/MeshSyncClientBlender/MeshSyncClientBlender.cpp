@@ -57,6 +57,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_blendshapes,
                 [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
                 [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
+            BindProperty(sync_textures,
+                [](const msbContext& self) { return self.getSettings().sync_textures; },
+                [](msbContext& self, bool v) { self.getSettings().sync_textures = v; })
             BindProperty(sync_cameras,
                 [](const msbContext& self) { return self.getSettings().sync_cameras; },
                 [](msbContext& self, bool v) { self.getSettings().sync_cameras = v; })
@@ -69,6 +72,10 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(animation_interval,
                 [](const msbContext& self) { return self.getSettings().animation_frame_interval; },
                 [](msbContext& self, int v) { self.getSettings().animation_frame_interval = v; })
+
+            BindProperty(dbg_force_single_threaded,
+                [](const msbContext& self) { return self.getSettings().dbg_force_single_threaded; },
+                [](msbContext& self, int v) { self.getSettings().dbg_force_single_threaded = v; })
             ;
     }
 #undef BindMethod

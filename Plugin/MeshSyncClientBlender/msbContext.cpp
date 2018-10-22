@@ -59,6 +59,28 @@ void msbContext::addDeleted(const std::string& path)
 }
 
 
+int msbContext::exportTexture(const std::string & path, ms::TextureType type)
+{
+    auto& tex = m_textures[path];
+    if (tex)
+        return tex->id;
+
+    tex = ms::Texture::create();
+    auto& data = tex->data;
+    if (ms::FileToByteArray(path.c_str(), data)) {
+        tex->id = ++m_texture_id_seed;
+        tex->name = mu::GetFilename(path.c_str());
+        tex->format = ms::TextureFormat::RawFile;
+        tex->type = type;
+        m_textures_to_send.push_back(tex);
+    }
+    else {
+        tex->id = -1;
+    }
+
+    return -1;
+}
+
 ms::MaterialPtr msbContext::addMaterial(Material * mat)
 {
     auto ret = ms::Material::create();
@@ -74,6 +96,13 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
             }
         }
         ret->setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
+
+        auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
+            if (!mtex || !mtex->tex || !mtex->tex->ima)
+                return -1;
+            return exportTexture(mtex->tex->ima->name, type);
+        };
+        //ret->setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
     }
     m_materials.push_back(ret);
     return ret;
@@ -163,8 +192,8 @@ void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
     bool is_editing = false;
     bl::BObject bobj(src);
 
-    // check if mesh is dirty
-    {
+    if (m_settings.sync_meshes) {
+        // check if mesh is dirty
         bl::BMesh bmesh(bobj.data());
         if (bmesh.ptr()->edit_btmesh) {
             is_editing = true;
@@ -176,31 +205,32 @@ void msbContext::extractMeshData(ms::Mesh& dst, Object *src)
                 return;
             }
         }
+        else {
+            // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
+            // todo: calculate normals by myself to be multi-threaded
+            if (m_settings.calc_per_index_normals)
+                bmesh.calc_normals_split();
+        }
     }
 
     // transform
     extractTransformData(dst, src);
 
     // bake modifiers if needed
-    Mesh *data = nullptr;
-    if (!is_editing && m_settings.bake_modifiers) {
+    Mesh *data = (Mesh*)src->data;
+    if (m_settings.sync_meshes && !is_editing && m_settings.bake_modifiers) {
         data = bobj.to_mesh(bl::BContext::get().scene());
         m_tmp_bmeshes.push_back(data);
-    }
-    else {
-        data = (Mesh*)src->data;
     }
 
     auto task = [this, &dst, src, data]() {
         doExtractMeshData(dst, src, data);
     };
-#ifdef msDebug
-    // force single-threaded
-    task();
-#else
-    // add async task
-    m_extract_tasks.push_back(task);
-#endif
+
+    if(m_settings.dbg_force_single_threaded)
+        task();
+    else
+        m_extract_tasks.push_back(task);
 }
 
 void msbContext::exportMaterials()
@@ -239,15 +269,13 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     bl::BObject bobj(obj);
     bl::BMesh bmesh(data);
 
-    if (bmesh.ptr()->edit_btmesh) {
+    if (!m_settings.bake_modifiers && !m_settings.sync_meshes && m_settings.sync_blendshapes) {
+        doExtractBlendshapeWeights(dst, obj, data);
+    }
+    else if (bmesh.ptr()->edit_btmesh) {
         doExtractEditMeshData(dst, obj, data);
     }
     else {
-        // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
-        // todo: calculate normals by myself to be multi-threaded
-        if (m_settings.calc_per_index_normals)
-            bmesh.calc_normals_split();
-
         doExtractNonEditMeshData(dst, obj, data);
     }
 
@@ -268,6 +296,27 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 
     dst.convertHandedness_Mesh(false, true);
     dst.convertHandedness_BlendShapes(false, true);
+}
+
+void msbContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data)
+{
+    auto& mesh = *data;
+    if (!m_settings.bake_modifiers) {
+        // blend shapes
+        if (m_settings.sync_blendshapes && mesh.key) {
+            RawVector<float3> basis;
+            int bi = 0;
+            each_key(&mesh, [&](const KeyBlock *kb) {
+                if (bi == 0) { // Basis
+                }
+                else {
+                    auto bsd = dst.addBlendShape(kb->name);
+                    bsd->weight = kb->curval * 100.0f;
+                }
+                ++bi;
+            });
+        }
+    }
 }
 
 void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
@@ -587,7 +636,7 @@ ms::TransformPtr msbContext::exportObject(Object * obj, bool force)
     case OB_MESH:
     {
         exportObject(obj->parent, true);
-        if (m_settings.sync_meshes) {
+        if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
             auto dst = addMesh(get_path(obj));
             extractMeshData(*dst, obj);
             ret = dst;
@@ -1089,12 +1138,14 @@ void msbContext::kickAsyncSend()
             {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
-                set.scene.objects = m_objects;
+                set.scene.textures = m_textures_to_send;
                 set.scene.materials = m_materials;
+                set.scene.objects = m_objects;
                 client.send(set);
 
-                m_objects.clear();
+                m_textures_to_send.clear();
                 m_materials.clear();
+                m_objects.clear();
             }
         }
 

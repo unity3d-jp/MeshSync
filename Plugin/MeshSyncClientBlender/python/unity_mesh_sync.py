@@ -30,6 +30,7 @@ def msb_apply_settings(self = None, context = None):
     ctx.bake_modifiers = scene.meshsync_bake_modifiers
     ctx.sync_bones = scene.meshsync_sync_bones
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
+    ctx.sync_textures = scene.meshsync_sync_textures
     ctx.sync_cameras = scene.meshsync_sync_cameras
     ctx.sync_lights = scene.meshsync_sync_lights
     ctx.animation_ts = scene.meshsync_animation_ts
@@ -46,8 +47,9 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs")
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = True, name = "Colors")
     bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(default = False, name = "Bake Modifiers")
-    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Bones")
-    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Blend Shapes")
+    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Sync Bones")
+    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Sync Blend Shapes")
+    bpy.types.Scene.meshsync_sync_textures = bpy.props.BoolProperty(default = True, name = "Sync Textures")
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras")
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights")
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync")
@@ -85,6 +87,7 @@ class MeshSyncScenePanel(bpy.types.Panel):
             b.prop(scene, 'meshsync_bake_modifiers')
         self.layout.prop(scene, 'meshsync_sync_bones')
         self.layout.prop(scene, 'meshsync_sync_blendshapes')
+        self.layout.prop(scene, 'meshsync_sync_textures')
         self.layout.prop(scene, 'meshsync_sync_cameras')
         self.layout.prop(scene, 'meshsync_sync_lights')
         self.layout.separator()

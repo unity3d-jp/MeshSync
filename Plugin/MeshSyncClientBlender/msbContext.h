@@ -19,12 +19,15 @@ struct msbSettings
     bool bake_modifiers = false;
     bool sync_bones = true;
     bool sync_blendshapes = true;
+    bool sync_textures = true;
     bool sync_cameras = true;
     bool sync_lights = true;
     bool calc_per_index_normals = true;
 
     float animation_timescale = 1.0f;
     int animation_frame_interval = 10;
+
+    bool dbg_force_single_threaded = false;
 };
 
 
@@ -86,6 +89,7 @@ private:
     ms::MeshPtr         addMesh(std::string path);
     void                addDeleted(const std::string& path);
     ms::MaterialPtr     addMaterial(Material *material);
+    int                 exportTexture(const std::string & path, ms::TextureType type);
 
     int getMaterialID(const Material *mat);
     void extractTransformData(ms::Transform& dst, Object *obj);
@@ -103,9 +107,10 @@ private:
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
 
-    void doExtractMeshData(ms::Mesh& mesh, Object *obj, Mesh *data);
-    void doExtractNonEditMeshData(ms::Mesh& mesh, Object *obj, Mesh *data);
-    void doExtractEditMeshData(ms::Mesh& mesh, Object *obj, Mesh *data);
+    void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
+    void doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data);
+    void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
+    void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
 
     void exportAnimation(Object *obj, bool force, const std::string base_path="");
     void extractTransformAnimationData(ms::Animation& dst, void *obj);
@@ -128,6 +133,10 @@ private:
     std::vector<std::string> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;
     std::vector<Mesh*> m_tmp_bmeshes;
+
+    int m_texture_id_seed = 0;
+    std::map<std::string, ms::TexturePtr> m_textures;
+    std::vector<ms::TexturePtr> m_textures_to_send;
 
     std::future<void> m_send_future;
 
