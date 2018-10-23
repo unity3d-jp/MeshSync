@@ -45,6 +45,7 @@ global proc UnityMeshSync_GUI()
         setParent ..;
     checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
     checkBox -label "Sync Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
+    checkBox -label "Sync Textures" -value $syncTextures -cc "umsCBSyncTextures" umsCtrlSyncTextures;
 
     checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
     checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
@@ -132,6 +133,12 @@ global proc umsCBSyncBones()
 {
     int $v = `checkBox -q -value umsCtrlSyncBones`;
     string $ret = `UnityMeshSync_Settings -syncBones $v`;
+}
+
+global proc umsCBSyncTextures()
+{
+    int $v = `checkBox -q -value umsCtrlSyncTextures`;
+    string $ret = `UnityMeshSync_Settings -syncTextures $v`;
 }
 
 global proc umsCBSyncCameras()

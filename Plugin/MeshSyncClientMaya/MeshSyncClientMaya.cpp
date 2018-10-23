@@ -626,14 +626,14 @@ void MeshSyncClientMaya::kickAsyncSend()
         {
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
-            set.scene.objects = m_objects;
-            set.scene.textures = m_textures;
+            set.scene.textures = m_textures_to_send;
             set.scene.materials = m_materials;
+            set.scene.objects = m_objects;
             client.send(set);
 
-            m_objects.clear();
-            m_textures.clear();
+            m_textures_to_send.clear();
             m_materials.clear();
+            m_objects.clear();
         }
 
         // send meshes one by one to Unity can respond quickly

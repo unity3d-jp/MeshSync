@@ -5,6 +5,78 @@
 #include "msmayaCommands.h"
 
 
+static inline double GetDoubleValue(MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0f)
+{
+    MString name = plug_name;
+    name += color_name;
+    auto plug = fn.findPlug(name);
+    if (!plug.isNull()) {
+        double ret = 0.0;
+        plug.getValue(ret);
+        return ret;
+    }
+    else {
+        return def;
+    }
+}
+
+static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu::float4& color, std::string& texpath)
+{
+    MPlug plug = fn.findPlug(plug_name);
+    if (!plug)
+        return false;
+
+    MPlugArray connected;
+    plug.connectedTo(connected, true, false);
+    for (int i = 0; i != connected.length(); ++i) {
+        if (connected[i].node().apiType() == MFn::kFileTexture) {
+            MFnDependencyNode fn_tex(connected[i].node());
+            MPlug ftn = fn_tex.findPlug("ftn");
+            MString path;
+            ftn.getValue(path);
+
+            texpath = path.asChar();
+            break;
+        }
+    }
+
+    if (texpath.empty()) {
+        color = {
+            (float)GetDoubleValue(fn, plug_name, "R"),
+            (float)GetDoubleValue(fn, plug_name, "G"),
+            (float)GetDoubleValue(fn, plug_name, "B"),
+            1.0f,
+        };
+    }
+    else {
+        color = mu::float4::one();
+    }
+
+    return true;
+}
+
+int MeshSyncClientMaya::exportTexture(const std::string& path, ms::TextureType type)
+{
+    auto& tex = m_textures[path];
+    if (tex)
+        return tex->id;
+
+    tex = ms::Texture::create();
+    auto& data = tex->data;
+    if (ms::FileToByteArray(path.c_str(), data)) {
+        tex->id = ++m_texture_id_seed;
+        tex->name = mu::GetFilename(path.c_str());
+        tex->format = ms::TextureFormat::RawFile;
+        tex->type = type;
+        m_textures_to_send.push_back(tex);
+    }
+    else {
+        tex->id = -1;
+    }
+
+    return tex->id;
+}
+
 void MeshSyncClientMaya::exportMaterials()
 {
     m_material_id_table.clear();
@@ -16,7 +88,16 @@ void MeshSyncClientMaya::exportMaterials()
         auto tmp = ms::Material::create();
         tmp->name = fn.name().asChar();
         tmp->id = (int)m_material_id_table.size();
-        tmp->setColor(to_float4(fn.color()));
+
+        {
+            mu::float4 color;
+            std::string texpath;
+            if (GetColorAndTexture(fn, "color", color, texpath)) {
+                tmp->setColor(color);
+                if (m_settings.sync_textures)
+                    tmp->setColorMap(exportTexture(texpath));
+            }
+        }
 
         m_material_id_table.push_back(fn.name());
         m_materials.push_back(tmp);

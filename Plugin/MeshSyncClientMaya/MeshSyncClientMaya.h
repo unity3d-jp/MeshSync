@@ -156,6 +156,7 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
+    int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     int getMaterialID(const MString& name);
     void exportMaterials();
 
@@ -186,10 +187,13 @@ private:
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
 
+    int m_texture_id_seed = 0;
+    std::map<std::string, ms::TexturePtr> m_textures;
+    std::vector<ms::TexturePtr> m_textures_to_send;
+
     std::vector<MString>                m_material_id_table;
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;
-    std::vector<ms::TexturePtr>         m_textures;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
     std::vector<ms::ConstraintPtr>      m_constraints;
