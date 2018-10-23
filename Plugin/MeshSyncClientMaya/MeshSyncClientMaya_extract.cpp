@@ -34,7 +34,7 @@ bool MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
     auto& shape = n->shape->node;
 
     ms::TransformPtr ret;
-    if (m_settings.sync_meshes && shape.hasFn(kMFnMesh)) {
+    if ((m_settings.sync_meshes || m_settings.sync_blendshapes) && shape.hasFn(kMFnMesh)) {
         exportObject(n->parent, true);
         auto dst = ms::Mesh::create();
         extractMeshData(*dst, n);
@@ -184,16 +184,57 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 
     auto task = [this, &dst, n]() {
-        if(m_settings.bake_deformers)
-            doExtractMeshDataBaked(dst, n);
-        else
-            doExtractMeshData(dst, n);
+        if (m_settings.sync_meshes) {
+            if (m_settings.bake_deformers)
+                doExtractMeshDataBaked(dst, n);
+            else
+                doExtractMeshData(dst, n);
+        }
+        else {
+            if (!m_settings.bake_deformers && m_settings.sync_blendshapes)
+                doExtractBlendshapeWeights(dst, n);
+        }
     };
     m_extract_tasks[n->shape->branches.front()].add(n, task);
 }
 
+void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
+{
+    auto& shape = n->shape->node;
+    if (!shape.hasFn(kMFnMesh)) { return; }
 
-void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape)
+    dst.visible = IsVisible(shape);
+    if (!dst.visible) { return; }
+
+    MFnMesh mmesh(shape);
+    MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
+
+    if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
+        MPlug plug_weight = fn_blendshape.findPlug("weight");
+        MPlug plug_it = fn_blendshape.findPlug("inputTarget");
+        uint32_t num_it = plug_it.evaluateNumElements();
+        for (uint32_t idx_it = 0; idx_it < num_it; ++idx_it) {
+            MPlug plug_itp(plug_it.elementByPhysicalIndex(idx_it));
+            if (plug_itp.logicalIndex() == 0) {
+                MPlug plug_itg(plug_itp.child(0)); // .inputTarget[idx_it].inputTargetGroup
+                uint32_t num_itg = plug_itg.evaluateNumElements();
+
+                for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
+                    auto dst_bs = ms::BlendShapeData::create();
+                    dst.blendshapes.push_back(dst_bs);
+                    MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
+                    dst_bs->name = plug_wc.name().asChar();
+                    plug_wc.getValue(dst_bs->weight);
+                    dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
+                }
+            }
+        }
+    }
+
+    dst.setupFlags();
+}
+
+void MeshSyncClientMaya::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape)
 {
     // get points
     {
@@ -387,7 +428,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         }
     }
 
-    doExtractMeshData(dst, fn_src_mesh, mmesh);
+    doExtractMeshDataImpl(dst, fn_src_mesh, mmesh);
 
     uint32_t vertex_count = (uint32_t)dst.points.size();
 
@@ -522,8 +563,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
 
                     MPlug plug_itgp(plug_itg.elementByPhysicalIndex(idx_itg));
-                    uint32_t delta_index = plug_itgp.logicalIndex();
-
                     MPlug plug_iti(plug_itgp.child(0)); // .inputTarget[idx_it].inputTargetGroup[idx_itg].inputTargetItem
                     uint32_t num_iti(plug_iti.evaluateNumElements());
                     for (uint32_t idx_iti = 0; idx_iti != num_iti; ++idx_iti) {
@@ -659,7 +698,7 @@ void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
         return;
     }
 
-    doExtractMeshData(dst, mmesh, mmesh);
+    doExtractMeshDataImpl(dst, mmesh, mmesh);
     dst.setupFlags();
 }
 

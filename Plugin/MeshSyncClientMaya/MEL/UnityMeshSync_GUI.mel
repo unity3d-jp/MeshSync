@@ -14,6 +14,7 @@ global proc UnityMeshSync_GUI()
     int    $bakeDeformers   = `UnityMeshSync_Settings -q -bakeDeformers`;
     int    $syncBlendShapes = `UnityMeshSync_Settings -q -syncBlendShapes`;
     int    $syncBones       = `UnityMeshSync_Settings -q -syncBones`;
+    int    $syncTextures    = `UnityMeshSync_Settings -q -syncTextures`;
     int    $syncCameras     = `UnityMeshSync_Settings -q -syncCameras`;
     int    $syncLights      = `UnityMeshSync_Settings -q -syncLights`;
     int    $autosync        = `UnityMeshSync_Settings -q -autosync`;
@@ -42,8 +43,8 @@ global proc UnityMeshSync_GUI()
         checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
         checkBox -label "Bake Deformers" -value $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
         setParent ..;
+    checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
     checkBox -label "Sync Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
-    checkBox -label "Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
 
     checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
     checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;

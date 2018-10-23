@@ -70,8 +70,9 @@ public:
         bool sync_normals = true;
         bool sync_uvs = true;
         bool sync_colors = true;
-        bool sync_bones = true;
         bool sync_blendshapes = true;
+        bool sync_bones = true;
+        bool sync_textures = true;
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
@@ -163,7 +164,8 @@ private:
     void extractCameraData(ms::Camera& dst, TreeNode *n);
     void extractLightData(ms::Light& dst, TreeNode *n);
     void extractMeshData(ms::Mesh& dst, TreeNode *n);
-    void doExtractMeshData(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape);
+    void doExtractBlendshapeWeights(ms::Mesh& dst, TreeNode *n);
+    void doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape);
     void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
     void doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n);
 

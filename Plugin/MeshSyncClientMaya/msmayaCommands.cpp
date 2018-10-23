@@ -84,6 +84,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
     syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
     syntax.addFlag("-smb", "-syncBones", MSyntax::kBoolean);
+    syntax.addFlag("-stx", "-syncTextures", MSyntax::kBoolean);
     syntax.addFlag("-sc", "-syncCameras", MSyntax::kBoolean);
     syntax.addFlag("-sl", "-syncLights", MSyntax::kBoolean);
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
@@ -119,6 +120,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncColors", settings.sync_colors);
     Handle("syncBlendShapes", settings.sync_blendshapes);
     Handle("syncBones", settings.sync_bones);
+    Handle("syncTextures", settings.sync_textures);
     Handle("syncCameras", settings.sync_cameras);
     Handle("syncLights", settings.sync_lights);
     Handle("syncConstraints", settings.sync_constraints);
