@@ -5,13 +5,28 @@
 #include "msmayaCommands.h"
 
 
-static inline double GetDoubleValue(MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0f)
+static inline double GetDoubleValue(MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0)
 {
     MString name = plug_name;
     name += color_name;
     auto plug = fn.findPlug(name);
     if (!plug.isNull()) {
         double ret = 0.0;
+        plug.getValue(ret);
+        return ret;
+    }
+    else {
+        return def;
+    }
+}
+
+static inline int GetIntValue(MFnDependencyNode& fn, const char *plug_name, const char *color_name, int def = 0)
+{
+    MString name = plug_name;
+    name += color_name;
+    auto plug = fn.findPlug(name);
+    if (!plug.isNull()) {
+        int ret = 0;
         plug.getValue(ret);
         return ret;
     }
@@ -29,14 +44,21 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
     MPlugArray connected;
     plug.connectedTo(connected, true, false);
     for (int i = 0; i != connected.length(); ++i) {
-        if (connected[i].node().apiType() == MFn::kFileTexture) {
-            MFnDependencyNode fn_tex(connected[i].node());
+        auto node = connected[i].node();
+        auto node_type = node.apiType();
+        if (node_type == kMFnFileTexture) {
+            MFnDependencyNode fn_tex(node);
             MPlug ftn = fn_tex.findPlug("ftn");
             MString path;
             ftn.getValue(path);
 
             texpath = path.asChar();
             break;
+        }
+        else if (node_type == kMFnBump) {
+            MFnDependencyNode fn_bump(node);
+            //DumpPlugInfo(fn_bump);
+            //return GetColorAndTexture(fn_bump, "bumpValue", color, texpath);
         }
     }
 
@@ -96,6 +118,10 @@ void MeshSyncClientMaya::exportMaterials()
                 tmp->setColor(color);
                 if (m_settings.sync_textures)
                     tmp->setColorMap(exportTexture(texpath));
+            }
+            if (GetColorAndTexture(fn, "normalCamera", color, texpath)) {
+                if (m_settings.sync_textures)
+                    tmp->setNormalMap(exportTexture(texpath));
             }
         }
 

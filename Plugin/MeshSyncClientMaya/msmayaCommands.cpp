@@ -104,31 +104,35 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     auto& settings = MeshSyncClientMaya::getInstance().m_settings;
 
     MString result;
-#define Handle(Name, Value)\
+
+#define Handle(Name, Value, SendIfAutosync)\
     if (args.isFlagSet(Name)) {\
         if(args.isQuery()) to_MString(result, Value);\
-        else get_arg(Value, Name, args);\
+        else {\
+            get_arg(Value, Name, args);\
+            if(settings.auto_sync && SendIfAutosync) MeshSyncClientMaya::getInstance().sendScene(MeshSyncClientMaya::SendScope::All);\
+        }\
     }
 
-    Handle("address", settings.client_settings.server);
-    Handle("port", settings.client_settings.port);
-    Handle("scaleFactor", settings.scale_factor);
-    Handle("autosync", settings.auto_sync);
-    Handle("syncMeshes", settings.sync_meshes);
-    Handle("syncNormals", settings.sync_normals);
-    Handle("syncUVs", settings.sync_uvs);
-    Handle("syncColors", settings.sync_colors);
-    Handle("syncBlendShapes", settings.sync_blendshapes);
-    Handle("syncBones", settings.sync_bones);
-    Handle("syncTextures", settings.sync_textures);
-    Handle("syncCameras", settings.sync_cameras);
-    Handle("syncLights", settings.sync_lights);
-    Handle("syncConstraints", settings.sync_constraints);
-    Handle("animationTS", settings.animation_time_scale);
-    Handle("animationSPS", settings.animation_sps);
-    Handle("applyTweak", settings.apply_tweak);
-    Handle("bakeDeformers", settings.bake_deformers);
-    Handle("multithreaded", settings.multithreaded);
+    Handle("address", settings.client_settings.server, false);
+    Handle("port", settings.client_settings.port, false);
+    Handle("scaleFactor", settings.scale_factor, true);
+    Handle("autosync", settings.auto_sync, true);
+    Handle("syncMeshes", settings.sync_meshes, true);
+    Handle("syncNormals", settings.sync_normals, true);
+    Handle("syncUVs", settings.sync_uvs, true);
+    Handle("syncColors", settings.sync_colors, true);
+    Handle("bakeDeformers", settings.bake_deformers, true);
+    Handle("applyTweak", settings.apply_tweak, true);
+    Handle("syncBlendShapes", settings.sync_blendshapes, true);
+    Handle("syncBones", settings.sync_bones, true);
+    Handle("syncTextures", settings.sync_textures, true);
+    Handle("syncCameras", settings.sync_cameras, true);
+    Handle("syncLights", settings.sync_lights, true);
+    Handle("syncConstraints", settings.sync_constraints, true);
+    Handle("animationTS", settings.animation_time_scale, false);
+    Handle("animationSPS", settings.animation_sps, false);
+    Handle("multithreaded", settings.multithreaded, false);
 #undef Handle
 
     MPxCommand::setResult(result);

@@ -90,6 +90,9 @@
 #define kMFnComponentListData   (MFn::Type)49571
 #define kMFnMeshVertComponent   (MFn::Type)49542
 #define kMFnPointArrayData      (MFn::Type)30813
+// todo
+#define kMFnFileTexture         MFn::kFileTexture
+#define kMFnBump                MFn::kBump
 
 #define kMFnConstraint          MFn::kConstraint
 #define kMFnAimConstraint       MFn::kAimConstraint
@@ -120,6 +123,8 @@
 #define kMFnComponentListData   MFn::kComponentListData
 #define kMFnMeshVertComponent   MFn::kMeshVertComponent
 #define kMFnPointArrayData      MFn::kPointArrayData
+#define kMFnFileTexture         MFn::kFileTexture
+#define kMFnBump                MFn::kBump
 
 #define kMFnConstraint          MFn::kConstraint
 #define kMFnAimConstraint       MFn::kAimConstraint

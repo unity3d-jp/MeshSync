@@ -117,5 +117,14 @@ void DumpPlugInfoImpl(MPlug plug)
     DumpPlugInfoImpl(plug, "");
     mscTrace("\n");
 }
+
+void DumpPlugInfoImpl(MFnDependencyNode& fn)
+{
+    MPlugArray connected;
+    fn.getConnections(connected);
+    for (uint32_t i = 0; i < connected.length(); ++i) {
+        DumpPlugInfoImpl(connected[i], " ");
+    }
+}
 #endif
 

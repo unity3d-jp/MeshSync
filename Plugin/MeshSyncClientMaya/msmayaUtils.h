@@ -18,7 +18,8 @@ MTime ToMTime(float seconds);
 
 #ifdef mscDebug
     void DumpPlugInfoImpl(MPlug plug);
-    #define DumpPlugInfo DumpPlugInfoImpl
+    void DumpPlugInfoImpl(MFnDependencyNode& fn);
+#define DumpPlugInfo DumpPlugInfoImpl
 #else
     #define DumpPlugInfo
 #endif
