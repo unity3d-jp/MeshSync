@@ -57,8 +57,17 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
         }
         else if (node_type == kMFnBump) {
             MFnDependencyNode fn_bump(node);
-            //DumpPlugInfo(fn_bump);
-            //return GetColorAndTexture(fn_bump, "bumpValue", color, texpath);
+            MPlug bump_interp = fn_bump.findPlug("bumpInterp");
+            if (!bump_interp.isNull()) {
+                int t = bump_interp.asInt();
+                // 0: bump
+                // 1: tangent space normals
+                // 2: object space normals
+                // send texture file only when tangent space normals
+                if (t == 1) {
+                    return GetColorAndTexture(fn_bump, "bumpValue", color, texpath);
+                }
+            }
         }
     }
 

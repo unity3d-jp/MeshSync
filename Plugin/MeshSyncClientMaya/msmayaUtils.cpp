@@ -125,6 +125,13 @@ void DumpPlugInfoImpl(MFnDependencyNode& fn)
     for (uint32_t i = 0; i < connected.length(); ++i) {
         DumpPlugInfoImpl(connected[i], " ");
     }
+
+    uint32_t num_attributes = fn.attributeCount();
+    for (uint32_t i = 0; i < num_attributes; ++i) {
+        MObject attr = fn.attribute(i);
+        MFnAttribute fn_attr(attr);
+        mscTrace(" attr %s (%s)\n", fn_attr.name().asChar(), attr.apiTypeStr());
+    }
 }
 #endif
 

@@ -82,6 +82,8 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-smn", "-syncNormals", MSyntax::kBoolean);
     syntax.addFlag("-smu", "-syncUVs", MSyntax::kBoolean);
     syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
+    syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
+    syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
     syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
     syntax.addFlag("-smb", "-syncBones", MSyntax::kBoolean);
     syntax.addFlag("-stx", "-syncTextures", MSyntax::kBoolean);
@@ -90,8 +92,6 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
     syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
     syntax.addFlag("-asp", "-animationSPS", MSyntax::kLong);
-    syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
-    syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
 
     return syntax;

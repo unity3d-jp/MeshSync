@@ -65,6 +65,7 @@
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
+#include <maya/MFnAttribute.h>
 #include <maya/MFnData.h>
 #include <maya/MFnAnimCurve.h>
 #include <maya/MFnSet.h>
