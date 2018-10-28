@@ -103,7 +103,9 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
                     return -1;
                 return exportTexture(bl::abspath(mtex->tex->ima->name), type);
             };
+#if BLENDER_VERSION < 280
             ret->setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
+#endif
         }
     }
     m_materials.push_back(ret);
@@ -720,7 +722,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *obj, const std::string & b
     dst->position = -swap_yz((float3&)group->dupli_ofs);
     dst->visible_hierarchy = is_visible(obj);
 
-    auto gobjects = bl::list_range((GroupObject*)group->gobject.first);
+    auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
     for (auto go : gobjects) {
         auto obj = go->ob;
         if (auto t = exportObject(obj, false)) {
@@ -917,7 +919,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         group_path += '/';
         group_path += (obj->dup_group->id.name + 2);
 
-        auto gobjects = bl::list_range((GroupObject*)obj->dup_group->gobject.first);
+        auto gobjects = bl::list_range((CollectionObject*)obj->dup_group->gobject.first);
         for (auto go : gobjects) {
             exportAnimation(go->ob, false, group_path);
         }

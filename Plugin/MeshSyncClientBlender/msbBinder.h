@@ -1,5 +1,9 @@
 #pragma once
 
+#if BLENDER_VERSION < 280
+    using CollectionObject = GroupObject;
+#endif
+
 namespace blender
 {
     bool ready();

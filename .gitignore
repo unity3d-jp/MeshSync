@@ -5,6 +5,7 @@
 *.user
 *.log
 *.tlog
+*.aps
 *.DS_Store
 
 *.exe
@@ -27,6 +28,7 @@
 *.unitypackage
 
 .vs/
+.mayaSwatches/
 _out/
 _tmp/
 _build_*/

@@ -1,6 +1,6 @@
 call toolchain.bat
 call :Build 2.79 35
-@rem call :Build 2.8 36
+call :Build 2.80 37
 exit /B 0
 
 :Build
