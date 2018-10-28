@@ -27,7 +27,7 @@ endif()
 
 # Blender
 option(BUILD_BLENDER2.79_CLIENT "Build MeshSyncClient for Blender 2.79" OFF)
-option(BUILD_BLENDER2.8_CLIENT "Build MeshSyncClient for Blender 2.8" OFF)
+option(BUILD_BLENDER2.80_CLIENT "Build MeshSyncClient for Blender 2.80" OFF)
 
 # Maya
 option(BUILD_MAYA2015_CLIENT "Build MeshSyncClient for Maya 2015" OFF)
@@ -79,8 +79,8 @@ endif()
 if(BUILD_BLENDER2.79_CLIENT)
     add_subdirectory_link(MeshSyncClientBlender2.79 MeshSyncClientBlender)
 endif()
-if(BUILD_BLENDER2.8_CLIENT)
-    add_subdirectory_link(MeshSyncClientBlender2.8 MeshSyncClientBlender)
+if(BUILD_BLENDER2.80_CLIENT)
+    add_subdirectory_link(MeshSyncClientBlender2.80 MeshSyncClientBlender)
 endif()
 
 # Maya

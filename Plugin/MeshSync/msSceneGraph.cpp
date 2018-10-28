@@ -1244,7 +1244,7 @@ void Scene::deserialize(std::istream& is)
 {
     EachMember(msRead);
     if (settings.validation_hash != hash()) {
-        throw std::exception("scene hash doesn't match");
+        throw std::runtime_error("scene hash doesn't match");
     }
 }
 

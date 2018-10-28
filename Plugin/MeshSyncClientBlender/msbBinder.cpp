@@ -621,8 +621,7 @@ std::string abspath(const std::string& path)
         "import bpy.path;"
         "ret = bpy.path.abspath(path);"
         , py::object(), local);
-    py::str ret = local["ret"];
-    return ret;
+    return (py::str)local["ret"];
 }
 
 } // namespace blender

@@ -131,6 +131,7 @@ void DumpPlugInfoImpl(MFnDependencyNode& fn)
         MObject attr = fn.attribute(i);
         MFnAttribute fn_attr(attr);
         mscTrace(" attr %s (%s)\n", fn_attr.name().asChar(), attr.apiTypeStr());
+        DumpPlugInfoImpl(fn.findPlug(fn_attr.name()), " ");
     }
 }
 #endif
