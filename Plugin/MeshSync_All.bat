@@ -16,11 +16,11 @@ set BLENDER_PYTHON_LIB_DIR=%cd%\External\python%BLENDER_PYTHON_VERSION%\lib64
 
 set MAYA_VERSION=2018
 set MAYA_LT=0
-set MAYA_LIB_DIR=%cd%\External\Maya2018\lib
-set MAYA_INCLUDE_DIR=%cd%\External\Maya2018\include
+set MAYA_LIB_DIR=%cd%\External\Maya%MAYA_VERSION%\lib
+set MAYA_INCLUDE_DIR=%cd%\External\Maya%MAYA_VERSION%\include
 
 set MOTIONBUILDER_VERSION=2018
-set MOTIONBUILDER_LIB_DIR=%cd%\External\OpenRealitySDK2018\lib
-set MOTIONBUILDER_INCLUDE_DIR=%cd%\External\OpenRealitySDK2018\include
+set MOTIONBUILDER_LIB_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\lib
+set MOTIONBUILDER_INCLUDE_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\include
 
 MeshSync_All.sln

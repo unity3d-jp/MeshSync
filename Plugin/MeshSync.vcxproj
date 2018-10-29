@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\MeshSync.h" />
+    <ClInclude Include="MeshSync\MeshSyncUtils.h" />
     <ClInclude Include="MeshSync\msAnimation.h" />
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
@@ -31,6 +32,7 @@
     <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\pch.h" />
+    <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSync\msAnimation.cpp" />
@@ -43,6 +45,7 @@
     <ClCompile Include="MeshSync/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeshSync\Utils\msTextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="setup.vcxproj">

@@ -20,6 +20,6 @@ endforeach()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args("MayaLT2018"
     DEFAULT_MSG
-    MAYA2018LT_INCLUDE_DIR
-    MAYA2018LT_LIBRARIES
+    MAYALT2018_INCLUDE_DIR
+    MAYALT2018_LIBRARIES
 )
