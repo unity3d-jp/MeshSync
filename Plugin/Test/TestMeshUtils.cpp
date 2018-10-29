@@ -727,4 +727,8 @@ TestCase(TestSum)
         auto sum = SumInt32_ISPC((uint32_t*)input.data(), input.size());
         Print("sum: %llu\n", sum);
     }, 1);
+    TestScope("SumInt32", [&]() {
+        auto sum = SumInt32(input.data(), sizeof(float) * input.size());
+        Print("sum: %llu\n", sum);
+    }, 1);
 }

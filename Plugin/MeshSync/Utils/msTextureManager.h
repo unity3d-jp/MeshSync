@@ -7,29 +7,34 @@ namespace ms {
 class TextureManager
 {
 public:
-    struct Record
-    {
-        TexturePtr texture;
-        Poco::Timestamp mtime = Poco::Timestamp::TIMEVAL_MIN;
-        uint64_t hash = 0;
-    };
-    
     TextureManager();
     ~TextureManager();
     void clear();
-    int find(const char *name) const;
-    int findOrCreate(const char *name, int width, int height, const void *data, size_t size, TextureFormat format);
-    int findOrLoad(const char *path, TextureType type);
-    std::vector<TexturePtr> getAllTextures();
-    std::vector<TexturePtr> getDirtyList();
+    void erase(const std::string& name);
+    int find(const std::string& name) const;
+    int addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format);
+    int addFile(const std::string& path, TextureType type);
 
-    static Poco::Timestamp getMTime(const char *path);
-    static uint64_t genHash(const void *data, size_t size);
+    std::vector<TexturePtr> getAllTextures();
+    std::vector<TexturePtr> getDirtyTextures();
+    void clearDirtyFlags();
 
 private:
+    struct Record
+    {
+        TexturePtr texture;
+        uint64_t mtime = 0;
+        uint64_t checksum = 0;
+        bool dirty = false;
+        std::future<void> task;
+
+        void waitTask();
+    };
+    int genID();
+    void waitTasks();
+
     int m_id_seed = 0;
     std::map<std::string, Record> m_records;
-    std::vector<TexturePtr> m_dirty_list;
 };
 
 } // namespace ms

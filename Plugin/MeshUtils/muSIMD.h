@@ -4,7 +4,7 @@
 
 namespace mu {
 
-uint64_t Sum(const uint32_t *src, size_t num);
+uint64_t SumInt32(const void *src, size_t num);
 
 void FloatToHalf(half *dst, const float *src, size_t num);
 void HalfToFloat(float *dst, const half *src, size_t num);

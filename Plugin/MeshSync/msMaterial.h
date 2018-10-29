@@ -52,6 +52,8 @@ enum class TextureType
 int GetPixelSize(TextureFormat format);
 bool FileToByteArray(const char *path, RawVector<char> &out);
 bool ByteArrayToFile(const char *path, const RawVector<char> &data);
+bool FileExists(const char *path);
+uint64_t FileMTime(const char *path);
 
 class Texture
 {

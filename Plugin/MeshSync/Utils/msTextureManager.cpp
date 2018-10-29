@@ -14,15 +14,21 @@ TextureManager::TextureManager()
 
 TextureManager::~TextureManager()
 {
+    waitTasks();
 }
 
 void TextureManager::clear()
 {
+    waitTasks();
     m_records.clear();
-    m_dirty_list.clear();
 }
 
-int TextureManager::find(const char *name) const
+void TextureManager::erase(const std::string& name)
+{
+    m_records.erase(name);
+}
+
+int TextureManager::find(const std::string& name) const
 {
     auto it = m_records.find(name);
     if (it != m_records.end())
@@ -30,76 +36,103 @@ int TextureManager::find(const char *name) const
     return -1;
 }
 
-int TextureManager::findOrCreate(const char *name, int width, int height, const void *data, size_t size, TextureFormat format)
+int TextureManager::addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format)
 {
     auto& rec = m_records[name];
+    int id = rec.texture ? rec.texture->id : genID();
 
-    auto hash = genHash(data, size);
-    if (!rec.texture || rec.hash != hash) {
-        rec.hash = hash;
+    auto checksum = SumInt32(data, size);
+    if (!rec.texture || rec.checksum != checksum) {
+        rec.checksum = checksum;
         rec.texture = Texture::create();
         auto& tex = rec.texture;
-        tex->id = ++m_id_seed;
+        tex->id = id;
         tex->name = name;
         tex->format = format;
         tex->width = width;
         tex->height = height;
         tex->data.assign((const char*)data, (const char*)data + size);
+        rec.dirty = true;
     }
-    return rec.texture->id;
+    return id;
 }
 
-int TextureManager::findOrLoad(const char *path, TextureType type)
+int TextureManager::addFile(const std::string& path, TextureType type)
 {
     auto& rec = m_records[path];
+    int id = rec.texture ?
+        rec.texture->id :
+        (FileExists(path.c_str()) ? genID() : -1);
 
-    auto mtime = getMTime(path);
-    if (!rec.texture || rec.mtime != mtime) {
-        rec.mtime = mtime;
-        rec.texture = Texture::create();
-        auto& tex = rec.texture;
-        auto& data = tex->data;
-        if (ms::FileToByteArray(path, data)) {
-            tex->id = ++m_id_seed;
-            tex->name = mu::GetFilename(path);
-            tex->format = ms::TextureFormat::RawFile;
-            tex->type = type;
-            m_dirty_list.push_back(tex);
+    rec.waitTask();
+    rec.task = std::async(std::launch::async, [this, path, type, &rec, id]() {
+        auto mtime = FileMTime(path.c_str());
+        if (!rec.texture || rec.mtime != mtime) {
+            rec.mtime = mtime;
+            rec.texture = Texture::create();
+            auto& tex = rec.texture;
+            auto& data = tex->data;
+            if (FileToByteArray(path.c_str(), data)) {
+                tex->id = id;
+                tex->name = mu::GetFilename(path.c_str());
+                tex->format = ms::TextureFormat::RawFile;
+                tex->type = type;
+                rec.dirty = true;
+            }
+            else {
+                tex->id = -1;
+            }
         }
-        else {
-            tex->id = -1;
-        }
-    }
-    return rec.texture->id;
+    });
+    return id;
 }
 
 std::vector<TexturePtr> TextureManager::getAllTextures()
 {
+    waitTasks();
+
     std::vector<TexturePtr> ret;
-    for (auto& r : m_records)
-        ret.push_back(r.second.texture);
+    for (auto& p : m_records)
+        ret.push_back(p.second.texture);
     return std::vector<TexturePtr>();
 }
 
-std::vector<TexturePtr> TextureManager::getDirtyList()
+std::vector<TexturePtr> TextureManager::getDirtyTextures()
 {
-    auto ret = std::move(m_dirty_list);
-    m_dirty_list = std::vector<TexturePtr>();
+    waitTasks();
+
+    std::vector<TexturePtr> ret;
+    for (auto& p : m_records) {
+        if (p.second.dirty)
+            ret.push_back(p.second.texture);
+    }
     return ret;
 }
 
-Poco::Timestamp TextureManager::getMTime(const char *path)
+void TextureManager::clearDirtyFlags()
 {
-    Poco::File f(path);
-    if (f.exists())
-        return f.getLastModified();
-    else
-        return Poco::Timestamp::TIMEVAL_MIN;
+    for (auto& p : m_records) {
+        p.second.dirty = false;
+    }
 }
 
-uint64_t TextureManager::genHash(const void *data, size_t size)
+int TextureManager::genID()
 {
-    return Sum((const uint32_t*)data, size / sizeof(uint32_t));
+    return ++m_id_seed;
+}
+
+void TextureManager::waitTasks()
+{
+    for (auto& p : m_records)
+        p.second.waitTask();
+}
+
+void TextureManager::Record::waitTask()
+{
+    if (task.valid()) {
+        task.wait();
+        task = {};
+    }
 }
 
 } // namespace ms

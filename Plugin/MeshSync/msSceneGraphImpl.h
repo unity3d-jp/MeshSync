@@ -226,11 +226,40 @@ struct vhash_impl<RawVector<T>>
     }
 };
 
+template<class T>
+struct csum_impl;
+template<> struct csum_impl<int> { uint64_t operator()(int v) { return (uint32_t&)v; } };
+template<> struct csum_impl<float> { uint64_t operator()(float v) { return (uint32_t&)v; } };
+template<> struct csum_impl<float2> { uint64_t operator()(const float2& v) { return mu::SumInt32(&v, 8); } };
+template<> struct csum_impl<float3> { uint64_t operator()(const float3& v) { return mu::SumInt32(&v, 12); } };
+template<> struct csum_impl<float4> { uint64_t operator()(const float4& v) { return mu::SumInt32(&v, 16); } };
+template<> struct csum_impl<quatf> { uint64_t operator()(const quatf& v) { return mu::SumInt32(&v, 16); } };
+template<> struct csum_impl<float4x4> { uint64_t operator()(const float4x4& v) { return mu::SumInt32(&v, 64); } };
+
+template<>
+struct csum_impl<std::string>
+{
+    uint64_t operator()(const std::string& v)
+    {
+        return mu::SumInt32(v.c_str(), v.size());
+    }
+};
+
+template<class T>
+struct csum_impl<RawVector<T>>
+{
+    uint64_t operator()(const RawVector<T>& v)
+    {
+        return mu::SumInt32(v.data(), sizeof(T) * v.size());
+    }
+};
+
 
 template<class T> inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
 template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
 template<class T> inline uint64_t vhash(const T& v) { return vhash_impl<T>()(v); }
+template<class T> inline uint64_t csum(const T& v) { return csum_impl<T>()(v); }
 
 } // namespace ms

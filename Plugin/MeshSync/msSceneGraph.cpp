@@ -129,6 +129,17 @@ void Transform::clear()
     reference.clear();
 }
 
+uint64_t Transform::checksum() const
+{
+    uint64_t ret = 0;
+    ret += csum(position);
+    ret += csum(rotation);
+    ret += csum(scale);
+    ret += csum(index);
+    ret += csum(reference);
+    return ret;
+}
+
 float4x4 Transform::toMatrix() const
 {
     return ms::transform(position, rotation, scale);
@@ -556,6 +567,48 @@ uint64_t Mesh::hash() const
 #define Body(A) ret += vhash(A);
     EachVertexProperty(Body);
 #undef Body
+    if (flags.has_bones) {
+        for(auto& b : bones)
+            ret += vhash(b->weights);
+    }
+    if (flags.has_blendshape_weights) {
+        for (auto& bs : blendshapes) {
+            for (auto& b : bs->frames) {
+                ret += vhash(b->points);
+                ret += vhash(b->normals);
+                ret += vhash(b->tangents);
+            }
+        }
+    }
+    return ret;
+}
+
+uint64_t Mesh::checksum() const
+{
+    uint64_t ret = 0;
+#define Body(A) ret += csum(A);
+    EachVertexProperty(Body);
+#undef Body
+    if (flags.has_bones) {
+        ret += csum(root_bone);
+        for (auto& b : bones) {
+            ret += csum(b->path);
+            ret += csum(b->bindpose);
+            ret += csum(b->weights);
+        }
+    }
+    if (flags.has_blendshape_weights) {
+        for (auto& bs : blendshapes) {
+            ret += csum(bs->name);
+            ret += csum(bs->weight);
+            for (auto& b : bs->frames) {
+                ret += csum(b->weight);
+                ret += csum(b->points);
+                ret += csum(b->normals);
+                ret += csum(b->tangents);
+            }
+        }
+    }
     return ret;
 }
 

@@ -255,9 +255,9 @@ void GenerateTangentsTriangleSoA_ISPC(float4 *dst,
 #endif
 
 #if defined(muSIMD_SumInt32) || !defined(muEnableISPC)
-uint64_t Sum(const uint32_t *src, size_t num)
+uint64_t SumInt32(const void *src, size_t num)
 {
-    return Forward(SumInt32, src, num);
+    return Forward(SumInt32, (uint32_t*)src, num / sizeof(uint32_t));
 }
 #endif
 

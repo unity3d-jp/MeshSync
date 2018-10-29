@@ -51,6 +51,18 @@ bool ByteArrayToFile(const char *path, const RawVector<char> &data)
     return true;
 }
 
+bool FileExists(const char * path)
+{
+    // this is fater than using fopen()
+    Poco::File f(path);
+    return f.exists();
+}
+
+uint64_t FileMTime(const char * path)
+{
+    Poco::File f(path);
+    return f.getLastModified().raw();
+}
 
 
 std::shared_ptr<Texture> Texture::create(std::istream & is)

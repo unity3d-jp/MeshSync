@@ -76,6 +76,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t checksum() const;
 
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
@@ -357,6 +358,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksum() const;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
