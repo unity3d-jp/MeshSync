@@ -32,6 +32,7 @@
 
 // this must be before maya includes
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 
 // avoid multiple definition of `MApiVersion'
 //#define _MApiVersion

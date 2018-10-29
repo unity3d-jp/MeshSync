@@ -61,24 +61,7 @@ void msbContext::addDeleted(const std::string& path)
 
 int msbContext::exportTexture(const std::string & path, ms::TextureType type)
 {
-    auto& tex = m_textures[path];
-    if (tex)
-        return tex->id;
-
-    tex = ms::Texture::create();
-    auto& data = tex->data;
-    if (ms::FileToByteArray(path.c_str(), data)) {
-        tex->id = ++m_texture_id_seed;
-        tex->name = mu::GetFilename(path.c_str());
-        tex->format = ms::TextureFormat::RawFile;
-        tex->type = type;
-        m_textures_to_send.push_back(tex);
-    }
-    else {
-        tex->id = -1;
-    }
-
-    return tex->id;
+    return m_texture_manager.addFile(path, type);
 }
 
 ms::MaterialPtr msbContext::addMaterial(Material * mat)
@@ -1150,12 +1133,12 @@ void msbContext::kickAsyncSend()
             {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
-                set.scene.textures = m_textures_to_send;
+                set.scene.textures = m_texture_manager.getDirtyTextures();
                 set.scene.materials = m_materials;
                 set.scene.objects = m_objects;
                 client.send(set);
 
-                m_textures_to_send.clear();
+                m_texture_manager.clearDirtyFlags();
                 m_materials.clear();
                 m_objects.clear();
             }

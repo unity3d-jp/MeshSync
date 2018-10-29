@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 
 class msmbDevice : public FBDevice
 {
@@ -100,11 +101,11 @@ private:
 
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;
-    std::vector<ms::TexturePtr>         m_textures;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
     std::vector<ms::ConstraintPtr>      m_constraints;
     std::vector<std::string>            m_deleted;
+    ms::TextureManager                  m_texture_manager;
     std::future<void>                   m_future_send;
 
 public:

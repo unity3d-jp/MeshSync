@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 
 using namespace mu;
 
@@ -52,7 +53,7 @@ private:
     using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::MaterialPtr>;
 
-    int exportTexture(const std::string& path);
+    int exportTexture(const std::string& path, ms::TextureType type);
     MQObject findMesh(MQDocument doc, const char *name);
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
@@ -78,9 +79,7 @@ private:
     ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
 
-    int m_texture_id_seed = 0;
-    std::map<std::string, ms::TexturePtr> m_textures;
-    std::vector<ms::TexturePtr> m_textures_to_send;
+    ms::TextureManager m_texture_manager;
     Materials m_materials;
     ms::CameraPtr m_camera;
 

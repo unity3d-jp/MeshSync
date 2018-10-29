@@ -187,10 +187,7 @@ private:
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
 
-    int m_texture_id_seed = 0;
-    std::map<std::string, ms::TexturePtr> m_textures;
-    std::vector<ms::TexturePtr> m_textures_to_send;
-
+    ms::TextureManager m_texture_manager;
     std::vector<MString>                m_material_id_table;
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;

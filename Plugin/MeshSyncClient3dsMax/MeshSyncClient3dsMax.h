@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
@@ -148,9 +149,7 @@ private:
     TimeValue m_current_time_tick;
     float m_current_time_sec;
 
-    int m_texture_id_seed = 0;
-    std::map<std::string, ms::TexturePtr> m_textures;
-    std::vector<ms::TexturePtr> m_textures_to_send;
+    ms::TextureManager m_texture_manager;
 
     std::vector<ms::TransformPtr>       m_objects;
     std::vector<ms::MeshPtr>            m_meshes;

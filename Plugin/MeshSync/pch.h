@@ -35,6 +35,7 @@
 #include <atomic>
 #include <algorithm>
 #include <thread>
+#include <future>
 #include <random>
 
 #define POCO_STATIC

@@ -19,6 +19,11 @@ void MeshManager::clear()
     m_records.clear();
 }
 
+bool MeshManager::empty() const
+{
+    return m_records.empty();
+}
+
 void MeshManager::erase(const std::string &path)
 {
     auto it = m_records.find(path);

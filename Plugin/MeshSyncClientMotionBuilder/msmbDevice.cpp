@@ -162,14 +162,14 @@ void msmbDevice::kickAsyncSend()
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.objects = m_objects;
-            set.scene.textures = m_textures;
+            set.scene.textures = m_texture_manager.getDirtyTextures();
             set.scene.materials = m_materials;
+            set.scene.objects = m_objects;
             client.send(set);
 
-            m_objects.clear();
-            m_textures.clear();
+            m_texture_manager.clearDirtyFlags();
             m_materials.clear();
+            m_objects.clear();
         }
 
         // send meshes one by one to Unity can respond quickly
@@ -679,79 +679,14 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
     if (!video)
         return -1;
 
-    auto& rec = m_texture_records[src];
-    if (rec.dst)
-        return rec.id; // already exported
-
-    auto dst = ms::Texture::create();
-    auto& data = dst->data;
-    if (ms::FileToByteArray(video->Filename, data)) {
-        // send raw file contents
-
-        dst->name = mu::GetFilename(video->Filename);
-        dst->format = ms::TextureFormat::RawFile;
-    }
-    else {
-        // send texture data in FBVideoClip
-
-        dst->name = mu::GetFilename_NoExtension(video->Filename);
-        dst->width = video->Width;
-        dst->height = video->Height;
-
-        int num_pixels = dst->width * dst->height;
-        auto image = (const char*)video->GetImage();
-        if (num_pixels > 0 && image) {
-            switch (video->Format) {
-            case kFBVideoFormat_RGBA_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.assign(image, image + (num_pixels * 4));
-                break;
-            case kFBVideoFormat_ABGR_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.resize_discard(num_pixels * 4);
-                mu::ABGR2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-                break;
-            case kFBVideoFormat_ARGB_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.resize_discard(num_pixels * 4);
-                mu::ARGB2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-                break;
-            case kFBVideoFormat_BGRA_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.resize_discard(num_pixels * 4);
-                mu::BGRA2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-                break;
-            case kFBVideoFormat_RGB_24:
-                dst->format = ms::TextureFormat::RGBu8;
-                data.assign(image, image + (num_pixels * 3));
-                break;
-            case kFBVideoFormat_BGR_24:
-                dst->format = ms::TextureFormat::RGBu8;
-                data.resize_discard(num_pixels * 3);
-                mu::BGR2RGB((mu::unorm8x3*)data.data(), (mu::unorm8x3*)image, num_pixels);
-                break;
-            default:
-                // not supported
-                break;
-            }
-        }
-    }
-
-    if (!data.empty()) {
-        m_textures.push_back(dst);
-        rec.dst = dst.get();
-        if (rec.id == -1)
-            rec.id = (int)m_texture_records.size() - 1;
-
-        dst->id = rec.id;
+    if (ms::FileExists(video->Filename)) {
+        ms::TextureType textype = ms::TextureType::Default;
         if (type == kFBMaterialTextureNormalMap)
-            dst->type = ms::TextureType::NormalMap;
+            textype = ms::TextureType::NormalMap;
 
-        return dst->id;
+        return m_texture_manager.addFile(video->Filename.AsString(), textype);
     }
-    else {
-        return -1;
-    }
+    return -1;
 }
 
 bool msmbDevice::exportMaterial(FBMaterial* src)

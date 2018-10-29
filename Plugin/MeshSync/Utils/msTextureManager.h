@@ -10,6 +10,7 @@ public:
     TextureManager();
     ~TextureManager();
     void clear();
+    bool empty() const;
     void erase(const std::string& name);
     int find(const std::string& name) const;
     int addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format);

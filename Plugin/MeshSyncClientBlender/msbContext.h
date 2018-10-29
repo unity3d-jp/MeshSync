@@ -1,6 +1,7 @@
 #pragma once
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 #include "msbBinder.h"
 
 struct msbSettings;
@@ -133,10 +134,7 @@ private:
     std::vector<std::string> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;
     std::vector<Mesh*> m_tmp_bmeshes;
-
-    int m_texture_id_seed = 0;
-    std::map<std::string, ms::TexturePtr> m_textures;
-    std::vector<ms::TexturePtr> m_textures_to_send;
+    ms::TextureManager m_texture_manager;
 
     std::future<void> m_send_future;
 

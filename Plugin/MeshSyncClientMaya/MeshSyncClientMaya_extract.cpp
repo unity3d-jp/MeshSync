@@ -88,24 +88,7 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
 
 int MeshSyncClientMaya::exportTexture(const std::string& path, ms::TextureType type)
 {
-    auto& tex = m_textures[path];
-    if (tex)
-        return tex->id;
-
-    tex = ms::Texture::create();
-    auto& data = tex->data;
-    if (ms::FileToByteArray(path.c_str(), data)) {
-        tex->id = ++m_texture_id_seed;
-        tex->name = mu::GetFilename(path.c_str());
-        tex->format = ms::TextureFormat::RawFile;
-        tex->type = type;
-        m_textures_to_send.push_back(tex);
-    }
-    else {
-        tex->id = -1;
-    }
-
-    return tex->id;
+    return m_texture_manager.addFile(path, type);
 }
 
 void MeshSyncClientMaya::exportMaterials()

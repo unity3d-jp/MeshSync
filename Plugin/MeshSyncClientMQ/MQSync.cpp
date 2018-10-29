@@ -43,9 +43,7 @@ void MQSync::clear()
     m_client_meshes.clear();
     m_host_meshes.clear();
 
-    m_texture_id_seed = 01;
-    m_textures.clear();
-    m_textures_to_send.clear();
+    m_texture_manager.clear();
     m_materials.clear();
     m_camera.reset();
     m_mesh_exists.clear();
@@ -143,7 +141,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 dst->setColor(to_float4(src->GetColor()));
                 if (m_sync_textures) {
                     src->GetTextureName(buf, sizeof(buf));
-                    dst->setColorMap(exportTexture(buf));
+                    dst->setColorMap(exportTexture(buf, ms::TextureType::Default));
                 }
             }
         }
@@ -275,14 +273,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         {
             ms::SetMessage set;
             set.scene.settings = scene_settings;
-            set.scene.textures = m_textures_to_send;
+            set.scene.textures = m_texture_manager.getDirtyTextures();
             set.scene.materials = m_materials;
             for (auto& pair : m_bones) {
                 set.scene.objects.push_back(pair.second.transform);
             }
             client.send(set);
 
-            m_textures_to_send.clear();
+            m_texture_manager.clear();
             m_materials.clear();
             m_bones.clear();
         }
@@ -497,25 +495,9 @@ bool MQSync::importMeshes(MQDocument doc)
     return true;
 }
 
-int MQSync::exportTexture(const std::string& path)
+int MQSync::exportTexture(const std::string& path, ms::TextureType type)
 {
-    auto& tex = m_textures[path];
-    if (tex)
-        return tex->id;
-
-    tex = ms::Texture::create();
-    auto& data = tex->data;
-    if (ms::FileToByteArray(path.c_str(), data)) {
-        tex->id = ++m_texture_id_seed;
-        tex->name = mu::GetFilename(path.c_str());
-        tex->format = ms::TextureFormat::RawFile;
-        m_textures_to_send.push_back(tex);
-    }
-    else {
-        tex->id = -1;
-    }
-
-    return tex->id;
+    return m_texture_manager.addFile(path, type);
 }
 
 MQObject MQSync::findMesh(MQDocument doc, const char *name)

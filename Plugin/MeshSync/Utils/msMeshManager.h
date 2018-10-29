@@ -10,6 +10,7 @@ public:
     MeshManager();
     ~MeshManager();
     void clear();
+    bool empty() const;
     void erase(const std::string& path);
     void add(MeshPtr mesh);
 

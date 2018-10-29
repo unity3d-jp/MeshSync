@@ -626,12 +626,12 @@ void MeshSyncClientMaya::kickAsyncSend()
         {
             ms::SetMessage set;
             set.scene.settings  = scene_settings;
-            set.scene.textures = m_textures_to_send;
+            set.scene.textures = m_texture_manager.getDirtyTextures();
             set.scene.materials = m_materials;
             set.scene.objects = m_objects;
             client.send(set);
 
-            m_textures_to_send.clear();
+            m_texture_manager.clearDirtyFlags();
             m_materials.clear();
             m_objects.clear();
         }

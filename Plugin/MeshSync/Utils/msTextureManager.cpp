@@ -23,6 +23,11 @@ void TextureManager::clear()
     m_records.clear();
 }
 
+bool TextureManager::empty() const
+{
+    return m_records.empty();
+}
+
 void TextureManager::erase(const std::string& name)
 {
     m_records.erase(name);
@@ -39,8 +44,11 @@ int TextureManager::find(const std::string& name) const
 int TextureManager::addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format)
 {
     auto& rec = m_records[name];
-    int id = rec.texture ? rec.texture->id : genID();
+    int id = rec.texture ?
+        rec.texture->id :
+        (data && size ? genID() : -1);
 
+    // not worth to make tasks
     auto checksum = SumInt32(data, size);
     if (!rec.texture || rec.checksum != checksum) {
         rec.checksum = checksum;
@@ -52,7 +60,7 @@ int TextureManager::addImage(const std::string& name, int width, int height, con
         tex->width = width;
         tex->height = height;
         tex->data.assign((const char*)data, (const char*)data + size);
-        rec.dirty = true;
+        rec.dirty = id != -1;
     }
     return id;
 }
@@ -77,10 +85,7 @@ int TextureManager::addFile(const std::string& path, TextureType type)
                 tex->name = mu::GetFilename(path.c_str());
                 tex->format = ms::TextureFormat::RawFile;
                 tex->type = type;
-                rec.dirty = true;
-            }
-            else {
-                tex->id = -1;
+                rec.dirty = id != -1;
             }
         }
     });
