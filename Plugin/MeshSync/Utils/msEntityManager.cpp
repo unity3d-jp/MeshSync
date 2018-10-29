@@ -1,30 +1,30 @@
 #include "pch.h"
-#include "msMeshManager.h"
+#include "msEntityManager.h"
 
 namespace ms {
 
-MeshManager::MeshManager()
+EntityManager::EntityManager()
 {
 }
 
-MeshManager::~MeshManager()
+EntityManager::~EntityManager()
 {
     waitTasks();
 }
 
-void MeshManager::clear()
+void EntityManager::clear()
 {
     waitTasks();
 
     m_records.clear();
 }
 
-bool MeshManager::empty() const
+bool EntityManager::empty() const
 {
     return m_records.empty();
 }
 
-void MeshManager::erase(const std::string &path)
+void EntityManager::erase(const std::string &path)
 {
     auto it = m_records.find(path);
     if (it != m_records.end()) {
@@ -33,7 +33,7 @@ void MeshManager::erase(const std::string &path)
     }
 }
 
-void MeshManager::add(MeshPtr mesh)
+void EntityManager::add(MeshPtr mesh)
 {
     auto& rec = lockAndGet(mesh->path);
     rec.waitTask();
@@ -66,17 +66,17 @@ void MeshManager::add(MeshPtr mesh)
     }
 }
 
-std::vector<MeshPtr> MeshManager::getAllMeshes()
+std::vector<TransformPtr> EntityManager::getAllMeshes()
 {
     waitTasks();
 
-    std::vector<MeshPtr> ret;
+    std::vector<TransformPtr> ret;
     for (auto& v : m_records)
         ret.push_back(v.second.mesh);
     return ret;
 }
 
-std::vector<TransformPtr> MeshManager::getDirtyTransforms()
+std::vector<TransformPtr> EntityManager::getDirtyEntities()
 {
     waitTasks();
 
@@ -92,11 +92,11 @@ std::vector<TransformPtr> MeshManager::getDirtyTransforms()
     return ret;
 }
 
-std::vector<MeshPtr> MeshManager::getDirtyMeshes()
+std::vector<TransformPtr> EntityManager::getDirtyMeshes()
 {
     waitTasks();
 
-    std::vector<MeshPtr> ret;
+    std::vector<TransformPtr> ret;
     for (auto& p : m_records) {
         auto& r = p.second;
         if (r.dirty_mesh) {
@@ -106,7 +106,7 @@ std::vector<MeshPtr> MeshManager::getDirtyMeshes()
     return ret;
 }
 
-void MeshManager::clearDirtyFlags()
+void EntityManager::clearDirtyFlags()
 {
     for (auto& p : m_records) {
         auto& r = p.second;
@@ -114,19 +114,19 @@ void MeshManager::clearDirtyFlags()
     }
 }
 
-void MeshManager::waitTasks()
+void EntityManager::waitTasks()
 {
     for (auto& p : m_records)
         p.second.waitTask();
 }
 
-MeshManager::Record& MeshManager::lockAndGet(const std::string &path)
+EntityManager::Record& EntityManager::lockAndGet(const std::string &path)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     return m_records[path];
 }
 
-void MeshManager::Record::waitTask()
+void EntityManager::Record::waitTask()
 {
     if (task.valid()) {
         task.wait();

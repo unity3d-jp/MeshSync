@@ -80,7 +80,7 @@ private:
     HostMeshes m_host_meshes;
 
     ms::TextureManager m_texture_manager;
-    ms::MeshManager m_mesh_manager;
+    ms::EntityManager m_entity_manager;
     Materials m_materials;
     ms::CameraPtr m_camera;
 

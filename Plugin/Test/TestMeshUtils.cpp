@@ -712,10 +712,9 @@ TestCase(TestMatrixExtraction)
 
 TestCase(TestSum)
 {
-    const int input_size = 10000000;
+    const size_t input_size = 10000000;
 
-    std::vector<float> input;
-    input.resize(input_size);
+    RawVector<float> input(input_size);
     for (int i = 0; i < input_size; ++i)
         input[i] = (float)i;
 
@@ -730,5 +729,29 @@ TestCase(TestSum)
     TestScope("SumInt32", [&]() {
         auto sum = SumInt32(input.data(), sizeof(float) * input.size());
         Print("sum: %llu\n", sum);
+    }, 1);
+}
+
+TestCase(TestCompareRawVector)
+{
+    const size_t input_size = 10000000;
+
+    RawVector<float> input1(input_size);
+    RawVector<float> input2(input_size);
+    RawVector<float> input3(input_size);
+    input1.resize(input_size);
+    for (int i = 0; i < input_size; ++i) {
+        input1[i] = (float)i;
+        input2[i] = (float)i;
+        input3[i] = (float)i * 1.1f;
+    }
+
+    TestScope("compare12", [&]() {
+        auto result = input1 == input2;
+        Print("result: %d\n", result);
+    }, 1);
+    TestScope("compare13", [&]() {
+        auto result = input1 == input3;
+        Print("result: %d\n", result);
     }, 1);
 }

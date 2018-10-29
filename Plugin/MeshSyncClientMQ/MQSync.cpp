@@ -120,7 +120,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             }
 
             extractMeshData(doc, rel.obj, *rel.data);
-            m_mesh_manager.add(rel.data);
+            m_entity_manager.add(rel.data);
         });
     }
 
@@ -280,7 +280,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 set.scene.objects.push_back(pair.second.transform);
             }
             {
-                auto objs = m_mesh_manager.getDirtyTransforms();
+                auto objs = m_entity_manager.getDirtyEntities();
                 set.scene.objects.insert(set.scene.objects.end(), objs.begin(), objs.end());
             }
             client.send(set);
@@ -292,7 +292,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         // send meshes one by one to Unity can respond quickly
         {
-            auto meshes = m_mesh_manager.getDirtyMeshes();
+            auto meshes = m_entity_manager.getDirtyMeshes();
             for (auto& mesh : meshes) {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;
@@ -300,7 +300,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 client.send(set);
             };
             m_meshes.clear();
-            m_mesh_manager.clearDirtyFlags();
+            m_entity_manager.clearDirtyFlags();
         }
 
         // detect deleted objects and send delete message
@@ -326,6 +326,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                     int id = 0;
                     ExtractID(i->first.c_str(), id);
                     del.targets.push_back({ i->first , id });
+                    m_entity_manager.erase(i->first);
                     m_mesh_exists.erase(i++);
                 }
                 else

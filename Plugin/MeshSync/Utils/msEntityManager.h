@@ -4,11 +4,11 @@
 
 namespace ms {
 
-class MeshManager
+class EntityManager
 {
 public:
-    MeshManager();
-    ~MeshManager();
+    EntityManager();
+    ~EntityManager();
     void clear();
     bool empty() const;
     void erase(const std::string& path);
@@ -16,9 +16,9 @@ public:
     // thread safe
     void add(MeshPtr mesh);
 
-    std::vector<MeshPtr> getAllMeshes();
-    std::vector<TransformPtr> getDirtyTransforms();
-    std::vector<MeshPtr> getDirtyMeshes();
+    std::vector<TransformPtr> getAllMeshes();
+    std::vector<TransformPtr> getDirtyEntities();
+    std::vector<TransformPtr> getDirtyMeshes();
     void clearDirtyFlags();
 
 private:

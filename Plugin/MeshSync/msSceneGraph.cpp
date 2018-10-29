@@ -136,6 +136,8 @@ uint64_t Transform::checksum() const
     ret += csum(rotation);
     ret += csum(scale);
     ret += csum(index);
+    ret += uint32_t(visible) << 8;
+    ret += uint32_t(visible_hierarchy) << 9;
     ret += csum(reference);
     return ret;
 }

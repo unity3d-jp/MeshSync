@@ -28,7 +28,7 @@
     <ClCompile Include="MeshSync\Utils\msTextureManager.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\Utils\msMeshManager.cpp">
+    <ClCompile Include="MeshSync\Utils\msEntityManager.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,7 +75,7 @@
     <ClInclude Include="MeshSync\MeshSyncUtils.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSync\Utils\msMeshManager.h">
+    <ClInclude Include="MeshSync\Utils\msEntityManager.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
   </ItemGroup>
