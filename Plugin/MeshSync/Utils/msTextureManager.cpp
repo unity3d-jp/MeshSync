@@ -43,7 +43,7 @@ int TextureManager::find(const std::string& name) const
 
 int TextureManager::addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format)
 {
-    auto& rec = m_records[name];
+    auto& rec = lockAndGet(name);
     int id = rec.texture ?
         rec.texture->id :
         (data && size ? genID() : -1);
@@ -67,7 +67,7 @@ int TextureManager::addImage(const std::string& name, int width, int height, con
 
 int TextureManager::addFile(const std::string& path, TextureType type)
 {
-    auto& rec = m_records[path];
+    auto& rec = lockAndGet(path);
     int id = rec.texture ?
         rec.texture->id :
         (FileExists(path.c_str()) ? genID() : -1);
@@ -97,8 +97,10 @@ std::vector<TexturePtr> TextureManager::getAllTextures()
     waitTasks();
 
     std::vector<TexturePtr> ret;
-    for (auto& p : m_records)
-        ret.push_back(p.second.texture);
+    for (auto& p : m_records) {
+        if (p.second.texture->id != -1)
+            ret.push_back(p.second.texture);
+    }
     return std::vector<TexturePtr>();
 }
 
@@ -108,7 +110,7 @@ std::vector<TexturePtr> TextureManager::getDirtyTextures()
 
     std::vector<TexturePtr> ret;
     for (auto& p : m_records) {
-        if (p.second.dirty)
+        if (p.second.dirty && p.second.texture->id != -1)
             ret.push_back(p.second.texture);
     }
     return ret;
@@ -130,6 +132,12 @@ void TextureManager::waitTasks()
 {
     for (auto& p : m_records)
         p.second.waitTask();
+}
+
+TextureManager::Record& TextureManager::lockAndGet(const std::string &path)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return m_records[path];
 }
 
 void TextureManager::Record::waitTask()

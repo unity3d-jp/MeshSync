@@ -12,6 +12,8 @@ public:
     void clear();
     bool empty() const;
     void erase(const std::string& path);
+
+    // thread safe
     void add(MeshPtr mesh);
 
     std::vector<MeshPtr> getAllMeshes();
@@ -32,8 +34,10 @@ private:
         void waitTask();
     };
     void waitTasks();
+    Record& lockAndGet(const std::string& path);
 
     std::map<std::string, Record> m_records;
+    std::mutex m_mutex;
 };
 
 } // namespace ms

@@ -13,7 +13,10 @@ public:
     bool empty() const;
     void erase(const std::string& name);
     int find(const std::string& name) const;
+
+    // thread safe
     int addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format);
+    // thread safe
     int addFile(const std::string& path, TextureType type);
 
     std::vector<TexturePtr> getAllTextures();
@@ -33,9 +36,11 @@ private:
     };
     int genID();
     void waitTasks();
+    Record& lockAndGet(const std::string& path);
 
     int m_id_seed = 0;
     std::map<std::string, Record> m_records;
+    std::mutex m_mutex;
 };
 
 } // namespace ms

@@ -35,12 +35,11 @@ void MeshManager::erase(const std::string &path)
 
 void MeshManager::add(MeshPtr mesh)
 {
-    auto& rec = m_records[mesh->path];
+    auto& rec = lockAndGet(mesh->path);
     rec.waitTask();
 
     if (!rec.mesh) {
         rec.mesh = mesh;
-        rec.dirty_trans = true;
         rec.dirty_mesh = true;
 
         rec.task = std::async(std::launch::async, [this, mesh, &rec]() {
@@ -49,6 +48,8 @@ void MeshManager::add(MeshPtr mesh)
         });
     }
     else {
+        rec.mesh = mesh;
+
         rec.task = std::async(std::launch::async, [this, mesh, &rec]() {
             auto trans_checksum = static_cast<Transform&>(*mesh).checksum();
             auto mesh_checksum = mesh->checksum();
@@ -109,7 +110,7 @@ void MeshManager::clearDirtyFlags()
 {
     for (auto& p : m_records) {
         auto& r = p.second;
-        r.dirty_trans = r.dirty_trans = false;
+        r.dirty_mesh = r.dirty_trans = false;
     }
 }
 
@@ -117,6 +118,12 @@ void MeshManager::waitTasks()
 {
     for (auto& p : m_records)
         p.second.waitTask();
+}
+
+MeshManager::Record& MeshManager::lockAndGet(const std::string &path)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return m_records[path];
 }
 
 void MeshManager::Record::waitTask()
