@@ -9,7 +9,13 @@ namespace mu {
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
 
-#ifdef muEnableHalf
+#ifdef muSIMD_SumInt32
+uint64_t SumInt32_ISPC(const uint32_t *src, size_t num)
+{
+    return ispc::SumInt32(src, (int)num);
+}
+#endif
+
 #ifdef muSIMD_FloatToHalf
 void FloatToHalf_ISPC(half *dst, const float *src, size_t num)
 {
@@ -22,7 +28,6 @@ void HalfToFloat_ISPC(float *dst, const half *src, size_t num)
     ispc::HalfToFloat(dst, (const uint16_t*)src, (int)num);
 }
 #endif
-#endif // muEnableHalf
 
 #ifdef muSIMD_InvertX3
 void InvertX_ISPC(float3 *dst, size_t num)
@@ -249,7 +254,13 @@ void GenerateTangentsTriangleSoA_ISPC(float4 *dst,
     #define Forward(Name, ...) Name##_Generic(__VA_ARGS__)
 #endif
 
-#ifdef muEnableHalf
+#if defined(muSIMD_SumInt32) || !defined(muEnableISPC)
+uint64_t Sum(const uint32_t *src, size_t num)
+{
+    return Forward(SumInt32, src, num);
+}
+#endif
+
 #if defined(muSIMD_FloatToHalf) || !defined(muEnableISPC)
 void FloatToHalf(half *dst, const float *src, size_t num)
 {
@@ -262,7 +273,6 @@ void HalfToFloat(float *dst, const half *src, size_t num)
     Forward(HalfToFloat, dst, src, num);
 }
 #endif
-#endif // muEnableHalf
 
 #if defined(muSIMD_InvertX3) || !defined(muEnableISPC)
 void InvertX(float3 *dst, size_t num)

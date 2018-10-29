@@ -9,7 +9,14 @@ const float PI = 3.14159265358979323846264338327950288419716939937510f;
 const float Deg2Rad = PI / 180.0f;
 const float Rad2Deg = 1.0f / (PI / 180.0f);
 
-#ifdef muEnableHalf
+uint64_t SumInt32_Generic(const uint32_t *src, size_t num)
+{
+    uint64_t ret = 0;
+    for (size_t i = 0; i < num; ++i)
+        ret += src[i];
+    return ret;
+}
+
 void FloatToHalf_Generic(half *dst, const float *src, size_t num)
 {
     for (size_t i = 0; i < num; ++i) {
@@ -22,7 +29,6 @@ void HalfToFloat_Generic(float *dst, const half *src, size_t num)
         dst[i] = src[i];
     }
 }
-#endif // muEnableHalf
 
 void InvertX_Generic(float3 *dst, size_t num)
 {

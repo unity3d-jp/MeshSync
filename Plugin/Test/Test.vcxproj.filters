@@ -5,6 +5,7 @@
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="MeshGenerator.cpp" />
     <ClCompile Include="TestMeshSyncClient.cpp" />
+    <ClCompile Include="TestMeshUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

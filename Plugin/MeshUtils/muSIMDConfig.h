@@ -1,5 +1,7 @@
 #pragma once
 
+#define muSIMD_SumInt32
+
 //#define muSIMD_FloatToHalf
 //#define muSIMD_HalfToFloat
 

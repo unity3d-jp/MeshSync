@@ -1,5 +1,18 @@
 #include "ispcmath.h"
 
+#ifdef muSIMD_SumInt32
+export uniform unsigned int64 SumInt32(
+    uniform const unsigned int src[],
+    uniform const int num)
+{
+    unsigned int64 tmp = 0;
+    foreach(i=0 ... num) {
+        tmp += src[i];
+    }
+    return reduce_add(tmp);
+}
+#endif
+
 #ifdef muSIMD_FloatToHalf
 export void FloatToHalf(
     uniform half dst[],

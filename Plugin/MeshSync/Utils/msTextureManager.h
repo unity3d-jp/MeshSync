@@ -20,6 +20,7 @@ public:
     int find(const char *name) const;
     int findOrCreate(const char *name, int width, int height, const void *data, size_t size, TextureFormat format);
     int findOrLoad(const char *path, TextureType type);
+    std::vector<TexturePtr> getAllTextures();
     std::vector<TexturePtr> getDirtyList();
 
     static Poco::Timestamp getMTime(const char *path);

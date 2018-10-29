@@ -18,6 +18,7 @@
     </ClCompile>
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="TestMeshSyncClient.cpp" />
+    <ClCompile Include="TestMeshUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MeshSync.vcxproj">

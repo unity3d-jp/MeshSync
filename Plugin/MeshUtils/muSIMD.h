@@ -1,13 +1,13 @@
 #pragma once
 #include "muSIMDConfig.h"
+#include "muHalf.h"
 
 namespace mu {
 
-#ifdef muEnableHalf
+uint64_t Sum(const uint32_t *src, size_t num);
+
 void FloatToHalf(half *dst, const float *src, size_t num);
 void HalfToFloat(float *dst, const half *src, size_t num);
-#endif // muEnableHalf
-
 void InvertX(float3 *dst, size_t num);
 void InvertX(float4 *dst, size_t num);
 void InvertV(float2 *dst, size_t num);
@@ -77,12 +77,13 @@ void GenerateTangentsTriangleSoA(float4 *dst,
 // ------------------------------------------------------------
 // internal (for test)
 // ------------------------------------------------------------
-#ifdef muEnableHalf
+uint64_t SumInt32_Generic(const uint32_t *src, size_t num);
+uint64_t SumInt32_ISPC(const uint32_t *src, size_t num);
+
 void FloatToHalf_Generic(half *dst, const float *src, size_t num);
 void FloatToHalf_ISPC(half *dst, const float *src, size_t num);
 void HalfToFloat_Generic(float *dst, const half *src, size_t num);
 void HalfToFloat_ISPC(float *dst, const half *src, size_t num);
-#endif // muEnableHalf
 
 void InvertX_Generic(float3 *dst, size_t num);
 void InvertX_ISPC(float3 *dst, size_t num);

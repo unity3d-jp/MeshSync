@@ -710,3 +710,21 @@ TestCase(TestMatrixExtraction)
     Print("ok");
 }
 
+TestCase(TestSum)
+{
+    const int input_size = 10000000;
+
+    std::vector<float> input;
+    input.resize(input_size);
+    for (int i = 0; i < input_size; ++i)
+        input[i] = (float)i;
+
+    TestScope("SumInt32_Generic", [&]() {
+        auto sum = SumInt32_Generic((uint32_t*)input.data(), input.size());
+        Print("sum: %llu\n", sum);
+    }, 1);
+    TestScope("SumInt32_ISPC", [&]() {
+        auto sum = SumInt32_ISPC((uint32_t*)input.data(), input.size());
+        Print("sum: %llu\n", sum);
+    }, 1);
+}

@@ -40,9 +40,10 @@ int TextureManager::findOrCreate(const char *name, int width, int height, const 
         rec.texture = Texture::create();
         auto& tex = rec.texture;
         tex->id = ++m_id_seed;
+        tex->name = name;
+        tex->format = format;
         tex->width = width;
         tex->height = height;
-        tex->format = format;
         tex->data.assign((const char*)data, (const char*)data + size);
     }
     return rec.texture->id;
@@ -72,10 +73,18 @@ int TextureManager::findOrLoad(const char *path, TextureType type)
     return rec.texture->id;
 }
 
+std::vector<TexturePtr> TextureManager::getAllTextures()
+{
+    std::vector<TexturePtr> ret;
+    for (auto& r : m_records)
+        ret.push_back(r.second.texture);
+    return std::vector<TexturePtr>();
+}
+
 std::vector<TexturePtr> TextureManager::getDirtyList()
 {
-    auto ret = m_dirty_list;
-    m_dirty_list.clear();
+    auto ret = std::move(m_dirty_list);
+    m_dirty_list = std::vector<TexturePtr>();
     return ret;
 }
 
@@ -88,16 +97,9 @@ Poco::Timestamp TextureManager::getMTime(const char *path)
         return Poco::Timestamp::TIMEVAL_MIN;
 }
 
-uint64_t TextureManager::genHash(const void *data_, size_t size)
+uint64_t TextureManager::genHash(const void *data, size_t size)
 {
-    // todo: optimize
-    uint64_t ret = 0;
-    auto data = (const uint32_t*)data_;
-    size_t count = size / sizeof(int);
-    for (size_t i = 0; i < count; ++i) {
-        ret += data[i];
-    }
-    return ret;
+    return Sum((const uint32_t*)data, size / sizeof(uint32_t));
 }
 
 } // namespace ms
