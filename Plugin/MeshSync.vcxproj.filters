@@ -31,6 +31,9 @@
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\Utils\msAsyncSceneSender.cpp">
+      <Filter>MeshSync\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -76,6 +79,9 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\Utils\msEntityManager.h">
+      <Filter>MeshSync\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\Utils\msAsyncSceneSender.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
   </ItemGroup>

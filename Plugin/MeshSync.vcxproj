@@ -32,6 +32,7 @@
     <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\pch.h" />
+    <ClInclude Include="MeshSync\Utils\msAsyncSceneSender.h" />
     <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
     <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
   </ItemGroup>
@@ -46,6 +47,7 @@
     <ClCompile Include="MeshSync/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeshSync\Utils\msAsyncSceneSender.cpp" />
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msTextureManager.cpp" />
   </ItemGroup>
