@@ -51,7 +51,7 @@ bool ByteArrayToFile(const char *path, const RawVector<char> &data)
     return true;
 }
 
-bool FileExists(const char * path)
+bool FileExists(const char *path)
 {
     if (!path || *path == '\0')
         return false;
@@ -66,9 +66,9 @@ bool FileExists(const char * path)
     }
 }
 
-uint64_t FileMTime(const char * path)
+uint64_t FileMTime(const char *path)
 {
-    if (!path || *path == '\0')
+    if (!FileExists(path))
         return 0;
 
     try {

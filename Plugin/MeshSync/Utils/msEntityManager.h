@@ -21,8 +21,8 @@ public:
     std::vector<TransformPtr> getDirtyGeometries();
     void clearDirtyFlags();
 
-    std::vector<TransformPtr> getNotAdded();
-    void eraseNotAdded();
+    std::vector<TransformPtr> getStaleEntities();
+    void eraseStaleEntities();
 
 private:
     struct Record
@@ -32,7 +32,7 @@ private:
         uint64_t checksum_geom = 0;
         bool dirty_trans = false;
         bool dirty_geom = false;
-        bool added = false;
+        bool updated = false;
         std::future<void> task;
 
         void waitTask();

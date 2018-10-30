@@ -243,8 +243,8 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
 #endif
 
-    if (!m_send_meshes.async_prepare) {
-        m_send_meshes.async_prepare = [this]() {
+    if (!m_send_meshes.on_prepare) {
+        m_send_meshes.on_prepare = [this]() {
             auto& t = m_send_meshes;
             t.client_settings = m_settings;
             t.scene_settings.handedness = ms::Handedness::Right;
@@ -255,20 +255,22 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
 
-            auto deleted = m_entity_manager.getNotAdded();
+            auto deleted = m_entity_manager.getStaleEntities();
             if (!deleted.empty()) {
                 for (auto& obj : deleted) {
                     int id = 0;
                     ExtractID(obj->path.c_str(), id);
                     t.deleted.push_back({ obj->path , id });
                 }
-                m_entity_manager.eraseNotAdded();
+                m_entity_manager.eraseStaleEntities();
             }
 
-            m_texture_manager.clear();
             m_materials.clear();
             m_bones.clear();
             m_meshes.clear();
+        };
+        m_send_meshes.on_succeeded = [this]() {
+            m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
         };
     }
@@ -323,8 +325,8 @@ void MQSync::sendCamera(MQDocument doc, bool force)
         }
     }
 
-    if (!m_send_camera.async_prepare) {
-        m_send_camera.async_prepare = [this]() {
+    if (!m_send_camera.on_prepare) {
+        m_send_camera.on_prepare = [this]() {
             auto& t = m_send_camera;
             t.client_settings = m_settings;
             t.scene_settings.handedness = ms::Handedness::Right;

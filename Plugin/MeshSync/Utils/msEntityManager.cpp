@@ -36,7 +36,7 @@ void EntityManager::erase(const std::string &path)
 inline void EntityManager::addTransform(TransformPtr obj)
 {
     auto& rec = lockAndGet(obj->path);
-    rec.added = true;
+    rec.updated = true;
 
     if (!rec.entity) {
         rec.entity = obj;
@@ -58,7 +58,7 @@ inline void EntityManager::addTransform(TransformPtr obj)
 inline void EntityManager::addGeometry(TransformPtr obj)
 {
     auto& rec = lockAndGet(obj->path);
-    rec.added = true;
+    rec.updated = true;
     rec.waitTask();
 
     if (!rec.entity) {
@@ -146,27 +146,27 @@ void EntityManager::clearDirtyFlags()
 {
     for (auto& p : m_records) {
         auto& r = p.second;
-        r.added = r.dirty_geom = r.dirty_trans = false;
+        r.updated = r.dirty_geom = r.dirty_trans = false;
     }
 }
 
-std::vector<TransformPtr> EntityManager::getNotAdded()
+std::vector<TransformPtr> EntityManager::getStaleEntities()
 {
     waitTasks();
 
     std::vector<TransformPtr> ret;
     for (auto& p : m_records) {
         auto& r = p.second;
-        if (!r.added)
+        if (!r.updated)
             ret.push_back(r.entity);
     }
     return ret;
 }
 
-void EntityManager::eraseNotAdded()
+void EntityManager::eraseStaleEntities()
 {
     for (auto it = m_records.begin(); it != m_records.end(); ) {
-        if (!it->second.added)
+        if (!it->second.updated)
             m_records.erase(it++);
         else
             ++it;

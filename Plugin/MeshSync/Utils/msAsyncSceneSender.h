@@ -16,7 +16,7 @@ public:
     std::vector<AnimationClipPtr> animations;
     std::vector<DeleteMessage::Identifier> deleted;
 
-    std::function<void()> async_prepare;
+    std::function<void()> on_prepare, on_succeeded, on_failed;
 
     AsyncSceneSender();
     ~AsyncSceneSender();

@@ -35,8 +35,8 @@ void AsyncSceneSender::kick()
 
 void AsyncSceneSender::send()
 {
-    if (async_prepare)
-        async_prepare();
+    if (on_prepare)
+        on_prepare();
 
     if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() && deleted.empty())
         return;
@@ -108,7 +108,16 @@ void AsyncSceneSender::send()
     {
         ms::FenceMessage fence;
         fence.type = ms::FenceMessage::FenceType::SceneEnd;
-        client.send(fence);
+        bool succeeded = client.send(fence);
+
+        if (succeeded) {
+            if (on_succeeded)
+                on_succeeded();
+        }
+        else {
+            if (on_failed)
+                on_failed();
+        }
     }
 }
 

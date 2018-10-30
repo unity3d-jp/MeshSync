@@ -49,7 +49,6 @@ public:
     msbSettings&        getSettings();
     const msbSettings&  getSettings() const;
 
-    bool isSending() const;
     bool prepare();
     void sendScene(SendScope scope);
     void sendAnimations(SendScope scope);
@@ -84,25 +83,23 @@ private:
         }
     };
 
-    ms::TransformPtr    addTransform(std::string path);
-    ms::CameraPtr       addCamera(std::string path);
-    ms::LightPtr        addLight(std::string path);
-    ms::MeshPtr         addMesh(std::string path);
     void                addDeleted(const std::string& path);
     ms::MaterialPtr     addMaterial(Material *material);
     int                 exportTexture(const std::string & path, ms::TextureType type);
 
     int getMaterialID(const Material *mat);
-    void extractTransformData(ms::Transform& dst, Object *obj);
-    void extractCameraData(ms::Camera& dst, Object *obj);
-    void extractLightData(ms::Light& dst, Object *obj);
-    void extractMeshData(ms::Mesh& dst, Object *obj);
-
     void exportMaterials();
-    ms::TransformPtr exportArmature(Object *obj);
+
     ms::TransformPtr exportObject(Object *obj, bool force);
+    ms::TransformPtr exportTransform(Object *obj, const std::string& path);
+    ms::TransformPtr exportPose(bPoseChannel *obj, const std::string& path);
+    ms::TransformPtr exportArmature(Object *obj, const std::string& path);
     ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
     ms::TransformPtr exportDupliGroup(Object *obj, const std::string & base_path);
+    ms::CameraPtr exportCamera(Object *obj, const std::string& path);
+    ms::LightPtr exportLight(Object *obj, const std::string& path);
+    ms::MeshPtr exportMesh(Object *obj, const std::string& path);
+
     ObjectRecord& touchRecord(Object *obj);
     void eraseStaleObjects();
 
@@ -127,16 +124,14 @@ private:
     std::set<Object*> m_added;
     std::set<Object*> m_pending, m_pending_tmp;
     std::map<const Bone*, ms::TransformPtr> m_bones;
-    std::vector<ms::TransformPtr> m_objects;
-    std::vector<ms::MeshPtr> m_meshes;
     std::vector<ms::AnimationClipPtr> m_animations;
     std::vector<ms::MaterialPtr> m_materials;
     std::vector<std::string> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;
     std::vector<Mesh*> m_tmp_bmeshes;
     ms::TextureManager m_texture_manager;
-
-    std::future<void> m_send_future;
+    ms::EntityManager m_entity_manager;
+    ms::AsyncSceneSender m_sender;
 
     using task_t = std::function<void()>;
     std::vector<task_t> m_extract_tasks;
