@@ -124,7 +124,7 @@ void MeshSyncClientMaya::exportMaterials()
     }
 }
 
-bool MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
+ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
 {
     if (!n || n->dst_obj)
         return false;
@@ -135,42 +135,22 @@ bool MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
     ms::TransformPtr ret;
     if ((m_settings.sync_meshes || m_settings.sync_blendshapes) && shape.hasFn(kMFnMesh)) {
         exportObject(n->parent, true);
-        auto dst = ms::Mesh::create();
-        extractMeshData(*dst, n);
-        m_meshes.emplace_back(dst);
-        ret = dst;
+        ret = exportMesh(n);
     }
     else if (m_settings.sync_cameras &&shape.hasFn(kMFnCamera)) {
         exportObject(n->parent, true);
-        auto dst = ms::Camera::create();
-        extractCameraData(*dst, n);
-        m_objects.emplace_back(dst);
-        ret = dst;
+        ret = exportCamera(n);
     }
     else if (m_settings.sync_lights &&shape.hasFn(kMFnLight)) {
         exportObject(n->parent, true);
-        auto dst = ms::Light::create();
-        extractLightData(*dst, n);
-        m_objects.emplace_back(dst);
-        ret = dst;
+        ret = exportLight(n);
     }
     else if ((m_settings.sync_bones && shape.hasFn(kMFnJoint)) || force) {
         exportObject(n->parent, true);
-        auto dst = ms::Transform::create();
-        extractTransformData(*dst, n);
-        m_objects.emplace_back(dst);
-        ret = dst;
+        ret = exportTransform(n);
     }
 
-    if (ret) {
-        ret->path = n->path;
-        ret->index = n->index;
-        n->dst_obj = ret.get();
-        return true;
-    }
-    else {
-        return false;
-    }
+    return ret;
 }
 
 static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
@@ -251,38 +231,69 @@ static void ExtractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4
     intensity = mlight.intensity();
 }
 
-void MeshSyncClientMaya::extractTransformData(ms::Transform& dst, TreeNode *n)
+template<class T>
+std::shared_ptr<T> MeshSyncClientMaya::createEntity(TreeNode& n)
 {
-    ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    auto ret = T::create();
+    auto& dst = *ret;
+    dst.path = n.path;
+    dst.index = n.index;
+    n.dst_obj = ret;
+    return ret;
 }
 
-void MeshSyncClientMaya::extractCameraData(ms::Camera& dst, TreeNode *n)
+ms::TransformPtr MeshSyncClientMaya::exportTransform(TreeNode *n)
 {
+    auto ret = createEntity<ms::Transform>(*n);
+    auto& dst = *ret;
+
+    ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+
+    m_entity_manager.add(ret);
+    return ret;
+}
+
+ms::CameraPtr MeshSyncClientMaya::exportCamera(TreeNode *n)
+{
+    auto ret = createEntity<ms::Camera>(*n);
+    auto& dst = *ret;
+
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
     ExtractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void MeshSyncClientMaya::extractLightData(ms::Light& dst, TreeNode *n)
+ms::LightPtr MeshSyncClientMaya::exportLight(TreeNode *n)
 {
+    auto ret = createEntity<ms::Light>(*n);
+    auto& dst = *ret;
+
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     dst.rotation = mu::flipY(dst.rotation);
 
     ExtractLightData(n, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
+ms::MeshPtr MeshSyncClientMaya::exportMesh(TreeNode *n)
 {
     if (m_material_id_table.empty()) {
         exportMaterials();
     }
 
+    auto ret = createEntity<ms::Mesh>(*n);
+    auto& dst = *ret;
+
     ExtractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
 
-    auto task = [this, &dst, n]() {
+    auto task = [this, ret, &dst, n]() {
         if (m_settings.sync_meshes) {
             if (m_settings.bake_deformers)
                 doExtractMeshDataBaked(dst, n);
@@ -293,8 +304,10 @@ void MeshSyncClientMaya::extractMeshData(ms::Mesh& dst, TreeNode *n)
             if (!m_settings.bake_deformers && m_settings.sync_blendshapes)
                 doExtractBlendshapeWeights(dst, n);
         }
+        m_entity_manager.add(ret);
     };
     m_extract_tasks[n->shape->branches.front()].add(n, task);
+    return ret;
 }
 
 void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
@@ -922,7 +935,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
         rec.tn = n;
         rec.dst = dst.get();
         rec.extractor = extractor;
-        n->dst_anim = dst.get();
+        n->dst_anim = dst;
         m_animations.front()->animations.push_back(dst);
         return true;
     }
@@ -1033,43 +1046,3 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
         }
     }
 }
-
-
-void MeshSyncClientMaya::exportConstraint(TreeNode *n)
-{
-    auto& trans = n->trans->node;
-    auto& shape = n->shape->node;
-
-    EachConstraints(trans, [&](const MObject& constraint) {
-        if (constraint.hasFn(kMFnAimConstraint)) {
-            auto dst = ms::AimConstraint::create();
-            m_constraints.push_back(dst);
-            extractConstraintData(*dst, n);
-        }
-        else if (constraint.hasFn(kMFnParentConstraint)) {
-            auto dst = ms::ParentConstraint::create();
-            m_constraints.push_back(dst);
-            extractConstraintData(*dst, n);
-        }
-        else if (constraint.hasFn(kMFnPointConstraint)) {
-            auto dst = ms::PositionConstraint::create();
-            m_constraints.push_back(dst);
-            extractConstraintData(*dst, n);
-        }
-        else if (constraint.hasFn(kMFnScaleConstraint)) {
-            auto dst = ms::ScaleConstraint::create();
-            m_constraints.push_back(dst);
-            extractConstraintData(*dst, n);
-        }
-        else {
-            // not supported
-        }
-    });
-}
-
-void MeshSyncClientMaya::extractConstraintData(ms::Constraint& dst, TreeNode *n)
-{
-    // todo
-    // maybe I give up to support this..
-}
-

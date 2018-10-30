@@ -241,9 +241,7 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope)
 
 bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
 {
-    if (m_sender.isSending()) {
-        m_sender.wait();
-    }
+    m_sender.wait();
 
     // create default clip
     m_animations.push_back(ms::AnimationClip::create());

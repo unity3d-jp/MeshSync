@@ -273,27 +273,12 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
 {
-    waitAsyncSend();
+    m_sender.wait();
     removeNodeCallbacks();
     removeGlobalCallbacks();
 #define Body(CmdType) m_iplugin.deregisterCommand(CmdType::name());
     EachCommand(Body)
 #undef Body
-}
-
-bool MeshSyncClientMaya::isSending() const
-{
-    if (m_future_send.valid()) {
-        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
-    }
-    return false;
-}
-
-void MeshSyncClientMaya::waitAsyncSend()
-{
-    if (m_future_send.valid()) {
-        m_future_send.wait_for(std::chrono::milliseconds(m_settings.timeout_ms));
-    }
 }
 
 void MeshSyncClientMaya::registerGlobalCallbacks()
@@ -473,7 +458,7 @@ bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 
 bool MeshSyncClientMaya::sendScene(SendScope scope)
 {
-    if (isSending()) {
+    if (m_sender.isSending()) {
         m_pending_scope = scope;
         return false;
     }
@@ -527,10 +512,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
 
 bool MeshSyncClientMaya::sendAnimations(SendScope scope)
 {
-    // wait for previous request to complete
-    if (m_future_send.valid()) {
-        m_future_send.get();
-    }
+    m_sender.wait();
 
     if (exportAnimations(scope) > 0) {
         kickAsyncSend();
@@ -595,80 +577,41 @@ void MeshSyncClientMaya::kickAsyncSend()
         to_meter = (float)dist.asMeters();
     }
 
-    // begin async send
-    m_future_send = std::async(std::launch::async, [this, to_meter]() {
-        ms::Client client(m_settings.client_settings);
+    if (!m_sender.on_prepare) {
+        m_sender.on_prepare = [this, to_meter]() {
+            auto& t = m_sender;
+            t.client_settings = m_settings.client_settings;
+            t.scene_settings.handedness = ms::Handedness::Right;
+            t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+            if (!m_deleted.empty()) {
+                for (auto& path : m_deleted) {
+                    t.deleted.push_back({ path, 0 });
+                    m_entity_manager.erase(path);
+                }
+                m_deleted.clear();
+            }
 
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_materials;
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
+            t.animations = m_animations;
 
-        // send delete message
-        size_t num_deleted = m_deleted.size();
-        if (num_deleted) {
-            ms::DeleteMessage del;
-            del.targets.resize(num_deleted);
-            for (uint32_t i = 0; i < num_deleted; ++i)
-                del.targets[i].path = m_deleted[i];
-
-            client.send(del);
-            m_deleted.clear();
-        }
-
-        // send scene data
-        {
-            ms::SetMessage set;
-            set.scene.settings  = scene_settings;
-            set.scene.textures = m_texture_manager.getDirtyTextures();
-            set.scene.materials = m_materials;
-            set.scene.objects = m_objects;
-            client.send(set);
-
-            m_texture_manager.clearDirtyFlags();
             m_materials.clear();
-            m_objects.clear();
-        }
-
-        // send meshes one by one to Unity can respond quickly
-        for(auto& mesh : m_meshes) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { mesh };
-            client.send(set);
-        };
-        m_meshes.clear();
-
-        // send animations and constraints
-        if (!m_animations.empty() || !m_constraints.empty()) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.animations = m_animations;
-            set.scene.constraints = m_constraints;
-            client.send(set);
-
             m_animations.clear();
-            m_constraints.clear();
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+        };
+        m_sender.on_succeeded = [this]() {
+            m_texture_manager.clearDirtyFlags();
+            m_entity_manager.clearDirtyFlags();
+        };
+    }
+    m_sender.kick();
 }
 
 bool MeshSyncClientMaya::recvScene()
 {
-    waitAsyncSend();
+    m_sender.wait();
 
     ms::Client client(m_settings.client_settings);
     ms::GetMessage gd;

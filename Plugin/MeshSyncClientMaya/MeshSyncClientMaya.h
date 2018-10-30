@@ -36,8 +36,8 @@ struct TreeNode : public mu::noncopyable
     TreeNode *parent = nullptr;
     std::vector<TreeNode*> children;
 
-    ms::Transform *dst_obj = nullptr;
-    ms::Animation *dst_anim = nullptr;
+    ms::TransformPtr dst_obj;
+    ms::AnimationPtr dst_anim;
 
     void clearState();
     bool isInstance() const;
@@ -149,8 +149,6 @@ private:
     void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
     bool checkRename(TreeNode *node);
 
-    bool isSending() const;
-    void waitAsyncSend();
     void registerGlobalCallbacks();
     void registerNodeCallbacks();
     void removeGlobalCallbacks();
@@ -160,11 +158,12 @@ private:
     int getMaterialID(const MString& name);
     void exportMaterials();
 
-    bool exportObject(TreeNode *tn, bool force);
-    void extractTransformData(ms::Transform& dst, TreeNode *n);
-    void extractCameraData(ms::Camera& dst, TreeNode *n);
-    void extractLightData(ms::Light& dst, TreeNode *n);
-    void extractMeshData(ms::Mesh& dst, TreeNode *n);
+    ms::TransformPtr exportObject(TreeNode *n, bool force);
+    template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
+    ms::TransformPtr exportTransform(TreeNode *n);
+    ms::CameraPtr exportCamera(TreeNode *n);
+    ms::LightPtr exportLight(TreeNode *n);
+    ms::MeshPtr exportMesh(TreeNode *n);
     void doExtractBlendshapeWeights(ms::Mesh& dst, TreeNode *n);
     void doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape);
     void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
@@ -177,9 +176,6 @@ private:
     void extractLightAnimationData(ms::Animation& dst, TreeNode *n);
     void extractMeshAnimationData(ms::Animation& dst, TreeNode *n);
 
-    void exportConstraint(TreeNode *tn);
-    void extractConstraintData(ms::Constraint& dst, TreeNode *n);
-
     void kickAsyncSend();
 
 private:
@@ -187,15 +183,14 @@ private:
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
 
-    ms::TextureManager m_texture_manager;
     std::vector<MString>                m_material_id_table;
-    std::vector<ms::TransformPtr>       m_objects;
-    std::vector<ms::MeshPtr>            m_meshes;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<ms::ConstraintPtr>      m_constraints;
     std::vector<std::string>            m_deleted;
-    std::future<void>                   m_future_send;
+
+    ms::TextureManager m_texture_manager;
+    ms::EntityManager m_entity_manager;
+    ms::AsyncSceneSender m_sender;
 
     SendScope m_pending_scope = SendScope::None;
     bool      m_scene_updated = true;
