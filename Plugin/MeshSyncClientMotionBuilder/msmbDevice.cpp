@@ -17,7 +17,7 @@ bool msmbDevice::FBCreate()
 
 void msmbDevice::FBDestroy()
 {
-    waitAsyncSend();
+    m_sender.wait();
 
     FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
     FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
@@ -98,21 +98,6 @@ void msmbDevice::update()
     sendScene(false);
 }
 
-bool msmbDevice::isSending() const
-{
-    if (m_future_send.valid()) {
-        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
-    }
-    return false;
-}
-
-void msmbDevice::waitAsyncSend()
-{
-    if (m_future_send.valid()) {
-        m_future_send.wait_for(std::chrono::milliseconds(timeout_ms));
-    }
-}
-
 void msmbDevice::kickAsyncSend()
 {
     // process extract tasks
@@ -131,75 +116,36 @@ void msmbDevice::kickAsyncSend()
     }
 
 
-    // begin async send
-    m_future_send = std::async(std::launch::async, [this]() {
-        ms::Client client(client_settings);
+    if (!m_sender.on_prepare) {
+        m_sender.on_prepare = [this]() {
+            auto& t = m_sender;
+            t.client_settings = client_settings;
+            t.scene_settings.handedness = ms::Handedness::Right;
+            t.scene_settings.scale_factor = scale_factor;
 
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = scale_factor;
+            if (!m_deleted.empty()) {
+                for (auto& path : m_deleted) {
+                    t.deleted.push_back({ path, 0 });
+                    m_entity_manager.erase(path);
+                }
+                m_deleted.clear();
+            }
 
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_materials;
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
+            t.animations = m_animations;
 
-        // send delete message
-        size_t num_deleted = m_deleted.size();
-        if (num_deleted) {
-            ms::DeleteMessage del;
-            del.targets.resize(num_deleted);
-            for (uint32_t i = 0; i < num_deleted; ++i)
-                del.targets[i].path = m_deleted[i];
-
-            client.send(del);
-            m_deleted.clear();
-        }
-
-        // send scene data
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.textures = m_texture_manager.getDirtyTextures();
-            set.scene.materials = m_materials;
-            set.scene.objects = m_objects;
-            client.send(set);
-
-            m_texture_manager.clearDirtyFlags();
             m_materials.clear();
-            m_objects.clear();
-        }
-
-        // send meshes one by one to Unity can respond quickly
-        for (auto& mesh : m_meshes) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { mesh };
-            client.send(set);
-        };
-        m_meshes.clear();
-
-        // send animations and constraints
-        if (!m_animations.empty() || !m_constraints.empty()) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.animations = m_animations;
-            set.scene.constraints = m_constraints;
-            client.send(set);
-
             m_animations.clear();
-            m_constraints.clear();
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+        };
+        m_sender.on_succeeded = [this]() {
+            m_texture_manager.clearDirtyFlags();
+            m_entity_manager.clearDirtyFlags();
+        };
+    }
+    m_sender.kick();
 }
 
 
@@ -209,7 +155,7 @@ bool msmbDevice::sendScene(bool force_all)
         m_dirty_meshes = m_dirty_textures = true;
 
     m_data_updated = m_pending = false;
-    if (isSending()) {
+    if (m_sender.isSending()) {
         m_pending = true;
         return false;
     }
@@ -252,16 +198,17 @@ bool msmbDevice::sendScene(bool force_all)
     }
 }
 
-bool msmbDevice::exportObject(FBModel* src, bool force)
+ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
 {
     if (!src)
-        return false;
+        return nullptr;
 
     auto& rec = m_node_records[src];
-    if (rec.dst) {
-        return false;
-    }
-    else if (rec.name.empty()) {
+    if (rec.dst)
+        return rec.dst;
+
+    if (rec.name.empty()) {
+        rec.src = src;
         rec.name = GetName(src);
         rec.path = GetPath(src);
         rec.index = ++m_node_index_seed;
@@ -273,22 +220,17 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
     }
     rec.exist = true;
 
+    ms::TransformPtr ret;
     if (IsCamera(src)) { // camera
         if (sync_cameras) {
             exportObject(src->Parent, true);
-            auto obj = ms::Camera::create();
-            rec.dst = obj.get();
-            m_objects.push_back(obj);
-            extractCamera(*obj, static_cast<FBCamera*>(src));
+            ret = exportCamera(rec);
         }
     }
     else if (IsLight(src)) { // light
         if (sync_lights) {
             exportObject(src->Parent, true);
-            auto obj = ms::Light::create();
-            rec.dst = obj.get();
-            m_objects.push_back(obj);
-            extractLight(*obj, static_cast<FBLight*>(src));
+            ret = exportLight(rec);
         }
     }
     else if (IsMesh(src)) { // mesh
@@ -299,24 +241,18 @@ bool msmbDevice::exportObject(FBModel* src, bool force)
         }
         if (sync_meshes) {
             exportObject(src->Parent, true);
-            auto obj = ms::Mesh::create();
-            rec.dst = obj.get();
-            m_meshes.push_back(obj);
             if (m_dirty_meshes)
-                extractMesh(*obj, src);
+                ret = exportMesh(rec);
             else
-                extractMeshSimple(*obj, src);
+                ret = exportMeshSimple(rec);
         }
     }
     else if (force) {
         exportObject(src->Parent, true);
-        auto obj = ms::Transform::create();
-        rec.dst = obj.get();
-        m_objects.push_back(obj);
-        extractTransform(*obj, src);
+        ret = exporttTransform(rec);
     }
 
-    return rec.dst != nullptr;
+    return ret;
 }
 
 
@@ -385,32 +321,67 @@ static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
 }
 
 
-void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
+template<class T>
+inline std::shared_ptr<T> msmbDevice::createEntity(NodeRecord& n)
 {
-    dst.path = GetPath(src);
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    auto ret = T::create();
+    auto& dst = *ret;
+    dst.path = n.path;
+    dst.index = n.index;
+    n.dst = ret;
+    return ret;
 }
 
-void msmbDevice::extractCamera(ms::Camera& dst, FBCamera* src)
+ms::TransformPtr msmbDevice::exporttTransform(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Transform>(n);
+    auto& dst = *ret;
+    auto src = n.src;
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+
+    m_entity_manager.add(ret);
+    return ret;
+}
+
+ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
+{
+    auto ret = createEntity<ms::Camera>(n);
+    auto& dst = *ret;
+    auto src = static_cast<FBCamera*>(n.src);
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
     dst.rotation *= mu::rotateY(90.0f * mu::Deg2Rad);
 
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
+ms::LightPtr msmbDevice::exportLight(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Light>(n);
+    auto& dst = *ret;
+    auto src = static_cast<FBLight*>(n.src);
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
     dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
 
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
+ms::MeshPtr msmbDevice::exportMeshSimple(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Mesh>(n);
+    auto& dst = *ret;
+    auto src = n.src;
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
 
     // blendshape weights
     if (FBGeometry *geom = src->Geometry) {
@@ -434,15 +405,24 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
         }
     }
     dst.setupFlags();
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
+ms::MeshPtr msmbDevice::exportMesh(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Mesh>(n);
+    auto& dst = *ret;
+    auto src = n.src;
 
-    m_extract_tasks.push_back([this, &dst, src]() {
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+
+    m_extract_tasks.push_back([this, ret, &dst, src]() {
         doExtractMesh(dst, src);
+        m_entity_manager.add(ret);
     });
+    return ret;
 }
 
 void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
@@ -724,9 +704,7 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
 bool msmbDevice::sendAnimations()
 {
     // wait for previous request to complete
-    if (m_future_send.valid()) {
-        m_future_send.get();
-    }
+    m_sender.wait();
 
     if (exportAnimations()) {
         kickAsyncSend();

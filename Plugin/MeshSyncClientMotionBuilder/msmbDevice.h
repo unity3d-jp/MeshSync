@@ -5,7 +5,7 @@
 
 class msmbDevice : public FBDevice
 {
-    FBDeviceDeclare(msmbDevice, FBDevice);
+FBDeviceDeclare(msmbDevice, FBDevice);
 public:
     bool FBCreate() override;
     void FBDestroy() override;
@@ -18,40 +18,13 @@ public:
     bool sendAnimations();
 
 private:
-    void onSceneChange(HIRegister pCaller, HKEventBase pEvent);
-    void onDataUpdate(HIRegister pCaller, HKEventBase pEvent);
-    void onRender(HIRegister pCaller, HKEventBase pEvent);
-    void onSynchronization(HIRegister pCaller, HKEventBase pEvent);
-
-    void update();
-    bool isSending() const;
-    void waitAsyncSend();
-    void kickAsyncSend();
-
-    bool exportObject(FBModel* src, bool force);
-    void extractTransform(ms::Transform& dst, FBModel* src);
-    void extractCamera(ms::Camera& dst, FBCamera* src);
-    void extractLight(ms::Light& dst, FBLight* src);
-    void extractMeshSimple(ms::Mesh& dst, FBModel* src);
-    void extractMesh(ms::Mesh& dst, FBModel* src);
-    void doExtractMesh(ms::Mesh& dst, FBModel* src);
-
-    int exportTexture(FBTexture* src, FBMaterialTextureType type);
-    bool exportMaterial(FBMaterial* src);
-
-    bool exportAnimations();
-    bool exportAnimation(FBModel* src, bool force);
-    void extractTransformAnimation(ms::Animation& dst, FBModel* src);
-    void extractCameraAnimation(ms::Animation& dst, FBModel* src);
-    void extractLightAnimation(ms::Animation& dst, FBModel* src);
-    void extractMeshAnimation(ms::Animation& dst, FBModel* src);
-
     struct NodeRecord
     {
         std::string name;
         std::string path;
         int index = 0;
-        ms::Transform *dst = nullptr;
+        FBModel *src = nullptr;
+        ms::TransformPtr dst;
         bool exist = false;
     };
     using NodeRecords = std::map<FBModel*, NodeRecord>;
@@ -84,6 +57,34 @@ private:
     using AnimationRecords = std::map<FBModel*, AnimationRecord>;
 
 private:
+    void onSceneChange(HIRegister pCaller, HKEventBase pEvent);
+    void onDataUpdate(HIRegister pCaller, HKEventBase pEvent);
+    void onRender(HIRegister pCaller, HKEventBase pEvent);
+    void onSynchronization(HIRegister pCaller, HKEventBase pEvent);
+
+    void update();
+    void kickAsyncSend();
+
+    ms::TransformPtr exportObject(FBModel* src, bool force);
+    template<class T> std::shared_ptr<T> createEntity(NodeRecord& n);
+    ms::TransformPtr exporttTransform(NodeRecord& n);
+    ms::CameraPtr exportCamera(NodeRecord& n);
+    ms::LightPtr exportLight(NodeRecord& n);
+    ms::MeshPtr exportMeshSimple(NodeRecord& n);
+    ms::MeshPtr exportMesh(NodeRecord& n);
+    void doExtractMesh(ms::Mesh& dst, FBModel* src);
+
+    int exportTexture(FBTexture* src, FBMaterialTextureType type);
+    bool exportMaterial(FBMaterial* src);
+
+    bool exportAnimations();
+    bool exportAnimation(FBModel* src, bool force);
+    void extractTransformAnimation(ms::Animation& dst, FBModel* src);
+    void extractCameraAnimation(ms::Animation& dst, FBModel* src);
+    void extractLightAnimation(ms::Animation& dst, FBModel* src);
+    void extractMeshAnimation(ms::Animation& dst, FBModel* src);
+
+private:
     bool m_data_updated = false;
     bool m_dirty_meshes = true;
     bool m_dirty_textures = true;
@@ -99,14 +100,13 @@ private:
     ExtractTasks m_extract_tasks;
     AnimationRecords m_anim_records;
 
-    std::vector<ms::TransformPtr>       m_objects;
-    std::vector<ms::MeshPtr>            m_meshes;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<ms::ConstraintPtr>      m_constraints;
     std::vector<std::string>            m_deleted;
-    ms::TextureManager                  m_texture_manager;
-    std::future<void>                   m_future_send;
+
+    ms::TextureManager m_texture_manager;
+    ms::EntityManager m_entity_manager;
+    ms::AsyncSceneSender m_sender;
 
 public:
     ms::ClientSettings client_settings;
