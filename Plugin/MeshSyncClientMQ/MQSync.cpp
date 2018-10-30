@@ -280,7 +280,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 set.scene.objects.push_back(pair.second.transform);
             }
             {
-                auto objs = m_entity_manager.getDirtyEntities();
+                auto objs = m_entity_manager.getDirtyTransforms();
                 set.scene.objects.insert(set.scene.objects.end(), objs.begin(), objs.end());
             }
             client.send(set);
@@ -292,7 +292,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
         // send meshes one by one to Unity can respond quickly
         {
-            auto meshes = m_entity_manager.getDirtyMeshes();
+            auto meshes = m_entity_manager.getDirtyGeometries();
             for (auto& mesh : meshes) {
                 ms::SetMessage set;
                 set.scene.settings = scene_settings;

@@ -38,6 +38,11 @@ Entity::Type Entity::getType() const
     return Type::Unknown;
 }
 
+bool Entity::isGeometry() const
+{
+    return false;
+}
+
 uint32_t Entity::getSerializeSize() const
 {
     uint32_t ret = 0;
@@ -67,6 +72,16 @@ void Entity::clear()
 }
 
 uint64_t Entity::hash() const
+{
+    return 0;
+}
+
+uint64_t Entity::checksumTrans() const
+{
+    return 0;
+}
+
+uint64_t Entity::checksumGeom() const
 {
     return 0;
 }
@@ -129,7 +144,7 @@ void Transform::clear()
     reference.clear();
 }
 
-uint64_t Transform::checksum() const
+uint64_t Transform::checksumTrans() const
 {
     uint64_t ret = 0;
     ret += csum(position);
@@ -213,8 +228,6 @@ void Camera::deserialize(std::istream& is)
     EachMember(msRead);
 }
 
-#undef EachMember
-
 void Camera::clear()
 {
     super::clear();
@@ -229,6 +242,17 @@ void Camera::clear()
     focal_length = 0.0f;
     focus_distance = 0.0f;
 }
+
+uint64_t Camera::checksumTrans() const
+{
+    uint64_t ret = super::checksumTrans();
+    ret += uint32_t(is_ortho) << 10;
+#define Body(A) ret += csum(A);
+    EachMember(Body);
+#undef Body
+    return ret;
+}
+#undef EachMember
 
 void Camera::applyScaleFactor(float v)
 {
@@ -269,8 +293,6 @@ void Light::deserialize(std::istream & is)
     EachMember(msRead);
 }
 
-#undef EachMember
-
 void Light::clear()
 {
     super::clear();
@@ -280,6 +302,19 @@ void Light::clear()
     range = 0.0f;
     spot_angle = 30.0f;
 }
+
+template<> struct csum_impl<Light::LightType> { uint64_t operator()(Light::LightType v) { return (uint32_t)v; } };
+
+uint64_t Light::checksumTrans() const
+{
+    uint64_t ret = super::checksumTrans();
+#define Body(A) ret += csum(A);
+    EachMember(Body);
+#undef Body
+    return ret;
+}
+#undef EachMember
+
 
 void Light::applyScaleFactor(float v)
 {
@@ -465,11 +500,8 @@ void BoneData::applyScaleFactor(float scale)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
-
-Entity::Type Mesh::getType() const
-{
-    return Type::Mesh;
-}
+Entity::Type Mesh::getType() const { return Type::Mesh; }
+bool Mesh::isGeometry() const { return true; }
 
 uint32_t Mesh::getSerializeSize() const
 {
@@ -585,7 +617,7 @@ uint64_t Mesh::hash() const
     return ret;
 }
 
-uint64_t Mesh::checksum() const
+uint64_t Mesh::checksumGeom() const
 {
     uint64_t ret = 0;
 #define Body(A) ret += csum(A);
@@ -1145,6 +1177,16 @@ uint64_t PointsData::hash() const
     EachArray(msHash);
     return ret;
 }
+
+uint64_t PointsData::checksumGeom() const
+{
+    uint64_t ret = 0;
+    ret += csum(time);
+#define Body(A) ret += csum(A);
+    EachArray(Body);
+#undef Body
+    return ret;
+}
 #undef EachArrays
 #undef EachMember
 
@@ -1188,11 +1230,8 @@ void PointsData::getBounds(float3 & center, float3 & extents)
 
 Points::Points() {}
 Points::~Points() {}
-
-Entity::Type Points::getType() const
-{
-    return Type::Points;
-}
+Entity::Type Points::getType() const { return Type::Points; }
+bool Points::isGeometry() const { return true; }
 
 #define EachMember(F)\
     F(data)
@@ -1227,6 +1266,14 @@ uint64_t Points::hash() const
     uint64_t ret = 0;
     for (auto& p : data)
         ret += p->hash();
+    return ret;
+}
+
+uint64_t Points::checksumGeom() const
+{
+    uint64_t ret = 0;
+    for (auto& p : data)
+        ret += p->checksumGeom();
     return ret;
 }
 

@@ -33,50 +33,81 @@ void EntityManager::erase(const std::string &path)
     }
 }
 
-void EntityManager::add(MeshPtr mesh)
+inline void EntityManager::addTransform(TransformPtr obj)
 {
-    auto& rec = lockAndGet(mesh->path);
+    auto& rec = lockAndGet(obj->path);
+    rec.added = true;
+
+    if (!rec.entity) {
+        rec.entity = obj;
+        rec.dirty_trans = true;
+
+        rec.checksum_trans = obj->checksumTrans();
+    }
+    else {
+        rec.entity = obj;
+
+        uint64_t checksum = obj->checksumTrans();
+        if (rec.checksum_trans != checksum) {
+            rec.dirty_trans = true;
+            rec.checksum_trans = checksum;
+        }
+    }
+}
+
+inline void EntityManager::addGeometry(TransformPtr obj)
+{
+    auto& rec = lockAndGet(obj->path);
+    rec.added = true;
     rec.waitTask();
 
-    if (!rec.mesh) {
-        rec.mesh = mesh;
-        rec.dirty_mesh = true;
+    if (!rec.entity) {
+        rec.entity = obj;
+        rec.dirty_geom = true;
 
-        rec.task = std::async(std::launch::async, [this, mesh, &rec]() {
-            rec.trans_checksum = static_cast<Transform&>(*mesh).checksum();
-            rec.mesh_checksum = mesh->checksum();
+        rec.task = std::async(std::launch::async, [this, obj, &rec]() {
+            rec.checksum_trans = obj->checksumTrans();
+            rec.checksum_geom = obj->checksumGeom();
         });
     }
     else {
-        rec.mesh = mesh;
+        rec.entity = obj;
 
-        rec.task = std::async(std::launch::async, [this, mesh, &rec]() {
-            auto trans_checksum = static_cast<Transform&>(*mesh).checksum();
-            auto mesh_checksum = mesh->checksum();
-            if (rec.mesh_checksum != mesh_checksum) {
-                rec.dirty_mesh = true;
-                rec.trans_checksum = trans_checksum;
-                rec.mesh_checksum = mesh_checksum;
+        rec.task = std::async(std::launch::async, [this, obj, &rec]() {
+            auto checksum_trans = obj->checksumTrans();
+            auto checksum_geom = obj->checksumGeom();
+            if (rec.checksum_geom != checksum_geom) {
+                rec.dirty_geom = true;
+                rec.checksum_trans = checksum_trans;
+                rec.checksum_geom = checksum_geom;
             }
-            else if (rec.trans_checksum != trans_checksum) {
+            else if (rec.checksum_trans != checksum_trans) {
                 rec.dirty_trans = true;
-                rec.trans_checksum = trans_checksum;
+                rec.checksum_trans = checksum_trans;
             }
         });
     }
 }
 
-std::vector<TransformPtr> EntityManager::getAllMeshes()
+void EntityManager::add(TransformPtr obj)
+{
+    if (obj->isGeometry())
+        addGeometry(obj);
+    else
+        addTransform(obj);
+}
+
+std::vector<TransformPtr> EntityManager::getAllEntities()
 {
     waitTasks();
 
     std::vector<TransformPtr> ret;
     for (auto& v : m_records)
-        ret.push_back(v.second.mesh);
+        ret.push_back(v.second.entity);
     return ret;
 }
 
-std::vector<TransformPtr> EntityManager::getDirtyEntities()
+std::vector<TransformPtr> EntityManager::getDirtyTransforms()
 {
     waitTasks();
 
@@ -84,23 +115,28 @@ std::vector<TransformPtr> EntityManager::getDirtyEntities()
     for (auto& p : m_records) {
         auto& r = p.second;
         if (r.dirty_trans) {
-            auto t = Transform::create();
-            *t = *r.mesh;
-            ret.push_back(t);
+            if (r.entity->isGeometry()) {
+                auto t = Transform::create();
+                *t = *r.entity;
+                ret.push_back(t);
+            }
+            else {
+                ret.push_back(r.entity);
+            }
         }
     }
     return ret;
 }
 
-std::vector<TransformPtr> EntityManager::getDirtyMeshes()
+std::vector<TransformPtr> EntityManager::getDirtyGeometries()
 {
     waitTasks();
 
     std::vector<TransformPtr> ret;
     for (auto& p : m_records) {
         auto& r = p.second;
-        if (r.dirty_mesh) {
-            ret.push_back(r.mesh);
+        if (r.dirty_geom) {
+            ret.push_back(r.entity);
         }
     }
     return ret;
@@ -110,7 +146,30 @@ void EntityManager::clearDirtyFlags()
 {
     for (auto& p : m_records) {
         auto& r = p.second;
-        r.dirty_mesh = r.dirty_trans = false;
+        r.added = r.dirty_geom = r.dirty_trans = false;
+    }
+}
+
+std::vector<TransformPtr> EntityManager::getNotAdded()
+{
+    waitTasks();
+
+    std::vector<TransformPtr> ret;
+    for (auto& p : m_records) {
+        auto& r = p.second;
+        if (!r.added)
+            ret.push_back(r.entity);
+    }
+    return ret;
+}
+
+void EntityManager::eraseNotAdded()
+{
+    for (auto it = m_records.begin(); it != m_records.end(); ) {
+        if (!it->second.added)
+            m_records.erase(it++);
+        else
+            ++it;
     }
 }
 

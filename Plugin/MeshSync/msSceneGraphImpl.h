@@ -228,6 +228,7 @@ struct vhash_impl<RawVector<T>>
 
 template<class T>
 struct csum_impl;
+template<> struct csum_impl<bool> { uint64_t operator()(bool v) { return (uint32_t)v; } };
 template<> struct csum_impl<int> { uint64_t operator()(int v) { return (uint32_t&)v; } };
 template<> struct csum_impl<float> { uint64_t operator()(float v) { return (uint32_t&)v; } };
 template<> struct csum_impl<float2> { uint64_t operator()(const float2& v) { return mu::SumInt32(&v, 8); } };

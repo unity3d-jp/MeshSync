@@ -37,11 +37,14 @@ public:
     msDefinePool(Entity);
     static std::shared_ptr<Entity> create(std::istream& is);
     virtual Type getType() const;
+    virtual bool isGeometry() const;
     virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
     virtual uint64_t hash() const;
+    virtual uint64_t checksumTrans() const;
+    virtual uint64_t checksumGeom() const;
 
     const char* getName() const; // get name (leaf) from path
 
@@ -76,7 +79,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
-    uint64_t checksum() const;
+    uint64_t checksumTrans() const override;
 
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
@@ -114,6 +117,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t checksumTrans() const override;
 
     void applyScaleFactor(float scale) override;
 };
@@ -150,6 +154,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
+    uint64_t checksumTrans() const override;
 
     void applyScaleFactor(float scale) override;
 };
@@ -353,12 +358,13 @@ protected:
 public:
     msDefinePool(Mesh);
     Type getType() const override;
+    bool isGeometry() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
-    uint64_t checksum() const;
+    uint64_t checksumGeom() const override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
@@ -415,6 +421,7 @@ public:
     void deserialize(std::istream& is);
     void clear();
     uint64_t hash() const;
+    uint64_t checksumGeom() const;
 
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
@@ -438,11 +445,13 @@ protected:
 public:
     msDefinePool(Points);
     Type getType() const override;
+    bool isGeometry() const override;
     uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksumGeom() const override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
