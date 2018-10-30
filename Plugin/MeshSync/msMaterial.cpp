@@ -53,15 +53,31 @@ bool ByteArrayToFile(const char *path, const RawVector<char> &data)
 
 bool FileExists(const char * path)
 {
-    // this is fater than using fopen()
-    Poco::File f(path);
-    return f.exists();
+    if (!path || *path == '\0')
+        return false;
+
+    try {
+        // this is fater than using fopen()
+        Poco::File f(path);
+        return f.exists();
+    }
+    catch (...) {
+        return false;
+    }
 }
 
 uint64_t FileMTime(const char * path)
 {
-    Poco::File f(path);
-    return f.getLastModified().raw();
+    if (!path || *path == '\0')
+        return 0;
+
+    try {
+        Poco::File f(path);
+        return f.getLastModified().raw();
+    }
+    catch (...) {
+        return 0;
+    }
 }
 
 

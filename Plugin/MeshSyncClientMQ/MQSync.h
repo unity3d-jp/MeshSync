@@ -50,7 +50,6 @@ private:
 
     using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
-    using ExistRecords = std::map<std::string, bool>;
     using Materials = std::vector<ms::MaterialPtr>;
 
     int exportTexture(const std::string& path, ms::TextureType type);
@@ -86,10 +85,8 @@ private:
 
     std::vector<MeshData> m_meshes;
     std::map<UINT, BoneData> m_bones;
-    ExistRecords m_mesh_exists;
-    ExistRecords m_bone_exists;
-    std::future<void> m_future_meshes;
-    std::future<void> m_future_camera;
+    ms::AsyncSceneSender m_send_meshes;
+    ms::AsyncSceneSender m_send_camera;
     bool m_pending_send_meshes = false;
 };
 

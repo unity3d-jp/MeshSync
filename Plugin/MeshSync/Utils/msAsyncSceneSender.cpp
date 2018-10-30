@@ -36,7 +36,7 @@ void AsyncSceneSender::kick()
 void AsyncSceneSender::send()
 {
     if (async_prepare)
-        async_prepare(*this);
+        async_prepare();
 
     if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() && deleted.empty())
         return;

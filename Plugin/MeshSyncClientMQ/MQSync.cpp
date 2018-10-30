@@ -10,16 +10,8 @@ MQSync::MQSync(MQBasePlugin *plugin)
 
 MQSync::~MQSync()
 {
-    try {
-        if (m_future_meshes.valid()) {
-            m_future_meshes.get();
-        }
-        if (m_future_camera.valid()) {
-            m_future_camera.get();
-        }
-    }
-    catch (...) {
-    }
+    m_send_meshes.wait();
+    m_send_camera.wait();
 }
 
 ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
@@ -44,10 +36,9 @@ void MQSync::clear()
     m_host_meshes.clear();
 
     m_texture_manager.clear();
+    m_entity_manager.clear();
     m_materials.clear();
     m_camera.reset();
-    m_mesh_exists.clear();
-    m_bone_exists.clear();
     m_pending_send_meshes = false;
 }
 
@@ -60,15 +51,13 @@ void MQSync::flushPendingRequests(MQDocument doc)
 
 void MQSync::sendMeshes(MQDocument doc, bool force)
 {
-    if (!force)
-    {
-        if (!m_auto_sync) { return; }
+    if (!force) {
+        if (!m_auto_sync)
+            return;
     }
 
     // just return if previous request is in progress. responsiveness is highest priority.
-    if (m_future_meshes.valid() &&
-        m_future_meshes.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
-    {
+    if (m_send_meshes.isSending()) {
         m_pending_send_meshes = true;
         return;
     }
@@ -198,14 +187,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 buildBonePath(path, bone);
 
                 // setup transform
-                {
-                    auto& trans = *bone.transform;
-                    trans.rotation = bone.world_rot;
-                    trans.position = bone.world_pos;
-                    auto it = m_bones.find(bone.parent);
-                    if (it != m_bones.end())
-                        trans.position -= it->second.world_pos;
-                }
+                auto& trans = *bone.transform;
+                trans.rotation = bone.world_rot;
+                trans.position = bone.world_pos;
+                auto it = m_bones.find(bone.parent);
+                if (it != m_bones.end())
+                    trans.position -= it->second.world_pos;
+
+                m_entity_manager.add(bone.transform);
             }
 
             // get weights
@@ -254,106 +243,36 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
 #endif
 
+    if (!m_send_meshes.async_prepare) {
+        m_send_meshes.async_prepare = [this]() {
+            auto& t = m_send_meshes;
+            t.client_settings = m_settings;
+            t.scene_settings.handedness = ms::Handedness::Right;
+            t.scene_settings.scale_factor = m_scale_factor;
 
-    // kick async send
-    m_future_meshes = std::async(std::launch::async, [this]() {
-        ms::Client client(m_settings);
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_materials;
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
 
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = m_scale_factor;
-
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send materials and bones
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.textures = m_texture_manager.getDirtyTextures();
-            set.scene.materials = m_materials;
-            for (auto& pair : m_bones) {
-                set.scene.objects.push_back(pair.second.transform);
+            auto deleted = m_entity_manager.getNotAdded();
+            if (!deleted.empty()) {
+                for (auto& obj : deleted) {
+                    int id = 0;
+                    ExtractID(obj->path.c_str(), id);
+                    t.deleted.push_back({ obj->path , id });
+                }
+                m_entity_manager.eraseNotAdded();
             }
-            {
-                auto objs = m_entity_manager.getDirtyTransforms();
-                set.scene.objects.insert(set.scene.objects.end(), objs.begin(), objs.end());
-            }
-            client.send(set);
 
             m_texture_manager.clear();
             m_materials.clear();
             m_bones.clear();
-        }
-
-        // send meshes one by one to Unity can respond quickly
-        {
-            auto meshes = m_entity_manager.getDirtyGeometries();
-            for (auto& mesh : meshes) {
-                ms::SetMessage set;
-                set.scene.settings = scene_settings;
-                set.scene.objects = { mesh };
-                client.send(set);
-            };
             m_meshes.clear();
             m_entity_manager.clearDirtyFlags();
-        }
-
-        // detect deleted objects and send delete message
-        {
-            for (auto& e : m_mesh_exists)
-                e.second = false;
-            for (auto& rel : m_meshes) {
-                auto& path = rel.data->path;
-                if (!path.empty())
-                    m_mesh_exists[path] = true;
-            }
-            for (auto& e : m_bone_exists)
-                e.second = false;
-            for (auto& rel : m_bones) {
-                auto& path = rel.second.transform->path;
-                if (!path.empty())
-                    m_bone_exists[path] = true;
-            }
-
-            ms::DeleteMessage del;
-            for (auto i = m_mesh_exists.begin(); i != m_mesh_exists.end(); ) {
-                if (!i->second) {
-                    int id = 0;
-                    ExtractID(i->first.c_str(), id);
-                    del.targets.push_back({ i->first , id });
-                    m_entity_manager.erase(i->first);
-                    m_mesh_exists.erase(i++);
-                }
-                else
-                    ++i;
-            }
-            for (auto i = m_bone_exists.begin(); i != m_bone_exists.end(); ) {
-                if (!i->second) {
-                    int id = 0;
-                    ExtractID(i->first.c_str(), id);
-                    del.targets.push_back({ i->first , id });
-                    m_bone_exists.erase(i++);
-                }
-                else
-                    ++i;
-            }
-            if (!del.targets.empty()) {
-                client.send(del);
-            }
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+        };
+    }
+    m_send_meshes.kick();
 }
 
 void MQSync::buildBonePath(std::string& dst, BoneData& bd)
@@ -369,18 +288,16 @@ void MQSync::buildBonePath(std::string& dst, BoneData& bd)
 
 void MQSync::sendCamera(MQDocument doc, bool force)
 {
-    if (!force)
-    {
-        if (!m_auto_sync) { return; }
+    if (!force) {
+        if (!m_auto_sync)
+            return;
     }
-    if (!m_sync_camera) { return; }
+    if (!m_sync_camera)
+        return;
 
     // just return if previous request is in progress
-    if (m_future_camera.valid() &&
-        m_future_camera.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
-    {
+    if (m_send_camera.isSending())
         return;
-    }
 
     // gather camera data
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
@@ -406,36 +323,16 @@ void MQSync::sendCamera(MQDocument doc, bool force)
         }
     }
 
-    // kick async send
-    m_future_camera = std::async(std::launch::async, [this]() {
-        ms::Client client(m_settings);
-
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = m_scale_factor;
-
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send camera
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { m_camera };
-            client.send(set);
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+    if (!m_send_camera.async_prepare) {
+        m_send_camera.async_prepare = [this]() {
+            auto& t = m_send_camera;
+            t.client_settings = m_settings;
+            t.scene_settings.handedness = ms::Handedness::Right;
+            t.scene_settings.scale_factor = m_scale_factor;
+            t.transforms = { m_camera };
+        };
+    }
+    m_send_camera.kick();
 }
 
 
