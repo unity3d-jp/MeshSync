@@ -19,12 +19,6 @@ msbSettings& msbContext::getSettings() { return m_settings; }
 const msbSettings& msbContext::getSettings() const { return m_settings; }
 
 
-void msbContext::addDeleted(const std::string& path)
-{
-    m_deleted.push_back(path);
-}
-
-
 int msbContext::exportTexture(const std::string & path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
@@ -127,6 +121,11 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& co
     }
 }
 
+
+void msbContext::addDeleted(const std::string& path)
+{
+    m_deleted.push_back(path);
+}
 
 ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
 {

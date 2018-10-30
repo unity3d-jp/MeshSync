@@ -40,6 +40,7 @@ inline void EntityManager::addTransform(TransformPtr obj)
 
     if (!rec.entity) {
         rec.entity = obj;
+        rec.order = ++m_order;
         rec.dirty_trans = true;
 
         rec.checksum_trans = obj->checksumTrans();
@@ -53,6 +54,7 @@ inline void EntityManager::addTransform(TransformPtr obj)
             rec.checksum_trans = checksum;
         }
     }
+    obj->order = rec.order;
 }
 
 inline void EntityManager::addGeometry(TransformPtr obj)
@@ -63,6 +65,7 @@ inline void EntityManager::addGeometry(TransformPtr obj)
 
     if (!rec.entity) {
         rec.entity = obj;
+        rec.order = ++m_order;
         rec.dirty_geom = true;
 
         rec.task = std::async(std::launch::async, [this, obj, &rec]() {
@@ -87,6 +90,7 @@ inline void EntityManager::addGeometry(TransformPtr obj)
             }
         });
     }
+    obj->order = rec.order;
 }
 
 void EntityManager::add(TransformPtr obj)
@@ -140,6 +144,17 @@ std::vector<TransformPtr> EntityManager::getDirtyGeometries()
         }
     }
     return ret;
+}
+
+void EntityManager::makeDirtyAll()
+{
+    for (auto& p : m_records) {
+        auto& r = p.second;
+        if(r.entity->isGeometry())
+            r.dirty_geom = true;
+        else
+            r.dirty_trans = true;
+    }
 }
 
 void EntityManager::clearDirtyFlags()

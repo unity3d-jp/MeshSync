@@ -83,13 +83,12 @@ private:
         }
     };
 
-    void                addDeleted(const std::string& path);
-    ms::MaterialPtr     addMaterial(Material *material);
-    int                 exportTexture(const std::string & path, ms::TextureType type);
-
+    int exportTexture(const std::string & path, ms::TextureType type);
+    ms::MaterialPtr addMaterial(Material *material);
     int getMaterialID(const Material *mat);
     void exportMaterials();
 
+    void addDeleted(const std::string& path);
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportTransform(Object *obj, const std::string& path);
     ms::TransformPtr exportPose(bPoseChannel *obj, const std::string& path);
@@ -99,16 +98,14 @@ private:
     ms::CameraPtr exportCamera(Object *obj, const std::string& path);
     ms::LightPtr exportLight(Object *obj, const std::string& path);
     ms::MeshPtr exportMesh(Object *obj, const std::string& path);
-
-    ObjectRecord& touchRecord(Object *obj);
-    void eraseStaleObjects();
-
-    ms::TransformPtr findBone(const Object *armature, const Bone *bone);
-
     void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
+
+    ms::TransformPtr findBone(const Object *armature, const Bone *bone);
+    ObjectRecord& touchRecord(Object *obj);
+    void eraseStaleObjects();
 
     void exportAnimation(Object *obj, bool force, const std::string base_path="");
     void extractTransformAnimationData(ms::Animation& dst, void *obj);

@@ -83,12 +83,13 @@ private:
     {
         int index = 0;
         INode *node = nullptr;
+        Object *baseobj = nullptr;
         std::wstring name;
         std::string path;
 
         bool dirty_trans = true;
         bool dirty_geom = true;
-        ms::Transform *dst_obj = nullptr;
+        ms::TransformPtr dst_obj;
 
         void clearDirty();
         void clearState();
@@ -114,18 +115,17 @@ private:
     void updateRecords();
     TreeNode& getNodeRecord(INode *n);
 
-    bool isSending() const;
-    void waitAsyncSend();
     void kickAsyncSend();
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    ms::Transform* exportObject(INode *node, bool force);
-    bool extractTransformData(ms::Transform& dst, INode *src, Object *obj);
-    bool extractCameraData(ms::Camera& dst, INode *n, Object *obj);
-    bool extractLightData(ms::Light& dst, INode *n, Object *obj);
-    bool extractMeshData(ms::Mesh& dst, INode *n, Object *obj);
+    ms::TransformPtr exportObject(INode *node, bool force);
+    template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
+    ms::TransformPtr exportTransform(TreeNode& node);
+    ms::CameraPtr exportCamera(TreeNode& node);
+    ms::LightPtr exportLight(TreeNode& node);
+    ms::MeshPtr exportMesh(TreeNode& node);
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
     ms::Animation* exportAnimations(INode *node, bool force);
@@ -149,15 +149,13 @@ private:
     TimeValue m_current_time_tick;
     float m_current_time_sec;
 
-    ms::TextureManager m_texture_manager;
-
-    std::vector<ms::TransformPtr>       m_objects;
-    std::vector<ms::MeshPtr>            m_meshes;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<ms::ConstraintPtr>      m_constraints;
     std::vector<std::string>            m_deleted;
-    std::future<void>                   m_future_send;
+
+    ms::TextureManager m_texture_manager;
+    ms::EntityManager m_entity_manager;
+    ms::AsyncSceneSender m_sender;
 };
 
 #define msmaxInstance() MeshSyncClient3dsMax::getInstance()

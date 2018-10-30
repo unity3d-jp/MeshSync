@@ -19,6 +19,7 @@ public:
     std::vector<TransformPtr> getAllEntities();
     std::vector<TransformPtr> getDirtyTransforms();
     std::vector<TransformPtr> getDirtyGeometries();
+    void makeDirtyAll();
     void clearDirtyFlags();
 
     std::vector<TransformPtr> getStaleEntities();
@@ -28,6 +29,7 @@ private:
     struct Record
     {
         TransformPtr entity;
+        int order = 0;
         uint64_t checksum_trans = 0;
         uint64_t checksum_geom = 0;
         bool dirty_trans = false;
@@ -42,6 +44,7 @@ private:
     void addTransform(TransformPtr v);
     void addGeometry(TransformPtr v);
 
+    int m_order = 0;
     std::map<std::string, Record> m_records;
     std::mutex m_mutex;
 };

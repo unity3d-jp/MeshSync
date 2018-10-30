@@ -41,6 +41,9 @@ void AsyncSceneSender::send()
     if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() && deleted.empty())
         return;
 
+    std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+    std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+
     ms::Client client(client_settings);
 
     // notify scene begin

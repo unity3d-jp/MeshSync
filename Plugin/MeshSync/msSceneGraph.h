@@ -67,6 +67,8 @@ public:
     bool visible_hierarchy = true;
     std::string reference;
 
+    // non-serializable
+    int order = 0;
 
 protected:
     Transform();
@@ -340,7 +342,7 @@ public:
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshapes;
 
-    // non-serialized
+    // non-serializable
     RawVector<Weights4> weights4;
     RawVector<float3> tmp_normals;
     RawVector<float2> tmp_uv0, tmp_uv1;
