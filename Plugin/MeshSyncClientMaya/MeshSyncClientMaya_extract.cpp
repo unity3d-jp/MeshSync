@@ -93,6 +93,7 @@ int MeshSyncClientMaya::exportTexture(const std::string& path, ms::TextureType t
 
 void MeshSyncClientMaya::exportMaterials()
 {
+    m_materials.clear();
     m_material_id_table.clear();
 
     MItDependencyNodes it(kMFnLambert);
@@ -122,6 +123,12 @@ void MeshSyncClientMaya::exportMaterials()
 
         it.next();
     }
+}
+
+void MeshSyncClientMaya::addDeleted(const std::string & path)
+{
+    m_deleted.push_back({ path, 0 });
+    m_entity_manager.erase(path);
 }
 
 ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
@@ -284,10 +291,6 @@ ms::LightPtr MeshSyncClientMaya::exportLight(TreeNode *n)
 
 ms::MeshPtr MeshSyncClientMaya::exportMesh(TreeNode *n)
 {
-    if (m_material_id_table.empty()) {
-        exportMaterials();
-    }
-
     auto ret = createEntity<ms::Mesh>(*n);
     auto& dst = *ret;
 
@@ -824,6 +827,7 @@ void MeshSyncClientMaya::AnimationRecord::operator()(MeshSyncClientMaya *_this)
 int MeshSyncClientMaya::exportAnimations(SendScope scope)
 {
     // create default clip
+    m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     int num_exported = 0;

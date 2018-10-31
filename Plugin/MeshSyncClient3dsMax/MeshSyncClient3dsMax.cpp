@@ -339,8 +339,8 @@ void MeshSyncClient3dsMax::kickAsyncSend()
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_materials.clear();
             m_deleted.clear();
+            m_materials.clear();
             m_animations.clear();
         };
     }
@@ -939,7 +939,7 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mes
 }
 
 
-ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
+ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode *n, bool force)
 {
     if (!n || !n->GetObjectRef())
         return nullptr;
@@ -962,8 +962,7 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
                 exportAnimations(bone, true);
             });
         }
-        auto dst = ms::MeshAnimation::create();
-        ret = dst;
+        ret = ms::MeshAnimation::create();
         extractor = &MeshSyncClient3dsMax::extractMeshAnimation;
     }
     else {
@@ -971,16 +970,14 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
         case CAMERA_CLASS_ID:
         {
             exportAnimations(n->GetParentNode(), true);
-            auto dst = ms::CameraAnimation::create();
-            ret = dst;
+            ret = ms::CameraAnimation::create();
             extractor = &MeshSyncClient3dsMax::extractCameraAnimation;
             break;
         }
         case LIGHT_CLASS_ID:
         {
             exportAnimations(n->GetParentNode(), true);
-            auto dst = ms::LightAnimation::create();
-            ret = dst;
+            ret = ms::LightAnimation::create();
             extractor = &MeshSyncClient3dsMax::extractLightAnimation;
             break;
         }
@@ -988,8 +985,7 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
         {
             if (force) {
                 exportAnimations(n->GetParentNode(), true);
-                auto dst = ms::TransformAnimation::create();
-                ret = dst;
+                ret = ms::TransformAnimation::create();
                 extractor = &MeshSyncClient3dsMax::extractTransformAnimation;
             }
             break;
@@ -1002,12 +998,12 @@ ms::Animation* MeshSyncClient3dsMax::exportAnimations(INode * n, bool force)
         ret->path = GetPath(n);
 
         auto& rec = m_anim_records[n];
-        rec.dst = ret.get();
+        rec.dst = ret;
         rec.node = n;
         rec.obj = obj;
         rec.extractor = extractor;
     }
-    return ret.get();
+    return ret;
 }
 
 void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode *src, Object *obj)

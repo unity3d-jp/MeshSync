@@ -16,7 +16,7 @@ namespace ms {
 struct Identifier
 {
     std::string path;
-    int id;
+    int id = InvalidID;
 
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
@@ -37,7 +37,7 @@ public:
         Points,
     };
 
-    int id = 0;
+    int id = InvalidID;
     std::string path;
 
 protected:

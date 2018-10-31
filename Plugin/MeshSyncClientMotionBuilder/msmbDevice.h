@@ -14,7 +14,6 @@ public:
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
 
     bool sendScene(bool force_all);
-    bool exportMaterials();
     bool sendAnimations();
 
 private:
@@ -65,6 +64,8 @@ private:
     void update();
     void kickAsyncSend();
 
+    void addDeleted(const std::string& path);
+
     ms::TransformPtr exportObject(FBModel* src, bool force);
     template<class T> std::shared_ptr<T> createEntity(NodeRecord& n);
     ms::TransformPtr exporttTransform(NodeRecord& n);
@@ -74,6 +75,7 @@ private:
     ms::MeshPtr exportMesh(NodeRecord& n);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
+    bool exportMaterials();
     int exportTexture(FBTexture* src, FBMaterialTextureType type);
     bool exportMaterial(FBMaterial* src);
 
@@ -102,7 +104,7 @@ private:
 
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<std::string>            m_deleted;
+    std::vector<ms::Identifier>         m_deleted;
 
     ms::TextureManager m_texture_manager;
     ms::EntityManager m_entity_manager;
@@ -121,7 +123,6 @@ public:
     bool sync_bones = true;
     bool sync_meshes = true;
     bool sync_textures = true;
-    bool sync_materials = true;
     bool bake_deformars = false;
     bool parallel_extraction = true;
 };

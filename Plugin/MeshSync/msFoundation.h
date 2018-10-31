@@ -6,6 +6,9 @@
 
 namespace ms {
 
+const int InvalidID = -1;
+
+
 template<class T> struct has_serializer { static const bool result = false; };
 
 template<class T>

@@ -58,7 +58,7 @@ uint64_t FileMTime(const char *path);
 class Texture
 {
 public:
-    int id = 0;
+    int id = InvalidID;
     std::string name; // if format is RawFile, this must be file name
     TextureType type = TextureType::Default;
     TextureFormat format = TextureFormat::Unknown;
@@ -102,7 +102,7 @@ struct MaterialDataFlags
 class Material
 {
 public:
-    int id = 0;
+    int id = InvalidID;
     std::string name;
     MaterialDataFlags flags = { 0 };
 
@@ -113,10 +113,10 @@ protected:
     float smoothness = 0.5f;
 
     // texture ids
-    int color_map = -1;
-    int metallic_map = -1;
-    int emission_map = -1;
-    int normal_map = -1;
+    int color_map = InvalidID;
+    int metallic_map = InvalidID;
+    int emission_map = InvalidID;
+    int normal_map = InvalidID;
 
 protected:
     Material();

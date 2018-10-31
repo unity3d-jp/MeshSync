@@ -89,6 +89,7 @@ private:
     void exportMaterials();
 
     void addDeleted(const std::string& path);
+
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportTransform(Object *obj, const std::string& path);
     ms::TransformPtr exportPose(bPoseChannel *obj, const std::string& path);
@@ -123,7 +124,7 @@ private:
     std::map<const Bone*, ms::TransformPtr> m_bones;
     std::vector<ms::AnimationClipPtr> m_animations;
     std::vector<ms::MaterialPtr> m_materials;
-    std::vector<std::string> m_deleted;
+    std::vector<ms::Identifier> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;
     std::vector<Mesh*> m_tmp_bmeshes;
     ms::TextureManager m_texture_manager;

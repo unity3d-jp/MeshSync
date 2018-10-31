@@ -123,28 +123,28 @@ void msmbDevice::kickAsyncSend()
             t.scene_settings.handedness = ms::Handedness::Right;
             t.scene_settings.scale_factor = scale_factor;
 
-            if (!m_deleted.empty()) {
-                for (auto& path : m_deleted) {
-                    t.deleted.push_back({ path, 0 });
-                    m_entity_manager.erase(path);
-                }
-                m_deleted.clear();
-            }
-
             t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
+            t.deleted = m_deleted;
             t.animations = m_animations;
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
+            m_deleted.clear();
             m_materials.clear();
             m_animations.clear();
         };
     }
     m_sender.kick();
+}
+
+void msmbDevice::addDeleted(const std::string & path)
+{
+    m_deleted.push_back({ path, 0 });
+    m_entity_manager.erase(path);
 }
 
 
@@ -159,8 +159,7 @@ bool msmbDevice::sendScene(bool force_all)
         return false;
     }
 
-    m_materials.clear();
-    if (sync_meshes && sync_materials)
+    if (sync_meshes)
         exportMaterials();
 
     // export nodes
@@ -173,7 +172,7 @@ bool msmbDevice::sendScene(bool force_all)
     // check deleted objects
     for (auto it = m_node_records.begin(); it != m_node_records.end(); /**/) {
         if (!it->second.exist) {
-            m_deleted.push_back(it->second.path);
+            addDeleted(it->second.path);
             m_node_records.erase(it++);
         }
         else {
@@ -214,7 +213,8 @@ ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
         rec.index = ++m_node_index_seed;
     }
     else if (rec.name != GetName(src)) {
-        m_deleted.push_back(rec.path);
+        // renamed
+        addDeleted(rec.path);
         rec.name = GetName(src);
         rec.path = GetPath(src);
     }
@@ -633,8 +633,9 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
 bool msmbDevice::exportMaterials()
 {
-    int num_exported = 0;
+    m_materials.clear();
 
+    int num_exported = 0;
     auto& materials = FBSystem::TheOne().Scene->Materials;
     const int num_materials = materials.GetCount();
     for (int mi = 0; mi < num_materials; ++mi) {

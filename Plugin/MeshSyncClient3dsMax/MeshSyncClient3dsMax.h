@@ -101,7 +101,7 @@ private:
         extractor_t extractor = nullptr;
         INode *node = nullptr;
         Object *obj = nullptr;
-        ms::Animation *dst = nullptr;
+        ms::AnimationPtr dst = nullptr;
 
         void operator()(MeshSyncClient3dsMax *_this);
     };
@@ -131,7 +131,7 @@ private:
     ms::MeshPtr exportMesh(TreeNode& node);
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
-    ms::Animation* exportAnimations(INode *node, bool force);
+    ms::AnimationPtr exportAnimations(INode *node, bool force);
     void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
     void extractCameraAnimation(ms::Animation& dst, INode *n, Object *obj);
     void extractLightAnimation(ms::Animation& dst, INode *n, Object *obj);

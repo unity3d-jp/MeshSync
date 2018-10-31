@@ -161,19 +161,18 @@ static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug
 }
 
 
-void MeshSyncClientMaya::onNodeUpdated(const MObject & node)
+void MeshSyncClientMaya::onNodeUpdated(const MObject& node)
 {
     m_dag_nodes[node].dirty = true;
 }
 
-void MeshSyncClientMaya::onNodeRemoved(const MObject & node)
+void MeshSyncClientMaya::onNodeRemoved(const MObject& node)
 {
     {
         auto it = m_dag_nodes.find(node);
         if (it != m_dag_nodes.end()) {
-            for (auto tn : it->second.branches) {
-                m_deleted.push_back(tn->path);
-            }
+            for (auto tn : it->second.branches)
+                addDeleted(tn->path);
             m_dag_nodes.erase(it);
         }
     }
@@ -443,7 +442,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
 bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 {
     if (tn->name != GetName(tn->trans->node)) {
-        m_deleted.push_back(tn->path);
+        addDeleted(tn->path);
         return true;
     }
     else {
@@ -463,6 +462,9 @@ bool MeshSyncClientMaya::sendScene(SendScope scope)
         return false;
     }
     m_pending_scope = SendScope::None;
+
+    if (m_settings.sync_meshes)
+        exportMaterials();
 
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
@@ -584,26 +586,19 @@ void MeshSyncClientMaya::kickAsyncSend()
             t.scene_settings.handedness = ms::Handedness::Right;
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
-            if (!m_deleted.empty()) {
-                for (auto& path : m_deleted) {
-                    t.deleted.push_back({ path, 0 });
-                    m_entity_manager.erase(path);
-                }
-                m_deleted.clear();
-            }
-
             t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
+            t.deleted = m_deleted;
             t.animations = m_animations;
-
-            m_materials.clear();
-            m_animations.clear();
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
+            m_deleted.clear();
+            m_materials.clear();
+            m_animations.clear();
         };
     }
     m_sender.kick();

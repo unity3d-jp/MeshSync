@@ -158,6 +158,8 @@ private:
     int getMaterialID(const MString& name);
     void exportMaterials();
 
+    void addDeleted(const std::string& path);
+
     ms::TransformPtr exportObject(TreeNode *n, bool force);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode *n);
@@ -186,7 +188,7 @@ private:
     std::vector<MString>                m_material_id_table;
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<std::string>            m_deleted;
+    std::vector<ms::Identifier>         m_deleted;
 
     ms::TextureManager m_texture_manager;
     ms::EntityManager m_entity_manager;

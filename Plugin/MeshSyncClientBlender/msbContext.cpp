@@ -71,6 +71,7 @@ int msbContext::getMaterialID(const Material *mat)
 
 void msbContext::exportMaterials()
 {
+    m_materials.clear();
     auto bpy_data = bl::BData(bl::BContext::get().data());;
     for (auto *mat : bpy_data.materials()) {
         addMaterial(mat);
@@ -124,7 +125,8 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& co
 
 void msbContext::addDeleted(const std::string& path)
 {
-    m_deleted.push_back(path);
+    m_deleted.push_back({ path, 0 });
+    m_entity_manager.erase(path);
 }
 
 ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
@@ -746,8 +748,8 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object * obj)
     auto path = get_path(obj);
     if (rec.path != path) {
         if (!rec.path.empty()) {
-            // in this case, obj is renamed
-            m_deleted.push_back(rec.path);
+            // obj is renamed
+            addDeleted(rec.path);
         }
         rec.name = get_name(obj);
         rec.path = path;
@@ -767,7 +769,7 @@ void msbContext::eraseStaleObjects()
 {
     for (auto i = m_obj_records.begin(); i != m_obj_records.end(); /**/) {
         if (!i->second.alive) {
-            m_deleted.push_back(i->second.path);
+            addDeleted(i->second.path);
             m_obj_records.erase(i++);
         }
         else {
@@ -779,10 +781,9 @@ void msbContext::eraseStaleObjects()
         // blender re-creates all objects when undo / redo.
         // in that case, m_deleted includes all previous objects.
         // to avoid unneeded delete, erase re-created objects from m_deleted.
-        m_deleted.erase(std::remove_if(m_deleted.begin(), m_deleted.end(),
-            [this](const std::string& v) {
+        m_deleted.erase(std::remove_if(m_deleted.begin(), m_deleted.end(), [this](const ms::Identifier& v) {
             for (auto& kvp : m_obj_records) {
-                if (kvp.second.path == v)
+                if (kvp.second.path == v.path)
                     return true;
             }
             return false;
@@ -799,6 +800,7 @@ void msbContext::sendAnimations(SendScope scope)
     m_ignore_update = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
+    m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create()); // create default clip
 
     // list target objects
@@ -1049,7 +1051,8 @@ void msbContext::sendScene(SendScope scope)
         if (!bpy_data.objects_is_updated())
             return; // nothing to send
 
-        exportMaterials();
+        if (m_settings.sync_meshes)
+            exportMaterials();
 
         auto scene = bl::BScene(bl::BContext::get().scene());
         for (auto *base : scene.objects()) {
@@ -1066,7 +1069,9 @@ void msbContext::sendScene(SendScope scope)
     }
     else {
         // all
-        exportMaterials();
+        if (m_settings.sync_meshes)
+            exportMaterials();
+
         auto scene = bl::BScene(bl::BContext::get().scene());
         for (auto *base : scene.objects()) {
             exportObject(base->object, false);
@@ -1120,22 +1125,12 @@ void msbContext::kickAsyncSend()
             t.scene_settings.scale_factor = 1.0f;
             t.scene_settings.handedness = ms::Handedness::Left;
 
-            if (!m_deleted.empty()) {
-                for (auto& path : m_deleted) {
-                    t.deleted.push_back({ path, 0 });
-                    m_entity_manager.erase(path);
-                }
-                m_deleted.clear();
-            }
-
             t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
+            t.deleted = m_deleted;
             t.animations = m_animations;
-
-            m_materials.clear();
-            m_animations.clear();
 
             if (scale_factor != 1.0f) {
                 for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }
@@ -1146,6 +1141,9 @@ void msbContext::kickAsyncSend()
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
+            m_deleted.clear();
+            m_materials.clear();
+            m_animations.clear();
         };
     }
     m_sender.kick();
