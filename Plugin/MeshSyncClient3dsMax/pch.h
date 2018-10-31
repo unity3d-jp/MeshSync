@@ -25,6 +25,7 @@
 #include <stdmat.h>
 #include <imenuman.h>
 #include <iskin.h>
+#include <iInstanceMgr.h>
 #include <triobj.h>
 #include <notify.h>
 #include <ISceneEventManager.h>

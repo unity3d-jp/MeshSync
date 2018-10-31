@@ -39,6 +39,12 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
+bool IsInstanced(INode *n)
+{
+    INodeTab instances;
+    return IInstanceMgr::GetInstanceMgr()->GetInstances(*n, instances);
+}
+
 Object* GetTopObject(INode *n)
 {
     return n->GetObjectRef();

@@ -423,7 +423,7 @@ void MeshSyncClient3dsMax::addDeleted(const std::string& path)
     m_entity_manager.erase(path);
 }
 
-ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n, bool force)
+ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)
 {
     if (!n || !n->GetObjectRef())
         return nullptr;
@@ -431,10 +431,21 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n, bool force)
     auto& rec = getNodeRecord(n);
     if (rec.dst_obj)
         return rec.dst_obj;
+
+    ms::TransformPtr ret;
+    // check if the node is instance
+    EnumerateInstance(n, [this, &rec, &ret](INode *instance) {
+        auto& irec = getNodeRecord(instance);
+        if (irec.dst_obj && irec.dst_obj->reference.empty()) {
+            ret = exportInstance(rec, irec.dst_obj);
+        }
+    });
+    if (ret)
+        return ret;
+
     auto *obj = GetBaseObject(n);
     rec.baseobj = obj;
 
-    ms::TransformPtr ret;
     if (IsMesh(obj)) {
         exportObject(n->GetParentNode(), true);
 

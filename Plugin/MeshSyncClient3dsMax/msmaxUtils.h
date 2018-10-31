@@ -10,6 +10,7 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
+bool IsInstanced(INode *n);
 Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);
 Modifier* FindSkin(INode *n);
@@ -136,6 +137,21 @@ inline void EnumerateAllNode(const Body& body)
     }
     else {
         mscTrace("EnumerateAllNode() failed!!!\n");
+    }
+}
+
+// Body: [](INode *node) -> void
+template<class Body>
+inline void EnumerateInstance(INode *n, const Body& body)
+{
+    INodeTab instances;
+    if (IInstanceMgr::GetInstanceMgr()->GetInstances(*n, instances) > 1) {
+        int c = instances.Count();
+        for (int i = 0; i < c; ++i) {
+            auto instance = instances[i];
+            if (instance != n)
+                body(instance);
+        }
     }
 }
 
