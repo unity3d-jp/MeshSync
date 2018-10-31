@@ -116,6 +116,13 @@ std::vector<TexturePtr> TextureManager::getDirtyTextures()
     return ret;
 }
 
+void TextureManager::makeDirtyAll()
+{
+    for (auto& p : m_records) {
+        p.second.dirty = true;
+    }
+}
+
 void TextureManager::clearDirtyFlags()
 {
     for (auto& p : m_records) {

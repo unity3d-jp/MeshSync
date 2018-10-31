@@ -108,7 +108,7 @@ void MeshSyncClient3dsMax::onShutdown()
 void MeshSyncClient3dsMax::onNewScene()
 {
     for (auto& kvp : m_node_records) {
-        m_deleted.push_back(kvp.second.path);
+        addDeleted(kvp.second.path);
     }
     m_node_records.clear();
     m_scene_updated = true;
@@ -136,7 +136,7 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 
     auto it = m_node_records.find(n);
     if (it != m_node_records.end()) {
-        m_deleted.push_back(it->second.path);
+        addDeleted(it->second.path);
         m_node_records.erase(it);
     }
 }
@@ -149,7 +149,7 @@ void MeshSyncClient3dsMax::onNodeRenamed()
     // (event callback tells name of before & after rename, but doesn't tell node itself...)
     for (auto& kvp : m_node_records) {
         if (kvp.second.name != kvp.first->GetName()) {
-            m_deleted.push_back(kvp.second.path);
+            addDeleted(kvp.second.path);
         }
     }
 }
@@ -160,7 +160,7 @@ void MeshSyncClient3dsMax::onNodeLinkChanged(INode * n)
 
     auto it = m_node_records.find(n);
     if (it != m_node_records.end()) {
-        m_deleted.push_back(it->second.path);
+        addDeleted(it->second.path);
     }
 }
 
@@ -196,17 +196,19 @@ void MeshSyncClient3dsMax::update()
     }
 
     if (m_pending_request != SendScope::None) {
-        if (sendScene(m_pending_request)) {
+        if (sendScene(m_pending_request, false)) {
             m_pending_request = SendScope::None;
         }
     }
 }
 
-bool MeshSyncClient3dsMax::sendScene(SendScope scope)
+bool MeshSyncClient3dsMax::sendScene(SendScope scope, bool force_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isSending())
         return false;
-    }
+
+    if (force_all)
+        m_entity_manager.makeDirtyAll();
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -244,6 +246,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     m_sender.wait();
 
     // create default clip
+    m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     // gather target data
@@ -326,26 +329,19 @@ void MeshSyncClient3dsMax::kickAsyncSend()
             t.scene_settings.handedness = ms::Handedness::LeftZUp;
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
-            if (!m_deleted.empty()) {
-                for (auto& path : m_deleted) {
-                    t.deleted.push_back({ path, 0 });
-                    m_entity_manager.erase(path);
-                }
-                m_deleted.clear();
-            }
-
             t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.animations = m_animations;
-
-            m_materials.clear();
-            m_animations.clear();
+            t.deleted = m_deleted;
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
+            m_materials.clear();
+            m_deleted.clear();
+            m_animations.clear();
         };
     }
     m_sender.kick();
@@ -421,6 +417,11 @@ void MeshSyncClient3dsMax::exportMaterials()
     }
 }
 
+void MeshSyncClient3dsMax::addDeleted(const std::string& path)
+{
+    m_deleted.push_back({ path, 0 });
+    m_entity_manager.erase(path);
+}
 
 ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode * n, bool force)
 {
@@ -578,6 +579,20 @@ ms::TransformPtr MeshSyncClient3dsMax::exportTransform(TreeNode& n)
     auto& dst = *ret;
 
     ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    m_entity_manager.add(ret);
+    return ret;
+}
+
+ms::TransformPtr MeshSyncClient3dsMax::exportInstance(TreeNode& n, ms::TransformPtr base)
+{
+    if (!base)
+        return nullptr;
+
+    auto ret = createEntity<ms::Transform>(n);
+    auto& dst = *ret;
+
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
 }

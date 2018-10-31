@@ -266,6 +266,8 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
     m_device->bake_deformars = (bool)(int)m_bu_bake_deformers.State;
     m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
     m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
+    if (m_device->auto_sync)
+        m_device->sendScene(false);
 }
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)

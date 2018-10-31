@@ -71,19 +71,6 @@ void SetMessage::deserialize(std::istream& is)
 }
 
 
-uint32_t DeleteMessage::Identifier::getSerializeSize() const
-{
-    return ssize(path) + ssize(id);
-}
-void DeleteMessage::Identifier::serialize(std::ostream& os) const
-{
-    write(os, path); write(os, id);
-}
-void DeleteMessage::Identifier::deserialize(std::istream& is)
-{
-    read(is, path); read(is, id);
-}
-
 DeleteMessage::DeleteMessage()
 {
 }

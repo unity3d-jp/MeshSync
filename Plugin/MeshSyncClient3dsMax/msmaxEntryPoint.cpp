@@ -102,6 +102,7 @@ Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
 {
     bool animations = false;
     auto scope = MeshSyncClient3dsMax::SendScope::All;
+    bool force_all = true;
 
     for (int i = 0; i < count; /**/) {
         std::wstring name = arg_list[i++]->to_string();
@@ -118,13 +119,17 @@ Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
                 else if (value == L"updated")
                     scope = MeshSyncClient3dsMax::SendScope::Updated;
             }
+            else if (name == L"-force_all") {
+                std::wstring value = arg_list[i++]->to_string();
+                force_all = value == L"true" || value == L"1";
+            }
         }
     }
 
     if (animations)
         msmaxInstance().sendAnimations(scope);
     else
-        msmaxInstance().sendScene(scope);
+        msmaxInstance().sendScene(scope, force_all);
     return &ok;
 }
 

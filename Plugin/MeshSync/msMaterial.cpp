@@ -127,6 +127,17 @@ uint64_t Texture::hash() const
     return vhash(data);
 }
 
+uint64_t Texture::checksum() const
+{
+    uint64_t ret = 0;
+    ret += csum((int)type);
+    ret += csum((int)format);
+    ret += csum(width);
+    ret += csum(height);
+    ret += csum(data);
+    return ret;
+}
+
 void Texture::setData(const void * src)
 {
     size_t data_size = width * height * GetPixelSize(format);
@@ -198,6 +209,20 @@ void Material::clear()
     metallic_map = 0;
     emission_map = 0;
     normal_map = 0;
+}
+
+uint64_t Material::checksum() const
+{
+    uint64_t ret = 0;
+    ret += csum(color);
+    ret += csum(emission);
+    ret += csum(metalic);
+    ret += csum(smoothness);
+    ret += csum(color_map);
+    ret += csum(metallic_map);
+    ret += csum(emission_map);
+    ret += csum(normal_map);
+    return ret;
 }
 
 bool Material::operator==(const Material& v) const

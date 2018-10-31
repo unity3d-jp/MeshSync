@@ -78,16 +78,26 @@ Modifier* FindMorph(INode *n)
     return ret;
 }
 
-bool IsMesh(Object *obj)
+bool IsBone(Object *obj)
 {
-    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID &&
-        (!obj->IsSubClassOf(BONE_OBJ_CLASSID) && !obj->IsSubClassOf(SKELOBJ_CLASS_ID));
+    if (!obj)
+        return false;
+
+    // not sure this is correct...
+    auto cid = obj->ClassID();
+    return
+        cid == Class_ID(BONE_CLASS_ID, 0) ||
+        cid == BONE_OBJ_CLASSID ||
+        cid == SKELOBJ_CLASS_ID ||
+        cid == CATBONE_CLASS_ID ||
+        cid == CATHUB_CLASS_ID;
 }
 
-bool IsBoneMesh(Object * obj)
+bool IsMesh(Object *obj)
 {
-    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID &&
-        (obj->IsSubClassOf(BONE_OBJ_CLASSID) || obj->IsSubClassOf(SKELOBJ_CLASS_ID));
+    if (!obj)
+        return false;
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID && !IsBone(obj);
 }
 
 TriObject* GetSourceMesh(INode * n, bool& needs_delete)

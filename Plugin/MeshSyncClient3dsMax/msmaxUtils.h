@@ -15,8 +15,8 @@ Object* GetBaseObject(INode *n);
 Modifier* FindSkin(INode *n);
 ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
+bool IsBone(Object *obj);
 bool IsMesh(Object *obj);
-bool IsBoneMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
 TriObject* GetFinalMesh(INode *n, bool& needs_delete);
 

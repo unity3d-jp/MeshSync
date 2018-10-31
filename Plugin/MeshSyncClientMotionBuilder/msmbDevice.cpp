@@ -136,13 +136,12 @@ void msmbDevice::kickAsyncSend()
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.animations = m_animations;
-
-            m_materials.clear();
-            m_animations.clear();
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
+            m_materials.clear();
+            m_animations.clear();
         };
     }
     m_sender.kick();
@@ -160,6 +159,7 @@ bool msmbDevice::sendScene(bool force_all)
         return false;
     }
 
+    m_materials.clear();
     if (sync_meshes && sync_materials)
         exportMaterials();
 
@@ -234,7 +234,7 @@ ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
         }
     }
     else if (IsMesh(src)) { // mesh
-        if (sync_bones) {
+        if (sync_bones && !bake_deformars) {
             EachBones(src, [this](FBModel *bone) {
                 exportObject(bone, true);
             });
@@ -721,6 +721,7 @@ bool msmbDevice::exportAnimations()
     FBPlayerControl control;
 
     // create default clip
+    m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     // gather models

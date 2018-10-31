@@ -8,6 +8,20 @@
 
 namespace ms {
 
+// Identifier
+uint32_t Identifier::getSerializeSize() const
+{
+    return ssize(path) + ssize(id);
+}
+void Identifier::serialize(std::ostream& os) const
+{
+    write(os, path); write(os, id);
+}
+void Identifier::deserialize(std::istream& is)
+{
+    read(is, path); read(is, id);
+}
+
 // Entity
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream & is)

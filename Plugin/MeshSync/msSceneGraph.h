@@ -13,6 +13,16 @@
 
 namespace ms {
 
+struct Identifier
+{
+    std::string path;
+    int id;
+
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+msHasSerializer(Identifier);
 
 class Entity
 {

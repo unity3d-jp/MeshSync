@@ -31,6 +31,7 @@
 #include <MeshNormalSpec.h>
 #include <systemutilities.h>
 #include <CS/BipedApi.h>
+#include <CATAPI/CATClassID.h>
 #include <maxscript/maxscript.h>
 #include <maxscript/foundation/numbers.h>
 #include <maxscript/macros/define_instantiation_functions.h>

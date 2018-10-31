@@ -77,6 +77,7 @@ public:
     void deserialize(std::istream& is);
     void clear();
     uint64_t hash() const;
+    uint64_t checksum() const;
 
     void setData(const void *src);
     void getData(void *dst) const;
@@ -127,6 +128,7 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
+    uint64_t checksum() const;
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
 

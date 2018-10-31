@@ -21,6 +21,7 @@ public:
 
     std::vector<TexturePtr> getAllTextures();
     std::vector<TexturePtr> getDirtyTextures();
+    void makeDirtyAll();
     void clearDirtyFlags();
 
 private:

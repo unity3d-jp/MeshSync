@@ -63,7 +63,7 @@ public:
     void onRepaint();
 
     void update();
-    bool sendScene(SendScope scope);
+    bool sendScene(SendScope scope, bool force_all);
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
@@ -120,9 +120,12 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
+    void addDeleted(const std::string& path);
+
     ms::TransformPtr exportObject(INode *node, bool force);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
+    ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);
     ms::CameraPtr exportCamera(TreeNode& node);
     ms::LightPtr exportLight(TreeNode& node);
     ms::MeshPtr exportMesh(TreeNode& node);
@@ -151,7 +154,7 @@ private:
 
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<std::string>            m_deleted;
+    std::vector<ms::Identifier>         m_deleted;
 
     ms::TextureManager m_texture_manager;
     ms::EntityManager m_entity_manager;

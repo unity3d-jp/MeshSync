@@ -89,15 +89,6 @@ class DeleteMessage : public Message
 {
 using super = Message;
 public:
-    struct Identifier
-    {
-        std::string path;
-        int id;
-
-        uint32_t getSerializeSize() const;
-        void serialize(std::ostream& os) const;
-        void deserialize(std::istream& is);
-    };
     std::vector<Identifier> targets;
 
     DeleteMessage();
@@ -105,7 +96,6 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(DeleteMessage::Identifier);
 msHasSerializer(DeleteMessage);
 using DeleteMessagePtr = std::shared_ptr<DeleteMessage>;
 

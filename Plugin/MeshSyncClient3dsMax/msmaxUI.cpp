@@ -56,7 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
+        msmaxInstance().sendScene(MeshSyncClient3dsMax::SendScope::All, true);
         return TRUE;
     }
 };
@@ -418,7 +418,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All); });
+            handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All, true); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
             handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
