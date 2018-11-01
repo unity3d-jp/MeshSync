@@ -18,6 +18,8 @@ struct Identifier
     std::string path;
     int id = InvalidID;
 
+    Identifier();
+    Identifier(const std::string& p, int i);
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);

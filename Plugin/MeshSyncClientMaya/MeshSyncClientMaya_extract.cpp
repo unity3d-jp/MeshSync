@@ -128,7 +128,7 @@ void MeshSyncClientMaya::exportMaterials()
 ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
 {
     if (!n || n->dst_obj)
-        return false;
+        return nullptr;
 
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;

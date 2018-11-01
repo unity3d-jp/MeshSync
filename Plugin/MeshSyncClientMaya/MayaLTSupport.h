@@ -71,10 +71,5 @@
 #define MDGMessage                  ___10IOl
 #define MNodeMessage                ___11IlI
 
-
-// todo
-// MFn::kFileTexture
-// MFn::kBump
-
 #endif // MAYA_LT
 #endif // _WIN32

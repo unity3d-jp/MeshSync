@@ -9,6 +9,9 @@
 namespace ms {
 
 // Identifier
+Identifier::Identifier() {}
+Identifier::Identifier(const std::string& p, int i) : path(p), id(i) {}
+
 uint32_t Identifier::getSerializeSize() const
 {
     return ssize(path) + ssize(id);
@@ -102,7 +105,7 @@ uint64_t Entity::checksumGeom() const
 
 Identifier Entity::getIdentifier() const
 {
-    return { path, id };
+    return Identifier{ path, id };
 }
 
 bool Entity::identidy(const Identifier& v) const

@@ -1,5 +1,4 @@
 option(ENABLE_TBB "Use Intel TBB." OFF)
-option(ENABLE_HALF "Use half." OFF)
 
 if(ENABLE_ISPC)
     setup_ispc()
