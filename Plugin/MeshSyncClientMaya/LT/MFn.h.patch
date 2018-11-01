@@ -1,0 +1,57 @@
+diff --git "a/.\\Maya2018\\include\\maya\\MFn.h" "b/.\\MayaLT2018\\include\\maya\\MFn.h"
+index 5c8c3c8..eb54cca 100644
+--- "a/.\\Maya2018\\include\\maya\\MFn.h"
++++ "b/.\\MayaLT2018\\include\\maya\\MFn.h"
+@@ -69,6 +69,12 @@ class FND_EXPORT MFn
+ public:
+ 	MFn();
+ 
++#if MAYA_LT
++    #define LT_VALUE(V) =V
++#else
++    #define LT_VALUE(V)
++#endif
++
+ 	//! Definition of all API types
+ 	enum Type
+ 	{
+@@ -182,7 +188,7 @@ public:
+ 		kDagNode,							//!< \nop
+ 		kProxy,								//!< \nop
+ 		kUnderWorld,						//!< \nop
+-		kTransform,							//!< \nop
++		kTransform LT_VALUE(15422),							//!< \nop
+ 		kAimConstraint,						//!< \nop
+ 		kLookAt,							//!< \nop
+ 		kGeometryConstraint,				//!< \nop
+@@ -193,7 +199,7 @@ public:
+ 		kSurfaceVarGroup,					//!< \nop
+ 		kIkEffector,						//!< \nop
+ 		kIkHandle,							//!< \nop
+-		kJoint,								//!< \nop
++		kJoint LT_VALUE(15433),								//!< \nop
+ 		kManipulator3D,						//!< \nop
+ 		kArrowManip,						//!< \nop
+ 		kAxesActionManip,					//!< \nop
+@@ -319,10 +325,10 @@ public:
+ 		kScaleConstraint,					//!< \nop
+ 		kTangentConstraint,					//!< \nop
+ 		kUnknownTransform,					//!< \nop
+-		kWorld,								//!< \nop
++		kWorld LT_VALUE(32831),								//!< \nop
+ 		kShape,								//!< \nop
+ 		kBaseLattice,						//!< \nop
+-		kCamera,							//!< \nop
++		kCamera LT_VALUE(32834),							//!< \nop
+ 		kCluster,							//!< \nop
+ 		kSoftMod,							//!< \nop
+ 		kCollision,							//!< \nop
+@@ -368,7 +374,7 @@ public:
+ 		kSurface,							//!< \nop
+ 		kNurbsSurface,						//!< \nop
+ 		kNurbsSurfaceGeom,					//!< \nop
+-		kMesh,								//!< \nop
++		kMesh LT_VALUE(32880),								//!< \nop
+ 		kMeshGeom,							//!< \nop
+ 		kRenderSphere,						//!< \nop
+ 		kFlexor,							//!< \nop
