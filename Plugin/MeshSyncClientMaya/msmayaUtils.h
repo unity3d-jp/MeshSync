@@ -114,7 +114,7 @@ inline void EnumerateNode(MFn::Type type, const Body& body)
 template<class Body>
 inline void EnumerateAllNode(const Body& body)
 {
-    MItDag it(MItDag::kDepthFirst, kMFnInvalid);
+    MItDag it(MItDag::kDepthFirst, MFn::kInvalid);
     while (!it.isDone()) {
         auto obj = it.item();
         body(obj);
@@ -147,7 +147,7 @@ inline void EachChild(const MObject& node, const Body& body)
 template<class Body>
 inline void EachConstraints(MObject& node, const Body& body)
 {
-    MItDependencyGraph it(node, kMFnConstraint, MItDependencyGraph::kUpstream);
+    MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         body(it.currentItem());
         it.next();
