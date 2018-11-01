@@ -12,6 +12,8 @@ namespace UTJ.MeshSync
 {
     public partial class MeshSyncServer
     {
+        public const int InvalidID = -1;
+
         public enum MessageType
         {
             Unknown,

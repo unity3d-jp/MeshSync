@@ -113,7 +113,7 @@ void Texture::deserialize(std::istream & is)
 
 void Texture::clear()
 {
-    id = 0;
+    id = InvalidID;
     name.clear();
 
     type = TextureType::Default;
@@ -195,7 +195,7 @@ void Material::deserialize(std::istream& is)
 
 void Material::clear()
 {
-    id = 0;
+    id = InvalidID;
     name.clear();
     flags = { 0 };
     flags.has_color = 1;

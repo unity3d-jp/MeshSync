@@ -30,9 +30,8 @@ bool& MQSync::getBakeCloth() { return m_bake_cloth; }
 
 void MQSync::clear()
 {
-    m_meshes.clear();
-    m_bones.clear();
-    m_client_meshes.clear();
+    m_obj_records.clear();
+    m_bone_records.clear();
     m_host_meshes.clear();
 
     m_texture_manager.clear();
@@ -61,80 +60,62 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         m_pending_send_meshes = true;
         return;
     }
-
     m_pending_send_meshes = false;
 
-    {
-        int nobj = doc->GetObjectCount();
-        int num_mesh_data = 0;
-
-        // build relations
-        for (int i = 0; i < nobj; ++i) {
-            auto obj = doc->GetObject(i);
-            if (!obj) { continue; }
-
-            char name[MaxNameBuffer];
-            obj->GetName(name, sizeof(name));
-
-            MeshData rel;
-            rel.obj = obj;
-            m_meshes.push_back(std::move(rel));
-            ++num_mesh_data;
-        }
-
-        {
-            while ((int)m_client_meshes.size() < num_mesh_data) {
-                m_client_meshes.push_back(ms::Mesh::create());
-            }
-
-            int mi = 0;
-            for (size_t i = 0; i < m_meshes.size(); ++i) {
-                auto& rel = m_meshes[i];
-                rel.data = m_client_meshes[mi++];
-                rel.data->index = (int)i;
-            }
-        }
-
-        // gather mesh data
-        parallel_for_each(m_meshes.begin(), m_meshes.end(), [this, doc](MeshData& rel) {
-            rel.data->clear();
-            rel.data->path = ms::ToUTF8(BuildPath(doc, rel.obj).c_str());
-            ExtractID(rel.data->path.c_str(), rel.data->id);
-
-            bool visible = rel.obj->GetVisible() != 0;
-            rel.data->visible = visible;
-            if (!visible) {
-                // not send actual contents if not visible
-                return;
-            }
-
-            extractMeshData(doc, rel.obj, *rel.data);
-            m_entity_manager.add(rel.data);
-        });
-    }
+    if (force)
+        m_entity_manager.makeDirtyAll();
 
     {
         // gather material data
+        char buf[1024];
         int nmat = doc->GetMaterialCount();
         m_materials.reserve(nmat);
         for (int mi = 0; mi < nmat; ++mi) {
-            if (auto src = doc->GetMaterial(mi)) {
-                auto dst = ms::Material::create();
-                m_materials.push_back(dst);
+            auto src = doc->GetMaterial(mi);
+            if (!src)
+                continue;
 
-                char buf[1024];
-                dst->id = mi;
-                {
-                    src->GetName(buf, sizeof(buf));
-                    dst->name = ms::ToUTF8(buf);
-                }
-                dst->setColor(to_float4(src->GetColor()));
-                if (m_sync_textures) {
-                    src->GetTextureName(buf, sizeof(buf));
-                    dst->setColorMap(exportTexture(buf, ms::TextureType::Default));
-                }
+            auto dst = ms::Material::create();
+            m_materials.push_back(dst);
+            dst->id = mi;
+
+            src->GetName(buf, sizeof(buf));
+            dst->name = ms::ToUTF8(buf);
+
+            dst->setColor(to_float4(src->GetColor()));
+            if (m_sync_textures) {
+                src->GetTextureName(buf, sizeof(buf));
+                dst->setColorMap(exportTexture(buf, ms::TextureType::Default));
             }
         }
+    }
+
+    {
+        // gather meshes
+        int nobj = doc->GetObjectCount();
+        for (int i = 0; i < nobj; ++i) {
+            auto obj = doc->GetObject(i);
+            if (!obj)
+                continue;
+
+            ObjectRecord rel;
+            rel.obj = obj;
+            rel.dst = ms::Mesh::create();
+            rel.dst->index = (int)i;
+            m_obj_records.push_back(std::move(rel));
+        }
+
+        // extract mesh data
+        parallel_for_each(m_obj_records.begin(), m_obj_records.end(), [this, doc](ObjectRecord& rec) {
+            rec.dst->path = ms::ToUTF8(BuildPath(doc, rec.obj).c_str());
+            ExtractID(rec.dst->path.c_str(), rec.dst->id);
+
+            bool visible = rec.obj->GetVisible() != 0;
+            rec.dst->visible = visible;
+            if (visible)
+                extractMeshData(doc, rec.obj, *rec.dst);
+            // add to m_entity_manager will be done later because bone weights affect checksum
+        });
     }
 
 #if MQPLUGIN_VERSION >= 0x0464
@@ -153,54 +134,53 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
             bone_manager.EnumBoneID(bone_ids);
             for (auto bid : bone_ids) {
-                auto& bone = m_bones[bid];
-                bone.id = bid;
+                auto& brec = m_bone_records[bid];
+                brec.bone_id = bid;
 
                 bone_manager.GetName(bid, name);
-                bone.name = S(name);
+                brec.name = S(name);
 
                 UINT parent;
                 bone_manager.GetParent(bid, parent);
-                bone.parent = parent;
+                brec.parent_id = parent;
 
                 MQPoint base_pos;
                 bone_manager.GetBaseRootPos(bid, base_pos);
-                bone.world_pos = (const float3&)base_pos;
-                bone.bindpose = mu::invert(mu::transform(bone.world_pos, quatf::identity(), float3::one()));
+                brec.world_pos = (const float3&)base_pos;
+                brec.bindpose = mu::invert(mu::transform(brec.world_pos, quatf::identity(), float3::one()));
 
                 if (m_sync_poses) {
                     MQMatrix rot;
                     bone_manager.GetRotationMatrix(bid, rot);
-                    bone.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
+                    brec.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
                 }
                 else {
-                    bone.world_rot = quatf::identity();
+                    brec.world_rot = quatf::identity();
                 }
             }
 
-            for (auto& pair : m_bones) {
-                auto& bone = pair.second;
+            for (auto& kvp : m_bone_records) {
+                auto& rec = kvp.second;
 
                 // build path
-                auto& path = bone.transform->path;
+                auto& path = rec.dst->path;
                 path = "/bones";
-                buildBonePath(path, bone);
+                buildBonePath(path, rec);
 
                 // setup transform
-                auto& trans = *bone.transform;
-                trans.rotation = bone.world_rot;
-                trans.position = bone.world_pos;
-                auto it = m_bones.find(bone.parent);
-                if (it != m_bones.end())
-                    trans.position -= it->second.world_pos;
-
-                m_entity_manager.add(bone.transform);
+                auto& dst = *rec.dst;
+                dst.rotation = rec.world_rot;
+                dst.position = rec.world_pos;
+                auto it = m_bone_records.find(rec.parent_id);
+                if (it != m_bone_records.end())
+                    dst.position -= it->second.world_pos;
             }
 
             // get weights
-            parallel_for_each(m_meshes.begin(), m_meshes.end(), [this, &bone_manager, nbones, &bone_ids](MeshData& rel) {
-                auto obj = rel.obj;
-                if (!rel.data->visible) { return; }
+            parallel_for_each(m_obj_records.begin(), m_obj_records.end(), [this, &bone_manager, &bone_ids](ObjectRecord& rec) {
+                auto obj = rec.obj;
+                if (!rec.dst->visible)
+                    return;
 
                 std::vector<UINT> vertex_ids;
                 std::vector<float> weights;
@@ -210,31 +190,30 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                         continue;
 
                     // find root bone
-                    if (rel.data->root_bone.empty()) {
-                        auto it = m_bones.find(bid);
+                    if (rec.dst->root_bone.empty()) {
+                        auto it = m_bone_records.find(bid);
                         for (;;) {
-                            auto next = m_bones.find(it->second.parent);
-                            if (next == m_bones.end())
+                            auto next = m_bone_records.find(it->second.parent_id);
+                            if (next == m_bone_records.end())
                                 break;
                             it = next;
                         }
-                        rel.data->root_bone = it->second.transform->path;
+                        rec.dst->root_bone = it->second.dst->path;
                     }
 
-                    auto data = ms::BoneData::create();
-                    rel.data->bones.push_back(data);
-                    rel.data->flags.has_bones = 1;
-                    auto& bone = m_bones[bid];
-                    data->path = bone.transform->path;
-                    data->bindpose = bone.bindpose;
+                    auto& bone = m_bone_records[bid];
+                    auto bd = ms::BoneData::create();
+                    rec.dst->bones.push_back(bd);
+                    rec.dst->flags.has_bones = 1;
+                    bd->path = bone.dst->path;
+                    bd->bindpose = bone.bindpose;
 
-                    auto size = rel.data->points.size();
-                    data->weights.resize_zeroclear(size);
+                    auto size = rec.dst->points.size();
+                    bd->weights.resize_zeroclear(size);
                     for (int iw = 0; iw < nweights; ++iw) {
                         int vi = obj->GetVertexIndexFromUniqueID(vertex_ids[iw]);
-                        if (vi >= 0) {
-                            data->weights[vi] = weights[iw];
-                        }
+                        if (vi >= 0)
+                            bd->weights[vi] = weights[iw];
                     }
                 }
             });
@@ -242,6 +221,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     bone_end:;
     }
 #endif
+
+    for (auto& rec : m_bone_records)
+        m_entity_manager.add(rec.second.dst);
+    m_bone_records.clear();
+
+    for (auto& rec : m_obj_records)
+        m_entity_manager.add(rec.dst);
+    m_obj_records.clear();
 
     if (!m_send_meshes.on_prepare) {
         m_send_meshes.on_prepare = [this]() {
@@ -255,19 +242,10 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
 
-            auto deleted = m_entity_manager.getStaleEntities();
-            if (!deleted.empty()) {
-                for (auto& obj : deleted) {
-                    int id = 0;
-                    ExtractID(obj->path.c_str(), id);
-                    t.deleted.push_back({ obj->path , id });
-                }
-                m_entity_manager.eraseStaleEntities();
-            }
+            m_entity_manager.eraseStaleEntities();
+            t.deleted = m_entity_manager.getDeleted();
 
             m_materials.clear();
-            m_bones.clear();
-            m_meshes.clear();
         };
         m_send_meshes.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
@@ -277,10 +255,10 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     m_send_meshes.kick();
 }
 
-void MQSync::buildBonePath(std::string& dst, BoneData& bd)
+void MQSync::buildBonePath(std::string& dst, BoneRecord& bd)
 {
-    auto it = m_bones.find(bd.parent);
-    if (it != m_bones.end())
+    auto it = m_bone_records.find(bd.parent_id);
+    if (it != m_bone_records.end())
         buildBonePath(dst, it->second);
 
     dst += "/";

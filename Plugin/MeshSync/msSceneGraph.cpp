@@ -84,7 +84,7 @@ void Entity::deserialize(std::istream& is)
 
 void Entity::clear()
 {
-    id = 0;
+    id = InvalidID;
     path.clear();
 }
 

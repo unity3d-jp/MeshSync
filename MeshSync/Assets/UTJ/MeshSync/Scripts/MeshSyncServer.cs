@@ -63,12 +63,13 @@ namespace UTJ.MeshSync
         Dictionary<int, Record> m_hostObjects = new Dictionary<int, Record>();
         Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
 
-        [HideInInspector][SerializeField] string[] m_clientObjects_keys;
-        [HideInInspector][SerializeField] Record[] m_clientObjects_values;
-        [HideInInspector][SerializeField] int[] m_hostObjects_keys;
-        [HideInInspector][SerializeField] Record[] m_hostObjects_values;
-        [HideInInspector][SerializeField] GameObject[] m_objIDTable_keys;
-        [HideInInspector][SerializeField] int[] m_objIDTable_values;
+        [HideInInspector] [SerializeField] string[] m_clientObjects_keys;
+        [HideInInspector] [SerializeField] Record[] m_clientObjects_values;
+        [HideInInspector] [SerializeField] int[] m_hostObjects_keys;
+        [HideInInspector] [SerializeField] Record[] m_hostObjects_values;
+        [HideInInspector] [SerializeField] GameObject[] m_objIDTable_keys;
+        [HideInInspector] [SerializeField] int[] m_objIDTable_values;
+        [HideInInspector] [SerializeField] int m_objIDSeed = 0;
 
         List<GameObject> m_tmpGameObjects = new List<GameObject>();
         List<Texture> m_tmpTextures = new List<Texture>();
@@ -440,7 +441,7 @@ namespace UTJ.MeshSync
 
         public Texture2D FindTexture(int id)
         {
-            if (id < 0)
+            if (id == InvalidID)
                 return null;
             var rec = m_textureList.Find(a => a.id == id);
             return rec != null ? rec.texture : null;
@@ -448,7 +449,7 @@ namespace UTJ.MeshSync
 
         public Material FindMaterial(int id)
         {
-            if (id < 0)
+            if (id == InvalidID)
                 return null;
             var rec = m_materialList.Find(a => a.id == id);
             return rec != null ? rec.material : null;
@@ -670,7 +671,7 @@ namespace UTJ.MeshSync
             var path = data_trans.path;
 
             Record rec = null;
-            if (!m_clientObjects.TryGetValue(path, out rec))
+            if (!m_clientObjects.TryGetValue(path, out rec) && data_id != InvalidID)
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
             {
@@ -1027,7 +1028,7 @@ namespace UTJ.MeshSync
 
             Transform trans = null;
             Record rec = null;
-            if (data_id != 0)
+            if (data_id != InvalidID)
             {
                 if (m_hostObjects.TryGetValue(data_id, out rec))
                 {
@@ -1038,7 +1039,7 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            else
+            if (rec == null)
             {
                 if (m_clientObjects.TryGetValue(path, out rec))
                 {
@@ -1106,7 +1107,7 @@ namespace UTJ.MeshSync
                 return null;
 
             var cam = trans.GetComponent<Camera>();
-            if(cam == null)
+            if (cam == null)
                 cam = trans.gameObject.AddComponent<Camera>();
 
             cam.orthographic = data.orthographic;
@@ -1446,7 +1447,8 @@ namespace UTJ.MeshSync
 
         int GetObjectlID(GameObject go)
         {
-            if (go == null) { return 0; }
+            if (go == null)
+                return InvalidID;
 
             int ret;
             if (m_objIDTable.ContainsKey(go))
@@ -1455,7 +1457,7 @@ namespace UTJ.MeshSync
             }
             else
             {
-                ret = m_objIDTable.Count + 1;
+                ret = ++m_objIDSeed;
                 m_objIDTable[go] = ret;
             }
             return ret;

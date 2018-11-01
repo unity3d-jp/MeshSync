@@ -30,25 +30,23 @@ public:
     bool importMeshes(MQDocument doc);
 
 private:
-    struct MeshData : public mu::noncopyable
+    struct ObjectRecord : public mu::noncopyable
     {
-        ms::MeshPtr data;
         MQObject obj = nullptr;
+        ms::MeshPtr dst;
     };
 
-    struct BoneData : public mu::noncopyable
+    struct BoneRecord : public mu::noncopyable
     {
-        UINT id = -1;
-        UINT parent = -1;
+        UINT bone_id = -1;
+        UINT parent_id = -1;
         std::string name;
         float3 world_pos = float3::zero();
         quatf world_rot = quatf::identity();
-
-        ms::TransformPtr transform = ms::Transform::create();
         float4x4 bindpose = float4x4::identity();
+        ms::TransformPtr dst = ms::Transform::create();
     };
 
-    using ClientMeshes = std::vector<ms::MeshPtr>;
     using HostMeshes = std::map<int, ms::MeshPtr>;
     using Materials = std::vector<ms::MaterialPtr>;
 
@@ -57,7 +55,7 @@ private:
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
     void extractCameraData(MQDocument doc, MQScene src, ms::Camera& dst); // true if anything changed
-    void buildBonePath(std::string& dst, BoneData& bd);
+    void buildBonePath(std::string& dst, BoneRecord& bd);
 
 
     MQBasePlugin *m_plugin = nullptr;
@@ -75,16 +73,16 @@ private:
     bool m_bake_skin = false;
     bool m_bake_cloth = false;
 
-    ClientMeshes m_client_meshes;
     HostMeshes m_host_meshes;
 
-    ms::TextureManager m_texture_manager;
-    ms::EntityManager m_entity_manager;
+    std::vector<ObjectRecord> m_obj_records;
+    std::map<UINT, BoneRecord> m_bone_records;
+
     Materials m_materials;
     ms::CameraPtr m_camera;
+    ms::TextureManager m_texture_manager;
+    ms::EntityManager m_entity_manager;
 
-    std::vector<MeshData> m_meshes;
-    std::map<UINT, BoneData> m_bones;
     ms::AsyncSceneSender m_send_meshes;
     ms::AsyncSceneSender m_send_camera;
     bool m_pending_send_meshes = false;
