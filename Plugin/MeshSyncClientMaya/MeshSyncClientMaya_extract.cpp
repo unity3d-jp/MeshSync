@@ -125,12 +125,6 @@ void MeshSyncClientMaya::exportMaterials()
     }
 }
 
-void MeshSyncClientMaya::addDeleted(const ms::Identifier& v)
-{
-    m_deleted.push_back(v);
-    m_entity_manager.erase(v);
-}
-
 ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
 {
     if (!n || n->dst_obj)

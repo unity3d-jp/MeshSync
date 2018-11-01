@@ -11,6 +11,7 @@ public:
     ~EntityManager();
     void clear();
     bool empty() const;
+
     bool erase(const std::string& path);
     bool erase(int id);
     bool erase(const Identifier& identifier);
@@ -22,6 +23,7 @@ public:
     std::vector<TransformPtr> getAllEntities();
     std::vector<TransformPtr> getDirtyTransforms();
     std::vector<TransformPtr> getDirtyGeometries();
+    std::vector<Identifier>& getDeleted();
     void makeDirtyAll();
     void clearDirtyFlags();
 
@@ -47,8 +49,11 @@ private:
     void addTransform(TransformPtr v);
     void addGeometry(TransformPtr v);
 
+    using kvp = std::map<std::string, Record>::value_type;
+
     int m_order = 0;
     std::map<std::string, Record> m_records;
+    std::vector<Identifier> m_deleted;
     std::mutex m_mutex;
 };
 

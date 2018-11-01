@@ -123,12 +123,6 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& co
 }
 
 
-void msbContext::addDeleted(const ms::Identifier& v)
-{
-    m_deleted.push_back(v);
-    m_entity_manager.erase(v);
-}
-
 ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
 {
     ms::TransformPtr ret;
@@ -749,7 +743,7 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object * obj)
     if (rec.path != path) {
         if (!rec.path.empty()) {
             // obj is renamed
-            addDeleted(rec.getIdentifier());
+            m_entity_manager.erase(rec.getIdentifier());
         }
         rec.name = get_name(obj);
         rec.path = path;
@@ -769,7 +763,7 @@ void msbContext::eraseStaleObjects()
 {
     for (auto i = m_obj_records.begin(); i != m_obj_records.end(); /**/) {
         if (!i->second.alive) {
-            addDeleted(i->second.getIdentifier());
+            m_entity_manager.erase(i->second.getIdentifier());
             m_obj_records.erase(i++);
         }
         else {
@@ -777,17 +771,18 @@ void msbContext::eraseStaleObjects()
         }
     }
 
-    if (!m_deleted.empty()) {
+    auto& deleted = m_entity_manager.getDeleted();
+    if (!deleted.empty()) {
         // blender re-creates all objects when undo / redo.
         // in that case, m_deleted includes all previous objects.
         // to avoid unneeded delete, erase re-created objects from m_deleted.
-        m_deleted.erase(std::remove_if(m_deleted.begin(), m_deleted.end(), [this](const ms::Identifier& v) {
+        deleted.erase(std::remove_if(deleted.begin(), deleted.end(), [this](const ms::Identifier& v) {
             for (auto& kvp : m_obj_records) {
                 if (kvp.second.path == v.path)
                     return true;
             }
             return false;
-        }), m_deleted.end());
+        }), deleted.end());
     }
 }
 
@@ -1131,7 +1126,7 @@ void msbContext::kickAsyncSend()
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted = m_deleted;
+            t.deleted = m_entity_manager.getDeleted();
             t.animations = m_animations;
 
             if (scale_factor != 1.0f) {
@@ -1143,7 +1138,6 @@ void msbContext::kickAsyncSend()
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_deleted.clear();
             m_materials.clear();
             m_animations.clear();
         };

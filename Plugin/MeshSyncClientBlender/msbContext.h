@@ -94,8 +94,6 @@ private:
     int getMaterialID(const Material *mat);
     void exportMaterials();
 
-    void addDeleted(const ms::Identifier& v);
-
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportTransform(Object *obj, const std::string& path);
     ms::TransformPtr exportPose(bPoseChannel *obj, const std::string& path);
@@ -124,21 +122,21 @@ private:
     void kickAsyncSend();
 
 private:
+    using task_t = std::function<void()>;
+
     msbSettings m_settings;
     std::set<Object*> m_added;
     std::set<Object*> m_pending, m_pending_tmp;
     std::map<const Bone*, ms::TransformPtr> m_bones;
-    std::vector<ms::AnimationClipPtr> m_animations;
-    std::vector<ms::MaterialPtr> m_materials;
-    std::vector<ms::Identifier> m_deleted;
     std::map<void*, ObjectRecord> m_obj_records;
     std::vector<Mesh*> m_tmp_bmeshes;
+    std::vector<task_t> m_extract_tasks;
+
+    std::vector<ms::AnimationClipPtr> m_animations;
+    std::vector<ms::MaterialPtr> m_materials;
     ms::TextureManager m_texture_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
-
-    using task_t = std::function<void()>;
-    std::vector<task_t> m_extract_tasks;
 
     // animation export
     using AnimationRecords = std::map<std::string, AnimationRecord>;

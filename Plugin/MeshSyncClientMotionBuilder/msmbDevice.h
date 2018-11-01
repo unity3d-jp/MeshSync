@@ -67,8 +67,6 @@ private:
     void update();
     void kickAsyncSend();
 
-    void addDeleted(const ms::Identifier& v);
-
     ms::TransformPtr exportObject(FBModel* src, bool force);
     template<class T> std::shared_ptr<T> createEntity(NodeRecord& n);
     ms::TransformPtr exporttTransform(NodeRecord& n);
@@ -105,9 +103,8 @@ private:
     ExtractTasks m_extract_tasks;
     AnimationRecords m_anim_records;
 
-    std::vector<ms::MaterialPtr>        m_materials;
-    std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<ms::Identifier>         m_deleted;
+    std::vector<ms::MaterialPtr> m_materials;
+    std::vector<ms::AnimationClipPtr> m_animations;
 
     ms::TextureManager m_texture_manager;
     ms::EntityManager m_entity_manager;

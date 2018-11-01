@@ -122,8 +122,6 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    void addDeleted(const ms::Identifier& v);
-
     ms::TransformPtr exportObject(INode *node, bool force);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
@@ -156,7 +154,6 @@ private:
 
     std::vector<ms::MaterialPtr>        m_materials;
     std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<ms::Identifier>         m_deleted;
 
     ms::TextureManager m_texture_manager;
     ms::EntityManager m_entity_manager;

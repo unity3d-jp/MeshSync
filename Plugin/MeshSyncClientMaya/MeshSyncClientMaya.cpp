@@ -177,7 +177,7 @@ void MeshSyncClientMaya::onNodeRemoved(const MObject& node)
         auto it = m_dag_nodes.find(node);
         if (it != m_dag_nodes.end()) {
             for (auto tn : it->second.branches)
-                addDeleted(tn->getIdentifier());
+                m_entity_manager.erase(tn->getIdentifier());
             m_dag_nodes.erase(it);
         }
     }
@@ -447,7 +447,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
 bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 {
     if (tn->name != GetName(tn->trans->node)) {
-        addDeleted(tn->getIdentifier());
+        m_entity_manager.erase(tn->getIdentifier());
         return true;
     }
     else {
@@ -511,7 +511,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool force_all)
         }
     }
 
-    if (num_exported > 0 || !m_deleted.empty()) {
+    if (num_exported > 0 || !m_entity_manager.getDeleted().empty()) {
         kickAsyncSend();
         return true;
     }
@@ -598,13 +598,12 @@ void MeshSyncClientMaya::kickAsyncSend()
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted = m_deleted;
+            t.deleted = m_entity_manager.getDeleted();
             t.animations = m_animations;
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_deleted.clear();
             m_materials.clear();
             m_animations.clear();
         };

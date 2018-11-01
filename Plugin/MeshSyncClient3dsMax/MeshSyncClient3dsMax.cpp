@@ -113,7 +113,7 @@ void MeshSyncClient3dsMax::onShutdown()
 void MeshSyncClient3dsMax::onNewScene()
 {
     for (auto& kvp : m_node_records) {
-        addDeleted(kvp.second.getIdentifier());
+        m_entity_manager.erase(kvp.second.getIdentifier());
     }
     m_node_records.clear();
     m_scene_updated = true;
@@ -141,7 +141,7 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 
     auto it = m_node_records.find(n);
     if (it != m_node_records.end()) {
-        addDeleted(it->second.getIdentifier());
+        m_entity_manager.erase(it->second.getIdentifier());
         m_node_records.erase(it);
     }
 }
@@ -154,7 +154,7 @@ void MeshSyncClient3dsMax::onNodeRenamed()
     // (event callback tells name of before & after rename, but doesn't tell node itself...)
     for (auto& kvp : m_node_records) {
         if (kvp.second.name != kvp.first->GetName()) {
-            addDeleted(kvp.second.getIdentifier());
+            m_entity_manager.erase(kvp.second.getIdentifier());
         }
     }
 }
@@ -165,7 +165,7 @@ void MeshSyncClient3dsMax::onNodeLinkChanged(INode * n)
 
     auto it = m_node_records.find(n);
     if (it != m_node_records.end()) {
-        addDeleted(it->second.getIdentifier());
+        m_entity_manager.erase(it->second.getIdentifier());
     }
 }
 
@@ -338,13 +338,12 @@ void MeshSyncClient3dsMax::kickAsyncSend()
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
+            t.deleted = m_entity_manager.getDeleted();
             t.animations = m_animations;
-            t.deleted = m_deleted;
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_deleted.clear();
             m_materials.clear();
             m_animations.clear();
         };
@@ -420,12 +419,6 @@ void MeshSyncClient3dsMax::exportMaterials()
             }
         }
     }
-}
-
-void MeshSyncClient3dsMax::addDeleted(const ms::Identifier& v)
-{
-    m_deleted.push_back(v);
-    m_entity_manager.erase(v);
 }
 
 ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)

@@ -30,6 +30,7 @@ bool EntityManager::erase(const std::string& path)
     if (it != m_records.end()) {
         it->second.waitTask();
         m_records.erase(it);
+        m_deleted.push_back({ path, InvalidID });
         return true;
     }
     return false;
@@ -39,19 +40,30 @@ bool EntityManager::erase(int id)
 {
     if (id == InvalidID)
         return false;
-    for (auto it = m_records.begin(); it != m_records.end(); ++it) {
-        if (it->second.entity->id == id) {
-            it->second.waitTask();
-            m_records.erase(it);
-            return true;
-        }
+    auto it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->id == id; });
+    if (it != m_records.end()) {
+        it->second.waitTask();
+        m_records.erase(it);
+        m_deleted.push_back({ std::string(), id });
+        return true;
     }
     return false;
 }
 
 bool EntityManager::erase(const Identifier& identifier)
 {
-    return erase(identifier.path) || erase(identifier.id);
+    auto it = m_records.find(identifier.path);
+    if (it == m_records.end() && identifier.id != InvalidID) {
+        int id = identifier.id;
+        it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->id == id; });
+    }
+    if (it != m_records.end()) {
+        it->second.waitTask();
+        m_records.erase(it);
+        m_deleted.push_back(identifier);
+        return true;
+    }
+    return false;
 }
 
 bool EntityManager::erase(TransformPtr v)
@@ -174,6 +186,11 @@ std::vector<TransformPtr> EntityManager::getDirtyGeometries()
     return ret;
 }
 
+std::vector<Identifier>& EntityManager::getDeleted()
+{
+    return m_deleted;
+}
+
 void EntityManager::makeDirtyAll()
 {
     for (auto& p : m_records) {
@@ -191,6 +208,7 @@ void EntityManager::clearDirtyFlags()
         auto& r = p.second;
         r.updated = r.dirty_geom = r.dirty_trans = false;
     }
+    m_deleted.clear();
 }
 
 std::vector<TransformPtr> EntityManager::getStaleEntities()
@@ -209,8 +227,10 @@ std::vector<TransformPtr> EntityManager::getStaleEntities()
 void EntityManager::eraseStaleEntities()
 {
     for (auto it = m_records.begin(); it != m_records.end(); ) {
-        if (!it->second.updated)
+        if (!it->second.updated) {
+            m_deleted.push_back(it->second.entity->getIdentifier());
             m_records.erase(it++);
+        }
         else
             ++it;
     }

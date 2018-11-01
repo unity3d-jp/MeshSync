@@ -132,24 +132,17 @@ void msmbDevice::kickAsyncSend()
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted = m_deleted;
+            t.deleted = m_entity_manager.getDeleted();
             t.animations = m_animations;
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_deleted.clear();
             m_materials.clear();
             m_animations.clear();
         };
     }
     m_sender.kick();
-}
-
-void msmbDevice::addDeleted(const ms::Identifier& v)
-{
-    m_deleted.push_back(v);
-    m_entity_manager.erase(v);
 }
 
 
@@ -179,7 +172,7 @@ bool msmbDevice::sendScene(bool force_all)
     // check deleted objects
     for (auto it = m_node_records.begin(); it != m_node_records.end(); /**/) {
         if (!it->second.exist) {
-            addDeleted(it->second.getIdentifier());
+            m_entity_manager.erase(it->second.getIdentifier());
             m_node_records.erase(it++);
         }
         else {
@@ -195,7 +188,7 @@ bool msmbDevice::sendScene(bool force_all)
     m_dirty_meshes = m_dirty_textures = false;
 
     // send
-    if (num_exported || !m_deleted.empty()) {
+    if (num_exported || !m_entity_manager.getDeleted().empty()) {
         kickAsyncSend();
         return true;
     }
@@ -221,7 +214,7 @@ ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
     }
     else if (rec.name != GetName(src)) {
         // renamed
-        addDeleted(rec.getIdentifier());
+        m_entity_manager.erase(rec.getIdentifier());
         rec.name = GetName(src);
         rec.path = GetPath(src);
     }
