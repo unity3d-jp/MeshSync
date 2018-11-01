@@ -94,9 +94,13 @@ bool IsBone(Object *obj)
     return
         cid == Class_ID(BONE_CLASS_ID, 0) ||
         cid == BONE_OBJ_CLASSID ||
-        cid == SKELOBJ_CLASS_ID ||
+        cid == SKELOBJ_CLASS_ID
+#if MAX_VERSION >= 2018
+        ||
         cid == CATBONE_CLASS_ID ||
-        cid == CATHUB_CLASS_ID;
+        cid == CATHUB_CLASS_ID
+#endif
+        ;
 }
 
 bool IsMesh(Object *obj)
