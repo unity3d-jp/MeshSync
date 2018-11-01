@@ -86,11 +86,13 @@ private:
         Object *baseobj = nullptr;
         std::wstring name;
         std::string path;
+        int id = ms::InvalidID;
 
         bool dirty_trans = true;
         bool dirty_geom = true;
-        ms::TransformPtr dst_obj;
+        ms::TransformPtr dst;
 
+        ms::Identifier getIdentifier() const;
         void clearDirty();
         void clearState();
     };
@@ -120,7 +122,7 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    void addDeleted(const std::string& path);
+    void addDeleted(const ms::Identifier& v);
 
     ms::TransformPtr exportObject(INode *node, bool force);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);

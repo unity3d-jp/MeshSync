@@ -110,7 +110,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         if(args.isQuery()) to_MString(result, Value);\
         else {\
             get_arg(Value, Name, args);\
-            if(settings.auto_sync && SendIfAutosync) MeshSyncClientMaya::getInstance().sendScene(MeshSyncClientMaya::SendScope::All);\
+            if(settings.auto_sync && SendIfAutosync) MeshSyncClientMaya::getInstance().sendScene(MeshSyncClientMaya::SendScope::All, false);\
         }\
     }
 
@@ -165,6 +165,7 @@ MStatus CmdExport::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto& instance = MeshSyncClientMaya::getInstance();
 
+    bool force_all = true;
     bool animations = false;
     auto scope = MeshSyncClientMaya::SendScope::All;
 
@@ -174,7 +175,6 @@ MStatus CmdExport::doIt(const MArgList& args_)
         if (t == "animations")
             animations = true;
     }
-
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
@@ -183,11 +183,14 @@ MStatus CmdExport::doIt(const MArgList& args_)
         else if (s == "updated")
             scope = MeshSyncClientMaya::SendScope::Updated;
     }
+    if (args.isFlagSet("forceAll")) {
+        get_arg(force_all, "forceAll", args);
+    }
 
     if (animations)
         MeshSyncClientMaya::getInstance().sendAnimations(scope);
     else
-        MeshSyncClientMaya::getInstance().sendScene(scope);
+        MeshSyncClientMaya::getInstance().sendScene(scope, force_all);
     return MStatus::kSuccess;
 }
 

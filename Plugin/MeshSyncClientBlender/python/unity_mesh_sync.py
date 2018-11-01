@@ -46,7 +46,7 @@ def msb_on_scene_settings_updated(self = None, context = None):
     msb_apply_scene_settings()
     if bpy.context.scene.meshsync_auto_sync:
         msb_context.setup(bpy.context)
-        msb_context.sendSceneAll()
+        msb_context.sendSceneAll(False)
     return None
 
 def msb_on_animation_settings_updated(self = None, context = None):
@@ -130,7 +130,7 @@ class MeshSync_OpSyncScene(bpy.types.Operator):
     def execute(self, context):
         msb_apply_scene_settings()
         msb_context.setup(bpy.context);
-        msb_context.sendSceneAll()
+        msb_context.sendSceneAll(True)
         return{'FINISHED'}
     
 

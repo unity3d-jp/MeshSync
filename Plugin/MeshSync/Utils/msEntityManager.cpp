@@ -24,13 +24,41 @@ bool EntityManager::empty() const
     return m_records.empty();
 }
 
-void EntityManager::erase(const std::string &path)
+bool EntityManager::erase(const std::string& path)
 {
     auto it = m_records.find(path);
     if (it != m_records.end()) {
         it->second.waitTask();
         m_records.erase(it);
+        return true;
     }
+    return false;
+}
+
+bool EntityManager::erase(int id)
+{
+    if (id == InvalidID)
+        return false;
+    for (auto it = m_records.begin(); it != m_records.end(); ++it) {
+        if (it->second.entity->id == id) {
+            it->second.waitTask();
+            m_records.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool EntityManager::erase(const Identifier& identifier)
+{
+    return erase(identifier.path) || erase(identifier.id);
+}
+
+bool EntityManager::erase(TransformPtr v)
+{
+    if (!v)
+        return false;
+    return erase(v->getIdentifier());
 }
 
 inline void EntityManager::addTransform(TransformPtr obj)

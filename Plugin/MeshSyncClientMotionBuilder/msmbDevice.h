@@ -21,10 +21,13 @@ private:
     {
         std::string name;
         std::string path;
+        int id = ms::InvalidID;
         int index = 0;
         FBModel *src = nullptr;
         ms::TransformPtr dst;
         bool exist = false;
+
+        ms::Identifier getIdentifier() const;
     };
     using NodeRecords = std::map<FBModel*, NodeRecord>;
     using ExtractTasks = std::vector<std::function<void()>>;
@@ -64,7 +67,7 @@ private:
     void update();
     void kickAsyncSend();
 
-    void addDeleted(const std::string& path);
+    void addDeleted(const ms::Identifier& v);
 
     ms::TransformPtr exportObject(FBModel* src, bool force);
     template<class T> std::shared_ptr<T> createEntity(NodeRecord& n);

@@ -32,6 +32,7 @@ struct TreeNode : public mu::noncopyable
     DAGNode *shape = nullptr;
     std::string name;
     std::string path;
+    int id = ms::InvalidID;
     int index = 0;
     TreeNode *parent = nullptr;
     std::vector<TreeNode*> children;
@@ -39,6 +40,7 @@ struct TreeNode : public mu::noncopyable
     ms::TransformPtr dst_obj;
     ms::AnimationPtr dst_anim;
 
+    ms::Identifier getIdentifier() const;
     void clearState();
     bool isInstance() const;
     TreeNode* getPrimaryInstanceNode() const;
@@ -108,7 +110,7 @@ public:
     void onTimeChange(const MTime& time);
 
     void update();
-    bool sendScene(SendScope scope);
+    bool sendScene(SendScope scope, bool force_all);
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
@@ -158,7 +160,7 @@ private:
     int getMaterialID(const MString& name);
     void exportMaterials();
 
-    void addDeleted(const std::string& path);
+    void addDeleted(const ms::Identifier& v);
 
     ms::TransformPtr exportObject(TreeNode *n, bool force);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);

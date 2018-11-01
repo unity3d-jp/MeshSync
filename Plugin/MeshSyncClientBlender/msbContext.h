@@ -50,7 +50,7 @@ public:
     const msbSettings&  getSettings() const;
 
     bool prepare();
-    void sendScene(SendScope scope);
+    void sendScene(SendScope scope, bool force_all);
     void sendAnimations(SendScope scope);
     void flushPendingList();
 
@@ -59,10 +59,16 @@ private:
     {
         std::string name;
         std::string path;
+        int id = ms::InvalidID;
         bool alive = false;
         bool exported = false;
 
-        void clear()
+        ms::Identifier getIdentifier() const
+        {
+            return { path,id };
+        }
+
+        void clearState()
         {
             alive = false;
             exported = false;
@@ -88,7 +94,7 @@ private:
     int getMaterialID(const Material *mat);
     void exportMaterials();
 
-    void addDeleted(const std::string& path);
+    void addDeleted(const ms::Identifier& v);
 
     ms::TransformPtr exportObject(Object *obj, bool force);
     ms::TransformPtr exportTransform(Object *obj, const std::string& path);

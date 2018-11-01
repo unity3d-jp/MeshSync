@@ -11,7 +11,7 @@ public:
     ~TextureManager();
     void clear();
     bool empty() const;
-    void erase(const std::string& name);
+    bool erase(const std::string& name);
     int find(const std::string& name) const;
 
     // thread safe

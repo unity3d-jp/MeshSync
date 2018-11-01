@@ -40,6 +40,11 @@ static void OnPostNewScene(void *param, NotifyInfo *info)
 }
 
 
+ms::Identifier MeshSyncClient3dsMax::TreeNode::getIdentifier() const
+{
+    return { path, id };
+}
+
 void MeshSyncClient3dsMax::TreeNode::clearDirty()
 {
     dirty_trans = dirty_geom = false;
@@ -47,7 +52,7 @@ void MeshSyncClient3dsMax::TreeNode::clearDirty()
 
 void MeshSyncClient3dsMax::TreeNode::clearState()
 {
-    dst_obj = nullptr;
+    dst = nullptr;
 }
 
 void MeshSyncClient3dsMax::AnimationRecord::operator()(MeshSyncClient3dsMax * _this)
@@ -108,7 +113,7 @@ void MeshSyncClient3dsMax::onShutdown()
 void MeshSyncClient3dsMax::onNewScene()
 {
     for (auto& kvp : m_node_records) {
-        addDeleted(kvp.second.path);
+        addDeleted(kvp.second.getIdentifier());
     }
     m_node_records.clear();
     m_scene_updated = true;
@@ -136,7 +141,7 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 
     auto it = m_node_records.find(n);
     if (it != m_node_records.end()) {
-        addDeleted(it->second.path);
+        addDeleted(it->second.getIdentifier());
         m_node_records.erase(it);
     }
 }
@@ -149,7 +154,7 @@ void MeshSyncClient3dsMax::onNodeRenamed()
     // (event callback tells name of before & after rename, but doesn't tell node itself...)
     for (auto& kvp : m_node_records) {
         if (kvp.second.name != kvp.first->GetName()) {
-            addDeleted(kvp.second.path);
+            addDeleted(kvp.second.getIdentifier());
         }
     }
 }
@@ -160,7 +165,7 @@ void MeshSyncClient3dsMax::onNodeLinkChanged(INode * n)
 
     auto it = m_node_records.find(n);
     if (it != m_node_records.end()) {
-        addDeleted(it->second.path);
+        addDeleted(it->second.getIdentifier());
     }
 }
 
@@ -417,10 +422,10 @@ void MeshSyncClient3dsMax::exportMaterials()
     }
 }
 
-void MeshSyncClient3dsMax::addDeleted(const std::string& path)
+void MeshSyncClient3dsMax::addDeleted(const ms::Identifier& v)
 {
-    m_deleted.push_back({ path, 0 });
-    m_entity_manager.erase(path);
+    m_deleted.push_back(v);
+    m_entity_manager.erase(v);
 }
 
 ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)
@@ -429,15 +434,15 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)
         return nullptr;
 
     auto& rec = getNodeRecord(n);
-    if (rec.dst_obj)
-        return rec.dst_obj;
+    if (rec.dst)
+        return rec.dst;
 
     ms::TransformPtr ret;
     // check if the node is instance
     EnumerateInstance(n, [this, &rec, &ret](INode *instance) {
         auto& irec = getNodeRecord(instance);
-        if (irec.dst_obj && irec.dst_obj->reference.empty()) {
-            ret = exportInstance(rec, irec.dst_obj);
+        if (irec.dst && irec.dst->reference.empty()) {
+            ret = exportInstance(rec, irec.dst);
         }
     });
     if (ret)
@@ -580,7 +585,7 @@ std::shared_ptr<T> MeshSyncClient3dsMax::createEntity(TreeNode& n)
     auto& dst = *ret;
     dst.path = n.path;
     dst.index = n.index;
-    n.dst_obj = ret;
+    n.dst = ret;
     return ret;
 }
 

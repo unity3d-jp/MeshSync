@@ -11,7 +11,10 @@ public:
     ~EntityManager();
     void clear();
     bool empty() const;
-    void erase(const std::string& path);
+    bool erase(const std::string& path);
+    bool erase(int id);
+    bool erase(const Identifier& identifier);
+    bool erase(TransformPtr v);
 
     // thread safe
     void add(TransformPtr v); 

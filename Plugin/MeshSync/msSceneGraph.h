@@ -56,8 +56,9 @@ public:
     virtual uint64_t checksumTrans() const;
     virtual uint64_t checksumGeom() const;
 
+    Identifier getIdentifier() const;
+    bool identidy(const Identifier& v) const;
     const char* getName() const; // get name (leaf) from path
-
 };
 msHasSerializer(Entity);
 using EntityPtr = std::shared_ptr<Entity>;

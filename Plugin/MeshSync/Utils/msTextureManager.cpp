@@ -28,9 +28,9 @@ bool TextureManager::empty() const
     return m_records.empty();
 }
 
-void TextureManager::erase(const std::string& name)
+bool TextureManager::erase(const std::string& name)
 {
-    m_records.erase(name);
+    return m_records.erase(name) != 0;
 }
 
 int TextureManager::find(const std::string& name) const

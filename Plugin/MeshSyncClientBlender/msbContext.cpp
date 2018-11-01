@@ -123,10 +123,10 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& co
 }
 
 
-void msbContext::addDeleted(const std::string& path)
+void msbContext::addDeleted(const ms::Identifier& v)
 {
-    m_deleted.push_back({ path, 0 });
-    m_entity_manager.erase(path);
+    m_deleted.push_back(v);
+    m_entity_manager.erase(v);
 }
 
 ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
@@ -749,7 +749,7 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object * obj)
     if (rec.path != path) {
         if (!rec.path.empty()) {
             // obj is renamed
-            addDeleted(rec.path);
+            addDeleted(rec.getIdentifier());
         }
         rec.name = get_name(obj);
         rec.path = path;
@@ -769,7 +769,7 @@ void msbContext::eraseStaleObjects()
 {
     for (auto i = m_obj_records.begin(); i != m_obj_records.end(); /**/) {
         if (!i->second.alive) {
-            addDeleted(i->second.path);
+            addDeleted(i->second.getIdentifier());
             m_obj_records.erase(i++);
         }
         else {
@@ -1041,10 +1041,13 @@ bool msbContext::prepare()
     return true;
 }
 
-void msbContext::sendScene(SendScope scope)
+void msbContext::sendScene(SendScope scope, bool force_all)
 {
     if (m_ignore_update || !prepare())
         return;
+
+    if (force_all)
+        m_entity_manager.makeDirtyAll();
 
     if (scope == SendScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
@@ -1109,9 +1112,8 @@ void msbContext::kickAsyncSend()
         m_tmp_bmeshes.clear();
     }
 
-    for (auto& kvp : m_obj_records) {
-        kvp.second.clear();
-    }
+    for (auto& kvp : m_obj_records)
+        kvp.second.clearState();
     m_bones.clear();
     m_added.clear();
 

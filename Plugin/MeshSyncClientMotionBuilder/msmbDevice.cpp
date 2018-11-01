@@ -6,6 +6,11 @@
 FBDeviceImplementation(msmbDevice);
 FBRegisterDevice("msmbDevice", msmbDevice, "UnityMeshSync", "UnityMeshSync for MotionBuilder", FB_DEFAULT_SDK_ICON);
 
+ms::Identifier msmbDevice::NodeRecord::getIdentifier() const
+{
+    return { path,id };
+}
+
 bool msmbDevice::FBCreate()
 {
     FBSystem::TheOne().Scene->OnChange.Add(this, (FBCallback)&msmbDevice::onSceneChange);
@@ -141,17 +146,19 @@ void msmbDevice::kickAsyncSend()
     m_sender.kick();
 }
 
-void msmbDevice::addDeleted(const std::string & path)
+void msmbDevice::addDeleted(const ms::Identifier& v)
 {
-    m_deleted.push_back({ path, 0 });
-    m_entity_manager.erase(path);
+    m_deleted.push_back(v);
+    m_entity_manager.erase(v);
 }
 
 
 bool msmbDevice::sendScene(bool force_all)
 {
-    if (force_all)
+    if (force_all) {
         m_dirty_meshes = m_dirty_textures = true;
+        m_entity_manager.makeDirtyAll();
+    }
 
     m_data_updated = m_pending = false;
     if (m_sender.isSending()) {
@@ -172,7 +179,7 @@ bool msmbDevice::sendScene(bool force_all)
     // check deleted objects
     for (auto it = m_node_records.begin(); it != m_node_records.end(); /**/) {
         if (!it->second.exist) {
-            addDeleted(it->second.path);
+            addDeleted(it->second.getIdentifier());
             m_node_records.erase(it++);
         }
         else {
@@ -214,7 +221,7 @@ ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
     }
     else if (rec.name != GetName(src)) {
         // renamed
-        addDeleted(rec.path);
+        addDeleted(rec.getIdentifier());
         rec.name = GetName(src);
         rec.path = GetPath(src);
     }

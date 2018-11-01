@@ -100,6 +100,19 @@ uint64_t Entity::checksumGeom() const
     return 0;
 }
 
+Identifier Entity::getIdentifier() const
+{
+    return { path, id };
+}
+
+bool Entity::identidy(const Identifier& v) const
+{
+    bool ret = path == v.path;
+    if (!ret && id != InvalidID && v.id != InvalidID)
+        ret = id == v.id;
+    return ret;
+}
+
 const char* Entity::getName() const
 {
     size_t name_pos = path.find_last_of('/');

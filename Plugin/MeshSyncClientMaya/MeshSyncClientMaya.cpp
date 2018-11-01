@@ -15,6 +15,11 @@ bool DAGNode::isInstance() const
     return branches.size() > 1;
 }
 
+ms::Identifier TreeNode::getIdentifier() const
+{
+    return { path, id };
+}
+
 void TreeNode::clearState()
 {
     dst_obj = nullptr;
@@ -172,7 +177,7 @@ void MeshSyncClientMaya::onNodeRemoved(const MObject& node)
         auto it = m_dag_nodes.find(node);
         if (it != m_dag_nodes.end()) {
             for (auto tn : it->second.branches)
-                addDeleted(tn->path);
+                addDeleted(tn->getIdentifier());
             m_dag_nodes.erase(it);
         }
     }
@@ -442,7 +447,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
 bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 {
     if (tn->name != GetName(tn->trans->node)) {
-        addDeleted(tn->path);
+        addDeleted(tn->getIdentifier());
         return true;
     }
     else {
@@ -455,13 +460,16 @@ bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 }
 
 
-bool MeshSyncClientMaya::sendScene(SendScope scope)
+bool MeshSyncClientMaya::sendScene(SendScope scope, bool force_all)
 {
     if (m_sender.isSending()) {
         m_pending_scope = scope;
         return false;
     }
     m_pending_scope = SendScope::None;
+
+    if (force_all)
+        m_entity_manager.makeDirtyAll();
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -541,10 +549,10 @@ void MeshSyncClientMaya::update()
     }
 
     if (m_pending_scope != SendScope::None) {
-        sendScene(m_pending_scope);
+        sendScene(m_pending_scope, false);
     }
     else if (m_settings.auto_sync) {
-        sendScene(SendScope::Updated);
+        sendScene(SendScope::Updated, false);
     }
 }
 
