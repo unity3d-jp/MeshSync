@@ -1,6 +1,5 @@
 import bpy
 from bpy.app.handlers import persistent
-import MeshSyncClientBlender as ms
 
 bl_info = {
     "name": "Unity Mesh Sync",
@@ -14,6 +13,14 @@ bl_info = {
     "category": "Import-Export",
 }
 
+ver = bpy.app.version
+if ver[0] == 2 and ver[1] == 79:
+    import MeshSyncClientBlender2_79 as ms
+elif ver[0] == 2 and ver[1] == 80:
+    import MeshSyncClientBlender2_80 as ms
+else:
+    # not supported
+    pass
 
 msb_context = ms.Context()
 
