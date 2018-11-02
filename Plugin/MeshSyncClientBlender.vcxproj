@@ -46,6 +46,7 @@
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="MeshSyncClientBlender\tools\extract_headers.py" />
+    <None Include="MeshSyncClientBlender\tools\replace_blender_version.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}</ProjectGuid>

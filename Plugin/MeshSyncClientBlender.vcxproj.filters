@@ -61,5 +61,8 @@
     <None Include="MeshSyncClientBlender\tools\extract_headers.py">
       <Filter>MeshSyncClientBlender\tools</Filter>
     </None>
+    <None Include="MeshSyncClientBlender\tools\replace_blender_version.py">
+      <Filter>MeshSyncClientBlender\tools</Filter>
+    </None>
   </ItemGroup>
 </Project>
