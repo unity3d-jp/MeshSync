@@ -33,10 +33,12 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
         bl::BMaterial bm(mat);
         auto color_src = mat;
         if (bm.use_nodes()) {
+#if BLENDER_VERSION < 280
             bl::BMaterial node(bm.active_node_material());
             if (node.ptr()) {
                 color_src = node.ptr();
             }
+#endif
         }
         ret->setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
 
@@ -804,9 +806,9 @@ void msbContext::sendAnimations(SendScope scope)
     }
     else {
         // all
-        for (auto *base : scene.objects()) {
-            exportAnimation(base->object, false);
-        }
+        scene.each_objects([this](Object *obj) {
+            exportAnimation(obj, false);
+        });
     }
 
     // advance frame and record animations
@@ -1053,14 +1055,13 @@ void msbContext::sendScene(SendScope scope, bool force_all)
             exportMaterials();
 
         auto scene = bl::BScene(bl::BContext::get().scene());
-        for (auto *base : scene.objects()) {
-            auto obj = base->object;
+        scene.each_objects([this](Object *obj) {
             auto bid = bl::BID(obj);
             if (bid.is_updated() || bid.is_updated_data())
                 exportObject(obj, false);
             else
                 touchRecord(obj);
-        }
+        });
     }
     if (scope == SendScope::Selected) {
         // todo
@@ -1071,9 +1072,9 @@ void msbContext::sendScene(SendScope scope, bool force_all)
             exportMaterials();
 
         auto scene = bl::BScene(bl::BContext::get().scene());
-        for (auto *base : scene.objects()) {
-            exportObject(base->object, false);
-        }
+        scene.each_objects([this](Object *obj) {
+            exportObject(obj, false);
+        });
     }
 
     eraseStaleObjects();
