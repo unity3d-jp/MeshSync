@@ -570,7 +570,11 @@ blist_range<Material> BData::materials()
 }
 bool BData::objects_is_updated()
 {
+#if BLENDER_VERSION < 280
     return get_bool(m_ptr, BlendDataObjects_is_updated);
+#else
+    return true;
+#endif
 }
 
 void BData::remove(Mesh * v)

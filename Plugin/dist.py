@@ -21,12 +21,8 @@ for blender_dir in blender_dirs:
     os.chdir('..')
 
 # make plugin archives
-is_blender = re.compile(r"_Blender.*")
 for t in os.listdir('.'):
     if not os.path.isdir(t):
         continue
-    if is_blender.search(t):
-        shutil.make_archive(t, 'zip', root_dir=t)
-    else:
-        shutil.make_archive(t, 'zip', root_dir='.', base_dir=t)
+    shutil.make_archive(t, 'zip', root_dir='.', base_dir=t)
     print(t + '.zip')

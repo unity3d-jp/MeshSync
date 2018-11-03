@@ -15,10 +15,13 @@ from bpy.app.handlers import persistent
 import MeshSyncClientBlender as ms
 from unity_mesh_sync_common import *
 
-class MESHSYNC_PT_Server(bpy.types.Panel):
+class MESHSYNC_PT:
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = "Mesh Sync"
+
+
+class MESHSYNC_PT_Server(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Server"
 
     def draw(self, context):
@@ -27,10 +30,7 @@ class MESHSYNC_PT_Server(bpy.types.Panel):
         self.layout.prop(scene, 'meshsync_server_port')
 
 
-class MESHSYNC_PT_Scene(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_category = "Mesh Sync"
+class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Scene"
 
     def draw(self, context):
@@ -53,10 +53,7 @@ class MESHSYNC_PT_Scene(bpy.types.Panel):
         self.layout.operator("meshsync.sync_scene", text="Manual Sync")
         self.layout.separator()
 
-class MESHSYNC_PT_Animation(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_category = "Mesh Sync"
+class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Animation"
 
     def draw(self, context):

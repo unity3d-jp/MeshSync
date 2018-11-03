@@ -15,11 +15,22 @@ from bpy.app.handlers import persistent
 import MeshSyncClientBlender as ms
 from unity_mesh_sync_common import *
 
+class MESHSYNC_PT:
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = ".workspace"
 
-class MESHSYNC_PT_Server(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+
+class MESHSYNC_PT_Main(MESHSYNC_PT, bpy.types.Panel):
+    bl_label = "MeshSync"
+
+    def draw(self, context):
+        pass
+
+
+class MESHSYNC_PT_Server(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Server"
+    bl_parent_id = "MESHSYNC_PT_Main"
 
     def draw(self, context):
         scene = bpy.context.scene
@@ -27,10 +38,9 @@ class MESHSYNC_PT_Server(bpy.types.Panel):
         self.layout.prop(scene, 'meshsync_server_port')
 
 
-class MESHSYNC_PT_Scene(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Scene"
+    bl_parent_id = "MESHSYNC_PT_Main"
 
     def draw(self, context):
         scene = bpy.context.scene
@@ -49,16 +59,15 @@ class MESHSYNC_PT_Scene(bpy.types.Panel):
         self.layout.prop(scene, 'meshsync_sync_lights')
         self.layout.separator()
         if MESHSYNC_OT_AutoSync._timer:
-            self.layout.operator("meshsync.auto_sync", "Auto Sync", icon="PAUSE")
+            self.layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
         else:
-            self.layout.operator("meshsync.auto_sync", "Auto Sync", icon="PLAY")
+            self.layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
         self.layout.operator("meshsync.sync_scene", text="Manual Sync")
         self.layout.separator()
 
-class MESHSYNC_PT_Animation(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Animation"
+    bl_parent_id = "MESHSYNC_PT_Main"
 
     def draw(self, context):
         scene = bpy.context.scene
@@ -91,13 +100,11 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
     bl_idname = "meshsync.auto_sync"
     bl_label = "Auto Sync"
     _timer = None
-    
+
     def invoke(self, context, event):
         print('invoke')
-        if context.area.type != "VIEW_3D":
-            return
         if not MESHSYNC_OT_AutoSync._timer:
-            MESHSYNC_OT_AutoSync._timer = context.window_manager.event_timer_add(1.0 / 3.0, context.window)
+            MESHSYNC_OT_AutoSync._timer = context.window_manager.event_timer_add(1.0 / 3.0, window=context.window)
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
         else:
@@ -114,13 +121,13 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
     def update(self):
         print('update')
         msb_context.flushPendingList();
-        if(bpy.context.scene.meshsync_auto_sync):
-            msb_apply_scene_settings()
-            msb_context.setup(bpy.context);
-            msb_context.sendSceneUpdated()
+        msb_apply_scene_settings()
+        msb_context.setup(bpy.context);
+        msb_context.sendSceneUpdated()
 
 
 classes = (
+    MESHSYNC_PT_Main,
     MESHSYNC_PT_Server,
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,

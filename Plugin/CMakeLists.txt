@@ -34,9 +34,6 @@ option(BUILD_MAYA2016_CLIENT "Build MeshSyncClient for Maya 2016" OFF)
 option(BUILD_MAYA2016.5_CLIENT "Build MeshSyncClient for Maya 2016.5" OFF)
 option(BUILD_MAYA2017_CLIENT "Build MeshSyncClient for Maya 2017" OFF)
 option(BUILD_MAYA2018_CLIENT "Build MeshSyncClient for Maya 2018" OFF)
-#if(MAC)
-#    option(BUILD_MAYALT2018_CLIENT "Build MeshSyncClient for Maya LT 2018" OFF)
-#endif()
 
 # MotionBuilder
 if(LINUX)
