@@ -21,10 +21,11 @@ exit /B 0
         pause
         exit /B 1
     )
-    
-    set DIST_DIR="dist\UnityMeshSync_Blender_Windows"
-    set PYD_DIR="%DIST_DIR%\MeshSyncClientBlender%BLENDER_MODULE_BLENDER_VERSION%"
-    xcopy /YS MeshSyncClientBlender\python "%DIST_DIR%\"
+
+    set DIST_DIR="dist\UnityMeshSync_Blender_Windows\blender-%BLENDER_VERSION%"
+    set PYD_DIR="%DIST_DIR%\MeshSyncClientBlender"
+    xcopy /Y MeshSyncClientBlender\python\unity_mesh_sync_common.py "%DIST_DIR%\"
+    xcopy /Y MeshSyncClientBlender\python\%BLENDER_VERSION%\unity_mesh_sync.py "%DIST_DIR%\"
+    xcopy /Y MeshSyncClientBlender\python\__init__.py "%PYD_DIR%\"
     xcopy /Y _out\x64_Master\MeshSyncClientBlender-%BLENDER_VERSION%\*.pyd "%PYD_DIR%\"
-    MeshSyncClientBlender\tools\gen_initpy.py "%PYD_DIR%\__init__.py" "%BLENDER_MODULE_BLENDER_VERSION%"
     exit /B 0

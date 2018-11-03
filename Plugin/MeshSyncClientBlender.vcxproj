@@ -41,11 +41,11 @@
     <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="MeshSyncClientBlender\python\unity_mesh_sync.py" />
-    <None Include="MeshSyncClientBlender\python\__init__.py">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
+    <None Include="MeshSyncClientBlender\python\2.79\unity_mesh_sync.py" />
+    <None Include="MeshSyncClientBlender\python\2.80\unity_mesh_sync.py" />
+    <None Include="MeshSyncClientBlender\python\unity_mesh_sync_common.py" />
     <None Include="MeshSyncClientBlender\tools\extract_headers.py" />
+    <None Include="MeshSyncClientBlender\tools\gen_initpy.py" />
     <None Include="MeshSyncClientBlender\tools\replace_blender_version.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
