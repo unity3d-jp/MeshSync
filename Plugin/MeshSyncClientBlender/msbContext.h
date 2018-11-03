@@ -57,20 +57,12 @@ public:
 private:
     struct ObjectRecord : public mu::noncopyable
     {
-        std::string name;
-        std::string path;
-        int id = ms::InvalidID;
-        bool alive = false;
+        bool touched = false;
         bool exported = false;
-
-        ms::Identifier getIdentifier() const
-        {
-            return { path,id };
-        }
 
         void clearState()
         {
-            alive = false;
+            touched = false;
             exported = false;
         }
     };
@@ -95,21 +87,21 @@ private:
     void exportMaterials();
 
     ms::TransformPtr exportObject(Object *obj, bool force);
-    ms::TransformPtr exportTransform(Object *obj, const std::string& path);
-    ms::TransformPtr exportPose(bPoseChannel *obj, const std::string& path);
-    ms::TransformPtr exportArmature(Object *obj, const std::string& path);
+    ms::TransformPtr exportTransform(Object *obj);
+    ms::TransformPtr exportPose(Object *armature, bPoseChannel *obj);
+    ms::TransformPtr exportArmature(Object *obj);
     ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
-    ms::TransformPtr exportDupliGroup(Object *obj, const std::string & base_path);
-    ms::CameraPtr exportCamera(Object *obj, const std::string& path);
-    ms::LightPtr exportLight(Object *obj, const std::string& path);
-    ms::MeshPtr exportMesh(Object *obj, const std::string& path);
+    ms::TransformPtr exportDupliGroup(Object *obj, const std::string& base_path);
+    ms::CameraPtr exportCamera(Object *obj);
+    ms::LightPtr exportLight(Object *obj);
+    ms::MeshPtr exportMesh(Object *obj);
     void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
 
     ms::TransformPtr findBone(const Object *armature, const Bone *bone);
-    ObjectRecord& touchRecord(Object *obj);
+    ObjectRecord& touchRecord(Object *obj, const std::string& base_path="");
     void eraseStaleObjects();
 
     void exportAnimation(Object *obj, bool force, const std::string base_path="");
@@ -125,7 +117,6 @@ private:
     using task_t = std::function<void()>;
 
     msbSettings m_settings;
-    std::set<Object*> m_added;
     std::set<Object*> m_pending, m_pending_tmp;
     std::map<const Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records;

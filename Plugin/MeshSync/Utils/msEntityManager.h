@@ -19,6 +19,7 @@ public:
 
     // thread safe
     void add(TransformPtr v); 
+    void touch(const std::string& path);
 
     std::vector<TransformPtr> getAllEntities();
     std::vector<TransformPtr> getDirtyTransforms();

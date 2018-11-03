@@ -12,10 +12,8 @@ bl_info = {
 
 import bpy
 from bpy.app.handlers import persistent
-import MeshSyncClientBlende as ms
+import MeshSyncClientBlender as ms
 from unity_mesh_sync_common import *
-
-msb_context = ms.Context()
 
 class MESHSYNC_PT_Server(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'

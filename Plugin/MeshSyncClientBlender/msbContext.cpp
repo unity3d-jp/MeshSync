@@ -134,13 +134,14 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     auto& rec = touchRecord(obj);
     if (rec.exported)
         return ret; // already exported
+    rec.exported = true;
 
     switch (obj->type) {
     case OB_ARMATURE:
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_bones) {
-            ret = exportArmature(obj, get_path(obj));
+            ret = exportArmature(obj);
         }
         break;
     }
@@ -148,7 +149,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
-            ret = exportMesh(obj, get_path(obj));
+            ret = exportMesh(obj);
         }
         break;
     }
@@ -156,7 +157,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_cameras) {
-            ret = exportCamera(obj, get_path(obj));
+            ret = exportCamera(obj);
         }
         break;
     }
@@ -164,7 +165,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     {
         exportObject(obj->parent, true);
         if (m_settings.sync_lights) {
-            ret = exportLight(obj, get_path(obj));
+            ret = exportLight(obj);
         }
         break;
     }
@@ -172,63 +173,50 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     {
         if (obj->dup_group || force) {
             exportObject(obj->parent, true);
-            ret = exportTransform(obj, get_path(obj));
+            ret = exportTransform(obj);
         }
         break;
     }
     }
 
-    if (ret) {
+    if (ret)
         exportDupliGroup(obj, ret->path);
-        rec.exported = true;
-    }
-
     return ret;
 }
 
-ms::TransformPtr msbContext::exportTransform(Object *src, const std::string& path)
+ms::TransformPtr msbContext::exportTransform(Object *src)
 {
-    if (m_added.find(src) != m_added.end())
-        return nullptr;
-    m_added.insert(src);
-
     auto ret = ms::Transform::create();
     auto& dst = *ret;
-    dst.path = path;
+    dst.path = get_path(src);
     ExtractTransformData(src, dst);
     m_entity_manager.add(ret);
     return ret;
 }
 
-ms::TransformPtr msbContext::exportPose(bPoseChannel *src, const std::string& path)
+ms::TransformPtr msbContext::exportPose(Object *armature, bPoseChannel *src)
 {
     auto ret = ms::Transform::create();
     auto& dst = *ret;
-    dst.path = path;
+    dst.path = get_path(armature, src->bone);
     extract_local_TRS(src, dst.position, dst.rotation, dst.scale);
     m_entity_manager.add(ret);
     return ret;
 }
 
-ms::TransformPtr msbContext::exportArmature(Object *src, const std::string& path)
+ms::TransformPtr msbContext::exportArmature(Object *src)
 {
-    if (m_added.find(src) != m_added.end())
-        return nullptr;
-    m_added.insert(src);
-
     auto ret = ms::Transform::create();
     auto& dst = *ret;
-    dst.path = path;
+    dst.path = get_path(src);
     ExtractTransformData(src, dst);
     m_entity_manager.add(ret);
 
-    auto poses = bl::list_range((bPoseChannel*)src->pose->chanbase.first);
-    for (auto pose : poses) {
+    for (auto pose : bl::list_range((bPoseChannel*)src->pose->chanbase.first)) {
         auto bone = pose->bone;
         auto& dst = m_bones[bone];
-        dst = exportPose(pose, get_path(src, bone));
+        dst = exportPose(src, pose);
     }
-
     return ret;
 }
 
@@ -276,15 +264,11 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& ba
     return dst;
 }
 
-ms::CameraPtr msbContext::exportCamera(Object *src, const std::string& path)
+ms::CameraPtr msbContext::exportCamera(Object *src)
 {
-    if (m_added.find(src) != m_added.end())
-        return nullptr;
-    m_added.insert(src);
-
     auto ret = ms::Camera::create();
     auto& dst = *ret;
-    dst.path = path;
+    dst.path = get_path(src);
     ExtractTransformData(src, dst);
     dst.rotation *= rotateX(90.0f * Deg2Rad);
 
@@ -293,15 +277,11 @@ ms::CameraPtr msbContext::exportCamera(Object *src, const std::string& path)
     return ret;
 }
 
-ms::LightPtr msbContext::exportLight(Object *src, const std::string& path)
+ms::LightPtr msbContext::exportLight(Object *src)
 {
-    if (m_added.find(src) != m_added.end())
-        return nullptr;
-    m_added.insert(src);
-
     auto ret = ms::Light::create();
     auto& dst = *ret;
-    dst.path = path;
+    dst.path = get_path(src);
     ExtractTransformData(src, dst);
     dst.rotation *= rotateX(90.0f * Deg2Rad);
 
@@ -310,15 +290,11 @@ ms::LightPtr msbContext::exportLight(Object *src, const std::string& path)
     return ret;
 }
 
-ms::MeshPtr msbContext::exportMesh(Object *src, const std::string& path)
+ms::MeshPtr msbContext::exportMesh(Object *src)
 {
     // ignore particles
     if (find_modofier(src, eModifierType_ParticleSystem) || find_modofier(src, eModifierType_ParticleInstance))
         return nullptr;
-
-    if (m_added.find(src) != m_added.end())
-        return nullptr;
-    m_added.insert(src);
 
     bool is_editing = false;
     bl::BObject bobj(src);
@@ -338,7 +314,7 @@ ms::MeshPtr msbContext::exportMesh(Object *src, const std::string& path)
 
     auto ret = ms::Mesh::create();
     auto& dst = *ret;
-    dst.path = path;
+    dst.path = get_path(src);
 
     // transform
     ExtractTransformData(src, dst);
@@ -735,27 +711,35 @@ ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
     return it != m_bones.end() ? it->second : nullptr;
 }
 
-msbContext::ObjectRecord& msbContext::touchRecord(Object * obj)
+msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string& base_path)
 {
     auto& rec = m_obj_records[obj];
-    if (rec.alive)
+    if (rec.touched)
         return rec; // already touched
 
-    auto path = get_path(obj);
-    if (rec.path != path) {
-        if (!rec.path.empty()) {
-            // obj is renamed
-            m_entity_manager.erase(rec.getIdentifier());
-        }
-        rec.name = get_name(obj);
-        rec.path = path;
-    }
+    rec.touched = true;
+    m_entity_manager.touch(base_path + get_path(obj));
 
-    rec.alive = true;
+    // trace bones
     if (obj->type == OB_ARMATURE) {
         auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
         for (auto pose : poses) {
-            m_obj_records[pose->bone].alive = true;
+            m_obj_records[pose->bone].touched = true;
+            m_entity_manager.touch(base_path + get_path(obj, pose->bone));
+        }
+    }
+
+    // trace dupli group
+    if (obj->dup_group) {
+        auto group = obj->dup_group;
+
+        auto local_path = std::string("/") + (group->id.name + 2);
+        auto group_path = base_path + local_path;
+        m_entity_manager.touch(group_path);
+
+        auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
+        for (auto go : gobjects) {
+            touchRecord(obj, group_path);
         }
     }
     return rec;
@@ -764,27 +748,10 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object * obj)
 void msbContext::eraseStaleObjects()
 {
     for (auto i = m_obj_records.begin(); i != m_obj_records.end(); /**/) {
-        if (!i->second.alive) {
-            m_entity_manager.erase(i->second.getIdentifier());
+        if (!i->second.touched)
             m_obj_records.erase(i++);
-        }
-        else {
+        else
             ++i;
-        }
-    }
-
-    auto& deleted = m_entity_manager.getDeleted();
-    if (!deleted.empty()) {
-        // blender re-creates all objects when undo / redo.
-        // in that case, m_deleted includes all previous objects.
-        // to avoid unneeded delete, erase re-created objects from m_deleted.
-        deleted.erase(std::remove_if(deleted.begin(), deleted.end(), [this](const ms::Identifier& v) {
-            for (auto& kvp : m_obj_records) {
-                if (kvp.second.path == v.path)
-                    return true;
-            }
-            return false;
-        }), deleted.end());
     }
 }
 
@@ -1111,7 +1078,6 @@ void msbContext::kickAsyncSend()
     for (auto& kvp : m_obj_records)
         kvp.second.clearState();
     m_bones.clear();
-    m_added.clear();
 
     // kick async send
     if (!m_sender.on_prepare) {
@@ -1127,6 +1093,7 @@ void msbContext::kickAsyncSend()
             t.materials = m_materials;
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
+            m_entity_manager.eraseStaleEntities();
             t.deleted = m_entity_manager.getDeleted();
             t.animations = m_animations;
 

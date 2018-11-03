@@ -141,6 +141,13 @@ void EntityManager::add(TransformPtr obj)
         addTransform(obj);
 }
 
+void EntityManager::touch(const std::string& path)
+{
+    auto it = m_records.find(path);
+    if (it != m_records.end())
+        it->second.updated = true;
+}
+
 std::vector<TransformPtr> EntityManager::getAllEntities()
 {
     waitTasks();

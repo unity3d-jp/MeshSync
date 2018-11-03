@@ -2,7 +2,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(MeshSync)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-find_package(OpenEXR QUIET)
 find_package(Poco COMPONENTS Net QUIET)
 if(APPLE)
     find_library(COCOA_LIBRARY Cocoa)
