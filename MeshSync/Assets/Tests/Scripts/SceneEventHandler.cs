@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UTJ.MeshSync;
 
@@ -6,17 +7,34 @@ using UTJ.MeshSync;
 [ExecuteInEditMode]
 public class SceneEventHandler : MonoBehaviour
 {
+    void Stringnize<T>(List<T> objs, string header, ref string dst) where T : UnityEngine.Object
+    {
+        if (objs.Count > 0)
+        {
+            dst += header;
+            dst += " ";
+            dst += string.Join(", ", objs.AsEnumerable().Select(o => o.name).ToArray());
+            dst += "\n";
+        }
+
+    }
+
     void OnSceneEvents(SceneEventType t, object arg)
     {
-        Debug.Log(t);
-
-        if(t == SceneEventType.UpdateInProgress)
+        if (t == SceneEventType.UpdateInProgress)
         {
             var a = arg as SceneUpdateArgs;
-            Debug.Log(a.gameObjects);
-            //Debug.Log(a.textures);
-            //Debug.Log(a.materials);
-            //Debug.Log(a.animations);
+
+            string log = "";
+            Stringnize(a.textures, "Textures: ", ref log);
+            Stringnize(a.materials, "Materials: ", ref log);
+            Stringnize(a.gameObjects, "GameObjects: ", ref log);
+            Stringnize(a.animations, "Animations: ", ref log);
+            Debug.Log(log);
+        }
+        else
+        {
+            Debug.Log(t);
         }
     }
 

@@ -38,7 +38,8 @@ void AsyncSceneSender::send()
     if (on_prepare)
         on_prepare();
 
-    if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() && deleted.empty())
+    // ignore material-only scene for now
+    if (textures.empty() && /*materials.empty() &&*/ transforms.empty() && geometries.empty() && animations.empty() && deleted.empty())
         return;
 
     std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });

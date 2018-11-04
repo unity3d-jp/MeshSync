@@ -1,7 +1,9 @@
 #pragma once
 
 #if BLENDER_VERSION < 280
-    using CollectionObject = GroupObject;
+using CollectionObject = GroupObject;
+#else
+struct Depsgraph;
 #endif
 
 namespace blender
@@ -112,7 +114,11 @@ namespace blender
         float4x4 matrix_local() const;
         float4x4 matrix_world() const;
         bool is_visible(Scene *scene) const;
+#if BLENDER_VERSION < 280
         Mesh* to_mesh(Scene *scene) const;
+#else
+        Mesh* to_mesh(Depsgraph *deg) const;
+#endif
     };
 
     class BMesh
@@ -217,6 +223,7 @@ namespace blender
         static BContext get();
         Main* data();
         Scene* scene();
+        Depsgraph* depsgraph();
     };
 
 #undef Compatible

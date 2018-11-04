@@ -50,6 +50,7 @@ static FunctionRNA* BlendDataMeshes_remove;
 Def(BContext);
 Prop(BContext, blend_data);
 Prop(BContext, scene);
+Prop(BContext, depsgraph);
 
 #undef Prop
 #undef Func
@@ -164,6 +165,7 @@ void setup(py::object bpy_context)
             each_prop{
                 if (match_prop("blend_data")) BContext_blend_data = prop;
                 if (match_prop("scene")) BContext_scene = prop;
+                if (match_prop("depsgraph")) BContext_depsgraph = prop;
             }
         }
     }
@@ -192,47 +194,49 @@ struct ret_holder<void>
     void get() {}
 };
 
+#pragma pack(push, 1)
 template<typename R>
 struct param_holder0
 {
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
-};
+} msPacked;
 template<typename R, typename A1>
 struct param_holder1
 {
     A1 a1;
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
-};
+} msPacked;
 template<typename R, typename A1, typename A2>
 struct param_holder2
 {
     A1 a1; A2 a2;
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
-};
+} msPacked;
 template<typename R, typename A1, typename A2, typename A3>
 struct param_holder3
 {
     A1 a1; A2 a2; A3 a3;
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
-};
+} msPacked;
 template<typename R, typename A1, typename A2, typename A3, typename A4>
 struct param_holder4
 {
     A1 a1; A2 a2; A3 a3; A4 a4;
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
-};
+} msPacked;
 template<typename R, typename A1, typename A2, typename A3, typename A4, typename A5>
 struct param_holder5
 {
     A1 a1; A2 a2; A3 a3; A4 a4; A5 a5;
     ret_holder<R> ret;
     typename ret_holder<R>::ret_t get() { return ret.get(); }
-};
+} msPacked;
+#pragma pack(pop)
 
 
 template<typename T, typename R>
@@ -404,10 +408,17 @@ bool BObject::is_visible(Scene * scene) const
 #endif
 }
 
+#if BLENDER_VERSION < 280
 Mesh* BObject::to_mesh(Scene *scene) const
 {
     return call<Object, Mesh*, Scene*, int, int, int, int>(m_ptr, BObject_to_mesh, scene, 1, 1, 1, 0);
 }
+#else
+Mesh* BObject::to_mesh(Depsgraph *deg) const
+{
+    return call<Object, Mesh*, Depsgraph*, bool, bool>(m_ptr, BObject_to_mesh, deg, true, false);
+}
+#endif
 
 blist_range<ModifierData> BObject::modifiers()
 {
@@ -554,6 +565,11 @@ Main* BContext::data()
 Scene* BContext::scene()
 {
     return (Scene*)get_pointer(m_ptr, BContext_scene);
+}
+
+Depsgraph* blender::BContext::depsgraph()
+{
+    return (Depsgraph*)get_pointer(m_ptr, BContext_depsgraph);
 }
 
 blist_range<Object> BData::objects()

@@ -69,7 +69,6 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
         else:
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
         layout.operator("meshsync.sync_scene", text="Manual Sync")
-        separator()
 
 
 class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):

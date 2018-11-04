@@ -324,8 +324,16 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
         // bake modifiers
         if (!is_editing && m_settings.bake_modifiers) {
             // make baked meshes
-            data = bobj.to_mesh(bl::BContext::get().scene());
-            m_tmp_bmeshes.push_back(data); // need to delete baked meshes later
+            Mesh *tmp =
+#if BLENDER_VERSION < 280
+                bobj.to_mesh(bl::BContext::get().scene());
+#else
+                bobj.to_mesh(bl::BContext::get().depsgraph());
+#endif
+            if (tmp) {
+                data = tmp;
+                m_tmp_bmeshes.push_back(tmp); // need to delete baked meshes later
+            }
         }
 
         // calculate per index normals

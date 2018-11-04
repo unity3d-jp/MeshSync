@@ -4,6 +4,12 @@
 #include <vector>
 #include <mutex>
 
+#if defined(_MSC_VER)
+    #define msPacked 
+#else
+    #define msPacked __attribute__((packed))
+#endif
+
 namespace ms {
 
 const int InvalidID = -1;
