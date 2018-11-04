@@ -34,8 +34,11 @@ class MESHSYNC_PT_Server(MESHSYNC_PT, bpy.types.Panel):
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(scene, 'meshsync_server_address')
-        self.layout.prop(scene, 'meshsync_server_port')
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        layout.prop(scene, 'meshsync_server_address')
+        layout.prop(scene, 'meshsync_server_port')
 
 
 class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
@@ -44,26 +47,30 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(scene, 'meshsync_scale_factor')
-        self.layout.prop(scene, 'meshsync_sync_meshes')
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        layout.prop(scene, 'meshsync_scale_factor')
+        layout.prop(scene, 'meshsync_sync_meshes')
         if scene.meshsync_sync_meshes:
-            b = self.layout.box()
+            b = layout.box()
             b.prop(scene, 'meshsync_sync_normals')
             b.prop(scene, 'meshsync_sync_uvs')
             b.prop(scene, 'meshsync_sync_colors')
             b.prop(scene, 'meshsync_bake_modifiers')
-        self.layout.prop(scene, 'meshsync_sync_bones')
-        self.layout.prop(scene, 'meshsync_sync_blendshapes')
-        self.layout.prop(scene, 'meshsync_sync_textures')
-        self.layout.prop(scene, 'meshsync_sync_cameras')
-        self.layout.prop(scene, 'meshsync_sync_lights')
-        self.layout.separator()
+        layout.prop(scene, 'meshsync_sync_bones')
+        layout.prop(scene, 'meshsync_sync_blendshapes')
+        layout.prop(scene, 'meshsync_sync_textures')
+        layout.prop(scene, 'meshsync_sync_cameras')
+        layout.prop(scene, 'meshsync_sync_lights')
+        layout.separator()
         if MESHSYNC_OT_AutoSync._timer:
-            self.layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
+            layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
         else:
-            self.layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
-        self.layout.operator("meshsync.sync_scene", text="Manual Sync")
-        self.layout.separator()
+            layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
+        layout.operator("meshsync.sync_scene", text="Manual Sync")
+        separator()
+
 
 class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Animation"
@@ -71,9 +78,12 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(scene, 'meshsync_animation_ts')
-        self.layout.prop(scene, 'meshsync_animation_fi')
-        self.layout.operator("meshsync.sync_animations", text="Sync")
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        layout.prop(scene, 'meshsync_animation_ts')
+        layout.prop(scene, 'meshsync_animation_fi')
+        layout.operator("meshsync.sync_animations", text="Sync")
 
 
 class MESHSYNC_OT_SyncScene(bpy.types.Operator):
@@ -114,12 +124,10 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
 
     def modal(self, context, event):
         if event.type == 'TIMER':
-            print('timer event fired')
             self.update()
         return {'PASS_THROUGH'}
 
     def update(self):
-        print('update')
         msb_context.flushPendingList();
         msb_apply_scene_settings()
         msb_context.setup(bpy.context);

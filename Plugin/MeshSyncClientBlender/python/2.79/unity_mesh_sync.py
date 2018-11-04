@@ -26,8 +26,9 @@ class MESHSYNC_PT_Server(MESHSYNC_PT, bpy.types.Panel):
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(scene, 'meshsync_server_address')
-        self.layout.prop(scene, 'meshsync_server_port')
+        layout = self.layout
+        layout.prop(scene, 'meshsync_server_address')
+        layout.prop(scene, 'meshsync_server_port')
 
 
 class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
@@ -35,32 +36,38 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(scene, 'meshsync_scale_factor')
-        self.layout.prop(scene, 'meshsync_sync_meshes')
+        layout = self.layout
+        layout.prop(scene, 'meshsync_scale_factor')
+        layout.prop(scene, 'meshsync_sync_meshes')
         if scene.meshsync_sync_meshes:
-            b = self.layout.box()
+            b = layout.box()
             b.prop(scene, 'meshsync_sync_normals')
             b.prop(scene, 'meshsync_sync_uvs')
             b.prop(scene, 'meshsync_sync_colors')
             b.prop(scene, 'meshsync_bake_modifiers')
-        self.layout.prop(scene, 'meshsync_sync_bones')
-        self.layout.prop(scene, 'meshsync_sync_blendshapes')
-        self.layout.prop(scene, 'meshsync_sync_textures')
-        self.layout.prop(scene, 'meshsync_sync_cameras')
-        self.layout.prop(scene, 'meshsync_sync_lights')
-        self.layout.separator()
-        self.layout.prop(scene, 'meshsync_auto_sync')
-        self.layout.operator("meshsync.sync_scene", text="Manual Sync")
-        self.layout.separator()
+        layout.prop(scene, 'meshsync_sync_bones')
+        layout.prop(scene, 'meshsync_sync_blendshapes')
+        layout.prop(scene, 'meshsync_sync_textures')
+        layout.prop(scene, 'meshsync_sync_cameras')
+        layout.prop(scene, 'meshsync_sync_lights')
+        layout.separator()
+        if scene.meshsync_auto_sync:
+            layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
+        else:
+            layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
+        layout.operator("meshsync.sync_scene", text="Manual Sync")
+        layout.separator()
+
 
 class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
     bl_label = "Animation"
 
     def draw(self, context):
         scene = bpy.context.scene
-        self.layout.prop(scene, 'meshsync_animation_ts')
-        self.layout.prop(scene, 'meshsync_animation_fi')
-        self.layout.operator("meshsync.sync_animations", text="Sync")
+        layout = self.layout
+        layout.prop(scene, 'meshsync_animation_ts')
+        layout.prop(scene, 'meshsync_animation_fi')
+        layout.operator("meshsync.sync_animations", text="Sync")
 
 
 class MESHSYNC_OT_SyncScene(bpy.types.Operator):
@@ -83,6 +90,19 @@ class MESHSYNC_OT_SyncAnimations(bpy.types.Operator):
         return{'FINISHED'}
 
 
+class MESHSYNC_OT_AutoSync(bpy.types.Operator):
+    bl_idname = "meshsync.auto_sync"
+    bl_label = "Auto Sync"
+
+    def invoke(self, context, event):
+        scene = bpy.context.scene
+        if not scene.meshsync_auto_sync:
+            scene.meshsync_auto_sync = True
+        else:
+            scene.meshsync_auto_sync = False
+        return {'FINISHED'}
+
+
 @persistent
 def on_scene_update(context):
     msb_context.flushPendingList();
@@ -98,6 +118,7 @@ classes = (
     MESHSYNC_PT_Animation,
     MESHSYNC_OT_SyncScene,
     MESHSYNC_OT_SyncAnimations,
+    MESHSYNC_OT_AutoSync,
 )
 
 def register():
