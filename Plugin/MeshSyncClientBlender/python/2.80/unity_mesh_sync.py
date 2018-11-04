@@ -111,12 +111,14 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
     _timer = None
 
     def invoke(self, context, event):
-        print('invoke')
+        scene = bpy.context.scene
         if not MESHSYNC_OT_AutoSync._timer:
+            scene.meshsync_auto_sync = True
             MESHSYNC_OT_AutoSync._timer = context.window_manager.event_timer_add(1.0 / 3.0, window=context.window)
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
         else:
+            scene.meshsync_auto_sync = False
             context.window_manager.event_timer_remove(MESHSYNC_OT_AutoSync._timer)
             MESHSYNC_OT_AutoSync._timer = None
             return {'FINISHED'}

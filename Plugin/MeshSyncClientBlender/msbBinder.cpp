@@ -404,7 +404,20 @@ bool BObject::is_visible(Scene * scene) const
 #if BLENDER_VERSION < 280
     return call<Object, int, Scene*>(m_ptr, BObject_is_visible, scene) != 0;
 #else
-    return get_bool(m_ptr, BObject_hide_viewport) == 0;
+    // Object.hide_viewport property seems not work...
+    // based on BKE_object_is_visible() in blenkernel/intern/object.c
+    auto BKE_object_is_visible = [](const Object *ob) -> bool {
+        if ((ob->base_flag & BASE_VISIBLE) == 0) {
+            return false;
+        }
+        if (((ob->transflag & OB_DUPLI) == 0) &&
+            (ob->particlesystem.first == NULL))
+        {
+            return true;
+        }
+        return ((ob->duplicator_visibility_flag & OB_DUPLI_FLAG_VIEWPORT) != 0);
+    };
+    return BKE_object_is_visible(m_ptr);
 #endif
 }
 
