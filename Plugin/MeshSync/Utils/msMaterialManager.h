@@ -23,6 +23,9 @@ public:
     void makeDirtyAll();
     void clearDirtyFlags();
 
+    std::vector<MaterialPtr> getStaleMaterials();
+    void eraseStaleMaterials();
+
 private:
     struct Record
     {

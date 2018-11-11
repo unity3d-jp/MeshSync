@@ -7,9 +7,6 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 
 ## 使い方
-
-**プラグイン本体は [releases](https://github.com/unity3d-jp/MeshSync/releases) からダウンロードしてください。**
-
 1. [Maya](#maya)
 2. [Maya LT](#maya-lt)
 3. [3ds Max](#3ds-max)
@@ -23,7 +20,8 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 
 ### Maya
 Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
-- インストールするには、プラグインを Maya の module path が通っているディレクトリにコピーします。
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Maya_*.zip をダウンロード。
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
     - 2016 以前の場合はバージョン名のディレクトリへコピーします。(%MAYA_APP_DIR%\2016 など)
   - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
@@ -46,14 +44,17 @@ Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作�
 
 
 ### Maya LT
-現在 Windows のみ対応で、Maya LT 2018 + Windows で動作を確認しています。Maya LT は本体外部プラグインをサポートしないため、問題が起きる可能性が高いことに留意ください。Maya LT 側のマイナーバージョンアップでも互換性が失われる可能性が考えられます。  
+現在 Windows のみ対応で、Maya LT 2018 + Windows で動作を確認しています。Maya LT は本来外部プラグインをサポートしないため、問題が起きる可能性が高いことに留意ください。Maya LT 側のマイナーバージョンアップでも互換性が失われる可能性が考えられます。  
 パッケージは別になっているものの、インストールや使い方は [非 LT の Maya](#maya) と同じです。
 
 
 ### 3ds Max
 3ds Max 2016, 2017, 2018, 2019 + Windows で動作を確認しています。
-- インストールするには、プラグイン用パスとして登録されているディレクトリにプラグインをコピーします。
-  - デフォルトで用意されているパスは C:\Program Files\Autodesk\3ds Max 2019\Plugins など
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_3dsMax_Windows.zip をダウンロード
+  - MeshSyncClient3dsMax.dlu をプラグイン用パスとして登録されているディレクトリにコピー
+    - プラグイン用パスは max 内の Configure -> Customize System Paths -> 3rd Party Plug-Ins の Add で追加できます
+    - デフォルトで用意されているパス (C:\Program Files\Autodesk\3ds Max 2019\Plugins など) でもおそらく機能しますが、デフォルトとそれ以外で別のパスを用意しておくことをおすすめします
 - インストール後、メインメニューバーに "UnityMeshSync" が追加されているので、それの "Window" から設定ウィンドウを開けます。
   - メニューバーを編集する場合、Action に "UnityMeshSync" カテゴリが追加されているので、そちらから MeshSync の機能にアクセスできます
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
@@ -78,7 +79,10 @@ Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作�
 
 ### Motion Builder
 Motion Builder 2015, 2016, 2017, 2018 + Windows, Linux (CentOS 7) で動作を確認しています
-- インストールするには、プラグインの zip を適当な場所に展開後、Motion Builder 内の Settings -> Preferences -> SDK メニューからプラグイン dll ファイルがあるディレクトリを追加します
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_MotionBuilder_*.zip をダウンロード
+  - MeshSyncClientMotionBuilder.dll をプラグイン用パスとして登録されているディレクトリにコピー
+    - プラグイン用パスは Motion Builder 内の Settings -> Preferences -> SDK メニューから追加できます
 - インストール後、Asset Browser 内の Templates -> Devices に UnityMeshSync というオブジェクトが追加されているので、それをシーンに追加します
 - Navigator 内の Devices -> UnityMeshSync を選択することで各種設定や機能にアクセスできます 
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
@@ -95,8 +99,11 @@ Motion Builder 2015, 2016, 2017, 2018 + Windows, Linux (CentOS 7) で動作を�
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971861-81043192-573e-11e8-9945-2bb248d869bd.png" height=400>
 
 ### Blender
-Blender 2.79(a,b) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。 対応は容易なので、気付き次第対応版を出す予定ではあります。
-- インストールするには、File -> User Preferences -> Add-ons を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip アーカイブを指定します。
+Blender 2.79(a,b), 2.80 alpha2 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。 対応は容易なので、気付き次第対応版を出す予定ではあります。
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Blender_*.zip をダウンロードして展開
+    - 展開して出てくる UnityMeshSync_Blender_* ディレクトリの中にも zip が入っていますが、これらはそのままで大丈夫です
+  - Blender 側で File -> User Preferences -> Add-ons (2.80 以降では Edit -> User Preferences) を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip ファイルを指定します。
   - **古いバージョンをインストール済みの場合、事前に削除しておく必要があります**。Add-ons メニューから "Import-Export: Unity Mesh Sync" を選択して Remove した後、blender を再起動してから上記手順を踏んでください。
 - "Import-Export: Unity Mesh Sync" が追加されるので、チェックを入れて有効化します。
 - MeshSync パネルが追加されるので、そちらから設定や手動の同期を行います。
@@ -115,7 +122,9 @@ Blender 2.79(a,b) + Windows, Mac, Linux (CentOS 7) で動作を確認してい�
 
 ### メタセコイア
 Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
-- インストールするには、Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Metasequoia*.zip をダウンロードして展開
+  - メタセコイア側で Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
   - **古いバージョンをインストール済みの場合、事前に手動で削除しておく必要があります**。メタセコイアを起動していない状態で該当ファイルを削除してください。
 - インストール後 パネル -> Unity Mesh Sync が追加されるのでこれを開き、"Auto Sync" をチェックします。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
@@ -133,7 +142,9 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 
 ### xismo
 xismo はプラグインの仕組みを提供していないため (2018/05 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～199 で動作を確認済しています。
-- [UnityMeshSync_xismo_Windows.zip](https://github.com/unity3d-jp/MeshSync/releases) を解凍し、出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます。
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_xismo_Windows.zip をダウンロード
+  - 展開して出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます
 - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態で xismo が起動します。
 - ウィンドウ -> Unity Mesh Sync メニューが追加されており、これで各種設定などを行います。
 - "Auto Sync" をチェックすると編集が自動的に Unity 側に反映されるようになります。
@@ -145,13 +156,12 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
 
 
 ### Unity
-- Unity 5.5 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
-- [MeshSync.unitypackage](https://github.com/unity3d-jp/MeshSync/releases) をプロジェクトにインポートします。
-  - 古いバージョンをインストール済みの場合、**パッケージインポート前に一度 Unity を終了し、Assets/UTJ/MeshSync を削除** しておくと確実です。プラグインがロードされていると更新に失敗するためです。
-  - Unity 5.5 の場合、インポート後にプラグイン dll の設定を下記画像のように変更する必要があります (5.6 を堺に .meta ファイルの仕様が変わっているため)
-  ![](https://user-images.githubusercontent.com/1488611/40534280-7ef6ecd6-6040-11e8-9f55-ea2f509a2383.png)
-- メニュー GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
-- このサーバーオブジェクトが同期処理を担当します。これがシーン内になければ同期できません。
+- Unity 5.6 系以上 + Windows (64 bit), Mac, Linux (CentOS 7) で動作を確認しています
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から MeshSync.unitypackage をダウンロードし、プロジェクトにインポートします。
+  - 古いバージョンをインストール済みの場合、**パッケージインポート前に一度 Unity を終了し、Assets/UTJ/MeshSync を削除** しておくと確実です。プラグイン dll がロードされていると更新に失敗するためです。
+  - インポート後は GameObject -> MeshSync メニューが追加されているはずです
+- GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当します
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39972178-45cf48d6-5744-11e8-8722-11fd412c7abd.png">
 
@@ -165,7 +175,7 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
   &nbsp;
 
 - マテリアルリスト
-  - MesySyncServer はマテリアルのリストを保持しています。このリストにマテリアルを設定すると、対応するオブジェクトに適切にアサインされます。
+  - MeshSyncServer はマテリアルのリストを保持しています。このリストにマテリアルを設定すると、対応するオブジェクトに適切にアサインされます。
 
 
 - アセット化
@@ -175,7 +185,7 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
 
 - ライトマップ UV
   - Unity でライトマップを使う場合、UV は通常のとは別の専用のものが用いられます。通常はモデルインポート時に自動的に生成されますが、本プラグインで DCC ツールから受信したモデルにはそれがありません。
-  MesySyncServer の "Generate Lightmap UV" ボタンを押すとそのライトマップ用 UV を生成します。この処理は結構時間がかかるのでご注意ください。
+  MeshSyncServer の "Generate Lightmap UV" ボタンを押すとそのライトマップ用 UV を生成します。この処理は結構時間がかかるのでご注意ください。
 
 
 ## Tips や注意事項など

@@ -31,8 +31,11 @@ public:
     }
 
 protected:
-    int addImpl(void *p)
+    int getIDImpl(const void *p)
     {
+        if (!p)
+            return InvalidID;
+
         auto& rec = m_records[p];
         if (rec.id == InvalidID)
             rec.id = genID();
@@ -52,26 +55,26 @@ protected:
         bool updated = true;
     };
     int m_id_seed = 0;
-    std::map<void*, Record> m_records;
+    std::map<const void*, Record> m_records;
 };
 
 template<class T>
-class ResourceIDGenerator<T*> : ResourceIDGenerator<void*>
+class ResourceIDGenerator<T*> : public ResourceIDGenerator<void*>
 {
 public:
-    int add(T *p)
+    int getID(const T *p)
     {
-        return addImpl(p);
+        return getIDImpl(p);
     }
 };
 
 template<>
-class ResourceIDGenerator<uint32_t> : ResourceIDGenerator<void*>
+class ResourceIDGenerator<uint32_t> : public ResourceIDGenerator<void*>
 {
 public:
-    int add(uint32_t handle)
+    int getID(uint32_t handle)
     {
-        return addImpl((void*)(size_t)handle);
+        return getIDImpl((void*)(size_t)handle);
     }
 };
 

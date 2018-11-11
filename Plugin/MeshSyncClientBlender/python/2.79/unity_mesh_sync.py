@@ -103,15 +103,6 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
         return {'FINISHED'}
 
 
-@persistent
-def on_scene_update(context):
-    msb_context.flushPendingList();
-    if(bpy.context.scene.meshsync_auto_sync):
-        msb_apply_scene_settings()
-        msb_context.setup(bpy.context);
-        msb_context.sendSceneUpdated()
-
-
 classes = (
     MESHSYNC_PT_Server,
     MESHSYNC_PT_Scene,

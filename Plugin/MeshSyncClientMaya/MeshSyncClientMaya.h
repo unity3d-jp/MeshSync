@@ -2,6 +2,20 @@
 
 #include "msmayaUtils.h"
 
+namespace ms {
+
+template<>
+class ResourceIDGenerator<MObject> : public ResourceIDGenerator<void*>
+{
+public:
+    int getID(const MObject& o)
+    {
+        return getIDImpl((void*&)o);
+    }
+};
+
+} // namespace ms
+
 struct MObjectKey
 {
     void *key;

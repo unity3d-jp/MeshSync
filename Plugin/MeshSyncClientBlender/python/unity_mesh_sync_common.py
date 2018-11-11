@@ -1,4 +1,5 @@
 import bpy
+from bpy.app.handlers import persistent
 import MeshSyncClientBlender as ms
 
 msb_context = ms.Context()
@@ -57,3 +58,15 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 1, name = "Time Scale", min = 0.01, update = msb_on_animation_settings_updated)
     bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Step", min = 1, max = 120, update = msb_on_animation_settings_updated)
 
+
+@persistent
+def on_scene_load(context):
+    msb_context.clear()
+
+@persistent
+def on_scene_update(context):
+    msb_context.flushPendingList()
+    if(bpy.context.scene.meshsync_auto_sync):
+        msb_apply_scene_settings()
+        msb_context.setup(bpy.context)
+        msb_context.sendSceneUpdated()

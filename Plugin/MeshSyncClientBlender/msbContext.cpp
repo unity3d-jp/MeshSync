@@ -24,11 +24,11 @@ int msbContext::exportTexture(const std::string & path, ms::TextureType type)
     return m_texture_manager.addFile(path, type);
 }
 
-ms::MaterialPtr msbContext::addMaterial(Material * mat)
+ms::MaterialPtr msbContext::addMaterial(Material *mat)
 {
     auto ret = ms::Material::create();
     ret->name = mat->id.name + 2;
-    ret->id = (int)m_materials.size();
+    ret->id = m_material_ids.getID(mat);
     {
         bl::BMaterial bm(mat);
         auto color_src = mat;
@@ -53,28 +53,18 @@ ms::MaterialPtr msbContext::addMaterial(Material * mat)
 #endif
         }
     }
-    m_materials.push_back(ret);
+    m_material_manager.add(ret);
     return ret;
 }
 
 int msbContext::getMaterialID(const Material *mat)
 {
-    if (mat == nullptr)
-        return 0;
-
-    int i = 0;
-    for (auto& m : m_materials) {
-        if (m->name == mat->id.name + 2)
-            return i;
-        ++i;
-    }
-    return 0;
+    return m_material_ids.getID(mat);
 }
 
 void msbContext::exportMaterials()
 {
-    m_materials.clear();
-    auto bpy_data = bl::BData(bl::BContext::get().data());;
+    auto bpy_data = bl::BData(bl::BContext::get().data());
     for (auto *mat : bpy_data.materials()) {
         addMaterial(mat);
     }
@@ -1005,6 +995,14 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
 
 
 
+void msbContext::clear()
+{
+    m_material_ids.clear();
+    m_texture_manager.clear();
+    m_material_manager.clear();
+    m_entity_manager.clear();
+}
+
 bool msbContext::prepare()
 {
     if (!bl::ready() || m_sender.isSending())
@@ -1098,9 +1096,10 @@ void msbContext::kickAsyncSend()
             t.scene_settings.handedness = ms::Handedness::Left;
 
             t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_materials;
+            t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
+            m_material_manager.eraseStaleMaterials();
             m_entity_manager.eraseStaleEntities();
             t.deleted = m_entity_manager.getDeleted();
             t.animations = m_animations;
@@ -1113,8 +1112,8 @@ void msbContext::kickAsyncSend()
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_materials.clear();
             m_animations.clear();
         };
     }

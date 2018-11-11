@@ -81,6 +81,27 @@ void MaterialManager::clearDirtyFlags()
     }
 }
 
+std::vector<MaterialPtr> MaterialManager::getStaleMaterials()
+{
+    std::vector<MaterialPtr> ret;
+    for (auto& p : m_records) {
+        auto& r = p.second;
+        if (!r.updated)
+            ret.push_back(r.material);
+    }
+    return ret;
+}
+
+void MaterialManager::eraseStaleMaterials()
+{
+    for (auto it = m_records.begin(); it != m_records.end(); ) {
+        if (!it->second.updated)
+            m_records.erase(it++);
+        else
+            ++it;
+    }
+}
+
 MaterialManager::Record& MaterialManager::lockAndGet(int id)
 {
     std::unique_lock<std::mutex> lock(m_mutex);

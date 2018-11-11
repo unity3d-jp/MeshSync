@@ -49,6 +49,7 @@ public:
     msbSettings&        getSettings();
     const msbSettings&  getSettings() const;
 
+    void clear();
     bool prepare();
     void sendScene(SendScope scope, bool force_all);
     void sendAnimations(SendScope scope);
@@ -124,8 +125,9 @@ private:
     std::vector<task_t> m_extract_tasks;
 
     std::vector<ms::AnimationClipPtr> m_animations;
-    std::vector<ms::MaterialPtr> m_materials;
+    ms::ResourceIDGenerator<Material*> m_material_ids;
     ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 
