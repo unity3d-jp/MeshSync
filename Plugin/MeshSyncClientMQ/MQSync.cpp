@@ -35,8 +35,8 @@ void MQSync::clear()
     m_host_meshes.clear();
 
     m_texture_manager.clear();
+    m_material_manager.clear();
     m_entity_manager.clear();
-    m_materials.clear();
     m_camera.reset();
     m_pending_send_meshes = false;
 }
@@ -62,23 +62,22 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
     m_pending_send_meshes = false;
 
-    if (force)
+    if (force) {
+        m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();
+    }
 
     {
         // gather material data
         char buf[1024];
         int nmat = doc->GetMaterialCount();
-        m_materials.reserve(nmat);
         for (int mi = 0; mi < nmat; ++mi) {
             auto src = doc->GetMaterial(mi);
             if (!src)
                 continue;
 
             auto dst = ms::Material::create();
-            m_materials.push_back(dst);
             dst->id = mi;
-
             src->GetName(buf, sizeof(buf));
             dst->name = ms::ToUTF8(buf);
 
@@ -87,6 +86,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 src->GetTextureName(buf, sizeof(buf));
                 dst->setColorMap(exportTexture(buf, ms::TextureType::Default));
             }
+            m_material_manager.add(dst);
         }
     }
 
@@ -238,17 +238,16 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             t.scene_settings.scale_factor = m_scale_factor;
 
             t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_materials;
+            t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
 
             m_entity_manager.eraseStaleEntities();
             t.deleted = m_entity_manager.getDeleted();
-
-            m_materials.clear();
         };
         m_send_meshes.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
         };
     }

@@ -48,7 +48,6 @@ private:
     };
 
     using HostMeshes = std::map<int, ms::MeshPtr>;
-    using Materials = std::vector<ms::MaterialPtr>;
 
     int exportTexture(const std::string& path, ms::TextureType type);
     MQObject findMesh(MQDocument doc, const char *name);
@@ -78,9 +77,9 @@ private:
     std::vector<ObjectRecord> m_obj_records;
     std::map<UINT, BoneRecord> m_bone_records;
 
-    Materials m_materials;
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
 
     ms::AsyncSceneSender m_send_meshes;

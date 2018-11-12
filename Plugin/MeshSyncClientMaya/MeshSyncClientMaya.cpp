@@ -375,14 +375,6 @@ void MeshSyncClientMaya::removeNodeCallbacks()
 }
 
 
-int MeshSyncClientMaya::getMaterialID(const MString& name)
-{
-    auto it = std::find(m_material_id_table.begin(), m_material_id_table.end(), name);
-    return it != m_material_id_table.end() ? (int)std::distance(m_material_id_table.begin(), it) : -1;
-}
-
-
-
 void MeshSyncClientMaya::constructTree()
 {
     m_tree_roots.clear();
@@ -468,8 +460,10 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool force_all)
     }
     m_pending_scope = SendScope::None;
 
-    if (force_all)
+    if (force_all) {
+        m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();
+    }
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -595,7 +589,7 @@ void MeshSyncClientMaya::kickAsyncSend()
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
             t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_materials;
+            t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.deleted = m_entity_manager.getDeleted();
@@ -603,8 +597,8 @@ void MeshSyncClientMaya::kickAsyncSend()
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_materials.clear();
             m_animations.clear();
         };
     }

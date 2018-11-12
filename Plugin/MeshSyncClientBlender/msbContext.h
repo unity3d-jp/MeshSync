@@ -125,7 +125,7 @@ private:
     std::vector<task_t> m_extract_tasks;
 
     std::vector<ms::AnimationClipPtr> m_animations;
-    ms::ResourceIDGenerator<Material*> m_material_ids;
+    ms::IDGenerator<Material*> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;

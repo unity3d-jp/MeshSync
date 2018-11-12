@@ -104,8 +104,8 @@ void MeshSyncClient3dsMax::onShutdown()
     unregisterMenu();
 
     m_texture_manager.clear();
+    m_material_manager.clear();
     m_entity_manager.clear();
-    m_materials.clear();
     m_animations.clear();
     m_node_records.clear();
 }
@@ -212,8 +212,10 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope, bool force_all)
     if (m_sender.isSending())
         return false;
 
-    if (force_all)
+    if (force_all) {
+        m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();
+    }
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -335,7 +337,7 @@ void MeshSyncClient3dsMax::kickAsyncSend()
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
             t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_materials;
+            t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.deleted = m_entity_manager.getDeleted();
@@ -343,8 +345,8 @@ void MeshSyncClient3dsMax::kickAsyncSend()
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_materials.clear();
             m_animations.clear();
         };
     }
@@ -361,14 +363,12 @@ void MeshSyncClient3dsMax::exportMaterials()
     auto *mtllib = GetCOREInterface()->GetSceneMtls();
     int count = mtllib->Count();
 
-    m_materials.clear();
+    int material_index = 0;
     for (int mi = 0; mi < count; ++mi) {
-        auto do_export = [this](Mtl *mtl) -> int // return material id
+        auto do_export = [this, &material_index](Mtl *mtl) -> int // return material id
         {
-            int mid = (int)m_materials.size();
             auto dst = ms::Material::create();
-            m_materials.push_back(dst);
-            dst->id = mid;
+            dst->id = material_index++;
             dst->name = mu::ToMBS(mtl->GetName().data());
             dst->setColor(to_color(mtl->GetDiffuse()));
 
@@ -394,8 +394,9 @@ void MeshSyncClient3dsMax::exportMaterials()
                 dst->setColorMap(export_texture(DIFFUSE_MAP_ID, ms::TextureType::Default));
                 dst->setNormalMap(export_texture(NORMAL_MAP_ID, ms::TextureType::NormalMap));
             }
+            m_material_manager.add(dst);
 
-            return mid;
+            return dst->id;
         };
 
         auto mtl = (Mtl*)(*mtllib)[mi];

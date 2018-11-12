@@ -1016,8 +1016,10 @@ void msbContext::sendScene(SendScope scope, bool force_all)
     if (m_ignore_update || !prepare())
         return;
 
-    if (force_all)
+    if (force_all) {
+        m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();
+    }
 
     if (scope == SendScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());

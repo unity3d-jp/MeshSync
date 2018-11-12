@@ -5,7 +5,7 @@
 namespace ms {
 
 template<>
-class ResourceIDGenerator<MObject> : public ResourceIDGenerator<void*>
+class IDGenerator<MObject> : public IDGenerator<void*>
 {
 public:
     int getID(const MObject& o)
@@ -171,7 +171,6 @@ private:
     void removeNodeCallbacks();
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
-    int getMaterialID(const MString& name);
     void exportMaterials();
 
     ms::TransformPtr exportObject(TreeNode *n, bool force);
@@ -199,11 +198,11 @@ private:
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
 
-    std::vector<MString>                m_material_id_table;
-    std::vector<ms::MaterialPtr>        m_materials;
+    ms::IDGenerator<MObject> m_material_id_table;
     std::vector<ms::AnimationClipPtr>   m_animations;
 
     ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 

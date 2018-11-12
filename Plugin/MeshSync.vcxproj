@@ -34,8 +34,8 @@
     <ClInclude Include="MeshSync\pch.h" />
     <ClInclude Include="MeshSync\Utils\msAsyncSceneSender.h" />
     <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
+    <ClInclude Include="MeshSync\Utils\msIDGenerator.h" />
     <ClInclude Include="MeshSync\Utils\msMaterialManager.h" />
-    <ClInclude Include="MeshSync\Utils\msResourceIDGenerator.h" />
     <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
   </ItemGroup>
   <ItemGroup>

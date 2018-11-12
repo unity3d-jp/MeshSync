@@ -129,7 +129,7 @@ void msmbDevice::kickAsyncSend()
             t.scene_settings.scale_factor = scale_factor;
 
             t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_materials;
+            t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.deleted = m_entity_manager.getDeleted();
@@ -137,8 +137,8 @@ void msmbDevice::kickAsyncSend()
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_materials.clear();
             m_animations.clear();
         };
     }
@@ -150,6 +150,7 @@ bool msmbDevice::sendScene(bool force_all)
 {
     if (force_all) {
         m_dirty_meshes = m_dirty_textures = true;
+        m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();
     }
 
@@ -633,8 +634,6 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
 bool msmbDevice::exportMaterials()
 {
-    m_materials.clear();
-
     int num_exported = 0;
     auto& materials = FBSystem::TheOne().Scene->Materials;
     const int num_materials = materials.GetCount();
@@ -680,7 +679,6 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
         return rec.id; // already exported
 
     auto dst = ms::Material::create();
-    m_materials.push_back(dst);
     rec.dst = dst.get();
     if (rec.id == -1)
         rec.id = (int)m_material_records.size() - 1;
@@ -698,6 +696,7 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
         dst->setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
         dst->setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
     }
+    m_material_manager.add(dst);
     return true;
 }
 

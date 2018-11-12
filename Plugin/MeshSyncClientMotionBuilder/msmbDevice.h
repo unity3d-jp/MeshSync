@@ -103,10 +103,10 @@ private:
     ExtractTasks m_extract_tasks;
     AnimationRecords m_anim_records;
 
-    std::vector<ms::MaterialPtr> m_materials;
     std::vector<ms::AnimationClipPtr> m_animations;
 
     ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 

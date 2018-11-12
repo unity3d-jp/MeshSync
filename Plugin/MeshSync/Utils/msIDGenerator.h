@@ -8,10 +8,10 @@ namespace ms {
 // generate IDs based on handle/pointer of DCC's object.
 // mainly intended to convert DCC's material object to unique ID.
 // (because materials are referenced by ID from polygons' material ID)
-template<class T> class ResourceIDGenerator;
+template<class T> class IDGenerator;
 
 template<>
-class ResourceIDGenerator<void*>
+class IDGenerator<void*>
 {
 public:
     void clear()
@@ -27,6 +27,13 @@ public:
                 m_records.erase(it++);
             else
                 ++it;
+        }
+    }
+
+    void clearDirtyFlags()
+    {
+        for (auto& kvp : m_records) {
+            kvp.second.updated = false;
         }
     }
 
@@ -59,7 +66,7 @@ protected:
 };
 
 template<class T>
-class ResourceIDGenerator<T*> : public ResourceIDGenerator<void*>
+class IDGenerator<T*> : public IDGenerator<void*>
 {
 public:
     int getID(const T *p)
@@ -69,7 +76,7 @@ public:
 };
 
 template<>
-class ResourceIDGenerator<uint32_t> : public ResourceIDGenerator<void*>
+class IDGenerator<uint32_t> : public IDGenerator<void*>
 {
 public:
     int getID(uint32_t handle)

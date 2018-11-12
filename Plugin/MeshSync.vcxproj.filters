@@ -90,7 +90,7 @@
     <ClInclude Include="MeshSync\Utils\msMaterialManager.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSync\Utils\msResourceIDGenerator.h">
+    <ClInclude Include="MeshSync\Utils\msIDGenerator.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
   </ItemGroup>

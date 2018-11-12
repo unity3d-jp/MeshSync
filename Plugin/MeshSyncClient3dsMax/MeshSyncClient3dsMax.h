@@ -151,11 +151,10 @@ private:
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time_tick;
     float m_current_time_sec;
-
-    std::vector<ms::MaterialPtr>        m_materials;
-    std::vector<ms::AnimationClipPtr>   m_animations;
+    std::vector<ms::AnimationClipPtr> m_animations;
 
     ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 };
