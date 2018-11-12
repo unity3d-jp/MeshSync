@@ -30,7 +30,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncClientXismo\MeshSyncClientXismo.h" />
+    <ClInclude Include="MeshSyncClientXismo\msxmContext.h" />
     <ClInclude Include="MeshSyncClientXismo\pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

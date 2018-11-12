@@ -1,144 +1,8 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
-#include "MeshSyncClientXismo.h"
-using namespace mu;
+#include "msxmContext.h"
 
-
-struct ms_vertex
-{
-    float3 vertex;
-    float3 normal;
-    float4 color;
-    float2 uv;
-};
-
-struct xm_vertex1
-{
-    float3 vertex;
-    float3 normal;
-    float4 color;
-    float2 uv;
-    float state;
-
-    bool operator==(const ms_vertex& v) const
-    {
-        return vertex == v.vertex && normal == v.normal && color == v.color && uv == v.uv;
-    }
-    operator ms_vertex() const
-    {
-        return { vertex, normal, color, uv };
-    }
-};
-
-
-struct MaterialData
-{
-    GLuint program = 0;
-    GLuint texture = 0;
-    float4 diffuse = float4::zero();
-
-    bool operator==(const MaterialData& v) const
-    {
-        return program == v.program && texture == v.texture && diffuse == v.diffuse;
-    }
-    bool operator!=(const MaterialData& v) const
-    {
-        return !operator==(v);
-    }
-};
-
-
-struct BufferData : public mu::noncopyable
-{
-    RawVector<char> data, tmp_data;
-    void        *mapped_data = nullptr;
-    GLuint      handle = 0;
-    int         num_elements = 0;
-    int         stride = 0;
-    bool        triangle = false;
-    bool        dirty = false;
-    bool        visible = true;
-    int         material_id = -1;
-    MaterialData material;
-    float4x4    transform = float4x4::identity();
-
-    struct SendTaskData : public mu::noncopyable
-    {
-        RawVector<char>     data;
-        GLuint              handle = 0;
-        int                 num_elements = 0;
-        bool                visible = true;
-        int                 material_id = -1;
-        float4x4            transform = float4x4::identity();
-        RawVector<ms_vertex> vertices_welded;
-        ms::MeshPtr         dst_mesh;
-
-        void buildMeshData(bool weld_vertices);
-    };
-    using SendTaskPtr = std::shared_ptr<SendTaskData>;
-    SendTaskPtr send_data;
-
-    bool isModelData() const;
-    void updateSendData();
-};
-
-
-class msxmContext : public msxmIContext
-{
-public:
-    msxmContext();
-    ~msxmContext() override;
-    msxmSettings& getSettings() override;
-    void send(bool force) override;
-
-    void onActiveTexture(GLenum texture) override;
-    void onBindTexture(GLenum target, GLuint texture) override;
-    void onGenBuffers(GLsizei n, GLuint* buffers) override;
-    void onDeleteBuffers(GLsizei n, const GLuint* buffers) override;
-    void onBindBuffer(GLenum target, GLuint buffer) override;
-    void onBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage) override;
-    void onMapBuffer(GLenum target, GLenum access, void *&mapped_data) override;
-    void onUnmapBuffer(GLenum target) override;
-    void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) override;
-    void onUniform4fv(GLint location, GLsizei count, const GLfloat* value) override;
-    void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value) override;
-    void onDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices) override;
-    void onFlush() override;
-
-protected:
-    BufferData* getActiveBuffer(GLenum target);
-
-protected:
-    msxmSettings m_settings;
-
-    std::map<uint32_t, BufferData> m_buffers;
-    std::vector<GLuint> m_meshes_deleted;
-    GLuint m_texture_slot = 0;
-
-    uint32_t m_vertex_attributes = 0;
-    uint32_t m_vb_handle = 0;
-    MaterialData m_material;
-    float4x4 m_proj = float4x4::identity();
-    float4x4 m_modelview = float4x4::identity();
-
-    bool m_camera_dirty = false;
-    float3 m_camera_pos = float3::zero();
-    quatf m_camera_rot = quatf::identity();
-    float m_camera_fov = 60.0f;
-    float m_camera_near = 0.01f;
-    float m_camera_far = 100.0f;
-
-    std::vector<MaterialData> m_material_data;
-    std::vector<BufferData::SendTaskPtr> m_mesh_data;
-
-    ms::CameraPtr m_camera;
-    ms::TextureManager m_texture_manager;
-    ms::MaterialManager m_material_manager;
-    ms::EntityManager m_entity_manager;
-
-    ms::AsyncSceneSender m_sender;
-};
 
 
 int msxmGetXismoVersion()
@@ -167,9 +31,9 @@ int msxmGetXismoVersion()
     return s_version;
 }
 
-msxmIContext* msxmGetContext()
+msxmContext* msxmGetContext()
 {
-    static std::unique_ptr<msxmIContext> s_ctx;
+    static std::unique_ptr<msxmContext> s_ctx;
     if (!s_ctx) {
         s_ctx.reset(new msxmContext());
         msxmInitializeWidget();
@@ -200,9 +64,11 @@ static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>
     }
 }
 
-void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
+void BufferData::buildMeshData(bool weld_vertices)
 {
-    if (!data.data()) { return; }
+    if (!data.data())
+        return;
+
     int num_indices = num_elements;
     int num_triangles = num_indices / 3;
 
@@ -273,21 +139,6 @@ bool BufferData::isModelData() const
     return stride == sizeof(xm_vertex1) && triangle;
 }
 
-void BufferData::updateSendData()
-{
-    if (!send_data) {
-        send_data.reset(new SendTaskData());
-    }
-    auto& dst = *send_data;
-    dst.data = data;
-    dst.handle = handle;
-    dst.num_elements = num_elements;
-    dst.material_id = material_id;
-    dst.transform = transform;
-    dst.visible = visible;
-    dirty = false;
-}
-
 
 
 msxmContext::msxmContext()
@@ -316,14 +167,13 @@ void msxmContext::send(bool force)
         m_entity_manager.makeDirtyAll();
     }
 
-    std::vector<BufferData*> buffers_to_send;
     for (auto& pair : m_buffers) {
         auto& buf = pair.second;
         if (buf.isModelData() && (buf.dirty || force)) {
-            buffers_to_send.push_back(&buf);
+            m_mesh_buffers.push_back(&buf);
         }
     }
-    if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
+    if (m_mesh_buffers.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
         // nothing to send
         return;
     }
@@ -377,15 +227,6 @@ void msxmContext::send(bool force)
         m_camera_dirty = false;
     }
 
-    // build send data
-    parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](BufferData *buf) {
-        buf->updateSendData();
-    });
-    m_mesh_data.resize(buffers_to_send.size());
-    for (size_t i = 0; i < buffers_to_send.size(); ++i) {
-        m_mesh_data[i] = buffers_to_send[i]->send_data;
-    }
-
 
     if (!m_sender.on_prepare) {
         m_sender.on_prepare = [this]() {
@@ -394,11 +235,11 @@ void msxmContext::send(bool force)
                 m_entity_manager.add(m_camera);
 
             // gen welded meshes
-            mu::parallel_for_each(m_mesh_data.begin(), m_mesh_data.end(), [&](BufferData::SendTaskPtr& v) {
+            mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferData *v) {
                 v->buildMeshData(m_settings.weld_vertices);
                 m_entity_manager.add(v->dst_mesh);
             });
-            m_mesh_data.clear();
+            m_mesh_buffers.clear();
 
             // handle deleted objects
             for (auto h : m_meshes_deleted) {
@@ -512,7 +353,7 @@ void msxmContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            parallel_invoke([buf]() {
+            ms::parallel_invoke([buf]() {
                 memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
             },
             [buf]() {

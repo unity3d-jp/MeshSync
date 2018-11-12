@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
-#include "MeshSyncClientXismo.h"
-using namespace mu;
+#include "msxmContext.h"
 
 #define msxmEnableQt
 
