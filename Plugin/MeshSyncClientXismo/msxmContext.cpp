@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 #include "MeshSyncClientXismo.h"
 using namespace mu;
 
@@ -51,7 +52,7 @@ struct MaterialData
 struct BufferData : public mu::noncopyable
 {
     RawVector<char> data, tmp_data;
-    void        *mapped_data;
+    void        *mapped_data = nullptr;
     GLuint      handle = 0;
     int         num_elements = 0;
     int         stride = 0;
@@ -112,8 +113,6 @@ protected:
     msxmSettings m_settings;
 
     std::map<uint32_t, BufferData> m_buffers;
-    std::future<void> m_send_future;
-
     std::vector<GLuint> m_meshes_deleted;
     GLuint m_texture_slot = 0;
 
@@ -122,7 +121,6 @@ protected:
     MaterialData m_material;
     float4x4 m_proj = float4x4::identity();
     float4x4 m_modelview = float4x4::identity();
-    float4x4 m_rotation = float4x4::identity();
 
     bool m_camera_dirty = false;
     float3 m_camera_pos = float3::zero();
@@ -133,10 +131,13 @@ protected:
 
     std::vector<MaterialData> m_material_data;
     std::vector<BufferData::SendTaskPtr> m_mesh_data;
-    std::vector<GLuint> m_deleted;
 
     ms::CameraPtr m_camera;
-    std::vector<ms::MaterialPtr> m_materials;
+    ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
+    ms::EntityManager m_entity_manager;
+
+    ms::AsyncSceneSender m_sender;
 };
 
 
@@ -218,12 +219,6 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
         return;
     }
 
-    mesh.flags.has_points = 1;
-    mesh.flags.has_normals = 1;
-    mesh.flags.has_uv0 = 1;
-    mesh.flags.has_counts = 1;
-    mesh.flags.has_indices = 1;
-    mesh.flags.has_material_ids = 1;
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
     mesh.refine_settings.flags.gen_tangents = 1;
@@ -270,6 +265,7 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
         mesh.counts[ti] = 3;
         mesh.material_ids[ti] = material_id;
     }
+    mesh.setupFlags();
 }
 
 bool BufferData::isModelData() const
@@ -300,9 +296,7 @@ msxmContext::msxmContext()
 
 msxmContext::~msxmContext()
 {
-    if (m_send_future.valid()) {
-        m_send_future.wait();
-    }
+    m_sender.wait();
 }
 
 msxmSettings& msxmContext::getSettings()
@@ -312,10 +306,14 @@ msxmSettings& msxmContext::getSettings()
 
 void msxmContext::send(bool force)
 {
-    if (m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
-    {
+    if (m_sender.isSending()) {
         // previous request is not completed yet
         return;
+    }
+
+    if (force) {
+        m_material_manager.makeDirtyAll();
+        m_entity_manager.makeDirtyAll();
     }
 
     std::vector<BufferData*> buffers_to_send;
@@ -352,17 +350,16 @@ void msxmContext::send(bool force)
             }
         }
 
-        m_materials.resize(m_material_data.size());
-        for (int i = 0; i < (int)m_materials.size(); ++i) {
-            auto& mat = m_materials[i];
-            if (!mat)
-                mat = ms::Material::create();
-
-            char name[128];
-            sprintf(name, "XismoMaterial:ID[%04x]", i);
-            mat->id = i;
+        char name[128];
+        int material_index = 0;
+        for (auto& md : m_material_data) {
+            int mid = material_index++;
+            auto mat = ms::Material::create();
+            sprintf(name, "XismoMaterial:ID[%04x]", mid);
+            mat->id = mid;
             mat->name = name;
-            mat->setColor(m_material_data[i].diffuse);
+            mat->setColor(md.diffuse);
+            m_material_manager.add(mat);
         }
     }
 
@@ -380,9 +377,6 @@ void msxmContext::send(bool force)
         m_camera_dirty = false;
     }
 
-    m_deleted.swap(m_meshes_deleted);
-    m_meshes_deleted.clear();
-
     // build send data
     parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](BufferData *buf) {
         buf->updateSendData();
@@ -392,63 +386,47 @@ void msxmContext::send(bool force)
         m_mesh_data[i] = buffers_to_send[i]->send_data;
     }
 
-    // kick async send
-    m_send_future = std::async(std::launch::async, [this]() {
-        ms::Client client(m_settings.client_settings);
 
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Left;
-        scene_settings.scale_factor = m_settings.scale_factor;
+    if (!m_sender.on_prepare) {
+        m_sender.on_prepare = [this]() {
+            // add camera
+            if (m_camera)
+                m_entity_manager.add(m_camera);
 
+            // gen welded meshes
+            mu::parallel_for_each(m_mesh_data.begin(), m_mesh_data.end(), [&](BufferData::SendTaskPtr& v) {
+                v->buildMeshData(m_settings.weld_vertices);
+                m_entity_manager.add(v->dst_mesh);
+            });
+            m_mesh_data.clear();
 
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send deleted
-        if (m_settings.sync_delete && !m_deleted.empty()) {
-            ms::DeleteMessage del;
-            for (auto h : m_deleted) {
+            // handle deleted objects
+            for (auto h : m_meshes_deleted) {
                 char path[128];
                 sprintf(path, "/XismoMesh:ID[%08x]", h);
-                del.targets.push_back({ path, (int)h });
+                m_entity_manager.erase(ms::Identifier(path, (int)h));
             }
-            client.send(del);
-        }
+            m_meshes_deleted.clear();
 
-        // send camera & materials
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            if (m_settings.sync_camera) {
-                set.scene.objects.push_back(std::static_pointer_cast<ms::Transform>(m_camera));
-            }
-            set.scene.materials = m_materials;
-            client.send(set);
-        }
 
-        // send meshes
-        mu::parallel_for_each(m_mesh_data.begin(), m_mesh_data.end(), [&](BufferData::SendTaskPtr& v) {
-            v->buildMeshData(m_settings.weld_vertices);
-        });
-        for (auto& v : m_mesh_data) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { v->dst_mesh };
-            client.send(set);
-        }
-        m_mesh_data.clear();
+            auto& t = m_sender;
+            t.client_settings = m_settings.client_settings;
+            t.scene_settings.handedness = ms::Handedness::Left;
+            t.scene_settings.scale_factor = m_settings.scale_factor;
 
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_material_manager.getDirtyMaterials();
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
+            t.deleted = m_entity_manager.getDeleted();
+        };
+        m_sender.on_succeeded = [this]() {
+            m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
+            m_entity_manager.clearDirtyFlags();
+        };
+    }
+    m_sender.kick();
 }
 
 void msxmContext::onActiveTexture(GLenum texture)
@@ -584,7 +562,7 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
         (buf && buf->stride == sizeof(xm_vertex1)))
     {
         {
-            // projection matrix -> camera fov & clippling planes
+            // projection matrix -> fov, aspect, clippling planes
             float fov, aspect, near_plane, far_plane;
             extract_projection_data(m_proj, fov, aspect, near_plane, far_plane);
 
