@@ -45,6 +45,9 @@ void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerRespons
     }
 
     auto& uri = request.getURI();
+#ifdef msDebug
+    m_holder->requested_uri = uri;;
+#endif
     if (uri == "set") {
         m_server->recvSet(request, response, *m_holder);
     }
@@ -74,6 +77,7 @@ void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerRespons
         // e.g. "hoge/hage/../hige" -> "hoge/hige"
         //      "../../secret_file" -> "/"
         m_server->serveFiles(response, uri);
+        m_holder->ready = true;
     }
 }
 
@@ -153,7 +157,7 @@ int Server::processMessages(const MessageHandler& handler)
     int ret = 0;
     for (auto i = m_received_messages.begin(); i != m_received_messages.end(); /**/) {
         auto& holder = *i;
-        if (!holder.ready.load())
+        if (!holder.ready)
             break;
 
         if (holder.task.valid())
@@ -320,18 +324,14 @@ void Server::endServe()
         mesh.refine_settings.smooth_angle = 180.0f;
         mesh.refine(mesh.refine_settings);
     });
-    if (request.wait_flag) {
-        *request.wait_flag = 0;
-    }
+    request.ready = true;
 }
 
 void Server::setScrrenshotFilePath(const std::string& path)
 {
     if (m_current_screenshot_request) {
         m_screenshot_file_path = path;
-        if (m_current_screenshot_request->wait_flag) {
-            *m_current_screenshot_request->wait_flag = 0;
-        }
+        m_current_screenshot_request->ready = true;
     }
 }
 
@@ -507,14 +507,13 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, M
     if (!mes)
         return;
 
-    mes->wait_flag.reset(new std::atomic_int(1));
+    mes->ready = false;
     dst.ready = true;
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
-        if (*mes->wait_flag == 0) {
+        if (mes->ready)
             break;
-        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -530,8 +529,13 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, M
             os.flush();
         }
         else {
-            response.setContentLength(0);
-            response.send();
+            Scene empty_scene;
+            response.setContentType("application/octet-stream");
+            response.setContentLength(empty_scene.getSerializeSize());
+
+            auto& os = response.send();
+            empty_scene.serialize(os);
+            os.flush();
         }
     }
 }
@@ -542,15 +546,14 @@ void Server::recvQuery(HTTPServerRequest & request, HTTPServerResponse & respons
     if (!mes)
         return;
 
-    mes->wait_flag.reset(new std::atomic_int(1));
+    mes->ready = false;
     mes->response = ResponseMessagePtr(new ResponseMessage());
     dst.ready = true;
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
-        if (*mes->wait_flag == 0) {
+        if (mes->ready)
             break;
-        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -620,16 +623,15 @@ void Server::recvText(HTTPServerRequest& request, HTTPServerResponse& response, 
 void Server::recvScreenshot(HTTPServerRequest& /*request*/, HTTPServerResponse& response, MessageHolder& dst)
 {
     auto mes = ScreenshotMessagePtr(new ScreenshotMessage());
-    mes->wait_flag.reset(new std::atomic_int(1));
+    mes->ready = false;
 
     dst.message = mes;
     dst.ready = true;
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
-        if (*mes->wait_flag == 0) {
+        if (mes->ready)
             break;
-        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -643,7 +645,7 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response, 
     dst.ready = true;
 
     auto mes = PollMessagePtr(new PollMessage());
-    mes->wait_flag.reset(new std::atomic_int(1));
+    mes->ready = false;
 
     if(request.getURI() == "/poll" || request.getURI() == "/poll/scene_update")
         mes->type = PollMessage::PollType::SceneUpdate;
@@ -662,14 +664,14 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response, 
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 400; ++i) {
-        if (*mes->wait_flag == 0) {
+        if (mes->ready) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
     // serve data
-    if (*mes->wait_flag == 0) {
+    if (mes->ready) {
         serveText(response, "ok", HTTPResponse::HTTP_OK);
     }
     else {
@@ -682,7 +684,7 @@ void Server::notifyPoll(PollMessage::PollType t)
     lock_t lock(m_poll_mutex);
     for (auto& p : m_polls) {
         if (p->type == t) {
-            *p->wait_flag = 0;
+            p->ready = true;
             p.reset();
         }
     }

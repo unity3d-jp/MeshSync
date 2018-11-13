@@ -61,7 +61,10 @@ public:
     {
         MessagePtr message;
         std::future<void> task;
-        std::atomic_bool ready = false;
+        std::atomic_bool ready = { false };
+#ifdef msDebug
+        std::string requested_uri;
+#endif
 
         MessageHolder();
         MessageHolder(MessageHolder&& v);

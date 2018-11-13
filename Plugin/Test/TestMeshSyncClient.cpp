@@ -369,7 +369,7 @@ TestCase(Test_SendTexture)
 
 TestCase(Test_Query)
 {
-    auto send_query = [](ms::QueryMessage::QueryType qt) {
+    auto send_query_impl = [](ms::QueryMessage::QueryType qt, const char *query_name) {
         ms::ClientSettings settings;
         ms::Client client(settings);
 
@@ -377,7 +377,7 @@ TestCase(Test_Query)
         query.type = qt;
         auto response = std::dynamic_pointer_cast<ms::ResponseMessage>(client.send(query));
 
-        printf("querty: %d\n", (int)qt);
+        printf("querty: %s\n", query_name);
         printf("response:\n");
         if (response) {
             for (auto& t : response->text)
@@ -388,7 +388,9 @@ TestCase(Test_Query)
         }
     };
 
-    send_query(ms::QueryMessage::QueryType::ClientName);
-    send_query(ms::QueryMessage::QueryType::RootNodes);
-    send_query(ms::QueryMessage::QueryType::AllNodes);
+#define SendQuery(Q) send_query_impl(Q, #Q)
+    SendQuery(ms::QueryMessage::QueryType::ClientName);
+    SendQuery(ms::QueryMessage::QueryType::RootNodes);
+    SendQuery(ms::QueryMessage::QueryType::AllNodes);
+#undef SendQuery
 }

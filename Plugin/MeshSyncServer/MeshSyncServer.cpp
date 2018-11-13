@@ -301,7 +301,7 @@ msAPI ms::QueryMessage::QueryType msQueryGetType(ms::QueryMessage *_this)
 }
 msAPI void msQueryFinishRespond(ms::QueryMessage *_this)
 {
-    *_this->wait_flag = 0;
+    _this->ready = true;
 }
 msAPI void msQueryAddResponseText(ms::QueryMessage *_this, const char *text)
 {

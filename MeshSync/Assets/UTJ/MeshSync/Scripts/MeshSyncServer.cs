@@ -1745,16 +1745,16 @@ namespace UTJ.MeshSync
             switch (data.queryType)
             {
                 case QueryMessage.QueryType.ClientName:
-                    data.AddResponseText("Unity");
+                    data.AddResponseText("Unity " + Application.unityVersion);
                     break;
-                case QueryMessage.QueryType.AllNodes:
+                case QueryMessage.QueryType.RootNodes:
                     {
                         var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
                         foreach (var go in roots)
                             data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
                     }
                     break;
-                case QueryMessage.QueryType.RootNodes:
+                case QueryMessage.QueryType.AllNodes:
                     {
                         var objects = FindObjectsOfType<Transform>();
                         foreach (var go in objects)

@@ -59,7 +59,7 @@ public:
     MeshRefineSettings refine_settings;
 
     // non-serializable
-    std::shared_ptr<std::atomic_int> wait_flag;
+    std::atomic_bool ready;
 
 public:
     GetMessage();
@@ -154,7 +154,7 @@ using super = Message;
 public:
 
     // non-serializable
-    std::shared_ptr<std::atomic_int> wait_flag;
+    std::atomic_bool ready;
 
 public:
     ScreenshotMessage();
@@ -181,8 +181,8 @@ public:
 public:
     QueryType type = QueryType::Unknown;
 
-    std::shared_ptr<std::atomic_int> wait_flag; // non-serializable
-    MessagePtr response;                        // 
+    std::atomic_bool ready; // non-serializable
+    MessagePtr response;    // 
 
     QueryMessage();
     uint32_t getSerializeSize() const override;
@@ -218,7 +218,7 @@ public:
         SceneUpdate,
     };
     PollType type = PollType::Unknown;
-    std::shared_ptr<std::atomic_int> wait_flag; // non-serializable
+    std::atomic_bool ready; // non-serializable
 
     PollMessage();
     uint32_t getSerializeSize() const override;
