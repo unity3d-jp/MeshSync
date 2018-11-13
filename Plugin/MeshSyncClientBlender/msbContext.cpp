@@ -536,7 +536,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
                         }
                     }
                     if (!found) {
-                        mscTrace("bone not found %s\n", bone->name);
+                        mscTrace("bone not found %s\n", g->name);
                     }
                     ++group_index;
                 });

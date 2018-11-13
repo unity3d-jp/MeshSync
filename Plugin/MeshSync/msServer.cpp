@@ -174,13 +174,13 @@ int Server::processMessages(const MessageHandler& handler)
             m_current_get_request = nullptr;
         }
         else if (auto set = std::dynamic_pointer_cast<SetMessage>(mes)) {
-            if (set->session_id == m_current_scene_session)
+            if (mes->session_id == m_current_scene_session)
                 handler(Message::Type::Set, *mes);
             else
                 skip = true;
         }
         else if (auto del = std::dynamic_pointer_cast<DeleteMessage>(mes)) {
-            if (set->session_id == m_current_scene_session)
+            if (mes->session_id == m_current_scene_session)
                 handler(Message::Type::Delete, *mes);
             else
                 skip = true;
