@@ -18,6 +18,7 @@ struct msbSettings
     bool sync_uvs = true;
     bool sync_colors = true;
     bool bake_modifiers = false;
+    bool convert_to_mesh = true;
     bool sync_bones = true;
     bool sync_blendshapes = true;
     bool sync_textures = true;
@@ -135,6 +136,6 @@ private:
     using AnimationRecords = std::map<std::string, AnimationRecord>;
     AnimationRecords m_anim_records;
     float m_current_time = 0.0f;
-    bool m_ignore_update = false;
+    bool m_sending_animations = false;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;

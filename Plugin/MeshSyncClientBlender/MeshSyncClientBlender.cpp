@@ -52,6 +52,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(bake_modifiers,
                 [](const msbContext& self) { return self.getSettings().bake_modifiers; },
                 [](msbContext& self, bool v) { self.getSettings().bake_modifiers = v; })
+            BindProperty(convert_to_mesh,
+                [](const msbContext& self) { return self.getSettings().convert_to_mesh; },
+                [](msbContext& self, bool v) { self.getSettings().convert_to_mesh = v; })
             BindProperty(sync_bones,
                 [](const msbContext& self) { return self.getSettings().sync_bones; },
                 [](msbContext& self, bool v) { self.getSettings().sync_bones = v; })

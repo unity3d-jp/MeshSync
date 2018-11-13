@@ -129,32 +129,43 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     switch (obj->type) {
     case OB_ARMATURE:
     {
-        exportObject(obj->parent, true);
         if (m_settings.sync_bones) {
+            exportObject(obj->parent, true);
             ret = exportArmature(obj);
         }
         break;
     }
     case OB_MESH:
     {
-        exportObject(obj->parent, true);
         if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
+            exportObject(obj->parent, true);
+            ret = exportMesh(obj);
+        }
+        break;
+    }
+    case OB_FONT:  //
+    case OB_CURVE: //
+    case OB_SURF:  //
+    case OB_MBALL: // these can be converted to mesh
+    {
+        if (m_settings.sync_meshes && m_settings.convert_to_mesh) {
+            exportObject(obj->parent, true);
             ret = exportMesh(obj);
         }
         break;
     }
     case OB_CAMERA:
     {
-        exportObject(obj->parent, true);
         if (m_settings.sync_cameras) {
+            exportObject(obj->parent, true);
             ret = exportCamera(obj);
         }
         break;
     }
     case OB_LAMP:
     {
-        exportObject(obj->parent, true);
         if (m_settings.sync_lights) {
+            exportObject(obj->parent, true);
             ret = exportLight(obj);
         }
         break;
@@ -286,14 +297,17 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
     if (find_modofier(src, eModifierType_ParticleSystem) || find_modofier(src, eModifierType_ParticleInstance))
         return nullptr;
 
-    bool is_editing = false;
     bl::BObject bobj(src);
-    if (m_settings.sync_meshes) {
+    Mesh *data = nullptr;
+    if (src->type == OB_MESH)
+        data = (Mesh*)src->data;
+    bool is_editing = false;
+
+    if (m_settings.sync_meshes && data) {
         // check if mesh is dirty
-        bl::BMesh bmesh(bobj.data());
-        if (bmesh.ptr()->edit_btmesh) {
+        if (data->edit_btmesh) {
             is_editing = true;
-            auto bm = bmesh.ptr()->edit_btmesh->bm;
+            auto bm = data->edit_btmesh->bm;
             if (bm->elem_table_dirty) {
                 // mesh is editing and dirty. just add to pending list
                 m_pending.insert(src);
@@ -309,11 +323,12 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
     // transform
     ExtractTransformData(src, dst);
 
-    Mesh *data = (Mesh*)src->data;
     if (m_settings.sync_meshes) {
-        // bake modifiers
-        if (!is_editing && m_settings.bake_modifiers) {
-            // make baked meshes
+        bool need_convert = 
+            (!is_editing && m_settings.bake_modifiers) ||
+            (src->type != OB_MESH);
+
+        if (need_convert) {
             Mesh *tmp =
 #if BLENDER_VERSION < 280
                 bobj.to_mesh(bl::BContext::get().scene());
@@ -759,7 +774,7 @@ void msbContext::sendAnimations(SendScope scope)
     // wait previous request to complete
     m_sender.wait();
 
-    m_ignore_update = true;
+    m_sending_animations = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
     m_animations.clear();
@@ -814,7 +829,7 @@ void msbContext::sendAnimations(SendScope scope)
         kickAsyncSend();
     }
 
-    m_ignore_update = false;
+    m_sending_animations = false;
 }
 
 void msbContext::exportAnimation(Object *obj, bool force, const std::string base_path)
@@ -1013,7 +1028,7 @@ bool msbContext::prepare()
 
 void msbContext::sendScene(SendScope scope, bool force_all)
 {
-    if (m_ignore_update || !prepare())
+    if (m_sending_animations || !prepare())
         return;
 
     if (force_all) {
@@ -1088,15 +1103,19 @@ void msbContext::kickAsyncSend()
     m_bones.clear();
 
     // kick async send
-    if (!m_sender.on_prepare) {
-        m_sender.on_prepare = [this]() {
-            auto& t = m_sender;
-            t.client_settings = m_settings.client_settings;
-            t.scene_settings = m_settings.scene_settings;
-            float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
-            t.scene_settings.scale_factor = 1.0f;
-            t.scene_settings.handedness = ms::Handedness::Left;
+    bool sending_animations = m_sending_animations;
+    m_sender.on_prepare = [this, sending_animations]() {
+        auto& t = m_sender;
+        t.client_settings = m_settings.client_settings;
+        t.scene_settings = m_settings.scene_settings;
+        float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
+        t.scene_settings.scale_factor = 1.0f;
+        t.scene_settings.handedness = ms::Handedness::Left;
 
+        if (sending_animations) {
+            t.animations = m_animations;
+        }
+        else {
             t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
@@ -1104,20 +1123,22 @@ void msbContext::kickAsyncSend()
             m_material_manager.eraseStaleMaterials();
             m_entity_manager.eraseStaleEntities();
             t.deleted = m_entity_manager.getDeleted();
-            t.animations = m_animations;
-
-            if (scale_factor != 1.0f) {
-                for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }
-                for (auto& obj : t.geometries) { obj->applyScaleFactor(scale_factor); }
-                for (auto& obj : t.animations) { obj->applyScaleFactor(scale_factor); }
-            }
-        };
-        m_sender.on_succeeded = [this]() {
+        }
+        if (scale_factor != 1.0f) {
+            for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }
+            for (auto& obj : t.geometries) { obj->applyScaleFactor(scale_factor); }
+            for (auto& obj : t.animations) { obj->applyScaleFactor(scale_factor); }
+        }
+    };
+    m_sender.on_succeeded = [this, sending_animations]() {
+        if (sending_animations) {
+            m_animations.clear();
+        }
+        else {
             m_texture_manager.clearDirtyFlags();
             m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
-            m_animations.clear();
-        };
-    }
+        }
+    };
     m_sender.kick();
 }
