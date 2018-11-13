@@ -113,6 +113,7 @@ public:
     {
         if (m_size == 0) {
             deallocate(m_data, m_size);
+            m_data = nullptr;
             m_size = m_capacity = 0;
         }
         else if (m_size == m_capacity) {

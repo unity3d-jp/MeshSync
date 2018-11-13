@@ -203,12 +203,18 @@ struct clear_impl
 template<class T>
 struct clear_impl<RawVector<T>>
 {
-    void operator()(RawVector<T>& v) { v.clear(); }
+    void operator()(RawVector<T>& v) {
+        v.clear();
+        v.shrink_to_fit();
+    }
 };
 template<class T>
 struct clear_impl<std::vector<T>>
 {
-    void operator()(std::vector<T>& v) { v.clear(); }
+    void operator()(std::vector<T>& v) {
+        v.clear();
+        v.shrink_to_fit();
+    }
 };
 
 template<class T>

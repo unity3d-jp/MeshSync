@@ -343,7 +343,7 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
 
         // calculate per index normals
         // note: when bake_modifiers is enabled, it is done for baked meshes
-        if (m_settings.calc_per_index_normals) {
+        if (m_settings.sync_normals && m_settings.calc_per_index_normals) {
             // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
             // todo: calculate normals by myself to be multi-threaded
             bl::BMesh(data).calc_normals_split();
