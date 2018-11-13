@@ -11,11 +11,12 @@ using namespace Poco::Net;
 class RequestHandler : public HTTPRequestHandler
 {
 public:
-    RequestHandler(Server *server);
-    void handleRequest(HTTPServerRequest &request, HTTPServerResponse &response) override;
+    RequestHandler(Server *server, Server::MessageHolder *holder);
+    void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response) override;
 
 private:
     Server *m_server = nullptr;
+    Server::MessageHolder *m_holder = nullptr;
 };
 
 class RequestHandlerFactory : public HTTPRequestHandlerFactory
@@ -29,13 +30,14 @@ private:
 };
 
 
-RequestHandler::RequestHandler(Server *server)
+RequestHandler::RequestHandler(Server *server, Server::MessageHolder *holder)
     : m_server(server)
+    , m_holder(holder)
 {
 }
 
 
-void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerResponse &response)
+void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     if (!m_server->isServing()) {
         m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
@@ -44,28 +46,28 @@ void RequestHandler::handleRequest(HTTPServerRequest &request, HTTPServerRespons
 
     auto& uri = request.getURI();
     if (uri == "set") {
-        m_server->recvSet(request, response);
+        m_server->recvSet(request, response, *m_holder);
     }
     else if (uri == "delete") {
-        m_server->recvDelete(request, response);
+        m_server->recvDelete(request, response, *m_holder);
     }
     else if (uri == "fence") {
-        m_server->recvFence(request, response);
+        m_server->recvFence(request, response, *m_holder);
     }
     else if (uri == "get") {
-        m_server->recvGet(request, response);
+        m_server->recvGet(request, response, *m_holder);
     }
     else if (uri == "query") {
-        m_server->recvQuery(request, response);
+        m_server->recvQuery(request, response, *m_holder);
     }
     else if (uri == "text" || uri.find("/text") != std::string::npos) {
-        m_server->recvText(request, response);
+        m_server->recvText(request, response, *m_holder);
     }
     else if (uri.find("/screenshot") != std::string::npos) {
-        m_server->recvScreenshot(request, response);
+        m_server->recvScreenshot(request, response, *m_holder);
     }
     else if (uri.find("/poll") != std::string::npos) {
-        m_server->recvPoll(request, response);
+        m_server->recvPoll(request, response, *m_holder);
     }
     else {
         // note: Poco handles commas in URI
@@ -82,7 +84,7 @@ RequestHandlerFactory::RequestHandlerFactory(Server *server)
 
 HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest&)
 {
-    return new RequestHandler(m_server);
+    return new RequestHandler(m_server, m_server->reserveMessage());
 }
 
 
@@ -130,8 +132,7 @@ void Server::stop()
 void Server::clear()
 {
     lock_t lock(m_message_mutex);
-    m_client_objs.clear();
-    m_recv_history.clear();
+    m_received_messages.clear();
     m_host_scene.reset();
 }
 
@@ -142,44 +143,81 @@ ServerSettings& Server::getSettings()
 
 int Server::getNumMessages() const
 {
-    return (int)m_recv_history.size();
+    return (int)m_received_messages.size();
 }
 
 int Server::processMessages(const MessageHandler& handler)
 {
-    lock_t l(m_message_mutex);
-    for (auto& p : m_recv_history) {
-        if (auto get = std::dynamic_pointer_cast<GetMessage>(p)) {
+    lock_t lm(m_message_mutex);
+
+    int ret = 0;
+    for (auto i = m_received_messages.begin(); i != m_received_messages.end(); /**/) {
+        auto& holder = *i;
+        if (!holder.ready.load())
+            break;
+
+        if (holder.task.valid())
+            holder.task.wait();
+
+        bool skip = false;
+        auto& mes = holder.message;
+        if (!mes)
+            goto next;
+
+        if (auto get = std::dynamic_pointer_cast<GetMessage>(mes)) {
             m_current_get_request = get;
-            handler(Message::Type::Get, *p);
+            handler(Message::Type::Get, *mes);
             m_current_get_request = nullptr;
         }
-        else if (auto set = std::dynamic_pointer_cast<SetMessage>(p)) {
-            handler(Message::Type::Set, *set);
+        else if (auto set = std::dynamic_pointer_cast<SetMessage>(mes)) {
+            if (set->session_id == m_current_scene_session)
+                handler(Message::Type::Set, *mes);
+            else
+                skip = true;
         }
-        else if (auto del = std::dynamic_pointer_cast<DeleteMessage>(p)) {
-            handler(Message::Type::Delete, *p);
-            for (auto& id : del->targets) {
-                m_client_objs.erase(id.path);
+        else if (auto del = std::dynamic_pointer_cast<DeleteMessage>(mes)) {
+            if (set->session_id == m_current_scene_session)
+                handler(Message::Type::Delete, *mes);
+            else
+                skip = true;
+        }
+        else if (auto fence = std::dynamic_pointer_cast<FenceMessage>(mes)) {
+            if (fence->type == FenceMessage::FenceType::SceneBegin) {
+                if (m_current_scene_session == InvalidID)
+                    m_current_scene_session = fence->session_id;
+                else
+                    skip = true;
             }
+            else if (fence->type == FenceMessage::FenceType::SceneEnd) {
+                if (m_current_scene_session == fence->session_id)
+                    m_current_scene_session = InvalidID;
+                else
+                    skip = true;
+            }
+
+            if (!skip)
+                handler(Message::Type::Fence, *mes);
         }
-        else if (std::dynamic_pointer_cast<FenceMessage>(p)) {
-            handler(Message::Type::Fence, *p);
+        else if (std::dynamic_pointer_cast<TextMessage>(mes)) {
+            handler(Message::Type::Text, *mes);
         }
-        else if (std::dynamic_pointer_cast<TextMessage>(p)) {
-            handler(Message::Type::Text, *p);
-        }
-        else if (auto shot = std::dynamic_pointer_cast<ScreenshotMessage>(p)) {
+        else if (auto shot = std::dynamic_pointer_cast<ScreenshotMessage>(mes)) {
             m_current_screenshot_request = shot;
-            handler(Message::Type::Screenshot, *p);
+            handler(Message::Type::Screenshot, *mes);
         }
-        else if (auto q = std::dynamic_pointer_cast<QueryMessage>(p)) {
-            handler(Message::Type::Query, *p);
+        else if (auto q = std::dynamic_pointer_cast<QueryMessage>(mes)) {
+            handler(Message::Type::Query, *mes);
+        }
+
+    next:
+        if (skip) {
+            ++i;
+        }
+        else {
+            m_received_messages.erase(i++);
+            ++ret;
         }
     }
-
-    int ret = (int)m_recv_history.size();
-    m_recv_history.clear();
     return ret;
 }
 
@@ -356,137 +394,121 @@ Scene* Server::getHostScene()
     return m_host_scene.get();
 }
 
-void Server::queueMessage(const MessagePtr& v)
+Server::MessageHolder* Server::reserveMessage()
 {
     lock_t l(m_message_mutex);
-    m_recv_history.push_back(v);
+
+    MessageHolder t;
+    m_received_messages.push_back(std::move(t));
+    return &m_received_messages.back();
 }
 
-void Server::queueMessage(const char * mes, TextMessage::Type type)
+void Server::queueTextMessage(const char * mes, TextMessage::Type type)
 {
-    lock_t l(m_message_mutex);
     auto txt = new TextMessage();
     txt->type = type;
     txt->text = mes;
-    m_recv_history.emplace_back(txt);
+
+    MessageHolder t;
+    t.message.reset(txt);
+
+    lock_t l(m_message_mutex);
+    m_received_messages.push_back(std::move(t));
 }
 
 
 template<class MessageT>
-std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest &request, HTTPServerResponse &response)
+std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
     try {
         auto ret = std::shared_ptr<MessageT>(new MessageT());
         ret->deserialize(request.stream());
+        dst.message = ret;
         return ret;
     }
     catch (const std::exception& e) {
-        queueMessage(e.what(), TextMessage::Type::Error);
+        queueTextMessage(e.what(), TextMessage::Type::Error);
         serveText(response, e.what(), HTTPResponse::HTTP_BAD_REQUEST);
+        dst.ready = true;
         return std::shared_ptr<MessageT>();
     }
 }
 
-void Server::recvSet(HTTPServerRequest &request, HTTPServerResponse &response)
+void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
-    RecvSceneScope scope(this);
-
-    auto mes = deserializeMessage<SetMessage>(request, response);
+    auto mes = deserializeMessage<SetMessage>(request, response, dst);
     if (!mes)
         return;
 
-    bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
-    bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-    parallel_for_each(mes->scene.objects.begin(), mes->scene.objects.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
-        if(obj->getType() == Entity::Type::Mesh) {
-            auto& mesh = (Mesh&)*obj;
-            mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-            mesh.refine_settings.flags.swap_handedness = swap_x;
-            mesh.refine_settings.flags.swap_yz = swap_yz;
-            mesh.refine_settings.flags.triangulate = 1;
-            mesh.refine_settings.flags.split = 1;
-            mesh.refine_settings.flags.optimize_topology = 1;
-            mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
-            mesh.refine(mesh.refine_settings);
-        }
-        else {
-            if (swap_x || swap_yz) {
-                obj->convertHandedness(swap_x, swap_yz);
+    dst.task = std::async(std::launch::async, [this, mes]() {
+        bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
+        bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
+        parallel_for_each(mes->scene.objects.begin(), mes->scene.objects.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
+            if (obj->getType() == Entity::Type::Mesh) {
+                auto& mesh = (Mesh&)*obj;
+                mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
+                mesh.refine_settings.flags.swap_handedness = swap_x;
+                mesh.refine_settings.flags.swap_yz = swap_yz;
+                mesh.refine_settings.flags.triangulate = 1;
+                mesh.refine_settings.flags.split = 1;
+                mesh.refine_settings.flags.optimize_topology = 1;
+                mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
+                mesh.refine(mesh.refine_settings);
             }
-            if (mes->scene.settings.scale_factor != 1.0f) {
-                float scale = 1.0f / mes->scene.settings.scale_factor;
-                obj->applyScaleFactor(scale);
-            }
-        }
-    });
-    for (auto& clip : mes->scene.animations) {
-        parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
-            if (swap_x || swap_yz) {
-                anim->convertHandedness(swap_x, swap_yz);
-            }
-            if (mes->scene.settings.scale_factor != 1.0f) {
-                float scale = 1.0f / mes->scene.settings.scale_factor;
-                anim->applyScaleFactor(scale);
+            else {
+                if (swap_x || swap_yz) {
+                    obj->convertHandedness(swap_x, swap_yz);
+                }
+                if (mes->scene.settings.scale_factor != 1.0f) {
+                    float scale = 1.0f / mes->scene.settings.scale_factor;
+                    obj->applyScaleFactor(scale);
+                }
             }
         });
-    }
-
-    {
-        lock_t l(m_message_mutex);
-        for (auto& obj : mes->scene.objects) {
-            m_client_objs[obj->path] = obj;
+        for (auto& clip : mes->scene.animations) {
+            parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+                if (swap_x || swap_yz) {
+                    anim->convertHandedness(swap_x, swap_yz);
+                }
+                if (mes->scene.settings.scale_factor != 1.0f) {
+                    float scale = 1.0f / mes->scene.settings.scale_factor;
+                    anim->applyScaleFactor(scale);
+                }
+            });
         }
-        m_recv_history.emplace_back(mes);
-    }
+    });
+    dst.ready = true;
     serveText(response, "ok");
 }
 
-void Server::recvDelete(HTTPServerRequest &request, HTTPServerResponse &response)
+void Server::recvDelete(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
-    RecvSceneScope scope(this);
-
-    auto mes = deserializeMessage<DeleteMessage>(request, response);
+    auto mes = deserializeMessage<DeleteMessage>(request, response, dst);
     if (!mes)
         return;
 
-    queueMessage(mes);
+    dst.ready = true;
     serveText(response, "ok");
 }
 
-void Server::recvFence(HTTPServerRequest &request, HTTPServerResponse &response)
+void Server::recvFence(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
-    auto mes = deserializeMessage<FenceMessage>(request, response);
+    auto mes = deserializeMessage<FenceMessage>(request, response, dst);
     if (!mes)
         return;
 
-    if (mes->type == FenceMessage::FenceType::SceneBegin) {
-        ++m_request_count;
-    }
-    else if (mes->type == FenceMessage::FenceType::SceneEnd) {
-        --m_request_count;
-
-        // wait for complete (or timeout) queuing set and delete messages
-        for (int i = 0; i < 500; ++i) {
-            if (m_request_count.load() == 0) {
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-    }
-    queueMessage(mes);
+    dst.ready = true;
     serveText(response, "ok");
 }
 
-void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
+void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
-    auto mes = deserializeMessage<GetMessage>(request, response);
+    auto mes = deserializeMessage<GetMessage>(request, response, dst);
     if (!mes)
         return;
 
     mes->wait_flag.reset(new std::atomic_int(1));
-
-    // queue request
-    queueMessage(mes);
+    dst.ready = true;
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
@@ -514,17 +536,15 @@ void Server::recvGet(HTTPServerRequest &request, HTTPServerResponse &response)
     }
 }
 
-void Server::recvQuery(HTTPServerRequest & request, HTTPServerResponse & response)
+void Server::recvQuery(HTTPServerRequest & request, HTTPServerResponse & response, MessageHolder& dst)
 {
-    auto mes = deserializeMessage<QueryMessage>(request, response);
+    auto mes = deserializeMessage<QueryMessage>(request, response, dst);
     if (!mes)
         return;
 
     mes->wait_flag.reset(new std::atomic_int(1));
     mes->response = ResponseMessagePtr(new ResponseMessage());
-
-    // queue request
-    queueMessage(mes);
+    dst.ready = true;
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
@@ -554,13 +574,13 @@ void Server::recvQuery(HTTPServerRequest & request, HTTPServerResponse & respons
     }
 }
 
-void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
+void Server::recvText(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
     bool respond_form = false;
 
-    std::shared_ptr<TextMessage> mes;
+    TextMessagePtr mes;
     if (request.getURI() == "text") {
-        mes = deserializeMessage<TextMessage>(request, response);
+        mes = deserializeMessage<TextMessage>(request, response, dst);
     }
     else if (request.getMethod() == HTTPServerRequest::HTTP_GET) {
         auto& uri = request.getURI();
@@ -588,7 +608,8 @@ void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
     }
 
     if (mes && !mes->text.empty())
-        queueMessage(mes);
+        dst.message = mes;
+    dst.ready = true;
 
     if (respond_form)
         serveFiles(response, "");
@@ -596,13 +617,13 @@ void Server::recvText(HTTPServerRequest &request, HTTPServerResponse &response)
         serveText(response, "ok");
 }
 
-void Server::recvScreenshot(HTTPServerRequest &/*request*/, HTTPServerResponse &response)
+void Server::recvScreenshot(HTTPServerRequest& /*request*/, HTTPServerResponse& response, MessageHolder& dst)
 {
     auto mes = ScreenshotMessagePtr(new ScreenshotMessage());
     mes->wait_flag.reset(new std::atomic_int(1));
 
-    // queue request
-    queueMessage(mes);
+    dst.message = mes;
+    dst.ready = true;
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
@@ -617,8 +638,10 @@ void Server::recvScreenshot(HTTPServerRequest &/*request*/, HTTPServerResponse &
     response.sendFile(m_screenshot_file_path, "image/png");
 }
 
-void Server::recvPoll(HTTPServerRequest &request, HTTPServerResponse & response)
+void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
+    dst.ready = true;
+
     auto mes = PollMessagePtr(new PollMessage());
     mes->wait_flag.reset(new std::atomic_int(1));
 
@@ -664,6 +687,17 @@ void Server::notifyPoll(PollMessage::PollType t)
         }
     }
     m_polls.erase(std::remove(m_polls.begin(), m_polls.end(), PollMessagePtr()), m_polls.end());
+}
+
+Server::MessageHolder::MessageHolder()
+{
+}
+
+Server::MessageHolder::MessageHolder(MessageHolder && v)
+{
+    message = std::move(v.message);
+    task = std::move(v.task);
+    ready = v.ready.load();
 }
 
 } // namespace ms

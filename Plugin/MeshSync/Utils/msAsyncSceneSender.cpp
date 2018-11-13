@@ -3,8 +3,18 @@
 
 namespace ms {
 
-AsyncSceneSender::AsyncSceneSender()
+AsyncSceneSender::AsyncSceneSender(int sid)
 {
+    if (sid == InvalidID) {
+        // gen session id
+        std::uniform_int_distribution<> d(0, 0x70000000);
+        std::mt19937 r;
+        r.seed(std::random_device()());
+        session_id = d(r);
+    }
+    else {
+        session_id = sid;
+    }
 }
 
 AsyncSceneSender::~AsyncSceneSender()
@@ -48,29 +58,35 @@ void AsyncSceneSender::send()
 
     // notify scene begin
     {
-        ms::FenceMessage fence;
-        fence.type = ms::FenceMessage::FenceType::SceneBegin;
-        client.send(fence);
+        ms::FenceMessage mes;
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.type = ms::FenceMessage::FenceType::SceneBegin;
+        client.send(mes);
     }
 
     // textures
     if (!textures.empty()) {
         for (auto& tex : textures) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.textures = { tex };
-            client.send(set);
+            ms::SetMessage mes;
+            mes.session_id = session_id;
+            mes.message_id = message_count++;
+            mes.scene.settings = scene_settings;
+            mes.scene.textures = { tex };
+            client.send(mes);
         };
         textures.clear();
     }
 
     // materials and non-geometry objects
     if (!materials.empty() || !transforms.empty()) {
-        ms::SetMessage set;
-        set.scene.settings = scene_settings;
-        set.scene.materials = materials;
-        set.scene.objects = transforms;
-        client.send(set);
+        ms::SetMessage mes;
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.scene.settings = scene_settings;
+        mes.scene.materials = materials;
+        mes.scene.objects = transforms;
+        client.send(mes);
 
         textures.clear();
         materials.clear();
@@ -80,38 +96,46 @@ void AsyncSceneSender::send()
     // geometries
     if (!geometries.empty()) {
         for (auto& geom : geometries) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { geom };
-            client.send(set);
+            ms::SetMessage mes;
+            mes.session_id = session_id;
+            mes.message_id = message_count++;
+            mes.scene.settings = scene_settings;
+            mes.scene.objects = { geom };
+            client.send(mes);
         };
         geometries.clear();
     }
 
     // animations
     if (!animations.empty()) {
-        ms::SetMessage set;
-        set.scene.settings = scene_settings;
-        set.scene.animations = animations;
-        client.send(set);
+        ms::SetMessage mes;
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.scene.settings = scene_settings;
+        mes.scene.animations = animations;
+        client.send(mes);
 
         animations.clear();
     }
 
     // deleted
     if (!deleted.empty()) {
-        ms::DeleteMessage del;
-        del.targets = deleted;
-        client.send(del);
+        ms::DeleteMessage mes;
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.targets = deleted;
+        client.send(mes);
 
         deleted.clear();
     }
 
     // notify scene end
     {
-        ms::FenceMessage fence;
-        fence.type = ms::FenceMessage::FenceType::SceneEnd;
-        bool succeeded = client.send(fence);
+        ms::FenceMessage mes;
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.type = ms::FenceMessage::FenceType::SceneEnd;
+        bool succeeded = client.send(mes);
 
         if (succeeded) {
             if (on_succeeded)

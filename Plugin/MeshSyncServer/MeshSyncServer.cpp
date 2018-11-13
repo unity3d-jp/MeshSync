@@ -254,6 +254,15 @@ msAPI float msPointsAGetTimeValue(ms::PointsAnimation *_this, int i) { return _t
 
 
 #pragma region Messages
+msAPI int msMessageGetSessionID(ms::Message *_this)
+{
+    return _this->session_id;
+}
+msAPI int msMessageGetMessageID(ms::Message *_this)
+{
+    return _this->message_id;
+}
+
 msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 {
     return _this->flags;

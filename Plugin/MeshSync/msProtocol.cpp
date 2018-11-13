@@ -9,11 +9,17 @@ Message::~Message()
 }
 uint32_t Message::getSerializeSize() const
 {
-    return ssize(protocol_version);
+    uint32_t ret = 0;
+    ret += ssize(protocol_version);
+    ret += ssize(session_id);
+    ret += ssize(message_id);
+    return ret;
 }
 void Message::serialize(std::ostream& os) const
 {
     write(os, protocol_version);
+    write(os, session_id);
+    write(os, message_id);
 }
 void Message::deserialize(std::istream& is)
 {
@@ -21,6 +27,8 @@ void Message::deserialize(std::istream& is)
     if (protocol_version != msProtocolVersion) {
         throw std::runtime_error("protocol version not matched");
     }
+    read(is, session_id);
+    read(is, message_id);
 }
 
 GetMessage::GetMessage()

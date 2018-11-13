@@ -21,6 +21,8 @@ public:
         Response,
     };
     int protocol_version = msProtocolVersion;
+    int session_id = InvalidID;
+    int message_id = 0;
 
     virtual ~Message();
     virtual uint32_t getSerializeSize() const;

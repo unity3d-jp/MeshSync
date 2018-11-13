@@ -7,6 +7,9 @@ namespace ms {
 class AsyncSceneSender
 {
 public:
+    int session_id = InvalidID;
+    int message_count = 0;
+
     ClientSettings client_settings;
     SceneSettings scene_settings;
     std::vector<TexturePtr> textures;
@@ -18,7 +21,7 @@ public:
 
     std::function<void()> on_prepare, on_succeeded, on_failed;
 
-    AsyncSceneSender();
+    AsyncSceneSender(int session_id = InvalidID);
     ~AsyncSceneSender();
     bool isSending();
     void wait();
