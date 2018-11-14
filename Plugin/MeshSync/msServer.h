@@ -101,7 +101,7 @@ private:
     std::mutex m_poll_mutex;
 
     int m_current_scene_session = InvalidID;
-    std::list<MessageHolder> m_received_messages;
+    std::list<MessageHolder> m_received_messages, m_processing_messages;
     PollMessages m_polls;
 
     ScenePtr m_host_scene;

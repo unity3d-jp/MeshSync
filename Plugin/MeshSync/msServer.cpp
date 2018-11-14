@@ -152,10 +152,14 @@ int Server::getNumMessages() const
 
 int Server::processMessages(const MessageHandler& handler)
 {
-    lock_t lm(m_message_mutex);
+    {
+        lock_t lm(m_message_mutex);
+        // just move messages to processing list to minimize contention
+        m_processing_messages.splice(m_processing_messages.end(), m_received_messages);
+    }
 
     int ret = 0;
-    for (auto i = m_received_messages.begin(); i != m_received_messages.end(); /**/) {
+    for (auto i = m_processing_messages.begin(); i != m_processing_messages.end(); /**/) {
         auto& holder = *i;
         if (!holder.ready)
             break;
@@ -218,7 +222,7 @@ int Server::processMessages(const MessageHandler& handler)
             ++i;
         }
         else {
-            m_received_messages.erase(i++);
+            m_processing_messages.erase(i++);
             ++ret;
         }
     }
