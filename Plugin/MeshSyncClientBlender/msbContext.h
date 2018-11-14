@@ -59,13 +59,14 @@ public:
 private:
     struct ObjectRecord : public mu::noncopyable
     {
+        std::string path;
         bool touched = false;
         bool exported = false;
+        bool renamed = false;
 
         void clearState()
         {
-            touched = false;
-            exported = false;
+            touched = exported = renamed = false;
         }
     };
 
@@ -116,14 +117,12 @@ private:
     void kickAsyncSend();
 
 private:
-    using task_t = std::function<void()>;
-
     msbSettings m_settings;
     std::set<Object*> m_pending, m_pending_tmp;
     std::map<const Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records;
     std::vector<Mesh*> m_tmp_bmeshes;
-    std::vector<task_t> m_extract_tasks;
+    std::vector<std::future<void>> m_extract_tasks;
 
     std::vector<ms::AnimationClipPtr> m_animations;
     ms::IDGenerator<Material*> m_material_ids;

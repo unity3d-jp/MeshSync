@@ -182,6 +182,8 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
 
     if (ret)
         exportDupliGroup(obj, ret->path);
+    else
+        m_entity_manager.erase(rec.path);
     return ret;
 }
 
@@ -294,7 +296,8 @@ ms::LightPtr msbContext::exportLight(Object *src)
 ms::MeshPtr msbContext::exportMesh(Object *src)
 {
     // ignore particles
-    if (find_modofier(src, eModifierType_ParticleSystem) || find_modofier(src, eModifierType_ParticleInstance))
+    if (//find_modofier(src, eModifierType_ParticleSystem) ||
+        find_modofier(src, eModifierType_ParticleInstance) )
         return nullptr;
 
     bl::BObject bobj(src);
@@ -359,7 +362,7 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
     if(m_settings.dbg_force_single_threaded)
         task();
     else
-        m_extract_tasks.push_back(task);
+        m_extract_tasks.push_back(std::async(std::launch::async, task));
     return ret;
 }
 
@@ -731,7 +734,13 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string
         return rec; // already touched
 
     rec.touched = true;
-    m_entity_manager.touch(base_path + get_path(obj));
+
+    auto path = base_path + get_path(obj);
+    if (path != rec.path) {
+        rec.renamed = true;
+        rec.path = path;
+    }
+    m_entity_manager.touch(path);
 
     // trace bones
     if (obj->type == OB_ARMATURE) {
@@ -1036,13 +1045,13 @@ void msbContext::sendScene(SendScope scope, bool force_all)
         m_entity_manager.makeDirtyAll();
     }
 
+    if (m_settings.sync_meshes)
+        exportMaterials();
+
     if (scope == SendScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
         if (!bpy_data.objects_is_updated())
             return; // nothing to send
-
-        if (m_settings.sync_meshes)
-            exportMaterials();
 
         auto scene = bl::BScene(bl::BContext::get().scene());
         scene.each_objects([this](Object *obj) {
@@ -1058,9 +1067,6 @@ void msbContext::sendScene(SendScope scope, bool force_all)
     }
     else {
         // all
-        if (m_settings.sync_meshes)
-            exportMaterials();
-
         auto scene = bl::BScene(bl::BContext::get().scene());
         scene.each_objects([this](Object *obj) {
             exportObject(obj, false);
@@ -1084,10 +1090,8 @@ void msbContext::flushPendingList()
 
 void msbContext::kickAsyncSend()
 {
-    // get vertex data in parallel
-    parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](task_t& task) {
-        task();
-    });
+    for (auto& t : m_extract_tasks)
+        t.wait();
     m_extract_tasks.clear();
 
     // clear baked meshes
@@ -1116,12 +1120,12 @@ void msbContext::kickAsyncSend()
             t.animations = m_animations;
         }
         else {
+            m_material_manager.eraseStaleMaterials();
+            m_entity_manager.eraseStaleEntities();
             t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            m_material_manager.eraseStaleMaterials();
-            m_entity_manager.eraseStaleEntities();
             t.deleted = m_entity_manager.getDeleted();
         }
         if (scale_factor != 1.0f) {
