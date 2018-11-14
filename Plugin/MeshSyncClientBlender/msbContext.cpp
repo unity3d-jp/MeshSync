@@ -126,11 +126,17 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
         return ret; // already exported
     rec.exported = true;
 
+    bool exported = false;
+    auto on_export = [this, obj, &exported]() {
+        exportObject(obj->parent, true);
+        exported = true;
+    };
+
     switch (obj->type) {
     case OB_ARMATURE:
     {
         if (m_settings.sync_bones) {
-            exportObject(obj->parent, true);
+            on_export();
             ret = exportArmature(obj);
         }
         break;
@@ -138,7 +144,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     case OB_MESH:
     {
         if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
-            exportObject(obj->parent, true);
+            on_export();
             ret = exportMesh(obj);
         }
         break;
@@ -149,7 +155,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     case OB_MBALL: // these can be converted to mesh
     {
         if (m_settings.sync_meshes && m_settings.convert_to_mesh) {
-            exportObject(obj->parent, true);
+            on_export();
             ret = exportMesh(obj);
         }
         break;
@@ -157,7 +163,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     case OB_CAMERA:
     {
         if (m_settings.sync_cameras) {
-            exportObject(obj->parent, true);
+            on_export();
             ret = exportCamera(obj);
         }
         break;
@@ -165,7 +171,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     case OB_LAMP:
     {
         if (m_settings.sync_lights) {
-            exportObject(obj->parent, true);
+            on_export();
             ret = exportLight(obj);
         }
         break;
@@ -173,7 +179,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     default:
     {
         if (obj->dup_group || force) {
-            exportObject(obj->parent, true);
+            on_export();
             ret = exportTransform(obj);
         }
         break;
@@ -182,7 +188,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
 
     if (ret)
         exportDupliGroup(obj, ret->path);
-    else
+    if (!exported)
         m_entity_manager.erase(rec.path);
     return ret;
 }
@@ -835,7 +841,7 @@ void msbContext::sendAnimations(SendScope scope)
 
     // send
     if (!m_animations.empty()) {
-        kickAsyncSend();
+        kickAsyncSend(false);
     }
 
     m_sending_animations = false;
@@ -1074,7 +1080,7 @@ void msbContext::sendScene(SendScope scope, bool force_all)
     }
 
     eraseStaleObjects();
-    kickAsyncSend();
+    kickAsyncSend(true);
 }
 
 void msbContext::flushPendingList()
@@ -1084,11 +1090,11 @@ void msbContext::flushPendingList()
         for (auto p : m_pending_tmp)
             exportObject(p, false);
         m_pending_tmp.clear();
-        kickAsyncSend();
+        kickAsyncSend(false);
     }
 }
 
-void msbContext::kickAsyncSend()
+void msbContext::kickAsyncSend(bool erase_stale_objects)
 {
     for (auto& t : m_extract_tasks)
         t.wait();
@@ -1107,8 +1113,7 @@ void msbContext::kickAsyncSend()
     m_bones.clear();
 
     // kick async send
-    bool sending_animations = m_sending_animations;
-    m_sender.on_prepare = [this, sending_animations]() {
+    m_sender.on_prepare = [this, erase_stale_objects]() {
         auto& t = m_sender;
         t.client_settings = m_settings.client_settings;
         t.scene_settings = m_settings.scene_settings;
@@ -1116,33 +1121,27 @@ void msbContext::kickAsyncSend()
         t.scene_settings.scale_factor = 1.0f;
         t.scene_settings.handedness = ms::Handedness::Left;
 
-        if (sending_animations) {
-            t.animations = m_animations;
-        }
-        else {
+        if (erase_stale_objects) {
             m_material_manager.eraseStaleMaterials();
             m_entity_manager.eraseStaleEntities();
-            t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_material_manager.getDirtyMaterials();
-            t.transforms = m_entity_manager.getDirtyTransforms();
-            t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted = m_entity_manager.getDeleted();
         }
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+        t.deleted = m_entity_manager.getDeleted();
+        t.animations = m_animations;
         if (scale_factor != 1.0f) {
             for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }
             for (auto& obj : t.geometries) { obj->applyScaleFactor(scale_factor); }
             for (auto& obj : t.animations) { obj->applyScaleFactor(scale_factor); }
         }
     };
-    m_sender.on_succeeded = [this, sending_animations]() {
-        if (sending_animations) {
-            m_animations.clear();
-        }
-        else {
-            m_texture_manager.clearDirtyFlags();
-            m_material_manager.clearDirtyFlags();
-            m_entity_manager.clearDirtyFlags();
-        }
+    m_sender.on_succeeded = [this]() {
+        m_texture_manager.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+        m_animations.clear();
     };
     m_sender.kick();
 }

@@ -114,7 +114,7 @@ private:
     void extractLightAnimationData(ms::Animation& dst, void *obj);
     void extractMeshAnimationData(ms::Animation& dst, void *obj);
 
-    void kickAsyncSend();
+    void kickAsyncSend(bool erase_stale_objects);
 
 private:
     msbSettings m_settings;
