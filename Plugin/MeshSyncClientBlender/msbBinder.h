@@ -184,22 +184,32 @@ namespace blender
         int frame_current();
         void frame_set(int f, float subf = 0.0f);
 
+#if BLENDER_VERSION < 280
         template<class Body>
         void each_objects(const Body& body)
         {
-#if BLENDER_VERSION < 280
             for (auto *base : list_range((Base*)m_ptr->base.first)) {
                 body(base->object);
             }
+        }
 #else
-            for (auto *c : list_range((CollectionChild*)m_ptr->master_collection->children.first)) {
+        template<class Body>
+        void each_objects_impl(const Body& body, CollectionChild *cc)
+        {
+            for (auto *c : list_range(cc)) {
+                each_objects_impl(body, (CollectionChild*)c->collection->children.first);
                 for (auto *o : list_range((CollectionObject*)c->collection->gobject.first)) {
                     body(o->ob);
                 }
             }
-#endif
         }
 
+        template<class Body>
+        void each_objects(const Body& body)
+        {
+            each_objects_impl(body, (CollectionChild*)m_ptr->master_collection->children.first);
+        }
+#endif
     };
 
     class BData
