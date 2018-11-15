@@ -6,18 +6,28 @@
 #pragma warning(disable:4229)
 static void(*WINAPI _glActiveTexture)(GLenum texture);
 static void(*WINAPI _glBindTexture)(GLenum target, GLuint texture);
+
 static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
 static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
 static void(*WINAPI _glBindBuffer) (GLenum target, GLuint buffer);
+static void(*WINAPI _glBindVertexBuffer) (GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
 static void(*WINAPI _glBufferData) (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
 static void* (*WINAPI _glMapBuffer) (GLenum target, GLenum access);
 static GLboolean(*WINAPI _glUnmapBuffer) (GLenum target);
-static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
 static void(*WINAPI _glUniform4fv) (GLint location, GLsizei count, const GLfloat* value);
 static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
-static void(*WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
-static void(*WINAPI _glFlush)(void);
+
+static void(*WINAPI _glGenVertexArrays)(GLsizei n, GLuint *buffers);
+static void(*WINAPI _glDeleteVertexArrays)(GLsizei n, const GLuint *buffers);
+static void(*WINAPI _glBindVertexArray) (GLuint buffer);
+static void(*WINAPI _glEnableVertexAttribArray) (GLuint index);
+static void(*WINAPI _glDisableVertexAttribArray) (GLuint index);
+static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+
+static void(*WINAPI _glDrawRangeElements)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices);
+static void(*WINAPI _glClear)(GLbitfield mask);
 static void* (*WINAPI _wglGetProcAddress)(const char* name);
+
 #pragma warning(pop)
 
 
@@ -47,6 +57,12 @@ static void WINAPI glBindBuffer_hook(GLenum target, GLuint buffer)
     msvrGetContext()->onBindBuffer(target, buffer);
     _glBindBuffer(target, buffer);
 }
+static void WINAPI glBindVertexBuffer_hook(GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride)
+{
+    msvrGetContext()->onBindVertexBuffer(bindingindex, buffer, offset, stride);
+    _glBindVertexBuffer(bindingindex, buffer, offset, stride);
+}
+
 static void WINAPI glBufferData_hook(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
     msvrGetContext()->onBufferData(target, size, data, usage);
@@ -64,12 +80,6 @@ static GLboolean WINAPI glUnmapBuffer_hook(GLenum target)
     return _glUnmapBuffer(target);
 }
 
-static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
-{
-    msvrGetContext()->onVertexAttribPointer(index, size, type, normalized, stride, pointer);
-    _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
-}
-
 static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat* value)
 {
     msvrGetContext()->onUniform4fv(location, count, value);
@@ -81,15 +91,66 @@ static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLbool
     _glUniformMatrix4fv(location, count, transpose, value);
 }
 
-static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
+static void WINAPI glGenVertexArrays_hook(GLsizei n, GLuint *buffers)
 {
-    msvrGetContext()->onDrawElements(mode, count, type, indices);
-    _glDrawElements(mode, count, type, indices);
+    _glGenVertexArrays(n, buffers);
+    msvrGetContext()->onGenVertexArrays(n, buffers);
 }
-static void WINAPI glFlush_hook(void)
+static void WINAPI glDeleteVertexArrays_hook(GLsizei n, const GLuint *buffers)
 {
-    msvrGetContext()->onFlush();
-    _glFlush();
+    msvrGetContext()->onDeleteVertexArrays(n, buffers);
+    _glDeleteVertexArrays(n, buffers);
+
+}
+static void WINAPI glBindVertexArray_hook(GLuint buffer)
+{
+    msvrGetContext()->onBindVertexArray(buffer);
+    _glBindVertexArray(buffer);
+}
+static void WINAPI glEnableVertexAttribArray_hook(GLuint index)
+{
+    msvrGetContext()->onEnableVertexAttribArray(index);
+    _glEnableVertexAttribArray(index);
+}
+static void WINAPI glDisableVertexAttribArray_hook(GLuint index)
+{
+    msvrGetContext()->onDisableVertexAttribArray(index);
+    _glDisableVertexAttribArray(index);
+}
+
+static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
+{
+    msvrGetContext()->onVertexAttribPointer(index, size, type, normalized, stride, pointer);
+    _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+}
+
+static void WINAPI glDrawRangeElements_hook(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
+{
+    msvrGetContext()->onDrawRangeElements(mode, start, end, count, type, indices);
+    _glDrawRangeElements(mode, start, end, count, type, indices);
+}
+
+static void WINAPI glClear_hook(GLbitfield mask)
+{
+    _glClear(mask);
+
+    static const GLbitfield s_steps[] = {
+        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+        GL_DEPTH_BUFFER_BIT,
+        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+        GL_COLOR_BUFFER_BIT,
+    };
+    static int s_pos = 0;
+    if (mask == s_steps[s_pos]) {
+        ++s_pos;
+        if (mask == GL_COLOR_BUFFER_BIT) {
+            msvrGetContext()->onFlush();
+            s_pos = 0;
+        }
+    }
+    else {
+        s_pos = 0;
+    }
 }
 
 static void* WINAPI wglGetProcAddress_hook(const char* name)
@@ -104,17 +165,25 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
 #define Hook(Name) {#Name, (void**)&Name##_hook, (void**)&_##Name}
     Hook(glActiveTexture),
     Hook(glBindTexture),
+
     Hook(glGenBuffers),
     Hook(glDeleteBuffers),
     Hook(glBindBuffer),
+    Hook(glBindVertexBuffer),
     Hook(glBufferData),
     Hook(glMapBuffer),
     Hook(glUnmapBuffer),
-    Hook(glVertexAttribPointer),
     Hook(glUniform4fv),
     Hook(glUniformMatrix4fv),
-    Hook(glDrawElements),
-    Hook(glFlush),
+
+    Hook(glGenVertexArrays),
+    Hook(glDeleteVertexArrays),
+    Hook(glBindVertexArray),
+    Hook(glEnableVertexAttribArray),
+    Hook(glDisableVertexAttribArray),
+    Hook(glVertexAttribPointer),
+
+    Hook(glDrawRangeElements),
 #undef Hook
     };
 
@@ -222,8 +291,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 #define Override(Name) (void*&)_##Name = OverrideDLLExport(opengl32, #Name, Name##_hook, jumptable);
         Override(wglGetProcAddress);
-        Override(glDrawElements);
-        Override(glFlush);
+        Override(glClear);
 #undef Override
     }
     else if (fdwReason == DLL_PROCESS_DETACH) {

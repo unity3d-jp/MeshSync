@@ -84,7 +84,6 @@ struct msvrSettings
     ms::ClientSettings client_settings;
     float scale_factor = 100.0f;
     bool auto_sync = true;
-    bool weld_vertices = true;
     bool sync_delete = true;
     bool sync_camera = false;
 };
@@ -99,16 +98,25 @@ public:
 
     void onActiveTexture(GLenum texture);
     void onBindTexture(GLenum target, GLuint texture);
+
     void onGenBuffers(GLsizei n, GLuint* buffers);
     void onDeleteBuffers(GLsizei n, const GLuint* buffers);
     void onBindBuffer(GLenum target, GLuint buffer);
+    void onBindVertexBuffer(GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
     void onBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
     void onMapBuffer(GLenum target, GLenum access, void *&mapped_data);
     void onUnmapBuffer(GLenum target);
-    void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
     void onUniform4fv(GLint location, GLsizei count, const GLfloat* value);
     void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
-    void onDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
+
+    void onGenVertexArrays(GLsizei n, GLuint *buffers);
+    void onDeleteVertexArrays(GLsizei n, const GLuint *buffers);
+    void onBindVertexArray(GLuint buffer);
+    void onEnableVertexAttribArray(GLuint index);
+    void onDisableVertexAttribArray(GLuint index);
+    void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+
+    void onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
     void onFlush();
 
 protected:
@@ -123,6 +131,7 @@ protected:
 
     uint32_t m_vertex_attributes = 0;
     uint32_t m_vb_handle = 0;
+    uint32_t m_ib_handle = 0;
     MaterialData m_material;
     float4x4 m_proj = float4x4::identity();
     float4x4 m_modelview = float4x4::identity();
