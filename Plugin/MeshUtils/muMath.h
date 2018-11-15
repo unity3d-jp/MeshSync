@@ -726,10 +726,10 @@ template<class T> inline tmat4x4<T> look44(const tvec3<T>& forward, const tvec3<
     } };
 }
 
-template<class T> inline tvec3<T> swap_handedness(const tvec3<T>& v) { return { -v.x, v.y, v.z }; }
-template<class T> inline tvec4<T> swap_handedness(const tvec4<T>& v) { return { -v.x, v.y, v.z, v.w }; }
-template<class T> inline tquat<T> swap_handedness(const tquat<T>& v) { return { v.x, -v.y, -v.z, v.w }; }
-template<class T> inline tmat3x3<T> swap_handedness(const tmat3x3<T>& m)
+template<class T> inline tvec3<T> flip_x(const tvec3<T>& v) { return { -v.x, v.y, v.z }; }
+template<class T> inline tvec4<T> flip_x(const tvec4<T>& v) { return { -v.x, v.y, v.z, v.w }; }
+template<class T> inline tquat<T> flip_x(const tquat<T>& v) { return { v.x, -v.y, -v.z, v.w }; }
+template<class T> inline tmat3x3<T> flip_x(const tmat3x3<T>& m)
 {
     return tmat3x3<T> {
          m[0].x,-m[0].y,-m[0].z,
@@ -737,16 +737,37 @@ template<class T> inline tmat3x3<T> swap_handedness(const tmat3x3<T>& m)
         -m[2].x, m[2].y, m[2].z,
     };
 }
-template<class T> inline tmat4x4<T> swap_handedness(const tmat4x4<T>& m)
+template<class T> inline tmat4x4<T> flip_x(const tmat4x4<T>& m)
 {
     return tmat4x4<T> {
-         m[0].x,-m[0].y,-m[0].z, m[0].w,
+         m[0].x,-m[0].y,-m[0].z,-m[0].w,
         -m[1].x, m[1].y, m[1].z, m[1].w,
         -m[2].x, m[2].y, m[2].z, m[2].w,
         -m[3].x, m[3].y, m[3].z, m[3].w,
     };
 }
 
+template<class T> inline tvec2<T> flip_z(const tvec2<T>& v) { return { v.x, v.y }; }
+template<class T> inline tvec3<T> flip_z(const tvec3<T>& v) { return { v.x, v.y, -v.z }; }
+template<class T> inline tvec4<T> flip_z(const tvec4<T>& v) { return { v.x, v.y, -v.z, v.w }; }
+template<class T> inline tquat<T> flip_z(const tquat<T>& v) { return { -v.x, -v.y, v.z, v.w }; }
+template<class T> inline tmat3x3<T> flip_z(const tmat3x3<T>& m)
+{
+    return tmat3x3<T> {
+        m[0].x, m[0].y,-m[0].z,
+        m[1].x, m[1].y,-m[1].z,
+       -m[2].x,-m[2].y, m[2].z,
+    };
+}
+template<class T> inline tmat4x4<T> flip_z(const tmat4x4<T>& m)
+{
+    return tmat4x4<T> {
+        m[0].x, m[0].y,-m[0].z, m[0].w,
+        m[1].x, m[1].y,-m[1].z, m[1].w,
+       -m[2].x,-m[2].y, m[2].z,-m[2].w,
+        m[3].x, m[3].y,-m[3].z, m[3].w,
+    };
+}
 
 template<class T> inline tvec3<T> swap_yz(const tvec3<T>& v) { return { v.x, v.z, v.y }; }
 template<class T> inline tvec4<T> swap_yz(const tvec4<T>& v) { return { v.x, v.z, v.y, v.w }; }

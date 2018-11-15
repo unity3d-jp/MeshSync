@@ -29,7 +29,7 @@ struct msbSettings
     float animation_timescale = 1.0f;
     int animation_frame_interval = 10;
 
-    bool dbg_force_single_threaded = false;
+    bool multithreaded = true;
 };
 
 
@@ -103,7 +103,7 @@ private:
     void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
 
-    ms::TransformPtr findBone(const Object *armature, const Bone *bone);
+    ms::TransformPtr findBone(Object *armature, Bone *bone);
     ObjectRecord& touchRecord(Object *obj, const std::string& base_path="");
     void eraseStaleObjects();
 
@@ -118,11 +118,11 @@ private:
 
 private:
     msbSettings m_settings;
-    std::set<Object*> m_pending, m_pending_tmp;
-    std::map<const Bone*, ms::TransformPtr> m_bones;
+    std::set<Object*> m_pending;
+    std::map<Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records;
-    std::vector<Mesh*> m_tmp_bmeshes;
-    std::vector<std::future<void>> m_extract_tasks;
+    std::vector<std::future<void>> m_async_tasks;
+    std::vector<Mesh*> m_tmp_meshes;
 
     std::vector<ms::AnimationClipPtr> m_animations;
     ms::IDGenerator<Material*> m_material_ids;

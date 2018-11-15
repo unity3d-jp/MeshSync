@@ -306,13 +306,13 @@ TestCase(TestNormalsAndTangents)
 TestCase(TestMatrixSwapHandedness)
 {
     quatf rot1 = rotate(normalize(float3{0.15f, 0.3f, 0.6f}), 60.0f);
-    quatf rot2 = swap_handedness(rot1);
+    quatf rot2 = flip_x(rot1);
     float4x4 mat1 = to_mat4x4(rot1);
     float4x4 mat2 = to_mat4x4(rot2);
-    float4x4 mat3 = swap_handedness(mat1);
+    float4x4 mat3 = flip_x(mat1);
     float4x4 imat1 = invert(mat1);
     float4x4 imat2 = invert(mat2);
-    float4x4 imat3 = swap_handedness(imat1);
+    float4x4 imat3 = flip_x(imat1);
 
     bool r1 = near_equal(mat2, mat3);
     bool r2 = near_equal(imat2, imat3);

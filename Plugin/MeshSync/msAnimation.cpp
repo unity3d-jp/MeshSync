@@ -159,9 +159,9 @@ void TransformAnimation::convertHandedness(bool x, bool yz)
 {
     if (x) {
         for (auto& tvp : translation)
-            tvp.value = swap_handedness(tvp.value);
+            tvp.value = flip_x(tvp.value);
         for (auto& tvp : rotation)
-            tvp.value = swap_handedness(tvp.value);
+            tvp.value = flip_x(tvp.value);
     }
     if (yz) {
         for (auto& tvp : translation)

@@ -211,8 +211,8 @@ void Transform::convertHandedness(bool x, bool yz)
     if (!x && !yz) return;
 
     if (x) {
-        position = swap_handedness(position);
-        rotation = swap_handedness(rotation);
+        position = flip_x(position);
+        rotation = flip_x(rotation);
     }
     if (yz) {
         position = swap_yz(position);
@@ -397,9 +397,9 @@ void BlendShapeFrameData::clear()
 void BlendShapeFrameData::convertHandedness(bool x, bool yz)
 {
     if (x) {
-        for (auto& v : points) { v = swap_handedness(v); }
-        for (auto& v : normals) { v = swap_handedness(v); }
-        for (auto& v : tangents) { v = swap_handedness(v); }
+        for (auto& v : points) { v = flip_x(v); }
+        for (auto& v : normals) { v = flip_x(v); }
+        for (auto& v : tangents) { v = flip_x(v); }
     }
     if (yz) {
         for (auto& v : points) { v = swap_yz(v); }
@@ -512,7 +512,7 @@ void BoneData::clear()
 void BoneData::convertHandedness(bool x, bool yz)
 {
     if (x) {
-        bindpose = swap_handedness(bindpose);
+        bindpose = flip_x(bindpose);
     }
     if (yz) {
         bindpose = swap_yz(bindpose);
@@ -1224,7 +1224,7 @@ void PointsData::convertHandedness(bool x, bool yz)
 {
     if (x) {
         mu::InvertX(points.data(), points.size());
-        for (auto& v : rotations) v = swap_handedness(v);
+        for (auto& v : rotations) v = flip_x(v);
         mu::InvertX(scales.data(), scales.size());
     }
     if (yz) {

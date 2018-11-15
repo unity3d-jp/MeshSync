@@ -346,7 +346,7 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
 #endif
             if (tmp) {
                 data = tmp;
-                m_tmp_bmeshes.push_back(tmp); // need to delete baked meshes later
+                m_tmp_meshes.push_back(tmp); // need to delete baked meshes later
             }
         }
 
@@ -365,10 +365,10 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
         m_entity_manager.add(ret);
     };
 
-    if(m_settings.dbg_force_single_threaded)
-        task();
+    if(m_settings.multithreaded)
+        m_async_tasks.push_back(std::async(std::launch::async, task));
     else
-        m_extract_tasks.push_back(std::async(std::launch::async, task));
+        task();
     return ret;
 }
 
@@ -727,7 +727,7 @@ void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     }
 }
 
-ms::TransformPtr msbContext::findBone(const Object *armature, const Bone *bone)
+ms::TransformPtr msbContext::findBone(Object *armature, Bone *bone)
 {
     auto it = m_bones.find(bone);
     return it != m_bones.end() ? it->second : nullptr;
@@ -1086,26 +1086,25 @@ void msbContext::sendScene(SendScope scope, bool force_all)
 void msbContext::flushPendingList()
 {
     if (!m_pending.empty() && !m_sender.isSending()) {
-        std::swap(m_pending, m_pending_tmp);
-        for (auto p : m_pending_tmp)
+        for (auto p : m_pending)
             exportObject(p, false);
-        m_pending_tmp.clear();
+        m_pending.clear();
         kickAsyncSend(false);
     }
 }
 
 void msbContext::kickAsyncSend(bool erase_stale_objects)
 {
-    for (auto& t : m_extract_tasks)
+    for (auto& t : m_async_tasks)
         t.wait();
-    m_extract_tasks.clear();
+    m_async_tasks.clear();
 
     // clear baked meshes
-    if (!m_tmp_bmeshes.empty()) {
+    if (!m_tmp_meshes.empty()) {
         bl::BData bd(bl::BContext::get().data());
-        for (auto *v : m_tmp_bmeshes)
+        for (auto *v : m_tmp_meshes)
             bd.remove(v);
-        m_tmp_bmeshes.clear();
+        m_tmp_meshes.clear();
     }
 
     for (auto& kvp : m_obj_records)
