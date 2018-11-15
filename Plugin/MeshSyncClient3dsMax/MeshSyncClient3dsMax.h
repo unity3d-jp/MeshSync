@@ -15,20 +15,23 @@ public:
 
         int timeout_ms = 5000;
         float scale_factor = 1.0f;
-        float animation_time_scale = 1.0f;
-        int animation_sps = 2;
         bool auto_sync = false;
         bool sync_meshes = true;
         bool sync_normals = true;
         bool sync_uvs = true;
         bool sync_colors = true;
+        bool bake_modifiers = false;
+        bool convert_to_mesh = true;
         bool sync_bones = true;
         bool sync_blendshapes = true;
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_textures = true;
-        bool bake_modifiers = false;
-        bool multithreaded = false;
+
+        float animation_time_scale = 1.0f;
+        int animation_sps = 2;
+
+        bool multithreaded = true;
 
         // import settings
         bool bake_skin = false;
@@ -78,7 +81,6 @@ public:
     void updateUIText();
 
 private:
-    using task_t = std::function<void()>;
     struct TreeNode : public mu::noncopyable
     {
         int index = 0;
@@ -143,6 +145,9 @@ private:
 
     std::map<INode*, TreeNode> m_node_records;
     std::map<Mtl*, MaterialRecord> m_material_records;
+    std::vector<std::future<void>> m_async_tasks;
+    std::vector<TriObject*> m_tmp_meshes;
+
     int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;

@@ -323,6 +323,14 @@ MeshSyncClient3dsMax::TreeNode & MeshSyncClient3dsMax::getNodeRecord(INode *n)
 
 void MeshSyncClient3dsMax::kickAsyncSend()
 {
+    for (auto& t : m_async_tasks)
+        t.wait();
+    m_async_tasks.clear();
+
+    for (auto *t : m_tmp_meshes)
+        t->DeleteThis();
+    m_tmp_meshes.clear();
+
     for (auto& kvp : m_node_records)
         kvp.second.clearState();
 
@@ -749,8 +757,9 @@ static void GenSmoothNormals(ms::Mesh& dst, Mesh& mesh)
 ms::MeshPtr MeshSyncClient3dsMax::exportMesh(TreeNode& n)
 {
     auto ret = createEntity<ms::Mesh>(n);
+    auto inode = n.node;
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
     if (!dst.visible)
         return ret;
 
@@ -760,16 +769,25 @@ ms::MeshPtr MeshSyncClient3dsMax::exportMesh(TreeNode& n)
 
     if (m_settings.sync_meshes) {
         tri = m_settings.bake_modifiers ?
-            GetFinalMesh(n.node, needs_delete) :
-            GetSourceMesh(n.node, needs_delete);
-        if (tri)
+            GetFinalMesh(inode, needs_delete) :
+            GetSourceMesh(inode, needs_delete);
+        if (tri) {
             mesh = &tri->GetMesh();
+            mesh->checkNormals(TRUE);
+            if (needs_delete)
+                m_tmp_meshes.push_back(tri);
+        }
     }
-    doExtractMeshData(dst, n.node, mesh);
-    m_entity_manager.add(ret);
 
-    if (tri && needs_delete)
-        tri->DeleteThis();
+    auto task = [this, ret, inode, mesh]() {
+        doExtractMeshData(*ret, inode, mesh);
+        m_entity_manager.add(ret);
+    };
+
+    if (m_settings.multithreaded)
+        m_async_tasks.push_back(std::async(std::launch::async, task));
+    else
+        task();
 
     return ret;
 }
