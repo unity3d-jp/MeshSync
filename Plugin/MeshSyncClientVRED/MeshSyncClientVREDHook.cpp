@@ -12,8 +12,17 @@ static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
 static void(*WINAPI _glBindBuffer) (GLenum target, GLuint buffer);
 static void(*WINAPI _glBindVertexBuffer) (GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
 static void(*WINAPI _glBufferData) (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+static void(*WINAPI _glNamedBufferData)(GLuint buffer, GLsizei size, const void *data, GLenum usage);
+static void(*WINAPI _glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
+static void(*WINAPI _glNamedBufferSubData)(GLuint buffer, GLintptr offset, GLsizei size, const void *data);
 static void* (*WINAPI _glMapBuffer) (GLenum target, GLenum access);
+static void* (*WINAPI _glMapNamedBuffer)(GLuint buffer, GLenum access);
 static GLboolean(*WINAPI _glUnmapBuffer) (GLenum target);
+static GLboolean(*WINAPI _glUnmapNamedBuffer)(GLuint buffer);
+static void* (*WINAPI _glMapBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+static void* (*WINAPI _glMapNamedBufferRange)(GLuint buffer, GLintptr offset, GLsizei length, GLbitfield access);
+static void(*WINAPI _glFlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length);
+static void(*WINAPI _glFlushMappedNamedBufferRange)(GLuint buffer, GLintptr offset, GLsizei length);
 static void(*WINAPI _glUniform4fv) (GLint location, GLsizei count, const GLfloat* value);
 static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
@@ -68,16 +77,56 @@ static void WINAPI glBufferData_hook(GLenum target, GLsizeiptr size, const void*
     msvrGetContext()->onBufferData(target, size, data, usage);
     _glBufferData(target, size, data, usage);
 }
+static void WINAPI glNamedBufferData_hook(GLuint buffer, GLsizei size, const void *data, GLenum usage)
+{
+    _glNamedBufferData(buffer, size, data, usage);
+}
+static void WINAPI glBufferSubData_hook(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data)
+{
+    _glBufferSubData(target, offset, size, data);
+}
+static void WINAPI glNamedBufferSubData_hook(GLuint buffer, GLintptr offset, GLsizei size, const void *data)
+{
+    _glNamedBufferSubData(buffer, offset, size, data);
+}
+
 static void* WINAPI glMapBuffer_hook(GLenum target, GLenum access)
 {
     auto ret = _glMapBuffer(target, access);
     msvrGetContext()->onMapBuffer(target, access, ret);
     return ret;
 }
+static void* WINAPI glMapNamedBuffer_hook(GLuint buffer, GLenum access)
+{
+    auto ret = _glMapNamedBuffer(buffer, access);
+    return ret;
+}
 static GLboolean WINAPI glUnmapBuffer_hook(GLenum target)
 {
     msvrGetContext()->onUnmapBuffer(target);
     return _glUnmapBuffer(target);
+}
+static GLboolean WINAPI glUnmapNamedBuffer_hook(GLuint buffer)
+{
+    return _glUnmapNamedBuffer(buffer);
+}
+static void* WINAPI glMapBufferRange_hook(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access)
+{
+    auto ret = _glMapBufferRange(target, offset, length, access);
+    return ret;
+}
+static void* WINAPI glMapNamedBufferRange_hook(GLuint buffer, GLintptr offset, GLsizei length, GLbitfield access)
+{
+    auto ret = _glMapNamedBufferRange(buffer, offset, length, access);
+    return ret;
+}
+static void WINAPI glFlushMappedBufferRange_hook(GLenum target, GLintptr offset, GLsizeiptr length)
+{
+    _glFlushMappedBufferRange(target, offset, length);
+}
+static void WINAPI glFlushMappedNamedBufferRange_hook(GLuint buffer, GLintptr offset, GLsizei length)
+{
+    _glFlushMappedNamedBufferRange(buffer, offset, length);
 }
 
 static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat* value)
@@ -171,8 +220,17 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glBindBuffer),
     Hook(glBindVertexBuffer),
     Hook(glBufferData),
+    Hook(glNamedBufferData),
+    Hook(glBufferSubData),
+    Hook(glNamedBufferSubData),
     Hook(glMapBuffer),
+    Hook(glMapNamedBuffer),
     Hook(glUnmapBuffer),
+    Hook(glUnmapNamedBuffer),
+    Hook(glMapBufferRange),
+    Hook(glMapNamedBufferRange),
+    Hook(glFlushMappedBufferRange),
+    Hook(glFlushMappedNamedBufferRange),
     Hook(glUniform4fv),
     Hook(glUniformMatrix4fv),
 
