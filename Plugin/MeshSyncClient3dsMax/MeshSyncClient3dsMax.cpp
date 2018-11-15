@@ -407,7 +407,11 @@ void MeshSyncClient3dsMax::exportMaterials()
             return dst->id;
         };
 
-        auto mtl = (Mtl*)(*mtllib)[mi];
+        auto mtlbase = (*mtllib)[mi];
+        if (mtlbase->SuperClassID() != MATERIAL_CLASS_ID)
+            continue;
+
+        auto mtl = (Mtl*)mtlbase;
         auto& rec = m_material_records[mtl];
 
         int num_submtls = mtl->NumSubMtls();
