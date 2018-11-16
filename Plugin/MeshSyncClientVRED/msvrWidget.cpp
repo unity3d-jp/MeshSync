@@ -68,9 +68,7 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     setWindowTitle("Unity Mesh Sync");
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
-    auto ctx = msvrGetContext();
-    ctx->getSettings().auto_sync = false;
-
+    auto &settings = msvrGetContext()->getSettings();
 
     // setup controls
 
@@ -90,13 +88,18 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
     auto ck_delete = new QCheckBox("Sync Delete / Hide");
-    ck_delete->setCheckState(Qt::Checked);
+    if (settings.sync_delete)
+        ck_delete->setCheckState(Qt::Checked);
     layout->addWidget(ck_delete, iy++, 0, 1, 3);
 
     auto ck_camera = new QCheckBox("Sync Camera");
+    if (settings.sync_camera)
+        ck_camera->setCheckState(Qt::Checked);
     layout->addWidget(ck_camera, iy++, 0, 1, 3);
 
     auto ck_auto_sync = new QCheckBox("Auto Sync");
+    if (settings.auto_sync)
+        ck_auto_sync->setCheckState(Qt::Checked);
     layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
 
     auto bu_manual_sync = new QPushButton("Manual Sync");
@@ -155,7 +158,8 @@ void msvrSettingsWidget::onEditScaleFactor(const QString& v)
     float scale = v.toFloat(&ok);
     if (ok && settings.scale_factor != scale) {
         settings.scale_factor = scale;
-        ctx->send(true);
+        if (settings.auto_sync)
+            ctx->send(true);
     }
 }
 
@@ -163,10 +167,9 @@ void msvrSettingsWidget::onToggleSyncCamera(int v)
 {
     auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
-    if (settings.sync_camera != (bool)v) {
-        settings.sync_camera = v;
-        ctx->send(true);
-    }
+    settings.sync_camera = v;
+    if (settings.auto_sync)
+        ctx->send(false);
 }
 
 void msvrSettingsWidget::onToggleSyncDelete(int v)
@@ -181,9 +184,8 @@ void msvrSettingsWidget::onToggleAutoSync(int v)
     auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
     settings.auto_sync = v;
-    if (v) {
+    if (v)
         ctx->send(true);
-    }
 }
 
 void msvrSettingsWidget::onClickManualSync(bool v)

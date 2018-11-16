@@ -65,9 +65,7 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     setWindowTitle("Unity Mesh Sync");
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
-    auto ctx = msxmGetContext();
-    ctx->getSettings().auto_sync = false;
-
+    auto &settings = msxmGetContext()->getSettings();
 
     // setup controls
 
@@ -87,13 +85,18 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
     auto ck_delete = new QCheckBox("Sync Delete / Hide");
-    ck_delete->setCheckState(Qt::Checked);
+    if (settings.sync_delete)
+        ck_delete->setCheckState(Qt::Checked);
     layout->addWidget(ck_delete, iy++, 0, 1, 3);
 
     auto ck_camera = new QCheckBox("Sync Camera");
+    if (settings.sync_camera)
+        ck_camera->setCheckState(Qt::Checked);
     layout->addWidget(ck_camera, iy++, 0, 1, 3);
 
     auto ck_auto_sync = new QCheckBox("Auto Sync");
+    if (settings.auto_sync)
+        ck_auto_sync->setCheckState(Qt::Checked);
     layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
 
     auto bu_manual_sync = new QPushButton("Manual Sync");
@@ -152,7 +155,8 @@ void msxmSettingsWidget::onEditScaleFactor(const QString& v)
     float scale = v.toFloat(&ok);
     if (ok && settings.scale_factor != scale) {
         settings.scale_factor = scale;
-        ctx->send(true);
+        if (settings.auto_sync)
+            ctx->send(true);
     }
 }
 
@@ -160,10 +164,9 @@ void msxmSettingsWidget::onToggleSyncCamera(int v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
-    if (settings.sync_camera != (bool)v) {
-        settings.sync_camera = v;
-        ctx->send(true);
-    }
+    settings.sync_camera = v;
+    if (settings.auto_sync)
+        ctx->send(false);
 }
 
 void msxmSettingsWidget::onToggleSyncDelete(int v)
@@ -178,9 +181,8 @@ void msxmSettingsWidget::onToggleAutoSync(int v)
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
     settings.auto_sync = v;
-    if (v) {
+    if (v)
         ctx->send(true);
-    }
 }
 
 void msxmSettingsWidget::onClickManualSync(bool v)

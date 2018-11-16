@@ -98,7 +98,7 @@ void msvrContext::send(bool force)
 
             auto& t = m_sender;
             t.client_settings = m_settings.client_settings;
-            t.scene_settings.handedness = ms::Handedness::Left;
+            t.scene_settings.handedness = ms::Handedness::LeftZUp;
             t.scene_settings.scale_factor = m_settings.scale_factor;
 
             t.textures = m_texture_manager.getDirtyTextures();
@@ -293,7 +293,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
     auto *vb = getActiveBuffer(GL_ARRAY_BUFFER);
     auto *ib = getActiveBuffer(GL_ELEMENT_ARRAY_BUFFER);
-    if (!ib || !vb || vb->stride != sizeof(vr_vertex) || !vb->dirty)
+    if (!ib || !vb || vb->stride != sizeof(vr_vertex))
         return;
 
     auto& camera_buf = m_buffer_records[m_ub_handles[1]];
@@ -301,13 +301,14 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     if (camera_buf.data.size() != 992 || obj_buf.data.size() != 560)
         return;
 
+    // camera
     {
         auto view = (float4x4&)camera_buf.data[64 * 4];
         auto proj = (float4x4&)camera_buf.data[0];
 
         // projection matrix -> fov, aspect, clippling planes
         float fov, aspect, near_plane, far_plane;
-        extract_projection_data(proj, fov, aspect, near_plane, far_plane);
+        extract_projection_data(proj, fov, aspect, far_plane, near_plane);
 
         // fov >= 180.0f means came is not perspective. capture only when camera is perspective.
         if (fov < 179.0f) {
@@ -322,8 +323,9 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             float3 pos;
             quatf rot;
             extract_look_data(view, pos, rot);
-            if (pos != m_camera_pos ||
-                rot != m_camera_rot)
+            rot *= mu::rotateX(-90.0f * mu::Deg2Rad);
+
+            if (pos != m_camera_pos || rot != m_camera_rot)
             {
                 m_camera_dirty = true;
                 m_camera_pos = pos;
@@ -341,51 +343,53 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         }
 
         auto task = [this, vb, ib, count, type, transform]() {
-            auto dst = ms::Mesh::create();
-            {
+            if (!vb->dst_mesh) {
+                vb->dst_mesh = ms::Mesh::create();
+
                 char path[128];
                 sprintf(path, "/VREDMesh:ID[%08x]", m_vb_handle);
-                dst->path = path;
+                vb->dst_mesh->path = path;
             }
+            auto& dst = *vb->dst_mesh;
 
-            dst->position = extract_position(transform);
-            dst->rotation = extract_rotation(transform);
-            dst->scale = extract_scale(transform);
+            dst.position = extract_position(transform);
+            dst.rotation = extract_rotation(transform);
+            dst.scale = extract_scale(transform);
 
+            if (vb->dirty) {
+                size_t num_indices = count;
+                size_t num_triangles = count / 3;
+                size_t num_vertices = vb->data.size() / vb->stride;
 
-            size_t num_indices = count;
-            size_t num_triangles = count / 3;
-            size_t num_vertices = vb->data.size() / vb->stride;
+                // convert vertices
+                dst.points.resize_discard(num_vertices);
+                dst.normals.resize_discard(num_vertices);
+                dst.uv0.resize_discard(num_vertices);
+                auto *vtx = (vr_vertex*)vb->data.data();
+                for (size_t vi = 0; vi < num_vertices; ++vi) {
+                    dst.points[vi] = vtx[vi].vertex;
+                    dst.normals[vi] = vtx[vi].normal;
+                    dst.uv0[vi] = vtx[vi].uv;
+                }
 
-            // convert vertices
-            dst->points.resize_discard(num_vertices);
-            dst->normals.resize_discard(num_vertices);
-            dst->uv0.resize_discard(num_vertices);
-            auto *vtx = (vr_vertex*)vb->data.data();
-            for (size_t vi = 0; vi < num_vertices; ++vi) {
-                dst->points[vi] = vtx[vi].vertex;
-                dst->normals[vi] = vtx[vi].normal;
-                dst->uv0[vi] = vtx[vi].uv;
+                // convert indices
+                dst.counts.resize(num_triangles, 3);
+                if (type == GL_UNSIGNED_INT) {
+                    int *src = (int*)ib->data.data();
+                    dst.indices.assign(src, src + num_indices);
+                }
+                else if (type == GL_UNSIGNED_SHORT) {
+                    uint16_t *src = (uint16_t*)ib->data.data();
+                    dst.indices.resize_discard(num_indices);
+                    for (size_t ii = 0; ii < num_indices; ++ii)
+                        dst.indices[ii] = src[ii];
+                }
+
+                dst.setupFlags();
+                dst.flags.has_refine_settings = 1;
+                dst.refine_settings.flags.swap_faces = true;
+                dst.refine_settings.flags.gen_tangents = 1;
             }
-
-            // convert indices
-            dst->counts.resize(num_triangles, 3);
-            if (type == GL_UNSIGNED_INT) {
-                int *src = (int*)ib->data.data();
-                dst->indices.assign(src, src + num_indices);
-            }
-            else if (type == GL_UNSIGNED_SHORT) {
-                uint16_t *src = (uint16_t*)ib->data.data();
-                dst->indices.resize_discard(num_indices);
-                for (size_t ii = 0; ii < num_indices; ++ii)
-                    dst->indices[ii] = src[ii];
-            }
-
-            dst->setupFlags();
-            dst->flags.has_refine_settings = 1;
-            dst->refine_settings.flags.gen_tangents = 1;
-
-            vb->dst_mesh = dst;
         };
         task();
     }

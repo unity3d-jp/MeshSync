@@ -45,7 +45,7 @@ struct MaterialRecord
 {
     GLuint program = 0;
     GLuint texture = 0;
-    float4 diffuse = float4::zero();
+    float4 diffuse = float4::one();
 
     bool operator==(const MaterialRecord& v) const
     {
@@ -80,7 +80,7 @@ struct msvrSettings
     float scale_factor = 100.0f;
     bool auto_sync = false;
     bool sync_delete = true;
-    bool sync_camera = false;
+    bool sync_camera = true;
     bool sync_textures = true;
     std::string camera_path = "/Main Camera";
 };
