@@ -18,6 +18,8 @@ public:
     int addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format);
     // thread safe
     int addFile(const std::string& path, TextureType type);
+    // thread safe
+    int add(TexturePtr tex);
 
     std::vector<TexturePtr> getAllTextures();
     std::vector<TexturePtr> getDirtyTextures();

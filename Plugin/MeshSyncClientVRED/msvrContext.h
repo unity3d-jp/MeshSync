@@ -16,7 +16,7 @@ msvrContext* msvrGetContext();
 void msvrInitializeWidget();
 
 
-struct ms_vertex
+struct vr_vertex
 {
     float3 vertex;
     float3 normal;
@@ -24,21 +24,9 @@ struct ms_vertex
     float4 color;
 };
 
-struct vr_vertex
+struct TextureRecord
 {
-    float3 vertex;
-    float3 normal;
-    float2 uv;
-    float4 color;
-
-    bool operator==(const ms_vertex& v) const
-    {
-        return vertex == v.vertex && normal == v.normal && uv == v.uv && color == v.color;
-    }
-    operator ms_vertex() const
-    {
-        return { vertex, normal, uv, color };
-    }
+    ms::TexturePtr dst = ms::Texture::create();
 };
 
 struct MaterialRecord
@@ -93,8 +81,11 @@ public:
     msvrSettings& getSettings();
     void send(bool force);
 
+    void onGenTextures(GLsizei n, GLuint * textures);
+    void onDeleteTextures(GLsizei n, const GLuint * textures);
     void onActiveTexture(GLenum texture);
     void onBindTexture(GLenum target, GLuint texture);
+    void onTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data);
 
     void onGenBuffers(GLsizei n, GLuint* buffers);
     void onDeleteBuffers(GLsizei n, const GLuint* buffers);
@@ -126,7 +117,6 @@ protected:
 
     std::map<uint32_t, BufferRecord> m_buffer_records;
     std::vector<GLuint> m_meshes_deleted;
-    GLuint m_texture_slot = 0;
 
     uint32_t m_vb_handle = 0;
     uint32_t m_ib_handle = 0;
@@ -141,7 +131,11 @@ protected:
     float m_camera_near = 0.01f;
     float m_camera_far = 100.0f;
 
-    std::vector<MaterialRecord> m_material_data;
+    int m_active_texture = 0;
+    uint32_t m_texture_slots[32] = {};
+    std::map<uint32_t, TextureRecord> m_texture_records;
+
+    std::vector<MaterialRecord> m_material_records;
 
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;

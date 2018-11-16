@@ -60,7 +60,7 @@ int TextureManager::addImage(const std::string& name, int width, int height, con
         tex->width = width;
         tex->height = height;
         tex->data.assign((const char*)data, (const char*)data + size);
-        rec.dirty = id != -1;
+        rec.dirty = true;
     }
     return id;
 }
@@ -85,11 +85,26 @@ int TextureManager::addFile(const std::string& path, TextureType type)
                 tex->name = mu::GetFilename(path.c_str());
                 tex->format = ms::TextureFormat::RawFile;
                 tex->type = type;
-                rec.dirty = id != -1;
+                rec.dirty = true;
             }
         }
     });
     return id;
+}
+
+int TextureManager::add(TexturePtr tex)
+{
+    if (!tex)
+        return InvalidID;
+
+    auto& rec = lockAndGet(tex->name);
+    auto checksum = SumInt32(tex->data.data(), tex->data.size());
+    if (!rec.texture || rec.checksum != checksum) {
+        rec.checksum = checksum;
+        rec.texture = tex;
+        rec.dirty = true;
+    }
+    return tex->id;
 }
 
 std::vector<TexturePtr> TextureManager::getAllTextures()

@@ -4,8 +4,13 @@
 
 #pragma warning(push)
 #pragma warning(disable:4229)
+static void(*WINAPI _glGenTextures)(GLsizei n, GLuint * textures);
+static void(*WINAPI _glDeleteTextures)(GLsizei n, const GLuint * textures);
 static void(*WINAPI _glActiveTexture)(GLenum texture);
 static void(*WINAPI _glBindTexture)(GLenum target, GLuint texture);
+static void(*WINAPI _glTexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data);
+static void(*WINAPI _glTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels);
+static void(*WINAPI _glTextureSubImage2D)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 
 static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
 static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
@@ -38,6 +43,16 @@ static void* (*WINAPI _wglGetProcAddress)(const char* name);
 
 #pragma warning(pop)
 
+static void WINAPI glGenTextures_hook(GLsizei n, GLuint * textures)
+{
+    _glGenTextures(n, textures);
+    msvrGetContext()->onGenTextures(n, textures);
+}
+static void WINAPI glDeleteTextures_hook(GLsizei n, const GLuint * textures)
+{
+    msvrGetContext()->onDeleteTextures(n, textures);
+    _glDeleteTextures(n, textures);
+}
 static void WINAPI glActiveTexture_hook(GLenum texture)
 {
     msvrGetContext()->onActiveTexture(texture);
@@ -47,6 +62,19 @@ static void WINAPI glBindTexture_hook(GLenum target, GLuint texture)
 {
     msvrGetContext()->onBindTexture(target, texture);
     _glBindTexture(target, texture);
+}
+static void WINAPI glTexImage2D_hook(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data)
+{
+    msvrGetContext()->onTexImage2D(target, level, internalformat, width, height, border, format, type, data);
+    _glTexImage2D(target, level, internalformat, width, height, border, format, type, data);
+}
+static void WINAPI glTexSubImage2D_hook(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels)
+{
+    _glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+static void WINAPI glTextureSubImage2D_hook(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
+{
+    _glTextureSubImage2D(texture, level, xoffset, yoffset, width, height, format, type, pixels);
 }
 
 static void WINAPI glGenBuffers_hook(GLsizei n, GLuint* buffers)
@@ -216,8 +244,13 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     }
     s_hooks[] = {
 #define Hook(Name) {#Name, (void**)&Name##_hook, (void**)&_##Name}
+    Hook(glGenTextures),
+    Hook(glDeleteTextures),
     Hook(glActiveTexture),
     Hook(glBindTexture),
+    //Hook(glTexImage2D),
+    Hook(glTexSubImage2D),
+    Hook(glTextureSubImage2D),
 
     Hook(glGenBuffers),
     Hook(glDeleteBuffers),
@@ -353,6 +386,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #define Override(Name) (void*&)_##Name = OverrideDLLExport(opengl32, #Name, Name##_hook, jumptable);
         Override(wglGetProcAddress);
         Override(glClear);
+        Override(glTexImage2D);
+        //Override(glTexSubImage2D);
 #undef Override
     }
     else if (fdwReason == DLL_PROCESS_DETACH) {

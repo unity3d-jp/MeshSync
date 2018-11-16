@@ -36,15 +36,15 @@ void msvrContext::send(bool force)
 
     // build material list
     {
-        m_material_data.clear();
+        m_material_records.clear();
         auto findOrAddMaterial = [this](const MaterialRecord& md) {
-            auto it = std::find(m_material_data.begin(), m_material_data.end(), md);
-            if (it != m_material_data.end()) {
-                return (int)std::distance(m_material_data.begin(), it);
+            auto it = std::find(m_material_records.begin(), m_material_records.end(), md);
+            if (it != m_material_records.end()) {
+                return (int)std::distance(m_material_records.begin(), it);
             }
             else {
-                int ret = (int)m_material_data.size();
-                m_material_data.push_back(md);
+                int ret = (int)m_material_records.size();
+                m_material_records.push_back(md);
                 return ret;
             }
         };
@@ -58,7 +58,7 @@ void msvrContext::send(bool force)
 
         char name[128];
         int material_index = 0;
-        for (auto& md : m_material_data) {
+        for (auto& md : m_material_records) {
             int mid = material_index++;
             auto mat = ms::Material::create();
             sprintf(name, "VREDMaterial:ID[%04x]", mid);
@@ -116,13 +116,125 @@ void msvrContext::send(bool force)
     m_sender.kick();
 }
 
+
+void msvrContext::onGenTextures(GLsizei n, GLuint * textures)
+{
+    for (int i = 0; i < (int)n; ++i) {
+        m_texture_records[textures[i]];
+    }
+}
+
+void msvrContext::onDeleteTextures(GLsizei n, const GLuint * textures)
+{
+    for (int i = 0; i < (int)n; ++i) {
+        m_texture_records.erase(textures[i]);
+    }
+}
+
 void msvrContext::onActiveTexture(GLenum texture)
 {
+    m_active_texture = texture - GL_TEXTURE0;
 }
 
 void msvrContext::onBindTexture(GLenum target, GLuint texture)
 {
+    if (target == GL_TEXTURE_2D) {
+        m_texture_slots[m_active_texture] = texture;
+    }
 }
+
+void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data)
+{
+    if (target == GL_TEXTURE_2D && level == 0) {
+        auto handle = m_texture_slots[m_active_texture];
+        auto& rec = m_texture_records[handle];
+        auto& dst = *rec.dst;
+
+        int pixel_size = 0;
+        switch (internalformat) {
+        case GL_RGB:
+            switch (type) {
+            case GL_UNSIGNED_BYTE:
+                pixel_size = 3;
+                dst.format = ms::TextureFormat::RGBu8;
+                break;
+            case GL_HALF_APPLE:
+                pixel_size = 6;
+                dst.format = ms::TextureFormat::RGBf16;
+                break;
+            case GL_FLOAT:
+                pixel_size = 12;
+                dst.format = ms::TextureFormat::RGBf32;
+                break;
+            }
+            break;
+        case GL_RGBA:
+            switch (type) {
+            case GL_UNSIGNED_BYTE:
+                pixel_size = 4;
+                dst.format = ms::TextureFormat::RGBAu8;
+                break;
+            case GL_HALF_APPLE:
+                pixel_size = 8;
+                dst.format = ms::TextureFormat::RGBAf16;
+                break;
+            case GL_FLOAT:
+                pixel_size = 16;
+                dst.format = ms::TextureFormat::RGBAf32;
+                break;
+            }
+            break;
+
+        case GL_RGB8:
+        case GL_RGB8_SNORM:
+        case GL_SRGB8:
+            pixel_size = 3;
+            dst.format = ms::TextureFormat::RGBu8;
+            break;
+        case GL_RGBA8:
+        case GL_RGBA8_SNORM:
+        case GL_SRGB8_ALPHA8:
+            pixel_size = 4;
+            dst.format = ms::TextureFormat::RGBAu8;
+            break;
+        case GL_RGB16F:
+            pixel_size = 6;
+            dst.format = ms::TextureFormat::RGBf16;
+            break;
+        case GL_RGBA16F:
+            pixel_size = 8;
+            dst.format = ms::TextureFormat::RGBAf16;
+            break;
+        case GL_RGB32F:
+            pixel_size = 12;
+            dst.format = ms::TextureFormat::RGBf32;
+            break;
+        case GL_RGBA32F:
+            pixel_size = 16;
+            dst.format = ms::TextureFormat::RGBAf32;
+            break;
+        }
+        if (pixel_size) {
+            char name[128];
+            sprintf(name, "VREDTexture:ID[%08x]", handle);
+            dst.name = name;
+            dst.id = (int)handle;
+            dst.width = width;
+            dst.height = height;
+            int size = width * height * pixel_size;
+            if (data) {
+                dst.data.assign((char*)data, (char*)data + size);
+                m_texture_manager.add(rec.dst);
+            }
+            else
+                dst.data.resize_zeroclear(size);
+        }
+        else {
+            msLogWarning("unsupported texture format\n");
+        }
+    }
+}
+
 
 void msvrContext::onGenBuffers(GLsizei n, GLuint *buffers)
 {
