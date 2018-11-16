@@ -407,7 +407,6 @@ msvrContext* msvrGetContext()
     static std::unique_ptr<msvrContext> s_ctx;
     if (!s_ctx) {
         s_ctx.reset(new msvrContext());
-        msvrInitializeWidget();
     }
     return s_ctx.get();
 }

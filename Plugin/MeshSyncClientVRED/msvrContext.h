@@ -78,7 +78,7 @@ struct msvrSettings
 {
     ms::ClientSettings client_settings;
     float scale_factor = 100.0f;
-    bool auto_sync = true;
+    bool auto_sync = false;
     bool sync_delete = true;
     bool sync_camera = false;
 };

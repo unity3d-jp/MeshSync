@@ -179,8 +179,10 @@ bool g_color_pass = false;
 
 static void WINAPI glDrawRangeElements_hook(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
 {
-    if (g_color_pass)
+    if (g_color_pass) {
+        msvrInitializeWidget();
         msvrGetContext()->onDrawRangeElements(mode, start, end, count, type, indices);
+    }
     _glDrawRangeElements(mode, start, end, count, type, indices);
 }
 
