@@ -218,8 +218,8 @@ void msxmContext::send(bool force)
     if (m_settings.sync_camera) {
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->path = "/Main Camera";
         }
+        m_camera->path = m_settings.camera_path;
         m_camera->position = m_camera_pos;
         m_camera->rotation = m_camera_rot;
         m_camera->fov = m_camera_fov;

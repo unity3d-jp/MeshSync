@@ -11,6 +11,7 @@ static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
 static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
 static void(*WINAPI _glBindBuffer) (GLenum target, GLuint buffer);
 static void(*WINAPI _glBindVertexBuffer) (GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
+static void(*WINAPI _glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 static void(*WINAPI _glBufferData) (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
 static void(*WINAPI _glNamedBufferData)(GLuint buffer, GLsizei size, const void *data, GLenum usage);
 static void(*WINAPI _glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
@@ -23,8 +24,6 @@ static void* (*WINAPI _glMapBufferRange)(GLenum target, GLintptr offset, GLsizei
 static void* (*WINAPI _glMapNamedBufferRange)(GLuint buffer, GLintptr offset, GLsizei length, GLbitfield access);
 static void(*WINAPI _glFlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length);
 static void(*WINAPI _glFlushMappedNamedBufferRange)(GLuint buffer, GLintptr offset, GLsizei length);
-static void(*WINAPI _glUniform4fv) (GLint location, GLsizei count, const GLfloat* value);
-static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
 static void(*WINAPI _glGenVertexArrays)(GLsizei n, GLuint *buffers);
 static void(*WINAPI _glDeleteVertexArrays)(GLsizei n, const GLuint *buffers);
@@ -38,7 +37,6 @@ static void(*WINAPI _glClear)(GLbitfield mask);
 static void* (*WINAPI _wglGetProcAddress)(const char* name);
 
 #pragma warning(pop)
-
 
 static void WINAPI glActiveTexture_hook(GLenum texture)
 {
@@ -71,6 +69,11 @@ static void WINAPI glBindVertexBuffer_hook(GLuint bindingindex, GLuint buffer, G
     msvrGetContext()->onBindVertexBuffer(bindingindex, buffer, offset, stride);
     _glBindVertexBuffer(bindingindex, buffer, offset, stride);
 }
+static void WINAPI glBindBufferBase_hook(GLenum target, GLuint index, GLuint buffer)
+{
+    msvrGetContext()->onBindBufferBase(target, index, buffer);
+    _glBindBufferBase(target, index, buffer);
+}
 
 static void WINAPI glBufferData_hook(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
@@ -87,6 +90,7 @@ static void WINAPI glBufferSubData_hook(GLenum target, GLintptr offset, GLsizeip
 }
 static void WINAPI glNamedBufferSubData_hook(GLuint buffer, GLintptr offset, GLsizei size, const void *data)
 {
+    msvrGetContext()->onNamedBufferSubData(buffer, offset, size, data);
     _glNamedBufferSubData(buffer, offset, size, data);
 }
 
@@ -129,17 +133,6 @@ static void WINAPI glFlushMappedBufferRange_hook(GLenum target, GLintptr offset,
 static void WINAPI glFlushMappedNamedBufferRange_hook(GLuint buffer, GLintptr offset, GLsizei length)
 {
     _glFlushMappedNamedBufferRange(buffer, offset, length);
-}
-
-static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat* value)
-{
-    msvrGetContext()->onUniform4fv(location, count, value);
-    _glUniform4fv(location, count, value);
-}
-static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
-{
-    msvrGetContext()->onUniformMatrix4fv(location, count, transpose, value);
-    _glUniformMatrix4fv(location, count, transpose, value);
 }
 
 static void WINAPI glGenVertexArrays_hook(GLsizei n, GLuint *buffers)
@@ -230,6 +223,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glDeleteBuffers),
     Hook(glBindBuffer),
     Hook(glBindVertexBuffer),
+    Hook(glBindBufferBase),
     Hook(glBufferData),
     Hook(glNamedBufferData),
     Hook(glBufferSubData),
@@ -242,8 +236,6 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glMapNamedBufferRange),
     Hook(glFlushMappedBufferRange),
     Hook(glFlushMappedNamedBufferRange),
-    Hook(glUniform4fv),
-    Hook(glUniformMatrix4fv),
 
     Hook(glGenVertexArrays),
     Hook(glDeleteVertexArrays),

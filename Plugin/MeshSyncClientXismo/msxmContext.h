@@ -89,6 +89,8 @@ struct msxmSettings
     bool weld_vertices = true;
     bool sync_delete = true;
     bool sync_camera = false;
+    bool sync_textures = true;
+    std::string camera_path = "/Main Camera";
 };
 
 class msxmContext

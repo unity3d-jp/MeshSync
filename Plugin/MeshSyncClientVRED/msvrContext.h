@@ -81,6 +81,8 @@ struct msvrSettings
     bool auto_sync = false;
     bool sync_delete = true;
     bool sync_camera = false;
+    bool sync_textures = true;
+    std::string camera_path = "/Main Camera";
 };
 
 class msvrContext
@@ -98,13 +100,13 @@ public:
     void onDeleteBuffers(GLsizei n, const GLuint* buffers);
     void onBindBuffer(GLenum target, GLuint buffer);
     void onBindVertexBuffer(GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
+    void onBindBufferBase(GLenum target, GLuint index, GLuint buffer);
     void onBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+    void onNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizei size, const void *data);
     void onMapBuffer(GLenum target, GLenum access, void *&mapped_data);
     void onMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, void *&mapped_data);
     void onUnmapBuffer(GLenum target);
     void onFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
-    void onUniform4fv(GLint location, GLsizei count, const GLfloat* value);
-    void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
     void onGenVertexArrays(GLsizei n, GLuint *buffers);
     void onDeleteVertexArrays(GLsizei n, const GLuint *buffers);
@@ -128,9 +130,9 @@ protected:
 
     uint32_t m_vb_handle = 0;
     uint32_t m_ib_handle = 0;
+    uint32_t m_ub_handle = 0;
+    uint32_t m_ub_handles[16] = {};
     MaterialRecord m_material;
-    float4x4 m_proj = float4x4::identity();
-    float4x4 m_modelview = float4x4::identity();
 
     bool m_camera_dirty = false;
     float3 m_camera_pos = float3::zero();

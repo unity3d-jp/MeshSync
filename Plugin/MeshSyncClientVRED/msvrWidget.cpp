@@ -27,7 +27,7 @@
 
 class msvrSettingsWidget : public QWidget
 {
-    using super = QWidget;
+using super = QWidget;
 public:
     msvrSettingsWidget(QWidget *parent = nullptr);
 
@@ -88,10 +88,6 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     auto ed_scale_factor = new QLineEdit("100.0");
     ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
-
-    //auto ck_weld = new QCheckBox("Weld Vertices");
-    //ck_weld->setCheckState(Qt::Checked);
-    //layout->addWidget(ck_weld, iy++, 0, 1, 3);
 
     auto ck_delete = new QCheckBox("Sync Delete / Hide");
     ck_delete->setCheckState(Qt::Checked);

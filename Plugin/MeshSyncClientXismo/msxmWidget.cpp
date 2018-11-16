@@ -35,7 +35,6 @@ private:
     void onEditServer(const QString& v);
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
-    void onToggleWelding(int v);
     void onToggleSyncCamera(int v);
     void onToggleSyncDelete(int v);
     void onToggleAutoSync(int v);
@@ -87,10 +86,6 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
-    //auto ck_weld = new QCheckBox("Weld Vertices");
-    //ck_weld->setCheckState(Qt::Checked);
-    //layout->addWidget(ck_weld, iy++, 0, 1, 3);
-
     auto ck_delete = new QCheckBox("Sync Delete / Hide");
     ck_delete->setCheckState(Qt::Checked);
     layout->addWidget(ck_delete, iy++, 0, 1, 3);
@@ -109,7 +104,6 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     connect(ed_server, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditServer);
     connect(ed_port, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditPort);
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditScaleFactor);
-    //connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
     connect(ck_camera, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncCamera);
     connect(ck_delete, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncDelete);
     connect(ck_auto_sync, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleAutoSync);
@@ -158,16 +152,6 @@ void msxmSettingsWidget::onEditScaleFactor(const QString& v)
     float scale = v.toFloat(&ok);
     if (ok && settings.scale_factor != scale) {
         settings.scale_factor = scale;
-        ctx->send(true);
-    }
-}
-
-void msxmSettingsWidget::onToggleWelding(int v)
-{
-    auto ctx = msxmGetContext();
-    auto& settings = ctx->getSettings();
-    if (settings.weld_vertices != (bool)v) {
-        settings.weld_vertices = v;
         ctx->send(true);
     }
 }
@@ -225,7 +209,7 @@ static msxmSettingsWidget *g_widget = nullptr;
 void msxmInitializeWidget()
 {
     if (!g_widget) {
-        g_widget.reset(new msxmSettingsWidget());
+        g_widget = new msxmSettingsWidget();
         g_widget->show();
     }
 }

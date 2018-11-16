@@ -66,7 +66,7 @@ void msvrContext::send(bool force)
         for (auto& md : m_material_data) {
             int mid = material_index++;
             auto mat = ms::Material::create();
-            sprintf(name, "XismoMaterial:ID[%04x]", mid);
+            sprintf(name, "VREDMaterial:ID[%04x]", mid);
             mat->id = mid;
             mat->name = name;
             mat->setColor(md.diffuse);
@@ -78,8 +78,8 @@ void msvrContext::send(bool force)
     if (m_settings.sync_camera) {
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->path = "/Main Camera";
         }
+        m_camera->path = m_settings.camera_path;
         m_camera->position = m_camera_pos;
         m_camera->rotation = m_camera_rot;
         m_camera->fov = m_camera_fov;
@@ -98,7 +98,7 @@ void msvrContext::send(bool force)
             // handle deleted objects
             for (auto h : m_meshes_deleted) {
                 char path[128];
-                sprintf(path, "/XismoMesh:ID[%08x]", h);
+                sprintf(path, "/VREDMesh:ID[%08x]", h);
                 m_entity_manager.erase(ms::Identifier(path, (int)h));
             }
             m_meshes_deleted.clear();
@@ -158,11 +158,16 @@ void msvrContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
 
 void msvrContext::onBindBuffer(GLenum target, GLuint buffer)
 {
-    if (target == GL_ARRAY_BUFFER) {
+    switch (target) {
+    case GL_ARRAY_BUFFER:
         m_vb_handle = buffer;
-    }
-    else if (target == GL_ELEMENT_ARRAY_BUFFER) {
+        break;
+    case GL_ELEMENT_ARRAY_BUFFER:
         m_ib_handle = buffer;
+        break;
+    case GL_UNIFORM_BUFFER:
+        m_ub_handle = buffer;
+        break;
     }
 }
 
@@ -171,6 +176,15 @@ void msvrContext::onBindVertexBuffer(GLuint bindingindex, GLuint buffer, GLintpt
     m_vb_handle = buffer;
     auto& rec = m_buffer_records[buffer];
     rec.stride = stride;
+}
+
+void msvrContext::onBindBufferBase(GLenum target, GLuint index, GLuint buffer)
+{
+    switch (target) {
+    case GL_UNIFORM_BUFFER:
+        m_ub_handles[index] = buffer;
+        break;
+    }
 }
 
 void msvrContext::onBufferData(GLenum target, GLsizeiptr size, const void * data, GLenum usage)
@@ -184,10 +198,19 @@ void msvrContext::onBufferData(GLenum target, GLsizeiptr size, const void * data
     }
 }
 
+void msvrContext::onNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizei size, const void * data)
+{
+    auto *buf = &m_buffer_records[buffer];
+    buf->data.resize_discard(offset + size);
+    if (data) {
+        memcpy(buf->data.data() + offset, data, size);
+        buf->dirty = true;
+    }
+}
+
 void msvrContext::onMapBuffer(GLenum target, GLenum access, void *& mapped_data)
 {
-    if (access != GL_WRITE_ONLY ||
-        (target != GL_ARRAY_BUFFER && target != GL_ELEMENT_ARRAY_BUFFER)) {
+    if (access != GL_WRITE_ONLY) {
         return;
     }
 
@@ -202,8 +225,7 @@ void msvrContext::onMapBuffer(GLenum target, GLenum access, void *& mapped_data)
 
 void msvrContext::onMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, void *& mapped_data)
 {
-    if ((access & GL_MAP_WRITE_BIT) == 0 ||
-        (target != GL_ARRAY_BUFFER && target != GL_ELEMENT_ARRAY_BUFFER)) {
+    if ((access & GL_MAP_WRITE_BIT) == 0) {
         return;
     }
 
@@ -233,34 +255,14 @@ void msvrContext::onFlushMappedBufferRange(GLenum target, GLintptr offset, GLsiz
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            memcpy((char*)buf->mapped_data + offset, buf->tmp_data.data() + offset, length);
-            if (buf->data.size() != buf->tmp_data.size() || memcmp(buf->data.data() + offset, buf->tmp_data.data() + offset, length) != 0) {
-                buf->data.swap(buf->tmp_data);
+            memcpy((char*)buf->mapped_data, buf->tmp_data.data() + offset, length);
+            if (memcmp(buf->data.data() + offset, buf->tmp_data.data() + offset, length) != 0) {
+                memcpy(buf->data.data() + offset, buf->data.data() + offset, length);
                 buf->dirty = true;
             }
             buf->mapped_data = nullptr;
         }
     }
-}
-
-void msvrContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * value)
-{
-    if (location == 3) {
-        // diffuse
-        m_material.diffuse.assign(value);
-    }
-}
-
-void msvrContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
-{
-    //if (location == 1) {
-    //    // projection matrix
-    //    m_proj.assign(value);
-    //}
-    //else if (location == 2) {
-    //    // modelview matrix
-    //    m_modelview.assign(value);
-    //}
 }
 
 
@@ -300,35 +302,35 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         (vb && vb->stride == sizeof(vr_vertex)) &&
         ib )
     {
-        {
-            // projection matrix -> fov, aspect, clippling planes
-            float fov, aspect, near_plane, far_plane;
-            extract_projection_data(m_proj, fov, aspect, near_plane, far_plane);
+        //{
+        //    // projection matrix -> fov, aspect, clippling planes
+        //    float fov, aspect, near_plane, far_plane;
+        //    extract_projection_data(m_proj, fov, aspect, near_plane, far_plane);
 
-            if (fov > 179.0f) {
-                // camera is not perspective. capture only when camera is perspective.
-                goto bailout;
-            }
-            if (fov != m_camera_fov) {
-                m_camera_dirty = true;
-                m_camera_fov = fov;
-                m_camera_near = near_plane;
-                m_camera_far = far_plane;
-            }
-        }
-        {
-            // modelview matrix -> camera pos & rot
-            float3 pos;
-            quatf rot;
-            extract_look_data(m_modelview, pos, rot);
-            if (pos != m_camera_pos ||
-                rot != m_camera_rot)
-            {
-                m_camera_dirty = true;
-                m_camera_pos = pos;
-                m_camera_rot = rot;
-            }
-        }
+        //    if (fov > 179.0f) {
+        //        // camera is not perspective. capture only when camera is perspective.
+        //        goto bailout;
+        //    }
+        //    if (fov != m_camera_fov) {
+        //        m_camera_dirty = true;
+        //        m_camera_fov = fov;
+        //        m_camera_near = near_plane;
+        //        m_camera_far = far_plane;
+        //    }
+        //}
+        //{
+        //    // modelview matrix -> camera pos & rot
+        //    float3 pos;
+        //    quatf rot;
+        //    extract_look_data(m_modelview, pos, rot);
+        //    if (pos != m_camera_pos ||
+        //        rot != m_camera_rot)
+        //    {
+        //        m_camera_dirty = true;
+        //        m_camera_pos = pos;
+        //        m_camera_rot = rot;
+        //    }
+        //}
 
         if (vb->material != m_material) {
             vb->material = m_material;
@@ -392,11 +394,13 @@ void msvrContext::onFlush()
 
 BufferRecord* msvrContext::getActiveBuffer(GLenum target)
 {
-    if (target == GL_ARRAY_BUFFER) {
+    switch (target) {
+    case GL_ARRAY_BUFFER:
         return &m_buffer_records[m_vb_handle];
-    }
-    else if (target == GL_ELEMENT_ARRAY_BUFFER) {
-        return &m_buffer_records[m_ib_handle];
+    case GL_ELEMENT_ARRAY_BUFFER:
+        return &m_buffer_records[m_vb_handle];
+    case GL_UNIFORM_BUFFER:
+        return &m_buffer_records[m_ub_handle];
     }
     return nullptr;
 }
