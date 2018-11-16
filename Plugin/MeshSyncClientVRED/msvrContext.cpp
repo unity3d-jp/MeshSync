@@ -151,14 +151,46 @@ void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat,
         auto& dst = *rec.dst;
 
         int pixel_size = 0;
-        switch (internalformat) {
+        switch (format) {
+        case GL_RED:
+            switch (type) {
+            case GL_UNSIGNED_BYTE:
+                pixel_size = 1;
+                dst.format = ms::TextureFormat::Ru8;
+                break;
+            case GL_HALF_FLOAT:
+                pixel_size = 2;
+                dst.format = ms::TextureFormat::Rf16;
+                break;
+            case GL_FLOAT:
+                pixel_size = 4;
+                dst.format = ms::TextureFormat::Rf32;
+                break;
+            }
+            break;
+        case GL_RG:
+            switch (type) {
+            case GL_UNSIGNED_BYTE:
+                pixel_size = 2;
+                dst.format = ms::TextureFormat::RGu8;
+                break;
+            case GL_HALF_FLOAT:
+                pixel_size = 4;
+                dst.format = ms::TextureFormat::RGf16;
+                break;
+            case GL_FLOAT:
+                pixel_size = 8;
+                dst.format = ms::TextureFormat::RGf32;
+                break;
+            }
+            break;
         case GL_RGB:
             switch (type) {
             case GL_UNSIGNED_BYTE:
                 pixel_size = 3;
                 dst.format = ms::TextureFormat::RGBu8;
                 break;
-            case GL_HALF_APPLE:
+            case GL_HALF_FLOAT:
                 pixel_size = 6;
                 dst.format = ms::TextureFormat::RGBf16;
                 break;
@@ -174,7 +206,7 @@ void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat,
                 pixel_size = 4;
                 dst.format = ms::TextureFormat::RGBAu8;
                 break;
-            case GL_HALF_APPLE:
+            case GL_HALF_FLOAT:
                 pixel_size = 8;
                 dst.format = ms::TextureFormat::RGBAf16;
                 break;
@@ -184,36 +216,8 @@ void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat,
                 break;
             }
             break;
-
-        case GL_RGB8:
-        case GL_RGB8_SNORM:
-        case GL_SRGB8:
-            pixel_size = 3;
-            dst.format = ms::TextureFormat::RGBu8;
-            break;
-        case GL_RGBA8:
-        case GL_RGBA8_SNORM:
-        case GL_SRGB8_ALPHA8:
-            pixel_size = 4;
-            dst.format = ms::TextureFormat::RGBAu8;
-            break;
-        case GL_RGB16F:
-            pixel_size = 6;
-            dst.format = ms::TextureFormat::RGBf16;
-            break;
-        case GL_RGBA16F:
-            pixel_size = 8;
-            dst.format = ms::TextureFormat::RGBAf16;
-            break;
-        case GL_RGB32F:
-            pixel_size = 12;
-            dst.format = ms::TextureFormat::RGBf32;
-            break;
-        case GL_RGBA32F:
-            pixel_size = 16;
-            dst.format = ms::TextureFormat::RGBAf32;
-            break;
         }
+
         if (pixel_size) {
             char name[128];
             sprintf(name, "VREDTexture:ID[%08x]", handle);

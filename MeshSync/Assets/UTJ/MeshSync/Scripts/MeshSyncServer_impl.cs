@@ -514,7 +514,8 @@ namespace UTJ.MeshSync
         {
             switch (v)
             {
-                case TextureFormat.Ru8: return UnityEngine.TextureFormat.Alpha8;
+                case TextureFormat.Ru8: return UnityEngine.TextureFormat.R8;
+                case TextureFormat.RGu8: return UnityEngine.TextureFormat.RG16;
                 case TextureFormat.RGBu8: return UnityEngine.TextureFormat.RGB24;
                 case TextureFormat.RGBAu8: return UnityEngine.TextureFormat.RGBA32;
                 case TextureFormat.Rf16: return UnityEngine.TextureFormat.RHalf;
@@ -530,7 +531,8 @@ namespace UTJ.MeshSync
         {
             switch (v)
             {
-                case UnityEngine.TextureFormat.Alpha8: return TextureFormat.Ru8;
+                case UnityEngine.TextureFormat.R8: return TextureFormat.Ru8;
+                case UnityEngine.TextureFormat.RG16: return TextureFormat.RGu8;
                 case UnityEngine.TextureFormat.RGB24: return TextureFormat.RGBu8;
                 case UnityEngine.TextureFormat.RGBA32: return TextureFormat.RGBAu8;
                 case UnityEngine.TextureFormat.RHalf: return TextureFormat.Rf16;

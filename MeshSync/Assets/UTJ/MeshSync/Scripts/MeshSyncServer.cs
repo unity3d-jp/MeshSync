@@ -490,10 +490,11 @@ namespace UTJ.MeshSync
                 else
                 {
                     texture = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
+                    texture.name = src.name;
                     texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
                     texture.Apply();
 #if UNITY_EDITOR
-                    string path = assetDir + "/" + src.name + ".asset";
+                    string path = assetDir + "/" + texture.name + ".asset";
                     CreateAsset(texture, path);
 #endif
                 }
