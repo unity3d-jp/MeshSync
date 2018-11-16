@@ -29,14 +29,9 @@ void msvrContext::send(bool force)
 
     for (auto& pair : m_buffer_records) {
         auto& buf = pair.second;
-        if (buf.dst_mesh && (buf.dirty || force)) {
-            m_mesh_buffers.push_back(&buf);
-            buf.dirty = false;
+        if (buf.dst_mesh) {
+            m_entity_manager.add(buf.dst_mesh);
         }
-    }
-    if (m_mesh_buffers.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
-        // nothing to send
-        return;
     }
 
     // build material list
@@ -86,15 +81,12 @@ void msvrContext::send(bool force)
         m_camera->near_plane = m_camera_near;
         m_camera->far_plane = m_camera_far;
         m_camera_dirty = false;
+        m_entity_manager.add(m_camera);
     }
 
 
     if (!m_sender.on_prepare) {
         m_sender.on_prepare = [this]() {
-            // add camera
-            if (m_camera)
-                m_entity_manager.add(m_camera);
-
             // handle deleted objects
             for (auto h : m_meshes_deleted) {
                 char path[128];
@@ -296,54 +288,70 @@ void msvrContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, G
 
 void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
 {
+    if (mode != GL_TRIANGLES)
+        return;
+
     auto *vb = getActiveBuffer(GL_ARRAY_BUFFER);
     auto *ib = getActiveBuffer(GL_ELEMENT_ARRAY_BUFFER);
-    if (mode == GL_TRIANGLES &&
-        (vb && vb->stride == sizeof(vr_vertex)) &&
-        ib )
-    {
-        //{
-        //    // projection matrix -> fov, aspect, clippling planes
-        //    float fov, aspect, near_plane, far_plane;
-        //    extract_projection_data(m_proj, fov, aspect, near_plane, far_plane);
+    if (!ib || !vb || vb->stride != sizeof(vr_vertex) || !vb->dirty)
+        return;
 
-        //    if (fov > 179.0f) {
-        //        // camera is not perspective. capture only when camera is perspective.
-        //        goto bailout;
-        //    }
-        //    if (fov != m_camera_fov) {
-        //        m_camera_dirty = true;
-        //        m_camera_fov = fov;
-        //        m_camera_near = near_plane;
-        //        m_camera_far = far_plane;
-        //    }
-        //}
-        //{
-        //    // modelview matrix -> camera pos & rot
-        //    float3 pos;
-        //    quatf rot;
-        //    extract_look_data(m_modelview, pos, rot);
-        //    if (pos != m_camera_pos ||
-        //        rot != m_camera_rot)
-        //    {
-        //        m_camera_dirty = true;
-        //        m_camera_pos = pos;
-        //        m_camera_rot = rot;
-        //    }
-        //}
+    auto& camera_buf = m_buffer_records[m_ub_handles[1]];
+    auto& obj_buf = m_buffer_records[m_ub_handles[2]];
+    if (camera_buf.data.size() != 992 || obj_buf.data.size() != 560)
+        return;
+
+    {
+        auto view = (float4x4&)camera_buf.data[64 * 4];
+        auto proj = (float4x4&)camera_buf.data[0];
+
+        // projection matrix -> fov, aspect, clippling planes
+        float fov, aspect, near_plane, far_plane;
+        extract_projection_data(proj, fov, aspect, near_plane, far_plane);
+
+        // fov >= 180.0f means came is not perspective. capture only when camera is perspective.
+        if (fov < 179.0f) {
+            if (fov != m_camera_fov) {
+                m_camera_dirty = true;
+                m_camera_fov = fov;
+                m_camera_near = near_plane;
+                m_camera_far = far_plane;
+            }
+
+            // modelview matrix -> camera pos & rot
+            float3 pos;
+            quatf rot;
+            extract_look_data(view, pos, rot);
+            if (pos != m_camera_pos ||
+                rot != m_camera_rot)
+            {
+                m_camera_dirty = true;
+                m_camera_pos = pos;
+                m_camera_rot = rot;
+            }
+        }
+    }
+
+    {
+        auto transform = (float4x4&)obj_buf.data[0];
 
         if (vb->material != m_material) {
             vb->material = m_material;
             vb->dirty = true;
         }
 
-        auto task = [this, vb, ib, count, type]() {
+        auto task = [this, vb, ib, count, type, transform]() {
             auto dst = ms::Mesh::create();
             {
                 char path[128];
                 sprintf(path, "/VREDMesh:ID[%08x]", m_vb_handle);
                 dst->path = path;
             }
+
+            dst->position = extract_position(transform);
+            dst->rotation = extract_rotation(transform);
+            dst->scale = extract_scale(transform);
+
 
             size_t num_indices = count;
             size_t num_triangles = count / 3;
@@ -378,12 +386,10 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             dst->refine_settings.flags.gen_tangents = 1;
 
             vb->dst_mesh = dst;
-            m_entity_manager.add(dst);
         };
         task();
     }
-bailout:
-    return;
+    vb->dirty = false;
 }
 
 void msvrContext::onFlush()
@@ -398,7 +404,7 @@ BufferRecord* msvrContext::getActiveBuffer(GLenum target)
     case GL_ARRAY_BUFFER:
         return &m_buffer_records[m_vb_handle];
     case GL_ELEMENT_ARRAY_BUFFER:
-        return &m_buffer_records[m_vb_handle];
+        return &m_buffer_records[m_ib_handle];
     case GL_UNIFORM_BUFFER:
         return &m_buffer_records[m_ub_handle];
     }

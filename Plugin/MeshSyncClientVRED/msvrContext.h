@@ -142,7 +142,6 @@ protected:
     float m_camera_far = 100.0f;
 
     std::vector<MaterialRecord> m_material_data;
-    std::vector<BufferRecord*> m_mesh_buffers;
 
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;
