@@ -113,6 +113,7 @@ static GLboolean WINAPI glUnmapNamedBuffer_hook(GLuint buffer)
 static void* WINAPI glMapBufferRange_hook(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access)
 {
     auto ret = _glMapBufferRange(target, offset, length, access);
+    msvrGetContext()->onMapBufferRange(target, offset, length, access, ret);
     return ret;
 }
 static void* WINAPI glMapNamedBufferRange_hook(GLuint buffer, GLintptr offset, GLsizei length, GLbitfield access)
@@ -122,6 +123,7 @@ static void* WINAPI glMapNamedBufferRange_hook(GLuint buffer, GLintptr offset, G
 }
 static void WINAPI glFlushMappedBufferRange_hook(GLenum target, GLintptr offset, GLsizeiptr length)
 {
+    msvrGetContext()->onFlushMappedBufferRange(target, offset, length);
     _glFlushMappedBufferRange(target, offset, length);
 }
 static void WINAPI glFlushMappedNamedBufferRange_hook(GLuint buffer, GLintptr offset, GLsizei length)
@@ -173,9 +175,12 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
+bool g_color_pass = false;
+
 static void WINAPI glDrawRangeElements_hook(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
 {
-    msvrGetContext()->onDrawRangeElements(mode, start, end, count, type, indices);
+    if (g_color_pass)
+        msvrGetContext()->onDrawRangeElements(mode, start, end, count, type, indices);
     _glDrawRangeElements(mode, start, end, count, type, indices);
 }
 
@@ -192,8 +197,12 @@ static void WINAPI glClear_hook(GLbitfield mask)
     static int s_pos = 0;
     if (mask == s_steps[s_pos]) {
         ++s_pos;
-        if (mask == GL_COLOR_BUFFER_BIT) {
+        if (s_pos == 2) {
+            g_color_pass = true;
+        }
+        else if (s_pos == 3) {
             msvrGetContext()->onFlush();
+            g_color_pass = false;
             s_pos = 0;
         }
     }

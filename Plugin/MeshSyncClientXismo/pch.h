@@ -5,13 +5,6 @@
     #define NOMINMAX
     #include <windows.h>
     #include <ppl.h>
-#else 
-    #include <dlfcn.h>
-    #ifdef __APPLE__
-        #include <mach-o/dyld.h>
-    #else
-        #include <link.h>
-    #endif
 #endif
 #include <cstdio>
 #include <cstdlib>

@@ -2,16 +2,6 @@
 #include "msvrContext.h"
 
 
-bool BufferData::isModelData() const
-{
-    return false;
-}
-
-void BufferData::buildMeshData(bool weld_vertices)
-{
-}
-
-
 msvrContext::msvrContext()
 {
 }
@@ -27,6 +17,111 @@ msvrSettings& msvrContext::getSettings()
 
 void msvrContext::send(bool force)
 {
+    if (m_sender.isSending()) {
+        // previous request is not completed yet
+        return;
+    }
+
+    if (force) {
+        m_material_manager.makeDirtyAll();
+        m_entity_manager.makeDirtyAll();
+    }
+
+    for (auto& pair : m_buffer_records) {
+        auto& buf = pair.second;
+        if (buf.dst_mesh && (buf.dirty || force)) {
+            m_mesh_buffers.push_back(&buf);
+            buf.dirty = false;
+        }
+    }
+    if (m_mesh_buffers.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
+        // nothing to send
+        return;
+    }
+
+    // build material list
+    {
+        m_material_data.clear();
+        auto findOrAddMaterial = [this](const MaterialRecord& md) {
+            auto it = std::find(m_material_data.begin(), m_material_data.end(), md);
+            if (it != m_material_data.end()) {
+                return (int)std::distance(m_material_data.begin(), it);
+            }
+            else {
+                int ret = (int)m_material_data.size();
+                m_material_data.push_back(md);
+                return ret;
+            }
+        };
+
+        for (auto& pair : m_buffer_records) {
+            auto& buf = pair.second;
+            if (buf.dst_mesh) {
+                buf.material_id = findOrAddMaterial(buf.material);
+            }
+        }
+
+        char name[128];
+        int material_index = 0;
+        for (auto& md : m_material_data) {
+            int mid = material_index++;
+            auto mat = ms::Material::create();
+            sprintf(name, "XismoMaterial:ID[%04x]", mid);
+            mat->id = mid;
+            mat->name = name;
+            mat->setColor(md.diffuse);
+            m_material_manager.add(mat);
+        }
+    }
+
+    // camera
+    if (m_settings.sync_camera) {
+        if (!m_camera) {
+            m_camera = ms::Camera::create();
+            m_camera->path = "/Main Camera";
+        }
+        m_camera->position = m_camera_pos;
+        m_camera->rotation = m_camera_rot;
+        m_camera->fov = m_camera_fov;
+        m_camera->near_plane = m_camera_near;
+        m_camera->far_plane = m_camera_far;
+        m_camera_dirty = false;
+    }
+
+
+    if (!m_sender.on_prepare) {
+        m_sender.on_prepare = [this]() {
+            // add camera
+            if (m_camera)
+                m_entity_manager.add(m_camera);
+
+            // handle deleted objects
+            for (auto h : m_meshes_deleted) {
+                char path[128];
+                sprintf(path, "/XismoMesh:ID[%08x]", h);
+                m_entity_manager.erase(ms::Identifier(path, (int)h));
+            }
+            m_meshes_deleted.clear();
+
+
+            auto& t = m_sender;
+            t.client_settings = m_settings.client_settings;
+            t.scene_settings.handedness = ms::Handedness::Left;
+            t.scene_settings.scale_factor = m_settings.scale_factor;
+
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_material_manager.getDirtyMaterials();
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
+            t.deleted = m_entity_manager.getDeleted();
+        };
+        m_sender.on_succeeded = [this]() {
+            m_texture_manager.clearDirtyFlags();
+            m_material_manager.clearDirtyFlags();
+            m_entity_manager.clearDirtyFlags();
+        };
+    }
+    m_sender.kick();
 }
 
 void msvrContext::onActiveTexture(GLenum texture)
@@ -50,12 +145,13 @@ void msvrContext::onGenBuffers(GLsizei n, GLuint *buffers)
 void msvrContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
 {
     for (int i = 0; i < n; ++i) {
-        auto it = m_buffers.find(buffers[i]);
-        if (it != m_buffers.end()) {
-            if (it->second.isModelData()) {
-                m_meshes_deleted.push_back(it->second.handle);
-            }
-            m_buffers.erase(it);
+        auto it = m_buffer_records.find(buffers[i]);
+        if (it != m_buffer_records.end()) {
+            auto& rec = it->second;
+            rec.wait();
+            if (rec.dst_mesh)
+                m_entity_manager.erase(rec.dst_mesh->getIdentifier());
+            m_buffer_records.erase(it);
         }
     }
 }
@@ -73,17 +169,13 @@ void msvrContext::onBindBuffer(GLenum target, GLuint buffer)
 void msvrContext::onBindVertexBuffer(GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride)
 {
     m_vb_handle = buffer;
-
-    if (buffer != 0)
-        m_vertex_attributes |= 1 << bindingindex;
-    else
-        m_vertex_attributes &= ~(1 << bindingindex);
+    auto& rec = m_buffer_records[buffer];
+    rec.stride = stride;
 }
 
 void msvrContext::onBufferData(GLenum target, GLsizeiptr size, const void * data, GLenum usage)
 {
     if (auto *buf = getActiveBuffer(target)) {
-        buf->handle = m_vb_handle;
         buf->data.resize_discard(size);
         if (data) {
             memcpy(buf->data.data(), data, buf->data.size());
@@ -94,7 +186,8 @@ void msvrContext::onBufferData(GLenum target, GLsizeiptr size, const void * data
 
 void msvrContext::onMapBuffer(GLenum target, GLenum access, void *& mapped_data)
 {
-    if (target != GL_ARRAY_BUFFER || access != GL_WRITE_ONLY) {
+    if (access != GL_WRITE_ONLY ||
+        (target != GL_ARRAY_BUFFER && target != GL_ELEMENT_ARRAY_BUFFER)) {
         return;
     }
 
@@ -107,19 +200,44 @@ void msvrContext::onMapBuffer(GLenum target, GLenum access, void *& mapped_data)
     }
 }
 
+void msvrContext::onMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, void *& mapped_data)
+{
+    if ((access & GL_MAP_WRITE_BIT) == 0 ||
+        (target != GL_ARRAY_BUFFER && target != GL_ELEMENT_ARRAY_BUFFER)) {
+        return;
+    }
+
+    // same as onMapBuffer()
+    if (auto *buf = getActiveBuffer(target)) {
+        buf->mapped_data = mapped_data;
+        buf->tmp_data.resize_discard(buf->data.size());
+        mapped_data = buf->tmp_data.data() + offset;
+    }
+}
+
 void msvrContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            ms::parallel_invoke([buf]() {
-                memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
-            },
-            [buf]() {
-                if (memcmp(buf->data.data(), buf->tmp_data.data(), buf->data.size()) != 0) {
-                    buf->data = buf->tmp_data;
-                    buf->dirty = true;
-                }
-            });
+            memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
+            if (buf->data != buf->tmp_data) {
+                std::swap(buf->data, buf->tmp_data);
+                buf->dirty = true;
+            }
+            buf->mapped_data = nullptr;
+        }
+    }
+}
+
+void msvrContext::onFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
+{
+    if (auto *buf = getActiveBuffer(target)) {
+        if (buf->mapped_data) {
+            memcpy((char*)buf->mapped_data + offset, buf->tmp_data.data() + offset, length);
+            if (buf->data.size() != buf->tmp_data.size() || memcmp(buf->data.data() + offset, buf->tmp_data.data() + offset, length) != 0) {
+                buf->data.swap(buf->tmp_data);
+                buf->dirty = true;
+            }
             buf->mapped_data = nullptr;
         }
     }
@@ -170,17 +288,17 @@ void msvrContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, G
 {
     if (auto *buf = getActiveBuffer(GL_ARRAY_BUFFER)) {
         buf->stride = stride;
-        m_vertex_attributes |= 1 << index;
     }
 }
 
 
 void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
 {
-    auto *buf = getActiveBuffer(GL_ARRAY_BUFFER);
+    auto *vb = getActiveBuffer(GL_ARRAY_BUFFER);
+    auto *ib = getActiveBuffer(GL_ELEMENT_ARRAY_BUFFER);
     if (mode == GL_TRIANGLES &&
-        ((m_vertex_attributes & 0xffff) == 0xffff) && // model vb has 16 attributes
-        (buf && buf->stride == sizeof(xm_vertex1)))
+        (vb && vb->stride == sizeof(vr_vertex)) &&
+        ib )
     {
         {
             // projection matrix -> fov, aspect, clippling planes
@@ -212,28 +330,73 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             }
         }
 
-        buf->triangle = true;
-        buf->num_elements = (int)count;
-        if (buf->material != m_material) {
-            buf->material = m_material;
-            buf->dirty = true;
+        if (vb->material != m_material) {
+            vb->material = m_material;
+            vb->dirty = true;
         }
+
+        auto task = [this, vb, ib, count, type]() {
+            auto dst = ms::Mesh::create();
+            {
+                char path[128];
+                sprintf(path, "/VREDMesh:ID[%08x]", m_vb_handle);
+                dst->path = path;
+            }
+
+            size_t num_indices = count;
+            size_t num_triangles = count / 3;
+            size_t num_vertices = vb->data.size() / vb->stride;
+
+            // convert vertices
+            dst->points.resize_discard(num_vertices);
+            dst->normals.resize_discard(num_vertices);
+            dst->uv0.resize_discard(num_vertices);
+            auto *vtx = (vr_vertex*)vb->data.data();
+            for (size_t vi = 0; vi < num_vertices; ++vi) {
+                dst->points[vi] = vtx[vi].vertex;
+                dst->normals[vi] = vtx[vi].normal;
+                dst->uv0[vi] = vtx[vi].uv;
+            }
+
+            // convert indices
+            dst->counts.resize(num_triangles, 3);
+            if (type == GL_UNSIGNED_INT) {
+                int *src = (int*)ib->data.data();
+                dst->indices.assign(src, src + num_indices);
+            }
+            else if (type == GL_UNSIGNED_SHORT) {
+                uint16_t *src = (uint16_t*)ib->data.data();
+                dst->indices.resize_discard(num_indices);
+                for (size_t ii = 0; ii < num_indices; ++ii)
+                    dst->indices[ii] = src[ii];
+            }
+
+            dst->setupFlags();
+            dst->flags.has_refine_settings = 1;
+            dst->refine_settings.flags.gen_tangents = 1;
+
+            vb->dst_mesh = dst;
+            m_entity_manager.add(dst);
+        };
+        task();
     }
 bailout:
-    m_vertex_attributes = 0;
+    return;
 }
 
 void msvrContext::onFlush()
 {
+    if (m_settings.auto_sync)
+        send(false);
 }
 
-BufferData* msvrContext::getActiveBuffer(GLenum target)
+BufferRecord* msvrContext::getActiveBuffer(GLenum target)
 {
     if (target == GL_ARRAY_BUFFER) {
-        return &m_buffers[m_vb_handle];
+        return &m_buffer_records[m_vb_handle];
     }
     else if (target == GL_ELEMENT_ARRAY_BUFFER) {
-        return &m_buffers[m_ib_handle];
+        return &m_buffer_records[m_ib_handle];
     }
     return nullptr;
 }
@@ -247,4 +410,12 @@ msvrContext* msvrGetContext()
         msvrInitializeWidget();
     }
     return s_ctx.get();
+}
+
+void BufferRecord::wait()
+{
+    if (task.valid()) {
+        task.wait();
+        task = {};
+    }
 }
