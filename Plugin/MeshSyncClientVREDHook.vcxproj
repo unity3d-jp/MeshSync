@@ -34,7 +34,7 @@
     <ClInclude Include="MeshSyncClientVRED\pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{62680C45-269B-4751-9FBD-774481C13873}</ProjectGuid>
+    <ProjectGuid>{F3D086E7-680D-48DC-8C0A-22416B1C65D5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>

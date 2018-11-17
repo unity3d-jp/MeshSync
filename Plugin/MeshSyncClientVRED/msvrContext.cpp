@@ -63,9 +63,11 @@ void msvrContext::send(bool force)
             sprintf(name, "VREDMaterial:ID[%04x]", mid);
             mat->id = mid;
             mat->name = name;
-            mat->setColor(md.diffuse);
-            mat->setColorMap(md.color_tex);
-            mat->setNormalMap(md.normal_tex);
+
+            auto& stdmat = ms::AsStandardMaterial(*mat);
+            stdmat.setColor(md.diffuse);
+            stdmat.setColorMap(md.color_tex);
+            stdmat.setNormalMap(md.normal_tex);
             m_material_manager.add(mat);
         }
     }

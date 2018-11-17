@@ -33,6 +33,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientXismoHook", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientMotionBuilder", "MeshSyncClientMotionBuilder.vcxproj", "{3B449195-231C-4B75-AB00-68186F6CEF37}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientVRED", "MeshSyncClientVRED.vcxproj", "{9A964349-1BC1-4C46-BAE5-D420F1D46B19}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientVREDHook", "MeshSyncClientVREDHook.vcxproj", "{F3D086E7-680D-48DC-8C0A-22416B1C65D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -134,6 +138,18 @@ Global
 		{3B449195-231C-4B75-AB00-68186F6CEF37}.Master|x64.ActiveCfg = Master|x64
 		{3B449195-231C-4B75-AB00-68186F6CEF37}.Master|x64.Build.0 = Master|x64
 		{3B449195-231C-4B75-AB00-68186F6CEF37}.Master|x86.ActiveCfg = Master|x64
+		{9A964349-1BC1-4C46-BAE5-D420F1D46B19}.Debug|x64.ActiveCfg = Debug|x64
+		{9A964349-1BC1-4C46-BAE5-D420F1D46B19}.Debug|x64.Build.0 = Debug|x64
+		{9A964349-1BC1-4C46-BAE5-D420F1D46B19}.Debug|x86.ActiveCfg = Debug|x64
+		{9A964349-1BC1-4C46-BAE5-D420F1D46B19}.Master|x64.ActiveCfg = Master|x64
+		{9A964349-1BC1-4C46-BAE5-D420F1D46B19}.Master|x64.Build.0 = Master|x64
+		{9A964349-1BC1-4C46-BAE5-D420F1D46B19}.Master|x86.ActiveCfg = Master|x64
+		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Debug|x64.ActiveCfg = Debug|x64
+		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Debug|x64.Build.0 = Debug|x64
+		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Debug|x86.ActiveCfg = Debug|x64
+		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Master|x64.ActiveCfg = Master|x64
+		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Master|x64.Build.0 = Master|x64
+		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Master|x86.ActiveCfg = Master|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
