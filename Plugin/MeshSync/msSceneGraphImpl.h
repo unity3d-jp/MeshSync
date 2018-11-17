@@ -251,7 +251,17 @@ struct csum_impl<std::string>
         return mu::SumInt32(v.c_str(), v.size());
     }
 };
-
+template<class T>
+struct csum_impl<std::vector<T>>
+{
+    uint64_t operator()(const std::vector<T>& v)
+    {
+        uint64_t ret = 0;
+        for (auto& e : v)
+            ret += e.checksum();
+        return ret;
+    }
+};
 template<class T>
 struct csum_impl<RawVector<T>>
 {

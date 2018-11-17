@@ -685,16 +685,18 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
 
     dst->id = rec.id;
     dst->name = src->LongName;
-    dst->setColor(to_float4(src->Diffuse));
+
+    auto& stdmat = ms::AsStandardMaterial(*dst);
+    stdmat.setColor(to_float4(src->Diffuse));
 
     auto emissive = to_float4(src->Emissive);
     if ((mu::float3&)emissive != mu::float3::zero())
-        dst->setEmission(emissive);
+        stdmat.setEmission(emissive);
 
     if (sync_textures && m_dirty_textures) {
-        dst->setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
-        dst->setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
-        dst->setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
+        stdmat.setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
+        stdmat.setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
+        stdmat.setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
     }
     m_material_manager.add(dst);
     return true;

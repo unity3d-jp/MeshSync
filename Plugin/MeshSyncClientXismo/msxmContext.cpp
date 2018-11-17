@@ -209,7 +209,8 @@ void msxmContext::send(bool force)
             sprintf(name, "XismoMaterial:ID[%04x]", mid);
             mat->id = mid;
             mat->name = name;
-            mat->setColor(md.diffuse);
+            auto& stdmat = ms::AsStandardMaterial(*mat);
+            stdmat.setColor(md.diffuse);
             m_material_manager.add(mat);
         }
     }

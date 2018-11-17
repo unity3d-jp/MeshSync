@@ -37,6 +37,9 @@
     <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\Utils\msMaterialExt.cpp">
+      <Filter>MeshSync\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -91,6 +94,9 @@
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\Utils\msIDGenerator.h">
+      <Filter>MeshSync\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\Utils\msMaterialExt.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
   </ItemGroup>

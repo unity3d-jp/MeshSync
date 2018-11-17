@@ -378,7 +378,9 @@ void MeshSyncClient3dsMax::exportMaterials()
             auto dst = ms::Material::create();
             dst->id = material_index++;
             dst->name = mu::ToMBS(mtl->GetName().data());
-            dst->setColor(to_color(mtl->GetDiffuse()));
+
+            auto& dstmat = ms::AsStandardMaterial(*dst);
+            dstmat.setColor(to_color(mtl->GetDiffuse()));
 
             // export textures
             if (m_settings.sync_textures && mtl->ClassID() == Class_ID(DMTL_CLASS_ID, 0)) {
@@ -399,8 +401,8 @@ void MeshSyncClient3dsMax::exportMaterials()
                 const int DIFFUSE_MAP_ID = 1;
                 const int NORMAL_MAP_ID = 8;
 
-                dst->setColorMap(export_texture(DIFFUSE_MAP_ID, ms::TextureType::Default));
-                dst->setNormalMap(export_texture(NORMAL_MAP_ID, ms::TextureType::NormalMap));
+                dstmat.setColorMap(export_texture(DIFFUSE_MAP_ID, ms::TextureType::Default));
+                dstmat.setNormalMap(export_texture(NORMAL_MAP_ID, ms::TextureType::NormalMap));
             }
             m_material_manager.add(dst);
 

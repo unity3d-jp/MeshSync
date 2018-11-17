@@ -115,28 +115,68 @@ struct MaterialDataFlags
     uint32_t has_normal_map : 1;
 };
 
+class MaterialParam
+{
+public:
+    enum class Type {
+        Unknown,
+        Int,
+        Float,
+        Vector,
+        Matrix,
+        FloatArray,
+        VectorArray,
+        MatrixArray,
+        Texture,
+    };
+
+    std::string name;
+    Type type = Type::Unknown;
+    RawVector<char> data;
+
+public:
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    uint64_t checksum() const;
+    bool operator==(const MaterialParam& v) const;
+    bool operator!=(const MaterialParam& v) const;
+
+    MaterialParam();
+    MaterialParam(const char *name, int v);
+    MaterialParam(const char *name, float v);
+    MaterialParam(const char *name, const float *v, int count);
+    MaterialParam(const char *name, const float4& v);
+    MaterialParam(const char *name, const float4 *v, int count);
+    MaterialParam(const char *name, const float4x4& v);
+    MaterialParam(const char *name, const float4x4 *v, int count);
+    MaterialParam(const char *name, TexturePtr v);
+    MaterialParam(const char *name, Texture *v);
+
+    int getArraySize() const;
+    int getInt() const;
+    float getFloat() const;
+    float4 getVector() const;
+    float4x4 getMatrix() const;
+    const float* getFloatArray() const;
+    const float4* getVectorArray() const;
+    const float4x4* getMatrixArray() const;
+    int getTexture() const;
+    void copy(void *dst) const;
+};
+msHasSerializer(MaterialParam);
+
 class Material
 {
 public:
     int id = InvalidID;
     std::string name;
-    MaterialDataFlags flags = { 0 };
-
-protected:
-    float4 color = float4::one();
-    float4 emission = float4::zero();
-    float metalic = 0.0f;
-    float smoothness = 0.5f;
-
-    // texture ids
-    int color_map = InvalidID;
-    int metallic_map = InvalidID;
-    int emission_map = InvalidID;
-    int normal_map = InvalidID;
+    std::string shader = "Standard";
+    std::vector<MaterialParam> params;
 
 protected:
     Material();
-    ~Material();
+    virtual ~Material();
 public:
     msDefinePool(Material);
     static std::shared_ptr<Material> create(std::istream& is);
@@ -148,27 +188,15 @@ public:
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
 
-    void    setColor(float4 v);
-    float4  getColor() const;
-    void    setEmission(float4 v);
-    float4  getEmission() const;
-    void    setMetallic(float v);
-    float   getMetallic() const;
-    void    setSmoothness(float v);
-    float   getSmoothness() const;
-
-    void    setColorMap(int v);
-    int     getColorMap() const;
-    void    setEmissionMap(int v);
-    int     getEmissionMap() const;
-    void    setMetallicMap(int v);
-    int     getMetallicMap() const;
-    void    setNormalMap(int v);
-    int     getNormalMap() const;
+    int getParamCount() const;
+    MaterialParam* getParam(int i);
+    MaterialParam* findParam(const char *name);
+    const MaterialParam* getParam(int i) const;
+    const MaterialParam* findParam(const char *name) const;
+    void addParam(MaterialParam v);
+    void eraseParam(const char *name);
 };
 msHasSerializer(Material);
 using MaterialPtr = std::shared_ptr<Material>;
-
-
 
 } // namespace ms

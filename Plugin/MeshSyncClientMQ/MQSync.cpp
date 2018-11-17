@@ -81,10 +81,11 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             src->GetName(buf, sizeof(buf));
             dst->name = ms::ToUTF8(buf);
 
-            dst->setColor(to_float4(src->GetColor()));
+            auto& stdmat = ms::AsStandardMaterial(*dst);
+            stdmat.setColor(to_float4(src->GetColor()));
             if (m_sync_textures) {
                 src->GetTextureName(buf, sizeof(buf));
-                dst->setColorMap(exportTexture(buf, ms::TextureType::Default));
+                stdmat.setColorMap(exportTexture(buf, ms::TextureType::Default));
             }
             m_material_manager.add(dst);
         }
@@ -356,7 +357,9 @@ bool MQSync::importMeshes(MQDocument doc)
         for (int i = 0; i < (int)ret->materials.size(); ++i) {
             auto dst = doc->GetMaterial(i);
             dst->SetName(ms::ToANSI(names[i]).c_str());
-            dst->SetColor(to_MQColor(ret->materials[i]->getColor()));
+
+            auto& stdmat = ms::AsStandardMaterial(*ret->materials[i]);
+            dst->SetColor(to_MQColor(stdmat.getColor()));
         }
     }
     

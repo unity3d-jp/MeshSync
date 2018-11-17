@@ -2,6 +2,7 @@
 #include "Test.h"
 #include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
+#include "../MeshSync/MeshSyncUtils.h"
 using namespace mu;
 
 static void Send(ms::Scene& scene)
@@ -351,13 +352,14 @@ TestCase(Test_SendTexture)
             auto mat = ms::Material::create();
             scene.materials.push_back(mat);
             mat->name = "TextMaterial1";
-            mat->setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
-            mat->setEmission({ 0.7f, 0.1f, 0.2f, 1.0f });
-            mat->setMetallic(0.2f);
-            mat->setSmoothness(0.8f);
-            mat->setColorMap(1);
-            mat->setMetallicMap(5);
-            mat->setEmissionMap(4);
+            auto& stdmat = ms::AsStandardMaterial(*mat);
+            stdmat.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
+            stdmat.setEmission({ 0.7f, 0.1f, 0.2f, 1.0f });
+            stdmat.setMetallic(0.2f);
+            stdmat.setSmoothness(0.8f);
+            stdmat.setColorMap(1);
+            stdmat.setMetallicMap(5);
+            stdmat.setEmissionMap(4);
         }
 
         Send(scene);

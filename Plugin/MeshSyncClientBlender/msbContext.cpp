@@ -30,6 +30,7 @@ ms::MaterialPtr msbContext::addMaterial(Material *mat)
     ret->name = mat->id.name + 2;
     ret->id = m_material_ids.getID(mat);
     {
+        auto& stdmat = ms::AsStandardMaterial(*ret);
         bl::BMaterial bm(mat);
         auto color_src = mat;
         if (bm.use_nodes()) {
@@ -40,7 +41,7 @@ ms::MaterialPtr msbContext::addMaterial(Material *mat)
             }
 #endif
         }
-        ret->setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
+        stdmat.setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
 
         if (m_settings.sync_textures) {
             auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
@@ -49,7 +50,7 @@ ms::MaterialPtr msbContext::addMaterial(Material *mat)
                 return exportTexture(bl::abspath(mtex->tex->ima->name), type);
             };
 #if BLENDER_VERSION < 280
-            ret->setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
+            stdmat.setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
 #endif
         }
     }

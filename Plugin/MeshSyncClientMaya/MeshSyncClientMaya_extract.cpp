@@ -104,14 +104,15 @@ void MeshSyncClientMaya::exportMaterials()
         {
             mu::float4 color;
             std::string texpath;
+            auto& stdmat = ms::AsStandardMaterial(*tmp);
             if (GetColorAndTexture(fn, "color", color, texpath)) {
-                tmp->setColor(color);
+                stdmat.setColor(color);
                 if (m_settings.sync_textures)
-                    tmp->setColorMap(exportTexture(texpath));
+                    stdmat.setColorMap(exportTexture(texpath));
             }
             if (GetColorAndTexture(fn, "normalCamera", color, texpath)) {
                 if (m_settings.sync_textures)
-                    tmp->setNormalMap(exportTexture(texpath));
+                    stdmat.setNormalMap(exportTexture(texpath));
             }
         }
         m_material_manager.add(tmp);

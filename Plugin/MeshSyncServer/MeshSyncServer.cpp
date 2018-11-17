@@ -125,29 +125,34 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 
 
 #pragma region Material
+msAPI const char* msMaterialParamGetName(ms::MaterialParam *_this) { return _this->name.c_str(); }
+msAPI ms::MaterialParam::Type msMaterialParamGetType(ms::MaterialParam *_this) { return _this->type; }
+msAPI int msMaterialParamGetInt(ms::MaterialParam *_this) { return _this->getInt(); }
+msAPI float msMaterialParamGetFloat(ms::MaterialParam *_this) { return _this->getFloat(); }
+msAPI float4 msMaterialParamGetVector(ms::MaterialParam *_this) { return _this->getVector(); }
+msAPI float4x4 msMaterialParamGetMatrix(ms::MaterialParam *_this) { return _this->getMatrix(); }
+msAPI int msMaterialParamGetTexture(ms::MaterialParam *_this) { return _this->getTexture(); }
+msAPI int msMaterialParamGetArraySize(ms::MaterialParam *_this) { return _this->getArraySize(); }
+msAPI void msMaterialParamCopyData(ms::MaterialParam *_this, void *dst) { return _this->copy(dst); }
+
 msAPI ms::Material* msMaterialCreate() { return ms::Material::create_raw(); }
 msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
 msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
 msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.c_str(); }
 msAPI void          msMaterialSetName(ms::Material *_this, const char *v) { _this->name = v; }
-msAPI ms::MaterialDataFlags msMaterialGetFlags(ms::Material *_this) { return _this->flags; }
-msAPI void          msMaterialSetFlags(ms::Material *_this, ms::MaterialDataFlags v) { _this->flags = v; }
-msAPI float4        msMaterialGetColor(ms::Material *_this) { return _this->getColor(); }
-msAPI void          msMaterialSetColor(ms::Material *_this, const float4 *v) { _this->setColor(*v); }
-msAPI float4        msMaterialGetEmission(ms::Material *_this) { return _this->getEmission(); }
-msAPI void          msMaterialSetEmission(ms::Material *_this, const float4 *v) { _this->setEmission(*v); }
-msAPI float         msMaterialGetMetalic(ms::Material *_this) { return _this->getMetallic(); }
-msAPI void          msMaterialSetMetalic(ms::Material *_this, const float v) { _this->setMetallic(v); }
-msAPI float         msMaterialGetSmoothness(ms::Material *_this) { return _this->getSmoothness(); }
-msAPI void          msMaterialSetSmoothness(ms::Material *_this, const float v) { _this->setSmoothness(v); }
-msAPI int           msMaterialGetColorMap(ms::Material *_this) { return _this->getColorMap(); }
-msAPI void          msMaterialSetColorMap(ms::Material *_this, int v) { _this->setColorMap(v); }
-msAPI int           msMaterialGetMetallicMap(ms::Material *_this) { return _this->getMetallicMap(); }
-msAPI void          msMaterialSetMetallicMap(ms::Material *_this, int v) { _this->setMetallicMap(v); }
-msAPI int           msMaterialGetEmissionMap(ms::Material *_this) { return _this->getEmissionMap(); }
-msAPI void          msMaterialSetEmissionMap(ms::Material *_this, int v) { _this->setEmissionMap(v); }
-msAPI int           msMaterialGetNormalMap(ms::Material *_this) { return _this->getNormalMap(); }
-msAPI void          msMaterialSetNormalMap(ms::Material *_this, int v) { _this->setNormalMap(v); }
+msAPI const char*   msMaterialGetShader(ms::Material *_this) { return _this->shader.c_str(); }
+msAPI void          msMaterialSetShader(ms::Material *_this, const char *v) { _this->shader = v; }
+
+msAPI int msMaterialGetNumParams(ms::Material *_this) { return _this->getParamCount(); }
+msAPI ms::MaterialParam* msMaterialGetParam(ms::Material *_this, int i) { return _this->getParam(i); }
+msAPI void msMaterialSetInt(ms::Material *_this, const char *n, int v) { _this->addParam({ n, v }); }
+msAPI void msMaterialSetFloat(ms::Material *_this, const char *n, float v) { _this->addParam({ n, v }); }
+msAPI void msMaterialSetVector(ms::Material *_this, const char *n, const float4 *v) { _this->addParam({ n, *v }); }
+msAPI void msMaterialSetMatrix(ms::Material *_this, const char *n, const float4x4 *v) { _this->addParam({ n, *v }); }
+msAPI void msMaterialSetFloatArray(ms::Material *_this, const char *n, const float *v, int c) { _this->addParam({ n, v, c }); }
+msAPI void msMaterialSetVectorArray(ms::Material *_this, const char *n, const float4 *v, int c) { _this->addParam({ n, v, c }); }
+msAPI void msMaterialSetMatrixArray(ms::Material *_this, const char *n, const float4x4 *v, int c) { _this->addParam({ n, v, c }); }
+msAPI void msMaterialSetTexture(ms::Material *_this, const char *n, ms::Texture *v) { _this->addParam({ n, v }); }
 #pragma endregion
 
 

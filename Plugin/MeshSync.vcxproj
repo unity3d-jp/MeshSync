@@ -36,6 +36,7 @@
     <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
     <ClInclude Include="MeshSync\Utils\msIDGenerator.h" />
     <ClInclude Include="MeshSync\Utils\msMaterialManager.h" />
+    <ClInclude Include="MeshSync\Utils\msMaterialExt.h" />
     <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +53,7 @@
     <ClCompile Include="MeshSync\Utils\msAsyncSceneSender.cpp" />
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp" />
+    <ClCompile Include="MeshSync\Utils\msMaterialExt.cpp" />
     <ClCompile Include="MeshSync\Utils\msTextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
