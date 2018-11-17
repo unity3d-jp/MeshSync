@@ -23,7 +23,13 @@ bool MaterialManager::empty() const
 
 bool MaterialManager::erase(int id)
 {
-    return m_records.erase(id) > 0;
+    auto it = m_records.find(id);
+    if (it != m_records.end()) {
+        m_deleted.push_back(it->second.material->getIdentifier());
+        m_records.erase(it);
+        return true;
+    }
+    return false;
 }
 
 MaterialPtr MaterialManager::find(int id) const
@@ -66,6 +72,11 @@ std::vector<MaterialPtr> MaterialManager::getDirtyMaterials()
     return ret;
 }
 
+std::vector<Identifier>& MaterialManager::getDeleted()
+{
+    return m_deleted;
+}
+
 void MaterialManager::makeDirtyAll()
 {
     for (auto& p : m_records) {
@@ -79,6 +90,7 @@ void MaterialManager::clearDirtyFlags()
         auto& r = p.second;
         r.updated = r.dirty = false;
     }
+    m_deleted.clear();
 }
 
 std::vector<MaterialPtr> MaterialManager::getStaleMaterials()
@@ -95,8 +107,10 @@ std::vector<MaterialPtr> MaterialManager::getStaleMaterials()
 void MaterialManager::eraseStaleMaterials()
 {
     for (auto it = m_records.begin(); it != m_records.end(); ) {
-        if (!it->second.updated)
+        if (!it->second.updated) {
+            m_deleted.push_back(it->second.material->getIdentifier());
             m_records.erase(it++);
+        }
         else
             ++it;
     }

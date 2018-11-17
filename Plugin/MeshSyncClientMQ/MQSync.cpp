@@ -71,13 +71,18 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         // gather material data
         char buf[1024];
         int nmat = doc->GetMaterialCount();
+
+        m_material_index_to_id.clear();
+        m_material_index_to_id.resize(nmat, ms::InvalidID);
+
         for (int mi = 0; mi < nmat; ++mi) {
             auto src = doc->GetMaterial(mi);
             if (!src)
                 continue;
 
             auto dst = ms::Material::create();
-            dst->id = mi;
+            dst->id = m_material_index_to_id[mi] = m_material_idgen.getID(src);
+            dst->index = mi;
             src->GetName(buf, sizeof(buf));
             dst->name = ms::ToUTF8(buf);
 
@@ -243,10 +248,14 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
 
+            m_material_idgen.eraseStaleRecords();
+            m_material_manager.eraseStaleMaterials();
+            t.deleted_materials = m_material_manager.getDeleted();
             m_entity_manager.eraseStaleEntities();
-            t.deleted = m_entity_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
         };
         m_send_meshes.on_succeeded = [this]() {
+            m_material_idgen.clearDirtyFlags();
             m_texture_manager.clearDirtyFlags();
             m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
@@ -519,8 +528,10 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     auto *indices = dst.indices.data();
     auto *uv = dst.uv0.data();
     for (int fi = 0; fi < nfaces; ++fi) {
+        int material_index = obj->GetFaceMaterial(fi);
+        dst.material_ids[fi] = material_index != -1 ? m_material_index_to_id[material_index] : ms::InvalidID;
+
         int c = dst.counts[fi];
-        dst.material_ids[fi] = obj->GetFaceMaterial(fi);
         //if (obj->GetFaceVisible(fi))
         {
             obj->GetFacePointArray(fi, indices);

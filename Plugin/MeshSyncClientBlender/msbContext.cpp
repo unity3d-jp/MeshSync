@@ -1129,7 +1129,7 @@ void msbContext::kickAsyncSend(bool erase_stale_objects)
         t.materials = m_material_manager.getDirtyMaterials();
         t.transforms = m_entity_manager.getDirtyTransforms();
         t.geometries = m_entity_manager.getDirtyGeometries();
-        t.deleted = m_entity_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
         t.animations = m_animations;
         if (scale_factor != 1.0f) {
             for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }

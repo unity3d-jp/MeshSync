@@ -143,7 +143,7 @@ std::shared_ptr<Material> Material::create(std::istream & is)
 Material::Material() {}
 Material::~Material() {}
 
-#define EachMember(F) F(id) F(name) F(shader) F(properties) F(keywords)
+#define EachMember(F) F(id) F(name) F(index) F(shader) F(properties) F(keywords)
 
 uint32_t Material::getSerializeSize() const
 {
@@ -175,6 +175,11 @@ uint64_t Material::checksum() const
     ret += csum(shader);
     ret += csum(properties);
     return ret;
+}
+
+Identifier Material::getIdentifier() const
+{
+    return {name, id};
 }
 
 bool Material::operator==(const Material& v) const

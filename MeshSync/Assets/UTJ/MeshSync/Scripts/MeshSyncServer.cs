@@ -503,7 +503,12 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAu8:
                             {
                                 path = assetDir + "/" + src.name + ".png";
-                                var data = ImageConversion.EncodeToPNG(texture);
+                                var data =
+#if UNITY_2017_3_OR_NEWER
+                                    ImageConversion.EncodeToPNG(texture);
+#else
+                                    texture.EncodeToPNG();
+#endif
                                 TextureData.WriteToFile(path, data);
                                 break;
                             }
@@ -513,7 +518,12 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAf16:
                             {
                                 path = assetDir + "/" + src.name + ".exr";
-                                var data = ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP);
+                                var data =
+#if UNITY_2017_3_OR_NEWER
+                                    ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP);
+#else
+                                    texture.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
+#endif
                                 TextureData.WriteToFile(path, data);
                                 break;
                             }
@@ -523,7 +533,13 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAf32:
                             {
                                 path = assetDir + "/" + src.name + ".exr";
-                                var data = ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP);
+                                var data =
+#if UNITY_2017_3_OR_NEWER
+                                    ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP);
+#else
+                                    texture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP);
+#endif
+
                                 TextureData.WriteToFile(path, data);
                                 break;
                             }
@@ -547,7 +563,7 @@ namespace UTJ.MeshSync
                         }
                     }
 #endif
-                }
+                            }
 
                 if (texture != null)
                 {
@@ -585,26 +601,6 @@ namespace UTJ.MeshSync
         void UpdateMaterials(SceneData scene)
         {
             int numMaterials = scene.numMaterials;
-            bool needsUpdate = false;
-            if(m_materialList.Count != numMaterials)
-            {
-                needsUpdate = true;
-            }
-            else
-            {
-                for (int i = 0; i < numMaterials; ++i)
-                {
-                    var src = scene.GetMaterial(i);
-                    var dst = m_materialList[i];
-                    if (src.id != dst.id || src.name != dst.name || src.color != dst.color)
-                    {
-                        needsUpdate = true;
-                        break;
-                    }
-                }
-            }
-
-            var newlist = new List<MaterialHolder>();
             for (int i = 0; i < numMaterials; ++i)
             {
                 var src = scene.GetMaterial(i);
@@ -614,17 +610,15 @@ namespace UTJ.MeshSync
                 {
                     dst = new MaterialHolder();
                     dst.id = id;
+                    m_materialList.Add(dst);
 
                     var shader = Shader.Find(src.shader);
                     if (shader == null)
                         shader = Shader.Find("Standard");
-
-                    var mat = new Material(shader);
-                    mat.name = src.name;
-                    mat.color = src.color;
-                    dst.material = mat;
+                    dst.material = new Material(shader);
                 }
-                dst.name = src.name;
+                dst.name = dst.material.name = src.name;
+                dst.shader = src.shader;
                 dst.color = src.color;
 
                 var dstmat = dst.material;
@@ -684,14 +678,7 @@ namespace UTJ.MeshSync
                         }
                     }
                 }
-
-                newlist.Add(dst);
                 m_tmpMaterials.Add(dstmat);
-            }
-
-            if (needsUpdate) {
-                m_materialList = newlist;
-                ReassignMaterials();
             }
         }
 
@@ -1401,7 +1388,8 @@ namespace UTJ.MeshSync
 
         void AssignMaterials(Record rec)
         {
-            if (rec.go == null) { return; }
+            if (rec.go == null)
+                return;
 
             var materialIDs = rec.materialIDs;
             var submeshCounts = rec.submeshCounts;
@@ -1417,10 +1405,12 @@ namespace UTJ.MeshSync
                 else
                 {
                     var t = rec.go.transform.Find("[" + i + "]");
-                    if (t == null) { break; }
+                    if (t == null)
+                        break;
                     r = t.GetComponent<Renderer>();
                 }
-                if (r == null) { continue; }
+                if (r == null)
+                    continue;
 
                 int submeshCount = submeshCounts[i];
                 var prev = r.sharedMaterials;
@@ -1950,7 +1940,7 @@ namespace UTJ.MeshSync
                 if(changed) { break; }
             }
 
-            if(changed)
+            if (changed)
             {
                 ReassignMaterials();
                 ForceRepaint();

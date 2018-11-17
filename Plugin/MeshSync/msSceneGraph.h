@@ -4,7 +4,6 @@
 #include <vector>
 #include <memory>
 #include "MeshUtils/MeshUtils.h"
-#include "msConfig.h"
 #include "msFoundation.h"
 
 #ifdef GetMessage
@@ -12,19 +11,6 @@
 #endif
 
 namespace ms {
-
-struct Identifier
-{
-    std::string path;
-    int id = InvalidID;
-
-    Identifier();
-    Identifier(const std::string& p, int i);
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-};
-msHasSerializer(Identifier);
 
 class Entity
 {

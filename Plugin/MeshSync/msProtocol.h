@@ -91,7 +91,8 @@ class DeleteMessage : public Message
 {
 using super = Message;
 public:
-    std::vector<Identifier> targets;
+    std::vector<Identifier> entities;
+    std::vector<Identifier> materials;
 
     DeleteMessage();
     uint32_t getSerializeSize() const override;

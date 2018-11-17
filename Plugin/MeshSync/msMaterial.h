@@ -84,6 +84,7 @@ class Material
 public:
     int id = InvalidID;
     std::string name;
+    int index = 0;
     std::string shader = "Standard";
     std::vector<MaterialProperty> properties;
     std::vector<MaterialKeyword> keywords;
@@ -99,6 +100,7 @@ public:
     void deserialize(std::istream& is);
     void clear();
     uint64_t checksum() const;
+    Identifier getIdentifier() const;
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
 

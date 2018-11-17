@@ -116,7 +116,7 @@ void msvrContext::send(bool force)
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted = m_entity_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
         };
         m_sender.on_succeeded = [this]() {
             m_texture_manager.clearDirtyFlags();

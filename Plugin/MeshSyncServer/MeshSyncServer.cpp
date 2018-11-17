@@ -284,15 +284,15 @@ msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
 
 msAPI int msDeleteGetNumTargets(ms::DeleteMessage *_this)
 {
-    return (int)_this->targets.size();
+    return (int)_this->entities.size();
 }
 msAPI const char* msDeleteGetPath(ms::DeleteMessage *_this, int i)
 {
-    return _this->targets[i].path.c_str();
+    return _this->entities[i].name.c_str();
 }
 msAPI int msDeleteGetID(ms::DeleteMessage *_this, int i)
 {
-    return _this->targets[i].id;
+    return _this->entities[i].id;
 }
 
 msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *_this)

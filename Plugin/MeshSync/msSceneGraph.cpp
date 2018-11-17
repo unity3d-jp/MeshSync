@@ -8,23 +8,6 @@
 
 namespace ms {
 
-// Identifier
-Identifier::Identifier() {}
-Identifier::Identifier(const std::string& p, int i) : path(p), id(i) {}
-
-uint32_t Identifier::getSerializeSize() const
-{
-    return ssize(path) + ssize(id);
-}
-void Identifier::serialize(std::ostream& os) const
-{
-    write(os, path); write(os, id);
-}
-void Identifier::deserialize(std::istream& is)
-{
-    read(is, path); read(is, id);
-}
-
 // Entity
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream & is)
@@ -110,7 +93,7 @@ Identifier Entity::getIdentifier() const
 
 bool Entity::identidy(const Identifier& v) const
 {
-    bool ret = path == v.path;
+    bool ret = path == v.name;
     if (!ret && id != InvalidID && v.id != InvalidID)
         ret = id == v.id;
     return ret;

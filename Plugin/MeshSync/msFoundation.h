@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 #include <mutex>
+#include "MeshUtils/MeshUtils.h"
+#include "msConfig.h"
 
 #if defined(_MSC_VER)
     #define msPacked 
@@ -110,3 +112,20 @@ std::shared_ptr<T> make_shared_ptr(T *p)
         Pool<T>::instance().push(this);\
     }
 
+
+namespace ms {
+
+struct Identifier
+{
+    std::string name;
+    int id = InvalidID;
+
+    Identifier();
+    Identifier(const std::string& p, int i);
+    uint32_t getSerializeSize() const;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+msHasSerializer(Identifier);
+
+} // namespace ms

@@ -2236,6 +2236,7 @@ namespace UTJ.MeshSync
         {
             public int id;
             public string name;
+            public string shader;
             public Color color = Color.white;
             public Material material;
         }

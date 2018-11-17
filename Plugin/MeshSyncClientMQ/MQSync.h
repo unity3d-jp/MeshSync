@@ -77,6 +77,9 @@ private:
     std::vector<ObjectRecord> m_obj_records;
     std::map<UINT, BoneRecord> m_bone_records;
 
+    ms::IDGenerator<MQCMaterial*> m_material_idgen;
+    std::vector<int> m_material_index_to_id;
+
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;

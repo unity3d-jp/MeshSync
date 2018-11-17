@@ -48,7 +48,8 @@ void AsyncSceneSender::send()
     if (on_prepare)
         on_prepare();
 
-    if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() && deleted.empty())
+    if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() &&
+        deleted_entities.empty() && deleted_materials.empty())
         return;
 
     std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
@@ -119,14 +120,16 @@ void AsyncSceneSender::send()
     }
 
     // deleted
-    if (!deleted.empty()) {
+    if (!deleted_entities.empty() || !deleted_materials.empty()) {
         ms::DeleteMessage mes;
         mes.session_id = session_id;
         mes.message_id = message_count++;
-        mes.targets = deleted;
+        mes.entities = deleted_entities;
+        mes.materials = deleted_materials;
         client.send(mes);
 
-        deleted.clear();
+        deleted_entities.clear();
+        deleted_materials.clear();
     }
 
     // notify scene end

@@ -85,18 +85,21 @@ DeleteMessage::DeleteMessage()
 uint32_t DeleteMessage::getSerializeSize() const
 {
     uint32_t ret = super::getSerializeSize();
-    ret += ssize(targets);
+    ret += ssize(entities);
+    ret += ssize(materials);
     return ret;
 }
 void DeleteMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    write(os, targets);
+    write(os, entities);
+    write(os, materials);
 }
 void DeleteMessage::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    read(is, targets);
+    read(is, entities);
+    read(is, materials);
 }
 
 

@@ -20,6 +20,7 @@ public:
 
     std::vector<MaterialPtr> getAllMaterials();
     std::vector<MaterialPtr> getDirtyMaterials();
+    std::vector<Identifier>& getDeleted();
     void makeDirtyAll();
     void clearDirtyFlags();
 
@@ -32,11 +33,12 @@ private:
         MaterialPtr material;
         uint64_t checksum = 0;
         bool dirty = false;
-        bool updated = true;
+        bool updated = false;
     };
     Record& lockAndGet(int id);
 
     std::map<int, Record> m_records;
+    std::vector<Identifier> m_deleted;
     std::mutex m_mutex;
 };
 

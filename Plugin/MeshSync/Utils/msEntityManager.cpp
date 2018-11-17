@@ -52,7 +52,7 @@ bool EntityManager::erase(int id)
 
 bool EntityManager::erase(const Identifier& identifier)
 {
-    auto it = m_records.find(identifier.path);
+    auto it = m_records.find(identifier.name);
     if (it == m_records.end() && identifier.id != InvalidID) {
         int id = identifier.id;
         it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->id == id; });

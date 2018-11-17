@@ -23,8 +23,10 @@ public:
     void eraseStaleRecords()
     {
         for (auto it = m_records.begin(); it != m_records.end(); ) {
-            if (!it->second.updated)
+            if (!it->second.updated) {
+                m_reserved.push_back(it->second.id);
                 m_records.erase(it++);
+            }
             else
                 ++it;
         }
@@ -52,7 +54,14 @@ protected:
 
     int genID()
     {
-        return ++m_id_seed;
+        if (!m_reserved.empty()) {
+            int ret = m_reserved.back();
+            m_reserved.pop_back();
+            return ret;
+        }
+        else {
+            return ++m_id_seed;
+        }
     }
 
 protected:
@@ -63,6 +72,7 @@ protected:
     };
     int m_id_seed = 0;
     std::map<const void*, Record> m_records;
+    std::vector<int> m_reserved;
 };
 
 template<class T>

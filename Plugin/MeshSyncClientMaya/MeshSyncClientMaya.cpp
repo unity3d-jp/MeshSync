@@ -592,7 +592,7 @@ void MeshSyncClientMaya::kickAsyncSend()
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted = m_entity_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
             t.animations = m_animations;
         };
         m_sender.on_succeeded = [this]() {

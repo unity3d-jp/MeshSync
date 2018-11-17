@@ -1,5 +1,6 @@
-namespace ms {
+#pragma once
 
+namespace ms {
 
 template<class T, bool hs = has_serializer<T>::result> struct ssize_impl2;
 template<class T> struct ssize_impl2<T, true> { uint32_t operator()(const T& v) { return v.getSerializeSize(); } };

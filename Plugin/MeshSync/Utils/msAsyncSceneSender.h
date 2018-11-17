@@ -17,7 +17,9 @@ public:
     std::vector<TransformPtr> transforms;
     std::vector<TransformPtr> geometries;
     std::vector<AnimationClipPtr> animations;
-    std::vector<Identifier> deleted;
+
+    std::vector<Identifier> deleted_entities;
+    std::vector<Identifier> deleted_materials;
 
     std::function<void()> on_prepare, on_succeeded, on_failed;
 
