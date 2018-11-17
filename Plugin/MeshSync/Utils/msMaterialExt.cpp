@@ -12,21 +12,21 @@ inline TexturePtr MakeTmpTexture(int id)
 
 void StandardMaterial::setColor(float4 v)
 {
-    addParam({ "_BaseColor", v });
+    addParam({ "_Color", v });
 }
 float4 StandardMaterial::getColor() const
 {
-    auto *p = findParam("_BaseColor");
+    auto *p = findParam("_Color");
     return p ? p->getVector() : float4::zero();
 }
 
 void StandardMaterial::setEmission(float4 v)
 {
-    addParam({ "_Emission", v });
+    addParam({ "_EmissionColor", v });
 }
 float4 StandardMaterial::getEmission() const
 {
-    auto *p = findParam("_Emission");
+    auto *p = findParam("_EmissionColor");
     return p ? p->getVector() : float4::zero();
 }
 

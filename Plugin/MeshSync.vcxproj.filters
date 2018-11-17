@@ -40,6 +40,9 @@
     <ClCompile Include="MeshSync\Utils\msMaterialExt.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\msTexture.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -98,6 +101,9 @@
     </ClInclude>
     <ClInclude Include="MeshSync\Utils\msMaterialExt.h">
       <Filter>MeshSync\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msTexture.h">
+      <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

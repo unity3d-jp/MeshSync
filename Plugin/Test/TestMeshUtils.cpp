@@ -96,10 +96,13 @@ TestCase(TestMeshRefiner)
     refiner.points = points;
     refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined, remap_uv);
 
+    refiner.connection.buildConnection(indices, counts, points);
+
     GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, 40.0f, false);
     refiner.addExpandedAttribute<float3>(normals, normals_refined, remap_normals);
 
     refiner.refine();
+    refiner.retopology(false);
     refiner.genSubmeshes(material_ids);
 }
 

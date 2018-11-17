@@ -331,50 +331,88 @@ namespace UTJ.MeshSync
             }
         };
 
-        public struct MaterialDataFlags
+        public struct MaterialPropertyData
         {
-            public int flags;
-            public bool hasColor
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msMaterialPropGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Type msMaterialPropGetType(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msMaterialPropGetInt(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern float msMaterialPropGetFloat(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Vector4 msMaterialPropGetVector(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Matrix4x4 msMaterialPropGetMatrix(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msMaterialPropGetTexture(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern int msMaterialPropGetArraySize(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr _this, float[] dst);
+            [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr _this, Vector4[] dst);
+            [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr _this, Matrix4x4[] dst);
+            #endregion
+
+            public enum Type
             {
-                get { return (flags & (1 << 0)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 0)); }
+                Unknown,
+                Int,
+                Float,
+                Vector,
+                Matrix,
+                FloatArray,
+                VectorArray,
+                MatrixArray,
+                Texture,
             }
-            public bool hasColorMap
+
+            public static implicit operator bool(MaterialPropertyData v)
             {
-                get { return (flags & (1 << 1)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 1)); }
+                return v._this != IntPtr.Zero;
             }
-            public bool hasEmission
+
+            public string name { get { return S(msMaterialPropGetName(_this)); } }
+            public Type type { get { return msMaterialPropGetType(_this); } }
+
+            public int intValue { get { return msMaterialPropGetInt(_this); } }
+            public float floatValue { get { return msMaterialPropGetFloat(_this); } }
+            public Vector4 vectorValue { get { return msMaterialPropGetVector(_this); } }
+            public Matrix4x4 matrixValue { get { return msMaterialPropGetMatrix(_this); } }
+            public float[] floatArray {
+                get {
+                    var ret = new float[msMaterialPropGetArraySize(_this)];
+                    msMaterialPropCopyData(_this, ret);
+                    return ret;
+                }
+            }
+            public Vector4[] vectorArray {
+                get {
+                    var ret = new Vector4[msMaterialPropGetArraySize(_this)];
+                    msMaterialPropCopyData(_this, ret);
+                    return ret;
+                }
+            }
+            public Matrix4x4[] matrixArray {
+                get {
+                    var ret = new Matrix4x4[msMaterialPropGetArraySize(_this)];
+                    msMaterialPropCopyData(_this, ret);
+                    return ret;
+                }
+            }
+            public int textureValue { get { return msMaterialPropGetTexture(_this); } }
+        }
+
+        public struct MaterialKeywordData
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern IntPtr msMaterialKeywordGetName(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern byte msMaterialKeywordGetValue(IntPtr _this);
+            #endregion
+
+            public static implicit operator bool(MaterialKeywordData v)
             {
-                get { return (flags & (1 << 2)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 2)); }
+                return v._this != IntPtr.Zero;
             }
-            public bool hasEmissionMap
-            {
-                get { return (flags & (1 << 3)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 3)); }
-            }
-            public bool hasMetallic
-            {
-                get { return (flags & (1 << 4)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 4)); }
-            }
-            public bool hasSmoothness
-            {
-                get { return (flags & (1 << 5)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 5)); }
-            }
-            public bool hasMetallicMap
-            {
-                get { return (flags & (1 << 6)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 6)); }
-            }
-            public bool hasNormalMap
-            {
-                get { return (flags & (1 << 7)) != 0; }
-                set { SwitchBits(ref flags, value, (1 << 7)); }
-            }
-        };
+
+            public string name { get { return S(msMaterialKeywordGetName(_this)); } }
+            public bool value { get { return msMaterialKeywordGetValue(_this) != 0; } }
+        }
 
         public struct MaterialData
         {
@@ -385,27 +423,30 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
-            [DllImport("MeshSyncServer")] static extern MaterialDataFlags msMaterialGetFlags(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetFlags(IntPtr _this, MaterialDataFlags v);
+            [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetShader(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetShader(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetNumParams(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MaterialPropertyData msMaterialGetParam(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern MaterialPropertyData msMaterialFindParam(IntPtr _this, string name);
 
-            [DllImport("MeshSyncServer")] static extern Color msMaterialGetColor(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetColor(IntPtr _this, ref Color v);
-            [DllImport("MeshSyncServer")] static extern Color msMaterialGetEmission(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmission(IntPtr _this, ref Color v);
-            [DllImport("MeshSyncServer")] static extern float msMaterialGetMetalic(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetalic(IntPtr _this, float v);
-            [DllImport("MeshSyncServer")] static extern float msMaterialGetSmoothness(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetSmoothness(IntPtr _this, float v);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetInt(IntPtr _this, string name, int v);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetFloat(IntPtr _this, string name, float v);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetVector(IntPtr _this, string name, Vector4 v);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMatrix(IntPtr _this, string name, Matrix4x4 v);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetFloatArray(IntPtr _this, string name, float[] v, int c);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetVectorArray(IntPtr _this, string name, Vector4[] v, int c);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetMatrixArray(IntPtr _this, string name, Matrix4x4[] v, int c);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetTexture(IntPtr _this, string name, TextureData v);
 
-            [DllImport("MeshSyncServer")] static extern int msMaterialGetColorMap(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetColorMap(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int msMaterialGetMetallicMap(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetMetallicMap(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int msMaterialGetEmissionMap(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetEmissionMap(IntPtr _this, int v);
-            [DllImport("MeshSyncServer")] static extern int msMaterialGetNormalMap(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern void msMaterialSetNormalMap(IntPtr _this, int v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetNumKeywords(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern MaterialKeywordData msMaterialGetKeyword(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern void msMaterialAddKeyword(IntPtr _this, string name, byte v);
             #endregion
+
+            public static implicit operator bool(MaterialData v)
+            {
+                return v._this != IntPtr.Zero;
+            }
 
             public static MaterialData Create() { return msMaterialCreate(); }
 
@@ -419,52 +460,61 @@ namespace UTJ.MeshSync
                 get { return S(msMaterialGetName(_this)); }
                 set { msMaterialSetName(_this, value); }
             }
-            public MaterialDataFlags flags
+            public string shader
             {
-                get { return msMaterialGetFlags(_this); }
-                set { msMaterialSetFlags(_this, value); }
+                get { return S(msMaterialGetShader(_this)); }
+                set { msMaterialSetShader(_this, value); }
+            }
+
+            public int numProperties
+            {
+                get { return msMaterialGetNumParams(_this); }
+            }
+            public MaterialPropertyData GetProperty(int i)
+            {
+                return msMaterialGetParam(_this, i);
+            }
+            public MaterialPropertyData FindProperty(string name)
+            {
+                return msMaterialFindParam(_this, name);
             }
 
             public Color color
             {
-                get { return msMaterialGetColor(_this); }
-                set { msMaterialSetColor(_this, ref value); }
-            }
-            public Color emission
-            {
-                get { return msMaterialGetEmission(_this); }
-                set { msMaterialSetEmission(_this, ref value); }
-            }
-            public float metalic
-            {
-                get { return msMaterialGetMetalic(_this); }
-                set { msMaterialSetMetalic(_this, value); }
-            }
-            public float smoothness
-            {
-                get { return msMaterialGetSmoothness(_this); }
-                set { msMaterialSetSmoothness(_this, value); }
+                get
+                {
+                    var p = FindProperty("_Color");
+                    if (p && p.type == MaterialPropertyData.Type.Vector)
+                        return p.vectorValue;
+                    else
+                        return Color.black;
+                }
+                set
+                {
+                    SetVector("_Color", value);
+                }
             }
 
-            public int colorMap
+            public void SetInt(string name, int v) { msMaterialSetInt(_this, name, v); }
+            public void SetFloat(string name, float v) { msMaterialSetFloat(_this, name, v); }
+            public void SetVector(string name, Vector4 v) { msMaterialSetVector(_this, name, v); }
+            public void SetMatrix(string name, Matrix4x4 v) { msMaterialSetMatrix(_this, name, v); }
+            public void SetFloatArray(string name, float[] v) { msMaterialSetFloatArray(_this, name, v, v.Length); }
+            public void SetVectorArray(string name, Vector4[] v) { msMaterialSetVectorArray(_this, name, v, v.Length); }
+            public void SetMatrixArray(string name, Matrix4x4[] v) { msMaterialSetMatrixArray(_this, name, v, v.Length); }
+            public void SetTexture(string name, TextureData v) { msMaterialSetTexture(_this, name, v); }
+
+            public int numKeywords
             {
-                get { return msMaterialGetColorMap(_this); }
-                set { msMaterialSetColorMap(_this, value); }
+                get { return msMaterialGetNumKeywords(_this); }
             }
-            public int metallicMap
+            public MaterialKeywordData GetKeyword(int i)
             {
-                get { return msMaterialGetMetallicMap(_this); }
-                set { msMaterialSetMetallicMap(_this, value); }
+                return msMaterialGetKeyword(_this, i);
             }
-            public int emissionMap
+            public void AddKeyword(string name, bool value)
             {
-                get { return msMaterialGetEmissionMap(_this); }
-                set { msMaterialSetEmissionMap(_this, value); }
-            }
-            public int normalMap
-            {
-                get { return msMaterialGetNormalMap(_this); }
-                set { msMaterialSetNormalMap(_this, value); }
+                msMaterialAddKeyword(_this, name, (byte)(value ? 1 : 0));
             }
         }
 

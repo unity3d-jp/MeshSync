@@ -565,6 +565,23 @@ namespace UTJ.MeshSync
             }
         }
 
+
+        // keyword strings
+        const string _Color = "_Color";
+        const string _MainTex = "_MainTex";
+
+        const string _EmissionColor = "_EmissionColor";
+        const string _EmissionMap = "_EmissionMap";
+        const string _EMISSION = "_EMISSION";
+
+        const string _Metallic = "_Metallic";
+        const string _Glossiness = "_Glossiness";
+        const string _MetallicGlossMap = "_MetallicGlossMap";
+        const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+
+        const string _BumpMap = "_BumpMap";
+        const string _NORMALMAP = "_NORMALMAP";
+
         void UpdateMaterials(SceneData scene)
         {
             int numMaterials = scene.numMaterials;
@@ -598,111 +615,78 @@ namespace UTJ.MeshSync
                     dst = new MaterialHolder();
                     dst.id = id;
 
-                    var tmp = CreateDefaultMaterial();
-                    tmp.name = src.name;
-                    tmp.color = src.color;
-                    dst.material = tmp;
+                    var shader = Shader.Find(src.shader);
+                    if (shader == null)
+                        shader = Shader.Find("Standard");
+
+                    var mat = new Material(shader);
+                    mat.name = src.name;
+                    mat.color = src.color;
+                    dst.material = mat;
                 }
                 dst.name = src.name;
                 dst.color = src.color;
 
-                if (dst.material.name == src.name)
+                var dstmat = dst.material;
+                if (dstmat.name == src.name)
                 {
-                    var flags = src.flags;
-
-                    // base color
-                    if (flags.hasColor)
-                        dst.material.color = dst.color;
-
-                    if (flags.hasColorMap)
+                    int numKeywords = src.numKeywords;
+                    for (int ki = 0; ki < numKeywords; ++ki)
                     {
-                        var mainTex = FindTexture(src.colorMap);
-                        if (mainTex != null)
-                            dst.material.mainTexture = mainTex;
+                        var kw = src.GetKeyword(ki);
+                        if (kw.value)
+                            dstmat.EnableKeyword(kw.name);
+                        else
+                            dstmat.DisableKeyword(kw.name);
                     }
 
-                    // emission
-                    const string _EmissionColor = "_EmissionColor";
-                    const string _EmissionMap = "_EmissionMap";
-                    const string _EMISSION = "_EMISSION";
-
-                    if (flags.hasEmission && dst.material.HasProperty(_EmissionColor))
+                    int numProps = src.numProperties;
+                    for (int pi = 0; pi < numProps; ++pi)
                     {
-                        var emission = src.emission;
-                        dst.material.SetColor(_EmissionColor, emission);
+                        var prop = src.GetProperty(pi);
+                        var name = prop.name;
+                        var type = prop.type;
 
-                        if (emission != Color.black)
+                        if (name == _EmissionColor && dstmat.HasProperty(_EmissionColor))
                         {
-                            if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                            if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
                             {
-                                dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                                dst.material.EnableKeyword(_EMISSION);
+                                dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                                dstmat.EnableKeyword(_EMISSION);
                             }
                         }
-                        else
+                        else if (name == _MetallicGlossMap && dstmat.HasProperty(_EmissionColor))
                         {
-                            if (dst.material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.RealtimeEmissive)
-                            {
-                                dst.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-                                dst.material.DisableKeyword(_EMISSION);
-                            }
+                            dstmat.EnableKeyword(_METALLICGLOSSMAP);
                         }
-                    }
-
-                    if (flags.hasEmissionMap && dst.material.HasProperty(_EmissionMap))
-                    {
-                        var emissionTex = FindTexture(src.emissionMap);
-                        if (emissionTex != null)
-                            dst.material.SetTexture(_EmissionMap, emissionTex);
-                    }
-
-                    // metallic
-                    const string _Metallic = "_Metallic";
-                    const string _Glossiness = "_Glossiness";
-                    const string _MetallicGlossMap = "_MetallicGlossMap";
-                    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
-
-                    if (flags.hasMetallic && dst.material.HasProperty(_Metallic))
-                        dst.material.SetFloat(_Metallic, src.metalic);
-
-                    if (flags.hasSmoothness && dst.material.HasProperty(_Glossiness))
-                        dst.material.SetFloat(_Glossiness, src.smoothness);
-
-                    if (flags.hasMetallicMap && dst.material.HasProperty(_MetallicGlossMap))
-                    {
-                        var metallicTex = FindTexture(src.metallicMap);
-                        if (metallicTex != null)
+                        else if (name == _BumpMap && dstmat.HasProperty(_BumpMap))
                         {
-                            dst.material.EnableKeyword(_METALLICGLOSSMAP);
-                            dst.material.SetTexture(_MetallicGlossMap, metallicTex);
+                            dstmat.EnableKeyword(_NORMALMAP);
                         }
-                        else
-                        {
-                            dst.material.DisableKeyword(_METALLICGLOSSMAP);
-                        }
-                    }
 
-                    // normal map
-                    const string _BumpMap = "_BumpMap";
-                    const string _NORMALMAP = "_NORMALMAP";
-
-                    if (flags.hasNormalMap && dst.material.HasProperty(_BumpMap))
-                    {
-                        var normalTex = FindTexture(src.normalMap);
-                        if (normalTex != null)
+                        switch (type)
                         {
-                            dst.material.EnableKeyword(_NORMALMAP);
-                            dst.material.SetTexture(_BumpMap, normalTex);
-                        }
-                        else
-                        {
-                            dst.material.DisableKeyword(_NORMALMAP);
+                            case MaterialPropertyData.Type.Int: dstmat.SetInt(name, prop.intValue); break;
+                            case MaterialPropertyData.Type.Float: dstmat.SetFloat(name, prop.floatValue); break;
+                            case MaterialPropertyData.Type.Vector: dstmat.SetVector(name, prop.vectorValue); break;
+                            case MaterialPropertyData.Type.Matrix: dstmat.SetMatrix(name, prop.matrixValue); break;
+                            case MaterialPropertyData.Type.FloatArray: dstmat.SetFloatArray(name, prop.floatArray); break;
+                            case MaterialPropertyData.Type.VectorArray: dstmat.SetVectorArray(name, prop.vectorArray); break;
+                            case MaterialPropertyData.Type.MatrixArray: dstmat.SetMatrixArray(name, prop.matrixArray); break;
+                            case MaterialPropertyData.Type.Texture:
+                                {
+                                    var tex = FindTexture(prop.textureValue);
+                                    if (tex != null)
+                                        dstmat.SetTexture(name, tex);
+                                }
+                                break;
+                            default: break;
                         }
                     }
                 }
 
                 newlist.Add(dst);
-                m_tmpMaterials.Add(dst.material);
+                m_tmpMaterials.Add(dstmat);
             }
 
             if (needsUpdate) {
@@ -1653,7 +1637,8 @@ namespace UTJ.MeshSync
         {
             var data = MaterialData.Create();
             data.name = mat.name;
-            data.color = mat.HasProperty("_Color") ? mat.color : Color.white;
+            if (mat.HasProperty("_Color"))
+                data.color = mat.GetColor("_Color");
             msServerServeMaterial(m_server, data);
             return true;
         }

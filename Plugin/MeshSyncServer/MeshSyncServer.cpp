@@ -125,15 +125,18 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 
 
 #pragma region Material
-msAPI const char* msMaterialParamGetName(ms::MaterialParam *_this) { return _this->name.c_str(); }
-msAPI ms::MaterialParam::Type msMaterialParamGetType(ms::MaterialParam *_this) { return _this->type; }
-msAPI int msMaterialParamGetInt(ms::MaterialParam *_this) { return _this->getInt(); }
-msAPI float msMaterialParamGetFloat(ms::MaterialParam *_this) { return _this->getFloat(); }
-msAPI float4 msMaterialParamGetVector(ms::MaterialParam *_this) { return _this->getVector(); }
-msAPI float4x4 msMaterialParamGetMatrix(ms::MaterialParam *_this) { return _this->getMatrix(); }
-msAPI int msMaterialParamGetTexture(ms::MaterialParam *_this) { return _this->getTexture(); }
-msAPI int msMaterialParamGetArraySize(ms::MaterialParam *_this) { return _this->getArraySize(); }
-msAPI void msMaterialParamCopyData(ms::MaterialParam *_this, void *dst) { return _this->copy(dst); }
+msAPI const char* msMaterialPropGetName(ms::MaterialProperty *_this) { return _this->name.c_str(); }
+msAPI ms::MaterialProperty::Type msMaterialPropGetType(ms::MaterialProperty *_this) { return _this->type; }
+msAPI int       msMaterialPropGetInt(ms::MaterialProperty *_this) { return _this->getInt(); }
+msAPI float     msMaterialPropGetFloat(ms::MaterialProperty *_this) { return _this->getFloat(); }
+msAPI float4    msMaterialPropGetVector(ms::MaterialProperty *_this) { return _this->getVector(); }
+msAPI float4x4  msMaterialPropGetMatrix(ms::MaterialProperty *_this) { return _this->getMatrix(); }
+msAPI int       msMaterialPropGetTexture(ms::MaterialProperty *_this) { return _this->getTexture(); }
+msAPI int       msMaterialPropGetArraySize(ms::MaterialProperty *_this) { return _this->getArraySize(); }
+msAPI void      msMaterialPropCopyData(ms::MaterialProperty *_this, void *dst) { return _this->copy(dst); }
+
+msAPI const char*   msMaterialKeywordGetName(ms::MaterialKeyword *_this) { return _this->name.c_str(); }
+msAPI bool          msMaterialKeywordGetValue(ms::MaterialKeyword *_this) { return _this->value; }
 
 msAPI ms::Material* msMaterialCreate() { return ms::Material::create_raw(); }
 msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
@@ -144,15 +147,20 @@ msAPI const char*   msMaterialGetShader(ms::Material *_this) { return _this->sha
 msAPI void          msMaterialSetShader(ms::Material *_this, const char *v) { _this->shader = v; }
 
 msAPI int msMaterialGetNumParams(ms::Material *_this) { return _this->getParamCount(); }
-msAPI ms::MaterialParam* msMaterialGetParam(ms::Material *_this, int i) { return _this->getParam(i); }
+msAPI ms::MaterialProperty* msMaterialGetParam(ms::Material *_this, int i) { return _this->getParam(i); }
+msAPI ms::MaterialProperty* msMaterialFindParam(ms::Material *_this, const char *n) { return _this->findParam(n); }
 msAPI void msMaterialSetInt(ms::Material *_this, const char *n, int v) { _this->addParam({ n, v }); }
 msAPI void msMaterialSetFloat(ms::Material *_this, const char *n, float v) { _this->addParam({ n, v }); }
-msAPI void msMaterialSetVector(ms::Material *_this, const char *n, const float4 *v) { _this->addParam({ n, *v }); }
-msAPI void msMaterialSetMatrix(ms::Material *_this, const char *n, const float4x4 *v) { _this->addParam({ n, *v }); }
+msAPI void msMaterialSetVector(ms::Material *_this, const char *n, const float4 v) { _this->addParam({ n, v }); }
+msAPI void msMaterialSetMatrix(ms::Material *_this, const char *n, const float4x4 v) { _this->addParam({ n, v }); }
 msAPI void msMaterialSetFloatArray(ms::Material *_this, const char *n, const float *v, int c) { _this->addParam({ n, v, c }); }
 msAPI void msMaterialSetVectorArray(ms::Material *_this, const char *n, const float4 *v, int c) { _this->addParam({ n, v, c }); }
 msAPI void msMaterialSetMatrixArray(ms::Material *_this, const char *n, const float4x4 *v, int c) { _this->addParam({ n, v, c }); }
 msAPI void msMaterialSetTexture(ms::Material *_this, const char *n, ms::Texture *v) { _this->addParam({ n, v }); }
+
+msAPI int msMaterialGetNumKeywords(ms::Material *_this) { return (int)_this->keywords.size(); }
+msAPI ms::MaterialKeyword* msMaterialGetKeyword(ms::Material *_this, int i) { return &_this->keywords[i]; }
+msAPI void msMaterialAddKeyword(ms::Material *_this, const char *name, bool v) { _this->keywords.push_back({name, v}); }
 #pragma endregion
 
 

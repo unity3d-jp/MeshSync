@@ -351,7 +351,8 @@ TestCase(Test_SendTexture)
         {
             auto mat = ms::Material::create();
             scene.materials.push_back(mat);
-            mat->name = "TextMaterial1";
+            mat->name = "TestMaterial1";
+            mat->id = 0;
             auto& stdmat = ms::AsStandardMaterial(*mat);
             stdmat.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
             stdmat.setEmission({ 0.7f, 0.1f, 0.2f, 1.0f });
