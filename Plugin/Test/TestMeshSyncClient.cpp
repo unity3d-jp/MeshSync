@@ -361,6 +361,9 @@ TestCase(Test_SendTexture)
             stdmat.setColorMap(1);
             stdmat.setMetallicMap(5);
             stdmat.setEmissionMap(4);
+
+            stdmat.addKeyword({ "_EMISSION", true });
+            stdmat.addKeyword({ "_INVALIDKEYWORD", true });
         }
 
         Send(scene);

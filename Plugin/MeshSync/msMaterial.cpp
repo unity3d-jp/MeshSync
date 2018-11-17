@@ -232,4 +232,39 @@ void Material::eraseParam(const char *n)
         properties.erase(it);
 }
 
+int Material::getKeywordCount() const
+{
+    return (int)keywords.size();
+}
+MaterialKeyword* Material::getKeyword(int i)
+{
+    return &keywords[i];
+}
+MaterialKeyword* Material::findKeyword(const char *n)
+{
+    auto it = std::find_if(keywords.begin(), keywords.end(), [n](const MaterialKeyword& v) { return v.name == n; });
+    return it != keywords.end() ? &(*it) : nullptr;
+}
+const MaterialKeyword* Material::getKeyword(int i) const
+{
+    return const_cast<Material*>(this)->getKeyword(i);
+}
+const MaterialKeyword* Material::findKeyword(const char *n) const
+{
+    return const_cast<Material*>(this)->findKeyword(n);
+}
+void Material::addKeyword(MaterialKeyword v)
+{
+    if (auto *p = findKeyword(v.name.c_str()))
+        *p = v;
+    else
+        keywords.push_back(v);
+}
+void Material::eraseKeyword(const char *n)
+{
+    auto it = std::find_if(keywords.begin(), keywords.end(), [n](const MaterialKeyword& v) { return v.name == n; });
+    if (it != keywords.end())
+        keywords.erase(it);
+}
+
 } // namespace ms

@@ -50,9 +50,6 @@ namespace UTJ.MeshSync
         {
             foreach (var md in t.materialData)
             {
-                if (md.id == MeshSyncServer.InvalidID)
-                    continue;
-
                 var rect = EditorGUILayout.BeginHorizontal();
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
                 EditorGUILayout.LabelField("", GUILayout.Width(16));

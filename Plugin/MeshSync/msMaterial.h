@@ -111,6 +111,14 @@ public:
     const MaterialProperty* findParam(const char *name) const;
     void addParam(MaterialProperty v);
     void eraseParam(const char *name);
+
+    int getKeywordCount() const;
+    MaterialKeyword* getKeyword(int i);
+    MaterialKeyword* findKeyword(const char *name);
+    const MaterialKeyword* getKeyword(int i) const;
+    const MaterialKeyword* findKeyword(const char *name) const;
+    void addKeyword(MaterialKeyword v);
+    void eraseKeyword(const char *name);
 };
 msHasSerializer(Material);
 using MaterialPtr = std::shared_ptr<Material>;

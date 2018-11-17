@@ -50,6 +50,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
         [SerializeField] bool m_updateMeshColliders = true;
+        [SerializeField] bool m_trackMaterialAssignment = true;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -608,88 +609,102 @@ namespace UTJ.MeshSync
 
         void UpdateMaterials(SceneData scene)
         {
+            bool needReassign = false;
+
             int numMaterials = scene.numMaterials;
             for (int i = 0; i < numMaterials; ++i)
             {
                 var src = scene.GetMaterial(i);
                 var id = src.id;
+
                 var dst = m_materialList.Find(a => a.id == id);
                 if (dst == null)
                 {
                     dst = new MaterialHolder();
                     dst.id = id;
                     m_materialList.Add(dst);
-
+                }
+                if (dst.material == null)
+                {
                     var shader = Shader.Find(src.shader);
                     if (shader == null)
                         shader = Shader.Find("Standard");
                     dst.material = new Material(shader);
+                    dst.materialIID = dst.material.GetInstanceID();
+                    needReassign = true;
                 }
-                dst.name = dst.material.name = src.name;
+                dst.name = src.name;
                 dst.index = src.index;
                 dst.shader = src.shader;
                 dst.color = src.color;
 
+                if (dst.materialIID != dst.material.GetInstanceID())
+                    continue;
+
                 var dstmat = dst.material;
-                if (dstmat.name == src.name)
+                dstmat.name = src.name;
+
+                int numKeywords = src.numKeywords;
+                for (int ki = 0; ki < numKeywords; ++ki)
                 {
-                    int numKeywords = src.numKeywords;
-                    for (int ki = 0; ki < numKeywords; ++ki)
+                    var kw = src.GetKeyword(ki);
+                    if (kw.value)
+                        dstmat.EnableKeyword(kw.name);
+                    else
+                        dstmat.DisableKeyword(kw.name);
+                }
+
+                int numProps = src.numProperties;
+                for (int pi = 0; pi < numProps; ++pi)
+                {
+                    var prop = src.GetProperty(pi);
+                    var name = prop.name;
+                    var type = prop.type;
+                    if (!dstmat.HasProperty(name))
+                        continue;
+
+                    if (name == _EmissionColor)
                     {
-                        var kw = src.GetKeyword(ki);
-                        if (kw.value)
-                            dstmat.EnableKeyword(kw.name);
-                        else
-                            dstmat.DisableKeyword(kw.name);
+                        if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                        {
+                            dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                            dstmat.EnableKeyword(_EMISSION);
+                        }
+                    }
+                    else if (name == _MetallicGlossMap)
+                    {
+                        dstmat.EnableKeyword(_METALLICGLOSSMAP);
+                    }
+                    else if (name == _BumpMap)
+                    {
+                        dstmat.EnableKeyword(_NORMALMAP);
                     }
 
-                    int numProps = src.numProperties;
-                    for (int pi = 0; pi < numProps; ++pi)
+                    switch (type)
                     {
-                        var prop = src.GetProperty(pi);
-                        var name = prop.name;
-                        var type = prop.type;
-
-                        if (name == _EmissionColor && dstmat.HasProperty(_EmissionColor))
-                        {
-                            if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                        case MaterialPropertyData.Type.Int: dstmat.SetInt(name, prop.intValue); break;
+                        case MaterialPropertyData.Type.Float: dstmat.SetFloat(name, prop.floatValue); break;
+                        case MaterialPropertyData.Type.Vector: dstmat.SetVector(name, prop.vectorValue); break;
+                        case MaterialPropertyData.Type.Matrix: dstmat.SetMatrix(name, prop.matrixValue); break;
+                        case MaterialPropertyData.Type.FloatArray: dstmat.SetFloatArray(name, prop.floatArray); break;
+                        case MaterialPropertyData.Type.VectorArray: dstmat.SetVectorArray(name, prop.vectorArray); break;
+                        case MaterialPropertyData.Type.MatrixArray: dstmat.SetMatrixArray(name, prop.matrixArray); break;
+                        case MaterialPropertyData.Type.Texture:
                             {
-                                dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                                dstmat.EnableKeyword(_EMISSION);
+                                var tex = FindTexture(prop.textureValue);
+                                if (tex != null)
+                                    dstmat.SetTexture(name, tex);
                             }
-                        }
-                        else if (name == _MetallicGlossMap && dstmat.HasProperty(_EmissionColor))
-                        {
-                            dstmat.EnableKeyword(_METALLICGLOSSMAP);
-                        }
-                        else if (name == _BumpMap && dstmat.HasProperty(_BumpMap))
-                        {
-                            dstmat.EnableKeyword(_NORMALMAP);
-                        }
-
-                        switch (type)
-                        {
-                            case MaterialPropertyData.Type.Int: dstmat.SetInt(name, prop.intValue); break;
-                            case MaterialPropertyData.Type.Float: dstmat.SetFloat(name, prop.floatValue); break;
-                            case MaterialPropertyData.Type.Vector: dstmat.SetVector(name, prop.vectorValue); break;
-                            case MaterialPropertyData.Type.Matrix: dstmat.SetMatrix(name, prop.matrixValue); break;
-                            case MaterialPropertyData.Type.FloatArray: dstmat.SetFloatArray(name, prop.floatArray); break;
-                            case MaterialPropertyData.Type.VectorArray: dstmat.SetVectorArray(name, prop.vectorArray); break;
-                            case MaterialPropertyData.Type.MatrixArray: dstmat.SetMatrixArray(name, prop.matrixArray); break;
-                            case MaterialPropertyData.Type.Texture:
-                                {
-                                    var tex = FindTexture(prop.textureValue);
-                                    if (tex != null)
-                                        dstmat.SetTexture(name, tex);
-                                }
-                                break;
-                            default: break;
-                        }
+                            break;
+                        default: break;
                     }
                 }
                 m_tmpMaterials.Add(dstmat);
             }
             m_materialList = m_materialList.OrderBy(v => v.index).ToList();
+
+            if (needReassign)
+                ReassignMaterials();
         }
 
         SkinnedMeshRenderer UpdateMesh(MeshData data)
@@ -1929,25 +1944,29 @@ namespace UTJ.MeshSync
                 var rec = kvp.Value;
                 if (rec.go != null && rec.go.activeInHierarchy)
                 {
-                    var mr = rec.go.GetComponent<MeshRenderer>();
-                    if(mr == null || rec.submeshCounts.Length == 0) { continue; }
+                    var mr = rec.go.GetComponent<SkinnedMeshRenderer>();
+                    if (mr == null || rec.submeshCounts.Length == 0)
+                        continue;
 
                     var materials = mr.sharedMaterials;
                     int n = Math.Min(materials.Length, rec.submeshCounts[0]);
                     for (int i = 0; i < n; ++i)
                     {
-                        int midx = rec.materialIDs[i];
-                        if(midx < 0 || midx >= m_materialList.Count) { continue; }
+                        int mid = rec.materialIDs[i];
+                        var mrec = m_materialList.Find(a => a.id == mid);
+                        if (mrec == null)
+                            continue;
 
-                        if(materials[i] != m_materialList[midx].material)
+                        if (materials[i] != mrec.material)
                         {
-                            m_materialList[midx].material = materials[i];
+                            mrec.material = materials[i];
                             changed = true;
                             break;
                         }
                     }
                 }
-                if(changed) { break; }
+                if (changed)
+                    break;
             }
 
             if (changed)
@@ -1959,12 +1978,10 @@ namespace UTJ.MeshSync
 
         void OnSceneViewGUI(SceneView sceneView)
         {
-            if (Event.current.type == EventType.DragExited)
+            if (m_trackMaterialAssignment)
             {
-                if (Event.current.button == 0)
-                {
+                if (Event.current.type == EventType.DragExited && Event.current.button == 0)
                     CheckMaterialAssignedViaEditor();
-                }
             }
         }
 #endif

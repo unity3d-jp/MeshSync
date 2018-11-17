@@ -2261,6 +2261,7 @@ namespace UTJ.MeshSync
             public string shader;
             public Color color = Color.white;
             public Material material;
+            public int materialIID;
         }
 
         [Serializable]
