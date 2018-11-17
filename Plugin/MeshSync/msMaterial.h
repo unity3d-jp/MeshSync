@@ -67,6 +67,7 @@ template<> struct GetTextureFormat<float4>  { static const TextureFormat result 
 int GetPixelSize(TextureFormat format);
 bool FileToByteArray(const char *path, RawVector<char> &out);
 bool ByteArrayToFile(const char *path, const RawVector<char> &data);
+bool ByteArrayToFile(const char *path, const char *data, size_t size);
 bool FileExists(const char *path);
 uint64_t FileMTime(const char *path);
 

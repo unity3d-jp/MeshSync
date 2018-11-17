@@ -565,7 +565,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msTextureGetSizeInByte(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string path);
+            [DllImport("MeshSyncServer")] static extern byte msWriteToFile(string path, byte[] data, int size);
             #endregion
 
             public static TextureData Create() { return msTextureCreate(); }
@@ -612,6 +613,10 @@ namespace UTJ.MeshSync
             public bool WriteToFile(string path)
             {
                 return msTextureWriteToFile(_this, path) != 0;
+            }
+            public static bool WriteToFile(string path, byte[] data)
+            {
+                return msWriteToFile(path, data, data.Length) != 0;
             }
         }
 

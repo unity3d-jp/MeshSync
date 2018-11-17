@@ -170,6 +170,7 @@ msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _t
 msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
 msAPI int               msTextureGetSizeInByte(ms::Texture *_this) { return (int)_this->data.size(); }
 msAPI bool              msTextureWriteToFile(ms::Texture *_this, const char *path) { return _this->writeToFile(path); }
+msAPI bool              msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
 #pragma endregion
 
 

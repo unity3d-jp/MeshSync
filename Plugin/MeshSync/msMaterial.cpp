@@ -51,6 +51,16 @@ bool ByteArrayToFile(const char *path, const RawVector<char> &data)
     return true;
 }
 
+bool ByteArrayToFile(const char * path, const char *data, size_t size)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f)
+        return false;
+    fwrite(data, 1, size, f);
+    fclose(f);
+    return true;
+}
+
 bool FileExists(const char *path)
 {
     if (!path || *path == '\0')
@@ -252,13 +262,13 @@ float   Material::getMetallic() const   { return metalic; }
 void    Material::setSmoothness(float v){ smoothness = v; flags.has_smoothness = 1; }
 float   Material::getSmoothness() const { return smoothness; }
 
-void    Material::setColorMap(int v)    { color_map = v; flags.has_color_map = (v >= 0 ? 1 : 0); }
+void    Material::setColorMap(int v)    { color_map = v; flags.has_color_map = (v != InvalidID ? 1 : 0); }
 int     Material::getColorMap() const   { return color_map; }
-void    Material::setEmissionMap(int v) { emission_map = v; flags.has_emission_map = (v >= 0 ? 1 : 0); }
+void    Material::setEmissionMap(int v) { emission_map = v; flags.has_emission_map = (v != InvalidID ? 1 : 0); }
 int     Material::getEmissionMap() const{ return emission_map; }
-void    Material::setMetallicMap(int v) { metallic_map = v; flags.has_metallic_map = (v >= 0 ? 1 : 0); }
+void    Material::setMetallicMap(int v) { metallic_map = v; flags.has_metallic_map = (v != InvalidID ? 1 : 0); }
 int     Material::getMetallicMap() const{ return metallic_map; }
-void    Material::setNormalMap(int v)   { normal_map = v; flags.has_normal_map = (v >= 0 ? 1 : 0); }
+void    Material::setNormalMap(int v)   { normal_map = v; flags.has_normal_map = (v != InvalidID ? 1 : 0); }
 int     Material::getNormalMap() const  { return normal_map; }
 
 
