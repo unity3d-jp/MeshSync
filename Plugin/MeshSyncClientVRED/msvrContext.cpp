@@ -29,9 +29,8 @@ void msvrContext::send(bool force)
 
     for (auto& pair : m_buffer_records) {
         auto& buf = pair.second;
-        if (buf.dst_mesh) {
+        if (buf.dst_mesh)
             m_entity_manager.add(buf.dst_mesh);
-        }
     }
 
     // build material list
@@ -307,7 +306,6 @@ void msvrContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
         auto it = m_buffer_records.find(buffers[i]);
         if (it != m_buffer_records.end()) {
             auto& rec = it->second;
-            rec.wait();
             if (rec.dst_mesh)
                 m_entity_manager.erase(rec.dst_mesh->getIdentifier());
             m_buffer_records.erase(it);
@@ -514,13 +512,12 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     }
 
     {
-        auto transform = (float4x4&)obj_buf.data[0];
-
         if (vb->material != m_material) {
             vb->material = m_material;
             vb->dirty = true;
         }
 
+        auto transform = (float4x4&)obj_buf.data[0];
         auto task = [this, vb, ib, count, type, transform]() {
             if (!vb->dst_mesh) {
                 vb->dst_mesh = ms::Mesh::create();
@@ -602,14 +599,6 @@ msvrContext* msvrGetContext()
         s_ctx.reset(new msvrContext());
     }
     return s_ctx.get();
-}
-
-void BufferRecord::wait()
-{
-    if (task.valid()) {
-        task.wait();
-        task = {};
-    }
 }
 
 bool FramebufferRecord::isMainTarget() const

@@ -67,9 +67,6 @@ struct BufferRecord : public mu::noncopyable
     MaterialRecord material;
 
     ms::MeshPtr dst_mesh;
-    std::future<void> task;
-
-    void wait();
 };
 
 
