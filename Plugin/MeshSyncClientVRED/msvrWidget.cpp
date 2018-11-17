@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
-#include "msxmContext.h"
+#include "msvrContext.h"
 
-#define msxmEnableQt
+#define msvrEnableQt
 
-#ifdef msxmEnableQt
+#ifdef msvrEnableQt
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -25,11 +25,11 @@
 #pragma comment(lib, "Qt5Widgets.lib")
 
 
-class msxmSettingsWidget : public QWidget
+class msvrSettingsWidget : public QWidget
 {
 using super = QWidget;
 public:
-    msxmSettingsWidget(QWidget *parent = nullptr);
+    msvrSettingsWidget(QWidget *parent = nullptr);
 
 private:
     void onEditServer(const QString& v);
@@ -49,23 +49,26 @@ private:
 static QMainWindow* FindMainWindow()
 {
     auto widgets = qApp->topLevelWidgets();
+    QMainWindow *ret = nullptr;
     for (auto w : widgets) {
-        auto mw = dynamic_cast<QMainWindow*>(w);
-        if (mw) {
-            return mw;
+        auto title = w->windowTitle().toStdString();
+        if (auto mw = dynamic_cast<QMainWindow*>(w)) {
+            if (mw->menuBar()->actions().size() > 8) {
+                ret = mw;
+            }
         }
     }
-    return nullptr;
+    return ret;
 }
 
 
-msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
+msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     : super(parent)
 {
     setWindowTitle("Unity Mesh Sync");
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
-    auto &settings = msxmGetContext()->getSettings();
+    auto &settings = msvrGetContext()->getSettings();
 
     // setup controls
 
@@ -104,25 +107,25 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
 
     setLayout(layout);
 
-    connect(ed_server, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditServer);
-    connect(ed_port, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditPort);
-    connect(ed_scale_factor, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditScaleFactor);
-    connect(ck_camera, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncCamera);
-    connect(ck_delete, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncDelete);
-    connect(ck_auto_sync, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleAutoSync);
-    connect(bu_manual_sync, &QPushButton::clicked, this, &msxmSettingsWidget::onClickManualSync);
+    connect(ed_server, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditServer);
+    connect(ed_port, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditPort);
+    connect(ed_scale_factor, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditScaleFactor);
+    connect(ck_camera, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncCamera);
+    connect(ck_delete, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncDelete);
+    connect(ck_auto_sync, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleAutoSync);
+    connect(bu_manual_sync, &QPushButton::clicked, this, &msvrSettingsWidget::onClickManualSync);
 
 
-    // try to add menu item (Widget -> Unity Mesh Sync)
+    // try to add menu item (Window -> Unity Mesh Sync)
 
     auto actions = FindMainWindow()->menuBar()->actions();
-    if (actions.size() > 9) {
-        auto *act_widgets = actions[9]; // "Widgets" menu
+    if (actions.size() > 8) {
+        auto *act_widgets = actions[8]; // "Window" menu
 
         m_menu_item = new QAction("Unity Mesh Sync", nullptr);
         m_menu_item->setCheckable(true);
         m_menu_item->setChecked(true);
-        connect(m_menu_item, &QAction::triggered, this, &msxmSettingsWidget::onMenuAction);
+        connect(m_menu_item, &QAction::triggered, this, &msvrSettingsWidget::onMenuAction);
 
         auto widget_menu = act_widgets->menu();
         widget_menu->addSeparator();
@@ -130,15 +133,15 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     }
 }
 
-void msxmSettingsWidget::onEditServer(const QString& v)
+void msvrSettingsWidget::onEditServer(const QString& v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     ctx->getSettings().client_settings.server = v.toStdString();
 }
 
-void msxmSettingsWidget::onEditPort(const QString& v)
+void msvrSettingsWidget::onEditPort(const QString& v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
     bool ok;
     uint16_t port = v.toUShort(&ok);
@@ -147,9 +150,9 @@ void msxmSettingsWidget::onEditPort(const QString& v)
     }
 }
 
-void msxmSettingsWidget::onEditScaleFactor(const QString& v)
+void msvrSettingsWidget::onEditScaleFactor(const QString& v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
     bool ok;
     float scale = v.toFloat(&ok);
@@ -160,38 +163,38 @@ void msxmSettingsWidget::onEditScaleFactor(const QString& v)
     }
 }
 
-void msxmSettingsWidget::onToggleSyncCamera(int v)
+void msvrSettingsWidget::onToggleSyncCamera(int v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
     settings.sync_camera = v;
     if (settings.auto_sync)
         ctx->send(false);
 }
 
-void msxmSettingsWidget::onToggleSyncDelete(int v)
+void msvrSettingsWidget::onToggleSyncDelete(int v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
     settings.sync_delete = v;
 }
 
-void msxmSettingsWidget::onToggleAutoSync(int v)
+void msvrSettingsWidget::onToggleAutoSync(int v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     auto& settings = ctx->getSettings();
     settings.auto_sync = v;
     if (v)
         ctx->send(true);
 }
 
-void msxmSettingsWidget::onClickManualSync(bool v)
+void msvrSettingsWidget::onClickManualSync(bool v)
 {
-    auto ctx = msxmGetContext();
+    auto ctx = msvrGetContext();
     ctx->send(true);
 }
 
-void msxmSettingsWidget::onMenuAction(bool v)
+void msvrSettingsWidget::onMenuAction(bool v)
 {
     if (v)
         show();
@@ -199,27 +202,29 @@ void msxmSettingsWidget::onMenuAction(bool v)
         hide();
 }
 
-void msxmSettingsWidget::closeEvent(QCloseEvent * e)
+void msvrSettingsWidget::closeEvent(QCloseEvent * e)
 {
     if (m_menu_item) {
         m_menu_item->setChecked(false);
     }
 }
 
-static msxmSettingsWidget *g_widget = nullptr;
+static msvrSettingsWidget *g_widget = nullptr;
 
-void msxmInitializeWidget()
+void msvrInitializeWidget()
 {
     if (!g_widget) {
-        g_widget = new msxmSettingsWidget();
-        g_widget->show();
+        if (auto mainwindow = FindMainWindow()) {
+            g_widget = new msvrSettingsWidget();
+            g_widget->show();
+        }
     }
 }
 
-#else // msxmEnableQt
+#else
 
-void msxmInitializeWidget()
+void msvrInitializeWidget()
 {
 }
 
-#endif // msxmEnableQt
+#endif

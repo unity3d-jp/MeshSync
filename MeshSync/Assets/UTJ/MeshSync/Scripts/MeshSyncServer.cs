@@ -473,9 +473,9 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
                     string path = assetDir + "/" + src.name;
                     src.WriteToFile(path);
+
                     AssetDatabase.ImportAsset(path);
                     texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-
                     if (texture != null)
                     {
                         var importer = (TextureImporter)AssetImporter.GetAtPath(path);
@@ -490,11 +490,62 @@ namespace UTJ.MeshSync
                 else
                 {
                     texture = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
+                    texture.name = src.name;
                     texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
                     texture.Apply();
+
 #if UNITY_EDITOR
-                    string path = assetDir + "/" + src.name + ".asset";
-                    CreateAsset(texture, path);
+                    string path = null;
+                    switch (src.format) {
+                        case TextureFormat.Ru8:
+                        case TextureFormat.RGu8:
+                        case TextureFormat.RGBu8:
+                        case TextureFormat.RGBAu8:
+                            {
+                                path = assetDir + "/" + src.name + ".png";
+                                var data = ImageConversion.EncodeToPNG(texture);
+                                TextureData.WriteToFile(path, data);
+                                break;
+                            }
+                        case TextureFormat.Rf16:
+                        case TextureFormat.RGf16:
+                        case TextureFormat.RGBf16:
+                        case TextureFormat.RGBAf16:
+                            {
+                                path = assetDir + "/" + src.name + ".exr";
+                                var data = ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP);
+                                TextureData.WriteToFile(path, data);
+                                break;
+                            }
+                        case TextureFormat.Rf32:
+                        case TextureFormat.RGf32:
+                        case TextureFormat.RGBf32:
+                        case TextureFormat.RGBAf32:
+                            {
+                                path = assetDir + "/" + src.name + ".exr";
+                                var data = ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP);
+                                TextureData.WriteToFile(path, data);
+                                break;
+                            }
+                    }
+
+                    if (path != null)
+                    {
+                        texture = null;
+                        GC.Collect();
+
+                        AssetDatabase.ImportAsset(path);
+                        texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                        if (texture != null)
+                        {
+                            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                            if (importer != null)
+                            {
+                                if (src.type == TextureType.NormalMap)
+                                    importer.textureType = TextureImporterType.NormalMap;
+                            }
+                        }
+                    }
 #endif
                 }
 

@@ -48,10 +48,26 @@ enum class TextureType
     NormalMap,
 };
 
+template<class T> struct GetTextureFormat;
+template<> struct GetTextureFormat<unorm8>  { static const TextureFormat result = ms::TextureFormat::Ru8; };
+template<> struct GetTextureFormat<unorm8x2>{ static const TextureFormat result = ms::TextureFormat::RGu8; };
+template<> struct GetTextureFormat<unorm8x3>{ static const TextureFormat result = ms::TextureFormat::RGBu8; };
+template<> struct GetTextureFormat<unorm8x4>{ static const TextureFormat result = ms::TextureFormat::RGBAu8; };
+template<> struct GetTextureFormat<half>    { static const TextureFormat result = ms::TextureFormat::Rf16; };
+template<> struct GetTextureFormat<half2>   { static const TextureFormat result = ms::TextureFormat::RGf16; };
+template<> struct GetTextureFormat<half3>   { static const TextureFormat result = ms::TextureFormat::RGBf16; };
+template<> struct GetTextureFormat<half4>   { static const TextureFormat result = ms::TextureFormat::RGBAf16; };
+template<> struct GetTextureFormat<float>   { static const TextureFormat result = ms::TextureFormat::Rf32; };
+template<> struct GetTextureFormat<float2>  { static const TextureFormat result = ms::TextureFormat::RGf32; };
+template<> struct GetTextureFormat<float3>  { static const TextureFormat result = ms::TextureFormat::RGBf32; };
+template<> struct GetTextureFormat<float4>  { static const TextureFormat result = ms::TextureFormat::RGBAf32; };
+
+
 // in byte
 int GetPixelSize(TextureFormat format);
 bool FileToByteArray(const char *path, RawVector<char> &out);
 bool ByteArrayToFile(const char *path, const RawVector<char> &data);
+bool ByteArrayToFile(const char *path, const char *data, size_t size);
 bool FileExists(const char *path);
 uint64_t FileMTime(const char *path);
 

@@ -64,7 +64,7 @@ static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>
     }
 }
 
-void BufferData::buildMeshData(bool weld_vertices)
+void BufferRecord::buildMeshData(bool weld_vertices)
 {
     if (!data.data())
         return;
@@ -84,11 +84,6 @@ void BufferData::buildMeshData(bool weld_vertices)
     if (!visible) {
         return;
     }
-
-    mesh.flags.has_refine_settings = 1;
-    mesh.refine_settings.flags.swap_faces = true;
-    mesh.refine_settings.flags.gen_tangents = 1;
-    mesh.refine_settings.flags.invert_v = 1;
 
     auto vertices = (const xm_vertex1*)data.data();
     if (weld_vertices) {
@@ -131,10 +126,15 @@ void BufferData::buildMeshData(bool weld_vertices)
         mesh.counts[ti] = 3;
         mesh.material_ids[ti] = material_id;
     }
+
     mesh.setupFlags();
+    mesh.flags.has_refine_settings = 1;
+    mesh.refine_settings.flags.swap_faces = true;
+    mesh.refine_settings.flags.gen_tangents = 1;
+    mesh.refine_settings.flags.invert_v = 1;
 }
 
-bool BufferData::isModelData() const
+bool BufferRecord::isModelData() const
 {
     return stride == sizeof(xm_vertex1) && triangle;
 }
@@ -167,10 +167,11 @@ void msxmContext::send(bool force)
         m_entity_manager.makeDirtyAll();
     }
 
-    for (auto& pair : m_buffers) {
+    for (auto& pair : m_buffer_records) {
         auto& buf = pair.second;
         if (buf.isModelData() && (buf.dirty || force)) {
             m_mesh_buffers.push_back(&buf);
+            buf.dirty = false;
         }
     }
     if (m_mesh_buffers.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
@@ -181,7 +182,7 @@ void msxmContext::send(bool force)
     // build material list
     {
         m_material_data.clear();
-        auto findOrAddMaterial = [this](const MaterialData& md) {
+        auto findOrAddMaterial = [this](const MaterialRecord& md) {
             auto it = std::find(m_material_data.begin(), m_material_data.end(), md);
             if (it != m_material_data.end()) {
                 return (int)std::distance(m_material_data.begin(), it);
@@ -193,7 +194,7 @@ void msxmContext::send(bool force)
             }
         };
 
-        for (auto& pair : m_buffers) {
+        for (auto& pair : m_buffer_records) {
             auto& buf = pair.second;
             if (buf.isModelData()) {
                 buf.material_id = findOrAddMaterial(buf.material);
@@ -217,8 +218,8 @@ void msxmContext::send(bool force)
     if (m_settings.sync_camera) {
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->path = "/Main Camera";
         }
+        m_camera->path = m_settings.camera_path;
         m_camera->position = m_camera_pos;
         m_camera->rotation = m_camera_rot;
         m_camera->fov = m_camera_fov;
@@ -235,7 +236,7 @@ void msxmContext::send(bool force)
                 m_entity_manager.add(m_camera);
 
             // gen welded meshes
-            mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferData *v) {
+            mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
                 v->buildMeshData(m_settings.weld_vertices);
                 m_entity_manager.add(v->dst_mesh);
             });
@@ -278,17 +279,17 @@ void msxmContext::onActiveTexture(GLenum texture)
 void msxmContext::onBindTexture(GLenum target, GLuint texture)
 {
     if (m_texture_slot == 0) {
-        m_material.texture = texture;
+        m_material_records.texture = texture;
     }
 }
 
-BufferData* msxmContext::getActiveBuffer(GLenum target)
+BufferRecord* msxmContext::getActiveBuffer(GLenum target)
 {
     uint32_t bid = 0;
     if (target == GL_ARRAY_BUFFER) {
         bid = m_vb_handle;
     }
-    return bid != 0 ? &m_buffers[bid] : nullptr;
+    return bid != 0 ? &m_buffer_records[bid] : nullptr;
 }
 
 
@@ -305,12 +306,12 @@ void msxmContext::onGenBuffers(GLsizei n, GLuint * handles)
 void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
 {
     for (int i = 0; i < n; ++i) {
-        auto it = m_buffers.find(handles[i]);
-        if (it != m_buffers.end()) {
+        auto it = m_buffer_records.find(handles[i]);
+        if (it != m_buffer_records.end()) {
             if (it->second.isModelData()) {
                 m_meshes_deleted.push_back(it->second.handle);
             }
-            m_buffers.erase(it);
+            m_buffer_records.erase(it);
         }
     }
 }
@@ -353,15 +354,11 @@ void msxmContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            ms::parallel_invoke([buf]() {
-                memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
-            },
-            [buf]() {
-                if (memcmp(buf->data.data(), buf->tmp_data.data(), buf->data.size()) != 0) {
-                    buf->data = buf->tmp_data;
-                    buf->dirty = true;
-                }
-            });
+            memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
+            if (buf->data != buf->tmp_data) {
+                std::swap(buf->data, buf->tmp_data);
+                buf->dirty = true;
+            }
             buf->mapped_data = nullptr;
         }
     }
@@ -379,7 +376,7 @@ void msxmContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * va
 {
     if (location == 3) {
         // diffuse
-        m_material.diffuse.assign(value);
+        m_material_records.diffuse.assign(value);
     }
 }
 
@@ -434,8 +431,8 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
 
         buf->triangle = true;
         buf->num_elements = (int)count;
-        if (buf->material != m_material) {
-            buf->material = m_material;
+        if (buf->material != m_material_records) {
+            buf->material = m_material_records;
             buf->dirty = true;
         }
     }

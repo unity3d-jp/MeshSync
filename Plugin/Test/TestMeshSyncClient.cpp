@@ -261,6 +261,19 @@ void CreateCheckerImage(RawVector<char>& dst, color_t black, color_t white, int 
     }
 }
 
+template<class color_t>
+ms::TexturePtr CreateCheckerImageTexture(color_t black, color_t white, int width, int height, int id, const char *name)
+{
+    auto tex = ms::Texture::create();
+    tex->id = id;
+    tex->name = name;
+    tex->format = ms::GetTextureFormat<color_t>::result;
+    tex->width = width;
+    tex->height = height;
+    CreateCheckerImage(tex->data, black, white, width, height);
+    return tex;
+}
+
 TestCase(Test_SendTexture)
 {
     auto gen_id = []() {
@@ -297,55 +310,40 @@ TestCase(Test_SendTexture)
         const int width = 512;
         const int height = 512;
         {
+            // Ru8
+            unorm8 black{ 0.0f };
+            unorm8 white{ 1.0f };
+            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
+        }
+        {
+            // RGu8
+            unorm8x2 black{ 0.0f, 0.0f };
+            unorm8x2 white{ 1.0f, 1.0f };
+            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
+        }
+        {
+            // RGBAu8
+            unorm8x3 black{ 0.0f, 0.0f, 0.0f };
+            unorm8x3 white{ 1.0f, 1.0f, 1.0f };
+            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
+        }
+        {
             // RGBAu8
             unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-
-            RawVector<char> data;
-            CreateCheckerImage(data, black, white, width, height);
-
-            auto tex = ms::Texture::create();
-            scene.textures.push_back(tex);
-            tex->id = gen_id();
-            tex->name = "RGBAu8";
-            tex->format = ms::TextureFormat::RGBAu8;
-            tex->width = width;
-            tex->height = height;
-            tex->data = std::move(data);
+            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
             half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-
-            RawVector<char> data;
-            CreateCheckerImage(data, black, white, width, height);
-
-            auto tex = ms::Texture::create();
-            scene.textures.push_back(tex);
-            tex->id = gen_id();
-            tex->name = "RGBAf16";
-            tex->format = ms::TextureFormat::RGBAf16;
-            tex->width = width;
-            tex->height = height;
-            tex->data = std::move(data);
+            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
             float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-
-            RawVector<char> data;
-            CreateCheckerImage(data, black, white, width, height);
-
-            auto tex = ms::Texture::create();
-            scene.textures.push_back(tex);
-            tex->id = gen_id();
-            tex->name = "RGBAf32";
-            tex->format = ms::TextureFormat::RGBAf32;
-            tex->width = width;
-            tex->height = height;
-            tex->data = std::move(data);
+            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
         // material

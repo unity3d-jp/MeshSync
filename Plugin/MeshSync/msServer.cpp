@@ -1,6 +1,7 @@
 #include "msServer.h"
 #include "pch.h"
 #include "msServer.h"
+#include "msMaterial.h"
 #include "msAnimation.h"
 
 

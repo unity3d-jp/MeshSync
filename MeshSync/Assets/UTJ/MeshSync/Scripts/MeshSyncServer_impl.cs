@@ -514,7 +514,8 @@ namespace UTJ.MeshSync
         {
             switch (v)
             {
-                case TextureFormat.Ru8: return UnityEngine.TextureFormat.Alpha8;
+                case TextureFormat.Ru8: return UnityEngine.TextureFormat.R8;
+                case TextureFormat.RGu8: return UnityEngine.TextureFormat.RG16;
                 case TextureFormat.RGBu8: return UnityEngine.TextureFormat.RGB24;
                 case TextureFormat.RGBAu8: return UnityEngine.TextureFormat.RGBA32;
                 case TextureFormat.Rf16: return UnityEngine.TextureFormat.RHalf;
@@ -530,7 +531,8 @@ namespace UTJ.MeshSync
         {
             switch (v)
             {
-                case UnityEngine.TextureFormat.Alpha8: return TextureFormat.Ru8;
+                case UnityEngine.TextureFormat.R8: return TextureFormat.Ru8;
+                case UnityEngine.TextureFormat.RG16: return TextureFormat.RGu8;
                 case UnityEngine.TextureFormat.RGB24: return TextureFormat.RGBu8;
                 case UnityEngine.TextureFormat.RGBA32: return TextureFormat.RGBAu8;
                 case UnityEngine.TextureFormat.RHalf: return TextureFormat.Rf16;
@@ -563,7 +565,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern int msTextureGetSizeInByte(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr _this, string path);
+            [DllImport("MeshSyncServer")] static extern byte msWriteToFile(string path, byte[] data, int size);
             #endregion
 
             public static TextureData Create() { return msTextureCreate(); }
@@ -610,6 +613,10 @@ namespace UTJ.MeshSync
             public bool WriteToFile(string path)
             {
                 return msTextureWriteToFile(_this, path) != 0;
+            }
+            public static bool WriteToFile(string path, byte[] data)
+            {
+                return msWriteToFile(path, data, data.Length) != 0;
             }
         }
 
