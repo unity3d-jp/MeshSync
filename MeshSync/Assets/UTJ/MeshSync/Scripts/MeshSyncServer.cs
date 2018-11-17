@@ -59,14 +59,14 @@ namespace UTJ.MeshSync
         bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
 
-        Dictionary<string, Record> m_clientObjects = new Dictionary<string, Record>();
-        Dictionary<int, Record> m_hostObjects = new Dictionary<int, Record>();
+        Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+        Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
         Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
 
         [HideInInspector] [SerializeField] string[] m_clientObjects_keys;
-        [HideInInspector] [SerializeField] Record[] m_clientObjects_values;
+        [HideInInspector] [SerializeField] EntityRecord[] m_clientObjects_values;
         [HideInInspector] [SerializeField] int[] m_hostObjects_keys;
-        [HideInInspector] [SerializeField] Record[] m_hostObjects_values;
+        [HideInInspector] [SerializeField] EntityRecord[] m_hostObjects_values;
         [HideInInspector] [SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector] [SerializeField] int[] m_objIDTable_values;
         [HideInInspector] [SerializeField] int m_objIDSeed = 0;
@@ -239,13 +239,14 @@ namespace UTJ.MeshSync
 
         void OnRecvDelete(DeleteMessage mes)
         {
-            int numTargets = mes.numTargets;
-            for (int i = 0; i < numTargets; ++i)
+            int numEntities = mes.numEntities;
+            for (int i = 0; i < numEntities; ++i)
             {
-                var id = mes.GetID(i);
-                var path = mes.GetPath(i);
+                var identifier = mes.GetEntity(i);
+                var id = identifier.id;
+                var path = identifier.name;
 
-                Record rec = null;
+                EntityRecord rec = null;
                 if (id != 0 && m_hostObjects.TryGetValue(id, out rec))
                 {
                     if (rec.go != null)
@@ -258,6 +259,13 @@ namespace UTJ.MeshSync
                         DestroyImmediate(rec.go);
                     m_clientObjects.Remove(path);
                 }
+            }
+
+            int numMaterials = mes.numMaterials;
+            for (int i = 0; i < numMaterials; ++i)
+            {
+                var id = mes.GetMaterial(i).id;
+                m_materialList.RemoveAll(v => v.id == id);
             }
 
             //Debug.Log("MeshSyncServer: Delete");
@@ -405,7 +413,7 @@ namespace UTJ.MeshSync
                     if (dstgo == null)
                         continue;
 
-                    Record srcrec = null;
+                    EntityRecord srcrec = null;
                     if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
                     {
                         var srcgo = srcrec.go;
@@ -618,6 +626,7 @@ namespace UTJ.MeshSync
                     dst.material = new Material(shader);
                 }
                 dst.name = dst.material.name = src.name;
+                dst.index = src.index;
                 dst.shader = src.shader;
                 dst.color = src.color;
 
@@ -680,6 +689,7 @@ namespace UTJ.MeshSync
                 }
                 m_tmpMaterials.Add(dstmat);
             }
+            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
         }
 
         SkinnedMeshRenderer UpdateMesh(MeshData data)
@@ -692,7 +702,7 @@ namespace UTJ.MeshSync
             var data_id = data_trans.id;
             var path = data_trans.path;
 
-            Record rec = null;
+            EntityRecord rec = null;
             if (!m_clientObjects.TryGetValue(path, out rec) && data_id != InvalidID)
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
@@ -1049,7 +1059,7 @@ namespace UTJ.MeshSync
             if(path.Length == 0) { return null; }
 
             Transform trans = null;
-            Record rec = null;
+            EntityRecord rec = null;
             if (data_id != InvalidID)
             {
                 if (m_hostObjects.TryGetValue(data_id, out rec))
@@ -1081,7 +1091,7 @@ namespace UTJ.MeshSync
             {
                 bool created = false;
                 trans = FindOrCreateObjectByPath(path, true, ref created);
-                rec = new Record
+                rec = new EntityRecord
                 {
                     go = trans.gameObject,
                     recved = true,
@@ -1386,7 +1396,7 @@ namespace UTJ.MeshSync
                 AssignMaterials(rec.Value);
         }
 
-        void AssignMaterials(Record rec)
+        void AssignMaterials(EntityRecord rec)
         {
             if (rec.go == null)
                 return;
@@ -1604,7 +1614,7 @@ namespace UTJ.MeshSync
 
                 if (!m_hostObjects.ContainsKey(dst_trans.id))
                 {
-                    m_hostObjects[dst_trans.id] = new Record();
+                    m_hostObjects[dst_trans.id] = new EntityRecord();
                 }
                 var rec = m_hostObjects[dst_trans.id];
                 rec.go = renderer.gameObject;

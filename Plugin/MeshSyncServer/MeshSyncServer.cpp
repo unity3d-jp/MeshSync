@@ -143,6 +143,8 @@ msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
 msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
 msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.c_str(); }
 msAPI void          msMaterialSetName(ms::Material *_this, const char *v) { _this->name = v; }
+msAPI int           msMaterialGetIndex(ms::Material *_this) { return _this->index; }
+msAPI void          msMaterialSetIndex(ms::Material *_this, int v) { _this->index = v; }
 msAPI const char*   msMaterialGetShader(ms::Material *_this) { return _this->shader.c_str(); }
 msAPI void          msMaterialSetShader(ms::Material *_this, const char *v) { _this->shader = v; }
 
@@ -282,17 +284,21 @@ msAPI ms::GetFlags msGetGetFlags(ms::GetMessage *_this)
     return _this->flags;
 }
 
-msAPI int msDeleteGetNumTargets(ms::DeleteMessage *_this)
+msAPI int msDeleteGetNumEntities(ms::DeleteMessage *_this)
 {
     return (int)_this->entities.size();
 }
-msAPI const char* msDeleteGetPath(ms::DeleteMessage *_this, int i)
+msAPI ms::Identifier* msDeleteGetEntity(ms::DeleteMessage *_this, int i)
 {
-    return _this->entities[i].name.c_str();
+    return &_this->entities[i];
 }
-msAPI int msDeleteGetID(ms::DeleteMessage *_this, int i)
+msAPI int msDeleteGetNumMaterials(ms::DeleteMessage *_this)
 {
-    return _this->entities[i].id;
+    return (int)_this->materials.size();
+}
+msAPI ms::Identifier* msDeleteGetMaterial(ms::DeleteMessage *_this, int i)
+{
+    return &_this->materials[i];
 }
 
 msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *_this)
@@ -325,6 +331,18 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *_this, const char *text)
         _this->response = res;
     }
     res->text.push_back(text);
+}
+#pragma endregion
+
+
+#pragma region Identifier
+msAPI const char* msIdentifierGetName(ms::Identifier *_this)
+{
+    return _this->name.c_str();
+}
+msAPI int msIdentifierGetID(ms::Identifier *_this)
+{
+    return _this->id;
 }
 #pragma endregion
 

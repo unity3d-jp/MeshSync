@@ -89,9 +89,10 @@ namespace UTJ.MeshSync
         {
             #region internal
             internal IntPtr _this;
-            [DllImport("MeshSyncServer")] static extern int msDeleteGetNumTargets(IntPtr _this);
-            [DllImport("MeshSyncServer")] static extern IntPtr msDeleteGetPath(IntPtr _this, int i);
-            [DllImport("MeshSyncServer")] static extern int msDeleteGetID(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msDeleteGetNumEntities(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Identifier msDeleteGetEntity(IntPtr _this, int i);
+            [DllImport("MeshSyncServer")] static extern int msDeleteGetNumMaterials(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern Identifier msDeleteGetMaterial(IntPtr _this, int i);
             #endregion
 
             public static explicit operator DeleteMessage(IntPtr v)
@@ -101,11 +102,13 @@ namespace UTJ.MeshSync
                 return ret;
             }
 
-            public int numTargets { get { return msDeleteGetNumTargets(_this); } }
-            public string GetPath(int i) { return S(msDeleteGetPath(_this, i)); }
-            public int GetID(int i) { return msDeleteGetID(_this, i); }
+            public int numEntities { get { return msDeleteGetNumEntities(_this); } }
+            public Identifier GetEntity(int i) { return msDeleteGetEntity(_this, i); }
+
+            public int numMaterials { get { return msDeleteGetNumMaterials(_this); } }
+            public Identifier GetMaterial(int i) { return msDeleteGetMaterial(_this, i); }
         }
-        
+
 
         public struct FenceMessage
         {
@@ -423,6 +426,8 @@ namespace UTJ.MeshSync
             [DllImport("MeshSyncServer")] static extern void msMaterialSetID(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetName(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetName(IntPtr _this, string v);
+            [DllImport("MeshSyncServer")] static extern int msMaterialGetIndex(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern void msMaterialSetIndex(IntPtr _this, int v);
             [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetShader(IntPtr _this);
             [DllImport("MeshSyncServer")] static extern void msMaterialSetShader(IntPtr _this, string v);
             [DllImport("MeshSyncServer")] static extern int msMaterialGetNumParams(IntPtr _this);
@@ -459,6 +464,11 @@ namespace UTJ.MeshSync
             {
                 get { return S(msMaterialGetName(_this)); }
                 set { msMaterialSetName(_this, value); }
+            }
+            public int index
+            {
+                get { return msMaterialGetIndex(_this); }
+                set { msMaterialSetIndex(_this, value); }
             }
             public string shader
             {
@@ -1372,6 +1382,17 @@ namespace UTJ.MeshSync
             }
         }
 
+        public struct Identifier
+        {
+            #region internal
+            internal IntPtr _this;
+            [DllImport("MeshSyncServer")] static extern int msIdentifierGetID(IntPtr _this);
+            [DllImport("MeshSyncServer")] static extern IntPtr msIdentifierGetName(IntPtr _this);
+            #endregion
+
+            public int id { get { return msIdentifierGetID(_this); } }
+            public string name { get { return S(msIdentifierGetName(_this)); } }
+        }
 
         public struct TransformData
         {
@@ -2186,7 +2207,7 @@ namespace UTJ.MeshSync
 
 
         [Serializable]
-        public class Record
+        public class EntityRecord
         {
             public int index;
             public GameObject go;
@@ -2236,6 +2257,7 @@ namespace UTJ.MeshSync
         {
             public int id;
             public string name;
+            public int index;
             public string shader;
             public Color color = Color.white;
             public Material material;
