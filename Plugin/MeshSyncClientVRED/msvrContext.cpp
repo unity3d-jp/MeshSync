@@ -65,6 +65,8 @@ void msvrContext::send(bool force)
             mat->id = mid;
             mat->name = name;
             mat->setColor(md.diffuse);
+            mat->setColorMap(md.color_tex);
+            mat->setNormalMap(md.normal_tex);
             m_material_manager.add(mat);
         }
     }
@@ -82,6 +84,14 @@ void msvrContext::send(bool force)
         m_camera->far_plane = m_camera_far;
         m_camera_dirty = false;
         m_entity_manager.add(m_camera);
+    }
+
+    for (auto& kvp : m_texture_records) {
+        auto& rec = kvp.second;
+        if (rec.dst && rec.dirty && rec.used) {
+            m_texture_manager.add(rec.dst);
+            rec.dirty = false;
+        }
     }
 
 
@@ -145,26 +155,26 @@ void msvrContext::onBindTexture(GLenum target, GLuint texture)
 
 void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data)
 {
-    if (target == GL_TEXTURE_2D && level == 0) {
+    if (data && target == GL_TEXTURE_2D && level == 0) {
         auto handle = m_texture_slots[m_active_texture];
         auto& rec = m_texture_records[handle];
-        auto& dst = *rec.dst;
 
         int pixel_size = 0;
+        ms::TextureFormat msf = ms::TextureFormat::Unknown;
         switch (format) {
         case GL_RED:
             switch (type) {
             case GL_UNSIGNED_BYTE:
                 pixel_size = 1;
-                dst.format = ms::TextureFormat::Ru8;
+                msf = ms::TextureFormat::Ru8;
                 break;
             case GL_HALF_FLOAT:
                 pixel_size = 2;
-                dst.format = ms::TextureFormat::Rf16;
+                msf = ms::TextureFormat::Rf16;
                 break;
             case GL_FLOAT:
                 pixel_size = 4;
-                dst.format = ms::TextureFormat::Rf32;
+                msf = ms::TextureFormat::Rf32;
                 break;
             }
             break;
@@ -172,15 +182,15 @@ void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat,
             switch (type) {
             case GL_UNSIGNED_BYTE:
                 pixel_size = 2;
-                dst.format = ms::TextureFormat::RGu8;
+                msf = ms::TextureFormat::RGu8;
                 break;
             case GL_HALF_FLOAT:
                 pixel_size = 4;
-                dst.format = ms::TextureFormat::RGf16;
+                msf = ms::TextureFormat::RGf16;
                 break;
             case GL_FLOAT:
                 pixel_size = 8;
-                dst.format = ms::TextureFormat::RGf32;
+                msf = ms::TextureFormat::RGf32;
                 break;
             }
             break;
@@ -188,15 +198,15 @@ void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat,
             switch (type) {
             case GL_UNSIGNED_BYTE:
                 pixel_size = 3;
-                dst.format = ms::TextureFormat::RGBu8;
+                msf = ms::TextureFormat::RGBu8;
                 break;
             case GL_HALF_FLOAT:
                 pixel_size = 6;
-                dst.format = ms::TextureFormat::RGBf16;
+                msf = ms::TextureFormat::RGBf16;
                 break;
             case GL_FLOAT:
                 pixel_size = 12;
-                dst.format = ms::TextureFormat::RGBf32;
+                msf = ms::TextureFormat::RGBf32;
                 break;
             }
             break;
@@ -204,39 +214,80 @@ void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat,
             switch (type) {
             case GL_UNSIGNED_BYTE:
                 pixel_size = 4;
-                dst.format = ms::TextureFormat::RGBAu8;
+                msf = ms::TextureFormat::RGBAu8;
                 break;
             case GL_HALF_FLOAT:
                 pixel_size = 8;
-                dst.format = ms::TextureFormat::RGBAf16;
+                msf = ms::TextureFormat::RGBAf16;
                 break;
             case GL_FLOAT:
                 pixel_size = 16;
-                dst.format = ms::TextureFormat::RGBAf32;
+                msf = ms::TextureFormat::RGBAf32;
                 break;
             }
             break;
         }
 
         if (pixel_size) {
+            auto dst = ms::Texture::create();
             char name[128];
-            sprintf(name, "VREDTexture:ID[%08x]", handle);
-            dst.name = name;
-            dst.id = (int)handle;
-            dst.width = width;
-            dst.height = height;
+            sprintf(name, "VREDTexture_ID%08x", handle);
+            dst->name = name;
+            dst->id = (int)handle;
+            dst->format = msf;
+            dst->width = width;
+            dst->height = height;
+
             int size = width * height * pixel_size;
-            if (data) {
-                dst.data.assign((char*)data, (char*)data + size);
-                m_texture_manager.add(rec.dst);
-            }
-            else
-                dst.data.resize_zeroclear(size);
+            dst->data.assign((char*)data, (char*)data + size);
+            rec.dst = dst;
+            rec.dirty = true;
         }
         else {
             msLogWarning("unsupported texture format\n");
         }
     }
+}
+
+void msvrContext::onGenFramebuffers(GLsizei n, GLuint * ids)
+{
+}
+
+void msvrContext::onBindFramebuffer(GLenum target, GLuint framebuffer)
+{
+    if (target != GL_FRAMEBUFFER)
+        return;
+    m_fb_handle = framebuffer;
+}
+
+void msvrContext::onDeleteFramebuffers(GLsizei n, GLuint *framebuffers)
+{
+    for (int i = 0; i < n; ++i)
+        m_framebuffer_records.erase(framebuffers[i]);
+}
+
+void msvrContext::onFramebufferTexture(GLenum target, GLenum attachment, GLuint texture, GLint level)
+{
+    if (target != GL_FRAMEBUFFER)
+        return;
+
+    auto& rec = m_framebuffer_records[m_fb_handle];
+    if (attachment == GL_DEPTH_ATTACHMENT)
+        rec.depth_stencil = texture;
+    else
+        rec.colors[attachment - GL_COLOR_ATTACHMENT0] = texture;
+}
+
+void msvrContext::onFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+{
+    if (target != GL_FRAMEBUFFER || textarget != GL_TEXTURE_2D)
+        return;
+
+    auto& rec = m_framebuffer_records[m_fb_handle];
+    if (attachment == GL_DEPTH_ATTACHMENT)
+        rec.depth_stencil = texture;
+    else
+        rec.colors[attachment - GL_COLOR_ATTACHMENT0] = texture;
 }
 
 
@@ -407,6 +458,10 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     if (mode != GL_TRIANGLES)
         return;
 
+    auto& fb = m_framebuffer_records[m_fb_handle];
+    if (!fb.isMainTarget())
+        return;
+
     auto *vb = getActiveBuffer(GL_ARRAY_BUFFER);
     auto *ib = getActiveBuffer(GL_ELEMENT_ARRAY_BUFFER);
     if (!ib || !vb || vb->stride != sizeof(vr_vertex))
@@ -450,6 +505,14 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         }
     }
 
+    // textures
+    for (auto& h : m_texture_slots) {
+        auto& rec = m_texture_records[h];
+        if (rec.dst) {
+            rec.used = true;
+        }
+    }
+
     {
         auto transform = (float4x4&)obj_buf.data[0];
 
@@ -485,7 +548,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
                 for (size_t vi = 0; vi < num_vertices; ++vi) {
                     dst.points[vi] = vtx[vi].vertex;
                     dst.normals[vi] = vtx[vi].normal;
-                    dst.uv0[vi] = vtx[vi].uv;
+                    dst.uv0[vi] = float2{ 1.0f, 1.0f } - vtx[vi].uv;
                 }
 
                 // convert indices
@@ -547,4 +610,9 @@ void BufferRecord::wait()
         task.wait();
         task = {};
     }
+}
+
+bool FramebufferRecord::isMainTarget() const
+{
+    return colors[0] && colors[1] && depth_stencil;
 }

@@ -26,18 +26,29 @@ struct vr_vertex
 
 struct TextureRecord
 {
-    ms::TexturePtr dst = ms::Texture::create();
+    ms::TexturePtr dst;
+    bool dirty = true;
+    bool used = false;
+};
+
+struct FramebufferRecord
+{
+    GLuint colors[16] = {};
+    GLuint depth_stencil = 0;
+
+    bool isMainTarget() const;
 };
 
 struct MaterialRecord
 {
     GLuint program = 0;
-    GLuint texture = 0;
     float4 diffuse = float4::one();
+    int color_tex = ms::InvalidID;
+    int normal_tex = ms::InvalidID;
 
     bool operator==(const MaterialRecord& v) const
     {
-        return program == v.program && texture == v.texture && diffuse == v.diffuse;
+        return memcmp(this, &v, sizeof(*this)) == 0;
     }
     bool operator!=(const MaterialRecord& v) const
     {
@@ -87,6 +98,12 @@ public:
     void onBindTexture(GLenum target, GLuint texture);
     void onTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data);
 
+    void onGenFramebuffers(GLsizei n, GLuint *ids);
+    void onBindFramebuffer(GLenum target, GLuint framebuffer);
+    void onDeleteFramebuffers(GLsizei n, GLuint *framebuffers);
+    void onFramebufferTexture(GLenum target, GLenum attachment, GLuint texture, GLint level);
+    void onFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+
     void onGenBuffers(GLsizei n, GLuint* buffers);
     void onDeleteBuffers(GLsizei n, const GLuint* buffers);
     void onBindBuffer(GLenum target, GLuint buffer);
@@ -115,13 +132,13 @@ protected:
 protected:
     msvrSettings m_settings;
 
-    std::map<uint32_t, BufferRecord> m_buffer_records;
+    std::map<GLuint, BufferRecord> m_buffer_records;
     std::vector<GLuint> m_meshes_deleted;
 
-    uint32_t m_vb_handle = 0;
-    uint32_t m_ib_handle = 0;
-    uint32_t m_ub_handle = 0;
-    uint32_t m_ub_handles[16] = {};
+    GLuint m_vb_handle = 0;
+    GLuint m_ib_handle = 0;
+    GLuint m_ub_handle = 0;
+    GLuint m_ub_handles[16] = {};
     MaterialRecord m_material;
 
     bool m_camera_dirty = false;
@@ -132,8 +149,11 @@ protected:
     float m_camera_far = 100.0f;
 
     int m_active_texture = 0;
-    uint32_t m_texture_slots[32] = {};
-    std::map<uint32_t, TextureRecord> m_texture_records;
+    GLuint m_texture_slots[32] = {};
+    std::map<GLuint, TextureRecord> m_texture_records;
+
+    GLuint m_fb_handle = 0;
+    std::map<GLuint, FramebufferRecord> m_framebuffer_records;
 
     std::vector<MaterialRecord> m_material_records;
 
