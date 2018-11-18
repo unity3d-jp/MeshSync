@@ -89,24 +89,24 @@ namespace UTJ.MeshSync
     #region Server
     public struct ServerSettings
     {
-        public int max_queue;
-        public int max_threads;
+        public int maxQueue;
+        public int maxThreads;
         public ushort port;
-        public uint mesh_split_unit;
+        public uint meshSplitUnit;
 
-        public static ServerSettings default_value
+        public static ServerSettings defaultValue
         {
             get
             {
                 return new ServerSettings
                 {
-                    max_queue = 512,
-                    max_threads = 8,
+                    maxQueue = 512,
+                    maxThreads = 8,
                     port = 8080,
 #if UNITY_2017_3_OR_NEWER
-                    mesh_split_unit = 0xffffffff,
+                    meshSplitUnit = 0xffffffff,
 #else
-                        mesh_split_unit = 65000,
+                    meshSplitUnit = 65000,
 #endif
                 };
             }

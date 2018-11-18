@@ -16,12 +16,13 @@ namespace UTJ.MeshSync
     public enum SceneEventType
     {
         UpdateBegin,
-        UpdateInProgress,
+        Update,
         UpdateEnd,
     }
 
     public class SceneUpdateArgs
     {
+        public SetMessage message;
         public List<GameObject> gameObjects;
         public List<Texture> textures;
         public List<Material> materials;
@@ -32,7 +33,7 @@ namespace UTJ.MeshSync
     #endregion
 
     [ExecuteInEditMode]
-    public partial class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
+    public class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Types
         [Serializable]
@@ -50,34 +51,23 @@ namespace UTJ.MeshSync
             // return true if modified
             public bool BuildMaterialData(MeshData md)
             {
-                int num_submeshes = md.numSubmeshes;
-                if (num_submeshes == 0) { return false; }
+                int numSubmeshes = md.numSubmeshes;
+                if (numSubmeshes == 0)
+                    return false;
 
-                var mids = new int[num_submeshes];
-                for (int i = 0; i < num_submeshes; ++i)
-                {
+                var mids = new int[numSubmeshes];
+                for (int i = 0; i < numSubmeshes; ++i)
                     mids[i] = md.GetSubmesh(i).materialID;
-                }
 
-                int num_splits = md.numSplits;
-                var scs = new int[num_splits];
-                for (int i = 0; i < num_splits; ++i)
-                {
+                int numSplits = md.numSplits;
+                var scs = new int[numSplits];
+                for (int i = 0; i < numSplits; ++i)
                     scs[i] = md.GetSplit(i).numSubmeshes;
-                }
 
                 bool ret = !materialIDs.SequenceEqual(mids) || !submeshCounts.SequenceEqual(scs);
                 materialIDs = mids;
                 submeshCounts = scs;
                 return ret;
-            }
-
-            public int maxMaterialID
-            {
-                get
-                {
-                    return materialIDs.Length > 0 ? materialIDs.Max() : 0;
-                }
             }
         }
 
@@ -104,40 +94,38 @@ namespace UTJ.MeshSync
         // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
         public class AnimationCurveKeyReducer
         {
-            static public void DoReduction(AnimationCurve in_curve, float eps = 0.001f)
+            static public void DoReduction(AnimationCurve curve, float eps = 0.001f)
             {
-                if (in_curve.keys.Length <= 2) return;
+                if (curve.keys.Length <= 2)
+                    return;
 
-                var del_indexes = GetDeleteKeyIndex(in_curve.keys, eps).ToArray();
-                foreach (var del_idx in del_indexes.Reverse()) in_curve.RemoveKey(del_idx);
+                var indices = GetDeleteKeyIndex(curve.keys, eps).ToArray();
+                foreach (var idx in indices.Reverse())
+                    curve.RemoveKey(idx);
             }
 
             static IEnumerable<int> GetDeleteKeyIndex(Keyframe[] keys, float eps)
             {
-                for (int s_idx = 0, i = 1; i < keys.Length - 1; i++)
+                for (int k = 0, i = 1; i < keys.Length - 1; i++)
                 {
-                    if (IsInterpolationValue(keys[s_idx], keys[i + 1], keys[i], eps))
-                    {
+                    if (IsInterpolationValue(keys[k], keys[i + 1], keys[i], eps))
                         yield return i;
-                    }
                     else
-                    {
-                        s_idx = i;
-                    }
+                        k = i;
                 }
             }
 
             static bool IsInterpolationValue(Keyframe key1, Keyframe key2, Keyframe comp, float eps)
             {
                 var val1 = GetValueFromTime(key1, key2, comp.time);
-
-                if (eps < System.Math.Abs(comp.value - val1)) return false;
+                if (eps < System.Math.Abs(comp.value - val1))
+                    return false;
 
                 var time = key1.time + (comp.time - key1.time) * 0.5f;
                 val1 = GetValueFromTime(key1, comp, time);
                 var val2 = GetValueFromTime(key1, key2, time);
 
-                return (System.Math.Abs(val2 - val1) <= eps) ? true : false;
+                return System.Math.Abs(val2 - val1) <= eps ? true : false;
             }
 
             static float GetValueFromTime(Keyframe key1, Keyframe key2, float time)
@@ -146,7 +134,8 @@ namespace UTJ.MeshSync
                 float a, b, c;
                 float kd, vd;
 
-                if (key1.outTangent == Mathf.Infinity) return key1.value;
+                if (key1.outTangent == Mathf.Infinity)
+                    return key1.value;
 
                 kd = key2.time - key1.time;
                 vd = key2.value - key1.value;
@@ -246,9 +235,7 @@ namespace UTJ.MeshSync
                 {
                     int n = keys.Length;
                     for (int i = 0; i < n; ++i)
-                    {
                         dic[keys[i]] = values[i];
-                    }
                 }
             }
             catch (Exception e) { Debug.LogError(e); }
@@ -274,7 +261,7 @@ namespace UTJ.MeshSync
         {
             StopServer();
 
-            var settings = ServerSettings.default_value;
+            var settings = ServerSettings.defaultValue;
             settings.port = (ushort)m_serverPort;
             m_server = Server.Start(ref settings);
             m_server.fileRootPath = Application.streamingAssetsPath + "/MeshSyncServerRoot";
@@ -319,7 +306,7 @@ namespace UTJ.MeshSync
 
         void OnServerMessage(MessageType type, IntPtr data)
         {
-            try
+            Try(() =>
             {
                 switch (type)
                 {
@@ -347,8 +334,7 @@ namespace UTJ.MeshSync
                     default:
                         break;
                 }
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
         }
 
         void OnRecvGet(GetMessage mes)
@@ -360,7 +346,8 @@ namespace UTJ.MeshSync
                 ServeMaterial(mat.material, mes);
             m_server.EndServe();
 
-            //Debug.Log("MeshSyncServer: Get");
+            if (m_logging)
+                Debug.Log("MeshSyncServer: served");
         }
 
         void OnRecvDelete(DeleteMessage mes)
@@ -459,32 +446,30 @@ namespace UTJ.MeshSync
             var scene = mes.scene;
 
             // sync textures
-            try
+            Try(() =>
             {
                 int numTextures = scene.numTextures;
                 if (numTextures > 0)
                     UpdateTextures(scene);
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
 
             // materials
-            try
+            Try(() =>
             {
                 int numMaterials = scene.numMaterials;
                 if (numMaterials > 0)
                     UpdateMaterials(scene);
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
 
             // objects
-            try
+            Try(() =>
             {
                 int numObjects = scene.numObjects;
                 for (int i = 0; i < numObjects; ++i)
                 {
                     Component dst = null;
                     var obj = scene.GetObject(i);
-                    switch(obj.type)
+                    switch (obj.type)
                     {
                         case TransformData.Type.Transform:
                             dst = UpdateTransform(obj);
@@ -505,27 +490,25 @@ namespace UTJ.MeshSync
                     if (dst != null)
                         m_tmpGameObjects.Add(dst.gameObject);
                 }
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
+
 
 #if UNITY_2018_1_OR_NEWER
             // constraints
-            try
+            Try(() =>
             {
                 int numConstraints = scene.numConstraints;
                 for (int i = 0; i < numConstraints; ++i)
                     UpdateConstraint(scene.GetConstraint(i));
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
 #endif
             // animations
-            try
+            Try(() =>
             {
                 int numClips = scene.numAnimationClips;
                 for (int i = 0; i < numClips; ++i)
                     UpdateAnimation(scene.GetAnimationClip(i));
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
 
             // update references
             {
@@ -553,12 +536,13 @@ namespace UTJ.MeshSync
                 ForceRepaint();
 
             var args = new SceneUpdateArgs {
+                message = mes,
                 gameObjects = m_tmpGameObjects,
                 textures = m_tmpTextures,
                 materials = m_tmpMaterials,
                 animations = m_tmpAnimations,
             };
-            FireEvent(SceneEventType.UpdateInProgress, args);
+            FireEvent(SceneEventType.Update, args);
         }
 
         void OnRecvScreenshot(IntPtr data)
@@ -605,30 +589,42 @@ namespace UTJ.MeshSync
 
 
         #region Misc
-        void MakeSureAssetDirectoryExists()
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Try(Action act)
         {
-#if UNITY_EDITOR
             try
             {
-                string assetDir = "Assets/" + m_assetExportPath;
-                if (!AssetDatabase.IsValidFolder(assetDir))
-                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+                act.Invoke();
+                return true;
             }
-            catch (Exception e) { Debug.LogError(e); }
+            catch (Exception e)
+            {
+                if (m_logging)
+                    Debug.LogError(e);
+                return false;
+            }
+        }
+
+        bool MakeSureAssetDirectoryExists()
+        {
+#if UNITY_EDITOR
+            return Try(()=> {
+                if (!AssetDatabase.IsValidFolder("Assets/" + m_assetExportPath))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+            });
 #endif
         }
 
-        void CreateAsset(UnityEngine.Object obj, string assetPath)
+        bool CreateAsset(UnityEngine.Object obj, string assetPath)
         {
 #if UNITY_EDITOR
-            try
+            return Try(() =>
             {
                 string assetDir = "Assets/" + m_assetExportPath;
                 if (!AssetDatabase.IsValidFolder(assetDir))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
                 AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
-            }
-            catch (Exception e) { Debug.LogError(e); }
+            });
 #endif
         }
 
@@ -644,17 +640,30 @@ namespace UTJ.MeshSync
             }
         }
 
+        byte[] EncodeToPNG(Texture2D tex)
+        {
+#if UNITY_2017_3_OR_NEWER
+            return ImageConversion.EncodeToPNG(tex);
+#else
+            return tex.EncodeToPNG();
+#endif
+        }
+        byte[] EncodeToEXR(Texture2D tex, Texture2D.EXRFlags flags)
+        {
+#if UNITY_2017_3_OR_NEWER
+            return ImageConversion.EncodeToEXR(tex, flags);
+#else
+            return tex.EncodeToEXR(flags);
+#endif
+        }
+
         public string BuildPath(Transform t)
         {
             var parent = t.parent;
             if (parent != null && parent != m_rootObject)
-            {
                 return BuildPath(parent) + "/" + t.name;
-            }
             else
-            {
                 return "/" + t.name;
-            }
         }
 
         public Texture2D FindTexture(int id)
@@ -675,14 +684,13 @@ namespace UTJ.MeshSync
 
         int GetMaterialIndex(Material mat)
         {
-            if (mat == null) { return -1; }
+            if (mat == null)
+                return Misc.InvalidID;
 
             for (int i = 0; i < m_materialList.Count; ++i)
             {
                 if (m_materialList[i].material == mat)
-                {
                     return i;
-                }
             }
 
             int ret = m_materialList.Count;
@@ -718,9 +726,11 @@ namespace UTJ.MeshSync
             Transform t = m_rootObject;
             foreach (var name in names)
             {
-                if (name.Length == 0) { continue; }
+                if (name.Length == 0)
+                    continue;
                 t = FindOrCreateObjectByName(t, name, createIfNotExist, ref created);
-                if (t == null) { break; }
+                if (t == null)
+                    break;
             }
             return t;
         }
@@ -775,7 +785,6 @@ namespace UTJ.MeshSync
                     smr.sharedMaterials = parent.sharedMaterials;
                 }
             }
-
             return smr;
         }
 
@@ -794,8 +803,9 @@ namespace UTJ.MeshSync
         void UpdateTextures(SceneData scene)
         {
             MakeSureAssetDirectoryExists();
+#if UNITY_EDITOR
             string assetDir = "Assets/" + m_assetExportPath;
-
+#endif
             int numTextures = scene.numTextures;
             for (int i = 0; i < numTextures; ++i)
             {
@@ -806,6 +816,7 @@ namespace UTJ.MeshSync
                 if (format == TextureFormat.RawFile)
                 {
 #if UNITY_EDITOR
+                    // write data to file and import
                     string path = assetDir + "/" + src.name;
                     src.WriteToFile(path);
 
@@ -828,8 +839,9 @@ namespace UTJ.MeshSync
                     texture.name = src.name;
                     texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
                     texture.Apply();
-
 #if UNITY_EDITOR
+                    // encode and write data to file and import
+                    // (script-generated texture works but can't set texture type such as normal map)
                     string path = null;
                     switch (src.format) {
                         case TextureFormat.Ru8:
@@ -838,13 +850,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAu8:
                             {
                                 path = assetDir + "/" + src.name + ".png";
-                                var data =
-#if UNITY_2017_3_OR_NEWER
-                                    ImageConversion.EncodeToPNG(texture);
-#else
-                                    texture.EncodeToPNG();
-#endif
-                                TextureData.WriteToFile(path, data);
+                                TextureData.WriteToFile(path, EncodeToPNG(texture));
                                 break;
                             }
                         case TextureFormat.Rf16:
@@ -853,13 +859,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAf16:
                             {
                                 path = assetDir + "/" + src.name + ".exr";
-                                var data =
-#if UNITY_2017_3_OR_NEWER
-                                    ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP);
-#else
-                                    texture.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
-#endif
-                                TextureData.WriteToFile(path, data);
+                                TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
                                 break;
                             }
                         case TextureFormat.Rf32:
@@ -868,14 +868,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAf32:
                             {
                                 path = assetDir + "/" + src.name + ".exr";
-                                var data =
-#if UNITY_2017_3_OR_NEWER
-                                    ImageConversion.EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP);
-#else
-                                    texture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP);
-#endif
-
-                                TextureData.WriteToFile(path, data);
+                                TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
                                 break;
                             }
                     }
@@ -898,7 +891,7 @@ namespace UTJ.MeshSync
                         }
                     }
 #endif
-                            }
+                }
 
                 if (texture != null)
                 {
@@ -1048,7 +1041,8 @@ namespace UTJ.MeshSync
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
             {
-                Debug.LogError("Something is wrong");
+                if (m_logging)
+                    Debug.LogError("Something is wrong");
                 return null;
             }
             else if(rec.reference != null)
@@ -1076,6 +1070,7 @@ namespace UTJ.MeshSync
                 var t = target;
                 if (si > 0)
                 {
+                    // make split mesh
                     bool created = false;
                     t = FindOrCreateObjectByPath(path + "/[" + si + "]", true, ref created);
                     t.gameObject.SetActive(true);
@@ -1169,12 +1164,13 @@ namespace UTJ.MeshSync
                     renderer.enabled = data.transform.visible;
             }
 
-            int num_splits = Math.Max(1, data.numSplits);
-            for (int si = num_splits; ; ++si)
+            int numSplits = Math.Max(1, data.numSplits);
+            for (int si = numSplits; ; ++si)
             {
                 bool created = false;
                 var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
-                if (t == null) { break; }
+                if (t == null)
+                    break;
                 DestroyImmediate(t.gameObject);
             }
 
@@ -1949,29 +1945,28 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
         public void GenerateLightmapUV(GameObject go)
         {
-            if (go == null) { return; }
+            if (go == null)
+                return;
+
             var mf = go.GetComponent<MeshFilter>();
             if (mf != null)
             {
                 var mesh = mf.sharedMesh;
                 if (mesh != null)
-                {
                     Unwrapping.GenerateSecondaryUVSet(mesh);
-                }
             }
             for (int i = 1; ; ++i)
             {
                 var t = go.transform.Find("[" + i + "]");
-                if (t == null) { break; }
+                if (t == null)
+                    break;
                 GenerateLightmapUV(t.gameObject);
             }
         }
         public void GenerateLightmapUV()
         {
             foreach (var kvp in m_clientObjects)
-            {
                 GenerateLightmapUV(kvp.Value.go);
-            }
             foreach (var kvp in m_hostObjects)
             {
                 if(kvp.Value.editMesh != null)
@@ -1984,40 +1979,45 @@ namespace UTJ.MeshSync
             if (m_materialList == null)
                 return;
 
-            string assetDir = "Assets/" + m_assetExportPath;
             foreach (var m in m_materialList)
             {
                 var material = m.material;
                 if (AssetDatabase.GetAssetPath(material) == "")
                 {
-                    string path = assetDir + "/" + material.name + ".mat";
-                    CreateAsset(material, path);
+                    string assetPath = "Assets/" + m_assetExportPath + "/" + material.name + ".mat";
+                    CreateAsset(material, assetPath);
+                    if (m_logging)
+                        Debug.Log("exported material " + assetPath);
                 }
             }
         }
 
         public void ExportMeshes(GameObject go)
         {
-            if(go == null) { return; }
+            if(go == null)
+                return;
 
-            if (!AssetDatabase.IsValidFolder("Assets/" + m_assetExportPath))
-                AssetDatabase.CreateFolder("Assets", m_assetExportPath);
             var mf = go.GetComponent<SkinnedMeshRenderer>();
-            if (mf != null && mf.sharedMesh != null)
-            {
-                var assetPath = "Assets/" + m_assetExportPath + "/" + mf.sharedMesh.name + ".asset";
-                CreateAsset(mf.sharedMesh, assetPath);
-                if (m_logging)
-                {
-                    Debug.Log("exported mesh " + assetPath);
-                }
+            if (mf == null)
+                return;
 
-                for (int i=1; ; ++i)
-                {
-                    var t = go.transform.Find("[" + i + "]");
-                    if(t == null) { break; }
-                    ExportMeshes(t.gameObject);
-                }
+            var mesh = mf.sharedMesh;
+            if (mesh == null || AssetDatabase.GetAssetPath(mesh) == "")
+                return;
+
+            MakeSureAssetDirectoryExists();
+            var assetPath = "Assets/" + m_assetExportPath + "/" + mesh.name + ".asset";
+            CreateAsset(mesh, assetPath);
+            if (m_logging)
+                Debug.Log("exported mesh " + assetPath);
+
+            // export splits
+            for (int i = 1; ; ++i)
+            {
+                var t = go.transform.Find("[" + i + "]");
+                if (t == null)
+                    break;
+                ExportMeshes(t.gameObject);
             }
         }
         public void ExportMeshes()
@@ -2045,23 +2045,20 @@ namespace UTJ.MeshSync
                     kvp.Value.editMesh = null;
 
                     var mf = kvp.Value.go.GetComponent<MeshFilter>();
-                    if(mf != null) { mf.sharedMesh = kvp.Value.origMesh; }
+                    if (mf != null)
+                        mf.sharedMesh = kvp.Value.origMesh;
 
                     var smr = kvp.Value.go.GetComponent<SkinnedMeshRenderer>();
-                    if (smr != null) { smr.sharedMesh = kvp.Value.origMesh; }
+                    if (smr != null)
+                        smr.sharedMesh = kvp.Value.origMesh;
 
                     if (m_logging)
-                    {
                         Debug.Log("updated mesh " + kvp.Value.origMesh.name);
-                    }
-
                     ++n;
                 }
             }
             if (n > 0)
-            {
                 AssetDatabase.SaveAssets();
-            }
         }
 
         void CheckMaterialAssignedViaEditor()

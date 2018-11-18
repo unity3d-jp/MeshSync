@@ -21,7 +21,7 @@ public class SceneEventHandler : MonoBehaviour
 
     void OnSceneEvents(SceneEventType t, object arg)
     {
-        if (t == SceneEventType.UpdateInProgress)
+        if (t == SceneEventType.Update)
         {
             var a = arg as SceneUpdateArgs;
 
