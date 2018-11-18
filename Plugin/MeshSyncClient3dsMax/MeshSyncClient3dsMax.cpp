@@ -348,10 +348,15 @@ void MeshSyncClient3dsMax::kickAsyncSend()
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted_entities = m_entity_manager.getDeleted();
             t.animations = m_animations;
+
+            m_material_idgen.eraseStaleRecords();
+            m_material_manager.eraseStaleMaterials();
+            t.deleted_materials = m_material_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
         };
         m_sender.on_succeeded = [this]() {
+            m_material_idgen.clearDirtyFlags();
             m_texture_manager.clearDirtyFlags();
             m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
@@ -376,7 +381,8 @@ void MeshSyncClient3dsMax::exportMaterials()
         auto do_export = [this, &material_index](Mtl *mtl) -> int // return material id
         {
             auto dst = ms::Material::create();
-            dst->id = material_index++;
+            dst->id = m_material_idgen.getID(mtl);
+            dst->index = material_index++;
             dst->name = mu::ToMBS(mtl->GetName().data());
 
             auto& dstmat = ms::AsStandardMaterial(*dst);
@@ -820,8 +826,8 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mes
             for (int fi = 0; fi < num_faces; ++fi) {
                 auto& face = faces[fi];
                 if (!mrec.submaterial_ids.empty()) { // multi-materials
-                    int mid = std::min((int)mesh->getFaceMtlIndex(fi), (int)mrec.submaterial_ids.size() - 1);
-                    dst.material_ids[fi] = mrec.submaterial_ids[mid];
+                    int midx = std::min((int)mesh->getFaceMtlIndex(fi), (int)mrec.submaterial_ids.size() - 1);
+                    dst.material_ids[fi] = mrec.submaterial_ids[midx];
                 }
                 else { // single material
                     dst.material_ids[fi] = mrec.material_id;
