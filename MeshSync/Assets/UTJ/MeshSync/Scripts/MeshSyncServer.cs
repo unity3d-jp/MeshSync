@@ -34,7 +34,135 @@ namespace UTJ.MeshSync
     [ExecuteInEditMode]
     public partial class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
-        #region fields
+        #region Types
+        [Serializable]
+        public class EntityRecord
+        {
+            public int index;
+            public GameObject go;
+            public Mesh origMesh;
+            public Mesh editMesh;
+            public int[] materialIDs = new int[0];
+            public int[] submeshCounts = new int[0];
+            public string reference;
+            public bool recved = false;
+
+            // return true if modified
+            public bool BuildMaterialData(MeshData md)
+            {
+                int num_submeshes = md.numSubmeshes;
+                if (num_submeshes == 0) { return false; }
+
+                var mids = new int[num_submeshes];
+                for (int i = 0; i < num_submeshes; ++i)
+                {
+                    mids[i] = md.GetSubmesh(i).materialID;
+                }
+
+                int num_splits = md.numSplits;
+                var scs = new int[num_splits];
+                for (int i = 0; i < num_splits; ++i)
+                {
+                    scs[i] = md.GetSplit(i).numSubmeshes;
+                }
+
+                bool ret = !materialIDs.SequenceEqual(mids) || !submeshCounts.SequenceEqual(scs);
+                materialIDs = mids;
+                submeshCounts = scs;
+                return ret;
+            }
+
+            public int maxMaterialID
+            {
+                get
+                {
+                    return materialIDs.Length > 0 ? materialIDs.Max() : 0;
+                }
+            }
+        }
+
+        [Serializable]
+        public class MaterialHolder
+        {
+            public int id;
+            public string name;
+            public int index;
+            public string shader;
+            public Color color = Color.white;
+            public Material material;
+            public int materialIID;
+        }
+
+        [Serializable]
+        public class TextureHolder
+        {
+            public int id;
+            public string name;
+            public Texture2D texture;
+        }
+
+        // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
+        public class AnimationCurveKeyReducer
+        {
+            static public void DoReduction(AnimationCurve in_curve, float eps = 0.001f)
+            {
+                if (in_curve.keys.Length <= 2) return;
+
+                var del_indexes = GetDeleteKeyIndex(in_curve.keys, eps).ToArray();
+                foreach (var del_idx in del_indexes.Reverse()) in_curve.RemoveKey(del_idx);
+            }
+
+            static IEnumerable<int> GetDeleteKeyIndex(Keyframe[] keys, float eps)
+            {
+                for (int s_idx = 0, i = 1; i < keys.Length - 1; i++)
+                {
+                    if (IsInterpolationValue(keys[s_idx], keys[i + 1], keys[i], eps))
+                    {
+                        yield return i;
+                    }
+                    else
+                    {
+                        s_idx = i;
+                    }
+                }
+            }
+
+            static bool IsInterpolationValue(Keyframe key1, Keyframe key2, Keyframe comp, float eps)
+            {
+                var val1 = GetValueFromTime(key1, key2, comp.time);
+
+                if (eps < System.Math.Abs(comp.value - val1)) return false;
+
+                var time = key1.time + (comp.time - key1.time) * 0.5f;
+                val1 = GetValueFromTime(key1, comp, time);
+                var val2 = GetValueFromTime(key1, key2, time);
+
+                return (System.Math.Abs(val2 - val1) <= eps) ? true : false;
+            }
+
+            static float GetValueFromTime(Keyframe key1, Keyframe key2, float time)
+            {
+                float t;
+                float a, b, c;
+                float kd, vd;
+
+                if (key1.outTangent == Mathf.Infinity) return key1.value;
+
+                kd = key2.time - key1.time;
+                vd = key2.value - key1.value;
+                t = (time - key1.time) / kd;
+
+                a = -2 * vd + kd * (key1.outTangent + key2.inTangent);
+                b = 3 * vd - kd * (2 * key1.outTangent + key2.inTangent);
+                c = kd * key1.outTangent;
+
+                return key1.value + t * (t * (a * t + b) + c);
+            }
+        }
+        #endregion
+
+
+        #region Fields
         public event SceneEventHandler sceneEvents;
 
         [SerializeField] int m_serverPort = 8080;
@@ -55,8 +183,8 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
-        IntPtr m_server;
-        msMessageHandler m_handler;
+        Server m_server;
+        Server.MessageHandler m_handler;
         bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
 
@@ -79,13 +207,15 @@ namespace UTJ.MeshSync
         Dictionary<GameObject, AnimationClip> m_animClipCache;
         #endregion
 
-        #region properties
-        public static string version { get { return Impl.S(msServerGetVersion()); } }
+
+        #region Properties
+        public static string version { get { return Server.version; } }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
         public List<TextureHolder> textureData { get { return m_textureList; } }
         #endregion
 
-        #region impl
+
+        #region Impl
         void FireEvent(SceneEventType t, object arg = null)
         {
             if (sceneEvents != null)
@@ -146,8 +276,8 @@ namespace UTJ.MeshSync
 
             var settings = ServerSettings.default_value;
             settings.port = (ushort)m_serverPort;
-            m_server = msServerStart(ref settings);
-            msServerSetFileRootPath(m_server, Application.streamingAssetsPath + "/MeshSyncServerRoot");
+            m_server = Server.Start(ref settings);
+            m_server.fileRootPath = Application.streamingAssetsPath + "/MeshSyncServerRoot";
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
@@ -157,14 +287,14 @@ namespace UTJ.MeshSync
 
         void StopServer()
         {
-            if(m_server != IntPtr.Zero)
+            if (m_server)
             {
 #if UNITY_EDITOR
                 EditorApplication.update -= PollServerEvents;
                 SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
 #endif
-                msServerStop(m_server);
-                m_server = IntPtr.Zero;
+                m_server.Stop();
+                m_server = default(Server);
             }
         }
 
@@ -180,13 +310,11 @@ namespace UTJ.MeshSync
             if (m_captureScreenshotInProgress)
             {
                 m_captureScreenshotInProgress = false;
-                msServerSetScreenshotFilePath(m_server, "screenshot.png");
+                m_server.screenshotPath = "screenshot.png";
             }
 
-            if (msServerGetNumMessages(m_server) > 0)
-            {
-                msServerProcessMessages(m_server, m_handler);
-            }
+            if (m_server.numMessages > 0)
+                m_server.ProcessMessages(m_handler);
         }
 
         void OnServerMessage(MessageType type, IntPtr data)
@@ -225,12 +353,12 @@ namespace UTJ.MeshSync
 
         void OnRecvGet(GetMessage mes)
         {
-            msServerBeginServe(m_server);
+            m_server.BeginServe();
             foreach (var mr in FindObjectsOfType<Renderer>())
                 ServeMesh(mr, mes);
             foreach (var mat in m_materialList)
                 ServeMaterial(mat.material, mes);
-            msServerEndServe(m_server);
+            m_server.EndServe();
 
             //Debug.Log("MeshSyncServer: Get");
         }
@@ -311,7 +439,7 @@ namespace UTJ.MeshSync
                 ForceRepaint();
                 GC.Collect();
 
-                msServerNotifyPoll(m_server, PollMessage.PollType.SceneUpdate);
+                m_server.NotifyPoll(PollMessage.PollType.SceneUpdate);
                 FireEvent(SceneEventType.UpdateEnd);
             }
         }
@@ -498,7 +626,7 @@ namespace UTJ.MeshSync
                 string assetDir = "Assets/" + m_assetExportPath;
                 if (!AssetDatabase.IsValidFolder(assetDir))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-                AssetDatabase.CreateAsset(obj, Impl.SanitizeFileName(assetPath));
+                AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
             }
             catch (Exception e) { Debug.LogError(e); }
 #endif
@@ -531,7 +659,7 @@ namespace UTJ.MeshSync
 
         public Texture2D FindTexture(int id)
         {
-            if (id == Impl.InvalidID)
+            if (id == Misc.InvalidID)
                 return null;
             var rec = m_textureList.Find(a => a.id == id);
             return rec != null ? rec.texture : null;
@@ -539,7 +667,7 @@ namespace UTJ.MeshSync
 
         public Material FindMaterial(int id)
         {
-            if (id == Impl.InvalidID)
+            if (id == Misc.InvalidID)
                 return null;
             var rec = m_materialList.Find(a => a.id == id);
             return rec != null ? rec.material : null;
@@ -569,7 +697,7 @@ namespace UTJ.MeshSync
         int GetObjectlID(GameObject go)
         {
             if (go == null)
-                return Impl.InvalidID;
+                return Misc.InvalidID;
 
             int ret;
             if (m_objIDTable.ContainsKey(go))
@@ -696,7 +824,7 @@ namespace UTJ.MeshSync
                 }
                 else
                 {
-                    texture = new Texture2D(src.width, src.height, Impl.ToUnityTextureFormat(src.format), false);
+                    texture = new Texture2D(src.width, src.height, Misc.ToUnityTextureFormat(src.format), false);
                     texture.name = src.name;
                     texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
                     texture.Apply();
@@ -916,7 +1044,7 @@ namespace UTJ.MeshSync
             var path = data_trans.path;
 
             EntityRecord rec = null;
-            if (!m_clientObjects.TryGetValue(path, out rec) && data_id != Impl.InvalidID)
+            if (!m_clientObjects.TryGetValue(path, out rec) && data_id != Misc.InvalidID)
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
             {
@@ -1203,7 +1331,7 @@ namespace UTJ.MeshSync
             else
             {
                 var dst = pts.data;
-                Impl.Resize(dst, numData);
+                Misc.Resize(dst, numData);
                 for (int di = 0; di < numData; ++di)
                     ReadPointsData(data.GetData(di), dst[di]);
             }
@@ -1246,7 +1374,7 @@ namespace UTJ.MeshSync
 
             Transform trans = null;
             EntityRecord rec = null;
-            if (data_id != Impl.InvalidID)
+            if (data_id != Misc.InvalidID)
             {
                 if (m_hostObjects.TryGetValue(data_id, out rec))
                 {
@@ -1438,31 +1566,31 @@ namespace UTJ.MeshSync
             {
                 case ConstraintData.ConstraintType.Aim:
                     {
-                        var c = Impl.GetOrAddComponent<AimConstraint>(trans.gameObject);
+                        var c = Misc.GetOrAddComponent<AimConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Parent:
                     {
-                        var c = Impl.GetOrAddComponent<ParentConstraint>(trans.gameObject);
+                        var c = Misc.GetOrAddComponent<ParentConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Position:
                     {
-                        var c = Impl.GetOrAddComponent<PositionConstraint>(trans.gameObject);
+                        var c = Misc.GetOrAddComponent<PositionConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Rotation:
                     {
-                        var c = Impl.GetOrAddComponent<RotationConstraint>(trans.gameObject);
+                        var c = Misc.GetOrAddComponent<RotationConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Scale:
                     {
-                        var c = Impl.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
+                        var c = Misc.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
@@ -1527,7 +1655,7 @@ namespace UTJ.MeshSync
                     else
                         clipName = root.name;
 
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + Impl.SanitizeFileName(clipName) + ".anim";
+                    var assetPath = "Assets/" + m_assetExportPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
                     CreateAsset(clip, assetPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
                     m_animClipCache[root.gameObject] = clip;
@@ -1674,7 +1802,7 @@ namespace UTJ.MeshSync
                 rec.origMesh = origMesh;
 
                 dst_trans.path = BuildPath(renderer.GetComponent<Transform>());
-                msServerServeMesh(m_server, dst);
+                m_server.ServeMesh(dst);
             }
             return ret;
         }
@@ -1683,7 +1811,7 @@ namespace UTJ.MeshSync
             var data = TextureData.Create();
             data.name = v.name;
             // todo
-            msServerServeTexture(m_server, data);
+            m_server.ServeTexture(data);
             return true;
         }
         bool ServeMaterial(Material mat, GetMessage mes)
@@ -1692,7 +1820,7 @@ namespace UTJ.MeshSync
             data.name = mat.name;
             if (mat.HasProperty("_Color"))
                 data.color = mat.GetColor("_Color");
-            msServerServeMaterial(m_server, data);
+            m_server.ServeMaterial(data);
             return true;
         }
 

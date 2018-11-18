@@ -10,16 +10,9 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
-    public static partial class Impl
+    public static partial class Misc
     {
         public const int InvalidID = -1;
-
-        public static void SwitchBits(ref int flags, bool f, int bit)
-        {
-
-            if (f) { flags |= bit; }
-            else { flags &= ~bit; }
-        }
 
         public static string S(IntPtr cstring)
         {
@@ -93,6 +86,84 @@ namespace UTJ.MeshSync
     }
 
 
+    #region Server
+    public struct ServerSettings
+    {
+        public int max_queue;
+        public int max_threads;
+        public ushort port;
+        public uint mesh_split_unit;
+
+        public static ServerSettings default_value
+        {
+            get
+            {
+                return new ServerSettings
+                {
+                    max_queue = 512,
+                    max_threads = 8,
+                    port = 8080,
+#if UNITY_2017_3_OR_NEWER
+                    mesh_split_unit = 0xffffffff,
+#else
+                        mesh_split_unit = 65000,
+#endif
+                };
+            }
+        }
+    }
+    public struct Server
+    {
+        #region internal
+        internal IntPtr _this;
+        [DllImport("MeshSyncServer")] static extern IntPtr msServerGetVersion();
+        [DllImport("MeshSyncServer")] static extern Server msServerStart(ref ServerSettings settings);
+        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr _this);
+
+        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr _this, MessageHandler handler);
+
+        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr _this);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr _this, TransformData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr _this, CameraData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr _this, LightData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr _this, MeshData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeTexture(IntPtr _this, TextureData data);
+        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr _this, MaterialData data);
+        [DllImport("MeshSyncServer")] static extern void msServerSetFileRootPath(IntPtr _this, string path);
+        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr _this, string path);
+        [DllImport("MeshSyncServer")] static extern void msServerNotifyPoll(IntPtr _this, PollMessage.PollType t);
+        #endregion
+
+        public delegate void MessageHandler(MessageType type, IntPtr data);
+
+        public static implicit operator bool(Server v) { return v._this != IntPtr.Zero; }
+
+        public static string version { get { return Misc.S(msServerGetVersion()); } }
+
+        public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
+        public void Stop() { msServerStop(_this); }
+
+        public int numMessages { get { return msServerGetNumMessages(_this); } }
+        public void ProcessMessages(MessageHandler handler) { msServerProcessMessages(_this, handler); }
+
+        public string fileRootPath { set { msServerSetFileRootPath(_this, value); } }
+        public string screenshotPath { set { msServerSetScreenshotFilePath(_this, value); } }
+
+        public void BeginServe() { msServerBeginServe(_this); }
+        public void EndServe() { msServerEndServe(_this); }
+        public void ServeTransform(TransformData data) { msServerServeTransform(_this, data); }
+        public void ServeCamera(CameraData data) { msServerServeCamera(_this, data); }
+        public void ServeLight(LightData data) { msServerServeLight(_this, data); }
+        public void ServeMesh(MeshData data) { msServerServeMesh(_this, data); }
+        public void ServeTexture(TextureData data) { msServerServeTexture(_this, data); }
+        public void ServeMaterial(MaterialData data) { msServerServeMaterial(_this, data); }
+        public void NotifyPoll(PollMessage.PollType t) { msServerNotifyPoll(_this, t); }
+    }
+    #endregion
+
+
     #region Messages
     public enum MessageType
     {
@@ -109,18 +180,18 @@ namespace UTJ.MeshSync
 
     public struct GetFlags
     {
-        public int flags;
-        public bool getTransform { get { return (flags & (1 << 0)) != 0; } }
-        public bool getPoints { get { return (flags & (1 << 1)) != 0; } }
-        public bool getNormals { get { return (flags & (1 << 2)) != 0; } }
-        public bool getTangents { get { return (flags & (1 << 3)) != 0; } }
-        public bool getUV0 { get { return (flags & (1 << 4)) != 0; } }
-        public bool getUV1 { get { return (flags & (1 << 5)) != 0; } }
-        public bool getColors { get { return (flags & (1 << 6)) != 0; } }
-        public bool getIndices { get { return (flags & (1 << 7)) != 0; } }
-        public bool getMaterialIDs { get { return (flags & (1 << 8)) != 0; } }
-        public bool getBones { get { return (flags & (1 << 9)) != 0; } }
-        public bool getBlendShapes { get { return (flags & (1 << 10)) != 0; } }
+        public BitFlags flags;
+        public bool getTransform { get { return flags[0]; } }
+        public bool getPoints { get { return flags[1]; } }
+        public bool getNormals { get { return flags[2]; } }
+        public bool getTangents { get { return flags[3]; } }
+        public bool getUV0 { get { return flags[4]; } }
+        public bool getUV1 { get { return flags[5]; } }
+        public bool getColors { get { return flags[6]; } }
+        public bool getIndices { get { return flags[7]; } }
+        public bool getMaterialIDs { get { return flags[8]; } }
+        public bool getBones { get { return flags[9]; } }
+        public bool getBlendShapes { get { return flags[10]; } }
     }
 
     public struct GetMessage
@@ -234,7 +305,7 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-        public string text { get { return Impl.S(msTextGetText(_this)); } }
+        public string text { get { return Misc.S(msTextGetText(_this)); } }
         public TextType textType { get { return msTextGetType(_this); } }
 
         public void Print()
@@ -377,7 +448,7 @@ namespace UTJ.MeshSync
         }
         public string name
         {
-            get { return Impl.S(msTextureGetName(_this)); }
+            get { return Misc.S(msTextureGetName(_this)); }
             set { msTextureSetName(_this, value); }
         }
         public TextureType type
@@ -454,7 +525,7 @@ namespace UTJ.MeshSync
             return v._this != IntPtr.Zero;
         }
 
-        public string name { get { return Impl.S(msMaterialPropGetName(_this)); } }
+        public string name { get { return Misc.S(msMaterialPropGetName(_this)); } }
         public Type type { get { return msMaterialPropGetType(_this); } }
 
         public int intValue { get { return msMaterialPropGetInt(_this); } }
@@ -504,7 +575,7 @@ namespace UTJ.MeshSync
             return v._this != IntPtr.Zero;
         }
 
-        public string name { get { return Impl.S(msMaterialKeywordGetName(_this)); } }
+        public string name { get { return Misc.S(msMaterialKeywordGetName(_this)); } }
         public bool value { get { return msMaterialKeywordGetValue(_this) != 0; } }
     }
 
@@ -553,7 +624,7 @@ namespace UTJ.MeshSync
         }
         public string name
         {
-            get { return Impl.S(msMaterialGetName(_this)); }
+            get { return Misc.S(msMaterialGetName(_this)); }
             set { msMaterialSetName(_this, value); }
         }
         public int index
@@ -563,7 +634,7 @@ namespace UTJ.MeshSync
         }
         public string shader
         {
-            get { return Impl.S(msMaterialGetShader(_this)); }
+            get { return Misc.S(msMaterialGetShader(_this)); }
             set { msMaterialSetShader(_this, value); }
         }
 
@@ -1142,7 +1213,7 @@ namespace UTJ.MeshSync
                 int numBS = msMeshAGetNumBlendshapes(_this);
                 for (int bi = 0; bi < numBS; ++bi)
                 {
-                    string name = "blendShape." + Impl.S(msMeshAGetBlendshapeName(_this, bi));
+                    string name = "blendShape." + Misc.S(msMeshAGetBlendshapeName(_this, bi));
                     clip.SetCurve(path, tsmr, name, null);
 
                     int numKeyframes = msMeshAGetNumBlendshapeSamples(_this, bi);
@@ -1245,7 +1316,7 @@ namespace UTJ.MeshSync
 
         public string path
         {
-            get { return Impl.S(msAnimationGetPath(_this)); }
+            get { return Misc.S(msAnimationGetPath(_this)); }
         }
 
         public TransformData.Type type
@@ -1309,7 +1380,7 @@ namespace UTJ.MeshSync
 
         public string name
         {
-            get { return Impl.S(msAnimationClipGetName(_this)); }
+            get { return Misc.S(msAnimationClipGetName(_this)); }
         }
         public int numAnimations
         {
@@ -1333,7 +1404,7 @@ namespace UTJ.MeshSync
         #endregion
 
         public int id { get { return msIdentifierGetID(_this); } }
-        public string name { get { return Impl.S(msIdentifierGetName(_this)); } }
+        public string name { get { return Misc.S(msIdentifierGetName(_this)); } }
     }
 
     public struct TransformData
@@ -1400,7 +1471,7 @@ namespace UTJ.MeshSync
         }
         public string path
         {
-            get { return Impl.S(msTransformGetPath(_this)); }
+            get { return Misc.S(msTransformGetPath(_this)); }
             set { msTransformSetPath(_this, value); }
         }
         public Vector3 position
@@ -1430,7 +1501,7 @@ namespace UTJ.MeshSync
         }
         public string reference
         {
-            get { return Impl.S(msTransformGetReference(_this)); }
+            get { return Misc.S(msTransformGetReference(_this)); }
             set { msTransformSetReference(_this, value); }
         }
     }
@@ -1645,7 +1716,7 @@ namespace UTJ.MeshSync
 
         public string name
         {
-            get { return Impl.S(msBlendShapeGetName(_this)); }
+            get { return Misc.S(msBlendShapeGetName(_this)); }
         }
         public float weight
         {
@@ -1668,76 +1739,76 @@ namespace UTJ.MeshSync
 
     public struct MeshDataFlags
     {
-        public int flags;
+        public BitFlags flags;
         public bool hasRefineSettings
         {
-            get { return (flags & (1 << 0)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 0)); }
+            get { return flags[0]; }
+            set { flags[0] = value; }
         }
         public bool hasIndices
         {
-            get { return (flags & (1 << 1)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 1)); }
+            get { return flags[1]; }
+            set { flags[1] = value; }
         }
         public bool hasCounts
         {
-            get { return (flags & (1 << 2)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 2)); }
+            get { return flags[2]; }
+            set { flags[2] = value; }
         }
         public bool hasPoints
         {
-            get { return (flags & (1 << 3)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 3)); }
+            get { return flags[3]; }
+            set { flags[3] = value; }
         }
         public bool hasNormals
         {
-            get { return (flags & (1 << 4)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 4)); }
+            get { return flags[4]; }
+            set { flags[4] = value; }
         }
         public bool hasTangents
         {
-            get { return (flags & (1 << 5)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 5)); }
+            get { return flags[5]; }
+            set { flags[5] = value; }
         }
         public bool hasUV0
         {
-            get { return (flags & (1 << 6)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 6)); }
+            get { return flags[6]; }
+            set { flags[6] = value; }
         }
         public bool hasUV1
         {
-            get { return (flags & (1 << 7)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 7)); }
+            get { return flags[7]; }
+            set { flags[7] = value; }
         }
         public bool hasColors
         {
-            get { return (flags & (1 << 8)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 8)); }
+            get { return flags[8]; }
+            set { flags[8] = value; }
         }
         public bool hasMaterialIDs
         {
-            get { return (flags & (1 << 9)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 9)); }
+            get { return flags[9]; }
+            set { flags[9] = value; }
         }
         public bool hasBones
         {
-            get { return (flags & (1 << 10)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 10)); }
+            get { return flags[10]; }
+            set { flags[10] = value; }
         }
         public bool hasBlendshapeWeights
         {
-            get { return (flags & (1 << 11)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 11)); }
+            get { return flags[11]; }
+            set { flags[11] = value; }
         }
         public bool hasBlendshapes
         {
-            get { return (flags & (1 << 12)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 12)); }
+            get { return flags[12]; }
+            set { flags[12] = value; }
         }
         public bool applyTRS
         {
-            get { return (flags & (1 << 13)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 13)); }
+            get { return flags[13]; }
+            set { flags[13] = value; }
         }
     };
 
@@ -1850,7 +1921,7 @@ namespace UTJ.MeshSync
         }
         public string rootBonePath
         {
-            get { return Impl.S(msMeshGetRootBonePath(_this)); }
+            get { return Misc.S(msMeshGetRootBonePath(_this)); }
             set { msMeshSetRootBonePath(_this, value); }
         }
         public Matrix4x4[] bindposes
@@ -1877,7 +1948,7 @@ namespace UTJ.MeshSync
             int n = numBones;
             var ret = new string[n];
             for (int i = 0; i < n; ++i)
-                ret[i] = Impl.S(msMeshGetBonePath(_this, i));
+                ret[i] = Misc.S(msMeshGetBonePath(_this, i));
             return ret;
         }
 
@@ -1902,36 +1973,36 @@ namespace UTJ.MeshSync
     #region Point
     public struct PointsDataFlags
     {
-        public int flags;
+        public BitFlags flags;
         public bool hasPoints
         {
-            get { return (flags & (1 << 0)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 0)); }
+            get { return flags[0]; }
+            set { flags[0] = value; }
         }
         public bool hasRotations
         {
-            get { return (flags & (1 << 1)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 1)); }
+            get { return flags[1]; }
+            set { flags[1] = value; }
         }
         public bool hasScales
         {
-            get { return (flags & (1 << 2)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 2)); }
+            get { return flags[2]; }
+            set { flags[2] = value; }
         }
         public bool hasVelocities
         {
-            get { return (flags & (1 << 3)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 3)); }
+            get { return flags[3]; }
+            set { flags[3] = value; }
         }
         public bool hasColors
         {
-            get { return (flags & (1 << 4)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 4)); }
+            get { return flags[4]; }
+            set { flags[4] = value; }
         }
         public bool hasIDs
         {
-            get { return (flags & (1 << 5)) != 0; }
-            set { Impl.SwitchBits(ref flags, value, (1 << 5)); }
+            get { return flags[5]; }
+            set { flags[5] = value; }
         }
     };
 
@@ -2060,10 +2131,10 @@ namespace UTJ.MeshSync
         }
 
         public ConstraintType type { get { return msConstraintGetType(_this); } }
-        public string path { get { return Impl.S(msConstraintGetPath(_this)); } }
+        public string path { get { return Misc.S(msConstraintGetPath(_this)); } }
         public int numSources { get { return msConstraintGetNumSources(_this); } }
 
-        public string GetSourcePath(int i) { return Impl.S(msConstraintGetSource(_this, i)); }
+        public string GetSourcePath(int i) { return Misc.S(msConstraintGetSource(_this, i)); }
     }
 
     public struct AimConstraintData
@@ -2162,7 +2233,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern AnimationClipData msSceneGetAnimationClipData(IntPtr _this, int i);
         #endregion
 
-        public string name { get { return Impl.S(msSceneGetName(_this)); } }
+        public string name { get { return Misc.S(msSceneGetName(_this)); } }
         public int numObjects { get { return msSceneGetNumObjects(_this); } }
         public int numMaterials { get { return msSceneGetNumMaterials(_this); } }
         public int numTextures { get { return msSceneGetNumTextures(_this); } }
