@@ -80,7 +80,7 @@ namespace UTJ.MeshSync
         #endregion
 
         #region properties
-        public static string version { get { return S(msServerGetVersion()); } }
+        public static string version { get { return Impl.S(msServerGetVersion()); } }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
         public List<TextureHolder> textureData { get { return m_textureList; } }
         #endregion
@@ -168,6 +168,8 @@ namespace UTJ.MeshSync
             }
         }
 
+
+        #region MessageHandlers
         void PollServerEvents()
         {
             if(m_requestRestartServer)
@@ -223,16 +225,11 @@ namespace UTJ.MeshSync
 
         void OnRecvGet(GetMessage mes)
         {
-
             msServerBeginServe(m_server);
             foreach (var mr in FindObjectsOfType<Renderer>())
-            {
                 ServeMesh(mr, mes);
-            }
-            foreach(var mat in m_materialList)
-            {
+            foreach (var mat in m_materialList)
                 ServeMaterial(mat.material, mes);
-            }
             msServerEndServe(m_server);
 
             //Debug.Log("MeshSyncServer: Get");
@@ -436,9 +433,80 @@ namespace UTJ.MeshSync
             FireEvent(SceneEventType.UpdateInProgress, args);
         }
 
+        void OnRecvScreenshot(IntPtr data)
+        {
+            ForceRepaint();
+
+#if UNITY_2017_1_OR_NEWER
+            ScreenCapture.CaptureScreenshot("screenshot.png");
+#else
+            Application.CaptureScreenshot("screenshot.png");
+#endif
+            // actual capture will be done at end of frame. not done immediately.
+            // just set flag now.
+            m_captureScreenshotInProgress = true;
+        }
+
+        void OnRecvQuery(QueryMessage data)
+        {
+            switch (data.queryType)
+            {
+                case QueryMessage.QueryType.ClientName:
+                    data.AddResponseText("Unity " + Application.unityVersion);
+                    break;
+                case QueryMessage.QueryType.RootNodes:
+                    {
+                        var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                        foreach (var go in roots)
+                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    }
+                    break;
+                case QueryMessage.QueryType.AllNodes:
+                    {
+                        var objects = FindObjectsOfType<Transform>();
+                        foreach (var go in objects)
+                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    }
+                    break;
+                default:
+                    break;
+            }
+            data.FinishRespond();
+        }
+        #endregion
+
+
+        #region Misc
+        void MakeSureAssetDirectoryExists()
+        {
+#if UNITY_EDITOR
+            try
+            {
+                string assetDir = "Assets/" + m_assetExportPath;
+                if (!AssetDatabase.IsValidFolder(assetDir))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+            }
+            catch (Exception e) { Debug.LogError(e); }
+#endif
+        }
+
+        void CreateAsset(UnityEngine.Object obj, string assetPath)
+        {
+#if UNITY_EDITOR
+            try
+            {
+                string assetDir = "Assets/" + m_assetExportPath;
+                if (!AssetDatabase.IsValidFolder(assetDir))
+                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+                AssetDatabase.CreateAsset(obj, Impl.SanitizeFileName(assetPath));
+            }
+            catch (Exception e) { Debug.LogError(e); }
+#endif
+        }
+
         void DestroyIfNotAsset(UnityEngine.Object obj)
         {
-            if(obj != null
+            if (obj != null
 #if UNITY_EDITOR
                 && AssetDatabase.GetAssetPath(obj) == ""
 #endif
@@ -448,9 +516,22 @@ namespace UTJ.MeshSync
             }
         }
 
+        public string BuildPath(Transform t)
+        {
+            var parent = t.parent;
+            if (parent != null && parent != m_rootObject)
+            {
+                return BuildPath(parent) + "/" + t.name;
+            }
+            else
+            {
+                return "/" + t.name;
+            }
+        }
+
         public Texture2D FindTexture(int id)
         {
-            if (id == InvalidID)
+            if (id == Impl.InvalidID)
                 return null;
             var rec = m_textureList.Find(a => a.id == id);
             return rec != null ? rec.texture : null;
@@ -458,13 +539,130 @@ namespace UTJ.MeshSync
 
         public Material FindMaterial(int id)
         {
-            if (id == InvalidID)
+            if (id == Impl.InvalidID)
                 return null;
             var rec = m_materialList.Find(a => a.id == id);
             return rec != null ? rec.material : null;
         }
 
+        int GetMaterialIndex(Material mat)
+        {
+            if (mat == null) { return -1; }
 
+            for (int i = 0; i < m_materialList.Count; ++i)
+            {
+                if (m_materialList[i].material == mat)
+                {
+                    return i;
+                }
+            }
+
+            int ret = m_materialList.Count;
+            var tmp = new MaterialHolder();
+            tmp.name = mat.name;
+            tmp.material = mat;
+            tmp.id = ret + 1;
+            m_materialList.Add(tmp);
+            return ret;
+        }
+
+        int GetObjectlID(GameObject go)
+        {
+            if (go == null)
+                return Impl.InvalidID;
+
+            int ret;
+            if (m_objIDTable.ContainsKey(go))
+            {
+                ret = m_objIDTable[go];
+            }
+            else
+            {
+                ret = ++m_objIDSeed;
+                m_objIDTable[go] = ret;
+            }
+            return ret;
+        }
+
+        Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
+        {
+            var names = path.Split('/');
+            Transform t = m_rootObject;
+            foreach (var name in names)
+            {
+                if (name.Length == 0) { continue; }
+                t = FindOrCreateObjectByName(t, name, createIfNotExist, ref created);
+                if (t == null) { break; }
+            }
+            return t;
+        }
+
+        Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
+        {
+            Transform ret = null;
+            if (parent == null)
+            {
+                var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                foreach (var go in roots)
+                {
+                    if (go.name == name)
+                    {
+                        ret = go.GetComponent<Transform>();
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                ret = parent.Find(name);
+            }
+
+            if (createIfNotExist && ret == null)
+            {
+                var go = new GameObject();
+                go.name = name;
+                ret = go.GetComponent<Transform>();
+                if (parent != null)
+                    ret.SetParent(parent, false);
+                created = true;
+            }
+            return ret;
+        }
+
+        static Material CreateDefaultMaterial()
+        {
+            var ret = new Material(Shader.Find("Standard"));
+            return ret;
+        }
+
+        SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
+        {
+            var smr = go.GetComponent<SkinnedMeshRenderer>();
+            if (smr == null)
+            {
+                smr = go.AddComponent<SkinnedMeshRenderer>();
+                if (isSplit)
+                {
+                    var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
+                    smr.sharedMaterials = parent.sharedMaterials;
+                }
+            }
+
+            return smr;
+        }
+
+        public void ForceRepaint()
+        {
+#if UNITY_EDITOR
+            SceneView.RepaintAll();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+#endif
+        }
+        #endregion
+
+
+
+        #region ReceiveScene
         void UpdateTextures(SceneData scene)
         {
             MakeSureAssetDirectoryExists();
@@ -498,7 +696,7 @@ namespace UTJ.MeshSync
                 }
                 else
                 {
-                    texture = new Texture2D(src.width, src.height, ToUnityTextureFormat(src.format), false);
+                    texture = new Texture2D(src.width, src.height, Impl.ToUnityTextureFormat(src.format), false);
                     texture.name = src.name;
                     texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
                     texture.Apply();
@@ -718,7 +916,7 @@ namespace UTJ.MeshSync
             var path = data_trans.path;
 
             EntityRecord rec = null;
-            if (!m_clientObjects.TryGetValue(path, out rec) && data_id != InvalidID)
+            if (!m_clientObjects.TryGetValue(path, out rec) && data_id != Impl.InvalidID)
                 m_hostObjects.TryGetValue(data_id, out rec);
             if (rec == null)
             {
@@ -1005,7 +1203,7 @@ namespace UTJ.MeshSync
             else
             {
                 var dst = pts.data;
-                Resize(dst, numData);
+                Impl.Resize(dst, numData);
                 for (int di = 0; di < numData; ++di)
                     ReadPointsData(data.GetData(di), dst[di]);
             }
@@ -1040,33 +1238,6 @@ namespace UTJ.MeshSync
             }
         }
 
-        void MakeSureAssetDirectoryExists()
-        {
-#if UNITY_EDITOR
-            try
-            {
-                string assetDir = "Assets/" + m_assetExportPath;
-                if (!AssetDatabase.IsValidFolder(assetDir))
-                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-            }
-            catch (Exception e) { Debug.LogError(e); }
-#endif
-        }
-
-        void CreateAsset(UnityEngine.Object obj, string assetPath)
-        {
-#if UNITY_EDITOR
-            try
-            {
-                string assetDir = "Assets/" + m_assetExportPath;
-                if (!AssetDatabase.IsValidFolder(assetDir))
-                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
-                AssetDatabase.CreateAsset(obj, SanitizeFileName(assetPath));
-            }
-            catch (Exception e) { Debug.LogError(e); }
-#endif
-        }
-
         Transform UpdateTransform(TransformData data)
         {
             var path = data.path;
@@ -1075,7 +1246,7 @@ namespace UTJ.MeshSync
 
             Transform trans = null;
             EntityRecord rec = null;
-            if (data_id != InvalidID)
+            if (data_id != Impl.InvalidID)
             {
                 if (m_hostObjects.TryGetValue(data_id, out rec))
                 {
@@ -1243,15 +1414,6 @@ namespace UTJ.MeshSync
             }
         }
 
-
-        T GetOrAddComponent<T>(GameObject go) where T : Component
-        {
-            var ret = go.GetComponent<T>();
-            if (ret == null)
-                ret = go.AddComponent<T>();
-            return ret;
-        }
-
         void UpdateConstraint(ConstraintData data)
         {
 #if UNITY_2018_1_OR_NEWER
@@ -1276,31 +1438,31 @@ namespace UTJ.MeshSync
             {
                 case ConstraintData.ConstraintType.Aim:
                     {
-                        var c = GetOrAddComponent<AimConstraint>(trans.gameObject);
+                        var c = Impl.GetOrAddComponent<AimConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Parent:
                     {
-                        var c = GetOrAddComponent<ParentConstraint>(trans.gameObject);
+                        var c = Impl.GetOrAddComponent<ParentConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Position:
                     {
-                        var c = GetOrAddComponent<PositionConstraint>(trans.gameObject);
+                        var c = Impl.GetOrAddComponent<PositionConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Rotation:
                     {
-                        var c = GetOrAddComponent<RotationConstraint>(trans.gameObject);
+                        var c = Impl.GetOrAddComponent<RotationConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
                 case ConstraintData.ConstraintType.Scale:
                     {
-                        var c = GetOrAddComponent<ScaleConstraint>(trans.gameObject);
+                        var c = Impl.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
                         basicSetup(c);
                         break;
                     }
@@ -1365,7 +1527,7 @@ namespace UTJ.MeshSync
                     else
                         clipName = root.name;
 
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + SanitizeFileName(clipName) + ".anim";
+                    var assetPath = "Assets/" + m_assetExportPath + "/" + Impl.SanitizeFileName(clipName) + ".anim";
                     CreateAsset(clip, assetPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
                     m_animClipCache[root.gameObject] = clip;
@@ -1377,17 +1539,17 @@ namespace UTJ.MeshSync
                     animPath = animPath.Remove(0, 1);
                 }
 
-                InterpolationMethod im = SmoothInterpolation;
+                InterpolationMethod interpolation = AnimationData.SmoothInterpolation;
                 //switch (m_animtionInterpolation)
                 //{
                 //    case InterpolationType.Linear:
-                //        im = LinearInterpolation;
+                //        interpolation = LinearInterpolation;
                 //        break;
                 //    default:
-                //        im = SmoothInterpolation;
+                //        interpolation = SmoothInterpolation;
                 //        break;
                 //}
-                data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, im);
+                data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, interpolation);
                 m_tmpAnimations.Add(clip);
             }
 
@@ -1473,134 +1635,10 @@ namespace UTJ.MeshSync
                     r.sharedMaterials = materials;
             }
         }
+        #endregion
 
-        int GetMaterialIndex(Material mat)
-        {
-            if(mat == null) { return -1; }
 
-            for (int i = 0; i < m_materialList.Count; ++i)
-            {
-                if(m_materialList[i].material == mat)
-                {
-                    return i;
-                }
-            }
-
-            int ret = m_materialList.Count;
-            var tmp = new MaterialHolder();
-            tmp.name = mat.name;
-            tmp.material = mat;
-            tmp.id = ret + 1;
-            m_materialList.Add(tmp);
-            return ret;
-        }
-
-        int GetObjectlID(GameObject go)
-        {
-            if (go == null)
-                return InvalidID;
-
-            int ret;
-            if (m_objIDTable.ContainsKey(go))
-            {
-                ret = m_objIDTable[go];
-            }
-            else
-            {
-                ret = ++m_objIDSeed;
-                m_objIDTable[go] = ret;
-            }
-            return ret;
-        }
-
-        Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
-        {
-            var names = path.Split('/');
-            Transform t = m_rootObject;
-            foreach (var name in names)
-            {
-                if (name.Length == 0) { continue; }
-                t = FindOrCreateObjectByName(t, name, createIfNotExist, ref created);
-                if (t == null) { break; }
-            }
-            return t;
-        }
-
-        Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
-        {
-            Transform ret = null;
-            if (parent == null)
-            {
-                var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-                foreach (var go in roots)
-                {
-                    if (go.name == name)
-                    {
-                        ret = go.GetComponent<Transform>();
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                ret = parent.Find(name);
-            }
-
-            if (createIfNotExist && ret == null)
-            {
-                var go = new GameObject();
-                go.name = name;
-                ret = go.GetComponent<Transform>();
-                if (parent != null)
-                    ret.SetParent(parent, false);
-                created = true;
-            }
-            return ret;
-        }
-
-        public static Material CreateDefaultMaterial()
-        {
-            var ret = new Material(Shader.Find("Standard"));
-            return ret;
-        }
-
-        SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
-        {
-            var smr = go.GetComponent<SkinnedMeshRenderer>();
-            if (smr == null)
-            {
-                smr = go.AddComponent<SkinnedMeshRenderer>();
-                if (isSplit)
-                {
-                    var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
-                    smr.sharedMaterials = parent.sharedMaterials;
-                }
-            }
-
-            return smr;
-        }
-
-        public void ForceRepaint()
-        {
-#if UNITY_EDITOR
-            SceneView.RepaintAll();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-#endif
-        }
-
-        string BuildPath(Transform t)
-        {
-            var parent = t.parent;
-            if (parent != null && parent != m_rootObject)
-            {
-                return BuildPath(parent) + "/" + t.name;
-            }
-            else
-            {
-                return "/" + t.name;
-            }
-        }
-
+        #region ServeScene
         bool ServeMesh(Renderer renderer, GetMessage mes)
         {
             bool ret = false;
@@ -1684,7 +1722,7 @@ namespace UTJ.MeshSync
             }
 
             Cloth cloth = smr.GetComponent<Cloth>();
-            if(cloth != null && mes.bakeCloth)
+            if (cloth != null && mes.bakeCloth)
             {
                 CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
             }
@@ -1738,7 +1776,7 @@ namespace UTJ.MeshSync
             }
             if (flags.getIndices)
             {
-                if(!flags.getMaterialIDs || materials == null || materials.Length == 0)
+                if (!flags.getMaterialIDs || materials == null || materials.Length == 0)
                 {
                     data.WriteIndices(mesh.triangles);
                 }
@@ -1776,48 +1814,10 @@ namespace UTJ.MeshSync
                 }
             }
         }
+        #endregion
 
-        void OnRecvScreenshot(IntPtr data)
-        {
-            ForceRepaint();
 
-#if UNITY_2017_1_OR_NEWER
-            ScreenCapture.CaptureScreenshot("screenshot.png");
-#else
-            Application.CaptureScreenshot("screenshot.png");
-#endif
-            // actual capture will be done at end of frame. not done immediately.
-            // just set flag now.
-            m_captureScreenshotInProgress = true;
-        }
-
-        void OnRecvQuery(QueryMessage data)
-        {
-            switch (data.queryType)
-            {
-                case QueryMessage.QueryType.ClientName:
-                    data.AddResponseText("Unity " + Application.unityVersion);
-                    break;
-                case QueryMessage.QueryType.RootNodes:
-                    {
-                        var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-                        foreach (var go in roots)
-                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
-                    }
-                    break;
-                case QueryMessage.QueryType.AllNodes:
-                    {
-                        var objects = FindObjectsOfType<Transform>();
-                        foreach (var go in objects)
-                            data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
-                    }
-                    break;
-                default:
-                    break;
-            }
-            data.FinishRespond();
-        }
-
+        #region Tools
 #if UNITY_EDITOR
         public void GenerateLightmapUV(GameObject go)
         {
@@ -1985,8 +1985,10 @@ namespace UTJ.MeshSync
             }
         }
 #endif
+        #endregion
 
 
+        #region EventFunctions
 #if UNITY_EDITOR
         void Reset()
         {
@@ -2044,6 +2046,7 @@ namespace UTJ.MeshSync
 #endif
             PollServerEvents();
         }
+        #endregion
         #endregion
     }
 }
