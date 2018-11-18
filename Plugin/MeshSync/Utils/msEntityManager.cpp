@@ -252,6 +252,11 @@ void EntityManager::waitTasks()
 EntityManager::Record& EntityManager::lockAndGet(const std::string &path)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
+    if (!m_deleted.empty()) {
+        auto it = std::find_if(m_deleted.begin(), m_deleted.end(), [&path](Identifier& v) { return v.name == path; });
+        if (it != m_deleted.end())
+            m_deleted.erase(it);
+    }
     return m_records[path];
 }
 

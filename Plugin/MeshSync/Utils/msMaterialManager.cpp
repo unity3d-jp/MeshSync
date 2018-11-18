@@ -119,6 +119,11 @@ void MaterialManager::eraseStaleMaterials()
 MaterialManager::Record& MaterialManager::lockAndGet(int id)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
+    if (!m_deleted.empty()) {
+        auto it = std::find_if(m_deleted.begin(), m_deleted.end(), [&id](Identifier& v) { return v.id == id; });
+        if (it != m_deleted.end())
+            m_deleted.erase(it);
+    }
     return m_records[id];
 }
 

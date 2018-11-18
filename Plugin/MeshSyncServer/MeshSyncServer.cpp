@@ -16,7 +16,8 @@ msAPI const char* msServerGetVersion()
 
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
-    if (!settings) { return nullptr; }
+    if (!settings)
+        return nullptr;
 
     auto& server = g_servers[settings->port];
     if (!server) {
@@ -45,7 +46,8 @@ msAPI int msServerGetNumMessages(ms::Server *server)
 
 msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 {
-    if (!server || !handler) { return 0; }
+    if (!server || !handler)
+        return 0;
     return server->processMessages([handler](ms::Message::Type type, ms::Message& data) {
         handler(type, &data);
     });

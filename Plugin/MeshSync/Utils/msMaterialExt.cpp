@@ -3,6 +3,16 @@
 
 namespace ms {
 
+// shader keywords
+static const char _Color[] = "_Color";
+static const char _EmissionColor[] = "_EmissionColor";
+static const char _Metallic[] = "_Metallic";
+static const char _Glossiness[] = "_Glossiness";
+static const char _MainTex[] = "_MainTex";
+static const char _EmissionMap[] = "_EmissionMap";
+static const char _MetallicGlossMap[] = "_MetallicGlossMap";
+static const char _BumpMap[] = "_BumpMap";
+
 inline TexturePtr MakeTmpTexture(int id)
 {
     auto ret = Texture::create();
@@ -12,41 +22,41 @@ inline TexturePtr MakeTmpTexture(int id)
 
 void StandardMaterial::setColor(float4 v)
 {
-    addParam({ "_Color", v });
+    addParam({ _Color, v });
 }
 float4 StandardMaterial::getColor() const
 {
-    auto *p = findParam("_Color");
+    auto *p = findParam(_Color);
     return p ? p->getVector() : float4::zero();
 }
 
 void StandardMaterial::setEmission(float4 v)
 {
-    addParam({ "_EmissionColor", v });
+    addParam({ _EmissionColor, v });
 }
 float4 StandardMaterial::getEmission() const
 {
-    auto *p = findParam("_EmissionColor");
+    auto *p = findParam(_EmissionColor);
     return p ? p->getVector() : float4::zero();
 }
 
 void StandardMaterial::setMetallic(float v)
 {
-    addParam({ "_Metallic", v });
+    addParam({ _Metallic, v });
 }
 float StandardMaterial::getMetallic() const
 {
-    auto *p = findParam("_Metallic");
+    auto *p = findParam(_Metallic);
     return p ? p->getFloat() : 0.0f;
 }
 
 void StandardMaterial::setSmoothness(float v)
 {
-    addParam({ "_Glossiness", v });
+    addParam({ _Glossiness, v });
 }
 float StandardMaterial::getSmoothness() const
 {
-    auto *p = findParam("_Glossiness");
+    auto *p = findParam(_Glossiness);
     return p ? p->getFloat() : 0.0f;
 }
 
@@ -57,9 +67,9 @@ void StandardMaterial::setColorMap(int v)
 void StandardMaterial::setColorMap(TexturePtr v)
 {
     if (v && v->id != InvalidID)
-        addParam({ "_MainTex", v });
+        addParam({ _MainTex, v });
     else
-        eraseParam("_MainTex");
+        eraseParam(_MainTex);
 }
 int StandardMaterial::getColorMap() const
 {
@@ -74,13 +84,13 @@ void StandardMaterial::setEmissionMap(int v)
 void StandardMaterial::setEmissionMap(TexturePtr v)
 {
     if (v && v->id != InvalidID)
-        addParam({ "_EmissionMap", v });
+        addParam({ _EmissionMap, v });
     else
-        eraseParam("_EmissionMap");
+        eraseParam(_EmissionMap);
 }
 int StandardMaterial::getEmissionMap() const
 {
-    auto *p = findParam("_EmissionMap");
+    auto *p = findParam(_EmissionMap);
     return p ? p->getTexture() : InvalidID;
 }
 
@@ -91,13 +101,13 @@ void StandardMaterial::setMetallicMap(int v)
 void StandardMaterial::setMetallicMap(TexturePtr v)
 {
     if (v && v->id != InvalidID)
-        addParam({ "_MetallicGlossMap", v });
+        addParam({ _MetallicGlossMap, v });
     else
-        eraseParam("_MetallicGlossMap");
+        eraseParam(_MetallicGlossMap);
 }
 int StandardMaterial::getMetallicMap() const
 {
-    auto *p = findParam("_MetallicGlossMap");
+    auto *p = findParam(_MetallicGlossMap);
     return p ? p->getTexture() : InvalidID;
 }
 
@@ -108,13 +118,13 @@ void StandardMaterial::setNormalMap(int v)
 void StandardMaterial::setNormalMap(TexturePtr v)
 {
     if (v && v->id != InvalidID)
-        addParam({ "_BumpMap", v });
+        addParam({ _BumpMap, v });
     else
-        eraseParam("_BumpMap");
+        eraseParam(_BumpMap);
 }
 int StandardMaterial::getNormalMap() const
 {
-    auto *p = findParam("_BumpMap");
+    auto *p = findParam(_BumpMap);
     return p ? p->getTexture() : InvalidID;
 }
 

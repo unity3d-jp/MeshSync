@@ -775,6 +775,7 @@ void msbContext::eraseStaleObjects()
         else
             ++i;
     }
+    m_entity_manager.eraseStaleEntities();
 }
 
 
@@ -835,9 +836,8 @@ void msbContext::sendAnimations(SendScope scope)
 
     // send
     if (!m_animations.empty()) {
-        kickAsyncSend(false);
+        kickAsyncSend();
     }
-
     m_sending_animations = false;
 }
 
@@ -1074,7 +1074,7 @@ void msbContext::sendScene(SendScope scope, bool force_all)
     }
 
     eraseStaleObjects();
-    kickAsyncSend(true);
+    kickAsyncSend();
 }
 
 void msbContext::flushPendingList()
@@ -1083,11 +1083,11 @@ void msbContext::flushPendingList()
         for (auto p : m_pending)
             exportObject(p, false);
         m_pending.clear();
-        kickAsyncSend(false);
+        kickAsyncSend();
     }
 }
 
-void msbContext::kickAsyncSend(bool erase_stale_objects)
+void msbContext::kickAsyncSend()
 {
     for (auto& t : m_async_tasks)
         t.wait();
@@ -1106,7 +1106,7 @@ void msbContext::kickAsyncSend(bool erase_stale_objects)
     m_bones.clear();
 
     // kick async send
-    m_sender.on_prepare = [this, erase_stale_objects]() {
+    m_sender.on_prepare = [this]() {
         auto& t = m_sender;
         t.client_settings = m_settings.client_settings;
         t.scene_settings = m_settings.scene_settings;
@@ -1114,10 +1114,6 @@ void msbContext::kickAsyncSend(bool erase_stale_objects)
         t.scene_settings.scale_factor = 1.0f;
         t.scene_settings.handedness = ms::Handedness::Left;
 
-        if (erase_stale_objects) {
-            m_material_manager.eraseStaleMaterials();
-            m_entity_manager.eraseStaleEntities();
-        }
         t.textures = m_texture_manager.getDirtyTextures();
         t.materials = m_material_manager.getDirtyMaterials();
         t.transforms = m_entity_manager.getDirtyTransforms();

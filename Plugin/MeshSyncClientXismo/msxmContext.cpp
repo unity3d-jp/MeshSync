@@ -230,45 +230,43 @@ void msxmContext::send(bool force)
     }
 
 
-    if (!m_sender.on_prepare) {
-        m_sender.on_prepare = [this]() {
-            // add camera
-            if (m_camera)
-                m_entity_manager.add(m_camera);
+    m_sender.on_prepare = [this]() {
+        // add camera
+        if (m_camera)
+            m_entity_manager.add(m_camera);
 
-            // gen welded meshes
-            mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
-                v->buildMeshData(m_settings.weld_vertices);
-                m_entity_manager.add(v->dst_mesh);
-            });
-            m_mesh_buffers.clear();
+        // gen welded meshes
+        mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
+            v->buildMeshData(m_settings.weld_vertices);
+            m_entity_manager.add(v->dst_mesh);
+        });
+        m_mesh_buffers.clear();
 
-            // handle deleted objects
-            for (auto h : m_meshes_deleted) {
-                char path[128];
-                sprintf(path, "/XismoMesh:ID[%08x]", h);
-                m_entity_manager.erase(ms::Identifier(path, (int)h));
-            }
-            m_meshes_deleted.clear();
+        // handle deleted objects
+        for (auto h : m_meshes_deleted) {
+            char path[128];
+            sprintf(path, "/XismoMesh:ID[%08x]", h);
+            m_entity_manager.erase(ms::Identifier(path, (int)h));
+        }
+        m_meshes_deleted.clear();
 
 
-            auto& t = m_sender;
-            t.client_settings = m_settings.client_settings;
-            t.scene_settings.handedness = ms::Handedness::Left;
-            t.scene_settings.scale_factor = m_settings.scale_factor;
+        auto& t = m_sender;
+        t.client_settings = m_settings.client_settings;
+        t.scene_settings.handedness = ms::Handedness::Left;
+        t.scene_settings.scale_factor = m_settings.scale_factor;
 
-            t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_material_manager.getDirtyMaterials();
-            t.transforms = m_entity_manager.getDirtyTransforms();
-            t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted_entities = m_entity_manager.getDeleted();
-        };
-        m_sender.on_succeeded = [this]() {
-            m_texture_manager.clearDirtyFlags();
-            m_material_manager.clearDirtyFlags();
-            m_entity_manager.clearDirtyFlags();
-        };
-    }
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+    m_sender.on_succeeded = [this]() {
+        m_texture_manager.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+    };
     m_sender.kick();
 }
 

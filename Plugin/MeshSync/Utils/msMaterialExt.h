@@ -3,7 +3,7 @@
 #include "../msMaterial.h"
 
 namespace ms {
-    
+
 // correspond to Unity's Standard shader
 class StandardMaterial : public Material
 {
