@@ -132,10 +132,13 @@ void msmbDevice::kickAsyncSend()
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted_entities = m_entity_manager.getDeleted();
             t.animations = m_animations;
+
+            t.deleted_materials = m_material_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
         };
         m_sender.on_succeeded = [this]() {
+            m_material_ids.clearDirtyFlags();
             m_texture_manager.clearDirtyFlags();
             m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
@@ -632,24 +635,6 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 }
 
 
-bool msmbDevice::exportMaterials()
-{
-    int num_exported = 0;
-    auto& materials = FBSystem::TheOne().Scene->Materials;
-    const int num_materials = materials.GetCount();
-    for (int mi = 0; mi < num_materials; ++mi) {
-        if (exportMaterial(materials[mi]))
-            ++num_exported;
-    }
-
-    for (auto& kvp : m_texture_records)
-        kvp.second.dst = nullptr;
-    for (auto& kvp : m_material_records)
-        kvp.second.dst = nullptr;
-
-    return num_exported > 0;
-}
-
 int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 {
     if (!src)
@@ -669,7 +654,7 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
     return -1;
 }
 
-bool msmbDevice::exportMaterial(FBMaterial* src)
+bool msmbDevice::exportMaterial(FBMaterial* src, int index)
 {
     if (!src)
         return false;
@@ -680,10 +665,11 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
 
     auto dst = ms::Material::create();
     rec.dst = dst.get();
-    if (rec.id == -1)
-        rec.id = (int)m_material_records.size() - 1;
+    if (rec.id == ms::InvalidID)
+        rec.id = m_material_ids.getID(src);
 
     dst->id = rec.id;
+    dst->index = index;
     dst->name = src->LongName;
 
     auto& stdmat = ms::AsStandardMaterial(*dst);
@@ -700,6 +686,26 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
     }
     m_material_manager.add(dst);
     return true;
+}
+
+bool msmbDevice::exportMaterials()
+{
+    int num_exported = 0;
+    auto& materials = FBSystem::TheOne().Scene->Materials;
+    const int num_materials = materials.GetCount();
+    for (int mi = 0; mi < num_materials; ++mi) {
+        if (exportMaterial(materials[mi], mi))
+            ++num_exported;
+    }
+
+    for (auto& kvp : m_texture_records)
+        kvp.second.dst = nullptr;
+    for (auto& kvp : m_material_records)
+        kvp.second.dst = nullptr;
+
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
+    return num_exported > 0;
 }
 
 

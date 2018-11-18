@@ -81,7 +81,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 continue;
 
             auto dst = ms::Material::create();
-            dst->id = m_material_index_to_id[mi] = m_material_idgen.getID(src);
+            dst->id = m_material_index_to_id[mi] = m_material_ids.getID(src);
             dst->index = mi;
             src->GetName(buf, sizeof(buf));
             dst->name = ms::ToUTF8(buf);
@@ -236,31 +236,30 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         m_entity_manager.add(rec.dst);
     m_obj_records.clear();
 
-    if (!m_send_meshes.on_prepare) {
-        m_send_meshes.on_prepare = [this]() {
-            auto& t = m_send_meshes;
-            t.client_settings = m_settings;
-            t.scene_settings.handedness = ms::Handedness::Right;
-            t.scene_settings.scale_factor = m_scale_factor;
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
+    m_entity_manager.eraseStaleEntities();
 
-            t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_material_manager.getDirtyMaterials();
-            t.transforms = m_entity_manager.getDirtyTransforms();
-            t.geometries = m_entity_manager.getDirtyGeometries();
+    m_send_meshes.on_prepare = [this]() {
+        auto& t = m_send_meshes;
+        t.client_settings = m_settings;
+        t.scene_settings.handedness = ms::Handedness::Right;
+        t.scene_settings.scale_factor = m_scale_factor;
 
-            m_material_idgen.eraseStaleRecords();
-            m_material_manager.eraseStaleMaterials();
-            t.deleted_materials = m_material_manager.getDeleted();
-            m_entity_manager.eraseStaleEntities();
-            t.deleted_entities = m_entity_manager.getDeleted();
-        };
-        m_send_meshes.on_succeeded = [this]() {
-            m_material_idgen.clearDirtyFlags();
-            m_texture_manager.clearDirtyFlags();
-            m_material_manager.clearDirtyFlags();
-            m_entity_manager.clearDirtyFlags();
-        };
-    }
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+
+        t.deleted_materials = m_material_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+    m_send_meshes.on_succeeded = [this]() {
+        m_material_ids.clearDirtyFlags();
+        m_texture_manager.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+    };
     m_send_meshes.kick();
 }
 

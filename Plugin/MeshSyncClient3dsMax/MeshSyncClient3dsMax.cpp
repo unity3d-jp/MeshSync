@@ -350,13 +350,11 @@ void MeshSyncClient3dsMax::kickAsyncSend()
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.animations = m_animations;
 
-            m_material_idgen.eraseStaleRecords();
-            m_material_manager.eraseStaleMaterials();
             t.deleted_materials = m_material_manager.getDeleted();
             t.deleted_entities = m_entity_manager.getDeleted();
         };
         m_sender.on_succeeded = [this]() {
-            m_material_idgen.clearDirtyFlags();
+            m_material_ids.clearDirtyFlags();
             m_texture_manager.clearDirtyFlags();
             m_material_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
@@ -381,7 +379,7 @@ void MeshSyncClient3dsMax::exportMaterials()
         auto do_export = [this, &material_index](Mtl *mtl) -> int // return material id
         {
             auto dst = ms::Material::create();
-            dst->id = m_material_idgen.getID(mtl);
+            dst->id = m_material_ids.getID(mtl);
             dst->index = material_index++;
             dst->name = mu::ToMBS(mtl->GetName().data());
 
@@ -440,6 +438,8 @@ void MeshSyncClient3dsMax::exportMaterials()
             }
         }
     }
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
 }
 
 ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)

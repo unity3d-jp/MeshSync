@@ -198,9 +198,9 @@ private:
     MFnPlugin                   m_iplugin;
     std::vector<MCallbackId>    m_cids_global;
 
-    ms::IDGenerator<MObject> m_material_id_table;
     std::vector<ms::AnimationClipPtr>   m_animations;
 
+    ms::IDGenerator<MObject> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;

@@ -24,12 +24,16 @@ int msbContext::exportTexture(const std::string & path, ms::TextureType type)
     return m_texture_manager.addFile(path, type);
 }
 
-ms::MaterialPtr msbContext::addMaterial(Material *mat)
+void msbContext::exportMaterials()
 {
-    auto ret = ms::Material::create();
-    ret->name = mat->id.name + 2;
-    ret->id = m_material_ids.getID(mat);
-    {
+    int midx = 0;
+    auto bpy_data = bl::BData(bl::BContext::get().data());
+    for (auto *mat : bpy_data.materials()) {
+        auto ret = ms::Material::create();
+        ret->name = mat->id.name + 2;
+        ret->id = m_material_ids.getID(mat);
+        ret->index = midx++;
+
         auto& stdmat = ms::AsStandardMaterial(*ret);
         bl::BMaterial bm(mat);
         auto color_src = mat;
@@ -53,22 +57,11 @@ ms::MaterialPtr msbContext::addMaterial(Material *mat)
             stdmat.setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
 #endif
         }
-    }
-    m_material_manager.add(ret);
-    return ret;
-}
 
-int msbContext::getMaterialID(const Material *mat)
-{
-    return m_material_ids.getID(mat);
-}
-
-void msbContext::exportMaterials()
-{
-    auto bpy_data = bl::BData(bl::BContext::get().data());
-    for (auto *mat : bpy_data.materials()) {
-        addMaterial(mat);
+        m_material_manager.add(ret);
     }
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
 }
 
 
@@ -457,9 +450,9 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
 
     std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        mid_table[mi] = getMaterialID(mesh.mat[mi]);
+        mid_table[mi] = m_material_ids.getID(mesh.mat[mi]);
     if (mid_table.empty())
-        mid_table.push_back(-1);
+        mid_table.push_back(ms::InvalidID);
 
     // vertices
     dst.points.resize_discard(num_vertices);
@@ -663,7 +656,7 @@ void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 
     std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        mid_table[mi] = getMaterialID(mesh.mat[mi]);
+        mid_table[mi] = m_material_ids.getID(mesh.mat[mi]);
     if (mid_table.empty())
         mid_table.push_back(-1);
 
@@ -1129,8 +1122,11 @@ void msbContext::kickAsyncSend(bool erase_stale_objects)
         t.materials = m_material_manager.getDirtyMaterials();
         t.transforms = m_entity_manager.getDirtyTransforms();
         t.geometries = m_entity_manager.getDirtyGeometries();
-        t.deleted_entities = m_entity_manager.getDeleted();
         t.animations = m_animations;
+
+        t.deleted_materials = m_material_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
+
         if (scale_factor != 1.0f) {
             for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }
             for (auto& obj : t.geometries) { obj->applyScaleFactor(scale_factor); }
@@ -1138,6 +1134,7 @@ void msbContext::kickAsyncSend(bool erase_stale_objects)
         }
     };
     m_sender.on_succeeded = [this]() {
+        m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();

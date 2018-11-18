@@ -571,8 +571,6 @@ void MeshSyncClientMaya::kickAsyncSend()
     // cleanup
     for (auto& n : m_tree_nodes)
         n->clearState();
-    m_material_id_table.clear();
-
 
     float to_meter = 1.0f;
     {
@@ -592,12 +590,15 @@ void MeshSyncClientMaya::kickAsyncSend()
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
-            t.deleted_entities = m_entity_manager.getDeleted();
             t.animations = m_animations;
+
+            t.deleted_materials = m_material_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
         };
         m_sender.on_succeeded = [this]() {
-            m_texture_manager.clearDirtyFlags();
+            m_material_ids.clearDirtyFlags();
             m_material_manager.clearDirtyFlags();
+            m_texture_manager.clearDirtyFlags();
             m_entity_manager.clearDirtyFlags();
             m_animations.clear();
         };

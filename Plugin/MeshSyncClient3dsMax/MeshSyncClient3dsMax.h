@@ -158,7 +158,7 @@ private:
     float m_current_time_sec;
     std::vector<ms::AnimationClipPtr> m_animations;
 
-    ms::IDGenerator<Mtl*> m_material_idgen;
+    ms::IDGenerator<Mtl*> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;

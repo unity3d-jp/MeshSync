@@ -93,6 +93,7 @@ int MeshSyncClientMaya::exportTexture(const std::string& path, ms::TextureType t
 
 void MeshSyncClientMaya::exportMaterials()
 {
+    int midx = 0;
     MItDependencyNodes it(MFn::kLambert);
     while (!it.isDone()) {
         MObject mo = it.item();
@@ -100,7 +101,8 @@ void MeshSyncClientMaya::exportMaterials()
 
         auto tmp = ms::Material::create();
         tmp->name = fn.name().asChar();
-        tmp->id = m_material_id_table.getID(mo);
+        tmp->id = m_material_ids.getID(mo);
+        tmp->index = midx++;
         {
             mu::float4 color;
             std::string texpath;
@@ -116,11 +118,11 @@ void MeshSyncClientMaya::exportMaterials()
             }
         }
         m_material_manager.add(tmp);
-
         it.next();
     }
-    m_material_id_table.eraseStaleRecords();
-    m_material_id_table.clearDirtyFlags();
+
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
 }
 
 ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
@@ -461,11 +463,11 @@ void MeshSyncClientMaya::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MF
         MObjectArray shaders;
         MIntArray indices;
         mshape.getConnectedShaders(0, shaders, indices);
-        mids.resize(shaders.length(), -1);
+        mids.resize(shaders.length(), ms::InvalidID);
         for (uint32_t si = 0; si < shaders.length(); si++) {
             MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
             if (!it.isDone()) {
-                mids[si] = m_material_id_table.getID(it.currentItem());
+                mids[si] = m_material_ids.getID(it.currentItem());
             }
         }
 

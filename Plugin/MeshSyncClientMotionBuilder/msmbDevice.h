@@ -34,14 +34,14 @@ private:
 
     struct TextureRecord : public mu::noncopyable
     {
-        int id = -1;
+        int id = ms::InvalidID;
         ms::Texture *dst = nullptr;
     };
     using TextureRecords = std::map<FBTexture*, TextureRecord>;
 
     struct MaterialRecord : public mu::noncopyable
     {
-        int id = -1;
+        int id = ms::InvalidID;
         ms::Material *dst = nullptr;
     };
     using MaterialRecords = std::map<FBMaterial*, MaterialRecord>;
@@ -76,9 +76,9 @@ private:
     ms::MeshPtr exportMesh(NodeRecord& n);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
-    bool exportMaterials();
     int exportTexture(FBTexture* src, FBMaterialTextureType type);
-    bool exportMaterial(FBMaterial* src);
+    bool exportMaterial(FBMaterial* src, int index);
+    bool exportMaterials();
 
     bool exportAnimations();
     bool exportAnimation(FBModel* src, bool force);
@@ -105,6 +105,7 @@ private:
 
     std::vector<ms::AnimationClipPtr> m_animations;
 
+    ms::IDGenerator<FBMaterial*> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;

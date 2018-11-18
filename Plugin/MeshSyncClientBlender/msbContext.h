@@ -85,8 +85,6 @@ private:
     };
 
     int exportTexture(const std::string & path, ms::TextureType type);
-    ms::MaterialPtr addMaterial(Material *material);
-    int getMaterialID(const Material *mat);
     void exportMaterials();
 
     ms::TransformPtr exportObject(Object *obj, bool force);
