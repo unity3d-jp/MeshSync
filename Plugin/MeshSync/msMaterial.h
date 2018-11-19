@@ -16,9 +16,6 @@ public:
         Float,
         Vector,
         Matrix,
-        FloatArray,
-        VectorArray,
-        MatrixArray,
         Texture,
     };
 
@@ -51,12 +48,16 @@ public:
     void setFloat2(const float2& v);
     void setFloat3(const float3& v);
     void setFloat4(const float4& v);
+    void setFloat2x2(const float2x2& v);
+    void setFloat3x3(const float3x3& v);
     void setFloat4x4(const float4x4& v);
-    void setFloatArray(const float *v, int count);
-    void setFloat2Array(const float2 *v, int count);
-    void setFloat3Array(const float3 *v, int count);
-    void setFloat4Array(const float4 *v, int count);
-    void setFloat4x4Array(const float4x4 *v, int count);
+    void setFloat(const float *v, int count);
+    void setFloat2(const float2 *v, int count);
+    void setFloat3(const float3 *v, int count);
+    void setFloat4(const float4 *v, int count);
+    void setFloat2x2(const float2x2 *v, int count);
+    void setFloat3x3(const float3x3 *v, int count);
+    void setFloat4x4(const float4x4 *v, int count);
     void setTexture(int v);
     void setTexture(TexturePtr v);
     void setTexture(Texture *v);
@@ -101,7 +102,7 @@ public:
     int id = InvalidID;
     std::string name;
     int index = 0;
-    std::string shader = "Standard";
+    std::string shader;
     std::vector<MaterialProperty> properties;
     std::vector<MaterialKeyword> keywords;
 

@@ -50,11 +50,16 @@ static void(*WINAPI _glLinkProgram)(GLuint program);
 static void(*WINAPI _glDeleteProgram)(GLuint program);
 static void(*WINAPI _glUseProgram)(GLuint program);
 /*static*/ void(*WINAPI _glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
-/*static*/ void(*WINAPI _glGetActiveUniformName)(GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName);
+/*static*/ void(*WINAPI _glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+/*static*/ GLint(*WINAPI _glGetUniformLocation)(GLuint program, const GLchar *name);
+
+static void(*WINAPI _glUniform1i)(GLint location, GLint v0);
 static void(*WINAPI _glUniform1fv)(GLint location, GLsizei count, const GLfloat *value);
 static void(*WINAPI _glUniform2fv)(GLint location, GLsizei count, const GLfloat *value);
 static void(*WINAPI _glUniform3fv)(GLint location, GLsizei count, const GLfloat *value);
 static void(*WINAPI _glUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
+static void(*WINAPI _glUniformMatrix2fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+static void(*WINAPI _glUniformMatrix3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
 static void(*WINAPI _glDrawRangeElements)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices);
@@ -273,15 +278,11 @@ static void WINAPI glUseProgram_hook(GLuint program)
     _glUseProgram(program);
     msvrGetContext()->onUseProgram(program);
 }
-static void WINAPI glGetProgramiv_hook(GLuint program, GLenum pname, GLint *params)
-{
-    _glGetProgramiv(program, pname, params);
-}
-static void WINAPI glGetActiveUniformName_hook(GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName)
-{
-    _glGetActiveUniformName(program, uniformIndex, bufSize, length, uniformName);
-}
 
+static void WINAPI glUniform1i_hook(GLint location, GLint v0)
+{
+    _glUniform1i(location, v0);
+}
 static void WINAPI glUniform1fv_hook(GLint location, GLsizei count, const GLfloat *value)
 {
     _glUniform1fv(location, count, value);
@@ -301,6 +302,16 @@ static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloa
 {
     _glUniform4fv(location, count, value);
     msvrGetContext()->onUniform4fv(location, count, value);
+}
+static void WINAPI glUniformMatrix2fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+{
+    _glUniformMatrix2fv(location, count, transpose, value);
+    msvrGetContext()->onUniformMatrix2fv(location, count, transpose, value);
+}
+static void WINAPI glUniformMatrix3fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+{
+    _glUniformMatrix3fv(location, count, transpose, value);
+    msvrGetContext()->onUniformMatrix3fv(location, count, transpose, value);
 }
 static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
 {
@@ -357,6 +368,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     }
     s_hooks[] = {
 #define Hook(Name) {#Name, (void**)&Name##_hook, (void**)&_##Name}
+#define Get(Name) {#Name, nullptr, (void**)&_##Name}
     Hook(glGenTextures),
     Hook(glDeleteTextures),
     Hook(glActiveTexture),
@@ -402,15 +414,21 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glLinkProgram),
     Hook(glDeleteProgram),
     Hook(glUseProgram),
-    Hook(glGetProgramiv),
-    Hook(glGetActiveUniformName),
+    Get(glGetProgramiv),
+    Get(glGetActiveUniform),
+    Get(glGetUniformLocation),
+
+    Hook(glUniform1i),
     Hook(glUniform1fv),
     Hook(glUniform2fv),
     Hook(glUniform3fv),
     Hook(glUniform4fv),
+    Hook(glUniformMatrix2fv),
+    Hook(glUniformMatrix3fv),
     Hook(glUniformMatrix4fv),
 
     Hook(glDrawRangeElements),
+#undef Get
 #undef Hook
     };
 
@@ -419,7 +437,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
             auto sym = _wglGetProcAddress(name);
             if (sym) {
                 *hook.func_orig = sym;
-                return hook.func_hook;
+                return hook.func_hook ? hook.func_hook : sym;
             }
         }
     }

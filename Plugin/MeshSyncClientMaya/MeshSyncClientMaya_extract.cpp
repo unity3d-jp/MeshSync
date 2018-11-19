@@ -114,7 +114,7 @@ void MeshSyncClientMaya::exportMaterials()
             }
             if (GetColorAndTexture(fn, "normalCamera", color, texpath)) {
                 if (m_settings.sync_textures)
-                    stdmat.setNormalMap(exportTexture(texpath));
+                    stdmat.setBumpMap(exportTexture(texpath));
             }
         }
         m_material_manager.add(tmp);

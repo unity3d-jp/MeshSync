@@ -8,6 +8,8 @@ using ms::float2;
 using ms::float3;
 using ms::float4;
 using ms::quatf;
+using ms::float2x2;
+using ms::float3x3;
 using ms::float4x4;
 
 class msvrContext;
@@ -71,8 +73,17 @@ struct BufferRecord : public mu::noncopyable
 
 struct ProgramRecord
 {
+    struct Uniform
+    {
+        std::string name;
+        GLenum type;
+        GLsizei size;
+        ms::MaterialProperty prop;
+    };
     GLuint program = 0;
-    std::map<GLuint, ms::MaterialProperty> uniforms;
+    std::map<GLuint, Uniform> uniforms;
+
+    ms::MaterialProperty* findProperty(GLuint loc);
 };
 
 
@@ -130,10 +141,13 @@ public:
     void onLinkProgram(GLuint program);
     void onDeleteProgram(GLuint program);
     void onUseProgram(GLuint program);
+    void onUniform1i(GLint location, GLint v0);
     void onUniform1fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform2fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform3fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform4fv(GLint location, GLsizei count, const GLfloat *value);
+    void onUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+    void onUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
     void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
     void onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
@@ -141,6 +155,7 @@ public:
 
 protected:
     BufferRecord* getActiveBuffer(GLenum target);
+    ms::MaterialProperty* findProperty(GLint location);
 
 protected:
     msvrSettings m_settings;

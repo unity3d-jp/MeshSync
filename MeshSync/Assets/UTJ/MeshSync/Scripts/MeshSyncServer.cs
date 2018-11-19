@@ -1000,15 +1000,30 @@ namespace UTJ.MeshSync
                         dstmat.EnableKeyword(_NORMALMAP);
                     }
 
+                    int arraySize = prop.arraySize;
                     switch (type)
                     {
-                        case MaterialPropertyData.Type.Int: dstmat.SetInt(name, prop.intValue); break;
-                        case MaterialPropertyData.Type.Float: dstmat.SetFloat(name, prop.floatValue); break;
-                        case MaterialPropertyData.Type.Vector: dstmat.SetVector(name, prop.vectorValue); break;
-                        case MaterialPropertyData.Type.Matrix: dstmat.SetMatrix(name, prop.matrixValue); break;
-                        case MaterialPropertyData.Type.FloatArray: dstmat.SetFloatArray(name, prop.floatArray); break;
-                        case MaterialPropertyData.Type.VectorArray: dstmat.SetVectorArray(name, prop.vectorArray); break;
-                        case MaterialPropertyData.Type.MatrixArray: dstmat.SetMatrixArray(name, prop.matrixArray); break;
+                        case MaterialPropertyData.Type.Int:
+                            dstmat.SetInt(name, prop.intValue);
+                            break;
+                        case MaterialPropertyData.Type.Float:
+                            if (arraySize == 1)
+                                dstmat.SetFloat(name, prop.floatValue);
+                            else
+                                dstmat.SetFloatArray(name, prop.floatArray);
+                            break;
+                        case MaterialPropertyData.Type.Vector:
+                            if (arraySize == 1)
+                                dstmat.SetVector(name, prop.vectorValue);
+                            else
+                                dstmat.SetVectorArray(name, prop.vectorArray);
+                            break;
+                        case MaterialPropertyData.Type.Matrix:
+                            if (arraySize == 1)
+                                dstmat.SetMatrix(name, prop.matrixValue);
+                            else
+                                dstmat.SetMatrixArray(name, prop.matrixArray);
+                            break;
                         case MaterialPropertyData.Type.Texture:
                             {
                                 var tex = FindTexture(prop.textureValue);

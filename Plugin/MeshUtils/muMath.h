@@ -85,6 +85,35 @@ struct tquat
 };
 
 template<class T>
+struct tmat2x2
+{
+    using scalar_t = T;
+    using vector_t = tvec2<T>;
+    tvec2<T> m[2];
+    tvec2<T>& operator[](int i) { return m[i]; }
+    const tvec2<T>& operator[](int i) const { return m[i]; }
+    bool operator==(const tmat2x2& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
+    bool operator!=(const tmat2x2& v) const { return !((*this) == v); }
+
+    template<class U> void assign(const U *v)
+    {
+        *this = { {
+            { (T)v[0], (T)v[1] },
+            { (T)v[2], (T)v[3] },
+        } };
+    }
+    template<class U> void assign(const tmat2x2<U>& v) { assign((U*)&v); }
+
+    static constexpr tmat2x2 identity()
+    {
+        return{ {
+            { T(1.0), T(0.0) },
+            { T(0.0), T(1.0) },
+        } };
+    }
+};
+
+template<class T>
 struct tmat3x3
 {
     using scalar_t = T;
@@ -156,6 +185,7 @@ using float2 = tvec2<float>;
 using float3 = tvec3<float>;
 using float4 = tvec4<float>;
 using quatf = tquat<float>;
+using float2x2 = tmat2x2<float>;
 using float3x3 = tmat3x3<float>;
 using float4x4 = tmat4x4<float>;
 
@@ -163,6 +193,7 @@ using double2 = tvec2<double>;
 using double3 = tvec3<double>;
 using double4 = tvec4<double>;
 using quatd = tquat<double>;
+using double2x2 = tmat2x2<double>;
 using double3x3 = tmat3x3<double>;
 using double4x4 = tmat4x4<double>;
 
@@ -790,9 +821,27 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
     };
 }
 
+template<class T> inline tmat3x3<T> to_mat3x3(const tmat2x2<T>& v)
+{
+    return tmat3x3<T>{
+        v[0][0], v[0][1], 0,
+        v[1][0], v[1][1], 0,
+              0,       0, 1,
+    };
+}
 template<class T> inline tmat3x3<T> to_mat3x3(const tmat4x4<T>& v)
 {
-    return { (tvec3<T>&)v[0], (tvec3<T>&)v[1], (tvec3<T>&)v[2] };
+    return tmat3x3<T>{(tvec3<T>&)v[0], (tvec3<T>&)v[1], (tvec3<T>&)v[2]};
+}
+
+template<class T> inline tmat4x4<T> to_mat4x4(const tmat2x2<T>& v)
+{
+    return tmat4x4<T>{
+        v[0][0], v[0][1], 0, 0,
+        v[1][0], v[1][1], 0, 0,
+              0,       0, 1, 0,
+              0,       0, 0, 1
+    };
 }
 template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
 {
@@ -800,7 +849,7 @@ template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
         v[0][0], v[0][1], v[0][2], 0,
         v[1][0], v[1][1], v[1][2], 0,
         v[2][0], v[2][1], v[2][2], 0,
-              0,       0,       0, 1,
+              0,       0,       0, 1
     };
 }
 

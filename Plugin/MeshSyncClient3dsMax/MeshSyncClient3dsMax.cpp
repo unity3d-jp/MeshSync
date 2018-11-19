@@ -409,7 +409,7 @@ void MeshSyncClient3dsMax::exportMaterials()
                 const int NORMAL_MAP_ID = 8;
 
                 dstmat.setColorMap(export_texture(DIFFUSE_MAP_ID, ms::TextureType::Default));
-                dstmat.setNormalMap(export_texture(NORMAL_MAP_ID, ms::TextureType::NormalMap));
+                dstmat.setBumpMap(export_texture(NORMAL_MAP_ID, ms::TextureType::NormalMap));
             }
             m_material_manager.add(dst);
 

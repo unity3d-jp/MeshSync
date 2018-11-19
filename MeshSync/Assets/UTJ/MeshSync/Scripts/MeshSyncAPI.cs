@@ -514,9 +514,6 @@ namespace UTJ.MeshSync
             Float,
             Vector,
             Matrix,
-            FloatArray,
-            VectorArray,
-            MatrixArray,
             Texture,
         }
 
@@ -532,11 +529,13 @@ namespace UTJ.MeshSync
         public float floatValue { get { return msMaterialPropGetFloat(_this); } }
         public Vector4 vectorValue { get { return msMaterialPropGetVector(_this); } }
         public Matrix4x4 matrixValue { get { return msMaterialPropGetMatrix(_this); } }
+
+        public int arraySize { get { return msMaterialPropGetArraySize(_this); } }
         public float[] floatArray
         {
             get
             {
-                var ret = new float[msMaterialPropGetArraySize(_this)];
+                var ret = new float[arraySize];
                 msMaterialPropCopyData(_this, ret);
                 return ret;
             }
@@ -545,7 +544,7 @@ namespace UTJ.MeshSync
         {
             get
             {
-                var ret = new Vector4[msMaterialPropGetArraySize(_this)];
+                var ret = new Vector4[arraySize];
                 msMaterialPropCopyData(_this, ret);
                 return ret;
             }
@@ -554,7 +553,7 @@ namespace UTJ.MeshSync
         {
             get
             {
-                var ret = new Matrix4x4[msMaterialPropGetArraySize(_this)];
+                var ret = new Matrix4x4[arraySize];
                 msMaterialPropCopyData(_this, ret);
                 return ret;
             }

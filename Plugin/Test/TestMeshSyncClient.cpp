@@ -355,7 +355,7 @@ TestCase(Test_SendTexture)
             mat->id = 0;
             auto& stdmat = ms::AsStandardMaterial(*mat);
             stdmat.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
-            stdmat.setEmission({ 0.7f, 0.1f, 0.2f, 1.0f });
+            stdmat.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
             stdmat.setMetallic(0.2f);
             stdmat.setSmoothness(0.8f);
             stdmat.setColorMap(1);
