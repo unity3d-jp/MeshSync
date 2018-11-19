@@ -27,7 +27,7 @@ void StandardMaterial::setColor(float4 v)
 float4 StandardMaterial::getColor() const
 {
     auto *p = findParam(_Color);
-    return p ? p->getVector() : float4::zero();
+    return p ? p->getFloat4() : float4::zero();
 }
 
 void StandardMaterial::setEmission(float4 v)
@@ -37,7 +37,7 @@ void StandardMaterial::setEmission(float4 v)
 float4 StandardMaterial::getEmission() const
 {
     auto *p = findParam(_EmissionColor);
-    return p ? p->getVector() : float4::zero();
+    return p ? p->getFloat4() : float4::zero();
 }
 
 void StandardMaterial::setMetallic(float v)

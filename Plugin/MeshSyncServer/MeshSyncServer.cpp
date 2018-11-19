@@ -131,8 +131,8 @@ msAPI const char* msMaterialPropGetName(ms::MaterialProperty *_this) { return _t
 msAPI ms::MaterialProperty::Type msMaterialPropGetType(ms::MaterialProperty *_this) { return _this->type; }
 msAPI int       msMaterialPropGetInt(ms::MaterialProperty *_this) { return _this->getInt(); }
 msAPI float     msMaterialPropGetFloat(ms::MaterialProperty *_this) { return _this->getFloat(); }
-msAPI float4    msMaterialPropGetVector(ms::MaterialProperty *_this) { return _this->getVector(); }
-msAPI float4x4  msMaterialPropGetMatrix(ms::MaterialProperty *_this) { return _this->getMatrix(); }
+msAPI float4    msMaterialPropGetVector(ms::MaterialProperty *_this) { return _this->getFloat4(); }
+msAPI float4x4  msMaterialPropGetMatrix(ms::MaterialProperty *_this) { return _this->getFloat4x4(); }
 msAPI int       msMaterialPropGetTexture(ms::MaterialProperty *_this) { return _this->getTexture(); }
 msAPI int       msMaterialPropGetArraySize(ms::MaterialProperty *_this) { return _this->getArraySize(); }
 msAPI void      msMaterialPropCopyData(ms::MaterialProperty *_this, void *dst) { return _this->copy(dst); }

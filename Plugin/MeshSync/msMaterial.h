@@ -35,24 +35,40 @@ public:
     bool operator!=(const MaterialProperty& v) const;
 
     MaterialProperty();
+    MaterialProperty(const char *name);
     MaterialProperty(const char *name, int v);
     MaterialProperty(const char *name, float v);
-    MaterialProperty(const char *name, const float *v, int count);
     MaterialProperty(const char *name, const float4& v);
-    MaterialProperty(const char *name, const float4 *v, int count);
     MaterialProperty(const char *name, const float4x4& v);
+    MaterialProperty(const char *name, const float *v, int count);
+    MaterialProperty(const char *name, const float4 *v, int count);
     MaterialProperty(const char *name, const float4x4 *v, int count);
     MaterialProperty(const char *name, TexturePtr v);
     MaterialProperty(const char *name, Texture *v);
 
+    void setInt(int v);
+    void setFloat(float v);
+    void setFloat2(const float2& v);
+    void setFloat3(const float3& v);
+    void setFloat4(const float4& v);
+    void setFloat4x4(const float4x4& v);
+    void setFloatArray(const float *v, int count);
+    void setFloat2Array(const float2 *v, int count);
+    void setFloat3Array(const float3 *v, int count);
+    void setFloat4Array(const float4 *v, int count);
+    void setFloat4x4Array(const float4x4 *v, int count);
+    void setTexture(int v);
+    void setTexture(TexturePtr v);
+    void setTexture(Texture *v);
+
     int getArraySize() const;
     int getInt() const;
     float getFloat() const;
-    float4 getVector() const;
-    float4x4 getMatrix() const;
+    float4 getFloat4() const;
+    float4x4 getFloat4x4() const;
     const float* getFloatArray() const;
-    const float4* getVectorArray() const;
-    const float4x4* getMatrixArray() const;
+    const float4* getFloat4Array() const;
+    const float4x4* getFloat4x4Array() const;
     int getTexture() const;
     void copy(void *dst) const;
 };

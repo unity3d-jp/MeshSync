@@ -41,6 +41,7 @@ struct FramebufferRecord
 
 struct MaterialRecord
 {
+    int id = ms::InvalidID;
     GLuint program = 0;
     float4 diffuse = float4::one();
     int color_tex = ms::InvalidID;
@@ -48,7 +49,7 @@ struct MaterialRecord
 
     bool operator==(const MaterialRecord& v) const
     {
-        return memcmp(this, &v, sizeof(*this)) == 0;
+        return memcmp(this, &v, sizeof(MaterialRecord));
     }
     bool operator!=(const MaterialRecord& v) const
     {
@@ -64,10 +65,16 @@ struct BufferRecord : public mu::noncopyable
     bool        dirty = false;
     bool        visible = true;
     int         material_id = -1;
-    MaterialRecord material;
 
     ms::MeshPtr dst_mesh;
 };
+
+struct ProgramRecord
+{
+    GLuint program = 0;
+    std::map<GLuint, ms::MaterialProperty> uniforms;
+};
+
 
 
 struct msvrSettings
@@ -120,6 +127,15 @@ public:
     void onDisableVertexAttribArray(GLuint index);
     void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
 
+    void onLinkProgram(GLuint program);
+    void onDeleteProgram(GLuint program);
+    void onUseProgram(GLuint program);
+    void onUniform1fv(GLint location, GLsizei count, const GLfloat *value);
+    void onUniform2fv(GLint location, GLsizei count, const GLfloat *value);
+    void onUniform3fv(GLint location, GLsizei count, const GLfloat *value);
+    void onUniform4fv(GLint location, GLsizei count, const GLfloat *value);
+    void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+
     void onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
     void onFlush();
 
@@ -136,14 +152,6 @@ protected:
     GLuint m_ib_handle = 0;
     GLuint m_ub_handle = 0;
     GLuint m_ub_handles[16] = {};
-    MaterialRecord m_material;
-
-    bool m_camera_dirty = false;
-    float3 m_camera_pos = float3::zero();
-    quatf m_camera_rot = quatf::identity();
-    float m_camera_fov = 60.0f;
-    float m_camera_near = 0.01f;
-    float m_camera_far = 100.0f;
 
     int m_active_texture = 0;
     GLuint m_texture_slots[32] = {};
@@ -152,7 +160,16 @@ protected:
     GLuint m_fb_handle = 0;
     std::map<GLuint, FramebufferRecord> m_framebuffer_records;
 
+    GLuint m_program_handle = 0;
+    std::map<GLuint, ProgramRecord> m_program_records;
     std::vector<MaterialRecord> m_material_records;
+
+    bool m_camera_dirty = false;
+    float3 m_camera_pos = float3::zero();
+    quatf m_camera_rot = quatf::identity();
+    float m_camera_fov = 60.0f;
+    float m_camera_near = 0.01f;
+    float m_camera_far = 100.0f;
 
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;

@@ -35,33 +35,12 @@ void msvrContext::send(bool force)
 
     // build material list
     {
-        m_material_records.clear();
-        auto findOrAddMaterial = [this](const MaterialRecord& md) {
-            auto it = std::find(m_material_records.begin(), m_material_records.end(), md);
-            if (it != m_material_records.end()) {
-                return (int)std::distance(m_material_records.begin(), it);
-            }
-            else {
-                int ret = (int)m_material_records.size();
-                m_material_records.push_back(md);
-                return ret;
-            }
-        };
-
-        for (auto& pair : m_buffer_records) {
-            auto& buf = pair.second;
-            if (buf.dst_mesh) {
-                buf.material_id = findOrAddMaterial(buf.material);
-            }
-        }
-
         char name[128];
         int material_index = 0;
         for (auto& md : m_material_records) {
-            int mid = material_index++;
             auto mat = ms::Material::create();
-            sprintf(name, "VREDMaterial:ID[%04x]", mid);
-            mat->id = mid;
+            sprintf(name, "VREDMaterial:ID[%04x]", md.id);
+            mat->id = md.id;
             mat->name = name;
 
             auto& stdmat = ms::AsStandardMaterial(*mat);
@@ -450,6 +429,80 @@ void msvrContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, G
     }
 }
 
+extern void(*WINAPI _glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+extern void(*WINAPI _glGetActiveUniformName)(GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName);
+
+void msvrContext::onLinkProgram(GLuint program)
+{
+}
+
+void msvrContext::onDeleteProgram(GLuint program)
+{
+    m_program_records.erase(program);
+}
+
+void msvrContext::onUseProgram(GLuint program)
+{
+    m_program_handle = program;
+
+    auto& rec = m_program_records[program];
+    if (rec.uniforms.empty()) {
+        int num_uniforms = 0;
+        _glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &num_uniforms);
+        for (int ui = 0; ui < num_uniforms; ++ui) {
+            char name[128];
+            GLsizei size = 0;
+            _glGetActiveUniformName(program, ui, sizeof(name), &size, name);
+            rec.uniforms[ui] = ms::MaterialProperty(name);
+        }
+    }
+}
+
+void msvrContext::onUniform1fv(GLint location, GLsizei count, const GLfloat * value)
+{
+    auto& rec = m_program_records[m_program_handle];
+    if (count == 1)
+        rec.uniforms[location].setFloat((float&)*value);
+    else
+        rec.uniforms[location].setFloatArray((float*)value, (int)count);
+}
+
+void msvrContext::onUniform2fv(GLint location, GLsizei count, const GLfloat * value)
+{
+    auto& rec = m_program_records[m_program_handle];
+    if (count == 1)
+        rec.uniforms[location].setFloat2((float2&)*value);
+    else
+        rec.uniforms[location].setFloat2Array((float2*)value, (int)count);
+}
+
+void msvrContext::onUniform3fv(GLint location, GLsizei count, const GLfloat * value)
+{
+    auto& rec = m_program_records[m_program_handle];
+    if (count == 1)
+        rec.uniforms[location].setFloat3((float3&)*value);
+    else
+        rec.uniforms[location].setFloat3Array((float3*)value, (int)count);
+}
+
+void msvrContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * value)
+{
+    auto& rec = m_program_records[m_program_handle];
+    if (count == 1)
+        rec.uniforms[location].setFloat4((float4&)*value);
+    else
+        rec.uniforms[location].setFloat4Array((float4*)value, (int)count);
+}
+
+void msvrContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
+{
+    auto& rec = m_program_records[m_program_handle];
+    if (count == 1)
+        rec.uniforms[location].setFloat4x4((float4x4&)*value);
+    else
+        rec.uniforms[location].setFloat4x4Array((float4x4*)value, (int)count);
+}
+
 
 void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
 {
@@ -506,69 +559,79 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     // textures
     for (auto& h : m_texture_slots) {
         auto& rec = m_texture_records[h];
-        if (rec.dst) {
+        if (rec.dst)
             rec.used = true;
-        }
     }
 
+    // material
     {
-        if (vb->material != m_material) {
-            vb->material = m_material;
-            vb->dirty = true;
+        auto& prec = m_program_records[m_program_handle];
+        MaterialRecord mrec;
+        mrec.program = m_program_handle;
+        // todo: fill mrec
+
+        auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
+        if (it != m_material_records.end()) {
+            vb->material_id = it->id;
         }
-
-        auto transform = (float4x4&)obj_buf.data[0];
-        auto task = [this, vb, ib, count, type, transform]() {
-            if (!vb->dst_mesh) {
-                vb->dst_mesh = ms::Mesh::create();
-
-                char path[128];
-                sprintf(path, "/VREDMesh:ID[%08x]", m_vb_handle);
-                vb->dst_mesh->path = path;
-            }
-            auto& dst = *vb->dst_mesh;
-
-            dst.position = extract_position(transform);
-            dst.rotation = extract_rotation(transform);
-            dst.scale = extract_scale(transform);
-
-            if (vb->dirty) {
-                size_t num_indices = count;
-                size_t num_triangles = count / 3;
-                size_t num_vertices = vb->data.size() / vb->stride;
-
-                // convert vertices
-                dst.points.resize_discard(num_vertices);
-                dst.normals.resize_discard(num_vertices);
-                dst.uv0.resize_discard(num_vertices);
-                auto *vtx = (vr_vertex*)vb->data.data();
-                for (size_t vi = 0; vi < num_vertices; ++vi) {
-                    dst.points[vi] = vtx[vi].vertex;
-                    dst.normals[vi] = vtx[vi].normal;
-                    dst.uv0[vi] = float2{ 1.0f, 1.0f } - vtx[vi].uv;
-                }
-
-                // convert indices
-                dst.counts.resize(num_triangles, 3);
-                if (type == GL_UNSIGNED_INT) {
-                    int *src = (int*)ib->data.data();
-                    dst.indices.assign(src, src + num_indices);
-                }
-                else if (type == GL_UNSIGNED_SHORT) {
-                    uint16_t *src = (uint16_t*)ib->data.data();
-                    dst.indices.resize_discard(num_indices);
-                    for (size_t ii = 0; ii < num_indices; ++ii)
-                        dst.indices[ii] = src[ii];
-                }
-
-                dst.setupFlags();
-                dst.flags.has_refine_settings = 1;
-                dst.refine_settings.flags.swap_faces = true;
-                dst.refine_settings.flags.gen_tangents = 1;
-            }
-        };
-        task();
+        else {
+            mrec.id = (int)m_material_records.size();
+            m_material_records.push_back(mrec);
+            vb->material_id = mrec.id;
+        }
     }
+
+    auto transform = (float4x4&)obj_buf.data[0];
+    auto task = [this, vb, ib, count, type, transform]() {
+        if (!vb->dst_mesh) {
+            vb->dst_mesh = ms::Mesh::create();
+
+            char path[128];
+            sprintf(path, "/VREDMesh:ID[%08x]", m_vb_handle);
+            vb->dst_mesh->path = path;
+        }
+        auto& dst = *vb->dst_mesh;
+
+        dst.position = extract_position(transform);
+        dst.rotation = extract_rotation(transform);
+        dst.scale = extract_scale(transform);
+
+        if (vb->dirty) {
+            size_t num_indices = count;
+            size_t num_triangles = count / 3;
+            size_t num_vertices = vb->data.size() / vb->stride;
+
+            // convert vertices
+            dst.points.resize_discard(num_vertices);
+            dst.normals.resize_discard(num_vertices);
+            dst.uv0.resize_discard(num_vertices);
+            auto *vtx = (vr_vertex*)vb->data.data();
+            for (size_t vi = 0; vi < num_vertices; ++vi) {
+                dst.points[vi] = vtx[vi].vertex;
+                dst.normals[vi] = vtx[vi].normal;
+                dst.uv0[vi] = float2{ 1.0f, 1.0f } -vtx[vi].uv;
+            }
+
+            // convert indices
+            dst.counts.resize(num_triangles, 3);
+            if (type == GL_UNSIGNED_INT) {
+                int *src = (int*)ib->data.data();
+                dst.indices.assign(src, src + num_indices);
+            }
+            else if (type == GL_UNSIGNED_SHORT) {
+                uint16_t *src = (uint16_t*)ib->data.data();
+                dst.indices.resize_discard(num_indices);
+                for (size_t ii = 0; ii < num_indices; ++ii)
+                    dst.indices[ii] = src[ii];
+            }
+
+            dst.setupFlags();
+            dst.flags.has_refine_settings = 1;
+            dst.refine_settings.flags.swap_faces = true;
+            dst.refine_settings.flags.gen_tangents = 1;
+        }
+    };
+    task();
     vb->dirty = false;
 }
 

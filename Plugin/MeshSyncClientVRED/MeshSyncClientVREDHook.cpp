@@ -46,6 +46,17 @@ static void(*WINAPI _glEnableVertexAttribArray) (GLuint index);
 static void(*WINAPI _glDisableVertexAttribArray) (GLuint index);
 static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
 
+static void(*WINAPI _glLinkProgram)(GLuint program);
+static void(*WINAPI _glDeleteProgram)(GLuint program);
+static void(*WINAPI _glUseProgram)(GLuint program);
+/*static*/ void(*WINAPI _glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+/*static*/ void(*WINAPI _glGetActiveUniformName)(GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName);
+static void(*WINAPI _glUniform1fv)(GLint location, GLsizei count, const GLfloat *value);
+static void(*WINAPI _glUniform2fv)(GLint location, GLsizei count, const GLfloat *value);
+static void(*WINAPI _glUniform3fv)(GLint location, GLsizei count, const GLfloat *value);
+static void(*WINAPI _glUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
+static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+
 static void(*WINAPI _glDrawRangeElements)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices);
 static void(*WINAPI _glClear)(GLbitfield mask);
 static void* (*WINAPI _wglGetProcAddress)(const char* name);
@@ -247,6 +258,57 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
+static void WINAPI glLinkProgram_hook(GLuint program)
+{
+    _glLinkProgram(program);
+    msvrGetContext()->onLinkProgram(program);
+}
+static void WINAPI glDeleteProgram_hook(GLuint program)
+{
+    msvrGetContext()->onDeleteProgram(program);
+    _glDeleteProgram(program);
+}
+static void WINAPI glUseProgram_hook(GLuint program)
+{
+    _glUseProgram(program);
+    msvrGetContext()->onUseProgram(program);
+}
+static void WINAPI glGetProgramiv_hook(GLuint program, GLenum pname, GLint *params)
+{
+    _glGetProgramiv(program, pname, params);
+}
+static void WINAPI glGetActiveUniformName_hook(GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName)
+{
+    _glGetActiveUniformName(program, uniformIndex, bufSize, length, uniformName);
+}
+
+static void WINAPI glUniform1fv_hook(GLint location, GLsizei count, const GLfloat *value)
+{
+    _glUniform1fv(location, count, value);
+    msvrGetContext()->onUniform1fv(location, count, value);
+}
+static void WINAPI glUniform2fv_hook(GLint location, GLsizei count, const GLfloat *value)
+{
+    _glUniform2fv(location, count, value);
+    msvrGetContext()->onUniform2fv(location, count, value);
+}
+static void WINAPI glUniform3fv_hook(GLint location, GLsizei count, const GLfloat *value)
+{
+    _glUniform3fv(location, count, value);
+    msvrGetContext()->onUniform3fv(location, count, value);
+}
+static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat *value)
+{
+    _glUniform4fv(location, count, value);
+    msvrGetContext()->onUniform4fv(location, count, value);
+}
+static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+{
+    _glUniformMatrix4fv(location, count, transpose, value);
+    msvrGetContext()->onUniformMatrix4fv(location, count, transpose, value);
+}
+
+
 bool g_color_pass = false;
 
 static void WINAPI glDrawRangeElements_hook(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
@@ -336,6 +398,17 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glEnableVertexAttribArray),
     Hook(glDisableVertexAttribArray),
     Hook(glVertexAttribPointer),
+
+    Hook(glLinkProgram),
+    Hook(glDeleteProgram),
+    Hook(glUseProgram),
+    Hook(glGetProgramiv),
+    Hook(glGetActiveUniformName),
+    Hook(glUniform1fv),
+    Hook(glUniform2fv),
+    Hook(glUniform3fv),
+    Hook(glUniform4fv),
+    Hook(glUniformMatrix4fv),
 
     Hook(glDrawRangeElements),
 #undef Hook
