@@ -36,19 +36,45 @@ void msvrContext::send(bool force)
     // build material list
     {
         char name[128];
-        int material_index = 0;
-        for (auto& md : m_material_records) {
+        for (auto& mr : m_material_records) {
             auto mat = ms::Material::create();
-            sprintf(name, "VREDMaterial:ID[%04x]", md.id);
-            mat->id = md.id;
+            sprintf(name, "VREDMaterial:ID[%04x]", mr.id);
+            mat->id = mr.id;
+            mat->index = mr.id;
             mat->name = name;
 
-            auto& stdmat = ms::AsStandardMaterial(*mat);
-            stdmat.setColor(md.diffuse);
-            stdmat.setColorMap(md.color_tex);
-            stdmat.setBumpMap(md.normal_tex);
+            auto& stdmat = ms::AsStandardSpecMaterial(*mat);
+            if (mr.diffuse_color != float4::zero())
+                stdmat.setColor(mr.diffuse_color);
+            if (mr.bump_scale != 0.0f)
+                stdmat.setBumpScale(mr.bump_scale);
+            if (mr.specular_color != float4::zero())
+                stdmat.setSpecularColor(mr.specular_color);
+
+            auto get_texid = [this, &mr](int slot) -> int {
+                if (slot == ms::InvalidID)
+                    return ms::InvalidID;
+                auto& rec = m_texture_records[mr.texture_slots[slot]];
+                return rec.dst ? rec.dst->id : ms::InvalidID;
+            };
+            {
+                int tid = get_texid(mr.color_map);
+                if (tid != ms::InvalidID)
+                    stdmat.setColorMap(tid);
+            }
+            {
+                int tid = get_texid(mr.bump_map);
+                if (tid != ms::InvalidID)
+                    stdmat.setBumpMap(tid);
+            }
+            {
+                int tid = get_texid(mr.specular_map);
+                if (tid != ms::InvalidID)
+                    stdmat.setSpecularGlossMap(tid);
+            }
             m_material_manager.add(mat);
         }
+        m_material_records.clear();
     }
 
     // camera
@@ -97,6 +123,7 @@ void msvrContext::send(bool force)
         t.deleted_entities = m_entity_manager.getDeleted();
     };
     m_sender.on_succeeded = [this]() {
+        m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();
@@ -126,14 +153,12 @@ void msvrContext::onActiveTexture(GLenum texture)
 
 void msvrContext::onBindTexture(GLenum target, GLuint texture)
 {
-    if (target == GL_TEXTURE_2D) {
-        m_texture_slots[m_active_texture] = texture;
-    }
+    m_texture_slots[m_active_texture] = texture;
 }
 
 void msvrContext::onTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data)
 {
-    if (data && target == GL_TEXTURE_2D && level == 0) {
+    if (data && level == 0) {
         auto handle = m_texture_slots[m_active_texture];
         auto& rec = m_texture_records[handle];
 
@@ -258,7 +283,7 @@ void msvrContext::onFramebufferTexture(GLenum target, GLenum attachment, GLuint 
 
 void msvrContext::onFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
-    if (target != GL_FRAMEBUFFER || textarget != GL_TEXTURE_2D)
+    if (target != GL_FRAMEBUFFER)
         return;
 
     auto& rec = m_framebuffer_records[m_fb_handle];
@@ -448,6 +473,7 @@ void msvrContext::onUseProgram(GLuint program)
 
     auto& rec = m_program_records[program];
     if (rec.uniforms.empty()) {
+        rec.mrec.program = program;
         int num_uniforms = 0;
         _glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &num_uniforms);
         for (int ui = 0; ui < num_uniforms; ++ui) {
@@ -462,21 +488,40 @@ void msvrContext::onUseProgram(GLuint program)
 
             auto mstype = ms::MaterialProperty::Type::Unknown;
             switch (type) {
-            case GL_FLOAT: mstype = ms::MaterialProperty::Type::Float; break;
+            case GL_FLOAT:
+                mstype = ms::MaterialProperty::Type::Float;
+                break;
             case GL_FLOAT_VEC2:
             case GL_FLOAT_VEC3:
-            case GL_FLOAT_VEC4: mstype = ms::MaterialProperty::Type::Vector; break;
+            case GL_FLOAT_VEC4:
+                mstype = ms::MaterialProperty::Type::Vector;
+                break;
             case GL_FLOAT_MAT2:
             case GL_FLOAT_MAT3:
-            case GL_FLOAT_MAT4: mstype = ms::MaterialProperty::Type::Matrix; break;
-            case GL_SAMPLER_2D: mstype = ms::MaterialProperty::Type::Texture; break;
-            default: continue;
+            case GL_FLOAT_MAT4:
+                mstype = ms::MaterialProperty::Type::Matrix;
+                break;
+            case GL_SAMPLER_2D:
+            case GL_SAMPLER_2D_ARRAY:
+            case GL_SAMPLER_2D_MULTISAMPLE:
+            case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_SAMPLER_2D_RECT:
+            case GL_INT_SAMPLER_2D:
+            case GL_INT_SAMPLER_2D_ARRAY:
+            case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_INT_SAMPLER_2D_RECT:
+            case GL_UNSIGNED_INT_SAMPLER_2D:
+            case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+            case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+                mstype = ms::MaterialProperty::Type::Texture;
+                break;
             }
 
             GLuint index = _glGetUniformLocation(program, name);
             auto& uni = rec.uniforms[index];
-            uni.prop.name = name;
-            uni.prop.type = mstype;
+            uni.name = name;
+            uni.type = mstype;
             uni.size = size;
         }
     }
@@ -484,52 +529,66 @@ void msvrContext::onUseProgram(GLuint program)
 
 void msvrContext::onUniform1i(GLint location, GLint v0)
 {
-    if (auto *prop = findProperty(location)) {
-        if (prop->type == ms::MaterialProperty::Type::Texture)
-            prop->setTexture(v0);
+    if (auto *prop = findUniform(location)) {
+        if (prop->type == ms::MaterialProperty::Type::Texture) {
+            auto& mr = m_program_records[m_program_handle].mrec;
+            if (prop->name == "colorTexture" || prop->name == "colorMap") {
+                mr.color_map = v0;
+            }
+            else if (prop->name == "bumpTexture") {
+                mr.bump_map = v0;
+            }
+            else if (prop->name == "specularTexture") {
+                mr.specular_map = v0;
+            }
+
+        }
     }
 }
 
 void msvrContext::onUniform1fv(GLint location, GLsizei count, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat((float*)value, (int)count);
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "bumpIntensity")
+            mr.bump_scale= *value;
+    }
 }
 
 void msvrContext::onUniform2fv(GLint location, GLsizei count, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat2((float2*)value, (int)count);
 }
 
 void msvrContext::onUniform3fv(GLint location, GLsizei count, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat3((float3*)value, (int)count);
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "diffuseColor" || prop->name == "exteriorColor")
+            (float3&)mr.diffuse_color = *(float3*)value;
+        else if (prop->name == "specularColor")
+            (float3&)mr.specular_color = *(float3*)value;
+    }
 }
 
 void msvrContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat4((float4*)value, (int)count);
+    if (auto *prop = findUniform(location)) {
+        if (prop->name == "") {
+
+        }
+    }
 }
 
 void msvrContext::onUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat2x2((float2x2*)value, (int)count);
 }
 
 void msvrContext::onUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat3x3((float3x3*)value, (int)count);
 }
 
 void msvrContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
 {
-    if (auto *prop = findProperty(location))
-        prop->setFloat4x4((float4x4*)value, (int)count);
 }
 
 
@@ -595,18 +654,17 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     // material
     {
         auto& prec = m_program_records[m_program_handle];
-        MaterialRecord mrec;
-        mrec.program = m_program_handle;
-        // todo: fill mrec
+        auto mrec = prec.mrec;
+        std::copy(m_texture_slots, m_texture_slots + msvrMaxTextureSlots, mrec.texture_slots);
 
         auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
         if (it != m_material_records.end()) {
             vb->material_id = it->id;
         }
         else {
-            mrec.id = (int)m_material_records.size();
-            m_material_records.push_back(mrec);
+            mrec.id = m_material_ids.getID(mrec);
             vb->material_id = mrec.id;
+            m_material_records.push_back(mrec);
         }
     }
 
@@ -643,6 +701,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
             // convert indices
             dst.counts.resize(num_triangles, 3);
+            dst.material_ids.resize(num_triangles, vb->material_id);
             if (type == GL_UNSIGNED_INT) {
                 int *src = (int*)ib->data.data();
                 dst.indices.assign(src, src + num_indices);
@@ -683,12 +742,11 @@ BufferRecord* msvrContext::getActiveBuffer(GLenum target)
     return nullptr;
 }
 
-ms::MaterialProperty* msvrContext::findProperty(GLint location)
+ProgramRecord::Uniform* msvrContext::findUniform(GLint location)
 {
     auto& uniforms = m_program_records[m_program_handle].uniforms;
     auto it = uniforms.find(location);
-    return it != uniforms.end() ? &it->second.prop : nullptr;
-    return nullptr;
+    return it != uniforms.end() ? &it->second : nullptr;
 }
 
 

@@ -8,6 +8,7 @@ static void(*WINAPI _glGenTextures)(GLsizei n, GLuint * textures);
 static void(*WINAPI _glDeleteTextures)(GLsizei n, const GLuint * textures);
 static void(*WINAPI _glActiveTexture)(GLenum texture);
 static void(*WINAPI _glBindTexture)(GLenum target, GLuint texture);
+static void(*WINAPI _glBindTextures)(GLuint first, GLsizei count, const GLuint *textures);
 static void(*WINAPI _glTexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data);
 static void(*WINAPI _glTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels);
 static void(*WINAPI _glTextureSubImage2D)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
@@ -88,6 +89,11 @@ static void WINAPI glBindTexture_hook(GLenum target, GLuint texture)
     msvrGetContext()->onBindTexture(target, texture);
     _glBindTexture(target, texture);
 }
+static void WINAPI glBindTextures_hook(GLuint first, GLsizei count, const GLuint *textures)
+{
+    _glBindTextures(first, count, textures);
+}
+
 static void WINAPI glTexImage2D_hook(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data)
 {
     msvrGetContext()->onTexImage2D(target, level, internalformat, width, height, border, format, type, data);
@@ -282,6 +288,7 @@ static void WINAPI glUseProgram_hook(GLuint program)
 static void WINAPI glUniform1i_hook(GLint location, GLint v0)
 {
     _glUniform1i(location, v0);
+    msvrGetContext()->onUniform1i(location, v0);
 }
 static void WINAPI glUniform1fv_hook(GLint location, GLsizei count, const GLfloat *value)
 {
@@ -373,6 +380,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glDeleteTextures),
     Hook(glActiveTexture),
     Hook(glBindTexture),
+    Hook(glBindTextures),
     //Hook(glTexImage2D),
     Hook(glTexSubImage2D),
     Hook(glTextureSubImage2D),

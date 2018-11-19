@@ -12,6 +12,8 @@ using ms::float2x2;
 using ms::float3x3;
 using ms::float4x4;
 
+#define msvrMaxTextureSlots 32
+
 class msvrContext;
 
 msvrContext* msvrGetContext();
@@ -45,19 +47,50 @@ struct MaterialRecord
 {
     int id = ms::InvalidID;
     GLuint program = 0;
-    float4 diffuse = float4::one();
-    int color_tex = ms::InvalidID;
-    int normal_tex = ms::InvalidID;
+    float4 diffuse_color = float4::zero();
+    float4 specular_color = float4::zero();
+    float bump_scale = 0.0f;
+    int color_map = ms::InvalidID;
+    int bump_map = ms::InvalidID;
+    int specular_map = ms::InvalidID;
+    GLuint texture_slots[msvrMaxTextureSlots] = {};
 
     bool operator==(const MaterialRecord& v) const
     {
-        return memcmp(this, &v, sizeof(MaterialRecord));
+        return
+            program == v.program &&
+            diffuse_color == v.diffuse_color &&
+            specular_color == v.specular_color &&
+            bump_scale == v.bump_scale &&
+            color_map == v.color_map &&
+            bump_map == v.bump_map &&
+            specular_map == v.specular_map &&
+            memcmp(texture_slots, v.texture_slots, sizeof(GLuint)*msvrMaxTextureSlots) == 0;
     }
     bool operator!=(const MaterialRecord& v) const
     {
         return !operator==(v);
     }
+    uint64_t checksum() const
+    {
+        return ms::SumInt32(this, sizeof(*this));
+    }
 };
+
+namespace ms {
+
+template<>
+class IDGenerator<MaterialRecord> : public IDGenerator<void*>
+{
+public:
+    int getID(const MaterialRecord& o)
+    {
+        auto ck = o.checksum();
+        return getIDImpl((void*&)ck);
+    }
+};
+
+} // namespace ms
 
 struct BufferRecord : public mu::noncopyable
 {
@@ -76,14 +109,11 @@ struct ProgramRecord
     struct Uniform
     {
         std::string name;
-        GLenum type;
-        GLsizei size;
-        ms::MaterialProperty prop;
+        ms::MaterialProperty::Type type;
+        int size;
     };
-    GLuint program = 0;
     std::map<GLuint, Uniform> uniforms;
-
-    ms::MaterialProperty* findProperty(GLuint loc);
+    MaterialRecord mrec;
 };
 
 
@@ -155,7 +185,7 @@ public:
 
 protected:
     BufferRecord* getActiveBuffer(GLenum target);
-    ms::MaterialProperty* findProperty(GLint location);
+    ProgramRecord::Uniform* findUniform(GLint location);
 
 protected:
     msvrSettings m_settings;
@@ -169,7 +199,7 @@ protected:
     GLuint m_ub_handles[16] = {};
 
     int m_active_texture = 0;
-    GLuint m_texture_slots[32] = {};
+    GLuint m_texture_slots[msvrMaxTextureSlots] = {};
     std::map<GLuint, TextureRecord> m_texture_records;
 
     GLuint m_fb_handle = 0;
@@ -186,6 +216,7 @@ protected:
     float m_camera_near = 0.01f;
     float m_camera_far = 100.0f;
 
+    ms::IDGenerator<MaterialRecord> m_material_ids;
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
