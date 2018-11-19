@@ -29,7 +29,7 @@ public:
         bool sync_textures = true;
 
         float animation_time_scale = 1.0f;
-        int animation_sps = 2;
+        float animation_sps = 2.0f;
 
         bool multithreaded = true;
 

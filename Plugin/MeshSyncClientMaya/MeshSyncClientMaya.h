@@ -79,7 +79,7 @@ public:
 
         float scale_factor = 0.01f;
         float animation_time_scale = 1.0f;
-        int  animation_sps = 2;
+        float animation_sps = 2.0f;
         int  timeout_ms = 5000;
         bool auto_sync = false;
         bool sync_meshes = true;

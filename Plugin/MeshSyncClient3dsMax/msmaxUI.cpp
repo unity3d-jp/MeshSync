@@ -409,9 +409,9 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             break;
         case IDC_EDIT_ANIMATION_SPS:
             handle_edit([&]() {
-                int tmp = CtrlGetInt(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
-                if (tmp < 1 || tmp > 120) {
-                    tmp = mu::clamp(tmp, 1, 120);
+                float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
+                if (tmp < 0.01f) {
+                    tmp = mu::max(tmp, 0.01f);
                     CtrlSetText(IDC_EDIT_ANIMATION_SPS, tmp);
                 }
                 s.animation_sps = tmp;

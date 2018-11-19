@@ -813,13 +813,18 @@ void msbContext::sendAnimations(SendScope scope)
         for(auto& kvp : m_anim_records) {
             kvp.second.dst->reserve(reserve_size);
         };
-        for (int f = frame_start; f <= frame_end; f += interval) {
+        for (int f = frame_start;;) {
             scene.frame_set(f);
 
             m_current_time = frame_to_seconds * f;
             mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
                 kvp.second(this);
             });
+
+            if (f >= frame_end)
+                break;
+            else
+                f = std::min(f + interval, frame_end);
         }
         m_anim_records.clear();
         scene.frame_set(frame_current);

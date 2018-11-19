@@ -14,23 +14,31 @@ template<> void get_arg(std::string& dst, const char *name, MArgParser& args)
 }
 template<> void get_arg(bool& dst, const char *name, MArgParser& args)
 {
-    args.getFlagArgument(name, 0, dst);
+    bool tmp;
+    auto stat = args.getFlagArgument(name, 0, tmp);
+    if (stat == MStatus::kSuccess)
+        dst = tmp;
 }
 template<> void get_arg(int& dst, const char *name, MArgParser& args)
 {
-    args.getFlagArgument(name, 0, dst);
+    int tmp;
+    auto stat = args.getFlagArgument(name, 0, tmp);
+    if (stat == MStatus::kSuccess)
+        dst = tmp;
 }
 template<> void get_arg(uint16_t& dst, const char *name, MArgParser& args)
 {
     int tmp;
-    args.getFlagArgument(name, 0, tmp);
-    dst = (uint16_t)tmp;
+    auto stat = args.getFlagArgument(name, 0, tmp);
+    if (stat == MStatus::kSuccess)
+        dst = (uint16_t)tmp;
 }
 template<> void get_arg(float& dst, const char *name, MArgParser& args)
 {
     double tmp;
-    args.getFlagArgument(name, 0, tmp);
-    dst = (float)tmp;
+    auto stat = args.getFlagArgument(name, 0, tmp);
+    if (stat == MStatus::kSuccess)
+        dst = (float)tmp;
 }
 
 
@@ -91,7 +99,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-sl", "-syncLights", MSyntax::kBoolean);
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
     syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
-    syntax.addFlag("-asp", "-animationSPS", MSyntax::kLong);
+    syntax.addFlag("-asp", "-animationSPS", MSyntax::kDouble);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
 
     return syntax;

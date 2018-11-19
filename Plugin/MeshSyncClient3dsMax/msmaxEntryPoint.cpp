@@ -60,7 +60,7 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
         Entry(timeout_ms,           Integer::intern, to_int);
         Entry(scale_factor,         Float::intern, to_float);
         Entry(animation_time_scale, Float::intern, to_float);
-        Entry(animation_sps,        Integer::intern, to_int);
+        Entry(animation_sps,        Float::intern, to_float);
         Entry(auto_sync,            bool_result, to_bool);
         Entry(sync_meshes,          bool_result, to_bool);
         Entry(sync_normals,         bool_result, to_bool);

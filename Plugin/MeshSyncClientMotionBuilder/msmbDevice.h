@@ -115,8 +115,8 @@ public:
     ms::ClientSettings client_settings;
     int  timeout_ms = 5000;
     float scale_factor = 100.0f;
-    float time_scale = 1.0f;
-    float samples_per_second = 3.0f;
+    float animation_time_scale = 1.0f;
+    float animation_sps = 3.0f;
 
     bool auto_sync = false;
     bool sync_cameras = true;

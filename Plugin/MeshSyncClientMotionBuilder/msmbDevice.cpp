@@ -743,7 +743,7 @@ bool msmbDevice::exportAnimations()
     FBTime time_current = system.LocalTime;
     double time_begin, time_end;
     std::tie(time_begin, time_end) = GetTimeRange(system.CurrentTake);
-    double interval = 1.0 / std::max(samples_per_second, 1.0f);
+    double interval = 1.0 / std::max(animation_sps, 0.01f);
 
     int reserve_size = int((time_end - time_begin) / interval) + 1;
     for (auto& kvp : m_anim_records) {
@@ -751,13 +751,18 @@ bool msmbDevice::exportAnimations()
     }
 
     // advance frame and record
-    for (double t = time_begin; t < time_end; t += interval) {
+    for (double t = time_begin;;) {
         FBTime fbt;
         fbt.SetSecondDouble(t);
         control.Goto(fbt);
         m_anim_time = (float)t;
         for (auto& kvp : m_anim_records)
             kvp.second(this);
+
+        if (t >= time_end)
+            break;
+        else
+            t = std::min(t + interval, time_end);
     }
 
     // cleanup
@@ -829,7 +834,7 @@ void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
     bool vis = true;
     ExtractTransformData(src, pos, rot, scale, vis);
 
-    float t = m_anim_time * time_scale;
+    float t = m_anim_time * animation_time_scale;
     auto& dst = (ms::TransformAnimation&)dst_;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
@@ -853,7 +858,7 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
     ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
-    float t = m_anim_time * time_scale;
+    float t = m_anim_time * animation_time_scale;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
@@ -875,7 +880,7 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     float spot_angle;
     ExtractLightData(static_cast<FBLight*>(src), type, color, intensity, spot_angle);
 
-    float t = m_anim_time * time_scale;
+    float t = m_anim_time * animation_time_scale;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     if (type == ms::Light::LightType::Spot)
@@ -900,7 +905,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
                 });
             }
 
-            float t = m_anim_time * time_scale;
+            float t = m_anim_time * animation_time_scale;
             int idx = 0;
             EnumerateAnimationNVP(src, [&dst, &idx, t](const char *name, double value) {
                 dst.blendshapes[idx++]->weight.push_back({ t, (float)value });

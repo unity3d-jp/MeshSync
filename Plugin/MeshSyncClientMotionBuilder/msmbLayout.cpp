@@ -229,9 +229,9 @@ bool msmbLayout::FBCreate()
             0, kFBAttachHeight, idLabelSPS, 1.0);
         SetControl(idEditSPS, m_ed_sps);
         m_ed_sps.Value = 3;
-        m_ed_sps.Min = 1;
-        m_ed_sps.Max = 120;
-        m_ed_sps.Precision = 1;
+        m_ed_sps.Min = 0.01;
+        m_ed_sps.SmallStep = 0.01;
+        m_ed_sps.LargeStep = 0.1;
         m_ed_sps.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
 
@@ -272,8 +272,8 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->time_scale = (float)m_ed_time_scale.Value;
-    m_device->samples_per_second = (float)m_ed_sps.Value;
+    m_device->animation_time_scale = (float)m_ed_time_scale.Value;
+    m_device->animation_sps = (float)m_ed_sps.Value;
 }
 
 void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
