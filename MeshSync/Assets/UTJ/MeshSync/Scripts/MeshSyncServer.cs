@@ -168,6 +168,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncPoints = true;
         [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
+        [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -1599,6 +1600,19 @@ namespace UTJ.MeshSync
         void UpdateAnimation(AnimationClipData clipData)
         {
 #if UNITY_EDITOR
+            InterpolationMethod interpolation = AnimationData.SmoothInterpolation;
+            switch (m_animtionInterpolation)
+            {
+                case InterpolationType.Linear:
+                    interpolation = AnimationData.LinearInterpolation;
+                    break;
+                case InterpolationType.Constant:
+                    interpolation = AnimationData.ConstantInterpolation;
+                    break;
+                default:
+                    break;
+            }
+
             int numAnimations = clipData.numAnimations;
             for (int ai = 0; ai < numAnimations; ++ai)
             {
@@ -1663,21 +1677,11 @@ namespace UTJ.MeshSync
                     animPath = animPath.Remove(0, 1);
                 }
 
-                InterpolationMethod interpolation = AnimationData.SmoothInterpolation;
-                //switch (m_animtionInterpolation)
-                //{
-                //    case InterpolationType.Linear:
-                //        interpolation = LinearInterpolation;
-                //        break;
-                //    default:
-                //        interpolation = SmoothInterpolation;
-                //        break;
-                //}
                 data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, interpolation);
                 m_tmpAnimations.Add(clip);
             }
 
-            if (m_animClipCache != null)
+            if (m_animClipCache != null && m_animtionInterpolation == InterpolationType.Smooth)
             {
                 // call EnsureQuaternionContinuity() to smooth rotation
                 foreach (var kvp in m_animClipCache)

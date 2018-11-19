@@ -695,8 +695,9 @@ namespace UTJ.MeshSync
     #region Animations
     public enum InterpolationType
     {
-        Linear,
         Smooth,
+        Linear,
+        Constant,
     }
     public delegate void InterpolationMethod(AnimationCurve curve);
 
@@ -851,7 +852,8 @@ namespace UTJ.MeshSync
                 var curves = GenRotationCurves();
                 if (curves != null)
                 {
-                    // no need to call im. (clip.EnsureQuaternionContinuity() later)
+                    foreach (var c in curves)
+                        im(c);
                     clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
                     clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
                     clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
@@ -1325,6 +1327,16 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
+        public static void SmoothInterpolation(AnimationCurve curve)
+        {
+            int len = curve.length;
+            for (int i = 0; i < len; ++i)
+            {
+                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
+                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
+            }
+        }
+
         public static void LinearInterpolation(AnimationCurve curve)
         {
             int len = curve.length;
@@ -1335,13 +1347,14 @@ namespace UTJ.MeshSync
             }
         }
 
-        public static void SmoothInterpolation(AnimationCurve curve)
+        public static void ConstantInterpolation(AnimationCurve curve)
         {
             int len = curve.length;
             for (int i = 0; i < len; ++i)
             {
-                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
-                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
+                AnimationUtility.SetKeyBroken(curve, i, true);
+                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
+                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
             }
         }
 
