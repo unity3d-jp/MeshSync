@@ -43,13 +43,13 @@ void msvrContext::send(bool force)
             mat->index = mr.id;
             mat->name = name;
 
-            auto& stdmat = ms::AsStandardSpecMaterial(*mat);
+            auto& stdmat = ms::AsStandardMaterial(*mat);
             if (mr.diffuse_color != float4::zero())
                 stdmat.setColor(mr.diffuse_color);
             if (mr.bump_scale != 0.0f)
                 stdmat.setBumpScale(mr.bump_scale);
-            if (mr.specular_color != float4::zero())
-                stdmat.setSpecularColor(mr.specular_color);
+            //if (mr.specular_color != float4::zero())
+            //    stdmat.setSpecularColor(mr.specular_color);
 
             auto get_texid = [this, &mr](int slot) -> int {
                 if (slot == ms::InvalidID)
@@ -70,7 +70,7 @@ void msvrContext::send(bool force)
             {
                 int tid = get_texid(mr.specular_map);
                 if (tid != ms::InvalidID)
-                    stdmat.setSpecularGlossMap(tid);
+                    stdmat.setMetallicMap(tid);
             }
             m_material_manager.add(mat);
         }
@@ -546,13 +546,17 @@ void msvrContext::onUniform1i(GLint location, GLint v0)
     }
 }
 
-void msvrContext::onUniform1fv(GLint location, GLsizei count, const GLfloat * value)
+void msvrContext::onUniform1f(GLint location, GLfloat v0)
 {
     if (auto *prop = findUniform(location)) {
         auto& mr = m_program_records[m_program_handle].mrec;
         if (prop->name == "bumpIntensity")
-            mr.bump_scale= *value;
+            mr.bump_scale = v0;
     }
+}
+
+void msvrContext::onUniform1fv(GLint location, GLsizei count, const GLfloat * value)
+{
 }
 
 void msvrContext::onUniform2fv(GLint location, GLsizei count, const GLfloat * value)
@@ -618,9 +622,9 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
         // projection matrix -> fov, aspect, clippling planes
         float fov, aspect, near_plane, far_plane;
-        extract_projection_data(proj, fov, aspect, far_plane, near_plane);
+        extract_projection_data(proj, fov, aspect, near_plane, far_plane);
 
-        // fov >= 180.0f means came is not perspective. capture only when camera is perspective.
+        // fov >= 180.0f means came is orthographic. capture only when perspective.
         if (fov < 179.0f) {
             if (fov != m_camera_fov) {
                 m_camera_dirty = true;
@@ -635,8 +639,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             extract_look_data(view, pos, rot);
             rot *= mu::rotateX(-90.0f * mu::Deg2Rad);
 
-            if (pos != m_camera_pos || rot != m_camera_rot)
-            {
+            if (pos != m_camera_pos || rot != m_camera_rot) {
                 m_camera_dirty = true;
                 m_camera_pos = pos;
                 m_camera_rot = rot;

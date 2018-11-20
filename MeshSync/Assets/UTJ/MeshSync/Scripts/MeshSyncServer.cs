@@ -843,6 +843,7 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
                     // encode and write data to file and import
                     // (script-generated texture works but can't set texture type such as normal map)
+                    bool exported = false;
                     string path = null;
                     switch (src.format) {
                         case TextureFormat.Ru8:
@@ -851,7 +852,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAu8:
                             {
                                 path = assetDir + "/" + src.name + ".png";
-                                TextureData.WriteToFile(path, EncodeToPNG(texture));
+                                exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
                                 break;
                             }
                         case TextureFormat.Rf16:
@@ -860,7 +861,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAf16:
                             {
                                 path = assetDir + "/" + src.name + ".exr";
-                                TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
+                                exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
                                 break;
                             }
                         case TextureFormat.Rf32:
@@ -869,12 +870,12 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBAf32:
                             {
                                 path = assetDir + "/" + src.name + ".exr";
-                                TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
+                                exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
                                 break;
                             }
                     }
 
-                    if (path != null)
+                    if (exported)
                     {
                         texture = null;
                         GC.Collect();

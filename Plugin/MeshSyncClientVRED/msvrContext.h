@@ -172,6 +172,7 @@ public:
     void onDeleteProgram(GLuint program);
     void onUseProgram(GLuint program);
     void onUniform1i(GLint location, GLint v0);
+    void onUniform1f(GLint location, GLfloat v0);
     void onUniform1fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform2fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform3fv(GLint location, GLsizei count, const GLfloat *value);

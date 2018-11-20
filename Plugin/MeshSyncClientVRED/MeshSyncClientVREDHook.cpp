@@ -55,6 +55,7 @@ static void(*WINAPI _glUseProgram)(GLuint program);
 /*static*/ GLint(*WINAPI _glGetUniformLocation)(GLuint program, const GLchar *name);
 
 static void(*WINAPI _glUniform1i)(GLint location, GLint v0);
+static void(*WINAPI _glUniform1f)(GLint location, GLfloat v0);
 static void(*WINAPI _glUniform1fv)(GLint location, GLsizei count, const GLfloat *value);
 static void(*WINAPI _glUniform2fv)(GLint location, GLsizei count, const GLfloat *value);
 static void(*WINAPI _glUniform3fv)(GLint location, GLsizei count, const GLfloat *value);
@@ -290,6 +291,11 @@ static void WINAPI glUniform1i_hook(GLint location, GLint v0)
     _glUniform1i(location, v0);
     msvrGetContext()->onUniform1i(location, v0);
 }
+static void WINAPI glUniform1f_hook(GLint location, GLfloat v0)
+{
+    _glUniform1f(location, v0);
+    msvrGetContext()->onUniform1f(location, v0);
+}
 static void WINAPI glUniform1fv_hook(GLint location, GLsizei count, const GLfloat *value)
 {
     _glUniform1fv(location, count, value);
@@ -427,6 +433,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Get(glGetUniformLocation),
 
     Hook(glUniform1i),
+    Hook(glUniform1f),
     Hook(glUniform1fv),
     Hook(glUniform2fv),
     Hook(glUniform3fv),

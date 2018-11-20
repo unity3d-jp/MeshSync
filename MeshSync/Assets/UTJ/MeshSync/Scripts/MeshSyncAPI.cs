@@ -486,7 +486,9 @@ namespace UTJ.MeshSync
         }
         public static bool WriteToFile(string path, byte[] data)
         {
-            return msWriteToFile(path, data, data.Length) != 0;
+            if (data != null)
+                return msWriteToFile(path, data, data.Length) != 0;
+            return false;
         }
     }
 

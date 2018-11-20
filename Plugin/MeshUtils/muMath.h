@@ -1092,11 +1092,12 @@ inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T
 
     auto m22 = -proj[2][2];
     auto m32 = -proj[3][2];
-    auto tmp_near = (T(2.0) * m32) / (T(2.0)*m22 - T(2.0));
-    auto tmp_far = ((m22 - T(1.0))*tmp_near) / (m22 + T(1.0));
-    near_plane = abs(tmp_near);
-    far_plane = abs(tmp_far);
-
+    auto tmp_near = abs((T(2.0) * m32) / (T(2.0)*m22 - T(2.0)));
+    auto tmp_far = abs(((m22 - T(1.0))*tmp_near) / (m22 + T(1.0)));
+    if (tmp_near > tmp_far)
+        std::swap(tmp_near, tmp_far);
+    near_plane = tmp_near;
+    far_plane = tmp_far;
 }
 
 template<class T>

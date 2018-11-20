@@ -42,6 +42,8 @@ bool FileToByteArray(const char *path, RawVector<char> &dst)
 
 bool ByteArrayToFile(const char *path, const RawVector<char> &data)
 {
+    if (!path)
+        return false;
     FILE *f = fopen(path, "wb");
     if (!f)
         return false;
@@ -52,6 +54,8 @@ bool ByteArrayToFile(const char *path, const RawVector<char> &data)
 
 bool ByteArrayToFile(const char * path, const char *data, size_t size)
 {
+    if (!path)
+        return false;
     FILE *f = fopen(path, "wb");
     if (!f)
         return false;
