@@ -1343,7 +1343,7 @@ void SceneSettings::deserialize(std::istream& is)
 
 
 #define EachMember(F)\
-    F(settings) F(objects) F(constraints) F(animations) F(textures) F(materials) F(misc_assets)
+    F(settings) F(objects) F(constraints) F(animations) F(textures) F(materials) F(assets)
 
 uint32_t Scene::getSerializeSize() const
 {
@@ -1372,7 +1372,7 @@ void Scene::clear()
     animations.clear();
     textures.clear();
     materials.clear();
-    misc_assets.clear();
+    assets.clear();
 }
 
 uint64_t Scene::hash() const
@@ -1384,7 +1384,7 @@ uint64_t Scene::hash() const
         ret += obj->hash();
     for (auto& obj : textures)
         ret += obj->hash();
-    for (auto& obj : misc_assets)
+    for (auto& obj : assets)
         ret += obj->hash();
     return ret;
 }

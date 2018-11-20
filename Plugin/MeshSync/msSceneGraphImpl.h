@@ -145,7 +145,7 @@ struct read_impl<RawVector<T>>
     {
         uint32_t size = 0;
         is.read((char*)&size, 4);
-        v.resize(size);
+        v.resize_discard(size);
         is.read((char*)v.data(), sizeof(T) * size);
     }
 };

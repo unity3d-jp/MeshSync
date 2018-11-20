@@ -69,17 +69,19 @@ void Texture::clear()
     type = TextureType::Default;
     format = TextureFormat::Unknown;
     width = height = 0;
-    data.clear();
+    vclear(data);
 }
 
 uint64_t Texture::hash() const
 {
-    return vhash(data);
+    uint64_t ret = super::hash();
+    ret += vhash(data);
+    return ret;
 }
 
 uint64_t Texture::checksum() const
 {
-    uint64_t ret = 0;
+    uint64_t ret = super::checksum();
     ret += csum((int)type);
     ret += csum((int)format);
     ret += csum(width);

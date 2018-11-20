@@ -361,7 +361,18 @@ TestCase(Test_SendTexture)
             stdmat.addKeyword({ "_EMISSION", true });
             stdmat.addKeyword({ "_INVALIDKEYWORD", true });
         }
+        Send(scene);
+    }
 
+    {
+        ms::Scene scene;
+
+        // file asset
+        {
+            auto as = ms::FileAsset::create();
+            if (as->readFromFile("explosion1.wav"))
+                scene.assets.push_back(as);
+        }
         Send(scene);
     }
 }

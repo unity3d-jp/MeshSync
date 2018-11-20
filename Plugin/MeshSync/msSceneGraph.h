@@ -509,7 +509,7 @@ public:
     std::vector<AnimationClipPtr> animations;
     std::vector<TexturePtr> textures;
     std::vector<MaterialPtr> materials;
-    std::vector<AssetPtr> misc_assets;
+    std::vector<AssetPtr> assets;
 
 public:
     uint32_t getSerializeSize() const;

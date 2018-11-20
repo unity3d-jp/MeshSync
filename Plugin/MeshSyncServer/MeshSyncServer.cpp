@@ -126,6 +126,43 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *_this)
 #pragma endregion
 
 
+#pragma region Asset
+msAPI int               msAssetGetID(ms::Asset *_this) { return _this->id; }
+msAPI void              msAssetSetID(ms::Asset *_this, int v) { _this->id = v; }
+msAPI const char*       msAssetGetName(ms::Asset *_this) { return _this->name.c_str(); }
+msAPI void              msAssetSetName(ms::Asset *_this, const char *v) { _this->name = v; }
+msAPI ms::AssetType     msAssetGetType(ms::Asset *_this) { return _this->getAssetType(); }
+#pragma endregion
+
+
+#pragma region FileAsset
+msAPI ms::FileAsset*    msFileAssetCreate() { return ms::FileAsset::create_raw(); }
+msAPI int               msFileAssetGetDataSize(ms::FileAsset *_this) { return (int)_this->data.size(); }
+msAPI const void*       msFileAssetGetDataPtr(ms::FileAsset *_this, int v) { return _this->data.data(); }
+msAPI bool              msFileAssetReadFromFile(ms::FileAsset *_this, const char *v) { return _this->readFromFile(v); }
+msAPI bool              msFileAssetWriteToFile(ms::FileAsset *_this, const char *v) { return _this->writeToFile(v); }
+#pragma endregion
+
+
+#pragma region Texture
+msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
+msAPI ms::TextureType   msTextureGetType(ms::Texture *_this) { return _this->type; }
+msAPI void              msTextureSetType(ms::Texture *_this, ms::TextureType v) { _this->type = v; }
+msAPI ms::TextureFormat msTextureGetFormat(ms::Texture *_this) { return _this->format; }
+msAPI void              msTextureSetFormat(ms::Texture *_this, ms::TextureFormat v) { _this->format = v; }
+msAPI int               msTextureGetWidth(ms::Texture *_this) { return _this->width; }
+msAPI void              msTextureSetWidth(ms::Texture *_this, int v) { _this->width = v; }
+msAPI int               msTextureGetHeight(ms::Texture *_this) { return _this->height; }
+msAPI void              msTextureSetHeight(ms::Texture *_this, int v) { _this->height = v; }
+msAPI void              msTextureGetData(ms::Texture *_this, void *v) { _this->getData(v); }
+msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _this->setData(v); }
+msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
+msAPI int               msTextureGetSizeInByte(ms::Texture *_this) { return (int)_this->data.size(); }
+msAPI bool              msTextureWriteToFile(ms::Texture *_this, const char *path) { return _this->writeToFile(path); }
+msAPI bool              msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
+#pragma endregion
+
+
 #pragma region Material
 msAPI const char* msMaterialPropGetName(ms::MaterialProperty *_this) { return _this->name.c_str(); }
 msAPI ms::MaterialProperty::Type msMaterialPropGetType(ms::MaterialProperty *_this) { return _this->type; }
@@ -141,10 +178,6 @@ msAPI const char*   msMaterialKeywordGetName(ms::MaterialKeyword *_this) { retur
 msAPI bool          msMaterialKeywordGetValue(ms::MaterialKeyword *_this) { return _this->value; }
 
 msAPI ms::Material* msMaterialCreate() { return ms::Material::create_raw(); }
-msAPI int           msMaterialGetID(ms::Material *_this) { return _this->id; }
-msAPI void          msMaterialSetID(ms::Material *_this, int v) { _this->id = v; }
-msAPI const char*   msMaterialGetName(ms::Material *_this) { return _this->name.c_str(); }
-msAPI void          msMaterialSetName(ms::Material *_this, const char *v) { _this->name = v; }
 msAPI int           msMaterialGetIndex(ms::Material *_this) { return _this->index; }
 msAPI void          msMaterialSetIndex(ms::Material *_this, int v) { _this->index = v; }
 msAPI const char*   msMaterialGetShader(ms::Material *_this) { return _this->shader.c_str(); }
@@ -168,31 +201,7 @@ msAPI void msMaterialAddKeyword(ms::Material *_this, const char *name, bool v) {
 #pragma endregion
 
 
-#pragma region Texture
-msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
-msAPI int               msTextureGetID(ms::Texture *_this) { return _this->id; }
-msAPI void              msTextureSetID(ms::Texture *_this, int v) { _this->id = v; }
-msAPI const char*       msTextureGetName(ms::Texture *_this) { return _this->name.c_str(); }
-msAPI void              msTextureSetName(ms::Texture *_this, const char *v) { _this->name = v; }
-msAPI ms::TextureType   msTextureGetType(ms::Texture *_this) { return _this->type; }
-msAPI void              msTextureSetType(ms::Texture *_this, ms::TextureType v) { _this->type = v; }
-msAPI ms::TextureFormat msTextureGetFormat(ms::Texture *_this) { return _this->format; }
-msAPI void              msTextureSetFormat(ms::Texture *_this, ms::TextureFormat v) { _this->format = v; }
-msAPI int               msTextureGetWidth(ms::Texture *_this) { return _this->width; }
-msAPI void              msTextureSetWidth(ms::Texture *_this, int v) { _this->width = v; }
-msAPI int               msTextureGetHeight(ms::Texture *_this) { return _this->height; }
-msAPI void              msTextureSetHeight(ms::Texture *_this, int v) { _this->height = v; }
-msAPI void              msTextureGetData(ms::Texture *_this, void *v) { _this->getData(v); }
-msAPI void              msTextureSetData(ms::Texture *_this, const void *v) { _this->setData(v); }
-msAPI void*             msTextureGetDataPtr(ms::Texture *_this) { return _this->data.data(); }
-msAPI int               msTextureGetSizeInByte(ms::Texture *_this) { return (int)_this->data.size(); }
-msAPI bool              msTextureWriteToFile(ms::Texture *_this, const char *path) { return _this->writeToFile(path); }
-msAPI bool              msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
-#pragma endregion
-
-
 #pragma region Animations
-msAPI const char*       msAnimationClipGetName(ms::AnimationClip *_this) { return _this->name.c_str(); }
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *_this) { return (int)_this->animations.size(); }
 msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *_this, int i) { return _this->animations[i].get(); }
 
@@ -1027,4 +1036,6 @@ msAPI int                   msSceneGetNumMaterials(ms::Scene *_this)            
 msAPI ms::Material*         msSceneGetMaterialData(ms::Scene *_this, int i)         { return _this->materials[i].get(); }
 msAPI int                   msSceneGetNumTextures(ms::Scene *_this)                 { return (int)_this->textures.size(); }
 msAPI ms::Texture*          msSceneGetTextureData(ms::Scene *_this, int i)          { return _this->textures[i].get(); }
+msAPI int                   msSceneGetNumAssets(ms::Scene *_this)                    { return (int)_this->assets.size(); }
+msAPI ms::Asset*            msSceneGetAssetData(ms::Scene *_this, int i)            { return _this->assets[i].get(); }
 #pragma endregion

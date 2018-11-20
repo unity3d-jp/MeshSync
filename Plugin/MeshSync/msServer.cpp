@@ -416,6 +416,7 @@ void Server::queueTextMessage(const char * mes, TextMessage::Type type)
 
     MessageHolder t;
     t.message.reset(txt);
+    t.ready = true;
 
     lock_t l(m_message_mutex);
     m_received_messages.push_back(std::move(t));
@@ -432,10 +433,10 @@ std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request,
         return ret;
     }
     catch (const std::exception& e) {
+        dst.ready = true;
         queueTextMessage(e.what(), TextMessage::Type::Error);
         serveText(response, e.what(), HTTPResponse::HTTP_BAD_REQUEST);
-        dst.ready = true;
-        return std::shared_ptr<MessageT>();
+        return nullptr;
     }
 }
 

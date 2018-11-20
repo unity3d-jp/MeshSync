@@ -38,7 +38,7 @@ Asset::~Asset()
 
 uint32_t Asset::getSerializeSize() const
 {
-    uint32_t ret = 0;
+    uint32_t ret = sizeof(int);
     EachMember(msSize);
     return ret;
 }
@@ -89,7 +89,7 @@ bool Asset::identify(const Identifier & v) const
 
 std::shared_ptr<FileAsset> FileAsset::create(std::istream & is)
 {
-    return std::static_pointer_cast<FileAsset>(super::create(is));
+    return std::static_pointer_cast<FileAsset>(Asset::create(is));
 }
 
 AssetType FileAsset::getAssetType() const
@@ -124,7 +124,9 @@ void FileAsset::clear()
 
 uint64_t FileAsset::hash() const
 {
-    return vhash(data);
+    uint64_t ret = super::hash();
+    ret += vhash(data);
+    return ret;
 }
 
 uint64_t FileAsset::checksum() const
@@ -138,7 +140,11 @@ bool FileAsset::readFromFile(const char *path)
 {
     if (!path)
         return false;
-    return FileToByteArray(path, data);
+    if (FileToByteArray(path, data)) {
+        name = GetFilename(path);
+        return true;
+    }
+    return false;
 }
 
 bool FileAsset::writeToFile(const char *path) const

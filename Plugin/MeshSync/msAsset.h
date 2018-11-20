@@ -15,13 +15,12 @@ enum class AssetType
 class Asset
 {
 public:
-    static std::shared_ptr<Asset> create(std::istream& is);
-
-public:
     std::string name;
     int id = InvalidID;
 
 public:
+    static std::shared_ptr<Asset> create(std::istream& is);
+
     virtual ~Asset();
     virtual AssetType getAssetType() const = 0;
     virtual uint32_t getSerializeSize() const;

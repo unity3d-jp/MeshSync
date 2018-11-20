@@ -554,7 +554,6 @@ void AnimationClip::deserialize(std::istream& is)
 void AnimationClip::clear()
 {
     super::clear();
-    name.clear();
     animations.clear();
 }
 

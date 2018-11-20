@@ -446,6 +446,30 @@ namespace UTJ.MeshSync
 
             var scene = mes.scene;
 
+            // assets
+            Try(() =>
+            {
+                int numAssets = scene.numAssets;
+                if (numAssets > 0)
+                {
+                    MakeSureAssetDirectoryExists();
+                    for (int i = 0; i < numAssets; ++i)
+                    {
+                        var asset = scene.GetAsset(i);
+                        switch (asset.type)
+                        {
+                            case AssetType.File:
+                                ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
+                                break;
+                            default:
+                                if(m_logging)
+                                    Debug.Log("unknown asset: " + asset.name);
+                                break;
+                        }
+                    }
+                }
+            });
+
             // sync textures
             Try(() =>
             {
@@ -476,16 +500,16 @@ namespace UTJ.MeshSync
                             dst = UpdateTransform(obj);
                             break;
                         case TransformData.Type.Camera:
-                            dst = UpdateCamera((CameraData)obj._this);
+                            dst = UpdateCamera((CameraData)obj);
                             break;
                         case TransformData.Type.Light:
-                            dst = UpdateLight((LightData)obj._this);
+                            dst = UpdateLight((LightData)obj);
                             break;
                         case TransformData.Type.Mesh:
-                            dst = UpdateMesh((MeshData)obj._this);
+                            dst = UpdateMesh((MeshData)obj);
                             break;
                         case TransformData.Type.Points:
-                            dst = UpdatePoints((PointsData)obj._this);
+                            dst = UpdatePoints((PointsData)obj);
                             break;
                     }
                     if (dst != null)
@@ -606,11 +630,16 @@ namespace UTJ.MeshSync
             }
         }
 
+        public string assetPath
+        {
+            get { return "Assets/" + m_assetExportPath; }
+        }
+
         bool MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
             return Try(()=> {
-                if (!AssetDatabase.IsValidFolder("Assets/" + m_assetExportPath))
+                if (!AssetDatabase.IsValidFolder(assetPath))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
             });
 #endif
@@ -621,8 +650,7 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             return Try(() =>
             {
-                string assetDir = "Assets/" + m_assetExportPath;
-                if (!AssetDatabase.IsValidFolder(assetDir))
+                if (!AssetDatabase.IsValidFolder(assetPath))
                     AssetDatabase.CreateFolder("Assets", m_assetExportPath);
                 AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
             });
@@ -805,7 +833,7 @@ namespace UTJ.MeshSync
         {
             MakeSureAssetDirectoryExists();
 #if UNITY_EDITOR
-            string assetDir = "Assets/" + m_assetExportPath;
+            string dstDir = assetPath;
 #endif
             int numTextures = scene.numTextures;
             for (int i = 0; i < numTextures; ++i)
@@ -818,7 +846,7 @@ namespace UTJ.MeshSync
                 {
 #if UNITY_EDITOR
                     // write data to file and import
-                    string path = assetDir + "/" + src.name;
+                    string path = dstDir + "/" + src.name;
                     src.WriteToFile(path);
 
                     AssetDatabase.ImportAsset(path);
@@ -851,7 +879,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBu8:
                         case TextureFormat.RGBAu8:
                             {
-                                path = assetDir + "/" + src.name + ".png";
+                                path = dstDir + "/" + src.name + ".png";
                                 exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
                                 break;
                             }
@@ -860,7 +888,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBf16:
                         case TextureFormat.RGBAf16:
                             {
-                                path = assetDir + "/" + src.name + ".exr";
+                                path = dstDir + "/" + src.name + ".exr";
                                 exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
                                 break;
                             }
@@ -869,7 +897,7 @@ namespace UTJ.MeshSync
                         case TextureFormat.RGBf32:
                         case TextureFormat.RGBAf32:
                             {
-                                path = assetDir + "/" + src.name + ".exr";
+                                path = dstDir + "/" + src.name + ".exr";
                                 exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
                                 break;
                             }
@@ -1681,9 +1709,9 @@ namespace UTJ.MeshSync
                     else
                         clipName = root.name;
 
-                    var assetPath = "Assets/" + m_assetExportPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
-                    CreateAsset(clip, assetPath);
-                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(assetPath + ".controller", clip);
+                    var dstPath = assetPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
+                    CreateAsset(clip, dstPath);
+                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                     m_animClipCache[root.gameObject] = clip;
                 }
 
@@ -2004,10 +2032,10 @@ namespace UTJ.MeshSync
                 var material = m.material;
                 if (AssetDatabase.GetAssetPath(material) == "")
                 {
-                    string assetPath = "Assets/" + m_assetExportPath + "/" + material.name + ".mat";
-                    CreateAsset(material, assetPath);
+                    string dstPath = assetPath + "/" + material.name + ".mat";
+                    CreateAsset(material, dstPath);
                     if (m_logging)
-                        Debug.Log("exported material " + assetPath);
+                        Debug.Log("exported material " + dstPath);
                 }
             }
         }
@@ -2026,10 +2054,10 @@ namespace UTJ.MeshSync
                 return;
 
             MakeSureAssetDirectoryExists();
-            var assetPath = "Assets/" + m_assetExportPath + "/" + mesh.name + ".asset";
-            CreateAsset(mesh, assetPath);
+            var dstPath = assetPath + "/" + mesh.name + ".asset";
+            CreateAsset(mesh, dstPath);
             if (m_logging)
-                Debug.Log("exported mesh " + assetPath);
+                Debug.Log("exported mesh " + dstPath);
 
             // export splits
             for (int i = 1; ; ++i)
