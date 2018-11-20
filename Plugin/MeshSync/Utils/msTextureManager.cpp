@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msTextureManager.h"
+#include "msMisc.h"
 
 namespace ms {
 

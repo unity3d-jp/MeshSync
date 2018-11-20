@@ -46,6 +46,12 @@
     <ClCompile Include="MeshSync\msFoundation.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\msMisc.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSync\msAsset.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -106,6 +112,12 @@
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msTexture.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msMisc.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msAsset.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>

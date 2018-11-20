@@ -291,14 +291,10 @@ TestCase(Test_SendTexture)
 
         ms::Scene scene;
         for (auto filename : raw_files) {
-            RawVector<char> data;
-            if (ms::FileToByteArray(filename, data)) {
-                auto tex = ms::Texture::create();
+            auto tex = ms::Texture::create();
+            if (tex->readFromFile(filename)) {
                 scene.textures.push_back(tex);
                 tex->id = gen_id();
-                tex->name = filename;
-                tex->format = ms::TextureFormat::RawFile;
-                tex->data = std::move(data);
             }
         }
         if (!scene.textures.empty())

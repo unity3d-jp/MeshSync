@@ -466,8 +466,8 @@ using PointsPtr = std::shared_ptr<Points>;
 class Constraint;
 using ConstraintPtr = std::shared_ptr<Constraint>;
 
-class Animation;
-using AnimationPtr = std::shared_ptr<Animation>;
+class Asset;
+using AssetPtr = std::shared_ptr<Asset>;
 
 class AnimationClip;
 using AnimationClipPtr = std::shared_ptr<AnimationClip>;
@@ -509,6 +509,7 @@ public:
     std::vector<AnimationClipPtr> animations;
     std::vector<TexturePtr> textures;
     std::vector<MaterialPtr> materials;
+    std::vector<AssetPtr> misc_assets;
 
 public:
     uint32_t getSerializeSize() const;

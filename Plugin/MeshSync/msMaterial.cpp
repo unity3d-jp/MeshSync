@@ -186,54 +186,62 @@ MaterialKeyword::MaterialKeyword(const char *n, bool v)
 
 
 
-std::shared_ptr<Material> Material::create(std::istream & is)
+std::shared_ptr<Material> Material::create(std::istream& is)
 {
-    auto ret = Pool<Material>::instance().pull();
-    ret->deserialize(is);
-    return make_shared_ptr(ret);
+    return std::static_pointer_cast<Material>(Asset::create(is));
 }
 
 Material::Material() {}
 Material::~Material() {}
 
-#define EachMember(F) F(id) F(name) F(index) F(shader) F(properties) F(keywords)
+#define EachMember(F) F(index) F(shader) F(properties) F(keywords)
+
+AssetType Material::getAssetType() const
+{
+    return AssetType::Material;
+}
 
 uint32_t Material::getSerializeSize() const
 {
-    uint32_t ret = 0;
+    uint32_t ret = super::getSerializeSize();
     EachMember(msSize);
     return ret;
 }
 void Material::serialize(std::ostream& os) const
 {
+    super::serialize(os);
     EachMember(msWrite);
 }
 void Material::deserialize(std::istream& is)
 {
+    super::deserialize(is);
     EachMember(msRead);
 }
-#undef EachMember
 
 void Material::clear()
 {
-    id = InvalidID;
-    name.clear();
-    shader = "Standard";
+    super::clear();
+    index = 0;
+    shader.clear();
     properties.clear();
+    keywords.clear();
+}
+
+uint64_t Material::hash() const
+{
+    return checksum();
 }
 
 uint64_t Material::checksum() const
 {
-    uint64_t ret = 0;
+    uint64_t ret = super::checksum();
+    ret += csum(index);
     ret += csum(shader);
     ret += csum(properties);
+    ret += csum(keywords);
     return ret;
 }
-
-Identifier Material::getIdentifier() const
-{
-    return {name, id};
-}
+#undef EachMember
 
 bool Material::operator==(const Material& v) const
 {

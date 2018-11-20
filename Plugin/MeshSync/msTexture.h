@@ -1,8 +1,6 @@
 #pragma once
 
-#include "MeshUtils/MeshUtils.h"
-#include "msConfig.h"
-#include "msFoundation.h"
+#include "msAsset.h"
 
 namespace ms {
 
@@ -65,17 +63,13 @@ template<> struct GetTextureFormat<float4>  { static const TextureFormat result 
 
 // in byte
 int GetPixelSize(TextureFormat format);
-bool FileToByteArray(const char *path, RawVector<char> &out);
-bool ByteArrayToFile(const char *path, const RawVector<char> &data);
-bool ByteArrayToFile(const char *path, const char *data, size_t size);
-bool FileExists(const char *path);
-uint64_t FileMTime(const char *path);
 
-class Texture
+class Texture : public Asset
 {
+using super = Asset;
 public:
-    int id = InvalidID;
-    std::string name; // if format is RawFile, this must be file name
+    // if format is RawFile, Asset::name must be file name
+
     TextureType type = TextureType::Default;
     TextureFormat format = TextureFormat::Unknown;
     int width = 0;
@@ -84,20 +78,23 @@ public:
 
 protected:
     Texture();
-    ~Texture();
+    ~Texture() override;
 public:
     msDefinePool(Texture);
     static std::shared_ptr<Texture> create(std::istream& is);
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-    void clear();
+
+    AssetType getAssetType() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
     uint64_t hash() const;
     uint64_t checksum() const;
 
     void setData(const void *src);
     void getData(void *dst) const;
-    bool writeToFile(const char *path);
+    bool readFromFile(const char *path);
+    bool writeToFile(const char *path) const;
 };
 msHasSerializer(Texture);
 using TexturePtr = std::shared_ptr<Texture>;

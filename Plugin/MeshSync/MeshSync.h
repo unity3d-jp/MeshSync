@@ -8,6 +8,7 @@
 #include "msMaterial.h"
 #include "msClient.h"
 #include "msServer.h"
+#include "msMisc.h"
 
 #ifdef mscDebug
     #define mscTrace(...) ::mu::Print("MeshSync trace: " __VA_ARGS__)

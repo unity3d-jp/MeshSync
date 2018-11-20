@@ -10,23 +10,24 @@ namespace ms {
 
 // Entity
 #pragma region Entity
-std::shared_ptr<Entity> Entity::create(std::istream & is)
+std::shared_ptr<Entity> Entity::create(std::istream& is)
 {
-    std::shared_ptr<Entity> ret;
-
     int type;
     read(is, type);
+
+    std::shared_ptr<Entity> ret;
     switch ((Type)type) {
     case Type::Transform: ret = Transform::create(); break;
     case Type::Camera: ret = Camera::create(); break;
     case Type::Light: ret = Light::create(); break;
     case Type::Mesh: ret = Mesh::create(); break;
     case Type::Points: ret = Points::create(); break;
-    default: break;
+    default:
+        throw std::runtime_error("Entity::create() failed");
+        break;
     }
-    if (ret) {
+    if (ret)
         ret->deserialize(is);
-    }
     return ret;
 }
 
@@ -60,7 +61,7 @@ void Entity::serialize(std::ostream& os) const
 }
 void Entity::deserialize(std::istream& is)
 {
-    // type is consumed by make()
+    // type is consumed by create()
     read(is, id);
     read(is, path);
 }
@@ -111,7 +112,7 @@ const char* Entity::getName() const
 
 // Transform
 #pragma region Transform
-std::shared_ptr<Transform> Transform::create(std::istream & is)
+std::shared_ptr<Transform> Transform::create(std::istream& is)
 {
     return std::static_pointer_cast<Transform>(super::create(is));
 }
@@ -1342,7 +1343,7 @@ void SceneSettings::deserialize(std::istream& is)
 
 
 #define EachMember(F)\
-    F(settings) F(objects) F(constraints) F(animations) F(textures) F(materials)
+    F(settings) F(objects) F(constraints) F(animations) F(textures) F(materials) F(misc_assets)
 
 uint32_t Scene::getSerializeSize() const
 {
@@ -1371,6 +1372,7 @@ void Scene::clear()
     animations.clear();
     textures.clear();
     materials.clear();
+    misc_assets.clear();
 }
 
 uint64_t Scene::hash() const
@@ -1381,6 +1383,8 @@ uint64_t Scene::hash() const
     for (auto& obj : animations)
         ret += obj->hash();
     for (auto& obj : textures)
+        ret += obj->hash();
+    for (auto& obj : misc_assets)
         ret += obj->hash();
     return ret;
 }

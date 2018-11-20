@@ -22,11 +22,13 @@
     <ClInclude Include="MeshSync\MeshSync.h" />
     <ClInclude Include="MeshSync\MeshSyncUtils.h" />
     <ClInclude Include="MeshSync\msAnimation.h" />
+    <ClInclude Include="MeshSync\msAsset.h" />
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
     <ClInclude Include="MeshSync\msConstraints.h" />
     <ClInclude Include="MeshSync\msFoundation.h" />
     <ClInclude Include="MeshSync\msMaterial.h" />
+    <ClInclude Include="MeshSync\msMisc.h" />
     <ClInclude Include="MeshSync\msProtocol.h" />
     <ClInclude Include="MeshSync\msSceneGraph.h" />
     <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
@@ -42,10 +44,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSync\msAnimation.cpp" />
+    <ClCompile Include="MeshSync\msAsset.cpp" />
     <ClCompile Include="MeshSync\msClient.cpp" />
     <ClCompile Include="MeshSync\msConstraints.cpp" />
     <ClCompile Include="MeshSync\msFoundation.cpp" />
     <ClCompile Include="MeshSync\msMaterial.cpp" />
+    <ClCompile Include="MeshSync\msMisc.cpp" />
     <ClCompile Include="MeshSync\msProtocol.cpp" />
     <ClCompile Include="MeshSync\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />

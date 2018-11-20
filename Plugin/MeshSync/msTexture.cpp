@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msTexture.h"
 #include "msSceneGraphImpl.h"
+#include "msMisc.h"
 
 namespace ms {
 
@@ -26,109 +27,45 @@ int GetPixelSize(TextureFormat format)
     return 0;
 }
 
-bool FileToByteArray(const char *path, RawVector<char> &dst)
+
+
+#define EachMember(F)  F(type) F(format) F(width) F(height) F(data)
+
+std::shared_ptr<Texture> Texture::create(std::istream& is)
 {
-    FILE *f = fopen(path, "rb");
-    if (!f)
-        return false;
-
-    fseek(f, 0, SEEK_END);
-    dst.resize_discard((size_t)ftell(f));
-    fseek(f, 0, SEEK_SET);
-    fread(dst.data(), 1, dst.size(), f);
-    fclose(f);
-    return true;
-}
-
-bool ByteArrayToFile(const char *path, const RawVector<char> &data)
-{
-    if (!path)
-        return false;
-    FILE *f = fopen(path, "wb");
-    if (!f)
-        return false;
-    fwrite(data.data(), 1, data.size(), f);
-    fclose(f);
-    return true;
-}
-
-bool ByteArrayToFile(const char * path, const char *data, size_t size)
-{
-    if (!path)
-        return false;
-    FILE *f = fopen(path, "wb");
-    if (!f)
-        return false;
-    fwrite(data, 1, size, f);
-    fclose(f);
-    return true;
-}
-
-bool FileExists(const char *path)
-{
-    if (!path || *path == '\0')
-        return false;
-
-    try {
-        // this is fater than using fopen()
-        Poco::File f(path);
-        return f.exists();
-    }
-    catch (...) {
-        return false;
-    }
-}
-
-uint64_t FileMTime(const char *path)
-{
-    if (!FileExists(path))
-        return 0;
-
-    try {
-        Poco::File f(path);
-        return f.getLastModified().raw();
-    }
-    catch (...) {
-        return 0;
-    }
-}
-
-
-std::shared_ptr<Texture> Texture::create(std::istream & is)
-{
-    auto ret = Pool<Texture>::instance().pull();
-    ret->deserialize(is);
-    return make_shared_ptr(ret);
+    return std::static_pointer_cast<Texture>(Asset::create(is));
 }
 
 Texture::Texture() {}
 Texture::~Texture() {}
 
-#define EachMember(F)\
-    F(id) F(name) F(type) F(format) F(width) F(height) F(data)
+AssetType Texture::getAssetType() const
+{
+    return AssetType::Texture;
+}
 
 uint32_t Texture::getSerializeSize() const
 {
-    uint32_t ret = 0;
+    uint32_t ret = super::getSerializeSize();
     EachMember(msSize);
     return ret;
 }
 
-void Texture::serialize(std::ostream & os) const
+void Texture::serialize(std::ostream& os) const
 {
+    super::serialize(os);
     EachMember(msWrite);
 }
 
-void Texture::deserialize(std::istream & is)
+void Texture::deserialize(std::istream& is)
 {
+    super::deserialize(is);
     EachMember(msRead);
 }
 
 void Texture::clear()
 {
-    id = InvalidID;
-    name.clear();
-
+    super::clear();
     type = TextureType::Default;
     format = TextureFormat::Unknown;
     width = height = 0;
@@ -151,22 +88,34 @@ uint64_t Texture::checksum() const
     return ret;
 }
 
-void Texture::setData(const void * src)
+void Texture::setData(const void *src)
 {
     size_t data_size = width * height * GetPixelSize(format);
     data.assign((const char*)src, (const char*)src + data_size);
 }
 
-void Texture::getData(void * dst) const
+void Texture::getData(void *dst) const
 {
     if (!dst)
         return;
     data.copy_to((char*)dst);
 }
 
-bool Texture::writeToFile(const char * path)
+bool Texture::readFromFile(const char *path)
 {
-    if (data.empty())
+    if (!path)
+        return false;
+    if (FileToByteArray(path, data)) {
+        name = GetFilename(path);
+        format = TextureFormat::RawFile;
+        return true;
+    }
+    return false;
+}
+
+bool Texture::writeToFile(const char *path) const
+{
+    if (!path)
         return false;
     return ByteArrayToFile(path, data);
 }

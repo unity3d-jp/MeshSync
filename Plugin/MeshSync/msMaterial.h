@@ -1,8 +1,5 @@
 #pragma once
 
-#include "MeshUtils/MeshUtils.h"
-#include "msConfig.h"
-#include "msFoundation.h"
 #include "msTexture.h"
 
 namespace ms {
@@ -96,11 +93,10 @@ public:
 msHasSerializer(MaterialKeyword);
 
 
-class Material
+class Material : public Asset
 {
+using super = Asset;
 public:
-    int id = InvalidID;
-    std::string name;
     int index = 0;
     std::string shader;
     std::vector<MaterialProperty> properties;
@@ -108,16 +104,18 @@ public:
 
 protected:
     Material();
-    virtual ~Material();
+    ~Material() override;
 public:
     msDefinePool(Material);
     static std::shared_ptr<Material> create(std::istream& is);
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-    void clear();
-    uint64_t checksum() const;
-    Identifier getIdentifier() const;
+
+    AssetType getAssetType() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
+    uint64_t hash() const override;
+    uint64_t checksum() const override;
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
 

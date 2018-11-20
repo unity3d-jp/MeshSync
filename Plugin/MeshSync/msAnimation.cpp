@@ -6,6 +6,7 @@
 
 #define Clear(V) V.clear();
 #define Hash(V) ret += vhash(V);
+#define CSum(V) ret += csum(V);
 #define Empty(V) && V.empty()
 #define Reduce(V) DoReduction(V);
 #define Reserve(V) V.reserve(n);
@@ -139,6 +140,12 @@ uint64_t TransformAnimation::hash() const
     EachMember(Hash);
     return ret;
 }
+uint64_t TransformAnimation::checksum() const
+{
+    uint64_t ret = 0;
+    EachMember(CSum);
+    return ret;
+}
 bool TransformAnimation::empty() const
 {
     bool ret = true;
@@ -219,6 +226,12 @@ uint64_t CameraAnimation::hash() const
     EachMember(Hash);
     return ret;
 }
+uint64_t CameraAnimation::checksum() const
+{
+    uint64_t ret = super::checksum();
+    EachMember(CSum);
+    return ret;
+}
 bool CameraAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
@@ -281,6 +294,12 @@ uint64_t LightAnimation::hash() const
 {
     uint64_t ret = super::hash();
     EachMember(Hash);
+    return ret;
+}
+uint64_t LightAnimation::checksum() const
+{
+    uint64_t ret = super::checksum();
+    EachMember(CSum);
     return ret;
 }
 bool LightAnimation::empty() const
@@ -386,6 +405,14 @@ uint64_t MeshAnimation::hash() const
     return ret;
 }
 
+uint64_t MeshAnimation::checksum() const
+{
+    uint64_t ret = 0;
+    for (auto& bs : blendshapes)
+        ret += csum(bs->weight);
+    return ret;
+}
+
 bool MeshAnimation::empty() const
 {
     return super::empty() && blendshapes.empty();
@@ -464,6 +491,13 @@ uint64_t PointsAnimation::hash() const
     return ret;
 }
 
+uint64_t PointsAnimation::checksum() const
+{
+    uint64_t ret = super::checksum();
+    EachMember(CSum);
+    return ret;
+}
+
 bool PointsAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
@@ -483,31 +517,35 @@ void PointsAnimation::reserve(size_t n)
 #undef EachMember
 
 
+#define EachMember(F) F(animations)
+
 std::shared_ptr<AnimationClip> AnimationClip::create(std::istream& is)
 {
-    auto ret = Pool<AnimationClip>::instance().pull();
-    ret->deserialize(is);
-    return make_shared_ptr(ret);
+    return std::static_pointer_cast<AnimationClip>(Asset::create(is));
 }
 
 AnimationClip::AnimationClip() {}
 AnimationClip::~AnimationClip() {}
 
-#define EachMember(F)\
-    F(name) F(animations)
+AssetType AnimationClip::getAssetType() const
+{
+    return AssetType::Animation;
+}
 
 uint32_t AnimationClip::getSerializeSize() const
 {
-    uint32_t ret = 0;
+    uint32_t ret = super::getSerializeSize();
     EachMember(msSize);
     return ret;
 }
 void AnimationClip::serialize(std::ostream& os) const
 {
+    super::serialize(os);
     EachMember(msWrite);
 }
 void AnimationClip::deserialize(std::istream& is)
 {
+    super::deserialize(is);
     EachMember(msRead);
 }
 
@@ -515,15 +553,24 @@ void AnimationClip::deserialize(std::istream& is)
 
 void AnimationClip::clear()
 {
+    super::clear();
     name.clear();
     animations.clear();
 }
 
 uint64_t AnimationClip::hash() const
 {
-    uint64_t ret = 0;
+    uint64_t ret = super::hash();
     for (auto& anim : animations)
         ret += anim->hash();
+    return ret;
+}
+
+uint64_t AnimationClip::checksum() const
+{
+    uint64_t ret = super::checksum();
+    for (auto& anim : animations)
+        ret += anim->checksum();
     return ret;
 }
 

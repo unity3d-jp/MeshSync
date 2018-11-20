@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include "MeshUtils/MeshUtils.h"
-#include "msConfig.h"
+#include "msAsset.h"
 #include "msSceneGraph.h"
 
 namespace ms {
@@ -34,6 +31,7 @@ public:
     virtual void deserialize(std::istream& is);
     virtual void clear();
     virtual uint64_t hash() const = 0;
+    virtual uint64_t checksum() const = 0;
     virtual bool empty() const = 0;
     virtual void reduction() = 0;
     virtual void reserve(size_t n) = 0;
@@ -65,6 +63,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksum() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -98,6 +97,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksum() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -127,6 +127,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksum() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -173,6 +174,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksum() const override;
     bool empty() const override;
     void reduction() override;
 
@@ -198,6 +200,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t hash() const override;
+    uint64_t checksum() const override;
     bool empty() const override;
     void reduction() override;
     void reserve(size_t n) override;
@@ -205,26 +208,29 @@ public:
 msHasSerializer(PointsAnimation);
 
 
-class AnimationClip
+class AnimationClip : public Asset
 {
+using super = Asset;
 public:
-    std::string name;
     std::vector<AnimationPtr> animations;
 
 protected:
     AnimationClip();
-    ~AnimationClip();
+    ~AnimationClip() override;
 public:
     msDefinePool(AnimationClip);
     static std::shared_ptr<AnimationClip> create(std::istream& is);
-    uint32_t getSerializeSize() const;
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
-    void clear();
-    uint64_t hash() const;
+
+    AssetType getAssetType() const override;
+    uint32_t getSerializeSize() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
+    uint64_t hash() const override;
+    uint64_t checksum() const override;
+
     bool empty() const;
     void reduction();
-
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
