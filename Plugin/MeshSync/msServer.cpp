@@ -180,7 +180,10 @@ int Server::processMessages(const MessageHandler& handler)
         }
         else if (auto set = std::dynamic_pointer_cast<SetMessage>(mes)) {
             if (mes->session_id == m_current_scene_session)
+            {
                 handler(Message::Type::Set, *mes);
+                m_scene_cache.push_back(set);
+            }
             else
                 skip = true;
         }
@@ -204,8 +207,11 @@ int Server::processMessages(const MessageHandler& handler)
                     skip = true;
             }
 
-            if (!skip)
+            if (!skip) {
                 handler(Message::Type::Fence, *mes);
+                if (fence->type == FenceMessage::FenceType::SceneEnd)
+                    m_scene_cache.clear();
+            }
         }
         else if (std::dynamic_pointer_cast<TextMessage>(mes)) {
             handler(Message::Type::Text, *mes);

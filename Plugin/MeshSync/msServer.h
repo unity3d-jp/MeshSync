@@ -102,6 +102,7 @@ private:
 
     int m_current_scene_session = InvalidID;
     std::list<MessageHolder> m_received_messages, m_processing_messages;
+    std::vector<SetMessagePtr> m_scene_cache;
     PollMessages m_polls;
 
     ScenePtr m_host_scene;

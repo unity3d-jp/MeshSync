@@ -7,49 +7,62 @@ using UTJ.MeshSync;
 [ExecuteInEditMode]
 public class SceneEventHandler : MonoBehaviour
 {
-    void Stringnize<T>(List<T> objs, string header, ref string dst) where T : UnityEngine.Object
+    string m_log;
+
+    void OnSceneUpdateBegin()
     {
-        if (objs.Count > 0)
-        {
-            dst += header;
-            dst += " ";
-            dst += string.Join(", ", objs.AsEnumerable().Select(o => o.name).ToArray());
-            dst += "\n";
-        }
+        m_log = "SceneUpdateBegin\n";
+    }
+    void OnUpdateTexture(Texture tex, TextureData data)
+    {
+        m_log += "Texture: " + tex.name + "\n";
+    }
+    void OnUpdateMaterial(Material mat, MaterialData data)
+    {
+        m_log += "Material: " + mat.name + "\n";
+    }
+    void OnUpdateEntity(GameObject obj, TransformData data)
+    {
+        m_log += "GameObject: " + obj.name + "\n";
 
     }
-
-    void OnSceneEvents(SceneEventType t, object arg)
+    void OnUpdateAnimation(AnimationClip anim, AnimationClipData data)
     {
-        if (t == SceneEventType.Update)
-        {
-            var a = arg as SceneUpdateArgs;
-
-            string log = "";
-            Stringnize(a.textures, "Textures: ", ref log);
-            Stringnize(a.materials, "Materials: ", ref log);
-            Stringnize(a.gameObjects, "GameObjects: ", ref log);
-            Stringnize(a.animations, "Animations: ", ref log);
-            Debug.Log(log);
-        }
-        else
-        {
-            Debug.Log(t);
-        }
+        m_log += "AnimationClip: " + anim.name + "\n";
     }
+    void OnSceneUpdateEnd()
+    {
+        m_log += "SceneUpdateEnd\n";
+        Debug.Log(m_log);
+    }
+
 
     void OnEnable()
     {
         var mss = GetComponent<MeshSyncServer>();
         if (mss != null)
-            mss.sceneEvents += OnSceneEvents;
+        {
+            mss.onSceneUpdateBegin += OnSceneUpdateBegin;
+            mss.onSceneUpdateEnd += OnSceneUpdateEnd;
+            mss.onUpdateTexture += OnUpdateTexture;
+            mss.onUpdateMaterial += OnUpdateMaterial;
+            mss.onUpdateEntity += OnUpdateEntity;
+            mss.onUpdateAnimation += OnUpdateAnimation;
+        }
     }
 
     void OnDisable()
     {
         var mss = GetComponent<MeshSyncServer>();
         if (mss != null)
-            mss.sceneEvents -= OnSceneEvents;
+        {
+            mss.onSceneUpdateBegin -= OnSceneUpdateBegin;
+            mss.onSceneUpdateEnd -= OnSceneUpdateEnd;
+            mss.onUpdateTexture -= OnUpdateTexture;
+            mss.onUpdateMaterial -= OnUpdateMaterial;
+            mss.onUpdateEntity -= OnUpdateEntity;
+            mss.onUpdateAnimation -= OnUpdateAnimation;
+        }
     }
 }
 

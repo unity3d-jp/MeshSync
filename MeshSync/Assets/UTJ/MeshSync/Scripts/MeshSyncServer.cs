@@ -12,24 +12,12 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
-    #region types
-    public enum SceneEventType
-    {
-        UpdateBegin,
-        Update,
-        UpdateEnd,
-    }
-
-    public class SceneUpdateArgs
-    {
-        public SetMessage message;
-        public List<GameObject> gameObjects;
-        public List<Texture> textures;
-        public List<Material> materials;
-        public List<AnimationClip> animations;
-    }
-
-    public delegate void SceneEventHandler(SceneEventType e, object arg);
+    #region Types
+    public delegate void SceneHandler();
+    public delegate void TextureHandler(Texture2D tex, TextureData data);
+    public delegate void MaterialHandler(Material mat, MaterialData data);
+    public delegate void EntityHandler(GameObject obj, TransformData data);
+    public delegate void AnimationHandler(AnimationClip anim, AnimationClipData data);
     #endregion
 
     [ExecuteInEditMode]
@@ -152,7 +140,12 @@ namespace UTJ.MeshSync
 
 
         #region Fields
-        public event SceneEventHandler sceneEvents;
+        public event SceneHandler onSceneUpdateBegin;
+        public event TextureHandler onUpdateTexture;
+        public event MaterialHandler onUpdateMaterial;
+        public event EntityHandler onUpdateEntity;
+        public event AnimationHandler onUpdateAnimation;
+        public event SceneHandler onSceneUpdateEnd;
 
         [SerializeField] int m_serverPort = 8080;
         [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
@@ -190,10 +183,6 @@ namespace UTJ.MeshSync
         [HideInInspector] [SerializeField] int[] m_objIDTable_values;
         [HideInInspector] [SerializeField] int m_objIDSeed = 0;
 
-        List<GameObject> m_tmpGameObjects = new List<GameObject>();
-        List<Texture> m_tmpTextures = new List<Texture>();
-        List<Material> m_tmpMaterials = new List<Material>();
-        List<AnimationClip> m_tmpAnimations = new List<AnimationClip>();
         Dictionary<GameObject, AnimationClip> m_animClipCache;
         #endregion
 
@@ -206,12 +195,6 @@ namespace UTJ.MeshSync
 
 
         #region Impl
-        void FireEvent(SceneEventType t, object arg = null)
-        {
-            if (sceneEvents != null)
-                sceneEvents(t, arg);
-        }
-
 #if UNITY_EDITOR
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         public static void CreateMeshSyncServer(MenuCommand menuCommand)
@@ -389,7 +372,8 @@ namespace UTJ.MeshSync
         {
             if(mes.type == FenceMessage.FenceType.SceneBegin)
             {
-                FireEvent(SceneEventType.UpdateBegin);
+                if (onSceneUpdateBegin != null)
+                    onSceneUpdateBegin.Invoke();
             }
             else if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
@@ -428,7 +412,8 @@ namespace UTJ.MeshSync
                 GC.Collect();
 
                 m_server.NotifyPoll(PollMessage.PollType.SceneUpdate);
-                FireEvent(SceneEventType.UpdateEnd);
+                if (onSceneUpdateEnd != null)
+                    onSceneUpdateEnd.Invoke();
             }
         }
 
@@ -439,11 +424,6 @@ namespace UTJ.MeshSync
 
         void OnRecvSet(SetMessage mes)
         {
-            m_tmpTextures.Clear();
-            m_tmpMaterials.Clear();
-            m_tmpGameObjects.Clear();
-            m_tmpAnimations.Clear();
-
             var scene = mes.scene;
 
             // assets
@@ -493,27 +473,31 @@ namespace UTJ.MeshSync
                 for (int i = 0; i < numObjects; ++i)
                 {
                     Component dst = null;
-                    var obj = scene.GetObject(i);
-                    switch (obj.type)
+                    var src = scene.GetObject(i);
+                    switch (src.type)
                     {
                         case TransformData.Type.Transform:
-                            dst = UpdateTransform(obj);
+                            dst = UpdateTransform(src);
                             break;
                         case TransformData.Type.Camera:
-                            dst = UpdateCamera((CameraData)obj);
+                            dst = UpdateCamera((CameraData)src);
                             break;
                         case TransformData.Type.Light:
-                            dst = UpdateLight((LightData)obj);
+                            dst = UpdateLight((LightData)src);
                             break;
                         case TransformData.Type.Mesh:
-                            dst = UpdateMesh((MeshData)obj);
+                            dst = UpdateMesh((MeshData)src);
                             break;
                         case TransformData.Type.Points:
-                            dst = UpdatePoints((PointsData)obj);
+                            dst = UpdatePoints((PointsData)src);
                             break;
                     }
+
                     if (dst != null)
-                        m_tmpGameObjects.Add(dst.gameObject);
+                    {
+                        if (onUpdateEntity != null)
+                            onUpdateEntity.Invoke(dst.gameObject, src);
+                    }
                 }
             });
 
@@ -559,15 +543,6 @@ namespace UTJ.MeshSync
 
             if(m_progressiveDisplay)
                 ForceRepaint();
-
-            var args = new SceneUpdateArgs {
-                message = mes,
-                gameObjects = m_tmpGameObjects,
-                textures = m_tmpTextures,
-                materials = m_tmpMaterials,
-                animations = m_tmpAnimations,
-            };
-            FireEvent(SceneEventType.Update, args);
         }
 
         void OnRecvScreenshot(IntPtr data)
@@ -839,16 +814,11 @@ namespace UTJ.MeshSync
             for (int i = 0; i < numTextures; ++i)
             {
                 Texture2D texture = null;
-
                 var src = scene.GetTexture(i);
-                var format = src.format;
-                if (format == TextureFormat.RawFile)
-                {
-#if UNITY_EDITOR
-                    // write data to file and import
-                    string path = dstDir + "/" + src.name;
-                    src.WriteToFile(path);
 
+#if UNITY_EDITOR
+                Action<string> doImport = (path) =>
+                {
                     AssetDatabase.ImportAsset(path);
                     texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                     if (texture != null)
@@ -860,6 +830,17 @@ namespace UTJ.MeshSync
                                 importer.textureType = TextureImporterType.NormalMap;
                         }
                     }
+                };
+#endif
+
+                var format = src.format;
+                if (format == TextureFormat.RawFile)
+                {
+#if UNITY_EDITOR
+                    // write data to file and import
+                    string path = dstDir + "/" + src.name;
+                    if (src.WriteToFile(path))
+                        doImport(path);
 #endif
                 }
                 else
@@ -908,17 +889,7 @@ namespace UTJ.MeshSync
                         texture = null;
                         GC.Collect();
 
-                        AssetDatabase.ImportAsset(path);
-                        texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                        if (texture != null)
-                        {
-                            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                            if (importer != null)
-                            {
-                                if (src.type == TextureType.NormalMap)
-                                    importer.textureType = TextureImporterType.NormalMap;
-                            }
-                        }
+                        doImport(path);
                     }
 #endif
                 }
@@ -934,7 +905,8 @@ namespace UTJ.MeshSync
                         m_textureList.Add(dst);
                     }
                     dst.texture = texture;
-                    m_tmpTextures.Add(texture);
+                    if (onUpdateTexture != null)
+                        onUpdateTexture.Invoke(texture, src);
                 }
             }
         }
@@ -1079,7 +1051,9 @@ namespace UTJ.MeshSync
                         default: break;
                     }
                 }
-                m_tmpMaterials.Add(dstmat);
+
+                if (onUpdateMaterial != null)
+                    onUpdateMaterial.Invoke(dstmat, src);
             }
             m_materialList = m_materialList.OrderBy(v => v.index).ToList();
 
@@ -1738,7 +1712,6 @@ namespace UTJ.MeshSync
                 }
 
                 data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, interpolation);
-                m_tmpAnimations.Add(clip);
             }
 
             if (m_animClipCache != null && m_animtionInterpolation == InterpolationType.Smooth)
@@ -1746,6 +1719,12 @@ namespace UTJ.MeshSync
                 // call EnsureQuaternionContinuity() to smooth rotation
                 foreach (var kvp in m_animClipCache)
                     kvp.Value.EnsureQuaternionContinuity();
+            }
+
+            if (onUpdateAnimation != null)
+            {
+                foreach (var kvp in m_animClipCache)
+                    onUpdateAnimation.Invoke(kvp.Value, clipData);
             }
 
             // clear clip cache
