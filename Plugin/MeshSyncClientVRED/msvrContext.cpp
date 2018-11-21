@@ -610,6 +610,21 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     if (!ib || !vb || vb->stride != sizeof(vr_vertex))
         return;
 
+    // black list
+    {
+        static const size_t s_blacklist[][2] = {
+            { 196608,  798768 }, // dome
+            { 574668, 2473776 }, // 
+            { 107448, 1206528 }, // 
+            {  41388,  170400 }, // 
+            {  30000,  124848 }, // material sample
+        };
+        for (auto *bl : s_blacklist) {
+            if(ib->data.size() == bl[0] && vb->data.size() == bl[1])
+                return;
+        }
+    }
+
     auto& camera_buf = m_buffer_records[m_ub_handles[1]];
     auto& obj_buf = m_buffer_records[m_ub_handles[2]];
     if (camera_buf.data.size() != 992 || obj_buf.data.size() != 560)

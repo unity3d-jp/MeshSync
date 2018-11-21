@@ -21,6 +21,6 @@ exit /B 0
     set DIST_DIR="dist\UnityMeshSync_VRED_Windows"
     set CONTENT_DIR="%DIST_DIR%\VRED%VRED_VERSION%"
     xcopy /Y _out\x64_Master\MeshSyncClientVRED%VRED_VERSION%\MeshSyncClientVRED.exe "%CONTENT_DIR%\"
-    xcopy /Y _out\x64_Master\MeshSyncClientVREDHook%VRED_VERSION%\MeshSyncClientVREDHook.dll "%CONTENT_DIR%\"
+    xcopy /Y _out\x64_Master\MeshSyncClientVRED%VRED_VERSION%\MeshSyncClientVREDHook.dll "%CONTENT_DIR%\"
     xcopy /Y MeshSyncClientVRED\%VRED_VERSION%\*.bat "%CONTENT_DIR%\"
     exit /B 0

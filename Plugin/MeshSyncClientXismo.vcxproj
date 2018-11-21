@@ -56,7 +56,7 @@
   </ImportGroup>
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External\glew\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(XISMO_VERSION)\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\MeshSyncClientXismo$(XISMO_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(XISMO_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">

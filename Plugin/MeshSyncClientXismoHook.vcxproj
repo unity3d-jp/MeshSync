@@ -59,7 +59,7 @@
   </ImportGroup>
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)External\glew\include;$(SolutionDir)External\Poco\include;$(XISMO_QT_DIR)\include;$(XISMO_QT_DIR)\include\QtCore;$(XISMO_QT_DIR)\include\QtGui;$(XISMO_QT_DIR)\include\QtWidgets;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(XISMO_VERSION)\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\MeshSyncClientXismo$(XISMO_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(XISMO_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">

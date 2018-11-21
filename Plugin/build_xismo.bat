@@ -24,4 +24,4 @@ exit /B 0
     set DIST_DIR="dist\UnityMeshSync_xismo_Windows"
     set CONTENT_DIR="%DIST_DIR%\xismo%XISMO_VERSION%"
     xcopy /Y _out\x64_Master\MeshSyncClientXismo%XISMO_VERSION%\MeshSyncClientXismo.exe "%CONTENT_DIR%\"
-    xcopy /Y _out\x64_Master\MeshSyncClientXismoHook%XISMO_VERSION%\MeshSyncClientXismoHook.dll "%CONTENT_DIR%\"
+    xcopy /Y _out\x64_Master\MeshSyncClientXismo%XISMO_VERSION%\MeshSyncClientXismoHook.dll "%CONTENT_DIR%\"
