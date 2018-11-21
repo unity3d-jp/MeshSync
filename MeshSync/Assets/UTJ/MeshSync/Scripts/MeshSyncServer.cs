@@ -12,17 +12,25 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
-    #region Types
     public delegate void SceneHandler();
     public delegate void TextureHandler(Texture2D tex, TextureData data);
     public delegate void MaterialHandler(Material mat, MaterialData data);
     public delegate void EntityHandler(GameObject obj, TransformData data);
     public delegate void AnimationHandler(AnimationClip anim, AnimationClipData data);
-    #endregion
 
     [ExecuteInEditMode]
     public class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
+        #region Events
+        public event SceneHandler onSceneUpdateBegin;
+        public event TextureHandler onUpdateTexture;
+        public event MaterialHandler onUpdateMaterial;
+        public event EntityHandler onUpdateEntity;
+        public event AnimationHandler onUpdateAnimation;
+        public event SceneHandler onSceneUpdateEnd;
+        #endregion
+
+
         #region Types
         [Serializable]
         public class EntityRecord
@@ -140,17 +148,8 @@ namespace UTJ.MeshSync
 
 
         #region Fields
-        public event SceneHandler onSceneUpdateBegin;
-        public event TextureHandler onUpdateTexture;
-        public event MaterialHandler onUpdateMaterial;
-        public event EntityHandler onUpdateEntity;
-        public event AnimationHandler onUpdateAnimation;
-        public event SceneHandler onSceneUpdateEnd;
-
         [SerializeField] int m_serverPort = 8080;
-        [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-        [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
-        [SerializeField] string m_assetExportPath = "MeshSyncAssets";
+        [SerializeField] string m_assetDir = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
         [Space(10)]
         [SerializeField] bool m_syncTransform = true;
@@ -165,6 +164,9 @@ namespace UTJ.MeshSync
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
+
+        [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
 
         Server m_server;
         Server.MessageHandler m_handler;
@@ -182,13 +184,30 @@ namespace UTJ.MeshSync
         [HideInInspector] [SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector] [SerializeField] int[] m_objIDTable_values;
         [HideInInspector] [SerializeField] int m_objIDSeed = 0;
-
-        Dictionary<GameObject, AnimationClip> m_animClipCache;
         #endregion
 
 
         #region Properties
         public static string version { get { return Server.version; } }
+        public int serverPort
+        {
+            get { return m_serverPort; }
+            set { m_serverPort = value; }
+        }
+        public string assetDir
+        {
+            get { return m_assetDir; }
+            set { m_assetDir = value; }
+        }
+        public string assetPath
+        {
+            get { return "Assets/" + m_assetDir; }
+        }
+        public Transform rootObject
+        {
+            get { return m_rootObject; }
+            set { m_rootObject = value; }
+        }
         public List<MaterialHolder> materialData { get { return m_materialList; } }
         public List<TextureHolder> textureData { get { return m_textureList; } }
         #endregion
@@ -201,7 +220,8 @@ namespace UTJ.MeshSync
         {
             var go = new GameObject();
             go.name = "MeshSyncServer";
-            go.AddComponent<MeshSyncServer>();
+            var mss = go.AddComponent<MeshSyncServer>();
+            mss.rootObject = go.GetComponent<Transform>();
             Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
         }
 #endif
@@ -605,17 +625,12 @@ namespace UTJ.MeshSync
             }
         }
 
-        public string assetPath
-        {
-            get { return "Assets/" + m_assetExportPath; }
-        }
-
         bool MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
             return Try(()=> {
                 if (!AssetDatabase.IsValidFolder(assetPath))
-                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+                    AssetDatabase.CreateFolder("Assets", m_assetDir);
             });
 #endif
         }
@@ -626,7 +641,7 @@ namespace UTJ.MeshSync
             return Try(() =>
             {
                 if (!AssetDatabase.IsValidFolder(assetPath))
-                    AssetDatabase.CreateFolder("Assets", m_assetExportPath);
+                    AssetDatabase.CreateFolder("Assets", m_assetDir);
                 AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
             });
 #endif
@@ -1647,6 +1662,8 @@ namespace UTJ.MeshSync
                     break;
             }
 
+            var animClipCache = new Dictionary<GameObject, AnimationClip>();
+
             int numAnimations = clipData.numAnimations;
             for (int ai = 0; ai < numAnimations; ++ai)
             {
@@ -1662,73 +1679,59 @@ namespace UTJ.MeshSync
                 while (root.parent != null && root.parent != m_rootObject)
                     root = root.parent;
 
-                Animator animator = null;
+                Animator animator = Misc.GetOrAddComponent<Animator>(root.gameObject);
+
+                // get or create animation clip
                 AnimationClip clip = null;
-
-                if (m_animClipCache == null)
-                    m_animClipCache = new Dictionary<GameObject, AnimationClip>();
-                else if (m_animClipCache.ContainsKey(root.gameObject))
-                    clip = m_animClipCache[root.gameObject];
-
-                animator = root.GetComponent<Animator>();
-                if (animator == null)
+                if (!animClipCache.TryGetValue(root.gameObject, out clip))
                 {
-                    animator = root.gameObject.AddComponent<Animator>();
-                }
-                else if (clip == null && animator.runtimeAnimatorController != null)
-                {
-                    var clips = animator.runtimeAnimatorController.animationClips;
-                    if (clips != null && clips.Length > 0)
+                    if (animator.runtimeAnimatorController != null)
                     {
-                        // note: this is extremely slow. m_animClipTable exists to cache the result and avoid frequent call.
-                        var tmp = animator.runtimeAnimatorController.animationClips[0];
-                        if (tmp != null)
+                        var clips = animator.runtimeAnimatorController.animationClips;
+                        if (clips != null && clips.Length > 0)
                         {
-                            clip = tmp;
-                            m_animClipCache[root.gameObject] = tmp;
+                            // note: this is extremely slow. animClipCache exists to cache the result and avoid frequent call.
+                            var tmp = animator.runtimeAnimatorController.animationClips[0];
+                            if (tmp != null)
+                            {
+                                clip = tmp;
+                                animClipCache[root.gameObject] = tmp;
+                            }
                         }
                     }
-                }
+                    if (clip == null)
+                    {
+                        clip = new AnimationClip();
+                        var clipName = clipData.name;
+                        if (clipName.Length > 0)
+                            clipName = root.name + "_" + clipName;
+                        else
+                            clipName = root.name;
 
-                if (clip == null)
-                {
-                    clip = new AnimationClip();
-                    var clipName = clipData.name;
-                    if(clipName.Length > 0)
-                        clipName = root.name + "_" + clipName;
-                    else
-                        clipName = root.name;
-
-                    var dstPath = assetPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
-                    CreateAsset(clip, dstPath);
-                    animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
-                    m_animClipCache[root.gameObject] = clip;
+                        var dstPath = assetPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
+                        CreateAsset(clip, dstPath);
+                        animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
+                        animClipCache[root.gameObject] = clip;
+                    }
                 }
 
                 var animPath = path.Replace("/" + root.name, "");
                 if (animPath.Length > 0 && animPath[0] == '/')
-                {
                     animPath = animPath.Remove(0, 1);
-                }
 
+                // get animation curves
                 data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, interpolation);
             }
 
-            if (m_animClipCache != null && m_animtionInterpolation == InterpolationType.Smooth)
-            {
-                // call EnsureQuaternionContinuity() to smooth rotation
-                foreach (var kvp in m_animClipCache)
+            // smooth rotation curves
+            if (m_animtionInterpolation == InterpolationType.Smooth)
+                foreach (var kvp in animClipCache)
                     kvp.Value.EnsureQuaternionContinuity();
-            }
 
+            // fire event
             if (onUpdateAnimation != null)
-            {
-                foreach (var kvp in m_animClipCache)
+                foreach (var kvp in animClipCache)
                     onUpdateAnimation.Invoke(kvp.Value, clipData);
-            }
-
-            // clear clip cache
-            m_animClipCache = null;
 #endif
         }
 
