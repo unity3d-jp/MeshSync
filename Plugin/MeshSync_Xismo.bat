@@ -1,0 +1,4 @@
+set XISMO_VERSION=190
+set XISMO_QT_VERSION=5.6.2
+set XISMO_QT_DIR=%cd%\External\Qt\%XISMO_QT_VERSION%\msvc2015_64
+MeshSync_Xismo.sln
