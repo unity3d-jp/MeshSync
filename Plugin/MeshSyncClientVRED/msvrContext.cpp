@@ -55,6 +55,7 @@ void msvrContext::send(bool force)
                 if (slot == ms::InvalidID)
                     return ms::InvalidID;
                 auto& rec = m_texture_records[mr.texture_slots[slot]];
+                rec.used = true;
                 return rec.dst ? rec.dst->id : ms::InvalidID;
             };
             {
@@ -77,6 +78,15 @@ void msvrContext::send(bool force)
         m_material_records.clear();
     }
 
+    // textures
+    for (auto& kvp : m_texture_records) {
+        auto& rec = kvp.second;
+        if (rec.dst && rec.dirty && rec.used) {
+            m_texture_manager.add(rec.dst);
+            rec.dirty = false;
+        }
+    }
+
     // camera
     if (m_settings.sync_camera) {
         if (!m_camera) {
@@ -90,14 +100,6 @@ void msvrContext::send(bool force)
         m_camera->far_plane = m_camera_far;
         m_camera_dirty = false;
         m_entity_manager.add(m_camera);
-    }
-
-    for (auto& kvp : m_texture_records) {
-        auto& rec = kvp.second;
-        if (rec.dst && rec.dirty && rec.used) {
-            m_texture_manager.add(rec.dst);
-            rec.dirty = false;
-        }
     }
 
 
@@ -552,6 +554,8 @@ void msvrContext::onUniform1f(GLint location, GLfloat v0)
         auto& mr = m_program_records[m_program_handle].mrec;
         if (prop->name == "bumpIntensity")
             mr.bump_scale = v0;
+        else if (prop->name == "opacity")
+            mr.diffuse_color.w = v0;
     }
 }
 
@@ -662,13 +666,6 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         }
     }
 
-    // textures
-    for (auto& h : m_texture_slots) {
-        auto& rec = m_texture_records[h];
-        if (rec.dst)
-            rec.used = true;
-    }
-
     // material
     {
         auto& prec = m_program_records[m_program_handle];
@@ -714,7 +711,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             for (size_t vi = 0; vi < num_vertices; ++vi) {
                 dst.points[vi] = vtx[vi].vertex;
                 dst.normals[vi] = vtx[vi].normal;
-                dst.uv0[vi] = float2{ 1.0f, 1.0f } -vtx[vi].uv;
+                dst.uv0[vi] = float2{ 1.0f, 1.0f } - vtx[vi].uv;
             }
 
             // convert indices

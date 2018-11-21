@@ -1012,6 +1012,22 @@ namespace UTJ.MeshSync
                     if (!dstmat.HasProperty(name))
                         continue;
 
+                    // todo: handle transparent
+                    //if (name == _Color)
+                    //{
+                    //    var color = prop.vectorValue;
+                    //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
+                    //    {
+                    //        dstmat.SetOverrideTag("RenderType", "Transparent");
+                    //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    //        dstmat.SetInt("_ZWrite", 0);
+                    //        dstmat.DisableKeyword("_ALPHATEST_ON");
+                    //        dstmat.DisableKeyword("_ALPHABLEND_ON");
+                    //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                    //    }
+                    //}
                     if (name == _EmissionColor)
                     {
                         if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
