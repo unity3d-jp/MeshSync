@@ -122,10 +122,10 @@ struct msvrSettings
 {
     ms::ClientSettings client_settings;
     float scale_factor = 100.0f;
-    bool auto_sync = false;
     bool sync_delete = true;
-    bool sync_camera = true;
     bool sync_textures = true;
+    bool sync_camera = true;
+    bool auto_sync = false;
     std::string camera_path = "/Main Camera";
 };
 
@@ -209,6 +209,8 @@ protected:
     GLuint m_program_handle = 0;
     std::map<GLuint, ProgramRecord> m_program_records;
     std::vector<MaterialRecord> m_material_records;
+
+    int m_draw_count = 0;
 
     bool m_camera_dirty = false;
     float3 m_camera_pos = float3::zero();

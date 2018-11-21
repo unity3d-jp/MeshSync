@@ -79,19 +79,20 @@ void msvrContext::send(bool force)
     }
 
     // textures
-    for (auto& kvp : m_texture_records) {
-        auto& rec = kvp.second;
-        if (rec.dst && rec.dirty && rec.used) {
-            m_texture_manager.add(rec.dst);
-            rec.dirty = false;
+    if (m_settings.sync_textures) {
+        for (auto& kvp : m_texture_records) {
+            auto& rec = kvp.second;
+            if (rec.dst && rec.dirty && rec.used) {
+                m_texture_manager.add(rec.dst);
+                rec.dirty = false;
+            }
         }
     }
 
     // camera
     if (m_settings.sync_camera) {
-        if (!m_camera) {
+        if (!m_camera)
             m_camera = ms::Camera::create();
-        }
         m_camera->path = m_settings.camera_path;
         m_camera->position = m_camera_pos;
         m_camera->rotation = m_camera_rot;
@@ -102,9 +103,8 @@ void msvrContext::send(bool force)
         m_entity_manager.add(m_camera);
     }
 
-
-    m_sender.on_prepare = [this]() {
-        // handle deleted objects
+    // handle deleted objects
+    if (m_settings.sync_delete) {
         for (auto h : m_meshes_deleted) {
             char path[128];
             sprintf(path, "/VREDMesh:ID[%08x]", h);
@@ -112,7 +112,15 @@ void msvrContext::send(bool force)
         }
         m_meshes_deleted.clear();
 
+        if (m_draw_count) {
+            m_material_ids.eraseStaleRecords();
+            m_material_manager.eraseStaleMaterials();
+        }
+    }
 
+    m_draw_count = 0;
+
+    m_sender.on_prepare = [this]() {
         auto& t = m_sender;
         t.client_settings = m_settings.client_settings;
         t.scene_settings.handedness = ms::Handedness::LeftZUp;
@@ -122,7 +130,9 @@ void msvrContext::send(bool force)
         t.materials = m_material_manager.getDirtyMaterials();
         t.transforms = m_entity_manager.getDirtyTransforms();
         t.geometries = m_entity_manager.getDirtyGeometries();
+
         t.deleted_entities = m_entity_manager.getDeleted();
+        t.deleted_materials = m_material_manager.getDeleted();
     };
     m_sender.on_succeeded = [this]() {
         m_material_ids.clearDirtyFlags();
@@ -308,13 +318,15 @@ void msvrContext::onGenBuffers(GLsizei n, GLuint *buffers)
 
 void msvrContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
 {
-    for (int i = 0; i < n; ++i) {
-        auto it = m_buffer_records.find(buffers[i]);
-        if (it != m_buffer_records.end()) {
-            auto& rec = it->second;
-            if (rec.dst_mesh)
-                m_entity_manager.erase(rec.dst_mesh->getIdentifier());
-            m_buffer_records.erase(it);
+    if (m_settings.sync_delete) {
+        for (int i = 0; i < n; ++i) {
+            auto it = m_buffer_records.find(buffers[i]);
+            if (it != m_buffer_records.end()) {
+                auto& rec = it->second;
+                if (rec.dst_mesh)
+                    m_entity_manager.erase(rec.dst_mesh->getIdentifier());
+                m_buffer_records.erase(it);
+            }
         }
     }
 }
@@ -736,6 +748,8 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     };
     task();
     vb->dirty = false;
+
+    ++m_draw_count;
 }
 
 void msvrContext::onFlush()
