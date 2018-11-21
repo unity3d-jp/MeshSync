@@ -12,6 +12,7 @@ public:
 
     ClientSettings client_settings;
     SceneSettings scene_settings;
+    std::vector<AssetPtr> assets;
     std::vector<TexturePtr> textures;
     std::vector<MaterialPtr> materials;
     std::vector<TransformPtr> transforms;

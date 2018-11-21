@@ -6,8 +6,8 @@ using UnityEngine.Rendering;
 namespace UTJ.MeshSync
 {
     [ExecuteInEditMode]
-    [RequireComponent(typeof(Points))]
-    public class PointsRenderer : MonoBehaviour
+    [RequireComponent(typeof(PointCache))]
+    public class PointCacheRenderer : MonoBehaviour
     {
         #region fields
         [SerializeField] Mesh m_mesh;
@@ -66,7 +66,7 @@ namespace UTJ.MeshSync
             return a != null && a.Length > 0;
         }
 
-        public void Flush(Points.Data data)
+        public void Flush(PointCache.Data data)
         {
             if (data == null || data.points == null || data.points.Length == 0)
                 return;
@@ -128,7 +128,7 @@ namespace UTJ.MeshSync
 
         void LateUpdate()
         {
-            var points = GetComponent<Points>();
+            var points = GetComponent<PointCache>();
             Flush(points.current);
         }
         #endregion

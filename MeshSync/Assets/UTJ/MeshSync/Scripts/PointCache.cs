@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 namespace UTJ.MeshSync
 {
     [ExecuteInEditMode]
-    public class Points : MonoBehaviour
+    public class PointCache : MonoBehaviour
     {
         [Serializable]
         public class Data

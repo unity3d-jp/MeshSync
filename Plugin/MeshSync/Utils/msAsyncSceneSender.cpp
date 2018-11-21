@@ -69,6 +69,18 @@ void AsyncSceneSender::send()
             goto cleanup;
     }
 
+    // assets
+    if (!assets.empty()) {
+        ms::SetMessage mes;
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.scene.settings = scene_settings;
+        mes.scene.assets = assets;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
+    }
+
     // textures
     if (!textures.empty()) {
         for (auto& tex : textures) {
@@ -155,6 +167,7 @@ cleanup:
     if (on_complete)
         on_complete();
 
+    assets.clear();
     textures.clear();
     materials.clear();
     transforms.clear();

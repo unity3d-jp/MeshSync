@@ -1356,7 +1356,7 @@ namespace UTJ.MeshSync
         {
             ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
 
-            var tpoints = typeof(Points);
+            var tpoints = typeof(PointCache);
             {
                 clip.SetCurve(path, tpoints, "m_time", null);
                 var curve = GenTimeCurve();

@@ -444,6 +444,7 @@ namespace UTJ.MeshSync
 
         void OnRecvSet(SetMessage mes)
         {
+            MakeSureAssetDirectoryExists();
             var scene = mes.scene;
 
             // assets
@@ -452,7 +453,6 @@ namespace UTJ.MeshSync
                 int numAssets = scene.numAssets;
                 if (numAssets > 0)
                 {
-                    MakeSureAssetDirectoryExists();
                     for (int i = 0; i < numAssets; ++i)
                     {
                         var asset = scene.GetAsset(i);
@@ -625,7 +625,7 @@ namespace UTJ.MeshSync
             }
         }
 
-        bool MakeSureAssetDirectoryExists()
+        public bool MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
             return Try(()=> {
@@ -640,8 +640,6 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             return Try(() =>
             {
-                if (!AssetDatabase.IsValidFolder(assetPath))
-                    AssetDatabase.CreateFolder("Assets", m_assetDir);
                 AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
             });
 #endif
@@ -821,7 +819,6 @@ namespace UTJ.MeshSync
         #region ReceiveScene
         void UpdateTextures(SceneData scene)
         {
-            MakeSureAssetDirectoryExists();
 #if UNITY_EDITOR
             string dstDir = assetPath;
 #endif
@@ -1351,7 +1348,7 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
-        Points UpdatePoints(PointsData data)
+        PointCache UpdatePoints(PointsData data)
         {
             var trans = UpdateTransform(data.transform);
             if (trans == null || !m_syncPoints)
@@ -1364,10 +1361,10 @@ namespace UTJ.MeshSync
             var path = data_trans.path;
             var go = trans.gameObject;
 
-            var pr = go.GetComponent<PointsRenderer>();
+            var pr = go.GetComponent<PointCacheRenderer>();
             if (pr == null)
-                pr = go.AddComponent<PointsRenderer>();
-            var pts = go.GetComponent<Points>();
+                pr = go.AddComponent<PointCacheRenderer>();
+            var pts = go.GetComponent<PointCache>();
 
             int numData = data.numData;
             if (numData == 1)
@@ -1384,7 +1381,7 @@ namespace UTJ.MeshSync
             return pts;
         }
 
-        void ReadPointsData(PointsCacheData src, Points.Data dst)
+        void ReadPointsData(PointsCacheData src, PointCache.Data dst)
         {
             dst.Clear();
 
@@ -1548,7 +1545,7 @@ namespace UTJ.MeshSync
             var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
             if (srcsmr != null)
             {
-                var dstpr = dstgo.GetComponent<PointsRenderer>();
+                var dstpr = dstgo.GetComponent<PointCacheRenderer>();
                 if (dstpr != null)
                 {
                     dstpr.sharedMesh = srcsmr.sharedMesh;
@@ -2025,6 +2022,7 @@ namespace UTJ.MeshSync
             if (m_materialList == null)
                 return;
 
+            MakeSureAssetDirectoryExists();
             foreach (var m in m_materialList)
             {
                 var material = m.material;
@@ -2038,7 +2036,7 @@ namespace UTJ.MeshSync
             }
         }
 
-        public void ExportMeshes(GameObject go)
+        void ExportMeshes(GameObject go)
         {
             if(go == null)
                 return;
@@ -2051,7 +2049,6 @@ namespace UTJ.MeshSync
             if (mesh == null || AssetDatabase.GetAssetPath(mesh) == "")
                 return;
 
-            MakeSureAssetDirectoryExists();
             var dstPath = assetPath + "/" + mesh.name + ".asset";
             CreateAsset(mesh, dstPath);
             if (m_logging)
@@ -2068,6 +2065,8 @@ namespace UTJ.MeshSync
         }
         public void ExportMeshes()
         {
+            MakeSureAssetDirectoryExists();
+
             // export client meshes
             foreach (var kvp in m_clientObjects)
             {
