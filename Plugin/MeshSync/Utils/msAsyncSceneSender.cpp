@@ -55,6 +55,7 @@ void AsyncSceneSender::send()
     std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
 
+    bool succeeded = true;
     ms::Client client(client_settings);
 
     // notify scene begin
@@ -63,7 +64,9 @@ void AsyncSceneSender::send()
         mes.session_id = session_id;
         mes.message_id = message_count++;
         mes.type = ms::FenceMessage::FenceType::SceneBegin;
-        client.send(mes);
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // textures
@@ -74,9 +77,10 @@ void AsyncSceneSender::send()
             mes.message_id = message_count++;
             mes.scene.settings = scene_settings;
             mes.scene.textures = { tex };
-            client.send(mes);
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
         };
-        textures.clear();
     }
 
     // materials and non-geometry objects
@@ -87,11 +91,9 @@ void AsyncSceneSender::send()
         mes.scene.settings = scene_settings;
         mes.scene.materials = materials;
         mes.scene.objects = transforms;
-        client.send(mes);
-
-        textures.clear();
-        materials.clear();
-        transforms.clear();
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // geometries
@@ -102,9 +104,10 @@ void AsyncSceneSender::send()
             mes.message_id = message_count++;
             mes.scene.settings = scene_settings;
             mes.scene.objects = { geom };
-            client.send(mes);
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
         };
-        geometries.clear();
     }
 
     // animations
@@ -114,9 +117,9 @@ void AsyncSceneSender::send()
         mes.message_id = message_count++;
         mes.scene.settings = scene_settings;
         mes.scene.animations = animations;
-        client.send(mes);
-
-        animations.clear();
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // deleted
@@ -126,10 +129,9 @@ void AsyncSceneSender::send()
         mes.message_id = message_count++;
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
-        client.send(mes);
-
-        deleted_entities.clear();
-        deleted_materials.clear();
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // notify scene end
@@ -138,17 +140,28 @@ void AsyncSceneSender::send()
         mes.session_id = session_id;
         mes.message_id = message_count++;
         mes.type = ms::FenceMessage::FenceType::SceneEnd;
-        bool succeeded = client.send(mes);
-
-        if (succeeded) {
-            if (on_succeeded)
-                on_succeeded();
-        }
-        else {
-            if (on_failed)
-                on_failed();
-        }
+        succeeded = succeeded && client.send(mes);
     }
+
+cleanup:
+    if (succeeded) {
+        if (on_success)
+            on_success();
+    }
+    else {
+        if (on_error)
+            on_error();
+    }
+    if (on_complete)
+        on_complete();
+
+    textures.clear();
+    materials.clear();
+    transforms.clear();
+    geometries.clear();
+    animations.clear();
+    deleted_entities.clear();
+    deleted_materials.clear();
 }
 
 } // namespace ms

@@ -136,7 +136,7 @@ void msmbDevice::kickAsyncSend()
         t.deleted_materials = m_material_manager.getDeleted();
         t.deleted_entities = m_entity_manager.getDeleted();
     };
-    m_sender.on_succeeded = [this]() {
+    m_sender.on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();

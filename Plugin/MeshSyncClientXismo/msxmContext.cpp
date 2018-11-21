@@ -262,7 +262,7 @@ void msxmContext::send(bool force)
         t.geometries = m_entity_manager.getDirtyGeometries();
         t.deleted_entities = m_entity_manager.getDeleted();
     };
-    m_sender.on_succeeded = [this]() {
+    m_sender.on_success = [this]() {
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();

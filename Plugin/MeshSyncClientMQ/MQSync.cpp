@@ -254,7 +254,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
         t.deleted_materials = m_material_manager.getDeleted();
         t.deleted_entities = m_entity_manager.getDeleted();
     };
-    m_send_meshes.on_succeeded = [this]() {
+    m_send_meshes.on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();

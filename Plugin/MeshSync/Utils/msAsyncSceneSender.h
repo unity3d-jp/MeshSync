@@ -21,7 +21,7 @@ public:
     std::vector<Identifier> deleted_entities;
     std::vector<Identifier> deleted_materials;
 
-    std::function<void()> on_prepare, on_succeeded, on_failed;
+    std::function<void()> on_prepare, on_success, on_error, on_complete;
 
     AsyncSceneSender(int session_id = InvalidID);
     ~AsyncSceneSender();

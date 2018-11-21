@@ -1134,7 +1134,7 @@ void msbContext::kickAsyncSend()
             for (auto& obj : t.animations) { obj->applyScaleFactor(scale_factor); }
         }
     };
-    m_sender.on_succeeded = [this]() {
+    m_sender.on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();

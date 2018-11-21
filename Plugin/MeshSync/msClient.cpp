@@ -63,7 +63,7 @@ bool Client::send(const SetMessage& mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
-        return true;
+        return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {
         return false;
@@ -88,7 +88,7 @@ bool Client::send(const DeleteMessage& mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
-        return true;
+        return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {
         return false;
@@ -113,7 +113,7 @@ bool Client::send(const FenceMessage & mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
-        return true;
+        return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {
         return false;
