@@ -100,7 +100,6 @@ struct ProgramRecord
 
 struct DrawcallRecord
 {
-    int draw_count = 0;
     int material_id = 0;
     ms::MeshPtr mesh;
 
@@ -116,13 +115,13 @@ struct msvrSettings
 {
     ms::ClientSettings client_settings;
     float scale_factor = 100.0f;
+    bool flip_u = false;
+    bool flip_v = false;
+    bool make_both_sided  = false;
     bool sync_delete = true;
     bool sync_textures = true;
     bool sync_camera = true;
     bool auto_sync = false;
-    bool flip_u = false;
-    bool flip_v = false;
-    bool make_both_sided  = false;
     std::string camera_path = "/Main Camera";
 };
 

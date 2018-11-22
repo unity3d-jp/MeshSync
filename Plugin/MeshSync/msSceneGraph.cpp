@@ -930,47 +930,92 @@ void Mesh::makeBothSided()
     size_t num_faces = counts.size();
     size_t num_indices = indices.size();
 
-    counts.resize(num_faces * 2);
-    indices.resize(num_indices * 2);
+    size_t num_back_faces = 0;
+    size_t num_back_indices = 0;
+    {
+        counts.resize(num_faces * 2);
+        indices.resize(num_indices * 2);
 
-    const int *scounts = counts.data();
-    const int *sindices = indices.data();
-    int *dcounts = counts.data() + num_faces;
-    int *dindices = indices.data() + num_indices;
+        const int *scounts = counts.data();
+        const int *sindices = indices.data();
+        int *dcounts = counts.data() + num_faces;
+        int *dindices = indices.data() + num_indices;
 
-    size_t written_faces = 0;
-    size_t written_indice = 0;
-    for (int fi = 0; fi < num_faces; ++fi) {
-        int count = scounts[fi];
-        if (count < 3) {
-            sindices += count;
-            continue;
-        }
-
-        dcounts[written_faces++] = scounts[fi];
-        for (int ci = 0; ci < count; ++ci)
-            dindices[ci] = sindices[count - ci - 1];
-        dindices += count;
-        sindices += count;
-        written_indice += count;
-    }
-    counts.resize(num_faces + written_faces);
-    indices.resize(num_indices + written_indice);
-
-    if (!material_ids.empty()) {
-        material_ids.resize(num_faces * 2);
-        const int *smids = material_ids.data();
-        int *dmids = material_ids.data() + num_faces;
-        int w = 0;
         for (int fi = 0; fi < num_faces; ++fi) {
-            int count = scounts[fi];
-            if (count < 3)
+            int count = counts[fi];
+            if (count < 3) {
+                scounts++;
+                sindices += count;
                 continue;
+            }
 
-            dmids[w++] = smids[fi];
+            *(dcounts++) = *(scounts++);
+            for (int ci = 0; ci < count; ++ci)
+                dindices[ci] = sindices[count - ci - 1];
+            dindices += count;
+            sindices += count;
+
+            num_back_faces++;
+            num_back_indices += count;
         }
-        material_ids.resize(num_faces + w);
+        counts.resize(num_faces + num_back_faces);
+        indices.resize(num_indices + num_back_indices);
     }
+
+    auto copy_face_elements = [this, num_faces, num_indices, num_back_faces](auto& attr) -> bool {
+        if (attr.size() != num_faces)
+            return false;
+
+        attr.resize(num_faces + num_back_faces);
+        const auto *src = attr.data();
+        auto *dst = attr.data() + num_faces;
+        for (int fi = 0; fi < num_faces; ++fi) {
+            int count = counts[fi];
+            if (count < 3) {
+                ++src;
+                continue;
+            }
+            *(dst++) = *(src++);
+        }
+        return true;
+    };
+
+    auto copy_index_elements = [this, num_faces, num_indices, num_back_indices](auto& attr) -> bool {
+        if (attr.size() != num_indices)
+            return false;
+
+        attr.resize(num_indices + num_back_indices);
+        const auto *src = attr.data();
+        auto *dst = attr.data() + num_indices;
+        for (int fi = 0; fi < num_faces; ++fi) {
+            int count = counts[fi];
+            if (count < 3) {
+                src += count;
+                continue;
+            }
+
+            for (int ci = 0; ci < count; ++ci)
+                dst[ci] = src[count - ci - 1];
+            dst += count;
+            src += count;
+        }
+        return true;
+    };
+
+    copy_face_elements(material_ids);
+    if (copy_index_elements(normals)) {
+        float3 *n = &normals[num_indices];
+        for (size_t ii = 0; ii < num_back_indices; ++ii)
+            n[ii] *= -1.0f;
+    }
+    if (copy_index_elements(tangents)) {
+        float4 *n = &tangents[num_indices];
+        for (size_t ii = 0; ii < num_back_indices; ++ii)
+            (float3&)n[ii] *= -1.0f;
+    }
+    copy_index_elements(uv0);
+    copy_index_elements(uv1);
+    copy_index_elements(colors);
 }
 
 void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)

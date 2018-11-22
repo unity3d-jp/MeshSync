@@ -107,6 +107,11 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
         ck_both_sided->setCheckState(Qt::Checked);
     layout->addWidget(ck_both_sided, iy++, 0, 1, 3);
 
+    auto ck_delete = new QCheckBox("Sync Delete");
+    if (settings.sync_delete)
+        ck_delete->setCheckState(Qt::Checked);
+    layout->addWidget(ck_delete, iy++, 0, 1, 3);
+
     auto ck_textures = new QCheckBox("Sync Textures");
     if (settings.sync_textures)
         ck_textures->setCheckState(Qt::Checked);
@@ -120,11 +125,6 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     layout->addWidget(new QLabel("Camera Path"), iy, 0);
     auto ed_camera_path = new QLineEdit(settings.camera_path.c_str());
     layout->addWidget(ed_camera_path, iy++, 1);
-
-    //auto ck_delete = new QCheckBox("Sync Delete");
-    //if (settings.sync_delete)
-    //    ck_delete->setCheckState(Qt::Checked);
-    //layout->addWidget(ck_delete, iy++, 0, 1, 3);
 
     auto ck_auto_sync = new QCheckBox("Auto Sync");
     if (settings.auto_sync)
@@ -144,10 +144,10 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     connect(ck_flip_u, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleFlipU);
     connect(ck_flip_v, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleFlipV);
     connect(ck_both_sided, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleBothSided);
+    connect(ck_delete, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncDelete);
     connect(ck_textures, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncTextures);
     connect(ck_camera, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncCamera);
     connect(ed_camera_path, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditCameraPath);
-    //connect(ck_delete, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncDelete);
     connect(ck_auto_sync, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleAutoSync);
     connect(bu_manual_sync, &QPushButton::clicked, this, &msvrSettingsWidget::onClickManualSync);
 

@@ -72,10 +72,15 @@ void msvrContext::send(bool force)
         m_entity_manager.makeDirtyAll();
     }
 
-    for (auto& kvp : m_drawcalls) {
-        auto& rec = kvp.second;
-        if (rec.mesh)
-            m_entity_manager.add(rec.mesh);
+    // textures
+    if (m_settings.sync_textures) {
+        for (auto& kvp : m_texture_records) {
+            auto& rec = kvp.second;
+            if (rec.dst && rec.dirty && rec.used) {
+                m_texture_manager.add(rec.dst);
+                rec.dirty = false;
+            }
+        }
     }
 
     // build material list
@@ -107,17 +112,6 @@ void msvrContext::send(bool force)
         m_material_records.clear();
     }
 
-    // textures
-    if (m_settings.sync_textures) {
-        for (auto& kvp : m_texture_records) {
-            auto& rec = kvp.second;
-            if (rec.dst && rec.dirty && rec.used) {
-                m_texture_manager.add(rec.dst);
-                rec.dirty = false;
-            }
-        }
-    }
-
     // camera
     if (m_settings.sync_camera) {
         if (!m_camera)
@@ -130,6 +124,13 @@ void msvrContext::send(bool force)
         m_camera->far_plane = m_camera_far;
         m_camera_dirty = false;
         m_entity_manager.add(m_camera);
+    }
+
+    // meshes
+    for (auto& kvp : m_drawcalls) {
+        auto& rec = kvp.second;
+        if (rec.mesh)
+            m_entity_manager.add(rec.mesh);
     }
 
     // handle deleted objects
@@ -662,17 +663,10 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     if (!ib || !vb || vb->stride != sizeof(vr_vertex))
         return;
 
-    DrawcallRecord *dr = nullptr;
-    {
-        DrawcallRecord t;
-        t.vb = m_vb_handle;
-        t.ib = m_ib_handle;
-        t.ub_object = m_ub_handles[2];
-        dr = &m_drawcalls[t.hash()];
-        if (!dr->mesh)
-            *dr = t;
-    }
-    dr->draw_count++;
+    auto& camera_buf = m_buffer_records[m_ub_handles[1]];
+    auto& obj_buf = m_buffer_records[m_ub_handles[2]];
+    if (camera_buf.data.size() != 992 || obj_buf.data.size() != 560)
+        return;
 
     // black list
     {
@@ -689,13 +683,19 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         }
     }
 
+    DrawcallRecord *dr = nullptr;
+    {
+        DrawcallRecord t;
+        t.vb = m_vb_handle;
+        t.ib = m_ib_handle;
+        t.ub_object = m_ub_handles[2];
+        dr = &m_drawcalls[t.hash()];
+        if (!dr->mesh)
+            *dr = t;
+    }
+
     vb->valid_vertex_buffer = true;
     ib->valid_index_buffer = true;
-
-    auto& camera_buf = m_buffer_records[m_ub_handles[1]];
-    auto& obj_buf = m_buffer_records[m_ub_handles[2]];
-    if (camera_buf.data.size() != 992 || obj_buf.data.size() != 560)
-        return;
 
     // camera
     {
@@ -828,10 +828,6 @@ void msvrContext::onFlush()
         auto& rec = kvp.second;
         if (rec.valid_vertex_buffer)
             rec.dirty = false;
-    }
-    for (auto& kvp : m_drawcalls) {
-        auto& rec = kvp.second;
-        rec.draw_count = 0;
     }
 }
 

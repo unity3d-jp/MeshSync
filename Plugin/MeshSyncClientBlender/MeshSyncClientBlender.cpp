@@ -49,6 +49,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_colors,
                 [](const msbContext& self) { return self.getSettings().sync_colors; },
                 [](msbContext& self, bool v) { self.getSettings().sync_colors = v; })
+            BindProperty(make_both_sided,
+                [](const msbContext& self) { return self.getSettings().make_both_sided; },
+                [](msbContext& self, bool v) { self.getSettings().make_both_sided = v; })
             BindProperty(bake_modifiers,
                 [](const msbContext& self) { return self.getSettings().bake_modifiers; },
                 [](msbContext& self, bool v) { self.getSettings().bake_modifiers = v; })

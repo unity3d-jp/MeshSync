@@ -45,6 +45,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
             b.prop(scene, 'meshsync_sync_uvs')
             b.prop(scene, 'meshsync_sync_colors')
             b.prop(scene, 'meshsync_convert_to_mesh')
+            b.prop(scene, 'meshsync_make_both_sided')
             b.prop(scene, 'meshsync_bake_modifiers')
         layout.prop(scene, 'meshsync_sync_bones')
         layout.prop(scene, 'meshsync_sync_blendshapes')

@@ -14,6 +14,7 @@ def msb_apply_scene_settings(self = None, context = None):
     ctx.sync_normals = scene.meshsync_sync_normals
     ctx.sync_uvs = scene.meshsync_sync_uvs
     ctx.sync_colors = scene.meshsync_sync_colors
+    ctx.make_both_sided = scene.meshsync_make_both_sided
     ctx.bake_modifiers = scene.meshsync_bake_modifiers
     ctx.convert_to_mesh = scene.meshsync_convert_to_mesh
     ctx.sync_bones = scene.meshsync_sync_bones
@@ -49,6 +50,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = True, name = "Colors", update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_make_both_sided = bpy.props.BoolProperty(default = False, name = "Make Both Sided", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(default = False, name = "Bake Modifiers", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_convert_to_mesh = bpy.props.BoolProperty(default = True, name = "Convert To Mesh", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Sync Bones", update = msb_on_scene_settings_updated)
