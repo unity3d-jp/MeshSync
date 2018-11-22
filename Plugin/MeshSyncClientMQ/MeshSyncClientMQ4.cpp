@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "MeshSyncClientMQ4.h"
-#include "DialogMQ4.h"
+#include "msmqUI4.h"
 
 static MeshSyncClientPlugin g_plugin;
 

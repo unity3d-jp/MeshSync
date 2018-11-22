@@ -1,12 +1,5 @@
 #pragma once
 
-// assume Windows7 or later
-#define WINVER          0x0601
-#define _WIN32_WINNT    0x0601
-#define _WIN32_IE       0x0601
-#define _RICHEDIT_VER   0x0601
-#define NOMINMAX
-
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlframe.h>

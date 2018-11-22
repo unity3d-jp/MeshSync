@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "DialogMQ4.h"
+#include "msmqUI4.h"
 
 
 SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : MQWindow(parent)

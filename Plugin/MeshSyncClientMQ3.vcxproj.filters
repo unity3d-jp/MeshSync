@@ -19,11 +19,11 @@
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ\Dialog\MainDlg.cpp">
-      <Filter>MeshSyncClientMQ\Dialog</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp">
       <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\msmqUI3\MainDlg.cpp">
+      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -42,17 +42,20 @@
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ3.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ\Dialog\resource.h">
-      <Filter>MeshSyncClientMQ\Dialog</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ\Dialog\stdafx.h">
-      <Filter>MeshSyncClientMQ\Dialog</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ\Dialog\MainDlg.h">
-      <Filter>MeshSyncClientMQ\Dialog</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\msmqContext.h">
       <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\msmqUtils.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\msmqUI3\resource.h">
+      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\msmqUI3\stdafx.h">
+      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\msmqUI3\MainDlg.h">
+      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -65,13 +68,18 @@
     <Filter Include="MeshSyncClientMQ">
       <UniqueIdentifier>{cda89d94-97e2-493d-aeca-b01bf3373769}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MeshSyncClientMQ\Dialog">
-      <UniqueIdentifier>{ebe265d8-6802-4bce-9a6c-1b26089e30bb}</UniqueIdentifier>
+    <Filter Include="MeshSyncClientMQ\msmqUI3">
+      <UniqueIdentifier>{803cba93-f355-4c3e-ba08-88da26602480}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MeshSyncClientMQ\Dialog\Dialog.rc">
-      <Filter>MeshSyncClientMQ\Dialog</Filter>
+    <None Include="MeshSyncClientMQ\msmqUI3\Dialog.aps">
+      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MeshSyncClientMQ\msmqUI3\Dialog.rc">
+      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>

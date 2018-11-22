@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "msmqContext.h"
-#include "MQUtils.h"
+#include "msmqUtils.h"
 
 
 msmqContext::msmqContext(MQBasePlugin *plugin)

@@ -1,9 +1,6 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include "pch.h"
 #include "stdafx.h"
-#include <string>
-#include <memory>
 #include "MainDlg.h"
-#include "../pch.h"
 #include "../MeshSyncClientMQ3.h"
 
 CAppModule _Module;

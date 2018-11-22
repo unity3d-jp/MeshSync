@@ -40,9 +40,9 @@
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ\DialogMQ4.cpp" />
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqUI4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk4/MQBasePlugin.h" />
@@ -51,10 +51,10 @@
     <ClInclude Include="External/mqsdk4/MQPlugin.h" />
     <ClInclude Include="External\mqsdk4\MQBoneManager.h" />
     <ClInclude Include="MeshSyncClientMQ/pch.h" />
-    <ClInclude Include="MeshSyncClientMQ\DialogMQ4.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ4.h" />
-    <ClInclude Include="MeshSyncClientMQ\MQUtils.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqContext.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqUI4.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
