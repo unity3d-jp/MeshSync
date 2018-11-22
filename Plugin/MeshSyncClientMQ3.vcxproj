@@ -30,7 +30,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp" />
-    <ClCompile Include="MeshSyncClientMQ\MQSync.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk3/MQBasePlugin.h" />
@@ -41,7 +41,7 @@
     <ClInclude Include="MeshSyncClientMQ\Dialog\resource.h" />
     <ClInclude Include="MeshSyncClientMQ\Dialog\stdafx.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ3.h" />
-    <ClInclude Include="MeshSyncClientMQ\MQSync.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">

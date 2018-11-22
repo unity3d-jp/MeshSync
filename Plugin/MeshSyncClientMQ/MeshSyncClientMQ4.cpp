@@ -295,20 +295,20 @@ MQBasePlugin *GetPluginClass()
     return &g_plugin;
 }
 
-MQSync& MeshSyncClientPlugin::getSync()
+msmqContext& MeshSyncClientPlugin::getContext()
 {
     return m_sync;
 }
 
 void MeshSyncClientPlugin::SendAll(bool only_when_autosync)
 {
-    if (!only_when_autosync || m_sync.getAutoSync())
+    if (!only_when_autosync || m_sync.getSettings().auto_sync)
         Execute(&MeshSyncClientPlugin::SendAllImpl);
 }
 
 void MeshSyncClientPlugin::SendCamera(bool only_when_autosync)
 {
-    if (!only_when_autosync || m_sync.getAutoSync())
+    if (!only_when_autosync || m_sync.getSettings().auto_sync)
         Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 

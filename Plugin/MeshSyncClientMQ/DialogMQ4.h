@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MQWidget.h"
+#include "MeshSyncClientMQ4.h"
 
 class MeshSyncClientPlugin;
 
@@ -15,6 +16,7 @@ public:
     BOOL OnScaleChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnMakeBothSidedChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncTexturesChange(MQWidgetBase *sender, MQDocument doc);
@@ -28,11 +30,14 @@ public:
     BOOL OnImportClicked(MQWidgetBase *sender, MQDocument doc);
 
 private:
+    msmqSettings& getSettings();
+
     MQEdit *m_edit_server = nullptr;
     MQEdit *m_edit_port = nullptr;
     MQEdit *m_edit_scale = nullptr;
     MQCheckBox *m_check_normals = nullptr;
     MQCheckBox *m_check_vcolor = nullptr;
+    MQCheckBox *m_check_both_sided = nullptr;
 
     MQCheckBox *m_check_bones = nullptr;
     MQFrame *m_frame_poses = nullptr;

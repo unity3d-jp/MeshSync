@@ -1,5 +1,4 @@
-﻿#include "MeshSyncClientMQ4.h"
-#include "pch.h"
+﻿#include "pch.h"
 #include "MeshSyncClientMQ3.h"
 
 static MeshSyncClientPlugin g_plugin;
@@ -228,7 +227,7 @@ MQBasePlugin *GetPluginClass()
 
 
 
-MQSync& MeshSyncClientPlugin::getSync()
+msmqContext& MeshSyncClientPlugin::getContext()
 {
     return m_sync;
 }
@@ -239,13 +238,13 @@ bool& MeshSyncClientPlugin::getActive()
 
 void MeshSyncClientPlugin::SendAll(bool only_when_autosync)
 {
-    if (!only_when_autosync || m_sync.getAutoSync())
+    if (!only_when_autosync || m_sync.getSettings().auto_sync)
         Execute(&MeshSyncClientPlugin::SendAllImpl);
 }
 
 void MeshSyncClientPlugin::SendCamera(bool only_when_autosync)
 {
-    if (!only_when_autosync || m_sync.getAutoSync())
+    if (!only_when_autosync || m_sync.getSettings().auto_sync)
         Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 
@@ -271,62 +270,4 @@ bool MeshSyncClientPlugin::ImportImpl(MQDocument doc)
 {
     m_sync.importMeshes(doc);
     return true;
-}
-
-
-std::string& GetServer(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getClientSettings().server;
-}
-uint16_t& GetPort(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getClientSettings().port;
-}
-bool& GetAutoSync(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getAutoSync();
-}
-bool& GetSyncVertexColor(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getSyncVertexColor();
-}
-bool& GetSyncTextures(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getSyncTextures();
-}
-bool& GetSyncCamera(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getSyncCamera();
-}
-std::string& GetCameraPath(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getCameraPath();
-}
-bool& GetBakeSkin(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getBakeSkin();
-}
-bool& GetBakeCloth(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getBakeCloth();
-}
-float& GetScaleFactor(MeshSyncClientPlugin *plugin)
-{
-    return plugin->getSync().getScaleFactor();
-}
-void SendAll(MeshSyncClientPlugin *plugin, bool only_when_autosync)
-{
-    plugin->SendAll(only_when_autosync);
-}
-void SendCamera(MeshSyncClientPlugin *plugin, bool only_when_autosync)
-{
-    plugin->SendCamera(only_when_autosync);
-}
-void Import(MeshSyncClientPlugin *plugin)
-{
-    plugin->Import();
-}
-void CloseWindow(MeshSyncClientPlugin *plugin)
-{
-    plugin->WindowClose();
 }

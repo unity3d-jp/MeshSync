@@ -25,11 +25,11 @@
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ\MQSync.cpp">
-      <Filter>MeshSyncClientMQ</Filter>
-    </ClCompile>
     <ClCompile Include="External\mqsdk4\MQBoneManager.cpp">
       <Filter>External\mqsdk4</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -54,13 +54,13 @@
     <ClInclude Include="MeshSyncClientMQ\DialogMQ4.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMQ\MQSync.h">
-      <Filter>MeshSyncClientMQ</Filter>
-    </ClInclude>
     <ClInclude Include="External\mqsdk4\MQBoneManager.h">
       <Filter>External\mqsdk4</Filter>
     </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\MQUtils.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\msmqContext.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
   </ItemGroup>

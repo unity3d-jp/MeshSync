@@ -5,23 +5,32 @@
 
 using namespace mu;
 
-class MQSync
+struct msmqSettings
+{
+    ms::ClientSettings client_settings;
+
+    float scale_factor = 200.0f;
+    std::string host_camera_path = "/Main Camera";
+    bool auto_sync = false;
+    bool sync_normals = true;
+    bool sync_vertex_color = true;
+    bool make_both_sided = false;
+    bool sync_camera = true;
+    bool sync_bones = true;
+    bool sync_poses = true;
+    bool sync_textures = true;
+
+    bool bake_skin = false;
+    bool bake_cloth = false;
+};
+
+class msmqContext
 {
 public:
-    MQSync(MQBasePlugin *plugin);
-    ~MQSync();
-    ms::ClientSettings& getClientSettings();
-    std::string& getCameraPath();
-    float& getScaleFactor();
-    bool& getAutoSync();
-    bool& getSyncNormals();
-    bool& getSyncVertexColor();
-    bool& getSyncCamera();
-    bool& getSyncBones();
-    bool& getSyncPoses();
-    bool& getSyncTextures();
-    bool& getBakeSkin();
-    bool& getBakeCloth();
+    msmqContext(MQBasePlugin *plugin);
+    ~msmqContext();
+
+    msmqSettings& getSettings();
 
     void clear();
     void flushPendingRequests(MQDocument doc);
@@ -58,19 +67,8 @@ private:
 
 
     MQBasePlugin *m_plugin = nullptr;
-    ms::ClientSettings m_settings;
-    float m_scale_factor = 200.0f;
-    std::string m_host_camera_path = "/Main Camera";
-    bool m_auto_sync = false;
-    bool m_sync_normals = true;
-    bool m_sync_vertex_color = true;
-    bool m_sync_camera = true;
-    bool m_sync_bones = true;
-    bool m_sync_poses = true;
-    bool m_sync_textures = true;
 
-    bool m_bake_skin = false;
-    bool m_bake_cloth = false;
+    msmqSettings m_settings;
 
     HostMeshes m_host_meshes;
 

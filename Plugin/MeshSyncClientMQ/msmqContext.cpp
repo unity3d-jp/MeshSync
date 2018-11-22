@@ -1,34 +1,25 @@
 #include "pch.h"
-#include "MQSync.h"
+#include "msmqContext.h"
 #include "MQUtils.h"
 
 
-MQSync::MQSync(MQBasePlugin *plugin)
+msmqContext::msmqContext(MQBasePlugin *plugin)
 {
     m_plugin = plugin;
 }
 
-MQSync::~MQSync()
+msmqContext::~msmqContext()
 {
     m_send_meshes.wait();
     m_send_camera.wait();
 }
 
-ms::ClientSettings& MQSync::getClientSettings() { return m_settings; }
-std::string& MQSync::getCameraPath() { return m_host_camera_path; }
-float& MQSync::getScaleFactor() { return m_scale_factor; }
-bool& MQSync::getAutoSync() { return m_auto_sync; }
-bool& MQSync::getSyncNormals() { return m_sync_normals; }
-bool & MQSync::getSyncVertexColor() { return m_sync_vertex_color; }
-bool& MQSync::getSyncCamera() { return m_sync_camera; }
-bool& MQSync::getSyncBones() { return m_sync_bones; }
-bool& MQSync::getSyncPoses() { return m_sync_poses; }
-bool& MQSync::getSyncTextures() { return m_sync_textures; }
+msmqSettings& msmqContext::getSettings()
+{
+    return m_settings;
+}
 
-bool& MQSync::getBakeSkin() { return m_bake_skin; }
-bool& MQSync::getBakeCloth() { return m_bake_cloth; }
-
-void MQSync::clear()
+void msmqContext::clear()
 {
     m_obj_records.clear();
     m_bone_records.clear();
@@ -41,17 +32,17 @@ void MQSync::clear()
     m_pending_send_meshes = false;
 }
 
-void MQSync::flushPendingRequests(MQDocument doc)
+void msmqContext::flushPendingRequests(MQDocument doc)
 {
     if (m_pending_send_meshes) {
         sendMeshes(doc, true);
     }
 }
 
-void MQSync::sendMeshes(MQDocument doc, bool force)
+void msmqContext::sendMeshes(MQDocument doc, bool force)
 {
     if (!force) {
-        if (!m_auto_sync)
+        if (!m_settings.auto_sync)
             return;
     }
 
@@ -88,7 +79,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
             auto& stdmat = ms::AsStandardMaterial(*dst);
             stdmat.setColor(to_float4(src->GetColor()));
-            if (m_sync_textures) {
+            if (m_settings.sync_textures) {
                 src->GetTextureName(buf, sizeof(buf));
                 stdmat.setColorMap(exportTexture(buf, ms::TextureType::Default));
             }
@@ -125,7 +116,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     }
 
 #if MQPLUGIN_VERSION >= 0x0464
-    if (m_sync_bones) {
+    if (m_settings.sync_bones) {
         // gather bone data
         MQBoneManager bone_manager(m_plugin, doc);
 
@@ -155,7 +146,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
                 brec.world_pos = (const float3&)base_pos;
                 brec.bindpose = mu::invert(mu::transform(brec.world_pos, quatf::identity(), float3::one()));
 
-                if (m_sync_poses) {
+                if (m_settings.sync_poses) {
                     MQMatrix rot;
                     bone_manager.GetRotationMatrix(bid, rot);
                     brec.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
@@ -242,9 +233,9 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
 
     m_send_meshes.on_prepare = [this]() {
         auto& t = m_send_meshes;
-        t.client_settings = m_settings;
+        t.client_settings = m_settings.client_settings;
         t.scene_settings.handedness = ms::Handedness::Right;
-        t.scene_settings.scale_factor = m_scale_factor;
+        t.scene_settings.scale_factor = m_settings.scale_factor;
 
         t.textures = m_texture_manager.getDirtyTextures();
         t.materials = m_material_manager.getDirtyMaterials();
@@ -263,7 +254,7 @@ void MQSync::sendMeshes(MQDocument doc, bool force)
     m_send_meshes.kick();
 }
 
-void MQSync::buildBonePath(std::string& dst, BoneRecord& bd)
+void msmqContext::buildBonePath(std::string& dst, BoneRecord& bd)
 {
     auto it = m_bone_records.find(bd.parent_id);
     if (it != m_bone_records.end())
@@ -274,13 +265,13 @@ void MQSync::buildBonePath(std::string& dst, BoneRecord& bd)
 }
 
 
-void MQSync::sendCamera(MQDocument doc, bool force)
+void msmqContext::sendCamera(MQDocument doc, bool force)
 {
     if (!force) {
-        if (!m_auto_sync)
+        if (!m_settings.auto_sync)
             return;
     }
-    if (!m_sync_camera)
+    if (!m_settings.sync_camera)
         return;
 
     // just return if previous request is in progress
@@ -291,14 +282,14 @@ void MQSync::sendCamera(MQDocument doc, bool force)
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->near_plane *= m_scale_factor;
-            m_camera->far_plane *= m_scale_factor;
+            m_camera->near_plane *= m_settings.scale_factor;
+            m_camera->far_plane *= m_settings.scale_factor;
         }
         auto prev_pos = m_camera->position;
         auto prev_rot = m_camera->rotation;
         auto prev_fov = m_camera->fov;
 
-        m_camera->path = m_host_camera_path;
+        m_camera->path = m_settings.host_camera_path;
         extractCameraData(doc, scene, *m_camera);
 
         if (!force &&
@@ -314,9 +305,9 @@ void MQSync::sendCamera(MQDocument doc, bool force)
     if (!m_send_camera.on_prepare) {
         m_send_camera.on_prepare = [this]() {
             auto& t = m_send_camera;
-            t.client_settings = m_settings;
+            t.client_settings = m_settings.client_settings;
             t.scene_settings.handedness = ms::Handedness::Right;
-            t.scene_settings.scale_factor = m_scale_factor;
+            t.scene_settings.scale_factor = m_settings.scale_factor;
             t.transforms = { m_camera };
         };
     }
@@ -324,9 +315,9 @@ void MQSync::sendCamera(MQDocument doc, bool force)
 }
 
 
-bool MQSync::importMeshes(MQDocument doc)
+bool msmqContext::importMeshes(MQDocument doc)
 {
-    ms::Client client(m_settings);
+    ms::Client client(m_settings.client_settings);
     ms::GetMessage gd;
     gd.flags.get_transform = 1;
     gd.flags.get_indices = 1;
@@ -335,11 +326,11 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.flags.get_colors = 1;
     gd.flags.get_material_ids = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
-    gd.scene_settings.scale_factor = m_scale_factor;
+    gd.scene_settings.scale_factor = m_settings.scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
     gd.refine_settings.flags.flip_v = 1;
-    gd.refine_settings.flags.bake_skin = m_bake_skin;
-    gd.refine_settings.flags.bake_cloth = m_bake_cloth;
+    gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
+    gd.refine_settings.flags.bake_cloth = m_settings.bake_cloth;
 
     auto ret = client.send(gd);
     if (!ret) {
@@ -392,12 +383,12 @@ bool MQSync::importMeshes(MQDocument doc)
     return true;
 }
 
-int MQSync::exportTexture(const std::string& path, ms::TextureType type)
+int msmqContext::exportTexture(const std::string& path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
 }
 
-MQObject MQSync::findMesh(MQDocument doc, const char *name)
+MQObject msmqContext::findMesh(MQDocument doc, const char *name)
 {
     int nobj = doc->GetObjectCount();
     for (int i = 0; i < nobj; ++i) {
@@ -413,7 +404,7 @@ MQObject MQSync::findMesh(MQDocument doc, const char *name)
     return nullptr;
 }
 
-MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *name)
+MQObject msmqContext::createMesh(MQDocument doc, const ms::Mesh& data, const char *name)
 {
     auto ret = MQ_CreateObject();
 
@@ -467,7 +458,7 @@ MQObject MQSync::createMesh(MQDocument doc, const ms::Mesh& data, const char *na
     return ret;
 }
 
-void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
+void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
     dst.flags.has_points = 1;
     dst.flags.has_uv0 = 1;
@@ -541,7 +532,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     }
 
     // vertex colors
-    if (m_sync_vertex_color) {
+    if (m_settings.sync_vertex_color) {
         dst.colors.resize_discard(nindices);
         dst.flags.has_colors = 1;
         auto *colors = dst.colors.data();
@@ -558,7 +549,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
     // normals
 #if MQPLUGIN_VERSION >= 0x0460
-    if (m_sync_normals) {
+    if (m_settings.sync_normals) {
         dst.normals.resize_discard(nindices);
         dst.flags.has_normals = 1;
         auto *normals = dst.normals.data();
@@ -581,7 +572,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     }
 }
 
-void MQSync::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
+void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
 {
     dst.position = to_float3(scene->GetCameraPosition());
     auto eular = ToEular(scene->GetCameraAngle(), true);

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "MQSync.h"
+#include "msmqContext.h"
 
 class MeshSyncClientPlugin : public MQStationPlugin
 {
@@ -41,7 +41,7 @@ public:
     bool ExecuteCallback(MQDocument doc, void *option) override;
 
 
-    MQSync& getSync();
+    msmqContext& getContext();
     bool& getActive();
 
     void SendAll(bool only_when_autosync);
@@ -53,6 +53,6 @@ private:
     bool SendCameraImpl(MQDocument doc);
     bool ImportImpl(MQDocument doc);
 
-    MQSync m_sync;
+    msmqContext m_sync;
     bool m_active = false;
 };

@@ -5,6 +5,7 @@
 #pragma once
 
 class MeshSyncClientPlugin;
+struct msmqSettings;
 
 class CMainDlg : public CDialogImpl<CMainDlg>, public CUpdateUI<CMainDlg>,
         public CMessageFilter, public CIdleHandler
@@ -57,6 +58,8 @@ public:
 
 
 private:
+    msmqSettings& getSettings();
+
     MeshSyncClientPlugin *m_plugin = nullptr;
     CEdit m_edit_server;
     CEdit m_edit_port;
