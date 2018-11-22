@@ -202,14 +202,16 @@ struct MeshRefineFlags
     uint32_t bake_skin : 1;
     uint32_t bake_cloth : 1;
 
-    uint32_t invert_v : 1;
+    uint32_t flip_u : 1;
+    uint32_t flip_v : 1;
     uint32_t mirror_x : 1;
     uint32_t mirror_y : 1;
-    uint32_t mirror_z : 1;
-    uint32_t mirror_x_weld : 1; // 20
+    uint32_t mirror_z : 1; // 20
+    uint32_t mirror_x_weld : 1;
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
     uint32_t mirror_basis : 1;
+    uint32_t make_both_sided : 1;
 };
 
 struct MeshRefineSettings
@@ -222,6 +224,8 @@ struct MeshRefineSettings
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
     float4x4 mirror_basis = float4x4::identity();
+
+    uint64_t checksum() const;
 };
 
 struct SubmeshData
@@ -371,6 +375,7 @@ public:
     void applyScaleFactor(float scale) override;
 
     void refine(const MeshRefineSettings& mrs);
+    void makeBothSided();
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 

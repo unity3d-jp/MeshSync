@@ -41,6 +41,7 @@ private:
     void onToggleSyncDelete(int v);
     void onToggleFlipU(int v);
     void onToggleFlipV(int v);
+    void onToggleBothSided(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
     void onMenuAction(bool v);
@@ -101,6 +102,11 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
         ck_flip_v->setCheckState(Qt::Checked);
     layout->addWidget(ck_flip_v, iy++, 0, 1, 3);
 
+    auto ck_both_sided = new QCheckBox("Make Both Sided");
+    if (settings.make_both_sided)
+        ck_both_sided->setCheckState(Qt::Checked);
+    layout->addWidget(ck_both_sided, iy++, 0, 1, 3);
+
     auto ck_textures = new QCheckBox("Sync Textures");
     if (settings.sync_textures)
         ck_textures->setCheckState(Qt::Checked);
@@ -137,6 +143,7 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditScaleFactor);
     connect(ck_flip_u, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleFlipU);
     connect(ck_flip_v, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleFlipV);
+    connect(ck_both_sided, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleBothSided);
     connect(ck_textures, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncTextures);
     connect(ck_camera, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncCamera);
     connect(ed_camera_path, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditCameraPath);
@@ -235,6 +242,15 @@ void msvrSettingsWidget::onToggleFlipV(int v)
     auto ctx = msvrGetContext();
     auto& settings = msvrGetContext()->getSettings();
     ctx->flipV(v);
+    if (settings.auto_sync)
+        ctx->send(true);
+}
+
+void msvrSettingsWidget::onToggleBothSided(int v)
+{
+    auto ctx = msvrGetContext();
+    auto& settings = msvrGetContext()->getSettings();
+    ctx->makeBothSided(v);
     if (settings.auto_sync)
         ctx->send(true);
 }

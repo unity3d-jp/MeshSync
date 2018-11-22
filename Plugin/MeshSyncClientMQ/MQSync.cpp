@@ -337,7 +337,7 @@ bool MQSync::importMeshes(MQDocument doc)
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
-    gd.refine_settings.flags.invert_v = 1;
+    gd.refine_settings.flags.flip_v = 1;
     gd.refine_settings.flags.bake_skin = m_bake_skin;
     gd.refine_settings.flags.bake_cloth = m_bake_cloth;
 
@@ -477,7 +477,7 @@ void MQSync::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     dst.flags.has_refine_settings = 1;
 
     dst.refine_settings.flags.gen_tangents = 1;
-    dst.refine_settings.flags.invert_v = 1;
+    dst.refine_settings.flags.flip_v = 1;
     if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {
         int axis = obj->GetMirrorAxis();
         dst.refine_settings.flags.mirror_x = (axis & MQOBJECT_MIRROR_AXIS_X) ? 1 : 0;

@@ -43,6 +43,12 @@ void InvertX_Generic(float4 *dst, size_t num)
     }
 }
 
+void InvertU(float2 * dst, size_t num)
+{
+    for (size_t i = 0; i < num; ++i) {
+        dst[i].x = 1.0f - dst[i].x;
+    }
+}
 void InvertV(float2 *dst, size_t num)
 {
     for (size_t i = 0; i < num; ++i) {

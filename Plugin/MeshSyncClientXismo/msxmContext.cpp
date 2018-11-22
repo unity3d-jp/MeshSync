@@ -131,7 +131,7 @@ void BufferRecord::buildMeshData(bool weld_vertices)
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
     mesh.refine_settings.flags.gen_tangents = 1;
-    mesh.refine_settings.flags.invert_v = 1;
+    mesh.refine_settings.flags.flip_v = 1;
 }
 
 bool BufferRecord::isModelData() const

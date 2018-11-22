@@ -341,6 +341,20 @@ void Light::applyScaleFactor(float v)
 // Mesh
 #pragma region Mesh
 
+uint64_t MeshRefineSettings::checksum() const
+{
+    uint64_t ret = 0;
+    ret += csum((int&)flags);
+    ret += csum(scale_factor);
+    ret += csum(smooth_angle);
+    ret += csum(split_unit);
+    ret += csum(max_bones_par_vertices);
+    ret += csum(local2world);
+    ret += csum(world2local);
+    ret += csum(mirror_basis);
+    return ret;
+}
+
 std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
 {
     auto ret = Pool<BlendShapeFrameData>::instance().pull();
@@ -634,6 +648,7 @@ uint64_t Mesh::hash() const
 uint64_t Mesh::checksumGeom() const
 {
     uint64_t ret = 0;
+    ret += refine_settings.checksum();
 #define Body(A) ret += csum(A);
     EachVertexProperty(Body);
 #undef Body
@@ -717,7 +732,10 @@ inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<in
 
 void Mesh::refine(const MeshRefineSettings& mrs)
 {
-    if (mrs.flags.invert_v) {
+    if (mrs.flags.flip_u) {
+        mu::InvertU(uv0.data(), uv0.size());
+    }
+    if (mrs.flags.flip_v) {
         mu::InvertV(uv0.data(), uv0.size());
     }
 
@@ -727,6 +745,11 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.apply_world2local) {
         applyTransform(mrs.world2local);
     }
+
+    if (mrs.flags.make_both_sided) {
+        makeBothSided();
+    }
+
     if (mrs.flags.mirror_x) {
         float3 plane_n = { 1.0f, 0.0f, 0.0f };
         float plane_d = 0.0f;
@@ -900,6 +923,54 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     flags.has_tangents = !tangents.empty();
     flags.has_uv0 = !uv0.empty();
     flags.has_indices = !indices.empty();
+}
+
+void Mesh::makeBothSided()
+{
+    size_t num_faces = counts.size();
+    size_t num_indices = indices.size();
+
+    counts.resize(num_faces * 2);
+    indices.resize(num_indices * 2);
+
+    const int *scounts = counts.data();
+    const int *sindices = indices.data();
+    int *dcounts = counts.data() + num_faces;
+    int *dindices = indices.data() + num_indices;
+
+    size_t written_faces = 0;
+    size_t written_indice = 0;
+    for (int fi = 0; fi < num_faces; ++fi) {
+        int count = scounts[fi];
+        if (count < 3) {
+            sindices += count;
+            continue;
+        }
+
+        dcounts[written_faces++] = scounts[fi];
+        for (int ci = 0; ci < count; ++ci)
+            dindices[ci] = sindices[count - ci - 1];
+        dindices += count;
+        sindices += count;
+        written_indice += count;
+    }
+    counts.resize(num_faces + written_faces);
+    indices.resize(num_indices + written_indice);
+
+    if (!material_ids.empty()) {
+        material_ids.resize(num_faces * 2);
+        const int *smids = material_ids.data();
+        int *dmids = material_ids.data() + num_faces;
+        int w = 0;
+        for (int fi = 0; fi < num_faces; ++fi) {
+            int count = scounts[fi];
+            if (count < 3)
+                continue;
+
+            dmids[w++] = smids[fi];
+        }
+        material_ids.resize(num_faces + w);
+    }
 }
 
 void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)

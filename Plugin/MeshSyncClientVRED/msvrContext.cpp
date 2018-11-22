@@ -760,14 +760,6 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
                 dst.normals[vi] = vtx[vi].normal;
                 dst.uv0[vi] = vtx[vi].uv;
             }
-            if (m_settings.flip_u) {
-                for (auto& uv : dst.uv0)
-                    uv.x = 1.0f - uv.x;
-            }
-            if (m_settings.flip_v) {
-                for (auto& uv : dst.uv0)
-                    uv.y = 1.0f - uv.y;
-            }
 
             // convert indices
             dst.counts.resize(num_triangles, 3);
@@ -787,6 +779,9 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             dst.flags.has_refine_settings = 1;
             dst.refine_settings.flags.swap_faces = true;
             dst.refine_settings.flags.gen_tangents = 1;
+            dst.refine_settings.flags.flip_u = m_settings.flip_u;
+            dst.refine_settings.flags.flip_v = m_settings.flip_v;
+            dst.refine_settings.flags.make_both_sided = m_settings.make_both_sided;
         }
     };
     task();
@@ -808,8 +803,7 @@ void msvrContext::flipU(bool v)
         auto& mesh = kvp.second.dst_mesh;
         if (mesh) {
             kvp.second.dirty = true;
-            for (auto& uv : mesh->uv0)
-                uv.x = 1.0f - uv.x;
+            mesh->refine_settings.flags.flip_u = m_settings.flip_u;
         }
     }
 }
@@ -821,8 +815,19 @@ void msvrContext::flipV(bool v)
         auto& mesh = kvp.second.dst_mesh;
         if (mesh) {
             kvp.second.dirty = true;
-            for (auto& uv : mesh->uv0)
-                uv.y = 1.0f - uv.y;
+            mesh->refine_settings.flags.flip_v = m_settings.flip_v;
+        }
+    }
+}
+
+void msvrContext::makeBothSided(bool v)
+{
+    m_settings.make_both_sided = v;
+    for (auto& kvp : m_buffer_records) {
+        auto& mesh = kvp.second.dst_mesh;
+        if (mesh) {
+            kvp.second.dirty = true;
+            mesh->refine_settings.flags.make_both_sided = m_settings.make_both_sided;
         }
     }
 }

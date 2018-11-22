@@ -110,6 +110,7 @@ struct msvrSettings
     bool auto_sync = false;
     bool flip_u = false;
     bool flip_v = false;
+    bool make_both_sided  = false;
     std::string camera_path = "/Main Camera";
 };
 
@@ -171,6 +172,7 @@ public:
 
     void flipU(bool v);
     void flipV(bool v);
+    void makeBothSided(bool v);
 
 protected:
     BufferRecord* getActiveBuffer(GLenum target);

@@ -10,6 +10,7 @@ void FloatToHalf(half *dst, const float *src, size_t num);
 void HalfToFloat(float *dst, const half *src, size_t num);
 void InvertX(float3 *dst, size_t num);
 void InvertX(float4 *dst, size_t num);
+void InvertU(float2 *dst, size_t num);
 void InvertV(float2 *dst, size_t num);
 void Scale(float *dst, float s, size_t num);
 void Scale(float3 *dst, float s, size_t num);
