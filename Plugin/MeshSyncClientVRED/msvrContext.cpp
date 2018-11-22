@@ -1,5 +1,37 @@
 #include "pch.h"
 #include "msvrContext.h"
+#include "MeshSync/msSceneGraphImpl.h"
+
+
+bool MaterialRecord::operator==(const MaterialRecord & v) const
+{
+    return
+        program == v.program &&
+        diffuse_color == v.diffuse_color &&
+        specular_color == v.specular_color &&
+        bump_scale == v.bump_scale &&
+        color_map == v.color_map &&
+        bump_map == v.bump_map &&
+        specular_map == v.specular_map;
+}
+
+bool MaterialRecord::operator!=(const MaterialRecord & v) const
+{
+    return !operator==(v);
+}
+
+uint64_t MaterialRecord::checksum() const
+{
+    uint64_t ret = 0;
+    ret += ms::csum(program);
+    ret += ms::csum(diffuse_color);
+    ret += ms::csum(specular_color);
+    ret += ms::csum(bump_scale);
+    ret += ms::csum(color_map);
+    ret += ms::csum(bump_map);
+    ret += ms::csum(specular_map);
+    return ret;
+}
 
 
 msvrContext::msvrContext()
@@ -19,7 +51,10 @@ void msvrContext::send(bool force)
 {
     if (m_sender.isSending()) {
         // previous request is not completed yet
-        return;
+        if (force)
+            m_sender.wait();
+        else
+            return;
     }
 
     if (force) {
@@ -51,28 +86,12 @@ void msvrContext::send(bool force)
             //if (mr.specular_color != float4::zero())
             //    stdmat.setSpecularColor(mr.specular_color);
 
-            auto get_texid = [this, &mr](int slot) -> int {
-                if (slot == ms::InvalidID)
-                    return ms::InvalidID;
-                auto& rec = m_texture_records[mr.texture_slots[slot]];
-                rec.used = true;
-                return rec.dst ? rec.dst->id : ms::InvalidID;
-            };
-            {
-                int tid = get_texid(mr.color_map);
-                if (tid != ms::InvalidID)
-                    stdmat.setColorMap(tid);
-            }
-            {
-                int tid = get_texid(mr.bump_map);
-                if (tid != ms::InvalidID)
-                    stdmat.setBumpMap(tid);
-            }
-            {
-                int tid = get_texid(mr.specular_map);
-                if (tid != ms::InvalidID)
-                    stdmat.setMetallicMap(tid);
-            }
+            if (mr.color_map != ms::InvalidID)
+                stdmat.setColorMap(mr.color_map);
+            if (mr.bump_map != ms::InvalidID)
+                stdmat.setBumpMap(mr.bump_map);
+            if (mr.specular_map != ms::InvalidID)
+                stdmat.setMetallicMap(mr.specular_map);
             m_material_manager.add(mat);
         }
         m_material_records.clear();
@@ -112,10 +131,10 @@ void msvrContext::send(bool force)
         }
         m_meshes_deleted.clear();
 
-        if (m_draw_count) {
-            m_material_ids.eraseStaleRecords();
-            m_material_manager.eraseStaleMaterials();
-        }
+        //if (m_draw_count) {
+        //    m_material_ids.eraseStaleRecords();
+        //    m_material_manager.eraseStaleMaterials();
+        //}
     }
 
     m_draw_count = 0;
@@ -681,8 +700,24 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     // material
     {
         auto& prec = m_program_records[m_program_handle];
-        auto mrec = prec.mrec;
-        std::copy(m_texture_slots, m_texture_slots + msvrMaxTextureSlots, mrec.texture_slots);
+        auto mrec = prec.mrec; // copy
+
+        // texture slot -> id
+        auto texture_slot_to_id = [this](int slot) {
+            if (slot == ms::InvalidID)
+                return ms::InvalidID;
+            auto& trec = m_texture_records[m_texture_slots[slot]];
+            if (trec.dst) {
+                trec.used = true;
+                return trec.dst->id;
+            }
+            else {
+                return ms::InvalidID;
+            }
+        };
+        mrec.color_map = texture_slot_to_id(mrec.color_map);
+        mrec.bump_map = texture_slot_to_id(mrec.bump_map);
+        mrec.specular_map = texture_slot_to_id(mrec.specular_map);
 
         auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
         if (it != m_material_records.end()) {
@@ -723,7 +758,15 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             for (size_t vi = 0; vi < num_vertices; ++vi) {
                 dst.points[vi] = vtx[vi].vertex;
                 dst.normals[vi] = vtx[vi].normal;
-                dst.uv0[vi] = float2{ 1.0f, 1.0f } - vtx[vi].uv;
+                dst.uv0[vi] = vtx[vi].uv;
+            }
+            if (m_settings.flip_u) {
+                for (auto& uv : dst.uv0)
+                    uv.x = 1.0f - uv.x;
+            }
+            if (m_settings.flip_v) {
+                for (auto& uv : dst.uv0)
+                    uv.y = 1.0f - uv.y;
             }
 
             // convert indices
@@ -756,6 +799,32 @@ void msvrContext::onFlush()
 {
     if (m_settings.auto_sync)
         send(false);
+}
+
+void msvrContext::flipU(bool v)
+{
+    m_settings.flip_u = v;
+    for (auto& kvp : m_buffer_records) {
+        auto& mesh = kvp.second.dst_mesh;
+        if (mesh) {
+            kvp.second.dirty = true;
+            for (auto& uv : mesh->uv0)
+                uv.x = 1.0f - uv.x;
+        }
+    }
+}
+
+void msvrContext::flipV(bool v)
+{
+    m_settings.flip_v = v;
+    for (auto& kvp : m_buffer_records) {
+        auto& mesh = kvp.second.dst_mesh;
+        if (mesh) {
+            kvp.second.dirty = true;
+            for (auto& uv : mesh->uv0)
+                uv.y = 1.0f - uv.y;
+        }
+    }
 }
 
 BufferRecord* msvrContext::getActiveBuffer(GLenum target)

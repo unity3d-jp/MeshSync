@@ -53,28 +53,10 @@ struct MaterialRecord
     int color_map = ms::InvalidID;
     int bump_map = ms::InvalidID;
     int specular_map = ms::InvalidID;
-    GLuint texture_slots[msvrMaxTextureSlots] = {};
 
-    bool operator==(const MaterialRecord& v) const
-    {
-        return
-            program == v.program &&
-            diffuse_color == v.diffuse_color &&
-            specular_color == v.specular_color &&
-            bump_scale == v.bump_scale &&
-            color_map == v.color_map &&
-            bump_map == v.bump_map &&
-            specular_map == v.specular_map &&
-            memcmp(texture_slots, v.texture_slots, sizeof(GLuint)*msvrMaxTextureSlots) == 0;
-    }
-    bool operator!=(const MaterialRecord& v) const
-    {
-        return !operator==(v);
-    }
-    uint64_t checksum() const
-    {
-        return ms::SumInt32(this, sizeof(*this));
-    }
+    bool operator==(const MaterialRecord& v) const;
+    bool operator!=(const MaterialRecord& v) const;
+    uint64_t checksum() const;
 };
 
 namespace ms {
@@ -126,6 +108,8 @@ struct msvrSettings
     bool sync_textures = true;
     bool sync_camera = true;
     bool auto_sync = false;
+    bool flip_u = false;
+    bool flip_v = false;
     std::string camera_path = "/Main Camera";
 };
 
@@ -183,6 +167,10 @@ public:
 
     void onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
     void onFlush();
+
+
+    void flipU(bool v);
+    void flipV(bool v);
 
 protected:
     BufferRecord* getActiveBuffer(GLenum target);

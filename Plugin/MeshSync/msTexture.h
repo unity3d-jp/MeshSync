@@ -88,8 +88,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
-    uint64_t hash() const;
-    uint64_t checksum() const;
+    uint64_t hash() const override;
+    uint64_t checksum() const override;
 
     void setData(const void *src);
     void getData(void *dst) const;
