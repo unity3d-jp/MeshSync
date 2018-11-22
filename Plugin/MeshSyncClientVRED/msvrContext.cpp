@@ -3,6 +3,11 @@
 #include "MeshSync/msSceneGraphImpl.h"
 
 
+bool FramebufferRecord::isMainTarget() const
+{
+    return colors[0] && colors[1] && depth_stencil;
+}
+
 bool MaterialRecord::operator==(const MaterialRecord & v) const
 {
     return
@@ -31,6 +36,11 @@ uint64_t MaterialRecord::checksum() const
     ret += ms::csum(bump_map);
     ret += ms::csum(specular_map);
     return ret;
+}
+
+int DrawcallRecord::hash() const
+{
+    return (vb << 0) | (ib << 12) | (ub_object << 24);
 }
 
 
@@ -62,10 +72,10 @@ void msvrContext::send(bool force)
         m_entity_manager.makeDirtyAll();
     }
 
-    for (auto& pair : m_buffer_records) {
-        auto& buf = pair.second;
-        if (buf.dst_mesh)
-            m_entity_manager.add(buf.dst_mesh);
+    for (auto& kvp : m_drawcalls) {
+        auto& rec = kvp.second;
+        if (rec.mesh)
+            m_entity_manager.add(rec.mesh);
     }
 
     // build material list
@@ -136,8 +146,6 @@ void msvrContext::send(bool force)
         //    m_material_manager.eraseStaleMaterials();
         //}
     }
-
-    m_draw_count = 0;
 
     m_sender.on_prepare = [this]() {
         auto& t = m_sender;
@@ -339,12 +347,21 @@ void msvrContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
 {
     if (m_settings.sync_delete) {
         for (int i = 0; i < n; ++i) {
-            auto it = m_buffer_records.find(buffers[i]);
+            auto handle = buffers[i];
+            auto it = m_buffer_records.find(handle);
             if (it != m_buffer_records.end()) {
-                auto& rec = it->second;
-                if (rec.dst_mesh)
-                    m_entity_manager.erase(rec.dst_mesh->getIdentifier());
                 m_buffer_records.erase(it);
+
+                for (auto it = m_drawcalls.begin(); it != m_drawcalls.end(); /**/) {
+                    if (it->second.vb == handle) {
+                        if (it->second.mesh)
+                            m_entity_manager.erase(it->second.mesh->getIdentifier());
+                        m_drawcalls.erase(it++);
+                    }
+                    else {
+                        ++it;
+                    }
+                }
             }
         }
     }
@@ -645,6 +662,18 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
     if (!ib || !vb || vb->stride != sizeof(vr_vertex))
         return;
 
+    DrawcallRecord *dr = nullptr;
+    {
+        DrawcallRecord t;
+        t.vb = m_vb_handle;
+        t.ib = m_ib_handle;
+        t.ub_object = m_ub_handles[2];
+        dr = &m_drawcalls[t.hash()];
+        if (!dr->mesh)
+            *dr = t;
+    }
+    dr->draw_count++;
+
     // black list
     {
         static const size_t s_blacklist[][2] = {
@@ -659,6 +688,9 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
                 return;
         }
     }
+
+    vb->valid_vertex_buffer = true;
+    ib->valid_index_buffer = true;
 
     auto& camera_buf = m_buffer_records[m_ub_handles[1]];
     auto& obj_buf = m_buffer_records[m_ub_handles[2]];
@@ -721,25 +753,25 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
         auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
         if (it != m_material_records.end()) {
-            vb->material_id = it->id;
+            dr->material_id = it->id;
         }
         else {
             mrec.id = m_material_ids.getID(mrec);
-            vb->material_id = mrec.id;
+            dr->material_id = mrec.id;
             m_material_records.push_back(mrec);
         }
     }
 
     auto transform = (float4x4&)obj_buf.data[0];
-    auto task = [this, vb, ib, count, type, transform]() {
-        if (!vb->dst_mesh) {
-            vb->dst_mesh = ms::Mesh::create();
+    auto task = [this, vb, ib, count, type, transform, dr]() {
+        if (!dr->mesh) {
+            dr->mesh = ms::Mesh::create();
 
             char path[128];
-            sprintf(path, "/VREDMesh:ID[%08x]", m_vb_handle);
-            vb->dst_mesh->path = path;
+            sprintf(path, "/VREDMesh:ID[%08x]", dr->hash());
+            dr->mesh->path = path;
         }
-        auto& dst = *vb->dst_mesh;
+        auto& dst = *dr->mesh;
 
         dst.position = extract_position(transform);
         dst.rotation = extract_rotation(transform);
@@ -763,7 +795,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
             // convert indices
             dst.counts.resize(num_triangles, 3);
-            dst.material_ids.resize(num_triangles, vb->material_id);
+            dst.material_ids.resize(num_triangles, dr->material_id);
             if (type == GL_UNSIGNED_INT) {
                 int *src = (int*)ib->data.data();
                 dst.indices.assign(src, src + num_indices);
@@ -785,50 +817,52 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         }
     };
     task();
-    vb->dirty = false;
-
-    ++m_draw_count;
 }
 
 void msvrContext::onFlush()
 {
     if (m_settings.auto_sync)
         send(false);
+
+    for (auto& kvp : m_buffer_records) {
+        auto& rec = kvp.second;
+        if (rec.valid_vertex_buffer)
+            rec.dirty = false;
+    }
+    for (auto& kvp : m_drawcalls) {
+        auto& rec = kvp.second;
+        rec.draw_count = 0;
+    }
 }
+
 
 void msvrContext::flipU(bool v)
 {
     m_settings.flip_u = v;
-    for (auto& kvp : m_buffer_records) {
-        auto& mesh = kvp.second.dst_mesh;
-        if (mesh) {
-            kvp.second.dirty = true;
+    for (auto& kvp : m_drawcalls) {
+        auto& mesh = kvp.second.mesh;
+        if (mesh)
             mesh->refine_settings.flags.flip_u = m_settings.flip_u;
-        }
     }
 }
 
 void msvrContext::flipV(bool v)
 {
     m_settings.flip_v = v;
-    for (auto& kvp : m_buffer_records) {
-        auto& mesh = kvp.second.dst_mesh;
-        if (mesh) {
-            kvp.second.dirty = true;
+    for (auto& kvp : m_drawcalls) {
+        auto& mesh = kvp.second.mesh;
+        if (mesh)
             mesh->refine_settings.flags.flip_v = m_settings.flip_v;
-        }
     }
 }
 
 void msvrContext::makeBothSided(bool v)
 {
     m_settings.make_both_sided = v;
-    for (auto& kvp : m_buffer_records) {
-        auto& mesh = kvp.second.dst_mesh;
-        if (mesh) {
-            kvp.second.dirty = true;
+    for (auto& kvp : m_drawcalls) {
+        auto& mesh = kvp.second.mesh;
+        if (mesh)
             mesh->refine_settings.flags.make_both_sided = m_settings.make_both_sided;
-        }
     }
 }
 
@@ -860,9 +894,4 @@ msvrContext* msvrGetContext()
         s_ctx.reset(new msvrContext());
     }
     return s_ctx.get();
-}
-
-bool FramebufferRecord::isMainTarget() const
-{
-    return colors[0] && colors[1] && depth_stencil;
 }

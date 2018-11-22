@@ -77,13 +77,13 @@ public:
 struct BufferRecord : public mu::noncopyable
 {
     RawVector<char> data, tmp_data;
-    void        *mapped_data = nullptr;
-    int         stride = 0;
-    bool        dirty = false;
-    bool        visible = true;
-    int         material_id = -1;
+    void *mapped_data = nullptr;
+    int stride = 0;
+    bool dirty = false;
+    bool visible = true;
 
-    ms::MeshPtr dst_mesh;
+    bool valid_vertex_buffer = false;
+    bool valid_index_buffer = false;
 };
 
 struct ProgramRecord
@@ -98,6 +98,18 @@ struct ProgramRecord
     MaterialRecord mrec;
 };
 
+struct DrawcallRecord
+{
+    int draw_count = 0;
+    int material_id = 0;
+    ms::MeshPtr mesh;
+
+    GLuint vb = 0;
+    GLuint ib = 0;
+    GLuint ub_object = 0;
+
+    int hash() const;
+};
 
 
 struct msvrSettings
@@ -200,7 +212,7 @@ protected:
     std::map<GLuint, ProgramRecord> m_program_records;
     std::vector<MaterialRecord> m_material_records;
 
-    int m_draw_count = 0;
+    std::map<int, DrawcallRecord> m_drawcalls;
 
     bool m_camera_dirty = false;
     float3 m_camera_pos = float3::zero();
