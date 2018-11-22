@@ -41,4 +41,6 @@ private:
     FBLabel m_lb_sps;
     FBEditNumber m_ed_sps;
     FBButton m_bu_sync_animations;
+
+    FBLabel m_lb_version;
 };

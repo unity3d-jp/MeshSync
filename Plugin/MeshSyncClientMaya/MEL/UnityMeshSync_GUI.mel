@@ -2,8 +2,9 @@ global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSync";
     if (`window -exists $Window`) deleteUI -window $Window;
-    window -t ("Unity Mesh Sync") -wh 300 400 $Window;
+    window -t ("Unity Mesh Sync") -wh 300 440 $Window;
     
+    string $version         = `UnityMeshSync_Settings -q -version`;
     string $address         = `UnityMeshSync_Settings -q -address`;
     int    $port            = `UnityMeshSync_Settings -q -port`;
     float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
@@ -67,7 +68,10 @@ global proc UnityMeshSync_GUI()
     setParent ..;
     button -l "Sync" -c "umsCBSyncAnimations";
     
-    
+    separator -h 20 -w 250;
+    string $pluginVersion = "Plugin Version: " + $version;
+    text -label $pluginVersion;
+
     //    button -l "Import Unity Scene" -w 100 -c "umsCBImport" BUTTON_IMPORT;
     setParent ..;
 

@@ -38,6 +38,9 @@ bool msmbLayout::FBCreate()
     const char *idEditSPS = "idEditSPS";
     const char *idButtonSyncAnimations = "idButtonSyncAnimations";
 
+    const char *idLabelVersion = "idLabelVersion";
+
+
     m_device = (msmbDevice*)(FBDevice*)Device;
 
     // server settings
@@ -243,6 +246,16 @@ bool msmbLayout::FBCreate()
         SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";
         m_bu_sync_animations.OnClick.Add(this, (FBCallback)&msmbLayout::onSyncAnimation);
+    }
+
+    {
+        AddRegion(idLabelVersion, idLabelVersion,
+            0, kFBAttachLeft, idButtonSyncAnimations, 1.0,
+            lS2, kFBAttachBottom, idButtonSyncAnimations, 1.0,
+            lW2, kFBAttachNone, nullptr, 1.0,
+            0, kFBAttachHeight, idButtonSyncAnimations, 1.0);
+        SetControl(idLabelVersion, m_lb_version);
+        m_lb_version.Caption = "Plugin Version: " msReleaseDateStr;
     }
 
     return true;

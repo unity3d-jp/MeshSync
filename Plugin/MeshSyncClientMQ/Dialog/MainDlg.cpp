@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include "MainDlg.h"
+#include "MeshSync/msConfig.h"
 
 CAppModule _Module;
 CMessageLoop theLoop;
@@ -62,6 +63,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_check_autosync.Attach(GetDlgItem(IDC_CHECK_AUTOSYNC));
     m_check_bake_skin.Attach(GetDlgItem(IDC_CHECK_BAKE_SKIN));
     m_check_bake_cloth.Attach(GetDlgItem(IDC_CHECK_BAKE_CLOTH));
+    m_txt_version.Attach(GetDlgItem(IDC_TXT_VERSION));
 
     char buf[256];
     m_edit_server.SetWindowText(GetServer(m_plugin).c_str());
@@ -76,6 +78,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_check_autosync.SetCheck(GetAutoSync(m_plugin));
     m_check_bake_skin.SetCheck(GetBakeSkin(m_plugin));
     m_check_bake_cloth.SetCheck(GetBakeCloth(m_plugin));
+    m_txt_version.SetWindowTextA("Plugin Version: " msReleaseDateStr);
     m_initializing = false;
     return TRUE;
 }

@@ -82,6 +82,7 @@ MSyntax CmdSettings::createSyntax()
     MSyntax syntax;
     syntax.enableQuery(true);
     syntax.enableEdit(false);
+    syntax.addFlag("-v", "-version", MSyntax::kString);
     syntax.addFlag("-a", "-address", MSyntax::kString);
     syntax.addFlag("-p", "-port", MSyntax::kLong);
     syntax.addFlag("-sf", "-scaleFactor", MSyntax::kDouble);
@@ -112,6 +113,10 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     auto& settings = MeshSyncClientMaya::getInstance().m_settings;
 
     MString result;
+
+    if (args.isFlagSet("version")) {
+        if (args.isQuery()) to_MString(result, std::string(msReleaseDateStr));
+    }
 
 #define Handle(Name, Value, SendIfAutosync)\
     if (args.isFlagSet(Name)) {\

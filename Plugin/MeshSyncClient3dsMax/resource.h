@@ -28,6 +28,7 @@
 #define IDC_CHECK_BLENDSHAPES           1022
 #define IDC_CHECK_BAKEMODIFIERS         1023
 #define IDC_CHECK_TEXTURES              1024
+#define IDC_TXT_VERSION                 1025
 
 // Next default values for new objects
 // 
@@ -35,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1020
+#define _APS_NEXT_CONTROL_VALUE         1026
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

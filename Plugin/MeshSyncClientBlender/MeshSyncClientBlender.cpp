@@ -76,11 +76,10 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(animation_interval,
                 [](const msbContext& self) { return self.getSettings().animation_frame_interval; },
                 [](msbContext& self, int v) { self.getSettings().animation_frame_interval = v; })
-
             BindProperty(multithreaded,
                 [](const msbContext& self) { return self.getSettings().multithreaded; },
                 [](msbContext& self, int v) { self.getSettings().multithreaded = v; })
-            ;
+            .def_property_readonly("version", [](const msbContext& self) { return std::string(msReleaseDateStr); });
     }
 #undef BindMethod
 #undef BindMethod2

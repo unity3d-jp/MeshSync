@@ -203,6 +203,10 @@ namespace UTJ.MeshSync
         {
             get { return "Assets/" + m_assetDir; }
         }
+        public string httpFileRootPath
+        {
+            get { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+        }
         public Transform rootObject
         {
             get { return m_rootObject; }
@@ -268,7 +272,7 @@ namespace UTJ.MeshSync
             var settings = ServerSettings.defaultValue;
             settings.port = (ushort)m_serverPort;
             m_server = Server.Start(ref settings);
-            m_server.fileRootPath = Application.streamingAssetsPath + "/MeshSyncServerRoot";
+            m_server.fileRootPath = httpFileRootPath;
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
@@ -384,8 +388,6 @@ namespace UTJ.MeshSync
                 var id = mes.GetMaterial(i).id;
                 m_materialList.RemoveAll(v => v.id == id);
             }
-
-            //Debug.Log("MeshSyncServer: Delete");
         }
 
         void OnRecvFence(FenceMessage mes)
@@ -397,15 +399,25 @@ namespace UTJ.MeshSync
             }
             else if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
+                // resolve references
+                foreach (var pair in m_clientObjects)
+                {
+                    var dstrec = pair.Value;
+                    if (dstrec.reference == null || dstrec.go == null)
+                        continue;
+
+                    EntityRecord srcrec = null;
+                    if (m_clientObjects.TryGetValue(dstrec.reference, out srcrec) && srcrec.go != null)
+                        UpdateReference(dstrec.go, srcrec.go);
+                }
+
                 // sort objects by index
                 {
                     var rec = m_clientObjects.Values.OrderBy(v => v.index);
                     foreach (var r in rec)
                     {
                         if (r.go != null)
-                        {
                             r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
-                        }
                     }
                 }
 
@@ -513,14 +525,10 @@ namespace UTJ.MeshSync
                             break;
                     }
 
-                    if (dst != null)
-                    {
-                        if (onUpdateEntity != null)
-                            onUpdateEntity.Invoke(dst.gameObject, src);
-                    }
+                    if (dst != null && onUpdateEntity != null)
+                        onUpdateEntity.Invoke(dst.gameObject, src);
                 }
             });
-
 
 #if UNITY_2018_1_OR_NEWER
             // constraints
@@ -538,28 +546,6 @@ namespace UTJ.MeshSync
                 for (int i = 0; i < numClips; ++i)
                     UpdateAnimation(scene.GetAnimationClip(i));
             });
-
-            // update references
-            {
-                foreach (var pair in m_clientObjects)
-                {
-                    var dstrec = pair.Value;
-                    if (dstrec.reference == null)
-                        continue;
-
-                    var dstgo = dstrec.go;
-                    if (dstgo == null)
-                        continue;
-
-                    EntityRecord srcrec = null;
-                    if(m_clientObjects.TryGetValue(dstrec.reference, out srcrec))
-                    {
-                        var srcgo = srcrec.go;
-                        if (srcgo != null)
-                            UpdateReference(dstgo, srcgo);
-                    }
-                }
-            }
 
             if(m_progressiveDisplay)
                 ForceRepaint();

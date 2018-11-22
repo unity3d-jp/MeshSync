@@ -475,4 +475,6 @@ void MeshSyncClient3dsMax::updateUIText()
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
+
+    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msReleaseDateStr);
 }

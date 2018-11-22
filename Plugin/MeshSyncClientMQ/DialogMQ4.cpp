@@ -118,6 +118,13 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_button_import->AddClickEvent(this, &SettingsDlg::OnImportClicked);
     }
 
+    {
+        MQFrame *vf = CreateVerticalFrame(this);
+
+        std::string plugin_version = "Plugin Version: " msReleaseDateStr;
+        CreateLabel(vf, L(plugin_version));
+    }
+
     this->AddHideEvent(this, &SettingsDlg::OnHide);
 }
 

@@ -68,5 +68,6 @@ private:
     CButton m_check_autosync;
     CButton m_check_bake_skin;
     CButton m_check_bake_cloth;
+    CStatic m_txt_version;
     bool m_initializing = true;
 };

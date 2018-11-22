@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2018, 9, 18),
+    "version": (2018, 11, 27),
     "blender": (2, 79, 0),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -71,6 +71,15 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout.operator("meshsync.sync_animations", text="Sync")
 
 
+class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
+    bl_label = "Plugin Version"
+
+    def draw(self, context):
+        scene = bpy.context.scene
+        layout = self.layout
+        layout.label(text = msb_context.version)
+
+
 class MESHSYNC_OT_SyncScene(bpy.types.Operator):
     bl_idname = "meshsync.sync_scene"
     bl_label = "Sync Scene"
@@ -108,6 +117,7 @@ classes = (
     MESHSYNC_PT_Server,
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,
+    MESHSYNC_PT_Version,
     MESHSYNC_OT_SyncScene,
     MESHSYNC_OT_SyncAnimations,
     MESHSYNC_OT_AutoSync,
