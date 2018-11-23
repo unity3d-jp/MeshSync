@@ -16,7 +16,7 @@ public:
     BOOL OnScaleChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc);
-    BOOL OnMakeBothSidedChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnmakeDoubleSidedChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncTexturesChange(MQWidgetBase *sender, MQDocument doc);

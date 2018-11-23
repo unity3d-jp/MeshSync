@@ -17,7 +17,7 @@ struct msbSettings
     bool sync_normals = true;
     bool sync_uvs = true;
     bool sync_colors = true;
-    bool make_both_sided = false;
+    bool make_double_sided = false;
     bool bake_modifiers = false;
     bool convert_to_mesh = true;
     bool sync_bones = true;

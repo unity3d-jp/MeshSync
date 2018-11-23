@@ -86,7 +86,7 @@ public:
         bool sync_normals = true;
         bool sync_uvs = true;
         bool sync_colors = true;
-        bool make_both_sided = false;
+        bool make_double_sided = false;
         bool bake_deformers = false;
         bool apply_tweak = true;
         bool sync_blendshapes = true;

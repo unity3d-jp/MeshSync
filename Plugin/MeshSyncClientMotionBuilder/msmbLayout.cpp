@@ -136,11 +136,11 @@ bool msmbLayout::FBCreate()
             lS, kFBAttachBottom, idButtonSyncMeshes, 1.0,
             0, kFBAttachWidth, idButtonSyncMeshes, 1.0,
             0, kFBAttachHeight, idButtonSyncMeshes, 1.0);
-        SetControl(idButtonBothSided, m_bu_make_both_sided);
-        m_bu_make_both_sided.Caption = "Make Both Sided";
-        m_bu_make_both_sided.Style = kFBCheckbox;
-        m_bu_make_both_sided.State = (int)m_device->make_both_sided;
-        m_bu_make_both_sided.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
+        SetControl(idButtonBothSided, m_bu_make_double_sided);
+        m_bu_make_double_sided.Caption = "Double Sided";
+        m_bu_make_double_sided.Style = kFBCheckbox;
+        m_bu_make_double_sided.State = (int)m_device->make_double_sided;
+        m_bu_make_double_sided.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
         AddRegion(idButtonBakeDeformers, idButtonBakeDeformers,
             0, kFBAttachLeft, idButtonBothSided, 1.0,
@@ -288,7 +288,7 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->scale_factor = (float)m_ed_scale.Value;
     m_device->sync_meshes = (bool)(int)m_bu_sync_meshes.State;
-    m_device->make_both_sided = (bool)(int)m_bu_make_both_sided.State;
+    m_device->make_double_sided = (bool)(int)m_bu_make_double_sided.State;
     m_device->bake_deformars = (bool)(int)m_bu_bake_deformers.State;
     m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
     m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;

@@ -14,7 +14,7 @@ struct msmqSettings
     bool auto_sync = false;
     bool sync_normals = true;
     bool sync_vertex_color = true;
-    bool make_both_sided = false;
+    bool make_double_sided = false;
     bool sync_camera = true;
     bool sync_bones = true;
     bool sync_poses = true;

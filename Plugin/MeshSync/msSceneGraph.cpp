@@ -782,8 +782,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
     // generate back faces
     // this must be after generating normals.
-    if (mrs.flags.make_both_sided) {
-        makeBothSided();
+    if (mrs.flags.make_double_sided) {
+        makeDoubleSided();
     }
 
     mu::MeshRefiner refiner;
@@ -923,7 +923,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     flags.has_indices = !indices.empty();
 }
 
-void Mesh::makeBothSided()
+void Mesh::makeDoubleSided()
 {
     size_t num_vertices = points.size();
     size_t num_faces = counts.size();

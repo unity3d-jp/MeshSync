@@ -629,7 +629,7 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
     }
 
     dst.refine_settings.flags.swap_faces = 1;
-    dst.refine_settings.flags.make_both_sided = make_both_sided;
+    dst.refine_settings.flags.make_double_sided = make_double_sided;
     dst.setupFlags();
 }
 

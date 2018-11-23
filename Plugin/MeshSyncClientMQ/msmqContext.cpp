@@ -461,7 +461,7 @@ MQObject msmqContext::createMesh(MQDocument doc, const ms::Mesh& data, const cha
 void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
     dst.flags.has_refine_settings = 1;
-    dst.refine_settings.flags.make_both_sided = m_settings.make_both_sided;
+    dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.flip_v = 1;
     if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {

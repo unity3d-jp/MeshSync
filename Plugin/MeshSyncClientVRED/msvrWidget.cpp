@@ -102,8 +102,8 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
         ck_flip_v->setCheckState(Qt::Checked);
     layout->addWidget(ck_flip_v, iy++, 0, 1, 3);
 
-    auto ck_both_sided = new QCheckBox("Make Both Sided");
-    if (settings.make_both_sided)
+    auto ck_both_sided = new QCheckBox("Double Sided");
+    if (settings.make_double_sided)
         ck_both_sided->setCheckState(Qt::Checked);
     layout->addWidget(ck_both_sided, iy++, 0, 1, 3);
 
@@ -250,7 +250,7 @@ void msvrSettingsWidget::onToggleBothSided(int v)
 {
     auto ctx = msvrGetContext();
     auto& settings = msvrGetContext()->getSettings();
-    ctx->makeBothSided(v);
+    ctx->makeDoubleSided(v);
     if (settings.auto_sync)
         ctx->send(true);
 }

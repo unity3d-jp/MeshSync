@@ -117,7 +117,7 @@ struct msvrSettings
     float scale_factor = 100.0f;
     bool flip_u = false;
     bool flip_v = false;
-    bool make_both_sided  = false;
+    bool make_double_sided  = false;
     bool sync_delete = true;
     bool sync_textures = true;
     bool sync_camera = true;
@@ -183,7 +183,7 @@ public:
 
     void flipU(bool v);
     void flipV(bool v);
-    void makeBothSided(bool v);
+    void makeDoubleSided(bool v);
 
 protected:
     BufferRecord* getActiveBuffer(GLenum target);

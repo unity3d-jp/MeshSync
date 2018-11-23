@@ -211,7 +211,7 @@ struct MeshRefineFlags
     uint32_t mirror_y_weld : 1;
     uint32_t mirror_z_weld : 1;
     uint32_t mirror_basis : 1;
-    uint32_t make_both_sided : 1;
+    uint32_t make_double_sided : 1;
 };
 
 struct MeshRefineSettings
@@ -375,7 +375,7 @@ public:
     void applyScaleFactor(float scale) override;
 
     void refine(const MeshRefineSettings& mrs);
-    void makeBothSided();
+    void makeDoubleSided();
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 

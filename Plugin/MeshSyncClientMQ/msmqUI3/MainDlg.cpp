@@ -131,7 +131,7 @@ LRESULT CMainDlg::OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 
 LRESULT CMainDlg::OnBnClickedCheckBothSided(WORD, WORD, HWND, BOOL &)
 {
-    getSettings().make_both_sided = m_check_bothsided.GetCheck() != 0;
+    getSettings().make_double_sided = m_check_bothsided.GetCheck() != 0;
     if (!m_initializing)
         m_plugin->SendAll(true);
     return 0;

@@ -813,7 +813,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             dst.refine_settings.flags.gen_tangents = 1;
             dst.refine_settings.flags.flip_u = m_settings.flip_u;
             dst.refine_settings.flags.flip_v = m_settings.flip_v;
-            dst.refine_settings.flags.make_both_sided = m_settings.make_both_sided;
+            dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         }
     };
     task();
@@ -852,13 +852,13 @@ void msvrContext::flipV(bool v)
     }
 }
 
-void msvrContext::makeBothSided(bool v)
+void msvrContext::makeDoubleSided(bool v)
 {
-    m_settings.make_both_sided = v;
+    m_settings.make_double_sided = v;
     for (auto& kvp : m_drawcalls) {
         auto& mesh = kvp.second.mesh;
         if (mesh)
-            mesh->refine_settings.flags.make_both_sided = m_settings.make_both_sided;
+            mesh->refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     }
 }
 

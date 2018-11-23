@@ -55,9 +55,9 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_vcolor->SetChecked(s.sync_vertex_color);
         m_check_vcolor->AddChangedEvent(this, &SettingsDlg::OnSyncVertexColorChange);
 
-        m_check_both_sided = CreateCheckBox(vf, L"Make Both Sided");
-        m_check_both_sided->SetChecked(s.make_both_sided);
-        m_check_both_sided->AddChangedEvent(this, &SettingsDlg::OnMakeBothSidedChange);
+        m_check_both_sided = CreateCheckBox(vf, L"Double Sided");
+        m_check_both_sided->SetChecked(s.make_double_sided);
+        m_check_both_sided->AddChangedEvent(this, &SettingsDlg::OnmakeDoubleSidedChange);
 
 #if MQPLUGIN_VERSION >= 0x0464
         m_check_bones = CreateCheckBox(vf, L"Sync Bones");
@@ -182,9 +182,9 @@ BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
     return 0;
 }
 
-BOOL SettingsDlg::OnMakeBothSidedChange(MQWidgetBase * sender, MQDocument doc)
+BOOL SettingsDlg::OnmakeDoubleSidedChange(MQWidgetBase * sender, MQDocument doc)
 {
-    getSettings().make_both_sided = m_check_both_sided->GetChecked();
+    getSettings().make_double_sided = m_check_both_sided->GetChecked();
     m_plugin->SendAll(true);
     return 0;
 }
