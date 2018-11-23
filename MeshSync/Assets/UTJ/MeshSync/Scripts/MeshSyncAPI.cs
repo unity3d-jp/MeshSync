@@ -381,6 +381,7 @@ namespace UTJ.MeshSync
         Animation,
         Texture,
         Material,
+        Audio,
     };
 
 
@@ -398,6 +399,7 @@ namespace UTJ.MeshSync
 
         public static implicit operator bool(AssetData v) { return v.self != IntPtr.Zero; }
         public static explicit operator FileAssetData(AssetData v) { return new FileAssetData { self = v.self }; }
+        public static explicit operator AudioData(AssetData v) { return new AudioData { self = v.self }; }
         public static explicit operator AnimationClipData(AssetData v) { return new AnimationClipData { self = v.self }; }
         public static explicit operator TextureData(AssetData v) { return new TextureData { self = v.self }; }
         public static explicit operator MaterialData(AssetData v) { return new MaterialData { self = v.self }; }
@@ -449,8 +451,82 @@ namespace UTJ.MeshSync
     }
     #endregion
 
+    #region Texture
+    public enum AudioFormat
+    {
+        Unknown = 0,
+        U8,
+        I16,
+        I24,
+        F32,
+        RawFile,
+    }
 
-    #region Material
+    [StructLayout(LayoutKind.Explicit)]
+    public struct AudioData
+    {
+        #region internal
+        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public AssetData asset;
+        [DllImport("MeshSyncServer")] static extern AudioData msAudioCreate();
+        [DllImport("MeshSyncServer")] static extern AudioFormat msAudioGetFormat(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
+        [DllImport("MeshSyncServer")] static extern int msAudioGetFrequency(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msAudioSetFrequency(IntPtr self, int v);
+        [DllImport("MeshSyncServer")] static extern int msAudioGetChannels(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msAudioSetChannels(IntPtr self, int v);
+        [DllImport("MeshSyncServer")] static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
+        [DllImport("MeshSyncServer")] static extern byte msAudioWriteToFile(IntPtr self, string path);
+        #endregion
+
+        public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
+
+        public static AudioData Create() { return msAudioCreate(); }
+
+        public int id
+        {
+            get { return asset.id; }
+            set { asset.id = value; }
+        }
+        public string name
+        {
+            get { return asset.name; }
+            set { asset.name = value; }
+        }
+        public AudioFormat format
+        {
+            get { return msAudioGetFormat(self); }
+            set { msAudioSetFormat(self, value); }
+        }
+        public int frequency
+        {
+            get { return msAudioGetFrequency(self); }
+            set { msAudioSetFrequency(self, value); }
+        }
+        public int channels
+        {
+            get { return msAudioGetChannels(self); }
+            set { msAudioSetChannels(self, value); }
+        }
+
+        public float[] samples
+        {
+            get
+            {
+                var ret = new float[frequency * channels];
+                msAudioGetDataAsFloat(self, ret);
+                return ret;
+            }
+        }
+
+        public bool WriteToFile(string path)
+        {
+            return msAudioWriteToFile(self, path) != 0;
+        }
+    }
+    #endregion
+
+    #region Texture
     public enum TextureType
     {
         Default,
@@ -566,7 +642,9 @@ namespace UTJ.MeshSync
             return false;
         }
     }
+    #endregion
 
+    #region Material
     public struct MaterialPropertyData
     {
         #region internal

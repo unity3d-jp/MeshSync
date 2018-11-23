@@ -144,6 +144,19 @@ msAPI bool              msFileAssetWriteToFile(ms::FileAsset *_this, const char 
 #pragma endregion
 
 
+#pragma region Audio
+msAPI ms::Audio*        msAudioCreate() { return ms::Audio::create_raw(); }
+msAPI ms::AudioFormat   msAudioGetFormat(ms::Audio *self) { return self->format; }
+msAPI void              msAudioSetFormat(ms::Audio *self, ms::AudioFormat v) { self->format = v; }
+msAPI int               msAudioGetFrequency(ms::Audio *self) { return self->frequency; }
+msAPI void              msAudioSetFrequency(ms::Audio *self, int v) { self->frequency = v; }
+msAPI int               msAudioGetChannels(ms::Audio *self) { return self->channels; }
+msAPI void              msAudioSetChannels(ms::Audio *self, int v) { self->channels = v; }
+msAPI void              msAudioGetDataAsFloat(ms::Audio *self, float *dst) { self->convertSamplesToFloat(dst); }
+msAPI bool              msAudioWriteToFile(ms::Audio *self, const char *path) { return self->writeToFile(path); }
+#pragma endregion
+
+
 #pragma region Texture
 msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
 msAPI ms::TextureType   msTextureGetType(ms::Texture *_this) { return _this->type; }

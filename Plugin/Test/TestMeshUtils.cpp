@@ -771,12 +771,13 @@ void FloatIntConversionImpl(float(&src)[N], T (&tmp)[N], float(&dst)[N])
 
 TestCase(Test_Half)
 {
-    float data[7] = { 0.0f, 0.1f, 0.5f, 1.0f, -0.1f, -0.5f, -1.0f };
-    float dst_s8[7], dst_u8[7], dst_u8n[7], dst_s16[7], dst_u16[7];
+    const int N = 9;
+    float data[N] = { 0.0f, 0.1f, 0.5f, 1.0f, 5.0f, -0.1f, -0.5f, -1.0f, -5.0f };
+    float dst_s8[N], dst_u8[N], dst_u8n[N], dst_s16[N], dst_u16[N];
 
-    snorm8 ts8[7]; FloatIntConversionImpl(data, ts8, dst_s8);
-    unorm8 tu8[7]; FloatIntConversionImpl(data, tu8, dst_u8);
-    unorm8n tu8n[7]; FloatIntConversionImpl(data, tu8n, dst_u8n);
-    snorm16 ts16[7]; FloatIntConversionImpl(data, ts16, dst_s16);
-    unorm16 tu16[7]; FloatIntConversionImpl(data, tu16, dst_u16);
+    snorm8 ts8[N]; FloatIntConversionImpl(data, ts8, dst_s8);
+    unorm8 tu8[N]; FloatIntConversionImpl(data, tu8, dst_u8);
+    unorm8n tu8n[N]; FloatIntConversionImpl(data, tu8n, dst_u8n);
+    snorm16 ts16[N]; FloatIntConversionImpl(data, ts16, dst_s16);
+    unorm16 tu16[N]; FloatIntConversionImpl(data, tu16, dst_u16);
 }

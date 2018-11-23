@@ -5,6 +5,7 @@ using UTJ.MeshSync;
 
 
 [ExecuteInEditMode]
+[RequireComponent(typeof(MeshSyncServer))]
 public class SceneEventHandler : MonoBehaviour
 {
     string m_log;

@@ -5,6 +5,7 @@
 #include "msAnimation.h"
 #include "msTexture.h"
 #include "msMaterial.h"
+#include "msAudio.h"
 
 namespace ms {
 
@@ -23,6 +24,7 @@ std::shared_ptr<Asset> Asset::create(std::istream& is)
     case AssetType::Animation: ret = AnimationClip::create(); break;
     case AssetType::Texture: ret = Texture::create(); break;
     case AssetType::Material: ret = Material::create(); break;
+    case AssetType::Audio: ret = Audio::create(); break;
     default:
         throw std::runtime_error("Asset::create() failed");
         break;

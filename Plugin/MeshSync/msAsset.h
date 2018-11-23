@@ -10,6 +10,7 @@ enum class AssetType
     Animation,
     Texture,
     Material,
+    Audio,
 };
 
 class Asset

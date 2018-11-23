@@ -483,6 +483,8 @@ using TexturePtr = std::shared_ptr<Texture>;
 class Material;
 using MaterialPtr = std::shared_ptr<Material>;
 
+class Audio;
+using AudioPtr = std::shared_ptr<Audio>;
 
 enum class Handedness
 {

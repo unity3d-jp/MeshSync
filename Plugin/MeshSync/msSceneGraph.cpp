@@ -3,6 +3,7 @@
 #include "msConstraints.h"
 #include "msAnimation.h"
 #include "msMaterial.h"
+#include "msAudio.h"
 #include "msSceneGraphImpl.h"
 
 
@@ -1513,6 +1514,8 @@ uint64_t Scene::hash() const
     for (auto& obj : animations)
         ret += obj->hash();
     for (auto& obj : textures)
+        ret += obj->hash();
+    for (auto& obj : materials)
         ret += obj->hash();
     for (auto& obj : assets)
         ret += obj->hash();

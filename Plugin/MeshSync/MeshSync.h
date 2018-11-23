@@ -6,6 +6,7 @@
 #include "msConstraints.h"
 #include "msAnimation.h"
 #include "msMaterial.h"
+#include "msAudio.h"
 #include "msClient.h"
 #include "msServer.h"
 #include "msMisc.h"

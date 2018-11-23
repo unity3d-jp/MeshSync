@@ -152,12 +152,13 @@ namespace UTJ.MeshSync
         [SerializeField] string m_assetDir = "MeshSyncAssets";
         [SerializeField] Transform m_rootObject;
         [Space(10)]
-        [SerializeField] bool m_syncTransform = true;
         [SerializeField] bool m_syncVisibility = true;
+        [SerializeField] bool m_syncTransform = true;
         [SerializeField] bool m_syncCameras = true;
         [SerializeField] bool m_syncLights = true;
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
+        [Space(10)]
         [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
@@ -172,6 +173,7 @@ namespace UTJ.MeshSync
         Server.MessageHandler m_handler;
         bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
+        bool m_needReassignMaterials = false;
 
         Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
         Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
@@ -421,6 +423,14 @@ namespace UTJ.MeshSync
                     }
                 }
 
+                // reassign materials
+                m_materialList = m_materialList.OrderBy(v => v.index).ToList();
+                if (m_needReassignMaterials)
+                {
+                    ReassignMaterials();
+                    m_needReassignMaterials = false;
+                }
+
 #if UNITY_EDITOR
                 if (!EditorApplication.isPlaying)
                 {
@@ -472,6 +482,9 @@ namespace UTJ.MeshSync
                         {
                             case AssetType.File:
                                 ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
+                                break;
+                            case AssetType.Audio:
+                                ((AudioData)asset).WriteToFile(assetPath + "/" + asset.name);
                                 break;
                             default:
                                 if(m_logging)
@@ -803,6 +816,28 @@ namespace UTJ.MeshSync
 
 
         #region ReceiveScene
+        void UpdateAssets(SceneData scene)
+        {
+            int numAssets = scene.numAssets;
+            for (int i = 0; i < numAssets; ++i)
+            {
+                var asset = scene.GetAsset(i);
+                switch (asset.type)
+                {
+                    case AssetType.File:
+                        ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
+                        break;
+                    case AssetType.Audio:
+                        ((AudioData)asset).WriteToFile(assetPath + "/" + asset.name);
+                        break;
+                    default:
+                        if (m_logging)
+                            Debug.Log("unknown asset: " + asset.name);
+                        break;
+                }
+            }
+        }
+
         void UpdateTextures(SceneData scene)
         {
 #if UNITY_EDITOR
@@ -928,8 +963,6 @@ namespace UTJ.MeshSync
 
         void UpdateMaterials(SceneData scene)
         {
-            bool needReassign = false;
-
             int numMaterials = scene.numMaterials;
             for (int i = 0; i < numMaterials; ++i)
             {
@@ -950,7 +983,7 @@ namespace UTJ.MeshSync
                         shader = Shader.Find("Standard");
                     dst.material = new Material(shader);
                     dst.materialIID = dst.material.GetInstanceID();
-                    needReassign = true;
+                    m_needReassignMaterials = true;
                 }
                 dst.name = src.name;
                 dst.index = src.index;
@@ -1053,10 +1086,6 @@ namespace UTJ.MeshSync
                 if (onUpdateMaterial != null)
                     onUpdateMaterial.Invoke(dstmat, src);
             }
-            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
-
-            if (needReassign)
-                ReassignMaterials();
         }
 
         SkinnedMeshRenderer UpdateMesh(MeshData data)

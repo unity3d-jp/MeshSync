@@ -101,7 +101,7 @@ std::shared_ptr<T> make_shared_ptr(T *p)
     }\
     static std::shared_ptr<T> create()\
     {\
-        return make_shared_ptr(Pool<T>::instance().pull());\
+        return make_shared_ptr(create_raw());\
     }\
     void release()\
     {\
