@@ -25,6 +25,7 @@ bool msmbLayout::FBCreate()
     const char *idLabelScale = "idLabelScale";
     const char *idEditlScale = "idEditlScale";
     const char *idButtonSyncMeshes = "idButtonSyncMeshes";
+    const char *idButtonBothSided = "idButtonBothSided";
     const char *idButtonBakeDeformers = "idButtonBakeDeformers";
     const char *idButtonSyncCameras = "idButtonSyncCameras";
     const char *idButtonSyncLights = "idButtonSyncLights";
@@ -130,11 +131,22 @@ bool msmbLayout::FBCreate()
         m_bu_sync_meshes.State = (int)m_device->sync_meshes;
         m_bu_sync_meshes.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
-        AddRegion(idButtonBakeDeformers, idButtonBakeDeformers,
+        AddRegion(idButtonBothSided, idButtonBothSided,
             0, kFBAttachLeft, idButtonSyncMeshes, 1.0,
             lS, kFBAttachBottom, idButtonSyncMeshes, 1.0,
             0, kFBAttachWidth, idButtonSyncMeshes, 1.0,
             0, kFBAttachHeight, idButtonSyncMeshes, 1.0);
+        SetControl(idButtonBothSided, m_bu_make_both_sided);
+        m_bu_make_both_sided.Caption = "Make Both Sided";
+        m_bu_make_both_sided.Style = kFBCheckbox;
+        m_bu_make_both_sided.State = (int)m_device->make_both_sided;
+        m_bu_make_both_sided.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
+
+        AddRegion(idButtonBakeDeformers, idButtonBakeDeformers,
+            0, kFBAttachLeft, idButtonBothSided, 1.0,
+            lS, kFBAttachBottom, idButtonBothSided, 1.0,
+            0, kFBAttachWidth, idButtonBothSided, 1.0,
+            0, kFBAttachHeight, idButtonBothSided, 1.0);
         SetControl(idButtonBakeDeformers, m_bu_bake_deformers);
         m_bu_bake_deformers.Caption = "Bake Deformers";
         m_bu_bake_deformers.Style = kFBCheckbox;
@@ -276,11 +288,12 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->scale_factor = (float)m_ed_scale.Value;
     m_device->sync_meshes = (bool)(int)m_bu_sync_meshes.State;
+    m_device->make_both_sided = (bool)(int)m_bu_make_both_sided.State;
     m_device->bake_deformars = (bool)(int)m_bu_bake_deformers.State;
     m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
     m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
     if (m_device->auto_sync)
-        m_device->sendScene(false);
+        m_device->sendScene(true);
 }
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)

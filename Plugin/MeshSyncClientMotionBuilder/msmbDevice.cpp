@@ -427,7 +427,7 @@ ms::MeshPtr msmbDevice::exportMesh(NodeRecord& n)
     return ret;
 }
 
-void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
+void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 {
     FBModelVertexData *vd = src->ModelVertexData;
     int num_vertices = vd->GetVertexCount();
@@ -629,6 +629,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     }
 
     dst.refine_settings.flags.swap_faces = 1;
+    dst.refine_settings.flags.make_both_sided = make_both_sided;
     dst.setupFlags();
 }
 

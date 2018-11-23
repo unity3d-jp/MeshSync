@@ -925,6 +925,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
 void Mesh::makeBothSided()
 {
+    size_t num_vertices = points.size();
     size_t num_faces = counts.size();
     size_t num_indices = indices.size();
 
@@ -1000,12 +1001,27 @@ void Mesh::makeBothSided()
         return true;
     };
 
+    auto expand = [this, num_vertices, num_indices](auto& attr) -> bool {
+        if (attr.size() != num_vertices)
+            return false;
+
+        std::remove_reference_t<decltype(attr)> tmp;
+        tmp.resize_discard(num_indices);
+        CopyWithIndices(tmp.data(), attr.data(), { indices.data(), num_indices });
+        attr.swap(tmp);
+        return true;
+    };
+
     copy_face_elements(material_ids);
+
+    expand(normals);
     if (copy_index_elements(normals)) {
         float3 *n = &normals[num_indices];
         for (size_t ii = 0; ii < num_back_indices; ++ii)
             n[ii] *= -1.0f;
     }
+
+    expand(tangents);
     if (copy_index_elements(tangents)) {
         float4 *n = &tangents[num_indices];
         for (size_t ii = 0; ii < num_back_indices; ++ii)

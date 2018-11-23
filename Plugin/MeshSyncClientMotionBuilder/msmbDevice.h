@@ -124,6 +124,7 @@ public:
     bool sync_bones = true;
     bool sync_meshes = true;
     bool sync_textures = true;
+    bool make_both_sided = false;
     bool bake_deformars = false;
     bool parallel_extraction = true;
 };

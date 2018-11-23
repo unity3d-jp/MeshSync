@@ -33,6 +33,7 @@ private:
     FBButton m_bu_sync_cameras;
     FBButton m_bu_sync_lights;
     FBButton m_bu_sync_meshes;
+    FBButton m_bu_make_both_sided;
     FBButton m_bu_bake_deformers;
 
     FBLabel m_lb_animation;
