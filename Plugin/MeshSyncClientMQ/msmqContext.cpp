@@ -339,31 +339,33 @@ bool msmqContext::importMeshes(MQDocument doc)
 
     // import materials
     {
+        auto material = ret->getAssets<ms::Material>();
+
         // create unique name list as Metasequoia doesn't accept multiple same names
         std::vector<std::string> names;
-        names.reserve(ret->materials.size());
-        for (int i = 0; i < (int)ret->materials.size(); ++i) {
-            auto name = ret->materials[i]->name;
+        names.reserve(material.size());
+        for (int i = 0; i < (int)material.size(); ++i) {
+            auto name = material[i]->name;
             while (std::find(names.begin(), names.end(), name) != names.end()) {
                 name += '_';
             }
             names.push_back(name);
         }
 
-        while (doc->GetMaterialCount() < (int)ret->materials.size()) {
+        while (doc->GetMaterialCount() < (int)material.size()) {
             doc->AddMaterial(MQ_CreateMaterial());
         }
-        for (int i = 0; i < (int)ret->materials.size(); ++i) {
+        for (int i = 0; i < (int)material.size(); ++i) {
             auto dst = doc->GetMaterial(i);
             dst->SetName(ms::ToANSI(names[i]).c_str());
 
-            auto& stdmat = ms::AsStandardMaterial(*ret->materials[i]);
+            auto& stdmat = ms::AsStandardMaterial(*material[i]);
             dst->SetColor(to_MQColor(stdmat.getColor()));
         }
     }
     
     // import meshes
-    for (auto& data : ret->objects) {
+    for (auto& data : ret->entities) {
         if (data->getType() == ms::Entity::Type::Mesh) {
             auto& mdata = (ms::Mesh&)*data;
 

@@ -486,6 +486,15 @@ namespace UTJ.MeshSync
                             case AssetType.Audio:
                                 ((AudioData)asset).WriteToFile(assetPath + "/" + asset.name);
                                 break;
+                            case AssetType.Texture:
+                                UpdateTexture((TextureData)asset);
+                                break;
+                            case AssetType.Material:
+                                UpdateMaterial((MaterialData)asset);
+                                break;
+                            case AssetType.Animation:
+                                UpdateAnimation((AnimationClipData)asset);
+                                break;
                             default:
                                 if(m_logging)
                                     Debug.Log("unknown asset: " + asset.name);
@@ -495,30 +504,14 @@ namespace UTJ.MeshSync
                 }
             });
 
-            // sync textures
-            Try(() =>
-            {
-                int numTextures = scene.numTextures;
-                if (numTextures > 0)
-                    UpdateTextures(scene);
-            });
-
-            // materials
-            Try(() =>
-            {
-                int numMaterials = scene.numMaterials;
-                if (numMaterials > 0)
-                    UpdateMaterials(scene);
-            });
-
             // objects
             Try(() =>
             {
-                int numObjects = scene.numObjects;
+                int numObjects = scene.numEntities;
                 for (int i = 0; i < numObjects; ++i)
                 {
                     Component dst = null;
-                    var src = scene.GetObject(i);
+                    var src = scene.GetEntity(i);
                     switch (src.type)
                     {
                         case TransformData.Type.Transform:
@@ -552,13 +545,6 @@ namespace UTJ.MeshSync
                     UpdateConstraint(scene.GetConstraint(i));
             });
 #endif
-            // animations
-            Try(() =>
-            {
-                int numClips = scene.numAnimationClips;
-                for (int i = 0; i < numClips; ++i)
-                    UpdateAnimation(scene.GetAnimationClip(i));
-            });
 
             if(m_progressiveDisplay)
                 ForceRepaint();
@@ -816,131 +802,101 @@ namespace UTJ.MeshSync
 
 
         #region ReceiveScene
-        void UpdateAssets(SceneData scene)
+        void UpdateTexture(TextureData src)
         {
-            int numAssets = scene.numAssets;
-            for (int i = 0; i < numAssets; ++i)
+            Texture2D texture = null;
+#if UNITY_EDITOR
+            Action<string> doImport = (path) =>
             {
-                var asset = scene.GetAsset(i);
-                switch (asset.type)
-                {
-                    case AssetType.File:
-                        ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
-                        break;
-                    case AssetType.Audio:
-                        ((AudioData)asset).WriteToFile(assetPath + "/" + asset.name);
-                        break;
-                    default:
-                        if (m_logging)
-                            Debug.Log("unknown asset: " + asset.name);
-                        break;
-                }
-            }
-        }
-
-        void UpdateTextures(SceneData scene)
-        {
-#if UNITY_EDITOR
-            string dstDir = assetPath;
-#endif
-            int numTextures = scene.numTextures;
-            for (int i = 0; i < numTextures; ++i)
-            {
-                Texture2D texture = null;
-                var src = scene.GetTexture(i);
-
-#if UNITY_EDITOR
-                Action<string> doImport = (path) =>
-                {
-                    AssetDatabase.ImportAsset(path);
-                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                    if (texture != null)
-                    {
-                        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                        if (importer != null)
-                        {
-                            if (src.type == TextureType.NormalMap)
-                                importer.textureType = TextureImporterType.NormalMap;
-                        }
-                    }
-                };
-#endif
-
-                var format = src.format;
-                if (format == TextureFormat.RawFile)
-                {
-#if UNITY_EDITOR
-                    // write data to file and import
-                    string path = dstDir + "/" + src.name;
-                    if (src.WriteToFile(path))
-                        doImport(path);
-#endif
-                }
-                else
-                {
-                    texture = new Texture2D(src.width, src.height, Misc.ToUnityTextureFormat(src.format), false);
-                    texture.name = src.name;
-                    texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
-                    texture.Apply();
-#if UNITY_EDITOR
-                    // encode and write data to file and import
-                    // (script-generated texture works but can't set texture type such as normal map)
-                    bool exported = false;
-                    string path = null;
-                    switch (src.format) {
-                        case TextureFormat.Ru8:
-                        case TextureFormat.RGu8:
-                        case TextureFormat.RGBu8:
-                        case TextureFormat.RGBAu8:
-                            {
-                                path = dstDir + "/" + src.name + ".png";
-                                exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
-                                break;
-                            }
-                        case TextureFormat.Rf16:
-                        case TextureFormat.RGf16:
-                        case TextureFormat.RGBf16:
-                        case TextureFormat.RGBAf16:
-                            {
-                                path = dstDir + "/" + src.name + ".exr";
-                                exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
-                                break;
-                            }
-                        case TextureFormat.Rf32:
-                        case TextureFormat.RGf32:
-                        case TextureFormat.RGBf32:
-                        case TextureFormat.RGBAf32:
-                            {
-                                path = dstDir + "/" + src.name + ".exr";
-                                exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
-                                break;
-                            }
-                    }
-
-                    if (exported)
-                    {
-                        texture = null;
-                        GC.Collect();
-
-                        doImport(path);
-                    }
-#endif
-                }
-
+                AssetDatabase.ImportAsset(path);
+                texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 if (texture != null)
                 {
-                    int id = src.id;
-                    var dst = m_textureList.Find(a => a.id == id);
-                    if (dst == null)
+                    var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                    if (importer != null)
                     {
-                        dst = new TextureHolder();
-                        dst.id = id;
-                        m_textureList.Add(dst);
+                        if (src.type == TextureType.NormalMap)
+                            importer.textureType = TextureImporterType.NormalMap;
                     }
-                    dst.texture = texture;
-                    if (onUpdateTexture != null)
-                        onUpdateTexture.Invoke(texture, src);
                 }
+            };
+#endif
+
+            var format = src.format;
+            if (format == TextureFormat.RawFile)
+            {
+#if UNITY_EDITOR
+                // write data to file and import
+                string path = assetPath + "/" + src.name;
+                if (src.WriteToFile(path))
+                    doImport(path);
+#endif
+            }
+            else
+            {
+                texture = new Texture2D(src.width, src.height, Misc.ToUnityTextureFormat(src.format), false);
+                texture.name = src.name;
+                texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
+                texture.Apply();
+#if UNITY_EDITOR
+                // encode and write data to file and import
+                // (script-generated texture works but can't set texture type such as normal map)
+                bool exported = false;
+                string path = null;
+                switch (src.format)
+                {
+                    case TextureFormat.Ru8:
+                    case TextureFormat.RGu8:
+                    case TextureFormat.RGBu8:
+                    case TextureFormat.RGBAu8:
+                        {
+                            path = assetPath + "/" + src.name + ".png";
+                            exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
+                            break;
+                        }
+                    case TextureFormat.Rf16:
+                    case TextureFormat.RGf16:
+                    case TextureFormat.RGBf16:
+                    case TextureFormat.RGBAf16:
+                        {
+                            path = assetPath + "/" + src.name + ".exr";
+                            exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
+                            break;
+                        }
+                    case TextureFormat.Rf32:
+                    case TextureFormat.RGf32:
+                    case TextureFormat.RGBf32:
+                    case TextureFormat.RGBAf32:
+                        {
+                            path = assetPath + "/" + src.name + ".exr";
+                            exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
+                            break;
+                        }
+                }
+
+                if (exported)
+                {
+                    texture = null;
+                    GC.Collect();
+
+                    doImport(path);
+                }
+#endif
+            }
+
+            if (texture != null)
+            {
+                int id = src.id;
+                var dst = m_textureList.Find(a => a.id == id);
+                if (dst == null)
+                {
+                    dst = new TextureHolder();
+                    dst.id = id;
+                    m_textureList.Add(dst);
+                }
+                dst.texture = texture;
+                if (onUpdateTexture != null)
+                    onUpdateTexture.Invoke(texture, src);
             }
         }
 
@@ -961,131 +917,126 @@ namespace UTJ.MeshSync
         const string _BumpMap = "_BumpMap";
         const string _NORMALMAP = "_NORMALMAP";
 
-        void UpdateMaterials(SceneData scene)
+        void UpdateMaterial(MaterialData src)
         {
-            int numMaterials = scene.numMaterials;
-            for (int i = 0; i < numMaterials; ++i)
+            var id = src.id;
+
+            var dst = m_materialList.Find(a => a.id == id);
+            if (dst == null)
             {
-                var src = scene.GetMaterial(i);
-                var id = src.id;
+                dst = new MaterialHolder();
+                dst.id = id;
+                m_materialList.Add(dst);
+            }
+            if (dst.material == null)
+            {
+                var shader = Shader.Find(src.shader);
+                if (shader == null)
+                    shader = Shader.Find("Standard");
+                dst.material = new Material(shader);
+                dst.materialIID = dst.material.GetInstanceID();
+                m_needReassignMaterials = true;
+            }
+            dst.name = src.name;
+            dst.index = src.index;
+            dst.shader = src.shader;
+            dst.color = src.color;
 
-                var dst = m_materialList.Find(a => a.id == id);
-                if (dst == null)
-                {
-                    dst = new MaterialHolder();
-                    dst.id = id;
-                    m_materialList.Add(dst);
-                }
-                if (dst.material == null)
-                {
-                    var shader = Shader.Find(src.shader);
-                    if (shader == null)
-                        shader = Shader.Find("Standard");
-                    dst.material = new Material(shader);
-                    dst.materialIID = dst.material.GetInstanceID();
-                    m_needReassignMaterials = true;
-                }
-                dst.name = src.name;
-                dst.index = src.index;
-                dst.shader = src.shader;
-                dst.color = src.color;
+            if (dst.materialIID != dst.material.GetInstanceID())
+                return;
 
-                if (dst.materialIID != dst.material.GetInstanceID())
+            var dstmat = dst.material;
+            dstmat.name = src.name;
+
+            int numKeywords = src.numKeywords;
+            for (int ki = 0; ki < numKeywords; ++ki)
+            {
+                var kw = src.GetKeyword(ki);
+                if (kw.value)
+                    dstmat.EnableKeyword(kw.name);
+                else
+                    dstmat.DisableKeyword(kw.name);
+            }
+
+            int numProps = src.numProperties;
+            for (int pi = 0; pi < numProps; ++pi)
+            {
+                var prop = src.GetProperty(pi);
+                var name = prop.name;
+                var type = prop.type;
+                if (!dstmat.HasProperty(name))
                     continue;
 
-                var dstmat = dst.material;
-                dstmat.name = src.name;
-
-                int numKeywords = src.numKeywords;
-                for (int ki = 0; ki < numKeywords; ++ki)
+                // todo: handle transparent
+                //if (name == _Color)
+                //{
+                //    var color = prop.vectorValue;
+                //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
+                //    {
+                //        dstmat.SetOverrideTag("RenderType", "Transparent");
+                //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                //        dstmat.SetInt("_ZWrite", 0);
+                //        dstmat.DisableKeyword("_ALPHATEST_ON");
+                //        dstmat.DisableKeyword("_ALPHABLEND_ON");
+                //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                //    }
+                //}
+                if (name == _EmissionColor)
                 {
-                    var kw = src.GetKeyword(ki);
-                    if (kw.value)
-                        dstmat.EnableKeyword(kw.name);
-                    else
-                        dstmat.DisableKeyword(kw.name);
+                    if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                    {
+                        dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                        dstmat.EnableKeyword(_EMISSION);
+                    }
+                }
+                else if (name == _MetallicGlossMap)
+                {
+                    dstmat.EnableKeyword(_METALLICGLOSSMAP);
+                }
+                else if (name == _BumpMap)
+                {
+                    dstmat.EnableKeyword(_NORMALMAP);
                 }
 
-                int numProps = src.numProperties;
-                for (int pi = 0; pi < numProps; ++pi)
+                int arraySize = prop.arraySize;
+                switch (type)
                 {
-                    var prop = src.GetProperty(pi);
-                    var name = prop.name;
-                    var type = prop.type;
-                    if (!dstmat.HasProperty(name))
-                        continue;
-
-                    // todo: handle transparent
-                    //if (name == _Color)
-                    //{
-                    //    var color = prop.vectorValue;
-                    //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-                    //    {
-                    //        dstmat.SetOverrideTag("RenderType", "Transparent");
-                    //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    //        dstmat.SetInt("_ZWrite", 0);
-                    //        dstmat.DisableKeyword("_ALPHATEST_ON");
-                    //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-                    //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                    //    }
-                    //}
-                    if (name == _EmissionColor)
-                    {
-                        if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                    case MaterialPropertyData.Type.Int:
+                        dstmat.SetInt(name, prop.intValue);
+                        break;
+                    case MaterialPropertyData.Type.Float:
+                        if (arraySize == 1)
+                            dstmat.SetFloat(name, prop.floatValue);
+                        else
+                            dstmat.SetFloatArray(name, prop.floatArray);
+                        break;
+                    case MaterialPropertyData.Type.Vector:
+                        if (arraySize == 1)
+                            dstmat.SetVector(name, prop.vectorValue);
+                        else
+                            dstmat.SetVectorArray(name, prop.vectorArray);
+                        break;
+                    case MaterialPropertyData.Type.Matrix:
+                        if (arraySize == 1)
+                            dstmat.SetMatrix(name, prop.matrixValue);
+                        else
+                            dstmat.SetMatrixArray(name, prop.matrixArray);
+                        break;
+                    case MaterialPropertyData.Type.Texture:
                         {
-                            dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                            dstmat.EnableKeyword(_EMISSION);
+                            var tex = FindTexture(prop.textureValue);
+                            if (tex != null)
+                                dstmat.SetTexture(name, tex);
                         }
-                    }
-                    else if (name == _MetallicGlossMap)
-                    {
-                        dstmat.EnableKeyword(_METALLICGLOSSMAP);
-                    }
-                    else if (name == _BumpMap)
-                    {
-                        dstmat.EnableKeyword(_NORMALMAP);
-                    }
-
-                    int arraySize = prop.arraySize;
-                    switch (type)
-                    {
-                        case MaterialPropertyData.Type.Int:
-                            dstmat.SetInt(name, prop.intValue);
-                            break;
-                        case MaterialPropertyData.Type.Float:
-                            if (arraySize == 1)
-                                dstmat.SetFloat(name, prop.floatValue);
-                            else
-                                dstmat.SetFloatArray(name, prop.floatArray);
-                            break;
-                        case MaterialPropertyData.Type.Vector:
-                            if (arraySize == 1)
-                                dstmat.SetVector(name, prop.vectorValue);
-                            else
-                                dstmat.SetVectorArray(name, prop.vectorArray);
-                            break;
-                        case MaterialPropertyData.Type.Matrix:
-                            if (arraySize == 1)
-                                dstmat.SetMatrix(name, prop.matrixValue);
-                            else
-                                dstmat.SetMatrixArray(name, prop.matrixArray);
-                            break;
-                        case MaterialPropertyData.Type.Texture:
-                            {
-                                var tex = FindTexture(prop.textureValue);
-                                if (tex != null)
-                                    dstmat.SetTexture(name, tex);
-                            }
-                            break;
-                        default: break;
-                    }
+                        break;
+                    default: break;
                 }
-
-                if (onUpdateMaterial != null)
-                    onUpdateMaterial.Invoke(dstmat, src);
             }
+
+            if (onUpdateMaterial != null)
+                onUpdateMaterial.Invoke(dstmat, src);
         }
 
         SkinnedMeshRenderer UpdateMesh(MeshData data)

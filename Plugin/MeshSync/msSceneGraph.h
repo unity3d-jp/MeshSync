@@ -511,12 +511,9 @@ struct Scene
 {
 public:
     SceneSettings settings;
-    std::vector<TransformPtr> objects;
-    std::vector<ConstraintPtr> constraints;
-    std::vector<AnimationClipPtr> animations;
-    std::vector<TexturePtr> textures;
-    std::vector<MaterialPtr> materials;
     std::vector<AssetPtr> assets;
+    std::vector<TransformPtr> entities;
+    std::vector<ConstraintPtr> constraints;
 
 public:
     uint32_t getSerializeSize() const;
@@ -524,9 +521,11 @@ public:
     void deserialize(std::istream& is); // throw
     void clear();
     uint64_t hash() const;
+
+    template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;
+    template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
 };
 msHasSerializer(Scene);
 using ScenePtr = std::shared_ptr<Scene>;
-
 
 } // namespace ms

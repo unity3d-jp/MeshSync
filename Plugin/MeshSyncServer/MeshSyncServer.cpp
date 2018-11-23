@@ -66,32 +66,32 @@ msAPI void msServerEndServe(ms::Server *server)
 msAPI void msServerServeTransform(ms::Server *server, ms::Transform *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.push_back(make_shared_ptr(data));
+    server->getHostScene()->entities.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeCamera(ms::Server *server, ms::Camera *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.push_back(make_shared_ptr(data));
+    server->getHostScene()->entities.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeLight(ms::Server *server, ms::Light *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.push_back(make_shared_ptr(data));
+    server->getHostScene()->entities.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeMesh(ms::Server *server, ms::Mesh *data)
 {
     if (!server) { return; }
-    server->getHostScene()->objects.push_back(make_shared_ptr(data));
+    server->getHostScene()->entities.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeMaterial(ms::Server *server, ms::Material *data)
 {
     if (!server) { return; }
-    server->getHostScene()->materials.push_back(make_shared_ptr(data));
+    server->getHostScene()->assets.push_back(make_shared_ptr(data));
 }
 msAPI void msServerServeTexture(ms::Server *server, ms::Texture *data)
 {
     if (!server) { return; }
-    server->getHostScene()->textures.push_back(make_shared_ptr(data));
+    server->getHostScene()->assets.push_back(make_shared_ptr(data));
 }
 
 msAPI void msServerSetFileRootPath(ms::Server *server, const char *path)
@@ -1038,17 +1038,11 @@ msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *_this, int
 #pragma endregion
 
 #pragma region Scene
-msAPI const char*           msSceneGetName(ms::Scene *_this)                        { return _this->settings.name.c_str(); }
-msAPI int                   msSceneGetNumObjects(ms::Scene *_this)                  { return (int)_this->objects.size(); }
-msAPI ms::Transform*        msSceneGetObjectData(ms::Scene *_this, int i)           { return _this->objects[i].get(); }
-msAPI int                   msSceneGetNumConstraints(ms::Scene *_this)              { return (int)_this->constraints.size(); }
-msAPI ms::Constraint*       msSceneGetConstraintData(ms::Scene *_this, int i)       { return _this->constraints[i].get(); }
-msAPI int                   msSceneGetNumAnimationClips(ms::Scene *_this)           { return (int)_this->animations.size(); }
-msAPI ms::AnimationClip*    msSceneGetAnimationClipData(ms::Scene *_this, int ci)   { return _this->animations[ci].get(); }
-msAPI int                   msSceneGetNumMaterials(ms::Scene *_this)                { return (int)_this->materials.size(); }
-msAPI ms::Material*         msSceneGetMaterialData(ms::Scene *_this, int i)         { return _this->materials[i].get(); }
-msAPI int                   msSceneGetNumTextures(ms::Scene *_this)                 { return (int)_this->textures.size(); }
-msAPI ms::Texture*          msSceneGetTextureData(ms::Scene *_this, int i)          { return _this->textures[i].get(); }
-msAPI int                   msSceneGetNumAssets(ms::Scene *_this)                    { return (int)_this->assets.size(); }
-msAPI ms::Asset*            msSceneGetAssetData(ms::Scene *_this, int i)            { return _this->assets[i].get(); }
+msAPI const char*       msSceneGetName(ms::Scene *_this)                { return _this->settings.name.c_str(); }
+msAPI int               msSceneGetNumAssets(ms::Scene *_this)           { return (int)_this->assets.size(); }
+msAPI ms::Asset*        msSceneGetAsset(ms::Scene *_this, int i)        { return _this->assets[i].get(); }
+msAPI int               msSceneGetNumEntities(ms::Scene *_this)         { return (int)_this->entities.size(); }
+msAPI ms::Transform*    msSceneGetEntity(ms::Scene *_this, int i)       { return _this->entities[i].get(); }
+msAPI int               msSceneGetNumConstraints(ms::Scene *_this)      { return (int)_this->constraints.size(); }
+msAPI ms::Constraint*   msSceneGetConstraint(ms::Scene *_this, int i)   { return _this->constraints[i].get(); }
 #pragma endregion

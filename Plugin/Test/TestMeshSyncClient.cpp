@@ -7,7 +7,7 @@ using namespace mu;
 
 static void Send(ms::Scene& scene)
 {
-    for (auto& obj : scene.objects) {
+    for (auto& obj : scene.entities) {
         if (auto *mesh = dynamic_cast<ms::Mesh*>(obj.get())) {
             mesh->setupFlags();
         }
@@ -69,7 +69,7 @@ TestCase(Test_SendMesh)
         ms::Scene scene;
 
         auto mesh = ms::Mesh::create();
-        scene.objects.push_back(mesh);
+        scene.entities.push_back(mesh);
 
         mesh->path = "/Test/Wave";
         mesh->refine_settings.flags.gen_normals = 1;
@@ -96,7 +96,7 @@ TestCase(Test_Animation)
     ms::Scene scene;
     {
         auto node = ms::Mesh::create();
-        scene.objects.push_back(node);
+        scene.entities.push_back(node);
 
         node->path = "/Test/Animation";
         node->position = { 0.0f, 0.0f, 0.0f };
@@ -108,7 +108,7 @@ TestCase(Test_Animation)
     }
     {
         auto clip = ms::AnimationClip::create();
-        scene.animations.push_back(clip);
+        scene.assets.push_back(clip);
 
         auto anim = ms::TransformAnimation::create();
         clip->animations.push_back(anim);
@@ -139,7 +139,7 @@ TestCase(Test_Points)
     ms::Scene scene;
     {
         auto node = ms::Mesh::create();
-        scene.objects.push_back(node);
+        scene.entities.push_back(node);
 
         node->path = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
@@ -152,7 +152,7 @@ TestCase(Test_Points)
     }
     {
         auto node = ms::Points::create();
-        scene.objects.push_back(node);
+        scene.entities.push_back(node);
 
         node->path = "/Test/PointsT";
         node->reference = "/Test/PointMesh";
@@ -170,7 +170,7 @@ TestCase(Test_Points)
     }
     {
         auto node = ms::Points::create();
-        scene.objects.push_back(node);
+        scene.entities.push_back(node);
 
         node->path = "/Test/PointsTR";
         node->reference = "/Test/PointMesh";
@@ -190,10 +190,10 @@ TestCase(Test_Points)
     }
     {
         auto node = ms::Points::create();
-        scene.objects.push_back(node);
+        scene.entities.push_back(node);
 
         auto clip = ms::AnimationClip::create();
-        scene.animations.push_back(clip);
+        scene.assets.push_back(clip);
 
         auto anim = ms::PointsAnimation::create();
         clip->animations.push_back(anim);
@@ -293,11 +293,11 @@ TestCase(Test_SendTexture)
         for (auto filename : raw_files) {
             auto tex = ms::Texture::create();
             if (tex->readFromFile(filename)) {
-                scene.textures.push_back(tex);
+                scene.assets.push_back(tex);
                 tex->id = gen_id();
             }
         }
-        if (!scene.textures.empty())
+        if (!scene.assets.empty())
             Send(scene);
     }
 
@@ -310,43 +310,43 @@ TestCase(Test_SendTexture)
             // Ru8
             unorm8 black{ 0.0f };
             unorm8 white{ 1.0f };
-            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
+            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
         }
         {
             // RGu8
             unorm8x2 black{ 0.0f, 0.0f };
             unorm8x2 white{ 1.0f, 1.0f };
-            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
+            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
         }
         {
             // RGBAu8
             unorm8x3 black{ 0.0f, 0.0f, 0.0f };
             unorm8x3 white{ 1.0f, 1.0f, 1.0f };
-            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
+            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
         }
         {
             // RGBAu8
             unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
+            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
             half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
+            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
             float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene.textures.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
+            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
         // material
         {
             auto mat = ms::Material::create();
-            scene.materials.push_back(mat);
+            scene.assets.push_back(mat);
             mat->name = "TestMaterial1";
             mat->id = 0;
             auto& stdmat = ms::AsStandardMaterial(*mat);

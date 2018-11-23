@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msAsyncSceneSender.h"
+#include "../MeshSync.h"
 
 namespace ms {
 
@@ -55,6 +56,8 @@ void AsyncSceneSender::send()
     std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
 
+    auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
+
     bool succeeded = true;
     ms::Client client(client_settings);
 
@@ -88,7 +91,7 @@ void AsyncSceneSender::send()
             mes.session_id = session_id;
             mes.message_id = message_count++;
             mes.scene.settings = scene_settings;
-            mes.scene.textures = { tex };
+            mes.scene.assets.push_back(tex);
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
@@ -101,8 +104,8 @@ void AsyncSceneSender::send()
         mes.session_id = session_id;
         mes.message_id = message_count++;
         mes.scene.settings = scene_settings;
-        mes.scene.materials = materials;
-        mes.scene.objects = transforms;
+        append(mes.scene.assets, materials);
+        mes.scene.entities = transforms;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
@@ -115,7 +118,7 @@ void AsyncSceneSender::send()
             mes.session_id = session_id;
             mes.message_id = message_count++;
             mes.scene.settings = scene_settings;
-            mes.scene.objects = { geom };
+            mes.scene.entities = { geom };
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
@@ -128,7 +131,7 @@ void AsyncSceneSender::send()
         mes.session_id = session_id;
         mes.message_id = message_count++;
         mes.scene.settings = scene_settings;
-        mes.scene.animations = animations;
+        append(mes.scene.assets, animations);
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;

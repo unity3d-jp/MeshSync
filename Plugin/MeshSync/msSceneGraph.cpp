@@ -1474,7 +1474,7 @@ void SceneSettings::deserialize(std::istream& is)
 
 
 #define EachMember(F)\
-    F(settings) F(objects) F(constraints) F(animations) F(textures) F(materials) F(assets)
+    F(settings) F(assets) F(entities) F(constraints)
 
 uint32_t Scene::getSerializeSize() const
 {
@@ -1498,29 +1498,52 @@ void Scene::deserialize(std::istream& is)
 void Scene::clear()
 {
     settings = SceneSettings();
-    objects.clear();
-    constraints.clear();
-    animations.clear();
-    textures.clear();
-    materials.clear();
     assets.clear();
+    entities.clear();
+    constraints.clear();
 }
 
 uint64_t Scene::hash() const
 {
     uint64_t ret = 0;
-    for (auto& obj : objects)
-        ret += obj->hash();
-    for (auto& obj : animations)
-        ret += obj->hash();
-    for (auto& obj : textures)
-        ret += obj->hash();
-    for (auto& obj : materials)
-        ret += obj->hash();
     for (auto& obj : assets)
+        ret += obj->hash();
+    for (auto& obj : entities)
         ret += obj->hash();
     return ret;
 }
+
+template<class AssetType>
+std::vector<std::shared_ptr<AssetType>> Scene::getAssets() const
+{
+    std::vector<std::shared_ptr<AssetType>> ret;
+    for (auto& asset : assets) {
+        if (auto p = std::dynamic_pointer_cast<AssetType>(asset))
+            ret.push_back(p);
+    }
+    return ret;
+}
+template std::vector<std::shared_ptr<Texture>> Scene::getAssets<Texture>() const;
+template std::vector<std::shared_ptr<Material>> Scene::getAssets<Material>() const;
+template std::vector<std::shared_ptr<AnimationClip>> Scene::getAssets<AnimationClip>() const;
+template std::vector<std::shared_ptr<Audio>> Scene::getAssets<Audio>() const;
+template std::vector<std::shared_ptr<FileAsset>> Scene::getAssets<FileAsset>() const;
+
+
+template<class EntityType>
+std::vector<std::shared_ptr<EntityType>> Scene::getEntities() const
+{
+    std::vector<std::shared_ptr<EntityType>> ret;
+    for (auto& asset : entities) {
+        if (auto p = std::dynamic_pointer_cast<EntityType>(asset))
+            ret.push_back(p);
+    }
+    return ret;
+}
+template std::vector<std::shared_ptr<Camera>> Scene::getAssets<Camera>() const;
+template std::vector<std::shared_ptr<Light>> Scene::getAssets<Light>() const;
+template std::vector<std::shared_ptr<Mesh>> Scene::getAssets<Mesh>() const;
+template std::vector<std::shared_ptr<Points>> Scene::getAssets<Points>() const;
 
 #undef EachMember
 #pragma endregion

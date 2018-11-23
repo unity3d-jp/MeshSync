@@ -2352,34 +2352,22 @@ namespace UTJ.MeshSync
         #region internal
         internal IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumObjects(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern TransformData msSceneGetObjectData(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumMaterials(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern MaterialData msSceneGetMaterialData(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumTextures(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern TextureData msSceneGetTextureData(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraintData(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumAnimationClips(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationClipData msSceneGetAnimationClipData(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern int msSceneGetNumAssets(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AssetData msSceneGetAssetData(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern AssetData msSceneGetAsset(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern int msSceneGetNumEntities(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern TransformData msSceneGetEntity(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
         #endregion
 
         public string name { get { return Misc.S(msSceneGetName(self)); } }
-        public int numObjects { get { return msSceneGetNumObjects(self); } }
-        public int numMaterials { get { return msSceneGetNumMaterials(self); } }
-        public int numTextures { get { return msSceneGetNumTextures(self); } }
-        public int numConstraints { get { return msSceneGetNumConstraints(self); } }
-        public int numAnimationClips { get { return msSceneGetNumAnimationClips(self); } }
         public int numAssets { get { return msSceneGetNumAssets(self); } }
+        public int numEntities { get { return msSceneGetNumEntities(self); } }
+        public int numConstraints { get { return msSceneGetNumConstraints(self); } }
 
-        public TransformData GetObject(int i) { return msSceneGetObjectData(self, i); }
-        public MaterialData GetMaterial(int i) { return msSceneGetMaterialData(self, i); }
-        public TextureData GetTexture(int i) { return msSceneGetTextureData(self, i); }
-        public ConstraintData GetConstraint(int i) { return msSceneGetConstraintData(self, i); }
-        public AnimationClipData GetAnimationClip(int i) { return msSceneGetAnimationClipData(self, i); }
-        public AssetData GetAsset(int i) { return msSceneGetAssetData(self, i); }
+        public AssetData GetAsset(int i) { return msSceneGetAsset(self, i); }
+        public TransformData GetEntity(int i) { return msSceneGetEntity(self, i); }
+        public ConstraintData GetConstraint(int i) { return msSceneGetConstraint(self, i); }
     }
     #endregion Scene
 }

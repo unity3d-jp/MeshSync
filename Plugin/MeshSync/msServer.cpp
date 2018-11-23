@@ -323,7 +323,7 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    parallel_for_each(m_host_scene->objects.begin(), m_host_scene->objects.end(), [&request](TransformPtr& p) {
+    parallel_for_each(m_host_scene->entities.begin(), m_host_scene->entities.end(), [&request](TransformPtr& p) {
         auto pmesh = dynamic_cast<Mesh*>(p.get());
         if (!pmesh)
             return;
@@ -455,7 +455,7 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
     dst.task = std::async(std::launch::async, [this, mes]() {
         bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
         bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-        parallel_for_each(mes->scene.objects.begin(), mes->scene.objects.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
+        parallel_for_each(mes->scene.entities.begin(), mes->scene.entities.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
             if (obj->getType() == Entity::Type::Mesh) {
                 auto& mesh = (Mesh&)*obj;
                 mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
@@ -477,7 +477,11 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
                 }
             }
         });
-        for (auto& clip : mes->scene.animations) {
+        for (auto& asset : mes->scene.assets) {
+            if (asset->getAssetType() != AssetType::Animation)
+                continue;
+
+            auto clip = std::static_pointer_cast<AnimationClip>(asset);
             parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
                 if (swap_x || swap_yz) {
                     anim->convertHandedness(swap_x, swap_yz);
