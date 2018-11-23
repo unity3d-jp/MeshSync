@@ -6,8 +6,20 @@ namespace mu {
 
 uint64_t SumInt32(const void *src, size_t num);
 
-void FloatToHalf(half *dst, const float *src, size_t num);
-void HalfToFloat(float *dst, const half *src, size_t num);
+void F32ToF16(half *dst, const float *src, size_t num);
+void F16ToF32(float *dst, const half *src, size_t num);
+
+void F32ToS8(snorm8 *dst, const float *src, size_t num);
+void S8ToF32(float *dst, const snorm8 *src, size_t num);
+void F32ToU8(unorm8 *dst, const float *src, size_t num);
+void U8ToF32(float *dst, const unorm8 *src, size_t num);
+void F32ToU8N(unorm8n *dst, const float *src, size_t num);
+void U8NToF32(float *dst, const unorm8n *src, size_t num);
+void F32ToS16(snorm16 *dst, const float *src, size_t num);
+void S16ToF32(float *dst, const snorm16 *src, size_t num);
+void F32ToU16(unorm16 *dst, const float *src, size_t num);
+void U16ToF32(float *dst, const unorm16 *src, size_t num);
+
 void InvertX(float3 *dst, size_t num);
 void InvertX(float4 *dst, size_t num);
 void InvertU(float2 *dst, size_t num);
@@ -81,10 +93,36 @@ void GenerateTangentsTriangleSoA(float4 *dst,
 uint64_t SumInt32_Generic(const uint32_t *src, size_t num);
 uint64_t SumInt32_ISPC(const uint32_t *src, size_t num);
 
-void FloatToHalf_Generic(half *dst, const float *src, size_t num);
-void FloatToHalf_ISPC(half *dst, const float *src, size_t num);
-void HalfToFloat_Generic(float *dst, const half *src, size_t num);
-void HalfToFloat_ISPC(float *dst, const half *src, size_t num);
+void F32ToF16_Generic(half *dst, const float *src, size_t num);
+void F32ToF16_ISPC(half *dst, const float *src, size_t num);
+void F16ToF32_Generic(float *dst, const half *src, size_t num);
+void F16ToF32_ISPC(float *dst, const half *src, size_t num);
+
+void F32ToS8_Generic(snorm8 *dst, const float *src, size_t num);
+void F32ToS8_ISPC(snorm8 *dst, const float *src, size_t num);
+void S8ToF32_Generic(float *dst, const snorm8 *src, size_t num);
+void S8ToF32_ISPC(float *dst, const snorm8 *src, size_t num);
+
+void F32ToU8_Generic(unorm8 *dst, const float *src, size_t num);
+void F32ToU8_ISPC(unorm8 *dst, const float *src, size_t num);
+void U8ToF32_Generic(float *dst, const unorm8 *src, size_t num);
+void U8ToF32_ISPC(float *dst, const unorm8 *src, size_t num);
+
+void F32ToU8N_Generic(unorm8n *dst, const float *src, size_t num);
+void F32ToU8N_ISPC(unorm8n *dst, const float *src, size_t num);
+void U8NToF32_Generic(float *dst, const unorm8n *src, size_t num);
+void U8NToF32_ISPC(float *dst, const unorm8n *src, size_t num);
+
+void F32ToS16_Generic(snorm16 *dst, const float *src, size_t num);
+void F32ToS16_ISPC(snorm16 *dst, const float *src, size_t num);
+void S16ToF32_Generic(float *dst, const snorm16 *src, size_t num);
+void S16ToF32_ISPC(float *dst, const snorm16 *src, size_t num);
+
+void F32ToU16_Generic(unorm16 *dst, const float *src, size_t num);
+void F32ToU16_ISPC(unorm16 *dst, const float *src, size_t num);
+void U16ToF32_Generic(float *dst, const unorm16 *src, size_t num);
+void U16ToF32_ISPC(float *dst, const unorm16 *src, size_t num);
+
 
 void InvertX_Generic(float3 *dst, size_t num);
 void InvertX_ISPC(float3 *dst, size_t num);

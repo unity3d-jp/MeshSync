@@ -758,3 +758,25 @@ TestCase(TestCompareRawVector)
         Print("result: %d\n", result);
     }, 1);
 }
+
+
+template<class T, size_t N>
+void FloatIntConversionImpl(float(&src)[N], T (&tmp)[N], float(&dst)[N])
+{
+    for (int i = 0; i < N; ++i) {
+        tmp[i] = src[i];
+        dst[i] = tmp[i];
+    }
+}
+
+TestCase(Test_Half)
+{
+    float data[7] = { 0.0f, 0.1f, 0.5f, 1.0f, -0.1f, -0.5f, -1.0f };
+    float dst_s8[7], dst_u8[7], dst_u8n[7], dst_s16[7], dst_u16[7];
+
+    snorm8 ts8[7]; FloatIntConversionImpl(data, ts8, dst_s8);
+    unorm8 tu8[7]; FloatIntConversionImpl(data, tu8, dst_u8);
+    unorm8n tu8n[7]; FloatIntConversionImpl(data, tu8n, dst_u8n);
+    snorm16 ts16[7]; FloatIntConversionImpl(data, ts16, dst_s16);
+    unorm16 tu16[7]; FloatIntConversionImpl(data, tu16, dst_u16);
+}

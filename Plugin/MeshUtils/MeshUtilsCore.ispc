@@ -13,29 +13,93 @@ export uniform unsigned int64 SumInt32(
 }
 #endif
 
-#ifdef muSIMD_FloatToHalf
-export void FloatToHalf(
-    uniform half dst[],
-    uniform const float src[],
-    uniform const int num)
+
+#ifdef muSIMD_Float_Norm_Conversion
+
+export void F32ToF16(uniform half dst[], uniform const float src[], uniform const int num)
 {
     foreach(i=0 ... num) {
         dst[i] = float_to_half(src[i]);
     }
 }
-#endif
-
-#ifdef muSIMD_HalfToFloat
-export void HalfToFloat(
-    uniform float dst[],
-    uniform const half src[],
-    uniform const int num)
+export void F16ToF32(uniform float dst[], uniform const half src[], uniform const int num)
 {
     foreach(i=0 ... num) {
         dst[i] = half_to_float(src[i]);
     }
 }
+
 #endif
+
+#ifdef muSIMD_Float_Norm_Conversion
+
+export void F32ToS8(uniform int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (int8)(clamp11(src[i]) * 127.0f);
+    }
+}
+export void S8ToF32(uniform float dst[], uniform const int8 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] / 127.0f;
+    }
+}
+
+export void F32ToU8(uniform unsigned int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (unsigned int8)(clamp01(src[i]) * 255.0f);
+    }
+}
+export void U8ToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] / 255.0f;
+    }
+}
+
+export void F32ToU8N(uniform unsigned int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (unsigned int8)((clamp11(src[i]) * 0.5f + 0.5f) * 255.0f);
+    }
+}
+export void U8NToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] / 255.0f * 2.0f - 1.0f;
+    }
+}
+
+export void F32ToS16(uniform int16 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (int16)(clamp11(src[i]) * 32767.0f);
+    }
+}
+export void S16ToF32(uniform float dst[], uniform const int16 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] / 32767.0f;
+    }
+}
+
+export void F32ToU16(uniform unsigned int16 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (unsigned int16)(clamp01(src[i]) * 65535.0f);
+    }
+}
+export void U16ToF32(uniform float dst[], uniform const unsigned int16 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] / 65535.0f;
+    }
+}
+
+#endif
+
 
 #ifdef muSIMD_NearEqual
 export uniform bool NearEqual(
@@ -1307,3 +1371,4 @@ export void GenerateTangentsPolygonIndexed(uniform float4 dst[],
     delete[] mem_tmp;
 }
 #endif
+

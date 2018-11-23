@@ -17,71 +17,66 @@ uint64_t SumInt32_Generic(const uint32_t *src, size_t num)
     return ret;
 }
 
-void FloatToHalf_Generic(half *dst, const float *src, size_t num)
-{
-    for (size_t i = 0; i < num; ++i) {
-        dst[i] = src[i];
-    }
-}
-void HalfToFloat_Generic(float *dst, const half *src, size_t num)
-{
-    for (size_t i = 0; i < num; ++i) {
-        dst[i] = src[i];
-    }
-}
+#define Impl for (size_t i = 0; i < num; ++i) { dst[i] = src[i]; }
+void F32ToF16_Generic(half *dst, const float *src, size_t num) { Impl; }
+void F16ToF32_Generic(float *dst, const half *src, size_t num) { Impl; }
+void F32ToS8_Generic(snorm8 *dst, const float *src, size_t num) { Impl; }
+void S8ToF32_Generic(float *dst, const snorm8 *src, size_t num) { Impl; }
+void F32ToU8_Generic(unorm8 *dst, const float *src, size_t num) { Impl; }
+void U8ToF32_Generic(float *dst, const unorm8 *src, size_t num) { Impl; }
+void F32ToU8N_Generic(unorm8n *dst, const float *src, size_t num) { Impl; }
+void U8NToF32_Generic(float *dst, const unorm8n *src, size_t num) { Impl; }
+void F32ToS16_Generic(snorm16 *dst, const float *src, size_t num) { Impl; }
+void S16ToF32_Generic(float *dst, const snorm16 *src, size_t num) { Impl; }
+void F32ToU16_Generic(unorm16 *dst, const float *src, size_t num) { Impl; }
+void U16ToF32_Generic(float *dst, const unorm16 *src, size_t num) { Impl; }
+#undef Impl
+
 
 void InvertX_Generic(float3 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].x *= -1.0f;
-    }
 }
 void InvertX_Generic(float4 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].x *= -1.0f;
-    }
 }
 
 void InvertU(float2 * dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].x = 1.0f - dst[i].x;
-    }
 }
 void InvertV(float2 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].y = 1.0f - dst[i].y;
-    }
 }
 
 void Scale_Generic(float *dst, float s, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] *= s;
-    }
 }
 void Scale_Generic(float3 *dst, float s, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] *= s;
-    }
 }
 
 void Normalize_Generic(float3 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] = normalize(dst[i]);
-    }
 }
 
 void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, float w)
 {
     const float iw = 1.0f - w;
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] = src1[i] * w + src2[i] * iw;
-    }
 }
 
 void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max)

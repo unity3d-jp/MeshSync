@@ -105,6 +105,15 @@ static inline uniform float3 reduce_add(float3 v)
     return r;
 }
 
+static inline float clamp01(float v)
+{
+    return clamp(v, 0.0f, 1.0f);
+}
+static inline float clamp11(float v)
+{
+    return clamp(v, -1.0f, 1.0f);
+}
+
 static inline float mod(float a, float b)
 {
     return a - b * floor(a / b);

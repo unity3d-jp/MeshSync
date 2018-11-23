@@ -4,9 +4,6 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
-#ifdef muEnableHalf
-    #include <OpenEXR/half.h>
-#endif // muEnableHalf
 #include "muIntrusiveArray.h"
 
 #define muEpsilon 1e-4f
@@ -412,15 +409,12 @@ inline int clamp(int v, int vmin, int vmax) { return std::min(std::max(v, vmin),
     inline T frac(T a) { return std::fmod(a, T(1.0)); }                                             \
     inline T clamp(T v, T vmin, T vmax) { return std::min<T>(std::max<T>(v, vmin), vmax); }         \
     inline T clamp01(T v) { return clamp(v, T(0), T(1)); }                                          \
-    inline T saturate(T v) { return clamp(v, T(-1), T(1)); }                                        \
+    inline T clamp11(T v) { return clamp(v, T(-1), T(1)); }                                         \
     inline T lerp(T  a, T  b, T  t) { return a * (T(1.0) - t) + b * t; }                            \
     inline bool near_equal(T a, T b, T epsilon = T(muEpsilon)) { return std::abs(a - b) < epsilon; }\
 
 SF(float)
 SF(double)
-#ifdef muEnableHalf
-SF(half)
-#endif
 #undef SF
 
 #define VF1N(N, F)\
@@ -461,7 +455,7 @@ VF2std(pow)
 VF2(mod)
 VF1(frac)
 VF1(clamp01)
-VF1(saturate)
+VF1(clamp11)
 
 #undef VF1N
 #undef VF2N
@@ -702,7 +696,7 @@ template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
         T v6 = d[7] - d[0] - d[4] + d[9];
 
         return{
-            v3 * asin(saturate(v4)),
+            v3 * asin(clamp11(v4)),
             atan2(v5, v6),
             atan2(v1, v2)
         };
@@ -716,7 +710,7 @@ template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
         T v5 = a*e + b*c;
         T v6 = b*e - a*c;
         return{
-            v3 * asin(saturate(v4)),
+            v3 * asin(clamp11(v4)),
             atan2(v5, v6),
             T(0.0)
         };
