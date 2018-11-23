@@ -86,14 +86,15 @@ public:
         bool sync_normals = true;
         bool sync_uvs = true;
         bool sync_colors = true;
+        bool make_both_sided = false;
+        bool bake_deformers = false;
+        bool apply_tweak = true;
         bool sync_blendshapes = true;
         bool sync_bones = true;
         bool sync_textures = true;
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
-        bool bake_deformers = false;
-        bool apply_tweak = true;
         bool multithreaded = false;
 
         // import settings

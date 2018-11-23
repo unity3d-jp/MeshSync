@@ -746,10 +746,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         applyTransform(mrs.world2local);
     }
 
-    if (mrs.flags.make_both_sided) {
-        makeBothSided();
-    }
-
     if (mrs.flags.mirror_x) {
         float3 plane_n = { 1.0f, 0.0f, 0.0f };
         float plane_d = 0.0f;
@@ -775,6 +771,21 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         setupBoneData();
     }
 
+    // normals
+    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.swap_faces;
+    if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
+        GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
+    }
+    else if (mrs.flags.gen_normals_with_smooth_angle) {
+        GenerateNormalsWithSmoothAngle(normals, points, counts, indices, mrs.smooth_angle, flip_normals);
+    }
+
+    // generate back faces
+    // this must be after generating normals.
+    if (mrs.flags.make_both_sided) {
+        makeBothSided();
+    }
+
     mu::MeshRefiner refiner;
     refiner.split_unit = mrs.split_unit;
     refiner.points = points;
@@ -788,21 +799,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
     if (colors.size() == indices.size())
         refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
-
-    // normals
-    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.swap_faces;
-    if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
-        GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
-    }
-    else if (mrs.flags.gen_normals_with_smooth_angle) {
-        GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, mrs.smooth_angle, flip_normals);
+    if (normals.size() == indices.size())
         refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
-    }
-    else {
-        if (normals.size() == indices.size()) {
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
-        }
-    }
 
     // refine
     {

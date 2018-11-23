@@ -85,8 +85,11 @@ TestCase(TestMeshRefiner)
         uv_flattened[i] = uv[indices[i]];
     }
 
+    RawVector<float3> normals;
+    GenerateNormalsWithSmoothAngle(normals, points, counts, indices, 40.0f, false);
+
     RawVector<float2> uv_refined;
-    RawVector<float3> normals, normals_refined;
+    RawVector<float3> normals_refined;
     RawVector<int> remap_uv, remap_normals;
 
     mu::MeshRefiner refiner;
@@ -94,11 +97,8 @@ TestCase(TestMeshRefiner)
     refiner.counts = counts;
     refiner.indices = indices;
     refiner.points = points;
+
     refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined, remap_uv);
-
-    refiner.connection.buildConnection(indices, counts, points);
-
-    GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, 40.0f, false);
     refiner.addExpandedAttribute<float3>(normals, normals_refined, remap_normals);
 
     refiner.refine();

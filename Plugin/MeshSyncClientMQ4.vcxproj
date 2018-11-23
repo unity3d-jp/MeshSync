@@ -43,6 +43,7 @@
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUI4.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk4/MQBasePlugin.h" />

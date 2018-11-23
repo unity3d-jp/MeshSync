@@ -296,6 +296,11 @@ ms::MeshPtr MeshSyncClientMaya::exportMesh(TreeNode *n)
                 doExtractMeshDataBaked(dst, n);
             else
                 doExtractMeshData(dst, n);
+            dst.flags.has_refine_settings = 1;
+            dst.flags.apply_trs = 1;
+            dst.refine_settings.flags.make_both_sided = m_settings.make_both_sided;
+            dst.refine_settings.flags.gen_tangents = 1;
+            dst.refine_settings.flags.swap_faces = 1;
         }
         else {
             if (!m_settings.bake_deformers && m_settings.sync_blendshapes)
@@ -504,11 +509,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             return;
         }
     }
-
-    dst.flags.has_refine_settings = 1;
-    dst.flags.apply_trs = 1;
-    dst.refine_settings.flags.gen_tangents = 1;
-    dst.refine_settings.flags.swap_faces = 1;
 
     if (!mmesh.object().hasFn(MFn::kMesh)) {
         // return empty mesh
@@ -795,11 +795,6 @@ void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
             return;
         }
     }
-
-    dst.flags.has_refine_settings = 1;
-    dst.flags.apply_trs = 1;
-    dst.refine_settings.flags.gen_tangents = 1;
-    dst.refine_settings.flags.swap_faces = 1;
 
     if (!mmesh.object().hasFn(MFn::kMesh)) {
         // return empty mesh

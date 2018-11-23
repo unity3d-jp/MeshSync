@@ -91,6 +91,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-smn", "-syncNormals", MSyntax::kBoolean);
     syntax.addFlag("-smu", "-syncUVs", MSyntax::kBoolean);
     syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
+    syntax.addFlag("-mbs", "-makeBothSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
     syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
@@ -135,6 +136,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncNormals", settings.sync_normals, true);
     Handle("syncUVs", settings.sync_uvs, true);
     Handle("syncColors", settings.sync_colors, true);
+    Handle("makeBothSided", settings.make_both_sided, true);
     Handle("bakeDeformers", settings.bake_deformers, true);
     Handle("applyTweak", settings.apply_tweak, true);
     Handle("syncBlendShapes", settings.sync_blendshapes, true);

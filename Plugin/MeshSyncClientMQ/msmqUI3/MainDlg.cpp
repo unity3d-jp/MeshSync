@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "stdafx.h"
 #include "MainDlg.h"
 #include "../MeshSyncClientMQ3.h"
 
@@ -40,6 +39,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_edit_port.Attach(GetDlgItem(IDC_EDIT_PORT));
     m_edit_scale.Attach(GetDlgItem(IDC_EDIT_SCALEFACTOR));
     m_check_vcolor.Attach(GetDlgItem(IDC_CHECK_VCOLOR));
+    m_check_bothsided.Attach(GetDlgItem(IDC_CHECK_BOTHSIDED));
     m_check_textures.Attach(GetDlgItem(IDC_CHECK_TEXTURES));
     m_check_camera.Attach(GetDlgItem(IDC_CHECK_CAMERA));
     m_edit_camera_path.Attach(GetDlgItem(IDC_EDIT_CAMERA_PATH));
@@ -124,6 +124,14 @@ LRESULT CMainDlg::OnEnChangeScaleFactor(WORD, WORD, HWND hWndCtl, BOOL &)
 LRESULT CMainDlg::OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     getSettings().sync_vertex_color = m_check_vcolor.GetCheck() != 0;
+    if (!m_initializing)
+        m_plugin->SendAll(true);
+    return 0;
+}
+
+LRESULT CMainDlg::OnBnClickedCheckBothSided(WORD, WORD, HWND, BOOL &)
+{
+    getSettings().make_both_sided = m_check_bothsided.GetCheck() != 0;
     if (!m_initializing)
         m_plugin->SendAll(true);
     return 0;

@@ -12,6 +12,7 @@ global proc UnityMeshSync_GUI()
     int    $syncNormals     = `UnityMeshSync_Settings -q -syncNormals`;
     int    $syncUVs         = `UnityMeshSync_Settings -q -syncUVs`;
     int    $syncColors      = `UnityMeshSync_Settings -q -syncColors`;
+    int    $makeBothSided   = `UnityMeshSync_Settings -q -makeBothSided`;
     int    $bakeDeformers   = `UnityMeshSync_Settings -q -bakeDeformers`;
     int    $syncBlendShapes = `UnityMeshSync_Settings -q -syncBlendShapes`;
     int    $syncBones       = `UnityMeshSync_Settings -q -syncBones`;
@@ -42,6 +43,7 @@ global proc UnityMeshSync_GUI()
         checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
         checkBox -label "UVs" -value $syncUVs -cc "umsCBSyncUVs" umsCtrlSyncUVs;
         checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
+        checkBox -label "Make Both Sided" -value $makeBothSided -cc "umsCBMakeBothSided" umsCtrlMakeBothSided;
         checkBox -label "Bake Deformers" -value $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
         setParent ..;
     checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
@@ -119,6 +121,12 @@ global proc umsCBSyncColors()
 {
     int $v = `checkBox -q -value umsCtrlSyncColors`;
     string $ret = `UnityMeshSync_Settings -syncColors $v`;
+}
+
+global proc umsCBMakeBothSided()
+{
+    int $v = `checkBox -q -value umsCtrlMakeBothSided`;
+    string $ret = `UnityMeshSync_Settings -makeBothSided $v`;
 }
 
 global proc umsCBBakeDeformers()

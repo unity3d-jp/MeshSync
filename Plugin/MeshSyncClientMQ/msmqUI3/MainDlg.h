@@ -1,8 +1,24 @@
-// MainDlg.h : interface of the CMainDlg class
-//
-/////////////////////////////////////////////////////////////////////////////
-
 #pragma once
+
+#include <atlbase.h>
+#include <atlapp.h>
+#include <atlframe.h>
+#include <atlctrls.h>
+
+extern CAppModule _Module;
+
+#include <atlwin.h>
+#include "resource.h"
+
+#if defined _M_IX86
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_IA64
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+  #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
 
 class MeshSyncClientPlugin;
 struct msmqSettings;
@@ -28,6 +44,7 @@ public:
         COMMAND_HANDLER(IDC_EDIT_PORT, EN_CHANGE, OnEnChangeEditPort)
         COMMAND_HANDLER(IDC_EDIT_SCALEFACTOR, EN_CHANGE, OnEnChangeScaleFactor)
         COMMAND_HANDLER(IDC_CHECK_VCOLOR, BN_CLICKED, OnBnClickedCheckVcolor)
+        COMMAND_HANDLER(IDC_CHECK_BOTHSIDED, BN_CLICKED, OnBnClickedCheckBothSided)
         COMMAND_HANDLER(IDC_CHECK_TEXTURES, BN_CLICKED, OnBnClickedCheckTexture)
         COMMAND_HANDLER(IDC_CHECK_CAMERA, BN_CLICKED, OnBnClickedCheckCamera)
         COMMAND_HANDLER(IDC_EDIT_CAMERA_PATH, EN_CHANGE, OnEnChangeCameraPath)
@@ -47,6 +64,7 @@ public:
     LRESULT OnEnChangeEditPort(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnEnChangeScaleFactor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedCheckVcolor(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedCheckBothSided(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedCheckTexture(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedCheckCamera(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -65,6 +83,7 @@ private:
     CEdit m_edit_port;
     CEdit m_edit_scale;
     CButton m_check_vcolor;
+    CButton m_check_bothsided;
     CButton m_check_textures;
     CButton m_check_camera;
     CEdit m_edit_camera_path;

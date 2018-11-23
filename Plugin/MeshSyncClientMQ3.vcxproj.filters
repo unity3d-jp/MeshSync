@@ -25,6 +25,9 @@
     <ClCompile Include="MeshSyncClientMQ\msmqUI3\MainDlg.cpp">
       <Filter>MeshSyncClientMQ\msmqUI3</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk3/MQBasePlugin.h">
@@ -71,11 +74,6 @@
     <Filter Include="MeshSyncClientMQ\msmqUI3">
       <UniqueIdentifier>{803cba93-f355-4c3e-ba08-88da26602480}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="MeshSyncClientMQ\msmqUI3\Dialog.aps">
-      <Filter>MeshSyncClientMQ\msmqUI3</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MeshSyncClientMQ\msmqUI3\Dialog.rc">

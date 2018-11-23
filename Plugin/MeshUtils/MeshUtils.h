@@ -21,7 +21,7 @@ bool GenerateNormalsPoly(RawVector<float3>& dst,
     const IArray<float3> points, const IArray<int> counts, const IArray<int> indices, bool flip);
 
 void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
-    const MeshConnectionInfo& connection, const IArray<float3> points,
+    const IArray<float3> points,
     const IArray<int> counts, const IArray<int> indices,
     float smooth_angle, bool flip);
 

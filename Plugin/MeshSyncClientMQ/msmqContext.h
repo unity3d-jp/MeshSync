@@ -87,6 +87,3 @@ private:
     ms::AsyncSceneSender m_send_camera;
     bool m_pending_send_meshes = false;
 };
-
-std::wstring L(const std::string& s);
-std::string S(const std::wstring& w);

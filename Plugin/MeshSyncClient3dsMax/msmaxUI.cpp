@@ -354,6 +354,12 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 notify_scene_update();
             });
             break;
+        case IDC_CHECK_BOTHSIDED:
+            handle_button([&]() {
+                s.make_both_sided = CtrlIsChecked(IDC_CHECK_BOTHSIDED);
+                notify_scene_update();
+            });
+            break;
         case IDC_CHECK_BAKEMODIFIERS:
             handle_button([&]() {
                 s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKEMODIFIERS);
@@ -465,6 +471,7 @@ void MeshSyncClient3dsMax::updateUIText()
     CtrlSetCheck(IDC_CHECK_NORMALS,      s.sync_normals);
     CtrlSetCheck(IDC_CHECK_UVS,          s.sync_uvs);
     CtrlSetCheck(IDC_CHECK_COLORS,       s.sync_colors);
+    CtrlSetCheck(IDC_CHECK_BOTHSIDED,    s.make_both_sided);
     CtrlSetCheck(IDC_CHECK_BAKEMODIFIERS, s.bake_modifiers);
     CtrlSetCheck(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
     CtrlSetCheck(IDC_CHECK_BONES,        s.sync_bones);

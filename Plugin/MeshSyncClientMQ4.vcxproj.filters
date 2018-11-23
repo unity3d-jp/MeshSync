@@ -31,6 +31,9 @@
     <ClCompile Include="MeshSyncClientMQ\msmqUI4.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMQ/pch.h">

@@ -29,6 +29,7 @@
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUI3\MainDlg.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk3/MQBasePlugin.h" />
@@ -52,9 +53,6 @@
     <ProjectReference Include="setup.vcxproj">
       <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="MeshSyncClientMQ\msmqUI3\Dialog.aps" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MeshSyncClientMQ\msmqUI3\Dialog.rc" />

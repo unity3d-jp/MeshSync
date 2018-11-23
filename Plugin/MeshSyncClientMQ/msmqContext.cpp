@@ -135,7 +135,7 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
                 brec.bone_id = bid;
 
                 bone_manager.GetName(bid, name);
-                brec.name = S(name);
+                brec.name = ToMBS(name);
 
                 UINT parent;
                 bone_manager.GetParent(bid, parent);
@@ -460,13 +460,8 @@ MQObject msmqContext::createMesh(MQDocument doc, const ms::Mesh& data, const cha
 
 void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
-    dst.flags.has_points = 1;
-    dst.flags.has_uv0 = 1;
-    dst.flags.has_counts = 1;
-    dst.flags.has_indices = 1;
-    dst.flags.has_material_ids = 1;
     dst.flags.has_refine_settings = 1;
-
+    dst.refine_settings.flags.make_both_sided = m_settings.make_both_sided;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.flip_v = 1;
     if (obj->GetMirrorType() != MQOBJECT_MIRROR_NONE) {
@@ -570,6 +565,7 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
         dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     }
+    dst.setupFlags();
 }
 
 void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)

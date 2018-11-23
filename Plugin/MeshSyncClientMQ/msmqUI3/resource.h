@@ -20,6 +20,8 @@
 #define IDC_EDIT_CAMERA_PATH            1014
 #define IDC_CHECK_TEXTURES              1015
 #define IDC_TXT_VERSION                 1016
+#define IDC_STATIC_SCENE_SETTINGS       1017
+#define IDC_CHECK_BOTHSIDED             1018
 
 // Next default values for new objects
 // 

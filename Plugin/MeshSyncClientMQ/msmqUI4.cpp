@@ -22,7 +22,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         MQFrame *hf = CreateHorizontalFrame(vf);
         CreateLabel(hf, L"Server : Port");
         m_edit_server = CreateEdit(hf);
-        m_edit_server->SetText(L(s.client_settings.server));
+        m_edit_server->SetText(ToWCS(s.client_settings.server));
         m_edit_server->AddChangedEvent(this, &SettingsDlg::OnServerChange);
 
         swprintf(buf, buf_len, L"%d", (int)s.client_settings.port);
@@ -55,6 +55,10 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         m_check_vcolor->SetChecked(s.sync_vertex_color);
         m_check_vcolor->AddChangedEvent(this, &SettingsDlg::OnSyncVertexColorChange);
 
+        m_check_both_sided = CreateCheckBox(vf, L"Make Both Sided");
+        m_check_both_sided->SetChecked(s.make_both_sided);
+        m_check_both_sided->AddChangedEvent(this, &SettingsDlg::OnMakeBothSidedChange);
+
 #if MQPLUGIN_VERSION >= 0x0464
         m_check_bones = CreateCheckBox(vf, L"Sync Bones");
         m_check_bones->SetChecked(s.sync_bones);
@@ -81,7 +85,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         space->SetWidth(32);
         CreateLabel(m_frame_camera_path, L"Camera Path");
         m_edit_camera_path = CreateEdit(m_frame_camera_path);
-        m_edit_camera_path->SetText(L(s.host_camera_path));
+        m_edit_camera_path->SetText(ToWCS(s.host_camera_path));
         m_edit_camera_path->AddChangedEvent(this, &SettingsDlg::OnCameraPathChange);
         m_edit_camera_path->SetHorzLayout(LAYOUT_FILL);
         m_frame_camera_path->SetVisible(m_check_camera->GetChecked());
@@ -121,7 +125,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
         MQFrame *vf = CreateVerticalFrame(this);
 
         std::string plugin_version = "Plugin Version: " msReleaseDateStr;
-        CreateLabel(vf, L(plugin_version));
+        CreateLabel(vf, ToWCS(plugin_version));
     }
 
     this->AddHideEvent(this, &SettingsDlg::OnHide);
@@ -141,21 +145,21 @@ BOOL SettingsDlg::OnHide(MQWidgetBase *sender, MQDocument doc)
 
 BOOL SettingsDlg::OnServerChange(MQWidgetBase * sender, MQDocument doc)
 {
-    auto v = S(m_edit_server->GetText());
+    auto v = ToMBS(m_edit_server->GetText());
     getSettings().client_settings.server = v;
     return 0;
 }
 
 BOOL SettingsDlg::OnPortChange(MQWidgetBase * sender, MQDocument doc)
 {
-    auto v = S(m_edit_port->GetText());
+    auto v = ToMBS(m_edit_port->GetText());
     getSettings().client_settings.server = std::atoi(v.c_str());
     return 0;
 }
 
 BOOL SettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
 {
-    auto v = S(m_edit_scale->GetText());
+    auto v = ToMBS(m_edit_scale->GetText());
     auto f = std::atof(v.c_str());
     if (f != 0.0) {
         getSettings().scale_factor = (float)f;
@@ -174,6 +178,13 @@ BOOL SettingsDlg::OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc)
 BOOL SettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_vertex_color = m_check_vcolor->GetChecked();
+    m_plugin->SendAll(true);
+    return 0;
+}
+
+BOOL SettingsDlg::OnMakeBothSidedChange(MQWidgetBase * sender, MQDocument doc)
+{
+    getSettings().make_both_sided = m_check_both_sided->GetChecked();
     m_plugin->SendAll(true);
     return 0;
 }
@@ -213,7 +224,7 @@ BOOL SettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
 
 BOOL SettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
 {
-    getSettings().host_camera_path = S(m_edit_camera_path->GetText());
+    getSettings().host_camera_path = ToMBS(m_edit_camera_path->GetText());
     return 0;
 }
 
