@@ -285,10 +285,8 @@ void F32ToS16(snorm16 *dst, const float *src, size_t num) { Forward(F32ToS16, ds
 void S16ToF32(float *dst, const snorm16 *src, size_t num) { Forward(S16ToF32, dst, src, num); }
 void F32ToU16(unorm16 *dst, const float *src, size_t num) { Forward(F32ToU16, dst, src, num); }
 void U16ToF32(float *dst, const unorm16 *src, size_t num) { Forward(U16ToF32, dst, src, num); }
-//void F32ToS24(snorm24 *dst, const float *src, size_t num) { Forward(F32ToS24, dst, src, num); }
-//void S24ToF32(float *dst, const snorm24 *src, size_t num) { Forward(S24ToF32, dst, src, num); }
-void F32ToS24(snorm24 *dst, const float *src, size_t num) { F32ToS24_Generic(dst, src, num); }
-void S24ToF32(float *dst, const snorm24 *src, size_t num) { S24ToF32_Generic(dst, src, num); }
+void F32ToS24(snorm24 *dst, const float *src, size_t num) { Forward(F32ToS24, dst, src, num); }
+void S24ToF32(float *dst, const snorm24 *src, size_t num) { Forward(S24ToF32, dst, src, num); }
 #endif
 
 
