@@ -44,16 +44,6 @@ bool MaterialProperty::operator!=(const MaterialProperty& v) const
 #undef EachMember
 
 MaterialProperty::MaterialProperty() {}
-MaterialProperty::MaterialProperty(const char *n) : name(n) {}
-MaterialProperty::MaterialProperty(const char *n, int v) : name(n) { setInt(v); }
-MaterialProperty::MaterialProperty(const char *n, float v) : name(n) { setFloat(v); }
-MaterialProperty::MaterialProperty(const char *n, const float4& v) : name(n) { setFloat4(v); }
-MaterialProperty::MaterialProperty(const char *n, const float4x4& v) : name(n) { setFloat4x4(v); }
-MaterialProperty::MaterialProperty(const char *n, const float *v, int c) : name(n) { setFloat(v, c); }
-MaterialProperty::MaterialProperty(const char *n, const float4 *v, int c) : name(n) { setFloat4(v, c); }
-MaterialProperty::MaterialProperty(const char *n, const float4x4 *v, int c) : name(n) { setFloat4x4(v, c); }
-MaterialProperty::MaterialProperty(const char *n, TexturePtr v) : name(n) { setTexture(v); }
-MaterialProperty::MaterialProperty(const char *n, Texture *v) : name(n) { setTexture(v); }
 
 template<class T>
 static inline void set_impl(RawVector<char>& dst, const T& v)
@@ -62,84 +52,104 @@ static inline void set_impl(RawVector<char>& dst, const T& v)
     (T&)dst[0] = v;
 }
 template<class T>
-static inline void set_impl(RawVector<char>& dst, const T *v, int count)
+static inline void set_impl(RawVector<char>& dst, const T *v, size_t n)
 {
-    dst.resize_discard(sizeof(T) * count);
+    dst.resize_discard(sizeof(T) * n);
     memcpy(dst.data(), v, dst.size());
 }
 
-void MaterialProperty::setInt(int v) { type = Type::Int; set_impl(data, v); }
-void MaterialProperty::setFloat(float v) { type = Type::Float; set_impl(data, v); }
-void MaterialProperty::setFloat2(const float2& v) { type = Type::Vector; set_impl(data, float4{ v[0], v[1], 0.0f, 0.0f }); }
-void MaterialProperty::setFloat3(const float3& v) { type = Type::Vector; set_impl(data, float4{ v[0], v[1], v[2], 0.0f }); }
-void MaterialProperty::setFloat4(const float4& v) { type = Type::Vector; set_impl(data, v); }
-void MaterialProperty::setFloat2x2(const float2x2& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
-void MaterialProperty::setFloat3x3(const float3x3& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
-void MaterialProperty::setFloat4x4(const float4x4& v) { type = Type::Matrix; set_impl(data, v); }
-void MaterialProperty::setFloat(const float *v, int c) { type = Type::Float; set_impl(data, v, c); }
-void MaterialProperty::setFloat2(const float2 *v, int count)
+template<> void MaterialProperty::set(const int& v) { type = Type::Int; set_impl(data, v); }
+template<> void MaterialProperty::set(const float& v) { type = Type::Float; set_impl(data, v); }
+template<> void MaterialProperty::set(const float2& v) { type = Type::Vector; set_impl(data, to_vec4(v)); }
+template<> void MaterialProperty::set(const float3& v) { type = Type::Vector; set_impl(data, to_vec4(v)); }
+template<> void MaterialProperty::set(const float4& v) { type = Type::Vector; set_impl(data, v); }
+template<> void MaterialProperty::set(const float2x2& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
+template<> void MaterialProperty::set(const float3x3& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
+template<> void MaterialProperty::set(const float4x4& v) { type = Type::Matrix; set_impl(data, v); }
+template<> void MaterialProperty::set(const TexturePtr& v)
 {
-    type = Type::Vector;
-    data.resize_discard(sizeof(float4) * count);
-    auto *dst = (float4*)data.data();
-    for (int i = 0; i < count; ++i) {
-        auto t = v[i];
-        dst[i] = { t[0], t[1], 0.0f, 0.0f };
-    }
+    type = Type::Texture;
+    TextureRecord rec;
+    rec.id = v ? v->id : InvalidID;
+    set_impl(data, rec);
 }
-void MaterialProperty::setFloat3(const float3 *v, int count)
+template<> void MaterialProperty::set(const TextureRecord& v)
 {
-    type = Type::Vector;
-    data.resize_discard(sizeof(float4) * count);
-    auto *dst = (float4*)data.data();
-    for (int i = 0; i < count; ++i) {
-        auto t = v[i];
-        dst[i] = { t[0], t[1], t[2], 0.0f };
-    }
+    type = Type::Texture;
+    set_impl(data, v);
 }
-void MaterialProperty::setFloat4(const float4 *v, int c) { type = Type::Vector; set_impl(data, v, c); }
-void MaterialProperty::setFloat2x2(const float2x2 *v, int count)
-{
-    type = Type::Matrix;
-    data.resize_discard(sizeof(float4x4) * count);
-    auto *dst = (float4x4*)data.data();
-    for (int i = 0; i < count; ++i)
-        dst[i] = to_mat4x4(v[i]);
-}
-void MaterialProperty::setFloat3x3(const float3x3 *v, int count)
-{
-    type = Type::Matrix;
-    data.resize_discard(sizeof(float4x4) * count);
-    auto *dst = (float4x4*)data.data();
-    for (int i = 0; i < count; ++i)
-        dst[i] = to_mat4x4(v[i]);
-}
-void MaterialProperty::setFloat4x4(const float4x4 *v, int c) { type = Type::Matrix; set_impl(data, v, c); }
-void MaterialProperty::setTexture(int v) { type = Type::Texture; set_impl(data, v); }
-void MaterialProperty::setTexture(TexturePtr v) { type = Type::Texture; set_impl(data, v ? v->id : InvalidID); }
-void MaterialProperty::setTexture(Texture *v) { type = Type::Texture; set_impl(data, v ? v->id : InvalidID); }
 
-int MaterialProperty::getArraySize() const
+template<> void MaterialProperty::set(const float *v, size_t n)
+{
+    type = Type::Float;
+    set_impl(data, v, n);
+}
+template<> void MaterialProperty::set(const float2 *v, size_t n)
+{
+    type = Type::Vector;
+    data.resize_discard(sizeof(float4) * n);
+    auto *dst = (float4*)data.data();
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = to_vec4(v[i]);
+}
+template<> void MaterialProperty::set(const float3 *v, size_t n)
+{
+    type = Type::Vector;
+    data.resize_discard(sizeof(float4) * n);
+    auto *dst = (float4*)data.data();
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = to_vec4(v[i]);
+}
+template<> void MaterialProperty::set(const float4 *v, size_t n)
+{
+    type = Type::Vector;
+    set_impl(data, v, n);
+}
+template<> void MaterialProperty::set(const float2x2 *v, size_t n)
+{
+    type = Type::Matrix;
+    data.resize_discard(sizeof(float4x4) * n);
+    auto *dst = (float4x4*)data.data();
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = to_mat4x4(v[i]);
+}
+template<> void MaterialProperty::set(const float3x3 *v, size_t n)
+{
+    type = Type::Matrix;
+    data.resize_discard(sizeof(float4x4) * n);
+    auto *dst = (float4x4*)data.data();
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = to_mat4x4(v[i]);
+}
+template<> void MaterialProperty::set(const float4x4 *v, size_t n)
+{
+    type = Type::Matrix;
+    set_impl(data, v, n);
+}
+
+size_t MaterialProperty::getArrayLength() const
 {
     switch (type) {
     case Type::Unknown: return 0;
-    case Type::Float: return (int)data.size() / sizeof(float);
+    case Type::Int:
+    case Type::Float: return (int)data.size() / sizeof(int);
     case Type::Vector: return (int)data.size() / sizeof(float4);
     case Type::Matrix: return (int)data.size() / sizeof(float4x4);
+    case Type::Texture: return (int)data.size() / sizeof(TextureRecord);
     default: return 1;
     }
 }
 
-int MaterialProperty::getInt() const { return (int&)data[0]; }
-float MaterialProperty::getFloat() const { return (float&)data[0]; }
-float4 MaterialProperty::getFloat4() const { return (float4&)data[0]; }
-float4x4 MaterialProperty::getFloat4x4() const { return (float4x4&)data[0]; }
-const float* MaterialProperty::getFloatArray() const { return (float*)&data[0]; }
-const float4* MaterialProperty::getFloat4Array() const { return (float4*)&data[0]; }
-const float4x4* MaterialProperty::getFloat4x4Array() const { return (float4x4*)&data[0]; }
-int MaterialProperty::getTexture() const { return (int&)data[0]; }
+template<> int& MaterialProperty::get() const { return (int&)data[0]; }
+template<> float& MaterialProperty::get() const { return (float&)data[0]; }
+template<> float4& MaterialProperty::get() const { return (float4&)data[0]; }
+template<> float4x4& MaterialProperty::get() const { return (float4x4&)data[0]; }
+template<> MaterialProperty::TextureRecord& MaterialProperty::get() const { return (TextureRecord&)data[0]; }
+template<> const float* MaterialProperty::getArray() const { return (float*)&data[0]; }
+template<> const float4* MaterialProperty::getArray() const { return (float4*)&data[0]; }
+template<> const float4x4* MaterialProperty::getArray() const { return (float4x4*)&data[0]; }
 
-void MaterialProperty::copy(void *dst) const
+void MaterialProperty::copy(void* dst)
 {
     data.copy_to((char*)dst);
 }
@@ -256,37 +266,37 @@ bool Material::operator!=(const Material& v) const
     return !(*this == v);
 }
 
-int Material::getParamCount() const
+int Material::getPropertyCount() const
 {
     return (int)properties.size();
 }
-MaterialProperty* Material::getParam(int i)
+MaterialProperty* Material::getProperty(int i)
 {
     return &properties[i];
 }
-MaterialProperty* Material::findParam(const char *n)
+MaterialProperty* Material::findProperty(const char *n)
 {
     auto it = std::find_if(properties.begin(), properties.end(), [n](const MaterialProperty& v) { return v.name == n; });
     return it != properties.end() ? &(*it) : nullptr;
 }
-const MaterialProperty* Material::getParam(int i) const
+const MaterialProperty* Material::getProperty(int i) const
 {
-    return const_cast<Material*>(this)->getParam(i);
+    return const_cast<Material*>(this)->getProperty(i);
 }
-const MaterialProperty* Material::findParam(const char *n) const
+const MaterialProperty* Material::findProperty(const char *n) const
 {
-    return const_cast<Material*>(this)->findParam(n);
+    return const_cast<Material*>(this)->findProperty(n);
 }
 
-void Material::addParam(MaterialProperty v)
+void Material::addProperty(MaterialProperty v)
 {
-    if (auto *p = findParam(v.name.c_str()))
+    if (auto *p = findProperty(v.name.c_str()))
         *p = v;
     else
         properties.push_back(v);
 }
 
-void Material::eraseParam(const char *n)
+void Material::eraseProperty(const char *n)
 {
     auto it = std::find_if(properties.begin(), properties.end(), [n](const MaterialProperty& v) { return v.name == n; });
     if (it != properties.end())

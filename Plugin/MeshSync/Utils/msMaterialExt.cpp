@@ -14,124 +14,111 @@ static const char _MetallicGlossMap[] = "_MetallicGlossMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
 
-inline TexturePtr MakeTmpTexture(int id)
-{
-    auto ret = Texture::create();
-    ret->id = id;
-    return ret;
-}
+using TextureRecord = MaterialProperty::TextureRecord;
 
 void StandardMaterial::setColor(float4 v)
 {
-    addParam({ _Color, v });
+    addProperty({ _Color, v });
 }
 float4 StandardMaterial::getColor() const
 {
-    auto *p = findParam(_Color);
-    return p ? p->getFloat4() : float4::zero();
+    auto *p = findProperty(_Color);
+    return p ? p->get<float4>() : float4::zero();
 }
-void StandardMaterial::setColorMap(int v)
+void StandardMaterial::setColorMap(const TextureRecord& v)
 {
-    setColorMap(MakeTmpTexture(v));
+    addProperty({ _MainTex,v });
 }
 void StandardMaterial::setColorMap(TexturePtr v)
 {
-    if (v && v->id != InvalidID)
-        addParam({ _MainTex, v });
-    else
-        eraseParam(_MainTex);
+    if (v)
+        addProperty({ _MainTex, v });
 }
-int StandardMaterial::getColorMap() const
+Material::TextureRecord* StandardMaterial::getColorMap() const
 {
-    auto *p = findParam("_MainTex");
-    return p ? p->getTexture() : InvalidID;
+    auto *p = findProperty("_MainTex");
+    return p ? &p->get<TextureRecord>() : nullptr;
 }
 
 void StandardMaterial::setEmissionColor(float4 v)
 {
-    addParam({ _EmissionColor, v });
+    addProperty({ _EmissionColor, v });
 }
 float4 StandardMaterial::getEmissionColor() const
 {
-    auto *p = findParam(_EmissionColor);
-    return p ? p->getFloat4() : float4::zero();
+    auto *p = findProperty(_EmissionColor);
+    return p ? p->get<float4>() : float4::zero();
 }
-void StandardMaterial::setEmissionMap(int v)
+void StandardMaterial::setEmissionMap(const TextureRecord& v)
 {
-    setEmissionMap(MakeTmpTexture(v));
+    addProperty({ _EmissionMap, v });
 }
 void StandardMaterial::setEmissionMap(TexturePtr v)
 {
-    if (v && v->id != InvalidID)
-        addParam({ _EmissionMap, v });
-    else
-        eraseParam(_EmissionMap);
+    if (v)
+        addProperty({ _EmissionMap, v });
 }
-int StandardMaterial::getEmissionMap() const
+Material::TextureRecord* StandardMaterial::getEmissionMap() const
 {
-    auto *p = findParam(_EmissionMap);
-    return p ? p->getTexture() : InvalidID;
+    auto *p = findProperty(_EmissionMap);
+    return p ? &p->get<TextureRecord>() : nullptr;
 }
 
 void StandardMaterial::setMetallic(float v)
 {
-    addParam({ _Metallic, v });
+    addProperty({ _Metallic, v });
 }
 float StandardMaterial::getMetallic() const
 {
-    auto *p = findParam(_Metallic);
-    return p ? p->getFloat() : 0.0f;
+    auto *p = findProperty(_Metallic);
+    return p ? p->get<float>() : 0.0f;
 }
-void StandardMaterial::setMetallicMap(int v)
+void StandardMaterial::setMetallicMap(const TextureRecord& v)
 {
-    setMetallicMap(MakeTmpTexture(v));
+    addProperty({ _MetallicGlossMap, v });
 }
 void StandardMaterial::setMetallicMap(TexturePtr v)
 {
-    if (v && v->id != InvalidID)
-        addParam({ _MetallicGlossMap, v });
-    else
-        eraseParam(_MetallicGlossMap);
+    if (v)
+        addProperty({ _MetallicGlossMap, v });
 }
-int StandardMaterial::getMetallicMap() const
+Material::TextureRecord* StandardMaterial::getMetallicMap() const
 {
-    auto *p = findParam(_MetallicGlossMap);
-    return p ? p->getTexture() : InvalidID;
+    auto *p = findProperty(_MetallicGlossMap);
+    return p ? &p->get<TextureRecord>() : nullptr;
 }
 void StandardMaterial::setSmoothness(float v)
 {
-    addParam({ _Glossiness, v });
+    addProperty({ _Glossiness, v });
 }
 float StandardMaterial::getSmoothness() const
 {
-    auto *p = findParam(_Glossiness);
-    return p ? p->getFloat() : 0.0f;
+    auto *p = findProperty(_Glossiness);
+    return p ? p->get<float>() : 0.0f;
 }
 
 void StandardMaterial::setBumpScale(float v)
 {
-    addParam({ _BumpScale, v });
+    addProperty({ _BumpScale, v });
 }
 float StandardMaterial::getBumpScale() const
 {
-    auto *p = findParam(_BumpScale);
-    return p ? p->getFloat() : 0.0f;
+    auto *p = findProperty(_BumpScale);
+    return p ? p->get<float>() : 0.0f;
 }
-void StandardMaterial::setBumpMap(int v)
+void StandardMaterial::setBumpMap(const TextureRecord& v)
 {
-    setBumpMap(MakeTmpTexture(v));
+    addProperty({ _BumpMap, v });
 }
 void StandardMaterial::setBumpMap(TexturePtr v)
 {
-    if (v && v->id != InvalidID)
-        addParam({ _BumpMap, v });
-    else
-        eraseParam(_BumpMap);
+    if (v)
+        addProperty({ _BumpMap, v });
 }
-int StandardMaterial::getBumpMap() const
+Material::TextureRecord* StandardMaterial::getBumpMap() const
 {
-    auto *p = findParam(_BumpMap);
-    return p ? p->getTexture() : InvalidID;
+    auto *p = findProperty(_BumpMap);
+    return p ? &p->get<TextureRecord>() : nullptr;
 }
 
 
@@ -149,34 +136,32 @@ void StandardSpecMaterial::setupShader()
 void StandardSpecMaterial::setSpecularColor(float4 v)
 {
     setupShader();
-    addParam({ _SpecColor, v });
+    addProperty({ _SpecColor, v });
 }
 
 float4 StandardSpecMaterial::getSpecularColor()
 {
-    auto *p = findParam(_SpecColor);
-    return p ? p->getFloat4() : float4::zero();
+    auto *p = findProperty(_SpecColor);
+    return p ? p->get<float4>() : float4::zero();
 }
 
-void StandardSpecMaterial::setSpecularGlossMap(int v)
+void StandardSpecMaterial::setSpecularGlossMap(const TextureRecord& v)
 {
     setupShader();
-    setSpecularGlossMap(MakeTmpTexture(v));
+    addProperty({ _SpecGlossMap, v });
 }
 
 void StandardSpecMaterial::setSpecularGlossMap(TexturePtr v)
 {
     setupShader();
-    if (v && v->id != InvalidID)
-        addParam({ _SpecGlossMap, v });
-    else
-        eraseParam(_SpecGlossMap);
+    if (v)
+        addProperty({ _SpecGlossMap, v });
 }
 
-int StandardSpecMaterial::getSpecularGlossMap()
+Material::TextureRecord* StandardSpecMaterial::getSpecularGlossMap()
 {
-    auto *p = findParam(_SpecGlossMap);
-    return p ? p->getTexture() : InvalidID;
+    auto *p = findProperty(_SpecGlossMap);
+    return p ? &p->get<TextureRecord>() : nullptr;
 }
 
 } // namespace ms

@@ -815,6 +815,39 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
     };
 }
 
+template<class T> inline tvec3<T> to_vec3(const tvec2<T>& v)
+{
+    return { v[0], v[1], 0 };
+}
+template<class T> inline tvec3<T> to_vec3(const tvec4<T>& v)
+{
+    return { v[0], v[1], v[2] };
+}
+
+template<class T> inline tvec4<T> to_vec4(const tvec2<T>& v)
+{
+    return {v[0], v[1], 0, 0};
+}
+template<class T> inline tvec4<T> to_vec4(const tvec3<T>& v)
+{
+    return { v[0], v[1], v[2], 0 };
+}
+
+template<class T> inline tmat2x2<T> to_mat2x2(const tmat3x3<T>& v)
+{
+    return tmat2x2<T>{
+        v[0][0], v[0][1],
+        v[1][0], v[1][1],
+    };
+}
+template<class T> inline tmat2x2<T> to_mat2x2(const tmat4x4<T>& v)
+{
+    return tmat2x2<T>{
+        v[0][0], v[0][1],
+        v[1][0], v[1][1],
+    };
+}
+
 template<class T> inline tmat3x3<T> to_mat3x3(const tmat2x2<T>& v)
 {
     return tmat3x3<T>{

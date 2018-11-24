@@ -91,7 +91,7 @@ void AsyncSceneSender::send()
             mes.session_id = session_id;
             mes.message_id = message_count++;
             mes.scene.settings = scene_settings;
-            mes.scene.assets.push_back(tex);
+            mes.scene.assets = { tex };
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;

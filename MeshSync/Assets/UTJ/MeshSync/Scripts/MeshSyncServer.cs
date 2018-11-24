@@ -1000,35 +1000,40 @@ namespace UTJ.MeshSync
                     dstmat.EnableKeyword(_NORMALMAP);
                 }
 
-                int arraySize = prop.arraySize;
+                int len = prop.arrayLength;
                 switch (type)
                 {
                     case MaterialPropertyData.Type.Int:
                         dstmat.SetInt(name, prop.intValue);
                         break;
                     case MaterialPropertyData.Type.Float:
-                        if (arraySize == 1)
+                        if (len == 1)
                             dstmat.SetFloat(name, prop.floatValue);
                         else
                             dstmat.SetFloatArray(name, prop.floatArray);
                         break;
                     case MaterialPropertyData.Type.Vector:
-                        if (arraySize == 1)
+                        if (len == 1)
                             dstmat.SetVector(name, prop.vectorValue);
                         else
                             dstmat.SetVectorArray(name, prop.vectorArray);
                         break;
                     case MaterialPropertyData.Type.Matrix:
-                        if (arraySize == 1)
+                        if (len == 1)
                             dstmat.SetMatrix(name, prop.matrixValue);
                         else
                             dstmat.SetMatrixArray(name, prop.matrixArray);
                         break;
                     case MaterialPropertyData.Type.Texture:
                         {
-                            var tex = FindTexture(prop.textureValue);
+                            var rec = prop.textureValue;
+                            var tex = FindTexture(rec.id);
                             if (tex != null)
+                            {
                                 dstmat.SetTexture(name, tex);
+                                dstmat.SetTextureScale(name, rec.scale);
+                                dstmat.SetTextureOffset(name, rec.offset);
+                            }
                         }
                         break;
                     default: break;

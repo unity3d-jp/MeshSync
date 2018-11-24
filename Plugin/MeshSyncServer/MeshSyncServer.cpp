@@ -177,15 +177,10 @@ msAPI bool              msWriteToFile(const char *path, const char *data, int si
 
 
 #pragma region Material
-msAPI const char* msMaterialPropGetName(ms::MaterialProperty *_this) { return _this->name.c_str(); }
+msAPI const char*   msMaterialPropGetName(ms::MaterialProperty *_this) { return _this->name.c_str(); }
 msAPI ms::MaterialProperty::Type msMaterialPropGetType(ms::MaterialProperty *_this) { return _this->type; }
-msAPI int       msMaterialPropGetInt(ms::MaterialProperty *_this) { return _this->getInt(); }
-msAPI float     msMaterialPropGetFloat(ms::MaterialProperty *_this) { return _this->getFloat(); }
-msAPI float4    msMaterialPropGetVector(ms::MaterialProperty *_this) { return _this->getFloat4(); }
-msAPI float4x4  msMaterialPropGetMatrix(ms::MaterialProperty *_this) { return _this->getFloat4x4(); }
-msAPI int       msMaterialPropGetTexture(ms::MaterialProperty *_this) { return _this->getTexture(); }
-msAPI int       msMaterialPropGetArraySize(ms::MaterialProperty *_this) { return _this->getArraySize(); }
-msAPI void      msMaterialPropCopyData(ms::MaterialProperty *_this, void *dst) { return _this->copy(dst); }
+msAPI int           msMaterialPropGetArrayLength(ms::MaterialProperty *_this) { return (int)_this->getArrayLength(); }
+msAPI void          msMaterialPropCopyData(ms::MaterialProperty *_this, void *dst) { return _this->copy(dst); }
 
 msAPI const char*   msMaterialKeywordGetName(ms::MaterialKeyword *_this) { return _this->name.c_str(); }
 msAPI bool          msMaterialKeywordGetValue(ms::MaterialKeyword *_this) { return _this->value; }
@@ -196,17 +191,16 @@ msAPI void          msMaterialSetIndex(ms::Material *_this, int v) { _this->inde
 msAPI const char*   msMaterialGetShader(ms::Material *_this) { return _this->shader.c_str(); }
 msAPI void          msMaterialSetShader(ms::Material *_this, const char *v) { _this->shader = v; }
 
-msAPI int msMaterialGetNumParams(ms::Material *_this) { return _this->getParamCount(); }
-msAPI ms::MaterialProperty* msMaterialGetParam(ms::Material *_this, int i) { return _this->getParam(i); }
-msAPI ms::MaterialProperty* msMaterialFindParam(ms::Material *_this, const char *n) { return _this->findParam(n); }
-msAPI void msMaterialSetInt(ms::Material *_this, const char *n, int v) { _this->addParam({ n, v }); }
-msAPI void msMaterialSetFloat(ms::Material *_this, const char *n, float v) { _this->addParam({ n, v }); }
-msAPI void msMaterialSetVector(ms::Material *_this, const char *n, const float4 v) { _this->addParam({ n, v }); }
-msAPI void msMaterialSetMatrix(ms::Material *_this, const char *n, const float4x4 v) { _this->addParam({ n, v }); }
-msAPI void msMaterialSetFloatArray(ms::Material *_this, const char *n, const float *v, int c) { _this->addParam({ n, v, c }); }
-msAPI void msMaterialSetVectorArray(ms::Material *_this, const char *n, const float4 *v, int c) { _this->addParam({ n, v, c }); }
-msAPI void msMaterialSetMatrixArray(ms::Material *_this, const char *n, const float4x4 *v, int c) { _this->addParam({ n, v, c }); }
-msAPI void msMaterialSetTexture(ms::Material *_this, const char *n, ms::Texture *v) { _this->addParam({ n, v }); }
+msAPI int msMaterialGetNumParams(ms::Material *_this) { return _this->getPropertyCount(); }
+msAPI ms::MaterialProperty* msMaterialGetParam(ms::Material *_this, int i) { return _this->getProperty(i); }
+msAPI ms::MaterialProperty* msMaterialFindParam(ms::Material *_this, const char *n) { return _this->findProperty(n); }
+msAPI void msMaterialSetInt(ms::Material *_this, const char *n, int v) { _this->addProperty({ n, v }); }
+msAPI void msMaterialSetFloat(ms::Material *_this, const char *n, float v) { _this->addProperty({ n, v }); }
+msAPI void msMaterialSetVector(ms::Material *_this, const char *n, const float4 v) { _this->addProperty({ n, v }); }
+msAPI void msMaterialSetMatrix(ms::Material *_this, const char *n, const float4x4 v) { _this->addProperty({ n, v }); }
+msAPI void msMaterialSetFloatArray(ms::Material *_this, const char *n, const float *v, int c) { _this->addProperty({ n, v, (size_t)c }); }
+msAPI void msMaterialSetVectorArray(ms::Material *_this, const char *n, const float4 *v, int c) { _this->addProperty({ n, v, (size_t)c }); }
+msAPI void msMaterialSetMatrixArray(ms::Material *_this, const char *n, const float4x4 *v, int c) { _this->addProperty({ n, v, (size_t)c }); }
 
 msAPI int msMaterialGetNumKeywords(ms::Material *_this) { return (int)_this->keywords.size(); }
 msAPI ms::MaterialKeyword* msMaterialGetKeyword(ms::Material *_this, int i) { return &_this->keywords[i]; }

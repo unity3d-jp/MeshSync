@@ -10,29 +10,29 @@ class StandardMaterial : public Material
 public:
     void    setColor(float4 v);
     float4  getColor() const;
-    void    setColorMap(int v);
+    void    setColorMap(const TextureRecord& v);
     void    setColorMap(TexturePtr v);
-    int     getColorMap() const;
+    TextureRecord* getColorMap() const;
 
     void    setEmissionColor(float4 v);
     float4  getEmissionColor() const;
-    void    setEmissionMap(int v);
+    void    setEmissionMap(const TextureRecord& v);
     void    setEmissionMap(TexturePtr v);
-    int     getEmissionMap() const;
+    TextureRecord* getEmissionMap() const;
 
     void    setMetallic(float v);
     float   getMetallic() const;
-    void    setMetallicMap(int v);
+    void    setMetallicMap(const TextureRecord& v);
     void    setMetallicMap(TexturePtr v);
-    int     getMetallicMap() const;
+    TextureRecord* getMetallicMap() const;
     void    setSmoothness(float v);
     float   getSmoothness() const;
 
     void    setBumpScale(float v);
     float   getBumpScale() const;
-    void    setBumpMap(int v);
+    void    setBumpMap(const TextureRecord& v);
     void    setBumpMap(TexturePtr v);
-    int     getBumpMap() const;
+    TextureRecord* getBumpMap() const;
 };
 using StandardMaterialPtr = std::shared_ptr<StandardMaterial>;
 inline StandardMaterial& AsStandardMaterial(Material& p) { return static_cast<StandardMaterial&>(p); }
@@ -45,9 +45,9 @@ class StandardSpecMaterial : public StandardMaterial
 public:
     void    setSpecularColor(float4 v);
     float4  getSpecularColor();
-    void    setSpecularGlossMap(int v);
+    void    setSpecularGlossMap(const TextureRecord& v);
     void    setSpecularGlossMap(TexturePtr v);
-    int     getSpecularGlossMap();
+    TextureRecord* getSpecularGlossMap();
 private:
     void setupShader();
 };

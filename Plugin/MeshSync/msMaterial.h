@@ -16,6 +16,15 @@ public:
         Texture,
     };
 
+    struct TextureRecord
+    {
+        int id;
+        float2 scale;
+        float2 offset;
+        TextureRecord(int i = InvalidID, const float2& s = float2::one(), const float2& o = float2::zero())
+            : id(i), scale(s), offset(o) {}
+    };
+
     std::string name;
     Type type = Type::Unknown;
     RawVector<char> data;
@@ -29,46 +38,22 @@ public:
     bool operator!=(const MaterialProperty& v) const;
 
     MaterialProperty();
-    MaterialProperty(const char *name);
-    MaterialProperty(const char *name, int v);
-    MaterialProperty(const char *name, float v);
-    MaterialProperty(const char *name, const float4& v);
-    MaterialProperty(const char *name, const float4x4& v);
-    MaterialProperty(const char *name, const float *v, int count);
-    MaterialProperty(const char *name, const float4 *v, int count);
-    MaterialProperty(const char *name, const float4x4 *v, int count);
-    MaterialProperty(const char *name, TexturePtr v);
-    MaterialProperty(const char *name, Texture *v);
 
-    void setInt(int v);
-    void setFloat(float v);
-    void setFloat2(const float2& v);
-    void setFloat3(const float3& v);
-    void setFloat4(const float4& v);
-    void setFloat2x2(const float2x2& v);
-    void setFloat3x3(const float3x3& v);
-    void setFloat4x4(const float4x4& v);
-    void setFloat(const float *v, int count);
-    void setFloat2(const float2 *v, int count);
-    void setFloat3(const float3 *v, int count);
-    void setFloat4(const float4 *v, int count);
-    void setFloat2x2(const float2x2 *v, int count);
-    void setFloat3x3(const float3x3 *v, int count);
-    void setFloat4x4(const float4x4 *v, int count);
-    void setTexture(int v);
-    void setTexture(TexturePtr v);
-    void setTexture(Texture *v);
+    // T accepts int, float, float{2,3,4, 2x2, 3x3, 4x4} and TexturePtr/TextureRecord
+    // note: float{2,3} are converted to float4 and float{2x2,3x3} are converted to float4x4 internally
+    template<class T> MaterialProperty(const char *n, const T& v) : name(n) { set<T>(v); }
+    template<class T> MaterialProperty(const char *n, const T *v, size_t c) : name(n) { set<T>(v, c); }
+    template<class T> void set(const T& v);
+    template<class T> void set(const T *v, size_t n);
 
-    int getArraySize() const;
-    int getInt() const;
-    float getFloat() const;
-    float4 getFloat4() const;
-    float4x4 getFloat4x4() const;
-    const float* getFloatArray() const;
-    const float4* getFloat4Array() const;
-    const float4x4* getFloat4x4Array() const;
-    int getTexture() const;
-    void copy(void *dst) const;
+    size_t getArrayLength() const;
+    // T accepts int, float, float4, float4x4 and TextureRecord.
+    // note: float{2,3,2x2,3x3} are not accepted because these were converted to float4 or float4x4.
+    //       also, TexturePtr is not accepted because it was converted to TextureRecord.
+    template<class T> T& get() const;
+    template<class T> T* getArray() const;
+
+    void copy(void *dst);
 };
 msHasSerializer(MaterialProperty);
 
@@ -97,6 +82,8 @@ class Material : public Asset
 {
 using super = Asset;
 public:
+    using TextureRecord = MaterialProperty::TextureRecord;
+
     int index = 0;
     std::string shader;
     std::vector<MaterialProperty> properties;
@@ -119,13 +106,13 @@ public:
     bool operator==(const Material& v) const;
     bool operator!=(const Material& v) const;
 
-    int getParamCount() const;
-    MaterialProperty* getParam(int i);
-    MaterialProperty* findParam(const char *name);
-    const MaterialProperty* getParam(int i) const;
-    const MaterialProperty* findParam(const char *name) const;
-    void addParam(MaterialProperty v);
-    void eraseParam(const char *name);
+    int getPropertyCount() const;
+    MaterialProperty* getProperty(int i);
+    MaterialProperty* findProperty(const char *name);
+    const MaterialProperty* getProperty(int i) const;
+    const MaterialProperty* findProperty(const char *name) const;
+    void addProperty(MaterialProperty v);
+    void eraseProperty(const char *name);
 
     int getKeywordCount() const;
     MaterialKeyword* getKeyword(int i);

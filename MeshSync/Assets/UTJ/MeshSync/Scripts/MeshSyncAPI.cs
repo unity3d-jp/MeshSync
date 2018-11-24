@@ -651,12 +651,12 @@ namespace UTJ.MeshSync
         internal IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msMaterialPropGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Type msMaterialPropGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msMaterialPropGetInt(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msMaterialPropGetFloat(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Vector4 msMaterialPropGetVector(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Matrix4x4 msMaterialPropGetMatrix(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msMaterialPropGetTexture(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msMaterialPropGetArraySize(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern int msMaterialPropGetArrayLength(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref int dst);
+        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref float dst);
+        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref Vector4 dst);
+        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref Matrix4x4 dst);
+        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref TextureRecord dst);
         [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, float[] dst);
         [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, Vector4[] dst);
         [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
@@ -672,6 +672,12 @@ namespace UTJ.MeshSync
             Texture,
         }
 
+        public struct TextureRecord
+        {
+            public int id;
+            public Vector2 scale, offset;
+        }
+
         public static implicit operator bool(MaterialPropertyData v)
         {
             return v.self != IntPtr.Zero;
@@ -680,17 +686,58 @@ namespace UTJ.MeshSync
         public string name { get { return Misc.S(msMaterialPropGetName(self)); } }
         public Type type { get { return msMaterialPropGetType(self); } }
 
-        public int intValue { get { return msMaterialPropGetInt(self); } }
-        public float floatValue { get { return msMaterialPropGetFloat(self); } }
-        public Vector4 vectorValue { get { return msMaterialPropGetVector(self); } }
-        public Matrix4x4 matrixValue { get { return msMaterialPropGetMatrix(self); } }
+        public int intValue
+        {
+            get
+            {
+                int ret = 0;
+                msMaterialPropCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public float floatValue
+        {
+            get
+            {
+                float ret = 0;
+                msMaterialPropCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector4 vectorValue
+        {
+            get
+            {
+                Vector4 ret = Vector4.zero;
+                msMaterialPropCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Matrix4x4 matrixValue
+        {
+            get
+            {
+                Matrix4x4 ret = Matrix4x4.identity;
+                msMaterialPropCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public TextureRecord textureValue
+        {
+            get
+            {
+                TextureRecord ret = default(TextureRecord);
+                msMaterialPropCopyData(self, ref ret);
+                return ret;
+            }
+        }
 
-        public int arraySize { get { return msMaterialPropGetArraySize(self); } }
+        public int arrayLength { get { return msMaterialPropGetArrayLength(self); } }
         public float[] floatArray
         {
             get
             {
-                var ret = new float[arraySize];
+                var ret = new float[arrayLength];
                 msMaterialPropCopyData(self, ret);
                 return ret;
             }
@@ -699,7 +746,7 @@ namespace UTJ.MeshSync
         {
             get
             {
-                var ret = new Vector4[arraySize];
+                var ret = new Vector4[arrayLength];
                 msMaterialPropCopyData(self, ret);
                 return ret;
             }
@@ -708,12 +755,11 @@ namespace UTJ.MeshSync
         {
             get
             {
-                var ret = new Matrix4x4[arraySize];
+                var ret = new Matrix4x4[arrayLength];
                 msMaterialPropCopyData(self, ret);
                 return ret;
             }
         }
-        public int textureValue { get { return msMaterialPropGetTexture(self); } }
     }
 
     public struct MaterialKeywordData
