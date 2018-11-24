@@ -30,6 +30,8 @@ void F32ToS16_Generic(snorm16 *dst, const float *src, size_t num) { Impl; }
 void S16ToF32_Generic(float *dst, const snorm16 *src, size_t num) { Impl; }
 void F32ToU16_Generic(unorm16 *dst, const float *src, size_t num) { Impl; }
 void U16ToF32_Generic(float *dst, const unorm16 *src, size_t num) { Impl; }
+void F32ToS24_Generic(snorm24 *dst, const float *src, size_t num) { Impl; }
+void S24ToF32_Generic(float *dst, const snorm24 *src, size_t num) { Impl; }
 #undef Impl
 
 

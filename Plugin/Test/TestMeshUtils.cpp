@@ -769,15 +769,117 @@ void FloatIntConversionImpl(float(&src)[N], T (&tmp)[N], float(&dst)[N])
     }
 }
 
-TestCase(Test_Half)
+TestCase(Test_Norm)
 {
-    const int N = 9;
-    float data[N] = { 0.0f, 0.1f, 0.5f, 1.0f, 5.0f, -0.1f, -0.5f, -1.0f, -5.0f };
-    float dst_s8[N], dst_u8[N], dst_u8n[N], dst_s16[N], dst_u16[N];
+    {
+        const int N = 9;
+        float data[N] = { 0.0f, 0.1f, 0.5f, 1.0f, 5.0f, -0.1f, -0.5f, -1.0f, -5.0f };
 
-    snorm8 ts8[N]; FloatIntConversionImpl(data, ts8, dst_s8);
-    unorm8 tu8[N]; FloatIntConversionImpl(data, tu8, dst_u8);
-    unorm8n tu8n[N]; FloatIntConversionImpl(data, tu8n, dst_u8n);
-    snorm16 ts16[N]; FloatIntConversionImpl(data, ts16, dst_s16);
-    unorm16 tu16[N]; FloatIntConversionImpl(data, tu16, dst_u16);
+        float expected_signed[N];
+        float expected_unsigned[N];
+        for (int i = 0; i < N; ++i) {
+            expected_signed[i] = clamp11(data[i]);
+            expected_unsigned[i] = clamp01(data[i]);
+        }
+
+        snorm8 ts8[N]; float dst_s8[N];
+        FloatIntConversionImpl(data, ts8, dst_s8);
+        Expect(NearEqual(dst_s8, expected_signed, N, 1e-2f));
+
+        unorm8 tu8[N]; float dst_u8[N];
+        FloatIntConversionImpl(data, tu8, dst_u8);
+        Expect(NearEqual(dst_u8, expected_unsigned, N, 1e-2f));
+
+        unorm8n tu8n[N]; float dst_u8n[N];
+        FloatIntConversionImpl(data, tu8n, dst_u8n);
+        Expect(NearEqual(dst_u8n, expected_signed, N, 1e-2f));
+
+        snorm16 ts16[N]; float dst_s16[N];
+        FloatIntConversionImpl(data, ts16, dst_s16);
+        Expect(NearEqual(dst_s16, expected_signed, N));
+
+        unorm16 tu16[N]; float dst_u16[N];
+        FloatIntConversionImpl(data, tu16, dst_u16);
+        Expect(NearEqual(dst_u16, expected_unsigned, N));
+
+        snorm24 ts24[N]; float dst_s24[N];
+        FloatIntConversionImpl(data, ts24, dst_s24);
+        Expect(NearEqual(dst_s24, expected_signed, N));
+    }
+#ifdef muSIMD_Float_Norm_Conversion
+    {
+        const int N = 100000;
+        RawVector<float> data(N);
+
+        float step = 3.0f / N;
+        for (int i = 0; i < N; ++i) {
+            data[i] = -1.5f + step * i;
+        }
+
+        RawVector<float> expected_signed(N);
+        RawVector<float> expected_unsigned(N);
+        for (int i = 0; i < N; ++i) {
+            expected_signed[i] = clamp11(data[i]);
+            expected_unsigned[i] = clamp01(data[i]);
+        }
+
+        RawVector<snorm8> ts8(N); RawVector<float> dst_s8(N);
+        RawVector<unorm8> tu8(N); RawVector<float> dst_u8(N);
+        RawVector<unorm8n> tu8n(N); RawVector<float> dst_u8n(N);
+        RawVector<snorm16> ts16(N); RawVector<float> dst_s16(N);
+        RawVector<unorm16> tu16(N); RawVector<float> dst_u16(N);
+        RawVector<snorm24> ts24(N); RawVector<float> dst_s24(N);
+        TestScope("Test_Norm ISPC", [&]() {
+            F32ToS8_ISPC(ts8.data(), data.data(), N);
+            S8ToF32_ISPC(dst_s8.data(), ts8.data(), N);
+
+            F32ToU8_ISPC(tu8.data(), data.data(), N);
+            U8ToF32_ISPC(dst_u8.data(), tu8.data(), N);
+
+            F32ToU8N_ISPC(tu8n.data(), data.data(), N);
+            U8NToF32_ISPC(dst_u8n.data(), tu8n.data(), N);
+
+            F32ToS16_ISPC(ts16.data(), data.data(), N);
+            S16ToF32_ISPC(dst_s16.data(), ts16.data(), N);
+
+            F32ToU16_ISPC(tu16.data(), data.data(), N);
+            U16ToF32_ISPC(dst_u16.data(), tu16.data(), N);
+
+            F32ToS24_ISPC(ts24.data(), data.data(), N);
+            S24ToF32_ISPC(dst_s24.data(), ts24.data(), N);
+        }, 10);
+        Expect(NearEqual(dst_s8.data(), expected_signed.data(), N, 1e-2f));
+        Expect(NearEqual(dst_u8.data(), expected_unsigned.data(), N, 1e-2f));
+        Expect(NearEqual(dst_u8n.data(), expected_signed.data(), N, 1e-2f));
+        Expect(NearEqual(dst_s16.data(), expected_signed.data(), N));
+        Expect(NearEqual(dst_u16.data(), expected_unsigned.data(), N));
+        Expect(NearEqual(dst_s24.data(), expected_signed.data(), N));
+
+        TestScope("Test_Norm Generic", [&]() {
+            F32ToS8_Generic(ts8.data(), data.data(), N);
+            S8ToF32_Generic(dst_s8.data(), ts8.data(), N);
+
+            F32ToU8_Generic(tu8.data(), data.data(), N);
+            U8ToF32_Generic(dst_u8.data(), tu8.data(), N);
+
+            F32ToU8N_Generic(tu8n.data(), data.data(), N);
+            U8NToF32_Generic(dst_u8n.data(), tu8n.data(), N);
+
+            F32ToS16_Generic(ts16.data(), data.data(), N);
+            S16ToF32_Generic(dst_s16.data(), ts16.data(), N);
+
+            F32ToU16_Generic(tu16.data(), data.data(), N);
+            U16ToF32_Generic(dst_u16.data(), tu16.data(), N);
+
+            F32ToS24_Generic(ts24.data(), data.data(), N);
+            S24ToF32_Generic(dst_s24.data(), ts24.data(), N);
+        }, 10);
+        Expect(NearEqual(dst_s8.data(), expected_signed.data(), N, 1e-2f));
+        Expect(NearEqual(dst_u8.data(), expected_unsigned.data(), N, 1e-2f));
+        Expect(NearEqual(dst_u8n.data(), expected_signed.data(), N, 1e-2f));
+        Expect(NearEqual(dst_s16.data(), expected_signed.data(), N));
+        Expect(NearEqual(dst_u16.data(), expected_unsigned.data(), N));
+        Expect(NearEqual(dst_s24.data(), expected_signed.data(), N));
+    }
+#endif
 }

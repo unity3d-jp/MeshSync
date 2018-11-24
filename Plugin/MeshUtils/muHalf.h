@@ -139,6 +139,41 @@ struct unorm16
     static unorm16 one() { return unorm16(1.0f); }
 };
 
+// -1.0f - 1.0f <-> -2147483647 - 2147483647
+// for audio sample
+struct snorm24
+{
+    uint8_t value[3];
+
+    snorm24() {}
+    snorm24(const snorm24& v)
+    {
+        for (int i = 0; i < 3; ++i)
+            value[i] = v.value[i];
+    }
+    snorm24(float v)
+    {
+        int i32 = int((double)clamp11(v) * 2147483647.0);
+        value[0] = uint8_t((i32 & 0x0000ff00) >> 8 );
+        value[1] = uint8_t((i32 & 0x00ff0000) >> 16);
+        value[2] = uint8_t((i32 & 0xff000000) >> 24);
+    }
+
+    snorm24& operator=(float v)
+    {
+        *this = snorm24(v);
+        return *this;
+    }
+    operator float() const
+    {
+        int i32 = (value[0] << 8) | (value[1] << 16) | (value[2] << 24);
+        return float((double)i32 / 2147483647.0);
+    }
+
+    static snorm24 zero() { return snorm24(0.0f); }
+    static snorm24 one() { return snorm24(1.0f); }
+};
+
 using half2 = tvec2<half>;
 using half3 = tvec3<half>;
 using half4 = tvec4<half>;

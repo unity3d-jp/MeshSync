@@ -8,8 +8,8 @@ enum class AudioFormat
 {
     Unknown = 0,
     U8,
-    I16,
-    I24,
+    S16,
+    S24,
     F32,
     RawFile,
 };
@@ -41,6 +41,9 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
 
+    void* allocate(int num_samples);
+    size_t getNumSamples() const;
+    double getDuration() const;
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
 

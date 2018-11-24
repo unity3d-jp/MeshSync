@@ -98,6 +98,24 @@ export void U16ToF32(uniform float dst[], uniform const unsigned int16 src[], un
     }
 }
 
+export void F32ToS24(uniform unsigned int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        // todo: fix this...
+        int32 v = (int32)((double)clamp11(src[i]) * 2147483647.0);
+        dst[i*3 + 0] = (unsigned int8)((v & 0x0000FF00) >> 8 );
+        dst[i*3 + 1] = (unsigned int8)((v & 0x00FF0000) >> 16);
+        dst[i*3 + 2] = (unsigned int8)((v & 0xFF000000) >> 24);
+    }
+}
+export void S24ToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        int32 v = ((int32)src[i*3 + 0] << 8) | ((int32)src[i*3 + 1] << 16) | ((int32)src[i*3 + 2] << 24);
+        dst[i] = (float)((double)v / 2147483647.0);
+    }
+}
+
 #endif
 
 

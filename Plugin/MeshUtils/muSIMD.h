@@ -19,6 +19,8 @@ void F32ToS16(snorm16 *dst, const float *src, size_t num);
 void S16ToF32(float *dst, const snorm16 *src, size_t num);
 void F32ToU16(unorm16 *dst, const float *src, size_t num);
 void U16ToF32(float *dst, const unorm16 *src, size_t num);
+void F32ToS24(snorm24 *dst, const float *src, size_t num);
+void S24ToF32(float *dst, const snorm24 *src, size_t num);
 
 void InvertX(float3 *dst, size_t num);
 void InvertX(float4 *dst, size_t num);
@@ -122,6 +124,11 @@ void F32ToU16_Generic(unorm16 *dst, const float *src, size_t num);
 void F32ToU16_ISPC(unorm16 *dst, const float *src, size_t num);
 void U16ToF32_Generic(float *dst, const unorm16 *src, size_t num);
 void U16ToF32_ISPC(float *dst, const unorm16 *src, size_t num);
+
+void F32ToS24_Generic(snorm24 *dst, const float *src, size_t num);
+void F32ToS24_ISPC(snorm24 *dst, const float *src, size_t num);
+void S24ToF32_Generic(float *dst, const snorm24 *src, size_t num);
+void S24ToF32_ISPC(float *dst, const snorm24 *src, size_t num);
 
 
 void InvertX_Generic(float3 *dst, size_t num);

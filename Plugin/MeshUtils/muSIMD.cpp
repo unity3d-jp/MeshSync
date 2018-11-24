@@ -32,6 +32,8 @@ void F32ToS16_ISPC(snorm16 *dst, const float *src, size_t num) { ispc::F32ToS16(
 void S16ToF32_ISPC(float *dst, const snorm16 *src, size_t num) { ispc::S16ToF32(dst, (int16_t*)src, (int)num); }
 void F32ToU16_ISPC(unorm16 *dst, const float *src, size_t num) { ispc::F32ToU16((uint16_t*)dst, src, (int)num); }
 void U16ToF32_ISPC(float *dst, const unorm16 *src, size_t num) { ispc::U16ToF32(dst, (uint16_t*)src, (int)num); }
+void F32ToS24_ISPC(snorm24 *dst, const float *src, size_t num) { ispc::F32ToS24((uint8_t*)dst, src, (int)num); }
+void S24ToF32_ISPC(float *dst, const snorm24 *src, size_t num) { ispc::S24ToF32(dst, (uint8_t*)src, (int)num); }
 #endif
 
 
@@ -283,6 +285,10 @@ void F32ToS16(snorm16 *dst, const float *src, size_t num) { Forward(F32ToS16, ds
 void S16ToF32(float *dst, const snorm16 *src, size_t num) { Forward(S16ToF32, dst, src, num); }
 void F32ToU16(unorm16 *dst, const float *src, size_t num) { Forward(F32ToU16, dst, src, num); }
 void U16ToF32(float *dst, const unorm16 *src, size_t num) { Forward(U16ToF32, dst, src, num); }
+//void F32ToS24(snorm24 *dst, const float *src, size_t num) { Forward(F32ToS24, dst, src, num); }
+//void S24ToF32(float *dst, const snorm24 *src, size_t num) { Forward(S24ToF32, dst, src, num); }
+void F32ToS24(snorm24 *dst, const float *src, size_t num) { F32ToS24_Generic(dst, src, num); }
+void S24ToF32(float *dst, const snorm24 *src, size_t num) { S24ToF32_Generic(dst, src, num); }
 #endif
 
 

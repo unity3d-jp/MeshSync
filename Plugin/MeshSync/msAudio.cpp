@@ -65,6 +65,35 @@ uint64_t Audio::checksum() const
     return ret;
 }
 
+static inline int SizeOf(AudioFormat f)
+{
+    int ret = 0;
+    switch (f) {
+    case AudioFormat::U8: ret = 1; break;
+    case AudioFormat::S16: ret = 2; break;
+    case AudioFormat::S24: ret = 3; break;
+    case AudioFormat::F32: ret = 4; break;
+    default: break;
+    }
+    return ret;
+}
+
+void* Audio::allocate(int num_samples)
+{
+    data.resize(channels * SizeOf(format) * num_samples);
+    return data.data();
+}
+
+size_t Audio::getNumSamples() const
+{
+    return data.size() / (channels * SizeOf(format));
+}
+
+double Audio::getDuration() const
+{
+    return (double)getNumSamples() / frequency;
+}
+
 bool Audio::readFromFile(const char * path)
 {
     if (!path)
@@ -84,23 +113,17 @@ bool Audio::writeToFile(const char * path) const
     return ByteArrayToFile(path, data);
 }
 
-template<class T>
-static inline void ConvertImpl(float *dst, const RawVector<char>& data)
-{
-    size_t n = data.size() / sizeof(T);
-    auto *src = (T*)data.data();
-    for (size_t si = 0; si < n; ++si)
-        dst[si] = src[si];
-}
-
 bool Audio::convertSamplesToFloat(float *dst)
 {
+    size_t n = data.size() / SizeOf(format);
     if (format == AudioFormat::U8)
-        ConvertImpl<unorm8n>(dst, data);
-    else if (format == AudioFormat::I16)
-        ConvertImpl<snorm16>(dst, data);
+        U8NToF32(dst, (unorm8n*)data.data(), n);
+    else if (format == AudioFormat::S16)
+        S16ToF32(dst, (snorm16*)data.data(), n);
+    else if (format == AudioFormat::S24)
+        S24ToF32(dst, (snorm24*)data.data(), n);
     else if (format == AudioFormat::F32)
-        ConvertImpl<float>(dst, data);
+        data.copy_to((char*)dst);
     else
         return false;
     return true;

@@ -363,18 +363,68 @@ TestCase(Test_SendTexture)
         }
         Send(scene);
     }
+}
 
-    {
-        ms::Scene scene;
 
-        // file asset
-        {
-            auto as = ms::FileAsset::create();
-            if (as->readFromFile("explosion1.wav"))
-                scene.assets.push_back(as);
-        }
-        Send(scene);
+
+static const int Frequency = 48000;
+static const int Channels = 1;
+
+template<class T >
+void create_samples(T *dst, int n, float t, float scale)
+{
+    for (int i = 0; i < n; ++i) {
+        dst[i] = std::sin((float(i + ((double)n * t)) * 5.5f) * (3.14159f / 180.0f)) * scale;
     }
+}
+
+ms::AudioPtr create_audio_asset(const char *name, ms::AudioFormat fmt)
+{
+    auto a = ms::Audio::create();
+    a->name = name;
+    a->format = fmt;
+    a->frequency = Frequency;
+    a->channels = Channels;
+
+    auto samples = a->allocate(Frequency * 3); // 3 sec
+    switch (fmt) {
+    case ms::AudioFormat::U8:
+        create_samples((unorm8n*)samples, a->getNumSamples() * Channels, 1.0f, 1.0f);
+        break;
+    case ms::AudioFormat::S16:
+        create_samples((snorm16*)samples, a->getNumSamples() * Channels, 1.0f, 1.0f);
+        break;
+    case ms::AudioFormat::S24:
+        create_samples((snorm24*)samples, a->getNumSamples() * Channels, 1.0f, 1.0f);
+        break;
+    case ms::AudioFormat::F32:
+        create_samples((float*)samples, a->getNumSamples() * Channels, 1.0f, 1.0f);
+        break;
+    }
+    return a;
+};
+
+TestCase(Test_Audio)
+{
+    ms::Scene scene;
+    scene.assets.push_back(create_audio_asset("audio_u8", ms::AudioFormat::U8));
+    scene.assets.push_back(create_audio_asset("audio_i16", ms::AudioFormat::S16));
+    scene.assets.push_back(create_audio_asset("audio_i24", ms::AudioFormat::S24));
+    scene.assets.push_back(create_audio_asset("audio_f32", ms::AudioFormat::F32));
+    Send(scene);
+}
+
+TestCase(Test_FileAsset)
+{
+    ms::Scene scene;
+
+    // file asset
+    {
+        auto as = ms::FileAsset::create();
+        if (as->readFromFile("explosion1.wav"))
+            scene.assets.push_back(as);
+    }
+    Send(scene);
 }
 
 
