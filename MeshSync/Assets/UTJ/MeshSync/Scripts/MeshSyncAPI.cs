@@ -675,6 +675,7 @@ namespace UTJ.MeshSync
         public struct TextureRecord
         {
             public int id;
+            public bool hasScaleOffset;
             public Vector2 scale, offset;
         }
 

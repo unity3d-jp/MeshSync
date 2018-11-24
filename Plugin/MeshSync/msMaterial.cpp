@@ -69,8 +69,7 @@ template<> void MaterialProperty::set(const float4x4& v) { type = Type::Matrix; 
 template<> void MaterialProperty::set(const TexturePtr& v)
 {
     type = Type::Texture;
-    TextureRecord rec;
-    rec.id = v ? v->id : InvalidID;
+    TextureRecord rec{ v ? v->id : InvalidID };
     set_impl(data, rec);
 }
 template<> void MaterialProperty::set(const TextureRecord& v)

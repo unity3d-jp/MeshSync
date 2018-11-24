@@ -101,12 +101,16 @@ void msvrContext::send(bool force)
             //if (mr.specular_color != float4::zero())
             //    stdmat.setSpecularColor(mr.specular_color);
 
+            auto scale = mr.texture_scale;
+            auto offset = -mr.texture_offset * scale;
+            offset -= (float2::one() - (float2::one() / scale)) * scale * 0.5f;
+
             if (mr.color_map != ms::InvalidID)
-                stdmat.setColorMap(mr.color_map);
+                stdmat.setColorMap({ mr.color_map, scale, offset });
             if (mr.bump_map != ms::InvalidID)
-                stdmat.setBumpMap(mr.bump_map);
+                stdmat.setBumpMap({ mr.bump_map });
             if (mr.specular_map != ms::InvalidID)
-                stdmat.setMetallicMap(mr.specular_map);
+                stdmat.setMetallicMap({ mr.specular_map });
             m_material_manager.add(mat);
         }
         m_material_records.clear();
@@ -608,12 +612,23 @@ void msvrContext::onUniform1f(GLint location, GLfloat v0)
     }
 }
 
+void msvrContext::onUniform2f(GLint location, GLfloat v0, GLfloat v1)
+{
+}
+
 void msvrContext::onUniform1fv(GLint location, GLsizei count, const GLfloat * value)
 {
 }
 
 void msvrContext::onUniform2fv(GLint location, GLsizei count, const GLfloat * value)
 {
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "colorRepeat")
+            mr.texture_scale = *(float2*)value;
+        else if (prop->name == "colorOffset")
+            mr.texture_offset = *(float2*)value;
+    }
 }
 
 void msvrContext::onUniform3fv(GLint location, GLsizei count, const GLfloat * value)

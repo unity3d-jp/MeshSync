@@ -50,9 +50,14 @@ struct MaterialRecord
     float4 diffuse_color = float4::zero();
     float4 specular_color = float4::zero();
     float bump_scale = 0.0f;
+
     int color_map = ms::InvalidID;
     int bump_map = ms::InvalidID;
     int specular_map = ms::InvalidID;
+
+    float2 texture_scale = float2::one();
+    float2 texture_offset = float2::zero();
+
 
     bool operator==(const MaterialRecord& v) const;
     bool operator!=(const MaterialRecord& v) const;
@@ -169,6 +174,7 @@ public:
     void onUseProgram(GLuint program);
     void onUniform1i(GLint location, GLint v0);
     void onUniform1f(GLint location, GLfloat v0);
+    void onUniform2f(GLint location, GLfloat v0, GLfloat v1);
     void onUniform1fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform2fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform3fv(GLint location, GLsizei count, const GLfloat *value);

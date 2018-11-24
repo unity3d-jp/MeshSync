@@ -18,11 +18,14 @@ public:
 
     struct TextureRecord
     {
-        int id;
-        float2 scale;
-        float2 offset;
-        TextureRecord(int i = InvalidID, const float2& s = float2::one(), const float2& o = float2::zero())
-            : id(i), scale(s), offset(o) {}
+        int id = InvalidID;
+        int has_scale_offset = 0;
+        float2 scale = float2::one();
+        float2 offset = float2::zero();
+        TextureRecord(int i)
+            : id(i), has_scale_offset(false) {}
+        TextureRecord(int i, const float2& s, const float2& o)
+            : id(i), has_scale_offset(true), scale(s), offset(o) {}
     };
 
     std::string name;

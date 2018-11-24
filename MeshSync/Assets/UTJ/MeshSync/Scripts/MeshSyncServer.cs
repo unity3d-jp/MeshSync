@@ -1031,8 +1031,11 @@ namespace UTJ.MeshSync
                             if (tex != null)
                             {
                                 dstmat.SetTexture(name, tex);
-                                dstmat.SetTextureScale(name, rec.scale);
-                                dstmat.SetTextureOffset(name, rec.offset);
+                                if (rec.hasScaleOffset)
+                                {
+                                    dstmat.SetTextureScale(name, rec.scale);
+                                    dstmat.SetTextureOffset(name, rec.offset);
+                                }
                             }
                         }
                         break;
