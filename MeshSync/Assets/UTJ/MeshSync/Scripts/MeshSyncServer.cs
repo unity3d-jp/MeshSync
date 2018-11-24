@@ -13,6 +13,7 @@ using UnityEditor;
 namespace UTJ.MeshSync
 {
     public delegate void SceneHandler();
+    public delegate void AudioHandler(AudioClip audio, AudioData data);
     public delegate void TextureHandler(Texture2D tex, TextureData data);
     public delegate void MaterialHandler(Material mat, MaterialData data);
     public delegate void EntityHandler(GameObject obj, TransformData data);
@@ -23,6 +24,7 @@ namespace UTJ.MeshSync
     {
         #region Events
         public event SceneHandler onSceneUpdateBegin;
+        public event AudioHandler onUpdateAudio;
         public event TextureHandler onUpdateTexture;
         public event MaterialHandler onUpdateMaterial;
         public event EntityHandler onUpdateEntity;
@@ -85,6 +87,14 @@ namespace UTJ.MeshSync
             public int id;
             public string name;
             public Texture2D texture;
+        }
+
+        [Serializable]
+        public class AudioHolder
+        {
+            public int id;
+            public string name;
+            public AudioClip audio;
         }
 
         // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
@@ -168,6 +178,7 @@ namespace UTJ.MeshSync
 
         [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
+        [HideInInspector] [SerializeField] List<AudioHolder> m_audioList = new List<AudioHolder>();
 
         Server m_server;
         Server.MessageHandler m_handler;
@@ -484,7 +495,7 @@ namespace UTJ.MeshSync
                                 ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
                                 break;
                             case AssetType.Audio:
-                                ((AudioData)asset).WriteToFile(assetPath + "/" + asset.name);
+                                UpdateAudio((AudioData)asset);
                                 break;
                             case AssetType.Texture:
                                 UpdateTexture((TextureData)asset);
@@ -704,6 +715,14 @@ namespace UTJ.MeshSync
             return ret;
         }
 
+        public AudioClip FindAudio(int id)
+        {
+            if (id == Misc.InvalidID)
+                return null;
+            var rec = m_audioList.Find(a => a.id == id);
+            return rec != null ? rec.audio : null;
+        }
+
         int GetObjectlID(GameObject go)
         {
             if (go == null)
@@ -802,6 +821,69 @@ namespace UTJ.MeshSync
 
 
         #region ReceiveScene
+        void UpdateAudio(AudioData src)
+        {
+            AudioClip ac = null;
+
+            var format = src.format;
+            if (format == AudioFormat.RawFile)
+            {
+                var dstPath = assetPath + "/" + src.name;
+                src.WriteToFile(dstPath);
+#if UNITY_EDITOR
+                AssetDatabase.ImportAsset(dstPath);
+                ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
+                if (ac != null)
+                {
+                    var importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
+                    if (importer != null)
+                    {
+                        // nothing todo for now
+                    }
+                }
+#endif
+            }
+            else
+            {
+#if UNITY_EDITOR
+                var dstPath = assetPath + "/" + src.name + ".wav";
+                if(src.ExportAsWave(dstPath))
+                {
+                    AssetDatabase.ImportAsset(dstPath);
+                    ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
+                    if (ac != null)
+                    {
+                        var importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
+                        if (importer != null)
+                        {
+                            // nothing todo for now
+                        }
+                    }
+                }
+#endif
+                if (ac == null)
+                {
+                    ac = AudioClip.Create(src.name, src.sampleLength, src.channels, src.frequency, false);
+                    ac.SetData(src.samples, 0);
+                }
+            }
+
+            if (ac != null)
+            {
+                int id = src.id;
+                var dst = m_audioList.Find(a => a.id == id);
+                if (dst == null)
+                {
+                    dst = new AudioHolder();
+                    dst.id = id;
+                    m_audioList.Add(dst);
+                }
+                dst.audio = ac;
+                if (onUpdateAudio != null)
+                    onUpdateAudio.Invoke(ac, src);
+            }
+        }
+
         void UpdateTexture(TextureData src)
         {
             Texture2D texture = null;

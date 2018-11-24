@@ -14,6 +14,10 @@ public class SceneEventHandler : MonoBehaviour
     {
         m_log = "SceneUpdateBegin\n";
     }
+    void OnUpdateAudio(AudioClip tex, AudioData data)
+    {
+        m_log += "Audio: " + tex.name + "\n";
+    }
     void OnUpdateTexture(Texture tex, TextureData data)
     {
         m_log += "Texture: " + tex.name + "\n";
@@ -45,6 +49,7 @@ public class SceneEventHandler : MonoBehaviour
         {
             mss.onSceneUpdateBegin += OnSceneUpdateBegin;
             mss.onSceneUpdateEnd += OnSceneUpdateEnd;
+            mss.onUpdateAudio += OnUpdateAudio;
             mss.onUpdateTexture += OnUpdateTexture;
             mss.onUpdateMaterial += OnUpdateMaterial;
             mss.onUpdateEntity += OnUpdateEntity;
@@ -59,6 +64,7 @@ public class SceneEventHandler : MonoBehaviour
         {
             mss.onSceneUpdateBegin -= OnSceneUpdateBegin;
             mss.onSceneUpdateEnd -= OnSceneUpdateEnd;
+            mss.onUpdateAudio -= OnUpdateAudio;
             mss.onUpdateTexture -= OnUpdateTexture;
             mss.onUpdateMaterial -= OnUpdateMaterial;
             mss.onUpdateEntity -= OnUpdateEntity;

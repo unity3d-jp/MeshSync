@@ -41,11 +41,13 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
 
+    // allocate num_samples * channels * size_of_format bytes
     void* allocate(int num_samples);
-    size_t getNumSamples() const;
+    size_t getSampleLength() const;
     double getDuration() const;
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
+    bool exportAsWave(const char *path) const;
 
     // length of dst must be frequency * channels
     bool convertSamplesToFloat(float *dst);

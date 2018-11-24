@@ -84,14 +84,14 @@ void* Audio::allocate(int num_samples)
     return data.data();
 }
 
-size_t Audio::getNumSamples() const
+size_t Audio::getSampleLength() const
 {
-    return data.size() / (channels * SizeOf(format));
+    return data.size() / SizeOf(format);
 }
 
 double Audio::getDuration() const
 {
-    return (double)getNumSamples() / frequency;
+    return (double)getSampleLength() / (frequency * channels);
 }
 
 bool Audio::readFromFile(const char * path)
@@ -112,6 +112,64 @@ bool Audio::writeToFile(const char * path) const
         return false;
     return ByteArrayToFile(path, data);
 }
+
+struct WaveHeader
+{
+    char    RIFFTag[4] = { 'R', 'I', 'F', 'F' };
+    int32_t nFileSize = 0;
+    char    WAVETag[4] = { 'W', 'A', 'V', 'E' };
+    char    fmtTag[4] = { 'f', 'm', 't', ' ' };
+    int32_t nFmtSize = 16;
+    int16_t shFmtID = 1;
+    int16_t shCh = 2;
+    int32_t nSampleRate = 48000;
+    int32_t nBytePerSec = 96000;
+    int16_t shBlockSize = 4;
+    int16_t shBitPerSample = 16;
+    char    dataTag[4] = { 'd', 'a', 't', 'a' };
+    int32_t nBytesData = 0;
+};
+
+bool Audio::exportAsWave(const char *path) const
+{
+    if (format == AudioFormat::RawFile)
+        return false;
+
+    std::ofstream os(path, std::ios::binary);
+    if (!os)
+        return false;
+
+    RawVector<char> tmp_data;
+
+    const RawVector<char> *wdata = &data;
+    AudioFormat wfmt = format;
+    // if format is f32, convert to s16
+    if (format == AudioFormat::F32) {
+        wfmt = AudioFormat::S16;
+        tmp_data.resize(getSampleLength() * sizeof(snorm16));
+        F32ToS16((snorm16*)tmp_data.data(), (const float*)data.data(), getSampleLength());
+        wdata = &tmp_data;
+    }
+
+    WaveHeader header;
+    header.nSampleRate = frequency;
+    header.shCh = (int16_t)channels;
+    header.shBitPerSample = (int16_t)SizeOf(wfmt) * 8;
+    header.nBytePerSec = header.nSampleRate * header.shBitPerSample * header.shCh / 8;
+    header.shBlockSize = header.shBitPerSample * header.shCh / 8;
+    os.write((char*)&header, sizeof(header));
+    os.write(wdata->data(), wdata->size());
+
+    uint32_t total_size = (uint32_t)(wdata->size() + sizeof(WaveHeader));
+    uint32_t filesize = total_size - 8;
+    uint32_t datasize = total_size - 44;
+    os.seekp(4);
+    os.write((char*)&filesize, 4);
+    os.seekp(40);
+    os.write((char*)&datasize, 4);
+    return true;
+}
+
 
 bool Audio::convertSamplesToFloat(float *dst)
 {

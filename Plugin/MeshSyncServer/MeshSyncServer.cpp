@@ -152,8 +152,10 @@ msAPI int               msAudioGetFrequency(ms::Audio *self) { return self->freq
 msAPI void              msAudioSetFrequency(ms::Audio *self, int v) { self->frequency = v; }
 msAPI int               msAudioGetChannels(ms::Audio *self) { return self->channels; }
 msAPI void              msAudioSetChannels(ms::Audio *self, int v) { self->channels = v; }
+msAPI int               msAudioGetSampleLength(ms::Audio *self) { return (int)self->getSampleLength(); }
 msAPI void              msAudioGetDataAsFloat(ms::Audio *self, float *dst) { self->convertSamplesToFloat(dst); }
 msAPI bool              msAudioWriteToFile(ms::Audio *self, const char *path) { return self->writeToFile(path); }
+msAPI bool              msAudioExportAsWave(ms::Audio *self, const char *path) { return self->exportAsWave(path); }
 #pragma endregion
 
 

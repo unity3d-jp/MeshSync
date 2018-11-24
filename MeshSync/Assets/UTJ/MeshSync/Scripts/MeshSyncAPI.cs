@@ -475,8 +475,10 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msAudioSetFrequency(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern int msAudioGetChannels(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msAudioSetChannels(IntPtr self, int v);
+        [DllImport("MeshSyncServer")] static extern int msAudioGetSampleLength(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
         [DllImport("MeshSyncServer")] static extern byte msAudioWriteToFile(IntPtr self, string path);
+        [DllImport("MeshSyncServer")] static extern byte msAudioExportAsWave(IntPtr self, string path);
         #endregion
 
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
@@ -508,12 +510,16 @@ namespace UTJ.MeshSync
             get { return msAudioGetChannels(self); }
             set { msAudioSetChannels(self, value); }
         }
+        public int sampleLength
+        {
+            get { return msAudioGetSampleLength(self); }
+        }
 
         public float[] samples
         {
             get
             {
-                var ret = new float[frequency * channels];
+                var ret = new float[sampleLength];
                 msAudioGetDataAsFloat(self, ret);
                 return ret;
             }
@@ -522,6 +528,10 @@ namespace UTJ.MeshSync
         public bool WriteToFile(string path)
         {
             return msAudioWriteToFile(self, path) != 0;
+        }
+        public bool ExportAsWave(string path)
+        {
+            return msAudioExportAsWave(self, path) != 0;
         }
     }
     #endregion
@@ -727,7 +737,7 @@ namespace UTJ.MeshSync
         {
             get
             {
-                TextureRecord ret = default(TextureRecord);
+                var ret = default(TextureRecord);
                 msMaterialPropCopyData(self, ref ret);
                 return ret;
             }
