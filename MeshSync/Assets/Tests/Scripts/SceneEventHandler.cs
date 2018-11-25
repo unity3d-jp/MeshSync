@@ -35,6 +35,10 @@ public class SceneEventHandler : MonoBehaviour
     {
         m_log += "AnimationClip: " + anim.name + "\n";
     }
+    void OnDeleteEntity(GameObject obj)
+    {
+        m_log += "Delete: " + obj.name + "\n";
+    }
     void OnSceneUpdateEnd()
     {
         m_log += "SceneUpdateEnd\n";
@@ -54,6 +58,7 @@ public class SceneEventHandler : MonoBehaviour
             mss.onUpdateMaterial += OnUpdateMaterial;
             mss.onUpdateEntity += OnUpdateEntity;
             mss.onUpdateAnimation += OnUpdateAnimation;
+            mss.onDeleteEntity += OnDeleteEntity;
         }
     }
 
@@ -69,6 +74,7 @@ public class SceneEventHandler : MonoBehaviour
             mss.onUpdateMaterial -= OnUpdateMaterial;
             mss.onUpdateEntity -= OnUpdateEntity;
             mss.onUpdateAnimation -= OnUpdateAnimation;
+            mss.onDeleteEntity -= OnDeleteEntity;
         }
     }
 }

@@ -13,22 +13,24 @@ using UnityEditor;
 namespace UTJ.MeshSync
 {
     public delegate void SceneHandler();
-    public delegate void AudioHandler(AudioClip audio, AudioData data);
-    public delegate void TextureHandler(Texture2D tex, TextureData data);
-    public delegate void MaterialHandler(Material mat, MaterialData data);
-    public delegate void EntityHandler(GameObject obj, TransformData data);
-    public delegate void AnimationHandler(AnimationClip anim, AnimationClipData data);
+    public delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
+    public delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
+    public delegate void UpdateMaterialHandler(Material mat, MaterialData data);
+    public delegate void UpdateEntityHandler(GameObject obj, TransformData data);
+    public delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
+    public delegate void DeleteEntityHandler(GameObject obj);
 
     [ExecuteInEditMode]
     public class MeshSyncServer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Events
         public event SceneHandler onSceneUpdateBegin;
-        public event AudioHandler onUpdateAudio;
-        public event TextureHandler onUpdateTexture;
-        public event MaterialHandler onUpdateMaterial;
-        public event EntityHandler onUpdateEntity;
-        public event AnimationHandler onUpdateAnimation;
+        public event UpdateAudioHandler onUpdateAudio;
+        public event UpdateTextureHandler onUpdateTexture;
+        public event UpdateMaterialHandler onUpdateMaterial;
+        public event UpdateEntityHandler onUpdateEntity;
+        public event UpdateAnimationHandler onUpdateAnimation;
+        public event DeleteEntityHandler onDeleteEntity;
         public event SceneHandler onSceneUpdateEnd;
         #endregion
 
@@ -380,18 +382,26 @@ namespace UTJ.MeshSync
                 var id = identifier.id;
                 var path = identifier.name;
 
+                GameObject target = null;
                 EntityRecord rec = null;
                 if (id != 0 && m_hostObjects.TryGetValue(id, out rec))
                 {
                     if (rec.go != null)
-                        DestroyImmediate(rec.go);
+                        target = rec.go;
                     m_hostObjects.Remove(id);
                 }
                 else if (m_clientObjects.TryGetValue(path, out rec))
                 {
                     if (rec.go != null)
-                        DestroyImmediate(rec.go);
+                        target = rec.go;
                     m_clientObjects.Remove(path);
+                }
+
+                if (target != null && !IsAsset(target))
+                {
+                    if (onDeleteEntity != null)
+                        onDeleteEntity.Invoke(target);
+                    DestroyImmediate(target);
                 }
             }
 
@@ -641,16 +651,23 @@ namespace UTJ.MeshSync
 #endif
         }
 
-        void DestroyIfNotAsset(UnityEngine.Object obj)
+        bool IsAsset(UnityEngine.Object obj)
         {
-            if (obj != null
 #if UNITY_EDITOR
-                && AssetDatabase.GetAssetPath(obj) == ""
+            if (AssetDatabase.GetAssetPath(obj) != "")
+                return true;
 #endif
-                )
+            return false;
+        }
+
+        bool DestroyIfNotAsset(UnityEngine.Object obj)
+        {
+            if (obj != null && !IsAsset(obj))
             {
                 DestroyImmediate(obj, false);
+                return true;
             }
+            return false;
         }
 
         byte[] EncodeToPNG(Texture2D tex)
