@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/msSceneGraphImpl.h"
 #include "MeshSync/MeshSyncUtils.h"
 #include "msxmContext.h"
 
@@ -39,6 +40,31 @@ msxmContext* msxmGetContext()
         msxmInitializeWidget();
     }
     return s_ctx.get();
+}
+
+
+bool MaterialRecord::operator==(const MaterialRecord& v) const
+{
+    return
+        program == v.program &&
+        diffuse_color == v.diffuse_color &&
+        emission_color == v.emission_color &&
+        color_map == v.color_map&&
+        bump_map == v.bump_map;
+}
+bool MaterialRecord::operator!=(const MaterialRecord& v) const
+{
+    return !operator==(v);
+}
+uint64_t MaterialRecord::checksum() const
+{
+    uint64_t ret = 0;
+    ret += ms::csum(program);
+    ret += ms::csum(diffuse_color);
+    ret += ms::csum(emission_color);
+    ret += ms::csum(color_map);
+    ret += ms::csum(bump_map);
+    return ret;
 }
 
 
@@ -234,7 +260,7 @@ void msxmContext::send(bool force)
             mat->id = mid;
             mat->name = name;
             auto& stdmat = ms::AsStandardMaterial(*mat);
-            stdmat.setColor(md.diffuse);
+            stdmat.setColor(md.diffuse_color);
             m_material_manager.add(mat);
         }
     }
@@ -253,11 +279,14 @@ void msxmContext::send(bool force)
         m_camera_dirty = false;
     }
 
-    for (auto& kvp : m_texture_records) {
-        auto& rec = kvp.second;
-        if (rec.dirty && rec.dst) {
-            rec.dirty = false;
-            m_texture_manager.add(rec.dst);
+    // textures
+    if (m_settings.sync_textures) {
+        for (auto& kvp : m_texture_records) {
+            auto& rec = kvp.second;
+            if (rec.dirty && rec.dst) {
+                rec.dirty = false;
+                m_texture_manager.add(rec.dst);
+            }
         }
     }
 
@@ -322,14 +351,12 @@ void msxmContext::onDeleteTextures(GLsizei n, const GLuint *textures)
 
 void msxmContext::onActiveTexture(GLenum texture)
 {
-    m_texture_slot = texture - GL_TEXTURE0;
+    m_active_texture = texture - GL_TEXTURE0;
 }
 
 void msxmContext::onBindTexture(GLenum target, GLuint texture)
 {
-    if (m_texture_slot == 0) {
-        m_material_records.texture = texture;
-    }
+    m_texture_slots[m_active_texture] = texture;
 }
 
 void msxmContext::onTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
@@ -437,6 +464,13 @@ BufferRecord* msxmContext::getActiveBuffer(GLenum target)
     return bid != 0 ? &m_buffer_records[bid] : nullptr;
 }
 
+ProgramRecord::Uniform * msxmContext::findUniform(GLint location)
+{
+    auto& uniforms = m_program_records[m_program_handle].uniforms;
+    auto it = uniforms.find(location);
+    return it != uniforms.end() ? &it->second : nullptr;
+}
+
 
 void msxmContext::onGenBuffers(GLsizei n, GLuint * handles)
 {
@@ -517,23 +551,108 @@ void msxmContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, G
     }
 }
 
-void msxmContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * value)
+
+extern void(*_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+extern void(*_glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+extern GLint(*_glGetUniformLocation)(GLuint program, const GLchar *name);
+
+void msxmContext::onLinkProgram(GLuint program)
 {
-    if (location == 3) {
-        // diffuse
-        m_material_records.diffuse.assign(value);
+}
+
+void msxmContext::onDeleteProgram(GLuint program)
+{
+    m_program_records.erase(program);
+}
+
+void msxmContext::onUseProgram(GLuint program)
+{
+    m_program_handle = program;
+
+    auto& rec = m_program_records[program];
+    if (rec.uniforms.empty()) {
+        rec.mrec.program = program;
+        int num_uniforms = 0;
+        _glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &num_uniforms);
+        for (int ui = 0; ui < num_uniforms; ++ui) {
+            char name[128];
+            GLsizei len = 0, size = 0;
+            GLenum type;
+            _glGetActiveUniform(program, ui, sizeof(name), &len, &size, &type, name);
+
+            auto mstype = ms::MaterialProperty::Type::Unknown;
+            switch (type) {
+            case GL_FLOAT:
+                mstype = ms::MaterialProperty::Type::Float;
+                break;
+            case GL_FLOAT_VEC2:
+            case GL_FLOAT_VEC3:
+            case GL_FLOAT_VEC4:
+                mstype = ms::MaterialProperty::Type::Vector;
+                break;
+            case GL_FLOAT_MAT2:
+            case GL_FLOAT_MAT3:
+            case GL_FLOAT_MAT4:
+                mstype = ms::MaterialProperty::Type::Matrix;
+                break;
+            case GL_SAMPLER_2D:
+            case GL_SAMPLER_2D_ARRAY:
+            case GL_SAMPLER_2D_MULTISAMPLE:
+            case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_SAMPLER_2D_RECT:
+            case GL_INT_SAMPLER_2D:
+            case GL_INT_SAMPLER_2D_ARRAY:
+            case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_INT_SAMPLER_2D_RECT:
+            case GL_UNSIGNED_INT_SAMPLER_2D:
+            case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+            case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+                mstype = ms::MaterialProperty::Type::Texture;
+                break;
+            }
+
+            GLuint index = _glGetUniformLocation(program, name);
+            auto& uni = rec.uniforms[index];
+            uni.name = name;
+            uni.type = mstype;
+            uni.size = size;
+        }
     }
 }
 
-void msxmContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
+void msxmContext::onUniform1i(GLint location, GLint v0)
 {
-    if (location == 0) {
-        // modelview matrix
-        m_modelview.assign(value);
+    if (auto *prop = findUniform(location)) {
+        if (prop->type == ms::MaterialProperty::Type::Texture) {
+            auto& mr = m_program_records[m_program_handle].mrec;
+            if (prop->name == "dif_tex")
+                mr.color_map = v0;
+            else if (prop->name == "normal_tex")
+                mr.bump_map = v0;
+        }
     }
-    else if (location == 1) {
-        // projection matrix
-        m_proj.assign(value);
+}
+
+void msxmContext::onUniform4fv(GLint location, GLsizei count, const GLfloat *value)
+{
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "diffuse")
+            mr.diffuse_color = *(float4*)value;
+        else if (prop->name == "emissive")
+            mr.emission_color = *(float4*)value;
+    }
+}
+
+void msxmContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+{
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "projMatrix")
+            m_proj = *(float4x4*)value;
+        else if (prop->name == "mvMatrix")
+            m_modelview = *(float4x4*)value;
     }
 }
 

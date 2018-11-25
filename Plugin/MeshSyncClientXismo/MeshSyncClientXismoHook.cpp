@@ -20,8 +20,18 @@ static void* (*WINAPI _glMapBuffer) (GLenum target, GLenum access);
 static GLboolean(*WINAPI _glUnmapBuffer) (GLenum target);
 
 static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+
+static void(*WINAPI _glLinkProgram)(GLuint program);
+static void(*WINAPI _glDeleteProgram)(GLuint program);
+static void(*WINAPI _glUseProgram)(GLuint program);
+/*static*/ void(*WINAPI _glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+/*static*/ void(*WINAPI _glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+/*static*/ GLint(*WINAPI _glGetUniformLocation)(GLuint program, const GLchar *name);
+
+static void(*WINAPI _glUniform1i)(GLint location, GLint v0);
 static void(*WINAPI _glUniform4fv) (GLint location, GLsizei count, const GLfloat* value);
 static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+
 static void(*WINAPI _glDrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
 static void(*WINAPI _glFlush)(void);
 static void* (*WINAPI _wglGetProcAddress)(const char* name);
@@ -97,15 +107,36 @@ static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum t
     _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 
+static void WINAPI glLinkProgram_hook(GLuint program)
+{
+    _glLinkProgram(program);
+    msxmGetContext()->onLinkProgram(program);
+}
+static void WINAPI glDeleteProgram_hook(GLuint program)
+{
+    msxmGetContext()->onDeleteProgram(program);
+    _glDeleteProgram(program);
+}
+static void WINAPI glUseProgram_hook(GLuint program)
+{
+    _glUseProgram(program);
+    msxmGetContext()->onUseProgram(program);
+}
+
+static void WINAPI glUniform1i_hook(GLint location, GLint v0)
+{
+    _glUniform1i(location, v0);
+    msxmGetContext()->onUniform1i(location, v0);
+}
 static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat* value)
 {
-    msxmGetContext()->onUniform4fv(location, count, value);
     _glUniform4fv(location, count, value);
+    msxmGetContext()->onUniform4fv(location, count, value);
 }
 static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
-    msxmGetContext()->onUniformMatrix4fv(location, count, transpose, value);
     _glUniformMatrix4fv(location, count, transpose, value);
+    msxmGetContext()->onUniformMatrix4fv(location, count, transpose, value);
 }
 
 static void WINAPI glDrawElements_hook(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices)
@@ -129,10 +160,11 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     }
     s_hooks[] = {
 #define Hook(Name) {#Name, (void**)&Name##_hook, (void**)&_##Name}
+#define Get(Name) {#Name, nullptr, (void**)&_##Name}
     Hook(glGenTextures),
     Hook(glDeleteTextures),
     Hook(glActiveTexture),
-    Hook(glBindTexture),
+    //Hook(glBindTexture),
     Hook(glTextureStorage2DEXT),
     Hook(glTextureSubImage2DEXT),
 
@@ -143,10 +175,20 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glMapBuffer),
     Hook(glUnmapBuffer),
     Hook(glVertexAttribPointer),
+
+    Hook(glLinkProgram),
+    Hook(glDeleteProgram),
+    Hook(glUseProgram),
+    Get(glGetProgramiv),
+    Get(glGetActiveUniform),
+    Get(glGetUniformLocation),
+    Hook(glUniform1i),
     Hook(glUniform4fv),
     Hook(glUniformMatrix4fv),
+
     Hook(glDrawElements),
     Hook(glFlush),
+#undef Get
 #undef Hook
     };
 
@@ -155,7 +197,7 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
             auto sym = _wglGetProcAddress(name);
             if (sym) {
                 *hook.func_orig = sym;
-                return hook.func_hook;
+                return hook.func_hook ? hook.func_hook : sym;
             }
         }
     }
@@ -256,6 +298,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         Override(wglGetProcAddress);
         Override(glDrawElements);
         Override(glFlush);
+        Override(glBindTexture);
 #undef Override
     }
     else if (fdwReason == DLL_PROCESS_DETACH) {

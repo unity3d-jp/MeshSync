@@ -509,9 +509,9 @@ void msvrContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, G
     }
 }
 
-extern void(*WINAPI _glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
-extern void(*WINAPI _glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
-extern GLint(*WINAPI _glGetUniformLocation)(GLuint program, const GLchar *name);
+extern void(*_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+extern void(*_glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+extern GLint(*_glGetUniformLocation)(GLuint program, const GLchar *name);
 
 void msvrContext::onLinkProgram(GLuint program)
 {
@@ -596,7 +596,6 @@ void msvrContext::onUniform1i(GLint location, GLint v0)
             else if (prop->name == "specularTexture") {
                 mr.specular_map = v0;
             }
-
         }
     }
 }

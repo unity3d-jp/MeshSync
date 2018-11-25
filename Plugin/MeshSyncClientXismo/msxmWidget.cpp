@@ -36,6 +36,7 @@ private:
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
     void onToggleDoubleSided(int v);
+    void onToggleSyncTextures(int v);
     void onToggleSyncCamera(int v);
     void onEditCameraPath(const QString& v);
     void onToggleSyncDelete(int v);
@@ -96,6 +97,11 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
         ck_delete->setCheckState(Qt::Checked);
     layout->addWidget(ck_delete, iy++, 0, 1, 3);
 
+    auto ck_textures = new QCheckBox("Sync Textures");
+    if (settings.sync_textures)
+        ck_textures->setCheckState(Qt::Checked);
+    layout->addWidget(ck_textures, iy++, 0, 1, 3);
+
     auto ck_camera = new QCheckBox("Sync Camera");
     if (settings.sync_camera)
         ck_camera->setCheckState(Qt::Checked);
@@ -121,6 +127,7 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     connect(ed_port, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditPort);
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditScaleFactor);
     connect(ck_double_sided, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleDoubleSided);
+    connect(ck_textures, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncTextures);
     connect(ck_camera, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncCamera);
     connect(ed_camera_path, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditCameraPath);
     connect(ck_delete, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncDelete);
@@ -182,6 +189,13 @@ void msxmSettingsWidget::onToggleDoubleSided(int v)
     settings.make_double_sided = v;
     if (settings.auto_sync)
         ctx->send(true);
+}
+
+void msxmSettingsWidget::onToggleSyncTextures(int v)
+{
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
+    settings.sync_textures = v;
 }
 
 void msxmSettingsWidget::onToggleSyncCamera(int v)

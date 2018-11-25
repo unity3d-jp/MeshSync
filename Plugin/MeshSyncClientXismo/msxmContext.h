@@ -4,6 +4,8 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
 
+#define msxmMaxTextureSlots 32
+
 using ms::float2;
 using ms::float3;
 using ms::float4;
@@ -54,18 +56,30 @@ struct TextureRecord
 struct MaterialRecord
 {
     GLuint program = 0;
-    GLuint texture = 0;
-    float4 diffuse = float4::zero();
+    float4 diffuse_color = float4::zero();
+    float4 emission_color = float4::zero();
+    int color_map = ms::InvalidID;
+    int bump_map = ms::InvalidID;
 
-    bool operator==(const MaterialRecord& v) const
+    bool operator==(const MaterialRecord& v) const;
+    bool operator!=(const MaterialRecord& v) const;
+    uint64_t checksum() const;
+};
+
+namespace ms {
+
+template<>
+class IDGenerator<MaterialRecord> : public IDGenerator<void*>
+{
+public:
+    int getID(const MaterialRecord& o)
     {
-        return program == v.program && texture == v.texture && diffuse == v.diffuse;
-    }
-    bool operator!=(const MaterialRecord& v) const
-    {
-        return !operator==(v);
+        auto ck = o.checksum();
+        return getIDImpl((void*&)ck);
     }
 };
+
+} // namespace ms
 
 struct BufferRecord : public mu::noncopyable
 {
@@ -91,6 +105,18 @@ struct BufferRecord : public mu::noncopyable
     void wait();
 private:
     void buildMeshDataBody(const msxmSettings& settings);
+};
+
+struct ProgramRecord
+{
+    struct Uniform
+    {
+        std::string name;
+        ms::MaterialProperty::Type type;
+        int size;
+    };
+    std::map<GLuint, Uniform> uniforms;
+    MaterialRecord mrec;
 };
 
 
@@ -128,13 +154,20 @@ public:
     void onMapBuffer(GLenum target, GLenum access, void *&mapped_data);
     void onUnmapBuffer(GLenum target);
     void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
+
+    void onLinkProgram(GLuint program);
+    void onDeleteProgram(GLuint program);
+    void onUseProgram(GLuint program);
+    void onUniform1i(GLint location, GLint v0);
     void onUniform4fv(GLint location, GLsizei count, const GLfloat* value);
     void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+
     void onDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices);
     void onFlush();
 
 protected:
     BufferRecord* getActiveBuffer(GLenum target);
+    ProgramRecord::Uniform* findUniform(GLint location);
 
 protected:
     msxmSettings m_settings;
@@ -142,8 +175,12 @@ protected:
     std::map<uint32_t, BufferRecord> m_buffer_records;
     std::vector<GLuint> m_meshes_deleted;
 
-    GLuint m_texture_slot = 0;
+    GLuint m_active_texture = 0;
+    GLuint m_texture_slots[msxmMaxTextureSlots] = {};
     std::map<GLuint, TextureRecord> m_texture_records;
+
+    GLuint m_program_handle = 0;
+    std::map<GLuint, ProgramRecord> m_program_records;
 
     uint32_t m_vertex_attributes = 0;
     uint32_t m_vb_handle = 0;
