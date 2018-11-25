@@ -253,6 +253,14 @@ void msxmContext::send(bool force)
         m_camera_dirty = false;
     }
 
+    for (auto& kvp : m_texture_records) {
+        auto& rec = kvp.second;
+        if (rec.dirty && rec.dst) {
+            rec.dirty = false;
+            m_texture_manager.add(rec.dst);
+        }
+    }
+
     // begin build mesh data
     mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
         v->startBuildMeshData(m_settings);
@@ -298,6 +306,20 @@ void msxmContext::send(bool force)
     m_sender.kick();
 }
 
+void msxmContext::onGenTextures(GLsizei n, GLuint *textures)
+{
+    for (int i = 0; i < (int)n; ++i) {
+        m_texture_records[textures[i]];
+    }
+}
+
+void msxmContext::onDeleteTextures(GLsizei n, const GLuint *textures)
+{
+    for (int i = 0; i < (int)n; ++i) {
+        m_texture_records.erase(textures[i]);
+    }
+}
+
 void msxmContext::onActiveTexture(GLenum texture)
 {
     m_texture_slot = texture - GL_TEXTURE0;
@@ -307,6 +329,102 @@ void msxmContext::onBindTexture(GLenum target, GLuint texture)
 {
     if (m_texture_slot == 0) {
         m_material_records.texture = texture;
+    }
+}
+
+void msxmContext::onTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
+{
+    if (!pixels)
+        return;
+
+    int pixel_size = 0;
+    ms::TextureFormat msf = ms::TextureFormat::Unknown;
+    switch (format) {
+    case GL_RED:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 1;
+            msf = ms::TextureFormat::Ru8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 2;
+            msf = ms::TextureFormat::Rf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 4;
+            msf = ms::TextureFormat::Rf32;
+            break;
+        }
+        break;
+    case GL_RG:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 2;
+            msf = ms::TextureFormat::RGu8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 4;
+            msf = ms::TextureFormat::RGf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 8;
+            msf = ms::TextureFormat::RGf32;
+            break;
+        }
+        break;
+    case GL_RGB:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 3;
+            msf = ms::TextureFormat::RGBu8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 6;
+            msf = ms::TextureFormat::RGBf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 12;
+            msf = ms::TextureFormat::RGBf32;
+            break;
+        }
+        break;
+    case GL_RGBA:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 4;
+            msf = ms::TextureFormat::RGBAu8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 8;
+            msf = ms::TextureFormat::RGBAf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 16;
+            msf = ms::TextureFormat::RGBAf32;
+            break;
+        }
+        break;
+    }
+
+    if (pixel_size) {
+        auto dst = ms::Texture::create();
+        char name[128];
+        sprintf(name, "XismoTexture_ID%08x", texture);
+        dst->name = name;
+        dst->id = (int)texture;
+        dst->format = msf;
+        dst->width = width;
+        dst->height = height;
+
+        int size = width * height * pixel_size;
+        dst->data.assign((char*)pixels, (char*)pixels + size);
+
+        auto& rec = m_texture_records[texture];
+        rec.dst = dst;
+        rec.dirty = true;
+    }
+    else {
+        msLogWarning("unsupported texture format\n");
     }
 }
 

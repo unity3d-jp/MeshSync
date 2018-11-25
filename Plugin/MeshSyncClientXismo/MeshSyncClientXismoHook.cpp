@@ -5,14 +5,20 @@
 
 #pragma warning(push)
 #pragma warning(disable:4229)
+static void(*WINAPI _glGenTextures)(GLsizei n, GLuint * textures);
+static void(*WINAPI _glDeleteTextures)(GLsizei n, const GLuint * textures);
 static void(*WINAPI _glActiveTexture)(GLenum texture);
 static void(*WINAPI _glBindTexture)(GLenum target, GLuint texture);
+static void (*WINAPI _glTextureStorage2DEXT)(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+static void (*WINAPI _glTextureSubImage2DEXT)(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
+
 static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
 static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
 static void(*WINAPI _glBindBuffer) (GLenum target, GLuint buffer);
 static void(*WINAPI _glBufferData) (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
 static void* (*WINAPI _glMapBuffer) (GLenum target, GLenum access);
 static GLboolean(*WINAPI _glUnmapBuffer) (GLenum target);
+
 static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
 static void(*WINAPI _glUniform4fv) (GLint location, GLsizei count, const GLfloat* value);
 static void(*WINAPI _glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
@@ -21,7 +27,16 @@ static void(*WINAPI _glFlush)(void);
 static void* (*WINAPI _wglGetProcAddress)(const char* name);
 #pragma warning(pop)
 
-
+static void WINAPI glGenTextures_hook(GLsizei n, GLuint * textures)
+{
+    _glGenTextures(n, textures);
+    msxmGetContext()->onGenTextures(n, textures);
+}
+static void WINAPI glDeleteTextures_hook(GLsizei n, const GLuint * textures)
+{
+    msxmGetContext()->onDeleteTextures(n, textures);
+    _glDeleteTextures(n, textures);
+}
 static void WINAPI glActiveTexture_hook(GLenum texture)
 {
     msxmGetContext()->onActiveTexture(texture);
@@ -32,6 +47,17 @@ static void WINAPI glBindTexture_hook(GLenum target, GLuint texture)
     msxmGetContext()->onBindTexture(target, texture);
     _glBindTexture(target, texture);
 }
+
+static void WINAPI glTextureStorage2DEXT_hook(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    _glTextureStorage2DEXT(texture, target, levels, internalformat, width, height);
+}
+static void WINAPI glTextureSubImage2DEXT_hook(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
+{
+    msxmGetContext()->onTextureSubImage2DEXT(texture, target, level, xoffset, yoffset, width, height, format, type, pixels);
+    _glTextureSubImage2DEXT(texture, target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
 
 static void WINAPI glGenBuffers_hook(GLsizei n, GLuint* buffers)
 {
@@ -103,8 +129,13 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     }
     s_hooks[] = {
 #define Hook(Name) {#Name, (void**)&Name##_hook, (void**)&_##Name}
+    Hook(glGenTextures),
+    Hook(glDeleteTextures),
     Hook(glActiveTexture),
     Hook(glBindTexture),
+    Hook(glTextureStorage2DEXT),
+    Hook(glTextureSubImage2DEXT),
+
     Hook(glGenBuffers),
     Hook(glDeleteBuffers),
     Hook(glBindBuffer),

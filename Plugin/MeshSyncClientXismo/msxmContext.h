@@ -44,6 +44,13 @@ struct xm_vertex1
     }
 };
 
+struct TextureRecord
+{
+    ms::TexturePtr dst;
+    bool dirty = true;
+    bool used = false;
+};
+
 struct MaterialRecord
 {
     GLuint program = 0;
@@ -108,8 +115,12 @@ public:
     msxmSettings& getSettings();
     void send(bool force);
 
+    void onGenTextures(GLsizei n, GLuint *textures);
+    void onDeleteTextures(GLsizei n, const GLuint *textures);
     void onActiveTexture(GLenum texture);
     void onBindTexture(GLenum target, GLuint texture);
+    void onTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
+
     void onGenBuffers(GLsizei n, GLuint* buffers);
     void onDeleteBuffers(GLsizei n, const GLuint* buffers);
     void onBindBuffer(GLenum target, GLuint buffer);
@@ -130,7 +141,9 @@ protected:
 
     std::map<uint32_t, BufferRecord> m_buffer_records;
     std::vector<GLuint> m_meshes_deleted;
+
     GLuint m_texture_slot = 0;
+    std::map<GLuint, TextureRecord> m_texture_records;
 
     uint32_t m_vertex_attributes = 0;
     uint32_t m_vb_handle = 0;
