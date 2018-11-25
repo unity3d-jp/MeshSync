@@ -46,6 +46,7 @@
     <ClCompile Include="CrashReporter\CrashReporter.cpp" />
     <ClCompile Include="MeshUtils\muAllocator.cpp" />
     <ClCompile Include="MeshUtils\muColor.cpp" />
+    <ClCompile Include="MeshUtils\muHalf.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\muMisc.cpp" />
     <ClCompile Include="MeshUtils\pch.cpp">

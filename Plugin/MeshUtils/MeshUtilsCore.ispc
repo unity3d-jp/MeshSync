@@ -41,8 +41,9 @@ export void F32ToS8(uniform int8 dst[], uniform const float src[], uniform size_
 }
 export void S8ToF32(uniform float dst[], uniform const int8 src[], uniform size_t size)
 {
+    const float R = 1.0f / 127.0f;
     foreach(i=0 ... size) {
-        dst[i] = (float)src[i] / 127.0f;
+        dst[i] = (float)src[i] * R;
     }
 }
 
@@ -54,8 +55,9 @@ export void F32ToU8(uniform unsigned int8 dst[], uniform const float src[], unif
 }
 export void U8ToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
 {
+    const float R = 1.0f / 255.0f;
     foreach(i=0 ... size) {
-        dst[i] = (float)src[i] / 255.0f;
+        dst[i] = (float)src[i] * R;
     }
 }
 
@@ -67,8 +69,9 @@ export void F32ToU8N(uniform unsigned int8 dst[], uniform const float src[], uni
 }
 export void U8NToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
 {
+    const float R = 1.0f / 255.0f;
     foreach(i=0 ... size) {
-        dst[i] = (float)src[i] / 255.0f * 2.0f - 1.0f;
+        dst[i] = (float)src[i] * R * 2.0f - 1.0f;
     }
 }
 
@@ -80,8 +83,9 @@ export void F32ToS16(uniform int16 dst[], uniform const float src[], uniform siz
 }
 export void S16ToF32(uniform float dst[], uniform const int16 src[], uniform size_t size)
 {
+    const float R = 1.0f / 32767.0f;
     foreach(i=0 ... size) {
-        dst[i] = (float)src[i] / 32767.0f;
+        dst[i] = (float)src[i] * R;
     }
 }
 
@@ -93,8 +97,9 @@ export void F32ToU16(uniform unsigned int16 dst[], uniform const float src[], un
 }
 export void U16ToF32(uniform float dst[], uniform const unsigned int16 src[], uniform size_t size)
 {
+    const float R = 1.0f / 65535.0f;
     foreach(i=0 ... size) {
-        dst[i] = (float)src[i] / 65535.0f;
+        dst[i] = (float)src[i] * R;
     }
 }
 
@@ -109,9 +114,10 @@ export void F32ToS24(uniform unsigned int8 dst[], uniform const float src[], uni
 }
 export void S24ToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
 {
+    const double R = 1.0d / 2147483647.0d;
     foreach(i=0 ... size) {
         int32 v = ((int32)src[i*3 + 0] << 8) | ((int32)src[i*3 + 1] << 16) | ((int32)src[i*3 + 2] << 24);
-        dst[i] = (float)((double)v / 2147483647.0d);
+        dst[i] = (float)((double)v * R);
     }
 }
 
@@ -123,8 +129,9 @@ export void F32ToS32(uniform int32 dst[], uniform const float src[], uniform siz
 }
 export void S32ToF32(uniform float dst[], uniform const int32 src[], uniform size_t size)
 {
+    const double R = 1.0d / 2147483647.0d;
     foreach(i=0 ... size) {
-        dst[i] = (float)((double)src[i] / 2147483647.0d);
+        dst[i] = (float)((double)src[i] * R);
     }
 }
 

@@ -107,6 +107,9 @@
     <ClCompile Include="MeshUtils\muColor.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshUtils\muHalf.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">

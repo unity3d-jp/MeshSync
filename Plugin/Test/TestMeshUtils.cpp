@@ -812,7 +812,7 @@ TestCase(Test_Norm)
     }
 #ifdef muSIMD_Float_Norm_Conversion
     {
-        const int N = 100000;
+        const int N = 1000000;
         const int T = 5;
         RawVector<float> data(N);
 
