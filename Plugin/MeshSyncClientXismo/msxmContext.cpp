@@ -163,7 +163,6 @@ void BufferRecord::buildMeshDataBody(const msxmSettings& settings)
     mesh.flags.has_refine_settings = 1;
     mesh.refine_settings.flags.swap_faces = true;
     mesh.refine_settings.flags.gen_tangents = 1;
-    mesh.refine_settings.flags.flip_v = 1;
     mesh.refine_settings.flags.make_double_sided = settings.make_double_sided;
 }
 
@@ -229,40 +228,40 @@ void msxmContext::send(bool force)
         return;
     }
 
+
+    // textures
+    if (m_settings.sync_textures) {
+        for (auto& kvp : m_texture_records) {
+            auto& rec = kvp.second;
+            if (rec.dst && rec.dirty && rec.used) {
+                m_texture_manager.add(rec.dst);
+                rec.dirty = false;
+            }
+        }
+    }
+
     // build material list
     {
-        m_material_data.clear();
-        auto findOrAddMaterial = [this](const MaterialRecord& md) {
-            auto it = std::find(m_material_data.begin(), m_material_data.end(), md);
-            if (it != m_material_data.end()) {
-                return (int)std::distance(m_material_data.begin(), it);
-            }
-            else {
-                int ret = (int)m_material_data.size();
-                m_material_data.push_back(md);
-                return ret;
-            }
-        };
-
-        for (auto& pair : m_buffer_records) {
-            auto& buf = pair.second;
-            if (buf.isModelData()) {
-                buf.material_id = findOrAddMaterial(buf.material);
-            }
-        }
-
         char name[128];
-        int material_index = 0;
-        for (auto& md : m_material_data) {
-            int mid = material_index++;
+        for (auto& mr : m_material_records) {
             auto mat = ms::Material::create();
-            sprintf(name, "XismoMaterial:ID[%04x]", mid);
-            mat->id = mid;
+            sprintf(name, "XismoMaterial:ID[%04x]", mr.id);
+            mat->id = mr.id;
+            mat->index = mr.id;
             mat->name = name;
+
             auto& stdmat = ms::AsStandardMaterial(*mat);
-            stdmat.setColor(md.diffuse_color);
+            if (mr.diffuse_color != float4::zero())
+                stdmat.setColor(mr.diffuse_color);
+            if (mr.emission_color != float4::zero())
+                stdmat.setEmissionColor(mr.emission_color);
+            if (mr.color_map != ms::InvalidID)
+                stdmat.setColorMap({ mr.color_map });
+            if (mr.bump_map != ms::InvalidID)
+                stdmat.setBumpMap({ mr.bump_map });
             m_material_manager.add(mat);
         }
+        m_material_records.clear();
     }
 
     // camera
@@ -277,17 +276,6 @@ void msxmContext::send(bool force)
         m_camera->near_plane = m_camera_near;
         m_camera->far_plane = m_camera_far;
         m_camera_dirty = false;
-    }
-
-    // textures
-    if (m_settings.sync_textures) {
-        for (auto& kvp : m_texture_records) {
-            auto& rec = kvp.second;
-            if (rec.dirty && rec.dst) {
-                rec.dirty = false;
-                m_texture_manager.add(rec.dst);
-            }
-        }
     }
 
     // begin build mesh data
@@ -695,10 +683,40 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
 
         buf->triangle = true;
         buf->num_elements = (int)count;
-        if (buf->material != m_material_records) {
-            buf->material = m_material_records;
-            buf->dirty = true;
+
+        // material
+        {
+            auto& prec = m_program_records[m_program_handle];
+            auto mrec = prec.mrec; // copy
+
+            // texture slot -> id
+            auto texture_slot_to_id = [this](int slot, ms::TextureType ttype) {
+                if (slot == ms::InvalidID)
+                    return ms::InvalidID;
+                auto& trec = m_texture_records[m_texture_slots[slot]];
+                if (trec.dst) {
+                    trec.used = true;
+                    trec.dst->type = ttype;
+                    return trec.dst->id;
+                }
+                else {
+                    return ms::InvalidID;
+                }
+            };
+            mrec.color_map = texture_slot_to_id(mrec.color_map, ms::TextureType::Default);
+            mrec.bump_map = texture_slot_to_id(mrec.bump_map, ms::TextureType::NormalMap);
+
+            auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
+            if (it != m_material_records.end()) {
+                buf->material_id = it->id;
+            }
+            else {
+                mrec.id = m_material_ids.getID(mrec);
+                buf->material_id = mrec.id;
+                m_material_records.push_back(mrec);
+            }
         }
+
     }
 bailout:
     m_vertex_attributes = 0;

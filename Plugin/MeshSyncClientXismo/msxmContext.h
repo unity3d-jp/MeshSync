@@ -55,6 +55,7 @@ struct TextureRecord
 
 struct MaterialRecord
 {
+    int id = ms::InvalidID;
     GLuint program = 0;
     float4 diffuse_color = float4::zero();
     float4 emission_color = float4::zero();
@@ -90,8 +91,7 @@ struct BufferRecord : public mu::noncopyable
     int         stride = 0;
     bool        triangle = false;
     bool        dirty = false;
-    int         material_id = -1;
-    MaterialRecord material;
+    int         material_id = ms::InvalidID;
     float4x4    transform = float4x4::identity();
 
     RawVector<xm_vertex1> vertices_tmp;
@@ -181,10 +181,10 @@ protected:
 
     GLuint m_program_handle = 0;
     std::map<GLuint, ProgramRecord> m_program_records;
+    std::vector<MaterialRecord> m_material_records;
 
     uint32_t m_vertex_attributes = 0;
     uint32_t m_vb_handle = 0;
-    MaterialRecord m_material_records;
     float4x4 m_proj = float4x4::identity();
     float4x4 m_modelview = float4x4::identity();
 
@@ -198,6 +198,7 @@ protected:
     std::vector<MaterialRecord> m_material_data;
     std::vector<BufferRecord*> m_mesh_buffers;
 
+    ms::IDGenerator<MaterialRecord> m_material_ids;
     ms::CameraPtr m_camera;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;

@@ -749,21 +749,22 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         auto mrec = prec.mrec; // copy
 
         // texture slot -> id
-        auto texture_slot_to_id = [this](int slot) {
+        auto texture_slot_to_id = [this](int slot, ms::TextureType ttype) {
             if (slot == ms::InvalidID)
                 return ms::InvalidID;
             auto& trec = m_texture_records[m_texture_slots[slot]];
             if (trec.dst) {
                 trec.used = true;
+                trec.dst->type = ttype;
                 return trec.dst->id;
             }
             else {
                 return ms::InvalidID;
             }
         };
-        mrec.color_map = texture_slot_to_id(mrec.color_map);
-        mrec.bump_map = texture_slot_to_id(mrec.bump_map);
-        mrec.specular_map = texture_slot_to_id(mrec.specular_map);
+        mrec.color_map = texture_slot_to_id(mrec.color_map, ms::TextureType::Default);
+        mrec.bump_map = texture_slot_to_id(mrec.bump_map, ms::TextureType::NormalMap);
+        mrec.specular_map = texture_slot_to_id(mrec.specular_map, ms::TextureType::Default);
 
         auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
         if (it != m_material_records.end()) {
