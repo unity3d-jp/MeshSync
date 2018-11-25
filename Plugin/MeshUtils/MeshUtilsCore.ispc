@@ -115,6 +115,19 @@ export void S24ToF32(uniform float dst[], uniform const unsigned int8 src[], uni
     }
 }
 
+export void F32ToS32(uniform int32 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (int32)((double)clamp11(src[i]) * 2147483647.0d);
+    }
+}
+export void S32ToF32(uniform float dst[], uniform const int32 src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (float)((double)src[i] / 2147483647.0d);
+    }
+}
+
 #endif
 
 

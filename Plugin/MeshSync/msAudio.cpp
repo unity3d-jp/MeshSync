@@ -72,6 +72,7 @@ static inline int SizeOf(AudioFormat f)
     case AudioFormat::U8: ret = 1; break;
     case AudioFormat::S16: ret = 2; break;
     case AudioFormat::S24: ret = 3; break;
+    case AudioFormat::S32: ret = 4; break;
     case AudioFormat::F32: ret = 4; break;
     default: break;
     }
@@ -174,12 +175,17 @@ bool Audio::exportAsWave(const char *path) const
 bool Audio::convertSamplesToFloat(float *dst)
 {
     size_t n = data.size() / SizeOf(format);
+    if (n == 0)
+        return false; // invalid format
+
     if (format == AudioFormat::U8)
         U8NToF32(dst, (unorm8n*)data.data(), n);
     else if (format == AudioFormat::S16)
         S16ToF32(dst, (snorm16*)data.data(), n);
     else if (format == AudioFormat::S24)
         S24ToF32(dst, (snorm24*)data.data(), n);
+    else if (format == AudioFormat::S32)
+        S32ToF32(dst, (snorm32*)data.data(), n);
     else if (format == AudioFormat::F32)
         data.copy_to((char*)dst);
     else

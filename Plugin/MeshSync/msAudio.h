@@ -10,8 +10,9 @@ enum class AudioFormat
     U8,
     S16,
     S24,
+    S32,
     F32,
-    RawFile,
+    RawFile = 100,
 };
 
 

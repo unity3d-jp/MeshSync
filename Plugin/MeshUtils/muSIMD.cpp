@@ -34,6 +34,8 @@ void F32ToU16_ISPC(unorm16 *dst, const float *src, size_t num) { ispc::F32ToU16(
 void U16ToF32_ISPC(float *dst, const unorm16 *src, size_t num) { ispc::U16ToF32(dst, (uint16_t*)src, (int)num); }
 void F32ToS24_ISPC(snorm24 *dst, const float *src, size_t num) { ispc::F32ToS24((uint8_t*)dst, src, (int)num); }
 void S24ToF32_ISPC(float *dst, const snorm24 *src, size_t num) { ispc::S24ToF32(dst, (uint8_t*)src, (int)num); }
+void F32ToS32_ISPC(snorm32 *dst, const float *src, size_t num) { ispc::F32ToS32((int32_t*)dst, src, (int)num); }
+void S32ToF32_ISPC(float *dst, const snorm32 *src, size_t num) { ispc::S32ToF32(dst, (int32_t*)src, (int)num); }
 #endif
 
 
@@ -287,6 +289,10 @@ void F32ToU16(unorm16 *dst, const float *src, size_t num) { Forward(F32ToU16, ds
 void U16ToF32(float *dst, const unorm16 *src, size_t num) { Forward(U16ToF32, dst, src, num); }
 void F32ToS24(snorm24 *dst, const float *src, size_t num) { Forward(F32ToS24, dst, src, num); }
 void S24ToF32(float *dst, const snorm24 *src, size_t num) { Forward(S24ToF32, dst, src, num); }
+
+// F32ToS32_ISPC is slower than F32ToS32_Generic...
+void F32ToS32(snorm32 *dst, const float *src, size_t num) { F32ToS32_Generic(dst, src, num); }
+void S32ToF32(float *dst, const snorm32 *src, size_t num) { S32ToF32_Generic(dst, src, num); }
 #endif
 
 

@@ -6,9 +6,11 @@ namespace mu {
 
 uint64_t SumInt32(const void *src, size_t num);
 
+// float <-> half
 void F32ToF16(half *dst, const float *src, size_t num);
 void F16ToF32(float *dst, const half *src, size_t num);
 
+// float <-> norm
 void F32ToS8(snorm8 *dst, const float *src, size_t num);
 void S8ToF32(float *dst, const snorm8 *src, size_t num);
 void F32ToU8(unorm8 *dst, const float *src, size_t num);
@@ -21,6 +23,8 @@ void F32ToU16(unorm16 *dst, const float *src, size_t num);
 void U16ToF32(float *dst, const unorm16 *src, size_t num);
 void F32ToS24(snorm24 *dst, const float *src, size_t num);
 void S24ToF32(float *dst, const snorm24 *src, size_t num);
+void F32ToS32(snorm32 *dst, const float *src, size_t num);
+void S32ToF32(float *dst, const snorm32 *src, size_t num);
 
 void InvertX(float3 *dst, size_t num);
 void InvertX(float4 *dst, size_t num);
@@ -129,6 +133,11 @@ void F32ToS24_Generic(snorm24 *dst, const float *src, size_t num);
 void F32ToS24_ISPC(snorm24 *dst, const float *src, size_t num);
 void S24ToF32_Generic(float *dst, const snorm24 *src, size_t num);
 void S24ToF32_ISPC(float *dst, const snorm24 *src, size_t num);
+
+void F32ToS32_Generic(snorm32 *dst, const float *src, size_t num);
+void F32ToS32_ISPC(snorm32 *dst, const float *src, size_t num);
+void S32ToF32_Generic(float *dst, const snorm32 *src, size_t num);
+void S32ToF32_ISPC(float *dst, const snorm32 *src, size_t num);
 
 
 void InvertX_Generic(float3 *dst, size_t num);

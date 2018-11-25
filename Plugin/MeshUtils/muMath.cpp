@@ -17,22 +17,24 @@ uint64_t SumInt32_Generic(const uint32_t *src, size_t num)
     return ret;
 }
 
-#define Impl for (size_t i = 0; i < num; ++i) { dst[i] = src[i]; }
-void F32ToF16_Generic(half *dst, const float *src, size_t num) { Impl; }
-void F16ToF32_Generic(float *dst, const half *src, size_t num) { Impl; }
-void F32ToS8_Generic(snorm8 *dst, const float *src, size_t num) { Impl; }
-void S8ToF32_Generic(float *dst, const snorm8 *src, size_t num) { Impl; }
-void F32ToU8_Generic(unorm8 *dst, const float *src, size_t num) { Impl; }
-void U8ToF32_Generic(float *dst, const unorm8 *src, size_t num) { Impl; }
-void F32ToU8N_Generic(unorm8n *dst, const float *src, size_t num) { Impl; }
-void U8NToF32_Generic(float *dst, const unorm8n *src, size_t num) { Impl; }
-void F32ToS16_Generic(snorm16 *dst, const float *src, size_t num) { Impl; }
-void S16ToF32_Generic(float *dst, const snorm16 *src, size_t num) { Impl; }
-void F32ToU16_Generic(unorm16 *dst, const float *src, size_t num) { Impl; }
-void U16ToF32_Generic(float *dst, const unorm16 *src, size_t num) { Impl; }
-void F32ToS24_Generic(snorm24 *dst, const float *src, size_t num) { Impl; }
-void S24ToF32_Generic(float *dst, const snorm24 *src, size_t num) { Impl; }
-#undef Impl
+#define Def(Name, T1, T2) void Name(T1 *dst, const T2 *src, size_t num) { for (size_t i = 0; i < num; ++i) { dst[i] = src[i]; } }
+Def(F32ToF16_Generic, half, float);
+Def(F16ToF32_Generic, float, half);
+Def(F32ToS8_Generic, snorm8, float);
+Def(S8ToF32_Generic, float, snorm8);
+Def(F32ToU8_Generic, unorm8, float);
+Def(U8ToF32_Generic, float, unorm8);
+Def(F32ToU8N_Generic, unorm8n, float);
+Def(U8NToF32_Generic, float, unorm8n);
+Def(F32ToS16_Generic, snorm16, float);
+Def(S16ToF32_Generic, float, snorm16);
+Def(F32ToU16_Generic, unorm16, float);
+Def(U16ToF32_Generic, float, unorm16);
+Def(F32ToS24_Generic, snorm24, float);
+Def(S24ToF32_Generic, float, snorm24);
+Def(F32ToS32_Generic, snorm32, float);
+Def(S32ToF32_Generic, float, snorm32);
+#undef Def
 
 
 void InvertX_Generic(float3 *dst, size_t num)

@@ -153,6 +153,7 @@ struct snorm24
     }
     snorm24(float v)
     {
+        // store upper 24 bits
         int i32 = int((double)clamp11(v) * 2147483647.0);
         value[0] = uint8_t((i32 & 0x0000ff00) >> 8 );
         value[1] = uint8_t((i32 & 0x00ff0000) >> 16);
@@ -172,6 +173,27 @@ struct snorm24
 
     static snorm24 zero() { return snorm24(0.0f); }
     static snorm24 one() { return snorm24(1.0f); }
+};
+
+// -1.0f - 1.0f <-> -2147483647 - 2147483647
+// for audio sample
+struct snorm32
+{
+    int value;
+
+    snorm32() {}
+    snorm32(const snorm32& v) : value(v.value) {}
+    snorm32(float v) : value(int((double)clamp11(v) * 2147483647.0)) {}
+
+    snorm32& operator=(float v)
+    {
+        *this = snorm32(v);
+        return *this;
+    }
+    operator float() const { return float((double)value / 2147483647.0); }
+
+    static snorm32 zero() { return snorm32(0.0f); }
+    static snorm32 one() { return snorm32(1.0f); }
 };
 
 using half2 = tvec2<half>;

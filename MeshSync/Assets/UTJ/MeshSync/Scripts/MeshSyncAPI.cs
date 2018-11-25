@@ -456,10 +456,11 @@ namespace UTJ.MeshSync
     {
         Unknown = 0,
         U8,
-        I16,
-        I24,
+        S16,
+        S24,
+        S32,
         F32,
-        RawFile,
+        RawFile = 100,
     }
 
     [StructLayout(LayoutKind.Explicit)]

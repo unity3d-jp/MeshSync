@@ -374,7 +374,8 @@ template<class T >
 static void GenerateAudioSample(T *dst, int n)
 {
     for (int i = 0; i < n; ++i) {
-        dst[i] = std::sin((float(i) * 10.0f * ms::Deg2Rad)) * 0.9f;
+        float s = std::pow(float(n - i) / n, 0.5f);
+        dst[i] = std::sin((float(i) * 1.5f * ms::Deg2Rad)) * s;
     }
 }
 
@@ -397,6 +398,9 @@ static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int 
         break;
     case ms::AudioFormat::S24:
         GenerateAudioSample((snorm24*)samples, a->getSampleLength() * Channels);
+        break;
+    case ms::AudioFormat::S32:
+        GenerateAudioSample((snorm32*)samples, a->getSampleLength() * Channels);
         break;
     case ms::AudioFormat::F32:
         GenerateAudioSample((float*)samples, a->getSampleLength() * Channels);
@@ -423,8 +427,9 @@ TestCase(Test_Audio)
     int ids = 0;
     ms::Scene scene;
     scene.assets.push_back(CreateAudioAsset("audio_u8", ms::AudioFormat::U8, ids++));
-    scene.assets.push_back(CreateAudioAsset("audio_i16", ms::AudioFormat::S16, ids++));
-    scene.assets.push_back(CreateAudioAsset("audio_i24", ms::AudioFormat::S24, ids++));
+    scene.assets.push_back(CreateAudioAsset("audio_s16", ms::AudioFormat::S16, ids++));
+    scene.assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
+    scene.assets.push_back(CreateAudioAsset("audio_s32", ms::AudioFormat::S32, ids++));
     scene.assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
     scene.assets.push_back(CreateAudioFileAsset("explosion1.wav", ids++));
     Send(scene);
