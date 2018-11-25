@@ -69,16 +69,21 @@ struct BufferRecord : public mu::noncopyable
     int         stride = 0;
     bool        triangle = false;
     bool        dirty = false;
-    bool        visible = true;
     int         material_id = -1;
     MaterialRecord material;
     float4x4    transform = float4x4::identity();
 
+    RawVector<xm_vertex1> vertices_tmp;
     RawVector<ms_vertex> vertices_welded;
     ms::MeshPtr dst_mesh;
+    std::future<void> task;
 
+    ~BufferRecord();
     bool isModelData() const;
-    void buildMeshData(const msxmSettings& settings);
+    void startBuildMeshData(const msxmSettings& settings);
+    void wait();
+private:
+    void buildMeshDataBody(const msxmSettings& settings);
 };
 
 
@@ -86,7 +91,7 @@ struct msxmSettings
 {
     ms::ClientSettings client_settings;
     float scale_factor = 100.0f;
-    bool auto_sync = true;
+    bool auto_sync = false;
     bool weld_vertices = true;
     bool make_double_sided = false;
     bool sync_delete = true;

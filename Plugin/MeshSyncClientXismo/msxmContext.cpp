@@ -64,28 +64,34 @@ static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>
     }
 }
 
-void BufferRecord::buildMeshData(const msxmSettings& settings)
+void BufferRecord::startBuildMeshData(const msxmSettings& settings)
 {
-    if (!data.data())
-        return;
-
-    int num_indices = num_elements;
-    int num_triangles = num_indices / 3;
-
     if (!dst_mesh) {
         dst_mesh = ms::Mesh::create();
+        dst_mesh->index = (int)handle;
 
         char path[128];
         sprintf(path, "/XismoMesh:ID[%08x]", handle);
         dst_mesh->path = path;
     }
-    auto& mesh = *dst_mesh;
-    mesh.visible = visible;
-    if (!visible) {
-        return;
-    }
 
-    auto vertices = (const xm_vertex1*)data.data();
+    if (dirty) {
+        dirty = false;
+        vertices_tmp.resize_discard(num_elements);
+        data.copy_to((char*)vertices_tmp.data());
+        task = std::async(std::launch::async, [this, &settings]() {
+            buildMeshDataBody(settings);
+        });
+    }
+}
+
+void BufferRecord::buildMeshDataBody(const msxmSettings& settings)
+{
+    int num_indices = (int)vertices_tmp.size();
+    int num_triangles = num_indices / 3;
+
+    auto& mesh = *dst_mesh;
+    auto vertices = vertices_tmp.data();
     if (settings.weld_vertices) {
         Weld(vertices, num_indices, vertices_welded, mesh.indices);
 
@@ -135,9 +141,22 @@ void BufferRecord::buildMeshData(const msxmSettings& settings)
     mesh.refine_settings.flags.make_double_sided = settings.make_double_sided;
 }
 
+void BufferRecord::wait()
+{
+    if (task.valid()) {
+        task.wait();
+        task = {};
+    }
+}
+
+BufferRecord::~BufferRecord()
+{
+    wait();
+}
+
 bool BufferRecord::isModelData() const
 {
-    return stride == sizeof(xm_vertex1) && triangle;
+    return stride == sizeof(xm_vertex1) && triangle && !data.empty();
 }
 
 
@@ -160,7 +179,10 @@ void msxmContext::send(bool force)
 {
     if (m_sender.isSending()) {
         // previous request is not completed yet
-        return;
+        if (force)
+            m_sender.wait();
+        else
+            return;
     }
 
     if (force) {
@@ -168,14 +190,15 @@ void msxmContext::send(bool force)
         m_entity_manager.makeDirtyAll();
     }
 
+    bool dirty_meshes = false;
     for (auto& pair : m_buffer_records) {
         auto& buf = pair.second;
-        if (buf.isModelData() && (buf.dirty || force)) {
+        if (buf.isModelData())
             m_mesh_buffers.push_back(&buf);
-            buf.dirty = false;
-        }
+        if (buf.dirty)
+            dirty_meshes = true;
     }
-    if (m_mesh_buffers.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
+    if ((!dirty_meshes && !force) && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
         // nothing to send
         return;
     }
@@ -230,6 +253,10 @@ void msxmContext::send(bool force)
         m_camera_dirty = false;
     }
 
+    // begin build mesh data
+    mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
+        v->startBuildMeshData(m_settings);
+    });
 
     m_sender.on_prepare = [this]() {
         // add camera
@@ -237,10 +264,10 @@ void msxmContext::send(bool force)
             m_entity_manager.add(m_camera);
 
         // gen welded meshes
-        mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
-            v->buildMeshData(m_settings);
+        for (auto *v : m_mesh_buffers) {
+            v->wait();
             m_entity_manager.add(v->dst_mesh);
-        });
+        }
         m_mesh_buffers.clear();
 
         // handle deleted objects
@@ -308,7 +335,7 @@ void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
     for (int i = 0; i < n; ++i) {
         auto it = m_buffer_records.find(handles[i]);
         if (it != m_buffer_records.end()) {
-            if (it->second.isModelData()) {
+            if (m_settings.sync_delete && it->second.isModelData()) {
                 m_meshes_deleted.push_back(it->second.handle);
             }
             m_buffer_records.erase(it);
@@ -356,7 +383,7 @@ void msxmContext::onUnmapBuffer(GLenum target)
         if (buf->mapped_data) {
             memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
             if (buf->data != buf->tmp_data) {
-                std::swap(buf->data, buf->tmp_data);
+                buf->data = buf->tmp_data;
                 buf->dirty = true;
             }
             buf->mapped_data = nullptr;

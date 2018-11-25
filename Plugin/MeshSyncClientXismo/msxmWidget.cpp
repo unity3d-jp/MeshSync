@@ -91,7 +91,7 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
         ck_double_sided->setCheckState(Qt::Checked);
     layout->addWidget(ck_double_sided, iy++, 0, 1, 3);
 
-    auto ck_delete = new QCheckBox("Sync Delete / Hide");
+    auto ck_delete = new QCheckBox("Sync Delete");
     if (settings.sync_delete)
         ck_delete->setCheckState(Qt::Checked);
     layout->addWidget(ck_delete, iy++, 0, 1, 3);
