@@ -8,19 +8,12 @@ static void(*WINAPI _glGenTextures)(GLsizei n, GLuint * textures);
 static void(*WINAPI _glDeleteTextures)(GLsizei n, const GLuint * textures);
 static void(*WINAPI _glActiveTexture)(GLenum texture);
 static void(*WINAPI _glBindTexture)(GLenum target, GLuint texture);
-static void(*WINAPI _glBindTextures)(GLuint first, GLsizei count, const GLuint *textures);
 static void(*WINAPI _glTexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data);
-static void(*WINAPI _glTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels);
-static void(*WINAPI _glTextureSubImage2D)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 
 static void(*WINAPI _glGenFramebuffers)(GLsizei n, GLuint *ids);
 static void(*WINAPI _glBindFramebuffer)(GLenum target, GLuint framebuffer);
 static void(*WINAPI _glDeleteFramebuffers)(GLsizei n, GLuint *framebuffers);
 static void(*WINAPI _glFramebufferTexture)(GLenum target, GLenum attachment, GLuint texture, GLint level);
-static void(*WINAPI _glFramebufferTexture1D)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-static void(*WINAPI _glFramebufferTexture2D)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-static void(*WINAPI _glFramebufferTexture3D)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint layer);
-static void(*WINAPI _glNamedFramebufferTexture)(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
 
 static void(*WINAPI _glGenBuffers)(GLsizei n, GLuint* buffers);
 static void(*WINAPI _glDeleteBuffers) (GLsizei n, const GLuint* buffers);
@@ -40,14 +33,6 @@ static void* (*WINAPI _glMapNamedBufferRange)(GLuint buffer, GLintptr offset, GL
 static void(*WINAPI _glFlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length);
 static void(*WINAPI _glFlushMappedNamedBufferRange)(GLuint buffer, GLintptr offset, GLsizei length);
 
-static void(*WINAPI _glGenVertexArrays)(GLsizei n, GLuint *buffers);
-static void(*WINAPI _glDeleteVertexArrays)(GLsizei n, const GLuint *buffers);
-static void(*WINAPI _glBindVertexArray) (GLuint buffer);
-static void(*WINAPI _glEnableVertexAttribArray) (GLuint index);
-static void(*WINAPI _glDisableVertexAttribArray) (GLuint index);
-static void(*WINAPI _glVertexAttribPointer) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
-
-static void(*WINAPI _glLinkProgram)(GLuint program);
 static void(*WINAPI _glDeleteProgram)(GLuint program);
 static void(*WINAPI _glUseProgram)(GLuint program);
 /*static*/ void(*WINAPI _glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
@@ -91,25 +76,11 @@ static void WINAPI glBindTexture_hook(GLenum target, GLuint texture)
     msvrGetContext()->onBindTexture(target, texture);
     _glBindTexture(target, texture);
 }
-static void WINAPI glBindTextures_hook(GLuint first, GLsizei count, const GLuint *textures)
-{
-    _glBindTextures(first, count, textures);
-}
-
 static void WINAPI glTexImage2D_hook(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * data)
 {
     msvrGetContext()->onTexImage2D(target, level, internalformat, width, height, border, format, type, data);
     _glTexImage2D(target, level, internalformat, width, height, border, format, type, data);
 }
-static void WINAPI glTexSubImage2D_hook(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels)
-{
-    _glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
-}
-static void WINAPI glTextureSubImage2D_hook(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
-{
-    _glTextureSubImage2D(texture, level, xoffset, yoffset, width, height, format, type, pixels);
-}
-
 
 static void WINAPI glGenFramebuffers_hook(GLsizei n, GLuint *ids)
 {
@@ -131,24 +102,6 @@ static void WINAPI glFramebufferTexture_hook(GLenum target, GLenum attachment, G
     msvrGetContext()->onFramebufferTexture(target, attachment, texture, level);
     _glFramebufferTexture(target, attachment, texture, level);
 }
-static void WINAPI glFramebufferTexture1D_hook(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
-{
-    _glFramebufferTexture1D(target, attachment, textarget, texture, level);
-}
-static void WINAPI glFramebufferTexture2D_hook(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
-{
-    msvrGetContext()->onFramebufferTexture2D(target, attachment, textarget, texture, level);
-    _glFramebufferTexture2D(target, attachment, textarget, texture, level);
-}
-static void WINAPI glFramebufferTexture3D_hook(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint layer)
-{
-    _glFramebufferTexture3D(target, attachment, textarget, texture, level, layer);
-}
-static void WINAPI glNamedFramebufferTexture_hook(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
-{
-    _glNamedFramebufferTexture(framebuffer, attachment, texture, level);
-}
-
 
 static void WINAPI glGenBuffers_hook(GLsizei n, GLuint* buffers)
 {
@@ -175,7 +128,6 @@ static void WINAPI glBindBufferBase_hook(GLenum target, GLuint index, GLuint buf
     msvrGetContext()->onBindBufferBase(target, index, buffer);
     _glBindBufferBase(target, index, buffer);
 }
-
 static void WINAPI glBufferData_hook(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
     msvrGetContext()->onBufferData(target, size, data, usage);
@@ -194,7 +146,6 @@ static void WINAPI glNamedBufferSubData_hook(GLuint buffer, GLintptr offset, GLs
     msvrGetContext()->onNamedBufferSubData(buffer, offset, size, data);
     _glNamedBufferSubData(buffer, offset, size, data);
 }
-
 static void* WINAPI glMapBuffer_hook(GLenum target, GLenum access)
 {
     auto ret = _glMapBuffer(target, access);
@@ -236,46 +187,6 @@ static void WINAPI glFlushMappedNamedBufferRange_hook(GLuint buffer, GLintptr of
     _glFlushMappedNamedBufferRange(buffer, offset, length);
 }
 
-
-static void WINAPI glGenVertexArrays_hook(GLsizei n, GLuint *buffers)
-{
-    _glGenVertexArrays(n, buffers);
-    msvrGetContext()->onGenVertexArrays(n, buffers);
-}
-static void WINAPI glDeleteVertexArrays_hook(GLsizei n, const GLuint *buffers)
-{
-    msvrGetContext()->onDeleteVertexArrays(n, buffers);
-    _glDeleteVertexArrays(n, buffers);
-
-}
-static void WINAPI glBindVertexArray_hook(GLuint buffer)
-{
-    msvrGetContext()->onBindVertexArray(buffer);
-    _glBindVertexArray(buffer);
-}
-static void WINAPI glEnableVertexAttribArray_hook(GLuint index)
-{
-    msvrGetContext()->onEnableVertexAttribArray(index);
-    _glEnableVertexAttribArray(index);
-}
-static void WINAPI glDisableVertexAttribArray_hook(GLuint index)
-{
-    msvrGetContext()->onDisableVertexAttribArray(index);
-    _glDisableVertexAttribArray(index);
-}
-
-
-static void WINAPI glVertexAttribPointer_hook(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
-{
-    msvrGetContext()->onVertexAttribPointer(index, size, type, normalized, stride, pointer);
-    _glVertexAttribPointer(index, size, type, normalized, stride, pointer);
-}
-
-static void WINAPI glLinkProgram_hook(GLuint program)
-{
-    _glLinkProgram(program);
-    msvrGetContext()->onLinkProgram(program);
-}
 static void WINAPI glDeleteProgram_hook(GLuint program)
 {
     msvrGetContext()->onDeleteProgram(program);
@@ -297,16 +208,6 @@ static void WINAPI glUniform1f_hook(GLint location, GLfloat v0)
     _glUniform1f(location, v0);
     msvrGetContext()->onUniform1f(location, v0);
 }
-static void WINAPI glUniform2f_hook(GLint location, GLfloat v0, GLfloat v1)
-{
-    _glUniform2f(location, v0, v1);
-    msvrGetContext()->onUniform2f(location, v0, v1);
-}
-static void WINAPI glUniform1fv_hook(GLint location, GLsizei count, const GLfloat *value)
-{
-    _glUniform1fv(location, count, value);
-    msvrGetContext()->onUniform1fv(location, count, value);
-}
 static void WINAPI glUniform2fv_hook(GLint location, GLsizei count, const GLfloat *value)
 {
     _glUniform2fv(location, count, value);
@@ -320,22 +221,6 @@ static void WINAPI glUniform3fv_hook(GLint location, GLsizei count, const GLfloa
 static void WINAPI glUniform4fv_hook(GLint location, GLsizei count, const GLfloat *value)
 {
     _glUniform4fv(location, count, value);
-    msvrGetContext()->onUniform4fv(location, count, value);
-}
-static void WINAPI glUniformMatrix2fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
-{
-    _glUniformMatrix2fv(location, count, transpose, value);
-    msvrGetContext()->onUniformMatrix2fv(location, count, transpose, value);
-}
-static void WINAPI glUniformMatrix3fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
-{
-    _glUniformMatrix3fv(location, count, transpose, value);
-    msvrGetContext()->onUniformMatrix3fv(location, count, transpose, value);
-}
-static void WINAPI glUniformMatrix4fv_hook(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
-{
-    _glUniformMatrix4fv(location, count, transpose, value);
-    msvrGetContext()->onUniformMatrix4fv(location, count, transpose, value);
 }
 
 
@@ -392,19 +277,12 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glDeleteTextures),
     Hook(glActiveTexture),
     Hook(glBindTexture),
-    Hook(glBindTextures),
     //Hook(glTexImage2D),
-    Hook(glTexSubImage2D),
-    Hook(glTextureSubImage2D),
 
     Hook(glGenFramebuffers),
     Hook(glBindFramebuffer),
     Hook(glDeleteFramebuffers),
     Hook(glFramebufferTexture),
-    Hook(glFramebufferTexture1D),
-    Hook(glFramebufferTexture2D),
-    Hook(glFramebufferTexture3D),
-    Hook(glNamedFramebufferTexture),
 
     Hook(glGenBuffers),
     Hook(glDeleteBuffers),
@@ -424,14 +302,6 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
     Hook(glFlushMappedBufferRange),
     Hook(glFlushMappedNamedBufferRange),
 
-    Hook(glGenVertexArrays),
-    Hook(glDeleteVertexArrays),
-    Hook(glBindVertexArray),
-    Hook(glEnableVertexAttribArray),
-    Hook(glDisableVertexAttribArray),
-    Hook(glVertexAttribPointer),
-
-    Hook(glLinkProgram),
     Hook(glDeleteProgram),
     Hook(glUseProgram),
     Get(glGetProgramiv),
@@ -440,14 +310,9 @@ static void* WINAPI wglGetProcAddress_hook(const char* name)
 
     Hook(glUniform1i),
     Hook(glUniform1f),
-    Hook(glUniform2f),
-    Hook(glUniform1fv),
     Hook(glUniform2fv),
     Hook(glUniform3fv),
     Hook(glUniform4fv),
-    Hook(glUniformMatrix2fv),
-    Hook(glUniformMatrix3fv),
-    Hook(glUniformMatrix4fv),
 
     Hook(glDrawRangeElements),
 #undef Get

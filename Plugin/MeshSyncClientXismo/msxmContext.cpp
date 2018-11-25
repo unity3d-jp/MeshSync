@@ -460,25 +460,26 @@ ProgramRecord::Uniform * msxmContext::findUniform(GLint location)
 }
 
 
-void msxmContext::onGenBuffers(GLsizei n, GLuint * handles)
+void msxmContext::onGenBuffers(GLsizei n, GLuint *buffers)
 {
     for (int i = 0; i < (int)n; ++i) {
-        auto it = std::find(m_meshes_deleted.begin(), m_meshes_deleted.end(), handles[i]);
+        auto it = std::find(m_meshes_deleted.begin(), m_meshes_deleted.end(), buffers[i]);
         if (it != m_meshes_deleted.end()) {
             m_meshes_deleted.erase(it);
         }
     }
 }
 
-void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
+void msxmContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
 {
-    for (int i = 0; i < n; ++i) {
-        auto it = m_buffer_records.find(handles[i]);
-        if (it != m_buffer_records.end()) {
-            if (m_settings.sync_delete && it->second.isModelData()) {
-                m_meshes_deleted.push_back(it->second.handle);
+    if (m_settings.sync_delete) {
+        for (int i = 0; i < n; ++i) {
+            auto it = m_buffer_records.find(buffers[i]);
+            if (it != m_buffer_records.end()) {
+                if (m_settings.sync_delete && it->second.isModelData())
+                    m_meshes_deleted.push_back(it->second.handle);
+                m_buffer_records.erase(it);
             }
-            m_buffer_records.erase(it);
         }
     }
 }

@@ -325,19 +325,6 @@ void msvrContext::onFramebufferTexture(GLenum target, GLenum attachment, GLuint 
         rec.colors[attachment - GL_COLOR_ATTACHMENT0] = texture;
 }
 
-void msvrContext::onFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
-{
-    if (target != GL_FRAMEBUFFER)
-        return;
-
-    auto& rec = m_framebuffer_records[m_fb_handle];
-    if (attachment == GL_DEPTH_ATTACHMENT)
-        rec.depth_stencil = texture;
-    else
-        rec.colors[attachment - GL_COLOR_ATTACHMENT0] = texture;
-}
-
-
 void msvrContext::onGenBuffers(GLsizei n, GLuint *buffers)
 {
     for (int i = 0; i < (int)n; ++i) {
@@ -459,7 +446,7 @@ void msvrContext::onUnmapBuffer(GLenum target)
         if (buf->mapped_data) {
             memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
             if (buf->data != buf->tmp_data) {
-                std::swap(buf->data, buf->tmp_data);
+                buf->data = buf->tmp_data;
                 buf->dirty = true;
             }
             buf->mapped_data = nullptr;
@@ -482,40 +469,9 @@ void msvrContext::onFlushMappedBufferRange(GLenum target, GLintptr offset, GLsiz
 }
 
 
-void msvrContext::onGenVertexArrays(GLsizei n, GLuint *buffers)
-{
-}
-
-void msvrContext::onDeleteVertexArrays(GLsizei n, const GLuint *buffers)
-{
-}
-
-void msvrContext::onBindVertexArray(GLuint buffer)
-{
-}
-
-void msvrContext::onEnableVertexAttribArray(GLuint index)
-{
-}
-
-void msvrContext::onDisableVertexAttribArray(GLuint index)
-{
-}
-
-void msvrContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void * pointer)
-{
-    if (auto *buf = getActiveBuffer(GL_ARRAY_BUFFER)) {
-        buf->stride = stride;
-    }
-}
-
 extern void(*_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
 extern void(*_glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 extern GLint(*_glGetUniformLocation)(GLuint program, const GLchar *name);
-
-void msvrContext::onLinkProgram(GLuint program)
-{
-}
 
 void msvrContext::onDeleteProgram(GLuint program)
 {
@@ -611,14 +567,6 @@ void msvrContext::onUniform1f(GLint location, GLfloat v0)
     }
 }
 
-void msvrContext::onUniform2f(GLint location, GLfloat v0, GLfloat v1)
-{
-}
-
-void msvrContext::onUniform1fv(GLint location, GLsizei count, const GLfloat * value)
-{
-}
-
 void msvrContext::onUniform2fv(GLint location, GLsizei count, const GLfloat * value)
 {
     if (auto *prop = findUniform(location)) {
@@ -640,28 +588,6 @@ void msvrContext::onUniform3fv(GLint location, GLsizei count, const GLfloat * va
             (float3&)mr.specular_color = *(float3*)value;
     }
 }
-
-void msvrContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * value)
-{
-    if (auto *prop = findUniform(location)) {
-        if (prop->name == "") {
-
-        }
-    }
-}
-
-void msvrContext::onUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
-{
-}
-
-void msvrContext::onUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
-{
-}
-
-void msvrContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
-{
-}
-
 
 void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
 {

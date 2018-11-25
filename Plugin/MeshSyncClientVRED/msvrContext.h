@@ -148,7 +148,6 @@ public:
     void onBindFramebuffer(GLenum target, GLuint framebuffer);
     void onDeleteFramebuffers(GLsizei n, GLuint *framebuffers);
     void onFramebufferTexture(GLenum target, GLenum attachment, GLuint texture, GLint level);
-    void onFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
 
     void onGenBuffers(GLsizei n, GLuint* buffers);
     void onDeleteBuffers(GLsizei n, const GLuint* buffers);
@@ -162,26 +161,12 @@ public:
     void onUnmapBuffer(GLenum target);
     void onFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
 
-    void onGenVertexArrays(GLsizei n, GLuint *buffers);
-    void onDeleteVertexArrays(GLsizei n, const GLuint *buffers);
-    void onBindVertexArray(GLuint buffer);
-    void onEnableVertexAttribArray(GLuint index);
-    void onDisableVertexAttribArray(GLuint index);
-    void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer);
-
-    void onLinkProgram(GLuint program);
     void onDeleteProgram(GLuint program);
     void onUseProgram(GLuint program);
     void onUniform1i(GLint location, GLint v0);
     void onUniform1f(GLint location, GLfloat v0);
-    void onUniform2f(GLint location, GLfloat v0, GLfloat v1);
-    void onUniform1fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform2fv(GLint location, GLsizei count, const GLfloat *value);
     void onUniform3fv(GLint location, GLsizei count, const GLfloat *value);
-    void onUniform4fv(GLint location, GLsizei count, const GLfloat *value);
-    void onUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-    void onUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-    void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
     void onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
     void onFlush();
