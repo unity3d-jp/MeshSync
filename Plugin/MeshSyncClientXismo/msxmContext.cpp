@@ -64,7 +64,7 @@ static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>
     }
 }
 
-void BufferRecord::buildMeshData(bool weld_vertices)
+void BufferRecord::buildMeshData(const msxmSettings& settings)
 {
     if (!data.data())
         return;
@@ -86,7 +86,7 @@ void BufferRecord::buildMeshData(bool weld_vertices)
     }
 
     auto vertices = (const xm_vertex1*)data.data();
-    if (weld_vertices) {
+    if (settings.weld_vertices) {
         Weld(vertices, num_indices, vertices_welded, mesh.indices);
 
         int num_vertices = (int)vertices_welded.size();
@@ -132,6 +132,7 @@ void BufferRecord::buildMeshData(bool weld_vertices)
     mesh.refine_settings.flags.swap_faces = true;
     mesh.refine_settings.flags.gen_tangents = 1;
     mesh.refine_settings.flags.flip_v = 1;
+    mesh.refine_settings.flags.make_double_sided = settings.make_double_sided;
 }
 
 bool BufferRecord::isModelData() const
@@ -237,7 +238,7 @@ void msxmContext::send(bool force)
 
         // gen welded meshes
         mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
-            v->buildMeshData(m_settings.weld_vertices);
+            v->buildMeshData(m_settings);
             m_entity_manager.add(v->dst_mesh);
         });
         m_mesh_buffers.clear();

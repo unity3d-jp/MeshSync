@@ -10,6 +10,7 @@ using ms::float4;
 using ms::quatf;
 using ms::float4x4;
 
+struct msxmSettings;
 class msxmContext;
 
 int msxmGetXismoVersion();
@@ -77,7 +78,7 @@ struct BufferRecord : public mu::noncopyable
     ms::MeshPtr dst_mesh;
 
     bool isModelData() const;
-    void buildMeshData(bool weld_vertices);
+    void buildMeshData(const msxmSettings& settings);
 };
 
 
@@ -87,8 +88,9 @@ struct msxmSettings
     float scale_factor = 100.0f;
     bool auto_sync = true;
     bool weld_vertices = true;
+    bool make_double_sided = false;
     bool sync_delete = true;
-    bool sync_camera = false;
+    bool sync_camera = true;
     bool sync_textures = true;
     std::string camera_path = "/Main Camera";
 };

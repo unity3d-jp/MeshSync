@@ -35,7 +35,9 @@ private:
     void onEditServer(const QString& v);
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
+    void onToggleDoubleSided(int v);
     void onToggleSyncCamera(int v);
+    void onEditCameraPath(const QString& v);
     void onToggleSyncDelete(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
@@ -84,6 +86,11 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
+    auto ck_double_sided = new QCheckBox("Double Sided");
+    if (settings.make_double_sided)
+        ck_double_sided->setCheckState(Qt::Checked);
+    layout->addWidget(ck_double_sided, iy++, 0, 1, 3);
+
     auto ck_delete = new QCheckBox("Sync Delete / Hide");
     if (settings.sync_delete)
         ck_delete->setCheckState(Qt::Checked);
@@ -93,6 +100,10 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     if (settings.sync_camera)
         ck_camera->setCheckState(Qt::Checked);
     layout->addWidget(ck_camera, iy++, 0, 1, 3);
+
+    layout->addWidget(new QLabel("Camera Path"), iy, 0);
+    auto ed_camera_path = new QLineEdit(settings.camera_path.c_str());
+    layout->addWidget(ed_camera_path, iy++, 1);
 
     auto ck_auto_sync = new QCheckBox("Auto Sync");
     if (settings.auto_sync)
@@ -109,7 +120,9 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     connect(ed_server, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditServer);
     connect(ed_port, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditPort);
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditScaleFactor);
+    connect(ck_double_sided, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleDoubleSided);
     connect(ck_camera, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncCamera);
+    connect(ed_camera_path, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditCameraPath);
     connect(ck_delete, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncDelete);
     connect(ck_auto_sync, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleAutoSync);
     connect(bu_manual_sync, &QPushButton::clicked, this, &msxmSettingsWidget::onClickManualSync);
@@ -162,6 +175,15 @@ void msxmSettingsWidget::onEditScaleFactor(const QString& v)
     }
 }
 
+void msxmSettingsWidget::onToggleDoubleSided(int v)
+{
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
+    settings.make_double_sided = v;
+    if (settings.auto_sync)
+        ctx->send(true);
+}
+
 void msxmSettingsWidget::onToggleSyncCamera(int v)
 {
     auto ctx = msxmGetContext();
@@ -169,6 +191,12 @@ void msxmSettingsWidget::onToggleSyncCamera(int v)
     settings.sync_camera = v;
     if (settings.auto_sync)
         ctx->send(false);
+}
+
+void msxmSettingsWidget::onEditCameraPath(const QString & v)
+{
+    auto ctx = msxmGetContext();
+    ctx->getSettings().camera_path = v.toStdString();
 }
 
 void msxmSettingsWidget::onToggleSyncDelete(int v)

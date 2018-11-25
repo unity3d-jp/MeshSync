@@ -37,7 +37,7 @@ private:
     MQEdit *m_edit_scale = nullptr;
     MQCheckBox *m_check_normals = nullptr;
     MQCheckBox *m_check_vcolor = nullptr;
-    MQCheckBox *m_check_both_sided = nullptr;
+    MQCheckBox *m_check_double_sided = nullptr;
 
     MQCheckBox *m_check_bones = nullptr;
     MQFrame *m_frame_poses = nullptr;

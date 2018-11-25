@@ -41,7 +41,7 @@ private:
     void onToggleSyncDelete(int v);
     void onToggleFlipU(int v);
     void onToggleFlipV(int v);
-    void onToggleBothSided(int v);
+    void onToggleDoubleSided(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
     void onMenuAction(bool v);
@@ -102,10 +102,10 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
         ck_flip_v->setCheckState(Qt::Checked);
     layout->addWidget(ck_flip_v, iy++, 0, 1, 3);
 
-    auto ck_both_sided = new QCheckBox("Double Sided");
+    auto ck_double_sided = new QCheckBox("Double Sided");
     if (settings.make_double_sided)
-        ck_both_sided->setCheckState(Qt::Checked);
-    layout->addWidget(ck_both_sided, iy++, 0, 1, 3);
+        ck_double_sided->setCheckState(Qt::Checked);
+    layout->addWidget(ck_double_sided, iy++, 0, 1, 3);
 
     auto ck_delete = new QCheckBox("Sync Delete");
     if (settings.sync_delete)
@@ -143,7 +143,7 @@ msvrSettingsWidget::msvrSettingsWidget(QWidget *parent)
     connect(ed_scale_factor, &QLineEdit::textEdited, this, &msvrSettingsWidget::onEditScaleFactor);
     connect(ck_flip_u, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleFlipU);
     connect(ck_flip_v, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleFlipV);
-    connect(ck_both_sided, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleBothSided);
+    connect(ck_double_sided, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleDoubleSided);
     connect(ck_delete, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncDelete);
     connect(ck_textures, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncTextures);
     connect(ck_camera, &QCheckBox::stateChanged, this, &msvrSettingsWidget::onToggleSyncCamera);
@@ -246,7 +246,7 @@ void msvrSettingsWidget::onToggleFlipV(int v)
         ctx->send(true);
 }
 
-void msvrSettingsWidget::onToggleBothSided(int v)
+void msvrSettingsWidget::onToggleDoubleSided(int v)
 {
     auto ctx = msvrGetContext();
     auto& settings = msvrGetContext()->getSettings();
