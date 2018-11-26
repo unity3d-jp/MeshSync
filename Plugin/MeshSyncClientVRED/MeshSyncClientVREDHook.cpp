@@ -260,6 +260,7 @@ static void WINAPI glClear_hook(GLbitfield mask)
     else {
         s_pos = 0;
     }
+    msvrGetContext()->onClear();
 }
 
 static void* WINAPI wglGetProcAddress_hook(const char* name)

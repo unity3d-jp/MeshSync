@@ -40,7 +40,7 @@ uint64_t MaterialRecord::checksum() const
 
 int DrawcallRecord::hash() const
 {
-    return (vb << 0) | (ib << 12) | (ub_object << 24);
+    return (vb << 16) | (ib << 8) | (nth);
 }
 
 
@@ -623,12 +623,13 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         }
     }
 
+    int nth = vb->draw_count++;
     DrawcallRecord *dr = nullptr;
     {
         DrawcallRecord t;
         t.vb = m_vb_handle;
         t.ib = m_ib_handle;
-        t.ub_object = m_ub_handles[2];
+        t.nth = nth;
         dr = &m_drawcalls[t.hash()];
         if (!dr->mesh)
             *dr = t;
@@ -705,12 +706,15 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
     auto transform = (float4x4&)obj_buf.data[0];
     auto task = [this, vb, ib, count, type, transform, dr]() {
+        bool new_mesh = false;
         if (!dr->mesh) {
             dr->mesh = ms::Mesh::create();
 
             char path[128];
             sprintf(path, "/VREDMesh:ID[%08x]", dr->hash());
             dr->mesh->path = path;
+            dr->mesh->index = dr->hash();
+            new_mesh = true;
         }
         auto& dst = *dr->mesh;
 
@@ -718,7 +722,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
         dst.rotation = extract_rotation(transform);
         dst.scale = extract_scale(transform);
 
-        if (vb->dirty) {
+        if (vb->dirty || new_mesh) {
             size_t num_indices = count;
             size_t num_triangles = count / 3;
             size_t num_vertices = vb->data.size() / vb->stride;
@@ -767,8 +771,15 @@ void msvrContext::onFlush()
 
     for (auto& kvp : m_buffer_records) {
         auto& rec = kvp.second;
-        if (rec.valid_vertex_buffer)
-            rec.dirty = false;
+        rec.dirty = false;
+    }
+}
+
+void msvrContext::onClear()
+{
+    for (auto& kvp : m_buffer_records) {
+        auto& rec = kvp.second;
+        rec.draw_count = 0;
     }
 }
 

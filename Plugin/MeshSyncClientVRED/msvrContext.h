@@ -89,6 +89,7 @@ struct BufferRecord : public mu::noncopyable
 
     bool valid_vertex_buffer = false;
     bool valid_index_buffer = false;
+    int draw_count = 0;
 };
 
 struct ProgramRecord
@@ -105,12 +106,12 @@ struct ProgramRecord
 
 struct DrawcallRecord
 {
-    int material_id = 0;
     ms::MeshPtr mesh;
+    int material_id = 0;
 
     GLuint vb = 0;
     GLuint ib = 0;
-    GLuint ub_object = 0;
+    int nth = 0;
 
     int hash() const;
 };
@@ -170,6 +171,7 @@ public:
 
     void onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
     void onFlush();
+    void onClear();
 
 
     void flipU(bool v);
