@@ -525,7 +525,11 @@ void BoneData::applyScaleFactor(float scale)
 
 
 #define EachVertexProperty(Body)\
-    Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(counts) Body(indices) Body(material_ids)
+    Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(velocities) Body(counts) Body(indices) Body(material_ids)
+
+#define EachTmpProperty(Body)\
+    Body(tmp_normals) Body(tmp_uv0) Body(tmp_uv1) Body(tmp_colors) Body(tmp_velocities)\
+     Body(remap_normals) Body(remap_uv0) Body(remap_uv1) Body(remap_colors) Body(tmp_weights4)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
@@ -611,7 +615,9 @@ void Mesh::clear()
 
 #define Body(A) vclear(A);
     EachVertexProperty(Body);
+    EachTmpProperty(Body);
 #undef Body
+    vclear(weights4);
 
     root_bone.clear();
     bones.clear();
@@ -619,9 +625,6 @@ void Mesh::clear()
 
     submeshes.clear();
     splits.clear();
-    weights4.clear();
-
-    remap_normals.clear(); remap_uv0.clear(); remap_uv1.clear(); remap_colors.clear();
 }
 
 uint64_t Mesh::hash() const
@@ -676,6 +679,7 @@ uint64_t Mesh::checksumGeom() const
     return ret;
 }
 
+#undef EachTmpProperty
 #undef EachVertexProperty
 
 void Mesh::convertHandedness(bool x, bool yz)
@@ -693,21 +697,25 @@ void Mesh::convertHandedness_Mesh(bool x, bool yz)
         mu::InvertX(points.data(), points.size());
         mu::InvertX(normals.data(), normals.size());
         mu::InvertX(tangents.data(), tangents.size());
+        mu::InvertX(velocities.data(), velocities.size());
     }
     if (yz) {
         for (auto& v : points) v = swap_yz(v);
         for (auto& v : normals) v = swap_yz(v);
         for (auto& v : tangents) v = swap_yz(v);
+        for (auto& v : velocities) v = swap_yz(v);
     }
 }
 void Mesh::convertHandedness_BlendShapes(bool x, bool yz)
 {
-    for (auto& bs : blendshapes) bs->convertHandedness(x, yz);
+    for (auto& bs : blendshapes)
+        bs->convertHandedness(x, yz);
 }
 
 void ms::Mesh::convertHandedness_Bones(bool x, bool yz)
 {
-    for (auto& bone : bones) bone->convertHandedness(x, yz);
+    for (auto& bone : bones)
+        bone->convertHandedness(x, yz);
 }
 
 
@@ -715,8 +723,10 @@ void Mesh::applyScaleFactor(float v)
 {
     super::applyScaleFactor(v);
     mu::Scale(points.data(), v, points.size());
-    for (auto& bone : bones) bone->applyScaleFactor(v);
-    for (auto& bs : blendshapes) bs->applyScaleFactor(v);
+    for (auto& bone : bones)
+        bone->applyScaleFactor(v);
+    for (auto& bs : blendshapes)
+        bs->applyScaleFactor(v);
 }
 
 template<class T>
@@ -794,14 +804,14 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     refiner.counts = counts;
     refiner.buildConnection();
 
+    if (normals.size() == indices.size())
+        refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
     if (uv0.size() == indices.size())
         refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);
     if (uv1.size() == indices.size())
         refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
     if (colors.size() == indices.size())
         refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
-    if (normals.size() == indices.size())
-        refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
 
     // refine
     {
@@ -885,6 +895,13 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             points.data(), uv0.data(), normals.data(), indices.data(), (int)indices.size() / 3, (int)points.size());
     }
 
+    // velocities
+    if (!velocities.empty()) {
+        tmp_velocities.resize_discard(points.size());
+        CopyWithIndices(tmp_velocities.data(), velocities.data(), refiner.new2old_points);
+        tmp_velocities.swap(velocities);
+    }
+
     // weights
     if (!weights4.empty()) {
         tmp_weights4.resize_discard(points.size());
@@ -917,11 +934,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         }
     }
 
-    flags.has_points = !points.empty();
-    flags.has_normals = !normals.empty();
-    flags.has_tangents = !tangents.empty();
-    flags.has_uv0 = !uv0.empty();
-    flags.has_indices = !indices.empty();
+    setupFlags();
 }
 
 void Mesh::makeDoubleSided()
@@ -1074,7 +1087,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
         IArray<int>{counts.data(), num_faces_old}, IArray<int>{indices.data(), num_indices_old}, IArray<int>{indirect.data(), indirect.size()});
 
     // normals
-    if (normals.data()) {
+    if (!normals.empty()) {
         if (normals.size() == num_points_old) {
             normals.resize(points.size());
             mu::CopyWithIndices(&normals[num_points_old], &normals[0], copylist);
@@ -1089,7 +1102,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     // uv
-    if (uv0.data()) {
+    if (!uv0.empty()) {
         if (uv0.size() == num_points_old) {
             uv0.resize(points.size());
             mu::CopyWithIndices(&uv0[num_points_old], &uv0[0], copylist);
@@ -1102,7 +1115,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
             });
         }
     }
-    if (uv1.data()) {
+    if (!uv1.empty()) {
         if (uv1.size() == num_points_old) {
             uv1.resize(points.size());
             mu::CopyWithIndices(&uv1[num_points_old], &uv1[0], copylist);
@@ -1117,7 +1130,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     // colors
-    if (colors.data()) {
+    if (!colors.empty()) {
         if (colors.size() == num_points_old) {
             colors.resize(points.size());
             mu::CopyWithIndices(&colors[num_points_old], &colors[0], copylist);
@@ -1131,8 +1144,16 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
         }
     }
 
+    // velocities
+    if (!velocities.empty()) {
+        if (velocities.size() == num_points_old) {
+            velocities.resize(points.size());
+            mu::CopyWithIndices(&velocities[num_points_old], &velocities[0], copylist);
+        }
+    }
+
     // material ids
-    if (material_ids.data()) {
+    if (!material_ids.empty()) {
         size_t n = material_ids.size();
         material_ids.resize(n * 2);
         memcpy(material_ids.data() + n, material_ids.data(), sizeof(int) * n);
@@ -1145,7 +1166,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
         mu::CopyWithIndices(&weights[num_points_old], &weights[0], copylist);
     }
 
-    // blend shapes
+    // blendshapes
     for (auto& bs : blendshapes) {
         for (auto& fp : bs->frames) {
             auto& f = *fp;
@@ -1167,9 +1188,10 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 
 void Mesh::applyTransform(const float4x4& m)
 {
-    for (auto& v : points) { v = mul_p(m, v); }
-    for (auto& v : normals) { v = m * v; }
+    mu::MulPoints(m, points.data(), points.data(), points.size());
+    mu::MulVectors(m, normals.data(), normals.data(), normals.size());
     mu::Normalize(normals.data(), normals.size());
+    mu::MulVectors(m, velocities.data(), velocities.data(), velocities.size());
 }
 
 void Mesh::setupBoneData()
@@ -1244,6 +1266,7 @@ void Mesh::setupFlags()
     flags.has_uv0 = !uv0.empty();
     flags.has_uv1 = !uv1.empty();
     flags.has_colors = !colors.empty();
+    flags.has_velocities = !velocities.empty();
     flags.has_counts = !counts.empty();
     flags.has_indices = !indices.empty();
     flags.has_material_ids = !material_ids.empty();
@@ -1288,7 +1311,7 @@ std::shared_ptr<PointsData> PointsData::create(std::istream & is)
 }
 
 #define EachArray(F)\
-    F(points) F(rotations) F(scales) F(velocities) F(colors) F(ids)
+    F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
 #define EachMember(F)\
     F(flags) F(time) EachArray(F)
 
@@ -1359,8 +1382,8 @@ void PointsData::setupFlags()
     flags.has_points = !points.empty();
     flags.has_rotations = !rotations.empty();
     flags.has_scales = !scales.empty();
-    flags.has_velocities = !velocities.empty();
     flags.has_colors = !colors.empty();
+    flags.has_velocities = !velocities.empty();
     flags.has_ids = !ids.empty();
 }
 

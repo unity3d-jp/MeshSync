@@ -177,7 +177,8 @@ struct MeshDataFlags
     uint32_t has_uv0 : 1;
     uint32_t has_uv1 : 1;
     uint32_t has_colors : 1;
-    uint32_t has_material_ids : 1; // 10
+    uint32_t has_velocities : 1; // 10
+    uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
     uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;
@@ -337,6 +338,7 @@ public:
     RawVector<float4> tangents;
     RawVector<float2> uv0, uv1;
     RawVector<float4> colors;
+    RawVector<float3> velocities;
     RawVector<int>    counts;
     RawVector<int>    indices;
     RawVector<int>    material_ids;
@@ -350,8 +352,8 @@ public:
     RawVector<float3> tmp_normals;
     RawVector<float2> tmp_uv0, tmp_uv1;
     RawVector<float4> tmp_colors;
+    RawVector<float3> tmp_velocities;
     RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
-
     RawVector<Weights4> tmp_weights4;
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
@@ -399,8 +401,8 @@ struct PointsDataFlags
     uint32_t has_points : 1;
     uint32_t has_rotations : 1;
     uint32_t has_scales : 1;
-    uint32_t has_velocities : 1;
     uint32_t has_colors : 1;
+    uint32_t has_velocities : 1;
     uint32_t has_ids : 1;
 };
 
@@ -411,8 +413,8 @@ struct PointsData
     RawVector<float3> points;
     RawVector<quatf>  rotations;
     RawVector<float3> scales;
-    RawVector<float3> velocities;
     RawVector<float4> colors;
+    RawVector<float3> velocities;
     RawVector<int>    ids;
 
 protected:

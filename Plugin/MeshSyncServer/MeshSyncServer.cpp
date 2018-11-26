@@ -680,6 +680,20 @@ msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
         self->flags.has_colors = 1;
     }
 }
+msAPI void msMeshReadVelocities(ms::Mesh *self, float3 *dst, ms::SplitData *split)
+{
+    if (split)
+        self->velocities.copy_to(dst, split->vertex_count, split->vertex_offset);
+    else
+        self->velocities.copy_to(dst);
+}
+msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
+{
+    if (size > 0) {
+        self->velocities.assign(v, v + size);
+        self->flags.has_velocities = 1;
+    }
+}
 msAPI void msMeshReadIndices(ms::Mesh *self, int *dst, ms::SplitData *split)
 {
     if (split)
