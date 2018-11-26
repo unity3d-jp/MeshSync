@@ -332,17 +332,17 @@ void Lerp(float *dst, const float *src1, const float *src2, size_t num, float w)
 {
     Forward(Lerp, dst, src1, src2, num, w);
 }
-#endif
-#if defined(muSIMD_Lerp) || !defined(muEnableISPC)
 void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w)
 {
     Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 2, w);
 }
-#endif
-#if defined(muSIMD_Lerp) || !defined(muEnableISPC)
 void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w)
 {
     Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 3, w);
+}
+void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w)
+{
+    Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 4, w);
 }
 #endif
 

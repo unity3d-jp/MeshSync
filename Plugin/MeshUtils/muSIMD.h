@@ -36,6 +36,7 @@ void Normalize(float3 *dst, size_t num);
 void Lerp(float *dst, const float *src1, const float *src2, size_t num, float w);
 void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w);
 void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
+void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w);
 void MinMax(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
 void MinMax(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muEpsilon);

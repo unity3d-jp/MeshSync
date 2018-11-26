@@ -539,6 +539,7 @@ inline static tvec4<T> mul4(const tmat4x4<T>& m, const tvec3<T>& v)
 template<class T> inline T dot(const tvec2<T>& l, const tvec2<T>& r) { return l.x*r.x + l.y*r.y; }
 template<class T> inline T dot(const tvec3<T>& l, const tvec3<T>& r) { return l.x*r.x + l.y*r.y + l.z*r.z; }
 template<class T> inline T dot(const tvec4<T>& l, const tvec4<T>& r) { return l.x*r.x + l.y*r.y + l.z*r.z + l.w*r.w; }
+template<class T> inline T dot(const tquat<T>& l, const tquat<T>& r) { return dot((const float4&)l, (const float4&)r); }
 template<class T> inline T length_sq(const tvec2<T>& v) { return dot(v, v); }
 template<class T> inline T length_sq(const tvec3<T>& v) { return dot(v, v); }
 template<class T> inline T length_sq(const tvec4<T>& v) { return dot(v, v); }
@@ -583,6 +584,57 @@ template<class T> inline T angle_between_signed(const tvec3<T>& a, const tvec3<T
 template<class T> inline T angle_between2_signed(const tvec3<T>& p1, const tvec3<T>& p2, const tvec3<T>& center, const tvec3<T>& n)
 {
     return angle_between_signed((p1 - center), (p2 - center), n);
+}
+
+template<class T> inline tquat<T> lerp(const tquat<T>& q1, const tquat<T>& q2, float t)
+{
+    tquat<T> ret;
+    if (dot(q1, q2) < T(0.0)) {
+        ret = {
+            q1.x + t * (-q2.x - q1.x),
+            q1.y + t * (-q2.y - q1.y),
+            q1.z + t * (-q2.z - q1.z),
+            q1.w + t * (-q2.w - q1.w)
+        };
+    }
+    else {
+        ret = {
+            q1.x + t * (q2.x - q1.x),
+            q1.y + t * (q2.y - q1.y),
+            q1.z + t * (q2.z - q1.z),
+            q1.w + t * (q2.w - q1.w)
+        };
+    }
+    return normalize(ret);
+}
+
+template<class T> inline tquat<T> slerp(const tquat<T>& q1, const tquat<T>& q2, T t)
+{
+    float d = dot(q1, q2);
+
+    tquat<T> tmp;
+    if (d < T(0.0)) {
+        d = -d;
+        tmp = { -q2.x, -q2.y, -q2.z, -q2.w };
+    }
+    else
+        tmp = q2;
+
+    if (d < T(0.95)) {
+        T angle = std::acos(d);
+        T sinadiv = T(1.0) / std::sin(angle);
+        T sinat = std::sin(angle * t);
+        T sinaomt = std::sin(angle * (T(1.0) - t));
+        return {
+            (q1.x * sinaomt + tmp.x * sinat) * sinadiv,
+            (q1.y * sinaomt + tmp.y * sinat) * sinadiv,
+            (q1.z * sinaomt + tmp.z * sinat) * sinadiv,
+            (q1.w * sinaomt + tmp.w * sinat) * sinadiv
+        };
+    }
+    else {
+        return lerp(q1, tmp, t);
+    }
 }
 
 template<class T> inline tvec3<T> apply_rotation(const tquat<T>& q, const tvec3<T>& p)
@@ -1485,6 +1537,32 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
 
     return { tangent.x, tangent.y, tangent.z,
         dot(cross(normal, tangent), binormal) > T(0.0) ? T(1.0) : -T(1.0) };
+}
+
+template<class A1, class Body>
+static inline void enumerate(A1& a1, const Body& body)
+{
+    size_t n = a1.size();
+    for (size_t i = 0; i < n; ++i)
+        body(a1[i]);
+}
+template<class A1, class A2, class Body>
+static inline void enumerate(A1& a1, A2& a2, const Body& body)
+{
+    size_t n = a1.size();
+    if (n != a2.size())
+        return;
+    for (size_t i = 0; i < n; ++i)
+        body(a1[i], a2[i]);
+}
+template<class A1, class A2, class A3, class Body>
+static inline void enumerate(A1& a1, A2& a2, A3& a3, const Body& body)
+{
+    size_t n = a1.size();
+    if (n != a2.size() || n != a3.size())
+        return;
+    for (size_t i = 0; i < n; ++i)
+        body(a1[i], a2[i], a3[i]);
 }
 
 } // namespace mu

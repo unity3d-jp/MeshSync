@@ -43,6 +43,8 @@ public:
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
     virtual uint64_t checksumGeom() const;
+    virtual bool lerp(const Entity& src1, const Entity& src2, float t);
+    virtual std::shared_ptr<Entity> clone();
 
     Identifier getIdentifier() const;
     bool identidy(const Identifier& v) const;
@@ -81,6 +83,8 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t checksumTrans() const override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
+    EntityPtr clone() override;
 
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
@@ -119,6 +123,8 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t checksumTrans() const override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
+    EntityPtr clone() override;
 
     void applyScaleFactor(float scale) override;
 };
@@ -156,6 +162,8 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t checksumTrans() const override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
+    EntityPtr clone() override;
 
     void applyScaleFactor(float scale) override;
 };
@@ -348,13 +356,14 @@ public:
     std::vector<BlendShapeDataPtr> blendshapes;
 
     // non-serializable
-    RawVector<Weights4> weights4;
     RawVector<float3> tmp_normals;
     RawVector<float2> tmp_uv0, tmp_uv1;
     RawVector<float4> tmp_colors;
     RawVector<float3> tmp_velocities;
     RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
     RawVector<Weights4> tmp_weights4;
+
+    RawVector<Weights4> weights4;
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
 
@@ -372,6 +381,8 @@ public:
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
+    EntityPtr clone() override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
@@ -430,6 +441,8 @@ public:
     void clear();
     uint64_t hash() const;
     uint64_t checksumGeom() const;
+    bool lerp(const PointsData& src1, const PointsData& src2, float t);
+    EntityPtr clone();
 
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
@@ -460,6 +473,8 @@ public:
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
+    EntityPtr clone() override;
 
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;

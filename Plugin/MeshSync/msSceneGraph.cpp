@@ -88,6 +88,18 @@ uint64_t Entity::checksumGeom() const
     return 0;
 }
 
+bool Entity::lerp(const Entity& /*s1*/, const Entity& /*s2*/, float /*t*/)
+{
+    return true;
+}
+
+EntityPtr Entity::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
+
 Identifier Entity::getIdentifier() const
 {
     return Identifier{ path, id };
@@ -169,6 +181,25 @@ uint64_t Transform::checksumTrans() const
     ret += uint32_t(visible) << 8;
     ret += uint32_t(visible_hierarchy) << 9;
     ret += csum(reference);
+    return ret;
+}
+
+bool Transform::lerp(const Entity& s1_, const Entity& s2_, float t)
+{
+    super::lerp(s1_, s2_, t);
+    auto& s1 = static_cast<const Transform&>(s1_);
+    auto& s2 = static_cast<const Transform&>(s2_);
+
+    position = mu::lerp(s1.position, s2.position, t);
+    rotation = mu::slerp(s1.rotation, s2.rotation, t);
+    scale = mu::lerp(s1.scale, s2.scale, t);
+    return true;
+}
+
+EntityPtr Transform::clone()
+{
+    auto ret = create();
+    *ret = *this;
     return ret;
 }
 
@@ -267,6 +298,31 @@ uint64_t Camera::checksumTrans() const
 #undef Body
     return ret;
 }
+
+bool Camera::lerp(const Entity& s1_, const Entity& s2_, float t)
+{
+    super::lerp(s1_, s2_, t);
+    auto& s1 = static_cast<const Camera&>(s1_);
+    auto& s2 = static_cast<const Camera&>(s2_);
+
+#define DoLerp(N) N = mu::lerp(s1.N, s2.N, t)
+    DoLerp(fov);
+    DoLerp(near_plane);
+    DoLerp(far_plane);
+    DoLerp(vertical_aperture);
+    DoLerp(horizontal_aperture);
+    DoLerp(focal_length);
+    DoLerp(focus_distance);
+#undef DoLerp
+    return true;
+}
+
+EntityPtr Camera::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
 #undef EachMember
 
 void Camera::applyScaleFactor(float v)
@@ -318,14 +374,36 @@ void Light::clear()
     spot_angle = 30.0f;
 }
 
-template<> struct csum_impl<Light::LightType> { uint64_t operator()(Light::LightType v) { return (uint32_t)v; } };
-
 uint64_t Light::checksumTrans() const
 {
     uint64_t ret = super::checksumTrans();
-#define Body(A) ret += csum(A);
-    EachMember(Body);
-#undef Body
+    ret += csum((int&)light_type);
+    ret += csum(color);
+    ret += csum(intensity);
+    ret += csum(range);
+    ret += csum(spot_angle);
+    return ret;
+}
+
+bool Light::lerp(const Entity &s1_, const Entity& s2_, float t)
+{
+    super::lerp(s1_, s2_, t);
+    auto& s1 = static_cast<const Light&>(s1_);
+    auto& s2 = static_cast<const Light&>(s2_);
+
+#define DoLerp(N) N = mu::lerp(s1.N, s2.N, t)
+    DoLerp(color);
+    DoLerp(intensity);
+    DoLerp(range);
+    DoLerp(spot_angle);
+#undef DoLerp
+    return true;
+}
+
+EntityPtr Light::clone()
+{
+    auto ret = create();
+    *ret = *this;
     return ret;
 }
 #undef EachMember
@@ -682,6 +760,44 @@ uint64_t Mesh::checksumGeom() const
 #undef EachTmpProperty
 #undef EachVertexProperty
 
+static inline float4 lerp_tangent(float4 a, float4 b, float w)
+{
+    float4 ret;
+    (float3&)ret = normalize(lerp((float3&)a, (float3&)b, w));
+    ret.w = a.w;
+    return ret;
+}
+
+bool Mesh::lerp(const Entity& s1_, const Entity& s2_, float t)
+{
+    super::lerp(s1_, s2_, t);
+    auto& s1 = static_cast<const Mesh&>(s1_);
+    auto& s2 = static_cast<const Mesh&>(s2_);
+
+    if (s1.points.size() != s2.points.size() || s1.indices.size() != s2.indices.size())
+        return false;
+#define DoLerp(N) Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
+    DoLerp(points);
+    DoLerp(normals);
+    DoLerp(uv0);
+    DoLerp(uv1);
+    DoLerp(colors);
+    DoLerp(velocities);
+#undef DoLerp
+    Normalize(normals.data(), normals.size());
+    enumerate(tangents, s1.tangents, s2.tangents, [t](float4& v, const float4& t1, const float4& t2) {
+        v = lerp_tangent(t1, t2, t);
+    });
+    return false;
+}
+
+EntityPtr Mesh::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
+
 void Mesh::convertHandedness(bool x, bool yz)
 {
     if (!x && !yz) return;
@@ -730,7 +846,7 @@ void Mesh::applyScaleFactor(float v)
 }
 
 template<class T>
-inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<int>& indices)
+static inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<int>& indices)
 {
     if (indices.empty()) {
         dst.assign(src.begin(), src.end());
@@ -1355,6 +1471,27 @@ uint64_t PointsData::checksumGeom() const
 #undef Body
     return ret;
 }
+
+bool PointsData::lerp(const PointsData& s1, const PointsData& s2, float t)
+{
+    if (s1.points.size() != s2.points.size() || s1.ids != s2.ids)
+        return false;
+#define DoLerp(N) Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
+    DoLerp(points);
+    DoLerp(scales);
+    DoLerp(colors);
+    DoLerp(velocities);
+#undef DoLerp
+    enumerate(rotations, s1.rotations, s2.rotations, [t](quatf& v, const quatf& t1, const quatf& t2) {
+        v = mu::slerp(t1, t2, t);
+    });
+    return true;
+}
+
+EntityPtr PointsData::clone()
+{
+    return EntityPtr();
+}
 #undef EachArrays
 #undef EachMember
 
@@ -1443,6 +1580,25 @@ uint64_t Points::checksumGeom() const
     for (auto& p : data)
         ret += p->checksumGeom();
     return ret;
+}
+
+bool Points::lerp(const Entity& s1_, const Entity& s2_, float t)
+{
+    super::lerp(s1_, s2_, t);
+    auto& s1 = static_cast<const Points&>(s1_);
+    auto& s2 = static_cast<const Points&>(s2_);
+ 
+    bool ret = true;
+    enumerate(data, s1.data, s2.data, [t, &ret](PointsDataPtr& v, const PointsDataPtr& t1, const PointsDataPtr& t2) {
+        if (!v->lerp(*t1, *t2, t))
+            ret = false;
+    });
+    return ret;
+}
+
+EntityPtr Points::clone()
+{
+    return EntityPtr();
 }
 
 #undef EachArrays
