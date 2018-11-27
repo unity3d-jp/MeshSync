@@ -142,10 +142,26 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - メタセコイア 4 系でサポートされたボーンは "Sync Bones" にチェックを入れることで反映できます。 "Sync Poses" にチェックを入れると "スキニング" で設定したポーズも反映します。
 
 ### VRED
+VRED は API hook を用いた特殊な実装になっています。そのため、使い方が特殊であったり、VRED のマイナーバージョンアップでも動作しなくなる可能性があることにご注意ください。
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_VRED_Windows.zip をダウンロードして展開
+  - VRED のインストール先がデフォルトであれば、VREDPro_2019.bat などの bat ファイルをダブルクリックで MeshSync が付与された状態で VRED が起動します。
+  - VRED のインストール先がデフォルトでない場合、bat ファイルをテキストエディタで開いて "%PROGRAMFILES%\Autodesk\VREDPro-11.0\Bin\WIN64\VREDPro.exe" などの部分をインストール先の VRED の exe ファイルに書き換えてください。(例: "D:\My Install Directory\VREDPro-11.0\Bin\WIN64\VREDPro.exe" など)
+- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
+- 部分的ながらテクスチャの同期にも対応しています。シェーダ内のパラメータ "colorTexture" "bumpTexture" に設定されているテクスチャをそれぞれカラーテクスチャ、ノーマルマップ用テクスチャとして同期します。
+- "Flip U/V" をチェックするとテクスチャ座標の U/V を反転します。マッピング方法が UV ではない場合でもこれを用いることでつじつまを合わせられるかもしれません。
+- "Double Sided" をチェックすると Mesh を両面化して送ります。
+- "Sync Deleted" をチェックすると、VRED 側で消えたモデルが Unity 側でも消えるようになります。
+- "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
 
+&nbsp;  
+  
+- VRED のビューポートに表示されているモデルをそのまま送っているため、モデルは大体同期できるはずです。
+  - ただし、VRED はカリングを行うため、カメラの視界外のオブジェクトは同期できないことに注意が必要です。
+- 実装上の制限により、オブジェクトの名前やツリー構造は同期できません。Unity 側では全てルートオブジェクトとなり、名前は機械的に変換されたものになります。
 
 ### xismo
-xismo はプラグインの仕組みを提供していないため (2018/05 現在)、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～199 で動作を確認済しています。
+xismo はプラグインの仕組みを提供していないため (2018/05 現在)、API hook を用いた実装になっています。そのため、使い方が特殊であったり、 xismo のバージョンアップで動作しなくなる可能性が高いことにご注意ください。現行版は xismo 191～199b で動作を確認済しています。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_xismo_Windows.zip をダウンロード
   - 展開して出てくる 2 つのファイル (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) を xismo がインストールされているディレクトリ (xismo.exe と同じディレクトリ) に置きます
