@@ -19,6 +19,8 @@ template<class T>
 struct tvec2
 {
     using scalar_t = T;
+    static const int vector_length = 2;
+
     T x, y;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -36,6 +38,8 @@ template<class T>
 struct tvec3
 {
     using scalar_t = T;
+    static const int vector_length = 3;
+
     T x, y, z;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -53,6 +57,8 @@ template<class T>
 struct tvec4
 {
     using scalar_t = T;
+    static const int vector_length = 4;
+
     T x, y, z, w;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -70,6 +76,8 @@ template<class T>
 struct tquat
 {
     using scalar_t = T;
+    static const int vector_length = 4;
+
     T x, y, z, w;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -87,6 +95,8 @@ struct tmat2x2
 {
     using scalar_t = T;
     using vector_t = tvec2<T>;
+    static const int vector_length = 4;
+
     tvec2<T> m[2];
     tvec2<T>& operator[](int i) { return m[i]; }
     const tvec2<T>& operator[](int i) const { return m[i]; }
@@ -116,6 +126,8 @@ struct tmat3x3
 {
     using scalar_t = T;
     using vector_t = tvec3<T>;
+    static const int vector_length = 9;
+
     tvec3<T> m[3];
     tvec3<T>& operator[](int i) { return m[i]; }
     const tvec3<T>& operator[](int i) const { return m[i]; }
@@ -147,6 +159,8 @@ struct tmat4x4
 {
     using scalar_t = T;
     using vector_t = tvec4<T>;
+    static const int vector_length = 16;
+
     tvec4<T> m[4];
     tvec4<T>& operator[](int i) { return m[i]; }
     const tvec4<T>& operator[](int i) const { return m[i]; }
@@ -900,45 +914,34 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
     };
 }
 
-template<class T, class U> inline tvec2<T> to(const tvec2<U>& v) { tvec2<T> r; r.assign(&v[0]); return r; }
-template<class T, class U> inline tvec3<T> to(const tvec3<U>& v) { tvec3<T> r; r.assign(&v[0]); return r; }
-template<class T, class U> inline tvec4<T> to(const tvec4<U>& v) { tvec4<T> r; r.assign(&v[0]); return r; }
-template<class T, class U> inline tquat<T> to(const tquat<U>& v) { tquat<T> r; r.assign(&v[0]); return r; }
-template<class T, class U> inline tmat2x2<T> to(const tmat2x2<U>& v) { tmat2x2<T> r; r.assign(&v[0][0]); return r; }
-template<class T, class U> inline tmat3x3<T> to(const tmat3x3<U>& v) { tmat3x3<T> r; r.assign(&v[0][0]); return r; }
-template<class T, class U> inline tmat4x4<T> to(const tmat4x4<U>& v) { tmat4x4<T> r; r.assign(&v[0][0]); return r; }
+// convert to different type of vec/mat with same length (e.g. float3 <-> half3, float4x4 <-> double4x4)
+template<class T, class U> inline T to(const tvec2<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tvec3<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tvec4<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tquat<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tmat2x2<U>& v) { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tmat3x3<U>& v) { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tmat4x4<U>& v) { T r; r.assign(v); return r; }
 
-template<class T> inline tvec3<T> to_vec3(const tvec2<T>& v)
-{
-    return { v[0], v[1], 0 };
-}
-template<class T> inline tvec3<T> to_vec3(const tvec4<T>& v)
-{
-    return { v[0], v[1], v[2] };
-}
+// convert to same type of vec/mat with different length
+template<class T> inline tvec3<T> to_vec3(const tvec2<T>& v) { return { v[0], v[1], 0 }; }
+template<class T> inline tvec3<T> to_vec3(const tvec3<T>& v) { return v; }
+template<class T> inline tvec3<T> to_vec3(const tvec4<T>& v) { return { v[0], v[1], v[2] }; }
+template<class T> inline tvec4<T> to_vec4(const tvec2<T>& v) { return { v[0], v[1], 0, 0}; }
+template<class T> inline tvec4<T> to_vec4(const tvec3<T>& v) { return { v[0], v[1], v[2], 0 }; }
+template<class T> inline tvec4<T> to_vec4(const tvec4<T>& v) { return v; }
 
-template<class T> inline tvec4<T> to_vec4(const tvec2<T>& v)
+template<class T> inline tmat2x2<T> to_mat2x2(const tmat2x2<T>& v)
 {
-    return {v[0], v[1], 0, 0};
+    return v;
 }
-template<class T> inline tvec4<T> to_vec4(const tvec3<T>& v)
-{
-    return { v[0], v[1], v[2], 0 };
-}
-
 template<class T> inline tmat2x2<T> to_mat2x2(const tmat3x3<T>& v)
 {
-    return tmat2x2<T>{
-        v[0][0], v[0][1],
-        v[1][0], v[1][1],
-    };
+    return tmat2x2<T>{(tvec2<T>&)v[0], (tvec2<T>&)v[1]};
 }
 template<class T> inline tmat2x2<T> to_mat2x2(const tmat4x4<T>& v)
 {
-    return tmat2x2<T>{
-        v[0][0], v[0][1],
-        v[1][0], v[1][1],
-    };
+    return tmat2x2<T>{(tvec2<T>&)v[0], (tvec2<T>&)v[1]};
 }
 
 template<class T> inline tmat3x3<T> to_mat3x3(const tmat2x2<T>& v)
@@ -948,6 +951,10 @@ template<class T> inline tmat3x3<T> to_mat3x3(const tmat2x2<T>& v)
         v[1][0], v[1][1], 0,
               0,       0, 1,
     };
+}
+template<class T> inline tmat3x3<T> to_mat3x3(const tmat3x3<T>& v)
+{
+    return v;
 }
 template<class T> inline tmat3x3<T> to_mat3x3(const tmat4x4<T>& v)
 {
@@ -971,6 +978,10 @@ template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
         v[2][0], v[2][1], v[2][2], 0,
               0,       0,       0, 1
     };
+}
+template<class T> inline tmat4x4<T> to_mat4x4(const tmat4x4<T>& v)
+{
+    return v;
 }
 
 template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)

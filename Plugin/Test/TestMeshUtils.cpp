@@ -939,22 +939,22 @@ TestCase(Test_Quat32)
         auto axis = rnd.v3n();
         auto angle = rnd.f11() * mu::PI;
 
-        qf16[i] = to<half>(rotate(axis, angle * 0.5f));
+        qf16[i] = to<quath>(rotate(axis, angle));
         r16[i] = qf16[i];
-        auto hfa = apply_rotation(to<float>(qf16[i]), forward);
-        auto hfb = apply_rotation(to<float>(r16[i]), forward);
+        auto hfa = apply_rotation(to<quatf>(qf16[i]), forward);
+        auto hfb = apply_rotation(to<quatf>(r16[i]), forward);
         Expect(near_equal(hfa, hfb, eps));
 
         qf32[i] = rotate(axis, angle);
         r32[i] = qf32[i];
         auto ffa = apply_rotation(qf32[i], forward);
-        auto ffb = apply_rotation(to<float>(r32[i]), forward);
+        auto ffb = apply_rotation(to<quatf>(r32[i]), forward);
         Expect(near_equal(ffa, ffb, eps));
 
-        qf64[i] = to<double>(rotate(axis, angle * 2.0f));
+        qf64[i] = to<quatd>(rotate(axis, angle));
         r64[i] = qf64[i];
-        auto dfa = apply_rotation(to<float>(qf64[i]), forward);
-        auto dfb = apply_rotation(to<float>(r64[i]), forward);
+        auto dfa = apply_rotation(to<quatf>(qf64[i]), forward);
+        auto dfb = apply_rotation(to<quatf>(r64[i]), forward);
         Expect(near_equal(dfa, dfb, eps));
     }
 }

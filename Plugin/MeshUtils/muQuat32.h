@@ -25,8 +25,8 @@ struct quat32
     static int dropmax(float a, float b, float c, float d)
     {
         if (a > b && a > c && a > d) return 0;
-        if (b > a && b > c && b > d) return 1;
-        if (c > a && c > b && c > d) return 2;
+        if (b > c && b > d) return 1;
+        if (c > d) return 2;
         return 3;
     }
 
@@ -46,33 +46,33 @@ struct quat32
     template<class T>
     quat32& operator=(const tquat<T>& v_)
     {
-        quatf v = to<float>(v_);
+        quatf v = to<quatf>(v_);
 
         float a0, a1, a2;
         value.drop = dropmax(square(v[0]), square(v[1]), square(v[2]), square(v[3]));
         if (value.drop == 0) {
-            const float flip = v[0] < 0.0f ? -1.0f : 1.0f;
-            a0 = v[1] * flip;
-            a1 = v[2] * flip;
-            a2 = v[3] * flip;
+            float s = sign(v[0]);
+            a0 = v[1] * s;
+            a1 = v[2] * s;
+            a2 = v[3] * s;
         }
         else if (value.drop == 1) {
-            const float flip = v[1] < 0.0f ? -1.0f : 1.0f;
-            a0 = v[0] * flip;
-            a1 = v[2] * flip;
-            a2 = v[3] * flip;
+            float s = sign(v[1]);
+            a0 = v[0] * s;
+            a1 = v[2] * s;
+            a2 = v[3] * s;
         }
         else if (value.drop == 2) {
-            const float flip = v[2] < 0.0f ? -1.0f : 1.0f;
-            a0 = v[0] * flip;
-            a1 = v[1] * flip;
-            a2 = v[3] * flip;
+            float s = sign(v[2]);
+            a0 = v[0] * s;
+            a1 = v[1] * s;
+            a2 = v[3] * s;
         }
         else {
-            const float flip = v[3] < 0.0f ? -1.0f : 1.0f;
-            a0 = v[0] * flip;
-            a1 = v[1] * flip;
-            a2 = v[2] * flip;
+            float s = sign(v[3]);
+            a0 = v[0] * s;
+            a1 = v[1] * s;
+            a2 = v[2] * s;
         }
 
         value.x0 = pack(a0);
@@ -99,6 +99,7 @@ struct quat32
 
     static quat32 identity() { return quat32(quatf::identity()); }
 };
-template<class T> inline tquat<T> to(quat32 v) { return (tquat<T>)v; }
+
+template<class T> inline T to(quat32 v) { return (T)v; }
 
 } // namespace mu
