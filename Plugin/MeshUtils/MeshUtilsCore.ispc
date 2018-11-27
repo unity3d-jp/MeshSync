@@ -412,7 +412,7 @@ export void Lerp(uniform float dst[], uniform const float src1[], uniform const 
 {
     uniform float iw = 1.0f - w;
     foreach(i=0 ... num) {
-        dst[i] = src1[i]*w + src2[i]*iw;
+        dst[i] = src1[i]*iw + src2[i]*w;
     }
 }
 #endif

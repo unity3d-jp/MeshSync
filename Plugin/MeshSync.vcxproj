@@ -30,6 +30,7 @@
     <ClInclude Include="MeshSync\msMaterial.h" />
     <ClInclude Include="MeshSync\msMisc.h" />
     <ClInclude Include="MeshSync\msProtocol.h" />
+    <ClInclude Include="MeshSync\msSceneCache.h" />
     <ClInclude Include="MeshSync\msSceneGraph.h" />
     <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
     <ClInclude Include="MeshSync\msServer.h" />
@@ -52,6 +53,7 @@
     <ClCompile Include="MeshSync\msMaterial.cpp" />
     <ClCompile Include="MeshSync\msMisc.cpp" />
     <ClCompile Include="MeshSync\msProtocol.cpp" />
+    <ClCompile Include="MeshSync\msSceneCache.cpp" />
     <ClCompile Include="MeshSync\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />
     <ClCompile Include="MeshSync/pch.cpp">

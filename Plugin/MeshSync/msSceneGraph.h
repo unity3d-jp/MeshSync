@@ -533,12 +533,16 @@ public:
     std::vector<ConstraintPtr> constraints;
 
 public:
+    msDefinePool(Scene);
+
     uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
     void clear();
     uint64_t hash() const;
+    void lerp(const Scene& src1, const Scene& src2, float t);
 
+    TransformPtr findEntity(const std::string& path) const;
     template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;
     template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
 };

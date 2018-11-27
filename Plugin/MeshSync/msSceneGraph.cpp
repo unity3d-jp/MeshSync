@@ -1627,29 +1627,25 @@ void Points::setupFlags()
 
 // Scene
 #pragma region Scene
+
+#define EachMember(F)\
+    F(validation_hash) F(name) F(handedness) F(scale_factor)
+
 uint32_t SceneSettings::getSerializeSize() const
 {
     uint32_t ret = 0;
-    ret += ssize(validation_hash);
-    ret += ssize(name);
-    ret += ssize(handedness);
-    ret += ssize(scale_factor);
+    EachMember(msSize);
     return ret;
 }
 void SceneSettings::serialize(std::ostream& os) const
 {
-    write(os, validation_hash);
-    write(os, name);
-    write(os, handedness);
-    write(os, scale_factor);
+    EachMember(msWrite);
 }
 void SceneSettings::deserialize(std::istream& is)
 {
-    read(is, validation_hash);
-    read(is, name);
-    read(is, handedness);
-    read(is, scale_factor);
+    EachMember(msRead);
 }
+#undef EachMember
 
 
 #define EachMember(F)\
@@ -1689,6 +1685,34 @@ uint64_t Scene::hash() const
         ret += obj->hash();
     for (auto& obj : entities)
         ret += obj->hash();
+    return ret;
+}
+
+void Scene::lerp(const Scene& s1, const Scene& s2, float t)
+{
+    entities.resize(s1.entities.size());
+    parallel_for(0, (int)entities.size(), 10, [this, &s1, &s2, t](int i) {
+        auto e1 = s1.entities[i];
+        if (auto e2 = s2.findEntity(e1->path)) {
+            auto e3 = e1->clone();
+            e3->lerp(*e1, *e2, t);
+            entities[i] = std::static_pointer_cast<Transform>(e3);
+        }
+        else {
+            entities[i] = e1;
+        }
+    });
+}
+
+TransformPtr Scene::findEntity(const std::string& path) const
+{
+    TransformPtr ret;
+    for (auto& e : entities) {
+        if (e->path == path) {
+            ret = e;
+            break;
+        }
+    }
     return ret;
 }
 

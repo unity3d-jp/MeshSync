@@ -65,11 +65,14 @@ struct Random
 
 TestCase(Test_SendMesh)
 {
+    std::ofstream ofs("wave.msc", std::ios::binary);
+    ms::SceneCacheWriter scw(ofs, ms::CacheFileEncoding::Plain);
+
     for (int i = 0; i < 8; ++i) {
-        ms::Scene scene;
+        auto scene = ms::Scene::create();
 
         auto mesh = ms::Mesh::create();
-        scene.entities.push_back(mesh);
+        scene->entities.push_back(mesh);
 
         mesh->path = "/Test/Wave";
         mesh->refine_settings.flags.gen_normals = 1;
@@ -85,11 +88,27 @@ TestCase(Test_SendMesh)
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::Deg2Rad * i);
         mids.resize(counts.size(), 0);
 
-        Send(scene);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        Send(*scene);
+        scw.addScene(scene, 0.5f * i);
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
 
+TestCase(Test_SceneCacheRead)
+{
+    std::ifstream ifs("wave.msc", std::ios::binary);
+    ms::SceneCacheReader scr(ifs);
+    Expect(scr.valid());
+
+    auto range = scr.getTimeRange();
+    float step = 0.1f;
+    for (float t = std::get<0>(range); t < std::get<1>(range); t += step) {
+        auto scene = scr.getByTime(t, true);
+        Send(*scene);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+}
 
 TestCase(Test_Animation)
 {

@@ -3,6 +3,7 @@
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
 #include "msSceneGraph.h"
+#include "msSceneCache.h"
 #include "msConstraints.h"
 #include "msAnimation.h"
 #include "msMaterial.h"

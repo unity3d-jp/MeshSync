@@ -55,6 +55,9 @@
     <ClCompile Include="MeshSync\msAudio.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\msSceneCache.cpp">
+      <Filter>MeshSync</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -124,6 +127,9 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\msAudio.h">
+      <Filter>MeshSync</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\msSceneCache.h">
       <Filter>MeshSync</Filter>
     </ClInclude>
   </ItemGroup>
