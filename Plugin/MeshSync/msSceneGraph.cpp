@@ -45,14 +45,6 @@ bool Entity::isGeometry() const
     return false;
 }
 
-uint32_t Entity::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += sizeof(int);
-    ret += ssize(id);
-    ret += ssize(path);
-    return ret;
-}
 void Entity::serialize(std::ostream& os) const
 {
     int type = (int)getType();
@@ -141,12 +133,6 @@ Entity::Type Transform::getType() const
 #define EachMember(F)\
     F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(reference)
 
-uint32_t Transform::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -257,12 +243,6 @@ Entity::Type Camera::getType() const
 #define EachMember(F)\
     F(is_ortho) F(fov) F(near_plane) F(far_plane) F(vertical_aperture) F(horizontal_aperture) F(focal_length) F(focus_distance)
 
-uint32_t Camera::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void Camera::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -347,12 +327,6 @@ Entity::Type Light::getType() const
 #define EachMember(F)\
     F(light_type) F(color) F(intensity) F(range) F(spot_angle)
 
-uint32_t Light::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void Light::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -447,12 +421,6 @@ BlendShapeFrameData::~BlendShapeFrameData() {}
 #define EachMember(F)\
     F(weight) F(points) F(normals) F(tangents)
 
-uint32_t BlendShapeFrameData::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
 void BlendShapeFrameData::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
@@ -505,12 +473,6 @@ BlendShapeData::~BlendShapeData() {}
 #define EachMember(F)\
     F(name) F(weight) F(frames)
 
-uint32_t BlendShapeData::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
 void BlendShapeData::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
@@ -555,15 +517,6 @@ std::shared_ptr<BoneData> BoneData::create(std::istream & is)
 
 BoneData::BoneData() {}
 BoneData::~BoneData() {}
-
-uint32_t BoneData::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += ssize(path);
-    ret += ssize(bindpose);
-    ret += ssize(weights);
-    return ret;
-}
 
 void BoneData::serialize(std::ostream & os) const
 {
@@ -614,74 +567,38 @@ Mesh::~Mesh() {}
 Entity::Type Mesh::getType() const { return Type::Mesh; }
 bool Mesh::isGeometry() const { return true; }
 
-uint32_t Mesh::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(flags);
-
-    if (flags.has_refine_settings) ret += ssize(refine_settings);
-
-#define Body(A) if(flags.has_##A) ret += ssize(A);
-    EachVertexProperty(Body);
-#undef Body
-
-    if (flags.has_bones) {
-        ret += ssize(root_bone);
-        ret += ssize(bones);
-    }
-    if (flags.has_blendshape_weights) {
-        ret += ssize(blendshapes);
-    }
-    return ret;
-}
-
 void Mesh::serialize(std::ostream& os) const
 {
     super::serialize(os);
+
     write(os, flags);
+    write(os, refine_settings);
 
-    if (flags.has_refine_settings) write(os, refine_settings);
-
-#define Body(A) if(flags.has_##A) write(os, A);
+#define Body(A) write(os, A);
     EachVertexProperty(Body);
 #undef Body
-
-    if (flags.has_bones) {
-        write(os, root_bone);
-        write(os, bones);
-    }
-    if (flags.has_blendshape_weights) {
-        write(os, blendshapes);
-    }
+    write(os, root_bone);
+    write(os, bones);
+    write(os, blendshapes);
 }
 
 void Mesh::deserialize(std::istream& is)
 {
-    clear();
     super::deserialize(is);
+
     read(is, flags);
+    read(is, refine_settings);
 
-    if (flags.has_refine_settings) read(is, refine_settings);
-
-#define Body(A) if(flags.has_##A) read(is, A);
+#define Body(A) read(is, A);
     EachVertexProperty(Body);
 #undef Body
+    read(is, root_bone);
+    read(is, bones);
+    read(is, blendshapes);
 
-    if (flags.has_bones) {
-        read(is, root_bone);
-        read(is, bones);
-
-        {
-            // todo: why does this happen??
-            auto it = std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); });
-            if (it != bones.end()) {
-                bones.erase(it, bones.end());
-            }
-        }
-    }
-    if (flags.has_blendshape_weights) {
-        read(is, blendshapes);
-    }
+    bones.erase(
+        std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
+        bones.end());
 }
 
 void Mesh::clear()
@@ -1431,13 +1348,6 @@ std::shared_ptr<PointsData> PointsData::create(std::istream & is)
 #define EachMember(F)\
     F(flags) F(time) EachArray(F)
 
-uint32_t PointsData::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
-
 void PointsData::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
@@ -1541,13 +1451,6 @@ bool Points::isGeometry() const { return true; }
 #define EachMember(F)\
     F(data)
 
-uint32_t Points::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
-
 void Points::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -1631,12 +1534,6 @@ void Points::setupFlags()
 #define EachMember(F)\
     F(validation_hash) F(name) F(handedness) F(scale_factor)
 
-uint32_t SceneSettings::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
 void SceneSettings::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
@@ -1651,12 +1548,6 @@ void SceneSettings::deserialize(std::istream& is)
 #define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
-uint32_t Scene::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
 void Scene::serialize(std::ostream& os) const
 {
     settings.validation_hash = hash();

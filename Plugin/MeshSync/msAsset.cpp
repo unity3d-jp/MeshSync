@@ -38,13 +38,6 @@ Asset::~Asset()
 {
 }
 
-uint32_t Asset::getSerializeSize() const
-{
-    uint32_t ret = sizeof(int);
-    EachMember(msSize);
-    return ret;
-}
-
 void Asset::serialize(std::ostream& os) const
 {
     int type = (int)getAssetType();
@@ -97,13 +90,6 @@ std::shared_ptr<FileAsset> FileAsset::create(std::istream & is)
 AssetType FileAsset::getAssetType() const
 {
     return AssetType::File;
-}
-
-uint32_t FileAsset::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
 }
 
 void FileAsset::serialize(std::ostream& os) const

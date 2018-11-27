@@ -2,9 +2,35 @@
 
 namespace ms {
 
-template<class T, bool hs = has_serializer<T>::result> struct ssize_impl2;
-template<class T> struct ssize_impl2<T, true> { uint32_t operator()(const T& v) { return v.getSerializeSize(); } };
-template<class T> struct ssize_impl2<T, false> { uint32_t operator()(const T&) { return sizeof(T); } };
+class countstreambuf : public std::streambuf
+{
+public:
+    int_type overflow(int_type c) override
+    {
+        ++size;
+        return c;
+    }
+
+    uint64_t size = 0;
+};
+
+class countstream : public std::ostream
+{
+public:
+    countstream() : std::ostream(&m_buf) {}
+    uint64_t size() const { return m_buf.size; }
+
+private:
+    countstreambuf m_buf;
+};
+
+template<class T>
+inline uint64_t ssize(const T& v)
+{
+    countstream c;
+    v.serialize(c);
+    return c.size();
+}
 
 template<class T, bool hs = has_serializer<T>::result> struct write_impl2;
 template<class T> struct write_impl2<T, true> { void operator()(std::ostream& os, const T& v) { v.serialize(os); } };
@@ -15,14 +41,6 @@ template<class T> struct read_impl2<T, true> { void operator()(std::istream& is,
 template<class T> struct read_impl2<T, false> { void operator()(std::istream& is, T& v) { is.read((char*)&v, sizeof(T)); } };
 
 
-template<class T>
-struct ssize_impl
-{
-    uint32_t operator()(const T& v)
-    {
-        return ssize_impl2<T>()(v);
-    }
-};
 template<class T>
 struct write_impl
 {
@@ -40,47 +58,6 @@ struct read_impl
     }
 };
 
-
-
-template<class T>
-struct ssize_impl<RawVector<T>>
-{
-    uint32_t operator()(const RawVector<T>& v) { return uint32_t(4 + sizeof(T) * v.size()); }
-};
-template<>
-struct ssize_impl<std::string>
-{
-    uint32_t operator()(const std::string& v) { return uint32_t(4 + v.size()); }
-};
-template<class T>
-struct ssize_impl<std::vector<T>>
-{
-    uint32_t operator()(const std::vector<T>& v) {
-        uint32_t ret = 4;
-        for (const auto& e : v) {
-            ret += ssize_impl<T>()(e);
-        }
-        return ret;
-    }
-};
-template<class T>
-struct ssize_impl<std::shared_ptr<T>>
-{
-    uint32_t operator()(const std::shared_ptr<T>& v) {
-        return v->getSerializeSize();
-    }
-};
-template<class T>
-struct ssize_impl<std::vector<std::shared_ptr<T>>>
-{
-    uint32_t operator()(const std::vector<std::shared_ptr<T>>& v) {
-        uint32_t ret = 4;
-        for (const auto& e : v) {
-            ret += e->getSerializeSize();
-        }
-        return ret;
-    }
-};
 
 
 template<class T>
@@ -274,7 +251,6 @@ struct csum_impl<RawVector<T>>
 };
 
 
-template<class T> inline uint32_t ssize(const T& v) { return ssize_impl<T>()(v); }
 template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
 template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }

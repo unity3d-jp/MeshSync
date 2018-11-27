@@ -7,14 +7,6 @@ namespace ms {
 Message::~Message()
 {
 }
-uint32_t Message::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += ssize(protocol_version);
-    ret += ssize(session_id);
-    ret += ssize(message_id);
-    return ret;
-}
 void Message::serialize(std::ostream& os) const
 {
     write(os, protocol_version);
@@ -33,14 +25,6 @@ void Message::deserialize(std::istream& is)
 
 GetMessage::GetMessage()
 {
-}
-uint32_t GetMessage::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(flags);
-    ret += ssize(scene_settings);
-    ret += ssize(refine_settings);
-    return ret;
 }
 void GetMessage::serialize(std::ostream& os) const
 {
@@ -61,12 +45,6 @@ void GetMessage::deserialize(std::istream& is)
 SetMessage::SetMessage()
 {
 }
-uint32_t SetMessage::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += scene.getSerializeSize();
-    return ret;
-}
 void SetMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -81,13 +59,6 @@ void SetMessage::deserialize(std::istream& is)
 
 DeleteMessage::DeleteMessage()
 {
-}
-uint32_t DeleteMessage::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(entities);
-    ret += ssize(materials);
-    return ret;
 }
 void DeleteMessage::serialize(std::ostream& os) const
 {
@@ -104,11 +75,6 @@ void DeleteMessage::deserialize(std::istream& is)
 
 
 FenceMessage::~FenceMessage() {}
-uint32_t FenceMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(type);
-}
 void FenceMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -121,12 +87,6 @@ void FenceMessage::deserialize(std::istream& is)
 }
 
 TextMessage::~TextMessage() {}
-uint32_t TextMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(text)
-        + ssize(type);
-}
 void TextMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -142,19 +102,12 @@ void TextMessage::deserialize(std::istream& is)
 
 
 ScreenshotMessage::ScreenshotMessage() {}
-uint32_t ScreenshotMessage::getSerializeSize() const { return super::getSerializeSize(); }
 void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os); }
 void ScreenshotMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
 
 QueryMessage::QueryMessage()
 {
-}
-
-uint32_t QueryMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(type);
 }
 
 void QueryMessage::serialize(std::ostream & os) const
@@ -173,12 +126,6 @@ ResponseMessage::ResponseMessage()
 {
 }
 
-uint32_t ResponseMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(text);
-}
-
 void ResponseMessage::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -194,12 +141,6 @@ void ResponseMessage::deserialize(std::istream & is)
 
 PollMessage::PollMessage()
 {}
-
-uint32_t PollMessage::getSerializeSize() const
-{
-    return super::getSerializeSize()
-        + ssize(type);
-}
 
 void PollMessage::serialize(std::ostream& os) const
 {

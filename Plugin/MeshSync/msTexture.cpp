@@ -44,13 +44,6 @@ AssetType Texture::getAssetType() const
     return AssetType::Texture;
 }
 
-uint32_t Texture::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
-
 void Texture::serialize(std::ostream& os) const
 {
     super::serialize(os);

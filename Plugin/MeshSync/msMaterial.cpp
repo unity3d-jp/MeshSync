@@ -10,13 +10,6 @@ namespace ms {
 
 #define EachMember(F) F(name) F(type) F(data)
 
-uint32_t MaterialProperty::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
-
 void MaterialProperty::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
@@ -156,12 +149,6 @@ void MaterialProperty::copy(void* dst)
 
 #define EachMember(F) F(name) F(value)
 
-uint32_t MaterialKeyword::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    EachMember(msSize);
-    return ret;
-}
 void MaterialKeyword::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
@@ -210,12 +197,6 @@ AssetType Material::getAssetType() const
     return AssetType::Material;
 }
 
-uint32_t Material::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void Material::serialize(std::ostream& os) const
 {
     super::serialize(os);

@@ -3,6 +3,7 @@
 #include "msServer.h"
 #include "msMaterial.h"
 #include "msAnimation.h"
+#include "msSceneGraphImpl.h"
 
 
 namespace ms {
@@ -538,7 +539,7 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, M
         lock_t l(m_message_mutex);
         if (m_host_scene) {
             response.setContentType("application/octet-stream");
-            response.setContentLength(m_host_scene->getSerializeSize());
+            response.setContentLength(ssize(*m_host_scene));
 
             auto& os = response.send();
             m_host_scene->serialize(os);
@@ -547,7 +548,7 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, M
         else {
             Scene empty_scene;
             response.setContentType("application/octet-stream");
-            response.setContentLength(empty_scene.getSerializeSize());
+            response.setContentLength(ssize(empty_scene));
 
             auto& os = response.send();
             empty_scene.serialize(os);
@@ -576,7 +577,7 @@ void Server::recvQuery(HTTPServerRequest & request, HTTPServerResponse & respons
     // serve data
     if (mes->response) {
         response.setContentType("application/octet-stream");
-        response.setContentLength(mes->response->getSerializeSize());
+        response.setContentLength(ssize(*mes->response));
 
         auto& os = response.send();
         mes->response->serialize(os);

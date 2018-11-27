@@ -84,7 +84,6 @@ public:
     static std::shared_ptr<Texture> create(std::istream& is);
 
     AssetType getAssetType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;

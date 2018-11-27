@@ -1,5 +1,8 @@
 #pragma once
+#include <iostream>
 #include <list>
+#include <mutex>
+#include <future>
 #include "msSceneGraph.h"
 
 namespace ms {
@@ -35,6 +38,7 @@ private:
     std::mutex m_mutex;
     std::list<SceneDesc> m_queue;
     std::future<void> m_task;
+    RawVector<char> m_buf;
 };
 
 

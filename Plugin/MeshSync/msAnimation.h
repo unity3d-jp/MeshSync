@@ -26,7 +26,6 @@ protected:
 public:
     static std::shared_ptr<Animation> create(std::istream& is);
     virtual Type getType() const;
-    virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
@@ -58,7 +57,6 @@ protected:
 public:
     msDefinePool(TransformAnimation);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -92,7 +90,6 @@ protected:
 public:
     msDefinePool(CameraAnimation);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -122,7 +119,6 @@ protected:
 public:
     msDefinePool(LightAnimation);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -148,7 +144,6 @@ protected:
 public:
     msDefinePool(BlendshapeAnimation);
     static std::shared_ptr<BlendshapeAnimation> create(std::istream & is);
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -169,7 +164,6 @@ protected:
 public:
     msDefinePool(MeshAnimation);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -195,7 +189,6 @@ protected:
 public:
     msDefinePool(PointsAnimation);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -222,7 +215,6 @@ public:
     static std::shared_ptr<AnimationClip> create(std::istream& is);
 
     AssetType getAssetType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;

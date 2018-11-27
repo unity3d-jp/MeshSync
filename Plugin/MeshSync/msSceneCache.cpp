@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msSceneCache.h"
+#include "msSceneGraphImpl.h"
 
 namespace ms {
 
@@ -76,7 +77,7 @@ void SceneCacheWriter::doWrite()
             }
 
             if (desc.scene) {
-                CacheFileSceneHeader header{ desc.scene->getSerializeSize(), desc.time };
+                CacheFileSceneHeader header{ ssize(*desc.scene), desc.time };
                 m_ost.write((char*)&header, sizeof(header));
                 desc.scene->serialize(m_ost);
             }
@@ -182,7 +183,6 @@ ScenePtr SceneCacheReader::getByTime(float time, bool lerp)
             return getByIndex(i);
         }
     }
-    return ScenePtr();
 }
 
 } // namespace ms

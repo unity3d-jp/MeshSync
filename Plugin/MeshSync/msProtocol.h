@@ -25,7 +25,6 @@ public:
     int message_id = 0;
 
     virtual ~Message();
-    virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is); // throw
 };
@@ -63,7 +62,6 @@ public:
 
 public:
     GetMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -79,7 +77,6 @@ public:
 
 public:
     SetMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -95,7 +92,6 @@ public:
     std::vector<Identifier> materials;
 
     DeleteMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -117,7 +113,6 @@ public:
     FenceType type = FenceType::Unknown;
 
     ~FenceMessage() override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -137,7 +132,6 @@ public:
     };
 
     ~TextMessage() override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 
@@ -159,7 +153,6 @@ public:
 
 public:
     ScreenshotMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -186,7 +179,6 @@ public:
     MessagePtr response;    // 
 
     QueryMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -201,7 +193,6 @@ public:
     std::vector<std::string> text;
 
     ResponseMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
@@ -222,7 +213,6 @@ public:
     std::atomic_bool ready; // non-serializable
 
     PollMessage();
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };

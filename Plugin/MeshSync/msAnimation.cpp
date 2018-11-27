@@ -74,14 +74,6 @@ Animation::Type Animation::getType() const
     return Type::Unknown;
 }
 
-uint32_t Animation::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += sizeof(int);
-    ret += ssize(path);
-    return ret;
-}
-
 void Animation::serialize(std::ostream & os) const
 {
     int type = (int)getType();
@@ -113,12 +105,6 @@ Animation::Type TransformAnimation::getType() const
 #define EachMember(F)\
     F(translation) F(rotation) F(scale) F(visible)
 
-uint32_t TransformAnimation::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void TransformAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -199,12 +185,6 @@ Animation::Type CameraAnimation::getType() const
 #define EachMember(F)\
     F(fov) F(near_plane) F(far_plane) F(horizontal_aperture) F(vertical_aperture) F(focal_length) F(focus_distance)
 
-uint32_t CameraAnimation::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void CameraAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -269,12 +249,6 @@ Animation::Type LightAnimation::getType() const
 #define EachMember(F)\
     F(color) F(intensity) F(range) F(spot_angle)
 
-uint32_t LightAnimation::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void LightAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -336,11 +310,6 @@ std::shared_ptr<BlendshapeAnimation> BlendshapeAnimation::create(std::istream & 
 BlendshapeAnimation::BlendshapeAnimation() {}
 BlendshapeAnimation::~BlendshapeAnimation() {}
 
-uint32_t BlendshapeAnimation::getSerializeSize() const
-{
-    return ssize(name) + ssize(weight);
-}
-
 void BlendshapeAnimation::serialize(std::ostream & os) const
 {
     write(os, name);
@@ -370,13 +339,6 @@ MeshAnimation::~MeshAnimation() {}
 Animation::Type MeshAnimation::getType() const
 {
     return Type::Mesh;
-}
-
-uint32_t MeshAnimation::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(blendshapes);
-    return ret;
 }
 
 void MeshAnimation::serialize(std::ostream & os) const
@@ -459,13 +421,6 @@ Animation::Type PointsAnimation::getType() const
 #define EachMember(F)\
     F(time)
 
-uint32_t PointsAnimation::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
-
 void PointsAnimation::serialize(std::ostream & os) const
 {
     super::serialize(os);
@@ -532,12 +487,6 @@ AssetType AnimationClip::getAssetType() const
     return AssetType::Animation;
 }
 
-uint32_t AnimationClip::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
 void AnimationClip::serialize(std::ostream& os) const
 {
     super::serialize(os);

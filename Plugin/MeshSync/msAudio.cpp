@@ -21,13 +21,6 @@ AssetType Audio::getAssetType() const
     return AssetType::Audio;
 }
 
-uint32_t Audio::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    EachMember(msSize);
-    return ret;
-}
-
 void Audio::serialize(std::ostream & os) const
 {
     super::serialize(os);

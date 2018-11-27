@@ -24,7 +24,6 @@ public:
 
     virtual ~Asset();
     virtual AssetType getAssetType() const = 0;
-    virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
@@ -54,7 +53,6 @@ public:
     static std::shared_ptr<FileAsset> create(std::istream& is);
 
     AssetType getAssetType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;

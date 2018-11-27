@@ -34,15 +34,6 @@ Constraint::Type Constraint::getType() const
     return Type::Unknown;
 }
 
-uint32_t Constraint::getSerializeSize() const
-{
-    uint32_t ret = 0;
-    ret += sizeof(int);
-    ret += ssize(path);
-    ret += ssize(source_paths);
-    return ret;
-}
-
 void Constraint::serialize(std::ostream& os) const
 {
     int type = (int)getType();
@@ -74,12 +65,6 @@ Constraint::Type AimConstraint::getType() const
     return Type::Aim;
 }
 
-uint32_t AimConstraint::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    return ret;
-}
-
 void AimConstraint::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -103,13 +88,6 @@ ParentConstraint::~ParentConstraint() {}
 Constraint::Type ParentConstraint::getType() const
 {
     return Type::Parent;
-}
-
-uint32_t ParentConstraint::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    ret += ssize(source_data);
-    return ret;
 }
 
 void ParentConstraint::serialize(std::ostream& os) const
@@ -140,12 +118,6 @@ Constraint::Type PositionConstraint::getType() const
     return Type::Position;
 }
 
-uint32_t PositionConstraint::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    return ret;
-}
-
 void PositionConstraint::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -171,12 +143,6 @@ Constraint::Type RotationConstraint::getType() const
     return Type::Rotation;
 }
 
-uint32_t RotationConstraint::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    return ret;
-}
-
 void RotationConstraint::serialize(std::ostream& os) const
 {
     super::serialize(os);
@@ -200,12 +166,6 @@ ScaleConstraint::~ScaleConstraint() {}
 Constraint::Type ScaleConstraint::getType() const
 {
     return Type::Scale;
-}
-
-uint32_t ScaleConstraint::getSerializeSize() const
-{
-    uint32_t ret = super::getSerializeSize();
-    return ret;
 }
 
 void ScaleConstraint::serialize(std::ostream& os) const

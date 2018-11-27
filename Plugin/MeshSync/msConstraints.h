@@ -31,7 +31,6 @@ public:
     msDefinePool(Constraint);
     static std::shared_ptr<Constraint> create(std::istream& is);
     virtual Type getType() const;
-    virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
@@ -53,7 +52,6 @@ protected:
 public:
     msDefinePool(AimConstraint);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -78,7 +76,6 @@ protected:
 public:
     msDefinePool(ParentConstraint);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -98,7 +95,6 @@ protected:
 public:
     msDefinePool(PositionConstraint);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -118,7 +114,6 @@ protected:
 public:
     msDefinePool(RotationConstraint);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -138,7 +133,6 @@ protected:
 public:
     msDefinePool(ScaleConstraint);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;

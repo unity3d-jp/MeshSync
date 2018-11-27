@@ -33,7 +33,6 @@ public:
     RawVector<char> data;
 
 public:
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     uint64_t checksum() const;
@@ -68,7 +67,6 @@ public:
     bool value = false;
 
 public:
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     uint64_t checksum() const;
@@ -100,7 +98,6 @@ public:
     static std::shared_ptr<Material> create(std::istream& is);
 
     AssetType getAssetType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;

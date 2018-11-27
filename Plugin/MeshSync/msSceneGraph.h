@@ -36,7 +36,6 @@ public:
     static std::shared_ptr<Entity> create(std::istream& is);
     virtual Type getType() const;
     virtual bool isGeometry() const;
-    virtual uint32_t getSerializeSize() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
     virtual void clear();
@@ -78,7 +77,6 @@ public:
     msDefinePool(Transform);
     static std::shared_ptr<Transform> create(std::istream& is);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -118,7 +116,6 @@ protected:
 public:
     msDefinePool(Camera);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -157,7 +154,6 @@ protected:
 public:
     msDefinePool(Light);
     Type getType() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -276,7 +272,6 @@ protected:
 public:
     msDefinePool(BlendShapeFrameData);
     static std::shared_ptr<BlendShapeFrameData> create(std::istream& is);
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -299,7 +294,6 @@ protected:
 public:
     msDefinePool(BlendShapeData);
     static std::shared_ptr<BlendShapeData> create(std::istream& is);
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -323,7 +317,6 @@ protected:
 public:
     msDefinePool(BoneData);
     static std::shared_ptr<BoneData> create(std::istream& is);
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -375,7 +368,6 @@ public:
     msDefinePool(Mesh);
     Type getType() const override;
     bool isGeometry() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -435,7 +427,6 @@ public:
     msDefinePool(PointsData);
     static std::shared_ptr<PointsData> create(std::istream& is);
 
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -467,7 +458,6 @@ public:
     msDefinePool(Points);
     Type getType() const override;
     bool isGeometry() const override;
-    uint32_t getSerializeSize() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void clear() override;
@@ -518,7 +508,6 @@ struct SceneSettings
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;
 
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
@@ -535,7 +524,6 @@ public:
 public:
     msDefinePool(Scene);
 
-    uint32_t getSerializeSize() const;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
     void clear();
