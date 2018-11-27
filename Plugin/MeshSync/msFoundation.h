@@ -73,7 +73,8 @@ struct releaser
 {
     void operator()(T *v)
     {
-        v->release();
+        if (v)
+            v->release();
     }
 };
 

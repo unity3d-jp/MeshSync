@@ -38,8 +38,7 @@ static void Send(ms::Scene& scene)
 
 TestCase(Test_SendMesh)
 {
-    std::ofstream ofs("wave.msc", std::ios::binary);
-    ms::SceneCacheWriter scw(ofs, ms::CacheFileEncoding::Plain);
+    auto osc = ms::OpenOSceneCacheFile("wave.msc");
 
     for (int i = 0; i < 8; ++i) {
         auto scene = ms::Scene::create();
@@ -61,22 +60,25 @@ TestCase(Test_SendMesh)
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::Deg2Rad * i);
         mids.resize(counts.size(), 0);
 
+        osc->addScene(scene, 0.5f * i);
         Send(*scene);
-        scw.addScene(scene, 0.5f * i);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
 
 TestCase(Test_SceneCacheRead)
 {
-    std::ifstream ifs("wave.msc", std::ios::binary);
-    ms::SceneCacheReader scr(ifs);
-    Expect(scr.valid());
+    auto isc = ms::OpenISceneCacheFile("wave.msc");
+    Expect(isc);
+    if (!isc)
+        return;
 
-    auto range = scr.getTimeRange();
+    auto range = isc->getTimeRange();
     float step = 0.1f;
     for (float t = std::get<0>(range); t < std::get<1>(range); t += step) {
-        auto scene = scr.getByTime(t, true);
+        auto scene = isc->getByTime(t, true);
+        if (!scene)
+            break;
         Send(*scene);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));

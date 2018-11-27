@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\Cache\msSceneCache.h" />
+    <ClInclude Include="MeshSync\Cache\msSceneCacheImpl.h" />
     <ClInclude Include="MeshSync\MeshSync.h" />
     <ClInclude Include="MeshSync\MeshSyncUtils.h" />
     <ClInclude Include="MeshSync\msAnimation.h" />
@@ -45,7 +46,7 @@
     <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshSync\Cache\msSceneCache.cpp" />
+    <ClCompile Include="MeshSync\Cache\msSceneCacheImpl.cpp" />
     <ClCompile Include="MeshSync\msAnimation.cpp" />
     <ClCompile Include="MeshSync\msAsset.cpp" />
     <ClCompile Include="MeshSync\msClient.cpp" />

@@ -80,8 +80,10 @@ uint64_t Entity::checksumGeom() const
     return 0;
 }
 
-bool Entity::lerp(const Entity& /*s1*/, const Entity& /*s2*/, float /*t*/)
+bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
 {
+    if (s1.getType() != s2.getType())
+        return false;
     return true;
 }
 
@@ -172,7 +174,8 @@ uint64_t Transform::checksumTrans() const
 
 bool Transform::lerp(const Entity& s1_, const Entity& s2_, float t)
 {
-    super::lerp(s1_, s2_, t);
+    if (!super::lerp(s1_, s2_, t))
+        return false;
     auto& s1 = static_cast<const Transform&>(s1_);
     auto& s2 = static_cast<const Transform&>(s2_);
 
@@ -281,7 +284,8 @@ uint64_t Camera::checksumTrans() const
 
 bool Camera::lerp(const Entity& s1_, const Entity& s2_, float t)
 {
-    super::lerp(s1_, s2_, t);
+    if (!super::lerp(s1_, s2_, t))
+        return false;
     auto& s1 = static_cast<const Camera&>(s1_);
     auto& s2 = static_cast<const Camera&>(s2_);
 
@@ -361,7 +365,8 @@ uint64_t Light::checksumTrans() const
 
 bool Light::lerp(const Entity &s1_, const Entity& s2_, float t)
 {
-    super::lerp(s1_, s2_, t);
+    if (!super::lerp(s1_, s2_, t))
+        return false;
     auto& s1 = static_cast<const Light&>(s1_);
     auto& s2 = static_cast<const Light&>(s2_);
 
@@ -687,13 +692,14 @@ static inline float4 lerp_tangent(float4 a, float4 b, float w)
 
 bool Mesh::lerp(const Entity& s1_, const Entity& s2_, float t)
 {
-    super::lerp(s1_, s2_, t);
+    if (!super::lerp(s1_, s2_, t))
+        return false;
     auto& s1 = static_cast<const Mesh&>(s1_);
     auto& s2 = static_cast<const Mesh&>(s2_);
 
     if (s1.points.size() != s2.points.size() || s1.indices.size() != s2.indices.size())
         return false;
-#define DoLerp(N) Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
+#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
     DoLerp(points);
     DoLerp(normals);
     DoLerp(uv0);
@@ -702,6 +708,8 @@ bool Mesh::lerp(const Entity& s1_, const Entity& s2_, float t)
     DoLerp(velocities);
 #undef DoLerp
     Normalize(normals.data(), normals.size());
+
+    tangents.resize_discard(s1.tangents.size());
     enumerate(tangents, s1.tangents, s2.tangents, [t](float4& v, const float4& t1, const float4& t2) {
         v = lerp_tangent(t1, t2, t);
     });
@@ -1386,12 +1394,14 @@ bool PointsData::lerp(const PointsData& s1, const PointsData& s2, float t)
 {
     if (s1.points.size() != s2.points.size() || s1.ids != s2.ids)
         return false;
-#define DoLerp(N) Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
+#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
     DoLerp(points);
     DoLerp(scales);
     DoLerp(colors);
     DoLerp(velocities);
 #undef DoLerp
+
+    rotations.resize_discard(s1.rotations.size());
     enumerate(rotations, s1.rotations, s2.rotations, [t](quatf& v, const quatf& t1, const quatf& t2) {
         v = mu::slerp(t1, t2, t);
     });
@@ -1487,7 +1497,8 @@ uint64_t Points::checksumGeom() const
 
 bool Points::lerp(const Entity& s1_, const Entity& s2_, float t)
 {
-    super::lerp(s1_, s2_, t);
+    if (!super::lerp(s1_, s2_, t))
+        return false;
     auto& s1 = static_cast<const Points&>(s1_);
     auto& s2 = static_cast<const Points&>(s2_);
  
@@ -1532,7 +1543,7 @@ void Points::setupFlags()
 #pragma region Scene
 
 #define EachMember(F)\
-    F(validation_hash) F(name) F(handedness) F(scale_factor)
+    F(name) F(handedness) F(scale_factor)
 
 void SceneSettings::serialize(std::ostream& os) const
 {
@@ -1550,13 +1561,16 @@ void SceneSettings::deserialize(std::istream& is)
 
 void Scene::serialize(std::ostream& os) const
 {
-    settings.validation_hash = hash();
+    uint64_t validation_hash = hash();
+    write(os, validation_hash);
     EachMember(msWrite);
 }
 void Scene::deserialize(std::istream& is)
 {
+    uint64_t validation_hash;
+    read(is, validation_hash);
     EachMember(msRead);
-    if (settings.validation_hash != hash()) {
+    if (validation_hash != hash()) {
         throw std::runtime_error("scene hash doesn't match");
     }
 }

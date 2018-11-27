@@ -503,7 +503,6 @@ enum class Handedness
 
 struct SceneSettings
 {
-    mutable uint64_t validation_hash = ~0llu;
     std::string name = "Untitled";
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;

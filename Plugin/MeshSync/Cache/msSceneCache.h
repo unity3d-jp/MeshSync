@@ -7,70 +7,48 @@
 
 namespace ms {
 
-enum class CacheFileEncoding
+enum class SceneCacheEncoding
 {
     Plain,
     ZSTD, // todo
 };
 
-
-class SceneCacheWriter
+struct SceneCacheSettings
 {
-public:
-    SceneCacheWriter(std::ostream& ost, CacheFileEncoding encoding);
-    ~SceneCacheWriter();
-    void addScene(ScenePtr scene, float time);
-    size_t queueSize();
-    bool isWriting();
-    void flush();
-
-private:
-    void doWrite();
-
-    struct SceneDesc {
-        ScenePtr scene;
-        float time;
-    };
-
-    std::ostream& m_ost;
-    CacheFileEncoding m_encoding;
-
-    std::mutex m_mutex;
-    std::list<SceneDesc> m_queue;
-    std::future<void> m_task;
-    RawVector<char> m_buf;
+    SceneCacheEncoding encoding = SceneCacheEncoding::Plain;
 };
 
 
-class SceneCacheReader
+class OSceneCache
 {
 public:
-    SceneCacheReader(std::istream& ist);
-    ~SceneCacheReader();
-    bool valid() const;
-    size_t size() const;
-    std::tuple<float, float> getTimeRange() const;
-    ScenePtr getByIndex(size_t i);
-    ScenePtr getByTime(float t, bool lerp);
-    void prefetchByIndex(size_t i);
-    void prefetchByTime(float t, bool next, bool lerp);
-
-private:
-    struct SceneDesc {
-        uint64_t pos = 0;
-        float time = 0.0f;
-        ScenePtr scene;
-    };
-
-    std::istream& m_ist;
-    CacheFileEncoding m_encoding;
-
-    std::mutex m_mutex;
-    std::vector<SceneDesc> m_descs;
-
-    float m_last_time = -1.0f;
-    SceneDesc m_scene1, m_scene2;
-    ScenePtr m_scene_lerped;
+    virtual ~OSceneCache();
+    virtual void release() = 0;
+    virtual void addScene(ScenePtr scene, float time) = 0;
+    virtual void flush() = 0;
+    virtual bool isWriting() = 0;
 };
+using OSceneCachePtr = std::shared_ptr<OSceneCache>;
+
+
+class ISceneCache
+{
+public:
+    virtual ~ISceneCache();
+    virtual void release() = 0;
+    virtual std::tuple<float, float> getTimeRange() const = 0;
+    virtual size_t getNumScenes() const = 0;
+    virtual ScenePtr getByIndex(size_t i) = 0;
+    virtual ScenePtr getByTime(float t, bool lerp) = 0;
+};
+using ISceneCachePtr = std::shared_ptr<ISceneCache>;
+
+
+OSceneCachePtr OpenOSceneCacheFile(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());
+OSceneCache* OpenOSceneCacheFileRaw(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());
+
+ISceneCachePtr OpenISceneCacheFile(const char *path);
+ISceneCache* OpenISceneCacheFileRaw(const char *path);
+
 
 } // namespace ms
