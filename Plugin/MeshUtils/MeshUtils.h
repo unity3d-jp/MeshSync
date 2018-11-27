@@ -4,8 +4,9 @@
 #include <memory>
 #include "muRawVector.h"
 #include "muIntrusiveArray.h"
-#include "muMath.h"
 #include "muHalf.h"
+#include "muMath.h"
+#include "muQuat32.h"
 #include "muSIMD.h"
 #include "muVertex.h"
 #include "muColor.h"

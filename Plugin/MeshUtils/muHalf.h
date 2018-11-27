@@ -1,6 +1,5 @@
 #pragma once
 #include <cstdint>
-#include "muMath.h"
 
 namespace mu {
 
@@ -39,11 +38,16 @@ struct half
     }
 };
 
+
+float clamp01(float v);
+float clamp11(float v);
+double clamp11(double v);
+
 // -1.0f - 1.0f <-> -127 - 127
 struct snorm8
 {
-    static const float C;
-    static const float R;
+    static constexpr float C = 127.0f;
+    static constexpr float R = 1.0f / 127.0f;
 
     int8_t value;
 
@@ -65,8 +69,8 @@ struct snorm8
 // 0.0f - 1.0f <-> 0 - 255
 struct unorm8
 {
-    static const float C;
-    static const float R;
+    static constexpr float C = 255.0f;
+    static constexpr float R = 1.0f / 255.0f;
 
     uint8_t value;
 
@@ -88,8 +92,8 @@ struct unorm8
 // -1.0f - 1.0f <-> 0 - 255
 struct unorm8n
 {
-    static const float C;
-    static const float R;
+    static constexpr float C = 255.0f;
+    static constexpr float R = 1.0f / 255.0f;
 
     uint8_t value;
 
@@ -111,8 +115,8 @@ struct unorm8n
 // -1.0f - 1.0f <-> -32767 - 32767
 struct snorm16
 {
-    static const float C;
-    static const float R;
+    static constexpr float C = 32767.0f;
+    static constexpr float R = 1.0f / 32767.0f;
 
     int16_t value;
 
@@ -134,8 +138,8 @@ struct snorm16
 // 0.0f - 1.0f <-> 0 - 65535
 struct unorm16
 {
-    static const float C;
-    static const float R;
+    static constexpr float C = 65535.0f;
+    static constexpr float R = 1.0f / 65535.0f;
 
     uint16_t value;
 
@@ -158,8 +162,8 @@ struct unorm16
 // for audio sample
 struct snorm24
 {
-    static const double C;
-    static const double R;
+    static constexpr double C = 2147483647.0;
+    static constexpr double R = 1.0 / 2147483647.0;
 
     uint8_t value[3];
 
@@ -197,8 +201,8 @@ struct snorm24
 // for audio sample
 struct snorm32
 {
-    static const double C;
-    static const double R;
+    static constexpr double C = 2147483647.0;
+    static constexpr double R = 1.0 / 2147483647.0;
 
     int value;
 
@@ -216,33 +220,5 @@ struct snorm32
     static snorm32 zero() { return snorm32(0.0f); }
     static snorm32 one() { return snorm32(1.0f); }
 };
-
-using half2 = tvec2<half>;
-using half3 = tvec3<half>;
-using half4 = tvec4<half>;
-using quath = tquat<half>;
-using half2x2 = tmat2x2<half>;
-using half3x3 = tmat3x3<half>;
-using half4x4 = tmat4x4<half>;
-
-using snorm8x2 = tvec2<snorm8>;
-using snorm8x3 = tvec3<snorm8>;
-using snorm8x4 = tvec4<snorm8>;
-
-using unorm8x2 = tvec2<unorm8>;
-using unorm8x3 = tvec3<unorm8>;
-using unorm8x4 = tvec4<unorm8>;
-
-using unorm8nx2 = tvec2<unorm8n>;
-using unorm8nx3 = tvec3<unorm8n>;
-using unorm8nx4 = tvec4<unorm8n>;
-
-using snorm16x2 = tvec2<snorm16>;
-using snorm16x3 = tvec3<snorm16>;
-using snorm16x4 = tvec4<snorm16>;
-
-using unorm16x2 = tvec2<unorm16>;
-using unorm16x3 = tvec3<unorm16>;
-using unorm16x4 = tvec4<unorm16>;
 
 } // namespace mu

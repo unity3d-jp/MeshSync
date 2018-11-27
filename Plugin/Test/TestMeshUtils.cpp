@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Test.h"
 #include "MeshGenerator.h"
+#include "Common.h"
 using namespace mu;
 
 #ifdef EnableFbxExport
@@ -921,4 +922,39 @@ TestCase(Test_Norm)
         }
     }
 #endif
+}
+
+TestCase(Test_Quat32)
+{
+    const int N = 100;
+    const float eps = 0.01f;
+
+    RawVector<quath> qf16(N); RawVector<quat32> r16(N);
+    RawVector<quatf> qf32(N); RawVector<quat32> r32(N);
+    RawVector<quatd> qf64(N); RawVector<quat32> r64(N);
+
+    float3 forward = { 0.0f, 0.0f, 1.0f};
+    Random rnd;
+    for (int i = 0; i < N; ++i) {
+        auto axis = rnd.v3n();
+        auto angle = rnd.f11() * mu::PI;
+
+        qf16[i] = to<half>(rotate(axis, angle * 0.5f));
+        r16[i] = qf16[i];
+        auto hfa = apply_rotation(to<float>(qf16[i]), forward);
+        auto hfb = apply_rotation(to<float>(r16[i]), forward);
+        Expect(near_equal(hfa, hfb, eps));
+
+        qf32[i] = rotate(axis, angle);
+        r32[i] = qf32[i];
+        auto ffa = apply_rotation(qf32[i], forward);
+        auto ffb = apply_rotation(to<float>(r32[i]), forward);
+        Expect(near_equal(ffa, ffb, eps));
+
+        qf64[i] = to<double>(rotate(axis, angle * 2.0f));
+        r64[i] = qf64[i];
+        auto dfa = apply_rotation(to<float>(qf64[i]), forward);
+        auto dfb = apply_rotation(to<float>(r64[i]), forward);
+        Expect(near_equal(dfa, dfb, eps));
+    }
 }

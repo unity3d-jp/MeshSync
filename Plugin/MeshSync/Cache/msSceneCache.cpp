@@ -40,6 +40,7 @@ void SceneCacheWriter::addScene(ScenePtr scene, float time)
         std::unique_lock<std::mutex> l(m_mutex);
         m_queue.push_back({ scene, time });
     }
+    doWrite();
 }
 
 size_t SceneCacheWriter::queueSize()

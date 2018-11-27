@@ -11,6 +11,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Test.h" />
     <ClInclude Include="MeshGenerator.h" />
+    <ClInclude Include="Common.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="python">

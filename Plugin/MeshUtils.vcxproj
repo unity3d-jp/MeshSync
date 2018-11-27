@@ -33,6 +33,7 @@
     <ClInclude Include="MeshUtils\muIterator.h" />
     <ClInclude Include="MeshUtils\muMeshRefiner.h" />
     <ClInclude Include="MeshUtils\muMisc.h" />
+    <ClInclude Include="MeshUtils\muQuat32.h" />
     <ClInclude Include="MeshUtils\muSIMDConfig.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
@@ -46,7 +47,6 @@
     <ClCompile Include="CrashReporter\CrashReporter.cpp" />
     <ClCompile Include="MeshUtils\muAllocator.cpp" />
     <ClCompile Include="MeshUtils\muColor.cpp" />
-    <ClCompile Include="MeshUtils\muHalf.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\muMisc.cpp" />
     <ClCompile Include="MeshUtils\pch.cpp">

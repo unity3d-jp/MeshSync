@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <limits>
 #include "muIntrusiveArray.h"
+#include "muHalf.h"
 
 #define muEpsilon 1e-4f
 
@@ -193,6 +194,34 @@ using quatd = tquat<double>;
 using double2x2 = tmat2x2<double>;
 using double3x3 = tmat3x3<double>;
 using double4x4 = tmat4x4<double>;
+
+using half2 = tvec2<half>;
+using half3 = tvec3<half>;
+using half4 = tvec4<half>;
+using quath = tquat<half>;
+using half2x2 = tmat2x2<half>;
+using half3x3 = tmat3x3<half>;
+using half4x4 = tmat4x4<half>;
+
+using snorm8x2 = tvec2<snorm8>;
+using snorm8x3 = tvec3<snorm8>;
+using snorm8x4 = tvec4<snorm8>;
+
+using unorm8x2 = tvec2<unorm8>;
+using unorm8x3 = tvec3<unorm8>;
+using unorm8x4 = tvec4<unorm8>;
+
+using unorm8nx2 = tvec2<unorm8n>;
+using unorm8nx3 = tvec3<unorm8n>;
+using unorm8nx4 = tvec4<unorm8n>;
+
+using snorm16x2 = tvec2<snorm16>;
+using snorm16x3 = tvec3<snorm16>;
+using snorm16x4 = tvec4<snorm16>;
+
+using unorm16x2 = tvec2<unorm16>;
+using unorm16x3 = tvec3<unorm16>;
+using unorm16x4 = tvec4<unorm16>;
 
 template<class T> inline tvec2<T> operator-(const tvec2<T>& v) { return{ -v.x, -v.y }; }
 template<class T, class U> inline tvec2<T> operator+(const tvec2<T>& l, const tvec2<U>& r) { return{ l.x + r.x, l.y + r.y }; }
@@ -487,6 +516,10 @@ template<class T> inline bool near_equal(const tvec4<T>& a, const tvec4<T>& b, T
 template<class T> inline bool near_equal(const tquat<T>& a, const tquat<T>& b, T e = muEpsilon)
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e) && near_equal(a.w, b.w, e);
+}
+template<class T> inline bool near_equal(const tmat2x2<T>& a, const tmat2x2<T>& b, T e = muEpsilon)
+{
+    return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e);
 }
 template<class T> inline bool near_equal(const tmat3x3<T>& a, const tmat3x3<T>& b, T e = muEpsilon)
 {
@@ -866,6 +899,14 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
         m[3].x, m[3].z, m[3].y, m[3].w,
     };
 }
+
+template<class T, class U> inline tvec2<T> to(const tvec2<U>& v) { tvec2<T> r; r.assign(&v[0]); return r; }
+template<class T, class U> inline tvec3<T> to(const tvec3<U>& v) { tvec3<T> r; r.assign(&v[0]); return r; }
+template<class T, class U> inline tvec4<T> to(const tvec4<U>& v) { tvec4<T> r; r.assign(&v[0]); return r; }
+template<class T, class U> inline tquat<T> to(const tquat<U>& v) { tquat<T> r; r.assign(&v[0]); return r; }
+template<class T, class U> inline tmat2x2<T> to(const tmat2x2<U>& v) { tmat2x2<T> r; r.assign(&v[0][0]); return r; }
+template<class T, class U> inline tmat3x3<T> to(const tmat3x3<U>& v) { tmat3x3<T> r; r.assign(&v[0][0]); return r; }
+template<class T, class U> inline tmat4x4<T> to(const tmat4x4<U>& v) { tmat4x4<T> r; r.assign(&v[0][0]); return r; }
 
 template<class T> inline tvec3<T> to_vec3(const tvec2<T>& v)
 {

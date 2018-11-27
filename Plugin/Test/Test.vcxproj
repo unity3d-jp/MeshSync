@@ -29,6 +29,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common.h" />
     <ClInclude Include="MeshGenerator.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Test.h" />
