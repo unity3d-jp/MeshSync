@@ -1,11 +1,12 @@
 #pragma once
 #include "msSceneCache.h"
+#include "msEncoder.h"
 
 namespace ms {
 
 struct CacheFileHeader
 {
-    char magic[4] = { 'M', 'S', 'C', ' ' };
+    char magic[4] = { 'M', 'S', 'S', 'C' };
     int version = msProtocolVersion;
     SceneCacheSettings settings;
 };
@@ -26,7 +27,6 @@ public:
 
     OSceneCacheImpl();
     ~OSceneCacheImpl() override;
-    void release() override;
     void addScene(ScenePtr scene, float time) override;
     void flush() override;
     bool isWriting() override;
@@ -49,6 +49,7 @@ protected:
     std::list<SceneDesc> m_queue;
     std::future<void> m_task;
 
+    EncoderPtr m_encoder;
     MemoryStream m_scene_buf;
     RawVector<char> m_encoded_buf;
 };
@@ -61,7 +62,6 @@ public:
 
     ISceneCacheImpl();
     ~ISceneCacheImpl() override;
-    void release() override;
     size_t getNumScenes() const override;
     std::tuple<float, float> getTimeRange() const override;
     ScenePtr getByIndex(size_t i) override;
@@ -90,8 +90,9 @@ protected:
     SceneDesc m_scene1, m_scene2;
     ScenePtr m_last_scene;
 
+    EncoderPtr m_encoder;
     MemoryStream m_scene_buf;
-    RawVector<char> m_encoded_buf;
+    RawVector<char> m_encoded_buf, m_tmp_buf;
 };
 
 

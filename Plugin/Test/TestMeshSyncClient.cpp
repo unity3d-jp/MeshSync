@@ -38,7 +38,8 @@ static void Send(ms::Scene& scene)
 
 TestCase(Test_SendMesh)
 {
-    auto osc = ms::OpenOSceneCacheFile("wave.msc");
+    auto osc = ms::OpenOSceneCacheFile("wave.sc");
+    auto oscz = ms::OpenOSceneCacheFile("wave.scz", { ms::SceneCacheEncoding::ZSTD });
 
     for (int i = 0; i < 8; ++i) {
         auto scene = ms::Scene::create();
@@ -61,6 +62,7 @@ TestCase(Test_SendMesh)
         mids.resize(counts.size(), 0);
 
         osc->addScene(scene, 0.5f * i);
+        oscz->addScene(scene, 0.5f * i);
         Send(*scene);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -68,7 +70,7 @@ TestCase(Test_SendMesh)
 
 TestCase(Test_SceneCacheRead)
 {
-    auto isc = ms::OpenISceneCacheFile("wave.msc");
+    auto isc = ms::OpenISceneCacheFile("wave.scz");
     Expect(isc);
     if (!isc)
         return;

@@ -23,7 +23,6 @@ class OSceneCache
 {
 public:
     virtual ~OSceneCache();
-    virtual void release() = 0;
     virtual void addScene(ScenePtr scene, float time) = 0;
     virtual void flush() = 0;
     virtual bool isWriting() = 0;
@@ -35,7 +34,6 @@ class ISceneCache
 {
 public:
     virtual ~ISceneCache();
-    virtual void release() = 0;
     virtual std::tuple<float, float> getTimeRange() const = 0;
     virtual size_t getNumScenes() const = 0;
     virtual ScenePtr getByIndex(size_t i) = 0;

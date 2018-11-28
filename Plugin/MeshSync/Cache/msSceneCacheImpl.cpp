@@ -5,6 +5,16 @@
 
 namespace ms {
 
+static EncoderPtr CreateEncoder(SceneCacheEncoding encoding)
+{
+    EncoderPtr ret;
+    switch (encoding) {
+    case SceneCacheEncoding::ZSTD: ret = CreateZSTDEncoder(); break;
+    default: break;
+    }
+    return ret;
+}
+
 OSceneCache::~OSceneCache()
 {
 }
@@ -23,14 +33,9 @@ OSceneCacheImpl::~OSceneCacheImpl()
         flush();
 
         // add terminator
-        CacheFileSceneHeader header;
-        m_ost->write((char*)&header, sizeof(header));
+        auto terminator = CacheFileSceneHeader::terminator();
+        m_ost->write((char*)&terminator, sizeof(terminator));
     }
-}
-
-void OSceneCacheImpl::release()
-{
-    delete this;
 }
 
 void OSceneCacheImpl::addScene(ScenePtr scene, float time)
@@ -54,13 +59,18 @@ bool OSceneCacheImpl::isWriting()
     return m_task.valid() && m_task.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-
 bool OSceneCacheImpl::prepare(ostream_ptr ost, const SceneCacheSettings& settings)
 {
     m_ost = ost;
     m_settings = settings;
     if (!m_ost)
         return false;
+
+    m_encoder = CreateEncoder(m_settings.encoding);
+    if (!m_encoder) {
+        m_settings.encoding = SceneCacheEncoding::Plain;
+        m_encoder = CreatePlainEncoder();
+    }
 
     CacheFileHeader header;
     header.settings = m_settings;
@@ -92,19 +102,16 @@ void OSceneCacheImpl::doWrite()
                 continue;
 
 
+            // serialize
             auto size = ssize(*desc.scene);
             m_scene_buf.resize(size);
             desc.scene->serialize(m_scene_buf);
             m_scene_buf.flush();
 
-            if (m_settings.encoding == SceneCacheEncoding::ZSTD) {
-                // todo
-                m_encoded_buf = m_scene_buf.getBuffer();
-            }
-            else {
-                m_scene_buf.swap(m_encoded_buf);
-            }
+            // encode
+            m_encoder->encode(m_encoded_buf, m_scene_buf.getBuffer());
 
+            // write
             CacheFileSceneHeader header{ m_encoded_buf.size(), desc.time };
             m_ost->write((char*)&header, sizeof(header));
             m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
@@ -128,11 +135,6 @@ ISceneCacheImpl::~ISceneCacheImpl()
 {
 }
 
-void ISceneCacheImpl::release()
-{
-    delete this;
-}
-
 bool ISceneCacheImpl::prepare(istream_ptr ist)
 {
     m_ist = ist;
@@ -142,11 +144,17 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     CacheFileHeader header;
     header.version = 0;
     m_ist->read((char*)&header, sizeof(header));
+    m_settings = header.settings;
 
     if (header.version != msProtocolVersion)
         return false;
 
-    m_settings = header.settings;
+    m_encoder = CreateEncoder(m_settings.encoding);
+    if (!m_encoder) {
+        // encoder associated with m_settings.encoding is not available
+        return false;
+    }
+
     for (;;) {
         CacheFileSceneHeader sh;
         m_ist->read((char*)&sh, sizeof(sh));
@@ -190,18 +198,17 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
         return ScenePtr();
 
     auto& desc = m_descs[i];
+
+    // read
     m_encoded_buf.resize(desc.size);
     m_ist->seekg(desc.pos, std::ios::beg);
     m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
 
-    if (m_settings.encoding == SceneCacheEncoding::ZSTD) {
-        // todo
-        m_encoded_buf = m_scene_buf.getBuffer();
-    }
-    else {
-        m_scene_buf.swap(m_encoded_buf);
-    }
+    // decode
+    m_encoder->decode(m_tmp_buf, m_encoded_buf);
+    m_scene_buf.swap(m_tmp_buf);
 
+    // deserialize
     try {
         m_last_scene = Scene::create();
         m_last_scene->deserialize(m_scene_buf);
@@ -266,7 +273,7 @@ OSceneCache* OpenOSceneCacheFileRaw(const char *path, const SceneCacheSettings& 
 }
 OSceneCachePtr OpenOSceneCacheFile(const char *path, const SceneCacheSettings& settings)
 {
-    return make_shared_ptr(OpenOSceneCacheFileRaw(path, settings));
+    return OSceneCachePtr(OpenOSceneCacheFileRaw(path, settings));
 }
 
 
@@ -292,7 +299,7 @@ ISceneCache* OpenISceneCacheFileRaw(const char *path)
 }
 ISceneCachePtr OpenISceneCacheFile(const char *path)
 {
-    return make_shared_ptr(OpenISceneCacheFileRaw(path));
+    return ISceneCachePtr(OpenISceneCacheFileRaw(path));
 }
 
 } // namespace ms

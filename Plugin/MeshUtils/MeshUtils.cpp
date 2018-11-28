@@ -2,15 +2,8 @@
 #include "MeshUtils.h"
 #include "muMeshRefiner.h"
 
-#ifdef muEnableHalf
-#ifdef _WIN32
-    #pragma comment(lib, "half.lib")
-#endif
-#endif // muEnableHalf
 
 namespace mu {
-
-
 
 bool GenerateNormalsPoly(RawVector<float3>& dst,
     const IArray<float3> points, const IArray<int> counts, const IArray<int> indices, bool flip)
