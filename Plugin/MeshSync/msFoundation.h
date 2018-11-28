@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -24,8 +25,8 @@ public:
     void resize(size_t n);
     void swap(RawVector<char>& buf);
 
-    int_type overflow(int_type c) override;
-    int_type underflow() override;
+    int overflow(int c) override;
+    int underflow() override;
     int sync() override;
 
     RawVector<char> buffer;

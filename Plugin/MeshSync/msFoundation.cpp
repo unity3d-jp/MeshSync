@@ -11,7 +11,7 @@ MemoryStreamBuf::MemoryStreamBuf()
 
 void MemoryStreamBuf::reset()
 {
-    this->setp(buffer.data(), buffer.data(), buffer.data() + buffer.size());
+    this->setp(buffer.data(), buffer.data() + buffer.size());
     this->setg(buffer.data(), buffer.data(), buffer.data() + buffer.size());
 }
 
@@ -27,13 +27,13 @@ void MemoryStreamBuf::swap(RawVector<char>& buf)
     reset();
 }
 
-MemoryStreamBuf::int_type MemoryStreamBuf::overflow(int_type c)
+int MemoryStreamBuf::overflow(int c)
 {
     ++wcount;
     return c;
 }
 
-MemoryStreamBuf::int_type MemoryStreamBuf::underflow()
+int MemoryStreamBuf::underflow()
 {
     ++rcount;
     return 0;
