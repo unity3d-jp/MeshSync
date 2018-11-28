@@ -222,4 +222,6 @@ struct snorm32
     static snorm32 one() { return snorm32(1.0f); }
 };
 
+template<class T> inline T to(float v) { return (T)v; }
+
 } // namespace mu

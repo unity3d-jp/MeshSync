@@ -83,11 +83,13 @@ void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, 
         dst[i] = src1[i] * w + src2[i] * iw;
 }
 
-void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max)
+template<class T>
+static inline void MinMax_GenericImpl(const T *src, size_t num, T& dst_min, T& dst_max)
 {
-    if (num == 0) { return; }
-    float2 rmin = src[0];
-    float2 rmax = src[0];
+    if (num == 0)
+        return;
+    auto rmin = src[0];
+    auto rmax = src[0];
     for (size_t i = 1; i < num; ++i) {
         rmin = min(rmin, src[i]);
         rmax = max(rmax, src[i]);
@@ -95,19 +97,10 @@ void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_
     dst_min = rmin;
     dst_max = rmax;
 }
-
-void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
-{
-    if (num == 0) { return; }
-    float3 rmin = src[0];
-    float3 rmax = src[0];
-    for (size_t i = 1; i < num; ++i) {
-        rmin = min(rmin, src[i]);
-        rmax = max(rmax, src[i]);
-    }
-    dst_min = rmin;
-    dst_max = rmax;
-}
+void MinMax_Generic(const int *src, size_t num, int& dst_min, int& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float *src, size_t num, float& dst_min, float& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
 
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps)
 {

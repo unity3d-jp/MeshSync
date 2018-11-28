@@ -12,8 +12,7 @@
 #define muSIMD_Lerp
 #define muSIMD_NearEqual
 
-#define muSIMD_MinMax2
-#define muSIMD_MinMax3
+#define muSIMD_MinMax
 
 #define muSIMD_MulVectors3
 #define muSIMD_MulPoints3
