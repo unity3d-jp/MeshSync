@@ -18,6 +18,12 @@ namespace UTJ.MeshSync
         int m_sceneIndexPrev = -1;
         [SerializeField][HideInInspector] Scene m_currentScene;
 
+        public string[] sceneNames
+        {
+            get { return m_sceneNames; }
+            set { m_sceneNames = value; }
+        }
+
         void UnloadScene()
         {
             if (!m_currentScene.IsValid() || !m_currentScene.isLoaded)

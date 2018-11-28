@@ -115,7 +115,7 @@ namespace UTJ.MeshSync
     public struct Server
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msServerGetVersion();
         [DllImport("MeshSyncServer")] static extern Server msServerStart(ref ServerSettings settings);
         [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr self);
@@ -197,7 +197,7 @@ namespace UTJ.MeshSync
     public struct GetMessage
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern GetFlags msGetGetFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msGetGetBakeSkin(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msGetGetBakeCloth(IntPtr self);
@@ -218,7 +218,7 @@ namespace UTJ.MeshSync
     public struct SetMessage
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern SceneData msSetGetSceneData(IntPtr self);
         #endregion
 
@@ -238,7 +238,7 @@ namespace UTJ.MeshSync
     public struct DeleteMessage
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msDeleteGetNumEntities(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Identifier msDeleteGetEntity(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern int msDeleteGetNumMaterials(IntPtr self);
@@ -262,7 +262,7 @@ namespace UTJ.MeshSync
     public struct FenceMessage
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern FenceType msFenceGetType(IntPtr self);
         #endregion
 
@@ -286,7 +286,7 @@ namespace UTJ.MeshSync
     public struct TextMessage
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msTextGetText(IntPtr self);
         [DllImport("MeshSyncServer")] static extern TextType msTextGetType(IntPtr self);
         #endregion
@@ -329,7 +329,7 @@ namespace UTJ.MeshSync
     public struct QueryMessage
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern QueryType msQueryGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msQueryFinishRespond(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msQueryAddResponseText(IntPtr self, string text);
@@ -389,7 +389,7 @@ namespace UTJ.MeshSync
     public struct AssetData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msAssetGetID(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msAssetSetID(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern IntPtr msAssetGetName(IntPtr self);
@@ -424,7 +424,7 @@ namespace UTJ.MeshSync
     public struct FileAssetData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport("MeshSyncServer")] static extern FileAssetData msFileAssetCreate();
         [DllImport("MeshSyncServer")] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
@@ -467,7 +467,7 @@ namespace UTJ.MeshSync
     public struct AudioData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport("MeshSyncServer")] static extern AudioData msAudioCreate();
         [DllImport("MeshSyncServer")] static extern AudioFormat msAudioGetFormat(IntPtr self);
@@ -659,7 +659,7 @@ namespace UTJ.MeshSync
     public struct MaterialPropertyData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msMaterialPropGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Type msMaterialPropGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msMaterialPropGetArrayLength(IntPtr self);
@@ -777,7 +777,7 @@ namespace UTJ.MeshSync
     public struct MaterialKeywordData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msMaterialKeywordGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern byte msMaterialKeywordGetValue(IntPtr self);
         #endregion
@@ -795,7 +795,7 @@ namespace UTJ.MeshSync
     public struct MaterialData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport("MeshSyncServer")] static extern MaterialData msMaterialCreate();
         [DllImport("MeshSyncServer")] static extern int msMaterialGetIndex(IntPtr self);
@@ -914,7 +914,7 @@ namespace UTJ.MeshSync
     public struct TransformAnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumTranslationSamples(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msTransformAGetTranslationTime(IntPtr self, int i);
@@ -1096,7 +1096,7 @@ namespace UTJ.MeshSync
     public struct CameraAnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFovSamples(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msCameraAGetFovTime(IntPtr self, int i);
@@ -1229,7 +1229,7 @@ namespace UTJ.MeshSync
     public struct LightAnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumColorSamples(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msLightAGetColorTime(IntPtr self, int i);
@@ -1392,7 +1392,7 @@ namespace UTJ.MeshSync
     public struct MeshAnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapes(IntPtr self);
         [DllImport("MeshSyncServer")] static extern IntPtr msMeshAGetBlendshapeName(IntPtr self, int bi);
@@ -1451,7 +1451,7 @@ namespace UTJ.MeshSync
     public struct PointsAnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msPointsAGetNumTimeSamples(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeTime(IntPtr self, int i);
@@ -1509,7 +1509,7 @@ namespace UTJ.MeshSync
     public struct AnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr self);
         [DllImport("MeshSyncServer")] static extern TransformData.Type msAnimationGetType(IntPtr self);
         #endregion
@@ -1596,7 +1596,7 @@ namespace UTJ.MeshSync
     public struct AnimationClipData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport("MeshSyncServer")] static extern IntPtr msAssetGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msAnimationClipGetNumAnimations(IntPtr self);
@@ -1629,7 +1629,7 @@ namespace UTJ.MeshSync
     public struct Identifier
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msIdentifierGetID(IntPtr self);
         [DllImport("MeshSyncServer")] static extern IntPtr msIdentifierGetName(IntPtr self);
         #endregion
@@ -1641,7 +1641,7 @@ namespace UTJ.MeshSync
     public struct TransformData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
         [DllImport("MeshSyncServer")] static extern Type msTransformGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr self);
@@ -1740,7 +1740,7 @@ namespace UTJ.MeshSync
     public struct CameraData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
         [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
         [DllImport("MeshSyncServer")] static extern byte msCameraIsOrtho(IntPtr self);
@@ -1813,7 +1813,7 @@ namespace UTJ.MeshSync
     public struct LightData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
@@ -1864,7 +1864,7 @@ namespace UTJ.MeshSync
     public struct SubmeshData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr self, IntPtr dst);
         [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr self);
@@ -1889,7 +1889,7 @@ namespace UTJ.MeshSync
     public struct SplitData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr self);
@@ -1912,7 +1912,7 @@ namespace UTJ.MeshSync
     public struct BlendShapeData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr self);
@@ -2030,7 +2030,7 @@ namespace UTJ.MeshSync
     public struct MeshData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
@@ -2217,7 +2217,7 @@ namespace UTJ.MeshSync
     public struct PointsCacheData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsDataGetFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msPointsDataGetTime(IntPtr self);
@@ -2278,7 +2278,7 @@ namespace UTJ.MeshSync
     public struct PointsData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern PointsData msPointsCreate();
@@ -2304,7 +2304,7 @@ namespace UTJ.MeshSync
     public struct ConstraintData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern ConstraintType msConstraintGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern IntPtr msConstraintGetPath(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msConstraintGetNumSources(IntPtr self);
@@ -2338,7 +2338,7 @@ namespace UTJ.MeshSync
     public struct AimConstraintData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         #endregion
 
 
@@ -2353,7 +2353,7 @@ namespace UTJ.MeshSync
     public struct ParentConstraintData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern Vector3 msParentConstraintGetPositionOffset(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
         #endregion
@@ -2372,7 +2372,7 @@ namespace UTJ.MeshSync
     public struct PositionConstraintData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         #endregion
 
         public static explicit operator PositionConstraintData(ConstraintData v)
@@ -2386,7 +2386,7 @@ namespace UTJ.MeshSync
     public struct RotationConstraintData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         #endregion
 
         public static explicit operator RotationConstraintData(ConstraintData v)
@@ -2400,7 +2400,7 @@ namespace UTJ.MeshSync
     public struct ScaleConstrainData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         #endregion
 
         public static explicit operator ScaleConstrainData(ConstraintData v)
@@ -2417,7 +2417,7 @@ namespace UTJ.MeshSync
     public struct SceneData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSceneGetNumAssets(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AssetData msSceneGetAsset(IntPtr self, int i);
