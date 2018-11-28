@@ -1,5 +1,4 @@
 #pragma once
-
 #include "msAsset.h"
 
 namespace ms {

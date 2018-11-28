@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "msSceneGraph.h"
 #include "msAnimation.h"
-#include "msSceneGraphImpl.h"
 
 
 #define Clear(V) V.clear();

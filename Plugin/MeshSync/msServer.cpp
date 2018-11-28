@@ -1,9 +1,8 @@
 #include "msServer.h"
 #include "pch.h"
 #include "msServer.h"
-#include "msMaterial.h"
-#include "msAnimation.h"
-#include "msSceneGraphImpl.h"
+#include "SceneGraph/msMaterial.h"
+#include "SceneGraph/msAnimation.h"
 
 
 namespace ms {

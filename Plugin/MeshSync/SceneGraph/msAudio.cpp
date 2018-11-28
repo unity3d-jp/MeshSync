@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "msAsset.h"
 #include "msAudio.h"
-#include "msSceneGraphImpl.h"
 #include "msMisc.h"
 
 namespace ms {

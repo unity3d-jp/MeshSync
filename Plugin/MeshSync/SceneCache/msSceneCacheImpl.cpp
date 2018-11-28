@@ -1,13 +1,12 @@
 #include "pch.h"
 #include "msSceneCache.h"
 #include "msSceneCacheImpl.h"
-#include "msSceneGraphImpl.h"
 
 namespace ms {
 
-static EncoderPtr CreateEncoder(SceneCacheEncoding encoding)
+static BufferEncoderPtr CreateEncoder(SceneCacheEncoding encoding)
 {
-    EncoderPtr ret;
+    BufferEncoderPtr ret;
     switch (encoding) {
     case SceneCacheEncoding::ZSTD: ret = CreateZSTDEncoder(); break;
     default: break;

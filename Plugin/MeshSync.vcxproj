@@ -19,26 +19,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSync\Cache\msEncoder.h" />
-    <ClInclude Include="MeshSync\Cache\msSceneCache.h" />
-    <ClInclude Include="MeshSync\Cache\msSceneCacheImpl.h" />
     <ClInclude Include="MeshSync\MeshSync.h" />
     <ClInclude Include="MeshSync\MeshSyncUtils.h" />
-    <ClInclude Include="MeshSync\msAnimation.h" />
-    <ClInclude Include="MeshSync\msAsset.h" />
     <ClInclude Include="MeshSync\msClient.h" />
     <ClInclude Include="MeshSync\msConfig.h" />
-    <ClInclude Include="MeshSync\msConstraints.h" />
     <ClInclude Include="MeshSync\msFoundation.h" />
-    <ClInclude Include="MeshSync\msMaterial.h" />
     <ClInclude Include="MeshSync\msMisc.h" />
     <ClInclude Include="MeshSync\msProtocol.h" />
-    <ClInclude Include="MeshSync\msSceneGraph.h" />
-    <ClInclude Include="MeshSync\msSceneGraphImpl.h" />
     <ClInclude Include="MeshSync\msServer.h" />
-    <ClInclude Include="MeshSync\msAudio.h" />
-    <ClInclude Include="MeshSync\msTexture.h" />
     <ClInclude Include="MeshSync\pch.h" />
+    <ClInclude Include="MeshSync\SceneCache\msEncoder.h" />
+    <ClInclude Include="MeshSync\SceneCache\msSceneCache.h" />
+    <ClInclude Include="MeshSync\SceneCache\msSceneCacheImpl.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msAnimation.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msAsset.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msAudio.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msConstraints.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msEntity.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msIdentifier.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msMaterial.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msMesh.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msSceneGraph.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msTexture.h" />
     <ClInclude Include="MeshSync\Utils\msAsyncSceneSender.h" />
     <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
     <ClInclude Include="MeshSync\Utils\msIDGenerator.h" />
@@ -47,23 +49,26 @@
     <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshSync\Cache\msEncoder.cpp" />
-    <ClCompile Include="MeshSync\Cache\msSceneCacheImpl.cpp" />
-    <ClCompile Include="MeshSync\msAnimation.cpp" />
-    <ClCompile Include="MeshSync\msAsset.cpp" />
     <ClCompile Include="MeshSync\msClient.cpp" />
-    <ClCompile Include="MeshSync\msConstraints.cpp" />
     <ClCompile Include="MeshSync\msFoundation.cpp" />
-    <ClCompile Include="MeshSync\msMaterial.cpp" />
     <ClCompile Include="MeshSync\msMisc.cpp" />
     <ClCompile Include="MeshSync\msProtocol.cpp" />
-    <ClCompile Include="MeshSync\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />
     <ClCompile Include="MeshSync/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshSync\msAudio.cpp" />
-    <ClCompile Include="MeshSync\msTexture.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msEncoder.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msSceneCacheImpl.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msAnimation.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msAsset.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msAudio.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msConstraints.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msEntity.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msIdentifier.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msMaterial.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msMesh.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msSceneGraph.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msTexture.cpp" />
     <ClCompile Include="MeshSync\Utils\msAsyncSceneSender.cpp" />
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp" />

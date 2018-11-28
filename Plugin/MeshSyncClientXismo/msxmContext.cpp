@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
-#include "MeshSync/msSceneGraphImpl.h"
 #include "MeshSync/MeshSyncUtils.h"
 #include "msxmContext.h"
 

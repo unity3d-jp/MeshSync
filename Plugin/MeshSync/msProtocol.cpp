@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "msProtocol.h"
-#include "msSceneGraphImpl.h"
+#include "msFoundation.h"
 
 namespace ms {
 

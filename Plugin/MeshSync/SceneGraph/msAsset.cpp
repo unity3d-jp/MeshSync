@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "msAsset.h"
-#include "msSceneGraphImpl.h"
 #include "msMisc.h"
 #include "msAnimation.h"
 #include "msTexture.h"

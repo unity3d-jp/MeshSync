@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "msvrContext.h"
-#include "MeshSync/msSceneGraphImpl.h"
 
 
 bool FramebufferRecord::isMainTarget() const

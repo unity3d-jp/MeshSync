@@ -1,5 +1,5 @@
 #pragma once
-#include "msFoundation.h"
+#include "msIdentifier.h"
 
 namespace ms {
 
@@ -64,5 +64,18 @@ public:
 };
 msHasSerializer(FileAsset);
 using FileAssetPtr = std::shared_ptr<FileAsset>;
+
+
+class AnimationClip;
+using AnimationClipPtr = std::shared_ptr<AnimationClip>;
+
+class Texture;
+using TexturePtr = std::shared_ptr<Texture>;
+
+class Material;
+using MaterialPtr = std::shared_ptr<Material>;
+
+class Audio;
+using AudioPtr = std::shared_ptr<Audio>;
 
 } // namespace ms

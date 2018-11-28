@@ -3,7 +3,7 @@
 #include <list>
 #include <mutex>
 #include <future>
-#include "msSceneGraph.h"
+#include "SceneGraph/msSceneGraph.h"
 
 namespace ms {
 

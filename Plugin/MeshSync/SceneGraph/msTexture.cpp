@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "msTexture.h"
-#include "msSceneGraphImpl.h"
 #include "msMisc.h"
 
 namespace ms {

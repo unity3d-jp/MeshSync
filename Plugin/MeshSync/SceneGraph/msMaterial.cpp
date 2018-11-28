@@ -1,11 +1,8 @@
 #include "pch.h"
 #include "msMaterial.h"
-#include "msSceneGraphImpl.h"
 
 
 namespace ms {
-
-
 
 
 #define EachMember(F) F(name) F(type) F(data)

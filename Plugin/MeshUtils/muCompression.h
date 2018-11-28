@@ -43,5 +43,7 @@ using BoundedArray2D8  = BoundedArray<unorm8x2, float2>;
 using BoundedArray2D16 = BoundedArray<unorm16x2, float2>;
 using BoundedArray3D8  = BoundedArray<unorm8x3, float3>;
 using BoundedArray3D16 = BoundedArray<unorm16x3, float3>;
+using BoundedArray4D8  = BoundedArray<unorm8x4, float4>;
+using BoundedArray4D16 = BoundedArray<unorm16x4, float4>;
 
 } // namespace mu

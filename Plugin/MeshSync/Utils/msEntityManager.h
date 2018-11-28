@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../msSceneGraph.h"
+#include "../SceneGraph/msSceneGraph.h"
 
 namespace ms {
 
