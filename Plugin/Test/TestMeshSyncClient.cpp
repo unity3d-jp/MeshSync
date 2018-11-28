@@ -38,7 +38,7 @@ static void Send(ms::Scene& scene)
 
 TestCase(Test_SendMesh)
 {
-    auto osc = ms::OpenOSceneCacheFile("wave.sc");
+    auto osc = ms::OpenOSceneCacheFile("wave.sc", { ms::SceneCacheEncoding::Plain });
     auto oscz = ms::OpenOSceneCacheFile("wave.scz", { ms::SceneCacheEncoding::ZSTD });
 
     for (int i = 0; i < 8; ++i) {
@@ -221,7 +221,7 @@ TestCase(Test_Points)
             node->data.push_back(data);
 
             float t = (1.0f / 30.0f) * fi;
-            anim->time.push_back({ t, {t} });
+            anim->time.push_back({ t, t });
             data->time = t;
             data->points = points;
             data->rotations = rotations;
@@ -427,7 +427,8 @@ TestCase(Test_Audio)
     scene.assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
     scene.assets.push_back(CreateAudioAsset("audio_s32", ms::AudioFormat::S32, ids++));
     scene.assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
-    scene.assets.push_back(CreateAudioFileAsset("explosion1.wav", ids++));
+    if (auto afa = CreateAudioFileAsset("explosion1.wav", ids++))
+        scene.assets.push_back(afa);
     Send(scene);
 }
 

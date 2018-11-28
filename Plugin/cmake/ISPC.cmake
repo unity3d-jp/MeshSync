@@ -52,7 +52,7 @@ function(add_ispc_targets)
         set(outputs ${header} ${objects})
         add_custom_command(
             OUTPUT ${outputs}
-            COMMAND ${ISPC} ${source} -o ${object} -h ${header} --pic --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-masked-vload --opt=fast-math
+            COMMAND ${ISPC} ${source} -o ${object} -h ${header} --pic --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --wno-perf
             DEPENDS ${source} ${arg_HEADERS}
         )
 

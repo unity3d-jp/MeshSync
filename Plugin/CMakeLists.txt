@@ -16,6 +16,12 @@ endif()
 include(AddPlugin)
 include(ISPC)
 
+option(ENABLE_ZSTD "Use ZSTD for scene cache compression" ON)
+if(ENABLE_ZSTD)
+    find_package(ZSTD)
+    add_definitions(-DmsEnableZSTD)
+endif()
+
 # Server
 option(BUILD_SERVER "Build MeshSyncServer" ON)
 
