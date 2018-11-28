@@ -88,13 +88,26 @@ void OSceneCacheImpl::doWrite()
                     m_queue.pop_back();
                 }
             }
+            if (!desc.scene)
+                continue;
 
-            if (desc.scene) {
-                CacheFileSceneHeader header{ ssize(*desc.scene), desc.time };
-                m_ost->write((char*)&header, sizeof(header));
-                desc.scene->serialize(*m_ost);
+
+            auto size = ssize(*desc.scene);
+            m_scene_buf.resize(size);
+            desc.scene->serialize(m_scene_buf);
+            m_scene_buf.flush();
+
+            if (m_settings.encoding == SceneCacheEncoding::ZSTD) {
+                // todo
+                m_encoded_buf = m_scene_buf.getBuffer();
+            }
+            else {
+                m_scene_buf.swap(m_encoded_buf);
             }
 
+            CacheFileSceneHeader header{ m_encoded_buf.size(), desc.time };
+            m_ost->write((char*)&header, sizeof(header));
+            m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
         }
     };
 
@@ -143,6 +156,7 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
         else {
             SceneDesc desc;
             desc.pos = (uint64_t)m_ist->tellg();
+            desc.size = sh.size;
             desc.time = sh.time;
             m_descs.push_back(desc);
 
@@ -176,11 +190,21 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
         return ScenePtr();
 
     auto& desc = m_descs[i];
+    m_encoded_buf.resize(desc.size);
     m_ist->seekg(desc.pos, std::ios::beg);
+    m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
+
+    if (m_settings.encoding == SceneCacheEncoding::ZSTD) {
+        // todo
+        m_encoded_buf = m_scene_buf.getBuffer();
+    }
+    else {
+        m_scene_buf.swap(m_encoded_buf);
+    }
 
     try {
         m_last_scene = Scene::create();
-        m_last_scene->deserialize(*m_ist);
+        m_last_scene->deserialize(m_scene_buf);
         return m_last_scene;
     }
     catch (std::runtime_error& e) {

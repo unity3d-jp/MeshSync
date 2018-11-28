@@ -2,36 +2,6 @@
 
 namespace ms {
 
-class countstreambuf : public std::streambuf
-{
-public:
-    int_type overflow(int_type c) override
-    {
-        ++size;
-        return c;
-    }
-
-    uint64_t size = 0;
-};
-
-class countstream : public std::ostream
-{
-public:
-    countstream() : std::ostream(&m_buf) {}
-    uint64_t size() const { return m_buf.size; }
-
-private:
-    countstreambuf m_buf;
-};
-
-template<class T>
-inline uint64_t ssize(const T& v)
-{
-    countstream c;
-    v.serialize(c);
-    return c.size();
-}
-
 template<class T, bool hs = has_serializer<T>::result> struct write_impl2;
 template<class T> struct write_impl2<T, true> { void operator()(std::ostream& os, const T& v) { v.serialize(os); } };
 template<class T> struct write_impl2<T, false> { void operator()(std::ostream& os, const T& v) { os.write((const char*)&v, sizeof(T)); } };

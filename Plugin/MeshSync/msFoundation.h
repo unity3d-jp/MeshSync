@@ -14,6 +14,76 @@
 
 namespace ms {
 
+class MemoryStreamBuf : public std::streambuf
+{
+public:
+    static const size_t default_bufsize = 1024 * 64;
+
+    MemoryStreamBuf();
+    void reset();
+    void resize(size_t n);
+    void swap(RawVector<char>& buf);
+
+    int_type overflow(int_type c) override;
+    int_type underflow() override;
+    int sync() override;
+
+    RawVector<char> buffer;
+    uint64_t wcount = 0;
+    uint64_t rcount = 0;
+};
+
+class MemoryStream : public std::iostream
+{
+public:
+    MemoryStream();
+    void reset();
+    void resize(size_t n);
+    void swap(RawVector<char>& buf);
+
+    const RawVector<char>& getBuffer() const;
+    uint64_t getWCount() const;
+    uint64_t getRCount() const;
+
+private:
+    MemoryStreamBuf m_buf;
+};
+
+
+class CounterStreamBuf : public std::streambuf
+{
+public:
+    int_type overflow(int_type c) override
+    {
+        ++size;
+        return c;
+    }
+
+    uint64_t size = 0;
+};
+
+class CounterStream : public std::ostream
+{
+public:
+    CounterStream() : std::ostream(&m_buf) {}
+    uint64_t size() const { return m_buf.size; }
+
+private:
+    CounterStreamBuf m_buf;
+};
+
+template<class T>
+inline uint64_t ssize(const T& v)
+{
+    CounterStream c;
+    v.serialize(c);
+    return c.size();
+}
+
+} // namespace ms
+
+namespace ms {
+
 template<class T> struct has_serializer { static const bool result = false; };
 
 template<class T>
