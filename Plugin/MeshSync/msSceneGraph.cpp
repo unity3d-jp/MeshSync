@@ -1586,10 +1586,10 @@ void Scene::clear()
 uint64_t Scene::hash() const
 {
     uint64_t ret = 0;
-    for (auto& obj : assets)
-        ret += obj->hash();
-    for (auto& obj : entities)
-        ret += obj->hash();
+    for (auto& a : assets)
+        ret += a->hash();
+    for (auto& e : entities)
+        ret += e->hash();
     return ret;
 }
 

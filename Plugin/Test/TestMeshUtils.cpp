@@ -958,3 +958,20 @@ TestCase(Test_Quat32)
         Expect(near_equal(dfa, dfb, eps));
     }
 }
+
+TestCase(Test_S10x3)
+{
+    const int N = 100;
+    const float eps = 0.01f;
+
+    Random rnd;
+    for (int i = 0; i < N; ++i) {
+        float4 tangent;
+        (float3&)tangent = rnd.v3n();
+        tangent.w = i % 2 == 0 ? 1.0f : -1.0f;
+
+        snorm10x3 encoded = mu::encode_tangent(tangent);
+        float4 decoded = mu::decode_tangent(encoded);
+        Expect(near_equal(tangent, decoded, eps));
+    }
+}

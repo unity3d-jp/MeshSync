@@ -10,12 +10,12 @@ namespace ms {
 enum class SceneCacheEncoding
 {
     Plain,
-    ZSTD, // todo
+    ZSTD,
 };
 
 struct SceneCacheSettings
 {
-    SceneCacheEncoding encoding = SceneCacheEncoding::Plain;
+    SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
 };
 
 

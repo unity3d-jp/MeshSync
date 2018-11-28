@@ -90,6 +90,7 @@ struct unorm8
 };
 
 // -1.0f - 1.0f <-> 0 - 255
+// for audio sample
 struct unorm8n
 {
     static constexpr float C = 255.0f;

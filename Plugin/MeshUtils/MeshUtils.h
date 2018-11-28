@@ -6,6 +6,7 @@
 #include "muIntrusiveArray.h"
 #include "muHalf.h"
 #include "muMath.h"
+#include "muS10x3.h"
 #include "muQuat32.h"
 #include "muSIMD.h"
 #include "muVertex.h"
