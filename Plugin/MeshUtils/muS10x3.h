@@ -29,6 +29,7 @@ struct snorm10x3
     snorm10x3() {}
     snorm10x3(const snorm10x3& v) : value(v.value) {}
     template<class T> snorm10x3(const tvec3<T>& v) { *this = v; }
+    template<class T> void assign(const tvec3<T>& v) { *this = v; }
 
     template<class T>
     snorm10x3& operator=(const tvec3<T>& v_)
