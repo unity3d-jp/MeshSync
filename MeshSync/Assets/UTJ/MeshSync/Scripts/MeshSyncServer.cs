@@ -631,10 +631,10 @@ namespace UTJ.MeshSync
             }
         }
 
-        public bool MakeSureAssetDirectoryExists()
+        public void MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
-            return Try(()=> {
+            Try(()=> {
                 if (!AssetDatabase.IsValidFolder(assetPath))
                     AssetDatabase.CreateFolder("Assets", m_assetDir);
             });
@@ -648,6 +648,8 @@ namespace UTJ.MeshSync
             {
                 AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
             });
+#else
+            return false;
 #endif
         }
 
