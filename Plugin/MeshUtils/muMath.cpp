@@ -101,6 +101,7 @@ void MinMax_Generic(const int *src, size_t num, int& dst_min, int& dst_max) { Mi
 void MinMax_Generic(const float *src, size_t num, float& dst_min, float& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
 void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
 void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float4 *src, size_t num, float4& dst_min, float4& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
 
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps)
 {

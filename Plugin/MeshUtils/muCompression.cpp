@@ -100,17 +100,19 @@ template void encode(BoundedArray<unorm16, float>& dst, const RawVector<float>& 
 template void encode(BoundedArray<unorm8x2, float2>& dst, const RawVector<float2>& src);
 template void encode(BoundedArray<unorm16x2, float2>& dst, const RawVector<float2>& src);
 template void encode(BoundedArray<unorm8x3, float3>& dst, const RawVector<float3>& src);
+template void encode(BoundedArray<unorm10x3, float3>& dst, const RawVector<float3>& src);
 template void encode(BoundedArray<unorm16x3, float3>& dst, const RawVector<float3>& src);
-//template void encode(BoundedArray<unorm8x4, float4>& dst, const RawVector<float4>& src);
-//template void encode(BoundedArray<unorm16x4, float4>& dst, const RawVector<float4>& src);
+template void encode(BoundedArray<unorm8x4, float4>& dst, const RawVector<float4>& src);
+template void encode(BoundedArray<unorm16x4, float4>& dst, const RawVector<float4>& src);
 
 template void decode(RawVector<float>& dst, const BoundedArray<unorm8, float>& src);
 template void decode(RawVector<float>& dst, const BoundedArray<unorm16, float>& src);
 template void decode(RawVector<float2>& dst, const BoundedArray<unorm8x2, float2>& src);
 template void decode(RawVector<float2>& dst, const BoundedArray<unorm16x2, float2>& src);
 template void decode(RawVector<float3>& dst, const BoundedArray<unorm8x3, float3>& src);
+template void decode(RawVector<float3>& dst, const BoundedArray<unorm10x3, float3>& src);
 template void decode(RawVector<float3>& dst, const BoundedArray<unorm16x3, float3>& src);
-//template void decode(RawVector<float4>& dst, const BoundedArray<unorm8x4, float4>& src);
-//template void decode(RawVector<float4>& dst, const BoundedArray<unorm16x4, float4>& src);
+template void decode(RawVector<float4>& dst, const BoundedArray<unorm8x4, float4>& src);
+template void decode(RawVector<float4>& dst, const BoundedArray<unorm16x4, float4>& src);
 
 } // namespace mu

@@ -36,6 +36,9 @@ struct half
         uint32_t r = sign_bit | exponent | mantissa;
         return (float&)r;
     }
+
+    static half zero() { return half(0.0f); }
+    static half one() { return half(1.0f); }
 };
 
 
@@ -46,8 +49,8 @@ double clamp11(double v);
 // -1.0f - 1.0f <-> -127 - 127
 struct snorm8
 {
-    static constexpr float C = 127.0f;
-    static constexpr float R = 1.0f / 127.0f;
+    static constexpr float C = float(0x7f);
+    static constexpr float R = 1.0f / float(0x7f);
 
     int8_t value;
 
@@ -69,8 +72,8 @@ struct snorm8
 // 0.0f - 1.0f <-> 0 - 255
 struct unorm8
 {
-    static constexpr float C = 255.0f;
-    static constexpr float R = 1.0f / 255.0f;
+    static constexpr float C = float(0xff);
+    static constexpr float R = 1.0f / float(0xff);
 
     uint8_t value;
 
@@ -93,8 +96,8 @@ struct unorm8
 // for audio sample
 struct unorm8n
 {
-    static constexpr float C = 255.0f;
-    static constexpr float R = 1.0f / 255.0f;
+    static constexpr float C = float(0xff);
+    static constexpr float R = 1.0f / float(0xff);
 
     uint8_t value;
 
@@ -116,8 +119,8 @@ struct unorm8n
 // -1.0f - 1.0f <-> -32767 - 32767
 struct snorm16
 {
-    static constexpr float C = 32767.0f;
-    static constexpr float R = 1.0f / 32767.0f;
+    static constexpr float C = float(0x7fff);
+    static constexpr float R = 1.0f / float(0x7fff);
 
     int16_t value;
 
@@ -139,8 +142,8 @@ struct snorm16
 // 0.0f - 1.0f <-> 0 - 65535
 struct unorm16
 {
-    static constexpr float C = 65535.0f;
-    static constexpr float R = 1.0f / 65535.0f;
+    static constexpr float C = float(0xffff);
+    static constexpr float R = 1.0f / float(0xffff);
 
     uint16_t value;
 
@@ -163,8 +166,8 @@ struct unorm16
 // for audio sample
 struct snorm24
 {
-    static constexpr double C = 2147483647.0;
-    static constexpr double R = 1.0 / 2147483647.0;
+    static constexpr double C = double(0x7fffffff);
+    static constexpr double R = 1.0 / double(0x7fffffff);
 
     uint8_t value[3];
 
@@ -202,8 +205,8 @@ struct snorm24
 // for audio sample
 struct snorm32
 {
-    static constexpr double C = 2147483647.0;
-    static constexpr double R = 1.0 / 2147483647.0;
+    static constexpr double C = double(0x7fffffff);
+    static constexpr double R = 1.0 / double(0x7fffffff);
 
     int value;
 

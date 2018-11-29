@@ -7,8 +7,8 @@ struct quat32
 {
     static constexpr float SR2 = 1.41421356237f;
     static constexpr float RSR2 = 1.0f / 1.41421356237f;
-    static constexpr float C = float(0x1 << 10);
-    static constexpr float R = 1.0f / float(0x1 << 10);
+    static constexpr float C = float(0x3ff);
+    static constexpr float R = 1.0f / float(0x3ff);
 
     static constexpr uint32_t pack(float a)
     {

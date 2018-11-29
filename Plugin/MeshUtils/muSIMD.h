@@ -41,6 +41,7 @@ void MinMax(const int *src, size_t num, int& dst_min, int& dst_max);
 void MinMax(const float *src, size_t num, float& dst_min, float& dst_max);
 void MinMax(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 void MinMax(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
+void MinMax(const float4 *src, size_t num, float4& dst_min, float4& dst_max);
 bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muEpsilon);
 bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muEpsilon);
 bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muEpsilon);
@@ -167,6 +168,8 @@ void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_
 void MinMax_ISPC(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
 void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
+void MinMax_Generic(const float4 *src, size_t num, float4& dst_min, float4& dst_max);
+void MinMax_ISPC(const float4 *src, size_t num, float4& dst_min, float4& dst_max);
 
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps);
 bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps);

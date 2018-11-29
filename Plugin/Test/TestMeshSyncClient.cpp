@@ -6,6 +6,17 @@
 #include "../MeshSync/MeshSyncUtils.h"
 using namespace mu;
 
+
+static ms::ClientSettings GetClientSettings()
+{
+    ms::ClientSettings ret;
+    GetArg("server", ret.server);
+    int port;
+    if (GetArg("port", port))
+        ret.port = (uint16_t)port;
+    return ret;
+}
+
 static void Send(ms::Scene& scene)
 {
     for (auto& obj : scene.entities) {
@@ -14,11 +25,7 @@ static void Send(ms::Scene& scene)
         }
     }
 
-    ms::ClientSettings settings;
-    GetArg("server", settings.server);
-
-    ms::Client client(settings);
-
+    ms::Client client(GetClientSettings());
     {
         ms::FenceMessage mes;
         mes.type = ms::FenceMessage::FenceType::SceneBegin;
@@ -451,8 +458,7 @@ TestCase(Test_FileAsset)
 TestCase(Test_Query)
 {
     auto send_query_impl = [](ms::QueryMessage::QueryType qt, const char *query_name) {
-        ms::ClientSettings settings;
-        ms::Client client(settings);
+        ms::Client client(GetClientSettings());
 
         ms::QueryMessage query;
         query.type = qt;

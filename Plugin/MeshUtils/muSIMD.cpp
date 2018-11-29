@@ -89,23 +89,23 @@ bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
 #ifdef muSIMD_MinMax
 void MinMax_ISPC(const int *src, size_t num, int& dst_min, int& dst_max)
 {
-    if (num == 0) { return; }
     ispc::MinMax1I(src, (int)num, dst_min, dst_max);
 }
 void MinMax_ISPC(const float *src, size_t num, float& dst_min, float& dst_max)
 {
-    if (num == 0) { return; }
     ispc::MinMax1(src, (int)num, dst_min, dst_max);
 }
 void MinMax_ISPC(const float2 *src, size_t num, float2& dst_min, float2& dst_max)
 {
-    if (num == 0) { return; }
     ispc::MinMax2((ispc::float2*)src, (int)num, (ispc::float2&)dst_min, (ispc::float2&)dst_max);
 }
 void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
 {
-    if (num == 0) { return; }
     ispc::MinMax3((ispc::float3*)src, (int)num, (ispc::float3&)dst_min, (ispc::float3&)dst_max);
+}
+void MinMax_ISPC(const float4 *src, size_t num, float4& dst_min, float4& dst_max)
+{
+    ispc::MinMax4((ispc::float4*)src, (int)num, (ispc::float4&)dst_min, (ispc::float4&)dst_max);
 }
 #endif
 
@@ -355,22 +355,11 @@ void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float
 #endif
 
 #if defined(muSIMD_MinMax) || !defined(muEnableISPC)
-void MinMax(const int *p, size_t num, int& dst_min, int& dst_max)
-{
-    Forward(MinMax, p, num, dst_min, dst_max);
-}
-void MinMax(const float *p, size_t num, float& dst_min, float& dst_max)
-{
-    Forward(MinMax, p, num, dst_min, dst_max);
-}
-void MinMax(const float2 *p, size_t num, float2& dst_min, float2& dst_max)
-{
-    Forward(MinMax, p, num, dst_min, dst_max);
-}
-void MinMax(const float3 *p, size_t num, float3& dst_min, float3& dst_max)
-{
-    Forward(MinMax, p, num, dst_min, dst_max);
-}
+void MinMax(const int *p, size_t num, int& dst_min, int& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float *p, size_t num, float& dst_min, float& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float2 *p, size_t num, float2& dst_min, float2& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float3 *p, size_t num, float3& dst_min, float3& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float4 *p, size_t num, float4& dst_min, float4& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
 #endif
 
 #if defined(muSIMD_NearEqual) || !defined(muEnableISPC)

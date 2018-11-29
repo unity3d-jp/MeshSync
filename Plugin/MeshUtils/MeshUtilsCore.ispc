@@ -376,6 +376,76 @@ export void MinMax3(
     dst_min = rmin;
     dst_max = rmax;
 }
+
+export void MinMax4(
+    uniform const float4 src[], uniform const int num,
+    uniform float4& dst_min, uniform float4& dst_max)
+{
+    if(num == 0) { return; }
+
+    uniform float4 rmin = src[0];
+    uniform float4 rmax = src[0];
+
+    const uniform int block_size = C;
+    const uniform int num_loops = num / block_size;
+    if(num_loops > 0) {
+        const uniform float * uniform fv = (const uniform float * uniform)src;
+        uniform float tmin[4][C];
+        uniform float tmax[4][C];
+        tmin[0][I] = tmax[0][I] = fv[C*0 + I];
+        tmin[1][I] = tmax[1][I] = fv[C*1 + I];
+        tmin[2][I] = tmax[2][I] = fv[C*2 + I];
+        tmin[3][I] = tmax[3][I] = fv[C*3 + I];
+
+        for(uniform int i=1; i < num_loops; ++i) {
+            uniform const int i4 = i*4;
+
+            float _0 = fv[C*(i4+0) + I];
+            tmin[0][I] = min(tmin[0][I], _0);
+            tmax[0][I] = max(tmax[0][I], _0);
+
+            float _1 = fv[C*(i4+1) + I];
+            tmin[1][I] = min(tmin[1][I], _1);
+            tmax[1][I] = max(tmax[1][I], _1);
+
+            float _2 = fv[C*(i4+2) + I];
+            tmin[2][I] = min(tmin[2][I], _2);
+            tmax[2][I] = max(tmax[2][I], _2);
+
+            float _3 = fv[C*(i4+3) + I];
+            tmin[3][I] = min(tmin[3][I], _3);
+            tmax[3][I] = max(tmax[3][I], _3);
+        }
+
+        float x,y,z,w;
+        aos_to_soa4((uniform float*)&tmin[0], &x, &y, &z, &w);
+        rmin.x = reduce_min(x);
+        rmin.y = reduce_min(y);
+        rmin.z = reduce_min(z);
+        rmin.w = reduce_min(w);
+
+        aos_to_soa4((uniform float*)&tmax[0], &x, &y, &z, &w);
+        rmax.x = reduce_max(x);
+        rmax.y = reduce_max(y);
+        rmax.z = reduce_max(z);
+        rmax.w = reduce_max(w);
+    }
+
+    for(uniform int i=num_loops*block_size; i < num; ++i) {
+        uniform float4 t = src[i];
+        rmin.x = min(rmin.x, t.x);
+        rmin.y = min(rmin.y, t.y);
+        rmin.z = min(rmin.z, t.z);
+        rmin.w = min(rmin.w, t.w);
+        rmax.x = max(rmax.x, t.x);
+        rmax.y = max(rmax.y, t.y);
+        rmax.z = max(rmax.z, t.z);
+        rmax.w = max(rmax.w, t.w);
+    }
+
+    dst_min = rmin;
+    dst_max = rmax;
+}
 #endif
 
 #ifdef muSIMD_InvertX3
