@@ -18,7 +18,7 @@ namespace ms {
 class MemoryStreamBuf : public std::streambuf
 {
 public:
-    static const size_t default_bufsize = 1024 * 64;
+    static const size_t default_bufsize = 1024 * 128;
 
     MemoryStreamBuf();
     void reset();
@@ -54,20 +54,22 @@ private:
 class CounterStreamBuf : public std::streambuf
 {
 public:
-    int_type overflow(int_type c) override
-    {
-        ++size;
-        return c;
-    }
+    static const size_t default_bufsize = 1024 * 4;
 
-    uint64_t size = 0;
+    CounterStreamBuf();
+    int overflow(int c) override;
+    int sync() override;
+    void reset();
+
+    uint64_t m_size = 0;
 };
 
 class CounterStream : public std::ostream
 {
 public:
-    CounterStream() : std::ostream(&m_buf) {}
-    uint64_t size() const { return m_buf.size; }
+    CounterStream();
+    uint64_t size() const;
+    void reset();
 
 private:
     CounterStreamBuf m_buf;
@@ -78,6 +80,7 @@ inline uint64_t ssize(const T& v)
 {
     CounterStream c;
     v.serialize(c);
+    c.flush();
     return c.size();
 }
 

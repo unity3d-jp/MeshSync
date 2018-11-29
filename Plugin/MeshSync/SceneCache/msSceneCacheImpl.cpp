@@ -102,8 +102,7 @@ void OSceneCacheImpl::doWrite()
 
 
             // serialize
-            auto size = ssize(*desc.scene);
-            m_scene_buf.resize(size);
+            m_scene_buf.reset();
             desc.scene->serialize(m_scene_buf);
             m_scene_buf.flush();
 
