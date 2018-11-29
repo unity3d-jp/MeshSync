@@ -38,3 +38,5 @@ inline void TestScope(const char *name, const Body& body, int num_try = 1)
     }
     Print("\n");
 }
+
+template<class T> bool GetArg(const char *name, T& dst);

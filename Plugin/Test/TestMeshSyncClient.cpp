@@ -15,6 +15,8 @@ static void Send(ms::Scene& scene)
     }
 
     ms::ClientSettings settings;
+    GetArg("server", settings.server);
+
     ms::Client client(settings);
 
     {
