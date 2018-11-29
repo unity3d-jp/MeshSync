@@ -1003,7 +1003,7 @@ TestCase(Test_BoundedArray)
         data_tangents[i] = tangent;
     }
 
-    BoundedArrayI16 ba1i_16;
+    BoundedArrayU16I ba1i_16;
     BoundedArrayU8 ba1_8;
     BoundedArrayU8x2 ba2_8;
     BoundedArrayU10x3 ba3_10;

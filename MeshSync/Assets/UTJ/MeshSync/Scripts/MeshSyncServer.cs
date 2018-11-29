@@ -1436,10 +1436,8 @@ namespace UTJ.MeshSync
             var path = data_trans.path;
             var go = trans.gameObject;
 
-            var pr = go.GetComponent<PointCacheRenderer>();
-            if (pr == null)
-                pr = go.AddComponent<PointCacheRenderer>();
-            var pts = go.GetComponent<PointCache>();
+            Misc.GetOrAddComponent<PointCacheRenderer>(go);
+            var pts = Misc.GetOrAddComponent<PointCache>(go);
 
             int numData = data.numData;
             if (numData == 1)
@@ -1570,10 +1568,7 @@ namespace UTJ.MeshSync
             if (trans == null || !m_syncCameras)
                 return null;
 
-            var cam = trans.GetComponent<Camera>();
-            if (cam == null)
-                cam = trans.gameObject.AddComponent<Camera>();
-
+            var cam = Misc.GetOrAddComponent<Camera>(trans.gameObject);
             cam.orthographic = data.orthographic;
 
             float fov = data.fov;
@@ -1599,10 +1594,7 @@ namespace UTJ.MeshSync
             if (trans == null || !m_syncLights)
                 return null;
 
-            var lt = trans.GetComponent<Light>();
-            if (lt == null)
-                lt = trans.gameObject.AddComponent<Light>();
-
+            var lt = Misc.GetOrAddComponent<Light>(trans.gameObject);
             lt.type = data.type;
             lt.color = data.color;
             lt.intensity = data.intensity;
@@ -1632,10 +1624,7 @@ namespace UTJ.MeshSync
                 }
                 else
                 {
-                    var dstsmr = dstgo.GetComponent<SkinnedMeshRenderer>();
-                    if (dstsmr == null)
-                        dstsmr = dstgo.AddComponent<SkinnedMeshRenderer>();
-
+                    var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
                     var mesh = srcsmr.sharedMesh;
                     dstsmr.sharedMesh = mesh;
                     dstsmr.sharedMaterials = srcsmr.sharedMaterials;

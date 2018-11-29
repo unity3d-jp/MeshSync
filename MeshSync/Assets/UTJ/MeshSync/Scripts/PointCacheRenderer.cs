@@ -9,7 +9,7 @@ namespace UTJ.MeshSync
     [RequireComponent(typeof(PointCache))]
     public class PointCacheRenderer : MonoBehaviour
     {
-        #region fields
+        #region Fields
         [SerializeField] Mesh m_mesh;
         [SerializeField] Material[] m_materials;
         [SerializeField] float m_pointSize = 1.0f;
@@ -21,7 +21,7 @@ namespace UTJ.MeshSync
         Matrix4x4[] m_matrices;
         #endregion
 
-        #region properties
+        #region Properties
         public Mesh sharedMesh
         {
             get { return m_mesh; }
@@ -60,7 +60,7 @@ namespace UTJ.MeshSync
         #endregion
 
 
-        #region impl
+        #region Impl
         bool IsValidArray<T>(T[] a)
         {
             return a != null && a.Length > 0;

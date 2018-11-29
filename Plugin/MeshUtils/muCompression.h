@@ -37,8 +37,8 @@ struct BoundedArray
 template<class PackedType, class PlainType> void encode(BoundedArray<PackedType, PlainType>& dst, const RawVector<PlainType>& src);
 template<class PackedType, class PlainType> void decode(RawVector<PlainType>& dst, const BoundedArray<PackedType, PlainType>& src);
 
-using BoundedArrayI8    = BoundedArray<uint8_t, int>;
-using BoundedArrayI16   = BoundedArray<uint16_t, int>;
+using BoundedArrayU8I   = BoundedArray<uint8_t, int>;
+using BoundedArrayU16I  = BoundedArray<uint16_t, int>;
 using BoundedArrayU8    = BoundedArray<unorm8, float>;
 using BoundedArrayU16   = BoundedArray<unorm16, float>;
 using BoundedArrayU8x2  = BoundedArray<unorm8x2, float2>;
