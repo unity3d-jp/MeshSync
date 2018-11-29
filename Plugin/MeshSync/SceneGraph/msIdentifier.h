@@ -15,6 +15,6 @@ struct Identifier
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
-msHasSerializer(Identifier);
+msSerializable(Identifier);
 
 } // namespace ms

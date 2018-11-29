@@ -40,9 +40,8 @@ public:
     bool identidy(const Identifier& v) const;
     const char* getName() const; // get name (leaf) from path
 };
-msHasSerializer(Entity);
-using EntityPtr = std::shared_ptr<Entity>;
-
+msSerializable(Entity);
+msDeclPtr(Entity);
 
 
 class Transform : public Entity
@@ -82,8 +81,8 @@ public:
     virtual void convertHandedness(bool x, bool yz);
     virtual void applyScaleFactor(float scale);
 };
-msHasSerializer(Transform);
-using TransformPtr = std::shared_ptr<Transform>;
+msSerializable(Transform);
+msDeclPtr(Transform);
 
 
 class Camera : public Transform
@@ -116,8 +115,8 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
-msHasSerializer(Camera);
-using CameraPtr = std::shared_ptr<Camera>;
+msSerializable(Camera);
+msDeclPtr(Camera);
 
 
 
@@ -154,12 +153,12 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
-msHasSerializer(Light);
-using LightPtr = std::shared_ptr<Light>;
+msSerializable(Light);
+msDeclPtr(Light);
 
 
 class Mesh;
-using MeshPtr = std::shared_ptr<Mesh>;
+msDeclPtr(Mesh);
 
 
 // Points
@@ -205,8 +204,8 @@ public:
 
     void getBounds(float3& center, float3& extents);
 };
-msHasSerializer(PointsData);
-using PointsDataPtr = std::shared_ptr<PointsData>;
+msSerializable(PointsData);
+msDeclPtr(PointsData);
 
 class Points : public Transform
 {
@@ -235,7 +234,7 @@ public:
 
     void setupFlags();
 };
-msHasSerializer(Points);
-using PointsPtr = std::shared_ptr<Points>;
+msSerializable(Points);
+msDeclPtr(Points);
 
 } // namespace ms

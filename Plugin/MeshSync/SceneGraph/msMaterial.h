@@ -57,7 +57,7 @@ public:
 
     void copy(void *dst);
 };
-msHasSerializer(MaterialProperty);
+msSerializable(MaterialProperty);
 
 
 class MaterialKeyword
@@ -76,7 +76,7 @@ public:
     MaterialKeyword();
     MaterialKeyword(const char *n, bool v);
 };
-msHasSerializer(MaterialKeyword);
+msSerializable(MaterialKeyword);
 
 
 class Material : public Asset
@@ -122,7 +122,7 @@ public:
     void addKeyword(MaterialKeyword v);
     void eraseKeyword(const char *name);
 };
-msHasSerializer(Material);
-using MaterialPtr = std::shared_ptr<Material>;
+msSerializable(Material);
+msDeclPtr(Material);
 
 } // namespace ms

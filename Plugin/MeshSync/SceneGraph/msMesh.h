@@ -114,8 +114,8 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
-msHasSerializer(BlendShapeFrameData);
-using BlendShapeFrameDataPtr = std::shared_ptr<BlendShapeFrameData>;
+msSerializable(BlendShapeFrameData);
+msDeclPtr(BlendShapeFrameData);
 
 struct BlendShapeData
 {
@@ -137,8 +137,8 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
-msHasSerializer(BlendShapeData);
-using BlendShapeDataPtr = std::shared_ptr<BlendShapeData>;
+msSerializable(BlendShapeData);
+msDeclPtr(BlendShapeData);
 
 struct BoneData 
 {
@@ -159,8 +159,8 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
-msHasSerializer(BoneData);
-using BoneDataPtr = std::shared_ptr<BoneData>;
+msSerializable(BoneData);
+msDeclPtr(BoneData);
 
 class Mesh : public Transform
 {
@@ -229,7 +229,7 @@ public:
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);
 };
-msHasSerializer(Mesh);
-using MeshPtr = std::shared_ptr<Mesh>;
+msSerializable(Mesh);
+msDeclPtr(Mesh);
 
 } // namespace ms

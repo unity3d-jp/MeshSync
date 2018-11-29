@@ -114,5 +114,6 @@ private:
     QueryMessagePtr m_current_query;
     std::vector<QueryMessagePtr> m_poll_messages;
 };
+msDeclPtr(Server);
 
 } // namespace ms

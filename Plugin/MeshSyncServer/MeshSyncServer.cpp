@@ -5,7 +5,7 @@
 
 using namespace mu;
 
-using ServerPtr = std::shared_ptr<ms::Server>;
+using ms::ServerPtr;
 static std::map<uint16_t, ServerPtr> g_servers;
 
 #pragma region Server

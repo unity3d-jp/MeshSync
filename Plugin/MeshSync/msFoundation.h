@@ -92,13 +92,13 @@ inline uint64_t ssize(const T& v)
 
 namespace ms {
 
-template<class T> struct has_serializer { static const bool result = false; };
+template<class T> struct serializable { static const bool result = false; };
 
-template<class T, bool hs = has_serializer<T>::result> struct write_impl2;
+template<class T, bool hs = serializable<T>::result> struct write_impl2;
 template<class T> struct write_impl2<T, true> { void operator()(std::ostream& os, const T& v) { v.serialize(os); } };
 template<class T> struct write_impl2<T, false> { void operator()(std::ostream& os, const T& v) { os.write((const char*)&v, sizeof(T)); } };
 
-template<class T, bool hs = has_serializer<T>::result> struct read_impl2;
+template<class T, bool hs = serializable<T>::result> struct read_impl2;
 template<class T> struct read_impl2<T, true> { void operator()(std::istream& is, T& v) { v.deserialize(is); } };
 template<class T> struct read_impl2<T, false> { void operator()(std::istream& is, T& v) { is.read((char*)&v, sizeof(T)); } };
 
@@ -392,7 +392,7 @@ std::shared_ptr<T> make_shared_ptr(T *p)
 
 } // namespace ms
 
-#define msHasSerializer(T) template<> struct has_serializer<T> { static const bool result = true; };
+#define msSerializable(T) template<> struct serializable<T> { static const bool result = true; };
 
 #define msSize(V) ret += ssize(V);
 #define msWrite(V) write(os, V);
@@ -416,3 +416,4 @@ std::shared_ptr<T> make_shared_ptr(T *p)
         Pool<T>::instance().push(this);\
     }
 
+#define msDeclPtr(T) using T##Ptr = std::shared_ptr<T>

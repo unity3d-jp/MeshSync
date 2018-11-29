@@ -16,9 +16,8 @@
 
 namespace ms {
 
-
 class Constraint;
-using ConstraintPtr = std::shared_ptr<Constraint>;
+msDeclPtr(Constraint);
 
 enum class Handedness
 {
@@ -37,7 +36,7 @@ struct SceneSettings
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
-msHasSerializer(SceneSettings);
+msSerializable(SceneSettings);
 
 struct Scene
 {
@@ -60,7 +59,7 @@ public:
     template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;
     template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
 };
-msHasSerializer(Scene);
-using ScenePtr = std::shared_ptr<Scene>;
+msSerializable(Scene);
+msDeclPtr(Scene);
 
 } // namespace ms

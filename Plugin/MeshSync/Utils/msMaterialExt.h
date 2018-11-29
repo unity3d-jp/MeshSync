@@ -34,7 +34,7 @@ public:
     void    setBumpMap(TexturePtr v);
     TextureRecord* getBumpMap() const;
 };
-using StandardMaterialPtr = std::shared_ptr<StandardMaterial>;
+msDeclPtr(StandardMaterial);
 inline StandardMaterial& AsStandardMaterial(Material& p) { return static_cast<StandardMaterial&>(p); }
 inline StandardMaterial* AsStandardMaterial(Material* p) { return static_cast<StandardMaterial*>(p); }
 inline StandardMaterialPtr AsStandardMaterial(MaterialPtr p) { return std::static_pointer_cast<StandardMaterial>(p); }
@@ -51,7 +51,7 @@ public:
 private:
     void setupShader();
 };
-using StandardSpecMaterialPtr = std::shared_ptr<StandardSpecMaterial>;
+msDeclPtr(StandardSpecMaterial);
 inline StandardSpecMaterial& AsStandardSpecMaterial(Material& p) { return static_cast<StandardSpecMaterial&>(p); }
 inline StandardSpecMaterial* AsStandardSpecMaterial(Material* p) { return static_cast<StandardSpecMaterial*>(p); }
 inline StandardSpecMaterialPtr AsStandardSpecMaterial(MaterialPtr p) { return std::static_pointer_cast<StandardSpecMaterial>(p); }

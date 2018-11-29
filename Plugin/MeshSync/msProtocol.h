@@ -28,8 +28,8 @@ public:
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is); // throw
 };
-msHasSerializer(Message);
-using MessagePtr = std::shared_ptr<Message>;
+msSerializable(Message);
+msDeclPtr(Message);
 
 
 struct GetFlags
@@ -65,8 +65,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(GetMessage);
-using GetMessagePtr = std::shared_ptr<GetMessage>;
+msSerializable(GetMessage);
+msDeclPtr(GetMessage);
 
 
 class SetMessage : public Message
@@ -80,8 +80,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(SetMessage);
-using SetMessagePtr = std::shared_ptr<SetMessage>;
+msSerializable(SetMessage);
+msDeclPtr(SetMessage);
 
 
 class DeleteMessage : public Message
@@ -95,8 +95,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(DeleteMessage);
-using DeleteMessagePtr = std::shared_ptr<DeleteMessage>;
+msSerializable(DeleteMessage);
+msDeclPtr(DeleteMessage);
 
 
 class FenceMessage : public Message
@@ -116,8 +116,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(FenceMessage);
-using FenceMessagePtr = std::shared_ptr<FenceMessage>;
+msSerializable(FenceMessage);
+msDeclPtr(FenceMessage);
 
 
 class TextMessage : public Message
@@ -139,8 +139,8 @@ public:
     std::string text;
     Type type = Type::Normal;
 };
-msHasSerializer(TextMessage);
-using TextMessagePtr = std::shared_ptr<TextMessage>;
+msSerializable(TextMessage);
+msDeclPtr(TextMessage);
 
 
 class ScreenshotMessage : public Message
@@ -156,8 +156,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(ScreenshotMessage);
-using ScreenshotMessagePtr = std::shared_ptr<ScreenshotMessage>;
+msSerializable(ScreenshotMessage);
+msDeclPtr(ScreenshotMessage);
 
 
 class QueryMessage : public Message
@@ -182,8 +182,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(QueryMessage);
-using QueryMessagePtr = std::shared_ptr<QueryMessage>;
+msSerializable(QueryMessage);
+msDeclPtr(QueryMessage);
 
 
 class ResponseMessage : public Message
@@ -196,8 +196,8 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(ResponseMessage);
-using ResponseMessagePtr = std::shared_ptr<ResponseMessage>;
+msSerializable(ResponseMessage);
+msDeclPtr(ResponseMessage);
 
 
 class PollMessage : public Message
@@ -216,7 +216,7 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msHasSerializer(PollMessage);
-using PollMessagePtr = std::shared_ptr<PollMessage>;
+msSerializable(PollMessage);
+msDeclPtr(PollMessage);
 
 } // namespace ms

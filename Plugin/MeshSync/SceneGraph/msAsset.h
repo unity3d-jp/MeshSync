@@ -34,8 +34,8 @@ public:
     bool identify(const Identifier& v) const;
 
 };
-msHasSerializer(Asset);
-using AssetPtr = std::shared_ptr<Asset>;
+msSerializable(Asset);
+msDeclPtr(Asset);
 
 
 
@@ -62,20 +62,20 @@ public:
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
 };
-msHasSerializer(FileAsset);
-using FileAssetPtr = std::shared_ptr<FileAsset>;
+msSerializable(FileAsset);
+msDeclPtr(FileAsset);
 
 
 class AnimationClip;
-using AnimationClipPtr = std::shared_ptr<AnimationClip>;
+msDeclPtr(AnimationClip);
 
 class Texture;
-using TexturePtr = std::shared_ptr<Texture>;
+msDeclPtr(Texture);
 
 class Material;
-using MaterialPtr = std::shared_ptr<Material>;
+msDeclPtr(Material);
 
 class Audio;
-using AudioPtr = std::shared_ptr<Audio>;
+msDeclPtr(Audio);
 
 } // namespace ms

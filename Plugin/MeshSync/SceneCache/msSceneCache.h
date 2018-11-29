@@ -27,7 +27,7 @@ public:
     virtual void flush() = 0;
     virtual bool isWriting() = 0;
 };
-using OSceneCachePtr = std::shared_ptr<OSceneCache>;
+msDeclPtr(OSceneCache);
 
 
 class ISceneCache
@@ -39,7 +39,7 @@ public:
     virtual ScenePtr getByIndex(size_t i) = 0;
     virtual ScenePtr getByTime(float t, bool lerp) = 0;
 };
-using ISceneCachePtr = std::shared_ptr<ISceneCache>;
+msDeclPtr(ISceneCache);
 
 
 OSceneCachePtr OpenOSceneCacheFile(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());

@@ -52,7 +52,7 @@ public:
     // length of dst must be frequency * channels
     bool convertSamplesToFloat(float *dst);
 };
-msHasSerializer(Audio);
-using AudioPtr = std::shared_ptr<Audio>;
+msSerializable(Audio);
+msDeclPtr(Audio);
 
 } // namespace ms

@@ -11,7 +11,7 @@ public:
     virtual void encode(RawVector<char>& dst, const RawVector<char>& src) = 0;
     virtual void decode(RawVector<char>& dst, const RawVector<char>& src) = 0;
 };
-using BufferEncoderPtr = std::shared_ptr<BufferEncoder>;
+msDeclPtr(BufferEncoder);
 
 BufferEncoderPtr CreatePlainEncoder();
 BufferEncoderPtr CreateZSTDEncoder();

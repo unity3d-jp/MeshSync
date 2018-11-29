@@ -94,7 +94,7 @@ public:
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
 };
-msHasSerializer(Texture);
-using TexturePtr = std::shared_ptr<Texture>;
+msSerializable(Texture);
+msDeclPtr(Texture);
 
 } // namespace ms

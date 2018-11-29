@@ -38,8 +38,8 @@ public:
     virtual void convertHandedness(bool x, bool yz) = 0;
     virtual void applyScaleFactor(float scale) = 0;
 };
-msHasSerializer(Animation);
-using AnimationPtr = std::shared_ptr<Animation>;
+msSerializable(Animation);
+msDeclPtr(Animation);
 
 
 class TransformAnimation : public Animation
@@ -69,7 +69,7 @@ public:
     void convertHandedness(bool x, bool yz) override;
     void applyScaleFactor(float scale) override;
 };
-msHasSerializer(TransformAnimation);
+msSerializable(TransformAnimation);
 
 
 class CameraAnimation : public TransformAnimation
@@ -101,7 +101,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
-msHasSerializer(CameraAnimation);
+msSerializable(CameraAnimation);
 
 
 class LightAnimation : public TransformAnimation
@@ -130,7 +130,7 @@ public:
 
     void applyScaleFactor(float scale) override;
 };
-msHasSerializer(LightAnimation);
+msSerializable(LightAnimation);
 
 
 struct BlendshapeAnimation
@@ -149,8 +149,8 @@ public:
     void clear();
     bool empty() const;
 };
-msHasSerializer(BlendshapeAnimation);
-using BlendshapeAnimationPtr = std::shared_ptr<BlendshapeAnimation>;
+msSerializable(BlendshapeAnimation);
+msDeclPtr(BlendshapeAnimation);
 
 class MeshAnimation : public TransformAnimation
 {
@@ -174,7 +174,7 @@ public:
 
     BlendshapeAnimation* findOrCreateBlendshapeAnimation(const char *name);
 };
-msHasSerializer(MeshAnimation);
+msSerializable(MeshAnimation);
 
 
 class PointsAnimation : public TransformAnimation
@@ -198,7 +198,7 @@ public:
     void reduction() override;
     void reserve(size_t n) override;
 };
-msHasSerializer(PointsAnimation);
+msSerializable(PointsAnimation);
 
 
 class AnimationClip : public Asset
@@ -226,7 +226,7 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };
-msHasSerializer(AnimationClip);
-using AnimationClipPtr = std::shared_ptr<AnimationClip>;
+msSerializable(AnimationClip);
+msDeclPtr(AnimationClip);
 
 } // namespace ms
