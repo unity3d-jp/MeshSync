@@ -21,7 +21,7 @@ void PrintImpl(const char *format, ...);
 
 
 #define TestCase(Name) testExport void Name(); RegisterTestEntry(Name); testExport void Name()
-#define Expect(Body) if(!Body) { Print("%s(%d): failed - " #Body "\n", __FILE__, __LINE__); }
+#define Expect(Body) if(!(Body)) { Print("%s(%d): failed - " #Body "\n", __FILE__, __LINE__); }
 
 template<class Body>
 inline void TestScope(const char *name, const Body& body, int num_try = 1)

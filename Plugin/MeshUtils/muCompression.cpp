@@ -61,40 +61,93 @@ void decode_tangents(RawVector<float4>& dst, const PackedArray<snorm10x3>& src)
 
 
 template<class T> static void zeroclear(T& v) { v = T::zero(); }
+template<> void zeroclear(int& v) { v = 0; }
 template<> void zeroclear(float& v) { v = 0.0f; }
+
+
+template<class PackedType, class PlainType, bool IsFloat = std::is_floating_point_v<get_scalar_type<PlainType>> >
+struct EncodeImpl;
+
+template<class PackedType, class PlainType>
+struct EncodeImpl<PackedType, PlainType, true>
+{
+    static inline void encode(BoundedArray<PackedType, PlainType>& dst, const RawVector<PlainType>& src)
+    {
+        zeroclear(dst.bound_min);
+        zeroclear(dst.bound_max);
+        dst.packed.resize_discard(src.size());
+        if (dst.packed.empty())
+            return;
+
+        MinMax(src.data(), src.size(), dst.bound_min, dst.bound_max);
+
+        auto bmin = dst.bound_min;
+        auto rsize = rcp(dst.bound_max - dst.bound_min);
+        enumerate(dst.packed, src, [bmin, rsize](auto& d, const auto& s) {
+            d = to<PackedType>((s - bmin) * rsize);
+        });
+    }
+
+    static inline void decode(RawVector<PlainType>& dst, const BoundedArray<PackedType, PlainType>& src)
+    {
+        dst.resize_discard(src.packed.size());
+        if (src.packed.empty())
+            return;
+
+        auto bmin = src.bound_min;
+        auto size = (src.bound_max - src.bound_min);
+        enumerate(dst, src.packed, [bmin, size](auto& d, const auto& s) {
+            d = to<PlainType>(s) * size + bmin;
+        });
+    }
+};
+
+template<class PackedType, class PlainType>
+struct EncodeImpl<PackedType, PlainType, false>
+{
+    static inline void encode(BoundedArray<PackedType, PlainType>& dst, const RawVector<PlainType>& src)
+    {
+        zeroclear(dst.bound_min);
+        zeroclear(dst.bound_max);
+        dst.packed.resize_discard(src.size());
+        if (dst.packed.empty())
+            return;
+
+        MinMax(src.data(), src.size(), dst.bound_min, dst.bound_max);
+
+        auto bmin = dst.bound_min;
+        enumerate(dst.packed, src, [bmin](auto& d, const auto& s) {
+            d = (PackedType)(s - bmin);
+        });
+    }
+
+    static inline void decode(RawVector<PlainType>& dst, const BoundedArray<PackedType, PlainType>& src)
+    {
+        dst.resize_discard(src.packed.size());
+        if (src.packed.empty())
+            return;
+
+        auto bmin = src.bound_min;
+        enumerate(dst, src.packed, [bmin](auto& d, const auto& s) {
+            d = (PlainType)(s) + bmin;
+        });
+    }
+};
 
 template<class PackedType, class PlainType>
 inline void encode(BoundedArray<PackedType, PlainType>& dst, const RawVector<PlainType>& src)
 {
-    zeroclear(dst.bound_min);
-    zeroclear(dst.bound_max);
-    dst.packed.resize_discard(src.size());
-    if (dst.packed.empty())
-        return;
-
-    MinMax(src.data(), src.size(), dst.bound_min, dst.bound_max);
-
-    auto bmin = dst.bound_min;
-    auto rsize = rcp(dst.bound_max - dst.bound_min);
-    enumerate(dst.packed, src, [bmin, rsize](auto& d, const auto& s) {
-        d = to<PackedType>((s - bmin) * rsize);
-    });
+    EncodeImpl<PackedType, PlainType>::encode(dst, src);
 }
 
 template<class PackedType, class PlainType>
 inline void decode(RawVector<PlainType>& dst, const BoundedArray<PackedType, PlainType>& src)
 {
-    dst.resize_discard(src.packed.size());
-    if (src.packed.empty())
-        return;
-
-    auto bmin = src.bound_min;
-    auto size = (src.bound_max - src.bound_min);
-    enumerate(dst, src.packed, [bmin, size](auto& d, const auto& s) {
-        d = to<PlainType>(s) * size + bmin;
-    });
+    EncodeImpl<PackedType, PlainType>::decode(dst, src);
 }
 
+template void encode(BoundedArray<uint8_t, int>& dst, const RawVector<int>& src);
+template void encode(BoundedArray<uint16_t, int>& dst, const RawVector<int>& src);
 template void encode(BoundedArray<unorm8, float>& dst, const RawVector<float>& src);
 template void encode(BoundedArray<unorm16, float>& dst, const RawVector<float>& src);
 template void encode(BoundedArray<unorm8x2, float2>& dst, const RawVector<float2>& src);
@@ -105,6 +158,8 @@ template void encode(BoundedArray<unorm16x3, float3>& dst, const RawVector<float
 template void encode(BoundedArray<unorm8x4, float4>& dst, const RawVector<float4>& src);
 template void encode(BoundedArray<unorm16x4, float4>& dst, const RawVector<float4>& src);
 
+template void decode(RawVector<int>& dst, const BoundedArray<uint8_t, int>& src);
+template void decode(RawVector<int>& dst, const BoundedArray<uint16_t, int>& src);
 template void decode(RawVector<float>& dst, const BoundedArray<unorm8, float>& src);
 template void decode(RawVector<float>& dst, const BoundedArray<unorm16, float>& src);
 template void decode(RawVector<float2>& dst, const BoundedArray<unorm8x2, float2>& src);

@@ -193,6 +193,19 @@ struct tmat4x4
     }
 };
 
+template<class T> struct get_scalar_type_t { using type = typename T::scalar_t; };
+#define Scalar(T) template<> struct get_scalar_type_t<T> { using type = T; }
+Scalar(int); Scalar(half); Scalar(float); Scalar(double);
+Scalar(snorm8); Scalar(unorm8); Scalar(unorm8n); Scalar(snorm16); Scalar(unorm16);
+#undef Scalar
+template<class T> using get_scalar_type = typename get_scalar_type_t<T>::type;
+
+template<class T> struct get_vector_type_t { using type = typename T::vector_t; };
+template<class T> struct get_vector_type_t<tvec2<T>> { using type = tvec2<T>; };
+template<class T> struct get_vector_type_t<tvec3<T>> { using type = tvec3<T>; };
+template<class T> struct get_vector_type_t<tvec4<T>> { using type = tvec4<T>; };
+template<class T> using get_vector_type = typename get_vector_type_t<T>::type;
+
 using float2 = tvec2<float>;
 using float3 = tvec3<float>;
 using float4 = tvec4<float>;

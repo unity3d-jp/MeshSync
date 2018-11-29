@@ -983,12 +983,15 @@ TestCase(Test_BoundedArray)
 
     Random rnd;
 
+    RawVector<int> data1i(N), tmp1i(N);
     RawVector<float> data1(N), tmp1(N);
     RawVector<float2> data2(N), tmp2(N);
     RawVector<float3> data3(N), tmp3(N);
     RawVector<float4> data4(N), tmp4(N);
     RawVector<float4> data_tangents(N), tmp_tangents(N);
     for (int i = 0; i < N; ++i) {
+        data1i[i] = (rnd.f01() * 60000.0f) + 10000;
+
         data1[i] = rnd.f11() * 1.0f;
         data2[i] = { rnd.f01()*2.0f, rnd.f01()*2.0f - 2.0f };
         data3[i] = rnd.v3n();
@@ -1000,16 +1003,17 @@ TestCase(Test_BoundedArray)
         data_tangents[i] = tangent;
     }
 
-    PackedArrayS10x3 batan;
+    BoundedArrayI16 ba1i_16;
     BoundedArrayU8 ba1_8;
     BoundedArrayU8x2 ba2_8;
     BoundedArrayU10x3 ba3_10;
     BoundedArrayU16x3 ba3_16;
     BoundedArrayU16x4 ba4_16;
+    PackedArrayS10x3 batan;
 
-    encode_tangents(batan, data_tangents);
-    decode_tangents(tmp_tangents, batan);
-    Expect(NearEqual(data_tangents.data(), tmp_tangents.data(), N, eps));
+    encode(ba1i_16, data1i);
+    decode(tmp1i, ba1i_16);
+    Expect(data1i == tmp1i);
 
     encode(ba1_8, data1);
     decode(tmp1, ba1_8);
@@ -1030,4 +1034,8 @@ TestCase(Test_BoundedArray)
     encode(ba4_16, data4);
     decode(tmp4, ba4_16);
     Expect(NearEqual(data4.data(), tmp4.data(), N, eps));
+
+    encode_tangents(batan, data_tangents);
+    decode_tangents(tmp_tangents, batan);
+    Expect(NearEqual(data_tangents.data(), tmp_tangents.data(), N, eps));
 }
