@@ -36,7 +36,7 @@
 #include <maxscript/foundation/numbers.h>
 #include <maxscript/macros/define_instantiation_functions.h>
 #include <MorpherApi.h>
-#if MAX_VERSION >= 2018
+#if MAX_PRODUCT_YEAR_NUMBER >= 2018
     #include <CATAPI/CATClassID.h>
 #endif
 

@@ -95,7 +95,7 @@ bool IsBone(Object *obj)
         cid == Class_ID(BONE_CLASS_ID, 0) ||
         cid == BONE_OBJ_CLASSID ||
         cid == SKELOBJ_CLASS_ID
-#if MAX_VERSION >= 2018
+#if MAX_PRODUCT_YEAR_NUMBER >= 2018
         ||
         cid == CATBONE_CLASS_ID ||
         cid == CATHUB_CLASS_ID
