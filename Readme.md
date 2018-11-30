@@ -30,18 +30,21 @@ Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作�
 - Maya を起動し、Windows -> Settings/Preferences -> Plug-in Manager を開き、MeshSyncClient の Loaded にチェックを入れてプラグインを有効化します。
 - UnityMeshSync シェルフが追加されているので、それの歯車アイコンで設定メニューを開きます。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります
+- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
 
 &nbsp;  
 
-- 歯車アイコン以外のボタンはそれぞれ手動同期、アニメーション同期相当のボタンになっています
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています
-- ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています
-- 負のスケールは部分的にしかサポートしていないので注意が必要です
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
-- NURBS などポリゴン以外の形状データは対応していません
-- インスタンシングは対応していますが、スキニングされたメッシュのインスタンスは現在未対応です (Unity 側では全て元インスタンスと同じ位置になっていまいます)
-- MEL にもコマンドが登録されており、全ての機能に MEL 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin/MeshSyncClientMaya/msmayaCommands.cpp)
+- 歯車アイコン以外のボタンはそれぞれ手動同期、アニメーション同期相当のボタンになっています。
+- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
+- ポリゴンメッシュはスキニング/ボーン (SkinCluster) と BlendShape もそのまま Unity へ持ってこれるようになっています。
+  - これら以外のデフォーマも適用を試みますが、前後に SkinCluster があった場合などに正しく適用されない可能性があります。
+  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を同期します。Maya 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
+- 負のスケールは部分的にしかサポートしていないので注意が必要です。
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
+- NURBS などポリゴン以外の形状データは対応していません。
+- インスタンシングは対応していますが、スキニングされたメッシュのインスタンスは現在未対応です (Unity 側では全て元インスタンスと同じ位置になっていまいます)。
+- MEL にもコマンドが登録されており、全ての機能に MEL 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin/MeshSyncClientMaya/msmayaCommands.cpp)。
 
 
 ### Maya LT
@@ -59,20 +62,21 @@ Maya 2015, 2016, 2016.5, 2017, 2018 + Windows, Mac, Linux (CentOS 7) で動作�
 - インストール後、メインメニューバーに "UnityMeshSync" が追加されているので、それの "Window" から設定ウィンドウを開けます。
   - メニューバーを編集する場合、Action に "UnityMeshSync" カテゴリが追加されているので、そちらから MeshSync の機能にアクセスできます
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります
+- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
 
 &nbsp;  
 
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています
-- モディファイアは大体対応していますが、対応できないケースもあります。以下のルールに従います
-  - Morph も Skin もない場合、全てのモディファイアを適用した状態で同期します
-  - Morph か Skin がある場合、その一つ前までのモディファイアを適用した状態で同期します
-    - Morph / Skin が複数ある場合、一番下のものが基準として選ばれます
-  - Morh と Skin は Unity 側にそのまま Blendshape / Skin として同期します
-    - Unity 側では常に Blendshape -> Skin の順番で適用されるため、Max 側で順番が逆だと意図しない結果になる可能性があります
-- 負のスケールは部分的にしかサポートしていないので注意が必要です
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
-- NURBS などポリゴン以外の形状データは対応していません
+- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
+- モディファイアは大体対応していますが、対応できないケースもあります。以下のルールに従います。
+  - Morph も Skin もない場合、全てのモディファイアを適用した状態で同期します。
+  - Morph か Skin がある場合、その一つ前までのモディファイアを適用した状態で同期します。
+    - Morph / Skin が複数ある場合、一番下のものが基準として選ばれます。
+  - Morh と Skin は Unity 側にそのまま Blendshape / Skin として同期します。
+    - Unity 側では常に Blendshape -> Skin の順番で適用されるため、Max 側で順番が逆だと意図しない結果になる可能性があります。
+  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を同期します。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
+- 負のスケールは部分的にしかサポートしていないので注意が必要です。
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
 - Max script にもコマンドが追加されており、全ての機能に Max script 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp)
 
 
@@ -87,20 +91,21 @@ Motion Builder 2015, 2016, 2017, 2018 + Windows, Linux (CentOS 7) で動作を�
 - インストール後、Asset Browser 内の Templates -> Devices に UnityMeshSync というオブジェクトが追加されているので、それをシーンに追加します
 - Navigator 内の Devices -> UnityMeshSync を選択することで各種設定や機能にアクセスできます 
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります
+- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
 
 &nbsp;  
 
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています
-- ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています
+- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
+- ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
 - NURBS などポリゴン以外の形状データは対応していません
 
-<img align="right" src="https://user-images.githubusercontent.com/1488611/39971861-81043192-573e-11e8-9945-2bb248d869bd.png" height=400>
+<img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 
 ### Blender
-Blender 2.79(a,b), 2.80 alpha2 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。 対応は容易なので、気付き次第対応版を出す予定ではあります。
+Blender 2.79(a,b), 2.80 beta (2018-11-29) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Blender_*.zip をダウンロードして展開
     - 展開して出てくる UnityMeshSync_Blender_* ディレクトリの中にも zip が入っていますが、これらはそのままで大丈夫です
@@ -108,18 +113,19 @@ Blender 2.79(a,b), 2.80 alpha2 + Windows, Mac, Linux (CentOS 7) で動作を確�
   - **古いバージョンをインストール済みの場合、事前に削除しておく必要があります**。Add-ons メニューから "Import-Export: Unity Mesh Sync" を選択して Remove した後、blender を再起動してから上記手順を踏んでください。
 - "Import-Export: Unity Mesh Sync" が追加されるので、チェックを入れて有効化します。
 - MeshSync パネルが追加されるので、そちらから設定や手動の同期を行います。
+  - 2.8 系ではパネルの場所がややわかりにくい場所になっています。右スクリーンショットを参照ください。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
 
 &nbsp;  
 
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています
-- ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています
-- 制限はあるものの Mirror デフォーマも対応しています
+- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
+- ポリゴンメッシュはスキニング/ボーン (Armature) と BlendShape もそのまま Unity へ持ってこれるようになっています。Mirror デフォーマも対応しています。これら以外のモディファイアは無視されます。
+  - "Bake Modifiers" をチェックすると、モディファイアを全て適用した結果を同期します。Blender 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
+- "Convert To Mesh" をチェックすると、NURBS などのポリゴンに変換可能なオブジェクトを変換して同期します。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
-- NURBS などポリゴン以外の形状データは対応していません
-- Armature, BlendShape, Mirror 以外のデフォーマは対応していません
 
 ### メタセコイア
 Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
@@ -129,6 +135,8 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
   - **古いバージョンをインストール済みの場合、事前に手動で削除しておく必要があります**。メタセコイアを起動していない状態で該当ファイルを削除してください。
 - インストール後 パネル -> Unity Mesh Sync が追加されるのでこれを開き、"Auto Sync" をチェックします。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
+- "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
 - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
 
 &nbsp;  
@@ -150,7 +158,7 @@ VRED は API hook を用いた特殊な実装になっています。そのた�
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - 部分的ながらテクスチャの同期にも対応しています。シェーダ内のパラメータ "colorTexture" "bumpTexture" に設定されているテクスチャをそれぞれカラーテクスチャ、ノーマルマップ用テクスチャとして同期します。
 - "Flip U/V" をチェックするとテクスチャ座標の U/V を反転します。マッピング方法が UV ではない場合でもこれを用いることでつじつまを合わせられるかもしれません。
-- "Double Sided" をチェックすると Mesh を両面化して送ります。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - "Sync Deleted" をチェックすると、VRED 側で消えたモデルが Unity 側でも消えるようになります。
 - "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
 
@@ -168,6 +176,8 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
 - MeshSyncClientXismo.exe を起動します。これにより MeshSync が付与された状態で xismo が起動します。
 - ウィンドウ -> Unity Mesh Sync メニューが追加されており、これで各種設定などを行います。
 - "Auto Sync" をチェックすると編集が自動的に Unity 側に反映されるようになります。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
+- "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
 
 &nbsp;  
 
@@ -183,29 +193,26 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
   - インポート後は GameObject -> MeshSync メニューが追加されているはずです
 - GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当します
 
-<img align="right" src="https://user-images.githubusercontent.com/1488611/39972178-45cf48d6-5744-11e8-8722-11fd412c7abd.png">
+<img align="right" src="https://user-images.githubusercontent.com/1488611/49274442-c40c4400-f4bb-11e8-99d6-3257cdbe7320.png" height=400>
 
 - Root Object
   - 同期により生成されるオブジェクト群のルートとなるオブジェクトを指定します。未設定の場合、ルートにオブジェクトが生成されていきます。
 - Sync Transform など
   - コンポーネント別の同期の有効/無効指定です。Play モードで物理シミュレーションの挙動を確認したい場合などに Transform の同期が邪魔になるので用意されたオプションです。
-- Update Mesh Collider オプション
+- Update Mesh Collider
+  - これが有効の場合、オブジェクトが MeshCollider を持っていたら Mesh を同期する時に MeshCollider の Mesh も更新します。
+- Track Material Assignment
+  - これが有効の場合、SceneView でマテリアルを D&D でアサインした場合などに、その変更を検知して同じマテリアルを持つ他の Mesh に対しても同様にマテリアルを更新します。
+- Update Mesh Collider
   - これが有効の場合、オブジェクトが MeshCollider を持っていたら Mesh を同期する時に MeshCollider の Mesh も更新します。
   
   &nbsp;
 
 - マテリアルリスト
   - MeshSyncServer はマテリアルのリストを保持しています。このリストにマテリアルを設定すると、対応するオブジェクトに適切にアサインされます。
-
-
 - アセット化
   - DCC ツール側の編集によって生成された Mesh 郡は、そのままではそのシーン内にしか存在できないオブジェクトです。他のシーンやプロジェクトへ持ち出せるようにするにはアセットファイルとして保存する必要があります。
   MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が行われます。("Asset Export Path" で指定されたディレクトリにファイルが生成されます)  
-
-
-- ライトマップ UV
-  - Unity でライトマップを使う場合、UV は通常のとは別の専用のものが用いられます。通常はモデルインポート時に自動的に生成されますが、本プラグインで DCC ツールから受信したモデルにはそれがありません。
-  MeshSyncServer の "Generate Lightmap UV" ボタンを押すとそのライトマップ用 UV を生成します。この処理は結構時間がかかるのでご注意ください。
 
 
 ## Tips や注意事項など
