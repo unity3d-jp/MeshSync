@@ -65,7 +65,7 @@ template<> void zeroclear(int& v) { v = 0; }
 template<> void zeroclear(float& v) { v = 0.0f; }
 
 
-template<class PackedType, class PlainType, bool IsFloat = std::is_floating_point_v<get_scalar_type<PlainType>> >
+template<class PackedType, class PlainType, bool IsFloat = std::is_floating_point<get_scalar_type<PlainType>>::value >
 struct EncodeImpl;
 
 template<class PackedType, class PlainType>
