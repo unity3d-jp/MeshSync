@@ -9,20 +9,35 @@ namespace mu {
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"
 
-#ifdef muEnableHalf
-#ifdef muSIMD_FloatToHalf
-void FloatToHalf_ISPC(half *dst, const float *src, size_t num)
+#ifdef muSIMD_SumInt32
+uint64_t SumInt32_ISPC(const uint32_t *src, size_t num)
 {
-    ispc::FloatToHalf((uint16_t*)dst, src, (int)num);
+    return ispc::SumInt32(src, (int)num);
 }
 #endif
-#ifdef muSIMD_HalfToFloat
-void HalfToFloat_ISPC(float *dst, const half *src, size_t num)
-{
-    ispc::HalfToFloat(dst, (const uint16_t*)src, (int)num);
-}
+
+#ifdef muSIMD_Float_Half_Conversion
+void F32ToF16_ISPC(half *dst, const float *src, size_t num) { ispc::F32ToF16((uint16_t*)dst, src, (int)num); }
+void F16ToF32_ISPC(float *dst, const half *src, size_t num) { ispc::F16ToF32(dst, (const uint16_t*)src, (int)num); }
 #endif
-#endif // muEnableHalf
+
+#ifdef muSIMD_Float_Norm_Conversion
+void F32ToS8_ISPC(snorm8 *dst, const float *src, size_t num) { ispc::F32ToS8((int8_t*)dst, src, (int)num); }
+void S8ToF32_ISPC(float *dst, const snorm8 *src, size_t num) { ispc::S8ToF32(dst, (int8_t*)src, (int)num); }
+void F32ToU8_ISPC(unorm8 *dst, const float *src, size_t num) { ispc::F32ToU8((uint8_t*)dst, src, (int)num); }
+void U8ToF32_ISPC(float *dst, const unorm8 *src, size_t num) { ispc::U8ToF32(dst, (uint8_t*)src, (int)num); }
+void F32ToU8N_ISPC(unorm8n *dst, const float *src, size_t num) { ispc::F32ToU8N((uint8_t*)dst, src, (int)num); }
+void U8NToF32_ISPC(float *dst, const unorm8n *src, size_t num) { ispc::U8NToF32(dst, (uint8_t*)src, (int)num); }
+void F32ToS16_ISPC(snorm16 *dst, const float *src, size_t num) { ispc::F32ToS16((int16_t*)dst, src, (int)num); }
+void S16ToF32_ISPC(float *dst, const snorm16 *src, size_t num) { ispc::S16ToF32(dst, (int16_t*)src, (int)num); }
+void F32ToU16_ISPC(unorm16 *dst, const float *src, size_t num) { ispc::F32ToU16((uint16_t*)dst, src, (int)num); }
+void U16ToF32_ISPC(float *dst, const unorm16 *src, size_t num) { ispc::U16ToF32(dst, (uint16_t*)src, (int)num); }
+void F32ToS24_ISPC(snorm24 *dst, const float *src, size_t num) { ispc::F32ToS24((uint8_t*)dst, src, (int)num); }
+void S24ToF32_ISPC(float *dst, const snorm24 *src, size_t num) { ispc::S24ToF32(dst, (uint8_t*)src, (int)num); }
+void F32ToS32_ISPC(snorm32 *dst, const float *src, size_t num) { ispc::F32ToS32((int32_t*)dst, src, (int)num); }
+void S32ToF32_ISPC(float *dst, const snorm32 *src, size_t num) { ispc::S32ToF32(dst, (int32_t*)src, (int)num); }
+#endif
+
 
 #ifdef muSIMD_InvertX3
 void InvertX_ISPC(float3 *dst, size_t num)
@@ -71,18 +86,26 @@ bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps)
 }
 #endif
 
-#ifdef muSIMD_MinMax2
+#ifdef muSIMD_MinMax
+void MinMax_ISPC(const int *src, size_t num, int& dst_min, int& dst_max)
+{
+    ispc::MinMax1I(src, (int)num, dst_min, dst_max);
+}
+void MinMax_ISPC(const float *src, size_t num, float& dst_min, float& dst_max)
+{
+    ispc::MinMax1(src, (int)num, dst_min, dst_max);
+}
 void MinMax_ISPC(const float2 *src, size_t num, float2& dst_min, float2& dst_max)
 {
-    if (num == 0) { return; }
     ispc::MinMax2((ispc::float2*)src, (int)num, (ispc::float2&)dst_min, (ispc::float2&)dst_max);
 }
-#endif
-#ifdef muSIMD_MinMax3
 void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
 {
-    if (num == 0) { return; }
     ispc::MinMax3((ispc::float3*)src, (int)num, (ispc::float3&)dst_min, (ispc::float3&)dst_max);
+}
+void MinMax_ISPC(const float4 *src, size_t num, float4& dst_min, float4& dst_max)
+{
+    ispc::MinMax4((ispc::float4*)src, (int)num, (ispc::float4&)dst_min, (ispc::float4&)dst_max);
 }
 #endif
 
@@ -249,20 +272,35 @@ void GenerateTangentsTriangleSoA_ISPC(float4 *dst,
     #define Forward(Name, ...) Name##_Generic(__VA_ARGS__)
 #endif
 
-#ifdef muEnableHalf
-#if defined(muSIMD_FloatToHalf) || !defined(muEnableISPC)
-void FloatToHalf(half *dst, const float *src, size_t num)
+#if defined(muSIMD_SumInt32) || !defined(muEnableISPC)
+uint64_t SumInt32(const void *src, size_t num)
 {
-    Forward(FloatToHalf, dst, src, num);
+    return Forward(SumInt32, (uint32_t*)src, num / sizeof(uint32_t));
 }
 #endif
-#if defined(muSIMD_HalfToFloat) || !defined(muEnableISPC)
-void HalfToFloat(float *dst, const half *src, size_t num)
-{
-    Forward(HalfToFloat, dst, src, num);
-}
+
+#if defined(muSIMD_Float_Half_Conversion) || !defined(muEnableISPC)
+void F32ToF16(half *dst, const float *src, size_t num) { Forward(F32ToF16, dst, src, num); }
+void F16ToF32(float *dst, const half *src, size_t num) { Forward(F16ToF32, dst, src, num); }
 #endif
-#endif // muEnableHalf
+
+#if defined(muSIMD_Float_Norm_Conversion) || !defined(muEnableISPC)
+void F32ToS8(snorm8 *dst, const float *src, size_t num) { Forward(F32ToS8, dst, src, num); }
+void S8ToF32(float *dst, const snorm8 *src, size_t num) { Forward(S8ToF32, dst, src, num); }
+void F32ToU8(unorm8 *dst, const float *src, size_t num) { Forward(F32ToU8, dst, src, num); }
+void U8ToF32(float *dst, const unorm8 *src, size_t num) { Forward(U8ToF32, dst, src, num); }
+void F32ToU8N(unorm8n *dst, const float *src, size_t num) { Forward(F32ToU8N, dst, src, num); }
+void U8NToF32(float *dst, const unorm8n *src, size_t num) { Forward(U8NToF32, dst, src, num); }
+void F32ToS16(snorm16 *dst, const float *src, size_t num) { Forward(F32ToS16, dst, src, num); }
+void S16ToF32(float *dst, const snorm16 *src, size_t num) { Forward(S16ToF32, dst, src, num); }
+void F32ToU16(unorm16 *dst, const float *src, size_t num) { Forward(F32ToU16, dst, src, num); }
+void U16ToF32(float *dst, const unorm16 *src, size_t num) { Forward(U16ToF32, dst, src, num); }
+void F32ToS24(snorm24 *dst, const float *src, size_t num) { Forward(F32ToS24, dst, src, num); }
+void S24ToF32(float *dst, const snorm24 *src, size_t num) { Forward(S24ToF32, dst, src, num); }
+void F32ToS32(snorm32 *dst, const float *src, size_t num) { Forward(F32ToS32, dst, src, num); }
+void S32ToF32(float *dst, const snorm32 *src, size_t num) { Forward(S32ToF32, dst, src, num); }
+#endif
+
 
 #if defined(muSIMD_InvertX3) || !defined(muEnableISPC)
 void InvertX(float3 *dst, size_t num)
@@ -302,31 +340,26 @@ void Lerp(float *dst, const float *src1, const float *src2, size_t num, float w)
 {
     Forward(Lerp, dst, src1, src2, num, w);
 }
-#endif
-#if defined(muSIMD_Lerp) || !defined(muEnableISPC)
 void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w)
 {
     Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 2, w);
 }
-#endif
-#if defined(muSIMD_Lerp) || !defined(muEnableISPC)
 void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w)
 {
     Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 3, w);
 }
+void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w)
+{
+    Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 4, w);
+}
 #endif
 
-#if defined(muSIMD_MinMax2) || !defined(muEnableISPC)
-void MinMax(const float2 *p, size_t num, float2& dst_min, float2& dst_max)
-{
-    Forward(MinMax, p, num, dst_min, dst_max);
-}
-#endif
-#if defined(muSIMD_MinMax3) || !defined(muEnableISPC)
-void MinMax(const float3 *p, size_t num, float3& dst_min, float3& dst_max)
-{
-    Forward(MinMax, p, num, dst_min, dst_max);
-}
+#if defined(muSIMD_MinMax) || !defined(muEnableISPC)
+void MinMax(const int *p, size_t num, int& dst_min, int& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float *p, size_t num, float& dst_min, float& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float2 *p, size_t num, float2& dst_min, float2& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float3 *p, size_t num, float3& dst_min, float3& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
+void MinMax(const float4 *p, size_t num, float4& dst_min, float4& dst_max) { Forward(MinMax, p, num, dst_min, dst_max); }
 #endif
 
 #if defined(muSIMD_NearEqual) || !defined(muEnableISPC)

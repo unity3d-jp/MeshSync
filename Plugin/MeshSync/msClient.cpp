@@ -16,13 +16,13 @@ ScenePtr Client::send(const GetMessage& mes)
     ScenePtr ret;
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
-        session.setTimeout(5000 * 1000);
+        session.setTimeout(m_settings.timeout_ms * 1000);
 
         {
             HTTPRequest request{ HTTPRequest::HTTP_POST, "get" };
             request.setContentType("application/octet-stream");
             request.setExpectContinue(true);
-            request.setContentLength(mes.getSerializeSize());
+            request.setContentLength(ssize(mes));
             auto& os = session.sendRequest(request);
             mes.serialize(os);
             os.flush();
@@ -31,8 +31,13 @@ ScenePtr Client::send(const GetMessage& mes)
         {
             HTTPResponse response;
             auto& is = session.receiveResponse(response);
-            ret.reset(new Scene());
-            ret->deserialize(is);
+            try {
+                ret.reset(new Scene());
+                ret->deserialize(is);
+            }
+            catch (const std::exception&) {
+                ret.reset();
+            }
         }
     }
     catch (...) {
@@ -49,7 +54,7 @@ bool Client::send(const SetMessage& mes)
         HTTPRequest request{ HTTPRequest::HTTP_POST, "set" };
         request.setContentType("application/octet-stream");
         request.setExpectContinue(true);
-        request.setContentLength(mes.getSerializeSize());
+        request.setContentLength(ssize(mes));
         auto& os = session.sendRequest(request);
         mes.serialize(os);
         os.flush();
@@ -58,7 +63,7 @@ bool Client::send(const SetMessage& mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
-        return true;
+        return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {
         return false;
@@ -74,7 +79,7 @@ bool Client::send(const DeleteMessage& mes)
         HTTPRequest request{ HTTPRequest::HTTP_POST, "delete" };
         request.setContentType("application/octet-stream");
         request.setExpectContinue(true);
-        request.setContentLength(mes.getSerializeSize());
+        request.setContentLength(ssize(mes));
         auto& os = session.sendRequest(request);
         mes.serialize(os);
         os.flush();
@@ -83,7 +88,7 @@ bool Client::send(const DeleteMessage& mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
-        return true;
+        return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {
         return false;
@@ -99,7 +104,7 @@ bool Client::send(const FenceMessage & mes)
         HTTPRequest request{ HTTPRequest::HTTP_POST, "fence" };
         request.setContentType("application/octet-stream");
         request.setExpectContinue(true);
-        request.setContentLength(mes.getSerializeSize());
+        request.setContentLength(ssize(mes));
         auto& os = session.sendRequest(request);
         mes.serialize(os);
         os.flush();
@@ -108,7 +113,7 @@ bool Client::send(const FenceMessage & mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
-        return true;
+        return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {
         return false;
@@ -126,7 +131,7 @@ MessagePtr Client::send(const QueryMessage & mes)
             HTTPRequest request{ HTTPRequest::HTTP_POST, "query" };
             request.setContentType("application/octet-stream");
             request.setExpectContinue(true);
-            request.setContentLength(mes.getSerializeSize());
+            request.setContentLength(ssize(mes));
             auto& os = session.sendRequest(request);
             mes.serialize(os);
             os.flush();

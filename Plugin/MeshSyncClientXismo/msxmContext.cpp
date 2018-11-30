@@ -1,143 +1,8 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
-#include "MeshSyncClientXismo.h"
-using namespace mu;
+#include "MeshSync/MeshSyncUtils.h"
+#include "msxmContext.h"
 
-
-struct ms_vertex
-{
-    float3 vertex;
-    float3 normal;
-    float4 color;
-    float2 uv;
-};
-
-struct xm_vertex1
-{
-    float3 vertex;
-    float3 normal;
-    float4 color;
-    float2 uv;
-    float state;
-
-    bool operator==(const ms_vertex& v) const
-    {
-        return vertex == v.vertex && normal == v.normal && color == v.color && uv == v.uv;
-    }
-    operator ms_vertex() const
-    {
-        return { vertex, normal, color, uv };
-    }
-};
-
-
-struct MaterialData
-{
-    GLuint program = 0;
-    GLuint texture = 0;
-    float4 diffuse = float4::zero();
-
-    bool operator==(const MaterialData& v) const
-    {
-        return program == v.program && texture == v.texture && diffuse == v.diffuse;
-    }
-    bool operator!=(const MaterialData& v) const
-    {
-        return !operator==(v);
-    }
-};
-
-
-struct BufferData : public mu::noncopyable
-{
-    RawVector<char> data, tmp_data;
-    void        *mapped_data;
-    GLuint      handle = 0;
-    int         num_elements = 0;
-    int         stride = 0;
-    bool        triangle = false;
-    bool        dirty = false;
-    bool        visible = true;
-    int         material_id = -1;
-    MaterialData material;
-    float4x4    transform = float4x4::identity();
-
-    struct SendTaskData : public mu::noncopyable
-    {
-        RawVector<char>     data;
-        GLuint              handle = 0;
-        int                 num_elements = 0;
-        bool                visible = true;
-        int                 material_id = -1;
-        float4x4            transform = float4x4::identity();
-        RawVector<ms_vertex> vertices_welded;
-        ms::MeshPtr         dst_mesh;
-
-        void buildMeshData(bool weld_vertices);
-    };
-    using SendTaskPtr = std::shared_ptr<SendTaskData>;
-    SendTaskPtr send_data;
-
-    bool isModelData() const;
-    void updateSendData();
-};
-
-
-class msxmContext : public msxmIContext
-{
-public:
-    msxmContext();
-    ~msxmContext() override;
-    msxmSettings& getSettings() override;
-    void send(bool force) override;
-
-    void onActiveTexture(GLenum texture) override;
-    void onBindTexture(GLenum target, GLuint texture) override;
-    void onGenBuffers(GLsizei n, GLuint* buffers) override;
-    void onDeleteBuffers(GLsizei n, const GLuint* buffers) override;
-    void onBindBuffer(GLenum target, GLuint buffer) override;
-    void onBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage) override;
-    void onMapBuffer(GLenum target, GLenum access, void *&mapped_data) override;
-    void onUnmapBuffer(GLenum target) override;
-    void onVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) override;
-    void onUniform4fv(GLint location, GLsizei count, const GLfloat* value) override;
-    void onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value) override;
-    void onDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices) override;
-    void onFlush() override;
-
-protected:
-    BufferData* getActiveBuffer(GLenum target);
-
-protected:
-    msxmSettings m_settings;
-
-    std::map<uint32_t, BufferData> m_buffers;
-    std::future<void> m_send_future;
-
-    std::vector<GLuint> m_meshes_deleted;
-    GLuint m_texture_slot = 0;
-
-    uint32_t m_vertex_attributes = 0;
-    uint32_t m_vb_handle = 0;
-    MaterialData m_material;
-    float4x4 m_proj = float4x4::identity();
-    float4x4 m_modelview = float4x4::identity();
-    float4x4 m_rotation = float4x4::identity();
-
-    bool m_camera_dirty = false;
-    float3 m_camera_pos = float3::zero();
-    quatf m_camera_rot = quatf::identity();
-    float m_camera_fov = 60.0f;
-    float m_camera_near = 0.01f;
-    float m_camera_far = 100.0f;
-
-    std::vector<MaterialData> m_material_data;
-    std::vector<BufferData::SendTaskPtr> m_mesh_data;
-    std::vector<GLuint> m_deleted;
-
-    ms::CameraPtr m_camera;
-    std::vector<ms::MaterialPtr> m_materials;
-};
 
 
 int msxmGetXismoVersion()
@@ -166,14 +31,39 @@ int msxmGetXismoVersion()
     return s_version;
 }
 
-msxmIContext* msxmGetContext()
+msxmContext* msxmGetContext()
 {
-    static std::unique_ptr<msxmIContext> s_ctx;
+    static std::unique_ptr<msxmContext> s_ctx;
     if (!s_ctx) {
         s_ctx.reset(new msxmContext());
         msxmInitializeWidget();
     }
     return s_ctx.get();
+}
+
+
+bool MaterialRecord::operator==(const MaterialRecord& v) const
+{
+    return
+        program == v.program &&
+        diffuse_color == v.diffuse_color &&
+        emission_color == v.emission_color &&
+        color_map == v.color_map&&
+        bump_map == v.bump_map;
+}
+bool MaterialRecord::operator!=(const MaterialRecord& v) const
+{
+    return !operator==(v);
+}
+uint64_t MaterialRecord::checksum() const
+{
+    uint64_t ret = 0;
+    ret += ms::csum(program);
+    ret += ms::csum(diffuse_color);
+    ret += ms::csum(emission_color);
+    ret += ms::csum(color_map);
+    ret += ms::csum(bump_map);
+    return ret;
 }
 
 
@@ -199,38 +89,35 @@ static void Weld(const SrcVertexT src[], int num_vertices, RawVector<DstVertexT>
     }
 }
 
-void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
+void BufferRecord::startBuildMeshData(const msxmSettings& settings)
 {
-    if (!data.data()) { return; }
-    int num_indices = num_elements;
-    int num_triangles = num_indices / 3;
-
     if (!dst_mesh) {
         dst_mesh = ms::Mesh::create();
+        dst_mesh->index = (int)handle;
 
         char path[128];
         sprintf(path, "/XismoMesh:ID[%08x]", handle);
         dst_mesh->path = path;
     }
-    auto& mesh = *dst_mesh;
-    mesh.visible = visible;
-    if (!visible) {
-        return;
+
+    if (dirty) {
+        dirty = false;
+        vertices_tmp.resize_discard(num_elements);
+        data.copy_to((char*)vertices_tmp.data());
+        task = std::async(std::launch::async, [this, &settings]() {
+            buildMeshDataBody(settings);
+        });
     }
+}
 
-    mesh.flags.has_points = 1;
-    mesh.flags.has_normals = 1;
-    mesh.flags.has_uv0 = 1;
-    mesh.flags.has_counts = 1;
-    mesh.flags.has_indices = 1;
-    mesh.flags.has_material_ids = 1;
-    mesh.flags.has_refine_settings = 1;
-    mesh.refine_settings.flags.swap_faces = true;
-    mesh.refine_settings.flags.gen_tangents = 1;
-    mesh.refine_settings.flags.invert_v = 1;
+void BufferRecord::buildMeshDataBody(const msxmSettings& settings)
+{
+    int num_indices = (int)vertices_tmp.size();
+    int num_triangles = num_indices / 3;
 
-    auto vertices = (const xm_vertex1*)data.data();
-    if (weld_vertices) {
+    auto& mesh = *dst_mesh;
+    auto vertices = vertices_tmp.data();
+    if (settings.weld_vertices) {
         Weld(vertices, num_indices, vertices_welded, mesh.indices);
 
         int num_vertices = (int)vertices_welded.size();
@@ -270,26 +157,30 @@ void BufferData::SendTaskData::buildMeshData(bool weld_vertices)
         mesh.counts[ti] = 3;
         mesh.material_ids[ti] = material_id;
     }
+
+    mesh.setupFlags();
+    mesh.flags.has_refine_settings = 1;
+    mesh.refine_settings.flags.swap_faces = true;
+    mesh.refine_settings.flags.gen_tangents = 1;
+    mesh.refine_settings.flags.make_double_sided = settings.make_double_sided;
 }
 
-bool BufferData::isModelData() const
+void BufferRecord::wait()
 {
-    return stride == sizeof(xm_vertex1) && triangle;
-}
-
-void BufferData::updateSendData()
-{
-    if (!send_data) {
-        send_data.reset(new SendTaskData());
+    if (task.valid()) {
+        task.wait();
+        task = {};
     }
-    auto& dst = *send_data;
-    dst.data = data;
-    dst.handle = handle;
-    dst.num_elements = num_elements;
-    dst.material_id = material_id;
-    dst.transform = transform;
-    dst.visible = visible;
-    dirty = false;
+}
+
+BufferRecord::~BufferRecord()
+{
+    wait();
+}
+
+bool BufferRecord::isModelData() const
+{
+    return stride == sizeof(xm_vertex1) && triangle && !data.empty();
 }
 
 
@@ -300,9 +191,7 @@ msxmContext::msxmContext()
 
 msxmContext::~msxmContext()
 {
-    if (m_send_future.valid()) {
-        m_send_future.wait();
-    }
+    m_sender.wait();
 }
 
 msxmSettings& msxmContext::getSettings()
@@ -312,66 +201,74 @@ msxmSettings& msxmContext::getSettings()
 
 void msxmContext::send(bool force)
 {
-    if (m_send_future.valid() && m_send_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
-    {
+    if (m_sender.isSending()) {
         // previous request is not completed yet
-        return;
+        if (force)
+            m_sender.wait();
+        else
+            return;
     }
 
-    std::vector<BufferData*> buffers_to_send;
-    for (auto& pair : m_buffers) {
-        auto& buf = pair.second;
-        if (buf.isModelData() && (buf.dirty || force)) {
-            buffers_to_send.push_back(&buf);
-        }
+    if (force) {
+        m_material_manager.makeDirtyAll();
+        m_entity_manager.makeDirtyAll();
     }
-    if (buffers_to_send.empty() && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
+
+    bool dirty_meshes = false;
+    for (auto& pair : m_buffer_records) {
+        auto& buf = pair.second;
+        if (buf.isModelData())
+            m_mesh_buffers.push_back(&buf);
+        if (buf.dirty)
+            dirty_meshes = true;
+    }
+    if ((!dirty_meshes && !force) && m_meshes_deleted.empty() && (!m_settings.sync_camera || !m_camera_dirty)) {
         // nothing to send
         return;
     }
 
+
+    // textures
+    if (m_settings.sync_textures) {
+        for (auto& kvp : m_texture_records) {
+            auto& rec = kvp.second;
+            if (rec.dst && rec.dirty && rec.used) {
+                m_texture_manager.add(rec.dst);
+                rec.dirty = false;
+            }
+        }
+    }
+
     // build material list
     {
-        m_material_data.clear();
-        auto findOrAddMaterial = [this](const MaterialData& md) {
-            auto it = std::find(m_material_data.begin(), m_material_data.end(), md);
-            if (it != m_material_data.end()) {
-                return (int)std::distance(m_material_data.begin(), it);
-            }
-            else {
-                int ret = (int)m_material_data.size();
-                m_material_data.push_back(md);
-                return ret;
-            }
-        };
-
-        for (auto& pair : m_buffers) {
-            auto& buf = pair.second;
-            if (buf.isModelData()) {
-                buf.material_id = findOrAddMaterial(buf.material);
-            }
-        }
-
-        m_materials.resize(m_material_data.size());
-        for (int i = 0; i < (int)m_materials.size(); ++i) {
-            auto& mat = m_materials[i];
-            if (!mat)
-                mat = ms::Material::create();
-
-            char name[128];
-            sprintf(name, "XismoMaterial:ID[%04x]", i);
-            mat->id = i;
+        char name[128];
+        for (auto& mr : m_material_records) {
+            auto mat = ms::Material::create();
+            sprintf(name, "XismoMaterial:ID[%04x]", mr.id);
+            mat->id = mr.id;
+            mat->index = mr.id;
             mat->name = name;
-            mat->setColor(m_material_data[i].diffuse);
+
+            auto& stdmat = ms::AsStandardMaterial(*mat);
+            if (mr.diffuse_color != float4::zero())
+                stdmat.setColor(mr.diffuse_color);
+            if (mr.emission_color != float4::zero())
+                stdmat.setEmissionColor(mr.emission_color);
+            if (mr.color_map != ms::InvalidID)
+                stdmat.setColorMap({ mr.color_map });
+            if (mr.bump_map != ms::InvalidID)
+                stdmat.setBumpMap({ mr.bump_map });
+            m_material_manager.add(mat);
         }
+        m_material_records.clear();
     }
 
     // camera
     if (m_settings.sync_camera) {
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->path = "/Main Camera";
         }
+        m_camera->path = m_settings.camera_path;
         m_camera->position = m_camera_pos;
         m_camera->rotation = m_camera_rot;
         m_camera->fov = m_camera_fov;
@@ -380,118 +277,208 @@ void msxmContext::send(bool force)
         m_camera_dirty = false;
     }
 
-    m_deleted.swap(m_meshes_deleted);
-    m_meshes_deleted.clear();
-
-    // build send data
-    parallel_for_each(buffers_to_send.begin(), buffers_to_send.end(), [](BufferData *buf) {
-        buf->updateSendData();
+    // begin build mesh data
+    mu::parallel_for_each(m_mesh_buffers.begin(), m_mesh_buffers.end(), [&](BufferRecord *v) {
+        v->startBuildMeshData(m_settings);
     });
-    m_mesh_data.resize(buffers_to_send.size());
-    for (size_t i = 0; i < buffers_to_send.size(); ++i) {
-        m_mesh_data[i] = buffers_to_send[i]->send_data;
+
+    m_sender.on_prepare = [this]() {
+        // add camera
+        if (m_camera)
+            m_entity_manager.add(m_camera);
+
+        // gen welded meshes
+        for (auto *v : m_mesh_buffers) {
+            v->wait();
+            m_entity_manager.add(v->dst_mesh);
+        }
+        m_mesh_buffers.clear();
+
+        // handle deleted objects
+        for (auto h : m_meshes_deleted) {
+            char path[128];
+            sprintf(path, "/XismoMesh:ID[%08x]", h);
+            m_entity_manager.erase(ms::Identifier(path, (int)h));
+        }
+        m_meshes_deleted.clear();
+
+
+        auto& t = m_sender;
+        t.client_settings = m_settings.client_settings;
+        t.scene_settings.handedness = ms::Handedness::Left;
+        t.scene_settings.scale_factor = m_settings.scale_factor;
+
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+    m_sender.on_success = [this]() {
+        m_texture_manager.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+    };
+    m_sender.kick();
+}
+
+void msxmContext::onGenTextures(GLsizei n, GLuint *textures)
+{
+    for (int i = 0; i < (int)n; ++i) {
+        m_texture_records[textures[i]];
     }
+}
 
-    // kick async send
-    m_send_future = std::async(std::launch::async, [this]() {
-        ms::Client client(m_settings.client_settings);
-
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Left;
-        scene_settings.scale_factor = m_settings.scale_factor;
-
-
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send deleted
-        if (m_settings.sync_delete && !m_deleted.empty()) {
-            ms::DeleteMessage del;
-            for (auto h : m_deleted) {
-                char path[128];
-                sprintf(path, "/XismoMesh:ID[%08x]", h);
-                del.targets.push_back({ path, (int)h });
-            }
-            client.send(del);
-        }
-
-        // send camera & materials
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            if (m_settings.sync_camera) {
-                set.scene.objects.push_back(std::static_pointer_cast<ms::Transform>(m_camera));
-            }
-            set.scene.materials = m_materials;
-            client.send(set);
-        }
-
-        // send meshes
-        mu::parallel_for_each(m_mesh_data.begin(), m_mesh_data.end(), [&](BufferData::SendTaskPtr& v) {
-            v->buildMeshData(m_settings.weld_vertices);
-        });
-        for (auto& v : m_mesh_data) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { v->dst_mesh };
-            client.send(set);
-        }
-        m_mesh_data.clear();
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+void msxmContext::onDeleteTextures(GLsizei n, const GLuint *textures)
+{
+    for (int i = 0; i < (int)n; ++i) {
+        m_texture_records.erase(textures[i]);
+    }
 }
 
 void msxmContext::onActiveTexture(GLenum texture)
 {
-    m_texture_slot = texture - GL_TEXTURE0;
+    m_active_texture = texture - GL_TEXTURE0;
 }
 
 void msxmContext::onBindTexture(GLenum target, GLuint texture)
 {
-    if (m_texture_slot == 0) {
-        m_material.texture = texture;
+    m_texture_slots[m_active_texture] = texture;
+}
+
+void msxmContext::onTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
+{
+    if (!pixels)
+        return;
+
+    int pixel_size = 0;
+    ms::TextureFormat msf = ms::TextureFormat::Unknown;
+    switch (format) {
+    case GL_RED:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 1;
+            msf = ms::TextureFormat::Ru8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 2;
+            msf = ms::TextureFormat::Rf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 4;
+            msf = ms::TextureFormat::Rf32;
+            break;
+        }
+        break;
+    case GL_RG:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 2;
+            msf = ms::TextureFormat::RGu8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 4;
+            msf = ms::TextureFormat::RGf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 8;
+            msf = ms::TextureFormat::RGf32;
+            break;
+        }
+        break;
+    case GL_RGB:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 3;
+            msf = ms::TextureFormat::RGBu8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 6;
+            msf = ms::TextureFormat::RGBf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 12;
+            msf = ms::TextureFormat::RGBf32;
+            break;
+        }
+        break;
+    case GL_RGBA:
+        switch (type) {
+        case GL_UNSIGNED_BYTE:
+            pixel_size = 4;
+            msf = ms::TextureFormat::RGBAu8;
+            break;
+        case GL_HALF_FLOAT:
+            pixel_size = 8;
+            msf = ms::TextureFormat::RGBAf16;
+            break;
+        case GL_FLOAT:
+            pixel_size = 16;
+            msf = ms::TextureFormat::RGBAf32;
+            break;
+        }
+        break;
+    }
+
+    if (pixel_size) {
+        auto dst = ms::Texture::create();
+        char name[128];
+        sprintf(name, "XismoTexture_ID%08x", texture);
+        dst->name = name;
+        dst->id = (int)texture;
+        dst->format = msf;
+        dst->width = width;
+        dst->height = height;
+
+        int size = width * height * pixel_size;
+        dst->data.assign((char*)pixels, (char*)pixels + size);
+
+        auto& rec = m_texture_records[texture];
+        rec.dst = dst;
+        rec.dirty = true;
+    }
+    else {
+        msLogWarning("unsupported texture format\n");
     }
 }
 
-BufferData* msxmContext::getActiveBuffer(GLenum target)
+BufferRecord* msxmContext::getActiveBuffer(GLenum target)
 {
     uint32_t bid = 0;
     if (target == GL_ARRAY_BUFFER) {
         bid = m_vb_handle;
     }
-    return bid != 0 ? &m_buffers[bid] : nullptr;
+    return bid != 0 ? &m_buffer_records[bid] : nullptr;
+}
+
+ProgramRecord::Uniform * msxmContext::findUniform(GLint location)
+{
+    auto& uniforms = m_program_records[m_program_handle].uniforms;
+    auto it = uniforms.find(location);
+    return it != uniforms.end() ? &it->second : nullptr;
 }
 
 
-void msxmContext::onGenBuffers(GLsizei n, GLuint * handles)
+void msxmContext::onGenBuffers(GLsizei n, GLuint *buffers)
 {
     for (int i = 0; i < (int)n; ++i) {
-        auto it = std::find(m_meshes_deleted.begin(), m_meshes_deleted.end(), handles[i]);
+        auto it = std::find(m_meshes_deleted.begin(), m_meshes_deleted.end(), buffers[i]);
         if (it != m_meshes_deleted.end()) {
             m_meshes_deleted.erase(it);
         }
     }
 }
 
-void msxmContext::onDeleteBuffers(GLsizei n, const GLuint * handles)
+void msxmContext::onDeleteBuffers(GLsizei n, const GLuint *buffers)
 {
-    for (int i = 0; i < n; ++i) {
-        auto it = m_buffers.find(handles[i]);
-        if (it != m_buffers.end()) {
-            if (it->second.isModelData()) {
-                m_meshes_deleted.push_back(it->second.handle);
+    if (m_settings.sync_delete) {
+        for (int i = 0; i < n; ++i) {
+            auto it = m_buffer_records.find(buffers[i]);
+            if (it != m_buffer_records.end()) {
+                if (m_settings.sync_delete && it->second.isModelData())
+                    m_meshes_deleted.push_back(it->second.handle);
+                m_buffer_records.erase(it);
             }
-            m_buffers.erase(it);
         }
     }
 }
@@ -534,15 +521,11 @@ void msxmContext::onUnmapBuffer(GLenum target)
 {
     if (auto *buf = getActiveBuffer(target)) {
         if (buf->mapped_data) {
-            parallel_invoke([buf]() {
-                memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
-            },
-            [buf]() {
-                if (memcmp(buf->data.data(), buf->tmp_data.data(), buf->data.size()) != 0) {
-                    buf->data = buf->tmp_data;
-                    buf->dirty = true;
-                }
-            });
+            memcpy(buf->mapped_data, buf->tmp_data.data(), buf->tmp_data.size());
+            if (buf->data != buf->tmp_data) {
+                buf->data = buf->tmp_data;
+                buf->dirty = true;
+            }
             buf->mapped_data = nullptr;
         }
     }
@@ -556,23 +539,108 @@ void msxmContext::onVertexAttribPointer(GLuint index, GLint size, GLenum type, G
     }
 }
 
-void msxmContext::onUniform4fv(GLint location, GLsizei count, const GLfloat * value)
+
+extern void(*_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+extern void(*_glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+extern GLint(*_glGetUniformLocation)(GLuint program, const GLchar *name);
+
+void msxmContext::onLinkProgram(GLuint program)
 {
-    if (location == 3) {
-        // diffuse
-        m_material.diffuse.assign(value);
+}
+
+void msxmContext::onDeleteProgram(GLuint program)
+{
+    m_program_records.erase(program);
+}
+
+void msxmContext::onUseProgram(GLuint program)
+{
+    m_program_handle = program;
+
+    auto& rec = m_program_records[program];
+    if (rec.uniforms.empty()) {
+        rec.mrec.program = program;
+        int num_uniforms = 0;
+        _glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &num_uniforms);
+        for (int ui = 0; ui < num_uniforms; ++ui) {
+            char name[128];
+            GLsizei len = 0, size = 0;
+            GLenum type;
+            _glGetActiveUniform(program, ui, sizeof(name), &len, &size, &type, name);
+
+            auto mstype = ms::MaterialProperty::Type::Unknown;
+            switch (type) {
+            case GL_FLOAT:
+                mstype = ms::MaterialProperty::Type::Float;
+                break;
+            case GL_FLOAT_VEC2:
+            case GL_FLOAT_VEC3:
+            case GL_FLOAT_VEC4:
+                mstype = ms::MaterialProperty::Type::Vector;
+                break;
+            case GL_FLOAT_MAT2:
+            case GL_FLOAT_MAT3:
+            case GL_FLOAT_MAT4:
+                mstype = ms::MaterialProperty::Type::Matrix;
+                break;
+            case GL_SAMPLER_2D:
+            case GL_SAMPLER_2D_ARRAY:
+            case GL_SAMPLER_2D_MULTISAMPLE:
+            case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_SAMPLER_2D_RECT:
+            case GL_INT_SAMPLER_2D:
+            case GL_INT_SAMPLER_2D_ARRAY:
+            case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_INT_SAMPLER_2D_RECT:
+            case GL_UNSIGNED_INT_SAMPLER_2D:
+            case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+            case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+                mstype = ms::MaterialProperty::Type::Texture;
+                break;
+            }
+
+            GLuint index = _glGetUniformLocation(program, name);
+            auto& uni = rec.uniforms[index];
+            uni.name = name;
+            uni.type = mstype;
+            uni.size = size;
+        }
     }
 }
 
-void msxmContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
+void msxmContext::onUniform1i(GLint location, GLint v0)
 {
-    if (location == 0) {
-        // modelview matrix
-        m_modelview.assign(value);
+    if (auto *prop = findUniform(location)) {
+        if (prop->type == ms::MaterialProperty::Type::Texture) {
+            auto& mr = m_program_records[m_program_handle].mrec;
+            if (prop->name == "dif_tex")
+                mr.color_map = v0;
+            else if (prop->name == "normal_tex")
+                mr.bump_map = v0;
+        }
     }
-    else if (location == 1) {
-        // projection matrix
-        m_proj.assign(value);
+}
+
+void msxmContext::onUniform4fv(GLint location, GLsizei count, const GLfloat *value)
+{
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "diffuse")
+            mr.diffuse_color = *(float4*)value;
+        else if (prop->name == "emissive")
+            mr.emission_color = *(float4*)value;
+    }
+}
+
+void msxmContext::onUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+{
+    if (auto *prop = findUniform(location)) {
+        auto& mr = m_program_records[m_program_handle].mrec;
+        if (prop->name == "projMatrix")
+            m_proj = *(float4x4*)value;
+        else if (prop->name == "mvMatrix")
+            m_modelview = *(float4x4*)value;
     }
 }
 
@@ -584,7 +652,7 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
         (buf && buf->stride == sizeof(xm_vertex1)))
     {
         {
-            // projection matrix -> camera fov & clippling planes
+            // projection matrix -> fov, aspect, clippling planes
             float fov, aspect, near_plane, far_plane;
             extract_projection_data(m_proj, fov, aspect, near_plane, far_plane);
 
@@ -615,10 +683,40 @@ void msxmContext::onDrawElements(GLenum mode, GLsizei count, GLenum type, const 
 
         buf->triangle = true;
         buf->num_elements = (int)count;
-        if (buf->material != m_material) {
-            buf->material = m_material;
-            buf->dirty = true;
+
+        // material
+        {
+            auto& prec = m_program_records[m_program_handle];
+            auto mrec = prec.mrec; // copy
+
+            // texture slot -> id
+            auto texture_slot_to_id = [this](int slot, ms::TextureType ttype) {
+                if (slot == ms::InvalidID)
+                    return ms::InvalidID;
+                auto& trec = m_texture_records[m_texture_slots[slot]];
+                if (trec.dst) {
+                    trec.used = true;
+                    trec.dst->type = ttype;
+                    return trec.dst->id;
+                }
+                else {
+                    return ms::InvalidID;
+                }
+            };
+            mrec.color_map = texture_slot_to_id(mrec.color_map, ms::TextureType::Default);
+            mrec.bump_map = texture_slot_to_id(mrec.bump_map, ms::TextureType::NormalMap);
+
+            auto it = std::find(m_material_records.begin(), m_material_records.end(), mrec);
+            if (it != m_material_records.end()) {
+                buf->material_id = it->id;
+            }
+            else {
+                mrec.id = m_material_ids.getID(mrec);
+                buf->material_id = mrec.id;
+                m_material_records.push_back(mrec);
+            }
         }
+
     }
 bailout:
     m_vertex_attributes = 0;

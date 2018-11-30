@@ -1,12 +1,12 @@
 #pragma once
 
-#define msReleaseDate 20180918
-#define msReleaseDateStr "20180918"
+#define msReleaseDate 20181130
+#define msReleaseDateStr "20181130"
 #define msVendor "Unity Technologies"
-#define msProtocolVersion 110
+#define msProtocolVersion 112
 //#define msEnableProfiling
 
-
+namespace mu {}
 namespace ms {
 using namespace mu;
 #define msLogInfo(...)    ::mu::Print("MeshSync info: " __VA_ARGS__)

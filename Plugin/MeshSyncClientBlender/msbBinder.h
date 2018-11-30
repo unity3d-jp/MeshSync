@@ -1,5 +1,11 @@
 #pragma once
 
+#if BLENDER_VERSION < 280
+using CollectionObject = GroupObject;
+#else
+struct Depsgraph;
+#endif
+
 namespace blender
 {
     bool ready();
@@ -8,6 +14,7 @@ namespace blender
     int CustomData_number_of_layers(const CustomData& data, int type);
     int CustomData_get_offset(const CustomData& data, int type);
     float3 BM_loop_calc_face_normal(const BMLoop& l);
+    std::string abspath(const std::string& path);
 
 
     struct ListHeader { ListHeader *next, *prev; };
@@ -107,6 +114,11 @@ namespace blender
         float4x4 matrix_local() const;
         float4x4 matrix_world() const;
         bool is_visible(Scene *scene) const;
+#if BLENDER_VERSION < 280
+        Mesh* to_mesh(Scene *scene) const;
+#else
+        Mesh* to_mesh(Depsgraph *deg) const;
+#endif
     };
 
     class BMesh
@@ -166,13 +178,38 @@ namespace blender
         Boilerplate(Scene)
         Compatible(BID)
 
-        blist_range<Base> objects();
-
         int fps();
         int frame_start();
         int frame_end();
         int frame_current();
         void frame_set(int f, float subf = 0.0f);
+
+#if BLENDER_VERSION < 280
+        template<class Body>
+        void each_objects(const Body& body)
+        {
+            for (auto *base : list_range((Base*)m_ptr->base.first)) {
+                body(base->object);
+            }
+        }
+#else
+        template<class Body>
+        void each_objects_impl(const Body& body, CollectionChild *cc)
+        {
+            for (auto *c : list_range(cc)) {
+                each_objects_impl(body, (CollectionChild*)c->collection->children.first);
+                for (auto *o : list_range((CollectionObject*)c->collection->gobject.first)) {
+                    body(o->ob);
+                }
+            }
+        }
+
+        template<class Body>
+        void each_objects(const Body& body)
+        {
+            each_objects_impl(body, (CollectionChild*)m_ptr->master_collection->children.first);
+        }
+#endif
     };
 
     class BData
@@ -180,10 +217,12 @@ namespace blender
     public:
         Boilerplate2(BData, Main)
 
-        blist_range<Object> objects();
+        blist_range<Object>   objects();
+        blist_range<Mesh>     meshes();
         blist_range<Material> materials();
 
         bool objects_is_updated();
+        void remove(Mesh *v);
     };
 
     class BContext
@@ -194,6 +233,7 @@ namespace blender
         static BContext get();
         Main* data();
         Scene* scene();
+        Depsgraph* depsgraph();
     };
 
 #undef Compatible

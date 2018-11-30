@@ -4,10 +4,8 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
-#ifdef muEnableHalf
-    #include <OpenEXR/half.h>
-#endif // muEnableHalf
 #include "muIntrusiveArray.h"
+#include "muHalf.h"
 
 #define muEpsilon 1e-4f
 
@@ -21,6 +19,8 @@ template<class T>
 struct tvec2
 {
     using scalar_t = T;
+    static const int vector_length = 2;
+
     T x, y;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -38,6 +38,8 @@ template<class T>
 struct tvec3
 {
     using scalar_t = T;
+    static const int vector_length = 3;
+
     T x, y, z;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -55,6 +57,8 @@ template<class T>
 struct tvec4
 {
     using scalar_t = T;
+    static const int vector_length = 4;
+
     T x, y, z, w;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -72,6 +76,8 @@ template<class T>
 struct tquat
 {
     using scalar_t = T;
+    static const int vector_length = 4;
+
     T x, y, z, w;
     T& operator[](int i) { return ((T*)this)[i]; }
     const T& operator[](int i) const { return ((T*)this)[i]; }
@@ -85,10 +91,43 @@ struct tquat
 };
 
 template<class T>
+struct tmat2x2
+{
+    using scalar_t = T;
+    using vector_t = tvec2<T>;
+    static const int vector_length = 4;
+
+    tvec2<T> m[2];
+    tvec2<T>& operator[](int i) { return m[i]; }
+    const tvec2<T>& operator[](int i) const { return m[i]; }
+    bool operator==(const tmat2x2& v) const { return memcmp(m, v.m, sizeof(*this)) == 0; }
+    bool operator!=(const tmat2x2& v) const { return !((*this) == v); }
+
+    template<class U> void assign(const U *v)
+    {
+        *this = { {
+            { (T)v[0], (T)v[1] },
+            { (T)v[2], (T)v[3] },
+        } };
+    }
+    template<class U> void assign(const tmat2x2<U>& v) { assign((U*)&v); }
+
+    static constexpr tmat2x2 identity()
+    {
+        return{ {
+            { T(1.0), T(0.0) },
+            { T(0.0), T(1.0) },
+        } };
+    }
+};
+
+template<class T>
 struct tmat3x3
 {
     using scalar_t = T;
     using vector_t = tvec3<T>;
+    static const int vector_length = 9;
+
     tvec3<T> m[3];
     tvec3<T>& operator[](int i) { return m[i]; }
     const tvec3<T>& operator[](int i) const { return m[i]; }
@@ -120,6 +159,8 @@ struct tmat4x4
 {
     using scalar_t = T;
     using vector_t = tvec4<T>;
+    static const int vector_length = 16;
+
     tvec4<T> m[4];
     tvec4<T>& operator[](int i) { return m[i]; }
     const tvec4<T>& operator[](int i) const { return m[i]; }
@@ -152,10 +193,24 @@ struct tmat4x4
     }
 };
 
+template<class T> struct get_scalar_type_t { using type = typename T::scalar_t; };
+#define Scalar(T) template<> struct get_scalar_type_t<T> { using type = T; }
+Scalar(int); Scalar(half); Scalar(float); Scalar(double);
+Scalar(snorm8); Scalar(unorm8); Scalar(unorm8n); Scalar(snorm16); Scalar(unorm16);
+#undef Scalar
+template<class T> using get_scalar_type = typename get_scalar_type_t<T>::type;
+
+template<class T> struct get_vector_type_t { using type = typename T::vector_t; };
+template<class T> struct get_vector_type_t<tvec2<T>> { using type = tvec2<T>; };
+template<class T> struct get_vector_type_t<tvec3<T>> { using type = tvec3<T>; };
+template<class T> struct get_vector_type_t<tvec4<T>> { using type = tvec4<T>; };
+template<class T> using get_vector_type = typename get_vector_type_t<T>::type;
+
 using float2 = tvec2<float>;
 using float3 = tvec3<float>;
 using float4 = tvec4<float>;
 using quatf = tquat<float>;
+using float2x2 = tmat2x2<float>;
 using float3x3 = tmat3x3<float>;
 using float4x4 = tmat4x4<float>;
 
@@ -163,8 +218,37 @@ using double2 = tvec2<double>;
 using double3 = tvec3<double>;
 using double4 = tvec4<double>;
 using quatd = tquat<double>;
+using double2x2 = tmat2x2<double>;
 using double3x3 = tmat3x3<double>;
 using double4x4 = tmat4x4<double>;
+
+using half2 = tvec2<half>;
+using half3 = tvec3<half>;
+using half4 = tvec4<half>;
+using quath = tquat<half>;
+using half2x2 = tmat2x2<half>;
+using half3x3 = tmat3x3<half>;
+using half4x4 = tmat4x4<half>;
+
+using snorm8x2 = tvec2<snorm8>;
+using snorm8x3 = tvec3<snorm8>;
+using snorm8x4 = tvec4<snorm8>;
+
+using unorm8x2 = tvec2<unorm8>;
+using unorm8x3 = tvec3<unorm8>;
+using unorm8x4 = tvec4<unorm8>;
+
+using unorm8nx2 = tvec2<unorm8n>;
+using unorm8nx3 = tvec3<unorm8n>;
+using unorm8nx4 = tvec4<unorm8n>;
+
+using snorm16x2 = tvec2<snorm16>;
+using snorm16x3 = tvec3<snorm16>;
+using snorm16x4 = tvec4<snorm16>;
+
+using unorm16x2 = tvec2<unorm16>;
+using unorm16x3 = tvec3<unorm16>;
+using unorm16x4 = tvec4<unorm16>;
 
 template<class T> inline tvec2<T> operator-(const tvec2<T>& v) { return{ -v.x, -v.y }; }
 template<class T, class U> inline tvec2<T> operator+(const tvec2<T>& l, const tvec2<U>& r) { return{ l.x + r.x, l.y + r.y }; }
@@ -381,15 +465,12 @@ inline int clamp(int v, int vmin, int vmax) { return std::min(std::max(v, vmin),
     inline T frac(T a) { return std::fmod(a, T(1.0)); }                                             \
     inline T clamp(T v, T vmin, T vmax) { return std::min<T>(std::max<T>(v, vmin), vmax); }         \
     inline T clamp01(T v) { return clamp(v, T(0), T(1)); }                                          \
-    inline T saturate(T v) { return clamp(v, T(-1), T(1)); }                                        \
+    inline T clamp11(T v) { return clamp(v, T(-1), T(1)); }                                         \
     inline T lerp(T  a, T  b, T  t) { return a * (T(1.0) - t) + b * t; }                            \
     inline bool near_equal(T a, T b, T epsilon = T(muEpsilon)) { return std::abs(a - b) < epsilon; }\
 
 SF(float)
 SF(double)
-#ifdef muEnableHalf
-SF(half)
-#endif
 #undef SF
 
 #define VF1N(N, F)\
@@ -430,7 +511,7 @@ VF2std(pow)
 VF2(mod)
 VF1(frac)
 VF1(clamp01)
-VF1(saturate)
+VF1(clamp11)
 
 #undef VF1N
 #undef VF2N
@@ -462,6 +543,10 @@ template<class T> inline bool near_equal(const tvec4<T>& a, const tvec4<T>& b, T
 template<class T> inline bool near_equal(const tquat<T>& a, const tquat<T>& b, T e = muEpsilon)
 {
     return near_equal(a.x, b.x, e) && near_equal(a.y, b.y, e) && near_equal(a.z, b.z, e) && near_equal(a.w, b.w, e);
+}
+template<class T> inline bool near_equal(const tmat2x2<T>& a, const tmat2x2<T>& b, T e = muEpsilon)
+{
+    return near_equal(a[0], b[0], e) && near_equal(a[1], b[1], e);
 }
 template<class T> inline bool near_equal(const tmat3x3<T>& a, const tmat3x3<T>& b, T e = muEpsilon)
 {
@@ -514,6 +599,7 @@ inline static tvec4<T> mul4(const tmat4x4<T>& m, const tvec3<T>& v)
 template<class T> inline T dot(const tvec2<T>& l, const tvec2<T>& r) { return l.x*r.x + l.y*r.y; }
 template<class T> inline T dot(const tvec3<T>& l, const tvec3<T>& r) { return l.x*r.x + l.y*r.y + l.z*r.z; }
 template<class T> inline T dot(const tvec4<T>& l, const tvec4<T>& r) { return l.x*r.x + l.y*r.y + l.z*r.z + l.w*r.w; }
+template<class T> inline T dot(const tquat<T>& l, const tquat<T>& r) { return dot((const float4&)l, (const float4&)r); }
 template<class T> inline T length_sq(const tvec2<T>& v) { return dot(v, v); }
 template<class T> inline T length_sq(const tvec3<T>& v) { return dot(v, v); }
 template<class T> inline T length_sq(const tvec4<T>& v) { return dot(v, v); }
@@ -558,6 +644,57 @@ template<class T> inline T angle_between_signed(const tvec3<T>& a, const tvec3<T
 template<class T> inline T angle_between2_signed(const tvec3<T>& p1, const tvec3<T>& p2, const tvec3<T>& center, const tvec3<T>& n)
 {
     return angle_between_signed((p1 - center), (p2 - center), n);
+}
+
+template<class T> inline tquat<T> lerp(const tquat<T>& q1, const tquat<T>& q2, float t)
+{
+    tquat<T> ret;
+    if (dot(q1, q2) < T(0.0)) {
+        ret = {
+            q1.x + t * (-q2.x - q1.x),
+            q1.y + t * (-q2.y - q1.y),
+            q1.z + t * (-q2.z - q1.z),
+            q1.w + t * (-q2.w - q1.w)
+        };
+    }
+    else {
+        ret = {
+            q1.x + t * (q2.x - q1.x),
+            q1.y + t * (q2.y - q1.y),
+            q1.z + t * (q2.z - q1.z),
+            q1.w + t * (q2.w - q1.w)
+        };
+    }
+    return normalize(ret);
+}
+
+template<class T> inline tquat<T> slerp(const tquat<T>& q1, const tquat<T>& q2, T t)
+{
+    float d = dot(q1, q2);
+
+    tquat<T> tmp;
+    if (d < T(0.0)) {
+        d = -d;
+        tmp = { -q2.x, -q2.y, -q2.z, -q2.w };
+    }
+    else
+        tmp = q2;
+
+    if (d < T(0.95)) {
+        T angle = std::acos(d);
+        T sinadiv = T(1.0) / std::sin(angle);
+        T sinat = std::sin(angle * t);
+        T sinaomt = std::sin(angle * (T(1.0) - t));
+        return {
+            (q1.x * sinaomt + tmp.x * sinat) * sinadiv,
+            (q1.y * sinaomt + tmp.y * sinat) * sinadiv,
+            (q1.z * sinaomt + tmp.z * sinat) * sinadiv,
+            (q1.w * sinaomt + tmp.w * sinat) * sinadiv
+        };
+    }
+    else {
+        return lerp(q1, tmp, t);
+    }
 }
 
 template<class T> inline tvec3<T> apply_rotation(const tquat<T>& q, const tvec3<T>& p)
@@ -671,7 +808,7 @@ template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
         T v6 = d[7] - d[0] - d[4] + d[9];
 
         return{
-            v3 * asin(saturate(v4)),
+            v3 * asin(clamp11(v4)),
             atan2(v5, v6),
             atan2(v1, v2)
         };
@@ -685,7 +822,7 @@ template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
         T v5 = a*e + b*c;
         T v6 = b*e - a*c;
         return{
-            v3 * asin(saturate(v4)),
+            v3 * asin(clamp11(v4)),
             atan2(v5, v6),
             T(0.0)
         };
@@ -726,10 +863,10 @@ template<class T> inline tmat4x4<T> look44(const tvec3<T>& forward, const tvec3<
     } };
 }
 
-template<class T> inline tvec3<T> swap_handedness(const tvec3<T>& v) { return { -v.x, v.y, v.z }; }
-template<class T> inline tvec4<T> swap_handedness(const tvec4<T>& v) { return { -v.x, v.y, v.z, v.w }; }
-template<class T> inline tquat<T> swap_handedness(const tquat<T>& v) { return { v.x, -v.y, -v.z, v.w }; }
-template<class T> inline tmat3x3<T> swap_handedness(const tmat3x3<T>& m)
+template<class T> inline tvec3<T> flip_x(const tvec3<T>& v) { return { -v.x, v.y, v.z }; }
+template<class T> inline tvec4<T> flip_x(const tvec4<T>& v) { return { -v.x, v.y, v.z, v.w }; }
+template<class T> inline tquat<T> flip_x(const tquat<T>& v) { return { v.x, -v.y, -v.z, v.w }; }
+template<class T> inline tmat3x3<T> flip_x(const tmat3x3<T>& m)
 {
     return tmat3x3<T> {
          m[0].x,-m[0].y,-m[0].z,
@@ -737,16 +874,37 @@ template<class T> inline tmat3x3<T> swap_handedness(const tmat3x3<T>& m)
         -m[2].x, m[2].y, m[2].z,
     };
 }
-template<class T> inline tmat4x4<T> swap_handedness(const tmat4x4<T>& m)
+template<class T> inline tmat4x4<T> flip_x(const tmat4x4<T>& m)
 {
     return tmat4x4<T> {
-         m[0].x,-m[0].y,-m[0].z, m[0].w,
+         m[0].x,-m[0].y,-m[0].z,-m[0].w,
         -m[1].x, m[1].y, m[1].z, m[1].w,
         -m[2].x, m[2].y, m[2].z, m[2].w,
         -m[3].x, m[3].y, m[3].z, m[3].w,
     };
 }
 
+template<class T> inline tvec2<T> flip_z(const tvec2<T>& v) { return { v.x, v.y }; }
+template<class T> inline tvec3<T> flip_z(const tvec3<T>& v) { return { v.x, v.y, -v.z }; }
+template<class T> inline tvec4<T> flip_z(const tvec4<T>& v) { return { v.x, v.y, -v.z, v.w }; }
+template<class T> inline tquat<T> flip_z(const tquat<T>& v) { return { -v.x, -v.y, v.z, v.w }; }
+template<class T> inline tmat3x3<T> flip_z(const tmat3x3<T>& m)
+{
+    return tmat3x3<T> {
+        m[0].x, m[0].y,-m[0].z,
+        m[1].x, m[1].y,-m[1].z,
+       -m[2].x,-m[2].y, m[2].z,
+    };
+}
+template<class T> inline tmat4x4<T> flip_z(const tmat4x4<T>& m)
+{
+    return tmat4x4<T> {
+        m[0].x, m[0].y,-m[0].z, m[0].w,
+        m[1].x, m[1].y,-m[1].z, m[1].w,
+       -m[2].x,-m[2].y, m[2].z,-m[2].w,
+        m[3].x, m[3].y,-m[3].z, m[3].w,
+    };
+}
 
 template<class T> inline tvec3<T> swap_yz(const tvec3<T>& v) { return { v.x, v.z, v.y }; }
 template<class T> inline tvec4<T> swap_yz(const tvec4<T>& v) { return { v.x, v.z, v.y, v.w }; }
@@ -769,9 +927,61 @@ template<class T> inline tmat4x4<T> swap_yz(const tmat4x4<T>& m)
     };
 }
 
+// convert to different type of vec/mat with same length (e.g. float3 <-> half3, float4x4 <-> double4x4)
+template<class T, class U> inline T to(const tvec2<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tvec3<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tvec4<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tquat<U>& v)   { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tmat2x2<U>& v) { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tmat3x3<U>& v) { T r; r.assign(v); return r; }
+template<class T, class U> inline T to(const tmat4x4<U>& v) { T r; r.assign(v); return r; }
+
+// convert to same type of vec/mat with different length
+template<class T> inline tvec3<T> to_vec3(const tvec2<T>& v) { return { v[0], v[1], 0 }; }
+template<class T> inline tvec3<T> to_vec3(const tvec3<T>& v) { return v; }
+template<class T> inline tvec3<T> to_vec3(const tvec4<T>& v) { return { v[0], v[1], v[2] }; }
+template<class T> inline tvec4<T> to_vec4(const tvec2<T>& v) { return { v[0], v[1], 0, 0}; }
+template<class T> inline tvec4<T> to_vec4(const tvec3<T>& v) { return { v[0], v[1], v[2], 0 }; }
+template<class T> inline tvec4<T> to_vec4(const tvec4<T>& v) { return v; }
+
+template<class T> inline tmat2x2<T> to_mat2x2(const tmat2x2<T>& v)
+{
+    return v;
+}
+template<class T> inline tmat2x2<T> to_mat2x2(const tmat3x3<T>& v)
+{
+    return tmat2x2<T>{(tvec2<T>&)v[0], (tvec2<T>&)v[1]};
+}
+template<class T> inline tmat2x2<T> to_mat2x2(const tmat4x4<T>& v)
+{
+    return tmat2x2<T>{(tvec2<T>&)v[0], (tvec2<T>&)v[1]};
+}
+
+template<class T> inline tmat3x3<T> to_mat3x3(const tmat2x2<T>& v)
+{
+    return tmat3x3<T>{
+        v[0][0], v[0][1], 0,
+        v[1][0], v[1][1], 0,
+              0,       0, 1,
+    };
+}
+template<class T> inline tmat3x3<T> to_mat3x3(const tmat3x3<T>& v)
+{
+    return v;
+}
 template<class T> inline tmat3x3<T> to_mat3x3(const tmat4x4<T>& v)
 {
-    return { (tvec3<T>&)v[0], (tvec3<T>&)v[1], (tvec3<T>&)v[2] };
+    return tmat3x3<T>{(tvec3<T>&)v[0], (tvec3<T>&)v[1], (tvec3<T>&)v[2]};
+}
+
+template<class T> inline tmat4x4<T> to_mat4x4(const tmat2x2<T>& v)
+{
+    return tmat4x4<T>{
+        v[0][0], v[0][1], 0, 0,
+        v[1][0], v[1][1], 0, 0,
+              0,       0, 1, 0,
+              0,       0, 0, 1
+    };
 }
 template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
 {
@@ -779,8 +989,12 @@ template<class T> inline tmat4x4<T> to_mat4x4(const tmat3x3<T>& v)
         v[0][0], v[0][1], v[0][2], 0,
         v[1][0], v[1][1], v[1][2], 0,
         v[2][0], v[2][1], v[2][2], 0,
-              0,       0,       0, 1,
+              0,       0,       0, 1
     };
+}
+template<class T> inline tmat4x4<T> to_mat4x4(const tmat4x4<T>& v)
+{
+    return v;
 }
 
 template<class T> inline tmat3x3<T> to_mat3x3(const tquat<T>& q)
@@ -1022,11 +1236,12 @@ inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T
 
     auto m22 = -proj[2][2];
     auto m32 = -proj[3][2];
-    auto tmp_near = (T(2.0) * m32) / (T(2.0)*m22 - T(2.0));
-    auto tmp_far = ((m22 - T(1.0))*tmp_near) / (m22 + T(1.0));
-    near_plane = abs(tmp_near);
-    far_plane = abs(tmp_far);
-
+    auto tmp_near = abs((T(2.0) * m32) / (T(2.0)*m22 - T(2.0)));
+    auto tmp_far = abs(((m22 - T(1.0))*tmp_near) / (m22 + T(1.0)));
+    if (tmp_near > tmp_far)
+        std::swap(tmp_near, tmp_far);
+    near_plane = tmp_near;
+    far_plane = tmp_far;
 }
 
 template<class T>
@@ -1387,6 +1602,32 @@ template<class T> inline tvec4<T> orthogonalize_tangent(
 
     return { tangent.x, tangent.y, tangent.z,
         dot(cross(normal, tangent), binormal) > T(0.0) ? T(1.0) : -T(1.0) };
+}
+
+template<class A1, class Body>
+static inline void enumerate(A1& a1, const Body& body)
+{
+    size_t n = a1.size();
+    for (size_t i = 0; i < n; ++i)
+        body(a1[i]);
+}
+template<class A1, class A2, class Body>
+static inline void enumerate(A1& a1, A2& a2, const Body& body)
+{
+    size_t n = a1.size();
+    if (n != a2.size())
+        return;
+    for (size_t i = 0; i < n; ++i)
+        body(a1[i], a2[i]);
+}
+template<class A1, class A2, class A3, class Body>
+static inline void enumerate(A1& a1, A2& a2, A3& a3, const Body& body)
+{
+    size_t n = a1.size();
+    if (n != a2.size() || n != a3.size())
+        return;
+    for (size_t i = 0; i < n; ++i)
+        body(a1[i], a2[i], a3[i]);
 }
 
 } // namespace mu

@@ -20,6 +20,7 @@
 #include <chrono>
 #include <codecvt>
 #include <locale>
+#include <type_traits>
 
 #include "muConfig.h"
 #ifdef muEnableHalf

@@ -1,24 +1,47 @@
 #pragma once
 #include "muSIMDConfig.h"
+#include "muHalf.h"
 
 namespace mu {
 
-#ifdef muEnableHalf
-void FloatToHalf(half *dst, const float *src, size_t num);
-void HalfToFloat(float *dst, const half *src, size_t num);
-#endif // muEnableHalf
+uint64_t SumInt32(const void *src, size_t num);
+
+// float <-> half
+void F32ToF16(half *dst, const float *src, size_t num);
+void F16ToF32(float *dst, const half *src, size_t num);
+
+// float <-> norm
+void F32ToS8(snorm8 *dst, const float *src, size_t num);
+void S8ToF32(float *dst, const snorm8 *src, size_t num);
+void F32ToU8(unorm8 *dst, const float *src, size_t num);
+void U8ToF32(float *dst, const unorm8 *src, size_t num);
+void F32ToU8N(unorm8n *dst, const float *src, size_t num);
+void U8NToF32(float *dst, const unorm8n *src, size_t num);
+void F32ToS16(snorm16 *dst, const float *src, size_t num);
+void S16ToF32(float *dst, const snorm16 *src, size_t num);
+void F32ToU16(unorm16 *dst, const float *src, size_t num);
+void U16ToF32(float *dst, const unorm16 *src, size_t num);
+void F32ToS24(snorm24 *dst, const float *src, size_t num);
+void S24ToF32(float *dst, const snorm24 *src, size_t num);
+void F32ToS32(snorm32 *dst, const float *src, size_t num);
+void S32ToF32(float *dst, const snorm32 *src, size_t num);
 
 void InvertX(float3 *dst, size_t num);
 void InvertX(float4 *dst, size_t num);
+void InvertU(float2 *dst, size_t num);
 void InvertV(float2 *dst, size_t num);
 void Scale(float *dst, float s, size_t num);
 void Scale(float3 *dst, float s, size_t num);
 void Normalize(float3 *dst, size_t num);
-void Lerp(float *dst, const float *src1, const float *src2, size_t num, float w);
+void Lerp(float  *dst, const float  *src1, const float  *src2, size_t num, float w);
 void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w);
 void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
-void MinMax(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
+void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w);
+void MinMax(const int *src, size_t num, int& dst_min, int& dst_max);
+void MinMax(const float *src, size_t num, float& dst_min, float& dst_max);
 void MinMax(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
+void MinMax(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
+void MinMax(const float4 *src, size_t num, float4& dst_min, float4& dst_max);
 bool NearEqual(const float *src1, const float *src2, size_t num, float eps = muEpsilon);
 bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps = muEpsilon);
 bool NearEqual(const float3 *src1, const float3 *src2, size_t num, float eps = muEpsilon);
@@ -77,12 +100,49 @@ void GenerateTangentsTriangleSoA(float4 *dst,
 // ------------------------------------------------------------
 // internal (for test)
 // ------------------------------------------------------------
-#ifdef muEnableHalf
-void FloatToHalf_Generic(half *dst, const float *src, size_t num);
-void FloatToHalf_ISPC(half *dst, const float *src, size_t num);
-void HalfToFloat_Generic(float *dst, const half *src, size_t num);
-void HalfToFloat_ISPC(float *dst, const half *src, size_t num);
-#endif // muEnableHalf
+uint64_t SumInt32_Generic(const uint32_t *src, size_t num);
+uint64_t SumInt32_ISPC(const uint32_t *src, size_t num);
+
+void F32ToF16_Generic(half *dst, const float *src, size_t num);
+void F32ToF16_ISPC(half *dst, const float *src, size_t num);
+void F16ToF32_Generic(float *dst, const half *src, size_t num);
+void F16ToF32_ISPC(float *dst, const half *src, size_t num);
+
+void F32ToS8_Generic(snorm8 *dst, const float *src, size_t num);
+void F32ToS8_ISPC(snorm8 *dst, const float *src, size_t num);
+void S8ToF32_Generic(float *dst, const snorm8 *src, size_t num);
+void S8ToF32_ISPC(float *dst, const snorm8 *src, size_t num);
+
+void F32ToU8_Generic(unorm8 *dst, const float *src, size_t num);
+void F32ToU8_ISPC(unorm8 *dst, const float *src, size_t num);
+void U8ToF32_Generic(float *dst, const unorm8 *src, size_t num);
+void U8ToF32_ISPC(float *dst, const unorm8 *src, size_t num);
+
+void F32ToU8N_Generic(unorm8n *dst, const float *src, size_t num);
+void F32ToU8N_ISPC(unorm8n *dst, const float *src, size_t num);
+void U8NToF32_Generic(float *dst, const unorm8n *src, size_t num);
+void U8NToF32_ISPC(float *dst, const unorm8n *src, size_t num);
+
+void F32ToS16_Generic(snorm16 *dst, const float *src, size_t num);
+void F32ToS16_ISPC(snorm16 *dst, const float *src, size_t num);
+void S16ToF32_Generic(float *dst, const snorm16 *src, size_t num);
+void S16ToF32_ISPC(float *dst, const snorm16 *src, size_t num);
+
+void F32ToU16_Generic(unorm16 *dst, const float *src, size_t num);
+void F32ToU16_ISPC(unorm16 *dst, const float *src, size_t num);
+void U16ToF32_Generic(float *dst, const unorm16 *src, size_t num);
+void U16ToF32_ISPC(float *dst, const unorm16 *src, size_t num);
+
+void F32ToS24_Generic(snorm24 *dst, const float *src, size_t num);
+void F32ToS24_ISPC(snorm24 *dst, const float *src, size_t num);
+void S24ToF32_Generic(float *dst, const snorm24 *src, size_t num);
+void S24ToF32_ISPC(float *dst, const snorm24 *src, size_t num);
+
+void F32ToS32_Generic(snorm32 *dst, const float *src, size_t num);
+void F32ToS32_ISPC(snorm32 *dst, const float *src, size_t num);
+void S32ToF32_Generic(float *dst, const snorm32 *src, size_t num);
+void S32ToF32_ISPC(float *dst, const snorm32 *src, size_t num);
+
 
 void InvertX_Generic(float3 *dst, size_t num);
 void InvertX_ISPC(float3 *dst, size_t num);
@@ -100,10 +160,16 @@ void Normalize_ISPC(float3 *dst, size_t num);
 void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, float w);
 void Lerp_ISPC(float *dst, const float *src1, const float *src2, size_t num, float w);
 
+void MinMax_Generic(const int *src, size_t num, int& dst_min, int& dst_max);
+void MinMax_ISPC(const int *src, size_t num, int& dst_min, int& dst_max);
+void MinMax_Generic(const float *src, size_t num, float& dst_min, float& dst_max);
+void MinMax_ISPC(const float *src, size_t num, float& dst_min, float& dst_max);
 void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 void MinMax_ISPC(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
 void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
 void MinMax_ISPC(const float3 *src, size_t num, float3& dst_min, float3& dst_max);
+void MinMax_Generic(const float4 *src, size_t num, float4& dst_min, float4& dst_max);
+void MinMax_ISPC(const float4 *src, size_t num, float4& dst_min, float4& dst_max);
 
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps);
 bool NearEqual_ISPC(const float *src1, const float *src2, size_t num, float eps);

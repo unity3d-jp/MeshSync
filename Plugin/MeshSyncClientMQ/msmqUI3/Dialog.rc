@@ -1,0 +1,112 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "atlres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""atlres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MAINDLG DIALOGEX 0, 0, 181, 232
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOPMOST | WS_EX_TOOLWINDOW
+CAPTION "Unity Mesh Sync"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    RTEXT           "Server : Port",IDC_STATIC_SERVER_PORT,6,6,42,8
+    EDITTEXT        IDC_EDIT_SERVER,54,6,84,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_PORT,145,6,27,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Scale Factor",IDC_STATIC_SCALEFACTOR,12,42,48,8
+    EDITTEXT        IDC_EDIT_SCALEFACTOR,60,42,60,14,ES_AUTOHSCROLL
+    CONTROL         "Sync Vertex Color",IDC_CHECK_VCOLOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,60,73,10
+    CONTROL         "Sync Textures",IDC_CHECK_TEXTURES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,84,73,10
+    CONTROL         "Sync Camera",IDC_CHECK_CAMERA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,96,60,10
+    RTEXT           "Camera Path",IDC_STATIC_CAMERA_PATH,24,108,42,8
+    EDITTEXT        IDC_EDIT_CAMERA_PATH,72,108,96,14,ES_AUTOHSCROLL
+    CONTROL         "Auto Sync",IDC_CHECK_AUTOSYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,126,60,10
+    PUSHBUTTON      "Manual Sync",IDC_BUTTON_SYNC,12,138,54,14
+    GROUPBOX        "Import Settings",IDC_STATIC_IMPORT_SETTINGS,6,162,168,54
+    CONTROL         "Bake Skin",IDC_CHECK_BAKE_SKIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,174,54,10
+    CONTROL         "Bake Cloth",IDC_CHECK_BAKE_CLOTH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,186,54,10
+    PUSHBUTTON      "Import Unity Scene",IDC_BUTTON_IMPORT,12,198,78,14
+    LTEXT           "Plugin Version: ",IDC_TXT_VERSION,6,222,168,8
+    GROUPBOX        "Scene Settings",IDC_STATIC_SCENE_SETTINGS,6,24,168,132
+    CONTROL         "Double Sided",IDC_CHECK_BOTHSIDED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,73,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_MAINDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 174
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 225
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_MAINDLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+

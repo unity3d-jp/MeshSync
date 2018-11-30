@@ -25,6 +25,7 @@
     <ClInclude Include="MeshUtils\ampmath.h" />
     <ClInclude Include="MeshUtils\ampmath_impl.h" />
     <ClInclude Include="MeshUtils\muColor.h" />
+    <ClInclude Include="MeshUtils\muCompression.h" />
     <ClInclude Include="MeshUtils\muConcurrency.h" />
     <ClInclude Include="MeshUtils\muConfig.h" />
     <ClInclude Include="MeshUtils\muHalf.h" />
@@ -33,6 +34,8 @@
     <ClInclude Include="MeshUtils\muIterator.h" />
     <ClInclude Include="MeshUtils\muMeshRefiner.h" />
     <ClInclude Include="MeshUtils\muMisc.h" />
+    <ClInclude Include="MeshUtils\muQuat32.h" />
+    <ClInclude Include="MeshUtils\muS10x3.h" />
     <ClInclude Include="MeshUtils\muSIMDConfig.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
@@ -46,6 +49,7 @@
     <ClCompile Include="CrashReporter\CrashReporter.cpp" />
     <ClCompile Include="MeshUtils\muAllocator.cpp" />
     <ClCompile Include="MeshUtils\muColor.cpp" />
+    <ClCompile Include="MeshUtils\muCompression.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\muMisc.cpp" />
     <ClCompile Include="MeshUtils\pch.cpp">
@@ -59,8 +63,8 @@
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
       <FileType>Document</FileType>
-      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-masked-vload --opt=fast-math</Command>
-      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86 --opt=fast-masked-vload --opt=fast-math</Command>
+      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --wno-perf</Command>
+      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86 --opt=fast-masked-vload --opt=fast-math --wno-perf</Command>
       <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj;$(IntDir)%(Filename)_avx512skx.obj</Outputs>
       <AdditionalInputs>$(SolutionDir)MeshUtils\ispcmath.h;$(SolutionDir)MeshUtils\muSIMDConfig.h</AdditionalInputs>
     </CustomBuild>

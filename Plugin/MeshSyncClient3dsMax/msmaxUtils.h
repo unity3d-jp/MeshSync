@@ -10,14 +10,16 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
+bool IsInstanced(INode *n);
 Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);
 Modifier* FindSkin(INode *n);
 ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
+bool IsBone(Object *obj);
 bool IsMesh(Object *obj);
-bool IsBoneMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
+TriObject* GetFinalMesh(INode *n, bool& needs_delete);
 
 
 inline mu::float2 to_float2(const Point3& v)
@@ -31,6 +33,10 @@ inline mu::float3 to_float3(const Point3& v)
 inline mu::float4 to_color(const Point3& v)
 {
     return { v.x, v.y, v.z, 1.0f };
+}
+inline mu::quatf to_quatf(const Quat& v)
+{
+    return { v.x, v.y, v.z, v.w };
 }
 
 inline mu::float4x4 to_float4x4(const Matrix3& v)
@@ -97,21 +103,6 @@ inline Object* EachModifier(INode *n, const Body& body)
     return obj;
 }
 
-// Body: [](IDerivedObject *obj, Modifier *mod, int mod_index) -> void
-template<class Body>
-inline void EachModifier(Object *obj, const Body& body)
-{
-    if (!obj)
-        return;
-    if (obj->SuperClassID() == GEN_DERIVOB_CLASS_ID) {
-        auto dobj = (IDerivedObject*)obj;
-        int num_mod = dobj->NumModifiers();
-        for (int mi = 0; mi < num_mod; ++mi)
-            body(obj, dobj->GetModifier(mi), mi);
-    }
-}
-
-
 
 namespace detail {
 
@@ -146,6 +137,21 @@ inline void EnumerateAllNode(const Body& body)
     }
     else {
         mscTrace("EnumerateAllNode() failed!!!\n");
+    }
+}
+
+// Body: [](INode *node) -> void
+template<class Body>
+inline void EnumerateInstance(INode *n, const Body& body)
+{
+    INodeTab instances;
+    if (IInstanceMgr::GetInstanceMgr()->GetInstances(*n, instances) > 1) {
+        int c = instances.Count();
+        for (int i = 0; i < c; ++i) {
+            auto instance = instances[i];
+            if (instance != n)
+                body(instance);
+        }
     }
 }
 

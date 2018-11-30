@@ -16,6 +16,6 @@ exit /B 0
     )
     
     set DIST_DIR="dist\UnityMeshSync_3dsMax_Windows"
-    set CONTENT_DIR="%DIST_DIR%\%MAX_VERSION%"
+    set CONTENT_DIR="%DIST_DIR%\3dsMax%MAX_VERSION%"
     xcopy /Y _out\x64_Master\MeshSyncClient3dsMax%MAX_VERSION%\MeshSyncClient3dsMax.dlu "%CONTENT_DIR%\"
     exit /B 0

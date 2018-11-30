@@ -4,14 +4,17 @@
 #include <memory>
 #include "muRawVector.h"
 #include "muIntrusiveArray.h"
-#include "muMath.h"
 #include "muHalf.h"
+#include "muMath.h"
+#include "muS10x3.h"
+#include "muQuat32.h"
 #include "muSIMD.h"
 #include "muVertex.h"
 #include "muColor.h"
 #include "muTLS.h"
 #include "muMisc.h"
 #include "muConcurrency.h"
+#include "muCompression.h"
 
 namespace mu {
 
@@ -21,7 +24,7 @@ bool GenerateNormalsPoly(RawVector<float3>& dst,
     const IArray<float3> points, const IArray<int> counts, const IArray<int> indices, bool flip);
 
 void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
-    const MeshConnectionInfo& connection, const IArray<float3> points,
+    const IArray<float3> points,
     const IArray<int> counts, const IArray<int> indices,
     float smooth_angle, bool flip);
 

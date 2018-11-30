@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmbDevice.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmbLayout.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmbUtils.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder/pch.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmbDevice.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmbLayout.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmbUtils.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder/pch.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MeshSyncClientMotionBuilder">
+      <UniqueIdentifier>{3ef682de-65c4-4f67-bee7-0391d152d7ee}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,5 +1,9 @@
 #pragma once
 
+#include "muMath.h"
+#include "muRawVector.h"
+#include "muIntrusiveArray.h"
+
 namespace mu {
 
 
@@ -134,6 +138,7 @@ struct MeshRefiner
     }
 
     void refine();
+    void buildConnection();
     void retopology(bool swap_faces);
     void genSubmeshes(IArray<int> material_ids);
     void genSubmeshes();

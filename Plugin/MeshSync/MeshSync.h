@@ -2,12 +2,19 @@
 
 #include "MeshUtils/MeshUtils.h"
 #include "msConfig.h"
-#include "msSceneGraph.h"
-#include "msConstraints.h"
-#include "msAnimation.h"
-#include "msMaterial.h"
+#include "SceneGraph/msAsset.h"
+#include "SceneGraph/msAnimation.h"
+#include "SceneGraph/msMaterial.h"
+#include "SceneGraph/msTexture.h"
+#include "SceneGraph/msAudio.h"
+#include "SceneGraph/msEntity.h"
+#include "SceneGraph/msMesh.h"
+#include "SceneGraph/msConstraints.h"
+#include "SceneGraph/msSceneGraph.h"
+#include "SceneCache/msSceneCache.h"
 #include "msClient.h"
 #include "msServer.h"
+#include "msMisc.h"
 
 #ifdef mscDebug
     #define mscTrace(...) ::mu::Print("MeshSync trace: " __VA_ARGS__)

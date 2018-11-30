@@ -41,11 +41,12 @@
     <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="MeshSyncClientBlender\python\unity_mesh_sync.py" />
-    <None Include="MeshSyncClientBlender\python\__init__.py">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
+    <None Include="MeshSyncClientBlender\python\2.79\unity_mesh_sync.py" />
+    <None Include="MeshSyncClientBlender\python\2.80\unity_mesh_sync.py" />
+    <None Include="MeshSyncClientBlender\python\unity_mesh_sync_common.py" />
     <None Include="MeshSyncClientBlender\tools\extract_headers.py" />
+    <None Include="MeshSyncClientBlender\tools\gen_initpy.py" />
+    <None Include="MeshSyncClientBlender\tools\replace_blender_version.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F8F15B0D-44E4-4AE0-A380-6AAB2730B56C}</ProjectGuid>
@@ -67,12 +68,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(PYTHON_INCLUDE_DIR);$(BLENDER_INCLUDE_DIRS);$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(BLENDER_PYTHON_INCLUDE_DIR);$(BLENDER_INCLUDE_DIRS);$(SolutionDir)External;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)-$(BLENDER_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)-$(BLENDER_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(PYTHON_LIB_DIR);$(BLENDER_LIB_DIR);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(BLENDER_PYTHON_LIB_DIR);$(BLENDER_LIB_DIR);$(LibraryPath)</LibraryPath>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

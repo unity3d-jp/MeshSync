@@ -2,7 +2,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(MeshSync)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-find_package(OpenEXR QUIET)
 find_package(Poco COMPONENTS Net QUIET)
 if(APPLE)
     find_library(COCOA_LIBRARY Cocoa)
@@ -17,6 +16,12 @@ endif()
 include(AddPlugin)
 include(ISPC)
 
+option(ENABLE_ZSTD "Use ZSTD for scene cache compression" ON)
+if(ENABLE_ZSTD)
+    find_package(ZSTD)
+    add_definitions(-DmsEnableZSTD)
+endif()
+
 # Server
 option(BUILD_SERVER "Build MeshSyncServer" ON)
 
@@ -27,7 +32,7 @@ endif()
 
 # Blender
 option(BUILD_BLENDER2.79_CLIENT "Build MeshSyncClient for Blender 2.79" OFF)
-option(BUILD_BLENDER2.8_CLIENT "Build MeshSyncClient for Blender 2.8" OFF)
+option(BUILD_BLENDER2.80_CLIENT "Build MeshSyncClient for Blender 2.80" OFF)
 
 # Maya
 option(BUILD_MAYA2015_CLIENT "Build MeshSyncClient for Maya 2015" OFF)
@@ -35,9 +40,6 @@ option(BUILD_MAYA2016_CLIENT "Build MeshSyncClient for Maya 2016" OFF)
 option(BUILD_MAYA2016.5_CLIENT "Build MeshSyncClient for Maya 2016.5" OFF)
 option(BUILD_MAYA2017_CLIENT "Build MeshSyncClient for Maya 2017" OFF)
 option(BUILD_MAYA2018_CLIENT "Build MeshSyncClient for Maya 2018" OFF)
-#if(MAC)
-#    option(BUILD_MAYALT2018_CLIENT "Build MeshSyncClient for Maya LT 2018" OFF)
-#endif()
 
 # MotionBuilder
 if(LINUX)
@@ -52,7 +54,7 @@ option(BUILD_TESTS "Tests" OFF)
 
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++14 -Wno-deprecated")
 
 function(add_subdirectory_link to from)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")
@@ -79,8 +81,8 @@ endif()
 if(BUILD_BLENDER2.79_CLIENT)
     add_subdirectory_link(MeshSyncClientBlender2.79 MeshSyncClientBlender)
 endif()
-if(BUILD_BLENDER2.8_CLIENT)
-    add_subdirectory_link(MeshSyncClientBlender2.8 MeshSyncClientBlender)
+if(BUILD_BLENDER2.80_CLIENT)
+    add_subdirectory_link(MeshSyncClientBlender2.80 MeshSyncClientBlender)
 endif()
 
 # Maya

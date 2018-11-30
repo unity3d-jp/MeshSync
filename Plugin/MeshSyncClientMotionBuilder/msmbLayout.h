@@ -33,6 +33,8 @@ private:
     FBButton m_bu_sync_cameras;
     FBButton m_bu_sync_lights;
     FBButton m_bu_sync_meshes;
+    FBButton m_bu_make_double_sided;
+    FBButton m_bu_bake_deformers;
 
     FBLabel m_lb_animation;
     FBLabel m_lb_time_scale;
@@ -40,4 +42,6 @@ private:
     FBLabel m_lb_sps;
     FBEditNumber m_ed_sps;
     FBButton m_bu_sync_animations;
+
+    FBLabel m_lb_version;
 };

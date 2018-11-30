@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Test.h"
 #include "MeshGenerator.h"
+#include "Common.h"
 using namespace mu;
 
 #ifdef EnableFbxExport
@@ -85,8 +86,11 @@ TestCase(TestMeshRefiner)
         uv_flattened[i] = uv[indices[i]];
     }
 
+    RawVector<float3> normals;
+    GenerateNormalsWithSmoothAngle(normals, points, counts, indices, 40.0f, false);
+
     RawVector<float2> uv_refined;
-    RawVector<float3> normals, normals_refined;
+    RawVector<float3> normals_refined;
     RawVector<int> remap_uv, remap_normals;
 
     mu::MeshRefiner refiner;
@@ -94,12 +98,12 @@ TestCase(TestMeshRefiner)
     refiner.counts = counts;
     refiner.indices = indices;
     refiner.points = points;
-    refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined, remap_uv);
 
-    GenerateNormalsWithSmoothAngle(normals, refiner.connection, points, counts, indices, 40.0f, false);
+    refiner.addExpandedAttribute<float2>(uv_flattened, uv_refined, remap_uv);
     refiner.addExpandedAttribute<float3>(normals, normals_refined, remap_normals);
 
     refiner.refine();
+    refiner.retopology(false);
     refiner.genSubmeshes(material_ids);
 }
 
@@ -306,13 +310,13 @@ TestCase(TestNormalsAndTangents)
 TestCase(TestMatrixSwapHandedness)
 {
     quatf rot1 = rotate(normalize(float3{0.15f, 0.3f, 0.6f}), 60.0f);
-    quatf rot2 = swap_handedness(rot1);
+    quatf rot2 = flip_x(rot1);
     float4x4 mat1 = to_mat4x4(rot1);
     float4x4 mat2 = to_mat4x4(rot2);
-    float4x4 mat3 = swap_handedness(mat1);
+    float4x4 mat3 = flip_x(mat1);
     float4x4 imat1 = invert(mat1);
     float4x4 imat2 = invert(mat2);
-    float4x4 imat3 = swap_handedness(imat1);
+    float4x4 imat3 = flip_x(imat1);
 
     bool r1 = near_equal(mat2, mat3);
     bool r2 = near_equal(imat2, imat3);
@@ -710,3 +714,328 @@ TestCase(TestMatrixExtraction)
     Print("ok");
 }
 
+TestCase(TestSum)
+{
+    const size_t input_size = 10000000;
+
+    RawVector<float> input(input_size);
+    for (int i = 0; i < input_size; ++i)
+        input[i] = (float)i;
+
+    TestScope("SumInt32_Generic", [&]() {
+        auto sum = SumInt32_Generic((uint32_t*)input.data(), input.size());
+        Print("sum: %llu\n", sum);
+    }, 1);
+    TestScope("SumInt32_ISPC", [&]() {
+        auto sum = SumInt32_ISPC((uint32_t*)input.data(), input.size());
+        Print("sum: %llu\n", sum);
+    }, 1);
+    TestScope("SumInt32", [&]() {
+        auto sum = SumInt32(input.data(), sizeof(float) * input.size());
+        Print("sum: %llu\n", sum);
+    }, 1);
+}
+
+TestCase(TestCompareRawVector)
+{
+    const size_t input_size = 10000000;
+
+    RawVector<float> input1(input_size);
+    RawVector<float> input2(input_size);
+    RawVector<float> input3(input_size);
+    input1.resize(input_size);
+    for (int i = 0; i < input_size; ++i) {
+        input1[i] = (float)i;
+        input2[i] = (float)i;
+        input3[i] = (float)i * 1.1f;
+    }
+
+    TestScope("compare12", [&]() {
+        auto result = input1 == input2;
+        Print("result: %d\n", result);
+    }, 1);
+    TestScope("compare13", [&]() {
+        auto result = input1 == input3;
+        Print("result: %d\n", result);
+    }, 1);
+}
+
+
+template<class T, size_t N>
+void FloatIntConversionImpl(float(&src)[N], T (&tmp)[N], float(&dst)[N])
+{
+    for (int i = 0; i < N; ++i) {
+        tmp[i] = src[i];
+        dst[i] = tmp[i];
+    }
+}
+
+TestCase(Test_Norm)
+{
+    {
+        const int N = 9;
+        float data[N] = { 0.0f, 0.1f, 0.5f, 1.0f, 5.0f, -0.1f, -0.5f, -1.0f, -5.0f };
+
+        float expected_signed[N];
+        float expected_unsigned[N];
+        for (int i = 0; i < N; ++i) {
+            expected_signed[i] = clamp11(data[i]);
+            expected_unsigned[i] = clamp01(data[i]);
+        }
+
+        snorm8 ts8[N]; float dst_s8[N];
+        FloatIntConversionImpl(data, ts8, dst_s8);
+        Expect(NearEqual(dst_s8, expected_signed, N, 1e-2f));
+
+        unorm8 tu8[N]; float dst_u8[N];
+        FloatIntConversionImpl(data, tu8, dst_u8);
+        Expect(NearEqual(dst_u8, expected_unsigned, N, 1e-2f));
+
+        unorm8n tu8n[N]; float dst_u8n[N];
+        FloatIntConversionImpl(data, tu8n, dst_u8n);
+        Expect(NearEqual(dst_u8n, expected_signed, N, 1e-2f));
+
+        snorm16 ts16[N]; float dst_s16[N];
+        FloatIntConversionImpl(data, ts16, dst_s16);
+        Expect(NearEqual(dst_s16, expected_signed, N));
+
+        unorm16 tu16[N]; float dst_u16[N];
+        FloatIntConversionImpl(data, tu16, dst_u16);
+        Expect(NearEqual(dst_u16, expected_unsigned, N));
+
+        snorm24 ts24[N]; float dst_s24[N];
+        FloatIntConversionImpl(data, ts24, dst_s24);
+        Expect(NearEqual(dst_s24, expected_signed, N));
+
+        snorm32 ts32[N]; float dst_s32[N];
+        FloatIntConversionImpl(data, ts32, dst_s32);
+        Expect(NearEqual(dst_s32, expected_signed, N));
+    }
+#ifdef muSIMD_Float_Norm_Conversion
+    {
+        const int N = 1000000;
+        const int T = 5;
+        RawVector<float> data(N);
+
+        float step = 3.0f / N;
+        for (int i = 0; i < N; ++i) {
+            data[i] = -1.5f + step * i;
+        }
+
+        RawVector<float> expected_signed(N);
+        RawVector<float> expected_unsigned(N);
+        for (int i = 0; i < N; ++i) {
+            expected_signed[i] = clamp11(data[i]);
+            expected_unsigned[i] = clamp01(data[i]);
+        }
+
+        {
+            RawVector<snorm8> ts8(N); RawVector<float> dst_s8(N);
+            TestScope("F32ToS8_ISPC", [&]() {
+                F32ToS8_ISPC(ts8.data(), data.data(), N);
+                S8ToF32_ISPC(dst_s8.data(), ts8.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s8.data(), expected_signed.data(), N, 1e-2f));
+            TestScope("F32ToS8_Generic", [&]() {
+                F32ToS8_Generic(ts8.data(), data.data(), N);
+                S8ToF32_Generic(dst_s8.data(), ts8.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s8.data(), expected_signed.data(), N, 1e-2f));
+        }
+        {
+            RawVector<unorm8> tu8(N); RawVector<float> dst_u8(N);
+            TestScope("F32ToU8_ISPC", [&]() {
+                F32ToU8_ISPC(tu8.data(), data.data(), N);
+                U8ToF32_ISPC(dst_u8.data(), tu8.data(), N);
+            }, T);
+            Expect(NearEqual(dst_u8.data(), expected_unsigned.data(), N, 1e-2f));
+            TestScope("F32ToU8_Generic", [&]() {
+                F32ToU8_Generic(tu8.data(), data.data(), N);
+                U8ToF32_Generic(dst_u8.data(), tu8.data(), N);
+            }, T);
+            Expect(NearEqual(dst_u8.data(), expected_unsigned.data(), N, 1e-2f));
+        }
+        {
+            RawVector<unorm8n> tu8n(N); RawVector<float> dst_u8n(N);
+            TestScope("F32ToU8N_ISPC", [&]() {
+                F32ToU8N_ISPC(tu8n.data(), data.data(), N);
+                U8NToF32_ISPC(dst_u8n.data(), tu8n.data(), N);
+            }, T);
+            Expect(NearEqual(dst_u8n.data(), expected_signed.data(), N, 1e-2f));
+            TestScope("F32ToU8N_Generic", [&]() {
+                F32ToU8N_Generic(tu8n.data(), data.data(), N);
+                U8NToF32_Generic(dst_u8n.data(), tu8n.data(), N);
+            }, T);
+            Expect(NearEqual(dst_u8n.data(), expected_signed.data(), N, 1e-2f));
+        }
+        {
+            RawVector<snorm16> ts16(N); RawVector<float> dst_s16(N);
+            TestScope("F32ToS16_ISPC", [&]() {
+                F32ToS16_ISPC(ts16.data(), data.data(), N);
+                S16ToF32_ISPC(dst_s16.data(), ts16.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s16.data(), expected_signed.data(), N));
+            TestScope("F32ToS16_Generic", [&]() {
+                F32ToS16_Generic(ts16.data(), data.data(), N);
+                S16ToF32_Generic(dst_s16.data(), ts16.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s16.data(), expected_signed.data(), N));
+        }
+        {
+            RawVector<unorm16> tu16(N); RawVector<float> dst_u16(N);
+            TestScope("F32ToU16_ISPC", [&]() {
+                F32ToU16_ISPC(tu16.data(), data.data(), N);
+                U16ToF32_ISPC(dst_u16.data(), tu16.data(), N);
+            }, T);
+            Expect(NearEqual(dst_u16.data(), expected_unsigned.data(), N));
+            TestScope("F32ToU16_Generic", [&]() {
+                F32ToU16_Generic(tu16.data(), data.data(), N);
+                U16ToF32_Generic(dst_u16.data(), tu16.data(), N);
+            }, T);
+            Expect(NearEqual(dst_u16.data(), expected_unsigned.data(), N));
+        }
+        {
+            RawVector<snorm24> ts24(N); RawVector<float> dst_s24(N);
+            TestScope("F32ToS24_ISPC", [&]() {
+                F32ToS24_ISPC(ts24.data(), data.data(), N);
+                S24ToF32_ISPC(dst_s24.data(), ts24.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s24.data(), expected_signed.data(), N));
+            TestScope("F32ToS24_Generic", [&]() {
+                F32ToS24_Generic(ts24.data(), data.data(), N);
+                S24ToF32_Generic(dst_s24.data(), ts24.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s24.data(), expected_signed.data(), N));
+        }
+        {
+            RawVector<snorm32> ts32(N); RawVector<float> dst_s32(N);
+            TestScope("F32ToS32_ISPC", [&]() {
+                F32ToS32_ISPC(ts32.data(), data.data(), N);
+                S32ToF32_ISPC(dst_s32.data(), ts32.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s32.data(), expected_signed.data(), N));
+            TestScope("F32ToS32_Generic", [&]() {
+                F32ToS32_Generic(ts32.data(), data.data(), N);
+                S32ToF32_Generic(dst_s32.data(), ts32.data(), N);
+            }, T);
+            Expect(NearEqual(dst_s32.data(), expected_signed.data(), N));
+        }
+    }
+#endif
+}
+
+TestCase(Test_Quat32)
+{
+    const int N = 100;
+    const float eps = 0.01f;
+
+    RawVector<quath> qf16(N); RawVector<quat32> r16(N);
+    RawVector<quatf> qf32(N); RawVector<quat32> r32(N);
+    RawVector<quatd> qf64(N); RawVector<quat32> r64(N);
+
+    float3 forward = { 0.0f, 0.0f, 1.0f};
+    Random rnd;
+    for (int i = 0; i < N; ++i) {
+        auto axis = rnd.v3n();
+        auto angle = rnd.f11() * mu::PI;
+
+        qf16[i] = to<quath>(rotate(axis, angle));
+        r16[i] = qf16[i];
+        auto hfa = apply_rotation(to<quatf>(qf16[i]), forward);
+        auto hfb = apply_rotation(to<quatf>(r16[i]), forward);
+        Expect(near_equal(hfa, hfb, eps));
+
+        qf32[i] = rotate(axis, angle);
+        r32[i] = qf32[i];
+        auto ffa = apply_rotation(qf32[i], forward);
+        auto ffb = apply_rotation(to<quatf>(r32[i]), forward);
+        Expect(near_equal(ffa, ffb, eps));
+
+        qf64[i] = to<quatd>(rotate(axis, angle));
+        r64[i] = qf64[i];
+        auto dfa = apply_rotation(to<quatf>(qf64[i]), forward);
+        auto dfb = apply_rotation(to<quatf>(r64[i]), forward);
+        Expect(near_equal(dfa, dfb, eps));
+    }
+}
+
+TestCase(Test_S10x3)
+{
+    const int N = 100;
+    const float eps = 0.01f;
+
+    Random rnd;
+    for (int i = 0; i < N; ++i) {
+        float4 tangent;
+        (float3&)tangent = rnd.v3n();
+        tangent.w = i % 2 == 0 ? 1.0f : -1.0f;
+
+        snorm10x3 encoded = mu::encode_tangent(tangent);
+        float4 decoded = mu::decode_tangent(encoded);
+        Expect(near_equal(tangent, decoded, eps));
+    }
+}
+
+TestCase(Test_BoundedArray)
+{
+    const int N = 100;
+    const float eps = 0.01f;
+
+    Random rnd;
+
+    RawVector<int> data1i(N), tmp1i(N);
+    RawVector<float> data1(N), tmp1(N);
+    RawVector<float2> data2(N), tmp2(N);
+    RawVector<float3> data3(N), tmp3(N);
+    RawVector<float4> data4(N), tmp4(N);
+    RawVector<float4> data_tangents(N), tmp_tangents(N);
+    for (int i = 0; i < N; ++i) {
+        data1i[i] = (rnd.f01() * 60000.0f) + 10000;
+
+        data1[i] = rnd.f11() * 1.0f;
+        data2[i] = { rnd.f01()*2.0f, rnd.f01()*2.0f - 2.0f };
+        data3[i] = rnd.v3n();
+        data4[i] = { rnd.f01() + 5.0f, rnd.f01() + 2.0f, rnd.f01() - 2.0f, rnd.f01() - 5.0f };
+
+        float4 tangent;
+        (float3&)tangent = rnd.v3n();
+        tangent.w = i % 2 == 0 ? 1.0f : -1.0f;
+        data_tangents[i] = tangent;
+    }
+
+    BoundedArrayU16I ba1i_16;
+    BoundedArrayU8 ba1_8;
+    BoundedArrayU8x2 ba2_8;
+    BoundedArrayU10x3 ba3_10;
+    BoundedArrayU16x3 ba3_16;
+    BoundedArrayU16x4 ba4_16;
+    PackedArrayS10x3 batan;
+
+    encode(ba1i_16, data1i);
+    decode(tmp1i, ba1i_16);
+    Expect(data1i == tmp1i);
+
+    encode(ba1_8, data1);
+    decode(tmp1, ba1_8);
+    Expect(NearEqual(data1.data(), tmp1.data(), N, eps));
+
+    encode(ba2_8, data2);
+    decode(tmp2, ba2_8);
+    Expect(NearEqual(data2.data(), tmp2.data(), N, eps));
+
+    encode(ba3_10, data3);
+    decode(tmp3, ba3_10);
+    Expect(NearEqual_Generic((float*)data3.data(), (float*)tmp3.data(), N*3, eps));
+
+    encode(ba3_16, data3);
+    decode(tmp3, ba3_16);
+    Expect(NearEqual(data3.data(), tmp3.data(), N, eps));
+
+    encode(ba4_16, data4);
+    decode(tmp4, ba4_16);
+    Expect(NearEqual(data4.data(), tmp4.data(), N, eps));
+
+    encode_tangents(batan, data_tangents);
+    decode_tangents(tmp_tangents, batan);
+    Expect(NearEqual(data_tangents.data(), tmp_tangents.data(), N, eps));
+}

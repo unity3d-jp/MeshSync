@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "MeshSync/MeshSync.h"
-#include "MeshSyncClientXismo.h"
-using namespace mu;
+#include "msxmContext.h"
 
 #define msxmEnableQt
 
@@ -26,18 +25,20 @@ using namespace mu;
 #pragma comment(lib, "Qt5Widgets.lib")
 
 
-class XismoSyncSettingsWidget : public QWidget
+class msxmSettingsWidget : public QWidget
 {
 using super = QWidget;
 public:
-    XismoSyncSettingsWidget(QWidget *parent = nullptr);
+    msxmSettingsWidget(QWidget *parent = nullptr);
 
 private:
     void onEditServer(const QString& v);
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
-    void onToggleWelding(int v);
+    void onToggleDoubleSided(int v);
+    void onToggleSyncTextures(int v);
     void onToggleSyncCamera(int v);
+    void onEditCameraPath(const QString& v);
     void onToggleSyncDelete(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
@@ -61,15 +62,13 @@ static QMainWindow* FindMainWindow()
 }
 
 
-XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
+msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     : super(parent)
 {
     setWindowTitle("Unity Mesh Sync");
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
-    auto ctx = msxmGetContext();
-    ctx->getSettings().auto_sync = false;
-
+    auto &settings = msxmGetContext()->getSettings();
 
     // setup controls
 
@@ -88,33 +87,52 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
     layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
 
-    //auto ck_weld = new QCheckBox("Weld Vertices");
-    //ck_weld->setCheckState(Qt::Checked);
-    //layout->addWidget(ck_weld, iy++, 0, 1, 3);
+    auto ck_double_sided = new QCheckBox("Double Sided");
+    if (settings.make_double_sided)
+        ck_double_sided->setCheckState(Qt::Checked);
+    layout->addWidget(ck_double_sided, iy++, 0, 1, 3);
 
-    auto ck_delete = new QCheckBox("Sync Delete / Hide");
-    ck_delete->setCheckState(Qt::Checked);
+    auto ck_delete = new QCheckBox("Sync Delete");
+    if (settings.sync_delete)
+        ck_delete->setCheckState(Qt::Checked);
     layout->addWidget(ck_delete, iy++, 0, 1, 3);
 
+    auto ck_textures = new QCheckBox("Sync Textures");
+    if (settings.sync_textures)
+        ck_textures->setCheckState(Qt::Checked);
+    layout->addWidget(ck_textures, iy++, 0, 1, 3);
+
     auto ck_camera = new QCheckBox("Sync Camera");
+    if (settings.sync_camera)
+        ck_camera->setCheckState(Qt::Checked);
     layout->addWidget(ck_camera, iy++, 0, 1, 3);
 
+    layout->addWidget(new QLabel("Camera Path"), iy, 0);
+    auto ed_camera_path = new QLineEdit(settings.camera_path.c_str());
+    layout->addWidget(ed_camera_path, iy++, 1);
+
     auto ck_auto_sync = new QCheckBox("Auto Sync");
+    if (settings.auto_sync)
+        ck_auto_sync->setCheckState(Qt::Checked);
     layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
 
     auto bu_manual_sync = new QPushButton("Manual Sync");
     layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
 
+    layout->addWidget(new QLabel("Plugin Version: " msReleaseDateStr), iy++, 0, 1, 3);
+
     setLayout(layout);
 
-    connect(ed_server, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditServer);
-    connect(ed_port, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditPort);
-    connect(ed_scale_factor, &QLineEdit::textEdited, this, &XismoSyncSettingsWidget::onEditScaleFactor);
-    //connect(ck_weld, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleWelding);
-    connect(ck_camera, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleSyncCamera);
-    connect(ck_delete, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleSyncDelete);
-    connect(ck_auto_sync, &QCheckBox::stateChanged, this, &XismoSyncSettingsWidget::onToggleAutoSync);
-    connect(bu_manual_sync, &QPushButton::clicked, this, &XismoSyncSettingsWidget::onClickManualSync);
+    connect(ed_server, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditServer);
+    connect(ed_port, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditPort);
+    connect(ed_scale_factor, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditScaleFactor);
+    connect(ck_double_sided, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleDoubleSided);
+    connect(ck_textures, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncTextures);
+    connect(ck_camera, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncCamera);
+    connect(ed_camera_path, &QLineEdit::textEdited, this, &msxmSettingsWidget::onEditCameraPath);
+    connect(ck_delete, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleSyncDelete);
+    connect(ck_auto_sync, &QCheckBox::stateChanged, this, &msxmSettingsWidget::onToggleAutoSync);
+    connect(bu_manual_sync, &QPushButton::clicked, this, &msxmSettingsWidget::onClickManualSync);
 
 
     // try to add menu item (Widget -> Unity Mesh Sync)
@@ -126,7 +144,7 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
         m_menu_item = new QAction("Unity Mesh Sync", nullptr);
         m_menu_item->setCheckable(true);
         m_menu_item->setChecked(true);
-        connect(m_menu_item, &QAction::triggered, this, &XismoSyncSettingsWidget::onMenuAction);
+        connect(m_menu_item, &QAction::triggered, this, &msxmSettingsWidget::onMenuAction);
 
         auto widget_menu = act_widgets->menu();
         widget_menu->addSeparator();
@@ -134,13 +152,13 @@ XismoSyncSettingsWidget::XismoSyncSettingsWidget(QWidget *parent)
     }
 }
 
-void XismoSyncSettingsWidget::onEditServer(const QString& v)
+void msxmSettingsWidget::onEditServer(const QString& v)
 {
     auto ctx = msxmGetContext();
     ctx->getSettings().client_settings.server = v.toStdString();
 }
 
-void XismoSyncSettingsWidget::onEditPort(const QString& v)
+void msxmSettingsWidget::onEditPort(const QString& v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
@@ -151,7 +169,7 @@ void XismoSyncSettingsWidget::onEditPort(const QString& v)
     }
 }
 
-void XismoSyncSettingsWidget::onEditScaleFactor(const QString& v)
+void msxmSettingsWidget::onEditScaleFactor(const QString& v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
@@ -159,54 +177,65 @@ void XismoSyncSettingsWidget::onEditScaleFactor(const QString& v)
     float scale = v.toFloat(&ok);
     if (ok && settings.scale_factor != scale) {
         settings.scale_factor = scale;
-        ctx->send(true);
+        if (settings.auto_sync)
+            ctx->send(true);
     }
 }
 
-void XismoSyncSettingsWidget::onToggleWelding(int v)
+void msxmSettingsWidget::onToggleDoubleSided(int v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
-    if (settings.weld_vertices != (bool)v) {
-        settings.weld_vertices = v;
+    settings.make_double_sided = v;
+    if (settings.auto_sync)
         ctx->send(true);
-    }
 }
 
-void XismoSyncSettingsWidget::onToggleSyncCamera(int v)
+void msxmSettingsWidget::onToggleSyncTextures(int v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
-    if (settings.sync_camera != (bool)v) {
-        settings.sync_camera = v;
-        ctx->send(true);
-    }
+    settings.sync_textures = v;
 }
 
-void XismoSyncSettingsWidget::onToggleSyncDelete(int v)
+void msxmSettingsWidget::onToggleSyncCamera(int v)
+{
+    auto ctx = msxmGetContext();
+    auto& settings = ctx->getSettings();
+    settings.sync_camera = v;
+    if (settings.auto_sync)
+        ctx->send(false);
+}
+
+void msxmSettingsWidget::onEditCameraPath(const QString & v)
+{
+    auto ctx = msxmGetContext();
+    ctx->getSettings().camera_path = v.toStdString();
+}
+
+void msxmSettingsWidget::onToggleSyncDelete(int v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
     settings.sync_delete = v;
 }
 
-void XismoSyncSettingsWidget::onToggleAutoSync(int v)
+void msxmSettingsWidget::onToggleAutoSync(int v)
 {
     auto ctx = msxmGetContext();
     auto& settings = ctx->getSettings();
     settings.auto_sync = v;
-    if (v) {
+    if (v)
         ctx->send(true);
-    }
 }
 
-void XismoSyncSettingsWidget::onClickManualSync(bool v)
+void msxmSettingsWidget::onClickManualSync(bool v)
 {
     auto ctx = msxmGetContext();
     ctx->send(true);
 }
 
-void XismoSyncSettingsWidget::onMenuAction(bool v)
+void msxmSettingsWidget::onMenuAction(bool v)
 {
     if (v)
         show();
@@ -214,20 +243,19 @@ void XismoSyncSettingsWidget::onMenuAction(bool v)
         hide();
 }
 
-void XismoSyncSettingsWidget::closeEvent(QCloseEvent * e)
+void msxmSettingsWidget::closeEvent(QCloseEvent * e)
 {
     if (m_menu_item) {
         m_menu_item->setChecked(false);
     }
 }
 
-static std::unique_ptr<XismoSyncSettingsWidget> g_widget;
-
+static msxmSettingsWidget *g_widget = nullptr;
 
 void msxmInitializeWidget()
 {
     if (!g_widget) {
-        g_widget.reset(new XismoSyncSettingsWidget());
+        g_widget = new msxmSettingsWidget();
         g_widget->show();
     }
 }

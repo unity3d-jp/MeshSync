@@ -7,10 +7,10 @@ std::string get_name(const Bone *obj);
 std::string get_path(const Object *obj);
 std::string get_path(const Object *arm, const Bone *obj);
 bool is_visible(const Object *obj);
-const ModifierData* find_modofier(Object *obj, ModifierType type);
-const Bone* find_bone_recursive(const Bone *bone, const char *name);
-const Bone* find_bone(const Object *obj, const char *name);
-const bPoseChannel* find_pose(const Object *obj, const char *name);
+ModifierData* find_modofier(Object *obj, ModifierType type);
+Bone* find_bone_recursive(Bone *bone, const char *name);
+Bone* find_bone(Object *obj, const char *name);
+bPoseChannel* find_pose(Object *obj, const char *name);
 
 void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s);
 void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s);
@@ -25,7 +25,7 @@ template<class Body>
 static inline void each_child(Object *obj, const Body& body)
 {
     // Object doesn't have children data. need to enumerate all objects and check its parent...
-    auto bpy_data = bl::BData(bl::BContext::get().data());;
+    auto bpy_data = bl::BData(bl::BContext::get().data());
     for (auto obj : bpy_data.objects()) {
         if (obj->parent == obj)
             body(obj);

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
@@ -14,18 +15,24 @@ public:
 
         int timeout_ms = 5000;
         float scale_factor = 1.0f;
-        float animation_time_scale = 1.0f;
-        int animation_sps = 2;
         bool auto_sync = false;
         bool sync_meshes = true;
         bool sync_normals = true;
         bool sync_uvs = true;
         bool sync_colors = true;
+        bool make_double_sided = false;
+        bool bake_modifiers = false;
+        bool convert_to_mesh = true;
         bool sync_bones = true;
         bool sync_blendshapes = true;
         bool sync_cameras = true;
         bool sync_lights = true;
-        bool multithreaded = false;
+        bool sync_textures = true;
+
+        float animation_time_scale = 1.0f;
+        float animation_sps = 2.0f;
+
+        bool multithreaded = true;
 
         // import settings
         bool bake_skin = false;
@@ -60,7 +67,7 @@ public:
     void onRepaint();
 
     void update();
-    bool sendScene(SendScope scope);
+    bool sendScene(SendScope scope, bool force_all);
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
@@ -75,18 +82,20 @@ public:
     void updateUIText();
 
 private:
-    using task_t = std::function<void()>;
     struct TreeNode : public mu::noncopyable
     {
         int index = 0;
         INode *node = nullptr;
+        Object *baseobj = nullptr;
         std::wstring name;
         std::string path;
+        int id = ms::InvalidID;
 
         bool dirty_trans = true;
         bool dirty_geom = true;
-        ms::Transform *dst_obj = nullptr;
+        ms::TransformPtr dst;
 
+        ms::Identifier getIdentifier() const;
         void clearDirty();
         void clearState();
     };
@@ -97,7 +106,7 @@ private:
         extractor_t extractor = nullptr;
         INode *node = nullptr;
         Object *obj = nullptr;
-        ms::Animation *dst = nullptr;
+        ms::AnimationPtr dst = nullptr;
 
         void operator()(MeshSyncClient3dsMax *_this);
     };
@@ -111,20 +120,21 @@ private:
     void updateRecords();
     TreeNode& getNodeRecord(INode *n);
 
-    bool isSending() const;
-    void waitAsyncSend();
     void kickAsyncSend();
 
+    int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    ms::Transform* exportObject(INode *node, bool force);
-    bool extractTransformData(ms::Transform& dst, INode *src, Object *obj);
-    bool extractCameraData(ms::Camera& dst, INode *n, Object *obj);
-    bool extractLightData(ms::Light& dst, INode *n, Object *obj);
-    bool extractMeshData(ms::Mesh& dst, INode *n, Object *obj);
-    void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh &mesh);
+    ms::TransformPtr exportObject(INode *node, bool force);
+    template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
+    ms::TransformPtr exportTransform(TreeNode& node);
+    ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);
+    ms::CameraPtr exportCamera(TreeNode& node);
+    ms::LightPtr exportLight(TreeNode& node);
+    ms::MeshPtr exportMesh(TreeNode& node);
+    void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
-    ms::Animation* exportAnimations(INode *node, bool force);
+    ms::AnimationPtr exportAnimations(INode *node, bool force);
     void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
     void extractCameraAnimation(ms::Animation& dst, INode *n, Object *obj);
     void extractLightAnimation(ms::Animation& dst, INode *n, Object *obj);
@@ -136,6 +146,9 @@ private:
 
     std::map<INode*, TreeNode> m_node_records;
     std::map<Mtl*, MaterialRecord> m_material_records;
+    std::vector<std::future<void>> m_async_tasks;
+    std::vector<TriObject*> m_tmp_meshes;
+
     int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;
@@ -144,14 +157,13 @@ private:
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time_tick;
     float m_current_time_sec;
+    std::vector<ms::AnimationClipPtr> m_animations;
 
-    std::vector<ms::TransformPtr>       m_objects;
-    std::vector<ms::MeshPtr>            m_meshes;
-    std::vector<ms::MaterialPtr>        m_materials;
-    std::vector<ms::AnimationClipPtr>   m_animations;
-    std::vector<ms::ConstraintPtr>      m_constraints;
-    std::vector<std::string>            m_deleted;
-    std::future<void>                   m_future_send;
+    ms::IDGenerator<Mtl*> m_material_ids;
+    ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
+    ms::EntityManager m_entity_manager;
+    ms::AsyncSceneSender m_sender;
 };
 
 #define msmaxInstance() MeshSyncClient3dsMax::getInstance()

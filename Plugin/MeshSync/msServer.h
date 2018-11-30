@@ -1,7 +1,9 @@
 #pragma once
 
+#include <list>
 #include <map>
 #include <mutex>
+#include <future>
 #include "msProtocol.h"
 
 namespace Poco {
@@ -38,56 +40,80 @@ public:
     int getNumMessages() const;
     int processMessages(const MessageHandler& handler);
 
+    void serveText(Poco::Net::HTTPServerResponse &response, const char* text, int stat = 200);
+    void serveBinary(Poco::Net::HTTPServerResponse &response, const void *data, size_t size, int stat = 200);
+    void serveFiles(Poco::Net::HTTPServerResponse &response, const std::string& uri);
+
     void setServe(bool v);
     bool isServing() const;
 
     void beginServe();
     void endServe();
 
-    void setScrrenshotFilePath(const std::string path);
+    void setScrrenshotFilePath(const std::string& path);
+    void setFileRootPath(const std::string& path);
+    const std::string& getFileRootPath() const;
+
+    void notifyPoll(PollMessage::PollType t);
 
 public:
-    Scene* getHostScene();
-    void queueMessage(const MessagePtr& v);
-    void queueVersionNotMatchedMessage();
-    void recvSet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvDelete(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvFence(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvText(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvGet(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvScreenshot(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-    void recvQuery(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response);
-
-    struct RecvSceneScope
+    struct MessageHolder
     {
-        RecvSceneScope(Server *v) : m_server(v) { ++m_server->m_request_count; }
-        ~RecvSceneScope() { --m_server->m_request_count; }
-        Server *m_server = nullptr;
+        MessagePtr message;
+        std::future<void> task;
+        std::atomic_bool ready = { false };
+#ifdef msDebug
+        std::string requested_uri;
+#endif
+
+        MessageHolder();
+        MessageHolder(MessageHolder&& v);
     };
 
+    Scene* getHostScene();
+    MessageHolder* reserveMessage();
+    void queueTextMessage(const char *mes, TextMessage::Type type);
+    void recvSet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvDelete(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvFence(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvGet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvQuery(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+
 private:
-    using GetPtr    = std::shared_ptr<GetMessage>;
-    using DeletePtr = std::shared_ptr<DeleteMessage>;
-    using ClientObjects = std::map<std::string, EntityPtr>;
+    template<class MessageT>
+    std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    bool loadMIMETypes(const std::string& path);
+    const std::string& getMIMEType(const std::string& filename);
+
+private:
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
     using lock_t = std::unique_lock<std::mutex>;
-    using History = std::vector<MessagePtr>;
+    using PollMessages = std::vector<PollMessagePtr>;
 
     bool m_serving = true;
     ServerSettings m_settings;
     HTTPServerPtr m_server;
-    std::mutex m_mutex;
-    std::atomic_int m_request_count{0};
+    std::map<std::string, std::string> m_mimetypes;
+    std::mutex m_message_mutex;
+    std::mutex m_poll_mutex;
 
-    ClientObjects m_client_objs;
-    History m_recv_history;
+    int m_current_scene_session = InvalidID;
+    std::list<MessageHolder> m_received_messages, m_processing_messages;
+    std::vector<SetMessagePtr> m_scene_cache;
+    PollMessages m_polls;
 
     ScenePtr m_host_scene;
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
     std::string m_screenshot_file_path;
+    std::string m_file_root_path;
 
     QueryMessagePtr m_current_query;
+    std::vector<QueryMessagePtr> m_poll_messages;
 };
+msDeclPtr(Server);
 
 } // namespace ms

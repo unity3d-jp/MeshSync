@@ -30,7 +30,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncClientXismo\MeshSyncClientXismo.h" />
+    <ClInclude Include="MeshSyncClientXismo\msxmContext.h" />
     <ClInclude Include="MeshSyncClientXismo\pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -58,12 +58,12 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\glew\include;$(SolutionDir)External\Poco\include;$(SolutionDir)External\Qt\include;$(SolutionDir)External\Qt\include\QtCore;$(SolutionDir)External\Qt\include\QtGui;$(SolutionDir)External\Qt\include\QtWidgets;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\glew\include;$(SolutionDir)External\Poco\include;$(XISMO_QT_DIR)\include;$(XISMO_QT_DIR)\include\QtCore;$(XISMO_QT_DIR)\include\QtGui;$(XISMO_QT_DIR)\include\QtWidgets;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\MeshSyncClientXismo$(XISMO_VERSION)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(XISMO_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\Qt\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(XISMO_QT_DIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
@@ -73,6 +73,7 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>XISMO_VERSION=$(XISMO_VERSION);mscDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -95,6 +96,7 @@
       <StringPooling>true</StringPooling>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <PreprocessorDefinitions>XISMO_VERSION=$(XISMO_VERSION);mscDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

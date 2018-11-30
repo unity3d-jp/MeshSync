@@ -2,15 +2,8 @@
 #include "MeshUtils.h"
 #include "muMeshRefiner.h"
 
-#ifdef muEnableHalf
-#ifdef _WIN32
-    #pragma comment(lib, "half.lib")
-#endif
-#endif // muEnableHalf
 
 namespace mu {
-
-
 
 bool GenerateNormalsPoly(RawVector<float3>& dst,
     const IArray<float3> points, const IArray<int> counts, const IArray<int> indices, bool flip)
@@ -44,9 +37,11 @@ bool GenerateNormalsPoly(RawVector<float3>& dst,
 }
 
 void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
-    const MeshConnectionInfo& connection, const IArray<float3> points,
-    const IArray<int> counts, const IArray<int> indices, float smooth_angle, bool flip)
+    const IArray<float3> points, const IArray<int> counts, const IArray<int> indices, float smooth_angle, bool flip)
 {
+    MeshConnectionInfo connection;
+    connection.buildConnection(indices, counts, points);
+
     const size_t num_faces = counts.size();
     const int i1 = flip ? 2 : 1;
     const int i2 = flip ? 1 : 2;

@@ -6,6 +6,11 @@
 FBDeviceImplementation(msmbDevice);
 FBRegisterDevice("msmbDevice", msmbDevice, "UnityMeshSync", "UnityMeshSync for MotionBuilder", FB_DEFAULT_SDK_ICON);
 
+ms::Identifier msmbDevice::NodeRecord::getIdentifier() const
+{
+    return { path,id };
+}
+
 bool msmbDevice::FBCreate()
 {
     FBSystem::TheOne().Scene->OnChange.Add(this, (FBCallback)&msmbDevice::onSceneChange);
@@ -17,7 +22,7 @@ bool msmbDevice::FBCreate()
 
 void msmbDevice::FBDestroy()
 {
-    waitAsyncSend();
+    m_sender.wait();
 
     FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
     FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
@@ -71,6 +76,8 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
     m_data_updated = true;
+    if (bake_deformars)
+        m_dirty_meshes = true;
 }
 
 void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
@@ -96,21 +103,6 @@ void msmbDevice::update()
     sendScene(false);
 }
 
-bool msmbDevice::isSending() const
-{
-    if (m_future_send.valid()) {
-        return m_future_send.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
-    }
-    return false;
-}
-
-void msmbDevice::waitAsyncSend()
-{
-    if (m_future_send.valid()) {
-        m_future_send.wait_for(std::chrono::milliseconds(timeout_ms));
-    }
-}
-
 void msmbDevice::kickAsyncSend()
 {
     // process extract tasks
@@ -129,90 +121,47 @@ void msmbDevice::kickAsyncSend()
     }
 
 
-    // begin async send
-    m_future_send = std::async(std::launch::async, [this]() {
-        ms::Client client(client_settings);
+    m_sender.on_prepare = [this]() {
+        auto& t = m_sender;
+        t.client_settings = client_settings;
+        t.scene_settings.handedness = ms::Handedness::Right;
+        t.scene_settings.scale_factor = scale_factor;
 
-        ms::SceneSettings scene_settings;
-        scene_settings.handedness = ms::Handedness::Right;
-        scene_settings.scale_factor = scale_factor;
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+        t.animations = m_animations;
 
-        // notify scene begin
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneBegin;
-            client.send(fence);
-        }
-
-        // send delete message
-        size_t num_deleted = m_deleted.size();
-        if (num_deleted) {
-            ms::DeleteMessage del;
-            del.targets.resize(num_deleted);
-            for (uint32_t i = 0; i < num_deleted; ++i)
-                del.targets[i].path = m_deleted[i];
-
-            client.send(del);
-            m_deleted.clear();
-        }
-
-        // send scene data
-        {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = m_objects;
-            set.scene.textures = m_textures;
-            set.scene.materials = m_materials;
-            client.send(set);
-
-            m_objects.clear();
-            m_textures.clear();
-            m_materials.clear();
-        }
-
-        // send meshes one by one to Unity can respond quickly
-        for (auto& mesh : m_meshes) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.objects = { mesh };
-            client.send(set);
-        };
-        m_meshes.clear();
-
-        // send animations and constraints
-        if (!m_animations.empty() || !m_constraints.empty()) {
-            ms::SetMessage set;
-            set.scene.settings = scene_settings;
-            set.scene.animations = m_animations;
-            set.scene.constraints = m_constraints;
-            client.send(set);
-
-            m_animations.clear();
-            m_constraints.clear();
-        }
-
-        // notify scene end
-        {
-            ms::FenceMessage fence;
-            fence.type = ms::FenceMessage::FenceType::SceneEnd;
-            client.send(fence);
-        }
-    });
+        t.deleted_materials = m_material_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+    m_sender.on_success = [this]() {
+        m_material_ids.clearDirtyFlags();
+        m_texture_manager.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+        m_animations.clear();
+    };
+    m_sender.kick();
 }
 
 
 bool msmbDevice::sendScene(bool force_all)
 {
-    if (force_all)
+    if (force_all) {
         m_dirty_meshes = m_dirty_textures = true;
+        m_material_manager.makeDirtyAll();
+        m_entity_manager.makeDirtyAll();
+    }
 
     m_data_updated = m_pending = false;
-    if (isSending()) {
+    if (m_sender.isSending()) {
         m_pending = true;
         return false;
     }
 
-    if (sync_meshes && sync_materials)
+    if (sync_meshes)
         exportMaterials();
 
     // export nodes
@@ -225,7 +174,7 @@ bool msmbDevice::sendScene(bool force_all)
     // check deleted objects
     for (auto it = m_node_records.begin(); it != m_node_records.end(); /**/) {
         if (!it->second.exist) {
-            m_deleted.push_back(it->second.path);
+            m_entity_manager.erase(it->second.getIdentifier());
             m_node_records.erase(it++);
         }
         else {
@@ -241,7 +190,7 @@ bool msmbDevice::sendScene(bool force_all)
     m_dirty_meshes = m_dirty_textures = false;
 
     // send
-    if (num_exported || !m_deleted.empty()) {
+    if (num_exported || !m_entity_manager.getDeleted().empty()) {
         kickAsyncSend();
         return true;
     }
@@ -250,71 +199,62 @@ bool msmbDevice::sendScene(bool force_all)
     }
 }
 
-bool msmbDevice::exportObject(FBModel* src, bool force)
+ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
 {
     if (!src)
-        return false;
+        return nullptr;
 
     auto& rec = m_node_records[src];
-    if (rec.dst) {
-        return false;
-    }
-    else if (rec.name.empty()) {
+    if (rec.dst)
+        return rec.dst;
+
+    if (rec.name.empty()) {
+        rec.src = src;
         rec.name = GetName(src);
         rec.path = GetPath(src);
         rec.index = ++m_node_index_seed;
     }
     else if (rec.name != GetName(src)) {
-        m_deleted.push_back(rec.path);
+        // renamed
+        m_entity_manager.erase(rec.getIdentifier());
         rec.name = GetName(src);
         rec.path = GetPath(src);
     }
     rec.exist = true;
 
+    ms::TransformPtr ret;
     if (IsCamera(src)) { // camera
         if (sync_cameras) {
             exportObject(src->Parent, true);
-            auto obj = ms::Camera::create();
-            rec.dst = obj.get();
-            m_objects.push_back(obj);
-            extractCamera(*obj, static_cast<FBCamera*>(src));
+            ret = exportCamera(rec);
         }
     }
     else if (IsLight(src)) { // light
         if (sync_lights) {
             exportObject(src->Parent, true);
-            auto obj = ms::Light::create();
-            rec.dst = obj.get();
-            m_objects.push_back(obj);
-            extractLight(*obj, static_cast<FBLight*>(src));
+            ret = exportLight(rec);
         }
     }
     else if (IsMesh(src)) { // mesh
-        if (sync_bones) {
+        if (sync_bones && !bake_deformars) {
             EachBones(src, [this](FBModel *bone) {
                 exportObject(bone, true);
             });
         }
         if (sync_meshes) {
             exportObject(src->Parent, true);
-            auto obj = ms::Mesh::create();
-            rec.dst = obj.get();
-            m_meshes.push_back(obj);
             if (m_dirty_meshes)
-                extractMesh(*obj, src);
+                ret = exportMesh(rec);
             else
-                extractMeshSimple(*obj, src);
+                ret = exportMeshSimple(rec);
         }
     }
     else if (force) {
         exportObject(src->Parent, true);
-        auto obj = ms::Transform::create();
-        rec.dst = obj.get();
-        m_objects.push_back(obj);
-        extractTransform(*obj, src);
+        ret = exporttTransform(rec);
     }
 
-    return rec.dst != nullptr;
+    return ret;
 }
 
 
@@ -383,32 +323,67 @@ static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
 }
 
 
-void msmbDevice::extractTransform(ms::Transform& dst, FBModel* src)
+template<class T>
+inline std::shared_ptr<T> msmbDevice::createEntity(NodeRecord& n)
 {
-    dst.path = GetPath(src);
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    auto ret = T::create();
+    auto& dst = *ret;
+    dst.path = n.path;
+    dst.index = n.index;
+    n.dst = ret;
+    return ret;
 }
 
-void msmbDevice::extractCamera(ms::Camera& dst, FBCamera* src)
+ms::TransformPtr msmbDevice::exporttTransform(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Transform>(n);
+    auto& dst = *ret;
+    auto src = n.src;
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+
+    m_entity_manager.add(ret);
+    return ret;
+}
+
+ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
+{
+    auto ret = createEntity<ms::Camera>(n);
+    auto& dst = *ret;
+    auto src = static_cast<FBCamera*>(n.src);
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
     dst.rotation *= mu::rotateY(90.0f * mu::Deg2Rad);
 
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void msmbDevice::extractLight(ms::Light& dst, FBLight* src)
+ms::LightPtr msmbDevice::exportLight(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Light>(n);
+    auto& dst = *ret;
+    auto src = static_cast<FBLight*>(n.src);
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
     dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
 
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
+ms::MeshPtr msmbDevice::exportMeshSimple(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Mesh>(n);
+    auto& dst = *ret;
+    auto src = n.src;
+
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
 
     // blendshape weights
     if (FBGeometry *geom = src->Geometry) {
@@ -432,25 +407,34 @@ void msmbDevice::extractMeshSimple(ms::Mesh & dst, FBModel * src)
         }
     }
     dst.setupFlags();
+
+    m_entity_manager.add(ret);
+    return ret;
 }
 
-void msmbDevice::extractMesh(ms::Mesh& dst, FBModel* src)
+ms::MeshPtr msmbDevice::exportMesh(NodeRecord& n)
 {
-    extractTransform(dst, src);
+    auto ret = createEntity<ms::Mesh>(n);
+    auto& dst = *ret;
+    auto src = n.src;
 
-    m_extract_tasks.push_back([this, &dst, src]() {
+    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+
+    m_extract_tasks.push_back([this, ret, &dst, src]() {
         doExtractMesh(dst, src);
+        m_entity_manager.add(ret);
     });
+    return ret;
 }
 
-void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
+void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 {
     FBModelVertexData *vd = src->ModelVertexData;
     int num_vertices = vd->GetVertexCount();
 
     // points
     {
-        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, false);
+        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, bake_deformars);
         if (!points)
             return;
 
@@ -461,7 +445,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
 
     // normals
     {
-        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, false);
+        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, bake_deformars);
         if (normals) {
             dst.normals.resize_discard(num_vertices);
             for (int vi = 0; vi < num_vertices; ++vi)
@@ -500,7 +484,7 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     }
 
     // colors
-    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, false)) {
+    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, bake_deformars)) {
         auto type = vd->GetVertexArrayType(kFBGeometryArrayID_Color);
         if (type == kFBGeometryArrayElementType_Float4) {
             auto colors = (const mu::float4*)colors_;
@@ -516,101 +500,103 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
         }
     }
 
-    // skin cluster
-    if (FBCluster *cluster = src->Cluster) {
-        int num_links = cluster->LinkGetCount();
-        for (int li = 0; li < num_links; ++li) {
-            ClusterScope scope(cluster, li);
+    if (!bake_deformars) {
+        // skin cluster
+        if (FBCluster *cluster = src->Cluster) {
+            int num_links = cluster->LinkGetCount();
+            for (int li = 0; li < num_links; ++li) {
+                ClusterScope scope(cluster, li);
 
-            int n = cluster->VertexGetCount();
-            if (n == 0)
-                continue;
+                int n = cluster->VertexGetCount();
+                if (n == 0)
+                    continue;
 
-            auto bd = ms::BoneData::create();
-            dst.bones.push_back(bd);
+                auto bd = ms::BoneData::create();
+                dst.bones.push_back(bd);
 
-            auto bone = cluster->LinkGetModel(li);
-            bd->path = GetPath(bone);
+                auto bone = cluster->LinkGetModel(li);
+                bd->path = GetPath(bone);
 
-            // root bone
-            if (li == 0) {
-                auto root = bone;
-                while (IsBone(root->Parent))
-                    root = root->Parent;
-                dst.root_bone = GetPath(root);
-            }
+                // root bone
+                if (li == 0) {
+                    auto root = bone;
+                    while (IsBone(root->Parent))
+                        root = root->Parent;
+                    dst.root_bone = GetPath(root);
+                }
 
-            // bindpose
-            {
-                // should consider rotation order?
-                //FBModelRotationOrder order = bone->RotationOrder;
+                // bindpose
+                {
+                    // should consider rotation order?
+                    //FBModelRotationOrder order = bone->RotationOrder;
 
-                FBVector3d t,r,s;
-                cluster->VertexGetTransform(t, r, s);
-                mu::quatf q = mu::invert(mu::rotateXYZ(to_float3(r) * mu::Deg2Rad));
-                bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
-            }
+                    FBVector3d t, r, s;
+                    cluster->VertexGetTransform(t, r, s);
+                    mu::quatf q = mu::invert(mu::rotateXYZ(to_float3(r) * mu::Deg2Rad));
+                    bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
+                }
 
-            // weights
-            bd->weights.resize_zeroclear(num_vertices);
-            for (int vi = 0; vi < n; ++vi) {
-                int i = cluster->VertexGetNumber(vi);
-                float w = (float)cluster->VertexGetWeight(vi);
-                bd->weights[i] = w;
+                // weights
+                bd->weights.resize_zeroclear(num_vertices);
+                for (int vi = 0; vi < n; ++vi) {
+                    int i = cluster->VertexGetNumber(vi);
+                    float w = (float)cluster->VertexGetWeight(vi);
+                    bd->weights[i] = w;
+                }
             }
         }
-    }
 
-    // blendshapes
-    if (FBGeometry *geom = src->Geometry) {
-        int num_shapes = geom->ShapeGetCount();
-        if (num_shapes) {
-            std::map<std::string, float> weight_table;
-            EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
-                weight_table[name] = (float)value;
-            });
+        // blendshapes
+        if (FBGeometry *geom = src->Geometry) {
+            int num_shapes = geom->ShapeGetCount();
+            if (num_shapes) {
+                std::map<std::string, float> weight_table;
+                EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
+                    weight_table[name] = (float)value;
+                });
 
 
-            RawVector<mu::float3> tmp_points, tmp_normals;
-            for (int si = 0; si < num_shapes; ++si) {
-                auto bsd = ms::BlendShapeData::create();
-                dst.blendshapes.push_back(bsd);
-                bsd->name = geom->ShapeGetName(si);
-                {
-                    auto it = weight_table.find(bsd->name);
-                    if (it != weight_table.end())
-                        bsd->weight = it->second;
-                }
-
-                auto bsfd = ms::BlendShapeFrameData::create();
-                bsfd->weight = 100.0f;
-                bsd->frames.push_back(bsfd);
-
-                tmp_points.resize_zeroclear(dst.points.size());
-                tmp_normals.resize_zeroclear(dst.normals.size());
-
-                int num_points = geom->ShapeGetDiffPointCount(si);
-                if (!tmp_normals.empty()) {
-                    for (int pi = 0; pi < num_points; ++pi) {
-                        int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
-                        FBVertex p, n;
-                        if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
-                            tmp_points[vi] = to_float3(p);
-                            tmp_normals[vi] = to_float3(n);
-                        }
+                RawVector<mu::float3> tmp_points, tmp_normals;
+                for (int si = 0; si < num_shapes; ++si) {
+                    auto bsd = ms::BlendShapeData::create();
+                    dst.blendshapes.push_back(bsd);
+                    bsd->name = geom->ShapeGetName(si);
+                    {
+                        auto it = weight_table.find(bsd->name);
+                        if (it != weight_table.end())
+                            bsd->weight = it->second;
                     }
-                    bsfd->points = std::move(tmp_points);
-                    bsfd->normals = std::move(tmp_normals);
-                }
-                else {
-                    for (int pi = 0; pi < num_points; ++pi) {
-                        int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
-                        FBVertex p;
-                        if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
-                            tmp_points[vi] = to_float3(p);
+
+                    auto bsfd = ms::BlendShapeFrameData::create();
+                    bsfd->weight = 100.0f;
+                    bsd->frames.push_back(bsfd);
+
+                    tmp_points.resize_zeroclear(dst.points.size());
+                    tmp_normals.resize_zeroclear(dst.normals.size());
+
+                    int num_points = geom->ShapeGetDiffPointCount(si);
+                    if (!tmp_normals.empty()) {
+                        for (int pi = 0; pi < num_points; ++pi) {
+                            int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
+                            FBVertex p, n;
+                            if (geom->ShapeGetDiffPoint(si, pi, vi, p, n)) {
+                                tmp_points[vi] = to_float3(p);
+                                tmp_normals[vi] = to_float3(n);
+                            }
                         }
+                        bsfd->points = std::move(tmp_points);
+                        bsfd->normals = std::move(tmp_normals);
                     }
-                    bsfd->points = std::move(tmp_points);
+                    else {
+                        for (int pi = 0; pi < num_points; ++pi) {
+                            int vi = 0; // zero initialization is needed or ShapeGetDiffPoint() fails
+                            FBVertex p;
+                            if (geom->ShapeGetDiffPoint(si, pi, vi, p)) {
+                                tmp_points[vi] = to_float3(p);
+                            }
+                        }
+                        bsfd->points = std::move(tmp_points);
+                    }
                 }
             }
         }
@@ -643,28 +629,10 @@ void msmbDevice::doExtractMesh(ms::Mesh & dst, FBModel * src)
     }
 
     dst.refine_settings.flags.swap_faces = 1;
+    dst.refine_settings.flags.make_double_sided = make_double_sided;
     dst.setupFlags();
 }
 
-
-bool msmbDevice::exportMaterials()
-{
-    int num_exported = 0;
-
-    auto& materials = FBSystem::TheOne().Scene->Materials;
-    const int num_materials = materials.GetCount();
-    for (int mi = 0; mi < num_materials; ++mi) {
-        if (exportMaterial(materials[mi]))
-            ++num_exported;
-    }
-
-    for (auto& kvp : m_texture_records)
-        kvp.second.dst = nullptr;
-    for (auto& kvp : m_material_records)
-        kvp.second.dst = nullptr;
-
-    return num_exported > 0;
-}
 
 int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 {
@@ -675,82 +643,17 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
     if (!video)
         return -1;
 
-    auto& rec = m_texture_records[src];
-    if (rec.dst)
-        return rec.id; // already exported
-
-    auto dst = ms::Texture::create();
-    auto& data = dst->data;
-    if (ms::FileToByteArray(video->Filename, data)) {
-        // send raw file contents
-
-        dst->name = mu::GetFilename(video->Filename);
-        dst->format = ms::TextureFormat::RawFile;
-    }
-    else {
-        // send texture data in FBVideoClip
-
-        dst->name = mu::GetFilename_NoExtension(video->Filename);
-        dst->width = video->Width;
-        dst->height = video->Height;
-
-        int num_pixels = dst->width * dst->height;
-        auto image = (const char*)video->GetImage();
-        if (num_pixels > 0 && image) {
-            switch (video->Format) {
-            case kFBVideoFormat_RGBA_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.assign(image, image + (num_pixels * 4));
-                break;
-            case kFBVideoFormat_ABGR_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.resize_discard(num_pixels * 4);
-                mu::ABGR2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-                break;
-            case kFBVideoFormat_ARGB_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.resize_discard(num_pixels * 4);
-                mu::ARGB2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-                break;
-            case kFBVideoFormat_BGRA_32:
-                dst->format = ms::TextureFormat::RGBAu8;
-                data.resize_discard(num_pixels * 4);
-                mu::BGRA2RGBA((mu::unorm8x4*)data.data(), (mu::unorm8x4*)image, num_pixels);
-                break;
-            case kFBVideoFormat_RGB_24:
-                dst->format = ms::TextureFormat::RGBu8;
-                data.assign(image, image + (num_pixels * 3));
-                break;
-            case kFBVideoFormat_BGR_24:
-                dst->format = ms::TextureFormat::RGBu8;
-                data.resize_discard(num_pixels * 3);
-                mu::BGR2RGB((mu::unorm8x3*)data.data(), (mu::unorm8x3*)image, num_pixels);
-                break;
-            default:
-                // not supported
-                break;
-            }
-        }
-    }
-
-    if (!data.empty()) {
-        m_textures.push_back(dst);
-        rec.dst = dst.get();
-        if (rec.id == -1)
-            rec.id = (int)m_texture_records.size() - 1;
-
-        dst->id = rec.id;
+    if (ms::FileExists(video->Filename)) {
+        ms::TextureType textype = ms::TextureType::Default;
         if (type == kFBMaterialTextureNormalMap)
-            dst->type = ms::TextureType::NormalMap;
+            textype = ms::TextureType::NormalMap;
 
-        return dst->id;
+        return m_texture_manager.addFile(video->Filename.AsString(), textype);
     }
-    else {
-        return -1;
-    }
+    return -1;
 }
 
-bool msmbDevice::exportMaterial(FBMaterial* src)
+bool msmbDevice::exportMaterial(FBMaterial* src, int index)
 {
     if (!src)
         return false;
@@ -760,34 +663,55 @@ bool msmbDevice::exportMaterial(FBMaterial* src)
         return rec.id; // already exported
 
     auto dst = ms::Material::create();
-    m_materials.push_back(dst);
     rec.dst = dst.get();
-    if (rec.id == -1)
-        rec.id = (int)m_material_records.size() - 1;
+    if (rec.id == ms::InvalidID)
+        rec.id = m_material_ids.getID(src);
 
     dst->id = rec.id;
+    dst->index = index;
     dst->name = src->LongName;
-    dst->setColor(to_float4(src->Diffuse));
+
+    auto& stdmat = ms::AsStandardMaterial(*dst);
+    stdmat.setColor(to_float4(src->Diffuse));
 
     auto emissive = to_float4(src->Emissive);
     if ((mu::float3&)emissive != mu::float3::zero())
-        dst->setEmission(emissive);
+        stdmat.setEmissionColor(emissive);
 
     if (sync_textures && m_dirty_textures) {
-        dst->setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
-        dst->setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
-        dst->setNormalMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
+        stdmat.setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
+        stdmat.setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
+        stdmat.setBumpMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
     }
+    m_material_manager.add(dst);
     return true;
+}
+
+bool msmbDevice::exportMaterials()
+{
+    int num_exported = 0;
+    auto& materials = FBSystem::TheOne().Scene->Materials;
+    const int num_materials = materials.GetCount();
+    for (int mi = 0; mi < num_materials; ++mi) {
+        if (exportMaterial(materials[mi], mi))
+            ++num_exported;
+    }
+
+    for (auto& kvp : m_texture_records)
+        kvp.second.dst = nullptr;
+    for (auto& kvp : m_material_records)
+        kvp.second.dst = nullptr;
+
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
+    return num_exported > 0;
 }
 
 
 bool msmbDevice::sendAnimations()
 {
     // wait for previous request to complete
-    if (m_future_send.valid()) {
-        m_future_send.get();
-    }
+    m_sender.wait();
 
     if (exportAnimations()) {
         kickAsyncSend();
@@ -804,6 +728,7 @@ bool msmbDevice::exportAnimations()
     FBPlayerControl control;
 
     // create default clip
+    m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     // gather models
@@ -819,7 +744,7 @@ bool msmbDevice::exportAnimations()
     FBTime time_current = system.LocalTime;
     double time_begin, time_end;
     std::tie(time_begin, time_end) = GetTimeRange(system.CurrentTake);
-    double interval = 1.0 / std::max(samples_per_second, 1.0f);
+    double interval = 1.0 / std::max(animation_sps, 0.01f);
 
     int reserve_size = int((time_end - time_begin) / interval) + 1;
     for (auto& kvp : m_anim_records) {
@@ -827,13 +752,18 @@ bool msmbDevice::exportAnimations()
     }
 
     // advance frame and record
-    for (double t = time_begin; t < time_end; t += interval) {
+    for (double t = time_begin;;) {
         FBTime fbt;
         fbt.SetSecondDouble(t);
         control.Goto(fbt);
         m_anim_time = (float)t;
         for (auto& kvp : m_anim_records)
             kvp.second(this);
+
+        if (t >= time_end)
+            break;
+        else
+            t = std::min(t + interval, time_end);
     }
 
     // cleanup
@@ -905,7 +835,7 @@ void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
     bool vis = true;
     ExtractTransformData(src, pos, rot, scale, vis);
 
-    float t = m_anim_time * time_scale;
+    float t = m_anim_time * animation_time_scale;
     auto& dst = (ms::TransformAnimation&)dst_;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
@@ -929,7 +859,7 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
     ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
-    float t = m_anim_time * time_scale;
+    float t = m_anim_time * animation_time_scale;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
@@ -951,7 +881,7 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     float spot_angle;
     ExtractLightData(static_cast<FBLight*>(src), type, color, intensity, spot_angle);
 
-    float t = m_anim_time * time_scale;
+    float t = m_anim_time * animation_time_scale;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     if (type == ms::Light::LightType::Spot)
@@ -976,7 +906,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
                 });
             }
 
-            float t = m_anim_time * time_scale;
+            float t = m_anim_time * animation_time_scale;
             int idx = 0;
             EnumerateAnimationNVP(src, [&dst, &idx, t](const char *name, double value) {
                 dst.blendshapes[idx++]->weight.push_back({ t, (float)value });

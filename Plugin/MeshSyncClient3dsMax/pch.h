@@ -22,8 +22,10 @@
 // 3ds Max headers
 #include <max.h>
 #include <modstack.h>
+#include <stdmat.h>
 #include <imenuman.h>
 #include <iskin.h>
+#include <iInstanceMgr.h>
 #include <triobj.h>
 #include <notify.h>
 #include <ISceneEventManager.h>
@@ -34,6 +36,9 @@
 #include <maxscript/foundation/numbers.h>
 #include <maxscript/macros/define_instantiation_functions.h>
 #include <MorpherApi.h>
+#if MAX_PRODUCT_YEAR_NUMBER >= 2018
+    #include <CATAPI/CATClassID.h>
+#endif
 
 #ifdef PI
     #undef PI

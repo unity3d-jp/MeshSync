@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "MQSync.h"
+#include "msmqContext.h"
 
 class SettingsDlg;
 
@@ -82,11 +82,11 @@ public:
     bool ExecuteCallback(MQDocument doc, void *option) override;
 
 
-    MQSync& getSync();
+    msmqContext& getContext();
     bool& getActive();
 
-    void SendAll();
-    void SendCamera();
+    void SendAll(bool only_when_autosync);
+    void SendCamera(bool only_when_autosync);
     void Import();
 
 private:
@@ -94,6 +94,6 @@ private:
     bool SendCameraImpl(MQDocument doc);
     bool ImportImpl(MQDocument doc);
 
-    MQSync m_sync;
+    msmqContext m_sync;
     SettingsDlg *m_dlg = nullptr;
 };

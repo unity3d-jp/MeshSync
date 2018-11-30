@@ -1,5 +1,4 @@
-using System;
-using System.IO;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
@@ -26,23 +25,20 @@ namespace UTJ.MeshSync
 
             if (GUILayout.Button("Open Material Window"))
                 MaterialWindow.Open(t);
-
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("Generate Lightmap UV"))
-                t.GenerateLightmapUV();
-
-            EditorGUILayout.Space();
+            //if (GUILayout.Button("Generate Lightmap UV"))
+            //    t.GenerateLightmapUV();
+            //EditorGUILayout.Space();
 
             if (GUILayout.Button("Export Meshes"))
                 t.ExportMeshes();
-
             EditorGUILayout.Space();
 
             if (GUILayout.Button("Export Materials"))
                 t.ExportMaterials();
-
             EditorGUILayout.Space();
+
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.version);
         }
 
@@ -50,8 +46,6 @@ namespace UTJ.MeshSync
         {
             foreach (var md in t.materialData)
             {
-                if(md.id < 0) { continue; }
-
                 var rect = EditorGUILayout.BeginHorizontal();
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
                 EditorGUILayout.LabelField("", GUILayout.Width(16));
@@ -77,3 +71,4 @@ namespace UTJ.MeshSync
         }
     }
 }
+#endif

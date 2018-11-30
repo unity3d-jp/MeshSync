@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "MeshSyncClientMQ4.h"
-#include "DialogMQ4.h"
+#include "msmqUI4.h"
 
 static MeshSyncClientPlugin g_plugin;
 
@@ -295,19 +295,21 @@ MQBasePlugin *GetPluginClass()
     return &g_plugin;
 }
 
-MQSync& MeshSyncClientPlugin::getSync()
+msmqContext& MeshSyncClientPlugin::getContext()
 {
     return m_sync;
 }
 
-void MeshSyncClientPlugin::SendAll()
+void MeshSyncClientPlugin::SendAll(bool only_when_autosync)
 {
-    Execute(&MeshSyncClientPlugin::SendAllImpl);
+    if (!only_when_autosync || m_sync.getSettings().auto_sync)
+        Execute(&MeshSyncClientPlugin::SendAllImpl);
 }
 
-void MeshSyncClientPlugin::SendCamera()
+void MeshSyncClientPlugin::SendCamera(bool only_when_autosync)
 {
-    Execute(&MeshSyncClientPlugin::SendCameraImpl);
+    if (!only_when_autosync || m_sync.getSettings().auto_sync)
+        Execute(&MeshSyncClientPlugin::SendCameraImpl);
 }
 
 void MeshSyncClientPlugin::Import()

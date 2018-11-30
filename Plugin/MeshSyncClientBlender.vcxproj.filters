@@ -27,11 +27,14 @@
     <Filter Include="MeshSyncClientBlender\python">
       <UniqueIdentifier>{d1e1adb5-2dd2-416c-a2dd-89fe761f1a8a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MeshSyncClientBlender\python\MeshSyncClientBlender">
-      <UniqueIdentifier>{3b44599e-70f1-49eb-aecc-1310e74fa802}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MeshSyncClientBlender\tools">
       <UniqueIdentifier>{39366f81-1fb0-4079-b4f3-830c19e7acd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MeshSyncClientBlender\python\2.79">
+      <UniqueIdentifier>{e298cd45-2518-4dce-a0e2-518040e05241}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MeshSyncClientBlender\python\2.80">
+      <UniqueIdentifier>{2697938a-7a38-4087-86e1-e5968240b275}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -52,14 +55,23 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="MeshSyncClientBlender\python\__init__.py">
-      <Filter>MeshSyncClientBlender\python\MeshSyncClientBlender</Filter>
-    </None>
-    <None Include="MeshSyncClientBlender\python\unity_mesh_sync.py">
-      <Filter>MeshSyncClientBlender\python</Filter>
-    </None>
     <None Include="MeshSyncClientBlender\tools\extract_headers.py">
       <Filter>MeshSyncClientBlender\tools</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\tools\replace_blender_version.py">
+      <Filter>MeshSyncClientBlender\tools</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\tools\gen_initpy.py">
+      <Filter>MeshSyncClientBlender\tools</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\python\2.79\unity_mesh_sync.py">
+      <Filter>MeshSyncClientBlender\python\2.79</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\python\2.80\unity_mesh_sync.py">
+      <Filter>MeshSyncClientBlender\python\2.80</Filter>
+    </None>
+    <None Include="MeshSyncClientBlender\python\unity_mesh_sync_common.py">
+      <Filter>MeshSyncClientBlender\python</Filter>
     </None>
   </ItemGroup>
 </Project>

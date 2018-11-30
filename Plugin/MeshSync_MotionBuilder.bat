@@ -1,4 +1,4 @@
 set MOTIONBUILDER_VERSION=2018
-set MOTIONBUILDER_LIB_DIR=%cd%\External\OpenRealitySDK2018\lib
-set MOTIONBUILDER_INCLUDE_DIR=%cd%\External\OpenRealitySDK2018\include
+set MOTIONBUILDER_LIB_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\lib
+set MOTIONBUILDER_INCLUDE_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\include
 MeshSync_MotionBuilder.sln

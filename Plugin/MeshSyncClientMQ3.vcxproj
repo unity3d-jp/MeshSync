@@ -26,22 +26,22 @@
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMQ\Dialog\MainDlg.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp" />
-    <ClCompile Include="MeshSyncClientMQ\MQSync.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqUI3\MainDlg.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External/mqsdk3/MQBasePlugin.h" />
     <ClInclude Include="External/mqsdk3/MQSetting.h" />
     <ClInclude Include="External/mqsdk3/MQPlugin.h" />
     <ClInclude Include="MeshSyncClientMQ/pch.h" />
-    <ClInclude Include="MeshSyncClientMQ\Dialog\MainDlg.h" />
-    <ClInclude Include="MeshSyncClientMQ\Dialog\resource.h" />
-    <ClInclude Include="MeshSyncClientMQ\Dialog\stdafx.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ3.h" />
-    <ClInclude Include="MeshSyncClientMQ\MQSync.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqContext.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqUI3\MainDlg.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqUI3\resource.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqUI3\stdafx.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
@@ -55,7 +55,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MeshSyncClientMQ\Dialog\Dialog.rc" />
+    <ResourceCompile Include="MeshSyncClientMQ\msmqUI3\Dialog.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{49C765EA-DD7C-481D-9584-CEFAD935735E}</ProjectGuid>

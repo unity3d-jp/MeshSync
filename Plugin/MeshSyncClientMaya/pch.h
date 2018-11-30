@@ -32,6 +32,7 @@
 
 // this must be before maya includes
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/MeshSyncUtils.h"
 
 // avoid multiple definition of `MApiVersion'
 //#define _MApiVersion
@@ -65,6 +66,7 @@
 #include <maya/MItDependencyNodes.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MItGeometry.h>
+#include <maya/MFnAttribute.h>
 #include <maya/MFnData.h>
 #include <maya/MFnAnimCurve.h>
 #include <maya/MFnSet.h>

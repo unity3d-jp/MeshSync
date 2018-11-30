@@ -39,6 +39,12 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
+bool IsInstanced(INode *n)
+{
+    INodeTab instances;
+    return IInstanceMgr::GetInstanceMgr()->GetInstances(*n, instances);
+}
+
 Object* GetTopObject(INode *n)
 {
     return n->GetObjectRef();
@@ -78,16 +84,30 @@ Modifier* FindMorph(INode *n)
     return ret;
 }
 
-bool IsMesh(Object *obj)
+bool IsBone(Object *obj)
 {
-    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID &&
-        (!obj->IsSubClassOf(BONE_OBJ_CLASSID) && !obj->IsSubClassOf(SKELOBJ_CLASS_ID));
+    if (!obj)
+        return false;
+
+    // not sure this is correct...
+    auto cid = obj->ClassID();
+    return
+        cid == Class_ID(BONE_CLASS_ID, 0) ||
+        cid == BONE_OBJ_CLASSID ||
+        cid == SKELOBJ_CLASS_ID
+#if MAX_PRODUCT_YEAR_NUMBER >= 2018
+        ||
+        cid == CATBONE_CLASS_ID ||
+        cid == CATHUB_CLASS_ID
+#endif
+        ;
 }
 
-bool IsBoneMesh(Object * obj)
+bool IsMesh(Object *obj)
 {
-    return obj && obj->SuperClassID() == GEOMOBJECT_CLASS_ID &&
-        (obj->IsSubClassOf(BONE_OBJ_CLASSID) || obj->IsSubClassOf(SKELOBJ_CLASS_ID));
+    if (!obj)
+        return false;
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID && !IsBone(obj);
 }
 
 TriObject* GetSourceMesh(INode * n, bool& needs_delete)
@@ -134,6 +154,39 @@ TriObject* GetSourceMesh(INode * n, bool& needs_delete)
     }
     else {
         to_triobject(n->GetObjectRef());
+    }
+    return ret;
+}
+
+TriObject* GetFinalMesh(INode * n, bool & needs_delete)
+{
+    IDerivedObject *dobj = nullptr;
+    int mod_index = 0;
+    needs_delete = false;
+
+    Object *base = EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
+        if (!dobj) {
+            dobj = obj;
+            mod_index = mi;
+        }
+    });
+
+    TriObject *ret = nullptr;
+    auto to_triobject = [&needs_delete, &ret](Object *obj) {
+        if (obj->CanConvertToType(triObjectClassID)) {
+            auto old = obj;
+            ret = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
+            if (ret != old)
+                needs_delete = true;
+        }
+    };
+
+    if (dobj) {
+        auto os = dobj->Eval(GetTime(), mod_index);
+        to_triobject(os.obj);
+    }
+    else {
+        to_triobject(base);
     }
     return ret;
 }

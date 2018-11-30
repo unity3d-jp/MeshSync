@@ -56,7 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendScene(MeshSyncClient3dsMax::SendScope::All);
+        msmaxInstance().sendScene(MeshSyncClient3dsMax::SendScope::All, true);
         return TRUE;
     }
 };
@@ -304,6 +304,12 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             }
         };
 
+        auto notify_scene_update = []() {
+            auto& self = msmaxInstance();
+            self.onSceneUpdated();
+            self.update();
+        };
+
         switch (cid) {
         case IDC_EDIT_SERVER:
             handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
@@ -319,36 +325,84 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_EDIT_SCALE_FACTOR:
-            handle_edit([&]() { s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor); });
+            handle_edit([&]() {
+                s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_MESHES:
-            handle_button([&]() { s.sync_meshes = CtrlIsChecked(IDC_CHECK_MESHES); });
+            handle_button([&]() {
+                s.sync_meshes = CtrlIsChecked(IDC_CHECK_MESHES);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_NORMALS:
-            handle_button([&]() { s.sync_normals = CtrlIsChecked(IDC_CHECK_NORMALS); });
+            handle_button([&]() {
+                s.sync_normals = CtrlIsChecked(IDC_CHECK_NORMALS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_UVS:
-            handle_button([&]() { s.sync_uvs = CtrlIsChecked(IDC_CHECK_UVS); });
+            handle_button([&]() {
+                s.sync_uvs = CtrlIsChecked(IDC_CHECK_UVS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_COLORS:
-            handle_button([&]() { s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS); });
+            handle_button([&]() {
+                s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS);
+                notify_scene_update();
+            });
+            break;
+        case IDC_CHECK_BOTHSIDED:
+            handle_button([&]() {
+                s.make_double_sided = CtrlIsChecked(IDC_CHECK_BOTHSIDED);
+                notify_scene_update();
+            });
+            break;
+        case IDC_CHECK_BAKEMODIFIERS:
+            handle_button([&]() {
+                s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKEMODIFIERS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_BLENDSHAPES:
-            handle_button([&]() { s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES); });
+            handle_button([&]() {
+                s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_BONES:
-            handle_button([&]() { s.sync_bones = CtrlIsChecked(IDC_CHECK_BONES); });
+            handle_button([&]() {
+                s.sync_bones = CtrlIsChecked(IDC_CHECK_BONES);
+                notify_scene_update();
+            });
+            break;
+        case IDC_CHECK_TEXTURES:
+            handle_button([&]() {
+                s.sync_textures = CtrlIsChecked(IDC_CHECK_TEXTURES);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_CAMERAS:
-            handle_button([&]() { s.sync_cameras = CtrlIsChecked(IDC_CHECK_CAMERAS); });
+            handle_button([&]() {
+                s.sync_cameras = CtrlIsChecked(IDC_CHECK_CAMERAS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_LIGHTS:
-            handle_button([&]() { s.sync_lights = CtrlIsChecked(IDC_CHECK_LIGHTS); });
+            handle_button([&]() {
+                s.sync_lights = CtrlIsChecked(IDC_CHECK_LIGHTS);
+                notify_scene_update();
+            });
             break;
         case IDC_CHECK_AUTO_SYNC:
-            handle_button([&]() { s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC); });
-            msmaxInstance().update();
+            handle_button([&]() {
+                s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC);
+                notify_scene_update();
+            });
             break;
+
         case IDC_EDIT_ANIMATION_TIME_SCALE:
             handle_edit([&]() {
                 float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
@@ -361,16 +415,16 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             break;
         case IDC_EDIT_ANIMATION_SPS:
             handle_edit([&]() {
-                int tmp = CtrlGetInt(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
-                if (tmp < 1 || tmp > 120) {
-                    tmp = mu::clamp(tmp, 1, 120);
+                float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
+                if (tmp < 0.01f) {
+                    tmp = mu::max(tmp, 0.01f);
                     CtrlSetText(IDC_EDIT_ANIMATION_SPS, tmp);
                 }
                 s.animation_sps = tmp;
             });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All); });
+            handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All, true); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
             handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
@@ -417,12 +471,17 @@ void MeshSyncClient3dsMax::updateUIText()
     CtrlSetCheck(IDC_CHECK_NORMALS,      s.sync_normals);
     CtrlSetCheck(IDC_CHECK_UVS,          s.sync_uvs);
     CtrlSetCheck(IDC_CHECK_COLORS,       s.sync_colors);
+    CtrlSetCheck(IDC_CHECK_BOTHSIDED,    s.make_double_sided);
+    CtrlSetCheck(IDC_CHECK_BAKEMODIFIERS, s.bake_modifiers);
     CtrlSetCheck(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
     CtrlSetCheck(IDC_CHECK_BONES,        s.sync_bones);
+    CtrlSetCheck(IDC_CHECK_TEXTURES,     s.sync_textures);
     CtrlSetCheck(IDC_CHECK_CAMERAS,      s.sync_cameras);
     CtrlSetCheck(IDC_CHECK_LIGHTS,       s.sync_lights);
     CtrlSetCheck(IDC_CHECK_AUTO_SYNC,    s.auto_sync);
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
+
+    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msReleaseDateStr);
 }

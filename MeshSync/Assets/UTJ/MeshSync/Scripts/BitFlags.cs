@@ -10,7 +10,10 @@ namespace UTJ.MeshSync
 
         public bool this[int v]
         {
-            get { return (bits & (1 << v)) != 0; }
+            get
+            {
+                return (bits & (1 << v)) != 0;
+            }
             set
             {
                 if (value)

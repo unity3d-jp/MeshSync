@@ -113,6 +113,7 @@ public:
     {
         if (m_size == 0) {
             deallocate(m_data, m_size);
+            m_data = nullptr;
             m_size = m_capacity = 0;
         }
         else if (m_size == m_capacity) {
@@ -179,8 +180,12 @@ public:
     void assign(const_pointer first, const_pointer last)
     {
         resize(std::distance(first, last));
-        // sadly, memcpy() can way faster than std::copy()
+        // sadly, memcpy() can be way faster than std::copy()
         memcpy(m_data, first, sizeof(value_type) * m_size);
+    }
+    void assign(pointer first, pointer last)
+    {
+        assign((const_pointer)first, (const_pointer)last);
     }
 
     template<class ForwardIter>

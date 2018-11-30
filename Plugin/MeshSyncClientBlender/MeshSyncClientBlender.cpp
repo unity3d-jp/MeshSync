@@ -16,9 +16,10 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             .def(py::init<>())
             BindMethod(flushPendingList)
             BindMethod2(setup, [](msbContext& self, py::object ctx) { bl::setup(ctx); })
-            BindMethod2(sendSceneAll, [](msbContext& self) { self.sendScene(msbContext::SendScope::All); })
-            BindMethod2(sendSceneUpdated, [](msbContext& self) { self.sendScene(msbContext::SendScope::Updated); })
-            BindMethod2(sendSceneSelected, [](msbContext& self) { self.sendScene(msbContext::SendScope::Selected); })
+            BindMethod2(clear, [](msbContext& self, py::object ctx) { self.clear(); })
+            BindMethod2(sendSceneAll, [](msbContext& self, bool force_all) { self.sendScene(msbContext::SendScope::All, force_all); })
+            BindMethod2(sendSceneUpdated, [](msbContext& self) { self.sendScene(msbContext::SendScope::Updated, false); })
+            BindMethod2(sendSceneSelected, [](msbContext& self) { self.sendScene(msbContext::SendScope::Selected, false); })
             BindMethod2(sendAnimationsAll, [](msbContext& self) { self.sendAnimations(msbContext::SendScope::All); })
             BindMethod2(sendAnimationsSelected, [](msbContext& self) { self.sendAnimations(msbContext::SendScope::Selected); })
             BindProperty(server_address,
@@ -48,12 +49,24 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(sync_colors,
                 [](const msbContext& self) { return self.getSettings().sync_colors; },
                 [](msbContext& self, bool v) { self.getSettings().sync_colors = v; })
+            BindProperty(make_double_sided,
+                [](const msbContext& self) { return self.getSettings().make_double_sided; },
+                [](msbContext& self, bool v) { self.getSettings().make_double_sided = v; })
+            BindProperty(bake_modifiers,
+                [](const msbContext& self) { return self.getSettings().bake_modifiers; },
+                [](msbContext& self, bool v) { self.getSettings().bake_modifiers = v; })
+            BindProperty(convert_to_mesh,
+                [](const msbContext& self) { return self.getSettings().convert_to_mesh; },
+                [](msbContext& self, bool v) { self.getSettings().convert_to_mesh = v; })
             BindProperty(sync_bones,
                 [](const msbContext& self) { return self.getSettings().sync_bones; },
                 [](msbContext& self, bool v) { self.getSettings().sync_bones = v; })
             BindProperty(sync_blendshapes,
                 [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
                 [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
+            BindProperty(sync_textures,
+                [](const msbContext& self) { return self.getSettings().sync_textures; },
+                [](msbContext& self, bool v) { self.getSettings().sync_textures = v; })
             BindProperty(sync_cameras,
                 [](const msbContext& self) { return self.getSettings().sync_cameras; },
                 [](msbContext& self, bool v) { self.getSettings().sync_cameras = v; })
@@ -66,7 +79,10 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(animation_interval,
                 [](const msbContext& self) { return self.getSettings().animation_frame_interval; },
                 [](msbContext& self, int v) { self.getSettings().animation_frame_interval = v; })
-            ;
+            BindProperty(multithreaded,
+                [](const msbContext& self) { return self.getSettings().multithreaded; },
+                [](msbContext& self, int v) { self.getSettings().multithreaded = v; })
+            .def_property_readonly("version", [](const msbContext& self) { return std::string(msReleaseDateStr); });
     }
 #undef BindMethod
 #undef BindMethod2

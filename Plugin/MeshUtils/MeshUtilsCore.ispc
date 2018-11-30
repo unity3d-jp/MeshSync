@@ -1,28 +1,142 @@
 #include "ispcmath.h"
 
-#ifdef muSIMD_FloatToHalf
-export void FloatToHalf(
-    uniform half dst[],
-    uniform const float src[],
+#ifdef muSIMD_SumInt32
+export uniform unsigned int64 SumInt32(
+    uniform const unsigned int src[],
     uniform const int num)
+{
+    unsigned int64 tmp = 0;
+    foreach(i=0 ... num) {
+        tmp += src[i];
+    }
+    return reduce_add(tmp);
+}
+#endif
+
+
+#ifdef muSIMD_Float_Norm_Conversion
+
+export void F32ToF16(uniform half dst[], uniform const float src[], uniform const int num)
 {
     foreach(i=0 ... num) {
         dst[i] = float_to_half(src[i]);
     }
 }
-#endif
-
-#ifdef muSIMD_HalfToFloat
-export void HalfToFloat(
-    uniform float dst[],
-    uniform const half src[],
-    uniform const int num)
+export void F16ToF32(uniform float dst[], uniform const half src[], uniform const int num)
 {
     foreach(i=0 ... num) {
         dst[i] = half_to_float(src[i]);
     }
 }
+
 #endif
+
+#ifdef muSIMD_Float_Norm_Conversion
+
+export void F32ToS8(uniform int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (int8)(clamp11(src[i]) * 127.0f);
+    }
+}
+export void S8ToF32(uniform float dst[], uniform const int8 src[], uniform size_t size)
+{
+    const float R = 1.0f / 127.0f;
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] * R;
+    }
+}
+
+export void F32ToU8(uniform unsigned int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (unsigned int8)(clamp01(src[i]) * 255.0f);
+    }
+}
+export void U8ToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
+{
+    const float R = 1.0f / 255.0f;
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] * R;
+    }
+}
+
+export void F32ToU8N(uniform unsigned int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (unsigned int8)((clamp11(src[i]) * 0.5f + 0.5f) * 255.0f);
+    }
+}
+export void U8NToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
+{
+    const float R = 1.0f / 255.0f;
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] * R * 2.0f - 1.0f;
+    }
+}
+
+export void F32ToS16(uniform int16 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (int16)(clamp11(src[i]) * 32767.0f);
+    }
+}
+export void S16ToF32(uniform float dst[], uniform const int16 src[], uniform size_t size)
+{
+    const float R = 1.0f / 32767.0f;
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] * R;
+    }
+}
+
+export void F32ToU16(uniform unsigned int16 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (unsigned int16)(clamp01(src[i]) * 65535.0f);
+    }
+}
+export void U16ToF32(uniform float dst[], uniform const unsigned int16 src[], uniform size_t size)
+{
+    const float R = 1.0f / 65535.0f;
+    foreach(i=0 ... size) {
+        dst[i] = (float)src[i] * R;
+    }
+}
+
+export void F32ToS24(uniform unsigned int8 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        int32 v = (int32)((double)clamp11(src[i]) * 2147483647.0d);
+        dst[i*3 + 0] = (unsigned int8)((v & 0x0000FF00) >> 8 );
+        dst[i*3 + 1] = (unsigned int8)((v & 0x00FF0000) >> 16);
+        dst[i*3 + 2] = (unsigned int8)((v & 0xFF000000) >> 24);
+    }
+}
+export void S24ToF32(uniform float dst[], uniform const unsigned int8 src[], uniform size_t size)
+{
+    const double R = 1.0d / 2147483647.0d;
+    foreach(i=0 ... size) {
+        int32 v = ((int32)src[i*3 + 0] << 8) | ((int32)src[i*3 + 1] << 16) | ((int32)src[i*3 + 2] << 24);
+        dst[i] = (float)((double)v * R);
+    }
+}
+
+export void F32ToS32(uniform int32 dst[], uniform const float src[], uniform size_t size)
+{
+    foreach(i=0 ... size) {
+        dst[i] = (int32)((double)clamp11(src[i]) * 2147483647.0d);
+    }
+}
+export void S32ToF32(uniform float dst[], uniform const int32 src[], uniform size_t size)
+{
+    const double R = 1.0d / 2147483647.0d;
+    foreach(i=0 ... size) {
+        dst[i] = (float)((double)src[i] * R);
+    }
+}
+
+#endif
+
 
 #ifdef muSIMD_NearEqual
 export uniform bool NearEqual(
@@ -96,7 +210,113 @@ export void MulPoints3(uniform const float4x4& m_, uniform const float3 src[], u
 }
 #endif
 
-#ifdef muSIMD_MinMax3
+#ifdef muSIMD_MinMax
+export void MinMax1I(
+    uniform const int src[], uniform const int num,
+    uniform int& dst_min, uniform int& dst_max)
+{
+    if(num == 0) { return; }
+
+    uniform int rmin = src[0];
+    uniform int rmax = src[0];
+
+    const uniform int block_size = C;
+    const uniform int num_loops = num / block_size;
+    if(num_loops > 0) {
+        int tmin, tmax;
+        tmin = tmax = src[I];
+        for(uniform int i=1; i < num_loops; ++i) {
+            tmin = min(tmin, src[C*i + I]);
+            tmax = max(tmax, src[C*i + I]);
+        }
+        rmin = reduce_min(tmin);
+        rmax = reduce_max(tmax);
+    }
+
+    for(uniform int i=num_loops*block_size; i < num; ++i) {
+        uniform int t = src[i];
+        rmin = min(rmin, t);
+        rmax = max(rmax, t);
+    }
+
+    dst_min = rmin;
+    dst_max = rmax;
+}
+
+export void MinMax1(
+    uniform const float src[], uniform const int num,
+    uniform float& dst_min, uniform float& dst_max)
+{
+    if(num == 0) { return; }
+
+    uniform float rmin = src[0];
+    uniform float rmax = src[0];
+
+    const uniform int block_size = C;
+    const uniform int num_loops = num / block_size;
+    if(num_loops > 0) {
+        float tmin, tmax;
+        tmin = tmax = src[I];
+        for(uniform int i=1; i < num_loops; ++i) {
+            tmin = min(tmin, src[C*i + I]);
+            tmax = max(tmax, src[C*i + I]);
+        }
+        rmin = reduce_min(tmin);
+        rmax = reduce_max(tmax);
+    }
+
+    for(uniform int i=num_loops*block_size; i < num; ++i) {
+        uniform float t = src[i];
+        rmin = min(rmin, t);
+        rmax = max(rmax, t);
+    }
+
+    dst_min = rmin;
+    dst_max = rmax;
+}
+
+export void MinMax2(
+    uniform const float2 src[], uniform const int num,
+    uniform float2& dst_min, uniform float2& dst_max)
+{
+    if(num == 0) { return; }
+
+    uniform float2 rmin = src[0];
+    uniform float2 rmax = src[0];
+
+    const uniform int block_size = C;
+    const uniform int num_loops = num / block_size;
+    if(num_loops > 0) {
+        const uniform float * uniform fv = (const uniform float * uniform)src;
+
+        float tmin[2], tmax[2];
+        tmin[0] = tmax[0] = fv[  I];
+        tmin[1] = tmax[1] = fv[C+I];
+        for(uniform int i=1; i < num_loops; ++i) {
+            uniform const int i2 = i*2;
+            tmin[0] = min(tmin[0], fv[C*(i2+0) + I]);
+            tmax[0] = max(tmax[0], fv[C*(i2+0) + I]);
+            tmin[1] = min(tmin[1], fv[C*(i2+1) + I]);
+            tmax[1] = max(tmax[1], fv[C*(i2+1) + I]);
+        }
+        rmin.x = reduce_min(shuffle(tmin[0], tmin[1], I*2 + 0));
+        rmin.y = reduce_min(shuffle(tmin[0], tmin[1], I*2 + 1));
+        rmax.x = reduce_max(shuffle(tmax[0], tmax[1], I*2 + 0));
+        rmax.y = reduce_max(shuffle(tmax[0], tmax[1], I*2 + 1));
+    }
+
+    for(uniform int i=num_loops*block_size; i < num; ++i) {
+        uniform float2 t = src[i];
+        rmin.x = min(rmin.x, t.x);
+        rmin.y = min(rmin.y, t.y);
+        rmax.x = max(rmax.x, t.x);
+        rmax.y = max(rmax.y, t.y);
+    }
+
+    dst_min = rmin;
+    dst_max = rmax;
+}
+
 export void MinMax3(
     uniform const float3 src[], uniform const int num,
     uniform float3& dst_min, uniform float3& dst_max)
@@ -156,46 +376,71 @@ export void MinMax3(
     dst_min = rmin;
     dst_max = rmax;
 }
-#endif
 
-#ifdef muSIMD_MinMax2
-export void MinMax2(
-    uniform const float2 src[], uniform const int num,
-    uniform float2& dst_min, uniform float2& dst_max)
+export void MinMax4(
+    uniform const float4 src[], uniform const int num,
+    uniform float4& dst_min, uniform float4& dst_max)
 {
     if(num == 0) { return; }
 
-    uniform float2 rmin = src[0];
-    uniform float2 rmax = src[0];
+    uniform float4 rmin = src[0];
+    uniform float4 rmax = src[0];
 
     const uniform int block_size = C;
     const uniform int num_loops = num / block_size;
     if(num_loops > 0) {
         const uniform float * uniform fv = (const uniform float * uniform)src;
+        uniform float tmin[4][C];
+        uniform float tmax[4][C];
+        tmin[0][I] = tmax[0][I] = fv[C*0 + I];
+        tmin[1][I] = tmax[1][I] = fv[C*1 + I];
+        tmin[2][I] = tmax[2][I] = fv[C*2 + I];
+        tmin[3][I] = tmax[3][I] = fv[C*3 + I];
 
-        float tmin[2], tmax[2];
-        tmin[0] = tmax[0] = fv[  I];
-        tmin[1] = tmax[1] = fv[C+I];
         for(uniform int i=1; i < num_loops; ++i) {
-            uniform const int i2 = i*2;
-            tmin[0] = min(tmin[0], fv[C*(i2+0) + I]);
-            tmax[0] = max(tmax[0], fv[C*(i2+0) + I]);
-            tmin[1] = min(tmin[1], fv[C*(i2+1) + I]);
-            tmax[1] = max(tmax[1], fv[C*(i2+1) + I]);
+            uniform const int i4 = i*4;
+
+            float _0 = fv[C*(i4+0) + I];
+            tmin[0][I] = min(tmin[0][I], _0);
+            tmax[0][I] = max(tmax[0][I], _0);
+
+            float _1 = fv[C*(i4+1) + I];
+            tmin[1][I] = min(tmin[1][I], _1);
+            tmax[1][I] = max(tmax[1][I], _1);
+
+            float _2 = fv[C*(i4+2) + I];
+            tmin[2][I] = min(tmin[2][I], _2);
+            tmax[2][I] = max(tmax[2][I], _2);
+
+            float _3 = fv[C*(i4+3) + I];
+            tmin[3][I] = min(tmin[3][I], _3);
+            tmax[3][I] = max(tmax[3][I], _3);
         }
 
-        rmin.x = reduce_min(shuffle(tmin[0], tmin[1], I*2 + 0));
-        rmin.y = reduce_min(shuffle(tmin[0], tmin[1], I*2 + 1));
-        rmax.x = reduce_max(shuffle(tmax[0], tmax[1], I*2 + 0));
-        rmax.y = reduce_max(shuffle(tmax[0], tmax[1], I*2 + 1));
+        float x,y,z,w;
+        aos_to_soa4((uniform float*)&tmin[0], &x, &y, &z, &w);
+        rmin.x = reduce_min(x);
+        rmin.y = reduce_min(y);
+        rmin.z = reduce_min(z);
+        rmin.w = reduce_min(w);
+
+        aos_to_soa4((uniform float*)&tmax[0], &x, &y, &z, &w);
+        rmax.x = reduce_max(x);
+        rmax.y = reduce_max(y);
+        rmax.z = reduce_max(z);
+        rmax.w = reduce_max(w);
     }
 
     for(uniform int i=num_loops*block_size; i < num; ++i) {
-        uniform float2 t = src[i];
+        uniform float4 t = src[i];
         rmin.x = min(rmin.x, t.x);
         rmin.y = min(rmin.y, t.y);
+        rmin.z = min(rmin.z, t.z);
+        rmin.w = min(rmin.w, t.w);
         rmax.x = max(rmax.x, t.x);
         rmax.y = max(rmax.y, t.y);
+        rmax.z = max(rmax.z, t.z);
+        rmax.w = max(rmax.w, t.w);
     }
 
     dst_min = rmin;
@@ -298,7 +543,7 @@ export void Lerp(uniform float dst[], uniform const float src1[], uniform const 
 {
     uniform float iw = 1.0f - w;
     foreach(i=0 ... num) {
-        dst[i] = src1[i]*w + src2[i]*iw;
+        dst[i] = src1[i]*iw + src2[i]*w;
     }
 }
 #endif
@@ -1294,3 +1539,4 @@ export void GenerateTangentsPolygonIndexed(uniform float4 dst[],
     delete[] mem_tmp;
 }
 #endif
+

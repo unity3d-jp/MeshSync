@@ -25,6 +25,8 @@ bool msmbLayout::FBCreate()
     const char *idLabelScale = "idLabelScale";
     const char *idEditlScale = "idEditlScale";
     const char *idButtonSyncMeshes = "idButtonSyncMeshes";
+    const char *idButtonBothSided = "idButtonBothSided";
+    const char *idButtonBakeDeformers = "idButtonBakeDeformers";
     const char *idButtonSyncCameras = "idButtonSyncCameras";
     const char *idButtonSyncLights = "idButtonSyncLights";
     const char *idButtonAutoSync = "idButtonAutoSync";
@@ -36,6 +38,9 @@ bool msmbLayout::FBCreate()
     const char *idLabelSPS = "idLabelSPS";
     const char *idEditSPS = "idEditSPS";
     const char *idButtonSyncAnimations = "idButtonSyncAnimations";
+
+    const char *idLabelVersion = "idLabelVersion";
+
 
     m_device = (msmbDevice*)(FBDevice*)Device;
 
@@ -126,11 +131,33 @@ bool msmbLayout::FBCreate()
         m_bu_sync_meshes.State = (int)m_device->sync_meshes;
         m_bu_sync_meshes.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
 
-        AddRegion(idButtonSyncCameras, idButtonSyncCameras,
+        AddRegion(idButtonBothSided, idButtonBothSided,
             0, kFBAttachLeft, idButtonSyncMeshes, 1.0,
             lS, kFBAttachBottom, idButtonSyncMeshes, 1.0,
             0, kFBAttachWidth, idButtonSyncMeshes, 1.0,
             0, kFBAttachHeight, idButtonSyncMeshes, 1.0);
+        SetControl(idButtonBothSided, m_bu_make_double_sided);
+        m_bu_make_double_sided.Caption = "Double Sided";
+        m_bu_make_double_sided.Style = kFBCheckbox;
+        m_bu_make_double_sided.State = (int)m_device->make_double_sided;
+        m_bu_make_double_sided.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
+
+        AddRegion(idButtonBakeDeformers, idButtonBakeDeformers,
+            0, kFBAttachLeft, idButtonBothSided, 1.0,
+            lS, kFBAttachBottom, idButtonBothSided, 1.0,
+            0, kFBAttachWidth, idButtonBothSided, 1.0,
+            0, kFBAttachHeight, idButtonBothSided, 1.0);
+        SetControl(idButtonBakeDeformers, m_bu_bake_deformers);
+        m_bu_bake_deformers.Caption = "Bake Deformers";
+        m_bu_bake_deformers.Style = kFBCheckbox;
+        m_bu_bake_deformers.State = (int)m_device->bake_deformars;
+        m_bu_bake_deformers.OnClick.Add(this, (FBCallback)&msmbLayout::onSceneSettingsChange);
+
+        AddRegion(idButtonSyncCameras, idButtonSyncCameras,
+            0, kFBAttachLeft, idButtonBakeDeformers, 1.0,
+            lS, kFBAttachBottom, idButtonBakeDeformers, 1.0,
+            0, kFBAttachWidth, idButtonBakeDeformers, 1.0,
+            0, kFBAttachHeight, idButtonBakeDeformers, 1.0);
         SetControl(idButtonSyncCameras, m_bu_sync_cameras);
         m_bu_sync_cameras.Caption = "Sync Cameras";
         m_bu_sync_cameras.Style = kFBCheckbox;
@@ -217,9 +244,9 @@ bool msmbLayout::FBCreate()
             0, kFBAttachHeight, idLabelSPS, 1.0);
         SetControl(idEditSPS, m_ed_sps);
         m_ed_sps.Value = 3;
-        m_ed_sps.Min = 1;
-        m_ed_sps.Max = 120;
-        m_ed_sps.Precision = 1;
+        m_ed_sps.Min = 0.01;
+        m_ed_sps.SmallStep = 0.01;
+        m_ed_sps.LargeStep = 0.1;
         m_ed_sps.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
 
@@ -231,6 +258,16 @@ bool msmbLayout::FBCreate()
         SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";
         m_bu_sync_animations.OnClick.Add(this, (FBCallback)&msmbLayout::onSyncAnimation);
+    }
+
+    {
+        AddRegion(idLabelVersion, idLabelVersion,
+            0, kFBAttachLeft, idButtonSyncAnimations, 1.0,
+            lS2, kFBAttachBottom, idButtonSyncAnimations, 1.0,
+            lW2, kFBAttachNone, nullptr, 1.0,
+            0, kFBAttachHeight, idButtonSyncAnimations, 1.0);
+        SetControl(idLabelVersion, m_lb_version);
+        m_lb_version.Caption = "Plugin Version: " msReleaseDateStr;
     }
 
     return true;
@@ -251,14 +288,18 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->scale_factor = (float)m_ed_scale.Value;
     m_device->sync_meshes = (bool)(int)m_bu_sync_meshes.State;
+    m_device->make_double_sided = (bool)(int)m_bu_make_double_sided.State;
+    m_device->bake_deformars = (bool)(int)m_bu_bake_deformers.State;
     m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
     m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
+    if (m_device->auto_sync)
+        m_device->sendScene(true);
 }
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->time_scale = (float)m_ed_time_scale.Value;
-    m_device->samples_per_second = (float)m_ed_sps.Value;
+    m_device->animation_time_scale = (float)m_ed_time_scale.Value;
+    m_device->animation_sps = (float)m_ed_sps.Value;
 }
 
 void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)

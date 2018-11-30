@@ -9,74 +9,87 @@ const float PI = 3.14159265358979323846264338327950288419716939937510f;
 const float Deg2Rad = PI / 180.0f;
 const float Rad2Deg = 1.0f / (PI / 180.0f);
 
-#ifdef muEnableHalf
-void FloatToHalf_Generic(half *dst, const float *src, size_t num)
+uint64_t SumInt32_Generic(const uint32_t *src, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
-        dst[i] = src[i];
-    }
+    uint64_t ret = 0;
+    for (size_t i = 0; i < num; ++i)
+        ret += src[i];
+    return ret;
 }
-void HalfToFloat_Generic(float *dst, const half *src, size_t num)
-{
-    for (size_t i = 0; i < num; ++i) {
-        dst[i] = src[i];
-    }
-}
-#endif // muEnableHalf
+
+#define Def(Name, T1, T2) void Name(T1 *dst, const T2 *src, size_t num) { for (size_t i = 0; i < num; ++i) { dst[i] = src[i]; } }
+Def(F32ToF16_Generic, half, float);
+Def(F16ToF32_Generic, float, half);
+Def(F32ToS8_Generic, snorm8, float);
+Def(S8ToF32_Generic, float, snorm8);
+Def(F32ToU8_Generic, unorm8, float);
+Def(U8ToF32_Generic, float, unorm8);
+Def(F32ToU8N_Generic, unorm8n, float);
+Def(U8NToF32_Generic, float, unorm8n);
+Def(F32ToS16_Generic, snorm16, float);
+Def(S16ToF32_Generic, float, snorm16);
+Def(F32ToU16_Generic, unorm16, float);
+Def(U16ToF32_Generic, float, unorm16);
+Def(F32ToS24_Generic, snorm24, float);
+Def(S24ToF32_Generic, float, snorm24);
+Def(F32ToS32_Generic, snorm32, float);
+Def(S32ToF32_Generic, float, snorm32);
+#undef Def
+
 
 void InvertX_Generic(float3 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].x *= -1.0f;
-    }
 }
 void InvertX_Generic(float4 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].x *= -1.0f;
-    }
 }
 
+void InvertU(float2 * dst, size_t num)
+{
+    for (size_t i = 0; i < num; ++i)
+        dst[i].x = 1.0f - dst[i].x;
+}
 void InvertV(float2 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i].y = 1.0f - dst[i].y;
-    }
 }
 
 void Scale_Generic(float *dst, float s, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] *= s;
-    }
 }
 void Scale_Generic(float3 *dst, float s, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] *= s;
-    }
 }
 
 void Normalize_Generic(float3 *dst, size_t num)
 {
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] = normalize(dst[i]);
-    }
 }
 
 void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, float w)
 {
     const float iw = 1.0f - w;
-    for (size_t i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i)
         dst[i] = src1[i] * w + src2[i] * iw;
-    }
 }
 
-void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max)
+template<class T>
+static inline void MinMax_GenericImpl(const T *src, size_t num, T& dst_min, T& dst_max)
 {
-    if (num == 0) { return; }
-    float2 rmin = src[0];
-    float2 rmax = src[0];
+    if (num == 0)
+        return;
+    auto rmin = src[0];
+    auto rmax = src[0];
     for (size_t i = 1; i < num; ++i) {
         rmin = min(rmin, src[i]);
         rmax = max(rmax, src[i]);
@@ -84,19 +97,11 @@ void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_
     dst_min = rmin;
     dst_max = rmax;
 }
-
-void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max)
-{
-    if (num == 0) { return; }
-    float3 rmin = src[0];
-    float3 rmax = src[0];
-    for (size_t i = 1; i < num; ++i) {
-        rmin = min(rmin, src[i]);
-        rmax = max(rmax, src[i]);
-    }
-    dst_min = rmin;
-    dst_max = rmax;
-}
+void MinMax_Generic(const int *src, size_t num, int& dst_min, int& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float *src, size_t num, float& dst_min, float& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float2 *src, size_t num, float2& dst_min, float2& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float3 *src, size_t num, float3& dst_min, float3& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
+void MinMax_Generic(const float4 *src, size_t num, float4& dst_min, float4& dst_max) { MinMax_GenericImpl(src, num, dst_min, dst_max); }
 
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps)
 {

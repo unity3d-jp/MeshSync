@@ -21,6 +21,46 @@ void PrintImpl(const char *format, ...)
     fflush(stdout);
 }
 
+struct ArgEntry
+{
+    std::string name;
+    std::string value;
+
+    template<class T> bool getValue(T& dst) const;
+};
+template<> bool ArgEntry::getValue(std::string& dst) const
+{
+    dst = value;
+    return true;
+}
+template<> bool ArgEntry::getValue(int& dst) const
+{
+    dst = std::atoi(value.c_str());
+    return dst != 0;
+}
+template<> bool ArgEntry::getValue(float& dst) const
+{
+    dst = (float)std::atof(value.c_str());
+    return dst != 0.0f;
+}
+
+static std::vector<ArgEntry>& GetArgs()
+{
+    static std::vector<ArgEntry> s_instance;
+    return s_instance;
+}
+template<class T> bool GetArg(const char *name, T& dst)
+{
+    auto& args = GetArgs();
+    auto it = std::find_if(args.begin(), args.end(), [name](auto& e) { return e.name == name; });
+    if (it != args.end())
+        return it->getValue(dst);
+    return false;
+}
+template bool GetArg(const char *name, std::string& dst);
+template bool GetArg(const char *name, int& dst);
+template bool GetArg(const char *name, float& dst);
+
 
 
 struct TestEntry
@@ -74,12 +114,18 @@ testExport void RunAllTests()
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1) {
-        RunAllTests();
-    }
-    else {
-        for (int i = 1; i < argc; ++i) {
-            RunTest(argv[i]);
+    int run_count = 0;
+    for (int i = 1; i < argc; ++i) {
+        if (char *sep = std::strstr(argv[i], "=")) {
+            *(sep++) = '\0';
+            GetArgs().push_back({ argv[i] , sep });
         }
+        else {
+            RunTest(argv[i]);
+            ++run_count;
+        }
+    }
+    if (run_count == 0) {
+        RunAllTests();
     }
 }

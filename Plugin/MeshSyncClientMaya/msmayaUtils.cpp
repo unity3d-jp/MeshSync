@@ -39,7 +39,7 @@ bool IsInstance(const MObject& node)
 
 MObject FindSkinCluster(MObject shape)
 {
-    MItDependencyGraph it(shape, kMFnSkinClusterFilter, MItDependencyGraph::kUpstream);
+    MItDependencyGraph it(shape, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         return it.currentItem();
     }
@@ -48,7 +48,7 @@ MObject FindSkinCluster(MObject shape)
 
 MObject FindBlendShape(MObject shape)
 {
-    MItDependencyGraph it(shape, kMFnBlendShape, MItDependencyGraph::kUpstream);
+    MItDependencyGraph it(shape, MFn::kBlendShape, MItDependencyGraph::kUpstream);
     if (!it.isDone()) {
         return it.currentItem();
     }
@@ -59,7 +59,7 @@ MObject FindOrigMesh(const MObject& shape)
 {
     MObject ret;
     EachChild(shape, [&](const MObject& child) {
-        if (child.hasFn(kMFnMesh)) {
+        if (child.hasFn(MFn::kMesh)) {
             MFnMesh fn(child);
             if (ret.isNull() || fn.isIntermediateObject()) {
                 ret = child;
@@ -116,6 +116,23 @@ void DumpPlugInfoImpl(MPlug plug)
 {
     DumpPlugInfoImpl(plug, "");
     mscTrace("\n");
+}
+
+void DumpPlugInfoImpl(MFnDependencyNode& fn)
+{
+    MPlugArray connected;
+    fn.getConnections(connected);
+    for (uint32_t i = 0; i < connected.length(); ++i) {
+        DumpPlugInfoImpl(connected[i], " ");
+    }
+
+    uint32_t num_attributes = fn.attributeCount();
+    for (uint32_t i = 0; i < num_attributes; ++i) {
+        MObject attr = fn.attribute(i);
+        MFnAttribute fn_attr(attr);
+        mscTrace(" attr %s (%s)\n", fn_attr.name().asChar(), attr.apiTypeStr());
+        DumpPlugInfoImpl(fn.findPlug(fn_attr.name()), " ");
+    }
 }
 #endif
 
