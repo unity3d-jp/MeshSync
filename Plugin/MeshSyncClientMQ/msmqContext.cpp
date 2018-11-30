@@ -46,10 +46,14 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
             return;
     }
 
-    // just return if previous request is in progress. responsiveness is highest priority.
     if (m_send_meshes.isSending()) {
-        m_pending_send_meshes = true;
-        return;
+        if (force) {
+            m_send_meshes.wait();
+        }
+        else {
+            m_pending_send_meshes = true;
+            return;
+        }
     }
     m_pending_send_meshes = false;
 

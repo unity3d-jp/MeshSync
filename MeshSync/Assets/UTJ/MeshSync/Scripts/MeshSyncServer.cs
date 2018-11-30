@@ -2055,12 +2055,20 @@ namespace UTJ.MeshSync
             if (go == null)
                 return;
 
-            var mf = go.GetComponent<MeshFilter>();
-            if (mf != null)
+            var smr = go.GetComponent<SkinnedMeshRenderer>();
+            if (smr != null)
             {
-                var mesh = mf.sharedMesh;
+                var mesh = smr.sharedMesh;
                 if (mesh != null)
-                    Unwrapping.GenerateSecondaryUVSet(mesh);
+                {
+                    var uv = new List<Vector2>();
+                    mesh.GetUVs(0, uv);
+                    if (uv.Count == 0)
+                    {
+                        Unwrapping.GenerateSecondaryUVSet(mesh);
+                        Debug.Log("generated uv " + mesh.name);
+                    }
+                }
             }
             for (int i = 1; ; ++i)
             {
@@ -2105,12 +2113,12 @@ namespace UTJ.MeshSync
             if(go == null)
                 return;
 
-            var mf = go.GetComponent<SkinnedMeshRenderer>();
-            if (mf == null)
+            var smr = go.GetComponent<SkinnedMeshRenderer>();
+            if (smr == null)
                 return;
 
-            var mesh = mf.sharedMesh;
-            if (mesh == null || AssetDatabase.GetAssetPath(mesh) == "")
+            var mesh = smr.sharedMesh;
+            if (mesh == null || AssetDatabase.GetAssetPath(mesh) != "")
                 return;
 
             var dstPath = assetPath + "/" + mesh.name + ".asset";
@@ -2136,10 +2144,7 @@ namespace UTJ.MeshSync
             {
                 if(kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
                 if (kvp.Value.editMesh != null)
-                {
                     ExportMeshes(kvp.Value.go);
-                    kvp.Value.editMesh = null;
-                }
             }
 
             // replace existing meshes
