@@ -392,7 +392,7 @@ const std::string& Server::getMIMEType(const std::string& filename)
 void Server::setFileRootPath(const std::string& path)
 {
     m_file_root_path = path;
-    loadMIMETypes(m_file_root_path + "/.mimetypes");
+    loadMIMETypes(m_file_root_path + "/mimetypes.txt");
 }
 
 const std::string& Server::getFileRootPath() const

@@ -41,8 +41,8 @@ TestLocal.meta
 MeshSyncAssets/
 MeshSyncAssets.meta
 
-MeshSync/*.csproj
-MeshSync/*.sln
+/*.csproj
+/*.sln
 
 Plugin/dist/
 Plugin/MeshSyncClientBlender2.*/
