@@ -451,7 +451,7 @@ namespace UTJ.MeshSync
     }
     #endregion
 
-    #region Texture
+    #region Audio
     public enum AudioFormat
     {
         Unknown = 0,

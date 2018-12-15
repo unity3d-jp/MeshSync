@@ -203,8 +203,10 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
   - これが有効の場合、オブジェクトが MeshCollider を持っていたら Mesh を同期する時に MeshCollider の Mesh も更新します。
 - Track Material Assignment
   - これが有効の場合、SceneView でマテリアルを D&D でアサインした場合などに、その変更を検知して同じマテリアルを持つ他の Mesh に対しても同様にマテリアルを更新します。
-- Update Mesh Collider
-  - これが有効の場合、オブジェクトが MeshCollider を持っていたら Mesh を同期する時に MeshCollider の Mesh も更新します。
+- Animation Interpolation
+  - アニメーションの補完方法を指定します。
+- Progressive Display
+  - これが有効な場合、受信途中のシーンの更新をリアルタイムで反映していきます。無効な場合はシーン全体のデータの受信が完了するまで待ってから更新を反映します。
   
   &nbsp;
 
