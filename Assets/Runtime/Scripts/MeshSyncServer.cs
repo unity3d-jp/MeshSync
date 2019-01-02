@@ -2248,6 +2248,9 @@ namespace UTJ.MeshSync
 
         void Awake()
         {
+#if UNITY_EDITOR
+            DeployStreamingAssets.Deploy();
+#endif
             StartServer();
         }
 
