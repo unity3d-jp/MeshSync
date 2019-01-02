@@ -13,7 +13,7 @@ exit /B 0
     echo %MAYA_VERSION% | findstr /C:"LT">nul && (set MAYA_LT=1) || (set MAYA_LT=0)
     set MAYA_LIB_DIR=%cd%\External\Maya%~2%~1\lib
     set MAYA_INCLUDE_DIR=%cd%\External\Maya%~1\include
-    msbuild MeshSyncClientMaya.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+    msbuild MeshSyncClientMaya.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     IF %ERRORLEVEL% NEQ 0 (
         pause
         exit /B 1
@@ -23,5 +23,5 @@ exit /B 0
     set CONTENT_DIR="%DIST_DIR%\UnityMeshSync\%~1%~2"
     xcopy /Y MeshSyncClientMaya\MEL\*.mod "%DIST_DIR%\"
     xcopy /Y MeshSyncClientMaya\MEL\*.mel "%CONTENT_DIR%\scripts\"
-    xcopy /Y _out\x64_Master\MeshSyncClientMaya%MAYA_VERSION%\MeshSyncClientMaya.mll "%CONTENT_DIR%\plug-ins\"
+    xcopy /Y _out\x64_Release\MeshSyncClientMaya%MAYA_VERSION%\MeshSyncClientMaya.mll "%CONTENT_DIR%\plug-ins\"
     exit /B 0

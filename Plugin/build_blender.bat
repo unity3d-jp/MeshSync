@@ -16,7 +16,7 @@ exit /B 0
 %cd%\External\blender-%BLENDER_VERSION%\include\python;
     set BLENDER_PYTHON_INCLUDE_DIR=%cd%\External\python%BLENDER_PYTHON_VERSION%\include
     set BLENDER_PYTHON_LIB_DIR=%cd%\External\python%BLENDER_PYTHON_VERSION%\lib64
-    msbuild MeshSyncClientBlender.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+    msbuild MeshSyncClientBlender.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     IF %ERRORLEVEL% NEQ 0 (
         pause
         exit /B 1
@@ -27,5 +27,5 @@ exit /B 0
     xcopy /Y MeshSyncClientBlender\python\unity_mesh_sync_common.py "%DIST_DIR%\"
     xcopy /Y MeshSyncClientBlender\python\%BLENDER_VERSION%\unity_mesh_sync.py "%DIST_DIR%\"
     xcopy /Y MeshSyncClientBlender\python\__init__.py "%PYD_DIR%\"
-    xcopy /Y _out\x64_Master\MeshSyncClientBlender-%BLENDER_VERSION%\*.pyd "%PYD_DIR%\"
+    xcopy /Y _out\x64_Release\MeshSyncClientBlender-%BLENDER_VERSION%\*.pyd "%PYD_DIR%\"
     exit /B 0

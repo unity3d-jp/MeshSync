@@ -10,7 +10,7 @@ exit /B 0
     echo target: %MOTIONBUILDER_VERSION%
     set MOTIONBUILDER_LIB_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\lib
     set MOTIONBUILDER_INCLUDE_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\include
-    msbuild MeshSyncClientMotionBuilder.vcxproj /t:Build /p:Configuration=Master /p:Platform=x64 /m /nologo
+    msbuild MeshSyncClientMotionBuilder.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     IF %ERRORLEVEL% NEQ 0 (
         pause
         exit /B 1
@@ -18,5 +18,5 @@ exit /B 0
     
     set DIST_DIR="dist\UnityMeshSync_MotionBuilder_Windows\"
     set CONTENT_DIR="%DIST_DIR%\MotionBuilder%MOTIONBUILDER_VERSION%"
-    xcopy /Y _out\x64_Master\MeshSyncClientMotionBuilder%MOTIONBUILDER_VERSION%\MeshSyncClientMotionBuilder.dll "%CONTENT_DIR%\"
+    xcopy /Y _out\x64_Release\MeshSyncClientMotionBuilder%MOTIONBUILDER_VERSION%\MeshSyncClientMotionBuilder.dll "%CONTENT_DIR%\"
     exit /B 0
