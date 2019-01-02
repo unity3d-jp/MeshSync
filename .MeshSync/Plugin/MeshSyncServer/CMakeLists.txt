@@ -1,0 +1,13 @@
+file(GLOB sources *.cpp *.h)
+set(plugins_dir "${CMAKE_SOURCE_DIR}/../Assets/UTJ/MeshSync/Runtime/Plugins/x86_64")
+add_plugin(MeshSyncServer SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
+
+add_dependencies(MeshSyncServer MeshUtils)
+target_include_directories(MeshSyncServer PUBLIC "${CMAKE_SOURCE_DIR}")
+target_link_libraries(MeshSyncServer MeshSync MeshUtils ${Poco_LIBRARIES})
+if(ENABLE_ZSTD)
+    target_link_libraries(MeshSyncServer ${ZSTD_LIBRARY})
+endif()
+if(LINUX)
+    target_link_libraries(MeshSyncServer pthread "-Wl,--no-undefined")
+endif()
