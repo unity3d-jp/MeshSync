@@ -1,8 +1,8 @@
-#if UNITY_EDITOR
-using UnityEditor;
 using UnityEngine;
+using UnityEditor;
+using UTJ.MeshSync;
 
-namespace UTJ.MeshSync
+namespace UTJ.MeshSyncEditor
 {
     class MaterialWindow : EditorWindow
     {
@@ -29,4 +29,3 @@ namespace UTJ.MeshSync
         }
     }
 }
-#endif

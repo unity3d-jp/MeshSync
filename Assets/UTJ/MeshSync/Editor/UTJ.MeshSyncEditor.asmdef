@@ -1,0 +1,14 @@
+{
+    "name": "UTJ.MeshSyncEditor",
+    "references": [
+        "UTJ.MeshSync"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

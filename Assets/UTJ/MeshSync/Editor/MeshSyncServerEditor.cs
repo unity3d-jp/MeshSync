@@ -1,8 +1,8 @@
-#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
+using UTJ.MeshSync;
 
-namespace UTJ.MeshSync
+namespace UTJ.MeshSyncEditor
 {
     [CustomEditor(typeof(MeshSyncServer))]
     public class MeshSyncServerEditor : Editor
@@ -71,4 +71,3 @@ namespace UTJ.MeshSync
         }
     }
 }
-#endif
