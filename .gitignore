@@ -44,8 +44,8 @@ MeshSyncAssets.meta
 /*.csproj
 /*.sln
 
-Plugin/dist/
-Plugin/MeshSyncClientBlender2.*/
-Plugin/MeshSyncClientMaya20*/
-Plugin/MeshSyncClientMayaLT20*/
-Plugin/MeshSyncClientMotionBuilder20*/
+.MeshSync/Plugin/dist/
+.MeshSync/Plugin/MeshSyncClientBlender2.*/
+.MeshSync/Plugin/MeshSyncClientMaya20*/
+.MeshSync/Plugin/MeshSyncClientMayaLT20*/
+.MeshSync/Plugin/MeshSyncClientMotionBuilder20*/
