@@ -1,18 +1,9 @@
-*.ipch
-*.sdf
-*.opendb
-*.db
 *.user
-*.log
-*.tlog
+
 *.aps
 *.DS_Store
+*.unitypackage
 
-*.exe
-*.dll
-*.bundle
-*.dylib
-*.so
 *.exr
 *.gif
 *.png
@@ -28,7 +19,6 @@
 *.unitypackage
 
 .vs/
-.mayaSwatches/
 _out/
 _tmp/
 _build_*/
@@ -38,8 +28,6 @@ Temp/
 obj/
 TestLocal/
 TestLocal.meta
-MeshSyncAssets/
-MeshSyncAssets.meta
 
 .MeshSync/*.csproj
 .MeshSync/*.sln
@@ -48,3 +36,5 @@ MeshSyncAssets.meta
 .MeshSync/Plugin/MeshSyncClientMaya20*/
 .MeshSync/Plugin/MeshSyncClientMayaLT20*/
 .MeshSync/Plugin/MeshSyncClientMotionBuilder20*/
+MeshSyncAssets/
+MeshSyncAssets.meta

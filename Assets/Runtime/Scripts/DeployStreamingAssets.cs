@@ -11,18 +11,18 @@ namespace UTJ.MeshSync
     {
         const string AssetDirName = "MeshSyncServerRoot";
 
-        public static bool Deploy()
+        public static bool Deploy(bool overwrite = false)
         {
             try
             {
                 string thisFile = new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileName().Replace('\\', '/');
                 var match = new Regex(@"^(.+?Assets)/Runtime").Match(thisFile);
-                if(match.Success)
+                if (match.Success)
                 {
                     var srcPath = match.Groups[1].Value + "/StreamingAssets/" + AssetDirName;
                     var dstPath = Application.streamingAssetsPath + "/" + AssetDirName;
                     if (!Directory.Exists(dstPath))
-                        return CopyDirectory(srcPath, dstPath);
+                        return CopyDirectory(srcPath, dstPath, overwrite);
                     return true;
                 }
             }
@@ -42,7 +42,7 @@ namespace UTJ.MeshSync
                 Directory.CreateDirectory(dst);
 
             var isMeta = new Regex(@"\.meta$");
-            foreach (FileInfo file in dir.GetFiles())
+            foreach (var file in dir.GetFiles())
             {
                 if (isMeta.Match(file.Name).Success)
                     continue; // ignore .meta
@@ -56,7 +56,7 @@ namespace UTJ.MeshSync
             }
 
             // recurse
-            foreach (DirectoryInfo subdir in dir.GetDirectories())
+            foreach (var subdir in dir.GetDirectories())
                 CopyDirectory(subdir.FullName, Path.Combine(dst, subdir.Name), overwrite);
 
             return true;
