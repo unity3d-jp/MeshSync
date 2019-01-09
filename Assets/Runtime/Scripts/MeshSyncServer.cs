@@ -1021,139 +1021,140 @@ namespace UTJ.MeshSync
 
         void UpdateMaterial(MaterialData src)
         {
-            var id = src.id;
+            var materialID = src.id;
+            var materialName = src.name;
 
-            var dst = m_materialList.Find(a => a.id == id);
+            var dst = m_materialList.Find(a => a.id == materialID);
             if (dst == null)
             {
                 dst = new MaterialHolder();
-                dst.id = id;
+                dst.id = materialID;
                 m_materialList.Add(dst);
             }
+#if UNITY_EDITOR
+            if (m_findMaterialFromAssets && (dst.material == null || dst.name != materialName))
+            {
+                var guids = AssetDatabase.FindAssets("t:Material " + materialName);
+                if (guids.Length > 0)
+                {
+                    dst.material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guids[0]));
+                    dst.materialIID = 0; // ignore material params
+                    m_needReassignMaterials = true;
+                }
+            }
+#endif
             if (dst.material == null)
             {
-#if UNITY_EDITOR
-                if (m_findMaterialFromAssets)
-                {
-                    var guids = AssetDatabase.FindAssets("t:Material " + src.name);
-                    if (guids.Length > 0)
-                        dst.material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guids[0]));
-                }
-#endif
-                if (dst.material == null)
-                {
-                    var shader = Shader.Find(src.shader);
-                    if (shader == null)
-                        shader = Shader.Find("Standard");
-                    dst.material = new Material(shader);
-                }
+                var shader = Shader.Find(src.shader);
+                if (shader == null)
+                    shader = Shader.Find("Standard");
+                dst.material = new Material(shader);
+                dst.material.name = materialName;
 
                 dst.materialIID = dst.material.GetInstanceID();
                 m_needReassignMaterials = true;
             }
-            dst.name = src.name;
+            dst.name = materialName;
             dst.index = src.index;
             dst.shader = src.shader;
             dst.color = src.color;
 
-            if (dst.materialIID != dst.material.GetInstanceID())
-                return;
-
             var dstmat = dst.material;
-            dstmat.name = src.name;
-
-            int numKeywords = src.numKeywords;
-            for (int ki = 0; ki < numKeywords; ++ki)
+            if (dst.materialIID == dst.material.GetInstanceID())
             {
-                var kw = src.GetKeyword(ki);
-                if (kw.value)
-                    dstmat.EnableKeyword(kw.name);
-                else
-                    dstmat.DisableKeyword(kw.name);
-            }
-
-            int numProps = src.numProperties;
-            for (int pi = 0; pi < numProps; ++pi)
-            {
-                var prop = src.GetProperty(pi);
-                var name = prop.name;
-                var type = prop.type;
-                if (!dstmat.HasProperty(name))
-                    continue;
-
-                // todo: handle transparent
-                //if (name == _Color)
-                //{
-                //    var color = prop.vectorValue;
-                //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-                //    {
-                //        dstmat.SetOverrideTag("RenderType", "Transparent");
-                //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                //        dstmat.SetInt("_ZWrite", 0);
-                //        dstmat.DisableKeyword("_ALPHATEST_ON");
-                //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-                //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                //    }
-                //}
-                if (name == _EmissionColor)
+                int numKeywords = src.numKeywords;
+                for (int ki = 0; ki < numKeywords; ++ki)
                 {
-                    if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                    var kw = src.GetKeyword(ki);
+                    if (kw.value)
+                        dstmat.EnableKeyword(kw.name);
+                    else
+                        dstmat.DisableKeyword(kw.name);
+                }
+
+                int numProps = src.numProperties;
+                for (int pi = 0; pi < numProps; ++pi)
+                {
+                    var prop = src.GetProperty(pi);
+                    var propName = prop.name;
+                    var propType = prop.type;
+                    if (!dstmat.HasProperty(propName))
+                        continue;
+
+                    // todo: handle transparent
+                    //if (propName == _Color)
+                    //{
+                    //    var color = prop.vectorValue;
+                    //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
+                    //    {
+                    //        dstmat.SetOverrideTag("RenderType", "Transparent");
+                    //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    //        dstmat.SetInt("_ZWrite", 0);
+                    //        dstmat.DisableKeyword("_ALPHATEST_ON");
+                    //        dstmat.DisableKeyword("_ALPHABLEND_ON");
+                    //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                    //    }
+                    //}
+                    if (propName == _EmissionColor)
                     {
-                        dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                        dstmat.EnableKeyword(_EMISSION);
-                    }
-                }
-                else if (name == _MetallicGlossMap)
-                {
-                    dstmat.EnableKeyword(_METALLICGLOSSMAP);
-                }
-                else if (name == _BumpMap)
-                {
-                    dstmat.EnableKeyword(_NORMALMAP);
-                }
-
-                int len = prop.arrayLength;
-                switch (type)
-                {
-                    case MaterialPropertyData.Type.Int:
-                        dstmat.SetInt(name, prop.intValue);
-                        break;
-                    case MaterialPropertyData.Type.Float:
-                        if (len == 1)
-                            dstmat.SetFloat(name, prop.floatValue);
-                        else
-                            dstmat.SetFloatArray(name, prop.floatArray);
-                        break;
-                    case MaterialPropertyData.Type.Vector:
-                        if (len == 1)
-                            dstmat.SetVector(name, prop.vectorValue);
-                        else
-                            dstmat.SetVectorArray(name, prop.vectorArray);
-                        break;
-                    case MaterialPropertyData.Type.Matrix:
-                        if (len == 1)
-                            dstmat.SetMatrix(name, prop.matrixValue);
-                        else
-                            dstmat.SetMatrixArray(name, prop.matrixArray);
-                        break;
-                    case MaterialPropertyData.Type.Texture:
+                        if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
                         {
-                            var rec = prop.textureValue;
-                            var tex = FindTexture(rec.id);
-                            if (tex != null)
+                            dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                            dstmat.EnableKeyword(_EMISSION);
+                        }
+                    }
+                    else if (propName == _MetallicGlossMap)
+                    {
+                        dstmat.EnableKeyword(_METALLICGLOSSMAP);
+                    }
+                    else if (propName == _BumpMap)
+                    {
+                        dstmat.EnableKeyword(_NORMALMAP);
+                    }
+
+                    int len = prop.arrayLength;
+                    switch (propType)
+                    {
+                        case MaterialPropertyData.Type.Int:
+                            dstmat.SetInt(propName, prop.intValue);
+                            break;
+                        case MaterialPropertyData.Type.Float:
+                            if (len == 1)
+                                dstmat.SetFloat(propName, prop.floatValue);
+                            else
+                                dstmat.SetFloatArray(propName, prop.floatArray);
+                            break;
+                        case MaterialPropertyData.Type.Vector:
+                            if (len == 1)
+                                dstmat.SetVector(propName, prop.vectorValue);
+                            else
+                                dstmat.SetVectorArray(propName, prop.vectorArray);
+                            break;
+                        case MaterialPropertyData.Type.Matrix:
+                            if (len == 1)
+                                dstmat.SetMatrix(propName, prop.matrixValue);
+                            else
+                                dstmat.SetMatrixArray(propName, prop.matrixArray);
+                            break;
+                        case MaterialPropertyData.Type.Texture:
                             {
-                                dstmat.SetTexture(name, tex);
-                                if (rec.hasScaleOffset)
+                                var rec = prop.textureValue;
+                                var tex = FindTexture(rec.id);
+                                if (tex != null)
                                 {
-                                    dstmat.SetTextureScale(name, rec.scale);
-                                    dstmat.SetTextureOffset(name, rec.offset);
+                                    dstmat.SetTexture(propName, tex);
+                                    if (rec.hasScaleOffset)
+                                    {
+                                        dstmat.SetTextureScale(propName, rec.scale);
+                                        dstmat.SetTextureOffset(propName, rec.offset);
+                                    }
                                 }
                             }
-                        }
-                        break;
-                    default: break;
+                            break;
+                        default: break;
+                    }
                 }
             }
 
