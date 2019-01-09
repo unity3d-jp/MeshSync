@@ -172,6 +172,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncPoints = true;
         [Space(10)]
         [SerializeField] bool m_updateMeshColliders = true;
+        [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
         [Space(10)]
@@ -1031,10 +1032,22 @@ namespace UTJ.MeshSync
             }
             if (dst.material == null)
             {
-                var shader = Shader.Find(src.shader);
-                if (shader == null)
-                    shader = Shader.Find("Standard");
-                dst.material = new Material(shader);
+#if UNITY_EDITOR
+                if (m_findMaterialFromAssets)
+                {
+                    var guids = AssetDatabase.FindAssets("t:Material " + src.name);
+                    if (guids.Length > 0)
+                        dst.material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guids[0]));
+                }
+#endif
+                if (dst.material == null)
+                {
+                    var shader = Shader.Find(src.shader);
+                    if (shader == null)
+                        shader = Shader.Find("Standard");
+                    dst.material = new Material(shader);
+                }
+
                 dst.materialIID = dst.material.GetInstanceID();
                 m_needReassignMaterials = true;
             }
