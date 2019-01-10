@@ -895,7 +895,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
 bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
 {
     if (!n || n->dst_anim)
-        return false;
+        return false; // null or already exported
 
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
@@ -903,27 +903,25 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
     ms::AnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
 
-    if (MAnimUtil::isAnimated(trans) || MAnimUtil::isAnimated(shape)) {
-        if (shape.hasFn(MFn::kCamera)) {
-            exportAnimation(n->parent);
-            dst = ms::CameraAnimation::create();
-            extractor = &MeshSyncClientMaya::extractCameraAnimationData;
-        }
-        else if (shape.hasFn(MFn::kLight)) {
-            exportAnimation(n->parent);
-            dst = ms::LightAnimation::create();
-            extractor = &MeshSyncClientMaya::extractLightAnimationData;
-        }
-        else if (shape.hasFn(MFn::kMesh)) {
-            exportAnimation(n->parent);
-            dst = ms::MeshAnimation::create();
-            extractor = &MeshSyncClientMaya::extractMeshAnimationData;
-        }
-        else {
-            exportAnimation(n->parent);
-            dst = ms::TransformAnimation::create();
-            extractor = &MeshSyncClientMaya::extractTransformAnimationData;
-        }
+    if (shape.hasFn(MFn::kCamera)) {
+        exportAnimation(n->parent);
+        dst = ms::CameraAnimation::create();
+        extractor = &MeshSyncClientMaya::extractCameraAnimationData;
+    }
+    else if (shape.hasFn(MFn::kLight)) {
+        exportAnimation(n->parent);
+        dst = ms::LightAnimation::create();
+        extractor = &MeshSyncClientMaya::extractLightAnimationData;
+    }
+    else if (shape.hasFn(MFn::kMesh)) {
+        exportAnimation(n->parent);
+        dst = ms::MeshAnimation::create();
+        extractor = &MeshSyncClientMaya::extractMeshAnimationData;
+    }
+    else if (shape.hasFn(MFn::kJoint)) {
+        exportAnimation(n->parent);
+        dst = ms::TransformAnimation::create();
+        extractor = &MeshSyncClientMaya::extractTransformAnimationData;
     }
 
     if (dst) {
