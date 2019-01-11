@@ -821,7 +821,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
         for (auto *tn : rec.branches) {
-            if (exportAnimation(tn))
+            if (exportAnimation(tn, false))
                 ++num_exported;
         }
     };
@@ -892,7 +892,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     return num_exported;
 }
 
-bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
+bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
 {
     if (!n || n->dst_anim)
         return false; // null or already exported
@@ -904,22 +904,22 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n)
     AnimationRecord::extractor_t extractor = nullptr;
 
     if (shape.hasFn(MFn::kCamera)) {
-        exportAnimation(n->parent);
+        exportAnimation(n->parent, true);
         dst = ms::CameraAnimation::create();
         extractor = &MeshSyncClientMaya::extractCameraAnimationData;
     }
     else if (shape.hasFn(MFn::kLight)) {
-        exportAnimation(n->parent);
+        exportAnimation(n->parent, true);
         dst = ms::LightAnimation::create();
         extractor = &MeshSyncClientMaya::extractLightAnimationData;
     }
     else if (shape.hasFn(MFn::kMesh)) {
-        exportAnimation(n->parent);
+        exportAnimation(n->parent, true);
         dst = ms::MeshAnimation::create();
         extractor = &MeshSyncClientMaya::extractMeshAnimationData;
     }
-    else if (shape.hasFn(MFn::kJoint)) {
-        exportAnimation(n->parent);
+    else if (shape.hasFn(MFn::kJoint) || force) {
+        exportAnimation(n->parent, true);
         dst = ms::TransformAnimation::create();
         extractor = &MeshSyncClientMaya::extractTransformAnimationData;
     }

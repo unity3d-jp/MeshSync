@@ -95,6 +95,7 @@ public:
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
+        bool ignore_namespace = true;
         bool multithreaded = false;
 
         // import settings
@@ -186,7 +187,7 @@ private:
     void doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n);
 
     int exportAnimations(SendScope scope);
-    bool exportAnimation(TreeNode *tn);
+    bool exportAnimation(TreeNode *tn, bool force);
     void extractTransformAnimationData(ms::Animation& dst, TreeNode *n);
     void extractCameraAnimationData(ms::Animation& dst, TreeNode *n);
     void extractLightAnimationData(ms::Animation& dst, TreeNode *n);
