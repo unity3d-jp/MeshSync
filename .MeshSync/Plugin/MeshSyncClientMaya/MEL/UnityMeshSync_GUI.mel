@@ -2,7 +2,7 @@ global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSync";
     if (`window -exists $Window`) deleteUI -window $Window;
-    window -t ("Unity Mesh Sync") -wh 300 600 $Window;
+    window -t ("Unity Mesh Sync") -wh 300 660 $Window;
 
     string $version         = `UnityMeshSync_Settings -q -version`;
     string $address         = `UnityMeshSync_Settings -q -address`;

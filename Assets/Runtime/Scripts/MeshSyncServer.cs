@@ -497,6 +497,7 @@ namespace UTJ.MeshSync
                 int numAssets = scene.numAssets;
                 if (numAssets > 0)
                 {
+                    bool save = false;
                     for (int i = 0; i < numAssets; ++i)
                     {
                         var asset = scene.GetAsset(i);
@@ -516,6 +517,7 @@ namespace UTJ.MeshSync
                                 break;
                             case AssetType.Animation:
                                 UpdateAnimation((AnimationClipData)asset);
+                                save = true;
                                 break;
                             default:
                                 if(m_logging)
@@ -523,6 +525,8 @@ namespace UTJ.MeshSync
                                 break;
                         }
                     }
+                    if (save)
+                        AssetDatabase.SaveAssets();
                 }
             });
 
