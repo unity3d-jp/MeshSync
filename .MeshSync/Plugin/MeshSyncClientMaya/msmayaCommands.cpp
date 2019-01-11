@@ -102,6 +102,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
     syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
     syntax.addFlag("-asp", "-animationSPS", MSyntax::kDouble);
+    syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
 
     return syntax;
@@ -147,6 +148,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncConstraints", settings.sync_constraints, true);
     Handle("animationTS", settings.animation_time_scale, false);
     Handle("animationSPS", settings.animation_sps, false);
+    Handle("removeNamespace", settings.remove_namespace, true);
     Handle("multithreaded", settings.multithreaded, false);
 #undef Handle
 

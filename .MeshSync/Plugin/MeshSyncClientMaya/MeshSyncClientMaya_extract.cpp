@@ -86,6 +86,16 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
     return true;
 }
 
+std::string MeshSyncClientMaya::getNodeName(const std::string& name)
+{
+    return m_settings.remove_namespace ? RemoveNamespaceFromName(name) : name;
+}
+
+std::string MeshSyncClientMaya::getNodePath(const std::string& path)
+{
+    return m_settings.remove_namespace ? RemoveNamespaceFromPath(path) : path;
+}
+
 int MeshSyncClientMaya::exportTexture(const std::string& path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
@@ -100,7 +110,7 @@ void MeshSyncClientMaya::exportMaterials()
         MFnLambertShader fn(mo);
 
         auto tmp = ms::Material::create();
-        tmp->name = fn.name().asChar();
+        tmp->name = getNodeName(fn.name().asChar());
         tmp->id = m_material_ids.getID(mo);
         tmp->index = midx++;
         {
@@ -237,7 +247,7 @@ std::shared_ptr<T> MeshSyncClientMaya::createEntity(TreeNode& n)
 {
     auto ret = T::create();
     auto& dst = *ret;
-    dst.path = n.path;
+    dst.path = getNodePath(n.path);
     dst.index = n.index;
     n.dst_obj = ret;
     return ret;
@@ -505,7 +515,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     if (n->isInstance()) {
         auto primary = n->getPrimaryInstanceNode();
         if (n != primary) {
-            dst.reference = primary->path;
+            dst.reference = getNodePath(primary->path);
             return;
         }
     }
@@ -721,7 +731,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     continue;
 
                 auto joint_node = joint_branch->trans->node;
-                bone->path = ToString(joint_path);
+                bone->path = getNodePath(ToString(joint_path));
                 if (dst.bones.empty()) {
                     // get root bone path
                     auto dpath = joint_branch->getDagPath();
@@ -791,7 +801,7 @@ void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
     if (n->isInstance()) {
         auto primary = n->getPrimaryInstanceNode();
         if (n != primary) {
-            dst.reference = primary->path;
+            dst.reference = getNodePath(primary->path);
             return;
         }
     }
@@ -925,7 +935,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
     }
 
     if (dst) {
-        dst->path = n->path;
+        dst->path = getNodePath(n->path);
         auto& rec = m_anim_records[n];
         rec.tn = n;
         rec.dst = dst.get();

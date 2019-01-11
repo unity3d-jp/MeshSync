@@ -2,12 +2,13 @@ global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSync";
     if (`window -exists $Window`) deleteUI -window $Window;
-    window -t ("Unity Mesh Sync") -wh 300 440 $Window;
-    
+    window -t ("Unity Mesh Sync") -wh 300 600 $Window;
+
     string $version         = `UnityMeshSync_Settings -q -version`;
     string $address         = `UnityMeshSync_Settings -q -address`;
     int    $port            = `UnityMeshSync_Settings -q -port`;
     float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
+    int    $removeNamespace = `UnityMeshSync_Settings -q -removeNamespace`;
     int    $syncMeshes      = `UnityMeshSync_Settings -q -syncMeshes`;
     int    $syncNormals     = `UnityMeshSync_Settings -q -syncNormals`;
     int    $syncUVs         = `UnityMeshSync_Settings -q -syncUVs`;
@@ -38,6 +39,8 @@ global proc UnityMeshSync_GUI()
     rowLayout -numberOfColumns 2;
         text -label "Scale Factor"; floatField -value $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
     setParent ..;
+    checkBox -label "Remove Namespace" -value $removeNamespace -cc "umsCBRemoveNamespace" umsCtrlRemoveNamespace;
+
     checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
         columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
         checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
@@ -96,6 +99,12 @@ global proc umsCBScaleFactor()
 {
     float $v = `floatField -q -value umsCtrlScaleFactor`;
     string $ret = `UnityMeshSync_Settings -scaleFactor $v`;
+}
+
+global proc umsCBRemoveNamespace()
+{
+    float $v = `checkBox -q -value umsCtrlRemoveNamespace`;
+    string $ret = `UnityMeshSync_Settings -removeNamespace $v`;
 }
 
 global proc umsCBSyncMeshes()

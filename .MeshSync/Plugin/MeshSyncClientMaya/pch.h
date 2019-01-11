@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include <functional>
+#include <regex>
 #include <future>
 #include <mutex>
 #include <memory>
