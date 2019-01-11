@@ -171,6 +171,7 @@ MSyntax CmdExport::createSyntax()
     syntax.enableEdit(false);
     syntax.addFlag("-s", "-scope", MSyntax::kString);
     syntax.addFlag("-t", "-target", MSyntax::kString);
+    syntax.addFlag("-fa", "-dirtyAll", MSyntax::kBoolean);
     return syntax;
 }
 
@@ -180,7 +181,7 @@ MStatus CmdExport::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto& instance = MeshSyncClientMaya::getInstance();
 
-    bool force_all = true;
+    bool dirty_all = true;
     bool animations = false;
     auto scope = MeshSyncClientMaya::SendScope::All;
 
@@ -198,14 +199,14 @@ MStatus CmdExport::doIt(const MArgList& args_)
         else if (s == "updated")
             scope = MeshSyncClientMaya::SendScope::Updated;
     }
-    if (args.isFlagSet("forceAll")) {
-        get_arg(force_all, "forceAll", args);
+    if (args.isFlagSet("dirtyAll")) {
+        get_arg(dirty_all, "dirtyAll", args);
     }
 
     if (animations)
         MeshSyncClientMaya::getInstance().sendAnimations(scope);
     else
-        MeshSyncClientMaya::getInstance().sendScene(scope, force_all);
+        MeshSyncClientMaya::getInstance().sendScene(scope, dirty_all);
     return MStatus::kSuccess;
 }
 

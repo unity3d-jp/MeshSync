@@ -452,7 +452,7 @@ bool MeshSyncClientMaya::checkRename(TreeNode *tn)
 }
 
 
-bool MeshSyncClientMaya::sendScene(SendScope scope, bool force_all)
+bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
 {
     if (m_sender.isSending()) {
         m_pending_scope = scope;
@@ -460,7 +460,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool force_all)
     }
     m_pending_scope = SendScope::None;
 
-    if (force_all) {
+    if (dirty_all) {
         m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();
     }

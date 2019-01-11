@@ -125,7 +125,7 @@ public:
     void onTimeChange(const MTime& time);
 
     void update();
-    bool sendScene(SendScope scope, bool force_all);
+    bool sendScene(SendScope scope, bool dirty_all);
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
