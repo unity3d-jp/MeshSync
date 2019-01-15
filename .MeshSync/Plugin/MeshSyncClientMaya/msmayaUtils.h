@@ -4,8 +4,7 @@
 
 std::string GetName(const MObject& node);
 std::string ToString(const MDagPath& path);
-std::string RemoveNamespaceFromName(const std::string& name);
-std::string RemoveNamespaceFromPath(const std::string& path);
+std::string RemoveNamespace(const std::string& path);
 
 bool IsVisible(const MObject& node);
 MDagPath GetParent(const MDagPath& node);

@@ -162,8 +162,7 @@ private:
     TaskRecords              m_extract_tasks;
     AnimationRecords         m_anim_records;
 
-    std::string getNodeName(const std::string& name);
-    std::string getNodePath(const std::string& path);
+    std::string handleNamespace(const std::string& path);
 
     void constructTree();
     void constructTree(const MObject& node, TreeNode *parent, const std::string& base);

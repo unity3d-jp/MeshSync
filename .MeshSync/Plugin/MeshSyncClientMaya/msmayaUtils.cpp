@@ -14,15 +14,14 @@ std::string ToString(const MDagPath& path)
     std::replace(ret.begin(), ret.end(), '|', '/');
     return ret;
 }
-std::string RemoveNamespaceFromName(const std::string& name)
+
+std::string RemoveNamespace(const std::string& path)
 {
-    static const std::regex namespace_re("^([^/]+?:)");
-    return std::regex_replace(name, namespace_re, "");
-}
-std::string RemoveNamespaceFromPath(const std::string& path)
-{
-    static const std::regex namespace_re("/([^/]+?:)");
-    return std::regex_replace(path, namespace_re, "/");
+    static const std::regex s_remove_head("^([^/]+?:)");
+    static const std::regex s_remove_leaf("/([^/]+?:)");
+
+    auto ret = std::regex_replace(path, s_remove_head, "");
+    return std::regex_replace(ret, s_remove_leaf, "/");
 }
 
 bool IsVisible(const MObject& node)

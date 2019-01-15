@@ -196,10 +196,14 @@ MStatus CmdExport::doIt(const MArgList& args_)
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
-        if (s == "selection")
+        if (s == "selection") {
             scope = MeshSyncClientMaya::SendScope::Selected;
-        else if (s == "updated")
+            dirty_all = false;
+        }
+        else if (s == "updated") {
             scope = MeshSyncClientMaya::SendScope::Updated;
+            dirty_all = false;
+        }
     }
     if (args.isFlagSet("dirtyAll")) {
         get_arg(dirty_all, "dirtyAll", args);
