@@ -126,5 +126,6 @@ public:
     bool sync_textures = true;
     bool make_double_sided = false;
     bool bake_deformars = false;
+    bool keyframe_reduction = true;
     bool parallel_extraction = true;
 };
