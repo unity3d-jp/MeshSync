@@ -17,8 +17,8 @@ std::string ToString(const MDagPath& path)
 
 std::string RemoveNamespace(const std::string& path)
 {
-    static const std::regex s_remove_head("^([^/]+?:)");
-    static const std::regex s_remove_leaf("/([^/]+?:)");
+    static const std::regex s_remove_head("^([^/]+:)");
+    static const std::regex s_remove_leaf("/([^/]+:)");
 
     auto ret = std::regex_replace(path, s_remove_head, "");
     return std::regex_replace(ret, s_remove_leaf, "/");

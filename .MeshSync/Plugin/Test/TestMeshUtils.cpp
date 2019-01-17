@@ -1039,3 +1039,21 @@ TestCase(Test_BoundedArray)
     decode_tangents(tmp_tangents, batan);
     Expect(NearEqual(data_tangents.data(), tmp_tangents.data(), N, eps));
 }
+
+TestCase(Test_RemoveNamespace)
+{
+    auto remove_namespace = [](std::string path) {
+        static const std::regex s_remove_head("^([^/]+:)");
+        static const std::regex s_remove_leaf("/([^/]+:)");
+
+        auto ret = std::regex_replace(path, s_remove_head, "");
+        return std::regex_replace(ret, s_remove_leaf, "/");
+    };
+
+    Expect(remove_namespace("name") == "name");
+    Expect(remove_namespace("ns1::name") == "name");
+    Expect(remove_namespace("ns1::ns2::ns3::name") == "name");
+    Expect(remove_namespace("/parent/child") == "/parent/child");
+    Expect(remove_namespace("/ns1::parent/ns1::child") == "/parent/child");
+    Expect(remove_namespace("/ns1::ns2::ns3::parent/ns1::ns2::ns3::child") == "/parent/child");
+}
