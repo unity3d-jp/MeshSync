@@ -23,6 +23,7 @@ global proc UnityMeshSync_GUI()
     int    $autosync        = `UnityMeshSync_Settings -q -autosync`;
     int    $animationTS     = `UnityMeshSync_Settings -q -animationTS`;
     int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
+    int    $kfReduction     = `UnityMeshSync_Settings -q -keyframeReduction`;
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
@@ -71,6 +72,10 @@ global proc UnityMeshSync_GUI()
     rowLayout -numberOfColumns 2;
         text -label "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
+    checkBox -label "Keyframe Reduction" -value $kfReduction -cc "umsCBKeyframeReduction" umsCtrlKeyframeReduction;
+
+    separator -h 5 -w 250 -style none;
+
     button -l "Sync" -c "umsCBSyncAnimations";
     
     separator -h 20 -w 250;
@@ -196,6 +201,12 @@ global proc umsCBAnimationSPS()
 {
     float $v = `floatField -q -value umsCtrlAnimationSPS`;
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
+}
+
+global  proc umsCBKeyframeReduction()
+{
+    int $v = `checkBox -q -value umsCtrlKeyframeReduction`;
+    string $ret = `UnityMeshSync_Settings -keyframeReduction $v`;
 }
 
 global proc umsCBSyncAnimations()

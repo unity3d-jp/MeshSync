@@ -96,6 +96,7 @@ public:
         bool sync_lights = true;
         bool sync_constraints = false;
         bool remove_namespace = true;
+        bool reduce_keyframes = true;
         bool multithreaded = false;
 
         // import settings
