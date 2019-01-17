@@ -84,6 +84,7 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout.use_property_decorate = False
         layout.prop(scene, 'meshsync_animation_ts')
         layout.prop(scene, 'meshsync_animation_fi')
+        layout.prop(scene, 'meshsync_animation_kfr')
         layout.operator("meshsync.sync_animations", text="Sync")
 
 

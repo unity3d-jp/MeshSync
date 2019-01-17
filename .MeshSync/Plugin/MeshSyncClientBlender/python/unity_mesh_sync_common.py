@@ -29,6 +29,7 @@ def msb_apply_animation_settings(self = None, context = None):
     scene = bpy.context.scene
     ctx.animation_ts = scene.meshsync_animation_ts
     ctx.animation_interval = scene.meshsync_animation_fi
+    ctx.keyframe_reduction = scene.meshsync_animation_kfr
     return None
 
 def msb_on_scene_settings_updated(self = None, context = None):
@@ -61,6 +62,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 1, name = "Time Scale", min = 0.01, update = msb_on_animation_settings_updated)
     bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Step", min = 1, update = msb_on_animation_settings_updated)
+    bpy.types.Scene.meshsync_animation_kfr = bpy.props.BoolProperty(default = True, name = "Keyframe Reduction", update = msb_on_animation_settings_updated)
 
 
 @persistent
