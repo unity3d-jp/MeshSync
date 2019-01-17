@@ -423,6 +423,11 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 s.animation_sps = tmp;
             });
             break;
+        case IDC_CHECK_KFREDUCTION:
+            handle_button([&]() {
+                s.keyframe_reduction = CtrlIsChecked(IDC_CHECK_KFREDUCTION);
+            });
+            break;
         case IDC_BUTTON_MANUAL_SYNC:
             handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All, true); });
             break;
@@ -482,6 +487,7 @@ void MeshSyncClient3dsMax::updateUIText()
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
+    CtrlSetCheck(IDC_CHECK_KFREDUCTION,        s.keyframe_reduction);
 
     CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msReleaseDateStr);
 }

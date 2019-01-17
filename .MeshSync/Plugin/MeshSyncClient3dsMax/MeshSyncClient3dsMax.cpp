@@ -286,14 +286,16 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     // cleanup intermediate data
     m_anim_records.clear();
 
-    // keyframe reduction
-    for (auto& clip : m_animations)
-        clip->reduction();
+    if (m_settings.keyframe_reduction) {
+        // keyframe reduction
+        for (auto& clip : m_animations)
+            clip->reduction();
 
-    // erase empty animation
-    m_animations.erase(
-        std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-        m_animations.end());
+        // erase empty animation
+        m_animations.erase(
+            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
+            m_animations.end());
+    }
 
     if (!m_animations.empty())
         kickAsyncSend();

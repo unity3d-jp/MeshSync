@@ -31,6 +31,7 @@ public:
 
         float animation_time_scale = 1.0f;
         float animation_sps = 2.0f;
+        bool keyframe_reduction = true;
 
         bool multithreaded = true;
 
