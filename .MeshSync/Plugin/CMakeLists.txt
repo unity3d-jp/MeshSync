@@ -40,6 +40,7 @@ option(BUILD_MAYA2016_CLIENT "Build MeshSyncClient for Maya 2016" OFF)
 option(BUILD_MAYA2016.5_CLIENT "Build MeshSyncClient for Maya 2016.5" OFF)
 option(BUILD_MAYA2017_CLIENT "Build MeshSyncClient for Maya 2017" OFF)
 option(BUILD_MAYA2018_CLIENT "Build MeshSyncClient for Maya 2018" OFF)
+option(BUILD_MAYA2019_CLIENT "Build MeshSyncClient for Maya 2019" OFF)
 
 # MotionBuilder
 if(LINUX)
@@ -47,6 +48,7 @@ if(LINUX)
     option(BUILD_MOTIONBUILDER2016_CLIENT "Build MeshSyncClient for MotionBuilder 2016" OFF)
     option(BUILD_MOTIONBUILDER2017_CLIENT "Build MeshSyncClient for MotionBuilder 2017" OFF)
     option(BUILD_MOTIONBUILDER2018_CLIENT "Build MeshSyncClient for MotionBuilder 2018" OFF)
+    option(BUILD_MOTIONBUILDER2019_CLIENT "Build MeshSyncClient for MotionBuilder 2019" OFF)
 endif()
 
 # Tests
