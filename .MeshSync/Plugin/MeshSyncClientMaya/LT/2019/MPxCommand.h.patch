@@ -1,0 +1,14 @@
+diff --git "a/.\\Maya2019\\include\\maya\\MPxCommand.h" "b/.\\MayaLT2019\\include\\maya\\MPxCommand.h"
+index b7aab2f..68a2bc9 100644
+--- "a/.\\Maya2019\\include\\maya\\MPxCommand.h"
++++ "b/.\\MayaLT2019\\include\\maya\\MPxCommand.h"
+@@ -69,6 +69,9 @@ class OPENMAYA_EXPORT MPxCommand
+ public:
+ 						MPxCommand();
+ 	virtual 			~MPxCommand();
++#if MAYA_LT
++    virtual void        deleteSurplusMemory();
++#endif
+ 	virtual MStatus   	doIt( const MArgList& args );
+ 	virtual MStatus   	undoIt( );
+ 	virtual MStatus   	redoIt( );

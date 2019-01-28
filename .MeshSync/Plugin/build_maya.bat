@@ -6,6 +6,7 @@ call :Build 2016.5
 call :Build 2016
 call :Build 2015
 call :Build 2018 LT
+call :Build 2019 LT
 exit /B 0
 
 :Build

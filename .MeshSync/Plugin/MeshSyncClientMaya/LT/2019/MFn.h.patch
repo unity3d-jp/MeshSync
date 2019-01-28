@@ -1,0 +1,166 @@
+diff --git "a/.\\Maya2019\\include\\maya\\MFn.h" "b/.\\MayaLT2019\\include\\maya\\MFn.h"
+index ee80277..b0a635b 100644
+--- "a/.\\Maya2019\\include\\maya\\MFn.h"
++++ "b/.\\MayaLT2019\\include\\maya\\MFn.h"
+@@ -69,6 +69,12 @@ class FND_EXPORT MFn
+ public:
+ 	MFn();
+ 
++#if MAYA_LT
++    #define LT_VALUE(V) =V
++#else
++    #define LT_VALUE(V)
++#endif
++
+ 	//! Definition of all API types
+ 	enum Type
+ 	{
+@@ -104,7 +110,7 @@ public:
+ 		kBlendWeighted,						//!< \nop
+ 		kBlendDevice,						//!< \nop
+ 		kBlendColors,						//!< \nop
+-		kBump,								//!< \nop
++		kBump LT_VALUE(2472),								//!< \nop
+ 		kBump3d,							//!< \nop
+ 		kCameraView,						//!< \nop
+ 		kChainToSpline,						//!< \nop
+@@ -182,7 +188,7 @@ public:
+ 		kDagNode,							//!< \nop
+ 		kProxy,								//!< \nop
+ 		kUnderWorld,						//!< \nop
+-		kTransform,							//!< \nop
++		kTransform LT_VALUE(15422),							//!< \nop
+ 		kAimConstraint,						//!< \nop
+ 		kLookAt,							//!< \nop
+ 		kGeometryConstraint,				//!< \nop
+@@ -193,7 +199,7 @@ public:
+ 		kSurfaceVarGroup,					//!< \nop
+ 		kIkEffector,						//!< \nop
+ 		kIkHandle,							//!< \nop
+-		kJoint,								//!< \nop
++		kJoint LT_VALUE(15433),								//!< \nop
+ 		kManipulator3D,						//!< \nop
+ 		kArrowManip,						//!< \nop
+ 		kAxesActionManip,					//!< \nop
+@@ -319,10 +325,10 @@ public:
+ 		kScaleConstraint,					//!< \nop
+ 		kTangentConstraint,					//!< \nop
+ 		kUnknownTransform,					//!< \nop
+-		kWorld,								//!< \nop
++		kWorld LT_VALUE(32831),								//!< \nop
+ 		kShape,								//!< \nop
+ 		kBaseLattice,						//!< \nop
+-		kCamera,							//!< \nop
++		kCamera LT_VALUE(32834),							//!< \nop
+ 		kCluster,							//!< \nop
+ 		kSoftMod,							//!< \nop
+ 		kCollision,							//!< \nop
+@@ -368,21 +374,21 @@ public:
+ 		kSurface,							//!< \nop
+ 		kNurbsSurface,						//!< \nop
+ 		kNurbsSurfaceGeom,					//!< \nop
+-		kMesh,								//!< \nop
++		kMesh LT_VALUE(32880),								//!< \nop
+ 		kMeshGeom,							//!< \nop
+ 		kRenderSphere,						//!< \nop
+ 		kFlexor,							//!< \nop
+ 		kClusterFlexor,						//!< \nop
+ 		kGuideLine,							//!< \nop
+-		kLight,								//!< \nop
++		kLight LT_VALUE(32886),								//!< \nop
+ 		kAmbientLight,						//!< \nop
+ 		kNonAmbientLight,					//!< \nop
+-		kAreaLight,							//!< \nop
++		kAreaLight LT_VALUE(32889),							//!< \nop
+ 		kLinearLight,						//!< \nop
+ 		kNonExtendedLight,					//!< \nop
+-		kDirectionalLight,					//!< \nop
+-		kPointLight,						//!< \nop
+-		kSpotLight,							//!< \nop
++		kDirectionalLight LT_VALUE(32892),					//!< \nop
++		kPointLight LT_VALUE(32893),						//!< \nop
++		kSpotLight LT_VALUE(32894),							//!< \nop
+ 		kParticle,							//!< \nop
+ 		kPolyToolFeedbackShape,				//!< \nop
+ 		kRigidConstraint,					//!< \nop
+@@ -408,7 +414,7 @@ public:
+ 		kGammaCorrect,						//!< \nop
+ 		kGeometryFilt,						//!< \nop
+ 		kBendLattice,						//!< \nop
+-		kBlendShape,						//!< \nop
++		kBlendShape LT_VALUE(61825),						//!< \nop
+ 		kCombinationShape,					//!< \nop
+ 		kBulgeLattice,						//!< \nop
+ 		kFFD,								//!< \nop
+@@ -417,7 +423,7 @@ public:
+ 		kSculpt,							//!< \nop
+ 		kTextureDeformer,					//!< \nop
+ 		kTextureDeformerHandle,				//!< \nop
+-		kTweak,								//!< \nop
++		kTweak LT_VALUE(61834),								//!< \nop
+ 		kWeightGeometryFilt,				//!< \nop
+ 		kClusterFilter,						//!< \nop
+ 		kSoftModFilter,						//!< \nop
+@@ -441,7 +447,7 @@ public:
+ 		kSplineSolver,						//!< \nop
+ 		kIkSystem,							//!< \nop
+ 		kImagePlane,						//!< \nop
+-		kLambert,							//!< \nop
++		kLambert LT_VALUE(61858),							//!< \nop
+ 		kReflect,							//!< \nop
+ 		kBlinn,								//!< \nop
+ 		kPhong,								//!< \nop
+@@ -568,7 +574,7 @@ public:
+ 		kBulge,								//!< \nop
+ 		kChecker,							//!< \nop
+ 		kCloth,								//!< \nop
+-		kFileTexture,						//!< \nop
++		kFileTexture LT_VALUE(49488),						//!< \nop
+ 		kFractal,							//!< \nop
+ 		kGrid,								//!< \nop
+ 		kMountain,							//!< \nop
+@@ -622,7 +628,7 @@ public:
+ 		kMeshEdgeComponent,					//!< \nop
+ 		kMeshPolygonComponent,				//!< \nop
+ 		kMeshFrEdgeComponent,				//!< \nop
+-		kMeshVertComponent,					//!< \nop
++		kMeshVertComponent LT_VALUE(49542),					//!< \nop
+ 		kMeshFaceVertComponent,				//!< \nop
+ 		kOrientationComponent,				//!< \nop
+ 		kSubVertexComponent,				//!< \nop
+@@ -651,7 +657,7 @@ public:
+ 		kMessageAttribute,					//!< \nop
+ 		kPlugin,							//!< Custom Plug-in
+ 		kData,								//!< \nop
+-		kComponentListData,					//!< \nop
++		kComponentListData LT_VALUE(49571),					//!< \nop
+ 		kDoubleArrayData,					//!< \nop
+ 		kIntArrayData,						//!< \nop
+ 		kLatticeData,						//!< \nop
+@@ -669,7 +675,7 @@ public:
+ 		kData3Int,							//!< \nop
+ 		kData3Short,						//!< \nop
+ 		kPluginData,						//!< Custom data types derived from MPxData
+-		kPointArrayData,					//!< \nop
++		kPointArrayData LT_VALUE(30813),					//!< \nop
+ 		kMatrixArrayData,					//!< \nop
+ 		kSphereData,						//!< \nop
+ 		kStringData,						//!< \nop
+@@ -753,7 +759,7 @@ public:
+ 		kSelectionListOperator,				//!< \nop
+ 		kSubdiv,							//!< \nop
+ 		kPolyToSubdiv,						//!< \nop
+-		kSkinClusterFilter,					//!< \nop
++		kSkinClusterFilter LT_VALUE(18188),					//!< \nop
+ 		kKeyingGroup,
+ 		kCharacter,							//!< \nop
+ 		kCharacterOffset,					//!< \nop
+@@ -776,7 +782,7 @@ public:
+ 		kTranslateUVManip2D,				//!< \nop
+ 		kRotateUVManip2D,					//!< \nop
+ 		kScaleUVManip2D,					//!< \nop
+-		kPolyTweakUV,						//!< \nop
++		kPolyTweakUV LT_VALUE(18211),						//!< \nop
+ 		kMoveUVShellManip2D,				//!< \nop
+ 		kPluginShape,						//!< Custom shapes (dependency nodes) derived from MPxSurfaceShape
+ 		kGeometryData,						//!< \nop
