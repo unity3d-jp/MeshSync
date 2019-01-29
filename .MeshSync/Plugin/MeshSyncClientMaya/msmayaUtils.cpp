@@ -27,7 +27,7 @@ std::string RemoveNamespace(const std::string& path)
 bool IsVisible(const MObject& node)
 {
     Pad<MFnDagNode> dag(node);
-    auto vis = dag.findPlug("visibility");
+    auto vis = dag.findPlug("visibility", true);
     bool visible = true;
     vis.getValue(visible);
     return visible;
@@ -140,7 +140,7 @@ void DumpPlugInfoImpl(MFnDependencyNode& fn)
         MObject attr = fn.attribute(i);
         MFnAttribute fn_attr(attr);
         mscTrace(" attr %s (%s)\n", fn_attr.name().asChar(), attr.apiTypeStr());
-        DumpPlugInfoImpl(fn.findPlug(fn_attr.name()), " ");
+        DumpPlugInfoImpl(fn.findPlug(fn_attr.name(), true), " ");
     }
 }
 #endif

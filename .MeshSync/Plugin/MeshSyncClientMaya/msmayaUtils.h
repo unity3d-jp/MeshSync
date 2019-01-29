@@ -105,7 +105,7 @@ inline void EnumerateNode(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     while (!it.isDone()) {
-        auto obj = it.item();
+        auto obj = it.currentItem();
         body(obj);
         it.next();
     }
@@ -167,7 +167,7 @@ inline void EachConstraints(MObject& node, const Body& body)
 
         mscTrace("%s%s %d\n", indent, node.apiTypeStr(), node.apiType());
         for (MItDependencyGraph iter(node); !iter.isDone(); iter.next()) {
-            if (iter.thisNode() != node) {
+            if (iter.currentItem() != node) {
                 auto item = iter.currentItem();
                 mscTrace("%s* %s %d\n", indent, item.apiTypeStr(), item.apiType());
             }

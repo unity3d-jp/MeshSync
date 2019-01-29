@@ -9,7 +9,7 @@ static inline double GetDoubleValue(MFnDependencyNode& fn, const char *plug_name
 {
     MString name = plug_name;
     name += color_name;
-    auto plug = fn.findPlug(name);
+    auto plug = fn.findPlug(name, true);
     if (!plug.isNull()) {
         double ret = 0.0;
         plug.getValue(ret);
@@ -24,7 +24,7 @@ static inline int GetIntValue(MFnDependencyNode& fn, const char *plug_name, cons
 {
     MString name = plug_name;
     name += color_name;
-    auto plug = fn.findPlug(name);
+    auto plug = fn.findPlug(name, true);
     if (!plug.isNull()) {
         int ret = 0;
         plug.getValue(ret);
@@ -37,7 +37,7 @@ static inline int GetIntValue(MFnDependencyNode& fn, const char *plug_name, cons
 
 static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu::float4& color, std::string& texpath)
 {
-    MPlug plug = fn.findPlug(plug_name);
+    MPlug plug = fn.findPlug(plug_name, true);
     if (!plug)
         return false;
 
@@ -48,7 +48,7 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
         auto node_type = node.apiType();
         if (node_type == MFn::kFileTexture) {
             MFnDependencyNode fn_tex(node);
-            MPlug ftn = fn_tex.findPlug("ftn");
+            MPlug ftn = fn_tex.findPlug("ftn", true);
             MString path;
             ftn.getValue(path);
 
@@ -57,7 +57,7 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
         }
         else if (node_type == MFn::kBump) {
             MFnDependencyNode fn_bump(node);
-            MPlug bump_interp = fn_bump.findPlug("bumpInterp");
+            MPlug bump_interp = fn_bump.findPlug("bumpInterp", true);
             if (!bump_interp.isNull()) {
                 int t = bump_interp.asInt();
                 // 0: bump
@@ -101,7 +101,7 @@ void MeshSyncClientMaya::exportMaterials()
     int midx = 0;
     MItDependencyNodes it(MFn::kLambert);
     while (!it.isDone()) {
-        MObject mo = it.item();
+        MObject mo = it.thisNode();
         MFnLambertShader fn(mo);
 
         auto tmp = ms::Material::create();
@@ -173,7 +173,7 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     {
         auto& trans = n->trans->node;
         MObject obj_wmat;
-        MFnDependencyNode(trans).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_wmat);
+        MFnDependencyNode(trans).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_wmat);
         mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
         vis = IsVisible(trans);
     }
@@ -183,7 +183,7 @@ static void ExtractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, m
     if (n->parent) {
         auto& parent = n->parent->trans->node;
         MObject obj_pwmat;
-        MFnDependencyNode(parent).findPlug("worldMatrix").elementByLogicalIndex(0).getValue(obj_pwmat);
+        MFnDependencyNode(parent).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_pwmat);
         auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
         mat *= mu::invert(pwmat);
     }
@@ -329,8 +329,8 @@ void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
 
     if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
-        MPlug plug_weight = fn_blendshape.findPlug("weight");
-        MPlug plug_it = fn_blendshape.findPlug("inputTarget");
+        MPlug plug_weight = fn_blendshape.findPlug("weight", true);
+        MPlug plug_it = fn_blendshape.findPlug("inputTarget", true);
         uint32_t num_it = plug_it.evaluateNumElements();
         for (uint32_t idx_it = 0; idx_it < num_it; ++idx_it) {
             MPlug plug_itp(plug_it.elementByPhysicalIndex(idx_it));
@@ -551,7 +551,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             MObject tweak = it.currentItem();
             if (!tweak.isNull()) {
                 MFnDependencyNode fn_tweak(tweak);
-                auto plug_vlist = fn_tweak.findPlug("vlist");
+                auto plug_vlist = fn_tweak.findPlug("vlist", true);
                 if (plug_vlist.isArray() && (int)plug_vlist.numElements() > obj_index) {
                     auto plug_vertex = plug_vlist.elementByPhysicalIndex(obj_index).child(0);
                     if (plug_vertex.isArray()) {
@@ -577,8 +577,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             MObject tweak = it.currentItem();
             if (!tweak.isNull()) {
                 MFnDependencyNode fn_tweak(tweak);
-                auto plug_uvsetname = fn_tweak.findPlug("uvSetName");
-                auto plug_uv = fn_tweak.findPlug("uvTweak");
+                auto plug_uvsetname = fn_tweak.findPlug("uvSetName", true);
+                auto plug_uv = fn_tweak.findPlug("uvTweak", true);
                 if (plug_uv.isArray() && (int)plug_uv.numElements() > obj_index) {
                     auto plug_vertex = plug_uv.elementByPhysicalIndex(obj_index).child(0);
                     if (plug_vertex.isArray()) {
@@ -658,8 +658,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             }
         };
 
-        MPlug plug_weight = fn_blendshape.findPlug("weight");
-        MPlug plug_it = fn_blendshape.findPlug("inputTarget");
+        MPlug plug_weight = fn_blendshape.findPlug("weight", true);
+        MPlug plug_it = fn_blendshape.findPlug("inputTarget", true);
         uint32_t num_it = plug_it.evaluateNumElements();
         for (uint32_t idx_it = 0; idx_it < num_it; ++idx_it) {
             MPlug plug_itp(plug_it.elementByPhysicalIndex(idx_it));
@@ -710,7 +710,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         dst.refine_settings.local2world = dst.toMatrix();
 
         // get bone data
-        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix", &mstat);
+        MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix", true, &mstat);
         if (mstat == MStatus::kSuccess) {
             MDagPathArray joint_paths;
             auto num_joints = fn_skin.influenceObjects(joint_paths);
@@ -760,7 +760,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             uint32_t vi = 0;
             while (!gi.isDone() && vi < vertex_count) {
                 uint32_t influence_count = 0;
-                if (fn_skin.getWeights(mesh_path, gi.component(), weights, influence_count) == MStatus::kSuccess) {
+                if (fn_skin.getWeights(mesh_path, gi.currentItem(), weights, influence_count) == MStatus::kSuccess) {
                     for (uint32_t ij = 0; ij < influence_count; ij++) {
                         dst.bones[ij]->weights[vi] = weights[ij];
                     }
@@ -1026,8 +1026,8 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
     // get blendshape weights
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(shape));
     if (!fn_blendshape.object().isNull()) {
-        MPlug plug_weight = fn_blendshape.findPlug("weight");
-        MPlug plug_it = fn_blendshape.findPlug("inputTarget");
+        MPlug plug_weight = fn_blendshape.findPlug("weight", true);
+        MPlug plug_it = fn_blendshape.findPlug("inputTarget", true);
         uint32_t num_it = plug_it.evaluateNumElements();
         for (uint32_t idx_it = 0; idx_it < num_it; ++idx_it) {
             MPlug plug_itp(plug_it.elementByPhysicalIndex(idx_it));
