@@ -2,6 +2,7 @@
 # * MAYA2016.5_LIBRARIES
 
 set(CMAKE_PREFIX_PATH
+    "/Applications/Autodesk/maya2016.5"
     "/Applications/Autodesk/maya2016.5/Maya.app/Contents"
     "/usr/autodesk/maya2016.5"
     "/opt/autodesk/maya2016.5"

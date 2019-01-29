@@ -2,6 +2,7 @@
 # * MAYA2019_LIBRARIES
 
 set(CMAKE_PREFIX_PATH
+    "/Applications/Autodesk/maya2019"
     "/Applications/Autodesk/maya2019/Maya.app/Contents"
     "/usr/autodesk/maya2019"
     "/opt/autodesk/maya2019"
