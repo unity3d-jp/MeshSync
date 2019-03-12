@@ -866,7 +866,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     // advance frame and record
     m_ignore_update = true;
     for (MTime t = time_begin;;) {
-        m_anim_time = (float)t.as(MTime::kSeconds);
+        m_anim_time = (float)(t - time_begin).as(MTime::kSeconds) * m_settings.animation_time_scale;
         MGlobal::viewFrame(t);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
@@ -956,7 +956,7 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, Tree
     bool vis = true;
     ExtractTransformData(n, pos, rot, scale, vis);
 
-    float t = m_anim_time * m_settings.animation_time_scale;
+    float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -977,17 +977,17 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, TreeNod
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
     ExtractCameraData(n, ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
-    float t = m_anim_time * m_settings.animation_time_scale;
-    dst.near_plane.push_back({ t , near_plane });
-    dst.far_plane.push_back({ t , far_plane });
-    dst.fov.push_back({ t , fov });
+    float t = m_anim_time;
+    dst.near_plane.push_back({ t, near_plane });
+    dst.far_plane.push_back({ t, far_plane });
+    dst.fov.push_back({ t, fov });
 
     // params for physical camera. not needed for now.
 #if 0
-    dst.horizontal_aperture.push_back({ t , horizontal_aperture });
-    dst.vertical_aperture.push_back({ t , vertical_aperture });
-    dst.focal_length.push_back({ t , focal_length });
-    dst.focus_distance.push_back({ t , focus_distance });
+    dst.horizontal_aperture.push_back({ t, horizontal_aperture });
+    dst.vertical_aperture.push_back({ t, vertical_aperture });
+    dst.focal_length.push_back({ t, focal_length });
+    dst.focus_distance.push_back({ t, focus_distance });
 #endif
 }
 
@@ -1007,7 +1007,7 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
     float spot_angle;
     ExtractLightData(n, type, color, intensity, spot_angle);
 
-    float t = m_anim_time * m_settings.animation_time_scale;
+    float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     if (type == ms::Light::LightType::Spot)
@@ -1021,7 +1021,7 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
     auto& dst = (ms::MeshAnimation&)dst_;
     auto& shape = n->shape->node;
 
-    float t = m_anim_time * m_settings.animation_time_scale;
+    float t = m_anim_time;
 
     // get blendshape weights
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(shape));
