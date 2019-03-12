@@ -756,7 +756,7 @@ bool msmbDevice::exportAnimations()
         FBTime fbt;
         fbt.SetSecondDouble(t);
         control.Goto(fbt);
-        m_anim_time = (float)t;
+        m_anim_time = (float)(t - time_begin) * animation_time_scale;
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 
@@ -837,7 +837,7 @@ void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
     bool vis = true;
     ExtractTransformData(src, pos, rot, scale, vis);
 
-    float t = m_anim_time * animation_time_scale;
+    float t = m_anim_time;
     auto& dst = (ms::TransformAnimation&)dst_;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
@@ -861,7 +861,7 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
     ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
 
-    float t = m_anim_time * animation_time_scale;
+    float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
@@ -883,7 +883,7 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
     float spot_angle;
     ExtractLightData(static_cast<FBLight*>(src), type, color, intensity, spot_angle);
 
-    float t = m_anim_time * animation_time_scale;
+    float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     if (type == ms::Light::LightType::Spot)
@@ -908,7 +908,7 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
                 });
             }
 
-            float t = m_anim_time * animation_time_scale;
+            float t = m_anim_time;
             int idx = 0;
             EnumerateAnimationNVP(src, [&dst, &idx, t](const char *name, double value) {
                 dst.blendshapes[idx++]->weight.push_back({ t, (float)value });
