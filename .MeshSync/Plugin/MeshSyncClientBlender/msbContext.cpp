@@ -817,7 +817,7 @@ void msbContext::sendAnimations(SendScope scope)
         for (int f = frame_start;;) {
             scene.frame_set(f);
 
-            m_current_time = frame_to_seconds * f;
+            m_anim_time = (f - frame_start) * frame_to_seconds * m_settings.animation_timescale;
             mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
                 kvp.second(this);
             });
@@ -936,7 +936,7 @@ void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
     extract_local_TRS((Object*)obj, pos, rot, scale);
     vis = is_visible((Object*)obj);
 
-    float t = m_current_time * m_settings.animation_timescale;
+    float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -952,7 +952,7 @@ void msbContext::extractPoseAnimationData(ms::Animation& dst_, void * obj)
     float3 scale;
     extract_local_TRS((bPoseChannel*)obj, pos, rot, scale);
 
-    float t = m_current_time * m_settings.animation_timescale;
+    float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -972,7 +972,7 @@ void msbContext::extractCameraAnimationData(ms::Animation& dst_, void *obj)
     float near_plane, far_plane, fov;
     ExtractCameraData((Object*)obj, ortho, near_plane, far_plane, fov);
 
-    float t = m_current_time * m_settings.animation_timescale;
+    float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
@@ -993,7 +993,7 @@ void msbContext::extractLightAnimationData(ms::Animation& dst_, void *obj)
     float intensity, range, spot_angle;
     ExtractLightData((Object*)obj, type, color, intensity, range, spot_angle);
 
-    float t = m_current_time * m_settings.animation_timescale;
+    float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     dst.range.push_back({ t, range });
@@ -1007,7 +1007,7 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
     extractTransformAnimationData(dst_, obj);
 
     auto& dst = (ms::MeshAnimation&)dst_;
-    float t = m_current_time * m_settings.animation_timescale;
+    float t = m_anim_time;
 
     auto& mesh = *(Mesh*)((Object*)obj)->data;
     if (!mesh.edit_btmesh && mesh.key) {
