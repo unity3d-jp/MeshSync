@@ -854,19 +854,19 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
 
     // extract
     auto time_current = MAnimControl::currentTime();
-    auto time_begin = MAnimControl::minTime();
+    auto time_start = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
     auto interval = MTime(1.0 / std::max(m_settings.animation_sps, 0.01f), MTime::kSeconds);
 
-    int reserve_size = int((time_end.as(MTime::kSeconds) - time_begin.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
+    int reserve_size = int((time_end.as(MTime::kSeconds) - time_start.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {
         kvp.second.dst->reserve(reserve_size);
     }
 
     // advance frame and record
     m_ignore_update = true;
-    for (MTime t = time_begin;;) {
-        m_anim_time = (float)(t - time_begin).as(MTime::kSeconds) * m_settings.animation_time_scale;
+    for (MTime t = time_start;;) {
+        m_anim_time = (float)(t - time_start).as(MTime::kSeconds) * m_settings.animation_time_scale;
         MGlobal::viewFrame(t);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
