@@ -319,7 +319,7 @@ void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEven
 
 void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->auto_sync = (bool)(int)m_bu_sync_lights.State;
+    m_device->auto_sync = (bool)(int)m_bu_auto_sync.State;
     if (m_device->auto_sync)
         m_device->sendScene(false);
 }

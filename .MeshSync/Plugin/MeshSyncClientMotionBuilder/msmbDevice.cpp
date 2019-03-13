@@ -82,7 +82,10 @@ void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
 {
-    if (auto_sync && m_data_updated)
+    // note: mocap devices seem doesn't trigger scene change events.
+    //       so, always set m_pending true on render when auto sync is enabled.
+    //       obviously this wastes CPU time, but I couldn't find a better way... (issue #47)
+    if (auto_sync /*&& m_data_updated*/)
         m_pending = true;
 }
 
