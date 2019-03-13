@@ -618,23 +618,10 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         };
 
         auto retrieve_delta = [&dst](ms::BlendShapeFrameData& dst_frame, MPlug plug_ipt, MPlug plug_ict) {
-            MObject obj_component_list;
+            MObject obj_cld;
+            plug_ict.getValue(obj_cld);
+
             MObject obj_points;
-            {
-                MObject obj_cld;
-                plug_ict.getValue(obj_cld);
-                if (!obj_cld.isNull() && obj_cld.hasFn(MFn::kComponentListData)) {
-                    MFnComponentListData fn_cld(obj_cld);
-                    uint32_t len = fn_cld.length();
-                    for (uint32_t ci = 0; ci < len; ++ci) {
-                        MObject tmp = fn_cld[ci];
-                        if (tmp.apiType() == MFn::kMeshVertComponent) {
-                            obj_component_list = tmp;
-                            break;
-                        }
-                    }
-                }
-            }
             {
                 MObject tmp;
                 plug_ipt.getValue(tmp);
@@ -642,18 +629,30 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     obj_points = tmp;
                 }
             }
-            if (!obj_component_list.isNull() && !obj_points.isNull()) {
-                MIntArray indices;
-                MFnSingleIndexedComponent fn_indices(obj_component_list);
-                fn_indices.getElements(indices);
-                const auto *indices_ptr = &indices[0];
 
-                MFnPointArrayData fn_points(obj_points);
-                const auto *points_ptr = &fn_points[0];
+            if (obj_cld.hasFn(MFn::kComponentListData) && !obj_points.isNull()) {
+                uint32_t base_point = 0;
 
-                uint32_t len = std::min(fn_points.length(), (uint32_t)dst.points.size());
-                for (uint32_t pi = 0; pi < len; ++pi) {
-                    dst_frame.points[indices_ptr[pi]] = to_float3(points_ptr[pi]);
+                MFnComponentListData fn_cld(obj_cld);
+                uint32_t num_clists = fn_cld.length();
+                for (uint32_t cli = 0; cli < num_clists; ++cli) {
+                    MObject clist = fn_cld[cli];
+                    if (clist.apiType() != MFn::kMeshVertComponent)
+                        continue;
+
+                    MIntArray indices;
+                    MFnSingleIndexedComponent fn_indices(clist);
+                    fn_indices.getElements(indices);
+                    const auto *indices_ptr = &indices[0];
+
+                    MFnPointArrayData fn_points(obj_points);
+                    const auto *points_ptr = &fn_points[0];
+
+                    auto len = indices.length();
+                    for (uint32_t pi = 0; pi < len; ++pi)
+                        dst_frame.points[indices_ptr[pi]] = to_float3(points_ptr[base_point + pi]);
+
+                    base_point += len;
                 }
             }
         };
