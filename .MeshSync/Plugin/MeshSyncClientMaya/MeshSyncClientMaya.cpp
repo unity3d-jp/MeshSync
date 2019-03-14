@@ -311,9 +311,8 @@ void MeshSyncClientMaya::registerNodeCallbacks()
             rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
     });
 
-
-    auto register_transforms = [this](MObject& n) {
-        EachParent(n, [this](MObject parent) {
+    auto register_parent_transforms = [this](MObject& n) {
+        EachParentRecursive(n, [this](MObject parent) {
             if (parent.hasFn(MFn::kTransform)) {
                 auto& rec = m_dag_nodes[parent];
                 if (!rec.cid)
@@ -326,7 +325,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     EnumerateNode(MFn::kCamera, [&](MObject& node) {
         Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
-            register_transforms(node);
+            register_parent_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
@@ -337,7 +336,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     EnumerateNode(MFn::kLight, [&](MObject& node) {
         Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
-            register_transforms(node);
+            register_parent_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
@@ -348,7 +347,7 @@ void MeshSyncClientMaya::registerNodeCallbacks()
     EnumerateNode(MFn::kMesh, [&](MObject& node) {
         Pad<MFnDagNode> fn(node);
         if (!fn.isIntermediateObject()) {
-            register_transforms(node);
+            register_parent_transforms(node);
             auto& rec = m_dag_nodes[node];
             if (!rec.cid)
                 m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
@@ -471,7 +470,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
         for (auto *tn : rec.branches) {
-            if (exportObject(tn, false))
+            if (exportObject(tn, true))
                 ++num_exported;
         }
         rec.dirty = false;

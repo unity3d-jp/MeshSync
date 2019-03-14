@@ -136,6 +136,18 @@ inline void EachParent(const MObject& node, const Body& body)
     for (uint32_t i = 0; i < num_parents; ++i)
         body(fn.parent(i));
 }
+// body: [](MObject&) -> void
+template<class Body>
+inline void EachParentRecursive(const MObject& node, const Body& body)
+{
+    Pad<MFnDagNode> fn(node);
+    auto num_parents = fn.parentCount();
+    for (uint32_t i = 0; i < num_parents; ++i) {
+        auto parent = fn.parent(i);
+        body(parent);
+        EachParentRecursive(parent, body);
+    }
+}
 
 // body: [](MObject&) -> void
 template<class Body>
