@@ -39,6 +39,13 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
+mu::float4x4 GetPivotMatrix(INode *n)
+{
+    auto t = to_float3(n->GetObjOffsetPos());
+    auto r = to_quatf(n->GetObjOffsetRot());
+    return mu::transform(t, r, mu::float3::one());
+}
+
 bool IsInstanced(INode *n)
 {
     INodeTab instances;

@@ -301,6 +301,11 @@ ms::MeshPtr MeshSyncClientMaya::exportMesh(TreeNode *n)
                 doExtractMeshDataBaked(dst, n);
             else
                 doExtractMeshData(dst, n);
+
+            //// handle pivot
+            //dst.refine_settings.flags.apply_local2world = 1;
+            //dst.refine_settings.local2world = GetPivotMatrix(n->trans->node);
+
             dst.flags.has_refine_settings = 1;
             dst.flags.apply_trs = 1;
             dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
@@ -497,10 +502,12 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
 
-    if (!shape.hasFn(MFn::kMesh)) { return; }
+    if (!shape.hasFn(MFn::kMesh))
+        return;
 
     dst.visible = IsVisible(shape);
-    if (!dst.visible) { return; }
+    if (!dst.visible)
+        return;
 
     MStatus mstat;
     MFnMesh mmesh(shape);
@@ -633,6 +640,9 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             if (obj_cld.hasFn(MFn::kComponentListData) && !obj_points.isNull()) {
                 uint32_t base_point = 0;
 
+                MFnPointArrayData fn_points(obj_points);
+                const auto *points_ptr = &fn_points[0];
+
                 MFnComponentListData fn_cld(obj_cld);
                 uint32_t num_clists = fn_cld.length();
                 for (uint32_t cli = 0; cli < num_clists; ++cli) {
@@ -644,9 +654,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     MFnSingleIndexedComponent fn_indices(clist);
                     fn_indices.getElements(indices);
                     const auto *indices_ptr = &indices[0];
-
-                    MFnPointArrayData fn_points(obj_points);
-                    const auto *points_ptr = &fn_points[0];
 
                     auto len = indices.length();
                     for (uint32_t pi = 0; pi < len; ++pi)

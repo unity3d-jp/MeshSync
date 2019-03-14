@@ -527,13 +527,6 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)
     return ret;
 }
 
-static mu::float4x4 GetPivotMatrix(INode *n)
-{
-    auto t = to_float3(n->GetObjOffsetPos());
-    auto r = to_quatf(n->GetObjOffsetRot());
-    return mu::transform(t, r, mu::float3::one());
-}
-
 static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     auto mat = to_float4x4(n->GetNodeTM(t));
