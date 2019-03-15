@@ -105,7 +105,7 @@ Motion Builder 2015, 2016, 2017, 2018 + Windows, Linux (CentOS 7) で動作を�
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 
 ### Blender
-Blender 2.79(a,b), 2.80 beta (2018-11-29) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
+Blender 2.79(a,b), 2.80 beta (2019-3-15) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Blender_*.zip をダウンロードして展開
     - 展開して出てくる UnityMeshSync_Blender_* ディレクトリの中にも zip が入っていますが、これらはそのままで大丈夫です
