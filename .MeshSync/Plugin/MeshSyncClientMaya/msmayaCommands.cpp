@@ -102,6 +102,8 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
     syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
     syntax.addFlag("-asp", "-animationSPS", MSyntax::kDouble);
+    syntax.addFlag("-kfr", "-keyframeReduction", MSyntax::kBoolean);
+    syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
 
     return syntax;
@@ -147,6 +149,8 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncConstraints", settings.sync_constraints, true);
     Handle("animationTS", settings.animation_time_scale, false);
     Handle("animationSPS", settings.animation_sps, false);
+    Handle("keyframeReduction", settings.reduce_keyframes, false);
+    Handle("removeNamespace", settings.remove_namespace, true);
     Handle("multithreaded", settings.multithreaded, false);
 #undef Handle
 
@@ -171,6 +175,7 @@ MSyntax CmdExport::createSyntax()
     syntax.enableEdit(false);
     syntax.addFlag("-s", "-scope", MSyntax::kString);
     syntax.addFlag("-t", "-target", MSyntax::kString);
+    syntax.addFlag("-fa", "-dirtyAll", MSyntax::kBoolean);
     return syntax;
 }
 
@@ -180,7 +185,7 @@ MStatus CmdExport::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto& instance = MeshSyncClientMaya::getInstance();
 
-    bool force_all = true;
+    bool dirty_all = true;
     bool animations = false;
     auto scope = MeshSyncClientMaya::SendScope::All;
 
@@ -193,19 +198,23 @@ MStatus CmdExport::doIt(const MArgList& args_)
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
-        if (s == "selection")
+        if (s == "selection") {
             scope = MeshSyncClientMaya::SendScope::Selected;
-        else if (s == "updated")
+            dirty_all = false;
+        }
+        else if (s == "updated") {
             scope = MeshSyncClientMaya::SendScope::Updated;
+            dirty_all = false;
+        }
     }
-    if (args.isFlagSet("forceAll")) {
-        get_arg(force_all, "forceAll", args);
+    if (args.isFlagSet("dirtyAll")) {
+        get_arg(dirty_all, "dirtyAll", args);
     }
 
     if (animations)
         MeshSyncClientMaya::getInstance().sendAnimations(scope);
     else
-        MeshSyncClientMaya::getInstance().sendScene(scope, force_all);
+        MeshSyncClientMaya::getInstance().sendScene(scope, dirty_all);
     return MStatus::kSuccess;
 }
 

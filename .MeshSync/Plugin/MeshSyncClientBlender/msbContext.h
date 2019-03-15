@@ -29,6 +29,7 @@ struct msbSettings
 
     float animation_timescale = 1.0f;
     int animation_frame_interval = 10;
+    bool keyframe_reduction = true;
 
     bool multithreaded = true;
 };
@@ -133,7 +134,7 @@ private:
     // animation export
     using AnimationRecords = std::map<std::string, AnimationRecord>;
     AnimationRecords m_anim_records;
-    float m_current_time = 0.0f;
+    float m_anim_time = 0.0f;
     bool m_sending_animations = false;
 };
 using msbContextPtr = std::shared_ptr<msbContext>;

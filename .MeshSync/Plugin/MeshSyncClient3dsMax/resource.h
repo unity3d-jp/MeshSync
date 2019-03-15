@@ -30,6 +30,7 @@
 #define IDC_CHECK_TEXTURES              1024
 #define IDC_TXT_VERSION                 1025
 #define IDC_CHECK_BOTHSIDED             1026
+#define IDC_CHECK_KFREDUCTION           1027
 
 // Next default values for new objects
 // 

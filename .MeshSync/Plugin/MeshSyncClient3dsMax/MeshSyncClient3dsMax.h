@@ -31,6 +31,7 @@ public:
 
         float animation_time_scale = 1.0f;
         float animation_sps = 2.0f;
+        bool keyframe_reduction = true;
 
         bool multithreaded = true;
 
@@ -156,7 +157,7 @@ private:
 
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time_tick;
-    float m_current_time_sec;
+    float m_anim_time = 0.0f;
     std::vector<ms::AnimationClipPtr> m_animations;
 
     ms::IDGenerator<Mtl*> m_material_ids;

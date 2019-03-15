@@ -79,6 +79,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(animation_interval,
                 [](const msbContext& self) { return self.getSettings().animation_frame_interval; },
                 [](msbContext& self, int v) { self.getSettings().animation_frame_interval = v; })
+            BindProperty(keyframe_reduction,
+                [](const msbContext& self) { return self.getSettings().keyframe_reduction; },
+                [](msbContext& self, int v) { self.getSettings().keyframe_reduction = v; })
             BindProperty(multithreaded,
                 [](const msbContext& self) { return self.getSettings().multithreaded; },
                 [](msbContext& self, int v) { self.getSettings().multithreaded = v; })

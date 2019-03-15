@@ -95,6 +95,8 @@ public:
         bool sync_cameras = true;
         bool sync_lights = true;
         bool sync_constraints = false;
+        bool remove_namespace = true;
+        bool reduce_keyframes = true;
         bool multithreaded = false;
 
         // import settings
@@ -125,7 +127,7 @@ public:
     void onTimeChange(const MTime& time);
 
     void update();
-    bool sendScene(SendScope scope, bool force_all);
+    bool sendScene(SendScope scope, bool dirty_all);
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
@@ -161,6 +163,7 @@ private:
     TaskRecords              m_extract_tasks;
     AnimationRecords         m_anim_records;
 
+    std::string handleNamespace(const std::string& path);
 
     void constructTree();
     void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
@@ -186,7 +189,7 @@ private:
     void doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n);
 
     int exportAnimations(SendScope scope);
-    bool exportAnimation(TreeNode *tn);
+    bool exportAnimation(TreeNode *tn, bool force);
     void extractTransformAnimationData(ms::Animation& dst, TreeNode *n);
     void extractCameraAnimationData(ms::Animation& dst, TreeNode *n);
     void extractLightAnimationData(ms::Animation& dst, TreeNode *n);

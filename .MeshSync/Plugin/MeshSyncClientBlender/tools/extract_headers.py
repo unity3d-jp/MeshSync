@@ -5,7 +5,7 @@ import re
 import shutil
 
 if (len(sys.argv) != 2):
-    print 'Usage: %s blender_source_dir' % sys.argv[0]
+    print('Usage: %s blender_source_dir' % sys.argv[0])
     quit()
 
 src_dir = sys.argv[1]

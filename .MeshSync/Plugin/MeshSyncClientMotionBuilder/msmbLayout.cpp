@@ -11,8 +11,8 @@ bool msmbLayout::FBCreate()
 {
     const int lS = 5;
     const int lS2 = 10;
-    const int lW = 100;
-    const int lW2 = 200;
+    const int lW = 170;
+    const int lW2 = 340;
     const int lH = 18;
 
     const char *idLabelServer = "idLabelServer";
@@ -37,6 +37,7 @@ bool msmbLayout::FBCreate()
     const char *idEditTimeScale = "idEditTimeScale";
     const char *idLabelSPS = "idLabelSPS";
     const char *idEditSPS = "idEditSPS";
+    const char *idButtonKFReduction = "idButtonKFReduction";
     const char *idButtonSyncAnimations = "idButtonSyncAnimations";
 
     const char *idLabelVersion = "idLabelVersion";
@@ -53,6 +54,7 @@ bool msmbLayout::FBCreate()
             lH, kFBAttachNone, nullptr, 1.0);
         SetControl(idLabelServer, m_lb_server);
         m_lb_server.Caption = "Server";
+        m_lb_server.Style = kFBTextStyleBold;
 
         AddRegion(idLabelAddress, idLabelAddress,
             0, kFBAttachLeft, idLabelServer, 1.0,
@@ -101,6 +103,7 @@ bool msmbLayout::FBCreate()
             0, kFBAttachHeight, idLabelPort, 1.0);
         SetControl(idLabelScene, m_lb_scene);
         m_lb_scene.Caption = "Scene";
+        m_lb_scene.Style = kFBTextStyleBold;
 
         AddRegion(idLabelScale, idLabelScale,
             0, kFBAttachLeft, idLabelScene, 1.0,
@@ -206,6 +209,7 @@ bool msmbLayout::FBCreate()
             0, kFBAttachHeight, idButtonManualSync, 1.0);
         SetControl(idLabelAnimation, m_lb_animation);
         m_lb_animation.Caption = "Animation";
+        m_lb_animation.Style = kFBTextStyleBold;
 
 
         AddRegion(idLabelTimeScale, idLabelTimeScale,
@@ -249,12 +253,22 @@ bool msmbLayout::FBCreate()
         m_ed_sps.LargeStep = 0.1;
         m_ed_sps.OnChange.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
+        AddRegion(idButtonKFReduction, idButtonKFReduction,
+            0, kFBAttachLeft, idLabelSPS, 1.0,
+            lS, kFBAttachBottom, idLabelSPS, 1.0,
+            0, kFBAttachWidth, idLabelSPS, 1.0,
+            0, kFBAttachHeight, idLabelSPS, 1.0);
+        SetControl(idButtonKFReduction, m_bu_kf_reduction);
+        m_bu_kf_reduction.Caption = "Keyframe Reduction";
+        m_bu_kf_reduction.Style = kFBCheckbox;
+        m_bu_kf_reduction.State = (int)m_device->keyframe_reduction;
+        m_bu_kf_reduction.OnClick.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
         AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
-            0, kFBAttachLeft, idLabelSPS, 1.0,
-            lS2, kFBAttachBottom, idLabelSPS, 1.0,
+            0, kFBAttachLeft, idButtonKFReduction, 1.0,
+            lS, kFBAttachBottom, idButtonKFReduction, 1.0,
             lW2, kFBAttachNone, nullptr, 1.0,
-            0, kFBAttachHeight, idLabelSPS, 1.0);
+            0, kFBAttachHeight, idButtonKFReduction, 1.0);
         SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";
         m_bu_sync_animations.OnClick.Add(this, (FBCallback)&msmbLayout::onSyncAnimation);
@@ -300,11 +314,12 @@ void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEven
 {
     m_device->animation_time_scale = (float)m_ed_time_scale.Value;
     m_device->animation_sps = (float)m_ed_sps.Value;
+    m_device->keyframe_reduction = (bool)(int)m_bu_kf_reduction.State;
 }
 
 void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->auto_sync = (bool)(int)m_bu_sync_lights.State;
+    m_device->auto_sync = (bool)(int)m_bu_auto_sync.State;
     if (m_device->auto_sync)
         m_device->sendScene(false);
 }

@@ -2,12 +2,13 @@ global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSync";
     if (`window -exists $Window`) deleteUI -window $Window;
-    window -t ("Unity Mesh Sync") -wh 300 440 $Window;
-    
+    window -t ("Unity Mesh Sync") -wh 300 660 $Window;
+
     string $version         = `UnityMeshSync_Settings -q -version`;
     string $address         = `UnityMeshSync_Settings -q -address`;
     int    $port            = `UnityMeshSync_Settings -q -port`;
     float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
+    int    $removeNamespace = `UnityMeshSync_Settings -q -removeNamespace`;
     int    $syncMeshes      = `UnityMeshSync_Settings -q -syncMeshes`;
     int    $syncNormals     = `UnityMeshSync_Settings -q -syncNormals`;
     int    $syncUVs         = `UnityMeshSync_Settings -q -syncUVs`;
@@ -22,6 +23,7 @@ global proc UnityMeshSync_GUI()
     int    $autosync        = `UnityMeshSync_Settings -q -autosync`;
     int    $animationTS     = `UnityMeshSync_Settings -q -animationTS`;
     int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
+    int    $kfReduction     = `UnityMeshSync_Settings -q -keyframeReduction`;
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
@@ -38,6 +40,8 @@ global proc UnityMeshSync_GUI()
     rowLayout -numberOfColumns 2;
         text -label "Scale Factor"; floatField -value $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
     setParent ..;
+    checkBox -label "Remove Namespace" -value $removeNamespace -cc "umsCBRemoveNamespace" umsCtrlRemoveNamespace;
+
     checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
         columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
         checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
@@ -68,6 +72,10 @@ global proc UnityMeshSync_GUI()
     rowLayout -numberOfColumns 2;
         text -label "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
+    checkBox -label "Keyframe Reduction" -value $kfReduction -cc "umsCBKeyframeReduction" umsCtrlKeyframeReduction;
+
+    separator -h 5 -w 250 -style none;
+
     button -l "Sync" -c "umsCBSyncAnimations";
     
     separator -h 20 -w 250;
@@ -96,6 +104,12 @@ global proc umsCBScaleFactor()
 {
     float $v = `floatField -q -value umsCtrlScaleFactor`;
     string $ret = `UnityMeshSync_Settings -scaleFactor $v`;
+}
+
+global proc umsCBRemoveNamespace()
+{
+    float $v = `checkBox -q -value umsCtrlRemoveNamespace`;
+    string $ret = `UnityMeshSync_Settings -removeNamespace $v`;
 }
 
 global proc umsCBSyncMeshes()
@@ -187,6 +201,12 @@ global proc umsCBAnimationSPS()
 {
     float $v = `floatField -q -value umsCtrlAnimationSPS`;
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
+}
+
+global  proc umsCBKeyframeReduction()
+{
+    int $v = `checkBox -q -value umsCtrlKeyframeReduction`;
+    string $ret = `UnityMeshSync_Settings -keyframeReduction $v`;
 }
 
 global proc umsCBSyncAnimations()

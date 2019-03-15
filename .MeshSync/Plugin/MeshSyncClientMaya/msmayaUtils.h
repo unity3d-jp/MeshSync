@@ -4,6 +4,7 @@
 
 std::string GetName(const MObject& node);
 std::string ToString(const MDagPath& path);
+std::string RemoveNamespace(const std::string& path);
 
 bool IsVisible(const MObject& node);
 MDagPath GetParent(const MDagPath& node);
@@ -15,6 +16,9 @@ MObject FindOrigMesh(const MObject& node);
 
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
+
+// rotation pivot. not scale pivot
+mu::float4x4 GetPivotMatrix(MObject node);
 
 #ifdef mscDebug
     void DumpPlugInfoImpl(MPlug plug);
@@ -104,7 +108,7 @@ inline void EnumerateNode(MFn::Type type, const Body& body)
 {
     MItDag it(MItDag::kDepthFirst, type);
     while (!it.isDone()) {
-        auto obj = it.item();
+        auto obj = it.currentItem();
         body(obj);
         it.next();
     }
@@ -131,6 +135,18 @@ inline void EachParent(const MObject& node, const Body& body)
     auto num_parents = fn.parentCount();
     for (uint32_t i = 0; i < num_parents; ++i)
         body(fn.parent(i));
+}
+// body: [](MObject&) -> void
+template<class Body>
+inline void EachParentRecursive(const MObject& node, const Body& body)
+{
+    Pad<MFnDagNode> fn(node);
+    auto num_parents = fn.parentCount();
+    for (uint32_t i = 0; i < num_parents; ++i) {
+        auto parent = fn.parent(i);
+        body(parent);
+        EachParentRecursive(parent, body);
+    }
 }
 
 // body: [](MObject&) -> void
@@ -166,7 +182,7 @@ inline void EachConstraints(MObject& node, const Body& body)
 
         mscTrace("%s%s %d\n", indent, node.apiTypeStr(), node.apiType());
         for (MItDependencyGraph iter(node); !iter.isDone(); iter.next()) {
-            if (iter.thisNode() != node) {
+            if (iter.currentItem() != node) {
                 auto item = iter.currentItem();
                 mscTrace("%s* %s %d\n", indent, item.apiTypeStr(), item.apiType());
             }

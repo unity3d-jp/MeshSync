@@ -10,6 +10,8 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
+mu::float4x4 GetPivotMatrix(INode *n);
+
 bool IsInstanced(INode *n);
 Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);

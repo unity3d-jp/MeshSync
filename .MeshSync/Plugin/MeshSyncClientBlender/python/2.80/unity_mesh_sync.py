@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2018, 11, 30),
+    "version": (2019, 3, 15),
     "blender": (2, 80, 0),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -84,6 +84,7 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout.use_property_decorate = False
         layout.prop(scene, 'meshsync_animation_ts')
         layout.prop(scene, 'meshsync_animation_fi')
+        layout.prop(scene, 'meshsync_animation_kfr')
         layout.operator("meshsync.sync_animations", text="Sync")
 
 

@@ -1,0 +1,14 @@
+diff --git "a/.\\Maya2019\\include\\maya\\MItDependencyGraph.h" "b/.\\MayaLT2019\\include\\maya\\MItDependencyGraph.h"
+index fe7eda2..2ebdc36 100644
+--- "a/.\\Maya2019\\include\\maya\\MItDependencyGraph.h"
++++ "b/.\\MayaLT2019\\include\\maya\\MItDependencyGraph.h"
+@@ -146,6 +146,9 @@ public:
+ 									Traversal traversal = kDepthFirst,
+ 									Level level = kNodeLevel,
+ 									MStatus* ReturnStatus = NULL );
++#if MAYA_LT
++    virtual
++#endif
+ 	            ~MItDependencyGraph ();
+ 	MStatus		reset();
+ 	MStatus		resetTo( MObject& rootNode,

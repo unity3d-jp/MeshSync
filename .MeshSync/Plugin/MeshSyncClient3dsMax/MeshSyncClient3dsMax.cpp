@@ -270,30 +270,34 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
 
     // advance frame and record animation
     auto time_range = GetCOREInterface()->GetAnimRange();
+    auto time_start = time_range.Start();
+    auto time_end = time_range.End();
     auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
-    for (TimeValue t = time_range.Start();;) {
+    for (TimeValue t = time_start;;) {
         m_current_time_tick = t;
-        m_current_time_sec = ToSeconds(t);
+        m_anim_time = ToSeconds(t - time_start) * m_settings.animation_time_scale;
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 
         if (t >= time_range.End())
             break;
         else
-            t = std::min(t + interval, time_range.End());
+            t = std::min(t + interval, time_end);
     }
 
     // cleanup intermediate data
     m_anim_records.clear();
 
-    // keyframe reduction
-    for (auto& clip : m_animations)
-        clip->reduction();
+    if (m_settings.keyframe_reduction) {
+        // keyframe reduction
+        for (auto& clip : m_animations)
+            clip->reduction();
 
-    // erase empty animation
-    m_animations.erase(
-        std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-        m_animations.end());
+        // erase empty animation
+        m_animations.erase(
+            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
+            m_animations.end());
+    }
 
     if (!m_animations.empty())
         kickAsyncSend();
@@ -521,13 +525,6 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)
 
     rec.clearDirty();
     return ret;
-}
-
-static mu::float4x4 GetPivotMatrix(INode *n)
-{
-    auto t = to_float3(n->GetObjOffsetPos());
-    auto r = to_quatf(n->GetObjOffsetRot());
-    return mu::transform(t, r, mu::float3::one());
 }
 
 static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
@@ -1050,7 +1047,7 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     bool vis;
     ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis);
 
-    float t = m_current_time_sec * m_settings.animation_time_scale;
+    float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
@@ -1060,7 +1057,7 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec * m_settings.animation_time_scale;
+    float t = m_anim_time;
     auto& dst = (ms::CameraAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -1080,7 +1077,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec * m_settings.animation_time_scale;
+    float t = m_anim_time;
     auto& dst = (ms::LightAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
@@ -1101,7 +1098,7 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src,
 {
     extractTransformAnimation(dst_, src, obj);
 
-    float t = m_current_time_sec * m_settings.animation_time_scale;
+    float t = m_anim_time;
     auto& dst = (ms::MeshAnimation&)dst_;
 
     if (m_settings.sync_blendshapes) {

@@ -15,10 +15,19 @@ std::string ToString(const MDagPath& path)
     return ret;
 }
 
+std::string RemoveNamespace(const std::string& path)
+{
+    static const std::regex s_remove_head("^([^/]+:)");
+    static const std::regex s_remove_leaf("/([^/]+:)");
+
+    auto ret = std::regex_replace(path, s_remove_head, "");
+    return std::regex_replace(ret, s_remove_leaf, "/");
+}
+
 bool IsVisible(const MObject& node)
 {
     Pad<MFnDagNode> dag(node);
-    auto vis = dag.findPlug("visibility");
+    auto vis = dag.findPlug("visibility", true);
     bool visible = true;
     vis.getValue(visible);
     return visible;
@@ -83,6 +92,18 @@ MTime ToMTime(float seconds)
     return ret;
 }
 
+mu::float4x4 GetPivotMatrix(MObject node)
+{
+    mu::float4x4 ret = mu::float4x4::identity();
+    if (!node.hasFn(MFn::kTransform))
+        return ret;
+
+    MFnTransform fn_trans(node);
+    auto pivot = fn_trans.rotatePivot(MSpace::kTransform);
+    (mu::float3&)ret[3] = to_float3(pivot);
+    return ret;
+}
+
 
 #ifdef mscDebug
 static void DumpPlugInfoImpl(MPlug plug, std::string indent)
@@ -131,7 +152,7 @@ void DumpPlugInfoImpl(MFnDependencyNode& fn)
         MObject attr = fn.attribute(i);
         MFnAttribute fn_attr(attr);
         mscTrace(" attr %s (%s)\n", fn_attr.name().asChar(), attr.apiTypeStr());
-        DumpPlugInfoImpl(fn.findPlug(fn_attr.name()), " ");
+        DumpPlugInfoImpl(fn.findPlug(fn_attr.name(), true), " ");
     }
 }
 #endif

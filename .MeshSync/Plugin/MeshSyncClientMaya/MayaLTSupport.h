@@ -50,6 +50,7 @@
 #define MFnCompoundAttribute        ___O0IIO
 #define MFnDagNode                  ___O1l0O
 #define MFnDependencyNode           ___IIO1l
+#define MFnTransform                ___IIO11
 #define MFnCamera                   ___I0lIl
 #define MFnLight                    ___IlI1I
 #define MFnSpotLight                ___IO0Il

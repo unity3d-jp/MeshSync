@@ -24,3 +24,4 @@
 #include <thread>
 #include <future>
 #include <random>
+#include <regex>

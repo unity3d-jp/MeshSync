@@ -587,15 +587,27 @@ Depsgraph* blender::BContext::depsgraph()
 
 blist_range<Object> BData::objects()
 {
+#if BLENDER_VERSION < 280
     return list_range((Object*)m_ptr->object.first);
+#else
+    return list_range((Object*)m_ptr->objects.first);
+#endif
 }
 blist_range<Mesh> blender::BData::meshes()
 {
+#if BLENDER_VERSION < 280
     return list_range((Mesh*)m_ptr->mesh.first);
+#else
+    return list_range((Mesh*)m_ptr->meshes.first);
+#endif
 }
 blist_range<Material> BData::materials()
 {
+#if BLENDER_VERSION < 280
     return list_range((Material*)m_ptr->mat.first);
+#else
+    return list_range((Material*)m_ptr->materials.first);
+#endif
 }
 bool BData::objects_is_updated()
 {
