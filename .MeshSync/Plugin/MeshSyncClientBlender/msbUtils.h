@@ -17,7 +17,32 @@ void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s);
 void extract_local_TRS(const bPoseChannel *pose, float3& t, quatf& r, float3& s);
 float4x4 extract_bindpose(const Bone *bone);
 
+inline Collection* get_instance_collection(Object *obj)
+{
+#if BLENDER_VERSION < 280
+    return obj->dup_group;
+#else
+    return obj->instance_collection;
+#endif
+}
 
+inline const float3& get_instance_offset(const Collection *col)
+{
+#if BLENDER_VERSION < 280
+    return (float3&)col->dupli_ofs;
+#else
+    return (float3&)col->instance_offset;
+#endif
+}
+
+inline BMEditMesh* get_edit_mesh(Mesh *mesh)
+{
+#if BLENDER_VERSION < 280
+    return mesh->edit_btmesh;
+#else
+    return mesh->edit_mesh;
+#endif
+}
 
 
 // Body: [](const FCurve*) -> void

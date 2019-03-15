@@ -79,14 +79,24 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
 {
     auto data = (Camera*)src->data;
     ortho = data->type == CAM_ORTHO;
+#if BLENDER_VERSION < 280
     near_plane = data->clipsta;
     far_plane = data->clipend;
+#else
+    near_plane = data->clip_start;
+    far_plane = data->clip_end;
+#endif
     fov = bl::BCamera(data).fov_vertical() * mu::Rad2Deg;
 }
 
 static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& color, float& intensity, float& range, float& spot_angle)
 {
-    auto data = (Lamp*)src->data;
+    auto data =
+#if BLENDER_VERSION < 280
+        (Lamp*)src->data;
+#else
+        (Light*)src->data;
+#endif
     color = (float4&)data->r;
     intensity = data->energy;
     range = data->dist;
@@ -172,7 +182,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     }
     default:
     {
-        if (obj->dup_group || force) {
+        if (get_instance_collection(obj) || force) {
             on_export();
             ret = exportTransform(obj);
         }
@@ -243,7 +253,7 @@ ms::TransformPtr msbContext::exportReference(Object *src, const std::string& bas
 
 ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& base_path)
 {
-    auto group = src->dup_group;
+    auto group = get_instance_collection(src);
     if (!group)
         return nullptr;
 
@@ -252,7 +262,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& ba
 
     auto dst = ms::Transform::create();
     dst->path = path;
-    dst->position = -swap_yz((float3&)group->dupli_ofs);
+    dst->position = -swap_yz(get_instance_offset(group));
     dst->visible_hierarchy = is_visible(src);
     m_entity_manager.add(dst);
 
@@ -308,9 +318,9 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
 
     if (m_settings.sync_meshes && data) {
         // check if mesh is dirty
-        if (data->edit_btmesh) {
+        if (auto edit_mesh = get_edit_mesh(data)) {
             is_editing = true;
-            auto bm = data->edit_btmesh->bm;
+            auto bm = edit_mesh->bm;
             if (bm->elem_table_dirty) {
                 // mesh is editing and dirty. just add to pending list
                 m_pending.insert(src);
@@ -371,7 +381,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     if (m_settings.sync_meshes) {
         bl::BObject bobj(obj);
         bl::BMesh bmesh(data);
-        bool is_editing = bmesh.ptr()->edit_btmesh;
+        bool is_editing = get_edit_mesh(bmesh.ptr()) != nullptr;
 
         dst.refine_settings.flags.swap_faces = true;
         if (is_editing) {
@@ -644,7 +654,7 @@ void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     bl::BObject bobj(obj);
     bl::BMesh bmesh(data);
-    bl::BEditMesh emesh(bmesh.ptr()->edit_btmesh);
+    bl::BEditMesh emesh(get_edit_mesh(bmesh.ptr()));
     auto& mesh = *data;
 
     auto polygons = emesh.polygons();
@@ -753,9 +763,7 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string
     }
 
     // trace dupli group
-    if (obj->dup_group) {
-        auto group = obj->dup_group;
-
+    if (auto group = get_instance_collection(obj)) {
         auto local_path = std::string("/") + (group->id.name + 2);
         auto group_path = base_path + local_path;
         m_entity_manager.touch(group_path);
@@ -861,6 +869,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     auto& clip = m_animations.front();
     ms::AnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
+    auto group = get_instance_collection(obj);
 
     auto add_animation = [this, &clip](const std::string& path, void *obj, ms::AnimationPtr dst, AnimationRecord::extractor_t extractor) {
         dst->path = path;
@@ -894,7 +903,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         break;
     }
     default:
-    if (force || obj->type == OB_ARMATURE || obj->dup_group) {
+    if (force || obj->type == OB_ARMATURE || group) {
         exportAnimation(obj->parent, true, base_path);
         add_animation(path, obj, ms::TransformAnimation::create(), &msbContext::extractTransformAnimationData);
 
@@ -911,14 +920,14 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     }
 
     // handle dupli group
-    if (obj->dup_group) {
+    if (group) {
         auto group_path = base_path;
         group_path += '/';
         group_path += get_name(obj);
         group_path += '/';
-        group_path += (obj->dup_group->id.name + 2);
+        group_path += (group->id.name + 2);
 
-        auto gobjects = bl::list_range((CollectionObject*)obj->dup_group->gobject.first);
+        auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
         for (auto go : gobjects) {
             exportAnimation(go->ob, false, group_path);
         }
@@ -1010,7 +1019,7 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
     float t = m_anim_time;
 
     auto& mesh = *(Mesh*)((Object*)obj)->data;
-    if (!mesh.edit_btmesh && mesh.key) {
+    if (!get_edit_mesh(&mesh) && mesh.key) {
         // blendshape weight animation
         int bi = 0;
         each_key(&mesh, [&](const KeyBlock *kb) {
