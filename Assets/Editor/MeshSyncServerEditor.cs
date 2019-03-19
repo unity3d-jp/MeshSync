@@ -44,12 +44,25 @@ namespace UTJ.MeshSyncEditor
 
         public static void DrawMaterialList(MeshSyncServer t)
         {
+            // calculate label width
+            float labelWidth = 60; // minimum
+            {
+                var style = GUI.skin.box;
+                foreach (var md in t.materialData)
+                {
+                    var size = style.CalcSize(new GUIContent(md.name));
+                    labelWidth = Mathf.Max(labelWidth, size.x);
+                }
+                // 100: margin for color and material field
+                labelWidth = Mathf.Min(labelWidth, EditorGUIUtility.currentViewWidth - 100);
+            }
+
             foreach (var md in t.materialData)
             {
                 var rect = EditorGUILayout.BeginHorizontal();
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
                 EditorGUILayout.LabelField("", GUILayout.Width(16));
-                EditorGUILayout.LabelField(md.name, GUILayout.Width(80));
+                EditorGUILayout.LabelField(md.name, GUILayout.Width(labelWidth));
                 {
                     var tmp = EditorGUILayout.ObjectField(md.material, typeof(Material), true) as Material;
                     if (tmp != md.material)
