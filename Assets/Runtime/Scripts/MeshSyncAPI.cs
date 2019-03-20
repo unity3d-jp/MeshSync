@@ -93,6 +93,7 @@ namespace UTJ.MeshSync
         public int maxThreads;
         public ushort port;
         public uint meshSplitUnit;
+        public int meshMaxBoneInfluence; // -1 (variable) or 4
 
         public static ServerSettings defaultValue
         {
@@ -107,6 +108,11 @@ namespace UTJ.MeshSync
                     meshSplitUnit = 0xffffffff,
 #else
                     meshSplitUnit = 65000,
+#endif
+#if UNITY_2019_1_OR_NEWER
+                    meshMaxBoneInfluence = -1,
+#else
+                    meshMaxBoneInfluence = 4,
 #endif
                 };
             }
@@ -1892,6 +1898,7 @@ namespace UTJ.MeshSync
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern int msSplitGetNumBoneWeights(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsSize(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr self);
@@ -1900,6 +1907,7 @@ namespace UTJ.MeshSync
 
         public int numPoints { get { return msSplitGetNumPoints(self); } }
         public int numIndices { get { return msSplitGetNumIndices(self); } }
+        public int numBoneWeights { get { return msSplitGetNumBoneWeights(self); } }
         public Bounds bounds { get { return new Bounds(msSplitGetBoundsCenter(self), msSplitGetBoundsSize(self)); } }
         public int numSubmeshes { get { return msSplitGetNumSubmeshes(self); } }
 
@@ -2053,8 +2061,14 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
         [DllImport("MeshSyncServer")] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst, SplitData split);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadWeights4(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteWeights4(IntPtr self, BoneWeight[] weights, int size);
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
+#if UNITY_2019_1_OR_NEWER
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneCounts(IntPtr self, byte[] dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeightsV(IntPtr self, BoneWeight1[] dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneCounts(IntPtr self, byte[] counts, int size);
+        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeightsV(IntPtr self, BoneWeight1[] weights, int size);
+#endif
         [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr self, IntPtr dst, SplitData split);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
@@ -2101,7 +2115,11 @@ namespace UTJ.MeshSync
         public void ReadUV1(PinnedList<Vector2> dst, SplitData split) { msMeshReadUV1(self, dst, split); }
         public void ReadColors(PinnedList<Color> dst, SplitData split) { msMeshReadColors(self, dst, split); }
         public void ReadVelocities(PinnedList<Vector3> dst, SplitData split) { msMeshReadVelocities(self, dst, split); }
-        public void ReadBoneWeights(IntPtr dst, SplitData split) { msMeshReadWeights4(self, dst, split); }
+        public void ReadBoneWeights4(IntPtr dst, SplitData split) { msMeshReadBoneWeights4(self, dst, split); }
+#if UNITY_2019_1_OR_NEWER
+        public void ReadBoneCounts(byte[] dst, SplitData split) { msMeshReadBoneCounts(self, dst, split); }
+        public void ReadBoneWeightsV(BoneWeight1[] dst, SplitData split) { msMeshReadBoneWeightsV(self, dst, split); }
+#endif
         public void ReadIndices(IntPtr dst, SplitData split) { msMeshReadIndices(self, dst, split); }
 
         public void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
@@ -2111,7 +2129,10 @@ namespace UTJ.MeshSync
         public void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
         public void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
         public void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
-        public void WriteWeights(BoneWeight[] v) { msMeshWriteWeights4(self, v, v.Length); }
+        public void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
+#if UNITY_2019_1_OR_NEWER
+        public void WriteBoneWeightsV(BoneWeight1[] v) { msMeshWriteBoneWeightsV(self, v, v.Length); }
+#endif
         public void WriteIndices(int[] v) { msMeshWriteIndices(self, v, v.Length); }
 
         public Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }

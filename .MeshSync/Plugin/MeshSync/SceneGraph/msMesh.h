@@ -89,6 +89,8 @@ struct SplitData
     int index_offset = 0;
     int vertex_count = 0;
     int vertex_offset = 0;
+    int weight_count = 0;
+    int weight_offset = 0;
     IArray<SubmeshData> submeshes;
     float3 bound_center = float3::zero();
     float3 bound_size = float3::zero();
@@ -192,6 +194,8 @@ public:
     RawVector<Weights4> tmp_weights4;
 
     RawVector<Weights4> weights4;
+    RawVector<uint8_t> bone_counts;
+    RawVector<Weights1> weights1;
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
 

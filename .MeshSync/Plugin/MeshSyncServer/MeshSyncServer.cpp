@@ -736,17 +736,37 @@ msAPI ms::SubmeshData* msMeshGetSubmesh(ms::Mesh *self, int i)
     return &self->submeshes[i];
 }
 
-msAPI void msMeshReadWeights4(ms::Mesh *self, ms::Weights4 *dst, ms::SplitData *split)
+msAPI void msMeshReadBoneWeights4(ms::Mesh *self, ms::Weights4 *dst, ms::SplitData *split)
 {
     if (split)
         self->weights4.copy_to(dst, split->vertex_count, split->vertex_offset);
     else
         self->weights4.copy_to(dst);
 }
-msAPI void msMeshWriteWeights4(ms::Mesh *self, const ms::Weights4 *v, int size)
+msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int size)
 {
-    self->weights4.assign(v, v + size);
+    self->weights4.assign(data, data + size);
 }
+msAPI void msMeshReadBoneCounts(ms::Mesh *self, uint8_t *dst, ms::SplitData *split)
+{
+    self->bone_counts.copy_to(dst, split->vertex_count, split->vertex_offset);
+}
+msAPI void msMeshReadBoneWeightsV(ms::Mesh *self, ms::Weights1 *dst, ms::SplitData *split)
+{
+    if (split)
+        self->weights1.copy_to(dst, split->weight_count, split->weight_offset);
+    else
+        self->weights1.copy_to(dst);
+}
+msAPI void msMeshWriteBoneCounts(ms::Mesh *self, uint8_t *data, int size)
+{
+    self->bone_counts.assign(data, data + size);
+}
+msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, const ms::Weights1 *data, int size)
+{
+    self->weights1.assign(data, data + size);
+}
+
 msAPI int msMeshGetNumBones(ms::Mesh *self)
 {
     return (int)self->bones.size();

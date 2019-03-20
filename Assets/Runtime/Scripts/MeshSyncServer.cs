@@ -6,6 +6,10 @@ using UnityEngine;
 #if UNITY_2017_1_OR_NEWER
 using UnityEngine.Animations;
 #endif
+#if UNITY_2019_1_OR_NEWER
+using Unity.Collections;
+#endif
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -1373,14 +1377,24 @@ namespace UTJ.MeshSync
             }
             if (flags.hasBones)
             {
-                var tmpW = new PinnedList<BoneWeight>();
-                tmpW.Resize(split.numPoints);
-                data.ReadBoneWeights(tmpW, split);
                 mesh.bindposes = data.bindposes;
-                mesh.boneWeights = tmpW.Array;
-                tmpW.Dispose();
+#if UNITY_2019_1_OR_NEWER
+                var bonesPerVertex = new NativeArray<byte>(split.numPoints, Allocator.Temp);
+                var weights = new NativeArray<BoneWeight1>(split.numBoneWeights, Allocator.Temp);
+                data.ReadBoneCounts(bonesPerVertex.ToArray(), split);
+                data.ReadBoneWeightsV(weights.ToArray(), split);
+                mesh.SetBoneWeights(bonesPerVertex, weights);
+                bonesPerVertex.Dispose();
+                weights.Dispose();
+#else
+                var tmpWeights4 = new PinnedList<BoneWeight>();
+                tmpWeights4.Resize(split.numPoints);
+                data.ReadBoneWeights4(tmpWeights4, split);
+                mesh.boneWeights = tmpWeights4.Array;
+                tmpWeights4.Dispose();
+#endif
             }
-            if(flags.hasIndices)
+            if (flags.hasIndices)
             {
                 mesh.subMeshCount = split.numSubmeshes;
                 for (int smi = 0; smi < mesh.subMeshCount; ++smi)
@@ -1990,7 +2004,7 @@ namespace UTJ.MeshSync
                 {
                     dst.SetBonePaths(this, smr.bones);
                     dst.bindposes = mesh.bindposes;
-                    dst.WriteWeights(mesh.boneWeights);
+                    dst.WriteBoneWeights4(mesh.boneWeights);
                 }
             }
             return true;
@@ -2042,7 +2056,7 @@ namespace UTJ.MeshSync
             }
             if (flags.getBones)
             {
-                data.WriteWeights(mesh.boneWeights);
+                data.WriteBoneWeights4(mesh.boneWeights);
                 data.bindposes = mesh.bindposes;
             }
             if (flags.getBlendShapes && mesh.blendShapeCount > 0)

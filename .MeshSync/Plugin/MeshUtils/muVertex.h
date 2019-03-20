@@ -22,8 +22,8 @@ struct Weights
         return total;
     }
 };
+using Weights1 = Weights<1>;
 using Weights4 = Weights<4>;
-using Weights8 = Weights<8>;
 
 
 // vertex interleave
