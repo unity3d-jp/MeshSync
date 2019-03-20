@@ -1381,8 +1381,8 @@ namespace UTJ.MeshSync
 #if UNITY_2019_1_OR_NEWER
                 var bonesPerVertex = new NativeArray<byte>(split.numPoints, Allocator.Temp);
                 var weights = new NativeArray<BoneWeight1>(split.numBoneWeights, Allocator.Temp);
-                data.ReadBoneCounts(bonesPerVertex.ToArray(), split);
-                data.ReadBoneWeightsV(weights.ToArray(), split);
+                data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex), split);
+                data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights), split);
                 mesh.SetBoneWeights(bonesPerVertex, weights);
                 bonesPerVertex.Dispose();
                 weights.Dispose();

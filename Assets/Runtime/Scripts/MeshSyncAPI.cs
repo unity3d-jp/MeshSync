@@ -83,6 +83,36 @@ namespace UTJ.MeshSync
                 default: return TextureFormat.Ru8;
             }
         }
+
+#if UNITY_2019_1_OR_NEWER
+        // explicit layout doesn't work with generics...
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct NAByte
+        {
+            [FieldOffset(0)] public Unity.Collections.NativeArray<byte> nativeArray;
+            [FieldOffset(0)] public IntPtr pointer;
+        }
+        public static IntPtr ForceGetPointer(ref Unity.Collections.NativeArray<byte> na)
+        {
+            var union = new NAByte();
+            union.nativeArray = na;
+            return union.pointer;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct NABoneWeight1
+        {
+            [FieldOffset(0)] public Unity.Collections.NativeArray<BoneWeight1> nativeArray;
+            [FieldOffset(0)] public IntPtr pointer;
+        }
+        public static IntPtr ForceGetPointer(ref Unity.Collections.NativeArray<BoneWeight1> na)
+        {
+            var union = new NABoneWeight1();
+            union.nativeArray = na;
+            return union.pointer;
+        }
+#endif
     }
 
 
@@ -2064,8 +2094,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst, SplitData split);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
 #if UNITY_2019_1_OR_NEWER
-        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneCounts(IntPtr self, byte[] dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeightsV(IntPtr self, BoneWeight1[] dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst, SplitData split);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneCounts(IntPtr self, byte[] counts, int size);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeightsV(IntPtr self, BoneWeight1[] weights, int size);
 #endif
@@ -2117,8 +2147,8 @@ namespace UTJ.MeshSync
         public void ReadVelocities(PinnedList<Vector3> dst, SplitData split) { msMeshReadVelocities(self, dst, split); }
         public void ReadBoneWeights4(IntPtr dst, SplitData split) { msMeshReadBoneWeights4(self, dst, split); }
 #if UNITY_2019_1_OR_NEWER
-        public void ReadBoneCounts(byte[] dst, SplitData split) { msMeshReadBoneCounts(self, dst, split); }
-        public void ReadBoneWeightsV(BoneWeight1[] dst, SplitData split) { msMeshReadBoneWeightsV(self, dst, split); }
+        public void ReadBoneCounts(IntPtr dst, SplitData split) { msMeshReadBoneCounts(self, dst, split); }
+        public void ReadBoneWeightsV(IntPtr dst, SplitData split) { msMeshReadBoneWeightsV(self, dst, split); }
 #endif
         public void ReadIndices(IntPtr dst, SplitData split) { msMeshReadIndices(self, dst, split); }
 
