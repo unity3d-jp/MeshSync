@@ -466,6 +466,7 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
                 mesh.refine_settings.flags.split = 1;
                 mesh.refine_settings.flags.optimize_topology = 1;
                 mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
+                mesh.refine_settings.max_bone_influence = m_settings.mesh_max_bone_influence;
                 mesh.refine(mesh.refine_settings);
             }
             else {

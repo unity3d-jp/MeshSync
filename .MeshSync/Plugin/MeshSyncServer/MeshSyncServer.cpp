@@ -839,6 +839,10 @@ msAPI int msSplitGetNumIndices(ms::SplitData *self)
 {
     return (int)self->index_count;
 }
+msAPI int msSplitGetNumBoneWeights(ms::SplitData *self)
+{
+    return (int)self->bone_weight_count;
+}
 msAPI float3 msSplitGetBoundsCenter(ms::SplitData *self)
 {
     return self->bound_center;

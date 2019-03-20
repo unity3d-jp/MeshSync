@@ -571,7 +571,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         size_t num_points = points.size();
         tmp_bone_counts.resize_discard(num_points);
         tmp_bone_offsets.resize_discard(num_points);
-        tmp_weights1.resize_discard(num_points);
 
         CopyWithIndices(tmp_bone_counts.data(), bone_counts.data(), refiner.new2old_points);
 
@@ -581,6 +580,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             tmp_bone_offsets[i] = offset;
             offset += tmp_bone_counts[i];
         }
+        tmp_weights1.resize_discard(offset);
 
         // remap weights
         for (size_t i = 0; i < num_points; ++i) {
@@ -994,13 +994,14 @@ void Mesh::setupBoneWeightsVariable()
     };
 
     // calculate bone weights
-    int nbi = 0;
+    offset = 0;
     for (int vi = 0; vi < num_vertices; ++vi) {
+        auto *dst = &weights1[offset];
         int num_influence = 0;
         for (int bi = 0; bi < num_bones; ++bi) {
             float weight = bones[bi]->weights[vi];
             if (weight > 0.0f) {
-                auto& w1 = weights1[nbi++];
+                auto& w1 = dst[num_influence];
                 w1.weight = weight;
                 w1.index = bi;
 
@@ -1009,10 +1010,16 @@ void Mesh::setupBoneWeightsVariable()
                     break;
             }
         }
+        offset += num_influence;
 
-        auto& w1 = weights1[bone_offsets[vi]];
-        if (w1.normalize(bone_counts[vi]) == 0.0f)
+        if (dst->normalize(num_influence) == 0.0f) {
             search_weight(vi);
+        }
+        else {
+            // Unity require descending order of weights
+            std::sort(dst, dst + num_influence,
+                [&](const Weights1& a, const Weights1& b) { return a.weight > b.weight; });
+        }
     }
 }
 
