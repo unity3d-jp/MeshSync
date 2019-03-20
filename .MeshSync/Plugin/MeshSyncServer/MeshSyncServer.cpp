@@ -56,12 +56,12 @@ msAPI int msServerProcessMessages(ms::Server *server, msMessageHandler handler)
 msAPI void msServerBeginServe(ms::Server *server)
 {
     if (!server) { return; }
-    server->beginServe();
+    server->beginServeScene();
 }
 msAPI void msServerEndServe(ms::Server *server)
 {
     if (!server) { return; }
-    server->endServe();
+    server->endServeScene();
 }
 msAPI void msServerServeTransform(ms::Server *server, ms::Transform *data)
 {
@@ -912,9 +912,17 @@ msAPI const char* msBlendShapeGetName(ms::BlendShapeData *self)
 {
     return self ? self->name.c_str() : "";
 }
+msAPI void msBlendShapeSetName(ms::BlendShapeData *self, const char *v)
+{
+    self->name = v;
+}
 msAPI float msBlendShapeGetWeight(ms::BlendShapeData *self)
 {
     return self ? self->weight : 0.0f;
+}
+msAPI void msBlendShapeSetWeight(ms::BlendShapeData *self, float v)
+{
+    self->weight = v;
 }
 msAPI int msBlendShapeGetNumFrames(ms::BlendShapeData *self)
 {

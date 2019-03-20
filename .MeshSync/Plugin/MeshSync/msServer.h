@@ -48,8 +48,8 @@ public:
     void setServe(bool v);
     bool isServing() const;
 
-    void beginServe();
-    void endServe();
+    void beginServeScene();
+    void endServeScene();
 
     void setScrrenshotFilePath(const std::string& path);
     void setFileRootPath(const std::string& path);

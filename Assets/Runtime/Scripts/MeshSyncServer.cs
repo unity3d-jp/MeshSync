@@ -2029,6 +2029,7 @@ namespace UTJ.MeshSync
                     for (int bi = 0; bi < mesh.blendShapeCount; ++bi)
                     {
                         var bd = dst.AddBlendShape(mesh.GetBlendShapeName(bi));
+                        bd.weight = smr.GetBlendShapeWeight(bi);
                         int frameCount = mesh.GetBlendShapeFrameCount(bi);
                         for (int fi = 0; fi < frameCount; ++fi)
                         {

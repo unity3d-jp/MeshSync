@@ -421,7 +421,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
         convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
-    if (!bones.empty() && (weights4.empty() && weights1.empty())) {
+    if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)
             setupBoneWeights4();
         else if (mrs.max_bone_influence == -1)
@@ -558,15 +558,15 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
     // bone weights
     if (!weights4.empty()) {
-        RawVector<Weights4> tmp_weights4;
-        tmp_weights4.resize_discard(points.size());
-        CopyWithIndices(tmp_weights4.data(), weights4.data(), refiner.new2old_points);
-        weights4.swap(tmp_weights4);
+        RawVector<Weights4> tmp_weights;
+        tmp_weights.resize_discard(points.size());
+        CopyWithIndices(tmp_weights.data(), weights4.data(), refiner.new2old_points);
+        weights4.swap(tmp_weights);
     }
     if (!weights1.empty() && !bone_counts.empty() && !bone_offsets.empty()) {
         RawVector<uint8_t> tmp_bone_counts;
         RawVector<int> tmp_bone_offsets;
-        RawVector<Weights1> tmp_weights1;
+        RawVector<Weights1> tmp_weights;
 
         size_t num_points = points.size();
         tmp_bone_counts.resize_discard(num_points);
@@ -580,20 +580,20 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             tmp_bone_offsets[i] = offset;
             offset += tmp_bone_counts[i];
         }
-        tmp_weights1.resize_discard(offset);
+        tmp_weights.resize_discard(offset);
 
         // remap weights
         for (size_t i = 0; i < num_points; ++i) {
             int new_offset = tmp_bone_offsets[i];
             int old_offset = bone_offsets[refiner.new2old_points[i]];
-            weights1[old_offset].copy_to(&tmp_weights1[new_offset], tmp_bone_counts[i]);
+            weights1[old_offset].copy_to(&tmp_weights[new_offset], tmp_bone_counts[i]);
         }
 
         bone_counts.swap(tmp_bone_counts);
         bone_offsets.swap(tmp_bone_offsets);
-        weights1.swap(tmp_weights1);
+        weights1.swap(tmp_weights);
 
-        // setup split
+        // setup splits
         int weight_offset = 0;
         for (auto& split : splits) {
             split.bone_weight_offset = weight_offset;

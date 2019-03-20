@@ -1955,7 +1955,9 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msBlendShapeSetName(IntPtr self, string v);
         [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msBlendShapeSetWeight(IntPtr self, float v);
         [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
         [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst, SplitData split);
@@ -1967,10 +1969,12 @@ namespace UTJ.MeshSync
         public string name
         {
             get { return Misc.S(msBlendShapeGetName(self)); }
+            set { msBlendShapeSetName(self, value); }
         }
         public float weight
         {
             get { return msBlendShapeGetWeight(self); }
+            set { msBlendShapeSetWeight(self, value); }
         }
         public float numFrames
         {

@@ -294,10 +294,10 @@ bool Server::isServing() const
     return m_serving;
 }
 
-void Server::beginServe()
+void Server::beginServeScene()
 {
     if (!m_current_get_request) {
-        msLogError("Server::beginServeMesh(): m_current_get_request is null\n");
+        msLogError("m_current_get_request is null\n");
         return;
     }
     m_host_scene.reset(new Scene());
@@ -311,14 +311,14 @@ void Server::beginServe()
     m_host_scene->settings = request.scene_settings;
 }
 
-void Server::endServe()
+void Server::endServeScene()
 {
     if (!m_current_get_request) {
-        msLogError("Server::endServeMesh(): m_current_get_request is null\n");
+        msLogError("m_current_get_request is null\n");
         return;
     }
     if (!m_host_scene) {
-        msLogError("Server::endServeMesh(): m_host_scene is null\n");
+        msLogError("m_host_scene is null\n");
         return;
     }
 

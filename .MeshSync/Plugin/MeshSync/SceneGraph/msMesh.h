@@ -98,7 +98,7 @@ struct SplitData
 
 struct BlendShapeFrameData
 {
-    float weight = 0.0f;
+    float weight = 0.0f; // 0.0f - 100.0f
     RawVector<float3> points;
     RawVector<float3> normals;
     RawVector<float3> tangents;
@@ -122,7 +122,7 @@ msDeclPtr(BlendShapeFrameData);
 struct BlendShapeData
 {
     std::string name;
-    float weight = 0.0f;
+    float weight = 0.0f; // 0.0f - 100.0f
     std::vector<BlendShapeFrameDataPtr> frames;
 
 protected:
