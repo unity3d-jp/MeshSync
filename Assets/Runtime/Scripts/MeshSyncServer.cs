@@ -1043,11 +1043,16 @@ namespace UTJ.MeshSync
             if (m_findMaterialFromAssets && (dst.material == null || dst.name != materialName))
             {
                 var guids = AssetDatabase.FindAssets("t:Material " + materialName);
-                if (guids.Length > 0)
+                foreach (var guid in guids)
                 {
-                    dst.material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guids[0]));
-                    dst.materialIID = 0; // ignore material params
-                    m_needReassignMaterials = true;
+                    var material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                    if (material.name == materialName)
+                    {
+                        dst.material = material;
+                        dst.materialIID = 0; // ignore material params
+                        m_needReassignMaterials = true;
+                        break;
+                    }
                 }
             }
 #endif
