@@ -2,6 +2,36 @@
 
 namespace mu {
 
+struct Weights1
+{
+    float   weight;
+    int     index;
+
+    // assume 'this' is an element of array
+    void copy_to(Weights1 *dst, int n)
+    {
+        // avoid std::copy() because it is way slower than memcpy on some compilers...
+        memcpy(dst, this, sizeof(Weights1)*n);
+    }
+
+    // assume 'this' is an element of array
+    float normalize(int n)
+    {
+        float total = 0.0f;
+
+        auto *weights = this;
+        for (int i = 0; i < n; ++i)
+            total += weights[i].weight;
+
+        if (total != 0.0f) {
+            float rcp_total = 1.0f / total;
+            for (int i = 0; i < n; ++i)
+                weights[i].weight *= rcp_total;
+        }
+        return total;
+    }
+};
+
 template<int N>
 struct Weights
 {
@@ -22,7 +52,6 @@ struct Weights
         return total;
     }
 };
-using Weights1 = Weights<1>;
 using Weights4 = Weights<4>;
 
 

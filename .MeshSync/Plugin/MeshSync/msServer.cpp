@@ -323,7 +323,7 @@ void Server::endServe()
     }
 
     auto& request = *m_current_get_request;
-    parallel_for_each(m_host_scene->entities.begin(), m_host_scene->entities.end(), [&request](TransformPtr& p) {
+    parallel_for_each(m_host_scene->entities.begin(), m_host_scene->entities.end(), [&request, this](TransformPtr& p) {
         auto pmesh = dynamic_cast<Mesh*>(p.get());
         if (!pmesh)
             return;
@@ -333,6 +333,7 @@ void Server::endServe()
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
         mesh.refine_settings.smooth_angle = 180.0f;
+        mesh.refine_settings.max_bone_influence = m_settings.mesh_max_bone_influence;
         mesh.refine(mesh.refine_settings);
     });
     request.ready = true;

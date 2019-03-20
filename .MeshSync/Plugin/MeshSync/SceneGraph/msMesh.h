@@ -60,7 +60,7 @@ struct MeshRefineSettings
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f; // in degree
     uint32_t split_unit = 65000;
-    uint32_t max_bones_par_vertices = 4;
+    uint32_t max_bone_influence = 4;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
     float4x4 mirror_basis = float4x4::identity();
@@ -223,7 +223,8 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 
-    void setupBoneData();
+    void setupBoneWeights4();
+    void setupBoneWeightsVariable();
     void setupFlags();
 
     void convertHandedness_Mesh(bool x, bool yz);

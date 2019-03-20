@@ -14,7 +14,7 @@ uint64_t MeshRefineSettings::checksum() const
     ret += csum(scale_factor);
     ret += csum(smooth_angle);
     ret += csum(split_unit);
-    ret += csum(max_bones_par_vertices);
+    ret += csum(max_bone_influence);
     ret += csum(local2world);
     ret += csum(world2local);
     ret += csum(mirror_basis);
@@ -427,8 +427,11 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
         convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
     }
-    if (weights4.empty() && !bones.empty()) {
-        setupBoneData();
+    if (!bones.empty() && (weights4.empty() && weights1.empty())) {
+        if (mrs.max_bone_influence == 4)
+            setupBoneWeights4();
+        else
+            setupBoneWeightsVariable();
     }
 
     // normals
@@ -843,7 +846,7 @@ void Mesh::applyTransform(const float4x4& m)
     mu::MulVectors(m, velocities.data(), velocities.data(), velocities.size());
 }
 
-void Mesh::setupBoneData()
+void Mesh::setupBoneWeights4()
 {
     if (bones.empty())
         return;
@@ -881,20 +884,14 @@ void Mesh::setupBoneData()
         }
     }
     else {
-        struct IW
-        {
-            int index;
-            float weight;
-        };
-
-        auto *tmp = (IW*)alloca(sizeof(IW) * num_bones);
+        auto *tmp = (Weights1*)alloca(sizeof(Weights1) * num_bones);
         for (int vi = 0; vi < num_vertices; ++vi) {
             for (int bi = 0; bi < num_bones; ++bi) {
                 tmp[bi].index = bi;
                 tmp[bi].weight = bones[bi]->weights[vi];
             }
             std::nth_element(tmp, tmp + 4, tmp + num_bones,
-                [&](const IW& a, const IW& b) { return a.weight > b.weight; });
+                [&](const Weights1& a, const Weights1& b) { return a.weight > b.weight; });
 
             auto& w4 = weights4[vi];
             for (int bi = 0; bi < 4; ++bi) {
@@ -904,6 +901,66 @@ void Mesh::setupBoneData()
             if (w4.normalize() == 0.0f)
                 search_weight(vi);
         }
+    }
+}
+
+void Mesh::setupBoneWeightsVariable()
+{
+    if (bones.empty())
+        return;
+
+    int num_bones = (int)bones.size();
+    int num_vertices = (int)points.size();
+    RawVector<int> bone_count_offsets;
+    bone_count_offsets.resize_discard(num_vertices);
+    bone_counts.resize_discard(num_vertices);
+
+    // count bone influence and offset
+    int num_bone_influence = 0;
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        int num_influence = 0;
+        for (int bi = 0; bi < num_bones; ++bi) {
+            float weight = bones[bi]->weights[vi];
+            if (weight > 0.0f)
+                ++num_influence;
+        }
+        bone_count_offsets[vi] = num_bone_influence;
+        bone_counts[vi] = num_influence;
+        num_bone_influence += num_influence;
+    }
+    weights1.resize_zeroclear(num_bone_influence);
+
+    auto search_weight = [this, &bone_count_offsets](int vi) {
+        // some DCC tools (mainly MotionBuilder) omit weight data if there are vertices with identical position. so find it.
+        int n = bone_counts[vi];
+        auto *dst = &weights1[bone_count_offsets[vi]];
+        auto beg = points.begin();
+        auto end = beg + vi;
+        auto it = std::find(beg, end, points[vi]);
+        if (it != end) {
+            // found
+            weights1[bone_count_offsets[std::distance(beg, it)]].copy_to(dst, n);
+        }
+        else {
+            // not found. assign 1 to void divide-by-zero...
+            dst[0].weight = 1.0f;
+        }
+    };
+
+    int nbi = 0;
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        for (int bi = 0; bi < num_bones; ++bi) {
+            float weight = bones[bi]->weights[vi];
+            if (weight > 0.0f) {
+                auto& w1 = weights1[nbi++];
+                w1.weight = weight;
+                w1.index = bi;
+            }
+        }
+
+        auto& w1 = weights1[bone_count_offsets[vi]];
+        if (w1.normalize(bone_counts[vi]) == 0.0f)
+            search_weight(vi);
     }
 }
 
