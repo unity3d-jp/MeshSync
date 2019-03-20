@@ -333,7 +333,7 @@ void Server::endServe()
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
         mesh.refine_settings.smooth_angle = 180.0f;
-        mesh.refine_settings.max_bone_influence = m_settings.mesh_max_bone_influence;
+        mesh.refine_settings.max_bone_influence = 0;
         mesh.refine(mesh.refine_settings);
     });
     request.ready = true;

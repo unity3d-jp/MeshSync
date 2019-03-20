@@ -23,8 +23,25 @@ void Message::deserialize(std::istream& is)
     read(is, message_id);
 }
 
+
+void GetFlags::setAllGetFlags()
+{
+    get_transform = 1;
+    get_points = 1;
+    get_normals = 1;
+    get_tangents = 1;
+    get_uv0 = 1;
+    get_uv1 = 1;
+    get_colors = 1;
+    get_indices = 1;
+    get_material_ids = 1;
+    get_bones = 1;
+    get_blendshapes = 1;
+}
+
 GetMessage::GetMessage()
 {
+    flags.setAllGetFlags();
 }
 void GetMessage::serialize(std::ostream& os) const
 {

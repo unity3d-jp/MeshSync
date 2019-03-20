@@ -745,7 +745,21 @@ msAPI void msMeshReadBoneWeights4(ms::Mesh *self, ms::Weights4 *dst, ms::SplitDa
 }
 msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int size)
 {
-    self->weights4.assign(data, data + size);
+    auto& bones = self->bones;
+    if (bones.empty()) {
+        msLogWarning("bones are empty!");
+        return;
+    }
+
+    int num_points = (int)self->points.size();
+    for (auto& bone : bones)
+        bone->weights.resize_zeroclear(num_points);
+    for (int vi = 0; vi < num_points; ++vi) {
+        auto& indices = data[vi].indices;
+        auto& weights = data[vi].weights;
+        for (int wi = 0; wi < 4; ++wi)
+            bones[indices[wi]]->weights[vi] = weights[wi];
+    }
 }
 msAPI void msMeshReadBoneCounts(ms::Mesh *self, uint8_t *dst, ms::SplitData *split)
 {
@@ -762,9 +776,26 @@ msAPI void msMeshWriteBoneCounts(ms::Mesh *self, uint8_t *data, int size)
 {
     self->bone_counts.assign(data, data + size);
 }
-msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, const ms::Weights1 *data, int size)
+msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_size, const ms::Weights1 *weights, int weights_size)
 {
-    self->weights1.assign(data, data + size);
+    auto& bones = self->bones;
+    if (bones.empty()) {
+        msLogWarning("bones are empty!");
+        return;
+    }
+
+    int num_points = (int)self->points.size();
+    for (auto& bone : bones)
+        bone->weights.resize_zeroclear(num_points);
+
+    int offset = 0;
+    for (int vi = 0; vi < num_points; ++vi) {
+        int num_weights = counts[vi];
+        auto *data = &weights[offset];
+        for (int wi = 0; wi < num_weights; ++wi)
+            bones[data->index]->weights[vi] = data->weight;
+        offset += num_weights;
+    }
 }
 
 msAPI int msMeshGetNumBones(ms::Mesh *self)

@@ -44,10 +44,11 @@ struct GetFlags
     uint32_t get_indices : 1;
     uint32_t get_material_ids : 1;
     uint32_t get_bones : 1;
-    uint32_t get_blendshapes : 1;
+    uint32_t get_blendshapes : 1; // 10
     uint32_t apply_culling : 1;
-};
 
+    void setAllGetFlags();
+};
 
 class GetMessage : public Message
 {

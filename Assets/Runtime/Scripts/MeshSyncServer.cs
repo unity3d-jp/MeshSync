@@ -2005,11 +2005,38 @@ namespace UTJ.MeshSync
             {
                 CaptureMesh(ref dst, mesh, null, mes.flags, smr.sharedMaterials);
 
+                // bones
                 if (mes.flags.getBones)
                 {
                     dst.SetBonePaths(this, smr.bones);
                     dst.bindposes = mesh.bindposes;
+
+#if UNITY_2019_1_OR_NEWER
+                    var bonesPerVertex = mesh.GetBonesPerVertex();
+                    var weights = mesh.GetAllBoneWeights();
+                    dst.WriteBoneWeightsV(ref bonesPerVertex, ref weights);
+#else
                     dst.WriteBoneWeights4(mesh.boneWeights);
+#endif
+                }
+
+                // blendshapes
+                if (mes.flags.getBlendShapes && mesh.blendShapeCount > 0)
+                {
+                    var v = new Vector3[mesh.vertexCount];
+                    var n = new Vector3[mesh.vertexCount];
+                    var t = new Vector3[mesh.vertexCount];
+                    for (int bi = 0; bi < mesh.blendShapeCount; ++bi)
+                    {
+                        var bd = dst.AddBlendShape(mesh.GetBlendShapeName(bi));
+                        int frameCount = mesh.GetBlendShapeFrameCount(bi);
+                        for (int fi = 0; fi < frameCount; ++fi)
+                        {
+                            mesh.GetBlendShapeFrameVertices(bi, fi, v, n, t);
+                            float w = mesh.GetBlendShapeFrameWeight(bi, fi);
+                            bd.AddFrame(w, v, n, t);
+                        }
+                    }
                 }
             }
             return true;
@@ -2017,31 +2044,18 @@ namespace UTJ.MeshSync
 
         void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials)
         {
-            // todo: cloth?
             if (flags.getPoints)
-            {
                 data.WritePoints(mesh.vertices);
-            }
             if (flags.getNormals)
-            {
                 data.WriteNormals(mesh.normals);
-            }
             if (flags.getTangents)
-            {
                 data.WriteTangents(mesh.tangents);
-            }
             if (flags.getUV0)
-            {
                 data.WriteUV0(mesh.uv);
-            }
             if (flags.getUV1)
-            {
                 data.WriteUV1(mesh.uv2);
-            }
             if (flags.getColors)
-            {
                 data.WriteColors(mesh.colors);
-            }
             if (flags.getIndices)
             {
                 if (!flags.getMaterialIDs || materials == null || materials.Length == 0)
@@ -2059,28 +2073,8 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            if (flags.getBones)
-            {
-                data.WriteBoneWeights4(mesh.boneWeights);
-                data.bindposes = mesh.bindposes;
-            }
-            if (flags.getBlendShapes && mesh.blendShapeCount > 0)
-            {
-                var v = new Vector3[mesh.vertexCount];
-                var n = new Vector3[mesh.vertexCount];
-                var t = new Vector3[mesh.vertexCount];
-                for (int bi = 0; bi < mesh.blendShapeCount; ++bi)
-                {
-                    var bd = data.AddBlendShape(mesh.GetBlendShapeName(bi));
-                    int frameCount = mesh.GetBlendShapeFrameCount(bi);
-                    for (int fi = 0; fi < frameCount; ++fi)
-                    {
-                        mesh.GetBlendShapeFrameVertices(bi, fi, v, n, t);
-                        float w = mesh.GetBlendShapeFrameWeight(bi, fi);
-                        bd.AddFrame(w, v, n, t);
-                    }
-                }
-            }
+
+            // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
         }
         #endregion
 
