@@ -754,7 +754,7 @@ msAPI void msMeshReadBoneCounts(ms::Mesh *self, uint8_t *dst, ms::SplitData *spl
 msAPI void msMeshReadBoneWeightsV(ms::Mesh *self, ms::Weights1 *dst, ms::SplitData *split)
 {
     if (split)
-        self->weights1.copy_to(dst, split->weight_count, split->weight_offset);
+        self->weights1.copy_to(dst, split->bone_weight_count, split->bone_weight_offset);
     else
         self->weights1.copy_to(dst);
 }
