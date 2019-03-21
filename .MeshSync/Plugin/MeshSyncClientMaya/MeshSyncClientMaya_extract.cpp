@@ -193,30 +193,30 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
         pos = extract_position(mat);
         rot = extract_rotation(mat);
         scale = extract_scale(mat);
-        n->pivot = mu::float4x4::identity();
+        n->model_transform = mu::float4x4::identity();
     };
 
     // fbx-compatible transform extraction
     // - scale pivot is ignored
     // - rotation orientation is ignored
     auto fbx_compatible_transform_extraction = [n, &pos, &rot, &scale]() {
-        MFnTransform fn_trans(n->trans->node);
+        MFnTransform fn_trans(n->getDagPath(false));
 
-        MVector t, rp;
+        MVector t, p, pt;
         MQuaternion r;
         double s[3];
-        t = fn_trans.getTranslation(MSpace::kTransform);
-        rp = fn_trans.rotatePivot(MSpace::kTransform);
+        MStatus stat;
+        t = fn_trans.getTranslation(MSpace::kWorld, &stat);
+        p = fn_trans.rotatePivot(MSpace::kWorld, &stat);
+        pt = fn_trans.rotatePivotTranslation(MSpace::kWorld, &stat);
         fn_trans.getRotation(r);
         fn_trans.getScale(s);
 
-        pos = to_float3(t);
-        if (!n->parent)
-            pos += to_float3(rp);
+        pos = to_float3(p);
         rot = to_quatf(r);
         scale = to_float3(s);
-        n->pivot = mu::float4x4::identity();
-        (mu::float3&)n->pivot[3] = to_float3(-rp);
+        n->model_transform = mu::float4x4::identity();
+        (mu::float3&)n->model_transform[3] = to_float3(t - p + pt);
     };
 
     if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
@@ -809,7 +809,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     else {
         // apply pivot
         dst.refine_settings.flags.apply_local2world = 1;
-        dst.refine_settings.local2world = n->pivot;
+        dst.refine_settings.local2world = n->model_transform;
     }
 
     // apply tweaks
@@ -853,7 +853,7 @@ void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
 
     // apply pivot
     dst.refine_settings.flags.apply_local2world = 1;
-    dst.refine_settings.local2world = n->pivot;
+    dst.refine_settings.local2world = n->model_transform;
 
     dst.setupFlags();
 }

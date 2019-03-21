@@ -53,14 +53,14 @@ struct TreeNode : public mu::noncopyable
 
     ms::TransformPtr dst_obj;
     ms::AnimationPtr dst_anim;
-    ms::float4x4 pivot;
+    ms::float4x4 model_transform;
 
     ms::Identifier getIdentifier() const;
     void clearState();
     bool isInstance() const;
     TreeNode* getPrimaryInstanceNode() const;
 
-    MDagPath getDagPath() const;
+    MDagPath getDagPath(bool include_shape = true) const;
     void getDagPath_(MDagPath& dst) const;
     MObject getTrans() const;
     MObject getShape() const;

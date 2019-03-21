@@ -56,11 +56,11 @@ TreeNode* TreeNode::getPrimaryInstanceNode() const
     return nullptr;
 }
 
-MDagPath TreeNode::getDagPath() const
+MDagPath TreeNode::getDagPath(bool include_shape) const
 {
     MDagPath ret;
     getDagPath_(ret);
-    if (shape)
+    if (include_shape && shape)
         ret.push(shape->node);
     return ret;
 }
