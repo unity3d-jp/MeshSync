@@ -92,18 +92,6 @@ MTime ToMTime(float seconds)
     return ret;
 }
 
-mu::float4x4 GetPivotMatrix(MObject node)
-{
-    mu::float4x4 ret = mu::float4x4::identity();
-    if (!node.hasFn(MFn::kTransform))
-        return ret;
-
-    MFnTransform fn_trans(node);
-    auto pivot = fn_trans.rotatePivot(MSpace::kTransform);
-    (mu::float3&)ret[3] = to_float3(pivot);
-    return ret;
-}
-
 
 #ifdef mscDebug
 static void DumpPlugInfoImpl(MPlug plug, std::string indent)

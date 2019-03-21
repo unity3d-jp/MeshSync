@@ -105,6 +105,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-kfr", "-keyframeReduction", MSyntax::kBoolean);
     syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
+    syntax.addFlag("-fct", "-fbxCompatibleTransform", MSyntax::kBoolean);
 
     return syntax;
 }
@@ -152,6 +153,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("keyframeReduction", settings.reduce_keyframes, false);
     Handle("removeNamespace", settings.remove_namespace, true);
     Handle("multithreaded", settings.multithreaded, false);
+    Handle("fbxCompatibleTransform", settings.fbx_compatible_transform, true);
 #undef Handle
 
     MPxCommand::setResult(result);

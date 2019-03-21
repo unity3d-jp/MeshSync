@@ -53,6 +53,7 @@ struct TreeNode : public mu::noncopyable
 
     ms::TransformPtr dst_obj;
     ms::AnimationPtr dst_anim;
+    ms::float4x4 pivot;
 
     ms::Identifier getIdentifier() const;
     void clearState();
@@ -98,6 +99,7 @@ public:
         bool remove_namespace = true;
         bool reduce_keyframes = true;
         bool multithreaded = false;
+        bool fbx_compatible_transform = true;
 
         // import settings
         bool bake_skin = false;
@@ -187,6 +189,11 @@ private:
     void doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape);
     void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
     void doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n);
+
+    void extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+        float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance);
+    void extractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle);
 
     int exportAnimations(SendScope scope);
     bool exportAnimation(TreeNode *tn, bool force);

@@ -17,9 +17,6 @@ MObject FindOrigMesh(const MObject& node);
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
 
-// rotation pivot. not scale pivot
-mu::float4x4 GetPivotMatrix(MObject node);
-
 #ifdef mscDebug
     void DumpPlugInfoImpl(MPlug plug);
     void DumpPlugInfoImpl(MFnDependencyNode& fn);
