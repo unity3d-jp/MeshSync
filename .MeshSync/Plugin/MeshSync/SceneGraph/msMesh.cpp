@@ -884,6 +884,8 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 
 void Mesh::applyTransform(const float4x4& m)
 {
+    if (mu::near_equal(m, float4x4::identity()))
+        return;
     mu::MulPoints(m, points.data(), points.data(), points.size());
     mu::MulVectors(m, normals.data(), normals.data(), normals.size());
     mu::Normalize(normals.data(), normals.size());

@@ -5,36 +5,6 @@
 #include "msmayaCommands.h"
 
 
-static inline double GetDoubleValue(MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0)
-{
-    MString name = plug_name;
-    name += color_name;
-    auto plug = fn.findPlug(name, true);
-    if (!plug.isNull()) {
-        double ret = 0.0;
-        plug.getValue(ret);
-        return ret;
-    }
-    else {
-        return def;
-    }
-}
-
-static inline int GetIntValue(MFnDependencyNode& fn, const char *plug_name, const char *color_name, int def = 0)
-{
-    MString name = plug_name;
-    name += color_name;
-    auto plug = fn.findPlug(name, true);
-    if (!plug.isNull()) {
-        int ret = 0;
-        plug.getValue(ret);
-        return ret;
-    }
-    else {
-        return def;
-    }
-}
-
 static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu::float4& color, std::string& texpath)
 {
     MPlug plug = fn.findPlug(plug_name, true);
@@ -72,10 +42,25 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
     }
 
     if (texpath.empty()) {
+        auto get_color_element = [](MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0) -> double
+        {
+            MString name = plug_name;
+            name += color_name;
+            auto plug = fn.findPlug(name, true);
+            if (!plug.isNull()) {
+                double ret = 0.0;
+                plug.getValue(ret);
+                return ret;
+            }
+            else {
+                return def;
+            }
+        };
+
         color = {
-            (float)GetDoubleValue(fn, plug_name, "R"),
-            (float)GetDoubleValue(fn, plug_name, "G"),
-            (float)GetDoubleValue(fn, plug_name, "B"),
+            (float)get_color_element(fn, plug_name, "R"),
+            (float)get_color_element(fn, plug_name, "G"),
+            (float)get_color_element(fn, plug_name, "B"),
             1.0f,
         };
     }
@@ -202,21 +187,21 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
     auto fbx_compatible_transform_extraction = [n, &pos, &rot, &scale]() {
         MFnTransform fn_trans(n->getDagPath(false));
 
-        MVector t, p, pt;
+        MVector t, p;
         MQuaternion r;
         double s[3];
-        MStatus stat;
-        t = fn_trans.getTranslation(MSpace::kWorld, &stat);
-        p = fn_trans.rotatePivot(MSpace::kWorld, &stat);
-        pt = fn_trans.rotatePivotTranslation(MSpace::kWorld, &stat);
+        // use rotate pivot as translation
+        t = fn_trans.rotatePivot(MSpace::kWorld);
+        p = fn_trans.rotatePivot(MSpace::kTransform);
         fn_trans.getRotation(r);
         fn_trans.getScale(s);
 
-        pos = to_float3(p);
+        pos = to_float3(t);
         rot = to_quatf(r);
         scale = to_float3(s);
+
         n->model_transform = mu::float4x4::identity();
-        (mu::float3&)n->model_transform[3] = to_float3(t - p + pt);
+        (mu::float3&)n->model_transform[3] = to_float3(-p);
     };
 
     if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
