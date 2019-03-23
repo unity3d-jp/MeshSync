@@ -44,6 +44,7 @@ private:
     {
         MQObject base_obj = nullptr;
         MQObject target_obj = nullptr;
+        ms::MeshPtr base;
         ms::BlendShapeDataPtr dst;
     };
 

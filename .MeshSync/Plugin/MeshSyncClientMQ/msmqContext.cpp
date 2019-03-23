@@ -259,53 +259,65 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
 
 #if MQPLUGIN_VERSION >= 0x0470
     if (m_settings.sync_morphs) {
+        // build morph base-target pairs
         for (auto& kvp : m_morph_records) {
-            auto& mrec = kvp.second;
+            auto& morph_record = kvp.second;
             auto target = kvp.second.target_obj;
             auto base = kvp.second.base_obj;
 
             auto it = std::find_if(m_obj_records.begin(), m_obj_records.end(), [base](auto& orec) { return orec.obj == base; });
             if (it != m_obj_records.end()) {
                 auto& obj_record = *it;
-                auto bdata = ms::BlendShapeData::create();
-                bdata->name = GetName(target);
-                obj_record.dst->blendshapes.push_back(bdata);
-                mrec.dst = bdata;
 
-                // todo: make parallel
-                auto src = obj_record.dst;
-                auto dst = ms::BlendShapeFrameData::create();
-                bdata->frames.push_back(dst);
-                dst->weight = 100.0f;
+                auto blendshape = ms::BlendShapeData::create();
+                obj_record.dst->blendshapes.push_back(blendshape);
+                blendshape->name = GetName(target);
 
-                auto& counts = src->counts;
-                auto& indices = src->indices;
-                auto& base_points = src->points;
-                auto& dst_points = dst->points;
-                auto& base_normals = src->normals;
-                auto& dst_normals = dst->normals;
+                auto frame = ms::BlendShapeFrameData::create();
+                blendshape->frames.push_back(frame);
+                frame->weight = 100.0f;
 
-                size_t num_faces = counts.size();
-                size_t num_indices = indices.size();
-                size_t num_points = base_points.size();
-
-                dst_points.resize(num_points);
-                target->GetVertexArray((MQPoint*)dst_points.data());
-                for (size_t i = 0; i < num_points; ++i)
-                    dst_points[i] -= base_points[i];
-
-                dst_normals.resize(num_indices);
-                auto *normals = dst_normals.data();
-                for (size_t fi = 0; fi < num_faces; ++fi) {
-                    int count = counts[fi];
-                    BYTE flags;
-                    for (int ci = 0; ci < count; ++ci)
-                        target->GetFaceVertexNormal(fi, ci, flags, (MQPoint&)*(normals++));
-                }
-                for (size_t i = 0; i < num_indices; ++i)
-                    dst_normals[i] -= base_normals[i];
+                morph_record.base = obj_record.dst;
+                morph_record.dst = blendshape;
             }
         }
+
+        // gen delta in parallel
+        parallel_for_each(m_morph_records.begin(), m_morph_records.end(), [](auto& kvp) {
+            auto& morph_record = kvp.second;
+            auto target = kvp.second.target_obj;
+            auto base = morph_record.base;
+            auto dst = morph_record.dst->frames[0];
+            if (!target || !base || !dst)
+                return;
+
+            auto& counts = base->counts;
+            auto& indices = base->indices;
+            auto& base_points = base->points;
+            auto& dst_points = dst->points;
+            auto& base_normals = base->normals;
+            auto& dst_normals = dst->normals;
+
+            size_t num_faces = counts.size();
+            size_t num_indices = indices.size();
+            size_t num_points = base_points.size();
+
+            dst_points.resize(num_points);
+            target->GetVertexArray((MQPoint*)dst_points.data());
+            for (size_t i = 0; i < num_points; ++i)
+                dst_points[i] -= base_points[i];
+
+            dst_normals.resize(num_indices);
+            auto *normals = dst_normals.data();
+            for (size_t fi = 0; fi < num_faces; ++fi) {
+                int count = counts[fi];
+                BYTE flags;
+                for (int ci = 0; ci < count; ++ci)
+                    target->GetFaceVertexNormal((int)fi, ci, flags, (MQPoint&)*(normals++));
+            }
+            for (size_t i = 0; i < num_indices; ++i)
+                dst_normals[i] -= base_normals[i];
+        });
     }
     m_morph_records.clear();
 #endif
