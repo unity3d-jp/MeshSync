@@ -40,6 +40,13 @@ public:
     bool importMeshes(MQDocument doc);
 
 private:
+    struct MorphRecord
+    {
+        MQObject base_obj = nullptr;
+        MQObject target_obj = nullptr;
+        ms::BlendShapeDataPtr dst;
+    };
+
     struct ObjectRecord : public mu::noncopyable
     {
         MQObject obj = nullptr;
@@ -53,6 +60,7 @@ private:
         std::string name;
         float3 world_pos = float3::zero();
         quatf world_rot = quatf::identity();
+        float3 world_scale = float3::one();
         float4x4 bindpose = float4x4::identity();
         ms::TransformPtr dst = ms::Transform::create();
     };
@@ -74,6 +82,7 @@ private:
     HostMeshes m_host_meshes;
 
     std::vector<ObjectRecord> m_obj_records;
+    std::map<UINT, MorphRecord> m_morph_records;
     std::map<UINT, BoneRecord> m_bone_records;
 
     ms::IDGenerator<MQCMaterial*> m_material_ids;

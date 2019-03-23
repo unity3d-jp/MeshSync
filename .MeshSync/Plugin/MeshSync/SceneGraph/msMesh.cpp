@@ -443,6 +443,9 @@ void Mesh::refine(const MeshRefineSettings& mrs)
         makeDoubleSided();
     }
 
+    size_t num_indices_old = indices.size();
+    size_t num_points_old = points.size();
+
     RawVector<float3> tmp_normals;
     RawVector<float2> tmp_uv0, tmp_uv1;
     RawVector<float4> tmp_colors;
@@ -611,19 +614,22 @@ void Mesh::refine(const MeshRefineSettings& mrs)
             bs->sort();
             for (auto& fp : bs->frames) {
                 auto& f = *fp;
-                if (!f.points.empty()) {
-                    tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), f.points.data(), refiner.new2old_points);
+                if (f.points.size() == num_points_old) {
+                    Remap(tmp, f.points, refiner.new2old_points);
                     f.points.swap(tmp);
                 }
-                if (!f.normals.empty()) {
-                    tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), f.normals.data(), refiner.new2old_points);
+
+                if (f.normals.size() == num_points_old) {
+                    Remap(tmp, f.normals, refiner.new2old_points);
                     f.normals.swap(tmp);
                 }
-                if (!f.tangents.empty()) {
-                    tmp.resize_discard(points.size());
-                    CopyWithIndices(tmp.data(), f.tangents.data(), refiner.new2old_points);
+                else if (f.normals.size() == num_indices_old) {
+                    Remap(tmp, f.normals, remap_normals);
+                    f.normals.swap(tmp);
+                }
+
+                if (f.tangents.size() == num_points_old) {
+                    Remap(tmp, f.tangents, refiner.new2old_points);
                     f.tangents.swap(tmp);
                 }
             }

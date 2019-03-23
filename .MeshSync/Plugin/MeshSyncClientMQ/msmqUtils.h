@@ -23,7 +23,9 @@ inline MQColor to_MQColor(const float4& v)
     return MQColor(v[0], v[1], v[2]);
 }
 
-std::string BuildPath(MQDocument doc, MQObject obj);
+std::string GetName(MQObject obj);
+std::string GetName(MQMaterial obj);
+std::string GetPath(MQDocument doc, MQObject obj);
 bool ExtractID(const char *name, int& id);
 
 float3 ToEular(const MQAngle& ang, bool flip_head = false);
