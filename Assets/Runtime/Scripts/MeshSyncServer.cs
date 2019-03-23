@@ -165,7 +165,7 @@ namespace UTJ.MeshSync
 
         #region Fields
         [SerializeField] int m_serverPort = 8080;
-        [SerializeField] string m_assetDir = "MeshSyncAssets";
+        [SerializeField] DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
         [SerializeField] Transform m_rootObject;
         [Space(10)]
         [SerializeField] bool m_syncVisibility = true;
@@ -214,14 +214,14 @@ namespace UTJ.MeshSync
             get { return m_serverPort; }
             set { m_serverPort = value; }
         }
-        public string assetDir
+        public DataPath assetDir
         {
             get { return m_assetDir; }
             set { m_assetDir = value; }
         }
         public string assetPath
         {
-            get { return "Assets/" + m_assetDir; }
+            get { return "Assets/" + m_assetDir.leaf; }
         }
         public string httpFileRootPath
         {
@@ -644,8 +644,7 @@ namespace UTJ.MeshSync
         {
 #if UNITY_EDITOR
             Try(()=> {
-                if (!AssetDatabase.IsValidFolder(assetPath))
-                    AssetDatabase.CreateFolder("Assets", m_assetDir);
+                m_assetDir.CreateDirectory();
             });
 #endif
         }
