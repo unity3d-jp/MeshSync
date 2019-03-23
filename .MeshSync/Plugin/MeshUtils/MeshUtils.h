@@ -236,32 +236,33 @@ inline bool Split(const IndexArray& counts, int max_vertices, const SplitMeshHan
 }
 
 
-inline void MirrorPoints(float3 *dst, const IArray<float3>& src, float3 plane_n, float plane_d)
+inline void MirrorPoints(float3 *dst, size_t n, float3 plane_n, float plane_d)
 {
-    if (!dst || !src.data()) { return; }
-
-    auto n = src.size();
-    for (size_t i = 0; i < n; ++i) {
-        auto& p = src[i];
-        float d = dot(plane_n, p) - plane_d;
-        dst[i] = p - (plane_n * (d  * 2.0f));
-    }
+    if (!dst)
+        return;
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = plane_mirror(dst[i], plane_n, plane_d);
 }
-inline void MirrorPoints(float3 *dst, const IArray<float3>& src, const IArray<int>& index, float3 plane_n, float plane_d)
-{
-    if (!dst || !src.data()) { return; }
 
-    auto n = index.size();
-    for (size_t i = 0; i < n; ++i) {
-        auto& p = src[index[i]];
-        float d = dot(plane_n, p) - plane_d;
-        dst[i] = p - (plane_n * (d  * 2.0f));
-    }
+inline void MirrorVectors(float3 *dst, size_t n, float3 plane_n)
+{
+    if (!dst)
+        return;
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = plane_mirror(dst[i], plane_n);
+}
+inline void MirrorVectors(float4 *dst, size_t n, float3 plane_n)
+{
+    if (!dst)
+        return;
+    for (size_t i = 0; i < n; ++i)
+        (float3&)dst[i] = plane_mirror((float3&)dst[i], plane_n);
 }
 
 inline void MirrorTopology(int *dst_counts, int *dst_indices, const IArray<int>& counts, const IArray<int>& indices, int offset)
 {
-    if (!dst_counts || !dst_indices) { return; }
+    if (!dst_counts || !dst_indices)
+        return;
 
     memcpy(dst_counts, counts.data(), sizeof(int) * counts.size());
     EnumerateReverseFaceIndices(counts, [&](int, int idx, int ridx) {
