@@ -152,7 +152,7 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
 
 
     // maya-compatible transform extraction
-    auto maya_compatible_transform_extraction = [n, &pos, &rot, &scale]() {
+    auto maya_compatible_transform_extraction = [n]() {
         // get TRS from world matrix.
         // note: world matrix is a result of local TRS + parent TRS + constraints.
         //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
@@ -175,33 +175,35 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
             mat *= mu::invert(pwmat);
         }
 
-        pos = extract_position(mat);
-        rot = extract_rotation(mat);
-        scale = extract_scale(mat);
+        auto& td = n->transform_data;
+        td.translation = extract_position(mat);
+        td.pivot = mu::float3::zero();
+        td.pivot_offset = mu::float3::zero();
+        td.rotation = extract_rotation(mat);
+        td.scale = extract_scale(mat);
         n->model_transform = mu::float4x4::identity();
     };
 
     // fbx-compatible transform extraction
     // - scale pivot is ignored
     // - rotation orientation is ignored
-    auto fbx_compatible_transform_extraction = [n, &pos, &rot, &scale]() {
+    auto fbx_compatible_transform_extraction = [n]() {
         MFnTransform fn_trans(n->getDagPath(false));
 
-        MVector t, p;
         MQuaternion r;
         double s[3];
-        // use rotate pivot as translation
-        t = fn_trans.rotatePivot(MSpace::kWorld);
-        p = fn_trans.rotatePivot(MSpace::kTransform);
         fn_trans.getRotation(r);
         fn_trans.getScale(s);
 
-        pos = to_float3(t);
-        rot = to_quatf(r);
-        scale = to_float3(s);
+        auto& td = n->transform_data;
+        td.translation = to_float3(fn_trans.getTranslation(MSpace::kTransform));
+        td.pivot = to_float3(fn_trans.rotatePivot(MSpace::kTransform));
+        td.pivot_offset = to_float3(fn_trans.rotatePivotTranslation(MSpace::kTransform));
+        td.rotation = to_quatf(r);
+        td.scale = to_float3(s);
 
         n->model_transform = mu::float4x4::identity();
-        (mu::float3&)n->model_transform[3] = to_float3(-p);
+        (mu::float3&)n->model_transform[3] = -td.pivot;
     };
 
     if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
@@ -209,6 +211,12 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
     else
         fbx_compatible_transform_extraction();
 
+    auto& td = n->transform_data;
+    pos = td.translation + td.pivot + td.pivot_offset;
+    if (n->parent)
+        pos -= n->parent->transform_data.pivot;
+    rot = td.rotation;
+    scale = td.scale;
     vis = IsVisible(n->trans->node);
 }
 

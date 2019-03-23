@@ -40,6 +40,15 @@ struct DAGNode : public mu::noncopyable
 };
 using DAGNodeMap = std::map<MObjectKey, DAGNode>;
 
+struct TransformData
+{
+    mu::float3 translation = mu::float3::zero();
+    mu::float3 pivot = mu::float3::zero();
+    mu::float3 pivot_offset = mu::float3::zero();
+    mu::quatf rotation = mu::quatf::identity();
+    mu::float3 scale = mu::float3::zero();
+};
+
 struct TreeNode : public mu::noncopyable
 {
     DAGNode *trans = nullptr;
@@ -53,6 +62,7 @@ struct TreeNode : public mu::noncopyable
 
     ms::TransformPtr dst_obj;
     ms::AnimationPtr dst_anim;
+    TransformData transform_data;
     ms::float4x4 model_transform;
 
     ms::Identifier getIdentifier() const;
