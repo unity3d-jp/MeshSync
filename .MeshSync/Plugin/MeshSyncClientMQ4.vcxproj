@@ -19,24 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="External/mqsdk4/MQBasePlugin.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQSetting.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQWidget.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQInit.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQPlugin.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="External\mqsdk4\MQBoneManager.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -44,13 +26,15 @@
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUI4.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQBasePlugin.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQBoneManager.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQInit.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQMorphManager.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQPlugin.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQSetting.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="External/mqsdk4/MQBasePlugin.h" />
-    <ClInclude Include="External/mqsdk4/MQSetting.h" />
-    <ClInclude Include="External/mqsdk4/MQWidget.h" />
-    <ClInclude Include="External/mqsdk4/MQPlugin.h" />
-    <ClInclude Include="External\mqsdk4\MQBoneManager.h" />
     <ClInclude Include="MeshSyncClientMQ/pch.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ4.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqContext.h" />
@@ -87,9 +71,9 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk4;$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk4$(MQ4_VERSION);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(MQ4_VERSION)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(MQ4_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>

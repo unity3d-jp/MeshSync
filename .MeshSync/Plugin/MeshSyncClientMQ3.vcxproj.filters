@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="External/mqsdk3/MQBasePlugin.cpp">
-      <Filter>External\mqsdk3</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk3/MQInit.cpp">
-      <Filter>External\mqsdk3</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk3/MQPlugin.cpp">
-      <Filter>External\mqsdk3</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk3/MQSetting.cpp">
-      <Filter>External\mqsdk3</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
@@ -28,17 +16,20 @@
     <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQSetting.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQBasePlugin.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQInit.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQPlugin.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="External/mqsdk3/MQBasePlugin.h">
-      <Filter>External\mqsdk3</Filter>
-    </ClInclude>
-    <ClInclude Include="External/mqsdk3/MQPlugin.h">
-      <Filter>External\mqsdk3</Filter>
-    </ClInclude>
-    <ClInclude Include="External/mqsdk3/MQSetting.h">
-      <Filter>External\mqsdk3</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMQ/pch.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
@@ -62,12 +53,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="External">
-      <UniqueIdentifier>{75824f95-85c7-4716-a34d-617df7533f02}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="External\mqsdk3">
-      <UniqueIdentifier>{5d2e96f1-ea31-4995-bfba-37851e0f59f3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MeshSyncClientMQ">
       <UniqueIdentifier>{cda89d94-97e2-493d-aeca-b01bf3373769}</UniqueIdentifier>
     </Filter>

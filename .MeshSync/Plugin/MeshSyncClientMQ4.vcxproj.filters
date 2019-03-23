@@ -4,26 +4,8 @@
     <ClCompile Include="MeshSyncClientMQ/pch.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQBasePlugin.cpp">
-      <Filter>External\mqsdk4</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQWidget.cpp">
-      <Filter>External\mqsdk4</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQInit.cpp">
-      <Filter>External\mqsdk4</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQPlugin.cpp">
-      <Filter>External\mqsdk4</Filter>
-    </ClCompile>
-    <ClCompile Include="External/mqsdk4/MQSetting.cpp">
-      <Filter>External\mqsdk4</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp">
       <Filter>MeshSyncClientMQ</Filter>
-    </ClCompile>
-    <ClCompile Include="External\mqsdk4\MQBoneManager.cpp">
-      <Filter>External\mqsdk4</Filter>
     </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp">
       <Filter>MeshSyncClientMQ</Filter>
@@ -34,28 +16,34 @@
     <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQMorphManager.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQPlugin.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQWidget.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQBasePlugin.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQBoneManager.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQInit.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\sdk_MQSetting.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMQ/pch.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
-    <ClInclude Include="External/mqsdk4/MQPlugin.h">
-      <Filter>External\mqsdk4</Filter>
-    </ClInclude>
-    <ClInclude Include="External/mqsdk4/MQBasePlugin.h">
-      <Filter>External\mqsdk4</Filter>
-    </ClInclude>
-    <ClInclude Include="External/mqsdk4/MQSetting.h">
-      <Filter>External\mqsdk4</Filter>
-    </ClInclude>
-    <ClInclude Include="External/mqsdk4/MQWidget.h">
-      <Filter>External\mqsdk4</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ4.h">
       <Filter>MeshSyncClientMQ</Filter>
-    </ClInclude>
-    <ClInclude Include="External\mqsdk4\MQBoneManager.h">
-      <Filter>External\mqsdk4</Filter>
     </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\msmqContext.h">
       <Filter>MeshSyncClientMQ</Filter>
@@ -70,12 +58,6 @@
   <ItemGroup>
     <Filter Include="MeshSyncClientMQ">
       <UniqueIdentifier>{9c638e9c-d6ef-4dc0-a470-bcd0298c4d16}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="External">
-      <UniqueIdentifier>{7dbb5883-859b-401e-a36c-f78af837b799}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="External\mqsdk4">
-      <UniqueIdentifier>{e79d40f9-c3cd-4978-9593-bea914e84457}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

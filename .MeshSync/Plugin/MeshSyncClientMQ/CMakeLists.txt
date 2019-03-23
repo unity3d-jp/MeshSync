@@ -6,24 +6,8 @@ if(NOT EXISTS "${MQSDK_ARCHIVE}")
     execute_process(WORKING_DIRECTORY "${EXTERNAL_DIR}" COMMAND 7za x "${MQSDK_ARCHIVE}")
 endif()
 
-file(GLOB sources *.cpp *.h)
+file(GLOB sources *.cpp *.h *.mm)
 list(FILTER sources EXCLUDE REGEX "MeshSyncClientMQ3\\.(h|cpp)") 
-list(APPEND sources
-    "${MQSDK_DIR}/MQBasePlugin.cpp"
-    "${MQSDK_DIR}/MQBoneManager.cpp"
-    "${MQSDK_DIR}/MQInit.cpp"
-    "${MQSDK_DIR}/MQPlugin.cpp"
-    "${MQSDK_DIR}/MQSetting.cpp"
-    "${MQSDK_DIR}/MQWidget.cpp"
-)
-if(MAC)
-    if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm"
-            "#import <Foundation/Foundation.h>\n"
-            "#include \"${MQSDK_DIR}/osx/StringUtil.mm\"\n")
-    endif()
-    list(APPEND sources "${CMAKE_CURRENT_BINARY_DIR}/StringUtil.mm")
-endif()
 
 add_library(MeshSyncClientMQ4 MODULE ${sources})
 set_target_properties(MeshSyncClientMQ4 PROPERTIES BUNDLE ON)

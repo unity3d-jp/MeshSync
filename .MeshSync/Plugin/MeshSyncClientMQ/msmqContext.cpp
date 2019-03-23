@@ -145,6 +145,9 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
                 bone_manager.GetParent(bid, parent);
                 brec.parent_id = parent;
 
+#if MQPLUGIN_VERSION >= 0x0470
+                // todo
+#else
                 MQPoint base_pos;
                 bone_manager.GetBaseRootPos(bid, base_pos);
                 brec.world_pos = (const float3&)base_pos;
@@ -158,6 +161,7 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
                 else {
                     brec.world_rot = quatf::identity();
                 }
+#endif
             }
 
             for (auto& kvp : m_bone_records) {
@@ -220,6 +224,12 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
             });
         }
     bone_end:;
+    }
+#endif
+
+#if MQPLUGIN_VERSION >= 0x0470
+    if (m_settings.sync_morphs) {
+        // todo
     }
 #endif
 
