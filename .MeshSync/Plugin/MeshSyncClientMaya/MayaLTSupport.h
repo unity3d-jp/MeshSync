@@ -7,6 +7,8 @@
 #define MTypeId                     ___0lIIO
 #define MStatus                     ___l1I00
 #define MTime                       ___ll0l0
+#define MVector                     ___0I0IO
+#define MQuaternion                 ___11l0l
 #define MMatrix                     ___lIl1O
 #define MDistance                   ___11llI
 #define MSelectionList              ___IlIlI
