@@ -11,5 +11,7 @@ mklink /J MeshSyncClientMotionBuilder2017 MeshSyncClientMotionBuilder
 mklink /J MeshSyncClientMotionBuilder2018 MeshSyncClientMotionBuilder
 mklink /J MeshSyncClientMotionBuilder2019 MeshSyncClientMotionBuilder
 
+mklink /J MeshSyncClientModo12 MeshSyncClientModo
+
 mklink /J MeshSyncClientBlender2.79 MeshSyncClientBlender
 mklink /J MeshSyncClientBlender2.80 MeshSyncClientBlender
