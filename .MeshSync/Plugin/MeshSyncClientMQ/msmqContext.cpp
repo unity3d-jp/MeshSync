@@ -172,23 +172,32 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
                 brec.parent_id = parent;
 
 #if MQPLUGIN_VERSION >= 0x0470
-                MQMatrix base_mat;
-                bone_manager.GetBaseMatrix(bid, base_mat);
-                brec.bindpose = mu::invert(to_float4x4(base_mat));
-                // todo
-#else
                 MQPoint base_pos;
-                bone_manager.GetBaseRootPos(bid, base_pos);
-                brec.world_pos = to_float3(base_pos);
-                brec.bindpose = mu::invert(mu::transform(brec.world_pos, quatf::identity(), float3::one()));
+                bone_manager.GetBasePos(bid, base_pos);
+                brec.pose_pos = to_float3(base_pos);
+                brec.bindpose = mu::invert(mu::transform(brec.pose_pos, quatf::identity(), float3::one()));
 
                 if (m_settings.sync_poses) {
                     MQMatrix rot;
                     bone_manager.GetRotationMatrix(bid, rot);
-                    brec.world_rot = mu::invert(mu::to_quat(to_float4x4(rot)));
+                    brec.pose_rot = mu::invert(mu::to_quat(to_float4x4(rot)));
                 }
                 else {
-                    brec.world_rot = quatf::identity();
+                    brec.pose_rot = quatf::identity();
+                }
+#else
+                MQPoint base_pos;
+                bone_manager.GetBaseRootPos(bid, base_pos);
+                brec.pose_pos = to_float3(base_pos);
+                brec.bindpose = mu::invert(mu::transform(brec.pose_pos, quatf::identity(), float3::one()));
+
+                if (m_settings.sync_poses) {
+                    MQMatrix rot;
+                    bone_manager.GetRotationMatrix(bid, rot);
+                    brec.pose_rot = mu::invert(mu::to_quat(to_float4x4(rot)));
+                }
+                else {
+                    brec.pose_rot = quatf::identity();
                 }
 #endif
             }
@@ -203,12 +212,11 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
 
                 // setup transform
                 auto& dst = *rec.dst;
-                dst.position = rec.world_pos;
-                dst.rotation = rec.world_rot;
-                dst.scale = rec.world_scale;
+                dst.position = rec.pose_pos;
+                dst.rotation = rec.pose_rot;
                 auto it = m_bone_records.find(rec.parent_id);
                 if (it != m_bone_records.end())
-                    dst.position -= it->second.world_pos;
+                    dst.position -= it->second.pose_pos;
             }
 
             // get weights

@@ -59,9 +59,8 @@ private:
         UINT bone_id = -1;
         UINT parent_id = -1;
         std::string name;
-        float3 world_pos = float3::zero();
-        quatf world_rot = quatf::identity();
-        float3 world_scale = float3::one();
+        float3 pose_pos = float3::zero();
+        quatf pose_rot = quatf::identity();
         float4x4 bindpose = float4x4::identity();
         ms::TransformPtr dst = ms::Transform::create();
     };
