@@ -15,17 +15,20 @@ std::string GetName(MQMaterial obj)
     return ms::ToUTF8(name);
 }
 
-std::string GetPath(MQDocument doc, MQObject obj)
+static std::string GetPathImpl(MQDocument doc, MQObject obj)
 {
     std::string ret;
-    if (auto parent = doc->GetParentObject(obj)) {
-        ret += GetPath(doc, parent);
-    }
+    if (auto parent = doc->GetParentObject(obj))
+        ret += GetPathImpl(doc, parent);
     char name[MaxNameBuffer];
     obj->GetName(name, sizeof(name));
     ret += "/";
     ret += name;
-    return ms::ToUTF8(ret);
+    return ret;
+}
+std::string GetPath(MQDocument doc, MQObject obj)
+{
+    return ms::ToUTF8(GetPathImpl(doc, obj));
 }
 
 bool ExtractID(const char *name, int& id)
