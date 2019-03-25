@@ -114,6 +114,8 @@ class msmodoCmdExport : public CLxCommand
 public:
     void execute() override
     {
+        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, false);
+
         CLxUser_LogService lS;
         lS.DebugOut(LXi_DBLOG_NORMAL, msmodoCmdExportName " executed\n");
     }
@@ -125,6 +127,8 @@ class msmodoCmdImport : public CLxCommand
 public:
     void execute() override
     {
+        msmodoGetInstance().recvScene();
+
         CLxUser_LogService lS;
         lS.DebugOut(LXi_DBLOG_NORMAL, msmodoCmdImportName " executed\n");
     }
@@ -141,15 +145,8 @@ class msmodoMetaRoot : public CLxMetaRoot
         g_meta_settings.set_type_UI();
         g_meta_settings.add_notifier(LXsNOTIFIER_SELECT, "");
         add(&g_meta_settings);
-
-        g_meta_export.set_type_UI();
-        g_meta_export.add_notifier(LXsNOTIFIER_SELECT, "");
         add(&g_meta_export);
-
-        g_meta_import.set_type_UI();
-        g_meta_import.add_notifier(LXsNOTIFIER_SELECT, "");
         add(&g_meta_import);
-
         return false;
     }
 };

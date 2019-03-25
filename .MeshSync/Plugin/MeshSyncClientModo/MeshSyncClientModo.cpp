@@ -28,6 +28,55 @@ void msmodoContext::update()
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
+    CLxUser_SceneService scene_service;
+    CLxUser_SelectionService selection_service;
+    CLxUser_LayerService layer_service;
+    CLxUser_MeshService mesh_service;
+    {
+        int flags = 0;
+        unsigned count;
+
+        layer_service.SetScene(0);
+        layer_service.Count(&count);
+    }
+    CLxUser_Scene scene;
+    layer_service.Scene(scene);
+
+    uint32_t num_meshes;
+    auto t_locator = scene_service.ItemType(LXsITYPE_LOCATOR);
+    auto t_light = scene_service.ItemType(LXsITYPE_LIGHT);
+    auto t_camera = scene_service.ItemType(LXsITYPE_CAMERA);
+    auto t_mesh = scene_service.ItemType(LXsITYPE_MESH);
+    auto t_meshinst = scene_service.ItemType(LXsITYPE_MESHINST);
+    scene.ItemCount(t_mesh, &num_meshes);
+
+    for (uint32_t im = 0; im < num_meshes; ++im) {
+        CLxUser_Item item;
+        scene.ItemByIndex(t_mesh, im, item);
+
+        const char *name;
+        item.Name(&name);
+        auto t = item.Type();
+
+        CLxUser_Locator locator(item);
+
+        CLxUser_ChannelRead chan_read;
+        scene.GetChannels(chan_read, selection_service.GetTime());
+
+        CLxUser_MeshFilter mesh_filter;
+        if (chan_read.Object(item, LXsICHAN_MESH_MESH, mesh_filter)) {
+            CLxUser_MeshFilterIdent mesh_filter_ident;
+            if (mesh_filter_ident.copy(mesh_filter)) {
+                CLxUser_Mesh mesh;
+                if (mesh_filter_ident.GetMesh(LXs_MESHFILTER_BASE, mesh)) {
+                    CLxUser_Point point;
+                    point.fromMesh(mesh);
+                    msLogInfo("ok\n");
+                }
+            }
+        }
+    }
+
     return false;
 }
 

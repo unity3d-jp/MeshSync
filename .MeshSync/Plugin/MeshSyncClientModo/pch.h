@@ -22,6 +22,7 @@
 #include <lxvector.h>
 #include <lxidef.h>
 #include <lx_plugin.hpp>
+#include <lx_layer.hpp>
 #include <lx_item.hpp>
 #include <lx_mesh.hpp>
 #include <lx_locator.hpp>
