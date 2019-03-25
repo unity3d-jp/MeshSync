@@ -26,58 +26,88 @@ void msmodoContext::update()
 {
 }
 
-bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
+void msmodoContext::eachLight(const std::function<void(CLxUser_Locator&)>& body)
 {
-    CLxUser_SceneService scene_service;
-    CLxUser_SelectionService selection_service;
-    CLxUser_LayerService layer_service;
-    CLxUser_MeshService mesh_service;
-    {
-        int flags = 0;
-        unsigned count;
+    auto ttype = m_scene_service.ItemType(LXsITYPE_LIGHT);
 
-        layer_service.SetScene(0);
-        layer_service.Count(&count);
+    uint32_t num_objects;
+    m_current_scene.ItemCount(ttype, &num_objects);
+
+    CLxUser_Item item;
+    for (uint32_t im = 0; im < num_objects; ++im) {
+        m_current_scene.ItemByIndex(ttype, im, item);
+        body(CLxUser_Locator(item));
     }
-    CLxUser_Scene scene;
-    layer_service.Scene(scene);
+}
 
-    uint32_t num_meshes;
-    auto t_locator = scene_service.ItemType(LXsITYPE_LOCATOR);
-    auto t_light = scene_service.ItemType(LXsITYPE_LIGHT);
-    auto t_camera = scene_service.ItemType(LXsITYPE_CAMERA);
-    auto t_mesh = scene_service.ItemType(LXsITYPE_MESH);
-    auto t_meshinst = scene_service.ItemType(LXsITYPE_MESHINST);
-    scene.ItemCount(t_mesh, &num_meshes);
+void msmodoContext::eachCamera(const std::function<void(CLxUser_Locator&)>& body)
+{
+    auto ttype = m_scene_service.ItemType(LXsITYPE_CAMERA);
 
-    for (uint32_t im = 0; im < num_meshes; ++im) {
-        CLxUser_Item item;
-        scene.ItemByIndex(t_mesh, im, item);
+    uint32_t num_objects;
+    m_current_scene.ItemCount(ttype, &num_objects);
 
-        const char *name;
-        item.Name(&name);
-        auto t = item.Type();
+    CLxUser_Item item;
+    for (uint32_t im = 0; im < num_objects; ++im) {
+        m_current_scene.ItemByIndex(ttype, im, item);
+        body(CLxUser_Locator(item));
+    }
+}
 
-        CLxUser_Locator locator(item);
+void msmodoContext::eachMesh(const std::function<void(CLxUser_Locator&, CLxUser_Mesh&)>& body)
+{
+    auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
 
-        CLxUser_ChannelRead chan_read;
-        scene.GetChannels(chan_read, selection_service.GetTime());
+    uint32_t num_objects;
+    m_current_scene.ItemCount(ttype, &num_objects);
 
-        CLxUser_MeshFilter mesh_filter;
-        if (chan_read.Object(item, LXsICHAN_MESH_MESH, mesh_filter)) {
-            CLxUser_MeshFilterIdent mesh_filter_ident;
-            if (mesh_filter_ident.copy(mesh_filter)) {
-                CLxUser_Mesh mesh;
-                if (mesh_filter_ident.GetMesh(LXs_MESHFILTER_BASE, mesh)) {
-                    CLxUser_Point point;
-                    point.fromMesh(mesh);
-                    msLogInfo("ok\n");
-                }
-            }
+    CLxUser_Item item;
+    CLxUser_MeshFilter mesh_filter;
+    CLxUser_Mesh mesh;
+    for (uint32_t im = 0; im < num_objects; ++im) {
+        m_current_scene.ItemByIndex(ttype, im, item);
+
+        if (m_chan_read.Object(item, LXsICHAN_MESH_MESH, mesh_filter)) {
+            if (mesh_filter.GetMesh(mesh))
+                body(CLxUser_Locator(item), mesh);
         }
     }
+}
 
-    return false;
+bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
+{
+    m_layer_service.SetScene(0);
+    m_layer_service.Scene(m_current_scene);
+
+    m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
+
+    eachCamera([this](CLxUser_Locator& locator) {
+    });
+
+    eachLight([this](CLxUser_Locator& locator) {
+    });
+
+    eachMesh([this](CLxUser_Locator& locator, CLxUser_Mesh& mesh) {
+        CLxUser_Point point;
+        point.fromMesh(mesh);
+
+        int num_points = mesh.NPoints();
+
+        RawVector<mu::float3> dst_points;
+        dst_points.resize_discard(num_points);
+
+        for (int pi = 0; pi < num_points; ++pi) {
+            point.SelectByIndex(pi);
+
+            LXtFVector p;
+            point.Pos(p);
+            dst_points[pi] = to_float3(p);
+        }
+
+        msLogInfo("ok\n");
+    });
+
+    return true;
 }
 
 bool msmodoContext::sendAnimations(SendScope scope)

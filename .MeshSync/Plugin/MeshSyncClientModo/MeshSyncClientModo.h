@@ -71,6 +71,10 @@ private:
 
     void kickAsyncSend();
 
+    void eachLight(const std::function<void(CLxUser_Locator&)>& body);
+    void eachCamera(const std::function<void(CLxUser_Locator&)>& body);
+    void eachMesh(const std::function<void(CLxUser_Locator&, CLxUser_Mesh&)>& body);
+
 private:
     msmodoSettings m_settings;
 
@@ -80,6 +84,15 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+
+
+    CLxUser_SceneService m_scene_service;
+    CLxUser_SelectionService m_selection_service;
+    CLxUser_LayerService m_layer_service;
+    CLxUser_MeshService m_mesh_service;
+
+    CLxUser_Scene m_current_scene;
+    CLxUser_ChannelRead m_chan_read;
 };
 
 #define msmodoGetInstance() msmodoContext::getInstance()
