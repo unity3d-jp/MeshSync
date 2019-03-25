@@ -3,35 +3,40 @@
 #include "msmodoUtils.h"
 
 
-MeshSyncClientModo& MeshSyncClientModo::getInstance()
+msmodoContext& msmodoContext::getInstance()
 {
-    static MeshSyncClientModo s_instance;
+    static msmodoContext s_instance;
     return s_instance;
 }
 
-MeshSyncClientModo::MeshSyncClientModo()
+msmodoContext::msmodoContext()
 {
 }
 
-MeshSyncClientModo::~MeshSyncClientModo()
+msmodoContext::~msmodoContext()
 {
 }
 
-void MeshSyncClientModo::update()
+msmodoSettings& msmodoContext::getSettings()
+{
+    return m_settings;
+}
+
+void msmodoContext::update()
 {
 }
 
-bool MeshSyncClientModo::sendScene(SendScope scope, bool dirty_all)
+bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
     return false;
 }
 
-bool MeshSyncClientModo::sendAnimations(SendScope scope)
+bool msmodoContext::sendAnimations(SendScope scope)
 {
     return false;
 }
 
-bool MeshSyncClientModo::recvScene()
+bool msmodoContext::recvScene()
 {
     return false;
 }
@@ -41,12 +46,12 @@ bool MeshSyncClientModo::recvScene()
 // component export
 // 
 
-ms::TransformPtr MeshSyncClientModo::exportObject(CLxLoc_Item& obj, bool force)
+ms::TransformPtr msmodoContext::exportObject(CLxLoc_Item& obj, bool force)
 {
     return nullptr;
 }
 
-ms::TransformPtr MeshSyncClientModo::exportTransform(CLxLoc_Item& obj)
+ms::TransformPtr msmodoContext::exportTransform(CLxLoc_Item& obj)
 {
     auto ret = ms::Transform::create();
 
@@ -89,19 +94,19 @@ ms::TransformPtr MeshSyncClientModo::exportTransform(CLxLoc_Item& obj)
     return ret;
 }
 
-ms::CameraPtr MeshSyncClientModo::exportCamera(CLxLoc_Item& obj)
+ms::CameraPtr msmodoContext::exportCamera(CLxLoc_Item& obj)
 {
     auto ret = ms::Camera::create();
     return ret;
 }
 
-ms::LightPtr MeshSyncClientModo::exportLight(CLxLoc_Item& obj)
+ms::LightPtr msmodoContext::exportLight(CLxLoc_Item& obj)
 {
     auto ret = ms::Light::create();
     return ret;
 }
 
-ms::MeshPtr MeshSyncClientModo::exportMesh(CLxLoc_Item& obj)
+ms::MeshPtr msmodoContext::exportMesh(CLxLoc_Item& obj)
 {
     auto ret = ms::Mesh::create();
     return ret;
@@ -112,38 +117,38 @@ ms::MeshPtr MeshSyncClientModo::exportMesh(CLxLoc_Item& obj)
 // animation export
 // 
 
-int MeshSyncClientModo::exportAnimations(SendScope scope)
+int msmodoContext::exportAnimations(SendScope scope)
 {
     return 0;
 }
 
-bool MeshSyncClientModo::exportAnimation(CLxLoc_Item& obj, bool force)
+bool msmodoContext::exportAnimation(CLxLoc_Item& obj, bool force)
 {
     return false;
 }
 
-void MeshSyncClientModo::extractTransformAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractTransformAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
 {
 
 }
 
-void MeshSyncClientModo::extractCameraAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractCameraAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
 {
 
 }
 
-void MeshSyncClientModo::extractLightAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractLightAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
 {
 
 }
 
-void MeshSyncClientModo::extractMeshAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractMeshAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
 {
 
 }
 
 
-void MeshSyncClientModo::kickAsyncSend()
+void msmodoContext::kickAsyncSend()
 {
     m_sender.on_prepare = [this]() {
         auto& t = m_sender;

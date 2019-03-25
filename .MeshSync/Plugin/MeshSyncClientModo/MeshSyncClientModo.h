@@ -1,41 +1,38 @@
 #pragma once
 
-class MeshSyncClientModo
+struct msmodoSettings
+{
+    ms::ClientSettings client_settings;
+
+    float scale_factor = 1.0f;
+    float animation_time_scale = 1.0f;
+    float animation_sps = 2.0f;
+    int  timeout_ms = 5000;
+    bool auto_sync = false;
+    bool sync_meshes = true;
+    bool sync_normals = true;
+    bool sync_uvs = true;
+    bool sync_colors = true;
+    bool make_double_sided = false;
+    bool bake_deformers = false;
+    bool sync_blendshapes = true;
+    bool sync_bones = true;
+    bool sync_textures = true;
+    bool sync_cameras = true;
+    bool sync_lights = true;
+    bool sync_constraints = false;
+    bool remove_namespace = true;
+    bool reduce_keyframes = true;
+
+    // import settings
+    bool bake_skin = false;
+    bool bake_cloth = false;
+};
+
+
+class msmodoContext
 {
 public:
-    struct Settings
-    {
-        ms::ClientSettings client_settings;
-
-        float scale_factor = 0.01f;
-        float animation_time_scale = 1.0f;
-        float animation_sps = 2.0f;
-        int  timeout_ms = 5000;
-        bool auto_sync = false;
-        bool sync_meshes = true;
-        bool sync_normals = true;
-        bool sync_uvs = true;
-        bool sync_colors = true;
-        bool make_double_sided = false;
-        bool bake_deformers = false;
-        bool apply_tweak = true;
-        bool sync_blendshapes = true;
-        bool sync_bones = true;
-        bool sync_textures = true;
-        bool sync_cameras = true;
-        bool sync_lights = true;
-        bool sync_constraints = false;
-        bool remove_namespace = true;
-        bool reduce_keyframes = true;
-        bool multithreaded = false;
-        bool fbx_compatible_transform = true;
-
-        // import settings
-        bool bake_skin = false;
-        bool bake_cloth = false;
-    };
-    Settings m_settings;
-
     enum class SendScope
     {
         None,
@@ -45,10 +42,12 @@ public:
     };
 
 
-    static MeshSyncClientModo& getInstance();
+    static msmodoContext& getInstance();
 
-    MeshSyncClientModo();
-    ~MeshSyncClientModo();
+    msmodoContext();
+    ~msmodoContext();
+
+    msmodoSettings& getSettings();
 
     void update();
     bool sendScene(SendScope scope, bool dirty_all);
@@ -73,6 +72,8 @@ private:
     void kickAsyncSend();
 
 private:
+    msmodoSettings m_settings;
+
     std::vector<ms::AnimationClipPtr> m_animations;
 
     ms::TextureManager m_texture_manager;
@@ -80,3 +81,6 @@ private:
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 };
+
+#define msmodoGetInstance() msmodoContext::getInstance()
+#define msmodoGetSettings() msmodoGetInstance().getSettings()
