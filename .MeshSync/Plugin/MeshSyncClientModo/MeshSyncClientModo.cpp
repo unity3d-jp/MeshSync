@@ -26,7 +26,7 @@ void msmodoContext::update()
 {
 }
 
-void msmodoContext::eachLight(const std::function<void(CLxUser_Locator&)>& body)
+void msmodoContext::eachLight(const std::function<void(CLxUser_Item&)>& body)
 {
     auto ttype = m_scene_service.ItemType(LXsITYPE_LIGHT);
 
@@ -36,11 +36,11 @@ void msmodoContext::eachLight(const std::function<void(CLxUser_Locator&)>& body)
     CLxUser_Item item;
     for (uint32_t im = 0; im < num_objects; ++im) {
         m_current_scene.ItemByIndex(ttype, im, item);
-        body(CLxUser_Locator(item));
+        body(item);
     }
 }
 
-void msmodoContext::eachCamera(const std::function<void(CLxUser_Locator&)>& body)
+void msmodoContext::eachCamera(const std::function<void(CLxUser_Item&)>& body)
 {
     auto ttype = m_scene_service.ItemType(LXsITYPE_CAMERA);
 
@@ -50,11 +50,11 @@ void msmodoContext::eachCamera(const std::function<void(CLxUser_Locator&)>& body
     CLxUser_Item item;
     for (uint32_t im = 0; im < num_objects; ++im) {
         m_current_scene.ItemByIndex(ttype, im, item);
-        body(CLxUser_Locator(item));
+        body(item);
     }
 }
 
-void msmodoContext::eachMesh(const std::function<void(CLxUser_Locator&, CLxUser_Mesh&)>& body)
+void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body)
 {
     auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
 
@@ -69,9 +69,14 @@ void msmodoContext::eachMesh(const std::function<void(CLxUser_Locator&, CLxUser_
 
         if (m_chan_read.Object(item, LXsICHAN_MESH_MESH, mesh_filter)) {
             if (mesh_filter.GetMesh(mesh))
-                body(CLxUser_Locator(item), mesh);
+                body(item, mesh);
         }
     }
+}
+
+static void ExtractTransformData()
+{
+
 }
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
@@ -81,13 +86,15 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
     m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
 
-    eachCamera([this](CLxUser_Locator& locator) {
+    eachCamera([this](CLxUser_Item& obj) {
     });
 
-    eachLight([this](CLxUser_Locator& locator) {
+    eachLight([this](CLxUser_Item& obj) {
     });
 
-    eachMesh([this](CLxUser_Locator& locator, CLxUser_Mesh& mesh) {
+    eachMesh([this](CLxUser_Item& obj, CLxUser_Mesh& mesh) {
+        CLxUser_Locator locator(obj);
+
         CLxUser_Polygon polygons;
         CLxUser_Point points;
         mesh.GetPolygons(polygons);
@@ -99,6 +106,7 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
         RawVector<int> dst_counts, dst_indices;
         RawVector<mu::float3> dst_points;
+        std::string path = GetPath(obj);
 
         dst_counts.resize_discard(num_faces);
         dst_indices.reserve_discard(num_faces * 4);

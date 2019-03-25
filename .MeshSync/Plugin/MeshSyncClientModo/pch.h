@@ -17,7 +17,8 @@
 #include <cassert>
 
 #ifdef _WIN32
-#pragma warning(push, 0)
+    #pragma warning(push, 0)
+#endif
 #include <lxversion.h>
 #include <lxvector.h>
 #include <lxidef.h>
@@ -35,7 +36,8 @@
 #include <lx_listener.hpp>
 #include <lxu_command.hpp>
 #include <lxu_package.hpp>
-#pragma warning(pop)
+#ifdef _WIN32
+    #pragma warning(pop)
 #endif
 
 #include "MeshSync/MeshSync.h"

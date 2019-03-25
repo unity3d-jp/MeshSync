@@ -71,9 +71,9 @@ private:
 
     void kickAsyncSend();
 
-    void eachLight(const std::function<void(CLxUser_Locator&)>& body);
-    void eachCamera(const std::function<void(CLxUser_Locator&)>& body);
-    void eachMesh(const std::function<void(CLxUser_Locator&, CLxUser_Mesh&)>& body);
+    void eachLight(const std::function<void(CLxUser_Item&)>& body);
+    void eachCamera(const std::function<void(CLxUser_Item&)>& body);
+    void eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body);
 
 private:
     msmodoSettings m_settings;
