@@ -31,7 +31,9 @@
 #include <lx_io.hpp>
 #include <lx_value.hpp>
 #include <lx_log.hpp>
+#include <lx_listener.hpp>
 #include <lxu_command.hpp>
+#include <lxu_package.hpp>
 #pragma warning(pop)
 #endif
 
