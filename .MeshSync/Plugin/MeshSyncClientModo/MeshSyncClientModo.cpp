@@ -88,19 +88,47 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     });
 
     eachMesh([this](CLxUser_Locator& locator, CLxUser_Mesh& mesh) {
-        CLxUser_Point point;
-        point.fromMesh(mesh);
+        CLxUser_Polygon polygons;
+        CLxUser_Point points;
+        mesh.GetPolygons(polygons);
+        mesh.GetPoints(points);
 
+        int num_faces = mesh.NPolygons();
+        int num_indices = 0;
         int num_points = mesh.NPoints();
 
+        RawVector<int> dst_counts, dst_indices;
         RawVector<mu::float3> dst_points;
-        dst_points.resize_discard(num_points);
 
+        dst_counts.resize_discard(num_faces);
+        dst_indices.reserve_discard(num_faces * 4);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            polygons.SelectByIndex(fi);
+
+            uint32_t count;
+            polygons.VertexCount(&count);
+            dst_counts[fi] = count;
+
+            size_t pos = dst_indices.size();
+            dst_indices.resize(pos + count);
+            for (uint32_t ci = 0; ci < count; ++ci) {
+                LXtPointID pid;
+                polygons.VertexByIndex(ci, &pid);
+                points.Select(pid);
+
+                uint32_t index;
+                points.Index(&index);
+                dst_indices[pos + ci] = index;
+            }
+        }
+        num_indices = (int)dst_indices.size();
+
+        dst_points.resize_discard(num_points);
         for (int pi = 0; pi < num_points; ++pi) {
-            point.SelectByIndex(pi);
+            points.SelectByIndex(pi);
 
             LXtFVector p;
-            point.Pos(p);
+            points.Pos(p);
             dst_points[pi] = to_float3(p);
         }
 
