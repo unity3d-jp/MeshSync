@@ -5,8 +5,9 @@ std::string GetName(CLxUser_Item& obj)
 {
     CLxUser_Item item(obj);
     const char *name;
-    item.Name(&name);
-    return name;
+    //item.Name(&name);
+    item.UniqueName(&name);
+    return name ? name : "";
 }
 
 std::string GetPath(CLxUser_Item& obj)

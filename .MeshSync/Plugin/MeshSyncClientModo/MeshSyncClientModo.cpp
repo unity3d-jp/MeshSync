@@ -26,6 +26,20 @@ void msmodoContext::update()
 {
 }
 
+void msmodoContext::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
+{
+    auto ttype = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
+
+    uint32_t num_objects;
+    m_current_scene.ItemCount(ttype, &num_objects);
+
+    CLxUser_Item item;
+    for (uint32_t im = 0; im < num_objects; ++im) {
+        m_current_scene.ItemByIndex(ttype, im, item);
+        body(item);
+    }
+}
+
 void msmodoContext::eachLight(const std::function<void(CLxUser_Item&)>& body)
 {
     auto ttype = m_scene_service.ItemType(LXsITYPE_LIGHT);
@@ -86,6 +100,17 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
     m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
 
+    eachMaterial([this](CLxUser_Item& obj) {
+        auto name = GetName(obj);
+        mu::float4 color {
+            m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
+            m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
+            m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
+            1.0f
+        };
+        msLogInfo("ok\n");
+    });
+
     eachCamera([this](CLxUser_Item& obj) {
     });
 
@@ -95,10 +120,12 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     eachMesh([this](CLxUser_Item& obj, CLxUser_Mesh& mesh) {
         CLxUser_Locator locator(obj);
 
+        CLxUser_StringTag poly_tag;
         CLxUser_Polygon polygons;
         CLxUser_Point points;
         mesh.GetPolygons(polygons);
         mesh.GetPoints(points);
+        poly_tag.set(polygons);
 
         int num_faces = mesh.NPolygons();
         int num_indices = 0;
@@ -112,6 +139,9 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
         dst_indices.reserve_discard(num_faces * 4);
         for (int fi = 0; fi < num_faces; ++fi) {
             polygons.SelectByIndex(fi);
+
+            const char *material_name = nullptr;
+            poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
 
             uint32_t count;
             polygons.VertexCount(&count);

@@ -71,6 +71,7 @@ private:
 
     void kickAsyncSend();
 
+    void eachMaterial(const std::function<void(CLxUser_Item&)>& body);
     void eachLight(const std::function<void(CLxUser_Item&)>& body);
     void eachCamera(const std::function<void(CLxUser_Item&)>& body);
     void eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body);
