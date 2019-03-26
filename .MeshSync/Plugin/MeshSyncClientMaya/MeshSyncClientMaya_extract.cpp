@@ -370,7 +370,7 @@ void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n
                     auto dst_bs = ms::BlendShapeData::create();
                     dst.blendshapes.push_back(dst_bs);
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
-                    dst_bs->name = plug_wc.name().asChar();
+                    dst_bs->name = handleNamespace(plug_wc.name().asChar());
                     plug_wc.getValue(dst_bs->weight);
                     dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
                 }
@@ -700,7 +700,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     auto dst_bs = ms::BlendShapeData::create();
                     dst.blendshapes.push_back(dst_bs);
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
-                    dst_bs->name = plug_wc.name().asChar();
+                    dst_bs->name = handleNamespace(plug_wc.name().asChar());
                     plug_wc.getValue(dst_bs->weight);
                     dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
 
@@ -1078,7 +1078,7 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
-                    std::string name = plug_wc.name().asChar();
+                    std::string name = handleNamespace(plug_wc.name().asChar());
 
                     auto bsa = dst.findOrCreateBlendshapeAnimation(name.c_str());
                     float weight = 0.0f;
