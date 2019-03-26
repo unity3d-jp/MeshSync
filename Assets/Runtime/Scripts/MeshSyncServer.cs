@@ -221,7 +221,7 @@ namespace UTJ.MeshSync
         }
         public string assetPath
         {
-            get { return "Assets/" + m_assetDir.leaf; }
+            get { return m_assetDir.leaf.Length != 0 ? "Assets/" + m_assetDir.leaf : "Assets"; }
         }
         public string httpFileRootPath
         {
