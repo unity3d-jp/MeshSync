@@ -1052,9 +1052,8 @@ namespace UTJ.MeshSync
                     {
                         candidate = material;
 
-                        // if there are multiple candidates, prefer the one with NativeFormatImporter (= not a part of fbx)
-                        var importer = AssetImporter.GetAtPath(path);
-                        if (importer != null && importer.ToString().Contains("NativeFormatImporter"))
+                        // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+                        if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
                             break;
                     }
                 }
