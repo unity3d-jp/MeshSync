@@ -1041,17 +1041,29 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             if (m_findMaterialFromAssets && (dst.material == null || dst.name != materialName))
             {
+                Material candidate = null;
+
                 var guids = AssetDatabase.FindAssets("t:Material " + materialName);
                 foreach (var guid in guids)
                 {
-                    var material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    var material = AssetDatabase.LoadAssetAtPath<Material>(path);
                     if (material.name == materialName)
                     {
-                        dst.material = material;
-                        dst.materialIID = 0; // ignore material params
-                        m_needReassignMaterials = true;
-                        break;
+                        candidate = material;
+
+                        // if there are multiple candidates, prefer the one with NativeFormatImporter (= not a part of fbx)
+                        var importer = AssetImporter.GetAtPath(path);
+                        if (importer != null && importer.ToString().Contains("NativeFormatImporter"))
+                            break;
                     }
+                }
+
+                if (candidate != null)
+                {
+                    dst.material = candidate;
+                    dst.materialIID = 0; // ignore material params
+                    m_needReassignMaterials = true;
                 }
             }
 #endif
