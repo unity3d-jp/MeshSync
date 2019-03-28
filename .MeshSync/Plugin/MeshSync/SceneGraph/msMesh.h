@@ -99,9 +99,9 @@ struct SplitData
 struct BlendShapeFrameData
 {
     float weight = 0.0f; // 0.0f - 100.0f
-    RawVector<float3> points;
-    RawVector<float3> normals;
-    RawVector<float3> tangents;
+    RawVector<float3> points; // can be empty or per-vertex data
+    RawVector<float3> normals;  // can be empty, per-vertex or per-index data
+    RawVector<float3> tangents; // can be empty, per-vertex or per-index data
 
 protected:
     BlendShapeFrameData();
@@ -146,7 +146,7 @@ struct BoneData
 {
     std::string path;
     float4x4 bindpose = float4x4::identity();
-    RawVector<float> weights;
+    RawVector<float> weights; // per-vertex data
 
 protected:
     BoneData();
@@ -168,18 +168,20 @@ class Mesh : public Transform
 {
 using super = Transform;
 public:
+    // serializable fields
+
     MeshDataFlags      flags = { 0 };
     MeshRefineSettings refine_settings;
 
     RawVector<float3> points;
-    RawVector<float3> normals;
-    RawVector<float4> tangents;
-    RawVector<float2> uv0, uv1;
-    RawVector<float4> colors;
-    RawVector<float3> velocities;
+    RawVector<float3> normals;    // can be empty, per-vertex or per-index data
+    RawVector<float4> tangents;   // can be empty, per-vertex or per-index data
+    RawVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
+    RawVector<float4> colors;     // can be empty, per-vertex or per-index data
+    RawVector<float3> velocities; // can be empty or per-vertex data
     RawVector<int>    counts;
     RawVector<int>    indices;
-    RawVector<int>    material_ids;
+    RawVector<int>    material_ids; // can be empty or per-face data
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
@@ -187,6 +189,8 @@ public:
 
 
     // non-serializable fields
+    // (generated in refine())
+
     RawVector<Weights4> weights4;
     RawVector<uint8_t> bone_counts;
     RawVector<int> bone_offsets;

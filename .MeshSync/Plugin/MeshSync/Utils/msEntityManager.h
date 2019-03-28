@@ -9,9 +9,14 @@ class EntityManager
 public:
     EntityManager();
     ~EntityManager();
-    void clear();
     bool empty() const;
 
+    // clear all states (both entity and delete record will be cleared)
+    void clear();
+    void clearEntityRecords();
+    void clearDeleteRecords();
+
+    // erase entity and add delete record
     bool erase(const std::string& path);
     bool erase(int id);
     bool erase(const Identifier& identifier);
@@ -19,6 +24,7 @@ public:
 
     // thread safe
     void add(TransformPtr v); 
+
     void touch(const std::string& path);
 
     std::vector<TransformPtr> getAllEntities();

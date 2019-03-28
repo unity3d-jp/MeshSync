@@ -9,9 +9,14 @@ class MaterialManager
 public:
     MaterialManager();
     ~MaterialManager();
-    void clear();
     bool empty() const;
+
+    // clear all states (both entity and delete record will be cleared)
+    void clear();
+
+    // erase entity and add delete record
     bool erase(int id);
+
     MaterialPtr find(int id) const;
 
     // thread safe

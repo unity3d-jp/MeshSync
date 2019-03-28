@@ -12,17 +12,28 @@ EntityManager::~EntityManager()
     waitTasks();
 }
 
-void EntityManager::clear()
-{
-    waitTasks();
-
-    m_records.clear();
-}
-
 bool EntityManager::empty() const
 {
     return m_records.empty();
 }
+
+void EntityManager::clear()
+{
+    waitTasks();
+    m_records.clear();
+    m_deleted.clear();
+}
+void EntityManager::clearEntityRecords()
+{
+    waitTasks();
+    m_records.clear();
+}
+void EntityManager::clearDeleteRecords()
+{
+    waitTasks();
+    m_deleted.clear();
+}
+
 
 bool EntityManager::erase(const std::string& path)
 {

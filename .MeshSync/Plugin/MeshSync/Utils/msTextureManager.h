@@ -9,8 +9,8 @@ class TextureManager
 public:
     TextureManager();
     ~TextureManager();
-    void clear();
     bool empty() const;
+    void clear();
     bool erase(const std::string& name);
     int find(const std::string& name) const;
 
