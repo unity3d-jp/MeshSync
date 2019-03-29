@@ -122,12 +122,15 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         if (args.isQuery()) to_MString(result, std::string(msReleaseDateStr));
     }
 
-#define Handle(Name, Value, SendIfAutosync)\
+#define Handle(Name, Value, Sync)\
     if (args.isFlagSet(Name)) {\
-        if(args.isQuery()) to_MString(result, Value);\
+        if(args.isQuery()) {\
+            to_MString(result, Value);\
+        }\
         else {\
             get_arg(Value, Name, args);\
-            if(settings.auto_sync && SendIfAutosync) MeshSyncClientMaya::getInstance().sendScene(MeshSyncClientMaya::SendScope::All, false);\
+            if (settings.auto_sync && Sync)\
+                MeshSyncClientMaya::getInstance().sendScene(MeshSyncClientMaya::SendScope::All, false);\
         }\
     }
 

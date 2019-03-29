@@ -10,9 +10,12 @@ bool IsVisible(const MObject& node);
 MDagPath GetParent(const MDagPath& node);
 bool IsInstance(const MObject& node);
 
+MObject FindTransformGeometry(MObject shape);
 MObject FindSkinCluster(MObject node);
 MObject FindBlendShape(MObject node);
 MObject FindOrigMesh(const MObject& node);
+MObject FindInputGeometry(MObject node, int index = 0); // node: geometryFilter
+bool GetTransformGeometryMatrix(MObject shape, mu::float4x4& result);
 
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);

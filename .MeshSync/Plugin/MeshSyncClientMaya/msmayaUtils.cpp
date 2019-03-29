@@ -46,21 +46,27 @@ bool IsInstance(const MObject& node)
     return dn.isInstanced(false);
 }
 
+MObject FindTransformGeometry(MObject shape)
+{
+    MItDependencyGraph it(shape, MFn::kTransformGeometry, MItDependencyGraph::kUpstream);
+    if (!it.isDone())
+        return it.currentItem();
+    return MObject();
+}
+
 MObject FindSkinCluster(MObject shape)
 {
     MItDependencyGraph it(shape, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
-    if (!it.isDone()) {
+    if (!it.isDone())
         return it.currentItem();
-    }
     return MObject();
 }
 
 MObject FindBlendShape(MObject shape)
 {
     MItDependencyGraph it(shape, MFn::kBlendShape, MItDependencyGraph::kUpstream);
-    if (!it.isDone()) {
+    if (!it.isDone())
         return it.currentItem();
-    }
     return MObject();
 }
 
@@ -77,6 +83,30 @@ MObject FindOrigMesh(const MObject& shape)
     });
     return ret;
 }
+
+MObject FindInputGeometry(MObject node, int index)
+{
+    MFnGeometryFilter fn_gf(node);
+    if (node.isNull())
+        return MObject();
+    return fn_gf.inputShapeAtIndex(index);
+}
+
+bool GetTransformGeometryMatrix(MObject shape, mu::float4x4& result)
+{
+    auto tg = FindTransformGeometry(shape);
+    if (!tg.isNull()) {
+        MFnDependencyNode fn(tg);
+        auto plug_transform = fn.findPlug("transform", true);
+
+        MObject mat;
+        plug_transform.getValue(mat);
+        result = to_float4x4(MFnMatrixData(mat).matrix());
+        return true;
+    }
+    return false;
+}
+
 
 float ToSeconds(MTime t)
 {
