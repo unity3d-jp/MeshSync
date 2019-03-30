@@ -75,7 +75,7 @@ void msmodoContext::eachCamera(const std::function<void(CLxUser_Item&)>& body)
     }
 }
 
-void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body)
+void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&)>& body)
 {
     static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
 
@@ -83,22 +83,106 @@ void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mes
     m_current_scene.ItemCount(ttype, &num_objects);
 
     CLxUser_Item item;
-    CLxUser_MeshFilter mesh_filter;
-    CLxUser_Mesh mesh;
     for (uint32_t im = 0; im < num_objects; ++im) {
         m_current_scene.ItemByIndex(ttype, im, item);
-
-        if (m_chan_read.Object(item, LXsICHAN_MESH_MESH, mesh_filter)) {
-            if (mesh_filter.GetMesh(mesh))
-                body(item, mesh);
-        }
+        body(item);
     }
 }
 
-static void ExtractTransformData()
+CLxUser_Mesh msmodoContext::getMesh(CLxUser_Item& obj)
+{
+    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
+
+    CLxUser_Mesh mesh;
+    CLxUser_MeshFilter mesh_filter;
+    if (m_chan_read.Object(obj, LXsICHAN_MESH_MESH, mesh_filter)) {
+        mesh_filter.GetMesh(mesh);
+    }
+    return mesh;
+}
+
+void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+{
+    enum RotationOrder {
+        ROTATION_ORDER_XYZ,
+        ROTATION_ORDER_XZY,
+        ROTATION_ORDER_YXZ,
+        ROTATION_ORDER_YZX,
+        ROTATION_ORDER_ZXY,
+        ROTATION_ORDER_ZYX
+    };
+
+    CLxUser_SceneGraph scene_graph;
+    CLxUser_ItemGraph  item_graph;
+    m_current_scene.GetGraph(LXsGRAPH_XFRMCORE, scene_graph);
+    item_graph.set(scene_graph);
+
+    auto mat = mu::float4x4::identity();
+
+    unsigned num_transform = item_graph.Reverse(n.item);
+    for (unsigned ti = 0; ti < num_transform; ++ti) {
+        CLxUser_Item transform;
+        if (item_graph.Reverse(n.item, ti, transform)) {
+            const char *tname;
+            m_scene_service.ItemTypeName(transform.Type(), &tname);
+
+            if (LXTypeMatch(tname, LXsITYPE_TRANSLATION)) {
+                mu::float3 t {
+                    (float)m_chan_read.FValue(transform, LXsITYPE_TRANSLATION ".X"),
+                    (float)m_chan_read.FValue(transform, LXsITYPE_TRANSLATION ".Y"),
+                    (float)m_chan_read.FValue(transform, LXsITYPE_TRANSLATION ".Z")
+                };
+                mat *= mu::translate(t);
+            }
+            else if (LXTypeMatch(tname, LXsITYPE_SCALE)) {
+                mu::float3 s {
+                    (float)m_chan_read.FValue(transform, LXsITYPE_SCALE ".X"),
+                    (float)m_chan_read.FValue(transform, LXsITYPE_SCALE ".Y"),
+                    (float)m_chan_read.FValue(transform, LXsITYPE_SCALE ".Z")
+                };
+                mat *= mu::scale44(s);
+            }
+            else if (LXTypeMatch(tname, LXsITYPE_ROTATION)) {
+
+                auto rot_order = (RotationOrder)m_chan_read.IValue(transform, LXsICHAN_ROTATION_ORDER);
+                mu::float3 rot_euler{
+                    (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".X"),
+                    (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Y"),
+                    (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Z")
+                };
+
+                mu::quatf r = mu::quatf::identity();
+                switch (rot_order) {
+                case ROTATION_ORDER_XYZ: r = mu::rotateXYZ(rot_euler); break;
+                case ROTATION_ORDER_XZY: r = mu::rotateXZY(rot_euler); break;
+                case ROTATION_ORDER_YXZ: r = mu::rotateYXZ(rot_euler); break;
+                case ROTATION_ORDER_YZX: r = mu::rotateYZX(rot_euler); break;
+                case ROTATION_ORDER_ZXY: r = mu::rotateZXY(rot_euler); break;
+                case ROTATION_ORDER_ZYX: r = mu::rotateZYX(rot_euler); break;
+                }
+
+                mat *= mu::to_mat4x4(r);
+            }
+        }
+    }
+
+    pos = extract_position(mat);
+    rot = extract_rotation(mat);
+    scale = extract_scale(mat);
+    msLogInfo("ok\n");
+}
+
+void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+    float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
 {
 
 }
+
+void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+{
+
+}
+
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
@@ -124,68 +208,11 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
         msLogInfo("ok\n");
     });
 
-    eachCamera([this](CLxUser_Item& obj) {
-    });
+    eachCamera([this](CLxUser_Item& obj) { exportObject(obj, true); });
+    eachLight([this](CLxUser_Item& obj) { exportObject(obj, true); });
+    eachMesh([this](CLxUser_Item& obj) { exportObject(obj, true); });
 
-    eachLight([this](CLxUser_Item& obj) {
-    });
-
-    eachMesh([this](CLxUser_Item& obj, CLxUser_Mesh& mesh) {
-        CLxUser_Locator locator(obj);
-
-        CLxUser_StringTag poly_tag;
-        CLxUser_Polygon polygons;
-        CLxUser_Point points;
-        mesh.GetPolygons(polygons);
-        mesh.GetPoints(points);
-        poly_tag.set(polygons);
-
-        int num_faces = mesh.NPolygons();
-        int num_indices = 0;
-        int num_points = mesh.NPoints();
-
-        RawVector<int> dst_counts, dst_indices;
-        RawVector<mu::float3> dst_points;
-        std::string path = GetPath(obj);
-
-        dst_counts.resize_discard(num_faces);
-        dst_indices.reserve_discard(num_faces * 4);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            polygons.SelectByIndex(fi);
-
-            const char *material_name = nullptr;
-            poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
-
-            uint32_t count;
-            polygons.VertexCount(&count);
-            dst_counts[fi] = count;
-
-            size_t pos = dst_indices.size();
-            dst_indices.resize(pos + count);
-            for (uint32_t ci = 0; ci < count; ++ci) {
-                LXtPointID pid;
-                polygons.VertexByIndex(ci, &pid);
-                points.Select(pid);
-
-                uint32_t index;
-                points.Index(&index);
-                dst_indices[pos + ci] = index;
-            }
-        }
-        num_indices = (int)dst_indices.size();
-
-        dst_points.resize_discard(num_points);
-        for (int pi = 0; pi < num_points; ++pi) {
-            points.SelectByIndex(pi);
-
-            LXtFVector p;
-            points.Pos(p);
-            dst_points[pi] = to_float3(p);
-        }
-
-        msLogInfo("ok\n");
-    });
-
+    kickAsyncSend();
     return true;
 }
 
@@ -221,6 +248,7 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj, bool force)
     auto& n = m_tree_nodes[obj];
     if (n.dst_obj)
         return n.dst_obj;
+    n.item = obj;
 
     static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
     static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
@@ -247,10 +275,12 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj, bool force)
     return n.dst_obj;
 }
 
-ms::TransformPtr msmodoContext::exportTransform(TreeNode& node)
+ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
 {
     auto ret = ms::Transform::create();
-    node.dst_obj = ret;
+    n.dst_obj = ret;
+
+    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
 
     //CLxUser_Scene      scene(SceneObject());
     //CLxUser_SceneGraph sceneGraph;
@@ -291,26 +321,86 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& node)
     return ret;
 }
 
-ms::CameraPtr msmodoContext::exportCamera(TreeNode& node)
+ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
 {
     auto ret = ms::Camera::create();
-    node.dst_obj = ret;
+    n.dst_obj = ret;
+
+    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
 
     return ret;
 }
 
-ms::LightPtr msmodoContext::exportLight(TreeNode& node)
+ms::LightPtr msmodoContext::exportLight(TreeNode& n)
 {
     auto ret = ms::Light::create();
-    node.dst_obj = ret;
+    n.dst_obj = ret;
+
+    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
 
     return ret;
 }
 
-ms::MeshPtr msmodoContext::exportMesh(TreeNode& node)
+ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 {
     auto ret = ms::Mesh::create();
-    node.dst_obj = ret;
+    n.dst_obj = ret;
+
+    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+
+    CLxUser_Mesh mesh = getMesh(n.item);
+
+    CLxUser_StringTag poly_tag;
+    CLxUser_Polygon polygons;
+    CLxUser_Point points;
+    mesh.GetPolygons(polygons);
+    mesh.GetPoints(points);
+    poly_tag.set(polygons);
+
+    int num_faces = mesh.NPolygons();
+    int num_indices = 0;
+    int num_points = mesh.NPoints();
+
+    auto& dst_counts = ret->counts;
+    auto& dst_indices = ret->indices;
+    auto& dst_points = ret->points;
+    auto& dst_mids = ret->material_ids;
+    std::string path = GetPath(n.item);
+
+    dst_counts.resize_discard(num_faces);
+    dst_indices.reserve_discard(num_faces * 4);
+    for (int fi = 0; fi < num_faces; ++fi) {
+        polygons.SelectByIndex(fi);
+
+        const char *material_name = nullptr;
+        poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
+
+        uint32_t count;
+        polygons.VertexCount(&count);
+        dst_counts[fi] = count;
+
+        size_t pos = dst_indices.size();
+        dst_indices.resize(pos + count);
+        for (uint32_t ci = 0; ci < count; ++ci) {
+            LXtPointID pid;
+            polygons.VertexByIndex(ci, &pid);
+            points.Select(pid);
+
+            uint32_t index;
+            points.Index(&index);
+            dst_indices[pos + ci] = index;
+        }
+    }
+    num_indices = (int)dst_indices.size();
+
+    dst_points.resize_discard(num_points);
+    for (int pi = 0; pi < num_points; ++pi) {
+        points.SelectByIndex(pi);
+
+        LXtFVector p;
+        points.Pos(p);
+        dst_points[pi] = to_float3(p);
+    }
 
     return ret;
 }
@@ -331,7 +421,7 @@ int msmodoContext::exportAnimations(SendScope scope)
     eachLight([this](CLxUser_Item& obj) {
         exportAnimation(obj, true);
     });
-    eachMesh([this](CLxUser_Item& obj, CLxUser_Mesh& mesh) {
+    eachMesh([this](CLxUser_Item& obj) {
         exportAnimation(obj, true);
     });
 
@@ -348,6 +438,7 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj, bool force)
     auto& n = m_tree_nodes[obj];
     if (n.dst_anim)
         return true;
+    n.item = obj;
 
     static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
     static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
@@ -383,22 +474,22 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj, bool force)
     return false;
 }
 
-void msmodoContext::extractTransformAnimationData(TreeNode& node)
+void msmodoContext::extractTransformAnimationData(TreeNode& n)
 {
 
 }
 
-void msmodoContext::extractCameraAnimationData(TreeNode& node)
+void msmodoContext::extractCameraAnimationData(TreeNode& n)
 {
 
 }
 
-void msmodoContext::extractLightAnimationData(TreeNode& node)
+void msmodoContext::extractLightAnimationData(TreeNode& n)
 {
 
 }
 
-void msmodoContext::extractMeshAnimationData(TreeNode& node)
+void msmodoContext::extractMeshAnimationData(TreeNode& n)
 {
 
 }

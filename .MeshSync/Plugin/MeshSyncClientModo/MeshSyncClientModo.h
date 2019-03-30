@@ -30,6 +30,7 @@ class msmodoContext;
 struct TreeNode : public mu::noncopyable
 {
     CLxUser_Item item;
+
     std::string name;
     std::string path;
     int id = ms::InvalidID;
@@ -120,7 +121,13 @@ private:
     void eachMaterial(const std::function<void(CLxUser_Item&)>& body);
     void eachLight(const std::function<void(CLxUser_Item&)>& body);
     void eachCamera(const std::function<void(CLxUser_Item&)>& body);
-    void eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body);
+    void eachMesh(const std::function<void(CLxUser_Item&)>& body);
+    CLxUser_Mesh getMesh(CLxUser_Item& obj);
+
+    void extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+        float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance);
+    void extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle);
 
 private:
     CLxUser_SceneService m_scene_service;
