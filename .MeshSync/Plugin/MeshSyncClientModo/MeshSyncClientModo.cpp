@@ -3,6 +3,13 @@
 #include "msmodoUtils.h"
 
 
+void TreeNode::clearState()
+{
+    dst_obj = nullptr;
+    dst_anim = nullptr;
+}
+
+
 msmodoContext& msmodoContext::getInstance()
 {
     static msmodoContext s_instance;
@@ -28,7 +35,7 @@ void msmodoContext::update()
 
 void msmodoContext::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
 {
-    auto ttype = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
+    static const auto ttype = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
 
     uint32_t num_objects;
     m_current_scene.ItemCount(ttype, &num_objects);
@@ -42,7 +49,7 @@ void msmodoContext::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
 
 void msmodoContext::eachLight(const std::function<void(CLxUser_Item&)>& body)
 {
-    auto ttype = m_scene_service.ItemType(LXsITYPE_LIGHT);
+    static const auto ttype = m_scene_service.ItemType(LXsITYPE_LIGHT);
 
     uint32_t num_objects;
     m_current_scene.ItemCount(ttype, &num_objects);
@@ -56,7 +63,7 @@ void msmodoContext::eachLight(const std::function<void(CLxUser_Item&)>& body)
 
 void msmodoContext::eachCamera(const std::function<void(CLxUser_Item&)>& body)
 {
-    auto ttype = m_scene_service.ItemType(LXsITYPE_CAMERA);
+    static const auto ttype = m_scene_service.ItemType(LXsITYPE_CAMERA);
 
     uint32_t num_objects;
     m_current_scene.ItemCount(ttype, &num_objects);
@@ -70,7 +77,7 @@ void msmodoContext::eachCamera(const std::function<void(CLxUser_Item&)>& body)
 
 void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body)
 {
-    auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
+    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
 
     uint32_t num_objects;
     m_current_scene.ItemCount(ttype, &num_objects);
@@ -95,6 +102,12 @@ static void ExtractTransformData()
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
+    if (m_sender.isSending()) {
+        m_pending_scope = scope;
+        return false;
+    }
+    m_pending_scope = SendScope::None;
+
     m_layer_service.SetScene(0);
     m_layer_service.Scene(m_current_scene);
 
@@ -103,9 +116,9 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     eachMaterial([this](CLxUser_Item& obj) {
         auto name = GetName(obj);
         mu::float4 color {
-            m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
-            m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
-            m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
+            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
+            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
+            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
             1.0f
         };
         msLogInfo("ok\n");
@@ -178,11 +191,20 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
 bool msmodoContext::sendAnimations(SendScope scope)
 {
-    return false;
+    m_sender.wait();
+
+    if (exportAnimations(scope) > 0) {
+        kickAsyncSend();
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool msmodoContext::recvScene()
 {
+    // todo
     return false;
 }
 
@@ -191,14 +213,44 @@ bool msmodoContext::recvScene()
 // component export
 // 
 
-ms::TransformPtr msmodoContext::exportObject(CLxLoc_Item& obj, bool force)
+ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj, bool force)
 {
-    return nullptr;
+    if (!obj.test())
+        return nullptr;
+
+    auto& n = m_tree_nodes[obj];
+    if (n.dst_obj)
+        return n.dst_obj;
+
+    static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
+    static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
+    static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
+    static const auto t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
+
+    if (obj.IsA(t_camera)) {
+        exportObject(GetParent(obj), true);
+        n.dst_obj = exportCamera(n);
+    }
+    else if (obj.IsA(t_light)) {
+        exportObject(GetParent(obj), true);
+        n.dst_obj = exportLight(n);
+    }
+    else if (obj.IsA(t_mesh)) {
+        exportObject(GetParent(obj), true);
+        n.dst_obj = exportMesh(n);
+    }
+    else {
+        exportObject(GetParent(obj), true);
+        n.dst_obj = exportTransform(n);
+    }
+
+    return n.dst_obj;
 }
 
-ms::TransformPtr msmodoContext::exportTransform(CLxLoc_Item& obj)
+ms::TransformPtr msmodoContext::exportTransform(TreeNode& node)
 {
     auto ret = ms::Transform::create();
+    node.dst_obj = ret;
 
     //CLxUser_Scene      scene(SceneObject());
     //CLxUser_SceneGraph sceneGraph;
@@ -239,21 +291,27 @@ ms::TransformPtr msmodoContext::exportTransform(CLxLoc_Item& obj)
     return ret;
 }
 
-ms::CameraPtr msmodoContext::exportCamera(CLxLoc_Item& obj)
+ms::CameraPtr msmodoContext::exportCamera(TreeNode& node)
 {
     auto ret = ms::Camera::create();
+    node.dst_obj = ret;
+
     return ret;
 }
 
-ms::LightPtr msmodoContext::exportLight(CLxLoc_Item& obj)
+ms::LightPtr msmodoContext::exportLight(TreeNode& node)
 {
     auto ret = ms::Light::create();
+    node.dst_obj = ret;
+
     return ret;
 }
 
-ms::MeshPtr msmodoContext::exportMesh(CLxLoc_Item& obj)
+ms::MeshPtr msmodoContext::exportMesh(TreeNode& node)
 {
     auto ret = ms::Mesh::create();
+    node.dst_obj = ret;
+
     return ret;
 }
 
@@ -264,30 +322,83 @@ ms::MeshPtr msmodoContext::exportMesh(CLxLoc_Item& obj)
 
 int msmodoContext::exportAnimations(SendScope scope)
 {
+    m_animations.clear();
+    m_animations.push_back(ms::AnimationClip::create());
+
+    eachCamera([this](CLxUser_Item& obj) {
+        exportAnimation(obj, true);
+    });
+    eachLight([this](CLxUser_Item& obj) {
+        exportAnimation(obj, true);
+    });
+    eachMesh([this](CLxUser_Item& obj, CLxUser_Mesh& mesh) {
+        exportAnimation(obj, true);
+    });
+
+    // todo:
+
     return 0;
 }
 
-bool msmodoContext::exportAnimation(CLxLoc_Item& obj, bool force)
+bool msmodoContext::exportAnimation(CLxUser_Item& obj, bool force)
 {
+    if (!obj.test())
+        return nullptr;
+
+    auto& n = m_tree_nodes[obj];
+    if (n.dst_anim)
+        return true;
+
+    static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
+    static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
+    static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
+    static const auto t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
+
+    if (obj.IsA(t_camera)) {
+        exportAnimation(GetParent(obj), true);
+        n.dst_anim = ms::CameraAnimation::create();
+        n.anim_extractor = &msmodoContext::extractCameraAnimationData;
+    }
+    else if (obj.IsA(t_light)) {
+        exportAnimation(GetParent(obj), true);
+        n.dst_anim = ms::LightAnimation::create();
+        n.anim_extractor = &msmodoContext::extractLightAnimationData;
+    }
+    else if (obj.IsA(t_mesh)) {
+        exportAnimation(GetParent(obj), true);
+        n.dst_anim = ms::MeshAnimation::create();
+        n.anim_extractor = &msmodoContext::extractMeshAnimationData;
+    }
+    else {
+        exportAnimation(GetParent(obj), true);
+        n.dst_anim = ms::TransformAnimation::create();
+        n.anim_extractor = &msmodoContext::extractTransformAnimationData;
+    }
+
+    if (n.dst_anim != nullptr) {
+        n.dst_anim->path = n.path;
+        m_anim_nodes.push_back(&n);
+        return true;
+    }
     return false;
 }
 
-void msmodoContext::extractTransformAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractTransformAnimationData(TreeNode& node)
 {
 
 }
 
-void msmodoContext::extractCameraAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractCameraAnimationData(TreeNode& node)
 {
 
 }
 
-void msmodoContext::extractLightAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractLightAnimationData(TreeNode& node)
 {
 
 }
 
-void msmodoContext::extractMeshAnimationData(ms::Animation& dst, CLxLoc_Item& obj)
+void msmodoContext::extractMeshAnimationData(TreeNode& node)
 {
 
 }
@@ -295,6 +406,11 @@ void msmodoContext::extractMeshAnimationData(ms::Animation& dst, CLxLoc_Item& ob
 
 void msmodoContext::kickAsyncSend()
 {
+    // cleanup
+    for (auto& kvp : m_tree_nodes)
+        kvp.second.clearState();
+
+    // kick async send
     m_sender.on_prepare = [this]() {
         auto& t = m_sender;
         t.client_settings = m_settings.client_settings;

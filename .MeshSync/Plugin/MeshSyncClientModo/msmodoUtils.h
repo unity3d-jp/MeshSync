@@ -1,5 +1,6 @@
 #pragma once
 
+CLxUser_Item GetParent(CLxUser_Item& obj);
 std::string GetName(CLxUser_Item& obj);
 std::string GetPath(CLxUser_Item& obj);
 

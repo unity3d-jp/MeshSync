@@ -1,5 +1,51 @@
 #pragma once
 
+namespace ms {
+
+    template<>
+    class IDGenerator<CLxUser_Item> : public IDGenerator<void*>
+    {
+    public:
+        int getID(const CLxUser_Item& v)
+        {
+            return getIDImpl((void*&)v.m_loc);
+        }
+    };
+
+} // namespace ms
+
+struct LxItemKey
+{
+    void *key;
+
+    LxItemKey() : key(nullptr) {}
+    LxItemKey(const CLxUser_Item& v) : key((void*&)v.m_loc) {}
+    bool operator<(const LxItemKey& v) const { return key < v.key; }
+    bool operator==(const LxItemKey& v) const { return key == v.key; }
+    bool operator!=(const LxItemKey& v) const { return key != v.key; }
+};
+
+class msmodoContext;
+
+struct TreeNode : public mu::noncopyable
+{
+    CLxUser_Item item;
+    std::string name;
+    std::string path;
+    int id = ms::InvalidID;
+    int index = 0;
+
+    ms::TransformPtr dst_obj;
+    ms::AnimationPtr dst_anim;
+
+    using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
+    AnimationExtractor anim_extractor = nullptr;
+
+    void clearState();
+};
+
+
+
 struct msmodoSettings
 {
     ms::ClientSettings client_settings;
@@ -56,18 +102,18 @@ public:
     bool recvScene();
 
 private:
-    ms::TransformPtr exportObject(CLxLoc_Item& obj, bool force);
-    ms::TransformPtr exportTransform(CLxLoc_Item& obj);
-    ms::CameraPtr exportCamera(CLxLoc_Item& obj);
-    ms::LightPtr exportLight(CLxLoc_Item& obj);
-    ms::MeshPtr exportMesh(CLxLoc_Item& obj);
+    ms::TransformPtr exportObject(CLxUser_Item& obj, bool force);
+    ms::TransformPtr exportTransform(TreeNode& node);
+    ms::CameraPtr exportCamera(TreeNode& node);
+    ms::LightPtr exportLight(TreeNode& node);
+    ms::MeshPtr exportMesh(TreeNode& node);
 
     int exportAnimations(SendScope scope);
-    bool exportAnimation(CLxLoc_Item& obj, bool force);
-    void extractTransformAnimationData(ms::Animation& dst, CLxLoc_Item& obj);
-    void extractCameraAnimationData(ms::Animation& dst, CLxLoc_Item& obj);
-    void extractLightAnimationData(ms::Animation& dst, CLxLoc_Item& obj);
-    void extractMeshAnimationData(ms::Animation& dst, CLxLoc_Item& obj);
+    bool exportAnimation(CLxUser_Item& obj, bool force);
+    void extractTransformAnimationData(TreeNode& node);
+    void extractCameraAnimationData(TreeNode& node);
+    void extractLightAnimationData(TreeNode& node);
+    void extractMeshAnimationData(TreeNode& node);
 
     void kickAsyncSend();
 
@@ -77,16 +123,6 @@ private:
     void eachMesh(const std::function<void(CLxUser_Item&, CLxUser_Mesh&)>& body);
 
 private:
-    msmodoSettings m_settings;
-
-    std::vector<ms::AnimationClipPtr> m_animations;
-
-    ms::TextureManager m_texture_manager;
-    ms::MaterialManager m_material_manager;
-    ms::EntityManager m_entity_manager;
-    ms::AsyncSceneSender m_sender;
-
-
     CLxUser_SceneService m_scene_service;
     CLxUser_SelectionService m_selection_service;
     CLxUser_LayerService m_layer_service;
@@ -94,6 +130,18 @@ private:
 
     CLxUser_Scene m_current_scene;
     CLxUser_ChannelRead m_chan_read;
+
+
+    msmodoSettings m_settings;
+    ms::TextureManager m_texture_manager;
+    ms::MaterialManager m_material_manager;
+    ms::EntityManager m_entity_manager;
+    ms::AsyncSceneSender m_sender;
+
+    std::map<LxItemKey, TreeNode> m_tree_nodes;
+    std::vector<TreeNode*> m_anim_nodes;
+    std::vector<ms::AnimationClipPtr> m_animations;
+    SendScope m_pending_scope = SendScope::None;
 };
 
 #define msmodoGetInstance() msmodoContext::getInstance()
