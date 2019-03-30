@@ -145,10 +145,12 @@ private:
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 
+    int m_index_seed = 0;
     std::map<LxItemKey, TreeNode> m_tree_nodes;
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;
     SendScope m_pending_scope = SendScope::None;
+    float m_anim_time = 0.0f;
 };
 
 #define msmodoGetInstance() msmodoContext::getInstance()

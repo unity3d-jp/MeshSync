@@ -250,6 +250,18 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj, bool force)
         return n.dst_obj;
     n.item = obj;
 
+    auto name = GetName(obj);
+    auto path = GetPath(obj);
+    if (!n.path.empty() && n.path!=path) {
+        // renamed
+        m_entity_manager.erase(n.path);
+    }
+    if (n.index == 0) {
+        n.index = ++m_index_seed;
+    }
+    n.name = name;
+    n.path = path;
+
     static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
     static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
     static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
@@ -281,42 +293,6 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
-
-    //CLxUser_Scene      scene(SceneObject());
-    //CLxUser_SceneGraph sceneGraph;
-    //CLxUser_ItemGraph  itemGraph;
-    //scene.GetGraph(LXsGRAPH_XFRMCORE, sceneGraph);
-    //itemGraph.set(sceneGraph);
-
-    //unsigned transformCount = itemGraph.Reverse(item);
-    //for (unsigned transformIndex = 0; transformIndex < transformCount; ++transformIndex) {
-    //    CLxUser_Item transform;
-    //    if (itemGraph.Reverse(item, transformIndex, transform)) {
-    //        SetItem(transform);
-
-    //        const char *xformType = ItemType();
-    //        if (LXTypeMatch(xformType, LXsITYPE_SCALE)) {
-    //            // scale
-    //            LXtVector scale;
-    //            ChanXform(LXsICHAN_SCALE_SCL, scale);
-
-    //        }
-    //        else if (LXTypeMatch(xformType, LXsITYPE_ROTATION)) {
-    //            // Rotation
-    //            LXtVector rotate;
-    //            ChanXform(LXsICHAN_ROTATION_ROT, rotate);
-    //            int axis[3];
-    //            buildAxisOrder(ChanInt(LXsICHAN_ROTATION_ORDER), axis);
-
-    //        }
-    //        else if (LXTypeMatch(xformType, LXsITYPE_TRANSLATION)) {
-    //            // Translation
-    //            LXtVector	translate;
-    //            ChanXform(LXsICHAN_TRANSLATION_POS, translate);
-
-    //        }
-    //    }
-    //}
 
     return ret;
 }
@@ -476,22 +452,77 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj, bool force)
 
 void msmodoContext::extractTransformAnimationData(TreeNode& n)
 {
+    auto& dst = (ms::TransformAnimation&)*n.dst_anim;
 
+    auto pos = mu::float3::zero();
+    auto rot = mu::quatf::identity();
+    auto scale = mu::float3::one();
+    bool vis = true;
+    extractTransformData(n, pos, rot, scale, vis);
+
+    float t = m_anim_time;
+    dst.translation.push_back({ t, pos });
+    dst.rotation.push_back({ t, rot });
+    dst.scale.push_back({ t, scale });
+    //dst.visible.push_back({ t, vis });
 }
 
 void msmodoContext::extractCameraAnimationData(TreeNode& n)
 {
+    extractTransformAnimationData(n);
 
+    auto& dst = (ms::CameraAnimation&)*n.dst_anim;
+    {
+        auto& last = dst.rotation.back();
+        last.value = mu::flipY(last.value);
+    }
+
+    bool ortho;
+    float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
+    extractCameraData(n, ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+
+    float t = m_anim_time;
+    dst.near_plane.push_back({ t, near_plane });
+    dst.far_plane.push_back({ t, far_plane });
+    dst.fov.push_back({ t, fov });
+
+#if 0
+    dst.horizontal_aperture.push_back({ t, horizontal_aperture });
+    dst.vertical_aperture.push_back({ t, vertical_aperture });
+    dst.focal_length.push_back({ t, focal_length });
+    dst.focus_distance.push_back({ t, focus_distance });
+#endif
 }
 
 void msmodoContext::extractLightAnimationData(TreeNode& n)
 {
+    extractTransformAnimationData(n);
 
+    auto& dst = (ms::LightAnimation&)*n.dst_anim;
+    {
+        auto& last = dst.rotation.back();
+        last.value = mu::flipY(last.value);
+    }
+
+    ms::Light::LightType type;
+    mu::float4 color;
+    float intensity;
+    float spot_angle;
+    extractLightData(n, type, color, intensity, spot_angle);
+
+    float t = m_anim_time;
+    dst.color.push_back({ t, color });
+    dst.intensity.push_back({ t, intensity });
+    if (type == ms::Light::LightType::Spot)
+        dst.spot_angle.push_back({ t, spot_angle });
 }
 
 void msmodoContext::extractMeshAnimationData(TreeNode& n)
 {
+    extractTransformAnimationData(n);
 
+    auto& dst = (ms::MeshAnimation&)*n.dst_anim;
+    // todo
 }
 
 
