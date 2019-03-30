@@ -174,18 +174,17 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
     pos = extract_position(mat);
     rot = extract_rotation(mat);
     scale = extract_scale(mat);
-    msLogInfo("ok\n");
 }
 
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
 {
-
+    // todo
 }
 
 void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
 {
-
+    // todo
 }
 
 
@@ -373,8 +372,10 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     CLxUser_StringTag poly_tag;
     CLxUser_Polygon polygons;
     CLxUser_Point points;
+    CLxUser_MeshMap mmap;
     mesh.GetPolygons(polygons);
     mesh.GetPoints(points);
+    mesh.GetMaps(mmap);
     poly_tag.set(polygons);
 
     int num_faces = mesh.NPolygons();
@@ -387,6 +388,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     auto& dst_mids = ret->material_ids;
     std::string path = GetPath(n.item);
 
+    // topology
     dst_counts.resize_discard(num_faces);
     dst_indices.reserve_discard(num_faces * 4);
     for (int fi = 0; fi < num_faces; ++fi) {
@@ -413,6 +415,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
     num_indices = (int)dst_indices.size();
 
+    //points
     dst_points.resize_discard(num_points);
     for (int pi = 0; pi < num_points; ++pi) {
         points.SelectByIndex(pi);
@@ -420,6 +423,72 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         LXtFVector p;
         points.Pos(p);
         dst_points[pi] = to_float3(p);
+    }
+
+    // normals
+    {
+        auto map_names = GetMapNames(mmap, LXi_VMAP_NORMAL);
+        if (!map_names.empty() && LXx_OK(mmap.SelectByName(LXi_VMAP_NORMAL, map_names[0])) ) {
+            auto mmid = mmap.ID();
+
+            auto& dst_normals = ret->normals;
+            dst_normals.resize_discard(dst_indices.size());
+            auto *write_ptr = dst_normals.data();
+
+            for (int fi = 0; fi < num_faces; ++fi) {
+                polygons.SelectByIndex(fi);
+
+                int count = dst_counts[fi];
+                for (int ci = 0; ci < count; ++ci) {
+                    LXtPointID pid;
+                    polygons.VertexByIndex(ci, &pid);
+
+                    mu::float3 v;
+                    if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
+                        dst_normals.clear();
+                        goto normals_end;
+                    }
+                    *(write_ptr++) = v;
+                }
+            }
+        normals_end:;
+        }
+    }
+
+    // uv
+    {
+        auto extract_uv = [&](const char *name, RawVector<mu::float2>& dst) {
+            if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_TEXTUREUV, name)))
+                return;
+            auto mmid = mmap.ID();
+
+            dst.resize_discard(dst_indices.size());
+            auto *write_ptr = dst.data();
+
+            for (int fi = 0; fi < num_faces; ++fi) {
+                polygons.SelectByIndex(fi);
+
+                int count = dst_counts[fi];
+                for (int ci = 0; ci < count; ++ci) {
+                    LXtPointID pid;
+                    polygons.VertexByIndex(ci, &pid);
+
+                    mu::float2 v;
+                    if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
+                        dst.clear();
+                        goto uv_end;
+                    }
+                    *(write_ptr++) = v;
+                }
+            }
+        uv_end:;
+        };
+
+        auto map_names = GetMapNames(mmap, LXi_VMAP_TEXTUREUV);
+        if (map_names.size() > 0)
+            extract_uv(map_names[0], ret->uv0);
+        if (map_names.size() > 1)
+            extract_uv(map_names[1], ret->uv1);
     }
 
     ret->setupFlags();

@@ -27,3 +27,28 @@ std::string GetPath(CLxUser_Item& obj)
     return ret;
 }
 
+
+class GetMapNames_Visitor : public CLxImpl_AbstractVisitor
+{
+public:
+    GetMapNames_Visitor(CLxUser_MeshMap *mmap) : m_mmap(mmap) {}
+
+    LxResult Evaluate() override
+    {
+        const char *name;
+        if (LXx_OK(m_mmap->Name(&name)))
+            m_names.push_back(name);
+        return LXe_OK;
+    }
+
+    CLxUser_MeshMap *m_mmap;
+    std::vector<const char*> m_names;
+};
+
+std::vector<const char*> GetMapNames(CLxUser_MeshMap& mmap, const LXtID4& id4)
+{
+    GetMapNames_Visitor name_visitor(&mmap);
+    mmap.FilterByType(id4);
+    mmap.Enum(&name_visitor);
+    return name_visitor.m_names;
+}

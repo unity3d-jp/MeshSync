@@ -3,6 +3,7 @@
 CLxUser_Item GetParent(CLxUser_Item& obj);
 std::string GetName(CLxUser_Item& obj);
 std::string GetPath(CLxUser_Item& obj);
+std::vector<const char*> GetMapNames(CLxUser_MeshMap& mmap, const LXtID4& id4);
 
 inline bool LXTypeMatch(const char *t1, const char *t2)
 {
