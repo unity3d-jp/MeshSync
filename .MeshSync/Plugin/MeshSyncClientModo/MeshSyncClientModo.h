@@ -103,14 +103,17 @@ public:
     bool recvScene();
 
 private:
-    ms::TransformPtr exportObject(CLxUser_Item& obj, bool force);
+    ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
+
+    ms::TransformPtr exportObject(CLxUser_Item& obj);
+    template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::CameraPtr exportCamera(TreeNode& node);
     ms::LightPtr exportLight(TreeNode& node);
     ms::MeshPtr exportMesh(TreeNode& node);
 
     int exportAnimations(SendScope scope);
-    bool exportAnimation(CLxUser_Item& obj, bool force);
+    bool exportAnimation(CLxUser_Item& obj);
     void extractTransformAnimationData(TreeNode& node);
     void extractCameraAnimationData(TreeNode& node);
     void extractLightAnimationData(TreeNode& node);
@@ -118,6 +121,7 @@ private:
 
     void kickAsyncSend();
 
+    void enumrateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
     void eachMaterial(const std::function<void(CLxUser_Item&)>& body);
     void eachLight(const std::function<void(CLxUser_Item&)>& body);
     void eachCamera(const std::function<void(CLxUser_Item&)>& body);
@@ -140,12 +144,14 @@ private:
 
 
     msmodoSettings m_settings;
+    ms::IDGenerator<CLxUser_Item> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
 
-    int m_index_seed = 0;
+    int m_material_index_seed = 0;
+    int m_entity_index_seed = 0;
     std::map<LxItemKey, TreeNode> m_tree_nodes;
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;

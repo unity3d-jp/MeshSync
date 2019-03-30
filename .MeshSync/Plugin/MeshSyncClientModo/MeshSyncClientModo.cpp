@@ -33,6 +33,22 @@ void msmodoContext::update()
 {
 }
 
+void msmodoContext::enumrateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
+{
+    CLxUser_SceneGraph scene_graph;
+    CLxUser_ItemGraph  item_graph;
+    m_current_scene.GetGraph(graph_name, scene_graph);
+    item_graph.set(scene_graph);
+
+    unsigned num_elements = item_graph.Reverse(item);
+    for (unsigned ti = 0; ti < num_elements; ++ti) {
+        CLxUser_Item element;
+        if (item_graph.Reverse(item, ti, element)) {
+            body(element);
+        }
+    }
+}
+
 void msmodoContext::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
 {
     static const auto ttype = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
@@ -103,68 +119,57 @@ CLxUser_Mesh msmodoContext::getMesh(CLxUser_Item& obj)
 
 void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    enum RotationOrder {
-        ROTATION_ORDER_XYZ,
-        ROTATION_ORDER_XZY,
-        ROTATION_ORDER_YXZ,
-        ROTATION_ORDER_YZX,
-        ROTATION_ORDER_ZXY,
-        ROTATION_ORDER_ZYX
-    };
-
-    CLxUser_SceneGraph scene_graph;
-    CLxUser_ItemGraph  item_graph;
-    m_current_scene.GetGraph(LXsGRAPH_XFRMCORE, scene_graph);
-    item_graph.set(scene_graph);
-
     auto mat = mu::float4x4::identity();
+    enumrateGraph(n.item, LXsGRAPH_XFRMCORE, [this, &mat](CLxUser_Item& transform) {
+        const char *tname;
+        m_scene_service.ItemTypeName(transform.Type(), &tname);
 
-    unsigned num_transform = item_graph.Reverse(n.item);
-    for (unsigned ti = 0; ti < num_transform; ++ti) {
-        CLxUser_Item transform;
-        if (item_graph.Reverse(n.item, ti, transform)) {
-            const char *tname;
-            m_scene_service.ItemTypeName(transform.Type(), &tname);
-
-            if (LXTypeMatch(tname, LXsITYPE_TRANSLATION)) {
-                mu::float3 t {
-                    (float)m_chan_read.FValue(transform, LXsITYPE_TRANSLATION ".X"),
-                    (float)m_chan_read.FValue(transform, LXsITYPE_TRANSLATION ".Y"),
-                    (float)m_chan_read.FValue(transform, LXsITYPE_TRANSLATION ".Z")
-                };
-                mat *= mu::translate(t);
-            }
-            else if (LXTypeMatch(tname, LXsITYPE_SCALE)) {
-                mu::float3 s {
-                    (float)m_chan_read.FValue(transform, LXsITYPE_SCALE ".X"),
-                    (float)m_chan_read.FValue(transform, LXsITYPE_SCALE ".Y"),
-                    (float)m_chan_read.FValue(transform, LXsITYPE_SCALE ".Z")
-                };
-                mat *= mu::scale44(s);
-            }
-            else if (LXTypeMatch(tname, LXsITYPE_ROTATION)) {
-
-                auto rot_order = (RotationOrder)m_chan_read.IValue(transform, LXsICHAN_ROTATION_ORDER);
-                mu::float3 rot_euler{
-                    (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".X"),
-                    (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Y"),
-                    (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Z")
-                };
-
-                mu::quatf r = mu::quatf::identity();
-                switch (rot_order) {
-                case ROTATION_ORDER_XYZ: r = mu::rotateXYZ(rot_euler); break;
-                case ROTATION_ORDER_XZY: r = mu::rotateXZY(rot_euler); break;
-                case ROTATION_ORDER_YXZ: r = mu::rotateYXZ(rot_euler); break;
-                case ROTATION_ORDER_YZX: r = mu::rotateYZX(rot_euler); break;
-                case ROTATION_ORDER_ZXY: r = mu::rotateZXY(rot_euler); break;
-                case ROTATION_ORDER_ZYX: r = mu::rotateZYX(rot_euler); break;
-                }
-
-                mat *= mu::to_mat4x4(r);
-            }
+        if (LXTypeMatch(tname, LXsITYPE_TRANSLATION)) {
+            mu::float3 t{
+                (float)m_chan_read.FValue(transform, LXsICHAN_TRANSLATION_POS ".X"),
+                (float)m_chan_read.FValue(transform, LXsICHAN_TRANSLATION_POS ".Y"),
+                (float)m_chan_read.FValue(transform, LXsICHAN_TRANSLATION_POS ".Z")
+            };
+            mat *= mu::translate(t);
         }
-    }
+        else if (LXTypeMatch(tname, LXsITYPE_SCALE)) {
+            mu::float3 s{
+                (float)m_chan_read.FValue(transform, LXsICHAN_SCALE_SCL ".X"),
+                (float)m_chan_read.FValue(transform, LXsICHAN_SCALE_SCL ".Y"),
+                (float)m_chan_read.FValue(transform, LXsICHAN_SCALE_SCL ".Z")
+            };
+            mat *= mu::scale44(s);
+        }
+        else if (LXTypeMatch(tname, LXsITYPE_ROTATION)) {
+            enum RotationOrder {
+                ROTATION_ORDER_XYZ,
+                ROTATION_ORDER_XZY,
+                ROTATION_ORDER_YXZ,
+                ROTATION_ORDER_YZX,
+                ROTATION_ORDER_ZXY,
+                ROTATION_ORDER_ZYX
+            };
+
+            auto rot_order = (RotationOrder)m_chan_read.IValue(transform, LXsICHAN_ROTATION_ORDER);
+            mu::float3 rot_euler{
+                (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".X"),
+                (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Y"),
+                (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Z")
+            };
+
+            mu::quatf r = mu::quatf::identity();
+            switch (rot_order) {
+            case ROTATION_ORDER_XYZ: r = mu::rotateXYZ(rot_euler); break;
+            case ROTATION_ORDER_XZY: r = mu::rotateXZY(rot_euler); break;
+            case ROTATION_ORDER_YXZ: r = mu::rotateYXZ(rot_euler); break;
+            case ROTATION_ORDER_YZX: r = mu::rotateYZX(rot_euler); break;
+            case ROTATION_ORDER_ZXY: r = mu::rotateZXY(rot_euler); break;
+            case ROTATION_ORDER_ZYX: r = mu::rotateZYX(rot_euler); break;
+            }
+
+            mat *= mu::to_mat4x4(r);
+        }
+    });
 
     pos = extract_position(mat);
     rot = extract_rotation(mat);
@@ -192,26 +197,23 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     }
     m_pending_scope = SendScope::None;
 
+    // prepare
     m_layer_service.SetScene(0);
     m_layer_service.Scene(m_current_scene);
-
     m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
 
-    eachMaterial([this](CLxUser_Item& obj) {
-        auto name = GetName(obj);
-        mu::float4 color {
-            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
-            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
-            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
-            1.0f
-        };
-        msLogInfo("ok\n");
-    });
+    // export materials
+    m_material_index_seed = 0;
+    eachMaterial([this](CLxUser_Item& obj) { exportMaterial(obj); });
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
 
-    eachCamera([this](CLxUser_Item& obj) { exportObject(obj, true); });
-    eachLight([this](CLxUser_Item& obj) { exportObject(obj, true); });
-    eachMesh([this](CLxUser_Item& obj) { exportObject(obj, true); });
+    // export entities
+    eachCamera([this](CLxUser_Item& obj) { exportObject(obj); });
+    eachLight([this](CLxUser_Item& obj) { exportObject(obj); });
+    eachMesh([this](CLxUser_Item& obj) { exportObject(obj); });
 
+    // send
     kickAsyncSend();
     return true;
 }
@@ -219,6 +221,11 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 bool msmodoContext::sendAnimations(SendScope scope)
 {
     m_sender.wait();
+
+    // prepare
+    m_layer_service.SetScene(0);
+    m_layer_service.Scene(m_current_scene);
+    m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
 
     if (exportAnimations(scope) > 0) {
         kickAsyncSend();
@@ -240,7 +247,30 @@ bool msmodoContext::recvScene()
 // component export
 // 
 
-ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj, bool force)
+ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item& obj)
+{
+    auto ret = ms::Material::create();
+    ret->name = GetName(obj);
+    ret->id = m_material_ids.getID(obj);
+    ret->index = ++m_material_index_seed;
+
+    {
+        auto& stdmat = ms::AsStandardMaterial(*ret);
+
+        mu::float4 color{
+            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
+            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
+            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
+            1.0f
+        };
+        stdmat.setColor(color);
+    }
+    m_material_manager.add(ret);
+
+    return ret;
+}
+
+ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
 {
     if (!obj.test())
         return nullptr;
@@ -257,69 +287,83 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj, bool force)
         m_entity_manager.erase(n.path);
     }
     if (n.index == 0) {
-        n.index = ++m_index_seed;
+        n.index = ++m_entity_index_seed;
     }
     n.name = name;
     n.path = path;
 
-    static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
     static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
     static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
     static const auto t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
 
     if (obj.IsA(t_camera)) {
-        exportObject(GetParent(obj), true);
+        exportObject(GetParent(obj));
         n.dst_obj = exportCamera(n);
     }
     else if (obj.IsA(t_light)) {
-        exportObject(GetParent(obj), true);
+        exportObject(GetParent(obj));
         n.dst_obj = exportLight(n);
     }
     else if (obj.IsA(t_mesh)) {
-        exportObject(GetParent(obj), true);
+        exportObject(GetParent(obj));
         n.dst_obj = exportMesh(n);
     }
     else {
-        exportObject(GetParent(obj), true);
+        exportObject(GetParent(obj));
         n.dst_obj = exportTransform(n);
     }
-
     return n.dst_obj;
 }
 
+template<class T> std::shared_ptr<T> msmodoContext::createEntity(TreeNode& n)
+{
+    auto ret = T::create();
+    auto& dst = *ret;
+    dst.path = n.path;
+    dst.index = n.index;
+    n.dst_obj = ret;
+    return ret;
+}
+
+
 ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
 {
-    auto ret = ms::Transform::create();
+    auto ret = createEntity<ms::Transform>(n);
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
 
+    m_entity_manager.add(n.dst_obj);
     return ret;
 }
 
 ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
 {
-    auto ret = ms::Camera::create();
+    auto ret = createEntity<ms::Camera>(n);
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+    ret->rotation = mu::flipY(ret->rotation);
 
+    m_entity_manager.add(n.dst_obj);
     return ret;
 }
 
 ms::LightPtr msmodoContext::exportLight(TreeNode& n)
 {
-    auto ret = ms::Light::create();
+    auto ret = createEntity<ms::Light>(n);
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+    ret->rotation = mu::flipY(mu::invert(ret->rotation));
 
+    m_entity_manager.add(n.dst_obj);
     return ret;
 }
 
 ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 {
-    auto ret = ms::Mesh::create();
+    auto ret = createEntity<ms::Mesh>(n);
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
@@ -378,6 +422,10 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         dst_points[pi] = to_float3(p);
     }
 
+    ret->setupFlags();
+    ret->refine_settings.flags.swap_faces = true;
+
+    m_entity_manager.add(n.dst_obj);
     return ret;
 }
 
@@ -392,13 +440,13 @@ int msmodoContext::exportAnimations(SendScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     eachCamera([this](CLxUser_Item& obj) {
-        exportAnimation(obj, true);
+        exportAnimation(obj);
     });
     eachLight([this](CLxUser_Item& obj) {
-        exportAnimation(obj, true);
+        exportAnimation(obj);
     });
     eachMesh([this](CLxUser_Item& obj) {
-        exportAnimation(obj, true);
+        exportAnimation(obj);
     });
 
     // todo:
@@ -406,7 +454,7 @@ int msmodoContext::exportAnimations(SendScope scope)
     return 0;
 }
 
-bool msmodoContext::exportAnimation(CLxUser_Item& obj, bool force)
+bool msmodoContext::exportAnimation(CLxUser_Item& obj)
 {
     if (!obj.test())
         return nullptr;
@@ -416,28 +464,27 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj, bool force)
         return true;
     n.item = obj;
 
-    static const auto t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
     static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
     static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
     static const auto t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
 
     if (obj.IsA(t_camera)) {
-        exportAnimation(GetParent(obj), true);
+        exportAnimation(GetParent(obj));
         n.dst_anim = ms::CameraAnimation::create();
         n.anim_extractor = &msmodoContext::extractCameraAnimationData;
     }
     else if (obj.IsA(t_light)) {
-        exportAnimation(GetParent(obj), true);
+        exportAnimation(GetParent(obj));
         n.dst_anim = ms::LightAnimation::create();
         n.anim_extractor = &msmodoContext::extractLightAnimationData;
     }
     else if (obj.IsA(t_mesh)) {
-        exportAnimation(GetParent(obj), true);
+        exportAnimation(GetParent(obj));
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
     }
     else {
-        exportAnimation(GetParent(obj), true);
+        exportAnimation(GetParent(obj));
         n.dst_anim = ms::TransformAnimation::create();
         n.anim_extractor = &msmodoContext::extractTransformAnimationData;
     }
@@ -501,7 +548,7 @@ void msmodoContext::extractLightAnimationData(TreeNode& n)
     auto& dst = (ms::LightAnimation&)*n.dst_anim;
     {
         auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
+        last.value = mu::flipY(mu::invert(last.value));
     }
 
     ms::Light::LightType type;
