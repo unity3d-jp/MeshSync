@@ -99,7 +99,7 @@ public:
         auto& settings = msmodoGetSettings();
 #define Handler(Name, Type, Member, Sync)\
         if(getArg(Name, Member) && settings.auto_sync && Sync)\
-            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, false);
+            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
 
         EachParams(Handler)
 #undef Handler
@@ -114,7 +114,7 @@ class msmodoCmdExport : public CLxCommand
 public:
     void execute() override
     {
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, false);
+        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
 
         CLxUser_LogService lS;
         lS.DebugOut(LXi_DBLOG_NORMAL, msmodoCmdExportName " executed\n");

@@ -102,6 +102,7 @@ private:
         void clearState();
     };
 
+    void prepare();
 
     ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
 
@@ -129,7 +130,8 @@ private:
     void eachDeformer(const std::function<void(CLxUser_Item&)>& body);
     void eachMesh(CLxUser_Item& deformer, const std::function<void(CLxUser_Item&)>& body);
     void eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body);
-    CLxUser_Mesh getMesh(CLxUser_Item& obj);
+    CLxUser_Mesh getBaseMesh(CLxUser_Item& obj);
+    CLxUser_Mesh getDeformedMesh(CLxUser_Item& obj);
 
     void extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -145,6 +147,7 @@ private:
 
     CLxUser_Scene m_current_scene;
     CLxUser_ChannelRead m_chan_read;
+    CLxUser_ChannelRead m_chan_read_setup;
 
 
     msmodoSettings m_settings;

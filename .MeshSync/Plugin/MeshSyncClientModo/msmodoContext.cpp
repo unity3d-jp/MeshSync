@@ -105,14 +105,28 @@ void msmodoContext::eachBone(CLxUser_Item& item, const std::function<void(CLxUse
     });
 }
 
-CLxUser_Mesh msmodoContext::getMesh(CLxUser_Item& obj)
+CLxUser_Mesh msmodoContext::getBaseMesh(CLxUser_Item& obj)
 {
     static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
 
     CLxUser_Mesh mesh;
-    CLxUser_MeshFilter mesh_filter;
-    if (m_chan_read.Object(obj, LXsICHAN_MESH_MESH, mesh_filter)) {
-        mesh_filter.GetMesh(mesh);
+    CLxUser_MeshFilter meshfilter;
+    CLxUser_MeshFilterIdent meshfilter_ident;
+    if (m_chan_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
+        if (meshfilter_ident.copy(meshfilter))
+            meshfilter_ident.GetMesh(LXs_MESHFILTER_BASE, mesh);
+    }
+    return mesh;
+}
+
+CLxUser_Mesh msmodoContext::getDeformedMesh(CLxUser_Item& obj)
+{
+    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
+
+    CLxUser_Mesh mesh;
+    CLxUser_MeshFilter meshfilter;
+    if (m_chan_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
+        meshfilter.GetMesh(mesh);
     }
     return mesh;
 }
@@ -190,6 +204,13 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
     // todo
 }
 
+void msmodoContext::prepare()
+{
+    m_layer_service.SetScene(0);
+    m_layer_service.Scene(m_current_scene);
+    m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
+    m_current_scene.GetSetupChannels(m_chan_read_setup);
+}
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
@@ -199,10 +220,11 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     }
     m_pending_scope = SendScope::None;
 
-    // prepare
-    m_layer_service.SetScene(0);
-    m_layer_service.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
+    if (dirty_all) {
+        m_entity_manager.makeDirtyAll();
+    }
+
+    prepare();
 
     // export materials
     m_material_index_seed = 0;
@@ -224,10 +246,7 @@ bool msmodoContext::sendAnimations(SendScope scope)
 {
     m_sender.wait();
 
-    // prepare
-    m_layer_service.SetScene(0);
-    m_layer_service.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
+    prepare();
 
     if (exportAnimations(scope) > 0) {
         kickAsyncSend();
@@ -372,7 +391,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
 
-    CLxUser_Mesh mesh = getMesh(n.item);
+    CLxUser_Mesh mesh = m_settings.bake_deformers ? getDeformedMesh(n.item) : getBaseMesh(n.item);
 
     CLxUser_StringTag poly_tag;
     CLxUser_Polygon polygons;
@@ -521,7 +540,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     // bone weights
-    if (m_settings.sync_bones) {
+    if (!m_settings.bake_deformers && m_settings.sync_bones) {
         auto get_weights = [&](const char *name, RawVector<float>& dst_array) -> bool {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
                 return false;
@@ -547,19 +566,19 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             if (def.Type() != ttype)
                 return;
 
-            static uint32_t ch_enable, ch_type, ch_name;
+            static uint32_t ch_enable, ch_type, ch_mapname;
             if (ch_enable == 0) {
                 def.ChannelLookup(LXsICHAN_GENINFLUENCE_ENABLE, &ch_enable);
                 def.ChannelLookup(LXsICHAN_GENINFLUENCE_TYPE, &ch_type);
-                def.ChannelLookup(LXsICHAN_GENINFLUENCE_NAME, &ch_name);
+                def.ChannelLookup(LXsICHAN_GENINFLUENCE_NAME, &ch_mapname);
             }
 
             int enable, type;
-            const char *map_name;
+            const char *mapname;
             m_chan_read.Integer(def, ch_enable, &enable);
             m_chan_read.Integer(def, ch_type, &type);
-            m_chan_read.String(def, ch_name, &map_name);
-            if (!map_name)
+            m_chan_read.String(def, ch_mapname, &mapname);
+            if (!mapname)
                 return;
 
             CLxUser_Item bone;
@@ -567,55 +586,68 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             if (!bone)
                 return;
 
+            CLxUser_Locator loc(bone);
+
             auto dst_bone = ms::BoneData::create();
             dst_bone->path = GetPath(bone);
             // todo: bindpose
-            if (get_weights(map_name, dst_bone->weights)) {
+            if (get_weights(mapname, dst_bone->weights))
                 dst.bones.push_back(dst_bone);
-            }
         });
     }
 
     // morph
-    if (m_settings.sync_blendshapes) {
-        auto do_extract = [&](const char *name, RawVector<mu::float3>& dst_array) {
+    if (!m_settings.bake_deformers && m_settings.sync_blendshapes) {
+        auto get_delta = [&](const char *name, RawVector<mu::float3>& dst_array) -> bool {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
-                return;
-            auto mmid = mmap.ID();
+                return false;
 
             dst_array.resize_discard(dst.points.size());
             auto *write_ptr = dst_array.data();
 
+            auto mmid = mmap.ID();
+            mu::float3 v;
             for (int pi = 0; pi < num_points; ++pi) {
                 points.SelectByIndex(pi);
-
-                mu::float3 v;
                 if (LXx_FAIL(points.MapEvaluate(mmid, &v[0]))) {
                     dst.clear();
-                    break;
+                    return false;
                 }
                 *(write_ptr++) = v;
             }
-
+            return true;
         };
 
-        auto map_names = GetMapNames(mmap, LXi_VMAP_MORPH);
-        for (auto name : map_names) {
-            auto dst_bs = ms::BlendShapeData::create();
-            dst.blendshapes.push_back(dst_bs);
-            dst_bs->name = name;
-
-            auto dst_bsf = ms::BlendShapeFrameData::create();
-            dst_bs->frames.push_back(dst_bsf);
-            dst_bsf->weight = 100.0f;
-            do_extract(name, dst_bsf->points);
-        }
-
-        enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [this](CLxUser_Item& def) {
+        enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
             static const auto ttype = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
             if (def.Type() != ttype)
                 return;
 
+            static uint32_t ch_enable, ch_strength, ch_mapname;
+            if (ch_enable == 0) {
+                def.ChannelLookup(LXsICHAN_MORPHDEFORM_ENABLE, &ch_enable);
+                def.ChannelLookup(LXsICHAN_MORPHDEFORM_STRENGTH, &ch_strength);
+                def.ChannelLookup(LXsICHAN_MORPHDEFORM_MAPNAME, &ch_mapname);
+            }
+
+            int enable;
+            double strength;
+            const char *mapname;
+            m_chan_read.Integer(def, ch_enable, &enable);
+            m_chan_read.Double(def, ch_strength, &strength);
+            m_chan_read.String(def, ch_mapname, &mapname);
+            if (!mapname)
+                return;
+
+            auto dst_bs = ms::BlendShapeData::create();
+            dst_bs->name = GetPath(def);
+            dst_bs->weight = (float)(strength * 100.0);
+
+            auto dst_bsf = ms::BlendShapeFrameData::create();
+            dst_bs->frames.push_back(dst_bsf);
+            dst_bsf->weight = 100.0f;
+            if (get_delta(mapname, dst_bsf->points))
+                dst.blendshapes.push_back(dst_bs);
         });
     }
 
