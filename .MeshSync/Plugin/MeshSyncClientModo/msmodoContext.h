@@ -102,7 +102,8 @@ private:
         void clearState();
     };
 
-    void prepare();
+    // time: inf -> current time
+    void prepare(double time = std::numeric_limits<double>::infinity());
 
     ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
 
@@ -146,8 +147,8 @@ private:
     CLxUser_DeformerService m_deform_service;
 
     CLxUser_Scene m_current_scene;
-    CLxUser_ChannelRead m_chan_read;
-    CLxUser_ChannelRead m_chan_read_setup;
+    CLxUser_ChannelRead m_ch_read;
+    CLxUser_ChannelRead m_ch_read_setup;
 
 
     msmodoSettings m_settings;

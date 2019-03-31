@@ -112,7 +112,7 @@ CLxUser_Mesh msmodoContext::getBaseMesh(CLxUser_Item& obj)
     CLxUser_Mesh mesh;
     CLxUser_MeshFilter meshfilter;
     CLxUser_MeshFilterIdent meshfilter_ident;
-    if (m_chan_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
+    if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
         if (meshfilter_ident.copy(meshfilter))
             meshfilter_ident.GetMesh(LXs_MESHFILTER_BASE, mesh);
     }
@@ -125,7 +125,7 @@ CLxUser_Mesh msmodoContext::getDeformedMesh(CLxUser_Item& obj)
 
     CLxUser_Mesh mesh;
     CLxUser_MeshFilter meshfilter;
-    if (m_chan_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
+    if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
         meshfilter.GetMesh(mesh);
     }
     return mesh;
@@ -136,57 +136,9 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
 {
     CLxUser_Locator loc(n.item);
 
-    auto mat = mu::float4x4::identity();
-    enumerateGraph(n.item, LXsGRAPH_XFRMCORE, [this, &mat](CLxUser_Item& transform) {
-        const char *tname;
-        m_scene_service.ItemTypeName(transform.Type(), &tname);
-
-        if (LXTypeMatch(tname, LXsITYPE_TRANSLATION)) {
-            mu::float3 t{
-                (float)m_chan_read.FValue(transform, LXsICHAN_TRANSLATION_POS ".X"),
-                (float)m_chan_read.FValue(transform, LXsICHAN_TRANSLATION_POS ".Y"),
-                (float)m_chan_read.FValue(transform, LXsICHAN_TRANSLATION_POS ".Z")
-            };
-            mat *= mu::translate(t);
-        }
-        else if (LXTypeMatch(tname, LXsITYPE_SCALE)) {
-            mu::float3 s{
-                (float)m_chan_read.FValue(transform, LXsICHAN_SCALE_SCL ".X"),
-                (float)m_chan_read.FValue(transform, LXsICHAN_SCALE_SCL ".Y"),
-                (float)m_chan_read.FValue(transform, LXsICHAN_SCALE_SCL ".Z")
-            };
-            mat *= mu::scale44(s);
-        }
-        else if (LXTypeMatch(tname, LXsITYPE_ROTATION)) {
-            enum RotationOrder {
-                ROTATION_ORDER_XYZ,
-                ROTATION_ORDER_XZY,
-                ROTATION_ORDER_YXZ,
-                ROTATION_ORDER_YZX,
-                ROTATION_ORDER_ZXY,
-                ROTATION_ORDER_ZYX
-            };
-
-            auto rot_order = (RotationOrder)m_chan_read.IValue(transform, LXsICHAN_ROTATION_ORDER);
-            mu::float3 rot_euler{
-                (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".X"),
-                (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Y"),
-                (float)m_chan_read.FValue(transform, LXsICHAN_ROTATION_ROT ".Z")
-            };
-
-            mu::quatf r = mu::quatf::identity();
-            switch (rot_order) {
-            case ROTATION_ORDER_XYZ: r = mu::rotateXYZ(rot_euler); break;
-            case ROTATION_ORDER_XZY: r = mu::rotateXZY(rot_euler); break;
-            case ROTATION_ORDER_YXZ: r = mu::rotateYXZ(rot_euler); break;
-            case ROTATION_ORDER_YZX: r = mu::rotateYZX(rot_euler); break;
-            case ROTATION_ORDER_ZXY: r = mu::rotateZXY(rot_euler); break;
-            case ROTATION_ORDER_ZYX: r = mu::rotateZYX(rot_euler); break;
-            }
-
-            mat *= mu::to_mat4x4(r);
-        }
-    });
+    LXtMatrix4 lxmat;
+    loc.LocalTransform4(m_ch_read, lxmat);
+    mu::float4x4 mat = to_float4x4(lxmat);
 
     pos = extract_position(mat);
     rot = extract_rotation(mat);
@@ -204,12 +156,15 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
     // todo
 }
 
-void msmodoContext::prepare()
+void msmodoContext::prepare(double time)
 {
+    if (time == std::numeric_limits<double>::infinity())
+        time = m_selection_service.GetTime();
+
     m_layer_service.SetScene(0);
     m_layer_service.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_chan_read, m_selection_service.GetTime());
-    m_current_scene.GetSetupChannels(m_chan_read_setup);
+    m_current_scene.GetChannels(m_ch_read, time);
+    m_current_scene.GetSetupChannels(m_ch_read_setup);
 }
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
@@ -279,9 +234,9 @@ ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item& obj)
         auto& stdmat = ms::AsStandardMaterial(*ret);
 
         mu::float4 color{
-            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
-            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
-            (float)m_chan_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
+            (float)m_ch_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".R"),
+            (float)m_ch_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".G"),
+            (float)m_ch_read.FValue(obj, LXsICHAN_ADVANCEDMATERIAL_DIFFCOL".B"),
             1.0f
         };
         stdmat.setColor(color);
@@ -377,7 +332,7 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
-    ret->rotation = mu::flipY(mu::invert(ret->rotation));
+    ret->rotation = mu::flipY(ret->rotation);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -575,9 +530,9 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
             int enable, type;
             const char *mapname;
-            m_chan_read.Integer(def, ch_enable, &enable);
-            m_chan_read.Integer(def, ch_type, &type);
-            m_chan_read.String(def, ch_mapname, &mapname);
+            m_ch_read.Integer(def, ch_enable, &enable);
+            m_ch_read.Integer(def, ch_type, &type);
+            m_ch_read.String(def, ch_mapname, &mapname);
             if (!mapname)
                 return;
 
@@ -586,14 +541,23 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             if (!bone)
                 return;
 
-            CLxUser_Locator loc(bone);
-
             auto dst_bone = ms::BoneData::create();
             dst_bone->path = GetPath(bone);
-            // todo: bindpose
+            {
+                // bindpose
+                CLxUser_Locator loc(bone);
+                LXtMatrix4 lxmat;
+                loc.WorldTransform4(m_ch_read_setup, lxmat);
+                dst_bone->bindpose = mu::invert(to_float4x4(lxmat));
+            }
             if (get_weights(mapname, dst_bone->weights))
                 dst.bones.push_back(dst_bone);
         });
+
+        if (!dst.bones.empty()) {
+            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.local2world = dst.toMatrix();
+        }
     }
 
     // morph
@@ -633,9 +597,9 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             int enable;
             double strength;
             const char *mapname;
-            m_chan_read.Integer(def, ch_enable, &enable);
-            m_chan_read.Double(def, ch_strength, &strength);
-            m_chan_read.String(def, ch_mapname, &mapname);
+            m_ch_read.Integer(def, ch_enable, &enable);
+            m_ch_read.Double(def, ch_strength, &strength);
+            m_ch_read.String(def, ch_mapname, &mapname);
             if (!mapname)
                 return;
 
@@ -778,7 +742,7 @@ void msmodoContext::extractLightAnimationData(TreeNode& n)
     auto& dst = (ms::LightAnimation&)*n.dst_anim;
     {
         auto& last = dst.rotation.back();
-        last.value = mu::flipY(mu::invert(last.value));
+        last.value = mu::flipY(last.value);
     }
 
     ms::Light::LightType type;
