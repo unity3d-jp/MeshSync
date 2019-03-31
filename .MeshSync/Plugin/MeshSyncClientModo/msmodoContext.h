@@ -27,24 +27,6 @@ struct LxItemKey
 
 class msmodoContext;
 
-struct TreeNode : public mu::noncopyable
-{
-    CLxUser_Item item;
-
-    std::string name;
-    std::string path;
-    int id = ms::InvalidID;
-    int index = 0;
-
-    ms::TransformPtr dst_obj;
-    ms::AnimationPtr dst_anim;
-
-    using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
-    AnimationExtractor anim_extractor = nullptr;
-
-    void clearState();
-};
-
 
 
 struct msmodoSettings
@@ -88,7 +70,6 @@ public:
         Selected,
     };
 
-
     static msmodoContext& getInstance();
 
     msmodoContext();
@@ -103,6 +84,25 @@ public:
     bool recvScene();
 
 private:
+    struct TreeNode : public mu::noncopyable
+    {
+        CLxUser_Item item;
+
+        std::string name;
+        std::string path;
+        int id = ms::InvalidID;
+        int index = 0;
+
+        ms::TransformPtr dst_obj;
+        ms::AnimationPtr dst_anim;
+
+        using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
+        AnimationExtractor anim_extractor = nullptr;
+
+        void clearState();
+    };
+
+
     ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
 
     ms::TransformPtr exportObject(CLxUser_Item& obj);

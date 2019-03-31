@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "MeshSyncClientModo.h"
+#include "msmodoContext.h"
 #include "msmodoUtils.h"
 
 
-void TreeNode::clearState()
+void msmodoContext::TreeNode::clearState()
 {
     dst_obj = nullptr;
     dst_anim = nullptr;
@@ -119,6 +119,8 @@ CLxUser_Mesh msmodoContext::getMesh(CLxUser_Item& obj)
 
 void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
+    CLxUser_Locator loc(n.item);
+
     auto mat = mu::float4x4::identity();
     enumrateGraph(n.item, LXsGRAPH_XFRMCORE, [this, &mat](CLxUser_Item& transform) {
         const char *tname;

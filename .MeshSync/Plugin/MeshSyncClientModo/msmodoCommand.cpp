@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "MeshSyncClientModo.h"
 #include "msmodoUtils.h"
 #include "msmodoCommand.h"
+#include "msmodoContext.h"
 
 
 class msmodoCmdSettings : public CLxCommand

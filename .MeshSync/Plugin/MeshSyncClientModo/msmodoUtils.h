@@ -26,5 +26,13 @@ inline mu::float3x3 to_float4(LXtFMatrix v)
 {
     return (mu::float3x3&)(v[0][0]);
 }
-
+inline mu::float4x4 to_float4x4(LXtMatrix v)
+{
+    return mu::float4x4{
+        (float)v[0][0], (float)v[0][1], (float)v[0][2], 0.0f,
+        (float)v[1][0], (float)v[1][1], (float)v[1][2], 0.0f,
+        (float)v[2][0], (float)v[2][1], (float)v[2][2], 0.0f,
+                  0.0f,           0.0f,           0.0f, 1.0f,
+    };
+}
 
