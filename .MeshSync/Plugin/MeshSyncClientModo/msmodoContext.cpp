@@ -99,9 +99,10 @@ void msmodoContext::eachBone(CLxUser_Item& item, const std::function<void(CLxUse
         if (def.Type() != ttype)
             return;
 
-        CLxUser_Item bone;
-        if (LXx_OK(m_deform_service.DeformerDeformationItem(def, bone)))
-            body(bone);
+        static const auto tloc = m_scene_service.ItemType(LXsITYPE_LOCATOR);
+        CLxUser_Item effector;
+        if (LXx_OK(m_deform_service.DeformerDeformationItem(def, effector)) && effector.IsA(tloc))
+                body(effector);
     });
 }
 
@@ -562,16 +563,16 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             if (!mapname)
                 return;
 
-            CLxUser_Item bone;
-            m_deform_service.DeformerDeformationItem(def, bone);
-            if (!bone)
+            static const auto tloc = m_scene_service.ItemType(LXsITYPE_LOCATOR);
+            CLxUser_Item effector;
+            if (LXx_FAIL(m_deform_service.DeformerDeformationItem(def, effector)) || !effector.IsA(tloc))
                 return;
 
             auto dst_bone = ms::BoneData::create();
-            dst_bone->path = GetPath(bone);
+            dst_bone->path = GetPath(effector);
             {
                 // bindpose
-                CLxUser_Locator loc(bone);
+                CLxUser_Locator loc(effector);
                 LXtMatrix4 lxmat;
                 loc.WorldTransform4(m_ch_read_setup, lxmat);
                 dst_bone->bindpose = mu::invert(to_float4x4(lxmat));
