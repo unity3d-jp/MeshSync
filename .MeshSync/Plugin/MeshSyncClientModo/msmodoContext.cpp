@@ -33,7 +33,7 @@ void msmodoContext::update()
 {
 }
 
-void msmodoContext::enumrateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
+void msmodoContext::enumerateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
 {
     CLxUser_SceneGraph scene_graph;
     CLxUser_ItemGraph  item_graph;
@@ -49,60 +49,60 @@ void msmodoContext::enumrateGraph(CLxUser_Item& item, const char *graph_name, co
     }
 }
 
+#define EachObjectImpl(Type)\
+    static const auto ttype = m_scene_service.ItemType(Type);\
+    uint32_t num_objects;\
+    m_current_scene.ItemCount(ttype, &num_objects);\
+    CLxUser_Item item;\
+    for (uint32_t im = 0; im < num_objects; ++im) {\
+        m_current_scene.ItemByIndex(ttype, im, item);\
+        body(item);\
+    }
+
 void msmodoContext::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
 {
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
-
-    uint32_t num_objects;
-    m_current_scene.ItemCount(ttype, &num_objects);
-
-    CLxUser_Item item;
-    for (uint32_t im = 0; im < num_objects; ++im) {
-        m_current_scene.ItemByIndex(ttype, im, item);
-        body(item);
-    }
+    EachObjectImpl(LXsITYPE_ADVANCEDMATERIAL);
 }
-
 void msmodoContext::eachLight(const std::function<void(CLxUser_Item&)>& body)
 {
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_LIGHT);
-
-    uint32_t num_objects;
-    m_current_scene.ItemCount(ttype, &num_objects);
-
-    CLxUser_Item item;
-    for (uint32_t im = 0; im < num_objects; ++im) {
-        m_current_scene.ItemByIndex(ttype, im, item);
-        body(item);
-    }
+    EachObjectImpl(LXsITYPE_LIGHT);
 }
-
 void msmodoContext::eachCamera(const std::function<void(CLxUser_Item&)>& body)
 {
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_CAMERA);
+    EachObjectImpl(LXsITYPE_CAMERA);
+}
+void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&)>& body)
+{
+    EachObjectImpl(LXsITYPE_MESH);
+}
+void msmodoContext::eachDeformer(const std::function<void(CLxUser_Item&)>& body)
+{
+    EachObjectImpl(LXsITYPE_DEFORM);
+}
+#undef EachObjectImpl
 
-    uint32_t num_objects;
-    m_current_scene.ItemCount(ttype, &num_objects);
-
-    CLxUser_Item item;
-    for (uint32_t im = 0; im < num_objects; ++im) {
-        m_current_scene.ItemByIndex(ttype, im, item);
-        body(item);
+void msmodoContext::eachMesh(CLxUser_Item& deformer, const std::function<void(CLxUser_Item&)>& body)
+{
+    CLxUser_Item mesh;
+    uint32_t n = 0;
+    m_deform_service.MeshCount(deformer, &n);
+    for (uint32_t i = 0; i < n; ++i) {
+        if (LXx_OK(m_deform_service.MeshByIndex(deformer, i, mesh)))
+            body(mesh);
     }
 }
 
-void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&)>& body)
+void msmodoContext::eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body)
 {
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
+    enumerateGraph(item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
+        static const auto ttype = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
+        if (def.Type() != ttype)
+            return;
 
-    uint32_t num_objects;
-    m_current_scene.ItemCount(ttype, &num_objects);
-
-    CLxUser_Item item;
-    for (uint32_t im = 0; im < num_objects; ++im) {
-        m_current_scene.ItemByIndex(ttype, im, item);
-        body(item);
-    }
+        CLxUser_Item bone;
+        if (LXx_OK(m_deform_service.DeformerDeformationItem(def, bone)))
+            body(bone);
+    });
 }
 
 CLxUser_Mesh msmodoContext::getMesh(CLxUser_Item& obj)
@@ -117,12 +117,13 @@ CLxUser_Mesh msmodoContext::getMesh(CLxUser_Item& obj)
     return mesh;
 }
 
+
 void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     CLxUser_Locator loc(n.item);
 
     auto mat = mu::float4x4::identity();
-    enumrateGraph(n.item, LXsGRAPH_XFRMCORE, [this, &mat](CLxUser_Item& transform) {
+    enumerateGraph(n.item, LXsGRAPH_XFRMCORE, [this, &mat](CLxUser_Item& transform) {
         const char *tname;
         m_scene_service.ItemTypeName(transform.Type(), &tname);
 
@@ -307,6 +308,7 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
     }
     else if (obj.IsA(t_mesh)) {
         exportObject(GetParent(obj));
+        eachBone(obj, [&](CLxUser_Item& bone) { exportObject(bone); });
         n.dst_obj = exportMesh(n);
     }
     else {
@@ -428,20 +430,18 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         auto do_extract = [&](const char *name, RawVector<mu::float3>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_NORMAL, name)))
                 return;
-            auto mmid = mmap.ID();
 
             dst_array.resize_discard(dst.indices.size());
             auto *write_ptr = dst_array.data();
 
+            auto mmid = mmap.ID();
+            LXtPointID pid;
+            mu::float3 v;
             for (int fi = 0; fi < num_faces; ++fi) {
                 polygons.SelectByIndex(fi);
-
                 int count = dst.counts[fi];
                 for (int ci = 0; ci < count; ++ci) {
-                    LXtPointID pid;
                     polygons.VertexByIndex(ci, &pid);
-
-                    mu::float3 v;
                     if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
                         dst.clear();
                         return;
@@ -461,20 +461,18 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         auto do_extract = [&](const char *name, RawVector<mu::float2>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_TEXTUREUV, name)))
                 return;
-            auto mmid = mmap.ID();
 
             dst_array.resize_discard(dst.indices.size());
             auto *write_ptr = dst_array.data();
 
+            auto mmid = mmap.ID();
+            LXtPointID pid;
+            mu::float2 v;
             for (int fi = 0; fi < num_faces; ++fi) {
                 polygons.SelectByIndex(fi);
-
                 int count = dst.counts[fi];
                 for (int ci = 0; ci < count; ++ci) {
-                    LXtPointID pid;
                     polygons.VertexByIndex(ci, &pid);
-
-                    mu::float2 v;
                     if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
                         dst.clear();
                         return;
@@ -496,20 +494,18 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         auto do_extract = [&](const char *name, RawVector<mu::float4>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_RGBA, name)))
                 return;
-            auto mmid = mmap.ID();
 
             dst_array.resize_discard(dst.indices.size());
             auto *write_ptr = dst_array.data();
 
+            auto mmid = mmap.ID();
+            LXtPointID pid;
+            mu::float4 v;
             for (int fi = 0; fi < num_faces; ++fi) {
                 polygons.SelectByIndex(fi);
-
                 int count = dst.counts[fi];
                 for (int ci = 0; ci < count; ++ci) {
-                    LXtPointID pid;
                     polygons.VertexByIndex(ci, &pid);
-
-                    mu::float4 v;
                     if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
                         dst.clear();
                         return;
@@ -525,40 +521,63 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     // bone weights
-    {
-        auto do_extract = [&](const char *name, RawVector<float>& dst_array) {
+    if (m_settings.sync_bones) {
+        auto get_weights = [&](const char *name, RawVector<float>& dst_array) -> bool {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
-                return;
-            auto mmid = mmap.ID();
+                return false;
 
             dst_array.resize_discard(dst.points.size());
             auto *write_ptr = dst_array.data();
 
+            auto mmid = mmap.ID();
+            float v;
             for (int pi = 0; pi < num_points; ++pi) {
                 points.SelectByIndex(pi);
-
-                float v;
                 if (LXx_FAIL(points.MapEvaluate(mmid, &v))) {
                     dst.clear();
-                    break;
+                    return false;
                 }
                 *(write_ptr++) = v;
             }
-
+            return true;
         };
 
-        auto map_names = GetMapNames(mmap, LXi_VMAP_WEIGHT);
-        for (auto name : map_names) {
+        enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
+            static const auto ttype = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
+            if (def.Type() != ttype)
+                return;
+
+            static uint32_t ch_enable, ch_type, ch_name;
+            if (ch_enable == 0) {
+                def.ChannelLookup(LXsICHAN_GENINFLUENCE_ENABLE, &ch_enable);
+                def.ChannelLookup(LXsICHAN_GENINFLUENCE_TYPE, &ch_type);
+                def.ChannelLookup(LXsICHAN_GENINFLUENCE_NAME, &ch_name);
+            }
+
+            int enable, type;
+            const char *map_name;
+            m_chan_read.Integer(def, ch_enable, &enable);
+            m_chan_read.Integer(def, ch_type, &type);
+            m_chan_read.String(def, ch_name, &map_name);
+            if (!map_name)
+                return;
+
+            CLxUser_Item bone;
+            m_deform_service.DeformerDeformationItem(def, bone);
+            if (!bone)
+                return;
+
             auto dst_bone = ms::BoneData::create();
-            dst_bone->path = name;
-            dst.bones.push_back(dst_bone);
-            // todo
-            do_extract(name, dst_bone->weights);
-        }
+            dst_bone->path = GetPath(bone);
+            // todo: bindpose
+            if (get_weights(map_name, dst_bone->weights)) {
+                dst.bones.push_back(dst_bone);
+            }
+        });
     }
 
     // morph
-    {
+    if (m_settings.sync_blendshapes) {
         auto do_extract = [&](const char *name, RawVector<mu::float3>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
                 return;
@@ -588,8 +607,16 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
             auto dst_bsf = ms::BlendShapeFrameData::create();
             dst_bs->frames.push_back(dst_bsf);
+            dst_bsf->weight = 100.0f;
             do_extract(name, dst_bsf->points);
         }
+
+        enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [this](CLxUser_Item& def) {
+            static const auto ttype = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
+            if (def.Type() != ttype)
+                return;
+
+        });
     }
 
     ret->setupFlags();
@@ -650,6 +677,7 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj)
     }
     else if (obj.IsA(t_mesh)) {
         exportAnimation(GetParent(obj));
+        eachBone(obj, [&](CLxUser_Item& bone) { exportAnimation(bone); });
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
     }
