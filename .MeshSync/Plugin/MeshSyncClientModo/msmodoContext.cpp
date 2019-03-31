@@ -362,46 +362,49 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     int num_points = mesh.NPoints();
 
     // topology
-    dst.counts.resize_discard(num_faces);
-    dst.indices.reserve_discard(num_faces * 4);
-    for (int fi = 0; fi < num_faces; ++fi) {
-        polygons.SelectByIndex(fi);
+    {
+        dst.counts.resize_discard(num_faces);
+        dst.indices.reserve_discard(num_faces * 4);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            polygons.SelectByIndex(fi);
 
-        const char *material_name = nullptr;
-        poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
+            const char *material_name = nullptr;
+            poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
 
-        uint32_t count;
-        polygons.VertexCount(&count);
-        dst.counts[fi] = count;
+            uint32_t count;
+            polygons.VertexCount(&count);
+            dst.counts[fi] = count;
 
-        size_t pos = dst.indices.size();
-        dst.indices.resize(pos + count);
-        for (uint32_t ci = 0; ci < count; ++ci) {
-            LXtPointID pid;
-            polygons.VertexByIndex(ci, &pid);
-            points.Select(pid);
+            size_t pos = dst.indices.size();
+            dst.indices.resize(pos + count);
+            for (uint32_t ci = 0; ci < count; ++ci) {
+                LXtPointID pid;
+                polygons.VertexByIndex(ci, &pid);
+                points.Select(pid);
 
-            uint32_t index;
-            points.Index(&index);
-            dst.indices[pos + ci] = index;
+                uint32_t index;
+                points.Index(&index);
+                dst.indices[pos + ci] = index;
+            }
         }
+        num_indices = (int)dst.indices.size();
     }
-    num_indices = (int)dst.indices.size();
-
 
     //points
-    dst.points.resize_discard(num_points);
-    for (int pi = 0; pi < num_points; ++pi) {
-        points.SelectByIndex(pi);
+    {
+        dst.points.resize_discard(num_points);
+        for (int pi = 0; pi < num_points; ++pi) {
+            points.SelectByIndex(pi);
 
-        LXtFVector p;
-        points.Pos(p);
-        dst.points[pi] = to_float3(p);
+            LXtFVector p;
+            points.Pos(p);
+            dst.points[pi] = to_float3(p);
+        }
     }
 
     // normals
     {
-        auto do_extract = [&](const char *name, RawVector<mu::float3>& dst_array) {
+        auto do_extract_map = [&](const char *name, RawVector<mu::float3>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_NORMAL, name)))
                 return;
 
@@ -425,9 +428,32 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             }
         };
 
+        auto do_extract_poly = [&](RawVector<mu::float3>& dst_array) {
+            dst_array.resize_discard(dst.indices.size());
+            auto *write_ptr = dst_array.data();
+
+            LXtPointID pid;
+            for (int fi = 0; fi < num_faces; ++fi) {
+                polygons.SelectByIndex(fi);
+                auto poly_id = polygons.ID();
+
+                int count = dst.counts[fi];
+                for (int ci = 0; ci < count; ++ci) {
+                    polygons.VertexByIndex(ci, &pid);
+                    points.Select(pid);
+
+                    LXtVector n;
+                    points.Normal(poly_id, n);
+                    *(write_ptr++) = to_float3(n);
+                }
+            }
+        };
+
         auto map_names = GetMapNames(mmap, LXi_VMAP_NORMAL);
         if (map_names.size() > 0)
-            do_extract(map_names[0], ret->normals);
+            do_extract_map(map_names[0], dst.normals);
+        else
+            do_extract_poly(dst.normals);
     }
 
     // uv
@@ -458,9 +484,9 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         auto map_names = GetMapNames(mmap, LXi_VMAP_TEXTUREUV);
         if (map_names.size() > 0)
-            do_extract(map_names[0], ret->uv0);
+            do_extract(map_names[0], dst.uv0);
         if (map_names.size() > 1)
-            do_extract(map_names[1], ret->uv1);
+            do_extract(map_names[1], dst.uv1);
     }
 
     // vertex color
@@ -491,7 +517,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         auto map_names = GetMapNames(mmap, LXi_VMAP_RGBA);
         if (map_names.size() > 0)
-            do_extract(map_names[0], ret->colors);
+            do_extract(map_names[0], dst.colors);
     }
 
     // bone weights
@@ -604,7 +630,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
                 return;
 
             auto dst_bs = ms::BlendShapeData::create();
-            dst_bs->name = GetPath(def);
+            dst_bs->name = GetName(def);
             dst_bs->weight = (float)(strength * 100.0);
 
             auto dst_bsf = ms::BlendShapeFrameData::create();
@@ -615,8 +641,10 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         });
     }
 
-    ret->setupFlags();
-    ret->refine_settings.flags.swap_faces = true;
+    dst.setupFlags();
+    dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
+    dst.refine_settings.flags.gen_tangents = 1;
+    dst.refine_settings.flags.swap_faces = 1;
 
     m_entity_manager.add(n.dst_obj);
     return ret;

@@ -10,19 +10,23 @@ inline bool LXTypeMatch(const char *t1, const char *t2)
     return t1 && t2 && strcmp(t1, t2) == 0;
 }
 
-inline mu::float2 to_float2(LXtFVector2 v)
+inline mu::float2 to_float2(const LXtFVector2& v)
 {
     return (mu::float2&)(v[0]);
 }
-inline mu::float3 to_float3(LXtFVector v)
+inline mu::float3 to_float3(const LXtVector& v)
+{
+    return { (float)v[0], (float)v[1], (float)v[2] };
+}
+inline mu::float3 to_float3(const LXtFVector& v)
 {
     return (mu::float3&)(v[0]);
 }
-inline mu::float4 to_float4(LXtFVector4 v)
+inline mu::float4 to_float4(const LXtFVector4& v)
 {
     return (mu::float4&)(v[0]);
 }
-inline mu::float3x3 to_float4(LXtFMatrix v)
+inline mu::float3x3 to_float4(const LXtFMatrix& v)
 {
     return (mu::float3x3&)(v[0][0]);
 }
