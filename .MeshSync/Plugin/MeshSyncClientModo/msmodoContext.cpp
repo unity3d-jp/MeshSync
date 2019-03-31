@@ -33,105 +33,6 @@ void msmodoContext::update()
 {
 }
 
-void msmodoContext::enumerateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
-{
-    CLxUser_SceneGraph scene_graph;
-    CLxUser_ItemGraph  item_graph;
-    m_current_scene.GetGraph(graph_name, scene_graph);
-    item_graph.set(scene_graph);
-
-    unsigned num_elements = item_graph.Reverse(item);
-    for (unsigned ti = 0; ti < num_elements; ++ti) {
-        CLxUser_Item element;
-        if (item_graph.Reverse(item, ti, element)) {
-            body(element);
-        }
-    }
-}
-
-#define EachObjectImpl(Type)\
-    static const auto ttype = m_scene_service.ItemType(Type);\
-    uint32_t num_objects;\
-    m_current_scene.ItemCount(ttype, &num_objects);\
-    CLxUser_Item item;\
-    for (uint32_t im = 0; im < num_objects; ++im) {\
-        m_current_scene.ItemByIndex(ttype, im, item);\
-        body(item);\
-    }
-
-void msmodoContext::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(LXsITYPE_ADVANCEDMATERIAL);
-}
-void msmodoContext::eachLight(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(LXsITYPE_LIGHT);
-}
-void msmodoContext::eachCamera(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(LXsITYPE_CAMERA);
-}
-void msmodoContext::eachMesh(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(LXsITYPE_MESH);
-}
-void msmodoContext::eachDeformer(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(LXsITYPE_DEFORM);
-}
-#undef EachObjectImpl
-
-void msmodoContext::eachMesh(CLxUser_Item& deformer, const std::function<void(CLxUser_Item&)>& body)
-{
-    CLxUser_Item mesh;
-    uint32_t n = 0;
-    m_deform_service.MeshCount(deformer, &n);
-    for (uint32_t i = 0; i < n; ++i) {
-        if (LXx_OK(m_deform_service.MeshByIndex(deformer, i, mesh)))
-            body(mesh);
-    }
-}
-
-void msmodoContext::eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body)
-{
-    enumerateGraph(item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-        static const auto ttype = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
-        if (def.Type() != ttype)
-            return;
-
-        static const auto tloc = m_scene_service.ItemType(LXsITYPE_LOCATOR);
-        CLxUser_Item effector;
-        if (LXx_OK(m_deform_service.DeformerDeformationItem(def, effector)) && effector.IsA(tloc))
-                body(effector);
-    });
-}
-
-CLxUser_Mesh msmodoContext::getBaseMesh(CLxUser_Item& obj)
-{
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
-
-    CLxUser_Mesh mesh;
-    CLxUser_MeshFilter meshfilter;
-    CLxUser_MeshFilterIdent meshfilter_ident;
-    if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
-        if (meshfilter_ident.copy(meshfilter))
-            meshfilter_ident.GetMesh(LXs_MESHFILTER_BASE, mesh);
-    }
-    return mesh;
-}
-
-CLxUser_Mesh msmodoContext::getDeformedMesh(CLxUser_Item& obj)
-{
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
-
-    CLxUser_Mesh mesh;
-    CLxUser_MeshFilter meshfilter;
-    if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
-        meshfilter.GetMesh(mesh);
-    }
-    return mesh;
-}
-
 
 void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
@@ -159,13 +60,7 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
 
 void msmodoContext::prepare(double time)
 {
-    if (time == std::numeric_limits<double>::infinity())
-        time = m_selection_service.GetTime();
-
-    m_layer_service.SetScene(0);
-    m_layer_service.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_ch_read, time);
-    m_current_scene.GetSetupChannels(m_ch_read_setup);
+    super::prepare(time);
 }
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
@@ -268,10 +163,6 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
     }
     n.name = name;
     n.path = path;
-
-    static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
-    static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
-    static const auto t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
 
     if (obj.IsA(t_camera)) {
         exportObject(GetParent(obj));
@@ -544,8 +435,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         };
 
         enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            static const auto ttype = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
-            if (def.Type() != ttype)
+            if (def.Type() != t_geninf)
                 return;
 
             static uint32_t ch_enable, ch_type, ch_mapname;
@@ -563,9 +453,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             if (!mapname)
                 return;
 
-            static const auto tloc = m_scene_service.ItemType(LXsITYPE_LOCATOR);
             CLxUser_Item effector;
-            if (LXx_FAIL(m_deform_service.DeformerDeformationItem(def, effector)) || !effector.IsA(tloc))
+            if (LXx_FAIL(m_deform_service.DeformerDeformationItem(def, effector)) || !effector.IsA(t_locator))
                 return;
 
             auto dst_bone = ms::BoneData::create();
@@ -610,8 +499,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         };
 
         enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            static const auto ttype = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
-            if (def.Type() != ttype)
+            if (def.Type() != t_morph)
                 return;
 
             static uint32_t ch_enable, ch_strength, ch_mapname;
@@ -685,10 +573,6 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj)
     if (n.dst_anim)
         return true;
     n.item = obj;
-
-    static const auto t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
-    static const auto t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
-    static const auto t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
 
     if (obj.IsA(t_camera)) {
         exportAnimation(GetParent(obj));

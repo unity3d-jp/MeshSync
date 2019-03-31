@@ -164,12 +164,14 @@
     </ClCompile>
     <ClCompile Include="MeshSyncClientModo\msmodoCommand.cpp" />
     <ClCompile Include="MeshSyncClientModo\msmodoContext.cpp" />
+    <ClCompile Include="MeshSyncClientModo\msmodoInterface.cpp" />
     <ClCompile Include="MeshSyncClientModo\msmodoUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientModo/pch.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoCommand.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoContext.h" />
+    <ClInclude Include="MeshSyncClientModo\msmodoInterface.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoUtils.h" />
   </ItemGroup>
   <ItemGroup>

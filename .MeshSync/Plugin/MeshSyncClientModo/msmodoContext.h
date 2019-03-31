@@ -1,5 +1,7 @@
 #pragma once
 
+#include "msmodoInterface.h"
+
 namespace ms {
 
     template<>
@@ -59,8 +61,9 @@ struct msmodoSettings
 };
 
 
-class msmodoContext
+class msmodoContext : private msmodoInterface
 {
+using super = msmodoInterface;
 public:
     enum class SendScope
     {
@@ -123,34 +126,12 @@ private:
 
     void kickAsyncSend();
 
-    void enumerateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
-    void eachMaterial(const std::function<void(CLxUser_Item&)>& body);
-    void eachLight(const std::function<void(CLxUser_Item&)>& body);
-    void eachCamera(const std::function<void(CLxUser_Item&)>& body);
-    void eachMesh(const std::function<void(CLxUser_Item&)>& body);
-    void eachDeformer(const std::function<void(CLxUser_Item&)>& body);
-    void eachMesh(CLxUser_Item& deformer, const std::function<void(CLxUser_Item&)>& body);
-    void eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body);
-    CLxUser_Mesh getBaseMesh(CLxUser_Item& obj);
-    CLxUser_Mesh getDeformedMesh(CLxUser_Item& obj);
-
     void extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
         float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance);
     void extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle);
 
 private:
-    CLxUser_SceneService m_scene_service;
-    CLxUser_SelectionService m_selection_service;
-    CLxUser_LayerService m_layer_service;
-    CLxUser_MeshService m_mesh_service;
-    CLxUser_DeformerService m_deform_service;
-
-    CLxUser_Scene m_current_scene;
-    CLxUser_ChannelRead m_ch_read;
-    CLxUser_ChannelRead m_ch_read_setup;
-
-
     msmodoSettings m_settings;
     ms::IDGenerator<CLxUser_Item> m_material_ids;
     ms::TextureManager m_texture_manager;

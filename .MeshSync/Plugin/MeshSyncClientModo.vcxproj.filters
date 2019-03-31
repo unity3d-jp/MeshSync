@@ -124,6 +124,9 @@
     <ClCompile Include="MeshSyncClientModo\msmodoContext.cpp">
       <Filter>MeshSyncClientModo</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientModo\msmodoInterface.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientModo\msmodoCommand.h">
@@ -136,6 +139,9 @@
       <Filter>MeshSyncClientModo</Filter>
     </ClInclude>
     <ClInclude Include="MeshSyncClientModo\msmodoContext.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoInterface.h">
       <Filter>MeshSyncClientModo</Filter>
     </ClInclude>
   </ItemGroup>
