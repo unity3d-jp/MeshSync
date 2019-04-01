@@ -13,11 +13,15 @@ void msmodoInterface::prepare(double time)
     m_current_scene.GetSetupChannels(m_ch_read_setup);
 
     if (t_locator == 0) {
+        t_material = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
+
         t_locator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
         t_camera = m_scene_service.ItemType(LXsITYPE_CAMERA);
         t_light = m_scene_service.ItemType(LXsITYPE_LIGHT);
         t_mesh = m_scene_service.ItemType(LXsITYPE_MESH);
+        t_meshinst = m_scene_service.ItemType(LXsITYPE_MESHINST);
 
+        t_deform = m_scene_service.ItemType(LXsITYPE_DEFORM);
         t_geninf = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
         t_morph = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
     }
@@ -40,34 +44,37 @@ void msmodoInterface::enumerateGraph(CLxUser_Item& item, const char *graph_name,
 }
 
 #define EachObjectImpl(Type)\
-    static const auto ttype = m_scene_service.ItemType(Type);\
     uint32_t num_objects;\
-    m_current_scene.ItemCount(ttype, &num_objects);\
+    m_current_scene.ItemCount(Type, &num_objects);\
     CLxUser_Item item;\
     for (uint32_t im = 0; im < num_objects; ++im) {\
-        m_current_scene.ItemByIndex(ttype, im, item);\
+        m_current_scene.ItemByIndex(Type, im, item);\
         body(item);\
     }
 
 void msmodoInterface::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
 {
-    EachObjectImpl(LXsITYPE_ADVANCEDMATERIAL);
+    EachObjectImpl(t_material);
 }
 void msmodoInterface::eachLight(const std::function<void(CLxUser_Item&)>& body)
 {
-    EachObjectImpl(LXsITYPE_LIGHT);
+    EachObjectImpl(t_light);
 }
 void msmodoInterface::eachCamera(const std::function<void(CLxUser_Item&)>& body)
 {
-    EachObjectImpl(LXsITYPE_CAMERA);
+    EachObjectImpl(t_camera);
 }
 void msmodoInterface::eachMesh(const std::function<void(CLxUser_Item&)>& body)
 {
-    EachObjectImpl(LXsITYPE_MESH);
+    EachObjectImpl(t_mesh);
+}
+void msmodoInterface::eachMeshInstance(const std::function<void(CLxUser_Item&)>& body)
+{
+    EachObjectImpl(t_meshinst);
 }
 void msmodoInterface::eachDeformer(const std::function<void(CLxUser_Item&)>& body)
 {
-    EachObjectImpl(LXsITYPE_DEFORM);
+    EachObjectImpl(t_deform);
 }
 #undef EachObjectImpl
 

@@ -111,8 +111,10 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
             eachLight(do_export);
         if (m_settings.sync_bones)
             eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
-        if (m_settings.sync_meshes)
+        if (m_settings.sync_meshes) {
             eachMesh(do_export);
+            eachMeshInstance(do_export);
+        }
         m_entity_manager.eraseStaleEntities();
     }
 
@@ -226,6 +228,10 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
         exportObject(GetParent(obj));
         n.dst_obj = exportMesh(n);
     }
+    else if (obj.IsA(t_meshinst)) {
+        exportObject(GetParent(obj));
+        n.dst_obj = exportMeshInstance(n);
+    }
     else {
         exportObject(GetParent(obj));
         n.dst_obj = exportTransform(n);
@@ -250,6 +256,20 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
     n.dst_obj = ret;
 
     extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+
+    m_entity_manager.add(n.dst_obj);
+    return ret;
+}
+
+ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
+{
+    auto ret = createEntity<ms::Transform>(n);
+    n.dst_obj = ret;
+
+    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+    enumerateGraph(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
+        n.dst_obj->reference = GetPath(g);
+    });
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -611,8 +631,10 @@ int msmodoContext::exportAnimations(SendScope scope)
         eachLight(do_export);
     if (m_settings.sync_bones)
         eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
-    if (m_settings.sync_meshes)
+    if (m_settings.sync_meshes) {
         eachMesh(do_export);
+        eachMeshInstance(do_export);
+    }
 
     // todo:
 

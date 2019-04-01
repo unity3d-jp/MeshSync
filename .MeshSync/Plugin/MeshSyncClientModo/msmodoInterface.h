@@ -10,6 +10,7 @@ public:
     void eachLight(const std::function<void(CLxUser_Item&)>& body);
     void eachCamera(const std::function<void(CLxUser_Item&)>& body);
     void eachMesh(const std::function<void(CLxUser_Item&)>& body);
+    void eachMeshInstance(const std::function<void(CLxUser_Item&)>& body);
     void eachDeformer(const std::function<void(CLxUser_Item&)>& body);
     void eachMesh(CLxUser_Item& deformer, const std::function<void(CLxUser_Item&)>& body);
     void eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body);
@@ -17,8 +18,9 @@ public:
     CLxUser_Mesh getDeformedMesh(CLxUser_Item& obj);
 
 public:
-    LXtItemType t_locator = 0, t_camera = 0, t_light = 0, t_mesh = 0,
-                t_geninf = 0, t_morph = 0;
+    LXtItemType t_material = 0,
+                t_locator = 0, t_camera = 0, t_light = 0, t_mesh = 0, t_meshinst = 0,
+                t_deform, t_geninf = 0, t_morph = 0;
 
 protected:
     CLxUser_SceneService     m_scene_service;

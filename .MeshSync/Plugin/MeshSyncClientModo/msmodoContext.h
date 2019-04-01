@@ -115,6 +115,7 @@ private:
     ms::TransformPtr exportObject(CLxUser_Item& obj);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
+    ms::TransformPtr exportMeshInstance(TreeNode& node);
     ms::CameraPtr exportCamera(TreeNode& node);
     ms::LightPtr exportLight(TreeNode& node);
     ms::MeshPtr exportMesh(TreeNode& node);
