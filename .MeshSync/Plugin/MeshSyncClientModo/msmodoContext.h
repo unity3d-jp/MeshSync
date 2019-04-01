@@ -98,16 +98,19 @@ private:
 
         ms::TransformPtr dst_obj;
         ms::AnimationPtr dst_anim;
+        RawVector<const char*> material_names; // per-face material names.
 
         using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
         AnimationExtractor anim_extractor = nullptr;
 
         void clearState();
+        void resolveMaterialIDs(const std::vector<ms::MaterialPtr>& materials);
     };
 
     // time: inf -> current time
     void prepare(double time = std::numeric_limits<double>::infinity());
 
+    void exportMaterials();
     ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
 
     ms::TransformPtr exportObject(CLxUser_Item& obj);
@@ -141,6 +144,7 @@ private:
 
     int m_material_index_seed = 0;
     int m_entity_index_seed = 0;
+    std::vector<ms::MaterialPtr> m_materials; // sorted by name
     std::map<LxItemKey, TreeNode> m_tree_nodes;
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;

@@ -9,6 +9,28 @@ void msmodoContext::TreeNode::clearState()
     dst_anim = nullptr;
 }
 
+void msmodoContext::TreeNode::resolveMaterialIDs(const std::vector<ms::MaterialPtr>& materials)
+{
+    if (material_names.empty() || !dst_obj || dst_obj->getType() != ms::Entity::Type::Mesh)
+        return;
+
+    auto& dst = static_cast<ms::Mesh&>(*dst_obj);
+    int num_faces = (int)dst.counts.size();
+
+    // material names -> material ids
+    dst.material_ids.resize_discard(num_faces);
+    for (int fi = 0; fi < num_faces; ++fi) {
+        auto mname = material_names[fi];
+        int mid = -1;
+        auto it = std::lower_bound(materials.begin(), materials.end(), mname,
+            [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
+        if (it != materials.end() && (*it)->name == mname)
+            mid = (*it)->id;
+        dst.material_ids[fi] = mid;
+    }
+}
+
+
 
 msmodoContext& msmodoContext::getInstance()
 {
@@ -77,11 +99,7 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
     prepare();
 
-    // export materials
-    m_material_index_seed = 0;
-    eachMaterial([this](CLxUser_Item& obj) { exportMaterial(obj); });
-    m_material_ids.eraseStaleRecords();
-    m_material_manager.eraseStaleMaterials();
+    exportMaterials();
 
     // export entities
     eachCamera([this](CLxUser_Item& obj) { exportObject(obj); });
@@ -121,10 +139,17 @@ bool msmodoContext::recvScene()
 
 ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item& obj)
 {
+    std::string ptag;
+    for (CLxUser_Item i = GetParent(obj); i; i = GetParent(i)) {
+        if (m_ch_read.GetString(i, LXsICHAN_MASK_PTAG, ptag))
+            break;
+    }
+
     auto ret = ms::Material::create();
-    ret->name = GetName(obj);
-    ret->id = m_material_ids.getID(obj);
-    ret->index = ++m_material_index_seed;
+    auto& dst = *ret;
+    dst.name = ptag;
+    dst.id = m_material_ids.getID(obj);
+    dst.index = ++m_material_index_seed;
 
     {
         auto& stdmat = ms::AsStandardMaterial(*ret);
@@ -141,6 +166,21 @@ ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item& obj)
 
     return ret;
 }
+
+void msmodoContext::exportMaterials()
+{
+    m_material_index_seed = 0;
+
+    eachMaterial([this](CLxUser_Item& obj) { exportMaterial(obj); });
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
+
+    // gen material list sorted by name for later resolve
+    m_materials = m_material_manager.getAllMaterials();
+    std::sort(m_materials.begin(), m_materials.end(),
+        [](auto& a, auto& b) { return a->name < b->name; });
+}
+
 
 ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
 {
@@ -255,13 +295,16 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
     // topology
     {
+        n.material_names.resize_discard(num_faces);
+
         dst.counts.resize_discard(num_faces);
         dst.indices.reserve_discard(num_faces * 4);
         for (int fi = 0; fi < num_faces; ++fi) {
             polygons.SelectByIndex(fi);
 
-            const char *material_name = nullptr;
+            const char *material_name;
             poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
+            n.material_names[fi] = material_name;
 
             uint32_t count;
             polygons.VertexCount(&count);
@@ -280,6 +323,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             }
         }
         num_indices = (int)dst.indices.size();
+
+        // resolving material ids will be done in kickAsyncSend()
     }
 
     //points
@@ -682,6 +727,12 @@ void msmodoContext::extractMeshAnimationData(TreeNode& n)
 
 void msmodoContext::kickAsyncSend()
 {
+    ms::parallel_for_each(m_tree_nodes.begin(), m_tree_nodes.end(), [this](auto& kvp) {
+        auto& node = kvp.second;
+        node.resolveMaterialIDs(m_materials);
+        node.material_names.clear();
+    });
+
     // cleanup
     for (auto& kvp : m_tree_nodes)
         kvp.second.clearState();
