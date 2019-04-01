@@ -109,9 +109,9 @@ private:
     };
 
     void exportMaterials();
-    ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
+    ms::MaterialPtr exportMaterial(CLxUser_Item obj);
 
-    ms::TransformPtr exportObject(CLxUser_Item& obj);
+    ms::TransformPtr exportObject(CLxUser_Item obj);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportMeshInstance(TreeNode& node);
@@ -120,7 +120,7 @@ private:
     ms::MeshPtr exportMesh(TreeNode& node);
 
     int exportAnimations(SendScope scope);
-    bool exportAnimation(CLxUser_Item& obj);
+    bool exportAnimation(CLxUser_Item obj);
     void extractTransformAnimationData(TreeNode& node);
     void extractCameraAnimationData(TreeNode& node);
     void extractLightAnimationData(TreeNode& node);

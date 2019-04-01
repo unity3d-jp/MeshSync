@@ -150,13 +150,15 @@ bool msmodoContext::recvScene()
 // component export
 // 
 
-ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item& obj)
+ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item obj)
 {
     std::string ptag;
     for (CLxUser_Item i = GetParent(obj); i; i = GetParent(i)) {
         if (m_ch_read.GetString(i, LXsICHAN_MASK_PTAG, ptag))
             break;
     }
+    if (ptag.empty())
+        return nullptr;
 
     auto ret = ms::Material::create();
     auto& dst = *ret;
@@ -195,9 +197,9 @@ void msmodoContext::exportMaterials()
 }
 
 
-ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
+ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj)
 {
-    if (!obj.test())
+    if (!obj)
         return nullptr;
 
     auto& n = m_tree_nodes[obj];
@@ -255,8 +257,9 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
 {
     auto ret = createEntity<ms::Transform>(n);
     n.dst_obj = ret;
+    auto& dst = *ret;
 
-    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -266,8 +269,9 @@ ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
 {
     auto ret = createEntity<ms::Transform>(n);
     n.dst_obj = ret;
+    auto& dst = *ret;
 
-    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
     enumerateGraph(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
         n.dst_obj->reference = GetPath(g);
     });
@@ -280,9 +284,13 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     n.dst_obj = ret;
+    auto& dst = *ret;
 
-    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
-    ret->rotation = mu::flipY(ret->rotation);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    dst.rotation = mu::flipY(dst.rotation);
+
+    extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
+        dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -292,9 +300,12 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     n.dst_obj = ret;
+    auto& dst = *ret;
 
-    extractTransformData(n, ret->position, ret->rotation, ret->scale, ret->visible);
-    ret->rotation = mu::flipY(ret->rotation);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    dst.rotation = mu::flipY(dst.rotation);
+
+    extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -691,7 +702,7 @@ int msmodoContext::exportAnimations(SendScope scope)
     return num_exported;
 }
 
-bool msmodoContext::exportAnimation(CLxUser_Item& obj)
+bool msmodoContext::exportAnimation(CLxUser_Item obj)
 {
     if (!obj)
         return false;
