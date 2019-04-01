@@ -9,6 +9,12 @@ void msmodoContext::TreeNode::clearState()
     dst_anim = nullptr;
 }
 
+void msmodoContext::TreeNode::doExtractAnimation(msmodoContext *self)
+{
+    if (anim_extractor)
+        (self->*anim_extractor)(*this);
+}
+
 void msmodoContext::TreeNode::resolveMaterialIDs(const std::vector<ms::MaterialPtr>& materials)
 {
     if (material_names.empty() || !dst_obj || dst_obj->getType() != ms::Entity::Type::Mesh)
@@ -80,11 +86,6 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
     // todo
 }
 
-void msmodoContext::prepare(double time)
-{
-    super::prepare(time);
-}
-
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
     if (m_sender.isSending()) {
@@ -111,10 +112,10 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
             eachLight(do_export);
         if (m_settings.sync_bones)
             eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
-        if (m_settings.sync_meshes) {
+        if (m_settings.sync_meshes)
             eachMesh(do_export);
+        if (m_settings.sync_mesh_instances)
             eachMeshInstance(do_export);
-        }
         m_entity_manager.eraseStaleEntities();
     }
 
@@ -620,35 +621,84 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
 int msmodoContext::exportAnimations(SendScope scope)
 {
+    // create default clip
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
-    auto do_export = [this](CLxUser_Item& obj) { exportAnimation(obj); };
+    // gather target objects
+    int num_exported = 0;
+    {
+        auto do_export = [this, &num_exported](CLxUser_Item& obj) {
+            if (exportAnimation(obj))
+                ++num_exported;
+        };
 
-    if (m_settings.sync_cameras)
-        eachCamera(do_export);
-    if (m_settings.sync_lights)
-        eachLight(do_export);
-    if (m_settings.sync_bones)
-        eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
-    if (m_settings.sync_meshes) {
-        eachMesh(do_export);
-        eachMeshInstance(do_export);
+        if (m_settings.sync_cameras)
+            eachCamera(do_export);
+        if (m_settings.sync_lights)
+            eachLight(do_export);
+        if (m_settings.sync_bones)
+            eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
+        if (m_settings.sync_meshes)
+            eachMesh(do_export);
+        if (m_settings.sync_mesh_instances)
+            eachMeshInstance(do_export);
     }
 
-    // todo:
 
-    return 0;
+    // advance frame and record
+    double time_current = m_selection_service.GetTime();
+    double time_start, time_end;
+    std::tie(time_start, time_end) = getTimeRange();
+    auto interval = (1.0 / std::max(m_settings.animation_sps, 0.01f));
+
+    int reserve_size = int((time_end - time_start) / interval) + 1;
+    for (auto& n : m_anim_nodes)
+        n->dst_anim->reserve(reserve_size);
+
+    m_ignore_update = true;
+    for (double t = time_start;;) {
+        m_anim_time = (float)(t - time_start) * m_settings.animation_time_scale;
+        setChannelReadTime(t);
+        for (auto& n : m_anim_nodes)
+            n->doExtractAnimation(this);
+
+        if (t >= time_end)
+            break;
+        else
+            t = std::min(t + interval, time_end);
+    }
+    setChannelReadTime();
+    m_ignore_update = false;
+
+    // cleanup
+    m_anim_nodes.clear();
+
+    if (m_settings.reduce_keyframes) {
+        // keyframe reduction
+        for (auto& clip : m_animations)
+            clip->reduction();
+
+        // erase empty animation
+        m_animations.erase(
+            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
+            m_animations.end());
+    }
+
+    if (num_exported == 0)
+        m_animations.clear();
+
+    return num_exported;
 }
 
 bool msmodoContext::exportAnimation(CLxUser_Item& obj)
 {
-    if (!obj.test())
-        return nullptr;
+    if (!obj)
+        return false;
 
     auto& n = m_tree_nodes[obj];
     if (n.dst_anim)
-        return true;
+        return false;
     n.item = obj;
 
     if (obj.IsA(t_camera)) {
@@ -666,13 +716,14 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj)
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
     }
-    else {
+    else { // includes MeshInstances
         exportAnimation(GetParent(obj));
         n.dst_anim = ms::TransformAnimation::create();
         n.anim_extractor = &msmodoContext::extractTransformAnimationData;
     }
 
     if (n.dst_anim != nullptr) {
+        m_animations.front()->animations.push_back(n.dst_anim);
         n.dst_anim->path = n.path;
         m_anim_nodes.push_back(&n);
         return true;

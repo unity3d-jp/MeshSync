@@ -2,14 +2,11 @@
 #include "msmodoInterface.h"
 #include "msmodoUtils.h"
 
-void msmodoInterface::prepare(double time)
+void msmodoInterface::prepare()
 {
-    if (time == std::numeric_limits<double>::infinity())
-        time = m_selection_service.GetTime();
-
     m_layer_service.SetScene(0);
     m_layer_service.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_ch_read, time);
+    m_current_scene.GetChannels(m_ch_read, m_selection_service.GetTime());
     m_current_scene.GetSetupChannels(m_ch_read_setup);
 
     if (t_locator == 0) {
@@ -26,6 +23,14 @@ void msmodoInterface::prepare(double time)
         t_morph = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
     }
 }
+
+void msmodoInterface::setChannelReadTime(double time)
+{
+    if (time == std::numeric_limits<double>::infinity())
+        time = m_selection_service.GetTime();
+    m_current_scene.GetChannels(m_ch_read, time);
+}
+
 
 void msmodoInterface::enumerateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
 {
@@ -127,4 +132,20 @@ CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
         meshfilter.GetMesh(mesh);
     }
     return mesh;
+}
+
+std::tuple<double, double> msmodoInterface::getTimeRange()
+{
+    double start = 0.0, end = 1.0;
+    {
+        CLxReadPreferenceValue q;
+        q.Query(LXsPREFERENCE_VALUE_ANIMATION_TIME_RANGE_START);
+        start = q.GetFloat();
+    }
+    {
+        CLxReadPreferenceValue q;
+        q.Query(LXsPREFERENCE_VALUE_ANIMATION_TIME_RANGE_END);
+        end = q.GetFloat();
+    }
+    return { start, end };
 }

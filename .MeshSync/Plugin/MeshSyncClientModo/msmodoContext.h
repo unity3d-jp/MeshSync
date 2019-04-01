@@ -48,6 +48,7 @@ struct msmodoSettings
     bool bake_deformers = false;
     bool sync_blendshapes = true;
     bool sync_bones = true;
+    bool sync_mesh_instances = true;
     bool sync_textures = true;
     bool sync_cameras = true;
     bool sync_lights = true;
@@ -103,11 +104,9 @@ private:
         AnimationExtractor anim_extractor = nullptr;
 
         void clearState();
+        void doExtractAnimation(msmodoContext *self);
         void resolveMaterialIDs(const std::vector<ms::MaterialPtr>& materials);
     };
-
-    // time: inf -> current time
-    void prepare(double time = std::numeric_limits<double>::infinity());
 
     void exportMaterials();
     ms::MaterialPtr exportMaterial(CLxUser_Item& obj);
@@ -149,6 +148,7 @@ private:
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;
     SendScope m_pending_scope = SendScope::None;
+    bool m_ignore_update = false;
     float m_anim_time = 0.0f;
 };
 

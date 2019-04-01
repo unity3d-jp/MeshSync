@@ -3,7 +3,10 @@
 class msmodoInterface
 {
 public:
-    void prepare(double time = std::numeric_limits<double>::infinity());
+    void prepare();
+
+    // time: inf -> current time
+    void setChannelReadTime(double time = std::numeric_limits<double>::infinity());
 
     void enumerateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
     void eachMaterial(const std::function<void(CLxUser_Item&)>& body);
@@ -16,6 +19,8 @@ public:
     void eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body);
     CLxUser_Mesh getBaseMesh(CLxUser_Item& obj);
     CLxUser_Mesh getDeformedMesh(CLxUser_Item& obj);
+
+    std::tuple<double, double> getTimeRange();
 
 public:
     LXtItemType t_material = 0,

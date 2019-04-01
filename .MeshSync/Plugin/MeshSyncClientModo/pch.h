@@ -34,6 +34,7 @@
 #include <lx_listener.hpp>
 #include <lxu_command.hpp>
 #include <lxu_package.hpp>
+#include <lxu_prefvalue.hpp>
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

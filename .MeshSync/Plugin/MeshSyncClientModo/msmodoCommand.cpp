@@ -111,12 +111,20 @@ public:
 class msmodoCmdExport : public CLxCommand
 {
 public:
+    void setup_args(CLxAttributeDesc &desc) override
+    {
+        desc.add("target", LXsTYPE_STRING);
+    }
+
     void execute() override
     {
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        std::string target;
+        cmd_read_arg("target", target);
 
-        CLxUser_LogService lS;
-        lS.DebugOut(LXi_DBLOG_NORMAL, msmodoCmdExportName " executed\n");
+        if (target == "animations")
+            msmodoGetInstance().sendAnimations(msmodoContext::SendScope::All);
+        else
+            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
     }
 };
 
@@ -127,9 +135,6 @@ public:
     void execute() override
     {
         msmodoGetInstance().recvScene();
-
-        CLxUser_LogService lS;
-        lS.DebugOut(LXi_DBLOG_NORMAL, msmodoCmdImportName " executed\n");
     }
 };
 
