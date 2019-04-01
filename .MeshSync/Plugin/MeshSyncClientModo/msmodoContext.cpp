@@ -112,26 +112,57 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
     near_plane = far_plane = 0.0f;
 }
 
-void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
+    // light shape specific data
     auto t = n.item.Type();
     if (t == tDirectionalLight) {
         type = ms::Light::LightType::Directional;
     }
-    else if (t == tSpotLight) {
-        type = ms::Light::LightType::Spot;
-    }
     else if (t == tAreaLight) {
         type = ms::Light::LightType::Area;
     }
+    else if (t == tSpotLight) {
+        type = ms::Light::LightType::Spot;
+
+        static uint32_t ch_radius, ch_cone;
+        if (ch_radius == 0) {
+            n.item.ChannelLookup(LXsICHAN_SPOTLIGHT_RADIUS, &ch_radius);
+            n.item.ChannelLookup(LXsICHAN_SPOTLIGHT_CONE, &ch_cone);
+        }
+        double radius, cone;
+        m_ch_read.Double(n.item, ch_radius, &radius);
+        m_ch_read.Double(n.item, ch_cone, &cone);
+        range = (float)radius;
+        spot_angle = (float)cone * mu::Rad2Deg;
+    }
     else if (t == tPointLight) {
         type = ms::Light::LightType::Point;
+
+        static uint32_t ch_radius;
+        if (ch_radius == 0) {
+            n.item.ChannelLookup(LXsICHAN_POINTLIGHT_RADIUS, &ch_radius);
+        }
+        double radius;
+        m_ch_read.Double(n.item, ch_radius, &radius);
+        range = (float)radius;
     }
     else {
         type = ms::Light::LightType::Point;
     }
 
+    // radiance
+    {
+        static uint32_t ch_radiance;
+        if (ch_radiance == 0) {
+            n.item.ChannelLookup(LXsICHAN_LIGHT_RADIANCE, &ch_radiance);
+        }
+        double radiance;
+        m_ch_read.Double(n.item, ch_radiance, &radiance);
+        intensity = (float)radiance;
+    }
 
+    // color
     CLxUser_Item light_material;
     enumerateItemGraphR(n.item, LXsGRAPH_PARENT, [this, &light_material](CLxUser_Item& o) {
         if (o.Type() == tLightMaterial)
@@ -372,7 +403,7 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
     dst.rotation = mu::flipY(dst.rotation);
 
-    extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+    extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -866,12 +897,15 @@ void msmodoContext::extractLightAnimationData(TreeNode& n)
     ms::Light::LightType type;
     mu::float4 color;
     float intensity;
+    float range;
     float spot_angle;
-    extractLightData(n, type, color, intensity, spot_angle);
+    extractLightData(n, type, color, intensity, range, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
+    if (type == ms::Light::LightType::Point || type == ms::Light::LightType::Spot)
+        dst.range.push_back({ t, range });
     if (type == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
 }
