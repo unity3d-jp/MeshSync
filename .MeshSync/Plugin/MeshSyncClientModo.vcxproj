@@ -204,12 +204,12 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MODO_INCLUDE_DIR);$(MODO_COMMON_DIR);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(MODO_VERSION)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(MODO_VERSION)_$(Platform)_$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MODO_INCLUDE_DIR);$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(MODO_LIB_DIR);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
     <TargetExt>.lx</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
