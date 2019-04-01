@@ -78,7 +78,38 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
 {
-    // todo
+    static uint32_t ch_proj_type, ch_res_x, ch_res_y, ch_aperture_x, ch_aperture_y, ch_focal_len, ch_focus_dist, ch_clip_dist;
+    if (ch_proj_type == 0) {
+        n.item.ChannelLookup(LXsICHAN_CAMERA_PROJTYPE, &ch_proj_type);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_RESX, &ch_res_x);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_RESY, &ch_res_y);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_APERTUREX, &ch_aperture_x);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_APERTUREY, &ch_aperture_y);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_FOCALLEN, &ch_focal_len);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_FOCUSDIST, &ch_focus_dist);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_CLIPDIST, &ch_clip_dist);
+    }
+
+    int proj, res_x, res_y;
+    double aperture_x, aperture_y, focal_len, focus_dist;
+    m_ch_read.Integer(n.item, ch_proj_type, &proj);
+    m_ch_read.Integer(n.item, ch_res_x, &res_x);
+    m_ch_read.Integer(n.item, ch_res_y, &res_y);
+    m_ch_read.Double(n.item, ch_aperture_x, &aperture_x);
+    m_ch_read.Double(n.item, ch_aperture_y, &aperture_y);
+    m_ch_read.Double(n.item, ch_focal_len, &focal_len);
+    m_ch_read.Double(n.item, ch_focus_dist, &focus_dist);
+
+    horizontal_aperture = (float)aperture_x;
+    vertical_aperture = (float)aperture_y;
+    focal_length = (float)focal_len;
+    focus_distance = (float)focus_dist;
+
+    ortho = proj == 1;
+    fov = mu::compute_fov(vertical_aperture, focal_length);
+
+    // disable near/far plane
+    near_plane = far_plane = 0.0f;
 }
 
 void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
