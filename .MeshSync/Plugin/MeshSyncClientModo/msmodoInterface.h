@@ -26,7 +26,7 @@ public:
 
     std::tuple<double, double> getTimeRange();
 
-    void dumpChannels(CLxUser_Item item);
+    void dbgDumpItem(CLxUser_Item item);
 
 public:
     LXtItemType tMaterial = 0,

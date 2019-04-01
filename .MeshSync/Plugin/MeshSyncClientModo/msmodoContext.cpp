@@ -50,11 +50,17 @@ msmodoContext::msmodoContext()
 
 msmodoContext::~msmodoContext()
 {
+    wait();
 }
 
 msmodoSettings& msmodoContext::getSettings()
 {
     return m_settings;
+}
+
+void msmodoContext::wait()
+{
+    m_sender.wait();
 }
 
 void msmodoContext::update()
@@ -224,8 +230,7 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
 bool msmodoContext::sendAnimations(SendScope scope)
 {
-    m_sender.wait();
-
+    wait();
     prepare();
 
     if (exportAnimations(scope) > 0) {
@@ -239,6 +244,8 @@ bool msmodoContext::sendAnimations(SendScope scope)
 
 bool msmodoContext::recvScene()
 {
+    wait();
+
     // todo
     return false;
 }
@@ -915,7 +922,40 @@ void msmodoContext::extractMeshAnimationData(TreeNode& n)
     extractTransformAnimationData(n);
 
     auto& dst = (ms::MeshAnimation&)*n.dst_anim;
-    // todo
+
+    // extract blendshape weights
+    if (!m_settings.bake_deformers && m_settings.sync_blendshapes) {
+        CLxUser_Mesh mesh = getBaseMesh(n.item);
+        CLxUser_MeshMap mmap;
+        mesh.GetMaps(mmap);
+
+        float t = m_anim_time;
+        enumerateItemGraphR(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
+            if (def.Type() != tMorph)
+                return;
+
+            static uint32_t ch_enable, ch_strength, ch_mapname;
+            if (ch_enable == 0) {
+                def.ChannelLookup(LXsICHAN_MORPHDEFORM_ENABLE, &ch_enable);
+                def.ChannelLookup(LXsICHAN_MORPHDEFORM_STRENGTH, &ch_strength);
+                def.ChannelLookup(LXsICHAN_MORPHDEFORM_MAPNAME, &ch_mapname);
+            }
+
+            int enable;
+            double strength;
+            const char *mapname;
+            m_ch_read.Integer(def, ch_enable, &enable);
+            m_ch_read.Double(def, ch_strength, &strength);
+            m_ch_read.String(def, ch_mapname, &mapname);
+            if (!mapname)
+                return;
+
+            if (LXx_OK(mmap.SelectByName(LXi_VMAP_MORPH, mapname))) {
+                auto bsa = dst.findOrCreateBlendshapeAnimation(GetName(def));
+                bsa->weight.push_back({ t, (float)(strength * 100.0) });
+            }
+        });
+    }
 }
 
 

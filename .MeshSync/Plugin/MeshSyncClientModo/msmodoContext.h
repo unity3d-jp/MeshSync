@@ -80,6 +80,7 @@ public:
 
     msmodoSettings& getSettings();
 
+    void wait();
     void update();
     bool sendScene(SendScope scope, bool dirty_all);
     bool sendAnimations(SendScope scope);

@@ -390,7 +390,7 @@ void MeshAnimation::reduction()
         blendshapes.end());
 }
 
-BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char * name)
+BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char *name)
 {
     BlendshapeAnimation *ret = nullptr;
     {
@@ -407,6 +407,10 @@ BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char *
         ret = bsa.get();
     }
     return ret;
+}
+BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const std::string& name)
+{
+    return findOrCreateBlendshapeAnimation(name.c_str());
 }
 
 

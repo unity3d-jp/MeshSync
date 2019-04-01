@@ -173,6 +173,7 @@ public:
     void reduction() override;
 
     BlendshapeAnimation* findOrCreateBlendshapeAnimation(const char *name);
+    BlendshapeAnimation* findOrCreateBlendshapeAnimation(const std::string& name);
 };
 msSerializable(MeshAnimation);
 

@@ -114,6 +114,7 @@ public:
     void setup_args(CLxAttributeDesc &desc) override
     {
         desc.add("target", LXsTYPE_STRING);
+        desc.default_val("scene");
     }
 
     void execute() override
@@ -121,10 +122,21 @@ public:
         std::string target;
         cmd_read_arg("target", target);
 
-        if (target == "animations")
-            msmodoGetInstance().sendAnimations(msmodoContext::SendScope::All);
-        else
-            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        auto& inst = msmodoGetInstance();
+        if (target == "everything") {
+            inst.wait();
+            inst.sendScene(msmodoContext::SendScope::All, true);
+            inst.wait();
+            inst.sendAnimations(msmodoContext::SendScope::All);
+        }
+        if (target == "animations") {
+            inst.wait();
+            inst.sendAnimations(msmodoContext::SendScope::All);
+        }
+        else { // scene
+            inst.wait();
+            inst.sendScene(msmodoContext::SendScope::All, true);
+        }
     }
 };
 

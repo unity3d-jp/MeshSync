@@ -197,7 +197,7 @@ std::tuple<double, double> msmodoInterface::getTimeRange()
     return { start, end };
 }
 
-void msmodoInterface::dumpChannels(CLxUser_Item item)
+void msmodoInterface::dbgDumpItem(CLxUser_Item item)
 {
     {
         auto path = GetPath(item);
