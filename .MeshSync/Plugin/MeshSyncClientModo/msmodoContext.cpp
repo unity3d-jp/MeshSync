@@ -102,9 +102,19 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     exportMaterials();
 
     // export entities
-    eachCamera([this](CLxUser_Item& obj) { exportObject(obj); });
-    eachLight([this](CLxUser_Item& obj) { exportObject(obj); });
-    eachMesh([this](CLxUser_Item& obj) { exportObject(obj); });
+    auto do_export = [this](CLxUser_Item& obj) { exportObject(obj); };
+
+    if (scope == SendScope::All) {
+        if (m_settings.sync_cameras)
+            eachCamera(do_export);
+        if (m_settings.sync_lights)
+            eachLight(do_export);
+        if (m_settings.sync_bones)
+            eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
+        if (m_settings.sync_meshes)
+            eachMesh(do_export);
+        m_entity_manager.eraseStaleEntities();
+    }
 
     // send
     kickAsyncSend();
@@ -214,7 +224,6 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item& obj)
     }
     else if (obj.IsA(t_mesh)) {
         exportObject(GetParent(obj));
-        eachBone(obj, [&](CLxUser_Item& bone) { exportObject(bone); });
         n.dst_obj = exportMesh(n);
     }
     else {
@@ -340,7 +349,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     // normals
-    {
+    if (m_settings.sync_normals) {
         auto do_extract_map = [&](const char *name, RawVector<mu::float3>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_NORMAL, name)))
                 return;
@@ -394,7 +403,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     // uv
-    {
+    if (m_settings.sync_uvs) {
         auto do_extract = [&](const char *name, RawVector<mu::float2>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_TEXTUREUV, name)))
                 return;
@@ -427,7 +436,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     // vertex color
-    {
+    if (m_settings.sync_colors) {
         auto do_extract = [&](const char *name, RawVector<mu::float4>& dst_array) {
             if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_RGBA, name)))
                 return;
@@ -594,15 +603,16 @@ int msmodoContext::exportAnimations(SendScope scope)
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
-    eachCamera([this](CLxUser_Item& obj) {
-        exportAnimation(obj);
-    });
-    eachLight([this](CLxUser_Item& obj) {
-        exportAnimation(obj);
-    });
-    eachMesh([this](CLxUser_Item& obj) {
-        exportAnimation(obj);
-    });
+    auto do_export = [this](CLxUser_Item& obj) { exportAnimation(obj); };
+
+    if (m_settings.sync_cameras)
+        eachCamera(do_export);
+    if (m_settings.sync_lights)
+        eachLight(do_export);
+    if (m_settings.sync_bones)
+        eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
+    if (m_settings.sync_meshes)
+        eachMesh(do_export);
 
     // todo:
 
@@ -631,7 +641,6 @@ bool msmodoContext::exportAnimation(CLxUser_Item& obj)
     }
     else if (obj.IsA(t_mesh)) {
         exportAnimation(GetParent(obj));
-        eachBone(obj, [&](CLxUser_Item& bone) { exportAnimation(bone); });
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
     }

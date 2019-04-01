@@ -74,8 +74,7 @@ public:
     Handler("syncConstraints", LXsTYPE_BOOLEAN, settings.sync_constraints, true)\
     Handler("animationTS", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
     Handler("animationSPS", LXsTYPE_FLOAT, settings.animation_sps, false)\
-    Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)\
-    Handler("removeNamespace", LXsTYPE_BOOLEAN, settings.remove_namespace, true)
+    Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)
 
 
     void setup_args(CLxAttributeDesc &desc) override
