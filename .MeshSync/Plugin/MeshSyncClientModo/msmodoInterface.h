@@ -8,7 +8,11 @@ public:
     // time: inf -> current time
     void setChannelReadTime(double time = std::numeric_limits<double>::infinity());
 
-    void enumerateGraph(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
+    void enumerateItemGraphR(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
+    void enumerateItemGraphF(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
+
+    void enumerateChannelGraphR(CLxUser_Item& item, int channel, const char *graph_name, const std::function<void(CLxUser_Item&)>& body);
+
     void eachMaterial(const std::function<void(CLxUser_Item&)>& body);
     void eachLight(const std::function<void(CLxUser_Item&)>& body);
     void eachCamera(const std::function<void(CLxUser_Item&)>& body);
@@ -22,10 +26,13 @@ public:
 
     std::tuple<double, double> getTimeRange();
 
+    void dumpChannels(CLxUser_Item item);
+
 public:
-    LXtItemType t_material = 0,
-                t_locator = 0, t_camera = 0, t_light = 0, t_mesh = 0, t_meshinst = 0,
-                t_deform, t_geninf = 0, t_morph = 0;
+    LXtItemType tMaterial = 0,
+                tLocator, tCamera, tLight, tMesh, tMeshInst,
+                tLightMaterial, tPointLight, tDirectionalLight, tSpotLight, tAreaLight,
+                tDeform, tGenInf, tMorph;
 
 protected:
     CLxUser_SceneService     m_scene_service;

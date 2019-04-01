@@ -114,7 +114,43 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
 
 void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
 {
-    // todo
+    auto t = n.item.Type();
+    if (t == tDirectionalLight) {
+        type = ms::Light::LightType::Directional;
+    }
+    else if (t == tSpotLight) {
+        type = ms::Light::LightType::Spot;
+    }
+    else if (t == tAreaLight) {
+        type = ms::Light::LightType::Area;
+    }
+    else if (t == tPointLight) {
+        type = ms::Light::LightType::Point;
+    }
+    else {
+        type = ms::Light::LightType::Point;
+    }
+
+
+    CLxUser_Item light_material;
+    enumerateItemGraphR(n.item, LXsGRAPH_PARENT, [this, &light_material](CLxUser_Item& o) {
+        if (o.Type() == tLightMaterial)
+            light_material = o;
+    });
+    if (light_material) {
+        static uint32_t ch_color_r, ch_color_g, ch_color_b;
+        if (ch_color_r == 0) {
+            light_material.ChannelLookup(LXsICHAN_LIGHTMATERIAL_LIGHTCOL".R", &ch_color_r);
+            light_material.ChannelLookup(LXsICHAN_LIGHTMATERIAL_LIGHTCOL".G", &ch_color_g);
+            light_material.ChannelLookup(LXsICHAN_LIGHTMATERIAL_LIGHTCOL".B", &ch_color_b);
+        }
+
+        double r, g, b;
+        m_ch_read.Double(light_material, ch_color_r, &r);
+        m_ch_read.Double(light_material, ch_color_g, &g);
+        m_ch_read.Double(light_material, ch_color_b, &b);
+        color = mu::float4{ (float)r, (float)g, (float)b, 1.0f };
+    }
 }
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
@@ -250,19 +286,19 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj)
     n.name = name;
     n.path = path;
 
-    if (obj.IsA(t_camera)) {
+    if (obj.IsA(tCamera)) {
         exportObject(GetParent(obj));
         n.dst_obj = exportCamera(n);
     }
-    else if (obj.IsA(t_light)) {
+    else if (obj.IsA(tLight)) {
         exportObject(GetParent(obj));
         n.dst_obj = exportLight(n);
     }
-    else if (obj.IsA(t_mesh)) {
+    else if (obj.IsA(tMesh)) {
         exportObject(GetParent(obj));
         n.dst_obj = exportMesh(n);
     }
-    else if (obj.IsA(t_meshinst)) {
+    else if (obj.IsA(tMeshInst)) {
         exportObject(GetParent(obj));
         n.dst_obj = exportMeshInstance(n);
     }
@@ -303,7 +339,7 @@ ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
-    enumerateGraph(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
+    enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
         n.dst_obj->reference = GetPath(g);
     });
 
@@ -551,8 +587,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             return true;
         };
 
-        enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            if (def.Type() != t_geninf)
+        enumerateItemGraphR(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
+            if (def.Type() != tGenInf)
                 return;
 
             static uint32_t ch_enable, ch_type, ch_mapname;
@@ -571,7 +607,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
                 return;
 
             CLxUser_Item effector;
-            if (LXx_FAIL(m_deform_service.DeformerDeformationItem(def, effector)) || !effector.IsA(t_locator))
+            if (LXx_FAIL(m_deform_service.DeformerDeformationItem(def, effector)) || !effector.IsA(tLocator))
                 return;
 
             auto dst_bone = ms::BoneData::create();
@@ -615,8 +651,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             return true;
         };
 
-        enumerateGraph(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            if (def.Type() != t_morph)
+        enumerateItemGraphR(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
+            if (def.Type() != tMorph)
                 return;
 
             static uint32_t ch_enable, ch_strength, ch_mapname;
@@ -743,17 +779,17 @@ bool msmodoContext::exportAnimation(CLxUser_Item obj)
         return false;
     n.item = obj;
 
-    if (obj.IsA(t_camera)) {
+    if (obj.IsA(tCamera)) {
         exportAnimation(GetParent(obj));
         n.dst_anim = ms::CameraAnimation::create();
         n.anim_extractor = &msmodoContext::extractCameraAnimationData;
     }
-    else if (obj.IsA(t_light)) {
+    else if (obj.IsA(tLight)) {
         exportAnimation(GetParent(obj));
         n.dst_anim = ms::LightAnimation::create();
         n.anim_extractor = &msmodoContext::extractLightAnimationData;
     }
-    else if (obj.IsA(t_mesh)) {
+    else if (obj.IsA(tMesh)) {
         exportAnimation(GetParent(obj));
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
