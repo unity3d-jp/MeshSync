@@ -147,6 +147,9 @@
     <ClInclude Include="MeshSyncClientModo\msmodoInterface.h">
       <Filter>MeshSyncClientModo</Filter>
     </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoWidget_moc.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshSyncClientModo">
