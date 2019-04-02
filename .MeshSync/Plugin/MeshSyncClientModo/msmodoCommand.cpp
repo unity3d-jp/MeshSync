@@ -11,24 +11,29 @@ public:
     {
         int tmp;
         if (cmd_read_arg(name, tmp)) {
-            dst = tmp != 0;
-            return true;
+            bool oldv = dst;
+            dst = (tmp != 0);
+            return dst != oldv;
         }
         return false;
     }
     bool getArg(const char *name, int& dst)
     {
-        if (cmd_read_arg(name, dst)) {
-            return true;
+        int tmp;
+        if (cmd_read_arg(name, tmp)) {
+            int old = dst;
+            dst = tmp;
+            return dst != old;
         }
         return false;
     }
     bool getArg(const char *name, uint16_t& dst)
     {
-        double tmp;
+        int tmp;
         if (cmd_read_arg(name, tmp)) {
+            uint16_t old = dst;
             dst = (uint16_t)tmp;
-            return true;
+            return dst != old;
         }
         return false;
     }
@@ -36,15 +41,19 @@ public:
     {
         double tmp;
         if (cmd_read_arg(name, tmp)) {
+            float old = dst;
             dst = (float)tmp;
-            return true;
+            return dst != old;
         }
         return false;
     }
     bool getArg(const char *name, std::string& dst)
     {
-        if (cmd_read_arg(name, dst)) {
-            return true;
+        std::string tmp;
+        if (cmd_read_arg(name, tmp)) {
+            std::string old = dst;
+            dst = tmp;
+            return dst != old;
         }
         return false;
     }

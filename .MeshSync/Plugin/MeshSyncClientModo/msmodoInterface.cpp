@@ -3,26 +3,60 @@
 #include "msmodoUtils.h"
 
 
-class msmodoTimeChangeTracker :
+class msmodoEventListener :
     public CLxImpl_SelectionListener,
+    public CLxImpl_AnimListener,
+    public CLxImpl_SceneItemListener,
+    public CLxImpl_SceneEvalListener,
     public CLxSingletonPolymorph
 {
 public:
     LXxSINGLETON_METHOD;
 
-    msmodoTimeChangeTracker(msmodoInterface *ifs)
+    msmodoEventListener(msmodoInterface *ifs)
         : m_ifs(ifs)
     {
-        AddInterface(new CLxIfc_SelectionListener<msmodoTimeChangeTracker>());
+        AddInterface(new CLxIfc_SelectionListener<msmodoEventListener>());
+        AddInterface(new CLxIfc_AnimListener<msmodoEventListener>());
+        AddInterface(new CLxIfc_SceneItemListener<msmodoEventListener>());
+        AddInterface(new CLxIfc_SceneEvalListener<msmodoEventListener>());
     }
 
     void selevent_Time(double time) override
     {
-        m_ifs->onTimeChange(time);
+        // scrubbing also fire this event, but time value is unstable. so let it to animevent_ScrubTime().
+        // this callback focus on handling playing state (between animevent_PlayStart() and animevent_PlayEnd())
+        if (m_playing)
+            m_ifs->onTimeChange();
+    }
+    LxResult animevent_TimeChange() override
+    {
+        // this callback seems never be fired...
+        return LXe_OK;
+    }
+    LxResult animevent_PlayStart() override
+    {
+        m_playing = true;
+        return LXe_OK;
+    }
+    LxResult animevent_PlayEnd() override
+    {
+        m_playing = false;
+        return LXe_OK;
+    }
+    LxResult animevent_ScrubTime() override
+    {
+        m_ifs->onTimeChange();
+        return LXe_OK;
+    }
+    LxResult animevent_ScrubEnd() override
+    {
+        return LXe_OK;
     }
 
 private:
     msmodoInterface *m_ifs;
+    bool m_playing = false;
 };
 
 
@@ -52,13 +86,13 @@ void msmodoInterface::prepare()
         tGenInf = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
         tMorph = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
     }
-    if (!m_time_change_tracker) {
-        m_time_change_tracker = new msmodoTimeChangeTracker(this);
-        m_listener_service.AddListener(*m_time_change_tracker);
+    if (!m_event_listener) {
+        m_event_listener = new msmodoEventListener(this);
+        m_listener_service.AddListener(*m_event_listener);
     }
 }
 
-void msmodoInterface::onTimeChange(double t)
+void msmodoInterface::onTimeChange()
 {
 }
 

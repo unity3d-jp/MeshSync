@@ -67,7 +67,7 @@ void msmodoContext::update()
 {
 }
 
-void msmodoContext::onTimeChange(double time)
+void msmodoContext::onTimeChange()
 {
     if (m_settings.auto_sync)
         sendScene(SendScope::All, false);

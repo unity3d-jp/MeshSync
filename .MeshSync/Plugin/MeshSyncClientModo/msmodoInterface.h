@@ -1,12 +1,12 @@
 #pragma once
 
-class msmodoTimeChangeTracker;
+class msmodoEventListener;
 
 class msmodoInterface
 {
 public:
     virtual void prepare();
-    virtual void onTimeChange(double t);
+    virtual void onTimeChange();
 
     // time: inf -> current time
     void setChannelReadTime(double time = std::numeric_limits<double>::infinity());
@@ -53,7 +53,7 @@ public:
     CLxUser_ChannelRead m_ch_read;
     CLxUser_ChannelRead m_ch_read_setup;
 
-    msmodoTimeChangeTracker *m_time_change_tracker = nullptr;
+    msmodoEventListener *m_event_listener = nullptr;
 
 private:
 };
