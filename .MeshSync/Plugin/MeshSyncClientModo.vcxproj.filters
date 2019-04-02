@@ -127,6 +127,9 @@
     <ClCompile Include="MeshSyncClientModo\msmodoInterface.cpp">
       <Filter>MeshSyncClientModo</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientModo\msmodoWidget.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientModo\msmodoCommand.h">

@@ -166,6 +166,7 @@
     <ClCompile Include="MeshSyncClientModo\msmodoContext.cpp" />
     <ClCompile Include="MeshSyncClientModo\msmodoInterface.cpp" />
     <ClCompile Include="MeshSyncClientModo\msmodoUtils.cpp" />
+    <ClCompile Include="MeshSyncClientModo\msmodoWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientModo/pch.h" />
@@ -204,12 +205,12 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MODO_INCLUDE_DIR);$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MODO_INCLUDE_DIR);$(MODO_QT_DIR)\include;$(MODO_QT_DIR)\include\QtCore;$(MODO_QT_DIR)\include\QtGui;$(MODO_QT_DIR)\include\QtWidgets;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(MODO_QT_DIR)\lib64;$(LibraryPath)</LibraryPath>
     <TargetExt>.lx</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">

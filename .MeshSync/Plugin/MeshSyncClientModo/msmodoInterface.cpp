@@ -24,7 +24,7 @@ public:
 
     void selevent_Time(double time) override
     {
-        // scrubbing also fire this event, but time value is unstable. so let it to animevent_ScrubTime().
+        // scrubbing also fire this callback, but time value is unstable. so let it to animevent_ScrubTime().
         // this callback focus on handling playing state (between animevent_PlayStart() and animevent_PlayEnd())
         if (m_playing)
             m_ifs->onTimeChange();

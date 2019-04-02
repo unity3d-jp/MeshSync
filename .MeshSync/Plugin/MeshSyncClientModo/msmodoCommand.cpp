@@ -3,6 +3,7 @@
 #include "msmodoCommand.h"
 #include "msmodoContext.h"
 
+void msmodoInitializeWidget();
 
 class msmodoCmdSettings : public CLxCommand
 {
@@ -11,9 +12,9 @@ public:
     {
         int tmp;
         if (cmd_read_arg(name, tmp)) {
-            bool oldv = dst;
+            bool old = dst;
             dst = (tmp != 0);
-            return dst != oldv;
+            return dst != old;
         }
         return false;
     }
@@ -111,6 +112,8 @@ public:
 
         EachParams(Handler)
 #undef Handler
+
+        msmodoInitializeWidget();
     }
 
 #undef EachParams
