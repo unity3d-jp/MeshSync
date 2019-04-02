@@ -67,6 +67,12 @@ void msmodoContext::update()
 {
 }
 
+void msmodoContext::onTimeChange(double time)
+{
+    if (m_settings.auto_sync)
+        sendScene(SendScope::All, false);
+}
+
 
 void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {

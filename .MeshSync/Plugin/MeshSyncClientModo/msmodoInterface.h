@@ -1,9 +1,12 @@
 #pragma once
 
+class msmodoTimeChangeTracker;
+
 class msmodoInterface
 {
 public:
-    void prepare();
+    virtual void prepare();
+    virtual void onTimeChange(double t);
 
     // time: inf -> current time
     void setChannelReadTime(double time = std::numeric_limits<double>::infinity());
@@ -43,11 +46,14 @@ public:
     CLxUser_LayerService     m_layer_service;
     CLxUser_MeshService      m_mesh_service;
     CLxUser_DeformerService  m_deform_service;
+    CLxUser_ListenerService  m_listener_service;
     CLxUser_LogService       m_log_service;
 
     CLxUser_Scene m_current_scene;
     CLxUser_ChannelRead m_ch_read;
     CLxUser_ChannelRead m_ch_read_setup;
+
+    msmodoTimeChangeTracker *m_time_change_tracker = nullptr;
 
 private:
 };
@@ -176,17 +182,20 @@ inline void msmodoInterface::eachBone(CLxUser_Item& item, const Body& body)
 template<class Body>
 inline void msmodoInterface::eachDeformer(CLxUser_Item& item, const Body& body)
 {
-    enumerateItemGraphR(item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) { body(def); });
+    enumerateItemGraphR(item, LXsGRAPH_DEFORMERS, body);
 }
 
-template<class Body> void msmodoInterface::eachSkinDeformer(CLxUser_Item& item, const Body& body)
+template<class Body>
+void msmodoInterface::eachSkinDeformer(CLxUser_Item& item, const Body& body)
 {
     eachDeformer(item, [&](CLxUser_Item& def) {
         if (def.Type() == tGenInf)
             body(def);
     });
 }
-template<class Body> void msmodoInterface::eachMorphDeformer(CLxUser_Item& item, const Body& body)
+
+template<class Body>
+void msmodoInterface::eachMorphDeformer(CLxUser_Item& item, const Body& body)
 {
     eachDeformer(item, [&](CLxUser_Item& def) {
         if (def.Type() == tMorph)

@@ -87,6 +87,8 @@ public:
 
     bool recvScene();
 
+    void onTimeChange(double time) override;
+
 private:
     struct TreeNode : public mu::noncopyable
     {

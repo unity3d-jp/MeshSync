@@ -2,6 +2,30 @@
 #include "msmodoInterface.h"
 #include "msmodoUtils.h"
 
+
+class msmodoTimeChangeTracker :
+    public CLxImpl_SelectionListener,
+    public CLxSingletonPolymorph
+{
+public:
+    LXxSINGLETON_METHOD;
+
+    msmodoTimeChangeTracker(msmodoInterface *ifs)
+        : m_ifs(ifs)
+    {
+        AddInterface(new CLxIfc_SelectionListener<msmodoTimeChangeTracker>());
+    }
+
+    void selevent_Time(double time) override
+    {
+        m_ifs->onTimeChange(time);
+    }
+
+private:
+    msmodoInterface *m_ifs;
+};
+
+
 void msmodoInterface::prepare()
 {
     m_layer_service.SetScene(0);
@@ -28,7 +52,16 @@ void msmodoInterface::prepare()
         tGenInf = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
         tMorph = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
     }
+    if (!m_time_change_tracker) {
+        m_time_change_tracker = new msmodoTimeChangeTracker(this);
+        m_listener_service.AddListener(*m_time_change_tracker);
+    }
 }
+
+void msmodoInterface::onTimeChange(double t)
+{
+}
+
 
 void msmodoInterface::setChannelReadTime(double time)
 {
@@ -41,8 +74,6 @@ void msmodoInterface::setChannelReadTime(double time)
 
 CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
 {
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
-
     CLxUser_Mesh mesh;
     CLxUser_MeshFilter meshfilter;
     CLxUser_MeshFilterIdent meshfilter_ident;
@@ -55,8 +86,6 @@ CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
 
 CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
 {
-    static const auto ttype = m_scene_service.ItemType(LXsITYPE_MESH);
-
     CLxUser_Mesh mesh;
     CLxUser_MeshFilter meshfilter;
     if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
