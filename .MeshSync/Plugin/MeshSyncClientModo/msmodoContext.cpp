@@ -606,7 +606,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     // bone weights
     if (!m_settings.bake_deformers && m_settings.sync_bones) {
         auto get_weights = [&](const char *name, RawVector<float>& dst_array) -> bool {
-            if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
+            if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
                 return false;
 
             dst_array.resize_discard(dst.points.size());
@@ -625,39 +625,23 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             return true;
         };
 
-        enumerateItemGraphR(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            if (def.Type() != tGenInf)
-                return;
+        eachSkinDeformer(n.item, [&](CLxUser_Item& def) {
+            mdmodoSkinDeformer skin(*this, def);
 
-            static uint32_t ch_enable, ch_type, ch_mapname;
-            if (ch_enable == 0) {
-                def.ChannelLookup(LXsICHAN_GENINFLUENCE_ENABLE, &ch_enable);
-                def.ChannelLookup(LXsICHAN_GENINFLUENCE_TYPE, &ch_type);
-                def.ChannelLookup(LXsICHAN_GENINFLUENCE_NAME, &ch_mapname);
-            }
-
-            int enable, type;
-            const char *mapname;
-            m_ch_read.Integer(def, ch_enable, &enable);
-            m_ch_read.Integer(def, ch_type, &type);
-            m_ch_read.String(def, ch_mapname, &mapname);
-            if (!mapname)
-                return;
-
-            CLxUser_Item effector;
-            if (LXx_FAIL(m_deform_service.DeformerDeformationItem(def, effector)) || !effector.IsA(tLocator))
+            auto joint = skin.getEffector();
+            if (!joint || !joint.IsA(tLocator))
                 return;
 
             auto dst_bone = ms::BoneData::create();
-            dst_bone->path = GetPath(effector);
+            dst_bone->path = GetPath(joint);
             {
                 // bindpose
-                CLxUser_Locator loc(effector);
+                CLxUser_Locator loc(joint);
                 LXtMatrix4 lxmat;
                 loc.WorldTransform4(m_ch_read_setup, lxmat);
                 dst_bone->bindpose = mu::invert(to_float4x4(lxmat));
             }
-            if (get_weights(mapname, dst_bone->weights))
+            if (get_weights(skin.getMapName(), dst_bone->weights))
                 dst.bones.push_back(dst_bone);
         });
 
@@ -670,7 +654,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     // morph
     if (!m_settings.bake_deformers && m_settings.sync_blendshapes) {
         auto get_delta = [&](const char *name, RawVector<mu::float3>& dst_array) -> bool {
-            if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
+            if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
                 return false;
 
             dst_array.resize_discard(dst.points.size());
@@ -689,34 +673,17 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             return true;
         };
 
-        enumerateItemGraphR(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            if (def.Type() != tMorph)
-                return;
-
-            static uint32_t ch_enable, ch_strength, ch_mapname;
-            if (ch_enable == 0) {
-                def.ChannelLookup(LXsICHAN_MORPHDEFORM_ENABLE, &ch_enable);
-                def.ChannelLookup(LXsICHAN_MORPHDEFORM_STRENGTH, &ch_strength);
-                def.ChannelLookup(LXsICHAN_MORPHDEFORM_MAPNAME, &ch_mapname);
-            }
-
-            int enable;
-            double strength;
-            const char *mapname;
-            m_ch_read.Integer(def, ch_enable, &enable);
-            m_ch_read.Double(def, ch_strength, &strength);
-            m_ch_read.String(def, ch_mapname, &mapname);
-            if (!mapname)
-                return;
+        eachMorphDeformer(n.item, [&](CLxUser_Item& def) {
+            mdmodoMorphDeformer morph(*this, def);
 
             auto dst_bs = ms::BlendShapeData::create();
             dst_bs->name = GetName(def);
-            dst_bs->weight = (float)(strength * 100.0);
+            dst_bs->weight = morph.getWeight();
 
             auto dst_bsf = ms::BlendShapeFrameData::create();
             dst_bs->frames.push_back(dst_bsf);
             dst_bsf->weight = 100.0f;
-            if (get_delta(mapname, dst_bsf->points))
+            if (get_delta(morph.getMapName(), dst_bsf->points))
                 dst.blendshapes.push_back(dst_bs);
         });
     }
@@ -929,30 +896,15 @@ void msmodoContext::extractMeshAnimationData(TreeNode& n)
         CLxUser_MeshMap mmap;
         mesh.GetMaps(mmap);
 
+
         float t = m_anim_time;
-        enumerateItemGraphR(n.item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-            if (def.Type() != tMorph)
-                return;
+        eachMorphDeformer(n.item, [&](CLxUser_Item& def) {
+            mdmodoMorphDeformer morph(*this, def);
 
-            static uint32_t ch_enable, ch_strength, ch_mapname;
-            if (ch_enable == 0) {
-                def.ChannelLookup(LXsICHAN_MORPHDEFORM_ENABLE, &ch_enable);
-                def.ChannelLookup(LXsICHAN_MORPHDEFORM_STRENGTH, &ch_strength);
-                def.ChannelLookup(LXsICHAN_MORPHDEFORM_MAPNAME, &ch_mapname);
-            }
-
-            int enable;
-            double strength;
-            const char *mapname;
-            m_ch_read.Integer(def, ch_enable, &enable);
-            m_ch_read.Double(def, ch_strength, &strength);
-            m_ch_read.String(def, ch_mapname, &mapname);
-            if (!mapname)
-                return;
-
-            if (LXx_OK(mmap.SelectByName(LXi_VMAP_MORPH, mapname))) {
+            const char *mapname = morph.getMapName();
+            if (mapname && LXx_OK(mmap.SelectByName(LXi_VMAP_MORPH, mapname))) {
                 auto bsa = dst.findOrCreateBlendshapeAnimation(GetName(def));
-                bsa->weight.push_back({ t, (float)(strength * 100.0) });
+                bsa->weight.push_back({ t, morph.getWeight() });
             }
         });
     }

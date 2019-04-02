@@ -37,123 +37,7 @@ void msmodoInterface::setChannelReadTime(double time)
     m_current_scene.GetChannels(m_ch_read, time);
 }
 
-void msmodoInterface::enumerateItemGraphR(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
-{
-    CLxUser_SceneGraph scene_graph;
-    if (!m_current_scene.GetGraph(graph_name, scene_graph))
-        return;
-    CLxUser_ItemGraph item_graph(scene_graph);
-    if (!item_graph)
-        return;
 
-    uint32_t num = item_graph.Reverse(item);
-    for (uint32_t ti = 0; ti < num; ++ti) {
-        CLxUser_Item element;
-        if (item_graph.Reverse(item, ti, element)) {
-            body(element);
-        }
-    }
-}
-
-void msmodoInterface::enumerateItemGraphF(CLxUser_Item& item, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
-{
-    CLxUser_SceneGraph scene_graph;
-    if (!m_current_scene.GetGraph(graph_name, scene_graph))
-        return;
-    CLxUser_ItemGraph item_graph(scene_graph);
-    if (!item_graph)
-        return;
-
-    uint32_t num;
-    item_graph.FwdCount(item, &num);
-    for (uint32_t ti = 0; ti < num; ++ti) {
-        CLxUser_Item element;
-        if (item_graph.Forward(item, ti, element)) {
-            body(element);
-        }
-    }
-}
-
-void msmodoInterface::enumerateChannelGraphR(CLxUser_Item& item, int channel, const char *graph_name, const std::function<void(CLxUser_Item&)>& body)
-{
-    CLxUser_SceneGraph scene_graph;
-    if (!m_current_scene.GetGraph(graph_name, scene_graph))
-        return;
-    CLxUser_ChannelGraph channel_graph(scene_graph);
-    if (!channel_graph)
-        return;
-
-    uint32_t num;
-    channel_graph.RevCount(item, channel, &num);
-    for (uint32_t ti = 0; ti < num; ++ti) {
-        CLxUser_Item element;
-        int och;
-        if (channel_graph.RevByIndex(item, channel, ti, element, &och)) {
-            body(element);
-        }
-    }
-}
-
-
-#define EachObjectImpl(Type)\
-    uint32_t num_objects;\
-    m_current_scene.ItemCount(Type, &num_objects);\
-    CLxUser_Item item;\
-    for (uint32_t im = 0; im < num_objects; ++im) {\
-        m_current_scene.ItemByIndex(Type, im, item);\
-        body(item);\
-    }
-
-void msmodoInterface::eachMaterial(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(tMaterial);
-}
-void msmodoInterface::eachLight(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(tLight);
-}
-void msmodoInterface::eachCamera(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(tCamera);
-}
-void msmodoInterface::eachMesh(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(tMesh);
-}
-void msmodoInterface::eachMeshInstance(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(tMeshInst);
-}
-void msmodoInterface::eachDeformer(const std::function<void(CLxUser_Item&)>& body)
-{
-    EachObjectImpl(tDeform);
-}
-#undef EachObjectImpl
-
-void msmodoInterface::eachMesh(CLxUser_Item& deformer, const std::function<void(CLxUser_Item&)>& body)
-{
-    CLxUser_Item mesh;
-    uint32_t n = 0;
-    m_deform_service.MeshCount(deformer, &n);
-    for (uint32_t i = 0; i < n; ++i) {
-        if (LXx_OK(m_deform_service.MeshByIndex(deformer, i, mesh)))
-            body(mesh);
-    }
-}
-
-void msmodoInterface::eachBone(CLxUser_Item& item, const std::function<void(CLxUser_Item&)>& body)
-{
-    enumerateItemGraphR(item, LXsGRAPH_DEFORMERS, [&](CLxUser_Item& def) {
-        static const auto ttype = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
-        if (def.Type() != ttype)
-            return;
-
-        static const auto tloc = m_scene_service.ItemType(LXsITYPE_LOCATOR);
-        CLxUser_Item effector;
-        if (LXx_OK(m_deform_service.DeformerDeformationItem(def, effector)) && effector.IsA(tloc))
-            body(effector);
-    });
-}
 
 CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
 {
@@ -217,4 +101,86 @@ void msmodoInterface::dbgDumpItem(CLxUser_Item item)
         m_scene_service.ItemTypeName(type, &tname);
         msLogInfo(" - %s (%s)\n", name, tname);
     }
+}
+
+
+
+uint32_t mdmodoSkinDeformer::ch_enable;
+uint32_t mdmodoSkinDeformer::ch_type;
+uint32_t mdmodoSkinDeformer::ch_mapname;
+
+mdmodoSkinDeformer::mdmodoSkinDeformer(msmodoInterface& ifs, CLxUser_Item& item)
+    : m_ifs(ifs), m_item(item)
+{
+    if (ch_enable == 0) {
+        m_item.ChannelLookup(LXsICHAN_GENINFLUENCE_ENABLE, &ch_enable);
+        m_item.ChannelLookup(LXsICHAN_GENINFLUENCE_TYPE, &ch_type);
+        m_item.ChannelLookup(LXsICHAN_GENINFLUENCE_NAME, &ch_mapname);
+    }
+}
+
+bool mdmodoSkinDeformer::isEnabled()
+{
+    int ret;
+    m_ifs.m_ch_read.Integer(m_item, ch_enable, &ret);
+    return ret != 0;
+}
+
+int mdmodoSkinDeformer::getInfluenceType()
+{
+    int ret;
+    m_ifs.m_ch_read.Integer(m_item, ch_type, &ret);
+    return ret;
+}
+
+const char* mdmodoSkinDeformer::getMapName()
+{
+    const char *ret;
+    m_ifs.m_ch_read.String(m_item, ch_mapname, &ret);
+    return ret;
+}
+
+CLxUser_Item mdmodoSkinDeformer::getEffector()
+{
+    CLxUser_Item effector;
+    if (LXx_FAIL(m_ifs.m_deform_service.DeformerDeformationItem(m_item, effector)))
+        return nullptr;
+    return effector;
+}
+
+
+
+uint32_t mdmodoMorphDeformer::ch_enable;
+uint32_t mdmodoMorphDeformer::ch_strength;
+uint32_t mdmodoMorphDeformer::ch_mapname;
+
+mdmodoMorphDeformer::mdmodoMorphDeformer(msmodoInterface& ifs, CLxUser_Item& item)
+    : m_ifs(ifs), m_item(item)
+{
+    if (ch_enable == 0) {
+        m_item.ChannelLookup(LXsICHAN_MORPHDEFORM_ENABLE, &ch_enable);
+        m_item.ChannelLookup(LXsICHAN_MORPHDEFORM_STRENGTH, &ch_strength);
+        m_item.ChannelLookup(LXsICHAN_MORPHDEFORM_MAPNAME, &ch_mapname);
+    }
+}
+
+bool mdmodoMorphDeformer::isEnabled()
+{
+    int ret;
+    m_ifs.m_ch_read.Integer(m_item, ch_enable, &ret);
+    return ret != 0;
+}
+
+float mdmodoMorphDeformer::getWeight()
+{
+    double ret;
+    m_ifs.m_ch_read.Double(m_item, ch_strength, &ret);
+    return (float)ret * 100.0f;
+}
+
+const char* mdmodoMorphDeformer::getMapName()
+{
+    const char *ret;
+    m_ifs.m_ch_read.String(m_item, ch_mapname, &ret);
+    return ret;
 }
