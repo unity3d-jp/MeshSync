@@ -179,6 +179,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
+        [SerializeField] bool m_reuseExistingAnimationClip = false;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -1793,7 +1794,7 @@ namespace UTJ.MeshSync
                 AnimationClip clip = null;
                 if (!animClipCache.TryGetValue(root.gameObject, out clip))
                 {
-                    if (animator.runtimeAnimatorController != null)
+                    if (m_reuseExistingAnimationClip && animator.runtimeAnimatorController != null)
                     {
                         var clips = animator.runtimeAnimatorController.animationClips;
                         if (clips != null && clips.Length > 0)
