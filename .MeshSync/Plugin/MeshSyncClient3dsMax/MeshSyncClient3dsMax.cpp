@@ -291,7 +291,7 @@ bool MeshSyncClient3dsMax::sendAnimations(SendScope scope)
     if (m_settings.keyframe_reduction) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction();
+            clip->reduction(m_settings.keep_flat_curves);
 
         // erase empty animation
         m_animations.erase(
