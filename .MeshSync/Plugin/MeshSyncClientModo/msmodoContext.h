@@ -53,6 +53,7 @@ struct msmodoSettings
     bool sync_cameras = true;
     bool sync_lights = true;
     bool reduce_keyframes = true;
+    bool keep_flat_curves = false;
 
     // import settings
     bool bake_skin = false;

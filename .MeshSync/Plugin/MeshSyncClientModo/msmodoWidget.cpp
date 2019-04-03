@@ -53,10 +53,12 @@ public slots:
     void onEditAnimationTimeScale(const QString& v);
     void onEditAnimationSPS(const QString& v);
     void onToggleKeyframeReduction(int v);
+    void onToggleKeepFlatCurves(int v);
     void onClickSyncAnimations(bool v);
 
 private:
     QWidget *m_widget_mesh = nullptr;
+    QWidget *m_widget_kfoptions = nullptr;
 };
 
 
@@ -224,6 +226,23 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         layout->addWidget(ck_keyframe_reduction, iy++, 0, 1, 3);
         connect(ck_keyframe_reduction, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeyframeReduction(int)));
 
+        {
+            int iy2 = 0;
+            m_widget_kfoptions = new QWidget();
+            auto *layout_kfoptions = new QGridLayout();
+            layout_kfoptions->setVerticalSpacing(2);
+            layout_kfoptions->setContentsMargins(10, 0, 0, 0);
+
+            auto ck_keep_flat_curves = new QCheckBox("Keep Flat Curves");
+            ck_keep_flat_curves->setCheckState(to_checkstate(settings.keep_flat_curves));
+            layout_kfoptions->addWidget(ck_keep_flat_curves, iy2++, 0);
+            connect(ck_keep_flat_curves, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeepFlatCurves(int)));
+
+            m_widget_kfoptions->setLayout(layout_kfoptions);
+            m_widget_kfoptions->setShown(settings.reduce_keyframes);
+            layout->addWidget(m_widget_kfoptions, iy++, 0, 1, 3, Qt::AlignTop);
+        }
+
         auto bu_sync_animations = new QPushButton("Sync Animations");
         layout->addWidget(bu_sync_animations, iy++, 0, 1, 3);
         connect(bu_sync_animations, SIGNAL(clicked(bool)), this, SLOT(onClickSyncAnimations(bool)));
@@ -376,6 +395,13 @@ void msmodoSettingsWidget::onToggleKeyframeReduction(int v)
 {
     auto& settings = msmodoGetSettings();
     settings.reduce_keyframes = v;
+    m_widget_kfoptions->setShown(settings.reduce_keyframes);
+}
+
+void msmodoSettingsWidget::onToggleKeepFlatCurves(int v)
+{
+    auto& settings = msmodoGetSettings();
+    settings.keep_flat_curves = v;
 }
 
 void msmodoSettingsWidget::onClickSyncAnimations(bool v)
