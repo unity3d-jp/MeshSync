@@ -70,6 +70,9 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout.prop(scene, 'meshsync_animation_ts')
         layout.prop(scene, 'meshsync_animation_fi')
         layout.prop(scene, 'meshsync_animation_kfr')
+        if scene.meshsync_animation_kfr:
+            b = layout.box()
+            b.prop(scene, 'meshsync_animation_kec')
         layout.operator("meshsync.sync_animations", text="Sync")
 
 
