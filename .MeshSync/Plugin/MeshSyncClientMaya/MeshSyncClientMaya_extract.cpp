@@ -938,7 +938,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     if (m_settings.reduce_keyframes) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_empty_curves);
+            clip->reduction(m_settings.keep_flat_curves);
 
         // erase empty animation
         m_animations.erase(

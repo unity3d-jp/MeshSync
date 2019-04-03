@@ -24,7 +24,7 @@ global proc UnityMeshSync_GUI()
     int    $animationTS     = `UnityMeshSync_Settings -q -animationTS`;
     int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
     int    $kfReduction     = `UnityMeshSync_Settings -q -keyframeReduction`;
-    int    $keepEmptyCurves = `UnityMeshSync_Settings -q -keepEmptyCurves`;
+    int    $keepFlatCurves  = `UnityMeshSync_Settings -q -keepFlatCurves`;
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
@@ -75,7 +75,7 @@ global proc UnityMeshSync_GUI()
     setParent ..;
     checkBox -label "Keyframe Reduction" -value $kfReduction -cc "umsCBKeyframeReduction" umsCtrlKeyframeReduction;
     columnLayout -visible $kfReduction -columnOffset "left" 20 msuFoldKeyframeReduction;
-        checkBox -label "Keep Empty Curves" -value $keepEmptyCurves -cc "umsCBKeepEmptyCurves" umsCtrlKeepEmptyCurves;
+        checkBox -label "Keep Flat Curves" -value $keepFlatCurves -cc "umsCBKeepFlatCurves" umsCtrlKeepFlatCurves;
     setParent ..;
 
     separator -h 5 -w 250 -style none;
@@ -214,10 +214,10 @@ global proc umsCBKeyframeReduction()
     columnLayout -e -visible $v msuFoldKeyframeReduction;
 }
 
-global proc umsCBKeepEmptyCurves()
+global proc umsCBKeepFlatCurves()
 {
-    int $v = `checkBox -q -value umsCtrlKeepEmptyCurves`;
-    string $ret = `UnityMeshSync_Settings -keepEmptyCurves $v`;
+    int $v = `checkBox -q -value umsCtrlKeepFlatCurves`;
+    string $ret = `UnityMeshSync_Settings -keepFlatCurves $v`;
 }
 
 global proc umsCBSyncAnimations()

@@ -273,11 +273,11 @@ bool msmbLayout::FBCreate()
             lS, kFBAttachBottom, idButtonKFReduction, 1,
             0, kFBAttachWidth, idButtonKFReduction, 1,
             0, kFBAttachHeight, idButtonKFReduction, 1);
-        SetControl(idButtonKeepEmptyCurves, m_bu_keep_empty_curves);
-        m_bu_keep_empty_curves.Caption = "Keep Empty Curves";
-        m_bu_keep_empty_curves.Style = kFBCheckbox;
-        m_bu_keep_empty_curves.State = (int)m_device->keep_empty_curves;
-        m_bu_keep_empty_curves.OnClick.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
+        SetControl(idButtonKeepEmptyCurves, m_bu_keep_flat_curves);
+        m_bu_keep_flat_curves.Caption = "Keep Flat Curves";
+        m_bu_keep_flat_curves.Style = kFBCheckbox;
+        m_bu_keep_flat_curves.State = (int)m_device->keep_flat_curves;
+        m_bu_keep_flat_curves.OnClick.Add(this, (FBCallback)&msmbLayout::onAnimationSettingsChange);
 
         AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
             0, kFBAttachLeft, idButtonKeepEmptyCurves, 1,
@@ -330,7 +330,7 @@ void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEven
     m_device->animation_time_scale = (float)m_ed_time_scale.Value;
     m_device->animation_sps = (float)m_ed_sps.Value;
     m_device->keyframe_reduction = (bool)(int)m_bu_kf_reduction.State;
-    m_device->keep_empty_curves = (bool)(int)m_bu_keep_empty_curves.State;
+    m_device->keep_flat_curves = (bool)(int)m_bu_keep_flat_curves.State;
 }
 
 void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)

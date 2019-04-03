@@ -32,7 +32,7 @@ public:
     virtual uint64_t hash() const = 0;
     virtual uint64_t checksum() const = 0;
     virtual bool empty() const = 0;
-    virtual void reduction(bool keep_empty_curves) = 0;
+    virtual void reduction(bool keep_flat_curves) = 0;
     virtual void reserve(size_t n) = 0;
 
     virtual void convertHandedness(bool x, bool yz) = 0;
@@ -63,7 +63,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
     bool empty() const override;
-    void reduction(bool keep_empty_curves) override;
+    void reduction(bool keep_flat_curves) override;
     void reserve(size_t n) override;
 
     void convertHandedness(bool x, bool yz) override;
@@ -96,7 +96,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
     bool empty() const override;
-    void reduction(bool keep_empty_curves) override;
+    void reduction(bool keep_flat_curves) override;
     void reserve(size_t n) override;
 
     void applyScaleFactor(float scale) override;
@@ -125,7 +125,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
     bool empty() const override;
-    void reduction(bool keep_empty_curves) override;
+    void reduction(bool keep_flat_curves) override;
     void reserve(size_t n) override;
 
     void applyScaleFactor(float scale) override;
@@ -170,7 +170,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
     bool empty() const override;
-    void reduction(bool keep_empty_curves) override;
+    void reduction(bool keep_flat_curves) override;
 
     BlendshapeAnimation* findOrCreateBlendshapeAnimation(const char *name);
 };
@@ -195,7 +195,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
     bool empty() const override;
-    void reduction(bool keep_empty_curves) override;
+    void reduction(bool keep_flat_curves) override;
     void reserve(size_t n) override;
 };
 msSerializable(PointsAnimation);
@@ -222,7 +222,7 @@ public:
     uint64_t checksum() const override;
 
     bool empty() const;
-    void reduction(bool keep_empty_curves = false);
+    void reduction(bool keep_flat_curves = false);
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 };

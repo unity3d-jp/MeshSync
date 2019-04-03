@@ -7,7 +7,7 @@
 #define Hash(V) ret += vhash(V);
 #define CSum(V) ret += csum(V);
 #define Empty(V) && V.empty()
-#define Reduce(V) DoReduction(V, keep_empty_curves);
+#define Reduce(V) DoReduction(V, keep_flat_curves);
 #define Reserve(V) V.reserve(n);
 
 namespace ms {
@@ -30,7 +30,7 @@ struct Equals<bool>
 };
 
 template<class T>
-static void DoReduction(RawVector<TVP<T>>& data, bool keep_empty_curve)
+static void DoReduction(RawVector<TVP<T>>& data, bool keep_flat_curve)
 {
     if (data.size() <= 1)
         return;
@@ -44,7 +44,7 @@ static void DoReduction(RawVector<TVP<T>>& data, bool keep_empty_curve)
     }
 
     if (data.size() == 1) {
-        if (keep_empty_curve)
+        if (keep_flat_curve)
             data.push_back(last_key); // keep at least 2 keys to prevent Unity's warning
         else
             data.clear();
@@ -145,7 +145,7 @@ bool TransformAnimation::empty() const
     ret = ret EachMember(Empty);
     return ret;
 }
-void TransformAnimation::reduction(bool keep_empty_curves)
+void TransformAnimation::reduction(bool keep_flat_curves)
 {
     EachMember(Reduce);
 }
@@ -223,9 +223,9 @@ bool CameraAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
 }
-void CameraAnimation::reduction(bool keep_empty_curves)
+void CameraAnimation::reduction(bool keep_flat_curves)
 {
-    super::reduction(keep_empty_curves);
+    super::reduction(keep_flat_curves);
     EachMember(Reduce);
 }
 void CameraAnimation::reserve(size_t n)
@@ -287,9 +287,9 @@ bool LightAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
 }
-void LightAnimation::reduction(bool keep_empty_curves)
+void LightAnimation::reduction(bool keep_flat_curves)
 {
-    super::reduction(keep_empty_curves);
+    super::reduction(keep_flat_curves);
     EachMember(Reduce);
 }
 void LightAnimation::reserve(size_t n)
@@ -387,12 +387,12 @@ bool MeshAnimation::empty() const
     return super::empty() && blendshapes.empty();
 }
 
-void MeshAnimation::reduction(bool keep_empty_curves)
+void MeshAnimation::reduction(bool keep_flat_curves)
 {
-    super::reduction(keep_empty_curves);
+    super::reduction(keep_flat_curves);
 
     for (auto& bs : blendshapes)
-        DoReduction(bs->weight, keep_empty_curves);
+        DoReduction(bs->weight, keep_flat_curves);
     blendshapes.erase(
         std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
         blendshapes.end());
@@ -465,9 +465,9 @@ bool PointsAnimation::empty() const
     return super::empty() EachMember(Empty);
 }
 
-void PointsAnimation::reduction(bool keep_empty_curves)
+void PointsAnimation::reduction(bool keep_flat_curves)
 {
-    super::reduction(keep_empty_curves);
+    super::reduction(keep_flat_curves);
     EachMember(Reduce);
 }
 
@@ -534,10 +534,10 @@ bool AnimationClip::empty() const
     return animations.empty();
 }
 
-void AnimationClip::reduction(bool keep_empty_curves)
+void AnimationClip::reduction(bool keep_flat_curves)
 {
-    mu::parallel_for_each(animations.begin(), animations.end(), [keep_empty_curves](ms::AnimationPtr& p) {
-        p->reduction(keep_empty_curves);
+    mu::parallel_for_each(animations.begin(), animations.end(), [keep_flat_curves](ms::AnimationPtr& p) {
+        p->reduction(keep_flat_curves);
     });
     animations.erase(
         std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),

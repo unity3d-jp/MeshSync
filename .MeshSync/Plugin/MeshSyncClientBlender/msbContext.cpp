@@ -842,7 +842,7 @@ void msbContext::sendAnimations(SendScope scope)
     if (m_settings.keyframe_reduction) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_empty_curves);
+            clip->reduction(m_settings.keep_flat_curves);
 
         // erase empty clip
         m_animations.erase(

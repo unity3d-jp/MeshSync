@@ -776,7 +776,7 @@ bool msmbDevice::exportAnimations()
     if (keyframe_reduction) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction(keep_empty_curves);
+            clip->reduction(keep_flat_curves);
 
         // erase empty clip
         m_animations.erase(
