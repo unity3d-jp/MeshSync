@@ -428,6 +428,11 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 s.keyframe_reduction = CtrlIsChecked(IDC_CHECK_KFREDUCTION);
             });
             break;
+        case IDC_CHECK_KEEPFLATCURVES:
+            handle_button([&]() {
+                s.keep_flat_curves = CtrlIsChecked(IDC_CHECK_KEEPFLATCURVES);
+            });
+            break;
         case IDC_BUTTON_MANUAL_SYNC:
             handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All, true); });
             break;

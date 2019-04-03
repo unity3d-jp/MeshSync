@@ -82,6 +82,9 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(keyframe_reduction,
                 [](const msbContext& self) { return self.getSettings().keyframe_reduction; },
                 [](msbContext& self, int v) { self.getSettings().keyframe_reduction = v; })
+            BindProperty(keep_flat_curves,
+                [](const msbContext& self) { return self.getSettings().keep_flat_curves; },
+                [](msbContext& self, int v) { self.getSettings().keep_flat_curves = v; })
             BindProperty(multithreaded,
                 [](const msbContext& self) { return self.getSettings().multithreaded; },
                 [](msbContext& self, int v) { self.getSettings().multithreaded = v; })

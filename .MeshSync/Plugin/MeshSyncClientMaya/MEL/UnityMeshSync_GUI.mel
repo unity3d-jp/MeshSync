@@ -24,6 +24,7 @@ global proc UnityMeshSync_GUI()
     int    $animationTS     = `UnityMeshSync_Settings -q -animationTS`;
     int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
     int    $kfReduction     = `UnityMeshSync_Settings -q -keyframeReduction`;
+    int    $keepFlatCurves  = `UnityMeshSync_Settings -q -keepFlatCurves`;
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
@@ -43,13 +44,13 @@ global proc UnityMeshSync_GUI()
     checkBox -label "Remove Namespace" -value $removeNamespace -cc "umsCBRemoveNamespace" umsCtrlRemoveNamespace;
 
     checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
-        columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
+    columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
         checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
         checkBox -label "UVs" -value $syncUVs -cc "umsCBSyncUVs" umsCtrlSyncUVs;
         checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
         checkBox -label "Double Sided" -value $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
         checkBox -label "Bake Deformers" -value $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
-        setParent ..;
+    setParent ..;
     checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
     checkBox -label "Sync Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
     checkBox -label "Sync Textures" -value $syncTextures -cc "umsCBSyncTextures" umsCtrlSyncTextures;
@@ -73,6 +74,9 @@ global proc UnityMeshSync_GUI()
         text -label "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
     checkBox -label "Keyframe Reduction" -value $kfReduction -cc "umsCBKeyframeReduction" umsCtrlKeyframeReduction;
+    columnLayout -visible $kfReduction -columnOffset "left" 20 msuFoldKeyframeReduction;
+        checkBox -label "Keep Flat Curves" -value $keepFlatCurves -cc "umsCBKeepFlatCurves" umsCtrlKeepFlatCurves;
+    setParent ..;
 
     separator -h 5 -w 250 -style none;
 
@@ -203,10 +207,17 @@ global proc umsCBAnimationSPS()
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
 }
 
-global  proc umsCBKeyframeReduction()
+global proc umsCBKeyframeReduction()
 {
     int $v = `checkBox -q -value umsCtrlKeyframeReduction`;
     string $ret = `UnityMeshSync_Settings -keyframeReduction $v`;
+    columnLayout -e -visible $v msuFoldKeyframeReduction;
+}
+
+global proc umsCBKeepFlatCurves()
+{
+    int $v = `checkBox -q -value umsCtrlKeepFlatCurves`;
+    string $ret = `UnityMeshSync_Settings -keepFlatCurves $v`;
 }
 
 global proc umsCBSyncAnimations()

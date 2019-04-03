@@ -18,15 +18,15 @@ TextureManager::~TextureManager()
     waitTasks();
 }
 
+bool TextureManager::empty() const
+{
+    return m_records.empty();
+}
+
 void TextureManager::clear()
 {
     waitTasks();
     m_records.clear();
-}
-
-bool TextureManager::empty() const
-{
-    return m_records.empty();
 }
 
 bool TextureManager::erase(const std::string& name)

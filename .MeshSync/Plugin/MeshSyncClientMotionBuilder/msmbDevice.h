@@ -127,5 +127,6 @@ public:
     bool make_double_sided = false;
     bool bake_deformars = false;
     bool keyframe_reduction = true;
+    bool keep_flat_curves = false;
     bool parallel_extraction = true;
 };

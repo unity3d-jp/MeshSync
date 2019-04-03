@@ -150,9 +150,7 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
         n = n->getPrimaryInstanceNode();
     }
 
-
-    // maya-compatible transform extraction
-    auto maya_compatible_transform_extraction = [n]() {
+    auto get_maya_transform = [n]() -> mu::float4x4 {
         // get TRS from world matrix.
         // note: world matrix is a result of local TRS + parent TRS + constraints.
         //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
@@ -175,6 +173,13 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
             mat *= mu::invert(pwmat);
         }
 
+        return mat;
+    };
+
+    // maya-compatible transform extraction
+    auto maya_compatible_transform_extraction = [n, &get_maya_transform]() {
+        auto mat = get_maya_transform();
+
         auto& td = n->transform_data;
         td.translation = extract_position(mat);
         td.pivot = mu::float3::zero();
@@ -182,12 +187,13 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
         td.rotation = extract_rotation(mat);
         td.scale = extract_scale(mat);
         n->model_transform = mu::float4x4::identity();
+        n->maya_transform = mat;
     };
 
     // fbx-compatible transform extraction
     // - scale pivot is ignored
     // - rotation orientation is ignored
-    auto fbx_compatible_transform_extraction = [n]() {
+    auto fbx_compatible_transform_extraction = [n, &get_maya_transform]() {
         MFnTransform fn_trans(n->getDagPath(false));
 
         MQuaternion r;
@@ -204,6 +210,7 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
 
         n->model_transform = mu::float4x4::identity();
         (mu::float3&)n->model_transform[3] = -td.pivot;
+        n->maya_transform = get_maya_transform();
     };
 
     if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
@@ -370,7 +377,7 @@ void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n
                     auto dst_bs = ms::BlendShapeData::create();
                     dst.blendshapes.push_back(dst_bs);
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
-                    dst_bs->name = plug_wc.name().asChar();
+                    dst_bs->name = handleNamespace(plug_wc.name().asChar());
                     plug_wc.getValue(dst_bs->weight);
                     dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
                 }
@@ -532,11 +539,6 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     if (!dst.visible)
         return;
 
-    MStatus mstat;
-    MFnMesh mmesh(shape);
-    MFnSkinCluster fn_skin(FindSkinCluster(mmesh.object()));
-    bool is_skinned = !fn_skin.object().isNull();
-
     if (n->isInstance()) {
         auto primary = n->getPrimaryInstanceNode();
         if (n != primary) {
@@ -544,6 +546,14 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
             return;
         }
     }
+
+
+    MStatus mstat;
+    MFnMesh mmesh(shape);
+    MFnSkinCluster fn_skin(FindSkinCluster(shape));
+    bool is_skinned = !fn_skin.object().isNull();
+    mu::float4x4 trans_geom = mu::float4x4::identity();
+    GetTransformGeometryMatrix(shape, trans_geom);
 
     if (!mmesh.object().hasFn(MFn::kMesh)) {
         // return empty mesh
@@ -700,7 +710,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     auto dst_bs = ms::BlendShapeData::create();
                     dst.blendshapes.push_back(dst_bs);
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
-                    dst_bs->name = plug_wc.name().asChar();
+                    dst_bs->name = handleNamespace(plug_wc.name().asChar());
                     plug_wc.getValue(dst_bs->weight);
                     dst_bs->weight *= 100.0f; // 0.0f-1.0f -> 0.0f-100.0f
 
@@ -736,7 +746,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     if (m_settings.sync_bones && !fn_skin.object().isNull()) {
         // request bake TRS
         dst.refine_settings.flags.apply_local2world = 1;
-        dst.refine_settings.local2world = dst.toMatrix();
+        dst.refine_settings.local2world = n->maya_transform;
 
         // get bone data
         MPlug plug_bindprematrix = fn_skin.findPlug("bindPreMatrix", true, &mstat);
@@ -810,6 +820,8 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         apply_tweak(shape, skin_index);
         apply_uv_tweak(shape, skin_index);
     }
+
+    dst.refine_settings.local2world = dst.refine_settings.local2world * trans_geom;
 
     dst.setupFlags();
 }
@@ -926,7 +938,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     if (m_settings.reduce_keyframes) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction();
+            clip->reduction(m_settings.keep_flat_curves);
 
         // erase empty animation
         m_animations.erase(
@@ -1078,7 +1090,7 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
 
                 for (uint32_t idx_itg = 0; idx_itg < num_itg; ++idx_itg) {
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
-                    std::string name = plug_wc.name().asChar();
+                    std::string name = handleNamespace(plug_wc.name().asChar());
 
                     auto bsa = dst.findOrCreateBlendshapeAnimation(name.c_str());
                     float weight = 0.0f;

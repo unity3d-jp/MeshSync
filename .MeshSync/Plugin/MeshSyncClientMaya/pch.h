@@ -90,6 +90,7 @@
 #include <maya/MFnVolumeLight.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MFnBlendShapeDeformer.h>
+#include <maya/MFnGeometryFilter.h>
 #include <maya/MEventMessage.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MNodeMessage.h>

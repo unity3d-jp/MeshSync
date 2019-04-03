@@ -11,14 +11,15 @@ MaterialManager::~MaterialManager()
 {
 }
 
-void MaterialManager::clear()
-{
-    m_records.clear();
-}
-
 bool MaterialManager::empty() const
 {
     return m_records.empty();
+}
+
+void MaterialManager::clear()
+{
+    m_records.clear();
+    m_deleted.clear();
 }
 
 bool MaterialManager::erase(int id)

@@ -64,6 +64,7 @@ struct TreeNode : public mu::noncopyable
     ms::AnimationPtr dst_anim;
     TransformData transform_data;
     ms::float4x4 model_transform;
+    ms::float4x4 maya_transform;
 
     ms::Identifier getIdentifier() const;
     void clearState();
@@ -99,7 +100,7 @@ public:
         bool sync_colors = true;
         bool make_double_sided = false;
         bool bake_deformers = false;
-        bool apply_tweak = true;
+        bool apply_tweak = false;
         bool sync_blendshapes = true;
         bool sync_bones = true;
         bool sync_textures = true;
@@ -108,6 +109,7 @@ public:
         bool sync_constraints = false;
         bool remove_namespace = true;
         bool reduce_keyframes = true;
+        bool keep_flat_curves = false;
         bool multithreaded = false;
         bool fbx_compatible_transform = true;
 

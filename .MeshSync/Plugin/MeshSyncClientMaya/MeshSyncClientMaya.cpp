@@ -459,6 +459,9 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
     }
     m_pending_scope = SendScope::None;
 
+    if (scope == SendScope::All) {
+        m_entity_manager.clearEntityRecords();
+    }
     if (dirty_all) {
         m_material_manager.makeDirtyAll();
         m_entity_manager.makeDirtyAll();

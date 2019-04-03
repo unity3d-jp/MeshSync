@@ -179,6 +179,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
+        [SerializeField] bool m_reuseExistingAnimationClip = false;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -221,7 +222,7 @@ namespace UTJ.MeshSync
         }
         public string assetPath
         {
-            get { return "Assets/" + m_assetDir.leaf; }
+            get { return m_assetDir.leaf.Length != 0 ? "Assets/" + m_assetDir.leaf : "Assets"; }
         }
         public string httpFileRootPath
         {
@@ -1041,17 +1042,28 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             if (m_findMaterialFromAssets && (dst.material == null || dst.name != materialName))
             {
+                Material candidate = null;
+
                 var guids = AssetDatabase.FindAssets("t:Material " + materialName);
                 foreach (var guid in guids)
                 {
-                    var material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    var material = AssetDatabase.LoadAssetAtPath<Material>(path);
                     if (material.name == materialName)
                     {
-                        dst.material = material;
-                        dst.materialIID = 0; // ignore material params
-                        m_needReassignMaterials = true;
-                        break;
+                        candidate = material;
+
+                        // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+                        if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
+                            break;
                     }
+                }
+
+                if (candidate != null)
+                {
+                    dst.material = candidate;
+                    dst.materialIID = 0; // ignore material params
+                    m_needReassignMaterials = true;
                 }
             }
 #endif
@@ -1782,7 +1794,7 @@ namespace UTJ.MeshSync
                 AnimationClip clip = null;
                 if (!animClipCache.TryGetValue(root.gameObject, out clip))
                 {
-                    if (animator.runtimeAnimatorController != null)
+                    if (m_reuseExistingAnimationClip && animator.runtimeAnimatorController != null)
                     {
                         var clips = animator.runtimeAnimatorController.animationClips;
                         if (clips != null && clips.Length > 0)
