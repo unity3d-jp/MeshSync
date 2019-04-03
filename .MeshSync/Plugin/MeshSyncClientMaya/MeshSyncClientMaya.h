@@ -109,6 +109,7 @@ public:
         bool sync_constraints = false;
         bool remove_namespace = true;
         bool reduce_keyframes = true;
+        bool keep_empty_curves = false;
         bool multithreaded = false;
         bool fbx_compatible_transform = true;
 

@@ -32,14 +32,22 @@ struct Equals<bool>
 template<class T>
 static void DoReduction(RawVector<TVP<T>>& data, bool keep_empty_curve)
 {
+    if (data.size() <= 1)
+        return;
+
+    auto last_key = data.back();
     while (data.size() >= 2) {
         if (Equals<T>()(data[data.size()-2].value, data.back().value))
             data.pop_back();
         else
             break;
     }
-    if (!keep_empty_curve && data.size() == 1) {
-        data.clear();
+
+    if (data.size() == 1) {
+        if (keep_empty_curve)
+            data.push_back(last_key); // keep at least 2 keys to prevent Unity's warning
+        else
+            data.clear();
     }
 }
 
