@@ -38,6 +38,7 @@ public slots:
     void onEditServer(const QString& v);
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
+    void onToggleSyncMeshes(int v);
     void onToggleBones(int v);
     void onToggleBlendshapes(int v);
     void onToggleBakeDeformers(int v);
@@ -53,6 +54,9 @@ public slots:
     void onEditAnimationSPS(const QString& v);
     void onToggleKeyframeReduction(int v);
     void onClickSyncAnimations(bool v);
+
+private:
+    QWidget *m_widget_mesh = nullptr;
 };
 
 
@@ -88,104 +92,152 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     // setup controls
 
     auto *layout = new QGridLayout();
+    layout->setVerticalSpacing(2);
+    layout->setAlignment(Qt::AlignTop);
+
+    const int space = 8;
     int iy = 0;
 
     // server & scene settings
-    layout->addWidget(new QLabel("Server:Port"), iy, 0);
-    auto ed_server = new QLineEdit(to_qstring(settings.client_settings.server));
-    layout->addWidget(ed_server, iy, 1);
-    auto ed_port = new QLineEdit(to_qstring((int)settings.client_settings.port));
-    ed_port->setValidator(new QIntValidator(0, 65535, this));
-    layout->addWidget(ed_port, iy++, 2);
+    {
+        auto lb_server = new QLabel("Server");
+        lb_server->setStyleSheet("font-weight: bold");
+        layout->addWidget(lb_server, iy++, 0, 1, 3);
 
-    layout->addWidget(new QLabel("Scale Factor"), iy, 0);
-    auto ed_scale_factor = new QLineEdit(to_qstring(settings.scale_factor));
-    ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
-    layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
+        layout->addWidget(new QLabel("Server:Port"), iy, 0);
 
-    // sync component
-    auto ck_bones= new QCheckBox("Sync Joints");
-    ck_bones->setCheckState(to_checkstate(settings.sync_bones));
-    layout->addWidget(ck_bones, iy++, 0, 1, 3);
+        auto ed_server = new QLineEdit(to_qstring(settings.client_settings.server));
+        layout->addWidget(ed_server, iy, 1);
+        connect(ed_server, SIGNAL(textEdited(QString)), this, SLOT(onEditServer(QString)));
 
-    auto ck_blendshapes = new QCheckBox("Sync Morphs");
-    ck_blendshapes->setCheckState(to_checkstate(settings.sync_blendshapes));
-    layout->addWidget(ck_blendshapes, iy++, 0, 1, 3);
+        auto ed_port = new QLineEdit(to_qstring((int)settings.client_settings.port));
+        ed_port->setValidator(new QIntValidator(0, 65535, this));
+        layout->addWidget(ed_port, iy++, 2);
+        connect(ed_port, SIGNAL(textEdited(QString)), this, SLOT(onEditPort(QString)));
 
-    auto ck_bake_deformers = new QCheckBox("Bake Deformers");
-    ck_bake_deformers->setCheckState(to_checkstate(settings.bake_deformers));
-    layout->addWidget(ck_bake_deformers, iy++, 0, 1, 3);
+        auto lb_scene = new QLabel("Scene");
+        lb_scene->setContentsMargins(0, space, 0, 0);
+        lb_scene->setStyleSheet("font-weight: bold");
+        layout->addWidget(lb_scene, iy++, 0, 1, 3);
 
-    auto ck_double_sided = new QCheckBox("Make Double Sided");
-    ck_double_sided->setCheckState(to_checkstate(settings.make_double_sided));
-    layout->addWidget(ck_double_sided, iy++, 0, 1, 3);
+        layout->addWidget(new QLabel("Scale Factor"), iy, 0);
+        auto ed_scale_factor = new QLineEdit(to_qstring(settings.scale_factor));
+        ed_scale_factor->setValidator(new QDoubleValidator(0.0, 10000.0, 100, this));
+        layout->addWidget(ed_scale_factor, iy++, 1, 1, 2);
+        connect(ed_scale_factor, SIGNAL(textEdited(QString)), this, SLOT(onEditScaleFactor(QString)));
+    }
 
-    auto ck_textures = new QCheckBox("Sync Textures");
-    ck_textures->setCheckState(to_checkstate(settings.sync_textures));
-    layout->addWidget(ck_textures, iy++, 0, 1, 3);
+    // mesh
+    {
+        auto ck_meshes = new QCheckBox("Sync Meshes");
+        ck_meshes->setCheckState(to_checkstate(settings.sync_meshes));
+        layout->addWidget(ck_meshes, iy++, 0, 1, 3);
+        connect(ck_meshes, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncMeshes(int)));
 
-    auto ck_minst = new QCheckBox("Sync Mesh Instances");
-    ck_minst->setCheckState(to_checkstate(settings.sync_mesh_instances));
-    layout->addWidget(ck_minst, iy++, 0, 1, 3);
+        int iy2 = 0;
+        m_widget_mesh = new QWidget();
+        auto *layout_mesh = new QGridLayout();
+        layout_mesh->setVerticalSpacing(2);
+        layout_mesh->setContentsMargins(10, 0, 0, 0);
 
-    auto ck_cameras = new QCheckBox("Sync Cameras");
-    ck_cameras->setCheckState(to_checkstate(settings.sync_cameras));
-    layout->addWidget(ck_cameras, iy++, 0, 1, 3);
+        auto ck_bones = new QCheckBox("Sync Joints");
+        ck_bones->setCheckState(to_checkstate(settings.sync_bones));
+        layout_mesh->addWidget(ck_bones, iy2++, 0);
+        connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleBones(int)));
 
-    auto ck_lights = new QCheckBox("Sync Lights");
-    ck_lights->setCheckState(to_checkstate(settings.sync_lights));
-    layout->addWidget(ck_lights, iy++, 0, 1, 3);
+        auto ck_blendshapes = new QCheckBox("Sync Morphs");
+        ck_blendshapes->setCheckState(to_checkstate(settings.sync_blendshapes));
+        layout_mesh->addWidget(ck_blendshapes, iy2++, 0);
+        connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleBlendshapes(int)));
 
-    auto ck_auto_sync = new QCheckBox("Auto Sync");
-    ck_auto_sync->setCheckState(to_checkstate(settings.auto_sync));
-    layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
+        auto ck_bake_deformers = new QCheckBox("Bake Deformers");
+        ck_bake_deformers->setCheckState(to_checkstate(settings.bake_deformers));
+        layout_mesh->addWidget(ck_bake_deformers, iy2++, 0);
+        connect(ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
 
-    auto bu_manual_sync = new QPushButton("Manual Sync");
-    layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
+        auto ck_double_sided = new QCheckBox("Make Double Sided");
+        ck_double_sided->setCheckState(to_checkstate(settings.make_double_sided));
+        layout_mesh->addWidget(ck_double_sided, iy2++, 0);
+        connect(ck_double_sided, SIGNAL(stateChanged(int)), this, SLOT(onToggleDoubleSided(int)));
+
+        m_widget_mesh->setLayout(layout_mesh);
+        m_widget_mesh->setShown(settings.sync_meshes);
+        layout->addWidget(m_widget_mesh, iy++, 0, 1, 3, Qt::AlignTop);
+    }
+
+    // other components
+    {
+        auto ck_textures = new QCheckBox("Sync Textures");
+        ck_textures->setCheckState(to_checkstate(settings.sync_textures));
+        layout->addWidget(ck_textures, iy++, 0, 1, 3);
+        connect(ck_textures, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncTextures(int)));
+
+        auto ck_minst = new QCheckBox("Sync Mesh Instances");
+        ck_minst->setCheckState(to_checkstate(settings.sync_mesh_instances));
+        layout->addWidget(ck_minst, iy++, 0, 1, 3);
+        connect(ck_minst, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncMeshInstances(int)));
+
+        auto ck_cameras = new QCheckBox("Sync Cameras");
+        ck_cameras->setCheckState(to_checkstate(settings.sync_cameras));
+        layout->addWidget(ck_cameras, iy++, 0, 1, 3);
+        connect(ck_cameras, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncCameras(int)));
+
+        auto ck_lights = new QCheckBox("Sync Lights");
+        ck_lights->setCheckState(to_checkstate(settings.sync_lights));
+        layout->addWidget(ck_lights, iy++, 0, 1, 3);
+        connect(ck_lights, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncLights(int)));
+    }
+
+    {
+        auto ck_auto_sync = new QCheckBox("Auto Sync");
+        ck_auto_sync->setContentsMargins(0, space, 0, 0);
+        ck_auto_sync->setCheckState(to_checkstate(settings.auto_sync));
+        layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
+        connect(ck_auto_sync, SIGNAL(stateChanged(int)), this, SLOT(onToggleAutoSync(int)));
+
+        auto bu_manual_sync = new QPushButton("Manual Sync");
+        layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
+        connect(bu_manual_sync, SIGNAL(clicked(bool)), this, SLOT(onClickManualSync(bool)));
+    }
 
     // animation
+    {
+        auto lb_scene = new QLabel("Animation");
+        lb_scene->setContentsMargins(0, space, 0, 0);
+        lb_scene->setStyleSheet("font-weight: bold");
+        layout->addWidget(lb_scene, iy++, 0, 1, 3);
 
-    layout->addWidget(new QLabel("Animation Time Scale"), iy, 0);
-    auto ed_anim_timescale = new QLineEdit(to_qstring(settings.animation_time_scale));
-    ed_anim_timescale->setValidator(new QDoubleValidator(0.01, 10000.0, 100, this));
-    layout->addWidget(ed_anim_timescale, iy++, 1, 1, 2);
+        layout->addWidget(new QLabel("Time Scale"), iy, 0);
+        auto ed_anim_timescale = new QLineEdit(to_qstring(settings.animation_time_scale));
+        ed_anim_timescale->setValidator(new QDoubleValidator(0.01, 10000.0, 100, this));
+        layout->addWidget(ed_anim_timescale, iy++, 1, 1, 2);
+        connect(ed_anim_timescale, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationTimeScale(QString)));
 
-    layout->addWidget(new QLabel("Samples Per Second"), iy, 0);
-    auto ed_anim_sps = new QLineEdit(to_qstring(settings.animation_sps));
-    ed_anim_sps->setValidator(new QDoubleValidator(0.01, 300.0, 100, this));
-    layout->addWidget(ed_anim_sps, iy++, 1, 1, 2);
+        layout->addWidget(new QLabel("Samples Per Second"), iy, 0);
+        auto ed_anim_sps = new QLineEdit(to_qstring(settings.animation_sps));
+        ed_anim_sps->setValidator(new QDoubleValidator(0.01, 300.0, 100, this));
+        layout->addWidget(ed_anim_sps, iy++, 1, 1, 2);
+        connect(ed_anim_sps, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationSPS(QString)));
 
-    auto ck_keyframe_reduction = new QCheckBox("Keyframe Reduction");
-    ck_keyframe_reduction->setCheckState(to_checkstate(settings.reduce_keyframes));
-    layout->addWidget(ck_keyframe_reduction, iy++, 0, 1, 3);
+        auto ck_keyframe_reduction = new QCheckBox("Keyframe Reduction");
+        ck_keyframe_reduction->setCheckState(to_checkstate(settings.reduce_keyframes));
+        layout->addWidget(ck_keyframe_reduction, iy++, 0, 1, 3);
+        connect(ck_keyframe_reduction, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeyframeReduction(int)));
 
-    auto bu_sync_animations = new QPushButton("Sync Animations");
-    layout->addWidget(bu_sync_animations, iy++, 0, 1, 3);
+        auto bu_sync_animations = new QPushButton("Sync Animations");
+        layout->addWidget(bu_sync_animations, iy++, 0, 1, 3);
+        connect(bu_sync_animations, SIGNAL(clicked(bool)), this, SLOT(onClickSyncAnimations(bool)));
+    }
 
-    layout->addWidget(new QLabel("Plugin Version: " msReleaseDateStr), iy++, 0, 1, 3, Qt::AlignTop);
-
+    {
+        auto lb_version = new QLabel("Plugin Version: " msReleaseDateStr);
+        lb_version->setContentsMargins(0, space, 0, 0);
+        layout->addWidget(lb_version, iy++, 0, 1, 3);
+    }
     setLayout(layout);
-
-    connect(ed_server, SIGNAL(textEdited(QString)), this, SLOT(onEditServer(QString)));
-    connect(ed_port, SIGNAL(textEdited(QString)), this, SLOT(onEditPort(QString)));
-    connect(ed_scale_factor, SIGNAL(textEdited(QString)), this, SLOT(onEditScaleFactor(QString)));
-
-    connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleBones(int)));
-    connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleBlendshapes(int)));
-    connect(ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
-    connect(ck_double_sided, SIGNAL(stateChanged(int)), this, SLOT(onToggleDoubleSided(int)));
-    connect(ck_textures, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncTextures(int)));
-    connect(ck_minst, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncMeshInstances(int)));
-    connect(ck_cameras, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncCameras(int)));
-    connect(ck_lights, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncLights(int)));
-    connect(ck_auto_sync, SIGNAL(stateChanged(int)), this, SLOT(onToggleAutoSync(int)));
-    connect(bu_manual_sync, SIGNAL(clicked(bool)), this, SLOT(onClickManualSync(bool)));
-
-    connect(ed_anim_timescale, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationTimeScale(QString)));
-    connect(ed_anim_sps, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationSPS(QString)));
-    connect(ck_keyframe_reduction, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeyframeReduction(int)));
-    connect(bu_sync_animations, SIGNAL(clicked(bool)), this, SLOT(onClickSyncAnimations(bool)));
 }
+
+#define msmodoSendScene() msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true)
 
 void msmodoSettingsWidget::onEditServer(const QString& v)
 {
@@ -211,8 +263,17 @@ void msmodoSettingsWidget::onEditScaleFactor(const QString& v)
     if (ok && val != 0.0f && settings.scale_factor != val) {
         settings.scale_factor = val;
         if (settings.auto_sync)
-            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+            msmodoSendScene();
     }
+}
+
+void msmodoSettingsWidget::onToggleSyncMeshes(int v)
+{
+    auto& settings = msmodoGetSettings();
+    settings.sync_meshes = v;
+    m_widget_mesh->setShown(settings.sync_meshes);
+    if (settings.auto_sync)
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleBones(int v)
@@ -220,7 +281,7 @@ void msmodoSettingsWidget::onToggleBones(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_bones = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleBlendshapes(int v)
@@ -228,7 +289,7 @@ void msmodoSettingsWidget::onToggleBlendshapes(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_blendshapes = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleBakeDeformers(int v)
@@ -236,7 +297,7 @@ void msmodoSettingsWidget::onToggleBakeDeformers(int v)
     auto& settings = msmodoGetSettings();
     settings.bake_deformers = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleDoubleSided(int v)
@@ -244,7 +305,7 @@ void msmodoSettingsWidget::onToggleDoubleSided(int v)
     auto& settings = msmodoGetSettings();
     settings.make_double_sided = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleSyncTextures(int v)
@@ -258,7 +319,7 @@ void msmodoSettingsWidget::onToggleSyncMeshInstances(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_mesh_instances = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleSyncCameras(int v)
@@ -266,7 +327,7 @@ void msmodoSettingsWidget::onToggleSyncCameras(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_cameras = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleSyncLights(int v)
@@ -274,7 +335,7 @@ void msmodoSettingsWidget::onToggleSyncLights(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_lights = v;
     if (settings.auto_sync)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onToggleAutoSync(int v)
@@ -282,12 +343,12 @@ void msmodoSettingsWidget::onToggleAutoSync(int v)
     auto& settings = msmodoGetSettings();
     settings.auto_sync = v;
     if (v)
-        msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+        msmodoSendScene();
 }
 
 void msmodoSettingsWidget::onClickManualSync(bool v)
 {
-    msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+    msmodoSendScene();
 }
 
 

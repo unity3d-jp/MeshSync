@@ -21,7 +21,7 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      17,   14, // methods
+      18,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -33,19 +33,20 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
       46,   22,   21,   21, 0x0a,
       66,   22,   21,   21, 0x0a,
       93,   22,   21,   21, 0x0a,
-     112,   22,   21,   21, 0x0a,
-     137,   22,   21,   21, 0x0a,
-     164,   22,   21,   21, 0x0a,
-     189,   22,   21,   21, 0x0a,
-     215,   22,   21,   21, 0x0a,
-     246,   22,   21,   21, 0x0a,
-     271,   22,   21,   21, 0x0a,
+     117,   22,   21,   21, 0x0a,
+     136,   22,   21,   21, 0x0a,
+     161,   22,   21,   21, 0x0a,
+     188,   22,   21,   21, 0x0a,
+     213,   22,   21,   21, 0x0a,
+     239,   22,   21,   21, 0x0a,
+     270,   22,   21,   21, 0x0a,
      295,   22,   21,   21, 0x0a,
-     317,   22,   21,   21, 0x0a,
+     319,   22,   21,   21, 0x0a,
      341,   22,   21,   21, 0x0a,
-     375,   22,   21,   21, 0x0a,
-     403,   22,   21,   21, 0x0a,
-     434,   22,   21,   21, 0x0a,
+     365,   22,   21,   21, 0x0a,
+     399,   22,   21,   21, 0x0a,
+     427,   22,   21,   21, 0x0a,
+     458,   22,   21,   21, 0x0a,
 
        0        // eod
 };
@@ -53,7 +54,8 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
 static const char qt_meta_stringdata_msmodoSettingsWidget[] = {
     "msmodoSettingsWidget\0\0v\0onEditServer(QString)\0"
     "onEditPort(QString)\0onEditScaleFactor(QString)\0"
-    "onToggleBones(int)\0onToggleBlendshapes(int)\0"
+    "onToggleSyncMeshes(int)\0onToggleBones(int)\0"
+    "onToggleBlendshapes(int)\0"
     "onToggleBakeDeformers(int)\0"
     "onToggleDoubleSided(int)\0"
     "onToggleSyncTextures(int)\0"
@@ -76,20 +78,21 @@ void msmodoSettingsWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c,
         case 0: _t->onEditServer((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 1: _t->onEditPort((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 2: _t->onEditScaleFactor((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 3: _t->onToggleBones((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 4: _t->onToggleBlendshapes((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 5: _t->onToggleBakeDeformers((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 6: _t->onToggleDoubleSided((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 7: _t->onToggleSyncTextures((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 8: _t->onToggleSyncMeshInstances((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 9: _t->onToggleSyncCameras((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 10: _t->onToggleSyncLights((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 11: _t->onToggleAutoSync((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 12: _t->onClickManualSync((*reinterpret_cast< bool(*)>(_a[1]))); break;
-        case 13: _t->onEditAnimationTimeScale((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 14: _t->onEditAnimationSPS((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 15: _t->onToggleKeyframeReduction((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 16: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 3: _t->onToggleSyncMeshes((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 4: _t->onToggleBones((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 5: _t->onToggleBlendshapes((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 6: _t->onToggleBakeDeformers((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 7: _t->onToggleDoubleSided((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 8: _t->onToggleSyncTextures((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 9: _t->onToggleSyncMeshInstances((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 10: _t->onToggleSyncCameras((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 11: _t->onToggleSyncLights((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 12: _t->onToggleAutoSync((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 13: _t->onClickManualSync((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 14: _t->onEditAnimationTimeScale((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 15: _t->onEditAnimationSPS((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 16: _t->onToggleKeyframeReduction((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 17: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -127,9 +130,9 @@ int msmodoSettingsWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 17)
+        if (_id < 18)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 17;
+        _id -= 18;
     }
     return _id;
 }
