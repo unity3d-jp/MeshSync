@@ -7,7 +7,7 @@
 #define Hash(V) ret += vhash(V);
 #define CSum(V) ret += csum(V);
 #define Empty(V) && V.empty()
-#define Reduce(V) DoReduction(V);
+#define Reduce(V) DoReduction(V, keep_empty_curves);
 #define Reserve(V) V.reserve(n);
 
 namespace ms {
@@ -30,7 +30,7 @@ struct Equals<bool>
 };
 
 template<class T>
-static void DoReduction(RawVector<TVP<T>>& data)
+static void DoReduction(RawVector<TVP<T>>& data, bool keep_empty_curve)
 {
     while (data.size() >= 2) {
         if (Equals<T>()(data[data.size()-2].value, data.back().value))
@@ -38,7 +38,7 @@ static void DoReduction(RawVector<TVP<T>>& data)
         else
             break;
     }
-    if (data.size() == 1) {
+    if (!keep_empty_curve && data.size() == 1) {
         data.clear();
     }
 }
@@ -137,7 +137,7 @@ bool TransformAnimation::empty() const
     ret = ret EachMember(Empty);
     return ret;
 }
-void TransformAnimation::reduction()
+void TransformAnimation::reduction(bool keep_empty_curves)
 {
     EachMember(Reduce);
 }
@@ -215,9 +215,9 @@ bool CameraAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
 }
-void CameraAnimation::reduction()
+void CameraAnimation::reduction(bool keep_empty_curves)
 {
-    super::reduction();
+    super::reduction(keep_empty_curves);
     EachMember(Reduce);
 }
 void CameraAnimation::reserve(size_t n)
@@ -279,9 +279,9 @@ bool LightAnimation::empty() const
 {
     return super::empty() EachMember(Empty);
 }
-void LightAnimation::reduction()
+void LightAnimation::reduction(bool keep_empty_curves)
 {
-    super::reduction();
+    super::reduction(keep_empty_curves);
     EachMember(Reduce);
 }
 void LightAnimation::reserve(size_t n)
@@ -379,12 +379,12 @@ bool MeshAnimation::empty() const
     return super::empty() && blendshapes.empty();
 }
 
-void MeshAnimation::reduction()
+void MeshAnimation::reduction(bool keep_empty_curves)
 {
-    super::reduction();
+    super::reduction(keep_empty_curves);
 
     for (auto& bs : blendshapes)
-        DoReduction(bs->weight);
+        DoReduction(bs->weight, keep_empty_curves);
     blendshapes.erase(
         std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
         blendshapes.end());
@@ -457,9 +457,9 @@ bool PointsAnimation::empty() const
     return super::empty() EachMember(Empty);
 }
 
-void PointsAnimation::reduction()
+void PointsAnimation::reduction(bool keep_empty_curves)
 {
-    super::reduction();
+    super::reduction(keep_empty_curves);
     EachMember(Reduce);
 }
 
@@ -526,10 +526,10 @@ bool AnimationClip::empty() const
     return animations.empty();
 }
 
-void AnimationClip::reduction()
+void AnimationClip::reduction(bool keep_empty_curves)
 {
-    mu::parallel_for_each(animations.begin(), animations.end(), [](ms::AnimationPtr& p) {
-        p->reduction();
+    mu::parallel_for_each(animations.begin(), animations.end(), [keep_empty_curves](ms::AnimationPtr& p) {
+        p->reduction(keep_empty_curves);
     });
     animations.erase(
         std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
