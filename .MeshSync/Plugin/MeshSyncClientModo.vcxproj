@@ -19,10 +19,6 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
-    <ClCompile Include="$(MODO_SOURCE_DIR)\initialize.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
     <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_attrdesc.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>

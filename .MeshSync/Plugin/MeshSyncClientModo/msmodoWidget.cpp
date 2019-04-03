@@ -48,14 +48,11 @@ public slots:
     void onToggleSyncLights(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
+
     void onEditAnimationTimeScale(const QString& v);
     void onEditAnimationSPS(const QString& v);
+    void onToggleKeyframeReduction(int v);
     void onClickSyncAnimations(bool v);
-    void onMenuAction(bool v);
-    void closeEvent(QCloseEvent *event) override;
-
-private:
-    QAction *m_menu_item = nullptr;
 };
 
 
@@ -75,12 +72,16 @@ inline QString to_qstring(const std::string& v)
 {
     return v.c_str();
 }
+inline Qt::CheckState to_checkstate(bool v)
+{
+    return v ? Qt::Checked : Qt::Unchecked;
+}
 
 msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     : super(parent)
 {
-    setWindowTitle("Unity Mesh Sync");
-    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    //setWindowTitle("Unity Mesh Sync");
+    //setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
     auto& settings = msmodoGetSettings();
 
@@ -104,48 +105,39 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
 
     // sync component
     auto ck_bones= new QCheckBox("Sync Joints");
-    if (settings.sync_bones)
-        ck_bones->setCheckState(Qt::Checked);
+    ck_bones->setCheckState(to_checkstate(settings.sync_bones));
     layout->addWidget(ck_bones, iy++, 0, 1, 3);
 
     auto ck_blendshapes = new QCheckBox("Sync Morphs");
-    if (settings.sync_blendshapes)
-        ck_blendshapes->setCheckState(Qt::Checked);
+    ck_blendshapes->setCheckState(to_checkstate(settings.sync_blendshapes));
     layout->addWidget(ck_blendshapes, iy++, 0, 1, 3);
 
     auto ck_bake_deformers = new QCheckBox("Bake Deformers");
-    if (settings.bake_deformers)
-        ck_bake_deformers->setCheckState(Qt::Checked);
+    ck_bake_deformers->setCheckState(to_checkstate(settings.bake_deformers));
     layout->addWidget(ck_bake_deformers, iy++, 0, 1, 3);
 
     auto ck_double_sided = new QCheckBox("Make Double Sided");
-    if (settings.make_double_sided)
-        ck_double_sided->setCheckState(Qt::Checked);
+    ck_double_sided->setCheckState(to_checkstate(settings.make_double_sided));
     layout->addWidget(ck_double_sided, iy++, 0, 1, 3);
 
     auto ck_textures = new QCheckBox("Sync Textures");
-    if (settings.sync_textures)
-        ck_textures->setCheckState(Qt::Checked);
+    ck_textures->setCheckState(to_checkstate(settings.sync_textures));
     layout->addWidget(ck_textures, iy++, 0, 1, 3);
 
     auto ck_minst = new QCheckBox("Sync Mesh Instances");
-    if (settings.sync_mesh_instances)
-        ck_minst->setCheckState(Qt::Checked);
+    ck_minst->setCheckState(to_checkstate(settings.sync_mesh_instances));
     layout->addWidget(ck_minst, iy++, 0, 1, 3);
 
     auto ck_cameras = new QCheckBox("Sync Cameras");
-    if (settings.sync_cameras)
-        ck_cameras->setCheckState(Qt::Checked);
+    ck_cameras->setCheckState(to_checkstate(settings.sync_cameras));
     layout->addWidget(ck_cameras, iy++, 0, 1, 3);
 
     auto ck_lights = new QCheckBox("Sync Lights");
-    if (settings.sync_lights)
-        ck_lights->setCheckState(Qt::Checked);
+    ck_lights->setCheckState(to_checkstate(settings.sync_lights));
     layout->addWidget(ck_lights, iy++, 0, 1, 3);
 
     auto ck_auto_sync = new QCheckBox("Auto Sync");
-    if (settings.auto_sync)
-        ck_auto_sync->setCheckState(Qt::Checked);
+    ck_auto_sync->setCheckState(to_checkstate(settings.auto_sync));
     layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
 
     auto bu_manual_sync = new QPushButton("Manual Sync");
@@ -163,10 +155,14 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     ed_anim_sps->setValidator(new QDoubleValidator(0.01, 300.0, 100, this));
     layout->addWidget(ed_anim_sps, iy++, 1, 1, 2);
 
+    auto ck_keyframe_reduction = new QCheckBox("Keyframe Reduction");
+    ck_keyframe_reduction->setCheckState(to_checkstate(settings.reduce_keyframes));
+    layout->addWidget(ck_keyframe_reduction, iy++, 0, 1, 3);
+
     auto bu_sync_animations = new QPushButton("Sync Animations");
     layout->addWidget(bu_sync_animations, iy++, 0, 1, 3);
 
-    layout->addWidget(new QLabel("Plugin Version: " msReleaseDateStr), iy++, 0, 1, 3);
+    layout->addWidget(new QLabel("Plugin Version: " msReleaseDateStr), iy++, 0, 1, 3, Qt::AlignTop);
 
     setLayout(layout);
 
@@ -187,24 +183,8 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
 
     connect(ed_anim_timescale, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationTimeScale(QString)));
     connect(ed_anim_sps, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationSPS(QString)));
+    connect(ck_keyframe_reduction, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeyframeReduction(int)));
     connect(bu_sync_animations, SIGNAL(clicked(bool)), this, SLOT(onClickSyncAnimations(bool)));
-
-
-    //// try to add menu item (Window -> Unity Mesh Sync)
-
-    //auto actions = FindMainWindow()->menuBar()->actions();
-    //if (actions.size() > 8) {
-    //    auto *act_widgets = actions[8]; // "Window" menu
-
-    //    m_menu_item = new QAction("Unity Mesh Sync", nullptr);
-    //    m_menu_item->setCheckable(true);
-    //    m_menu_item->setChecked(true);
-    //    connect(m_menu_item, &QAction::triggered, this, &msmodoSettingsWidget::onMenuAction);
-
-    //    auto widget_menu = act_widgets->menu();
-    //    widget_menu->addSeparator();
-    //    widget_menu->addAction(m_menu_item);
-    //}
 }
 
 void msmodoSettingsWidget::onEditServer(const QString& v)
@@ -328,9 +308,13 @@ void msmodoSettingsWidget::onEditAnimationSPS(const QString& v)
     float val = v.toFloat(&ok);
     if (ok && val != 0.0f && settings.animation_sps != val) {
         settings.animation_sps = val;
-        if (settings.auto_sync)
-            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
     }
+}
+
+void msmodoSettingsWidget::onToggleKeyframeReduction(int v)
+{
+    auto& settings = msmodoGetSettings();
+    settings.reduce_keyframes = v;
 }
 
 void msmodoSettingsWidget::onClickSyncAnimations(bool v)
@@ -339,37 +323,21 @@ void msmodoSettingsWidget::onClickSyncAnimations(bool v)
 }
 
 
-
-void msmodoSettingsWidget::onMenuAction(bool v)
-{
-    if (v)
-        show();
-    else
-        hide();
-}
-
-void msmodoSettingsWidget::closeEvent(QCloseEvent * e)
-{
-    if (m_menu_item) {
-        m_menu_item->setChecked(false);
-    }
-}
-
-static msmodoSettingsWidget *g_widget = nullptr;
-
-void msmodoInitializeWidget()
-{
-    if (!g_widget) {
-        g_widget = new msmodoSettingsWidget();
-        g_widget->show();
-    }
-}
-
 #include "msmodoWidget_moc.h"
+
+
+void msmodoInitializeWidget(void *parent)
+{
+    auto parent_widget = static_cast<QWidget*>(parent);
+
+    auto layout = new QVBoxLayout(parent_widget);
+    layout->addWidget(new msmodoSettingsWidget());
+    parent_widget->setLayout(layout);
+}
 
 #else
 
-void msmodoInitializeWidget()
+void msmodoInitializeWidget(void *parent)
 {
 }
 

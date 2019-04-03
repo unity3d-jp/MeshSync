@@ -21,7 +21,7 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      18,   14, // methods
+      17,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -45,8 +45,7 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
      341,   22,   21,   21, 0x0a,
      375,   22,   21,   21, 0x0a,
      403,   22,   21,   21, 0x0a,
-     431,   22,   21,   21, 0x0a,
-     456,  450,   21,   21, 0x0a,
+     434,   22,   21,   21, 0x0a,
 
        0        // eod
 };
@@ -64,9 +63,8 @@ static const char qt_meta_stringdata_msmodoSettingsWidget[] = {
     "onClickManualSync(bool)\0"
     "onEditAnimationTimeScale(QString)\0"
     "onEditAnimationSPS(QString)\0"
+    "onToggleKeyframeReduction(int)\0"
     "onClickSyncAnimations(bool)\0"
-    "onMenuAction(bool)\0event\0"
-    "closeEvent(QCloseEvent*)\0"
 };
 
 void msmodoSettingsWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -90,9 +88,8 @@ void msmodoSettingsWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c,
         case 12: _t->onClickManualSync((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 13: _t->onEditAnimationTimeScale((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 14: _t->onEditAnimationSPS((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 15: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
-        case 16: _t->onMenuAction((*reinterpret_cast< bool(*)>(_a[1]))); break;
-        case 17: _t->closeEvent((*reinterpret_cast< QCloseEvent*(*)>(_a[1]))); break;
+        case 15: _t->onToggleKeyframeReduction((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 16: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -130,9 +127,9 @@ int msmodoSettingsWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 18)
+        if (_id < 17)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 18;
+        _id -= 17;
     }
     return _id;
 }

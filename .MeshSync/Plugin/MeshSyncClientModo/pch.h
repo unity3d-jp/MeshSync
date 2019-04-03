@@ -37,6 +37,7 @@
 #include <lxu_package.hpp>
 #include <lxu_prefvalue.hpp>
 #include <lxw_anim.hpp>
+#include <lxw_customview.hpp>
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

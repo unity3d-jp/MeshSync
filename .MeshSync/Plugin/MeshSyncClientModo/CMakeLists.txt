@@ -4,6 +4,7 @@ mark_as_advanced(FORCE MODO_SDK_DIR)
 set(MESHSYNC_CLIENT_MODO "MeshSyncClientModo")
 
 file(GLOB sources *.cpp *.h "${MODO_SDK_DIR}/common/*.cpp")
+list(FILTER sources EXCLUDE REGEX "initialize.(h|cpp)") 
 add_library(${MESHSYNC_CLIENT_MODO} SHARED ${sources})
 add_dependencies(${MESHSYNC_CLIENT_MODO} MeshUtils MeshSync)
 target_include_directories(${MESHSYNC_CLIENT_MODO} PUBLIC "${CMAKE_SOURCE_DIR}" "${MODO_SDK_DIR}/include")

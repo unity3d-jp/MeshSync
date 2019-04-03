@@ -3,7 +3,6 @@
 #include "msmodoCommand.h"
 #include "msmodoContext.h"
 
-void msmodoInitializeWidget();
 
 class msmodoCmdSettings : public CLxCommand
 {
@@ -81,7 +80,6 @@ public:
     Handler("syncTextures", LXsTYPE_BOOLEAN, settings.sync_textures, true)\
     Handler("syncCameras", LXsTYPE_BOOLEAN, settings.sync_cameras, true)\
     Handler("syncLights", LXsTYPE_BOOLEAN, settings.sync_lights, true)\
-    Handler("syncConstraints", LXsTYPE_BOOLEAN, settings.sync_constraints, true)\
     Handler("animationTS", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
     Handler("animationSPS", LXsTYPE_FLOAT, settings.animation_sps, false)\
     Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)
@@ -112,8 +110,6 @@ public:
 
         EachParams(Handler)
 #undef Handler
-
-        msmodoInitializeWidget();
     }
 
 #undef EachParams
@@ -181,69 +177,31 @@ class msmodoMetaRoot : public CLxMetaRoot
 static msmodoMetaRoot g_mroot;
 
 
+void msmodoInitializeWidget(void *parent);
 
-/*
-class msmodoInstance :
-    public CLxImpl_PackageInstance,
-    public CLxImpl_SceneItemListener,
-    public CLxImpl_ChannelUI
+class msmodoView : public CLxImpl_CustomView
 {
 public:
-    static void initialize()
+    LxResult customview_Init(ILxUnknownID pane)
     {
-        auto srv = new CLxPolymorph<msmodoInstance>();
-        srv->AddInterface(new CLxIfc_PackageInstance<msmodoInstance>());
-        srv->AddInterface(new CLxIfc_SceneItemListener<msmodoInstance>());
-        srv->AddInterface(new CLxIfc_ChannelUI<msmodoInstance>());
-        lx::AddSpawner(msmodoInstanceName, srv);
-    }
+        CLxLoc_CustomPane p(pane);
+        if (!p.test())
+            return LXe_FAILED;
 
-    msmodoInstance()
-    {
-        msLogInfo("msmodListener\n");
-    }
+        void *parent = nullptr; // QWidget
+        p.GetParent(&parent);
+        if (!parent)
+            return LXe_FAILED;
 
-    void sil_ChannelValue(const char *action, ILxUnknownID item, unsigned index) override
-    {
-        CLxUser_Item hit(item);
-
-        CLxUser_LogService lS;
-        lS.DebugOut(LXi_DBLOG_NORMAL, msmodoInstanceName " executed\n");
-        // todo
-    }
-};
-
-
-class msmodoPackage :
-    public CLxImpl_Package,
-    public CLxImpl_ChannelUI
-{
-public:
-    static void initialize()
-    {
-        auto srv = new CLxPolymorph<msmodoPackage>();
-        srv->AddInterface(new CLxIfc_Package<msmodoPackage>());
-        //srv->AddInterface(new CLxIfc_StaticDesc<msmodoPackage>());
-        srv->AddInterface(new CLxIfc_ChannelUI<msmodoPackage>());
-        lx::AddSpawner(msmodoPackageName, srv);
-    }
-
-    CLxSpawner<msmodoInstance> m_inst_spawn;
-
-    msmodoPackage()
-        : m_inst_spawn(msmodoInstanceName)
-    {
-    }
-
-    ~msmodoPackage()
-    {
+        msmodoInitializeWidget(parent);
+        return LXe_OK;
     }
 };
 
 
 void initialize(void)
 {
-    msmodoPackage::initialize();
-    msmodoInstance::initialize();
+    auto cmd = new CLxPolymorph<msmodoView>();
+    cmd->AddInterface(new CLxIfc_CustomView<msmodoView>());
+    lx::AddServer(msmodoViewName, cmd);
 }
-*/
