@@ -960,6 +960,7 @@ namespace UTJ.MeshSync
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumRotationSamples(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msTransformAFillRotation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillRotationEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationType it);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumScaleSamples(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msTransformAFillScale(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationType it);
@@ -1003,18 +1004,34 @@ namespace UTJ.MeshSync
             if (n == 0)
                 return null;
 
-            var x = new Keyframe[n];
-            var y = new Keyframe[n];
-            var z = new Keyframe[n];
-            var w = new Keyframe[n];
-            msTransformAFillRotation(self, x, y, z, w, it);
+            if (it == InterpolationType.Constant || it == InterpolationType.Linear)
+            {
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                msTransformAFillRotationEuler(self, x, y, z, it);
 
-            return new AnimationCurve[] {
+                return new AnimationCurve[] {
+                    new AnimationCurve(x),
+                    new AnimationCurve(y),
+                    new AnimationCurve(z),
+                };
+            }
+            else
+            {
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                var w = new Keyframe[n];
+                msTransformAFillRotation(self, x, y, z, w, it);
+
+                return new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
                     new AnimationCurve(z),
                     new AnimationCurve(w),
                 };
+            }
         }
 
         public AnimationCurve[] GenScaleCurves(InterpolationType it)
@@ -1068,10 +1085,19 @@ namespace UTJ.MeshSync
                 var curves = GenRotationCurves(it);
                 if (curves != null)
                 {
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.w", curves[3]);
+                    if (curves.Length == 3)
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint.z", curves[2]);
+                    }
+                    else
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.w", curves[3]);
+                    }
                 }
             }
             {

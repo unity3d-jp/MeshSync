@@ -387,6 +387,8 @@ static void msSetTangentMode(Keyframe *key, int n, InterpolationType it)
 
         k.tangent_mode &= ~kRightTangentMask;
         k.tangent_mode |= (int)tangent_mode << 5;
+
+        k.in_weight = k.out_weight = kDefaultWeight;
     }
 
     IArray<Keyframe> curve{ key, (size_t)n };
@@ -469,6 +471,24 @@ static inline void FillCurves(const RawVector<ms::TVP<quatf>>& src, Keyframe *x,
     msSetTangentMode(z, n, it);
     msSetTangentMode(w, n, it);
 }
+static inline void FillCurvesEuler(const RawVector<ms::TVP<quatf>>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationType it)
+{
+    int n = (int)src.size();
+    for (int i = 0; i < n; ++i) {
+        const auto v = src[i];
+        auto r = mu::to_eulerZXY(v.value) * mu::Rad2Deg;
+
+        x[i].time = v.time;
+        x[i].value = r.x;
+        y[i].time = v.time;
+        y[i].value = r.y;
+        z[i].time = v.time;
+        z[i].value = r.z;
+    }
+    msSetTangentMode(x, n, it);
+    msSetTangentMode(y, n, it);
+    msSetTangentMode(z, n, it);
+}
 
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
 msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *self, int i) { return self->animations[i].get(); }
@@ -490,6 +510,10 @@ msAPI quatf     msTransformAGetRotationValue(ms::TransformAnimation *self, int i
 msAPI void      msTransformAFillRotation(ms::TransformAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationType it)
 {
     FillCurves(self->rotation, x, y, z, w, it);
+}
+msAPI void      msTransformAFillRotationEuler(ms::TransformAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationType it)
+{
+    FillCurvesEuler(self->rotation, x, y, z, it);
 }
 
 msAPI int       msTransformAGetNumScaleSamples(ms::TransformAnimation *self) { return self ? (int)self->scale.size() : 0; }
