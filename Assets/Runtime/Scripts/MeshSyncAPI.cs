@@ -956,20 +956,16 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumTranslationSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetTranslationTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetTranslationValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillTranslation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumRotationSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetRotationTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Quaternion msTransformAGetRotationValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillRotation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumScaleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetScaleTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetScaleValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillScale(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibleTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibleValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillVisible(IntPtr self, Keyframe[] v);
         #endregion
 
         public static explicit operator TransformAnimationData(IntPtr v)
@@ -988,24 +984,17 @@ namespace UTJ.MeshSync
             int n = msTransformAGetNumTranslationSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
             var y = new Keyframe[n];
             var z = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetTranslationTime(self, i);
-                var v = msTransformAGetTranslationValue(self, i);
-                x[i].time = y[i].time = z[i].time = t;
-                x[i].value = v.x;
-                y[i].value = v.y;
-                z[i].value = v.z;
-            }
-            var ret = new AnimationCurve[] {
+            msTransformAFillTranslation(self, x, y, z);
+
+            return new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
                     new AnimationCurve(z),
                 };
-            return ret;
         }
 
         public AnimationCurve[] GenRotationCurves()
@@ -1013,27 +1002,19 @@ namespace UTJ.MeshSync
             int n = msTransformAGetNumRotationSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
             var y = new Keyframe[n];
             var z = new Keyframe[n];
             var w = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetRotationTime(self, i);
-                var v = msTransformAGetRotationValue(self, i);
-                x[i].time = y[i].time = z[i].time = w[i].time = t;
-                x[i].value = v.x;
-                y[i].value = v.y;
-                z[i].value = v.z;
-                w[i].value = v.w;
-            }
-            var ret = new AnimationCurve[] {
+            msTransformAFillRotation(self, x, y, z, w);
+
+            return new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
                     new AnimationCurve(z),
                     new AnimationCurve(w),
                 };
-            return ret;
         }
 
         public AnimationCurve[] GenScaleCurves()
@@ -1041,24 +1022,17 @@ namespace UTJ.MeshSync
             int n = msTransformAGetNumScaleSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
             var y = new Keyframe[n];
             var z = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetScaleTime(self, i);
-                var v = msTransformAGetScaleValue(self, i);
-                x[i].time = y[i].time = z[i].time = t;
-                x[i].value = v.x;
-                y[i].value = v.y;
-                z[i].value = v.z;
-            }
-            var ret = new AnimationCurve[] {
+            msTransformAFillScale(self, x, y, z);
+
+            return new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
                     new AnimationCurve(z),
                 };
-            return ret;
         }
 
         public AnimationCurve GenVisibilityCurve()
@@ -1066,16 +1040,11 @@ namespace UTJ.MeshSync
             int n = msTransformAGetNumVisibleSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetVisibleTime(self, i);
-                var v = msTransformAGetVisibleValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msTransformAFillVisible(self, x);
+
+            return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
@@ -1138,32 +1107,25 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFovSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFovTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFovValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFov(IntPtr self, Keyframe[] v);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumNearSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetNearTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetNearValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillNear(IntPtr self, Keyframe[] v);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFarSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFarTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFarValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFar(IntPtr self, Keyframe[] v);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumHApertureSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetHApertureTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetHApertureValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillHAperture(IntPtr self, Keyframe[] v);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumVApertureSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetVApertureTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetVApertureValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillVAperture(IntPtr self, Keyframe[] v);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocalLengthSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocalLengthTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocalLengthValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFocalLength(IntPtr self, Keyframe[] v);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocusDistanceSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFocusDistance(IntPtr self, Keyframe[] v);
         #endregion
 
         public static explicit operator CameraAnimationData(IntPtr v)
@@ -1182,16 +1144,11 @@ namespace UTJ.MeshSync
             int n = msCameraAGetNumFovSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msCameraAGetFovTime(self, i);
-                var v = msCameraAGetFovValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msCameraAFillFov(self, x);
+
+            return new AnimationCurve(x);
         }
 
         public AnimationCurve GenNearPlaneCurve()
@@ -1199,16 +1156,11 @@ namespace UTJ.MeshSync
             int n = msCameraAGetNumNearSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msCameraAGetNearTime(self, i);
-                var v = msCameraAGetNearValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msCameraAFillNear(self, x);
+
+            return new AnimationCurve(x);
         }
 
         public AnimationCurve GenFarPlaneCurve()
@@ -1216,16 +1168,11 @@ namespace UTJ.MeshSync
             int n = msCameraAGetNumFarSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msCameraAGetFarTime(self, i);
-                var v = msCameraAGetFarValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msCameraAFillFar(self, x);
+
+            return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
@@ -1271,20 +1218,16 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumColorSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetColorTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Color msLightAGetColorValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillColor(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w);
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumIntensitySamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetIntensityTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetIntensityValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillIntensity(IntPtr self, Keyframe[] x);
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumRangeSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetRangeTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetRangeValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillRange(IntPtr self, Keyframe[] x);
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumSpotAngleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillSpotAngle(IntPtr self, Keyframe[] x);
         #endregion
 
 
@@ -1304,27 +1247,19 @@ namespace UTJ.MeshSync
             int n = msLightAGetNumColorSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
             var y = new Keyframe[n];
             var z = new Keyframe[n];
             var w = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetColorTime(self, i);
-                var v = msLightAGetColorValue(self, i);
-                x[i].time = y[i].time = z[i].time = w[i].time = t;
-                x[i].value = v.r;
-                y[i].value = v.g;
-                z[i].value = v.b;
-                w[i].value = v.a;
-            }
-            var ret = new AnimationCurve[] {
+            msLightAFillColor(self, x, y, z, w);
+
+            return new AnimationCurve[] {
                     new AnimationCurve(x),
                     new AnimationCurve(y),
                     new AnimationCurve(z),
                     new AnimationCurve(w),
                 };
-            return ret;
         }
 
         public AnimationCurve GenIntensityCurve()
@@ -1332,16 +1267,11 @@ namespace UTJ.MeshSync
             int n = msLightAGetNumIntensitySamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetIntensityTime(self, i);
-                var v = msLightAGetIntensityValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msLightAFillIntensity(self, x);
+
+            return new AnimationCurve(x);
         }
 
         public AnimationCurve GenRangeCurve()
@@ -1349,16 +1279,11 @@ namespace UTJ.MeshSync
             int n = msLightAGetNumRangeSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetRangeTime(self, i);
-                var v = msLightAGetRangeValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msLightAFillRange(self, x);
+
+            return new AnimationCurve(x);
         }
 
         public AnimationCurve GenSpotAngleCurve()
@@ -1366,16 +1291,11 @@ namespace UTJ.MeshSync
             int n = msLightAGetNumSpotAngleSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetSpotAngleTime(self, i);
-                var v = msLightAGetSpotAngleValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msLightAFillSpotAngle(self, x);
+
+            return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
@@ -1436,8 +1356,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapes(IntPtr self);
         [DllImport("MeshSyncServer")] static extern IntPtr msMeshAGetBlendshapeName(IntPtr self, int bi);
         [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapeSamples(IntPtr self, int bi);
-        [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeTime(IntPtr self, int bi, int si);
-        [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeWeight(IntPtr self, int bi, int si);
+        [DllImport("MeshSyncServer")] static extern int msMeshAFillBlendshapeWeight(IntPtr self, int bi, Keyframe[] x);
         #endregion
 
 
@@ -1471,11 +1390,7 @@ namespace UTJ.MeshSync
                     if (numKeyframes > 0)
                     {
                         var kf = new Keyframe[numKeyframes];
-                        for (int ki = 0; ki < numKeyframes; ++ki)
-                        {
-                            kf[ki].time = msMeshAGetNumBlendshapeTime(self, bi, ki);
-                            kf[ki].value = msMeshAGetNumBlendshapeWeight(self, bi, ki);
-                        }
+                        msMeshAFillBlendshapeWeight(self, bi, kf);
 
                         var curve = new AnimationCurve(kf);
                         im(curve);
@@ -1493,8 +1408,7 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msPointsAGetNumTimeSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern float msPointsAFillTime(IntPtr self, Keyframe[] x);
         #endregion
 
 
@@ -1514,16 +1428,11 @@ namespace UTJ.MeshSync
             int n = msPointsAGetNumTimeSamples(self);
             if (n == 0)
                 return null;
+
             var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msPointsAGetTimeTime(self, i);
-                var v = msPointsAGetTimeValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            msPointsAFillTime(self, x);
+
+            return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
