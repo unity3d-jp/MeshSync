@@ -38,7 +38,7 @@ const float kTimeEpsilon = 0.00001f;
 const float kDefaultWeight = 1.0f / 3.0f;
 const float kCurveTimeEpsilon = 0.00001f;
 
-float LinearTangent(IArray<Keyframe>& curve, int i1, int i2)
+static inline float LinearTangent(IArray<Keyframe>& curve, int i1, int i2)
 {
     const auto& k1 = curve[i1];
     const auto& k2 = curve[i2];
@@ -50,17 +50,17 @@ float LinearTangent(IArray<Keyframe>& curve, int i1, int i2)
     return (k2.value - k1.value) / dt;
 }
 
-inline TangentMode GetLeftTangentMode(const Keyframe& key)
+static inline TangentMode GetLeftTangentMode(const Keyframe& key)
 {
     return static_cast<TangentMode>((key.tangent_mode & kLeftTangentMask) >> 1);
 }
 
-inline TangentMode GetRightTangentMode(const Keyframe& key)
+static inline TangentMode GetRightTangentMode(const Keyframe& key)
 {
     return static_cast<TangentMode>((key.tangent_mode & kRightTangentMask) >> 5);
 }
 
-inline float SafeDiv(float y, float x)
+static inline float SafeDiv(float y, float x)
 {
     if (std::abs(x) > kCurveTimeEpsilon)
         return y / x;
@@ -68,7 +68,7 @@ inline float SafeDiv(float y, float x)
         return 0;
 }
 
-inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias)
+static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias)
 {
     if (curve.size() < 2)
         return;
@@ -143,7 +143,7 @@ inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias)
     }
 }
 
-inline void UpdateTangents(IArray<Keyframe>& curve, int index)
+static inline void UpdateTangents(IArray<Keyframe>& curve, int index)
 {
     auto& key = curve[index];
 
@@ -268,9 +268,37 @@ static inline void FillCurves(const RawVector<ms::TVP<quatf>>& src, Keyframe *x,
 static inline void FillCurvesEuler(const RawVector<ms::TVP<quatf>>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
     int n = (int)src.size();
+    float3 prev;
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
         auto r = mu::to_eulerZXY(v.value) * mu::Rad2Deg;
+        if (i > 0) {
+            // make continuous
+            auto d = r - mu::mod(prev, 360.0f);
+            auto x = mu::abs(d);
+            auto x1 = mu::abs(d - 360.0f);
+            auto x2 = mu::abs(d + 360.0f);
+
+            if (x1.x < x.x)
+                r.x -= 360.0f;
+            else if (x2.x < x.x)
+                r.x += 360.0f;
+
+            if (x1.y < x.y)
+                r.y -= 360.0f;
+            else if (x2.y < x.y)
+                r.y += 360.0f;
+
+            if (x1.z < x.z)
+                r.z -= 360.0f;
+            else if (x2.z < x.z)
+                r.z += 360.0f;
+
+            auto c = prev / 360.0f;
+            c -= mu::frac(c);
+            r += c * 360.0f;
+        }
+        prev = r;
 
         x[i].time = v.time;
         x[i].value = r.x;

@@ -32,6 +32,7 @@ struct tvec2
 
     static constexpr tvec2 zero() { return{ (T)0, (T)0 }; }
     static constexpr tvec2 one() { return{ (T)1, (T)1 }; }
+    static constexpr tvec2 set(T v) { return{ v, v }; }
 };
 
 template<class T>
@@ -51,6 +52,7 @@ struct tvec3
 
     static constexpr tvec3 zero() { return{ (T)0, (T)0, (T)0 }; }
     static constexpr tvec3 one() { return{ (T)1, (T)1, (T)1 }; }
+    static constexpr tvec3 set(T v) { return{ v, v, v }; }
 };
 
 template<class T>
@@ -70,6 +72,7 @@ struct tvec4
 
     static constexpr tvec4 zero() { return{ (T)0, (T)0, (T)0, (T)0 }; }
     static constexpr tvec4 one() { return{ (T)1, (T)1, (T)1, (T)1 }; }
+    static constexpr tvec4 set(T v) { return{ v, v, v, v }; }
 };
 
 template<class T>
@@ -482,6 +485,9 @@ SF(double)
     template<class T> inline tvec2<T> N(const tvec2<T>& a, const tvec2<T>& b) { return{ F(a.x, b.x), F(a.y, b.y) }; }\
     template<class T> inline tvec3<T> N(const tvec3<T>& a, const tvec3<T>& b) { return{ F(a.x, b.x), F(a.y, b.y), F(a.z, b.z) }; }\
     template<class T> inline tvec4<T> N(const tvec4<T>& a, const tvec4<T>& b) { return{ F(a.x, b.x), F(a.y, b.y), F(a.z, b.z), F(a.w, b.w) }; }\
+    template<class T> inline tvec2<T> N(const tvec2<T>& a, T b) { return{ F(a.x, b), F(a.y, b) }; }\
+    template<class T> inline tvec3<T> N(const tvec3<T>& a, T b) { return{ F(a.x, b), F(a.y, b), F(a.z, b) }; }\
+    template<class T> inline tvec4<T> N(const tvec4<T>& a, T b) { return{ F(a.x, b), F(a.y, b), F(a.z, b), F(a.w, b) }; }
 
 #define VF1(N) VF1N(N, N)
 #define VF2(N) VF2N(N, N)
