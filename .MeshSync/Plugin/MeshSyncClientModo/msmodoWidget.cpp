@@ -45,6 +45,7 @@ public slots:
     void onToggleDoubleSided(int v);
     void onToggleSyncTextures(int v);
     void onToggleSyncMeshInstances(int v);
+    void onToggleSyncReplicators(int v);
     void onToggleSyncCameras(int v);
     void onToggleSyncLights(int v);
     void onToggleAutoSync(int v);
@@ -178,6 +179,11 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         ck_minst->setCheckState(to_checkstate(settings.sync_mesh_instances));
         layout->addWidget(ck_minst, iy++, 0, 1, 3);
         connect(ck_minst, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncMeshInstances(int)));
+
+        auto ck_replicators = new QCheckBox("Sync Replicators");
+        ck_replicators->setCheckState(to_checkstate(settings.sync_replicators));
+        layout->addWidget(ck_replicators, iy++, 0, 1, 3);
+        connect(ck_replicators, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncReplicators(int)));
 
         auto ck_cameras = new QCheckBox("Sync Cameras");
         ck_cameras->setCheckState(to_checkstate(settings.sync_cameras));
@@ -337,6 +343,14 @@ void msmodoSettingsWidget::onToggleSyncMeshInstances(int v)
 {
     auto& settings = msmodoGetSettings();
     settings.sync_mesh_instances = v;
+    if (settings.auto_sync)
+        msmodoSendScene();
+}
+
+void msmodoSettingsWidget::onToggleSyncReplicators(int v)
+{
+    auto& settings = msmodoGetSettings();
+    settings.sync_replicators = v;
     if (settings.auto_sync)
         msmodoSendScene();
 }
