@@ -178,7 +178,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
-        [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
+        [SerializeField] InterpolationMode m_animtionInterpolation = InterpolationMode.Smooth;
         [SerializeField] bool m_reuseExistingAnimationClip = false;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
@@ -1758,18 +1758,7 @@ namespace UTJ.MeshSync
         void UpdateAnimation(AnimationClipData clipData)
         {
 #if UNITY_EDITOR
-            InterpolationMethod interpolation = AnimationData.SmoothInterpolation;
-            switch (m_animtionInterpolation)
-            {
-                case InterpolationType.Linear:
-                    interpolation = AnimationData.LinearInterpolation;
-                    break;
-                case InterpolationType.Constant:
-                    interpolation = AnimationData.ConstantInterpolation;
-                    break;
-                default:
-                    break;
-            }
+            //float start = Time.realtimeSinceStartup;
 
             var animClipCache = new Dictionary<GameObject, AnimationClip>();
 
@@ -1829,14 +1818,16 @@ namespace UTJ.MeshSync
                     animPath = animPath.Remove(0, 1);
 
                 // get animation curves
-                data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, interpolation);
+                data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, m_animtionInterpolation);
             }
 
             // smooth rotation curves
-            if (m_animtionInterpolation == InterpolationType.Smooth)
+            if (m_animtionInterpolation == InterpolationMode.Smooth)
                 foreach (var kvp in animClipCache)
                     kvp.Value.EnsureQuaternionContinuity();
 
+            //Debug.Log("UpdateAnimation() " + (Time.realtimeSinceStartup - start) + " sec");
+            
             // fire event
             if (onUpdateAnimation != null)
                 foreach (var kvp in animClipCache)

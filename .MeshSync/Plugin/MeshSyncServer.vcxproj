@@ -15,6 +15,7 @@
     <ClCompile Include="MeshSyncServer\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeshSyncServer\UnitySpecific.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncServer\MeshSyncServer.h" />

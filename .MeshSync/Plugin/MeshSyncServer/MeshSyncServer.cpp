@@ -211,81 +211,70 @@ msAPI void msMaterialAddKeyword(ms::Material *self, const char *name, bool v) { 
 
 
 #pragma region Animations
+using tvp_b = ms::TVP<bool>;
+using tvp_f = ms::TVP<float>;
+using tvp_f3 = ms::TVP<float3>;
+using tvp_f4 = ms::TVP<float4>;
+using tvp_q = ms::TVP<quatf>;
+
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
 msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *self, int i) { return self->animations[i].get(); }
 
 msAPI const char* msAnimationGetPath(ms::Animation *self) { return self->path.c_str(); }
 msAPI ms::Animation::Type msAnimationGetType(ms::Animation *self) { return self->getType(); }
 
-msAPI int       msTransformAGetNumTranslationSamples(ms::TransformAnimation *self) { return self ? (int)self->translation.size() : 0; }
-msAPI float     msTransformAGetTranslationTime(ms::TransformAnimation *self, int i) { return self->translation[i].time; }
-msAPI float3    msTransformAGetTranslationValue(ms::TransformAnimation *self, int i) { return self->translation[i].value; }
+msAPI int   msTransformAGetNumTranslationSamples(ms::TransformAnimation *self) { return self ? (int)self->translation.size() : 0; }
+msAPI void  msTransformAGetTranslationSample(ms::TransformAnimation *self, int i, tvp_f3 *dst) { *dst = self->translation[i]; }
 
-msAPI int       msTransformAGetNumRotationSamples(ms::TransformAnimation *self) { return self ? (int)self->rotation.size() : 0; }
-msAPI float     msTransformAGetRotationTime(ms::TransformAnimation *self, int i) { return self->rotation[i].time; }
-msAPI quatf     msTransformAGetRotationValue(ms::TransformAnimation *self, int i) { return self->rotation[i].value; }
+msAPI int   msTransformAGetNumRotationSamples(ms::TransformAnimation *self) { return self ? (int)self->rotation.size() : 0; }
+msAPI void  msTransformAGetRotationSample(ms::TransformAnimation *self, int i, tvp_q *dst) { *dst = self->rotation[i]; }
 
-msAPI int       msTransformAGetNumScaleSamples(ms::TransformAnimation *self) { return self ? (int)self->scale.size() : 0; }
-msAPI float     msTransformAGetScaleTime(ms::TransformAnimation *self, int i) { return self->scale[i].time; }
-msAPI float3    msTransformAGetScaleValue(ms::TransformAnimation *self, int i) { return self->scale[i].value; }
+msAPI int   msTransformAGetNumScaleSamples(ms::TransformAnimation *self) { return self ? (int)self->scale.size() : 0; }
+msAPI void  msTransformAGetScaleSample(ms::TransformAnimation *self, int i, tvp_f3 *dst) { *dst = self->scale[i]; }
 
-msAPI int       msTransformAGetNumVisibleSamples(ms::TransformAnimation *self) { return self ? (int)self->visible.size() : 0; }
-msAPI float     msTransformAGetVisibleTime(ms::TransformAnimation *self, int i) { return self->visible[i].time; }
-msAPI bool      msTransformAGetVisibleValue(ms::TransformAnimation *self, int i) { return self->visible[i].value; }
+msAPI int   msTransformAGetNumVisibleSamples(ms::TransformAnimation *self) { return self ? (int)self->visible.size() : 0; }
+msAPI void  msTransformAGetVisibleSample(ms::TransformAnimation *self, int i, tvp_b *dst) { *dst = self->visible[i]; }
 
-msAPI int       msCameraAGetNumFovSamples(ms::CameraAnimation *self) { return self ? (int)self->fov.size() : 0; }
-msAPI float     msCameraAGetFovTime(ms::CameraAnimation *self, int i) { return self->fov[i].time; }
-msAPI float     msCameraAGetFovValue(ms::CameraAnimation *self, int i) { return self->fov[i].value; }
+msAPI int   msCameraAGetNumFovSamples(ms::CameraAnimation *self) { return self ? (int)self->fov.size() : 0; }
+msAPI void  msCameraAGetFovSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->fov[i]; }
 
-msAPI int       msCameraAGetNumNearSamples(ms::CameraAnimation *self) { return self ? (int)self->near_plane.size() : 0; }
-msAPI float     msCameraAGetNearTime(ms::CameraAnimation *self, int i) { return self->near_plane[i].time; }
-msAPI float     msCameraAGetNearValue(ms::CameraAnimation *self, int i) { return self->near_plane[i].value; }
+msAPI int   msCameraAGetNumNearSamples(ms::CameraAnimation *self) { return self ? (int)self->near_plane.size() : 0; }
+msAPI void  msCameraAGetNearSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->near_plane[i]; }
 
-msAPI int       msCameraAGetNumFarSamples(ms::CameraAnimation *self) { return self ? (int)self->far_plane.size() : 0; }
-msAPI float     msCameraAGetFarTime(ms::CameraAnimation *self, int i) { return self->far_plane[i].time; }
-msAPI float     msCameraAGetFarValue(ms::CameraAnimation *self, int i) { return self->far_plane[i].value; }
+msAPI int   msCameraAGetNumFarSamples(ms::CameraAnimation *self) { return self ? (int)self->far_plane.size() : 0; }
+msAPI void  msCameraAGetFarSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->far_plane[i]; }
 
-msAPI int       msCameraAGetNumHApertureSamples(ms::CameraAnimation *self) { return self ? (int)self->horizontal_aperture.size() : 0; }
-msAPI float     msCameraAGetHApertureTime(ms::CameraAnimation *self, int i) { return self->horizontal_aperture[i].time; }
-msAPI float     msCameraAGetHApertureValue(ms::CameraAnimation *self, int i) { return self->horizontal_aperture[i].value; }
+msAPI int   msCameraAGetNumHApertureSamples(ms::CameraAnimation *self) { return self ? (int)self->horizontal_aperture.size() : 0; }
+msAPI void  msCameraAGetHApertureSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->horizontal_aperture[i]; }
 
-msAPI int       msCameraAGetNumVApertureSamples(ms::CameraAnimation *self) { return self ? (int)self->vertical_aperture.size() : 0; }
-msAPI float     msCameraAGetVApertureTime(ms::CameraAnimation *self, int i) { return self->vertical_aperture[i].time; }
-msAPI float     msCameraAGetVApertureValue(ms::CameraAnimation *self, int i) { return self->vertical_aperture[i].value; }
+msAPI int   msCameraAGetNumVApertureSamples(ms::CameraAnimation *self) { return self ? (int)self->vertical_aperture.size() : 0; }
+msAPI void  msCameraAGetVApertureSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->vertical_aperture[i]; }
 
-msAPI int       msCameraAGetNumFocalLengthSamples(ms::CameraAnimation *self) { return self ? (int)self->focal_length.size() : 0; }
-msAPI float     msCameraAGetFocalLengthTime(ms::CameraAnimation *self, int i) { return self->focal_length[i].time; }
-msAPI float     msCameraAGetFocalLengthValue(ms::CameraAnimation *self, int i) { return self->focal_length[i].value; }
+msAPI int   msCameraAGetNumFocalLengthSamples(ms::CameraAnimation *self) { return self ? (int)self->focal_length.size() : 0; }
+msAPI void  msCameraAGetFocalLengthSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->focal_length[i]; }
 
-msAPI int       msCameraAGetNumFocusDistanceSamples(ms::CameraAnimation *self) { return self ? (int)self->focus_distance.size() : 0; }
-msAPI float     msCameraAGetFocusDistanceTime(ms::CameraAnimation *self, int i) { return self->focus_distance[i].time; }
-msAPI float     msCameraAGetFocusDistanceValue(ms::CameraAnimation *self, int i) { return self->focus_distance[i].value; }
+msAPI int   msCameraAGetNumFocusDistanceSamples(ms::CameraAnimation *self) { return self ? (int)self->focus_distance.size() : 0; }
+msAPI void  msCameraAGetFocusDistanceSample(ms::CameraAnimation *self, int i, tvp_f *dst) { *dst = self->focus_distance[i]; }
 
-msAPI int       msLightAGetNumColorSamples(ms::LightAnimation *self) { return self ? (int)self->color.size() : 0; }
-msAPI float     msLightAGetColorTime(ms::LightAnimation *self, int i) { return self->color[i].time; }
-msAPI float4    msLightAGetColorValue(ms::LightAnimation *self, int i) { return self->color[i].value; }
+msAPI int   msLightAGetNumColorSamples(ms::LightAnimation *self) { return self ? (int)self->color.size() : 0; }
+msAPI void  msLightAGetColorSample(ms::LightAnimation *self, int i, tvp_f4 *dst) { *dst = self->color[i]; }
 
-msAPI int       msLightAGetNumIntensitySamples(ms::LightAnimation *self) { return self ? (int)self->intensity.size() : 0; }
-msAPI float     msLightAGetIntensityTime(ms::LightAnimation *self, int i) { return self->intensity[i].time; }
-msAPI float     msLightAGetIntensityValue(ms::LightAnimation *self, int i) { return self->intensity[i].value; }
+msAPI int   msLightAGetNumIntensitySamples(ms::LightAnimation *self) { return self ? (int)self->intensity.size() : 0; }
+msAPI void  msLightAGetIntensitySample(ms::LightAnimation *self, int i, tvp_f *dst) { *dst = self->intensity[i]; }
 
-msAPI int       msLightAGetNumRangeSamples(ms::LightAnimation *self) { return self ? (int)self->range.size() : 0; }
-msAPI float     msLightAGetRangeTime(ms::LightAnimation *self, int i) { return self->range[i].time; }
-msAPI float     msLightAGetRangeValue(ms::LightAnimation *self, int i) { return self->range[i].value; }
+msAPI int   msLightAGetNumRangeSamples(ms::LightAnimation *self) { return self ? (int)self->range.size() : 0; }
+msAPI void  msLightAGetRangeSample(ms::LightAnimation *self, int i, tvp_f *dst) { *dst = self->range[i]; }
 
-msAPI int       msLightAGetNumSpotAngleSamples(ms::LightAnimation *self) { return self ? (int)self->spot_angle.size() : 0; }
-msAPI float     msLightAGetSpotAngleTime(ms::LightAnimation *self, int i) { return self->spot_angle[i].time; }
-msAPI float     msLightAGetSpotAngleValue(ms::LightAnimation *self, int i) { return self->spot_angle[i].value; }
+msAPI int   msLightAGetNumSpotAngleSamples(ms::LightAnimation *self) { return self ? (int)self->spot_angle.size() : 0; }
+msAPI void  msLightAGetSpotAngleSample(ms::LightAnimation *self, int i, tvp_f *dst) { *dst = self->spot_angle[i]; }
 
 msAPI int           msMeshAGetNumBlendshapes(ms::MeshAnimation *self) { return (int)self->blendshapes.size(); }
 msAPI const char*   msMeshAGetBlendshapeName(ms::MeshAnimation *self, int bi) { return self->blendshapes[bi]->name.c_str(); }
 msAPI int           msMeshAGetNumBlendshapeSamples(ms::MeshAnimation *self, int bi) { return (int)self->blendshapes[bi]->weight.size(); }
-msAPI float         msMeshAGetNumBlendshapeTime(ms::MeshAnimation *self, int bi, int i) { return self->blendshapes[bi]->weight[i].time; }
-msAPI float         msMeshAGetNumBlendshapeWeight(ms::MeshAnimation *self, int bi, int i) { return self->blendshapes[bi]->weight[i].value; }
+msAPI void          msMeshAGetBlendshapeSample(ms::MeshAnimation *self, int bi, int i, tvp_f *dst) { *dst = self->blendshapes[bi]->weight[i]; }
 
 msAPI int   msPointsAGetNumTimeSamples(ms::PointsAnimation *self) { return (int)self->time.size(); }
-msAPI float msPointsAGetTimeTime(ms::PointsAnimation *self, int i) { return self->time[i].time; }
-msAPI float msPointsAGetTimeValue(ms::PointsAnimation *self, int i) { return self->time[i].value; }
+msAPI void msPointsAGetTimeValue(ms::PointsAnimation *self, int i, tvp_f *dst) { *dst = self->time[i]; }
 #pragma endregion
 
 
