@@ -30,7 +30,9 @@ public:
 
     CLxUser_Mesh getBaseMesh(CLxUser_Item& mesh_obj);
     CLxUser_Mesh getDeformedMesh(CLxUser_Item& mesh_obj);
-    CLxUser_Mesh getCachedMesh(CLxUser_Item& replicator_obj);
+
+    // Body: [] (CLxUser_Item &replica, const mu::float4x4& matrix) -> void
+    template<class Body> void eachReplica(CLxUser_Item& item, const Body& body);
 
     std::tuple<double, double> getTimeRange();
 
@@ -189,7 +191,7 @@ inline void msmodoInterface::eachDeformer(CLxUser_Item& item, const Body& body)
 }
 
 template<class Body>
-void msmodoInterface::eachSkinDeformer(CLxUser_Item& item, const Body& body)
+inline void msmodoInterface::eachSkinDeformer(CLxUser_Item& item, const Body& body)
 {
     eachDeformer(item, [&](CLxUser_Item& def) {
         if (def.Type() == tGenInf)
@@ -198,10 +200,51 @@ void msmodoInterface::eachSkinDeformer(CLxUser_Item& item, const Body& body)
 }
 
 template<class Body>
-void msmodoInterface::eachMorphDeformer(CLxUser_Item& item, const Body& body)
+inline void msmodoInterface::eachMorphDeformer(CLxUser_Item& item, const Body& body)
 {
     eachDeformer(item, [&](CLxUser_Item& def) {
         if (def.Type() == tMorph)
             body(def);
     });
+}
+
+
+template<class Body>
+class ReplicaVisitor : public CLxImpl_AbstractVisitor
+{
+public:
+    ReplicaVisitor(msmodoInterface *s, CLxUser_ReplicatorEnumerator *e, const Body& body)
+        : m_self(s), m_enumerator(e), m_body(body) {}
+
+    LxResult Evaluate() override
+    {
+        CLxUser_Item replica;
+        if (LXx_OK(m_enumerator->Item(replica))) {
+            LXtVector pos;
+            LXtMatrix ori;
+            m_enumerator->Position(pos);
+            m_enumerator->Orientation(ori);
+
+            auto matrix = to_float4x4(ori);
+            (mu::float3&)matrix[3] = to_float3(pos);
+
+            m_body(replica, matrix);
+        }
+        return LXe_OK;
+    }
+
+    msmodoInterface *m_self;
+    CLxUser_ReplicatorEnumerator *m_enumerator;
+    const Body& m_body;
+};
+
+template<class Body>
+inline void msmodoInterface::eachReplica(CLxUser_Item& item, const Body& body)
+{
+    CLxUser_ReplicatorEnumerator enumerator;
+    m_scene_service.GetReplicatorEnumerator(item, enumerator);
+    if (enumerator) {
+        ReplicaVisitor<Body> visitor(this, &enumerator, body);
+        enumerator.Enum(&visitor, m_ch_read, true);
+    }
 }

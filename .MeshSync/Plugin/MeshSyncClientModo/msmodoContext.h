@@ -49,7 +49,7 @@ struct msmodoSettings
     bool sync_blendshapes = true;
     bool sync_bones = true;
     bool sync_mesh_instances = true;
-    bool sync_replicators = false;
+    bool sync_replicators = true;
     bool sync_textures = true;
     bool sync_cameras = true;
     bool sync_lights = true;
@@ -122,7 +122,7 @@ private:
     ms::CameraPtr exportCamera(TreeNode& node);
     ms::LightPtr exportLight(TreeNode& node);
     ms::MeshPtr exportMesh(TreeNode& node);
-    ms::MeshPtr exportReplicator(TreeNode& node);
+    ms::TransformPtr exportReplicator(TreeNode& node);
 
     int exportAnimations(SendScope scope);
     bool exportAnimation(CLxUser_Item obj);

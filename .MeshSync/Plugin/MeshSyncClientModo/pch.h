@@ -31,6 +31,7 @@
 #include <lx_deform.hpp>
 #include <lx_layer.hpp>
 #include <lx_package.hpp>
+#include <lx_particle.hpp>
 #include <lx_log.hpp>
 #include <lx_listener.hpp>
 #include <lxu_command.hpp>

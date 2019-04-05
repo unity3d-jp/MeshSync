@@ -129,18 +129,6 @@ CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
     return mesh;
 }
 
-CLxUser_Mesh msmodoInterface::getCachedMesh(CLxUser_Item& obj)
-{
-    //// this doesn't work. gave up for now...
-
-    //dbgDumpItem(obj);
-    //CLxUser_Item cache;
-    //if (m_ch_read.GetRef(obj, LXsICHAN_REPLICATOR_CACHE_OBJ, cache)) {
-    //    dbgDumpItem(cache);
-    //}
-    return nullptr;
-}
-
 
 std::tuple<double, double> msmodoInterface::getTimeRange()
 {

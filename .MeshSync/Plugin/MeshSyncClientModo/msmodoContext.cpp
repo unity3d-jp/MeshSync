@@ -348,10 +348,10 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj)
         exportObject(GetParent(obj));
         n.dst_obj = exportMeshInstance(n);
     }
-    //else if (obj.IsA(tReplicator)) {
-    //    exportObject(GetParent(obj));
-    //    n.dst_obj = exportReplicator(n);
-    //}
+    else if (obj.IsA(tReplicator)) {
+        exportObject(GetParent(obj));
+        n.dst_obj = exportReplicator(n);
+    }
     else {
         exportObject(GetParent(obj));
         n.dst_obj = exportTransform(n);
@@ -709,14 +709,35 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     return ret;
 }
 
-ms::MeshPtr msmodoContext::exportReplicator(TreeNode& n)
+ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
 {
-    //auto ret = createEntity<ms::Mesh>(n);
-    //auto& dst = *ret;
-    //n.dst_obj = ret;
+    auto ret = createEntity<ms::Transform>(n);
+    n.dst_obj = ret;
+    auto& dst = *ret;
 
-    auto mesh = getCachedMesh(n.item);
-    return nullptr;
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    m_entity_manager.add(n.dst_obj);
+
+    // export replica
+    int nth = 0;
+    eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
+        char buf[64];
+        sprintf(buf, " (%d)", nth++);
+        std::string path = n.path;
+        path += '/';
+        path += GetName(geom);
+        path += buf;
+
+        auto p = ms::Transform::create();
+        auto& dst = *p;
+        dst.path = path;
+        dst.reference = GetPath(geom);
+        dst.position = mu::extract_position(matrix);
+        dst.rotation = mu::extract_rotation(matrix);
+        dst.scale = mu::extract_scale(matrix);
+        m_entity_manager.add(p);
+    });
+    return ret;
 }
 
 
