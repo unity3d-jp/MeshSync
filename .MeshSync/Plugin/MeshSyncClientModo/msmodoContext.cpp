@@ -226,6 +226,8 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
             eachMesh(do_export);
         if (m_settings.sync_mesh_instances)
             eachMeshInstance(do_export);
+        if (m_settings.sync_replicators)
+            eachReplicator(do_export);
         m_entity_manager.eraseStaleEntities();
     }
 
@@ -346,6 +348,10 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj)
         exportObject(GetParent(obj));
         n.dst_obj = exportMeshInstance(n);
     }
+    //else if (obj.IsA(tReplicator)) {
+    //    exportObject(GetParent(obj));
+    //    n.dst_obj = exportReplicator(n);
+    //}
     else {
         exportObject(GetParent(obj));
         n.dst_obj = exportTransform(n);
@@ -702,6 +708,17 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     m_entity_manager.add(n.dst_obj);
     return ret;
 }
+
+ms::MeshPtr msmodoContext::exportReplicator(TreeNode& n)
+{
+    //auto ret = createEntity<ms::Mesh>(n);
+    //auto& dst = *ret;
+    //n.dst_obj = ret;
+
+    auto mesh = getCachedMesh(n.item);
+    return nullptr;
+}
+
 
 
 // 

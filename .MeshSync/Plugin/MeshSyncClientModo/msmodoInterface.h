@@ -21,14 +21,16 @@ public:
     template<class Body> void eachCamera(const Body& body);
     template<class Body> void eachMesh(const Body& body);
     template<class Body> void eachMeshInstance(const Body& body);
+    template<class Body> void eachReplicator(const Body& body);
     template<class Body> void eachBone(CLxUser_Item& item, const Body& body);
 
     template<class Body> void eachDeformer(CLxUser_Item& item, const Body& body);
     template<class Body> void eachSkinDeformer(CLxUser_Item& item, const Body& body);
     template<class Body> void eachMorphDeformer(CLxUser_Item& item, const Body& body);
 
-    CLxUser_Mesh getBaseMesh(CLxUser_Item& obj);
-    CLxUser_Mesh getDeformedMesh(CLxUser_Item& obj);
+    CLxUser_Mesh getBaseMesh(CLxUser_Item& mesh_obj);
+    CLxUser_Mesh getDeformedMesh(CLxUser_Item& mesh_obj);
+    CLxUser_Mesh getCachedMesh(CLxUser_Item& replicator_obj);
 
     std::tuple<double, double> getTimeRange();
 
@@ -36,7 +38,7 @@ public:
 
 public:
     LXtItemType tMaterial = 0,
-                tLocator, tCamera, tLight, tMesh, tMeshInst,
+                tLocator, tCamera, tLight, tMesh, tMeshInst, tReplicator,
                 tLightMaterial, tPointLight, tDirectionalLight, tSpotLight, tAreaLight,
                 tDeform, tGenInf, tMorph;
 
@@ -168,6 +170,7 @@ template<class Body> inline void msmodoInterface::eachLight(const Body& body) { 
 template<class Body> inline void msmodoInterface::eachCamera(const Body& body) { eachObject(tCamera, body); }
 template<class Body> inline void msmodoInterface::eachMesh(const Body& body) { eachObject(tMesh, body); }
 template<class Body> inline void msmodoInterface::eachMeshInstance(const Body& body) { eachObject(tMeshInst, body); }
+template<class Body> inline void msmodoInterface::eachReplicator(const Body& body) { eachObject(tReplicator, body); }
 
 template<class Body>
 inline void msmodoInterface::eachBone(CLxUser_Item& item, const Body& body)

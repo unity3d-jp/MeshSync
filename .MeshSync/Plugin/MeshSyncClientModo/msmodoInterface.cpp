@@ -75,6 +75,7 @@ void msmodoInterface::prepare()
         tLight = m_scene_service.ItemType(LXsITYPE_LIGHT);
         tMesh = m_scene_service.ItemType(LXsITYPE_MESH);
         tMeshInst = m_scene_service.ItemType(LXsITYPE_MESHINST);
+        tReplicator = m_scene_service.ItemType(LXsITYPE_REPLICATOR);
 
         tLightMaterial = m_scene_service.ItemType(LXsITYPE_LIGHTMATERIAL);
         tPointLight = m_scene_service.ItemType(LXsITYPE_POINTLIGHT);
@@ -128,6 +129,19 @@ CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
     return mesh;
 }
 
+CLxUser_Mesh msmodoInterface::getCachedMesh(CLxUser_Item& obj)
+{
+    //// this doesn't work. gave up for now...
+
+    //dbgDumpItem(obj);
+    //CLxUser_Item cache;
+    //if (m_ch_read.GetRef(obj, LXsICHAN_REPLICATOR_CACHE_OBJ, cache)) {
+    //    dbgDumpItem(cache);
+    //}
+    return nullptr;
+}
+
+
 std::tuple<double, double> msmodoInterface::getTimeRange()
 {
     double start = 0.0, end = 1.0;
@@ -158,10 +172,10 @@ void msmodoInterface::dbgDumpItem(CLxUser_Item item)
     item.ChannelCount(&n);
     for (uint32_t i = 0; i < n; ++i) {
         const char *name, *tname;
-        uint32_t type;
+        uint32_t ch;
         item.ChannelName(i, &name);
-        item.ChannelType(i, &type);
-        m_scene_service.ItemTypeName(type, &tname);
+        item.ChannelLookup(name, &ch);
+        m_ch_read.TypeName(item, ch, &tname);
         msLogInfo(" - %s (%s)\n", name, tname);
     }
 }

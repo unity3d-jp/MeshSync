@@ -44,3 +44,7 @@
 
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
+
+#ifdef GetObject
+    #undef GetObject
+#endif
