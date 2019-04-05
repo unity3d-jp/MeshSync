@@ -942,13 +942,13 @@ namespace UTJ.MeshSync
 
 
     #region Animations
-    public enum InterpolationType
+    public enum InterpolationMode
     {
         Smooth,
         Linear,
         Constant,
     }
-    public delegate void InterpolationMethod(AnimationCurve curve);
+
 
     public struct TransformAnimationData
     {
@@ -956,17 +956,17 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumTranslationSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformAFillTranslation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillTranslation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumRotationSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformAFillRotation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationType it);
-        [DllImport("MeshSyncServer")] static extern void msTransformAFillRotationEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillRotation(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillRotationEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumScaleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformAFillScale(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillScale(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformAFillVisible(IntPtr self, Keyframe[] x, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msTransformAFillVisible(IntPtr self, Keyframe[] x, InterpolationMode im);
         #endregion
 
         public static explicit operator TransformAnimationData(IntPtr v)
@@ -980,7 +980,7 @@ namespace UTJ.MeshSync
             return v.self != IntPtr.Zero;
         }
 
-        public AnimationCurve[] GenTranslationCurves(InterpolationType it)
+        public AnimationCurve[] GenTranslationCurves(InterpolationMode im)
         {
             int n = msTransformAGetNumTranslationSamples(self);
             if (n == 0)
@@ -989,7 +989,7 @@ namespace UTJ.MeshSync
             var x = new Keyframe[n];
             var y = new Keyframe[n];
             var z = new Keyframe[n];
-            msTransformAFillTranslation(self, x, y, z, it);
+            msTransformAFillTranslation(self, x, y, z, im);
 
             return new AnimationCurve[] {
                     new AnimationCurve(x),
@@ -998,18 +998,18 @@ namespace UTJ.MeshSync
                 };
         }
 
-        public AnimationCurve[] GenRotationCurves(InterpolationType it)
+        public AnimationCurve[] GenRotationCurves(InterpolationMode im)
         {
             int n = msTransformAGetNumRotationSamples(self);
             if (n == 0)
                 return null;
 
-            if (it == InterpolationType.Constant || it == InterpolationType.Linear)
+            if (im == InterpolationMode.Constant || im == InterpolationMode.Linear)
             {
                 var x = new Keyframe[n];
                 var y = new Keyframe[n];
                 var z = new Keyframe[n];
-                msTransformAFillRotationEuler(self, x, y, z, it);
+                msTransformAFillRotationEuler(self, x, y, z, im);
 
                 return new AnimationCurve[] {
                     new AnimationCurve(x),
@@ -1023,7 +1023,7 @@ namespace UTJ.MeshSync
                 var y = new Keyframe[n];
                 var z = new Keyframe[n];
                 var w = new Keyframe[n];
-                msTransformAFillRotation(self, x, y, z, w, it);
+                msTransformAFillRotation(self, x, y, z, w, im);
 
                 return new AnimationCurve[] {
                     new AnimationCurve(x),
@@ -1034,7 +1034,7 @@ namespace UTJ.MeshSync
             }
         }
 
-        public AnimationCurve[] GenScaleCurves(InterpolationType it)
+        public AnimationCurve[] GenScaleCurves(InterpolationMode im)
         {
             int n = msTransformAGetNumScaleSamples(self);
             if (n == 0)
@@ -1043,7 +1043,7 @@ namespace UTJ.MeshSync
             var x = new Keyframe[n];
             var y = new Keyframe[n];
             var z = new Keyframe[n];
-            msTransformAFillScale(self, x, y, z, it);
+            msTransformAFillScale(self, x, y, z, im);
 
             return new AnimationCurve[] {
                     new AnimationCurve(x),
@@ -1052,27 +1052,27 @@ namespace UTJ.MeshSync
                 };
         }
 
-        public AnimationCurve GenVisibilityCurve(InterpolationType it)
+        public AnimationCurve GenVisibilityCurve(InterpolationMode im)
         {
             int n = msTransformAGetNumVisibleSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msTransformAFillVisible(self, x, it);
+            msTransformAFillVisible(self, x, im);
 
             return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationType it)
+        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
         {
             var ttrans = typeof(Transform);
             var tgo = typeof(GameObject);
 
             {
                 clip.SetCurve(path, ttrans, "m_LocalPosition", null);
-                var curves = GenTranslationCurves(it);
+                var curves = GenTranslationCurves(im);
                 if (curves != null)
                 {
                     clip.SetCurve(path, ttrans, "m_LocalPosition.x", curves[0]);
@@ -1082,7 +1082,7 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, ttrans, "m_LocalRotation", null);
-                var curves = GenRotationCurves(it);
+                var curves = GenRotationCurves(im);
                 if (curves != null)
                 {
                     if (curves.Length == 3)
@@ -1102,7 +1102,7 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, ttrans, "m_LocalScale", null);
-                var curves = GenScaleCurves(it);
+                var curves = GenScaleCurves(im);
                 if (curves != null)
                 {
                     clip.SetCurve(path, ttrans, "m_LocalScale.x", curves[0]);
@@ -1112,7 +1112,7 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, tgo, "m_IsActive", null);
-                var curve = GenVisibilityCurve(it);
+                var curve = GenVisibilityCurve(im);
                 if (curve != null)
                 {
                     clip.SetCurve(path, tgo, "m_IsActive", curve);
@@ -1128,25 +1128,25 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFovSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillFov(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFov(IntPtr self, Keyframe[] v, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumNearSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillNear(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillNear(IntPtr self, Keyframe[] v, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFarSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillFar(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFar(IntPtr self, Keyframe[] v, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumHApertureSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillHAperture(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillHAperture(IntPtr self, Keyframe[] v, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumVApertureSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillVAperture(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillVAperture(IntPtr self, Keyframe[] v, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocalLengthSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillFocalLength(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFocalLength(IntPtr self, Keyframe[] v, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocusDistanceSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraAFillFocusDistance(IntPtr self, Keyframe[] v, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msCameraAFillFocusDistance(IntPtr self, Keyframe[] v, InterpolationMode im);
         #endregion
 
         public static explicit operator CameraAnimationData(IntPtr v)
@@ -1160,63 +1160,63 @@ namespace UTJ.MeshSync
             return v.self != IntPtr.Zero;
         }
 
-        public AnimationCurve GenFovCurve(InterpolationType it)
+        public AnimationCurve GenFovCurve(InterpolationMode im)
         {
             int n = msCameraAGetNumFovSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msCameraAFillFov(self, x, it);
+            msCameraAFillFov(self, x, im);
 
             return new AnimationCurve(x);
         }
 
-        public AnimationCurve GenNearPlaneCurve(InterpolationType it)
+        public AnimationCurve GenNearPlaneCurve(InterpolationMode im)
         {
             int n = msCameraAGetNumNearSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msCameraAFillNear(self, x, it);
+            msCameraAFillNear(self, x, im);
 
             return new AnimationCurve(x);
         }
 
-        public AnimationCurve GenFarPlaneCurve(InterpolationType it)
+        public AnimationCurve GenFarPlaneCurve(InterpolationMode im)
         {
             int n = msCameraAGetNumFarSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msCameraAFillFar(self, x, it);
+            msCameraAFillFar(self, x, im);
 
             return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationType it)
+        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, it);
+            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
 
             var tcam = typeof(Camera);
             {
                 clip.SetCurve(path, tcam, "field of view", null);
-                var curve = GenFovCurve(it);
+                var curve = GenFovCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tcam, "field of view", curve);
             }
             {
                 clip.SetCurve(path, tcam, "near clip plane", null);
-                var curve = GenNearPlaneCurve(it);
+                var curve = GenNearPlaneCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tcam, "near clip plane", curve);
             }
             {
                 clip.SetCurve(path, tcam, "far clip plane", null);
-                var curve = GenFarPlaneCurve(it);
+                var curve = GenFarPlaneCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tcam, "far clip plane", curve);
             }
@@ -1230,16 +1230,16 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumColorSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightAFillColor(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillColor(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumIntensitySamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightAFillIntensity(IntPtr self, Keyframe[] x, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillIntensity(IntPtr self, Keyframe[] x, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumRangeSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightAFillRange(IntPtr self, Keyframe[] x, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillRange(IntPtr self, Keyframe[] x, InterpolationMode im);
 
         [DllImport("MeshSyncServer")] static extern int msLightAGetNumSpotAngleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightAFillSpotAngle(IntPtr self, Keyframe[] x, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern void msLightAFillSpotAngle(IntPtr self, Keyframe[] x, InterpolationMode im);
         #endregion
 
 
@@ -1254,7 +1254,7 @@ namespace UTJ.MeshSync
             return v.self != IntPtr.Zero;
         }
 
-        public AnimationCurve[] GenColorCurves(InterpolationType it)
+        public AnimationCurve[] GenColorCurves(InterpolationMode im)
         {
             int n = msLightAGetNumColorSamples(self);
             if (n == 0)
@@ -1264,7 +1264,7 @@ namespace UTJ.MeshSync
             var y = new Keyframe[n];
             var z = new Keyframe[n];
             var w = new Keyframe[n];
-            msLightAFillColor(self, x, y, z, w, it);
+            msLightAFillColor(self, x, y, z, w, im);
 
             return new AnimationCurve[] {
                     new AnimationCurve(x),
@@ -1274,51 +1274,51 @@ namespace UTJ.MeshSync
                 };
         }
 
-        public AnimationCurve GenIntensityCurve(InterpolationType it)
+        public AnimationCurve GenIntensityCurve(InterpolationMode im)
         {
             int n = msLightAGetNumIntensitySamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msLightAFillIntensity(self, x, it);
+            msLightAFillIntensity(self, x, im);
 
             return new AnimationCurve(x);
         }
 
-        public AnimationCurve GenRangeCurve(InterpolationType it)
+        public AnimationCurve GenRangeCurve(InterpolationMode im)
         {
             int n = msLightAGetNumRangeSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msLightAFillRange(self, x, it);
+            msLightAFillRange(self, x, im);
 
             return new AnimationCurve(x);
         }
 
-        public AnimationCurve GenSpotAngleCurve(InterpolationType it)
+        public AnimationCurve GenSpotAngleCurve(InterpolationMode im)
         {
             int n = msLightAGetNumSpotAngleSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msLightAFillSpotAngle(self, x, it);
+            msLightAFillSpotAngle(self, x, im);
 
             return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationType it)
+        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, it);
+            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
 
             var tlight = typeof(Light);
             {
                 clip.SetCurve(path, tlight, "m_Color", null);
-                var curves = GenColorCurves(it);
+                var curves = GenColorCurves(im);
                 if (curves != null)
                 {
                     clip.SetCurve(path, tlight, "m_Color.r", curves[0]);
@@ -1329,19 +1329,19 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, tlight, "m_Intensity", null);
-                var curve = GenIntensityCurve(it);
+                var curve = GenIntensityCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tlight, "m_Intensity", curve);
             }
             {
                 clip.SetCurve(path, tlight, "m_Range", null);
-                var curve = GenRangeCurve(it);
+                var curve = GenRangeCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tlight, "m_Range", curve);
             }
             {
                 clip.SetCurve(path, tlight, "m_SpotAngle", null);
-                var curve = GenSpotAngleCurve(it);
+                var curve = GenSpotAngleCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tlight, "m_SpotAngle", curve);
             }
@@ -1357,7 +1357,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapes(IntPtr self);
         [DllImport("MeshSyncServer")] static extern IntPtr msMeshAGetBlendshapeName(IntPtr self, int bi);
         [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapeSamples(IntPtr self, int bi);
-        [DllImport("MeshSyncServer")] static extern int msMeshAFillBlendshapeWeight(IntPtr self, int bi, Keyframe[] x, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern int msMeshAFillBlendshapeWeight(IntPtr self, int bi, Keyframe[] x, InterpolationMode im);
         #endregion
 
 
@@ -1373,9 +1373,9 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationType it)
+        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, it);
+            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
 
             var tsmr = typeof(SkinnedMeshRenderer);
             {
@@ -1391,7 +1391,7 @@ namespace UTJ.MeshSync
                     if (numKeyframes > 0)
                     {
                         var kf = new Keyframe[numKeyframes];
-                        msMeshAFillBlendshapeWeight(self, bi, kf, it);
+                        msMeshAFillBlendshapeWeight(self, bi, kf, im);
 
                         var curve = new AnimationCurve(kf);
                         clip.SetCurve(path, tsmr, name, curve);
@@ -1408,7 +1408,7 @@ namespace UTJ.MeshSync
         public IntPtr self;
 
         [DllImport("MeshSyncServer")] static extern int msPointsAGetNumTimeSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msPointsAFillTime(IntPtr self, Keyframe[] x, InterpolationType it);
+        [DllImport("MeshSyncServer")] static extern float msPointsAFillTime(IntPtr self, Keyframe[] x, InterpolationMode im);
         #endregion
 
 
@@ -1423,27 +1423,27 @@ namespace UTJ.MeshSync
             return v.self != IntPtr.Zero;
         }
 
-        public AnimationCurve GenTimeCurve(InterpolationType it)
+        public AnimationCurve GenTimeCurve(InterpolationMode im)
         {
             int n = msPointsAGetNumTimeSamples(self);
             if (n == 0)
                 return null;
 
             var x = new Keyframe[n];
-            msPointsAFillTime(self, x, it);
+            msPointsAFillTime(self, x, im);
 
             return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationType it)
+        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, it);
+            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
 
             var tpoints = typeof(PointCache);
             {
                 clip.SetCurve(path, tpoints, "m_time", null);
-                var curve = GenTimeCurve(it);
+                var curve = GenTimeCurve(im);
                 if (curve != null)
                     clip.SetCurve(path, tpoints, "m_time", curve);
             }
@@ -1482,24 +1482,24 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationType it)
+        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
         {
             switch (type)
             {
                 case TransformData.Type.Transform:
-                    ((TransformAnimationData)self).ExportToClip(clip, root, target, path, it);
+                    ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
                     break;
                 case TransformData.Type.Camera:
-                    ((CameraAnimationData)self).ExportToClip(clip, root, target, path, it);
+                    ((CameraAnimationData)self).ExportToClip(clip, root, target, path, im);
                     break;
                 case TransformData.Type.Light:
-                    ((LightAnimationData)self).ExportToClip(clip, root, target, path, it);
+                    ((LightAnimationData)self).ExportToClip(clip, root, target, path, im);
                     break;
                 case TransformData.Type.Mesh:
-                    ((MeshAnimationData)self).ExportToClip(clip, root, target, path, it);
+                    ((MeshAnimationData)self).ExportToClip(clip, root, target, path, im);
                     break;
                 case TransformData.Type.Points:
-                    ((PointsAnimationData)self).ExportToClip(clip, root, target, path, it);
+                    ((PointsAnimationData)self).ExportToClip(clip, root, target, path, im);
                     break;
             }
         }

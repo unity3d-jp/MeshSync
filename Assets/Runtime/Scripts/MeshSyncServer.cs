@@ -178,7 +178,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
-        [SerializeField] InterpolationType m_animtionInterpolation = InterpolationType.Smooth;
+        [SerializeField] InterpolationMode m_animtionInterpolation = InterpolationMode.Smooth;
         [SerializeField] bool m_reuseExistingAnimationClip = false;
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
@@ -1822,7 +1822,7 @@ namespace UTJ.MeshSync
             }
 
             // smooth rotation curves
-            if (m_animtionInterpolation == InterpolationType.Smooth)
+            if (m_animtionInterpolation == InterpolationMode.Smooth)
                 foreach (var kvp in animClipCache)
                     kvp.Value.EnsureQuaternionContinuity();
 
