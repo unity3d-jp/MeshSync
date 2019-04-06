@@ -15,11 +15,12 @@ void msmodoContext::TreeNode::doExtractAnimation(msmodoContext *self)
         (self->*anim_extractor)(*this);
 }
 
-void msmodoContext::TreeNode::resolveMaterialIDs(const std::vector<ms::MaterialPtr>& materials)
+void msmodoContext::TreeNode::resolveMaterialIDs(msmodoContext *self)
 {
     if (material_names.empty() || !dst_obj || dst_obj->getType() != ms::Entity::Type::Mesh)
         return;
 
+    auto& materials = self->m_materials;
     auto& dst = static_cast<ms::Mesh&>(*dst_obj);
     int num_faces = (int)dst.counts.size();
 
@@ -34,6 +35,23 @@ void msmodoContext::TreeNode::resolveMaterialIDs(const std::vector<ms::MaterialP
             mid = (*it)->id;
         dst.material_ids[fi] = mid;
     }
+}
+
+void msmodoContext::TreeNode::resolveReplicas(msmodoContext *self)
+{
+    if (replicas.empty() && prev_replicas.empty())
+        return;
+
+    // erase from entity manager if the replica no longer exists
+    std::sort(replicas.begin(), replicas.end(),
+        [](auto& a, auto& b) { return a->path < b->path; });
+    for (auto& p : prev_replicas) {
+        auto it = std::lower_bound(replicas.begin(), replicas.end(), p, [](auto& r, auto& p) { return r->path < p->path; });
+        if (it == replicas.end() || (*it)->path != p->path)
+            self->m_entity_manager.eraseThreadSafe(p);
+    }
+
+    prev_replicas = replicas;
 }
 
 
@@ -720,6 +738,7 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
 
     // export replica
     int nth = 0;
+    n.replicas.clear();
     eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
         char buf[64];
         sprintf(buf, " (%d)", nth++);
@@ -735,6 +754,8 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
         dst.position = mu::extract_position(matrix);
         dst.rotation = mu::extract_rotation(matrix);
         dst.scale = mu::extract_scale(matrix);
+
+        n.replicas.push_back(p);
         m_entity_manager.add(p);
     });
     return ret;
@@ -770,6 +791,8 @@ int msmodoContext::exportAnimations(SendScope scope)
             eachMesh(do_export);
         if (m_settings.sync_mesh_instances)
             eachMeshInstance(do_export);
+        if (m_settings.sync_replicators)
+            eachReplicator(do_export);
     }
 
 
@@ -843,7 +866,7 @@ bool msmodoContext::exportAnimation(CLxUser_Item obj)
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
     }
-    else { // includes MeshInstances
+    else { // includes MeshInstances and Replicators
         exportAnimation(GetParent(obj));
         n.dst_anim = ms::TransformAnimation::create();
         n.anim_extractor = &msmodoContext::extractTransformAnimationData;
@@ -959,8 +982,8 @@ void msmodoContext::kickAsyncSend()
 {
     ms::parallel_for_each(m_tree_nodes.begin(), m_tree_nodes.end(), [this](auto& kvp) {
         auto& node = kvp.second;
-        node.resolveMaterialIDs(m_materials);
-        node.material_names.clear();
+        node.resolveMaterialIDs(this);
+        node.resolveReplicas(this);
     });
 
     // cleanup

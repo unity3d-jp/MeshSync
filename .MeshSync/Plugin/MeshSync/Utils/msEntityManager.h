@@ -21,6 +21,7 @@ public:
     bool erase(int id);
     bool erase(const Identifier& identifier);
     bool erase(TransformPtr v);
+    bool eraseThreadSafe(TransformPtr v);
 
     // thread safe
     void add(TransformPtr v); 

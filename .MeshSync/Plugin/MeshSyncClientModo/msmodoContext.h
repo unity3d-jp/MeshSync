@@ -102,14 +102,18 @@ private:
 
         ms::TransformPtr dst_obj;
         ms::AnimationPtr dst_anim;
-        RawVector<const char*> material_names; // per-face material names.
+
+        RawVector<const char*> material_names; // mesh: per-face material names.
+        std::vector<ms::TransformPtr> replicas, prev_replicas; // replicator: 
 
         using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
         AnimationExtractor anim_extractor = nullptr;
 
         void clearState();
         void doExtractAnimation(msmodoContext *self);
-        void resolveMaterialIDs(const std::vector<ms::MaterialPtr>& materials);
+
+        void resolveMaterialIDs(msmodoContext *self);
+        void resolveReplicas(msmodoContext *self);
     };
 
     void exportMaterials();

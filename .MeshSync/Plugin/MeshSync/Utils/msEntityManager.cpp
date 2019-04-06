@@ -84,6 +84,12 @@ bool EntityManager::erase(TransformPtr v)
     return erase(v->getIdentifier());
 }
 
+bool EntityManager::eraseThreadSafe(TransformPtr v)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    return erase(v);
+}
+
 inline void EntityManager::addTransform(TransformPtr obj)
 {
     auto& rec = lockAndGet(obj->path);
