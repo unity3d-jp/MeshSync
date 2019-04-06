@@ -97,6 +97,7 @@ public:
     struct TreeNode : public mu::noncopyable
     {
         CLxUser_Item item;
+        CLxLoc_MeshTracker mesh_tracker;
 
         std::string name;
         std::string path;
@@ -165,7 +166,7 @@ private:
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;
     SendScope m_pending_scope = SendScope::None;
-    bool m_ignore_update = false;
+    bool m_ignore_events = false;
     float m_anim_time = 0.0f;
 };
 

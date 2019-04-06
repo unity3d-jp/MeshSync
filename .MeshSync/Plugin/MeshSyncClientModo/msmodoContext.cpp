@@ -812,7 +812,7 @@ int msmodoContext::exportAnimations(SendScope scope)
 
 
     // advance frame and record
-    double time_current = m_selection_service.GetTime();
+    double time_current = m_svc_selection.GetTime();
     double time_start, time_end;
     std::tie(time_start, time_end) = getTimeRange();
     auto interval = (1.0 / std::max(m_settings.animation_sps, 0.01f));
@@ -821,7 +821,7 @@ int msmodoContext::exportAnimations(SendScope scope)
     for (auto& n : m_anim_nodes)
         n->dst_anim->reserve(reserve_size);
 
-    m_ignore_update = true;
+    m_ignore_events = true;
     for (double t = time_start;;) {
         m_anim_time = (float)(t - time_start) * m_settings.animation_time_scale;
         setChannelReadTime(t);
@@ -834,7 +834,7 @@ int msmodoContext::exportAnimations(SendScope scope)
             t = std::min(t + interval, time_end);
     }
     setChannelReadTime();
-    m_ignore_update = false;
+    m_ignore_events = false;
 
     // cleanup
     m_anim_nodes.clear();

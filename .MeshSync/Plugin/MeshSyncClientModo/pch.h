@@ -34,6 +34,7 @@
 #include <lx_particle.hpp>
 #include <lx_log.hpp>
 #include <lx_listener.hpp>
+#include <lx_scripts.hpp>
 #include <lxu_command.hpp>
 #include <lxu_package.hpp>
 #include <lxu_prefvalue.hpp>

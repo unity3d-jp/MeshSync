@@ -54,54 +54,104 @@ public:
         return LXe_OK;
     }
 
+
+    void sel_ChannelValue(ILxUnknownID item, unsigned index) override
+    {
+        CLxUser_Item obj(item);
+        if (obj.IsA(m_ifs->tLocator))
+            m_ifs->onItemUpdated(obj);
+    }
+
 private:
     msmodoInterface *m_ifs;
     bool m_playing = false;
 };
 
+class msmodoTimerCallbackVisitor : public CLxImpl_AbstractVisitor
+{
+public:
+    msmodoTimerCallbackVisitor() {}
+
+    LxResult Evaluate() override
+    {
+        m_ifs->onIdle();
+        m_ifs->startTimer();
+        return LXe_OK;
+    }
+
+    msmodoInterface *m_ifs = nullptr;
+};
+
+
+msmodoInterface::msmodoInterface()
+{
+}
+
+msmodoInterface::~msmodoInterface()
+{
+    if (m_timer_callback) {
+        delete m_timer_callback;
+        m_timer_callback = nullptr;
+    }
+}
 
 void msmodoInterface::prepare()
 {
-    m_layer_service.SetScene(0);
-    m_layer_service.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_ch_read, m_selection_service.GetTime());
+    m_svc_layer.SetScene(0);
+    m_svc_layer.Scene(m_current_scene);
+    m_current_scene.GetChannels(m_ch_read, m_svc_selection.GetTime());
     m_current_scene.GetSetupChannels(m_ch_read_setup);
 
     if (tMaterial == 0) {
-        tMaterial = m_scene_service.ItemType(LXsITYPE_ADVANCEDMATERIAL);
+        tMaterial = m_svc_scene.ItemType(LXsITYPE_ADVANCEDMATERIAL);
 
-        tLocator = m_scene_service.ItemType(LXsITYPE_LOCATOR);
-        tCamera = m_scene_service.ItemType(LXsITYPE_CAMERA);
-        tLight = m_scene_service.ItemType(LXsITYPE_LIGHT);
-        tMesh = m_scene_service.ItemType(LXsITYPE_MESH);
-        tMeshInst = m_scene_service.ItemType(LXsITYPE_MESHINST);
-        tReplicator = m_scene_service.ItemType(LXsITYPE_REPLICATOR);
+        tLocator = m_svc_scene.ItemType(LXsITYPE_LOCATOR);
+        tCamera = m_svc_scene.ItemType(LXsITYPE_CAMERA);
+        tLight = m_svc_scene.ItemType(LXsITYPE_LIGHT);
+        tMesh = m_svc_scene.ItemType(LXsITYPE_MESH);
+        tMeshInst = m_svc_scene.ItemType(LXsITYPE_MESHINST);
+        tReplicator = m_svc_scene.ItemType(LXsITYPE_REPLICATOR);
 
-        tLightMaterial = m_scene_service.ItemType(LXsITYPE_LIGHTMATERIAL);
-        tPointLight = m_scene_service.ItemType(LXsITYPE_POINTLIGHT);
-        tDirectionalLight = m_scene_service.ItemType(LXsITYPE_SUNLIGHT);
-        tSpotLight = m_scene_service.ItemType(LXsITYPE_SPOTLIGHT);
-        tAreaLight = m_scene_service.ItemType(LXsITYPE_AREALIGHT);
+        tLightMaterial = m_svc_scene.ItemType(LXsITYPE_LIGHTMATERIAL);
+        tPointLight = m_svc_scene.ItemType(LXsITYPE_POINTLIGHT);
+        tDirectionalLight = m_svc_scene.ItemType(LXsITYPE_SUNLIGHT);
+        tSpotLight = m_svc_scene.ItemType(LXsITYPE_SPOTLIGHT);
+        tAreaLight = m_svc_scene.ItemType(LXsITYPE_AREALIGHT);
 
-        tDeform = m_scene_service.ItemType(LXsITYPE_DEFORM);
-        tGenInf = m_scene_service.ItemType(LXsITYPE_GENINFLUENCE);
-        tMorph = m_scene_service.ItemType(LXsITYPE_MORPHDEFORM);
+        tDeform = m_svc_scene.ItemType(LXsITYPE_DEFORM);
+        tGenInf = m_svc_scene.ItemType(LXsITYPE_GENINFLUENCE);
+        tMorph = m_svc_scene.ItemType(LXsITYPE_MORPHDEFORM);
     }
     if (!m_event_listener) {
         m_event_listener = new msmodoEventListener(this);
-        m_listener_service.AddListener(*m_event_listener);
+        m_svc_listener.AddListener(*m_event_listener);
+    }
+    if (!m_timer_callback) {
+        m_timer_callback = new CLxInst_OneVisitor<msmodoTimerCallbackVisitor>();
+        m_timer_callback->loc.m_ifs = this;
+        startTimer();
     }
 }
 
-void msmodoInterface::onTimeChange()
+void msmodoInterface::startTimer()
 {
+    if (m_timer_callback)
+        m_svc_platform.TimerStart(*m_timer_callback, 50, USERIDLEf_ALL_IDLE);
 }
+
+
+void msmodoInterface::onItemAdded(CLxUser_Item& item) {}
+void msmodoInterface::onItemRemoved(CLxUser_Item& item) {}
+void msmodoInterface::onItemUpdated(CLxUser_Item& item) {}
+void msmodoInterface::onTimeChange() {}
+void msmodoInterface::onIdle() {}
+
 
 
 void msmodoInterface::setChannelReadTime(double time)
 {
     if (time == std::numeric_limits<double>::infinity())
-        time = m_selection_service.GetTime();
+        time = m_svc_selection.GetTime();
     m_current_scene.GetChannels(m_ch_read, time);
 }
 
@@ -109,6 +159,9 @@ void msmodoInterface::setChannelReadTime(double time)
 
 CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
 {
+    if (!obj.IsA(tMesh))
+        return nullptr;
+
     CLxUser_Mesh mesh;
     CLxUser_MeshFilter meshfilter;
     CLxUser_MeshFilterIdent meshfilter_ident;
@@ -121,6 +174,9 @@ CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
 
 CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
 {
+    if (!obj.IsA(tMesh))
+        return nullptr;
+
     CLxUser_Mesh mesh;
     CLxUser_MeshFilter meshfilter;
     if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
@@ -152,7 +208,7 @@ void msmodoInterface::dbgDumpItem(CLxUser_Item item)
         auto path = GetPath(item);
         auto t = item.Type();
         const char *tname;
-        m_scene_service.ItemTypeName(t, &tname);
+        m_svc_scene.ItemTypeName(t, &tname);
         msLogInfo("%s (%s)\n", path.c_str(), tname);
     }
 
@@ -208,7 +264,7 @@ const char* mdmodoSkinDeformer::getMapName()
 CLxUser_Item mdmodoSkinDeformer::getEffector()
 {
     CLxUser_Item effector;
-    if (LXx_FAIL(m_ifs.m_deform_service.DeformerDeformationItem(m_item, effector)))
+    if (LXx_FAIL(m_ifs.m_svc_deform.DeformerDeformationItem(m_item, effector)))
         return nullptr;
     return effector;
 }

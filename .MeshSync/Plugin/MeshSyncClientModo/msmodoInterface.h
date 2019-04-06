@@ -1,12 +1,23 @@
 #pragma once
 
 class msmodoEventListener;
+class msmodoTimerCallbackVisitor;
 
 class msmodoInterface
 {
 public:
+    msmodoInterface();
+    virtual ~msmodoInterface();
+
     virtual void prepare();
+    void startTimer();
+
+    // events
+    virtual void onItemAdded(CLxUser_Item& item);
+    virtual void onItemRemoved(CLxUser_Item& item);
+    virtual void onItemUpdated(CLxUser_Item& item);
     virtual void onTimeChange();
+    virtual void onIdle();
 
     // time: inf -> current time
     void setChannelReadTime(double time = std::numeric_limits<double>::infinity());
@@ -44,22 +55,21 @@ public:
                 tLightMaterial, tPointLight, tDirectionalLight, tSpotLight, tAreaLight,
                 tDeform, tGenInf, tMorph;
 
-public:
-    CLxUser_SceneService     m_scene_service;
-    CLxUser_SelectionService m_selection_service;
-    CLxUser_LayerService     m_layer_service;
-    CLxUser_MeshService      m_mesh_service;
-    CLxUser_DeformerService  m_deform_service;
-    CLxUser_ListenerService  m_listener_service;
-    CLxUser_LogService       m_log_service;
+    CLxUser_SceneService     m_svc_scene;
+    CLxUser_SelectionService m_svc_selection;
+    CLxUser_LayerService     m_svc_layer;
+    CLxUser_MeshService      m_svc_mesh;
+    CLxUser_DeformerService  m_svc_deform;
+    CLxUser_ListenerService  m_svc_listener;
+    CLxUser_LogService       m_svc_log;
+    CLxUser_PlatformService  m_svc_platform;
 
     CLxUser_Scene m_current_scene;
     CLxUser_ChannelRead m_ch_read;
     CLxUser_ChannelRead m_ch_read_setup;
 
     msmodoEventListener *m_event_listener = nullptr;
-
-private:
+    CLxInst_OneVisitor<msmodoTimerCallbackVisitor> *m_timer_callback = nullptr;
 };
 
 
@@ -179,7 +189,7 @@ inline void msmodoInterface::eachBone(CLxUser_Item& item, const Body& body)
 {
     eachSkinDeformer(item, [&](CLxUser_Item& def) {
         CLxUser_Item effector;
-        if (LXx_OK(m_deform_service.DeformerDeformationItem(def, effector)) && effector.IsA(tLocator))
+        if (LXx_OK(m_svc_deform.DeformerDeformationItem(def, effector)) && effector.IsA(tLocator))
             body(effector);
     });
 }
@@ -242,7 +252,7 @@ template<class Body>
 inline void msmodoInterface::eachReplica(CLxUser_Item& item, const Body& body)
 {
     CLxUser_ReplicatorEnumerator enumerator;
-    m_scene_service.GetReplicatorEnumerator(item, enumerator);
+    m_svc_scene.GetReplicatorEnumerator(item, enumerator);
     if (enumerator) {
         ReplicaVisitor<Body> visitor(this, &enumerator, body);
         enumerator.Enum(&visitor, m_ch_read, true);
