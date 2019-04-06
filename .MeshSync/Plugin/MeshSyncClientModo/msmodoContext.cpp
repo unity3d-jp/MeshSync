@@ -7,6 +7,7 @@ void msmodoContext::TreeNode::clearState()
 {
     dst_obj = nullptr;
     dst_anim = nullptr;
+    dst_anim_replicas.clear();
 }
 
 void msmodoContext::TreeNode::doExtractAnimation(msmodoContext *self)
@@ -103,6 +104,7 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
     pos = extract_position(mat);
     rot = extract_rotation(mat);
     scale = extract_scale(mat);
+    vis = loc.Visible(m_ch_read) == LXe_TRUE;
 }
 
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -213,6 +215,25 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
         color = mu::float4{ (float)r, (float)g, (float)b, 1.0f };
     }
 }
+
+void msmodoContext::extractReplicaData(
+    TreeNode& n, CLxUser_Item& geom, int nth, const mu::float4x4& matrix,
+    std::string& path, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
+{
+    char buf[64];
+    sprintf(buf, " (%d)", nth++);
+    path = n.path;
+    path += '/';
+    path += GetName(geom);
+    path += buf;
+
+    auto p = ms::Transform::create();
+    auto& dst = *p;
+    pos = mu::extract_position(matrix);
+    rot = mu::extract_rotation(matrix);
+    scale = mu::extract_scale(matrix);
+}
+
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
@@ -740,20 +761,10 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
     int nth = 0;
     n.replicas.clear();
     eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
-        char buf[64];
-        sprintf(buf, " (%d)", nth++);
-        std::string path = n.path;
-        path += '/';
-        path += GetName(geom);
-        path += buf;
-
         auto p = ms::Transform::create();
         auto& dst = *p;
-        dst.path = path;
         dst.reference = GetPath(geom);
-        dst.position = mu::extract_position(matrix);
-        dst.rotation = mu::extract_rotation(matrix);
-        dst.scale = mu::extract_scale(matrix);
+        extractReplicaData(n, geom, nth++, matrix, dst.path, dst.position, dst.rotation, dst.scale);
 
         n.replicas.push_back(p);
         m_entity_manager.add(p);
@@ -866,7 +877,12 @@ bool msmodoContext::exportAnimation(CLxUser_Item obj)
         n.dst_anim = ms::MeshAnimation::create();
         n.anim_extractor = &msmodoContext::extractMeshAnimationData;
     }
-    else { // includes MeshInstances and Replicators
+    else if (obj.IsA(tReplicator)) {
+        exportAnimation(GetParent(obj));
+        n.dst_anim = ms::TransformAnimation::create();
+        n.anim_extractor = &msmodoContext::extractReplicatorAnimationData;
+    }
+    else { // includes MeshInstances
         exportAnimation(GetParent(obj));
         n.dst_anim = ms::TransformAnimation::create();
         n.anim_extractor = &msmodoContext::extractTransformAnimationData;
@@ -977,6 +993,34 @@ void msmodoContext::extractMeshAnimationData(TreeNode& n)
     }
 }
 
+void msmodoContext::extractReplicatorAnimationData(TreeNode& n)
+{
+    extractTransformAnimationData(n);
+
+    // export replica
+    int nth = 0;
+    eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
+        std::string path;
+        auto pos = mu::float3::zero();
+        auto rot = mu::quatf::identity();
+        auto scale = mu::float3::one();
+        bool vis = true;
+        extractReplicaData(n, geom, nth++, matrix, path, pos, rot, scale);
+
+        auto &dst_ptr = n.dst_anim_replicas[path];
+        if (!dst_ptr) {
+            dst_ptr = ms::TransformAnimation::create();
+            dst_ptr->path = path;
+            m_animations.front()->animations.push_back(dst_ptr);
+        }
+        auto& dst = static_cast<ms::TransformAnimation&>(*dst_ptr);
+
+        float t = m_anim_time;
+        dst.translation.push_back({ t, pos });
+        dst.rotation.push_back({ t, rot });
+        dst.scale.push_back({ t, scale });
+    });
+}
 
 void msmodoContext::kickAsyncSend()
 {

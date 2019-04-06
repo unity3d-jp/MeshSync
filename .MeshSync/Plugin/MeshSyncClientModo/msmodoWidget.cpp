@@ -2,9 +2,9 @@
 #include "MeshSync/MeshSync.h"
 #include "msmodoContext.h"
 
-#define msvrEnableQt
+#define msmodoEnableQt
 
-#ifdef msvrEnableQt
+#ifdef msmodoEnableQt
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -39,8 +39,8 @@ public slots:
     void onEditPort(const QString& v);
     void onEditScaleFactor(const QString& v);
     void onToggleSyncMeshes(int v);
-    void onToggleBones(int v);
-    void onToggleBlendshapes(int v);
+    void onToggleSyncBones(int v);
+    void onToggleSyncBlendshapes(int v);
     void onToggleBakeDeformers(int v);
     void onToggleDoubleSided(int v);
     void onToggleSyncTextures(int v);
@@ -63,23 +63,23 @@ private:
 };
 
 
-inline QString to_qstring(int v)
+static inline QString to_qstring(int v)
 {
     char buf[128];
     sprintf(buf, "%d", v);
     return buf;
 }
-inline QString to_qstring(float v)
+static inline QString to_qstring(float v)
 {
     char buf[128];
     sprintf(buf, "%.2f", v);
     return buf;
 }
-inline QString to_qstring(const std::string& v)
+static inline QString to_qstring(const std::string& v)
 {
     return v.c_str();
 }
-inline Qt::CheckState to_checkstate(bool v)
+static inline Qt::CheckState to_qcheckstate(bool v)
 {
     return v ? Qt::Checked : Qt::Unchecked;
 }
@@ -87,9 +87,6 @@ inline Qt::CheckState to_checkstate(bool v)
 msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     : super(parent)
 {
-    //setWindowTitle("Unity Mesh Sync");
-    //setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
-
     auto& settings = msmodoGetSettings();
 
     // setup controls
@@ -133,7 +130,7 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     // mesh
     {
         auto ck_meshes = new QCheckBox("Sync Meshes");
-        ck_meshes->setCheckState(to_checkstate(settings.sync_meshes));
+        ck_meshes->setCheckState(to_qcheckstate(settings.sync_meshes));
         layout->addWidget(ck_meshes, iy++, 0, 1, 3);
         connect(ck_meshes, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncMeshes(int)));
 
@@ -144,22 +141,22 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         layout_mesh->setContentsMargins(10, 0, 0, 0);
 
         auto ck_bones = new QCheckBox("Sync Joints");
-        ck_bones->setCheckState(to_checkstate(settings.sync_bones));
+        ck_bones->setCheckState(to_qcheckstate(settings.sync_bones));
         layout_mesh->addWidget(ck_bones, iy2++, 0);
-        connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleBones(int)));
+        connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBones(int)));
 
         auto ck_blendshapes = new QCheckBox("Sync Morphs");
-        ck_blendshapes->setCheckState(to_checkstate(settings.sync_blendshapes));
+        ck_blendshapes->setCheckState(to_qcheckstate(settings.sync_blendshapes));
         layout_mesh->addWidget(ck_blendshapes, iy2++, 0);
-        connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleBlendshapes(int)));
+        connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBlendshapes(int)));
 
         auto ck_bake_deformers = new QCheckBox("Bake Deformers");
-        ck_bake_deformers->setCheckState(to_checkstate(settings.bake_deformers));
+        ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
         layout_mesh->addWidget(ck_bake_deformers, iy2++, 0);
         connect(ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
 
         auto ck_double_sided = new QCheckBox("Make Double Sided");
-        ck_double_sided->setCheckState(to_checkstate(settings.make_double_sided));
+        ck_double_sided->setCheckState(to_qcheckstate(settings.make_double_sided));
         layout_mesh->addWidget(ck_double_sided, iy2++, 0);
         connect(ck_double_sided, SIGNAL(stateChanged(int)), this, SLOT(onToggleDoubleSided(int)));
 
@@ -171,27 +168,27 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     // other components
     {
         auto ck_textures = new QCheckBox("Sync Textures");
-        ck_textures->setCheckState(to_checkstate(settings.sync_textures));
+        ck_textures->setCheckState(to_qcheckstate(settings.sync_textures));
         layout->addWidget(ck_textures, iy++, 0, 1, 3);
         connect(ck_textures, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncTextures(int)));
 
         auto ck_minst = new QCheckBox("Sync Mesh Instances");
-        ck_minst->setCheckState(to_checkstate(settings.sync_mesh_instances));
+        ck_minst->setCheckState(to_qcheckstate(settings.sync_mesh_instances));
         layout->addWidget(ck_minst, iy++, 0, 1, 3);
         connect(ck_minst, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncMeshInstances(int)));
 
         auto ck_replicators = new QCheckBox("Sync Replicators");
-        ck_replicators->setCheckState(to_checkstate(settings.sync_replicators));
+        ck_replicators->setCheckState(to_qcheckstate(settings.sync_replicators));
         layout->addWidget(ck_replicators, iy++, 0, 1, 3);
         connect(ck_replicators, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncReplicators(int)));
 
         auto ck_cameras = new QCheckBox("Sync Cameras");
-        ck_cameras->setCheckState(to_checkstate(settings.sync_cameras));
+        ck_cameras->setCheckState(to_qcheckstate(settings.sync_cameras));
         layout->addWidget(ck_cameras, iy++, 0, 1, 3);
         connect(ck_cameras, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncCameras(int)));
 
         auto ck_lights = new QCheckBox("Sync Lights");
-        ck_lights->setCheckState(to_checkstate(settings.sync_lights));
+        ck_lights->setCheckState(to_qcheckstate(settings.sync_lights));
         layout->addWidget(ck_lights, iy++, 0, 1, 3);
         connect(ck_lights, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncLights(int)));
     }
@@ -199,7 +196,7 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     {
         auto ck_auto_sync = new QCheckBox("Auto Sync");
         ck_auto_sync->setContentsMargins(0, space, 0, 0);
-        ck_auto_sync->setCheckState(to_checkstate(settings.auto_sync));
+        ck_auto_sync->setCheckState(to_qcheckstate(settings.auto_sync));
         layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
         connect(ck_auto_sync, SIGNAL(stateChanged(int)), this, SLOT(onToggleAutoSync(int)));
 
@@ -228,7 +225,7 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         connect(ed_anim_sps, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationSPS(QString)));
 
         auto ck_keyframe_reduction = new QCheckBox("Keyframe Reduction");
-        ck_keyframe_reduction->setCheckState(to_checkstate(settings.reduce_keyframes));
+        ck_keyframe_reduction->setCheckState(to_qcheckstate(settings.reduce_keyframes));
         layout->addWidget(ck_keyframe_reduction, iy++, 0, 1, 3);
         connect(ck_keyframe_reduction, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeyframeReduction(int)));
 
@@ -240,7 +237,7 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
             layout_kfoptions->setContentsMargins(10, 0, 0, 0);
 
             auto ck_keep_flat_curves = new QCheckBox("Keep Flat Curves");
-            ck_keep_flat_curves->setCheckState(to_checkstate(settings.keep_flat_curves));
+            ck_keep_flat_curves->setCheckState(to_qcheckstate(settings.keep_flat_curves));
             layout_kfoptions->addWidget(ck_keep_flat_curves, iy2++, 0);
             connect(ck_keep_flat_curves, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeepFlatCurves(int)));
 
@@ -301,7 +298,7 @@ void msmodoSettingsWidget::onToggleSyncMeshes(int v)
         msmodoSendScene();
 }
 
-void msmodoSettingsWidget::onToggleBones(int v)
+void msmodoSettingsWidget::onToggleSyncBones(int v)
 {
     auto& settings = msmodoGetSettings();
     settings.sync_bones = v;
@@ -309,7 +306,7 @@ void msmodoSettingsWidget::onToggleBones(int v)
         msmodoSendScene();
 }
 
-void msmodoSettingsWidget::onToggleBlendshapes(int v)
+void msmodoSettingsWidget::onToggleSyncBlendshapes(int v)
 {
     auto& settings = msmodoGetSettings();
     settings.sync_blendshapes = v;

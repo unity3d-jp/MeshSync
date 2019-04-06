@@ -34,21 +34,21 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
       66,   22,   21,   21, 0x0a,
       93,   22,   21,   21, 0x0a,
      117,   22,   21,   21, 0x0a,
-     136,   22,   21,   21, 0x0a,
-     161,   22,   21,   21, 0x0a,
-     188,   22,   21,   21, 0x0a,
-     213,   22,   21,   21, 0x0a,
-     239,   22,   21,   21, 0x0a,
-     270,   22,   21,   21, 0x0a,
-     299,   22,   21,   21, 0x0a,
-     324,   22,   21,   21, 0x0a,
-     348,   22,   21,   21, 0x0a,
-     370,   22,   21,   21, 0x0a,
-     394,   22,   21,   21, 0x0a,
-     428,   22,   21,   21, 0x0a,
-     456,   22,   21,   21, 0x0a,
-     487,   22,   21,   21, 0x0a,
-     515,   22,   21,   21, 0x0a,
+     140,   22,   21,   21, 0x0a,
+     169,   22,   21,   21, 0x0a,
+     196,   22,   21,   21, 0x0a,
+     221,   22,   21,   21, 0x0a,
+     247,   22,   21,   21, 0x0a,
+     278,   22,   21,   21, 0x0a,
+     307,   22,   21,   21, 0x0a,
+     332,   22,   21,   21, 0x0a,
+     356,   22,   21,   21, 0x0a,
+     378,   22,   21,   21, 0x0a,
+     402,   22,   21,   21, 0x0a,
+     436,   22,   21,   21, 0x0a,
+     464,   22,   21,   21, 0x0a,
+     495,   22,   21,   21, 0x0a,
+     523,   22,   21,   21, 0x0a,
 
        0        // eod
 };
@@ -56,8 +56,8 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
 static const char qt_meta_stringdata_msmodoSettingsWidget[] = {
     "msmodoSettingsWidget\0\0v\0onEditServer(QString)\0"
     "onEditPort(QString)\0onEditScaleFactor(QString)\0"
-    "onToggleSyncMeshes(int)\0onToggleBones(int)\0"
-    "onToggleBlendshapes(int)\0"
+    "onToggleSyncMeshes(int)\0onToggleSyncBones(int)\0"
+    "onToggleSyncBlendshapes(int)\0"
     "onToggleBakeDeformers(int)\0"
     "onToggleDoubleSided(int)\0"
     "onToggleSyncTextures(int)\0"
@@ -83,8 +83,8 @@ void msmodoSettingsWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c,
         case 1: _t->onEditPort((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 2: _t->onEditScaleFactor((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 3: _t->onToggleSyncMeshes((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 4: _t->onToggleBones((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 5: _t->onToggleBlendshapes((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 4: _t->onToggleSyncBones((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 5: _t->onToggleSyncBlendshapes((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 6: _t->onToggleBakeDeformers((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 7: _t->onToggleDoubleSided((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 8: _t->onToggleSyncTextures((*reinterpret_cast< int(*)>(_a[1]))); break;

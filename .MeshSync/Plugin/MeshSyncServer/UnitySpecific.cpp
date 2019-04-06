@@ -74,22 +74,19 @@ static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias
         return;
 
     auto& key = curve[index];
-    if (index == 0)
-    {
+    if (index == 0) {
         key.in_tangent = key.out_tangent = 0;
 
         if (curve.size() > 1)
             key.in_weight = key.out_weight = kDefaultWeight;
     }
-    else if (index == curve.size() - 1)
-    {
+    else if (index == curve.size() - 1) {
         key.in_tangent = key.out_tangent = 0;
 
         if (curve.size() > 1)
             key.in_weight = key.out_weight = kDefaultWeight;
     }
-    else
-    {
+    else {
         float dx1 = key.time - curve[index - 1].time;
         float dy1 = key.value - curve[index - 1].value;
 
@@ -104,8 +101,7 @@ static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias
 
         float m = SafeDiv(dy, dx);
 
-        if ((m1 > 0 && m2 > 0) || (m1 < 0 && m2 < 0))
-        {
+        if ((m1 > 0 && m2 > 0) || (m1 < 0 && m2 < 0)) {
             float lower_bias = (1.0f - bias) * 0.5f;
             float upper_bias = lower_bias + bias;
 
@@ -120,21 +116,18 @@ static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias
 
                 key.in_tangent = mp; key.out_tangent = mp;
             }
-            else if (std::abs(dy1) < std::abs(lower_dy))
-            {
+            else if (std::abs(dy1) < std::abs(lower_dy)) {
                 float b = SafeDiv(dy1, lower_dy);
                 //T mp = b * m + (1.0F - b) * m1;
                 float mp = b * m;
 
                 key.in_tangent = mp; key.out_tangent = mp;
             }
-            else
-            {
+            else {
                 key.in_tangent = m; key.out_tangent = m;
             }
         }
-        else
-        {
+        else {
             key.in_tangent = key.out_tangent = 0.0f;
         }
 
