@@ -54,12 +54,46 @@ public:
         return LXe_OK;
     }
 
+    void sil_ItemAdd(ILxUnknownID item) override
+    {
+        CLxUser_Item obj(item);
+        if (obj.IsA(m_ifs->tLocator))
+            m_ifs->onItemAdd(obj);
+    }
+
+    void sil_ItemRemove(ILxUnknownID item) override
+    {
+        CLxUser_Item obj(item);
+        if (obj.IsA(m_ifs->tLocator))
+            m_ifs->onItemRemove(obj);
+    }
+
+    void sil_ItemParent(ILxUnknownID item) override
+    {
+        CLxUser_Item obj(item);
+        if (obj.IsA(m_ifs->tLocator))
+            m_ifs->onTreeRestructure();
+    }
+
+    void sil_ItemChild(ILxUnknownID item) override
+    {
+        CLxUser_Item obj(item);
+        if (obj.IsA(m_ifs->tLocator))
+            m_ifs->onTreeRestructure();
+    }
+
+    void sil_ItemName(ILxUnknownID item) override
+    {
+        CLxUser_Item obj(item);
+        if (obj.IsA(m_ifs->tLocator))
+            m_ifs->onTreeRestructure();
+    }
 
     void sel_ChannelValue(ILxUnknownID item, unsigned index) override
     {
         CLxUser_Item obj(item);
         if (obj.IsA(m_ifs->tLocator))
-            m_ifs->onItemUpdated(obj);
+            m_ifs->onItemUpdate(obj);
     }
 
 private:
@@ -67,19 +101,18 @@ private:
     bool m_playing = false;
 };
 
-class msmodoTimerCallbackVisitor : public CLxImpl_AbstractVisitor
+class msmodoTimerCallbackVisitor : public CLxVisitor
 {
 public:
-    msmodoTimerCallbackVisitor() {}
+    msmodoTimerCallbackVisitor(msmodoInterface *ifs) : m_ifs(ifs) {}
 
-    LxResult Evaluate() override
+    void evaluate() override
     {
         m_ifs->onIdle();
         m_ifs->startTimer();
-        return LXe_OK;
     }
 
-    msmodoInterface *m_ifs = nullptr;
+    msmodoInterface *m_ifs;
 };
 
 
@@ -127,8 +160,7 @@ void msmodoInterface::prepare()
         m_svc_listener.AddListener(*m_event_listener);
     }
     if (!m_timer_callback) {
-        m_timer_callback = new CLxInst_OneVisitor<msmodoTimerCallbackVisitor>();
-        m_timer_callback->loc.m_ifs = this;
+        m_timer_callback = new msmodoTimerCallbackVisitor(this);
         startTimer();
     }
 }
@@ -140,9 +172,10 @@ void msmodoInterface::startTimer()
 }
 
 
-void msmodoInterface::onItemAdded(CLxUser_Item& item) {}
-void msmodoInterface::onItemRemoved(CLxUser_Item& item) {}
-void msmodoInterface::onItemUpdated(CLxUser_Item& item) {}
+void msmodoInterface::onItemAdd(CLxUser_Item& item) {}
+void msmodoInterface::onItemRemove(CLxUser_Item& item) {}
+void msmodoInterface::onItemUpdate(CLxUser_Item& item) {}
+void msmodoInterface::onTreeRestructure() {}
 void msmodoInterface::onTimeChange() {}
 void msmodoInterface::onIdle() {}
 
@@ -204,6 +237,9 @@ std::tuple<double, double> msmodoInterface::getTimeRange()
 
 void msmodoInterface::dbgDumpItem(CLxUser_Item item)
 {
+    if (!item)
+        return;
+
     {
         auto path = GetPath(item);
         auto t = item.Type();

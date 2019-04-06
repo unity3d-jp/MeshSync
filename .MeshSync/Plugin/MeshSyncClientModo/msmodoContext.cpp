@@ -84,12 +84,64 @@ void msmodoContext::wait()
 
 void msmodoContext::update()
 {
+    if (m_pending_scope != SendScope::None) {
+        sendScene(m_pending_scope, false);
+    }
+}
+
+void msmodoContext::onItemAdd(CLxUser_Item& item)
+{
+    if (m_settings.auto_sync)
+        m_pending_scope = SendScope::All;
+}
+
+void msmodoContext::onItemRemove(CLxUser_Item& item)
+{
+    auto it = m_tree_nodes.find(item);
+    if (it != m_tree_nodes.end()) {
+        {
+            auto& rec = it->second;
+            m_entity_manager.erase(rec.path);
+        }
+        m_tree_nodes.erase(it);
+
+        if (m_settings.auto_sync)
+            m_pending_scope = SendScope::All;
+    }
+}
+
+void msmodoContext::onItemUpdate(CLxUser_Item& item)
+{
+    if (m_ignore_events)
+        return;
+
+    auto it = m_tree_nodes.find(item);
+    if (it != m_tree_nodes.end()) {
+        it->second.dirty = true;
+
+        if (m_settings.auto_sync && m_pending_scope == SendScope::None)
+            m_pending_scope = SendScope::Updated;
+    }
+    else {
+        //dbgDumpItem(item);
+    }
+}
+
+void msmodoContext::onTreeRestructure()
+{
+    if (m_settings.auto_sync)
+        m_pending_scope = SendScope::All;
 }
 
 void msmodoContext::onTimeChange()
 {
     if (m_settings.auto_sync)
         sendScene(SendScope::All, false);
+}
+
+void msmodoContext::onIdle()
+{
+    update();
 }
 
 
@@ -256,9 +308,9 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     exportMaterials();
 
     // export entities
-    auto do_export = [this](CLxUser_Item& obj) { exportObject(obj); };
-
     if (scope == SendScope::All) {
+        auto do_export = [this](CLxUser_Item& obj) { exportObject(obj, true); };
+
         if (m_settings.sync_cameras)
             eachCamera(do_export);
         if (m_settings.sync_lights)
@@ -272,6 +324,13 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
         if (m_settings.sync_replicators)
             eachReplicator(do_export);
         m_entity_manager.eraseStaleEntities();
+    }
+    else if (scope == SendScope::Updated) {
+        for (auto& kvp : m_tree_nodes) {
+            auto& n = kvp.second;
+            if (n.dirty)
+                exportObject(n.item, false);
+        }
     }
 
     // send
@@ -353,7 +412,7 @@ void msmodoContext::exportMaterials()
 }
 
 
-ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj)
+ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
 {
     if (!obj)
         return nullptr;
@@ -375,28 +434,33 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj)
     n.name = name;
     n.path = path;
 
+    auto handle_parent = [&]() {
+        if (parent)
+            exportObject(GetParent(obj), parent);
+    };
+
     if (obj.IsA(tCamera)) {
-        exportObject(GetParent(obj));
+        handle_parent();
         n.dst_obj = exportCamera(n);
     }
     else if (obj.IsA(tLight)) {
-        exportObject(GetParent(obj));
+        handle_parent();
         n.dst_obj = exportLight(n);
     }
     else if (obj.IsA(tMesh)) {
-        exportObject(GetParent(obj));
+        handle_parent();
         n.dst_obj = exportMesh(n);
     }
     else if (obj.IsA(tMeshInst)) {
-        exportObject(GetParent(obj));
+        handle_parent();
         n.dst_obj = exportMeshInstance(n);
     }
     else if (obj.IsA(tReplicator)) {
-        exportObject(GetParent(obj));
+        handle_parent();
         n.dst_obj = exportReplicator(n);
     }
     else {
-        exportObject(GetParent(obj));
+        handle_parent();
         n.dst_obj = exportTransform(n);
     }
     return n.dst_obj;
@@ -473,13 +537,15 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
 
 ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 {
+    CLxUser_Mesh mesh = m_settings.bake_deformers ? getDeformedMesh(n.item) : getBaseMesh(n.item);
+    if (!mesh)
+        return nullptr;
+
     auto ret = createEntity<ms::Mesh>(n);
     auto& dst = *ret;
     n.dst_obj = ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
-
-    CLxUser_Mesh mesh = m_settings.bake_deformers ? getDeformedMesh(n.item) : getBaseMesh(n.item);
 
     CLxUser_StringTag poly_tag;
     CLxUser_Polygon polygons;

@@ -13,9 +13,10 @@ public:
     void startTimer();
 
     // events
-    virtual void onItemAdded(CLxUser_Item& item);
-    virtual void onItemRemoved(CLxUser_Item& item);
-    virtual void onItemUpdated(CLxUser_Item& item);
+    virtual void onItemAdd(CLxUser_Item& item);
+    virtual void onItemRemove(CLxUser_Item& item);
+    virtual void onItemUpdate(CLxUser_Item& item);
+    virtual void onTreeRestructure();
     virtual void onTimeChange();
     virtual void onIdle();
 
@@ -69,7 +70,7 @@ public:
     CLxUser_ChannelRead m_ch_read_setup;
 
     msmodoEventListener *m_event_listener = nullptr;
-    CLxInst_OneVisitor<msmodoTimerCallbackVisitor> *m_timer_callback = nullptr;
+    msmodoTimerCallbackVisitor *m_timer_callback = nullptr;
 };
 
 

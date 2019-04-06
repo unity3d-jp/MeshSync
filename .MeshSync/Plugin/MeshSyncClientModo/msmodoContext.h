@@ -88,21 +88,26 @@ public:
 
     bool recvScene();
 
+    void onItemAdd(CLxUser_Item& item) override;
+    void onItemRemove(CLxUser_Item& item) override;
+    void onItemUpdate(CLxUser_Item& item) override;
+    void onTreeRestructure() override;
     void onTimeChange() override;
+    void onIdle() override;
 
-public:
+private:
     struct TreeNode;
     using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
 
     struct TreeNode : public mu::noncopyable
     {
         CLxUser_Item item;
-        CLxLoc_MeshTracker mesh_tracker;
 
         std::string name;
         std::string path;
         int id = ms::InvalidID;
         int index = 0;
+        bool dirty = true;
 
         ms::TransformPtr dst_obj;
         ms::AnimationPtr dst_anim;
@@ -123,8 +128,7 @@ public:
     void exportMaterials();
     ms::MaterialPtr exportMaterial(CLxUser_Item obj);
 
-    ms::TransformPtr exportObject(CLxUser_Item obj);
-    template<class T> static AnimationExtractor getAnimationExtractor();
+    ms::TransformPtr exportObject(CLxUser_Item obj, bool parent);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportMeshInstance(TreeNode& node);
@@ -134,6 +138,7 @@ public:
     ms::TransformPtr exportReplicator(TreeNode& node);
 
     int exportAnimations(SendScope scope);
+    template<class T> static AnimationExtractor getAnimationExtractor();
     template<class T> std::shared_ptr<T> createAnimation(TreeNode& n);
     bool exportAnimation(CLxUser_Item obj);
     void extractTransformAnimationData(TreeNode& node);
