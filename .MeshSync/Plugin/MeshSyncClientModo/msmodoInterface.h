@@ -31,7 +31,7 @@ public:
     CLxUser_Mesh getBaseMesh(CLxUser_Item& mesh_obj);
     CLxUser_Mesh getDeformedMesh(CLxUser_Item& mesh_obj);
 
-    // Body: [] (CLxUser_Item &replica, const mu::float4x4& matrix) -> void
+    // Body: [] (CLxUser_Item &geom, const mu::float4x4& matrix) -> void
     template<class Body> void eachReplica(CLxUser_Item& item, const Body& body);
 
     std::tuple<double, double> getTimeRange();

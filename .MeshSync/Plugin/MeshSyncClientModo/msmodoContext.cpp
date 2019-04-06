@@ -220,15 +220,19 @@ void msmodoContext::extractReplicaData(
     TreeNode& n, CLxUser_Item& geom, int nth, const mu::float4x4& matrix,
     std::string& path, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
 {
-    char buf[64];
-    sprintf(buf, " (%d)", nth++);
-    path = n.path;
+    if (n.dst_obj)
+        path = n.dst_obj->path;
+    else if (n.dst_anim)
+        path = n.dst_anim->path;
+    else
+        path = GetPath(n.item);
     path += '/';
     path += GetName(geom);
+
+    char buf[64];
+    sprintf(buf, " (%d)", nth++);
     path += buf;
 
-    auto p = ms::Transform::create();
-    auto& dst = *p;
     pos = mu::extract_position(matrix);
     rot = mu::extract_rotation(matrix);
     scale = mu::extract_scale(matrix);
@@ -852,6 +856,29 @@ int msmodoContext::exportAnimations(SendScope scope)
     return num_exported;
 }
 
+
+#define DefAnimationExtractor(Type, Extractor)\
+    template<> msmodoContext::AnimationExtractor msmodoContext::getAnimationExtractor<Type>() { return &Extractor; }
+
+DefAnimationExtractor(ms::TransformAnimation, msmodoContext::extractTransformAnimationData);
+DefAnimationExtractor(ms::CameraAnimation, msmodoContext::extractCameraAnimationData);
+DefAnimationExtractor(ms::LightAnimation, msmodoContext::extractLightAnimationData);
+DefAnimationExtractor(ms::MeshAnimation, msmodoContext::extractMeshAnimationData);
+
+#undef DefAnimationExtractor
+
+template<class T>
+std::shared_ptr<T> msmodoContext::createAnimation(TreeNode& n)
+{
+    auto ret = T::create();
+    auto& dst = *ret;
+    dst.path = GetPath(n.item);
+    n.dst_anim = ret;
+    n.anim_extractor = getAnimationExtractor<T>();
+    m_animations.front()->animations.push_back(ret);
+    return ret;
+}
+
 bool msmodoContext::exportAnimation(CLxUser_Item obj)
 {
     if (!obj)
@@ -864,33 +891,27 @@ bool msmodoContext::exportAnimation(CLxUser_Item obj)
 
     if (obj.IsA(tCamera)) {
         exportAnimation(GetParent(obj));
-        n.dst_anim = ms::CameraAnimation::create();
-        n.anim_extractor = &msmodoContext::extractCameraAnimationData;
+        n.dst_anim = createAnimation<ms::CameraAnimation>(n);
     }
     else if (obj.IsA(tLight)) {
         exportAnimation(GetParent(obj));
-        n.dst_anim = ms::LightAnimation::create();
-        n.anim_extractor = &msmodoContext::extractLightAnimationData;
+        n.dst_anim = createAnimation<ms::LightAnimation>(n);
     }
     else if (obj.IsA(tMesh)) {
         exportAnimation(GetParent(obj));
-        n.dst_anim = ms::MeshAnimation::create();
-        n.anim_extractor = &msmodoContext::extractMeshAnimationData;
+        n.dst_anim = createAnimation<ms::MeshAnimation>(n);
     }
     else if (obj.IsA(tReplicator)) {
         exportAnimation(GetParent(obj));
-        n.dst_anim = ms::TransformAnimation::create();
+        n.dst_anim = createAnimation<ms::TransformAnimation>(n);
         n.anim_extractor = &msmodoContext::extractReplicatorAnimationData;
     }
     else { // includes MeshInstances
         exportAnimation(GetParent(obj));
-        n.dst_anim = ms::TransformAnimation::create();
-        n.anim_extractor = &msmodoContext::extractTransformAnimationData;
+        n.dst_anim = createAnimation<ms::TransformAnimation>(n);
     }
 
     if (n.dst_anim != nullptr) {
-        m_animations.front()->animations.push_back(n.dst_anim);
-        n.dst_anim->path = n.path;
         m_anim_nodes.push_back(&n);
         return true;
     }
@@ -997,14 +1018,13 @@ void msmodoContext::extractReplicatorAnimationData(TreeNode& n)
 {
     extractTransformAnimationData(n);
 
-    // export replica
+    // export replicas
     int nth = 0;
     eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
         std::string path;
         auto pos = mu::float3::zero();
         auto rot = mu::quatf::identity();
         auto scale = mu::float3::one();
-        bool vis = true;
         extractReplicaData(n, geom, nth++, matrix, path, pos, rot, scale);
 
         auto &dst_ptr = n.dst_anim_replicas[path];
@@ -1024,6 +1044,7 @@ void msmodoContext::extractReplicatorAnimationData(TreeNode& n)
 
 void msmodoContext::kickAsyncSend()
 {
+    // resolve
     ms::parallel_for_each(m_tree_nodes.begin(), m_tree_nodes.end(), [this](auto& kvp) {
         auto& node = kvp.second;
         node.resolveMaterialIDs(this);

@@ -90,7 +90,10 @@ public:
 
     void onTimeChange() override;
 
-private:
+public:
+    struct TreeNode;
+    using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
+
     struct TreeNode : public mu::noncopyable
     {
         CLxUser_Item item;
@@ -107,7 +110,6 @@ private:
         RawVector<const char*> material_names; // mesh: per-face material names.
         std::vector<ms::TransformPtr> replicas, prev_replicas; // replicator: 
 
-        using AnimationExtractor = void (msmodoContext::*)(TreeNode& node);
         AnimationExtractor anim_extractor = nullptr;
 
         void clearState();
@@ -121,6 +123,7 @@ private:
     ms::MaterialPtr exportMaterial(CLxUser_Item obj);
 
     ms::TransformPtr exportObject(CLxUser_Item obj);
+    template<class T> static AnimationExtractor getAnimationExtractor();
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportMeshInstance(TreeNode& node);
@@ -130,6 +133,7 @@ private:
     ms::TransformPtr exportReplicator(TreeNode& node);
 
     int exportAnimations(SendScope scope);
+    template<class T> std::shared_ptr<T> createAnimation(TreeNode& n);
     bool exportAnimation(CLxUser_Item obj);
     void extractTransformAnimationData(TreeNode& node);
     void extractCameraAnimationData(TreeNode& node);
