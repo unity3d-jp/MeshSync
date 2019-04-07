@@ -123,6 +123,7 @@ private:
 
         void resolveMaterialIDs(msmodoContext *self);
         void resolveReplicas(msmodoContext *self);
+        void eraseFromEntityManager(msmodoContext *self);
     };
 
     void exportMaterials();

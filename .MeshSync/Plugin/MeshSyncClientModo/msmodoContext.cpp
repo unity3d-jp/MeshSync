@@ -55,6 +55,15 @@ void msmodoContext::TreeNode::resolveReplicas(msmodoContext *self)
     prev_replicas = replicas;
 }
 
+void msmodoContext::TreeNode::eraseFromEntityManager(msmodoContext *self)
+{
+    auto& manager = self->m_entity_manager;
+    manager.erase(path);
+    for (auto& r : prev_replicas)
+        manager.erase(r->path);
+
+}
+
 
 
 msmodoContext& msmodoContext::getInstance()
@@ -99,10 +108,7 @@ void msmodoContext::onItemRemove(CLxUser_Item& item)
 {
     auto it = m_tree_nodes.find(item);
     if (it != m_tree_nodes.end()) {
-        {
-            auto& rec = it->second;
-            m_entity_manager.erase(rec.path);
-        }
+        it->second.eraseFromEntityManager(this);
         m_tree_nodes.erase(it);
 
         if (m_settings.auto_sync)
@@ -307,6 +313,18 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 
     exportMaterials();
 
+    // erase dead entities
+    for (auto i = m_tree_nodes.begin(); i != m_tree_nodes.end(); /**/) {
+        auto& n = i->second;
+        if (!valid(n.item)) {
+            m_tree_nodes.erase(i++);
+            n.eraseFromEntityManager(this);
+        }
+        else {
+            ++i;
+        }
+    }
+
     // export entities
     if (scope == SendScope::All) {
         auto do_export = [this](CLxUser_Item& obj) { exportObject(obj, true); };
@@ -424,9 +442,9 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
 
     auto name = GetName(obj);
     auto path = GetPath(obj);
-    if (!n.path.empty() && n.path!=path) {
+    if (!n.path.empty() && n.path != path) {
         // renamed
-        m_entity_manager.erase(n.path);
+        n.eraseFromEntityManager(this);
     }
     if (n.index == 0) {
         n.index = ++m_entity_index_seed;

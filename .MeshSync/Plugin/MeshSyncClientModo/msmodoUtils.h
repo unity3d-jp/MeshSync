@@ -5,9 +5,10 @@ std::string GetName(CLxUser_Item& obj);
 std::string GetPath(CLxUser_Item& obj);
 std::vector<const char*> GetMapNames(CLxUser_MeshMap& mmap, const LXtID4& id4);
 
-inline bool LXTypeMatch(const char *t1, const char *t2)
+inline bool valid(CLxUser_Item& obj)
 {
-    return t1 && t2 && strcmp(t1, t2) == 0;
+    // Type() seems return 0 if the object is dead
+    return obj.test() && obj.Type() != 0;
 }
 
 inline mu::float2 to_float2(const LXtFVector2& v)
