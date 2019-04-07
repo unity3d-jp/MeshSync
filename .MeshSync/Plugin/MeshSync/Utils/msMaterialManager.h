@@ -32,6 +32,8 @@ public:
     std::vector<MaterialPtr> getStaleMaterials();
     void eraseStaleMaterials();
 
+    void setAlwaysMarkDirty(bool v);
+
 private:
     struct Record
     {
@@ -42,6 +44,7 @@ private:
     };
     Record& lockAndGet(int id);
 
+    bool m_always_mark_dirty = false;
     std::map<int, Record> m_records;
     std::vector<Identifier> m_deleted;
     std::mutex m_mutex;

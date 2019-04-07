@@ -4,14 +4,14 @@
 CLxUser_Item GetParent(CLxUser_Item& obj)
 {
     CLxUser_Item parent;
-    if (obj && LXx_OK(obj.Parent(parent)))
+    if (valid(obj) && LXx_OK(obj.Parent(parent)))
         return parent;
     return nullptr;
 }
 
 std::string GetName(CLxUser_Item& obj)
 {
-    if (!obj)
+    if (!valid(obj))
         return std::string();
     const char *name;
     obj.UniqueName(&name);
@@ -20,7 +20,7 @@ std::string GetName(CLxUser_Item& obj)
 
 std::string GetPath(CLxUser_Item& obj)
 {
-    if (!obj)
+    if (!valid(obj))
         return std::string();
     std::string ret;
     if (auto parent = GetParent(obj))

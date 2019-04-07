@@ -305,13 +305,9 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     }
     m_pending_scope = SendScope::None;
 
-    if (dirty_all) {
-        m_entity_manager.makeDirtyAll();
-    }
-
     prepare();
-
-    exportMaterials();
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
 
     // erase dead entities
     for (auto i = m_tree_nodes.begin(); i != m_tree_nodes.end(); /**/) {
@@ -320,28 +316,23 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
             m_tree_nodes.erase(i++);
             n.eraseFromEntityManager(this);
         }
-        else {
+        else
             ++i;
-        }
     }
 
-    // export entities
+    // materials
+    exportMaterials();
+
+    // entities
     if (scope == SendScope::All) {
         auto do_export = [this](CLxUser_Item& obj) { exportObject(obj, true); };
 
-        if (m_settings.sync_cameras)
-            eachCamera(do_export);
-        if (m_settings.sync_lights)
-            eachLight(do_export);
-        if (m_settings.sync_bones)
-            eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
-        if (m_settings.sync_meshes)
-            eachMesh(do_export);
-        if (m_settings.sync_mesh_instances)
-            eachMeshInstance(do_export);
-        if (m_settings.sync_replicators)
-            eachReplicator(do_export);
-        m_entity_manager.eraseStaleEntities();
+        eachCamera(do_export);
+        eachLight(do_export);
+        eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
+        eachMesh(do_export);
+        eachMeshInstance(do_export);
+        eachReplicator(do_export);
     }
     else if (scope == SendScope::Updated) {
         for (auto& kvp : m_tree_nodes) {
@@ -432,10 +423,11 @@ void msmodoContext::exportMaterials()
 
 ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
 {
-    if (!obj)
+    if (!valid(obj))
         return nullptr;
 
     auto& n = m_tree_nodes[obj];
+    n.dirty = false;
     if (n.dst_obj)
         return n.dst_obj;
     n.item = obj;
@@ -458,24 +450,39 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
     };
 
     if (obj.IsA(tCamera)) {
-        handle_parent();
-        n.dst_obj = exportCamera(n);
+        if (m_settings.sync_cameras) {
+            handle_parent();
+            n.dst_obj = exportCamera(n);
+        }
     }
     else if (obj.IsA(tLight)) {
-        handle_parent();
-        n.dst_obj = exportLight(n);
+        if (m_settings.sync_lights) {
+            handle_parent();
+            n.dst_obj = exportLight(n);
+        }
     }
     else if (obj.IsA(tMesh)) {
-        handle_parent();
-        n.dst_obj = exportMesh(n);
+        if (m_settings.sync_bones) {
+            eachMesh([&](CLxUser_Item& obj) {
+                eachBone(obj, [&](CLxUser_Item& b) { exportObject(b, true); });
+            });
+        }
+        if (m_settings.sync_meshes) {
+            handle_parent();
+            n.dst_obj = exportMesh(n);
+        }
     }
     else if (obj.IsA(tMeshInst)) {
-        handle_parent();
-        n.dst_obj = exportMeshInstance(n);
+        if (m_settings.sync_mesh_instances) {
+            handle_parent();
+            n.dst_obj = exportMeshInstance(n);
+        }
     }
     else if (obj.IsA(tReplicator)) {
-        handle_parent();
-        n.dst_obj = exportReplicator(n);
+        if (m_settings.sync_replicators) {
+            handle_parent();
+            n.dst_obj = exportReplicator(n);
+        }
     }
     else {
         handle_parent();

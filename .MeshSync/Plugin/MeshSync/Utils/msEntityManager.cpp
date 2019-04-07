@@ -110,6 +110,9 @@ inline void EntityManager::addTransform(TransformPtr obj)
             rec.dirty_trans = true;
             rec.checksum_trans = checksum;
         }
+        else if (m_always_mark_dirty)
+            rec.dirty_trans = true;
+
     }
     obj->order = rec.order;
 }
@@ -145,6 +148,8 @@ inline void EntityManager::addGeometry(TransformPtr obj)
                 rec.dirty_trans = true;
                 rec.checksum_trans = checksum_trans;
             }
+            if (m_always_mark_dirty)
+                rec.dirty_geom = rec.dirty_trans = true;
         });
     }
     obj->order = rec.order;
@@ -258,6 +263,11 @@ void EntityManager::eraseStaleEntities()
         else
             ++it;
     }
+}
+
+void EntityManager::setAlwaysMarkDirty(bool v)
+{
+    m_always_mark_dirty = v;
 }
 
 void EntityManager::waitTasks()
