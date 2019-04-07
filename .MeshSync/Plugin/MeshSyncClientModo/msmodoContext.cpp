@@ -161,6 +161,8 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
 
     pos = extract_position(mat);
     rot = extract_rotation(mat);
+    if(n.item.IsA(tCamera) || n.item.IsA(tLight))
+        rot = mu::flipY(rot);
     scale = extract_scale(mat);
     vis = loc.Visible(m_ch_read) == LXe_TRUE;
 }
@@ -421,7 +423,7 @@ void msmodoContext::exportMaterials()
 }
 
 
-ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
+ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent, bool tip)
 {
     if (!valid(obj))
         return nullptr;
@@ -446,7 +448,11 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
 
     auto handle_parent = [&]() {
         if (parent)
-            exportObject(GetParent(obj), parent);
+            exportObject(GetParent(obj), parent, false);
+    };
+    auto handle_transform = [&]() {
+        handle_parent();
+        n.dst_obj = exportTransform(n);
     };
 
     if (obj.IsA(tCamera)) {
@@ -454,39 +460,47 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent)
             handle_parent();
             n.dst_obj = exportCamera(n);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else if (obj.IsA(tLight)) {
         if (m_settings.sync_lights) {
             handle_parent();
             n.dst_obj = exportLight(n);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else if (obj.IsA(tMesh)) {
-        if (m_settings.sync_bones) {
-            eachMesh([&](CLxUser_Item& obj) {
-                eachBone(obj, [&](CLxUser_Item& b) { exportObject(b, true); });
-            });
-        }
+        if (m_settings.sync_bones)
+            eachBone(obj, [&](CLxUser_Item& bone) { exportObject(bone, true); });
+
         if (m_settings.sync_meshes) {
             handle_parent();
             n.dst_obj = exportMesh(n);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else if (obj.IsA(tMeshInst)) {
         if (m_settings.sync_mesh_instances) {
             handle_parent();
             n.dst_obj = exportMeshInstance(n);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else if (obj.IsA(tReplicator)) {
         if (m_settings.sync_replicators) {
             handle_parent();
             n.dst_obj = exportReplicator(n);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else {
-        handle_parent();
-        n.dst_obj = exportTransform(n);
+        // bone or intermediate node
+        handle_transform();
     }
     return n.dst_obj;
 }
@@ -536,8 +550,6 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
-    dst.rotation = mu::flipY(dst.rotation);
-
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
@@ -552,8 +564,6 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
-    dst.rotation = mu::flipY(dst.rotation);
-
     extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
@@ -1031,10 +1041,6 @@ void msmodoContext::extractCameraAnimationData(TreeNode& n)
     extractTransformAnimationData(n);
 
     auto& dst = (ms::CameraAnimation&)*n.dst_anim;
-    {
-        auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
-    }
 
     bool ortho;
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
@@ -1058,10 +1064,6 @@ void msmodoContext::extractLightAnimationData(TreeNode& n)
     extractTransformAnimationData(n);
 
     auto& dst = (ms::LightAnimation&)*n.dst_anim;
-    {
-        auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
-    }
 
     ms::Light::LightType type;
     mu::float4 color;

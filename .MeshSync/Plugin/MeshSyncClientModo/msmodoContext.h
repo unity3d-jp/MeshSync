@@ -129,7 +129,7 @@ private:
     void exportMaterials();
     ms::MaterialPtr exportMaterial(CLxUser_Item obj);
 
-    ms::TransformPtr exportObject(CLxUser_Item obj, bool parent);
+    ms::TransformPtr exportObject(CLxUser_Item obj, bool parent, bool tip = true);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportMeshInstance(TreeNode& node);
