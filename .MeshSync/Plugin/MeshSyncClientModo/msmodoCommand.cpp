@@ -80,23 +80,18 @@ public:
     Handler("syncTextures", LXsTYPE_BOOLEAN, settings.sync_textures, true)\
     Handler("syncCameras", LXsTYPE_BOOLEAN, settings.sync_cameras, true)\
     Handler("syncLights", LXsTYPE_BOOLEAN, settings.sync_lights, true)\
-    Handler("animationTS", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
-    Handler("animationSPS", LXsTYPE_FLOAT, settings.animation_sps, false)\
-    Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)
+    Handler("syncMeshInstances", LXsTYPE_BOOLEAN, settings.sync_mesh_instances, true)\
+    Handler("syncReplicators", LXsTYPE_BOOLEAN, settings.sync_replicators, true)\
+    Handler("animationTimeScale", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
+    Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)\
+    Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)\
+    Handler("keepFlatCurves", LXsTYPE_BOOLEAN, settings.keep_flat_curves, false)
 
 
     void setup_args(CLxAttributeDesc &desc) override
     {
-#define Handler(Name, Type, Member, Sync) desc.add(Name, Type);
-        EachParams(Handler)
-#undef Handler
-        desc.add("dummy", LXsTYPE_BOOLEAN);
-    }
-
-    void interact() override
-    {
         auto& settings = msmodoGetSettings();
-#define Handler(Name, Type, Member, Sync) setArg(Name, Member);
+#define Handler(Name, Type, Member, Sync) desc.add(Name, Type); desc.default_val(Member);
         EachParams(Handler)
 #undef Handler
     }
@@ -119,29 +114,42 @@ public:
 class msmodoCmdExport : public CLxCommand
 {
 public:
+    class TargetSelector : public CLxCustomArgumentUI
+    {
+    public:
+        CLxDynamicUIValue* uivalue(CLxCommand &cmd) override
+        {
+            auto *pop = new CLxUIValue();
+            pop->popup_add("Objects");
+            pop->popup_add("Animations");
+            pop->popup_add("Everything");
+            return pop;
+        }
+    };
+
     void setup_args(CLxAttributeDesc &desc) override
     {
-        desc.add("target", LXsTYPE_STRING);
-        desc.default_val("scene");
+        desc.add("target", LXsTYPE_INTEGER);
+        desc.arg_set_custom(new TargetSelector());
     }
 
     void execute() override
     {
-        std::string target;
+        int target;
         cmd_read_arg("target", target);
 
         auto& inst = msmodoGetInstance();
-        if (target == "everything") {
+        if (target == 2) { // everything
             inst.wait();
             inst.sendScene(msmodoContext::SendScope::All, true);
             inst.wait();
             inst.sendAnimations(msmodoContext::SendScope::All);
         }
-        if (target == "animations") {
+        if (target == 1) { // animations
             inst.wait();
             inst.sendAnimations(msmodoContext::SendScope::All);
         }
-        else { // scene
+        else { // objects
             inst.wait();
             inst.sendScene(msmodoContext::SendScope::All, true);
         }

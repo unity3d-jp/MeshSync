@@ -367,6 +367,8 @@ bool msmodoContext::recvScene()
 {
     wait();
 
+    m_svc_log.DebugOut(LXi_DBLOG_NORMAL, "Not implemented yet. sorry!\n");
+
     // todo
     return false;
 }
