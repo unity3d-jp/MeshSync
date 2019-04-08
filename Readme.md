@@ -11,6 +11,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 2. [Maya LT](#maya-lt)
 3. [3ds Max](#3ds-max)
 3. [Motion Builder](#motion-builder)
+3. [Modo](#modo)
 4. [Blender](#blender)
 5. [メタセコイア](#メタセコイア)
 5. [VRED](#vred)
@@ -102,8 +103,33 @@ Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動�
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
 - NURBS などポリゴン以外の形状データは対応していません
 
-<img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 
+### Modo
+<img src="https://user-images.githubusercontent.com/1488611/55697991-d9135980-59fe-11e9-8e9f-8fcfba1b234f.png" height=300>
+<img src="https://user-images.githubusercontent.com/1488611/55697990-d9135980-59fe-11e9-9312-29c95e20e5b0.png" height=300>
+
+Modo 10, 12, 13 + Windows, Mac, Linux で動作を確認しています。
+- インストール：
+  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Modo_*.zip をダウンロードして展開
+  - Modo 内の System -> Add Plug-in で MeshSyncClientModo.fx を指定
+- インストール後は新たな View が追加されており、ここから各種設定や機能にアクセスできます (Application -> Custom View -> UnityMeshSync)
+- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
+- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+
+&nbsp;  
+
+- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
+- Mesh Instance や Replicator も部分的にサポートしています
+- ポリゴンメッシュはスキニング / Joint と Morph も Unity へ持ってこれるようになっていますが、デフォーマの扱いには注意が必要です。
+  - MeshSync が解釈できるデフォーマは Joint + Weight Map 方式のスキニングと Morph のみです。それ以外のデフォーマは無視されます。
+  - Mesh Instance や Replicator のスキニングは正しく Unity 側に反映できません。後述の "Bake Deformers" を使う必要があります。
+  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を同期します。複雑なデフォーマ構成であっても Unity 側の Mesh の内容がほぼ一致するようになりますが、代償としてスキニングや Morph/Blendshape の情報が失われます。
+- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
+- 負のスケールは部分的にしかサポートしていないので注意が必要です
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
+  
+  
+<img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 ### Blender
 Blender 2.79(a,b), 2.80 beta (2019-3-15) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
 - インストール：
