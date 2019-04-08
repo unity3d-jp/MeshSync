@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msmodoInterface.h"
 #include "msmodoUtils.h"
+#include "msmodoCompat.h"
 
 
 class msmodoEventListener :
@@ -189,6 +190,25 @@ void msmodoInterface::setChannelReadTime(double time)
 }
 
 
+template<class MeshFilterType>
+static inline void GetBaseMeshImpl(CLxUser_ChannelRead& ch_read, CLxUser_Item& obj, CLxUser_Mesh& dst_mesh)
+{
+    MeshFilterType meshfilter;
+    CLxUser_MeshFilterIdent meshfilter_ident;
+    if (ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
+        if (meshfilter_ident.copy(meshfilter))
+            meshfilter_ident.GetMesh(LXs_MESHFILTER_BASE, dst_mesh);
+    }
+}
+
+template<class MeshFilterType>
+static inline void GetDeformedMeshImpl(CLxUser_ChannelRead& ch_read, CLxUser_Item& obj, CLxUser_Mesh& dst_mesh)
+{
+    MeshFilterType meshfilter;
+    if (ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
+        meshfilter.GetMesh(dst_mesh);
+    }
+}
 
 CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
 {
@@ -196,12 +216,9 @@ CLxUser_Mesh msmodoInterface::getBaseMesh(CLxUser_Item& obj)
         return nullptr;
 
     CLxUser_Mesh mesh;
-    CLxUser_MeshFilter meshfilter;
-    CLxUser_MeshFilterIdent meshfilter_ident;
-    if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
-        if (meshfilter_ident.copy(meshfilter))
-            meshfilter_ident.GetMesh(LXs_MESHFILTER_BASE, mesh);
-    }
+    GetBaseMeshImpl<CLxUser_MeshFilter>(m_ch_read, obj, mesh);
+    if (!mesh)
+        GetBaseMeshImpl<CLxUser_MeshFilter1>(m_ch_read, obj, mesh);
     return mesh;
 }
 
@@ -211,10 +228,9 @@ CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
         return nullptr;
 
     CLxUser_Mesh mesh;
-    CLxUser_MeshFilter meshfilter;
-    if (m_ch_read.Object(obj, LXsICHAN_MESH_MESH, meshfilter)) {
-        meshfilter.GetMesh(mesh);
-    }
+    GetDeformedMeshImpl<CLxUser_MeshFilter>(m_ch_read, obj, mesh);
+    if (!mesh)
+        GetDeformedMeshImpl<CLxUser_MeshFilter1>(m_ch_read, obj, mesh);
     return mesh;
 }
 

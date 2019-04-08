@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="MeshSyncClientModo/pch.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoCommand.h" />
+    <ClInclude Include="MeshSyncClientModo\msmodoCompat.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoContext.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoInterface.h" />
     <ClInclude Include="MeshSyncClientModo\msmodoUtils.h" />
