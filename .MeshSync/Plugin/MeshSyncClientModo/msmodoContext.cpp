@@ -298,6 +298,18 @@ void msmodoContext::extractReplicaData(
     scale = mu::extract_scale(matrix);
 }
 
+bool msmodoContext::sendMaterials(bool dirty_all)
+{
+    if (dirty_all) {
+        m_material_manager.setAlwaysMarkDirty(dirty_all);
+        m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    }
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+    return true;
+}
 
 bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
 {
@@ -310,6 +322,7 @@ bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
     prepare();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
     // erase dead entities
     for (auto i = m_tree_nodes.begin(); i != m_tree_nodes.end(); /**/) {
@@ -380,10 +393,16 @@ bool msmodoContext::recvScene()
 
 ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item obj)
 {
+    CLxUser_Item mask;
+    std::string ptagtype;
     std::string ptag;
     for (CLxUser_Item i = GetParent(obj); i; i = GetParent(i)) {
-        if (m_ch_read.GetString(i, LXsICHAN_MASK_PTAG, ptag))
+        m_ch_read.GetString(i, LXsICHAN_MASK_PTYP, ptagtype);
+        if (ptagtype == "Material") {
+            mask = i;
+            m_ch_read.GetString(i, LXsICHAN_MASK_PTAG, ptag);
             break;
+        }
     }
     if (ptag.empty())
         return nullptr;
@@ -404,6 +423,38 @@ ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item obj)
             1.0f
         };
         stdmat.setColor(color);
+
+        if (m_settings.sync_textures) {
+            eachImageMap(mask, [&](CLxUser_Item& image) {
+                const char *effect;
+                if (!m_ch_read.Get(image, LXsICHAN_TEXTURELAYER_EFFECT, &effect))
+                    return;
+
+                if (match(effect, LXs_FX_DIFFCOLOR)) {
+                    if (auto filename = getImageFilePath(image))
+                        stdmat.setColorMap(m_texture_manager.addFile(filename, ms::TextureType::Default));
+                }
+                else if (
+                    match(effect, LXs_FX_LUMICOLOR) ||
+                    match(effect, LXs_FX_UE_EMIS) ||
+                    match(effect, LXs_FX_UT_EMIS) ||
+                    match(effect, LXs_FX_GLTF_EMIS))
+                {
+                    if (auto filename = getImageFilePath(image))
+                        stdmat.setEmissionMap(m_texture_manager.addFile(filename, ms::TextureType::Default));
+                }
+                else if (
+                    match(effect, LXs_FX_BUMP) ||
+                    match(effect, LXs_FX_NORMAL) ||
+                    match(effect, LXs_FX_UE_NORMAL) ||
+                    match(effect, LXs_FX_UT_NORMAL) ||
+                    match(effect, LXs_FX_GLTF_NORMAL))
+                {
+                    if (auto filename = getImageFilePath(image))
+                        stdmat.setBumpMap(m_texture_manager.addFile(filename, ms::TextureType::NormalMap));
+                }
+            });
+        }
     }
     m_material_manager.add(ret);
 

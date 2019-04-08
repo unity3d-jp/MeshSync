@@ -32,6 +32,7 @@
 #include <lx_layer.hpp>
 #include <lx_package.hpp>
 #include <lx_particle.hpp>
+#include <lx_image.hpp>
 #include <lx_log.hpp>
 #include <lx_listener.hpp>
 #include <lx_scripts.hpp>

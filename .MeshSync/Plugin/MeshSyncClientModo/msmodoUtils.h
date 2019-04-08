@@ -11,6 +11,11 @@ inline bool valid(CLxUser_Item& obj)
     return obj.test() && obj.Type() != 0;
 }
 
+inline bool match(const char *a, const char *b)
+{
+    return std::strcmp(a, b) == 0;
+}
+
 inline mu::float2 to_float2(const LXtFVector2& v)
 {
     return (mu::float2&)(v[0]);

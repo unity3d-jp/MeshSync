@@ -83,6 +83,7 @@ public:
 
     void wait();
     void update();
+    bool sendMaterials(bool dirty_all);
     bool sendScene(SendScope scope, bool dirty_all);
     bool sendAnimations(SendScope scope);
 

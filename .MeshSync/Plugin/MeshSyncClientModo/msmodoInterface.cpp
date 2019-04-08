@@ -136,6 +136,11 @@ void msmodoInterface::prepare()
     m_current_scene.GetChannels(m_ch_read, m_svc_selection.GetTime());
     m_current_scene.GetSetupChannels(m_ch_read_setup);
 
+    CLxUser_SceneGraph scene_graph;
+    m_current_scene.GetGraph(LXsGRAPH_SHADELOC, scene_graph);
+    if (scene_graph)
+        m_shadeloc_graph.set(scene_graph);
+
     if (tMaterial == 0) {
         tMaterial = m_svc_scene.ItemType(LXsITYPE_ADVANCEDMATERIAL);
 
@@ -155,6 +160,10 @@ void msmodoInterface::prepare()
         tDeform = m_svc_scene.ItemType(LXsITYPE_DEFORM);
         tGenInf = m_svc_scene.ItemType(LXsITYPE_GENINFLUENCE);
         tMorph = m_svc_scene.ItemType(LXsITYPE_MORPHDEFORM);
+
+        tImageMap = m_svc_scene.ItemType(LXsITYPE_IMAGEMAP);
+        tTextureLayer = m_svc_scene.ItemType(LXsITYPE_TEXTURELAYER);
+        tVideoStill = m_svc_scene.ItemType(LXsITYPE_VIDEOSTILL);
     }
     if (!m_event_listener) {
         m_event_listener = new msmodoEventListener(this);
@@ -232,6 +241,19 @@ CLxUser_Mesh msmodoInterface::getDeformedMesh(CLxUser_Item& obj)
     if (!mesh)
         GetDeformedMeshImpl<CLxUser_MeshFilter1>(m_ch_read, obj, mesh);
     return mesh;
+}
+
+const char* msmodoInterface::getImageFilePath(CLxUser_Item& image)
+{
+    CLxUser_Item still;
+    int n = m_shadeloc_graph.Forward(image);
+    for (int i = 0; i < n; i++) {
+        m_shadeloc_graph.Forward(image, i, still);
+        const char *filename;
+        if (still.IsA(tVideoStill) && m_ch_read.Get(still, LXsICHAN_VIDEOSTILL_FILENAME, &filename))
+            return filename;
+    }
+    return nullptr;
 }
 
 

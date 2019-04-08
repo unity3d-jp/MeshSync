@@ -58,15 +58,9 @@ public:
         return false;
     }
 
-    void setArg(const char *name, bool v) { cmd_set_arg(name, (int)v); }
-    void setArg(const char *name, int v) { cmd_set_arg(name, v); }
-    void setArg(const char *name, uint16_t v) { cmd_set_arg(name, v); }
-    void setArg(const char *name, float v) { cmd_set_arg(name, (double)v); }
-    void setArg(const char *name, const std::string& v) { cmd_set_arg(name, v); }
-
-#define EachParams(Handler)\
-    Handler("address", LXsTYPE_STRING, settings.client_settings.server, false)\
-    Handler("port", LXsTYPE_INTEGER, settings.client_settings.port, false)\
+#define EachParam(Handler)\
+    Handler("serverAddress", LXsTYPE_STRING, settings.client_settings.server, false)\
+    Handler("serverPort", LXsTYPE_INTEGER, settings.client_settings.port, false)\
     Handler("scaleFactor", LXsTYPE_FLOAT, settings.scale_factor, true)\
     Handler("autosync", LXsTYPE_BOOLEAN, settings.auto_sync, true)\
     Handler("syncMeshes", LXsTYPE_BOOLEAN, settings.sync_meshes, true)\
@@ -92,7 +86,7 @@ public:
     {
         auto& settings = msmodoGetSettings();
 #define Handler(Name, Type, Member, Sync) desc.add(Name, Type); desc.default_val(Member);
-        EachParams(Handler)
+        EachParam(Handler)
 #undef Handler
     }
 
@@ -103,7 +97,7 @@ public:
         if(getArg(Name, Member) && settings.auto_sync && Sync)\
             msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
 
-        EachParams(Handler)
+        EachParam(Handler)
 #undef Handler
     }
 
@@ -121,6 +115,7 @@ public:
         {
             auto *pop = new CLxUIValue();
             pop->popup_add("Objects");
+            pop->popup_add("Materials");
             pop->popup_add("Animations");
             pop->popup_add("Everything");
             return pop;
@@ -139,15 +134,21 @@ public:
         cmd_read_arg("target", target);
 
         auto& inst = msmodoGetInstance();
-        if (target == 2) { // everything
+        if (target == 3) { // everything
+            inst.wait();
+            inst.sendMaterials(true);
             inst.wait();
             inst.sendScene(msmodoContext::SendScope::All, true);
             inst.wait();
             inst.sendAnimations(msmodoContext::SendScope::All);
         }
-        if (target == 1) { // animations
+        if (target == 2) { // animations
             inst.wait();
             inst.sendAnimations(msmodoContext::SendScope::All);
+        }
+        if (target == 1) { // materials
+            inst.wait();
+            inst.sendMaterials(true);
         }
         else { // objects
             inst.wait();

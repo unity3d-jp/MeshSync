@@ -23,6 +23,8 @@ public:
     // time: inf -> current time
     void setChannelReadTime(double time = std::numeric_limits<double>::infinity());
 
+    template<class Body> void eachChild(CLxUser_Item& item, const Body& body);
+
     template<class Body> void enumerateItemGraphR(CLxUser_Item& item, const char *graph_name, const Body& body);
     template<class Body> void enumerateItemGraphF(CLxUser_Item& item, const char *graph_name, const Body& body);
     template<class Body> void enumerateChannelGraphR(CLxUser_Item& item, int channel, const char *graph_name, const Body& body);
@@ -40,8 +42,11 @@ public:
     template<class Body> void eachSkinDeformer(CLxUser_Item& item, const Body& body);
     template<class Body> void eachMorphDeformer(CLxUser_Item& item, const Body& body);
 
+    template<class Body> void eachImageMap(CLxUser_Item& material_mask, const Body& body);
+
     CLxUser_Mesh getBaseMesh(CLxUser_Item& mesh_obj);
     CLxUser_Mesh getDeformedMesh(CLxUser_Item& mesh_obj);
+    const char* getImageFilePath(CLxUser_Item& image);
 
     // Body: [] (CLxUser_Item &geom, const mu::float4x4& matrix) -> void
     template<class Body> void eachReplica(CLxUser_Item& item, const Body& body);
@@ -54,7 +59,8 @@ public:
     LXtItemType tMaterial = 0,
                 tLocator, tCamera, tLight, tMesh, tMeshInst, tReplicator,
                 tLightMaterial, tPointLight, tDirectionalLight, tSpotLight, tAreaLight,
-                tDeform, tGenInf, tMorph;
+                tDeform, tGenInf, tMorph,
+                tImageMap, tTextureLayer, tVideoStill;
 
     CLxUser_SceneService     m_svc_scene;
     CLxUser_SelectionService m_svc_selection;
@@ -68,6 +74,7 @@ public:
     CLxUser_Scene m_current_scene;
     CLxUser_ChannelRead m_ch_read;
     CLxUser_ChannelRead m_ch_read_setup;
+    CLxUser_ItemGraph m_shadeloc_graph;
 
     msmodoEventListener *m_event_listener = nullptr;
     msmodoTimerCallbackVisitor *m_timer_callback = nullptr;
@@ -105,6 +112,18 @@ private:
 };
 
 
+
+template<class Body>
+inline void msmodoInterface::eachChild(CLxUser_Item& item, const Body& body)
+{
+    CLxUser_Item child;
+    uint32_t n;
+    item.SubCount(&n);
+    for (uint32_t i = 0; i < n; ++i) {
+        item.SubByIndex(i, child);
+        body(child);
+    }
+}
 
 template<class Body>
 inline void msmodoInterface::enumerateItemGraphR(CLxUser_Item& item, const char *graph_name, const Body& body)
@@ -218,6 +237,16 @@ inline void msmodoInterface::eachMorphDeformer(CLxUser_Item& item, const Body& b
             body(def);
     });
 }
+
+template<class Body>
+inline void msmodoInterface::eachImageMap(CLxUser_Item& material_mask, const Body& body)
+{
+    eachChild(material_mask, [&](CLxUser_Item& child) {
+        if (child.Type() == tImageMap)
+            body(child);
+    });
+}
+
 
 
 template<class Body>
