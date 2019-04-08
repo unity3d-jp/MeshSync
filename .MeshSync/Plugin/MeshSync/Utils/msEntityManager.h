@@ -21,6 +21,7 @@ public:
     bool erase(int id);
     bool erase(const Identifier& identifier);
     bool erase(TransformPtr v);
+    bool eraseThreadSafe(TransformPtr v);
 
     // thread safe
     void add(TransformPtr v); 
@@ -36,6 +37,8 @@ public:
 
     std::vector<TransformPtr> getStaleEntities();
     void eraseStaleEntities();
+
+    void setAlwaysMarkDirty(bool v);
 
 private:
     struct Record
@@ -59,6 +62,7 @@ private:
     using kvp = std::map<std::string, Record>::value_type;
 
     int m_order = 0;
+    bool m_always_mark_dirty = false;
     std::map<std::string, Record> m_records;
     std::vector<Identifier> m_deleted;
     std::mutex m_mutex;

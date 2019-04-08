@@ -37,6 +37,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientVRED", "MeshS
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientVREDHook", "MeshSyncClientVREDHook.vcxproj", "{F3D086E7-680D-48DC-8C0A-22416B1C65D5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientModo", "MeshSyncClientModo.vcxproj", "{31919FE7-EE4D-4D8E-961E-FED45D510616}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -149,6 +151,12 @@ Global
 		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Release|x64.ActiveCfg = Release|x64
 		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Release|x64.Build.0 = Release|x64
 		{F3D086E7-680D-48DC-8C0A-22416B1C65D5}.Release|x86.ActiveCfg = Release|x64
+		{31919FE7-EE4D-4D8E-961E-FED45D510616}.Debug|x64.ActiveCfg = Debug|x64
+		{31919FE7-EE4D-4D8E-961E-FED45D510616}.Debug|x64.Build.0 = Debug|x64
+		{31919FE7-EE4D-4D8E-961E-FED45D510616}.Debug|x86.ActiveCfg = Debug|x64
+		{31919FE7-EE4D-4D8E-961E-FED45D510616}.Release|x64.ActiveCfg = Release|x64
+		{31919FE7-EE4D-4D8E-961E-FED45D510616}.Release|x64.Build.0 = Release|x64
+		{31919FE7-EE4D-4D8E-961E-FED45D510616}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

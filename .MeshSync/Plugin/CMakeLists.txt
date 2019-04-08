@@ -51,6 +51,9 @@ if(LINUX)
     option(BUILD_MOTIONBUILDER2019_CLIENT "Build MeshSyncClient for MotionBuilder 2019" OFF)
 endif()
 
+# Modo
+option(BUILD_MODO_CLIENT "Build MeshSyncClient for Modo" OFF)
+
 # Tests
 option(BUILD_TESTS "Tests" OFF)
 
@@ -125,6 +128,11 @@ if(BUILD_MOTIONBUILDER2018_CLIENT)
 endif()
 if(BUILD_MOTIONBUILDER2019_CLIENT)
     add_subdirectory_link(MeshSyncClientMotionBuilder2019 MeshSyncClientMotionBuilder)
+endif()
+
+# Modo
+if(BUILD_MODO_CLIENT)
+    add_subdirectory(MeshSyncClientModo)
 endif()
 
 # Tests

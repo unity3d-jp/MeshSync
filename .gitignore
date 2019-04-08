@@ -36,5 +36,6 @@ TestLocal.meta
 .MeshSync/Plugin/MeshSyncClientMaya20*/
 .MeshSync/Plugin/MeshSyncClientMayaLT20*/
 .MeshSync/Plugin/MeshSyncClientMotionBuilder20*/
+.MeshSync/Plugin/MeshSyncClientModo1*/
 MeshSyncAssets/
 MeshSyncAssets.meta

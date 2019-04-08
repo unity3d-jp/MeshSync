@@ -83,6 +83,8 @@ public:
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
 
+    static void sanitizeHierarchyPath(std::string& path);
+
 private:
     template<class MessageT>
     std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);

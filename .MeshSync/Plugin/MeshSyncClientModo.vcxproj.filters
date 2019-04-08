@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="MeshSyncClientModo\msmodoCommand.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientModo\msmodoUtils.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientModo/pch.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_geometry.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_io.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_log.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_math.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_matrix.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_message.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_meta.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_modifier.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_octree.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_package.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_parser.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_prefvalue.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_quaternion.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_queries.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_scene.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_schematic.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_select.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_shade.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_simd.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_surface.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_tableau.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_value.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_vector.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_vectorarray.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\util.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\clean.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\cwrap.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_attrdesc.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_attributes.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_chanmod.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_command.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_deform.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_dialog.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_drawover.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_drop.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MODO_SOURCE_DIR)\lxu_format.cpp">
+      <Filter>lxsdk</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientModo\msmodoContext.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientModo\msmodoInterface.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientModo\msmodoWidget.cpp">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MeshSyncClientModo\msmodoCommand.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoUtils.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo/pch.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoContext.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoInterface.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoWidget_moc.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientModo\msmodoCompat.h">
+      <Filter>MeshSyncClientModo</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MeshSyncClientModo">
+      <UniqueIdentifier>{c3c5caa2-1990-49c4-92dd-91780725ef47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lxsdk">
+      <UniqueIdentifier>{e3bec7b7-0fb1-49f7-89a9-d3e7c37e7822}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

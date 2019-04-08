@@ -173,6 +173,7 @@ public:
     void reduction(bool keep_flat_curves) override;
 
     BlendshapeAnimation* findOrCreateBlendshapeAnimation(const char *name);
+    BlendshapeAnimation* findOrCreateBlendshapeAnimation(const std::string& name);
 };
 msSerializable(MeshAnimation);
 

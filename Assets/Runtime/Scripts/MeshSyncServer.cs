@@ -437,7 +437,11 @@ namespace UTJ.MeshSync
 
                     EntityRecord srcrec = null;
                     if (m_clientObjects.TryGetValue(dstrec.reference, out srcrec) && srcrec.go != null)
+                    {
+                        dstrec.materialIDs = srcrec.materialIDs;
+                        dstrec.submeshCounts = srcrec.submeshCounts;
                         UpdateReference(dstrec.go, srcrec.go);
+                    }
                 }
 
                 // sort objects by index
@@ -2212,7 +2216,7 @@ namespace UTJ.MeshSync
         void CheckMaterialAssignedViaEditor()
         {
             bool changed = false;
-            foreach(var kvp in m_clientObjects)
+            foreach (var kvp in m_clientObjects)
             {
                 var rec = kvp.Value;
                 if (rec.go != null && rec.go.activeInHierarchy)

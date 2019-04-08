@@ -447,6 +447,15 @@ std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request,
     }
 }
 
+void Server::sanitizeHierarchyPath(std::string& path)
+{
+    for (char& c : path) {
+        if (c == '.')
+            c = '_';
+    }
+}
+
+
 void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
     auto mes = deserializeMessage<SetMessage>(request, response, dst);
@@ -454,9 +463,12 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
         return;
 
     dst.task = std::async(std::launch::async, [this, mes]() {
+        // receive and convert assets
         bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
         bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
         parallel_for_each(mes->scene.entities.begin(), mes->scene.entities.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
+            sanitizeHierarchyPath(obj->path);
+            sanitizeHierarchyPath(obj->reference);
             if (obj->getType() == Entity::Type::Mesh) {
                 auto& mesh = (Mesh&)*obj;
                 mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
@@ -485,6 +497,7 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
 
             auto clip = std::static_pointer_cast<AnimationClip>(asset);
             parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+                sanitizeHierarchyPath(anim->path);
                 if (swap_x || swap_yz) {
                     anim->convertHandedness(swap_x, swap_yz);
                 }
