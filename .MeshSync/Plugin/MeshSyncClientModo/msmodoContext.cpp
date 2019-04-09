@@ -179,8 +179,11 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
 
     pos = extract_position(mat);
     rot = extract_rotation(mat);
-    if(n.item.IsA(tCamera) || n.item.IsA(tLight))
+    if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
         rot = mu::flipY(rot);
+        if (n.item.IsA(tLight))
+            rot *= mu::rotateZ(180.0f * mu::Deg2Rad);
+    }
     scale = extract_scale(mat);
     vis = loc.Visible(m_ch_read) == LXe_TRUE;
 }
