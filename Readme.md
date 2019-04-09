@@ -54,7 +54,7 @@ Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で�
 
 
 ### 3ds Max
-3ds Max 2016, 2017, 2018, 2019 + Windows で動作を確認しています。
+3ds Max 2016, 2017, 2018, 2019, 2020 + Windows で動作を確認しています。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_3dsMax_Windows.zip をダウンロード
   - MeshSyncClient3dsMax.dlu をプラグイン用パスとして登録されているディレクトリにコピー
@@ -105,8 +105,7 @@ Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動�
 
 
 ### Modo
-<img src="https://user-images.githubusercontent.com/1488611/55697991-d9135980-59fe-11e9-8e9f-8fcfba1b234f.png" height=300>
-<img src="https://user-images.githubusercontent.com/1488611/55697990-d9135980-59fe-11e9-9312-29c95e20e5b0.png" height=300>
+<img src="https://user-images.githubusercontent.com/1488611/55697991-d9135980-59fe-11e9-8e9f-8fcfba1b234f.png" height=300><img src="https://user-images.githubusercontent.com/1488611/55697990-d9135980-59fe-11e9-9312-29c95e20e5b0.png" height=300>
 
 Modo 10, 12, 13 + Windows, Mac, Linux で動作を確認しています。
 - インストール：
@@ -127,9 +126,10 @@ Modo 10, 12, 13 + Windows, Mac, Linux で動作を確認しています。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
-  
-  
+- コマンドからも MeshSync の機能にアクセスできます。unity.meshsync.settings 設定変更、unity.meshsync.export エクスポートできます
+
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
+
 ### Blender
 Blender 2.79(a,b), 2.80 beta (2019-3-15) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
 - インストール：

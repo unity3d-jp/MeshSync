@@ -114,6 +114,7 @@ private:
         ms::AnimationPtr dst_anim;
         std::map<std::string, ms::AnimationPtr> dst_anim_replicas;
 
+        RawVector<LXtID4> face_types;
         RawVector<const char*> material_names; // mesh: per-face material names.
         std::vector<ms::TransformPtr> replicas, prev_replicas; // replicator: 
 
@@ -122,7 +123,7 @@ private:
         void clearState();
         void doExtractAnimation(msmodoContext *self);
 
-        void resolveMaterialIDs(msmodoContext *self);
+        void resolveMesh(msmodoContext *self);
         void resolveReplicas(msmodoContext *self);
         void eraseFromEntityManager(msmodoContext *self);
     };

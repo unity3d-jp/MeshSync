@@ -16,28 +16,46 @@ void msmodoContext::TreeNode::doExtractAnimation(msmodoContext *self)
         (self->*anim_extractor)(*this);
 }
 
-void msmodoContext::TreeNode::resolveMaterialIDs(msmodoContext *self)
+// * run in parallel *
+void msmodoContext::TreeNode::resolveMesh(msmodoContext *self)
 {
-    if (material_names.empty() || !dst_obj || dst_obj->getType() != ms::Entity::Type::Mesh)
+    if (!dst_obj || dst_obj->getType() != ms::Entity::Type::Mesh)
         return;
 
-    auto& materials = self->m_materials;
-    auto& dst = static_cast<ms::Mesh&>(*dst_obj);
-    int num_faces = (int)dst.counts.size();
+    if (!material_names.empty()) {
+        auto& materials = self->m_materials;
+        auto& dst = static_cast<ms::Mesh&>(*dst_obj);
+        int num_faces = (int)dst.counts.size();
 
-    // material names -> material ids
-    dst.material_ids.resize_discard(num_faces);
-    for (int fi = 0; fi < num_faces; ++fi) {
-        auto mname = material_names[fi];
-        int mid = -1;
-        auto it = std::lower_bound(materials.begin(), materials.end(), mname,
-            [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
-        if (it != materials.end() && (*it)->name == mname)
-            mid = (*it)->id;
-        dst.material_ids[fi] = mid;
+        // material names -> material ids
+        dst.material_ids.resize_discard(num_faces);
+        for (int fi = 0; fi < num_faces; ++fi) {
+            auto mname = material_names[fi];
+            int mid = -1;
+            auto it = std::lower_bound(materials.begin(), materials.end(), mname,
+                [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
+            if (it != materials.end() && (*it)->name == mname)
+                mid = (*it)->id;
+            dst.material_ids[fi] = mid;
+        }
+    }
+    if (!face_types.empty()) {
+        // exclude line objects for now
+        bool all_curves = true;
+        for (auto t : face_types) {
+            if (t != LXiPTYP_CURVE && t != LXiPTYP_BEZIER && t != LXiPTYP_LINE && t != LXiPTYP_BSPLINE) {
+                all_curves = false;
+                break;
+            }
+        }
+        if (all_curves) {
+            self->m_entity_manager.eraseThreadSafe(dst_obj);
+            return;
+        }
     }
 }
 
+// * run in parallel *
 void msmodoContext::TreeNode::resolveReplicas(msmodoContext *self)
 {
     if (replicas.empty() && prev_replicas.empty())
@@ -650,12 +668,15 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
     // topology
     {
+        n.face_types.resize_discard(num_faces);
         n.material_names.resize_discard(num_faces);
 
         dst.counts.resize_discard(num_faces);
         dst.indices.reserve_discard(num_faces * 4);
         for (int fi = 0; fi < num_faces; ++fi) {
             polygons.SelectByIndex(fi);
+
+            polygons.Type(&n.face_types[fi]);
 
             const char *material_name;
             poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
@@ -1193,7 +1214,7 @@ void msmodoContext::kickAsyncSend()
     // resolve
     ms::parallel_for_each(m_tree_nodes.begin(), m_tree_nodes.end(), [this](auto& kvp) {
         auto& node = kvp.second;
-        node.resolveMaterialIDs(this);
+        node.resolveMesh(this);
         node.resolveReplicas(this);
     });
 
