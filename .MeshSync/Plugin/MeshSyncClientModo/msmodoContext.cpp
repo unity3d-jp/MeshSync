@@ -269,7 +269,10 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
         }
         double radiance;
         m_ch_read.Double(n.item, ch_radiance, &radiance);
-        intensity = (float)radiance;
+
+        // this is purely based on my observation...
+        const float RadianceToIntensity = 0.4f;
+        intensity = (float)radiance * RadianceToIntensity;
     }
 
     // color
