@@ -950,6 +950,17 @@ namespace UTJ.MeshSync
     }
 
 
+    public class AnimationImportContext
+    {
+        public AnimationClip clip;
+        public GameObject root;
+        public GameObject target;
+        public string path;
+        public InterpolationMode interpolation;
+        public bool enableVisibility;
+        public Type mainComponentType;
+    }
+
     public struct TransformAnimationData
     {
         #region internal
@@ -1059,20 +1070,22 @@ namespace UTJ.MeshSync
                 return null;
 
             var x = new Keyframe[n];
-            msTransformAFillVisible(self, x, im);
+            msTransformAFillVisible(self, x, InterpolationMode.Constant);
 
             return new AnimationCurve(x);
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
+        public void ExportToClip(AnimationImportContext ctx)
         {
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
             var ttrans = typeof(Transform);
-            var tgo = typeof(GameObject);
 
             {
                 clip.SetCurve(path, ttrans, "m_LocalPosition", null);
-                var curves = GenTranslationCurves(im);
+                var curves = GenTranslationCurves(interpolation);
                 if (curves != null)
                 {
                     clip.SetCurve(path, ttrans, "m_LocalPosition.x", curves[0]);
@@ -1082,7 +1095,7 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, ttrans, "m_LocalRotation", null);
-                var curves = GenRotationCurves(im);
+                var curves = GenRotationCurves(interpolation);
                 if (curves != null)
                 {
                     if (curves.Length == 3)
@@ -1102,7 +1115,7 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, ttrans, "m_LocalScale", null);
-                var curves = GenScaleCurves(im);
+                var curves = GenScaleCurves(interpolation);
                 if (curves != null)
                 {
                     clip.SetCurve(path, ttrans, "m_LocalScale.x", curves[0]);
@@ -1110,13 +1123,12 @@ namespace UTJ.MeshSync
                     clip.SetCurve(path, ttrans, "m_LocalScale.z", curves[2]);
                 }
             }
+            if (ctx.enableVisibility && ctx.mainComponentType != null)
             {
-                clip.SetCurve(path, tgo, "m_IsActive", null);
-                var curve = GenVisibilityCurve(im);
+                clip.SetCurve(path, ctx.mainComponentType, "m_Enabled", null);
+                var curve = GenVisibilityCurve(interpolation);
                 if (curve != null)
-                {
-                    clip.SetCurve(path, tgo, "m_IsActive", curve);
-                }
+                    clip.SetCurve(path, ctx.mainComponentType, "m_Enabled", curve);
             }
         }
 #endif
@@ -1197,26 +1209,31 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
+        public void ExportToClip(AnimationImportContext ctx)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
             var tcam = typeof(Camera);
+            ctx.mainComponentType = tcam;
+            ((TransformAnimationData)self).ExportToClip(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
             {
                 clip.SetCurve(path, tcam, "field of view", null);
-                var curve = GenFovCurve(im);
+                var curve = GenFovCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tcam, "field of view", curve);
             }
             {
                 clip.SetCurve(path, tcam, "near clip plane", null);
-                var curve = GenNearPlaneCurve(im);
+                var curve = GenNearPlaneCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tcam, "near clip plane", curve);
             }
             {
                 clip.SetCurve(path, tcam, "far clip plane", null);
-                var curve = GenFarPlaneCurve(im);
+                var curve = GenFarPlaneCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tcam, "far clip plane", curve);
             }
@@ -1311,14 +1328,19 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
+        public void ExportToClip(AnimationImportContext ctx)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
             var tlight = typeof(Light);
+            ctx.mainComponentType = tlight;
+            ((TransformAnimationData)self).ExportToClip(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
             {
                 clip.SetCurve(path, tlight, "m_Color", null);
-                var curves = GenColorCurves(im);
+                var curves = GenColorCurves(interpolation);
                 if (curves != null)
                 {
                     clip.SetCurve(path, tlight, "m_Color.r", curves[0]);
@@ -1329,19 +1351,19 @@ namespace UTJ.MeshSync
             }
             {
                 clip.SetCurve(path, tlight, "m_Intensity", null);
-                var curve = GenIntensityCurve(im);
+                var curve = GenIntensityCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tlight, "m_Intensity", curve);
             }
             {
                 clip.SetCurve(path, tlight, "m_Range", null);
-                var curve = GenRangeCurve(im);
+                var curve = GenRangeCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tlight, "m_Range", curve);
             }
             {
                 clip.SetCurve(path, tlight, "m_SpotAngle", null);
-                var curve = GenSpotAngleCurve(im);
+                var curve = GenSpotAngleCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tlight, "m_SpotAngle", curve);
             }
@@ -1373,11 +1395,16 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
+        public void ExportToClip(AnimationImportContext ctx)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
             var tsmr = typeof(SkinnedMeshRenderer);
+            ctx.mainComponentType = tsmr;
+            ((TransformAnimationData)self).ExportToClip(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
             {
                 // blendshape animation
 
@@ -1391,7 +1418,7 @@ namespace UTJ.MeshSync
                     if (numKeyframes > 0)
                     {
                         var kf = new Keyframe[numKeyframes];
-                        msMeshAFillBlendshapeWeight(self, bi, kf, im);
+                        msMeshAFillBlendshapeWeight(self, bi, kf, interpolation);
 
                         var curve = new AnimationCurve(kf);
                         clip.SetCurve(path, tsmr, name, curve);
@@ -1436,14 +1463,19 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
+        public void ExportToClip(AnimationImportContext ctx)
         {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
             var tpoints = typeof(PointCache);
+            ctx.mainComponentType = tpoints;
+            ((TransformAnimationData)self).ExportToClip(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
             {
                 clip.SetCurve(path, tpoints, "m_time", null);
-                var curve = GenTimeCurve(im);
+                var curve = GenTimeCurve(interpolation);
                 if (curve != null)
                     clip.SetCurve(path, tpoints, "m_time", curve);
             }
@@ -1482,24 +1514,24 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMode im)
+        public void ExportToClip(AnimationImportContext ctx)
         {
             switch (type)
             {
                 case TransformData.Type.Transform:
-                    ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
+                    ((TransformAnimationData)self).ExportToClip(ctx);
                     break;
                 case TransformData.Type.Camera:
-                    ((CameraAnimationData)self).ExportToClip(clip, root, target, path, im);
+                    ((CameraAnimationData)self).ExportToClip(ctx);
                     break;
                 case TransformData.Type.Light:
-                    ((LightAnimationData)self).ExportToClip(clip, root, target, path, im);
+                    ((LightAnimationData)self).ExportToClip(ctx);
                     break;
                 case TransformData.Type.Mesh:
-                    ((MeshAnimationData)self).ExportToClip(clip, root, target, path, im);
+                    ((MeshAnimationData)self).ExportToClip(ctx);
                     break;
                 case TransformData.Type.Points:
-                    ((PointsAnimationData)self).ExportToClip(clip, root, target, path, im);
+                    ((PointsAnimationData)self).ExportToClip(ctx);
                     break;
             }
         }

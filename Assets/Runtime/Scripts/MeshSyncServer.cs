@@ -534,8 +534,10 @@ namespace UTJ.MeshSync
                                 break;
                         }
                     }
+#if UNITY_EDITOR
                     if (save)
                         AssetDatabase.SaveAssets();
+#endif
                 }
             });
 
@@ -1822,7 +1824,16 @@ namespace UTJ.MeshSync
                     animPath = animPath.Remove(0, 1);
 
                 // get animation curves
-                data.ExportToClip(clip, root.gameObject, target.gameObject, animPath, m_animtionInterpolation);
+                var ctx = new AnimationImportContext()
+                {
+                    clip = clip,
+                    root = root.gameObject,
+                    target = target.gameObject,
+                    path = animPath,
+                    interpolation = m_animtionInterpolation,
+                    enableVisibility = m_syncVisibility,
+                };
+                data.ExportToClip(ctx);
             }
 
             // smooth rotation curves
