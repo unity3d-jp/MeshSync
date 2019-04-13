@@ -43,6 +43,7 @@ namespace UTJ.MeshSync
         [Serializable]
         public class EntityRecord
         {
+            public TransformData.Type dataType;
             public int index;
             public GameObject go;
             public Mesh origMesh;
@@ -440,7 +441,7 @@ namespace UTJ.MeshSync
                     {
                         dstrec.materialIDs = srcrec.materialIDs;
                         dstrec.submeshCounts = srcrec.submeshCounts;
-                        UpdateReference(dstrec.go, srcrec.go);
+                        UpdateReference(dstrec, srcrec);
                     }
                 }
 
@@ -1586,6 +1587,7 @@ namespace UTJ.MeshSync
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
+            rec.dataType = data.type;
 
             // sync TRS
             if (m_syncTransform)
@@ -1661,22 +1663,47 @@ namespace UTJ.MeshSync
             return lt;
         }
 
-        void UpdateReference(GameObject dstgo, GameObject srcgo)
+        void UpdateReference(EntityRecord dst, EntityRecord src)
         {
-            var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
-            if (srcsmr != null)
+            if (src.dataType == TransformData.Type.Unknown)
             {
-                var dstpr = dstgo.GetComponent<PointCacheRenderer>();
-                if (dstpr != null)
-                {
-                    dstpr.sharedMesh = srcsmr.sharedMesh;
+                Debug.LogError("MeshSync: should not be here!");
+                return;
+            }
 
-                    var materials = srcsmr.sharedMaterials;
-                    for (int i = 0; i < materials.Length; ++i)
-                        materials[i].enableInstancing = true;
-                    dstpr.sharedMaterials = materials;
+            var dstgo = dst.go;
+            var srcgo = src.go;
+
+            // should copy 'enabled'...?
+            if (src.dataType == TransformData.Type.Camera)
+            {
+                var srccam = srcgo.GetComponent<Camera>();
+                if (srccam != null)
+                {
+                    var dstcam  = Misc.GetOrAddComponent<Camera>(dstgo);
+                    dstcam.orthographic = srccam.orthographic;
+                    dstcam.fieldOfView = srccam.fieldOfView;
+                    dstcam.nearClipPlane = srccam.nearClipPlane;
+                    dstcam.farClipPlane = srccam.farClipPlane;
                 }
-                else
+            }
+            else if (src.dataType == TransformData.Type.Light)
+            {
+                var srclt = srcgo.GetComponent<Light>();
+                if (srclt != null)
+                {
+                    var dstlt = Misc.GetOrAddComponent<Light>(dstgo);
+                    dstlt.type = srclt.type;
+                    dstlt.color = srclt.color;
+                    dstlt.intensity = srclt.intensity;
+                    dstlt.range = srclt.range;
+                    dstlt.spotAngle = srclt.spotAngle;
+                }
+            }
+            else if (src.dataType == TransformData.Type.Mesh)
+            {
+                var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
+                if (srcsmr != null)
                 {
                     var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
                     var mesh = srcsmr.sharedMesh;
@@ -1691,14 +1718,43 @@ namespace UTJ.MeshSync
                         for (int bi = 0; bi < blendShapeCount; ++bi)
                             dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
                     }
-
 #if UNITY_EDITOR
                     if (!EditorApplication.isPlaying)
                     {
-                        dstgo.SetActive(false); // 
-                        dstgo.SetActive(true);  // force recalculate skinned mesh on editor
+                        // force recalculate skinned mesh on editor
+                        dstgo.SetActive(false);
+                        dstgo.SetActive(true);
                     }
 #endif
+                    // handle mesh collider
+                    if (m_updateMeshColliders)
+                    {
+                        var srcmc = srcgo.GetComponent<MeshCollider>();
+                        if (srcmc != null && srcmc.sharedMesh == mesh)
+                        {
+                            var dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
+                            dstmc.enabled = srcmc.enabled;
+                            dstmc.isTrigger = srcmc.isTrigger;
+                            dstmc.sharedMaterial = srcmc.sharedMaterial;
+                            dstmc.sharedMesh = mesh;
+                            dstmc.convex = srcmc.convex;
+                            dstmc.cookingOptions = srcmc.cookingOptions;
+                        }
+                    }
+                }
+            }
+            else if (src.dataType == TransformData.Type.Points)
+            {
+                var srcpr = srcgo.GetComponent<PointCacheRenderer>();
+                if (srcpr != null)
+                {
+                    var dstpr = Misc.GetOrAddComponent<PointCacheRenderer>(dstgo);
+                    dstpr.sharedMesh = srcpr.sharedMesh;
+
+                    var materials = srcpr.sharedMaterials;
+                    for (int i = 0; i < materials.Length; ++i)
+                        materials[i].enableInstancing = true;
+                    dstpr.sharedMaterials = materials;
                 }
             }
         }

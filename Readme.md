@@ -10,13 +10,13 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 1. [Maya](#maya)
 2. [Maya LT](#maya-lt)
 3. [3ds Max](#3ds-max)
-3. [Motion Builder](#motion-builder)
-3. [Modo](#modo)
-4. [Blender](#blender)
-5. [メタセコイア](#メタセコイア)
-5. [VRED](#vred)
-5. [xismo](#xismo)
-6. [Unity](#unity)
+4. [Motion Builder](#motion-builder)
+5. [Blender](#blender)
+6. [Modo](#modo)
+7. [メタセコイア](#メタセコイア)
+8. [VRED](#vred)
+9. [xismo](#xismo)
+10. [Unity](#unity)
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
