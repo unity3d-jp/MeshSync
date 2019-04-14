@@ -48,9 +48,9 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (msmbDevice::*)(ms::Animation& dst, FBModel *src);
+        using extractor_t = void (msmbDevice::*)(ms::TransformAnimation& dst, FBModel *src);
 
-        ms::Animation *dst = nullptr;
+        ms::TransformAnimationPtr dst;
         FBModel *src = nullptr;
         extractor_t extractor = nullptr;
 
@@ -82,10 +82,10 @@ private:
 
     bool exportAnimations();
     bool exportAnimation(FBModel* src, bool force);
-    void extractTransformAnimation(ms::Animation& dst, FBModel* src);
-    void extractCameraAnimation(ms::Animation& dst, FBModel* src);
-    void extractLightAnimation(ms::Animation& dst, FBModel* src);
-    void extractMeshAnimation(ms::Animation& dst, FBModel* src);
+    void extractTransformAnimation(ms::TransformAnimation& dst, FBModel* src);
+    void extractCameraAnimation(ms::TransformAnimation& dst, FBModel* src);
+    void extractLightAnimation(ms::TransformAnimation& dst, FBModel* src);
+    void extractMeshAnimation(ms::TransformAnimation& dst, FBModel* src);
 
 private:
     bool m_data_updated = false;

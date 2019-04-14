@@ -970,18 +970,17 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mes
 }
 
 
-ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode *n, bool force)
+bool MeshSyncClient3dsMax::exportAnimations(INode *n, bool force)
 {
     if (!n || !n->GetObjectRef())
-        return nullptr;
+        return false;
 
     auto it = m_anim_records.find(n);
     if (it != m_anim_records.end())
-        return it->second.dst;
+        return false;
 
     auto obj = GetBaseObject(n);
-    auto& animations = m_animations[0]->animations;
-    ms::AnimationPtr ret;
+    ms::TransformAnimationPtr ret;
     AnimationRecord::extractor_t extractor = nullptr;
 
     if (IsMesh(obj)) {
@@ -1025,7 +1024,7 @@ ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode *n, bool force)
     }
 
     if (ret) {
-        animations.push_back(ret);
+        m_animations.front()->addAnimation(ret);
         ret->path = GetPath(n);
 
         auto& rec = m_anim_records[n];
@@ -1034,10 +1033,10 @@ ms::AnimationPtr MeshSyncClient3dsMax::exportAnimations(INode *n, bool force)
         rec.obj = obj;
         rec.extractor = extractor;
     }
-    return ret;
+    return ret != nullptr;
 }
 
-void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode *src, Object *obj)
+void MeshSyncClient3dsMax::extractTransformAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -1053,7 +1052,7 @@ void MeshSyncClient3dsMax::extractTransformAnimation(ms::Animation& dst_, INode 
     dst.scale.push_back({ t, scale });
 }
 
-void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *src, Object *obj)
+void MeshSyncClient3dsMax::extractCameraAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
 {
     extractTransformAnimation(dst_, src, obj);
 
@@ -1073,7 +1072,7 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::Animation& dst_, INode *sr
     dst.far_plane.push_back({ t, far_plane });
 }
 
-void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src, Object *obj)
+void MeshSyncClient3dsMax::extractLightAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
 {
     extractTransformAnimation(dst_, src, obj);
 
@@ -1094,7 +1093,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::Animation& dst_, INode *src
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
-void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src, Object *obj)
+void MeshSyncClient3dsMax::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
 {
     extractTransformAnimation(dst_, src, obj);
 
@@ -1113,8 +1112,7 @@ void MeshSyncClient3dsMax::extractMeshAnimation(ms::Animation& dst_, INode *src,
                     continue;
 
                 auto name = mu::ToMBS(channel.GetName());
-                auto dbs = dst.findOrCreateBlendshapeAnimation(name.c_str());
-                dbs->weight.push_back({ t, channel.GetMorphWeight(m_current_time_tick) });
+                dst.getBlendshapeCurve(name).push_back({ t, channel.GetMorphWeight(m_current_time_tick) });
             }
         }
     }

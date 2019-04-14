@@ -104,11 +104,11 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::Animation& dst, INode *n, Object *obj);
+        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::TransformAnimation& dst, INode *n, Object *obj);
         extractor_t extractor = nullptr;
         INode *node = nullptr;
         Object *obj = nullptr;
-        ms::AnimationPtr dst = nullptr;
+        ms::TransformAnimationPtr dst;
 
         void operator()(MeshSyncClient3dsMax *_this);
     };
@@ -136,11 +136,11 @@ private:
     ms::MeshPtr exportMesh(TreeNode& node);
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
-    ms::AnimationPtr exportAnimations(INode *node, bool force);
-    void extractTransformAnimation(ms::Animation& dst, INode *n, Object *obj);
-    void extractCameraAnimation(ms::Animation& dst, INode *n, Object *obj);
-    void extractLightAnimation(ms::Animation& dst, INode *n, Object *obj);
-    void extractMeshAnimation(ms::Animation& dst, INode *n, Object *obj);
+    bool exportAnimations(INode *node, bool force);
+    void extractTransformAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
+    void extractCameraAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
+    void extractLightAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
+    void extractMeshAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
 
 private:
     Settings m_settings;

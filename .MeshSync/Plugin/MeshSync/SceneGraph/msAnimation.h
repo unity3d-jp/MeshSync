@@ -237,6 +237,8 @@ public:
 };
 
 
+#define mskPointsTime "Points.time"
+
 class PointsAnimation : public TransformAnimation
 {
 using super = TransformAnimation;

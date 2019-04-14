@@ -111,8 +111,8 @@ private:
         bool dirty = true;
 
         ms::TransformPtr dst_obj;
-        ms::AnimationPtr dst_anim;
-        std::map<std::string, ms::AnimationPtr> dst_anim_replicas;
+        ms::TransformAnimationPtr dst_anim;
+        std::map<std::string, ms::TransformAnimationPtr> dst_anim_replicas;
 
         RawVector<LXtID4> face_types;
         RawVector<const char*> material_names; // mesh: per-face material names.

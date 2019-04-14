@@ -540,6 +540,19 @@ TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name
     return getBlendshapeCurve(name.c_str());
 }
 
+std::shared_ptr<PointsAnimation> PointsAnimation::create(AnimationPtr host)
+{
+    return std::make_shared<PointsAnimation>(host);
+}
+std::shared_ptr<PointsAnimation> PointsAnimation::create()
+{
+    return create(Animation::create());
+}
+PointsAnimation::PointsAnimation(AnimationPtr host)
+    : super(host)
+    , time(host->getCurve(mskPointsTime, DataType::Float))
+{
+}
 
 
 } // namespace ms

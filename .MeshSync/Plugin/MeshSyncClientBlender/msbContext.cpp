@@ -867,17 +867,17 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         return;
 
     auto& clip = m_animations.front();
-    ms::AnimationPtr dst;
+    ms::TransformAnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
     auto group = get_instance_collection(obj);
 
-    auto add_animation = [this, &clip](const std::string& path, void *obj, ms::AnimationPtr dst, AnimationRecord::extractor_t extractor) {
+    auto add_animation = [this, &clip](const std::string& path, void *obj, ms::TransformAnimationPtr dst, AnimationRecord::extractor_t extractor) {
         dst->path = path;
         auto& rec = m_anim_records[path];
         rec.extractor = extractor;
         rec.obj = obj;
-        rec.dst = dst.get();
-        clip->animations.push_back(dst);
+        rec.dst = dst;
+        clip->addAnimation(dst);
     };
 
     switch (obj->type) {
@@ -934,7 +934,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     }
 }
 
-void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
+void msbContext::extractTransformAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -952,7 +952,7 @@ void msbContext::extractTransformAnimationData(ms::Animation& dst_, void *obj)
     //dst.visible.push_back({ t, vis });
 }
 
-void msbContext::extractPoseAnimationData(ms::Animation& dst_, void * obj)
+void msbContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -967,7 +967,7 @@ void msbContext::extractPoseAnimationData(ms::Animation& dst_, void * obj)
     dst.scale.push_back({ t, scale });
 }
 
-void msbContext::extractCameraAnimationData(ms::Animation& dst_, void *obj)
+void msbContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     extractTransformAnimationData(dst_, obj);
 
@@ -987,7 +987,7 @@ void msbContext::extractCameraAnimationData(ms::Animation& dst_, void *obj)
     dst.fov.push_back({ t , fov });
 }
 
-void msbContext::extractLightAnimationData(ms::Animation& dst_, void *obj)
+void msbContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     extractTransformAnimationData(dst_, obj);
 
@@ -1011,7 +1011,7 @@ void msbContext::extractLightAnimationData(ms::Animation& dst_, void *obj)
     }
 }
 
-void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
+void msbContext::extractMeshAnimationData(ms::TransformAnimation & dst_, void * obj)
 {
     extractTransformAnimationData(dst_, obj);
 
@@ -1026,8 +1026,7 @@ void msbContext::extractMeshAnimationData(ms::Animation & dst_, void * obj)
             if (bi == 0) { // Basis
             }
             else {
-                auto bsa = dst.findOrCreateBlendshapeAnimation(kb->name);
-                bsa->weight.push_back({ t, kb->curval * 100.0f });
+                dst.getBlendshapeCurve(kb->name).push_back({ t, kb->curval * 100.0f });
             }
             ++bi;
         });

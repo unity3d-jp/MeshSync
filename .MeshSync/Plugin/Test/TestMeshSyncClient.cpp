@@ -116,7 +116,7 @@ TestCase(Test_Animation)
         scene.assets.push_back(clip);
 
         auto anim = ms::TransformAnimation::create();
-        clip->animations.push_back(anim);
+        clip->addAnimation(anim);
 
         anim->path = "/Test/Animation";
         anim->translation.push_back({ 0.0f, {0.0f, 0.0f, 0.0f} });
@@ -201,7 +201,7 @@ TestCase(Test_Points)
         scene.assets.push_back(clip);
 
         auto anim = ms::PointsAnimation::create();
-        clip->animations.push_back(anim);
+        clip->addAnimation(anim);
 
         anim->path = "/Test/PointsTRS";
         node->path = "/Test/PointsTRS";

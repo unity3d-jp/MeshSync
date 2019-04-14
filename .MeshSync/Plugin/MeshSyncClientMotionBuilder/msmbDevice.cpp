@@ -792,7 +792,7 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
     if (!src || m_anim_records.find(src) != m_anim_records.end())
         return 0;
 
-    ms::AnimationPtr dst;
+    ms::TransformAnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
 
     if (IsCamera(src)) { // camera
@@ -822,9 +822,9 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
     if (dst) {
         auto& rec = m_anim_records[src];
         rec.src = src;
-        rec.dst = dst.get();
+        rec.dst = dst;
         rec.extractor = extractor;
-        m_animations.front()->animations.push_back(dst);
+        m_animations.front()->addAnimation(dst);
         return true;
     }
     else {
@@ -832,7 +832,7 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
     }
 }
 
-void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
+void msmbDevice::extractTransformAnimation(ms::TransformAnimation& dst_, FBModel* src)
 {
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
@@ -850,7 +850,7 @@ void msmbDevice::extractTransformAnimation(ms::Animation& dst_, FBModel* src)
     dst.path = GetPath(src);
 }
 
-void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
+void msmbDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* src)
 {
     extractTransformAnimation(dst_, src);
 
@@ -870,7 +870,7 @@ void msmbDevice::extractCameraAnimation(ms::Animation& dst_, FBModel* src)
     dst.fov.push_back({ t , fov });
 }
 
-void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
+void msmbDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* src)
 {
     extractTransformAnimation(dst_, src);
 
@@ -893,7 +893,7 @@ void msmbDevice::extractLightAnimation(ms::Animation& dst_, FBModel* src)
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
-void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
+void msmbDevice::extractMeshAnimation(ms::TransformAnimation & dst_, FBModel * src)
 {
     extractTransformAnimation(dst_, src);
 
@@ -903,18 +903,9 @@ void msmbDevice::extractMeshAnimation(ms::Animation & dst_, FBModel * src)
     if (FBGeometry *geom = src->Geometry) {
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
-            if (dst.blendshapes.empty()) {
-                EnumerateAnimationNVP(src, [&dst](const char *name, double value) {
-                    auto bsa = ms::BlendshapeAnimation::create();
-                    bsa->name = name;
-                    dst.blendshapes.push_back(bsa);
-                });
-            }
-
             float t = m_anim_time;
-            int idx = 0;
-            EnumerateAnimationNVP(src, [&dst, &idx, t](const char *name, double value) {
-                dst.blendshapes[idx++]->weight.push_back({ t, (float)value });
+            EnumerateAnimationNVP(src, [&dst, t](const char *name, double value) {
+                dst.getBlendshapeCurve(name).push_back({ t, (float)value });
             });
         }
     }

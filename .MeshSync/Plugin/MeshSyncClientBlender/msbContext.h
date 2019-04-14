@@ -75,10 +75,10 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (msbContext::*)(ms::Animation& dst, void *obj);
+        using extractor_t = void (msbContext::*)(ms::TransformAnimation& dst, void *obj);
 
         void *obj = nullptr;
-        ms::Animation *dst = nullptr;
+        ms::TransformAnimationPtr dst;
         extractor_t extractor = nullptr;
 
         void operator()(msbContext *_this)
@@ -109,11 +109,11 @@ private:
     void eraseStaleObjects();
 
     void exportAnimation(Object *obj, bool force, const std::string base_path="");
-    void extractTransformAnimationData(ms::Animation& dst, void *obj);
-    void extractPoseAnimationData(ms::Animation& dst, void *obj);
-    void extractCameraAnimationData(ms::Animation& dst, void *obj);
-    void extractLightAnimationData(ms::Animation& dst, void *obj);
-    void extractMeshAnimationData(ms::Animation& dst, void *obj);
+    void extractTransformAnimationData(ms::TransformAnimation& dst, void *obj);
+    void extractPoseAnimationData(ms::TransformAnimation& dst, void *obj);
+    void extractCameraAnimationData(ms::TransformAnimation& dst, void *obj);
+    void extractLightAnimationData(ms::TransformAnimation& dst, void *obj);
+    void extractMeshAnimationData(ms::TransformAnimation& dst, void *obj);
 
     void kickAsyncSend();
 
