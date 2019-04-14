@@ -1144,9 +1144,7 @@ namespace UTJ.MeshSync
                 }
             }
             {
-                clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint", null);
                 clip.SetCurve(path, ttrans, "m_LocalRotation", null);
-
                 var curves = GenCurves(msAnimationGetTransformRotation(self), interpolation);
                 if (curves != null)
                 {

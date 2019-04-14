@@ -164,13 +164,12 @@ public:
     virtual ~TransformAnimation();
     void reserve(size_t n);
 
+    AnimationPtr host;
     std::string& path;
     TAnimationCurve<float3> translation;
     TAnimationCurve<quatf>  rotation;
     TAnimationCurve<float3> scale;
     TAnimationCurve<int>    visibility;
-
-    AnimationPtr host;
 };
 msDeclPtr(TransformAnimation);
 

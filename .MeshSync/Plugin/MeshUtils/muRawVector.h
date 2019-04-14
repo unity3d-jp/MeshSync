@@ -233,18 +233,20 @@ public:
     }
     void push_back(const_pointer v, size_t n)
     {
+        size_t pos = m_size;
         resize(m_size + n);
-        memcpy(end(), v, sizeof(value_type) * n);
+        memcpy(m_data + pos, v, sizeof(value_type) * n);
     }
 
 
     void pop_back()
     {
-        --m_size;
+        if (m_size > 0)
+            --m_size;
     }
     void pop_back(size_t n)
     {
-        m_size -= n;
+        m_size = n >= m_size ? 0 : m_size - n;
     }
 
     bool operator == (const RawVector& other) const

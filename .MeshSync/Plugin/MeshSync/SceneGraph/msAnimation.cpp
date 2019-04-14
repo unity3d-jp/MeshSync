@@ -446,8 +446,9 @@ std::shared_ptr<TransformAnimation> TransformAnimation::create()
     return create(Animation::create());
 }
 
-TransformAnimation::TransformAnimation(AnimationPtr host)
-    : path(host->path)
+TransformAnimation::TransformAnimation(AnimationPtr h)
+    : host(h)
+    , path(host->path)
     , translation(host->getCurve(mskTransformTranslation, DataType::Float3))
     , rotation(host->getCurve(mskTransformRotation, DataType::Quaternion))
     , scale(host->getCurve(mskTransformScale, DataType::Float3))
