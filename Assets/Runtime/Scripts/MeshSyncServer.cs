@@ -43,7 +43,7 @@ namespace UTJ.MeshSync
         [Serializable]
         public class EntityRecord
         {
-            public TransformData.Type dataType;
+            public EntityType dataType;
             public int index;
             public GameObject go;
             public Mesh origMesh;
@@ -550,21 +550,21 @@ namespace UTJ.MeshSync
                 {
                     Component dst = null;
                     var src = scene.GetEntity(i);
-                    switch (src.type)
+                    switch (src.entityType)
                     {
-                        case TransformData.Type.Transform:
+                        case EntityType.Transform:
                             dst = UpdateTransform(src);
                             break;
-                        case TransformData.Type.Camera:
+                        case EntityType.Camera:
                             dst = UpdateCamera((CameraData)src);
                             break;
-                        case TransformData.Type.Light:
+                        case EntityType.Light:
                             dst = UpdateLight((LightData)src);
                             break;
-                        case TransformData.Type.Mesh:
+                        case EntityType.Mesh:
                             dst = UpdateMesh((MeshData)src);
                             break;
-                        case TransformData.Type.Points:
+                        case EntityType.Points:
                             dst = UpdatePoints((PointsData)src);
                             break;
                     }
@@ -1587,7 +1587,7 @@ namespace UTJ.MeshSync
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
-            rec.dataType = data.type;
+            rec.dataType = data.entityType;
 
             // sync TRS
             if (m_syncTransform)
@@ -1665,7 +1665,7 @@ namespace UTJ.MeshSync
 
         void UpdateReference(EntityRecord dst, EntityRecord src)
         {
-            if (src.dataType == TransformData.Type.Unknown)
+            if (src.dataType == EntityType.Unknown)
             {
                 Debug.LogError("MeshSync: should not be here!");
                 return;
@@ -1675,7 +1675,7 @@ namespace UTJ.MeshSync
             var srcgo = src.go;
 
             // should copy 'enabled'...?
-            if (src.dataType == TransformData.Type.Camera)
+            if (src.dataType == EntityType.Camera)
             {
                 var srccam = srcgo.GetComponent<Camera>();
                 if (srccam != null)
@@ -1687,7 +1687,7 @@ namespace UTJ.MeshSync
                     dstcam.farClipPlane = srccam.farClipPlane;
                 }
             }
-            else if (src.dataType == TransformData.Type.Light)
+            else if (src.dataType == EntityType.Light)
             {
                 var srclt = srcgo.GetComponent<Light>();
                 if (srclt != null)
@@ -1700,7 +1700,7 @@ namespace UTJ.MeshSync
                     dstlt.spotAngle = srclt.spotAngle;
                 }
             }
-            else if (src.dataType == TransformData.Type.Mesh)
+            else if (src.dataType == EntityType.Mesh)
             {
                 var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
                 if (srcsmr != null)
@@ -1743,7 +1743,7 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            else if (src.dataType == TransformData.Type.Points)
+            else if (src.dataType == EntityType.Points)
             {
                 var srcpr = srcgo.GetComponent<PointCacheRenderer>();
                 if (srcpr != null)

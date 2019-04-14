@@ -531,7 +531,7 @@ MeshAnimation::MeshAnimation(AnimationPtr host)
 TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const char *name)
 {
     char buf[512];
-    sprintf(mskMeshBlendshape ".%s", name);
+    sprintf(buf, mskMeshBlendshape ".%s", name);
     return host->getCurve(buf, DataType::Float);
 }
 TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name)

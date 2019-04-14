@@ -305,34 +305,46 @@ static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, Keyfra
     SetTangentMode(z, n, it);
 }
 
-msAPI void msCurveFillI(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
+msAPI bool msCurveFillI(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
 {
-    if (self->data_type == ms::AnimationCurve::DataType::Int)
-        FillCurve(ms::TAnimationCurve<int>(*self), x, it);
+    if (self->data_type != ms::AnimationCurve::DataType::Int)
+        return false;
+    FillCurve(ms::TAnimationCurve<int>(*self), x, it);
+    return true;
 }
-msAPI void msCurveFillF(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
+msAPI bool msCurveFillF(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
 {
-    if (self->data_type == ms::AnimationCurve::DataType::Float)
-        FillCurve(ms::TAnimationCurve<float>(*self), x, it);
+    if (self->data_type != ms::AnimationCurve::DataType::Float)
+        return false;
+    FillCurve(ms::TAnimationCurve<float>(*self), x, it);
+    return true;
 }
-msAPI void msCurveFillF3(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI bool msCurveFillF3(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
-    if (self->data_type == ms::AnimationCurve::DataType::Float3)
-        FillCurves(ms::TAnimationCurve<float3>(*self), x, y, z, it);
+    if (self->data_type != ms::AnimationCurve::DataType::Float3)
+        return false;
+    FillCurves(ms::TAnimationCurve<float3>(*self), x, y, z, it);
+    return true;
 }
-msAPI void msCurveFillF4(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+msAPI bool msCurveFillF4(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
 {
-    if (self->data_type == ms::AnimationCurve::DataType::Float4)
-        FillCurves(ms::TAnimationCurve<float4>(*self), x, y, z, w, it);
+    if (self->data_type != ms::AnimationCurve::DataType::Float4)
+        return false;
+    FillCurves(ms::TAnimationCurve<float4>(*self), x, y, z, w, it);
+    return true;
 }
-msAPI void msCurveFillQuat(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+msAPI bool msCurveFillQuat(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
 {
-    if (self->data_type == ms::AnimationCurve::DataType::Quaternion)
-        FillCurves(ms::TAnimationCurve<quatf>(*self), x, y, z, w, it);
+    if (self->data_type != ms::AnimationCurve::DataType::Quaternion)
+        return false;
+    FillCurves(ms::TAnimationCurve<quatf>(*self), x, y, z, w, it);
+    return true;
 }
-msAPI void msCurveFillEuler(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI bool msCurveFillEuler(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
-    if (self->data_type == ms::AnimationCurve::DataType::Quaternion)
-        FillCurvesEuler(ms::TAnimationCurve<quatf>(*self), x, y, z, it);
+    if (self->data_type != ms::AnimationCurve::DataType::Quaternion)
+        return false;
+    FillCurvesEuler(ms::TAnimationCurve<quatf>(*self), x, y, z, it);
+    return true;
 }
 

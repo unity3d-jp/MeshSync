@@ -211,25 +211,23 @@ msAPI void msMaterialAddKeyword(ms::Material *self, const char *name, bool v) { 
 
 
 #pragma region Animations
-using tvp_b = ms::TVP<bool>;
-using tvp_f = ms::TVP<float>;
-using tvp_f3 = ms::TVP<float3>;
-using tvp_f4 = ms::TVP<float4>;
-using tvp_q = ms::TVP<quatf>;
-
-msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
-msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *self, int i) { return self->animations[i].get(); }
+msAPI const char*   msCurveGetName(ms::AnimationCurve *self) { return self->name.c_str(); }
+msAPI int           msCurveGetDataType(ms::AnimationCurve *self) { return (int)self->data_type; }
+msAPI int           msCurveGetDataFlags(ms::AnimationCurve *self) { return (int&)self->data_flags; }
+msAPI int           msCurveGetNumSamples(ms::AnimationCurve *self) { return self ? (int)self->size() : 0; }
+msAPI const char* msCurveGetBlendshapeName(ms::AnimationCurve *self)
+{
+    static const size_t s_name_pos = std::strlen(mskMeshBlendshape) + 1; // +1 for trailing '.'
+    if (std::strcmp(self->name.c_str(), mskMeshBlendshape) == 0)
+        return &self->name[s_name_pos];
+    return "";
+}
 
 msAPI const char*           msAnimationGetPath(ms::Animation *self) { return self->path.c_str(); }
 msAPI int                   msAnimationGetEntityType(ms::Animation *self) { return (int)self->entity_type; }
 msAPI int                   msAnimationGetNumCurves(ms::Animation *self) { return (int)self->curves.size(); }
 msAPI ms::AnimationCurve*   msAnimationGetCurve(ms::Animation *self, int i) { return self->curves[i].get(); }
-
-msAPI const char*   msCurveGetName(ms::AnimationCurve *self) { return self->name.c_str(); }
-msAPI int           msCurveGetDataType(ms::AnimationCurve *self) { return (int)self->data_type; }
-msAPI int           msCurveGetDataFlags(ms::AnimationCurve *self) { return (int&)self->data_flags; }
-msAPI int           msCurveGetNumSamples(ms::AnimationCurve *self) { return (int&)self->data_flags; }
-
+msAPI ms::AnimationCurve*   msAnimationFindCurve(ms::Animation *self, const char *name) { return self->findCurve(name).get(); }
 
 #define DefGetCurve(Name) msAPI ms::AnimationCurve* msAnimationGet##Name(ms::Animation *self) { return self->findCurve(msk##Name).get(); }
 DefGetCurve(TransformTranslation) // -> msAnimationGetTransformTranslation
@@ -253,7 +251,7 @@ DefGetCurve(LightSpotAngle)
 
 using msCurveCallback = void(*)(ms::AnimationCurve *curve);
 
-void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback cb)
+msAPI void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback cb)
 {
     auto compare1 = [](const ms::AnimationCurvePtr& curve, const char *tag) {
         return std::strcmp(curve->name.c_str(), tag) < 0;
@@ -270,15 +268,8 @@ void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback cb)
     }
 }
 
-const char* msCurveGetBlendshapeName(ms::AnimationCurve *self)
-{
-    static const size_t s_name_pos = std::strlen(mskMeshBlendshape) + 1; // +1 for trailing '.'
-    if (std::strcmp(self->name.c_str(), mskMeshBlendshape) == 0)
-        return &self->name[s_name_pos];
-    return "";
-}
-
-
+msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
+msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *self, int i) { return self->animations[i].get(); }
 #pragma endregion
 
 
