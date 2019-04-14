@@ -5,6 +5,8 @@
 
 namespace ms {
 
+// this class holds untyped raw animation samples.
+// TAnimationCurve<> handle typed data operations.
 class AnimationCurve
 {
 public:
@@ -44,13 +46,11 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 
-    bool operator<(const AnimationCurve& v) const;
-
 
     std::string name;
     RawVector<char> data;
     DataType data_type = DataType::Unknown;
-    DataFlags flags = {};
+    DataFlags data_flags = {};
 };
 msSerializable(AnimationCurve);
 msDeclPtr(AnimationCurve);
@@ -60,6 +60,7 @@ class Animation
 {
 public:
     using EntityType = Entity::Type;
+    using DataType = AnimationCurve::DataType;
 
     EntityType entity_type = EntityType::Unknown;
     std::string path;
@@ -85,7 +86,9 @@ public:
 
     AnimationCurvePtr findCurve(const char *name);
     // erase old one if already exists
-    AnimationCurvePtr addCurve(const char *name, AnimationCurve::DataType type);
+    AnimationCurvePtr addCurve(const char *name, DataType type);
+    // find or create curve
+    AnimationCurvePtr getCurve(const char *name, DataType type);
 };
 msSerializable(Animation);
 msDeclPtr(Animation);
@@ -115,6 +118,8 @@ public:
     void reduction(bool keep_flat_curves = false);
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
+
+    void addAnimation(AnimationPtr v);
 };
 msSerializable(AnimationClip);
 msDeclPtr(AnimationClip);
@@ -134,16 +139,17 @@ struct TAnimationCurve
 {
     using key_t = TVP<T>;
 
-    TAnimationCurve(AnimationCurve& c) : curve(c) {}
+    TAnimationCurve(AnimationCurve& c) : curve(&c) {}
+    TAnimationCurve(AnimationCurvePtr c) : curve(c.get()) {}
 
     size_t size() const
     {
-        return curve.data.size() / sizeof(key_t);
+        return curve->data.size() / sizeof(key_t);
     }
 
     key_t* data()
     {
-        return (key_t*)curve.data.data();
+        return (key_t*)curve->data.data();
     }
 
     bool empty() const
@@ -153,31 +159,31 @@ struct TAnimationCurve
 
     void clear()
     {
-        curve.data.clear();
+        curve->data.clear();
     }
 
     void reserve(size_t v)
     {
-        curve.data.reserve(v * sizeof(key_t));
+        curve->data.reserve(v * sizeof(key_t));
     }
 
     void resize(size_t v)
     {
-        curve.data.resize(v * sizeof(key_t));
+        curve->data.resize(v * sizeof(key_t));
     }
 
     void resize_discard(size_t v)
     {
-        curve.data.resize_discard(v * sizeof(key_t));
+        curve->data.resize_discard(v * sizeof(key_t));
     }
 
     void push_back(const key_t& v)
     {
-        curve.data.push_back((const char*)&v, sizeof(key_t));
+        curve->data.push_back((const char*)&v, sizeof(key_t));
     }
     void pop_back()
     {
-        curve.data.pop_back(sizeof(key_t));
+        curve->data.pop_back(sizeof(key_t));
     }
 
     key_t& operator[](size_t i)
@@ -190,12 +196,12 @@ struct TAnimationCurve
     key_t& front() { return data()[0]; }
     key_t& back() { return data()[size() - 1]; }
 
-    AnimationCurve& curve;
+    AnimationCurve *curve;
 };
 
 
 
-#define mskTransformPosition    "Transform.position"
+#define mskTransformTranslation "Transform.translation"
 #define mskTransformRotation    "Transform.rotation"
 #define mskTransformScale       "Transform.scale"
 #define mskTransformVisibility  "Transform.visibility"
@@ -203,15 +209,22 @@ struct TAnimationCurve
 class TransformAnimation
 {
 public:
+    using DataType = AnimationCurve::DataType;
+
+    static std::shared_ptr<TransformAnimation> create(AnimationPtr host);
+    static std::shared_ptr<TransformAnimation> create();
+
     TransformAnimation(AnimationPtr host);
+    virtual ~TransformAnimation();
+
     TAnimationCurve<float3> translation;
     TAnimationCurve<quatf>  rotation;
     TAnimationCurve<float3> scale;
     TAnimationCurve<int>    visibility;
 
-protected:
-    AnimationPtr m_animation;
+    AnimationPtr host;
 };
+msDeclPtr(TransformAnimation);
 
 
 #define mskCameraFieldOfView        "Camera.fieldOfView"
@@ -226,6 +239,9 @@ class CameraAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
+    static std::shared_ptr<CameraAnimation> create(AnimationPtr host);
+    static std::shared_ptr<CameraAnimation> create();
+
     CameraAnimation(AnimationPtr host);
     TAnimationCurve<float> fov;
     TAnimationCurve<float> near_plane;
@@ -246,6 +262,9 @@ class LightAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
+    static std::shared_ptr<LightAnimation> create(AnimationPtr host);
+    static std::shared_ptr<LightAnimation> create();
+
     LightAnimation(AnimationPtr host);
     TAnimationCurve<float4> color;
     TAnimationCurve<float>  intensity;
@@ -260,6 +279,9 @@ class MeshAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
+    static std::shared_ptr<MeshAnimation> create(AnimationPtr host);
+    static std::shared_ptr<MeshAnimation> create();
+
     MeshAnimation(AnimationPtr host);
 
     // Body: [](TAnimationCurve<float>& curve) -> void
@@ -288,7 +310,12 @@ class PointsAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
-    RawVector<TVP<float>> time;
+    static std::shared_ptr<PointsAnimation> create(AnimationPtr host);
+    static std::shared_ptr<PointsAnimation> create();
+
+    PointsAnimation(AnimationPtr host);
+
+    TAnimationCurve<float> time;
 };
 
 } // namespace ms

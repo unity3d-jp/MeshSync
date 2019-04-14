@@ -57,7 +57,7 @@ template<> void ReduceKeyframes<void>(AnimationCurve& /*self*/, bool /*keep_flat
 
 template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x, bool yz)
 {
-    if (!self.flags.affect_handedness)
+    if (!self.data_flags.affect_handedness)
         return;
 
     TAnimationCurve<T> data(self);
@@ -68,7 +68,7 @@ template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x
         for (auto& tvp : data)
             tvp.value = swap_yz(tvp.value);
 }
-template<class T> static void ConvertHandedness(AnimationCurve& self, bool x, bool yz) {}
+template<class T> static void ConvertHandedness(AnimationCurve& /*self*/, bool /*x*/, bool /*yz*/) {}
 template<> void ConvertHandedness<float3>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float3>(self, x, yz); }
 template<> void ConvertHandedness<float4>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float4>(self, x, yz); }
 template<> void ConvertHandedness<quatf>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<quatf>(self, x, yz); }
@@ -76,14 +76,14 @@ template<> void ConvertHandedness<quatf>(AnimationCurve& self, bool x, bool yz) 
 
 template<class T> static void ApplyScaleImpl(AnimationCurve& self, float v)
 {
-    if (!self.flags.affect_scale)
+    if (!self.data_flags.affect_scale)
         return;
 
     TAnimationCurve<T> data(self);
     for (auto& tvp : data)
         tvp.value *= v;
 }
-template<class T> static void ApplyScale(AnimationCurve& self, float v) {}
+template<class T> static void ApplyScale(AnimationCurve& /*self*/, float /*v*/) {}
 template<> void ApplyScale<float>(AnimationCurve& self, float v) { ApplyScaleImpl<float>(self, v); }
 template<> void ApplyScale<float2>(AnimationCurve& self, float v) { ApplyScaleImpl<float2>(self, v); }
 template<> void ApplyScale<float3>(AnimationCurve& self, float v) { ApplyScaleImpl<float3>(self, v); }
@@ -110,15 +110,6 @@ static AnimationCurveFunctionSet g_curve_fs[] = {
 #undef EachDataTypes
 
 
-#define EachMember(F) F(name) F(data) F(data_type) F(flags)
-
-AnimationCurve::AnimationCurve()
-{
-}
-
-AnimationCurve::~AnimationCurve()
-{
-}
 
 std::shared_ptr<AnimationCurve> AnimationCurve::create(std::istream& is)
 {
@@ -127,6 +118,10 @@ std::shared_ptr<AnimationCurve> AnimationCurve::create(std::istream& is)
     return ret;
 }
 
+AnimationCurve::AnimationCurve() {}
+AnimationCurve::~AnimationCurve() {}
+
+#define EachMember(F) F(name) F(data) F(data_type) F(data_flags)
 
 void AnimationCurve::serialize(std::ostream& os) const
 {
@@ -143,7 +138,7 @@ void AnimationCurve::clear()
     name.clear();
     data.clear();
     data_type = DataType::Unknown;
-    flags = {};
+    data_flags = {};
 }
 
 uint64_t AnimationCurve::hash() const
@@ -161,10 +156,12 @@ uint64_t AnimationCurve::checksum() const
     EachMember(msCSum);
     return ret;
 }
+
 bool AnimationCurve::empty() const
 {
     return data.empty();
 }
+
 void AnimationCurve::reserve(size_t n)
 {
     g_curve_fs[(int)data_type].reserve_keyframes(*this, n);
@@ -181,11 +178,6 @@ void AnimationCurve::convertHandedness(bool x, bool yz)
 void AnimationCurve::applyScaleFactor(float scale)
 {
     g_curve_fs[(int)data_type].apply_scale(*this, scale);
-}
-
-bool AnimationCurve::operator<(const AnimationCurve& v) const
-{
-    return name < v.name;
 }
 #undef EachMember
 
@@ -222,344 +214,89 @@ void Animation::clear()
     curves.clear();
 }
 
-
-/*
-void TransformAnimation::reduction(bool keep_flat_curves)
-{
-    EachMember(Reduce);
-}
-void TransformAnimation::reserve(size_t n)
-{
-    EachMember(Reserve);
-}
-#undef EachMember
-
-void TransformAnimation::convertHandedness(bool x, bool yz)
-{
-    if (x) {
-        for (auto& tvp : translation)
-            tvp.value = flip_x(tvp.value);
-        for (auto& tvp : rotation)
-            tvp.value = flip_x(tvp.value);
-    }
-    if (yz) {
-        for (auto& tvp : translation)
-            tvp.value = swap_yz(tvp.value);
-        for (auto& tvp : rotation)
-            tvp.value = swap_yz(tvp.value);
-        for (auto& tvp : scale)
-            tvp.value = swap_yz(tvp.value);
-    }
-}
-
-void TransformAnimation::ApplyScale(float s)
-{
-    for (auto& tvp : translation)
-        tvp.value *= s;
-}
-
-
-
-CameraAnimation::CameraAnimation() {}
-CameraAnimation::~CameraAnimation() {}
-
-Animation::Type CameraAnimation::getType() const
-{
-    return Type::Camera;
-}
-
-#define EachMember(F)\
-    F(fov) F(near_plane) F(far_plane) F(horizontal_aperture) F(vertical_aperture) F(focal_length) F(focus_distance)
-
-void CameraAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-void CameraAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-void CameraAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-uint64_t CameraAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    EachMember(Hash);
-    return ret;
-}
-uint64_t CameraAnimation::checksum() const
-{
-    uint64_t ret = super::checksum();
-    EachMember(CSum);
-    return ret;
-}
-bool CameraAnimation::empty() const
-{
-    return super::empty() EachMember(Empty);
-}
-void CameraAnimation::reduction(bool keep_flat_curves)
-{
-    super::reduction(keep_flat_curves);
-    EachMember(Reduce);
-}
-void CameraAnimation::reserve(size_t n)
-{
-    super::reserve(n);
-    EachMember(Reserve);
-}
-#undef EachMember
-
-void CameraAnimation::ApplyScale(float s)
-{
-    super::ApplyScale(s);
-    for (auto& tvp : near_plane)
-        tvp.value *= s;
-    for (auto& tvp : far_plane)
-        tvp.value *= s;
-}
-
-
-LightAnimation::LightAnimation() {}
-LightAnimation::~LightAnimation() {}
-
-Animation::Type LightAnimation::getType() const
-{
-    return Type::Light;
-}
-
-#define EachMember(F)\
-    F(color) F(intensity) F(range) F(spot_angle)
-
-void LightAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-void LightAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-void LightAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-uint64_t LightAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    EachMember(Hash);
-    return ret;
-}
-uint64_t LightAnimation::checksum() const
-{
-    uint64_t ret = super::checksum();
-    EachMember(CSum);
-    return ret;
-}
-bool LightAnimation::empty() const
-{
-    return super::empty() EachMember(Empty);
-}
-void LightAnimation::reduction(bool keep_flat_curves)
-{
-    super::reduction(keep_flat_curves);
-    EachMember(Reduce);
-}
-void LightAnimation::reserve(size_t n)
-{
-    super::reserve(n);
-    EachMember(Reserve);
-}
-#undef EachMember
-
-void LightAnimation::ApplyScale(float s)
-{
-    super::ApplyScale(s);
-    for (auto& tvp : range)
-        tvp.value *= s;
-}
-
-
-std::shared_ptr<BlendshapeAnimation> BlendshapeAnimation::create(std::istream & is)
-{
-    auto ret = Pool<BlendshapeAnimation>::instance().pull();
-    ret->deserialize(is);
-    return make_shared_ptr(ret);
-}
-
-BlendshapeAnimation::BlendshapeAnimation() {}
-BlendshapeAnimation::~BlendshapeAnimation() {}
-
-void BlendshapeAnimation::serialize(std::ostream & os) const
-{
-    write(os, name);
-    write(os, weight);
-}
-
-void BlendshapeAnimation::deserialize(std::istream & is)
-{
-    read(is, name);
-    read(is, weight);
-}
-
-void BlendshapeAnimation::clear()
-{
-    name.clear();
-    weight.clear();
-}
-
-bool BlendshapeAnimation::empty() const
-{
-    return weight.empty();
-}
-
-MeshAnimation::MeshAnimation() {}
-MeshAnimation::~MeshAnimation() {}
-
-Animation::Type MeshAnimation::getType() const
-{
-    return Type::Mesh;
-}
-
-void MeshAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    write(os, blendshapes);
-}
-
-void MeshAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    read(is, blendshapes);
-}
-
-void MeshAnimation::clear()
-{
-    super::clear();
-    blendshapes.clear();
-}
-
-uint64_t MeshAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    for (auto& bs : blendshapes)
-        ret += vhash(bs->weight);
-    return ret;
-}
-
-uint64_t MeshAnimation::checksum() const
+uint64_t Animation::hash() const
 {
     uint64_t ret = 0;
-    for (auto& bs : blendshapes)
-        ret += csum(bs->weight);
+    for (auto& c : curves)
+        ret += c->hash();
     return ret;
 }
-
-bool MeshAnimation::empty() const
+uint64_t Animation::checksum() const
 {
-    return super::empty() && blendshapes.empty();
+    uint64_t ret = 0;
+    for (auto& c : curves)
+        ret += c->checksum();
+    return ret;
+}
+bool Animation::empty() const
+{
+    return curves.empty();
+}
+void Animation::reduction(bool keep_flat_curves)
+{
+    for (auto& c : curves)
+        c->reduction(keep_flat_curves);
+}
+void Animation::reserve(size_t n)
+{
+    for (auto& c : curves)
+        c->reserve(n);
 }
 
-void MeshAnimation::reduction(bool keep_flat_curves)
+void Animation::convertHandedness(bool x, bool yz)
 {
-    super::reduction(keep_flat_curves);
-
-    for (auto& bs : blendshapes)
-        DoReduction(bs->weight, keep_flat_curves);
-    blendshapes.erase(
-        std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
-        blendshapes.end());
+    for (auto& c : curves)
+        c->convertHandedness(x, yz);
+}
+void Animation::applyScaleFactor(float scale)
+{
+    for (auto& c : curves)
+        c->applyScaleFactor(scale);
 }
 
-BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char *name)
+AnimationCurvePtr Animation::findCurve(const char *name)
 {
-    BlendshapeAnimation *ret = nullptr;
-    {
-        auto it = std::find_if(blendshapes.begin(), blendshapes.end(),
-            [name](const ms::BlendshapeAnimationPtr& ptr) { return ptr->name == name; });
-        if (it != blendshapes.end()) {
-            ret = it->get();
-        }
+    auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
+        return std::strcmp(curve->name.c_str(), name) < 0;
+    });
+    if (it != curves.end() && (*it)->name == name)
+        return *it;
+    return nullptr;
+}
+AnimationCurvePtr Animation::addCurve(const char *name, DataType type)
+{
+    auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
+        return std::strcmp(curve->name.c_str(), name) < 0;
+    });
+    if (it != curves.end() && (*it)->name == name) {
+        auto& ret = *it;
+        // clear existing one
+        ret->data.clear();
+        ret->data_type = type;
+        return ret;
     }
-    if (!ret) {
-        auto bsa = ms::BlendshapeAnimation::create();
-        bsa->name = name;
-        blendshapes.push_back(bsa);
-        ret = bsa.get();
+    else {
+        auto ret = AnimationCurve::create();
+        ret->name = name;
+        ret->data_type = type;
+        curves.insert(it, ret);
+        return ret;
     }
+}
+AnimationCurvePtr Animation::getCurve(const char *name, DataType type)
+{
+    auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
+        return std::strcmp(curve->name.c_str(), name) < 0;
+    });
+    if (it != curves.end() && (*it)->name == name)
+        return *it;
+
+    auto ret = AnimationCurve::create();
+    ret->name = name;
+    ret->data_type = type;
+    curves.insert(it, ret);
     return ret;
 }
-BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const std::string& name)
-{
-    return findOrCreateBlendshapeAnimation(name.c_str());
-}
-
-
-PointsAnimation::PointsAnimation() {}
-PointsAnimation::~PointsAnimation() {}
-
-Animation::Type PointsAnimation::getType() const
-{
-    return Type::Points;
-}
-#define EachMember(F)\
-    F(time)
-
-void PointsAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-
-void PointsAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-
-void PointsAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-
-uint64_t PointsAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    EachMember(Hash);
-    return ret;
-}
-
-uint64_t PointsAnimation::checksum() const
-{
-    uint64_t ret = super::checksum();
-    EachMember(CSum);
-    return ret;
-}
-
-bool PointsAnimation::empty() const
-{
-    return super::empty() EachMember(Empty);
-}
-
-void PointsAnimation::reduction(bool keep_flat_curves)
-{
-    super::reduction(keep_flat_curves);
-    EachMember(Reduce);
-}
-
-void PointsAnimation::reserve(size_t n)
-{
-    super::reserve(n);
-    EachMember(Reserve);
-}
-#undef EachMember
 
 
 #define EachMember(F) F(animations)
@@ -633,11 +370,59 @@ void AnimationClip::convertHandedness(bool x, bool yz)
         animation->convertHandedness(x, yz);
 }
 
-void AnimationClip::ApplyScale(float scale)
+void AnimationClip::applyScaleFactor(float scale)
 {
     for (auto& animation : animations)
-        animation->ApplyScale(scale);
+        animation->applyScaleFactor(scale);
 }
-*/
+
+
+
+
+TransformAnimation::TransformAnimation(AnimationPtr host)
+    : translation(host->getCurve(mskTransformTranslation, DataType::Float3))
+    , rotation(host->getCurve(mskTransformRotation, DataType::Quaternion))
+    , scale(host->getCurve(mskTransformScale, DataType::Float3))
+    , visibility(host->getCurve(mskTransformVisibility, DataType::Int))
+{
+    translation.curve->data_flags.affect_handedness = true;
+    translation.curve->data_flags.affect_scale = true;
+    rotation.curve->data_flags.affect_handedness = true;
+    scale.curve->data_flags.affect_handedness = true;
+}
+
+TransformAnimation::~TransformAnimation()
+{
+}
+
+CameraAnimation::CameraAnimation(AnimationPtr host)
+    : super(host)
+    , fov(host->getCurve(mskCameraFieldOfView, DataType::Float))
+    , near_plane(host->getCurve(mskCameraNearPlane, DataType::Float))
+    , far_plane(host->getCurve(mskCameraFarPlane, DataType::Float))
+    , horizontal_aperture(host->getCurve(mskCameraHorizontalAperture, DataType::Float))
+    , vertical_aperture(host->getCurve(mskCameraVerticalAperture, DataType::Float))
+    , focal_length(host->getCurve(mskCameraFocalLength, DataType::Float))
+    , focus_distance(host->getCurve(mskCameraFocusDistance, DataType::Float))
+{
+    near_plane.curve->data_flags.affect_scale = true;
+    far_plane.curve->data_flags.affect_scale = true;
+}
+
+LightAnimation::LightAnimation(AnimationPtr host)
+    : super(host)
+    , color(host->getCurve(mskLightColor, DataType::Float4))
+    , intensity(host->getCurve(mskLightIntensity, DataType::Float))
+    , range(host->getCurve(mskLightRange, DataType::Float))
+    , spot_angle(host->getCurve(mskLightSpotAngle, DataType::Float))
+{
+    range.curve->data_flags.affect_scale = true;
+}
+
+MeshAnimation::MeshAnimation(AnimationPtr host)
+    : super(host)
+{
+}
+
 
 } // namespace ms
