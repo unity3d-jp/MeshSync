@@ -184,7 +184,7 @@ static void SetTangentMode(Keyframe *key, int n, InterpolationMode im)
         UpdateTangents(curve, i);
 }
 
-static inline void FillCurve(const RawVector<ms::TVP<bool>>& src, Keyframe *x, InterpolationMode it)
+static inline void FillCurve(const ms::TAnimationCurve<int>& src, Keyframe *x, InterpolationMode it)
 {
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -194,7 +194,7 @@ static inline void FillCurve(const RawVector<ms::TVP<bool>>& src, Keyframe *x, I
     }
     SetTangentMode(x, n, it);
 }
-static inline void FillCurve(const RawVector<ms::TVP<float>>& src, Keyframe *x, InterpolationMode it)
+static inline void FillCurve(const ms::TAnimationCurve<float>& src, Keyframe *x, InterpolationMode it)
 {
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -204,7 +204,7 @@ static inline void FillCurve(const RawVector<ms::TVP<float>>& src, Keyframe *x, 
     }
     SetTangentMode(x, n, it);
 }
-static inline void FillCurves(const RawVector<ms::TVP<float3>>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+static inline void FillCurves(const ms::TAnimationCurve<float3>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -220,26 +220,7 @@ static inline void FillCurves(const RawVector<ms::TVP<float3>>& src, Keyframe *x
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
 }
-static inline void FillCurves(const RawVector<ms::TVP<float4>>& src, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
-{
-    int n = (int)src.size();
-    for (int i = 0; i < n; ++i) {
-        const auto v = src[i];
-        x[i].time = v.time;
-        x[i].value = v.value.x;
-        y[i].time = v.time;
-        y[i].value = v.value.y;
-        z[i].time = v.time;
-        z[i].value = v.value.z;
-        w[i].time = v.time;
-        w[i].value = v.value.w;
-    }
-    SetTangentMode(x, n, it);
-    SetTangentMode(y, n, it);
-    SetTangentMode(z, n, it);
-    SetTangentMode(w, n, it);
-}
-static inline void FillCurves(const RawVector<ms::TVP<quatf>>& src, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+static inline void FillCurves(const ms::TAnimationCurve<float4>& src, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
 {
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -258,7 +239,26 @@ static inline void FillCurves(const RawVector<ms::TVP<quatf>>& src, Keyframe *x,
     SetTangentMode(z, n, it);
     SetTangentMode(w, n, it);
 }
-static inline void FillCurvesEuler(const RawVector<ms::TVP<quatf>>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+{
+    int n = (int)src.size();
+    for (int i = 0; i < n; ++i) {
+        const auto v = src[i];
+        x[i].time = v.time;
+        x[i].value = v.value.x;
+        y[i].time = v.time;
+        y[i].value = v.value.y;
+        z[i].time = v.time;
+        z[i].value = v.value.z;
+        w[i].time = v.time;
+        w[i].value = v.value.w;
+    }
+    SetTangentMode(x, n, it);
+    SetTangentMode(y, n, it);
+    SetTangentMode(z, n, it);
+    SetTangentMode(w, n, it);
+}
+static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
     int n = (int)src.size();
     float3 prev;
@@ -305,79 +305,34 @@ static inline void FillCurvesEuler(const RawVector<ms::TVP<quatf>>& src, Keyfram
     SetTangentMode(z, n, it);
 }
 
-msAPI void msTransformAFillTranslation(ms::TransformAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI void msCurveFillI(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
 {
-    FillCurves(self->translation, x, y, z, it);
+    if (self->data_type == ms::AnimationCurve::DataType::Int)
+        FillCurve(ms::TAnimationCurve<int>(*self), x, it);
 }
-msAPI void msTransformAFillRotation(ms::TransformAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+msAPI void msCurveFillF(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
 {
-    FillCurves(self->rotation, x, y, z, w, it);
+    if (self->data_type == ms::AnimationCurve::DataType::Float)
+        FillCurve(ms::TAnimationCurve<float>(*self), x, it);
 }
-msAPI void msTransformAFillRotationEuler(ms::TransformAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI void msCurveFillF3(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
-    FillCurvesEuler(self->rotation, x, y, z, it);
+    if (self->data_type == ms::AnimationCurve::DataType::Float3)
+        FillCurves(ms::TAnimationCurve<float3>(*self), x, y, z, it);
 }
-msAPI void msTransformAFillScale(ms::TransformAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI void msCurveFillF4(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
 {
-    FillCurves(self->scale, x, y, z, it);
+    if (self->data_type == ms::AnimationCurve::DataType::Float4)
+        FillCurves(ms::TAnimationCurve<float4>(*self), x, y, z, w, it);
 }
-msAPI void msTransformAFillVisible(ms::TransformAnimation *self, Keyframe *v, InterpolationMode it)
+msAPI void msCurveFillQuat(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
 {
-    FillCurve(self->visible, v, it);
+    if (self->data_type == ms::AnimationCurve::DataType::Quaternion)
+        FillCurves(ms::TAnimationCurve<quatf>(*self), x, y, z, w, it);
 }
-
-msAPI void msCameraAFillFov(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
+msAPI void msCurveFillEuler(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
-    FillCurve(self->fov, v, it);
-}
-msAPI void msCameraAFillNear(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->near_plane, v, it);
-}
-msAPI void msCameraAFillFar(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->far_plane, v, it);
-}
-msAPI void msCameraAFillHAperture(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->horizontal_aperture, v, it);
-}
-msAPI void msCameraAFillVAperture(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->vertical_aperture, v, it);
-}
-msAPI void msCameraAFillFocalLength(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->focal_length, v, it);
-}
-msAPI void msCameraAFillFocusDistance(ms::CameraAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->focus_distance, v, it);
+    if (self->data_type == ms::AnimationCurve::DataType::Quaternion)
+        FillCurvesEuler(ms::TAnimationCurve<quatf>(*self), x, y, z, it);
 }
 
-msAPI void msLightAFillColor(ms::LightAnimation *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
-{
-    FillCurves(self->color, x, y, z, w, it);
-}
-msAPI void msLightAFillIntensity(ms::LightAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->intensity, v, it);
-}
-msAPI void msLightAFillRange(ms::LightAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->range, v, it);
-}
-msAPI void msLightAFillSpotAngle(ms::LightAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->spot_angle, v, it);
-}
-
-msAPI void msMeshAFillBlendshapeWeight(ms::MeshAnimation *self, int bi, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->blendshapes[bi]->weight, v, it);
-}
-
-msAPI void msPointsAFillTime(ms::PointsAnimation *self, Keyframe *v, InterpolationMode it)
-{
-    FillCurve(self->time, v, it);
-}

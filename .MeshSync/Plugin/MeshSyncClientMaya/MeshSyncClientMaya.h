@@ -61,7 +61,7 @@ struct TreeNode : public mu::noncopyable
     std::vector<TreeNode*> children;
 
     ms::TransformPtr dst_obj;
-    ms::AnimationPtr dst_anim;
+    ms::TransformAnimationPtr dst_anim;
     TransformData transform_data;
     ms::float4x4 model_transform;
     ms::float4x4 maya_transform;
@@ -161,10 +161,10 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (MeshSyncClientMaya::*)(ms::Animation& dst, TreeNode *n);
+        using extractor_t = void (MeshSyncClientMaya::*)(ms::TransformAnimation& dst, TreeNode *n);
 
         TreeNode *tn = nullptr;
-        ms::Animation *dst = nullptr;
+        ms::TransformAnimationPtr dst;
         extractor_t extractor = nullptr;
 
         void operator()(MeshSyncClientMaya *_this);
@@ -209,10 +209,10 @@ private:
 
     int exportAnimations(SendScope scope);
     bool exportAnimation(TreeNode *tn, bool force);
-    void extractTransformAnimationData(ms::Animation& dst, TreeNode *n);
-    void extractCameraAnimationData(ms::Animation& dst, TreeNode *n);
-    void extractLightAnimationData(ms::Animation& dst, TreeNode *n);
-    void extractMeshAnimationData(ms::Animation& dst, TreeNode *n);
+    void extractTransformAnimationData(ms::TransformAnimation& dst, TreeNode *n);
+    void extractCameraAnimationData(ms::TransformAnimation& dst, TreeNode *n);
+    void extractLightAnimationData(ms::TransformAnimation& dst, TreeNode *n);
+    void extractMeshAnimationData(ms::TransformAnimation& dst, TreeNode *n);
 
     void kickAsyncSend();
 

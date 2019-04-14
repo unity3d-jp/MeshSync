@@ -23,6 +23,22 @@ struct Equals<int>
 };
 
 template<class T>
+static size_t GetSize(const AnimationCurve& self)
+{
+    TAnimationCurve<T> data(self);
+    return data.size();
+}
+template<> size_t GetSize<void>(const AnimationCurve& /*self*/) { return 0; }
+
+template<class T>
+static void* At(const AnimationCurve& self, int i)
+{
+    TAnimationCurve<T> data(self);
+    return &data[i];
+}
+template<> void* At<void>(const AnimationCurve& /*self*/, int /*i*/) { return nullptr; }
+
+template<class T>
 static void ReserveKeyframes(AnimationCurve& self, size_t n)
 {
     TAnimationCurve<T> data(self);
@@ -92,6 +108,8 @@ template<> void ApplyScale<float4>(AnimationCurve& self, float v) { ApplyScaleIm
 
 struct AnimationCurveFunctionSet
 {
+    size_t(*size)(const AnimationCurve& self);
+    void*(*at)(const AnimationCurve& self, int i);
     void(*reserve_keyframes)(AnimationCurve& self, size_t n);
     void(*reduce_keyframes)(AnimationCurve& self, bool keep_flat_curve);
     void(*convert_handedness)(AnimationCurve& self, bool x, bool yz);
@@ -101,13 +119,12 @@ struct AnimationCurveFunctionSet
 #define EachDataTypes(Body)\
     Body(void) Body(int) Body(float) Body(float2) Body(float3) Body(float4) Body(quatf)
 
-#define DefFunctionSet(T) {&ReserveKeyframes<T>, &ReduceKeyframes<T>, &ConvertHandedness<T>, &ApplyScale<T>},
+#define DefFunctionSet(T) {&GetSize<T>, &At<T>, &ReserveKeyframes<T>, &ReduceKeyframes<T>, &ConvertHandedness<T>, &ApplyScale<T>},
 
 static AnimationCurveFunctionSet g_curve_fs[] = {
     EachDataTypes(DefFunctionSet)
 };
 #undef DefFunctionSet
-#undef EachDataTypes
 
 
 
@@ -157,10 +174,25 @@ uint64_t AnimationCurve::checksum() const
     return ret;
 }
 
+size_t AnimationCurve::size() const
+{
+    return g_curve_fs[(int)data_type].size(*this);
+}
+
 bool AnimationCurve::empty() const
 {
     return data.empty();
 }
+
+template<class T>
+TVP<T>& AnimationCurve::at(int i)
+{
+    return *(TVP<T>*)g_curve_fs[(int)data_type].at(*this, i);
+}
+#define Instantiate(T) template TVP<T>& AnimationCurve::at(int i);
+EachDataTypes(Instantiate)
+#undef Instantiate
+
 
 void AnimationCurve::reserve(size_t n)
 {
@@ -263,6 +295,11 @@ AnimationCurvePtr Animation::findCurve(const char *name)
         return *it;
     return nullptr;
 }
+AnimationCurvePtr Animation::findCurve(const std::string& name)
+{
+    return findCurve(name.c_str());
+}
+
 AnimationCurvePtr Animation::addCurve(const char *name, DataType type)
 {
     auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
@@ -283,6 +320,11 @@ AnimationCurvePtr Animation::addCurve(const char *name, DataType type)
         return ret;
     }
 }
+AnimationCurvePtr Animation::addCurve(const std::string& name, DataType type)
+{
+    return addCurve(name.c_str(), type);
+}
+
 AnimationCurvePtr Animation::getCurve(const char *name, DataType type)
 {
     auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
@@ -296,6 +338,11 @@ AnimationCurvePtr Animation::getCurve(const char *name, DataType type)
     ret->data_type = type;
     curves.insert(it, ret);
     return ret;
+}
+
+AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
+{
+    return getCurve(name.c_str(), type);
 }
 
 
@@ -376,15 +423,37 @@ void AnimationClip::applyScaleFactor(float scale)
         animation->applyScaleFactor(scale);
 }
 
+void AnimationClip::addAnimation(AnimationPtr v)
+{
+    if (v)
+        animations.push_back(v);
+}
+void AnimationClip::addAnimation(TransformAnimationPtr v)
+{
+    if (v)
+        addAnimation(v->host);
+}
 
 
+
+std::shared_ptr<TransformAnimation> TransformAnimation::create(AnimationPtr host)
+{
+    return std::make_shared<TransformAnimation>(host);
+}
+
+std::shared_ptr<TransformAnimation> TransformAnimation::create()
+{
+    return create(Animation::create());
+}
 
 TransformAnimation::TransformAnimation(AnimationPtr host)
-    : translation(host->getCurve(mskTransformTranslation, DataType::Float3))
+    : path(host->path)
+    , translation(host->getCurve(mskTransformTranslation, DataType::Float3))
     , rotation(host->getCurve(mskTransformRotation, DataType::Quaternion))
     , scale(host->getCurve(mskTransformScale, DataType::Float3))
     , visibility(host->getCurve(mskTransformVisibility, DataType::Int))
 {
+    host->entity_type = Entity::Type::Transform;
     translation.curve->data_flags.affect_handedness = true;
     translation.curve->data_flags.affect_scale = true;
     rotation.curve->data_flags.affect_handedness = true;
@@ -395,6 +464,20 @@ TransformAnimation::~TransformAnimation()
 {
 }
 
+void TransformAnimation::reserve(size_t n)
+{
+    host->reserve(n);
+}
+
+
+std::shared_ptr<CameraAnimation> CameraAnimation::create(AnimationPtr host)
+{
+    return std::make_shared<CameraAnimation>(host);
+}
+std::shared_ptr<CameraAnimation> CameraAnimation::create()
+{
+    return create(Animation::create());
+}
 CameraAnimation::CameraAnimation(AnimationPtr host)
     : super(host)
     , fov(host->getCurve(mskCameraFieldOfView, DataType::Float))
@@ -405,10 +488,20 @@ CameraAnimation::CameraAnimation(AnimationPtr host)
     , focal_length(host->getCurve(mskCameraFocalLength, DataType::Float))
     , focus_distance(host->getCurve(mskCameraFocusDistance, DataType::Float))
 {
+    host->entity_type = Entity::Type::Camera;
     near_plane.curve->data_flags.affect_scale = true;
     far_plane.curve->data_flags.affect_scale = true;
 }
 
+
+std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
+{
+    return std::make_shared<LightAnimation>(host);
+}
+std::shared_ptr<LightAnimation> LightAnimation::create()
+{
+    return create(Animation::create());
+}
 LightAnimation::LightAnimation(AnimationPtr host)
     : super(host)
     , color(host->getCurve(mskLightColor, DataType::Float4))
@@ -416,13 +509,36 @@ LightAnimation::LightAnimation(AnimationPtr host)
     , range(host->getCurve(mskLightRange, DataType::Float))
     , spot_angle(host->getCurve(mskLightSpotAngle, DataType::Float))
 {
+    host->entity_type = Entity::Type::Light;
     range.curve->data_flags.affect_scale = true;
 }
 
+
+std::shared_ptr<MeshAnimation> MeshAnimation::create(AnimationPtr host)
+{
+    return std::make_shared<MeshAnimation>(host);
+}
+std::shared_ptr<MeshAnimation> MeshAnimation::create()
+{
+    return create(Animation::create());
+}
 MeshAnimation::MeshAnimation(AnimationPtr host)
     : super(host)
 {
+    host->entity_type = Entity::Type::Mesh;
 }
+
+TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const char *name)
+{
+    char buf[512];
+    sprintf(mskMeshBlendshape ".%s", name);
+    return host->getCurve(buf, DataType::Float);
+}
+TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name)
+{
+    return getBlendshapeCurve(name.c_str());
+}
+
 
 
 } // namespace ms

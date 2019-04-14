@@ -5,6 +5,14 @@
 
 namespace ms {
 
+// time-value pair
+template<class T>
+struct TVP
+{
+    float time;
+    T value;
+};
+
 // this class holds untyped raw animation samples.
 // TAnimationCurve<> handle typed data operations.
 class AnimationCurve
@@ -39,7 +47,11 @@ public:
     void clear();
     uint64_t hash() const;
     uint64_t checksum() const;
+
+    size_t size() const;
     bool empty() const;
+    template<class T> TVP<T>& at(int i);
+
     void reduction(bool keep_flat_curves);
     void reserve(size_t n);
 
@@ -85,54 +97,18 @@ public:
     void applyScaleFactor(float scale);
 
     AnimationCurvePtr findCurve(const char *name);
+    AnimationCurvePtr findCurve(const std::string& name);
     // erase old one if already exists
     AnimationCurvePtr addCurve(const char *name, DataType type);
+    AnimationCurvePtr addCurve(const std::string& name, DataType type);
     // find or create curve
     AnimationCurvePtr getCurve(const char *name, DataType type);
+    AnimationCurvePtr getCurve(const std::string& name, DataType type);
 };
 msSerializable(Animation);
 msDeclPtr(Animation);
 
 
-class AnimationClip : public Asset
-{
-using super = Asset;
-public:
-    std::vector<AnimationPtr> animations;
-
-protected:
-    AnimationClip();
-    ~AnimationClip() override;
-public:
-    msDefinePool(AnimationClip);
-    static std::shared_ptr<AnimationClip> create(std::istream& is);
-
-    AssetType getAssetType() const override;
-    void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
-    void clear() override;
-    uint64_t hash() const override;
-    uint64_t checksum() const override;
-
-    bool empty() const;
-    void reduction(bool keep_flat_curves = false);
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
-
-    void addAnimation(AnimationPtr v);
-};
-msSerializable(AnimationClip);
-msDeclPtr(AnimationClip);
-
-
-
-// time-value pair
-template<class T>
-struct TVP
-{
-    float time;
-    T value;
-};
 
 template<class T>
 struct TAnimationCurve
@@ -140,56 +116,26 @@ struct TAnimationCurve
     using key_t = TVP<T>;
 
     TAnimationCurve(AnimationCurve& c) : curve(&c) {}
+    TAnimationCurve(const AnimationCurve& c) : curve(const_cast<AnimationCurve*>(&c)) {}
     TAnimationCurve(AnimationCurvePtr c) : curve(c.get()) {}
 
-    size_t size() const
-    {
-        return curve->data.size() / sizeof(key_t);
-    }
+    size_t size() const { return curve->data.size() / sizeof(key_t); }
 
-    key_t* data()
-    {
-        return (key_t*)curve->data.data();
-    }
+          key_t* data()       { return (key_t*)curve->data.data(); }
+    const key_t* data() const { return (key_t*)curve->data.data(); }
 
-    bool empty() const
-    {
-        return size() == 0;
-    }
+    bool empty() const { return size() == 0; }
+    void clear() { curve->data.clear(); }
 
-    void clear()
-    {
-        curve->data.clear();
-    }
+    void reserve(size_t v) { curve->data.reserve(v * sizeof(key_t)); }
+    void resize(size_t v) { curve->data.resize(v * sizeof(key_t)); }
+    void resize_discard(size_t v) { curve->data.resize_discard(v * sizeof(key_t)); }
 
-    void reserve(size_t v)
-    {
-        curve->data.reserve(v * sizeof(key_t));
-    }
+    void push_back(const key_t& v) { curve->data.push_back((const char*)&v, sizeof(key_t)); }
+    void pop_back() { curve->data.pop_back(sizeof(key_t)); }
 
-    void resize(size_t v)
-    {
-        curve->data.resize(v * sizeof(key_t));
-    }
-
-    void resize_discard(size_t v)
-    {
-        curve->data.resize_discard(v * sizeof(key_t));
-    }
-
-    void push_back(const key_t& v)
-    {
-        curve->data.push_back((const char*)&v, sizeof(key_t));
-    }
-    void pop_back()
-    {
-        curve->data.pop_back(sizeof(key_t));
-    }
-
-    key_t& operator[](size_t i)
-    {
-        return data()[i];
-    }
+          key_t& operator[](size_t i)       { return data()[i]; }
+    const key_t& operator[](size_t i) const { return data()[i]; }
 
     key_t* begin() { return data(); }
     key_t* end() { return data() + size(); }
@@ -216,7 +162,9 @@ public:
 
     TransformAnimation(AnimationPtr host);
     virtual ~TransformAnimation();
+    void reserve(size_t n);
 
+    std::string& path;
     TAnimationCurve<float3> translation;
     TAnimationCurve<quatf>  rotation;
     TAnimationCurve<float3> scale;
@@ -284,22 +232,6 @@ public:
 
     MeshAnimation(AnimationPtr host);
 
-    // Body: [](TAnimationCurve<float>& curve) -> void
-    template<class Body>
-    void enumerateBlendshapeCurves(const Body& body)
-    {
-        auto compare = [](AnimationCurvePtr& curve, const char *tag) {
-            return std::strcmp(curve->name.c_str(), tag) < 0;
-        };
-
-        auto beg = std::lower_bound(m_animation->curves.begin(), m_animation->curves.end(), mskMeshBlendshape, compare);
-        if (beg != m_animation->curves.end()) {
-            auto end = std::upper_bound(beg, m_animation->curves.end(), mskMeshBlendshape, compare);
-            for (auto i = beg; i != end; ++i)
-                body(*i);
-        }
-    }
-
     // find or create curve
     TAnimationCurve<float> getBlendshapeCurve(const char *name);
     TAnimationCurve<float> getBlendshapeCurve(const std::string& name);
@@ -317,5 +249,37 @@ public:
 
     TAnimationCurve<float> time;
 };
+
+
+class AnimationClip : public Asset
+{
+using super = Asset;
+public:
+    std::vector<AnimationPtr> animations;
+
+protected:
+    AnimationClip();
+    ~AnimationClip() override;
+public:
+    msDefinePool(AnimationClip);
+    static std::shared_ptr<AnimationClip> create(std::istream& is);
+
+    AssetType getAssetType() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+    void clear() override;
+    uint64_t hash() const override;
+    uint64_t checksum() const override;
+
+    bool empty() const;
+    void reduction(bool keep_flat_curves = false);
+    void convertHandedness(bool x, bool yz);
+    void applyScaleFactor(float scale);
+
+    void addAnimation(AnimationPtr v);
+    void addAnimation(TransformAnimationPtr v);
+};
+msSerializable(AnimationClip);
+msDeclPtr(AnimationClip);
 
 } // namespace ms
