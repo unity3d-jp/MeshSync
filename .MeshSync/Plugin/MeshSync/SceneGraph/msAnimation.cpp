@@ -438,14 +438,10 @@ void AnimationClip::addAnimation(TransformAnimationPtr v)
 
 std::shared_ptr<TransformAnimation> TransformAnimation::create(AnimationPtr host)
 {
+    if (!host)
+        host = Animation::create();
     return std::make_shared<TransformAnimation>(host);
 }
-
-std::shared_ptr<TransformAnimation> TransformAnimation::create()
-{
-    return create(Animation::create());
-}
-
 TransformAnimation::TransformAnimation(AnimationPtr h)
     : host(h)
     , path(host->path)
@@ -473,11 +469,9 @@ void TransformAnimation::reserve(size_t n)
 
 std::shared_ptr<CameraAnimation> CameraAnimation::create(AnimationPtr host)
 {
+    if (!host)
+        host = Animation::create();
     return std::make_shared<CameraAnimation>(host);
-}
-std::shared_ptr<CameraAnimation> CameraAnimation::create()
-{
-    return create(Animation::create());
 }
 CameraAnimation::CameraAnimation(AnimationPtr host)
     : super(host)
@@ -497,11 +491,9 @@ CameraAnimation::CameraAnimation(AnimationPtr host)
 
 std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
 {
+    if (!host)
+        host = Animation::create();
     return std::make_shared<LightAnimation>(host);
-}
-std::shared_ptr<LightAnimation> LightAnimation::create()
-{
-    return create(Animation::create());
 }
 LightAnimation::LightAnimation(AnimationPtr host)
     : super(host)
@@ -517,11 +509,9 @@ LightAnimation::LightAnimation(AnimationPtr host)
 
 std::shared_ptr<MeshAnimation> MeshAnimation::create(AnimationPtr host)
 {
+    if (!host)
+        host = Animation::create();
     return std::make_shared<MeshAnimation>(host);
-}
-std::shared_ptr<MeshAnimation> MeshAnimation::create()
-{
-    return create(Animation::create());
 }
 MeshAnimation::MeshAnimation(AnimationPtr host)
     : super(host)
@@ -542,11 +532,9 @@ TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name
 
 std::shared_ptr<PointsAnimation> PointsAnimation::create(AnimationPtr host)
 {
+    if (!host)
+        host = Animation::create();
     return std::make_shared<PointsAnimation>(host);
-}
-std::shared_ptr<PointsAnimation> PointsAnimation::create()
-{
-    return create(Animation::create());
 }
 PointsAnimation::PointsAnimation(AnimationPtr host)
     : super(host)

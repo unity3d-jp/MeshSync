@@ -157,8 +157,7 @@ class TransformAnimation
 public:
     using DataType = AnimationCurve::DataType;
 
-    static std::shared_ptr<TransformAnimation> create(AnimationPtr host);
-    static std::shared_ptr<TransformAnimation> create();
+    static std::shared_ptr<TransformAnimation> create(AnimationPtr host = nullptr);
 
     TransformAnimation(AnimationPtr host);
     virtual ~TransformAnimation();
@@ -186,8 +185,7 @@ class CameraAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
-    static std::shared_ptr<CameraAnimation> create(AnimationPtr host);
-    static std::shared_ptr<CameraAnimation> create();
+    static std::shared_ptr<CameraAnimation> create(AnimationPtr host = nullptr);
 
     CameraAnimation(AnimationPtr host);
     TAnimationCurve<float> fov;
@@ -209,8 +207,7 @@ class LightAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
-    static std::shared_ptr<LightAnimation> create(AnimationPtr host);
-    static std::shared_ptr<LightAnimation> create();
+    static std::shared_ptr<LightAnimation> create(AnimationPtr host = nullptr);
 
     LightAnimation(AnimationPtr host);
     TAnimationCurve<float4> color;
@@ -226,14 +223,29 @@ class MeshAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
-    static std::shared_ptr<MeshAnimation> create(AnimationPtr host);
-    static std::shared_ptr<MeshAnimation> create();
+    static std::shared_ptr<MeshAnimation> create(AnimationPtr host = nullptr);
 
     MeshAnimation(AnimationPtr host);
 
     // find or create curve
     TAnimationCurve<float> getBlendshapeCurve(const char *name);
     TAnimationCurve<float> getBlendshapeCurve(const std::string& name);
+
+    template<class Body>
+    void eachBlendshapeCurves(const Body& body)
+    {
+        EachBlendshapeCurves(*host, body);
+    }
+
+    template<class Body>
+    static void EachBlendshapeCurves(Animation& anim, const Body& body)
+    {
+        auto i = std::lower_bound(anim.curves.begin(), anim.curves.end(), mskMeshBlendshape, [](auto& curve, auto *tag) {
+            return std::strcmp(curve->name.c_str(), tag) < 0;
+        });
+        while (i != anim.curves.end() && ms::StartWith((*i)->name, mskMeshBlendshape))
+            body(*(i++));
+    }
 };
 
 
@@ -243,8 +255,7 @@ class PointsAnimation : public TransformAnimation
 {
 using super = TransformAnimation;
 public:
-    static std::shared_ptr<PointsAnimation> create(AnimationPtr host);
-    static std::shared_ptr<PointsAnimation> create();
+    static std::shared_ptr<PointsAnimation> create(AnimationPtr host = nullptr);
 
     PointsAnimation(AnimationPtr host);
 

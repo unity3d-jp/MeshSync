@@ -247,17 +247,17 @@ DefGetCurve(LightColor)
 DefGetCurve(LightIntensity)
 DefGetCurve(LightRange)
 DefGetCurve(LightSpotAngle)
+
+DefGetCurve(PointsTime)
 #undef DefGetCurve
 
 using msCurveCallback = void(*)(ms::AnimationCurve *curve);
 
 msAPI void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback cb)
 {
-    auto i = std::lower_bound(self->curves.begin(), self->curves.end(), mskMeshBlendshape, [](const ms::AnimationCurvePtr& curve, const char *tag) {
-        return std::strcmp(curve->name.c_str(), tag) < 0;
+    ms::MeshAnimation::EachBlendshapeCurves(*self, [cb](ms::AnimationCurvePtr& curve) {
+        cb(curve.get());
     });
-    while (i != self->curves.end() && ms::StartWith((*i)->name, mskMeshBlendshape))
-        cb((i++)->get());
 }
 
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
