@@ -3,13 +3,6 @@
 #include "msAnimation.h"
 
 
-#define Clear(V) V.clear();
-#define Hash(V) ret += vhash(V);
-#define CSum(V) ret += csum(V);
-#define Empty(V) && V.empty()
-#define Reduce(V) DoReduction(V, keep_flat_curves);
-#define Reserve(V) V.reserve(n);
-
 namespace ms {
 
 template<class T>
@@ -21,17 +14,26 @@ struct Equals
     }
 };
 template<>
-struct Equals<bool>
+struct Equals<int>
 {
-    bool operator()(bool a, bool b) const
+    bool operator()(int a, int b) const
     {
         return a == b;
     }
 };
 
 template<class T>
-static void DoReduction(RawVector<TVP<T>>& data, bool keep_flat_curve)
+static void ReserveKeyframes(AnimationCurve& self, size_t n)
 {
+    TAnimationCurve<T> data(self);
+    data.reserve(n);
+}
+template<> void ReserveKeyframes<void>(AnimationCurve& /*self*/, size_t /*n*/) {}
+
+template<class T>
+static void ReduceKeyframes(AnimationCurve& self, bool keep_flat_curve)
+{
+    TAnimationCurve<T> data(self);
     if (data.size() <= 1)
         return;
 
@@ -50,101 +52,178 @@ static void DoReduction(RawVector<TVP<T>>& data, bool keep_flat_curve)
             data.clear();
     }
 }
+template<> void ReduceKeyframes<void>(AnimationCurve& /*self*/, bool /*keep_flat_curve*/) {}
+
+
+template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x, bool yz)
+{
+    if (!self.flags.affect_handedness)
+        return;
+
+    TAnimationCurve<T> data(self);
+    if (x)
+        for (auto& tvp : data)
+            tvp.value = flip_x(tvp.value);
+    if (yz)
+        for (auto& tvp : data)
+            tvp.value = swap_yz(tvp.value);
+}
+template<class T> static void ConvertHandedness(AnimationCurve& self, bool x, bool yz) {}
+template<> void ConvertHandedness<float3>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float3>(self, x, yz); }
+template<> void ConvertHandedness<float4>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float4>(self, x, yz); }
+template<> void ConvertHandedness<quatf>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<quatf>(self, x, yz); }
+
+
+template<class T> static void ApplyScaleImpl(AnimationCurve& self, float v)
+{
+    if (!self.flags.affect_scale)
+        return;
+
+    TAnimationCurve<T> data(self);
+    for (auto& tvp : data)
+        tvp.value *= v;
+}
+template<class T> static void ApplyScale(AnimationCurve& self, float v) {}
+template<> void ApplyScale<float>(AnimationCurve& self, float v) { ApplyScaleImpl<float>(self, v); }
+template<> void ApplyScale<float2>(AnimationCurve& self, float v) { ApplyScaleImpl<float2>(self, v); }
+template<> void ApplyScale<float3>(AnimationCurve& self, float v) { ApplyScaleImpl<float3>(self, v); }
+template<> void ApplyScale<float4>(AnimationCurve& self, float v) { ApplyScaleImpl<float4>(self, v); }
+
+
+struct AnimationCurveFunctionSet
+{
+    void(*reserve_keyframes)(AnimationCurve& self, size_t n);
+    void(*reduce_keyframes)(AnimationCurve& self, bool keep_flat_curve);
+    void(*convert_handedness)(AnimationCurve& self, bool x, bool yz);
+    void(*apply_scale)(AnimationCurve& self, float v);
+};
+
+#define EachDataTypes(Body)\
+    Body(void) Body(int) Body(float) Body(float2) Body(float3) Body(float4) Body(quatf)
+
+#define DefFunctionSet(T) {&ReserveKeyframes<T>, &ReduceKeyframes<T>, &ConvertHandedness<T>, &ApplyScale<T>},
+
+static AnimationCurveFunctionSet g_curve_fs[] = {
+    EachDataTypes(DefFunctionSet)
+};
+#undef DefFunctionSet
+#undef EachDataTypes
+
+
+#define EachMember(F) F(name) F(data) F(data_type) F(flags)
+
+AnimationCurve::AnimationCurve()
+{
+}
+
+AnimationCurve::~AnimationCurve()
+{
+}
+
+std::shared_ptr<AnimationCurve> AnimationCurve::create(std::istream& is)
+{
+    auto ret = AnimationCurve::create();
+    ret->deserialize(is);
+    return ret;
+}
+
+
+void AnimationCurve::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+
+void AnimationCurve::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+
+void AnimationCurve::clear()
+{
+    name.clear();
+    data.clear();
+    data_type = DataType::Unknown;
+    flags = {};
+}
+
+uint64_t AnimationCurve::hash() const
+{
+    uint64_t ret = 0;
+    ret += vhash(data);
+    return ret;
+}
+
+template<> inline uint64_t csum(const AnimationCurve::DataFlags& v) { return (uint32_t&)v; }
+
+uint64_t AnimationCurve::checksum() const
+{
+    uint64_t ret = 0;
+    EachMember(msCSum);
+    return ret;
+}
+bool AnimationCurve::empty() const
+{
+    return data.empty();
+}
+void AnimationCurve::reserve(size_t n)
+{
+    g_curve_fs[(int)data_type].reserve_keyframes(*this, n);
+}
+void AnimationCurve::reduction(bool keep_flat_curves)
+{
+    g_curve_fs[(int)data_type].reduce_keyframes(*this, keep_flat_curves);
+}
+
+void AnimationCurve::convertHandedness(bool x, bool yz)
+{
+    g_curve_fs[(int)data_type].convert_handedness(*this, x, yz);
+}
+void AnimationCurve::applyScaleFactor(float scale)
+{
+    g_curve_fs[(int)data_type].apply_scale(*this, scale);
+}
+
+bool AnimationCurve::operator<(const AnimationCurve& v) const
+{
+    return name < v.name;
+}
+#undef EachMember
+
 
 
 std::shared_ptr<Animation> Animation::create(std::istream & is)
 {
-    std::shared_ptr<Animation> ret;
-
-    int type;
-    read(is, type);
-    switch ((Type)type) {
-    case Type::Transform: ret = TransformAnimation::create(); break;
-    case Type::Camera: ret = CameraAnimation::create(); break;
-    case Type::Light: ret = LightAnimation::create(); break;
-    case Type::Mesh: ret = MeshAnimation::create(); break;
-    case Type::Points: ret = PointsAnimation::create(); break;
-    default: break;
-    }
-    if (ret) {
-        ret->deserialize(is);
-    }
+    auto ret = Animation::create();
+    ret->deserialize(is);
     return ret;
 }
-
 
 Animation::Animation() {}
 Animation::~Animation() {}
 
-Animation::Type Animation::getType() const
-{
-    return Type::Unknown;
-}
-
 void Animation::serialize(std::ostream & os) const
 {
-    int type = (int)getType();
-    write(os, type);
+    write(os, entity_type);
     write(os, path);
+    write(os, curves);
 }
 
 void Animation::deserialize(std::istream & is)
 {
-    // type is consumed by make()
+    read(is, entity_type);
     read(is, path);
+    read(is, curves);
 }
 
 void Animation::clear()
 {
+    entity_type = EntityType::Unknown;
     path.clear();
+    curves.clear();
 }
 
 
-
-TransformAnimation::TransformAnimation() {}
-TransformAnimation::~TransformAnimation() {}
-
-Animation::Type TransformAnimation::getType() const
-{
-    return Type::Transform;
-}
-
-#define EachMember(F)\
-    F(translation) F(rotation) F(scale) F(visible)
-
-void TransformAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-void TransformAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-void TransformAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-uint64_t TransformAnimation::hash() const
-{
-    uint64_t ret = 0;
-    EachMember(Hash);
-    return ret;
-}
-uint64_t TransformAnimation::checksum() const
-{
-    uint64_t ret = 0;
-    EachMember(CSum);
-    return ret;
-}
-bool TransformAnimation::empty() const
-{
-    bool ret = true;
-    ret = ret EachMember(Empty);
-    return ret;
-}
+/*
 void TransformAnimation::reduction(bool keep_flat_curves)
 {
     EachMember(Reduce);
@@ -173,7 +252,7 @@ void TransformAnimation::convertHandedness(bool x, bool yz)
     }
 }
 
-void TransformAnimation::applyScaleFactor(float s)
+void TransformAnimation::ApplyScale(float s)
 {
     for (auto& tvp : translation)
         tvp.value *= s;
@@ -235,9 +314,9 @@ void CameraAnimation::reserve(size_t n)
 }
 #undef EachMember
 
-void CameraAnimation::applyScaleFactor(float s)
+void CameraAnimation::ApplyScale(float s)
 {
-    super::applyScaleFactor(s);
+    super::ApplyScale(s);
     for (auto& tvp : near_plane)
         tvp.value *= s;
     for (auto& tvp : far_plane)
@@ -299,9 +378,9 @@ void LightAnimation::reserve(size_t n)
 }
 #undef EachMember
 
-void LightAnimation::applyScaleFactor(float s)
+void LightAnimation::ApplyScale(float s)
 {
-    super::applyScaleFactor(s);
+    super::ApplyScale(s);
     for (auto& tvp : range)
         tvp.value *= s;
 }
@@ -554,10 +633,11 @@ void AnimationClip::convertHandedness(bool x, bool yz)
         animation->convertHandedness(x, yz);
 }
 
-void AnimationClip::applyScaleFactor(float scale)
+void AnimationClip::ApplyScale(float scale)
 {
     for (auto& animation : animations)
-        animation->applyScaleFactor(scale);
+        animation->ApplyScale(scale);
 }
+*/
 
 } // namespace ms
