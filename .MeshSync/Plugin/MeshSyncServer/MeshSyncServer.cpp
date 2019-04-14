@@ -218,7 +218,7 @@ msAPI int           msCurveGetNumSamples(ms::AnimationCurve *self) { return self
 msAPI const char* msCurveGetBlendshapeName(ms::AnimationCurve *self)
 {
     static const size_t s_name_pos = std::strlen(mskMeshBlendshape) + 1; // +1 for trailing '.'
-    if (std::strcmp(self->name.c_str(), mskMeshBlendshape) == 0)
+    if (ms::StartWith(self->name, mskMeshBlendshape))
         return &self->name[s_name_pos];
     return "";
 }
@@ -253,19 +253,11 @@ using msCurveCallback = void(*)(ms::AnimationCurve *curve);
 
 msAPI void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback cb)
 {
-    auto compare1 = [](const ms::AnimationCurvePtr& curve, const char *tag) {
+    auto i = std::lower_bound(self->curves.begin(), self->curves.end(), mskMeshBlendshape, [](const ms::AnimationCurvePtr& curve, const char *tag) {
         return std::strcmp(curve->name.c_str(), tag) < 0;
-    };
-    auto compare2 = [](const char *tag, const ms::AnimationCurvePtr& curve) {
-        return std::strcmp(tag, curve->name.c_str()) < 0;
-    };
-
-    auto beg = std::lower_bound(self->curves.begin(), self->curves.end(), mskMeshBlendshape, compare1);
-    if (beg != self->curves.end()) {
-        auto end = std::upper_bound(beg, self->curves.end(), mskMeshBlendshape, compare2);
-        for (auto i = beg; i != end; ++i)
-            cb(i->get());
-    }
+    });
+    while (i != self->curves.end() && ms::StartWith((*i)->name, mskMeshBlendshape))
+        cb((i++)->get());
 }
 
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
