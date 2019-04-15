@@ -471,9 +471,9 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
         exportMaterials();
 
     int num_exported = 0;
-    auto export_branches = [&](DAGNode& rec) {
+    auto export_branches = [&](DAGNode& rec, bool parents) {
         for (auto *tn : rec.branches) {
-            if (exportObject(tn, true))
+            if (exportObject(tn, parents))
                 ++num_exported;
         }
         rec.dirty = false;
@@ -483,7 +483,7 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
         //EnumerateAllNode([](MObject& obj) { PrintNodeInfo(obj); });
 
         auto handler = [&](MObject& node) {
-            export_branches(m_dag_nodes[node]);
+            export_branches(m_dag_nodes[node], true);
         };
         EnumerateNode(MFn::kJoint, handler);
         EnumerateNode(MFn::kCamera, handler);
@@ -494,16 +494,17 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
         for (auto& kvp : m_dag_nodes) {
             auto& rec = kvp.second;
             if (rec.dirty)
-                export_branches(rec);
+                export_branches(rec, false);
         }
     }
     else if (scope == SendScope::Selected) {
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
-        for (uint32_t i = 0; i < list.length(); i++) {
+        uint32_t n = list.length();
+        for (uint32_t i = 0; i < n; i++) {
             MObject node;
             list.getDependNode(i, node);
-            export_branches(m_dag_nodes[node]);
+            export_branches(m_dag_nodes[node], true);
         }
     }
 

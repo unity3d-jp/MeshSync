@@ -115,7 +115,7 @@ void MeshSyncClientMaya::exportMaterials()
     m_material_manager.eraseStaleMaterials();
 }
 
-ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
+ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool parent, bool tip)
 {
     if (!n || n->dst_obj)
         return nullptr;
@@ -123,22 +123,51 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool force)
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
 
+    auto handle_parent = [&]() {
+        if (parent)
+            exportObject(n->parent, parent, false);
+    };
+    auto handle_transform = [&]() {
+        handle_parent();
+        n->dst_obj = exportTransform(n);
+    };
+
     ms::TransformPtr ret;
-    if ((m_settings.sync_meshes || m_settings.sync_blendshapes) && shape.hasFn(MFn::kMesh)) {
-        exportObject(n->parent, true);
-        ret = exportMesh(n);
+    if (shape.hasFn(MFn::kMesh)) {
+        if (m_settings.sync_meshes) {
+            handle_parent();
+            ret = exportMesh(n);
+        }
+        else if (!tip && parent)
+            handle_transform();
     }
-    else if (m_settings.sync_cameras &&shape.hasFn(MFn::kCamera)) {
-        exportObject(n->parent, true);
-        ret = exportCamera(n);
+    else if (shape.hasFn(MFn::kCamera)) {
+        if (m_settings.sync_cameras) {
+            handle_parent();
+            ret = exportCamera(n);
+        }
+        else if (!tip && parent)
+            handle_transform();
     }
-    else if (m_settings.sync_lights &&shape.hasFn(MFn::kLight)) {
-        exportObject(n->parent, true);
-        ret = exportLight(n);
+    else if (shape.hasFn(MFn::kLight)) {
+        if (m_settings.sync_lights) {
+            handle_parent();
+            ret = exportLight(n);
+        }
+        else if (!tip && parent)
+            handle_transform();
     }
-    else if ((m_settings.sync_bones && shape.hasFn(MFn::kJoint)) || force) {
-        exportObject(n->parent, true);
-        ret = exportTransform(n);
+    else if (shape.hasFn(MFn::kJoint)) {
+        if (m_settings.sync_bones) {
+            handle_parent();
+            ret = exportTransform(n);
+        }
+        else if (!tip && parent)
+            handle_transform();
+    }
+    else {
+        // intermediate node
+        handle_transform();
     }
 
     return ret;
@@ -218,11 +247,18 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
     else
         fbx_compatible_transform_extraction();
 
+
     auto& td = n->transform_data;
     pos = td.translation + td.pivot + td.pivot_offset;
     if (n->parent)
         pos -= n->parent->transform_data.pivot;
+
     rot = td.rotation;
+    if (n->shape->node.hasFn(MFn::kCamera))
+        rot = mu::flipY(rot);
+    else if (n->shape->node.hasFn(MFn::kLight))
+        rot = mu::flipY(rot) * mu::rotateZ(180.0f * mu::Deg2Rad);
+
     scale = td.scale;
     vis = IsVisible(n->trans->node);
 }
@@ -299,8 +335,6 @@ ms::CameraPtr MeshSyncClientMaya::exportCamera(TreeNode *n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
-    dst.rotation = mu::flipY(dst.rotation);
-
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
@@ -314,8 +348,6 @@ ms::LightPtr MeshSyncClientMaya::exportLight(TreeNode *n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
-    dst.rotation = mu::flipY(dst.rotation);
-
     extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
@@ -1021,10 +1053,6 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::TransformAnimation& dst_
     extractTransformAnimationData(dst_, n);
 
     auto& dst = (ms::CameraAnimation&)dst_;
-    {
-        auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
-    }
 
     bool ortho;
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
@@ -1049,10 +1077,6 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::TransformAnimation& dst_,
     extractTransformAnimationData(dst_, n);
 
     auto& dst = (ms::LightAnimation&)dst_;
-    {
-        auto& last = dst.rotation.back();
-        last.value = mu::flipY(last.value);
-    }
 
     ms::Light::LightType type;
     mu::float4 color;

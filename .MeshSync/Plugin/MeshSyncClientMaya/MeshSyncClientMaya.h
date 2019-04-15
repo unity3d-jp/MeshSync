@@ -191,7 +191,7 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    ms::TransformPtr exportObject(TreeNode *n, bool force);
+    ms::TransformPtr exportObject(TreeNode *n, bool parent, bool tip = true);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode *n);
     ms::CameraPtr exportCamera(TreeNode *n);
