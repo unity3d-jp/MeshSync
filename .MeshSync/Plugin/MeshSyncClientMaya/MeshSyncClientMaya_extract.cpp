@@ -960,7 +960,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
 
-    ms::AnimationPtr dst;
+    ms::TransformAnimationPtr dst;
     AnimationRecord::extractor_t extractor = nullptr;
 
     if (shape.hasFn(MFn::kCamera)) {
@@ -988,10 +988,10 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
         dst->path = handleNamespace(n->path);
         auto& rec = m_anim_records[n];
         rec.tn = n;
-        rec.dst = dst.get();
+        rec.dst = dst;
         rec.extractor = extractor;
         n->dst_anim = dst;
-        m_animations.front()->animations.push_back(dst);
+        m_animations.front()->addAnimation(dst);
         return true;
     }
     else {
@@ -999,7 +999,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
     }
 }
 
-void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, TreeNode *n)
+void MeshSyncClientMaya::extractTransformAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -1013,10 +1013,10 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::Animation& dst_, Tree
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visibility.push_back({ t, vis });
 }
 
-void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, TreeNode *n)
+void MeshSyncClientMaya::extractCameraAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
 {
     extractTransformAnimationData(dst_, n);
 
@@ -1044,7 +1044,7 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::Animation& dst_, TreeNod
 #endif
 }
 
-void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode *n)
+void MeshSyncClientMaya::extractLightAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
 {
     extractTransformAnimationData(dst_, n);
 
@@ -1067,7 +1067,7 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::Animation& dst_, TreeNode
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
-void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode *n)
+void MeshSyncClientMaya::extractMeshAnimationData(ms::TransformAnimation & dst_, TreeNode *n)
 {
     extractTransformAnimationData(dst_, n);
 
@@ -1092,10 +1092,10 @@ void MeshSyncClientMaya::extractMeshAnimationData(ms::Animation & dst_, TreeNode
                     MPlug plug_wc = plug_weight.elementByPhysicalIndex(idx_itg);
                     std::string name = handleNamespace(plug_wc.name().asChar());
 
-                    auto bsa = dst.findOrCreateBlendshapeAnimation(name.c_str());
+                    auto bsa = dst.getBlendshapeCurve(name);
                     float weight = 0.0f;
                     plug_wc.getValue(weight);
-                    bsa->weight.push_back({ t, weight * 100.0f });
+                    bsa.push_back({ t, weight * 100.0f });
                 }
             }
         }

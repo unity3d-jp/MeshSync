@@ -3,6 +3,14 @@
 
 namespace ms {
 
+bool StartWith(const std::string& a, const char *b)
+{
+    if (!b)
+        return false;
+    size_t n = std::strlen(b);
+    return std::strncmp(a.c_str(), b, n) == 0;
+}
+
 bool FileToByteArray(const char *path, RawVector<char> &dst)
 {
     FILE *f = fopen(path, "rb");

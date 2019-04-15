@@ -3,7 +3,7 @@
 #define msReleaseDate 20190410
 #define msReleaseDateStr "20190410"
 #define msVendor "Unity Technologies"
-#define msProtocolVersion 112
+#define msProtocolVersion 113
 //#define msEnableProfiling
 
 namespace mu {}

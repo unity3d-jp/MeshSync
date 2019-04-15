@@ -272,8 +272,10 @@ struct vhash_impl<RawVector<T>>
     }
 };
 
-template<class T>
-struct csum_impl;
+template<class T, bool is_enum = std::is_enum<T>::value> struct csum_impl2;
+template<class T> struct csum_impl2<T, true> { uint64_t operator()(T v) { return static_cast<uint64_t>(v); } };
+
+template<class T> struct csum_impl { uint64_t operator()(const T& v) { return csum_impl2<T>()(v); } };
 template<> struct csum_impl<bool> { uint64_t operator()(bool v) { return (uint32_t)v; } };
 template<> struct csum_impl<int> { uint64_t operator()(int v) { return (uint32_t&)v; } };
 template<> struct csum_impl<uint32_t> { uint64_t operator()(uint32_t v) { return (uint32_t&)v; } };
@@ -399,6 +401,7 @@ std::shared_ptr<T> make_shared_ptr(T *p)
 #define msRead(V) read(is, V);
 #define msClear(V) V.clear();
 #define msHash(V) ret += vhash(V);
+#define msCSum(V) ret += csum(V);
 
 #define msDefinePool(T)\
     friend class Pool<T>;\

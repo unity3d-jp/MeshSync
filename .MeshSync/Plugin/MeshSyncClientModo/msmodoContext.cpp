@@ -1056,7 +1056,7 @@ std::shared_ptr<T> msmodoContext::createAnimation(TreeNode& n)
     dst.path = GetPath(n.item);
     n.dst_anim = ret;
     n.anim_extractor = getAnimationExtractor<T>();
-    m_animations.front()->animations.push_back(ret);
+    m_animations.front()->addAnimation(ret);
     return ret;
 }
 
@@ -1180,8 +1180,7 @@ void msmodoContext::extractMeshAnimationData(TreeNode& n)
 
             const char *mapname = morph.getMapName();
             if (mapname && LXx_OK(mmap.SelectByName(LXi_VMAP_MORPH, mapname))) {
-                auto bsa = dst.findOrCreateBlendshapeAnimation(GetName(def));
-                bsa->weight.push_back({ t, morph.getWeight() });
+                dst.getBlendshapeCurve(GetName(def)).push_back({ t, morph.getWeight() });
             }
         });
     }
@@ -1204,7 +1203,7 @@ void msmodoContext::extractReplicatorAnimationData(TreeNode& n)
         if (!dst_ptr) {
             dst_ptr = ms::TransformAnimation::create();
             dst_ptr->path = path;
-            m_animations.front()->animations.push_back(dst_ptr);
+            m_animations.front()->addAnimation(dst_ptr);
         }
         auto& dst = static_cast<ms::TransformAnimation&>(*dst_ptr);
 
