@@ -119,6 +119,13 @@ public:
     };
     Settings m_settings;
 
+    enum class SendTarget
+    {
+        Objects,
+        Materials,
+        Animations,
+        Everything,
+    };
     enum class SendScope
     {
         None,
@@ -140,11 +147,13 @@ public:
     void onSceneLoadEnd();
     void onTimeChange(const MTime& time);
 
+    void wait();
     void update();
-    bool sendScene(SendScope scope, bool dirty_all);
+    bool sendObjects(SendScope scope, bool dirty_all);
+    bool sendMaterials(bool dirty_all);
     bool sendAnimations(SendScope scope);
 
-    bool recvScene();
+    bool recvObjects();
 
 
 private:

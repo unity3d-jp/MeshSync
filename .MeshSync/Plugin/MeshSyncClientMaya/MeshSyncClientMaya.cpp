@@ -185,7 +185,7 @@ void MeshSyncClientMaya::onNodeRemoved(const MObject& node)
 
 void MeshSyncClientMaya::onNodeRenamed()
 {
-    onSceneUpdated();
+    m_scene_updated = true;
 }
 
 void MeshSyncClientMaya::onSceneUpdated()
@@ -207,7 +207,7 @@ void MeshSyncClientMaya::onTimeChange(const MTime & time)
 {
     if (m_settings.auto_sync) {
         m_pending_scope = SendScope::All;
-        // timer callback won't be called while scrubbing time slider. so call update() immediately
+        // timer callback won't be fired while scrubbing time slider. so call update() immediately
         update();
 
         // for timer callback
@@ -269,9 +269,10 @@ MeshSyncClientMaya::MeshSyncClientMaya(MObject obj)
 
 MeshSyncClientMaya::~MeshSyncClientMaya()
 {
-    m_sender.wait();
+    wait();
     removeNodeCallbacks();
     removeGlobalCallbacks();
+
 #define Body(CmdType) m_iplugin.deregisterCommand(CmdType::name());
     EachCommand(Body)
 #undef Body
@@ -455,7 +456,7 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
 }
 
 
-bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
+bool MeshSyncClientMaya::sendObjects(SendScope scope, bool dirty_all)
 {
     if (m_sender.isSending()) {
         m_pending_scope = scope;
@@ -466,10 +467,10 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
     if (scope == SendScope::All) {
         m_entity_manager.clearEntityRecords();
     }
-    if (dirty_all) {
-        m_material_manager.makeDirtyAll();
-        m_entity_manager.makeDirtyAll();
-    }
+
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -521,6 +522,21 @@ bool MeshSyncClientMaya::sendScene(SendScope scope, bool dirty_all)
     }
 }
 
+bool MeshSyncClientMaya::sendMaterials(bool dirty_all)
+{
+    if (m_sender.isSending()) {
+        return false;
+    }
+
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+    return true;
+}
+
 bool MeshSyncClientMaya::sendAnimations(SendScope scope)
 {
     m_sender.wait();
@@ -532,6 +548,11 @@ bool MeshSyncClientMaya::sendAnimations(SendScope scope)
     else {
         return false;
     }
+}
+
+void MeshSyncClientMaya::wait()
+{
+    m_sender.wait();
 }
 
 void MeshSyncClientMaya::update()
@@ -550,10 +571,10 @@ void MeshSyncClientMaya::update()
     }
 
     if (m_pending_scope != SendScope::None) {
-        sendScene(m_pending_scope, false);
+        sendObjects(m_pending_scope, false);
     }
     else if (m_settings.auto_sync) {
-        sendScene(SendScope::Updated, false);
+        sendObjects(SendScope::Updated, false);
     }
 }
 
@@ -611,7 +632,7 @@ void MeshSyncClientMaya::kickAsyncSend()
     m_sender.kick();
 }
 
-bool MeshSyncClientMaya::recvScene()
+bool MeshSyncClientMaya::recvObjects()
 {
     m_sender.wait();
 
