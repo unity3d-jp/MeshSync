@@ -185,15 +185,7 @@ void MeshSyncClientMaya::onNodeRemoved(const MObject& node)
 
 void MeshSyncClientMaya::onNodeRenamed()
 {
-    bool needs_update = false;
-    for (auto& tn : m_tree_nodes) {
-        if (checkRename(tn.get()))
-            needs_update = true;
-    }
-
-    if (needs_update) {
-        m_scene_updated = true;
-    }
+    onSceneUpdated();
 }
 
 void MeshSyncClientMaya::onSceneUpdated()
@@ -376,17 +368,44 @@ void MeshSyncClientMaya::removeNodeCallbacks()
 
 void MeshSyncClientMaya::constructTree()
 {
+    struct ExistRecord
+    {
+        std::string path;
+        bool exists;
+
+        bool operator<(const ExistRecord& v) const { return path < v.path; }
+        bool operator<(const std::string& v) const { return path < v; }
+    };
+    // create path list to detect rename / re-parent 
+    std::vector<ExistRecord> old_records;
+    old_records.reserve(m_tree_nodes.size());
+    for (auto& n : m_tree_nodes)
+        old_records.push_back({ std::move(n->path), false });
+    std::sort(old_records.begin(), old_records.end());
+
+    // clear old tree
     m_tree_roots.clear();
     m_tree_nodes.clear();
     for (auto& kvp : m_dag_nodes)
         kvp.second.branches.clear();
     m_index_seed = 0;
 
+    // build new tree
     EnumerateNode(MFn::kTransform, [&](MObject& node) {
-        if (Pad<MFnDagNode>(node).parent(0).hasFn(MFn::kWorld)) {
+        if (Pad<MFnDagNode>(node).parent(0).hasFn(MFn::kWorld))
             constructTree(node, nullptr, "");
-        }
     });
+
+    // erase renamed / re-parented objects
+    for (auto& n : m_tree_nodes) {
+        auto it = std::lower_bound(old_records.begin(), old_records.end(), n->path);
+        if (it != old_records.end() && it->path == n->path)
+            it->exists = true;
+    }
+    for (auto& r : old_records) {
+        if (!r.exists)
+            m_entity_manager.erase(r.path);
+    }
 }
 
 void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, const std::string& base)
@@ -433,21 +452,6 @@ void MeshSyncClientMaya::constructTree(const MObject& node, TreeNode *parent, co
         if (c.hasFn(MFn::kTransform))
             constructTree(c, tn, path);
     });
-}
-
-bool MeshSyncClientMaya::checkRename(TreeNode *tn)
-{
-    if (tn->name != GetName(tn->trans->node)) {
-        m_entity_manager.erase(tn->getIdentifier());
-        return true;
-    }
-    else {
-        for (auto child : tn->children) {
-            if (checkRename(child))
-                return true;
-        }
-    }
-    return false;
 }
 
 

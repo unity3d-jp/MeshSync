@@ -181,7 +181,6 @@ private:
 
     void constructTree();
     void constructTree(const MObject& node, TreeNode *parent, const std::string& base);
-    bool checkRename(TreeNode *node);
 
     void registerGlobalCallbacks();
     void registerNodeCallbacks();
