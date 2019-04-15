@@ -52,6 +52,7 @@ struct MeshRefineFlags
     uint32_t mirror_z_weld : 1;
     uint32_t mirror_basis : 1;
     uint32_t make_double_sided : 1;
+    uint32_t quadify : 1;
 };
 
 struct MeshRefineSettings
@@ -59,6 +60,7 @@ struct MeshRefineSettings
     MeshRefineFlags flags = { 0 };
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f; // in degree
+    float quadify_threshold = 15.0f; // in degree
     uint32_t split_unit = 65000;
     uint32_t max_bone_influence = 4;
     float4x4 local2world = float4x4::identity();
