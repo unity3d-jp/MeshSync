@@ -540,8 +540,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
         if (cid == CAMERA_CLASS_ID) {
             if (m_settings.sync_cameras) {
                 handle_parent();
-                if (!handle_instance())
-                    ret = exportCamera(rec);
+                ret = exportCamera(rec);
             }
             else if (!tip && parent)
                 handle_transform();
@@ -549,8 +548,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
         else if (cid == LIGHT_CLASS_ID) {
             if (m_settings.sync_lights) {
                 handle_parent();
-                if (!handle_instance())
-                    ret = exportLight(rec);
+                ret = exportLight(rec);
             }
             else if (!tip && parent)
                 handle_transform();

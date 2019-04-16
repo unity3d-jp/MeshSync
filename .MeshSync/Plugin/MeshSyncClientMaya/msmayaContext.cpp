@@ -2,7 +2,7 @@
 #include "pch.h"
 #include "msmayaUtils.h"
 #include "msmayaContext.h"
-#include "msmayaCommands.h"
+#include "msmayaCommand.h"
 
 
 bool DAGNode::isInstance() const
@@ -23,31 +23,18 @@ void TreeNode::clearState()
 
 bool TreeNode::isInstance() const
 {
-    return shape->branches.size() > 1 ||
-        trans->branches.size() > 1;
+    return shape->branches.size() > 1;
+}
+
+bool TreeNode::isPrimaryInstance() const
+{
+    return getPrimaryInstanceNode() == this;
 }
 
 TreeNode* TreeNode::getPrimaryInstanceNode() const
 {
-    auto get_primary_parent = [](const MObject& node) -> MObject {
-        Pad<MFnDagNode> dn(node);
-        return dn.parentCount() > 0 ? dn.parent(0) : MObject();
-    };
-
-    if (trans->branches.size() > 1) {
-        auto primary = get_primary_parent(trans->node);
-        for (auto b : trans->branches) {
-            if (b->parent->trans->node == primary)
-                return b;
-        }
-    }
-    if (shape->branches.size() > 1) {
-        auto primary = get_primary_parent(shape->node);
-        for (auto b : shape->branches) {
-            if (b->trans->node == primary)
-                return b;
-        }
-    }
+    if (!shape->branches.empty())
+        return shape->branches.front();
     return nullptr;
 }
 
@@ -397,7 +384,7 @@ void msmayaContext::constructTree()
 
     // build new tree
     EnumerateNode(MFn::kTransform, [&](MObject& node) {
-        if (Pad<MFnDagNode>(node).parent(0).hasFn(MFn::kWorld))
+        if (Pad<MFnDagNode>(node).parent(0).hasFn(MFn::kWorld)) // root transforms
             constructTree(node, nullptr, "");
     });
 
@@ -435,30 +422,45 @@ void msmayaContext::constructTree(const MObject& node, TreeNode *parent, const s
         rec_shape.node = shape;
     }
 
-    auto *tn = new TreeNode();
-    m_tree_nodes.emplace_back(tn);
-    tn->trans = &rec_node;
-    tn->shape = &rec_shape;
-    tn->name = name;
-    tn->path = path;
-    tn->index = ++m_index_seed;
-    tn->parent = parent;
+    auto *n = new TreeNode();
+    m_tree_nodes.emplace_back(n);
+    n->trans = &rec_node;
+    n->shape = &rec_shape;
+    n->name = name;
+    n->path = path;
+    n->index = ++m_index_seed;
+    n->parent = parent;
 
     if (parent)
-        parent->children.push_back(tn);
+        parent->children.push_back(n);
     else
-        m_tree_roots.push_back(tn);
+        m_tree_roots.push_back(n);
 
-    rec_node.branches.push_back(tn);
+    rec_node.branches.push_back(n);
     if (shape != node)
-        rec_shape.branches.push_back(tn);
+        rec_shape.branches.push_back(n);
 
     EachChild(node, [&](const MObject & c) {
         if (c.hasFn(MFn::kTransform))
-            constructTree(c, tn, path);
+            constructTree(c, n, path);
     });
 }
 
+
+bool msmayaContext::sendMaterials(bool dirty_all)
+{
+    if (m_sender.isSending()) {
+        return false;
+    }
+
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+    return true;
+}
 
 bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
 {
@@ -524,21 +526,6 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
     else {
         return false;
     }
-}
-
-bool msmayaContext::sendMaterials(bool dirty_all)
-{
-    if (m_sender.isSending()) {
-        return false;
-    }
-
-    m_material_manager.setAlwaysMarkDirty(dirty_all);
-    m_texture_manager.setAlwaysMarkDirty(dirty_all);
-    exportMaterials();
-
-    // send
-    kickAsyncSend();
-    return true;
 }
 
 bool msmayaContext::sendAnimations(SendScope scope)
@@ -787,12 +774,20 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
         handle_parent();
         n->dst_obj = exportTransform(n);
     };
+    auto handle_instance = [&]() -> bool {
+        if (n->isInstance() && !n->isPrimaryInstance()) {
+            n->dst_obj = exportInstance(n);
+            return true;
+        }
+        return false;
+    };
 
     ms::TransformPtr ret;
     if (shape.hasFn(MFn::kMesh)) {
-        if (m_settings.sync_meshes) {
+        if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
             handle_parent();
-            ret = exportMesh(n);
+            if (!handle_instance())
+                ret = exportMesh(n);
         }
         else if (!tip && parent)
             handle_transform();
@@ -980,6 +975,21 @@ ms::TransformPtr msmayaContext::exportTransform(TreeNode *n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+
+    m_entity_manager.add(ret);
+    return ret;
+}
+
+ms::TransformPtr msmayaContext::exportInstance(TreeNode *n)
+{
+    auto ret = createEntity<ms::Transform>(*n);
+    auto& dst = *ret;
+
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+
+    auto primary = n->getPrimaryInstanceNode();
+    if (primary && n != primary)
+        dst.reference = handleNamespace(primary->path);
 
     m_entity_manager.add(ret);
     return ret;
@@ -1226,15 +1236,6 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     dst.visible = IsVisible(shape);
     if (!dst.visible)
         return;
-
-    if (n->isInstance()) {
-        auto primary = n->getPrimaryInstanceNode();
-        if (n != primary) {
-            dst.reference = handleNamespace(primary->path);
-            return;
-        }
-    }
-
 
     MStatus mstat;
     MFnMesh mmesh(shape);
@@ -1528,14 +1529,6 @@ void msmayaContext::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
 
     MStatus mstat;
     MFnMesh mmesh(shape);
-
-    if (n->isInstance()) {
-        auto primary = n->getPrimaryInstanceNode();
-        if (n != primary) {
-            dst.reference = handleNamespace(primary->path);
-            return;
-        }
-    }
 
     if (!mmesh.object().hasFn(MFn::kMesh)) {
         // return empty mesh

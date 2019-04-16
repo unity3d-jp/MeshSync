@@ -118,6 +118,7 @@ public:
             pop->popup_add("Materials");
             pop->popup_add("Animations");
             pop->popup_add("Everything");
+            static_assert((int)msmodoContext::SendTarget::Everything == 3, "SendTarget enum and uivalue mismatch");
             return pop;
         }
     };

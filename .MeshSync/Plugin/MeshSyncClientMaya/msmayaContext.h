@@ -69,6 +69,7 @@ struct TreeNode : public mu::noncopyable
     ms::Identifier getIdentifier() const;
     void clearState();
     bool isInstance() const;
+    bool isPrimaryInstance() const;
     TreeNode* getPrimaryInstanceNode() const;
 
     MDagPath getDagPath(bool include_shape = true) const;
@@ -149,8 +150,8 @@ public:
 
     void wait();
     void update();
-    bool sendObjects(SendScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
+    bool sendObjects(SendScope scope, bool dirty_all);
     bool sendAnimations(SendScope scope);
 
     bool recvObjects();
@@ -202,6 +203,7 @@ private:
     ms::TransformPtr exportObject(TreeNode *n, bool parent, bool tip = true);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode *n);
+    ms::TransformPtr exportInstance(TreeNode *n);
     ms::CameraPtr exportCamera(TreeNode *n);
     ms::LightPtr exportLight(TreeNode *n);
     ms::MeshPtr exportMesh(TreeNode *n);
