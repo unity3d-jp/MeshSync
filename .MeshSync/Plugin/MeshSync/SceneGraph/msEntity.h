@@ -37,7 +37,8 @@ public:
     virtual std::shared_ptr<Entity> clone();
 
     Identifier getIdentifier() const;
-    bool identidy(const Identifier& v) const;
+    bool isRoot() const;
+    bool identify(const Identifier& v) const;
     const char* getName() const; // get name (leaf) from path
 };
 msSerializable(Entity);

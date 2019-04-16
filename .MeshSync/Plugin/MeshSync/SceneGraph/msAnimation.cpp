@@ -277,6 +277,9 @@ void Animation::reserve(size_t n)
 
 void Animation::convertHandedness(bool x, bool yz)
 {
+    if (yz && !isRoot())
+        yz = false;
+
     for (auto& c : curves)
         c->convertHandedness(x, yz);
 }
@@ -284,6 +287,11 @@ void Animation::applyScaleFactor(float scale)
 {
     for (auto& c : curves)
         c->applyScaleFactor(scale);
+}
+
+bool Animation::isRoot() const
+{
+    return path.find_last_of('/') == 0;
 }
 
 AnimationCurvePtr Animation::findCurve(const char *name)

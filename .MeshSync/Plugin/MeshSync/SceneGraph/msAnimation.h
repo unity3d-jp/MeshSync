@@ -96,6 +96,7 @@ public:
     void convertHandedness(bool x, bool yz);
     void applyScaleFactor(float scale);
 
+    bool isRoot() const;
     AnimationCurvePtr findCurve(const char *name);
     AnimationCurvePtr findCurve(const std::string& name);
     // erase old one if already exists

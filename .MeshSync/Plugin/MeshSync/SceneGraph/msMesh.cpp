@@ -52,17 +52,12 @@ void BlendShapeFrameData::clear()
 
 #undef EachMember
 
-void BlendShapeFrameData::convertHandedness(bool x, bool yz)
+void BlendShapeFrameData::convertHandedness(bool x, bool /*yz*/)
 {
     if (x) {
         for (auto& v : points) { v = flip_x(v); }
         for (auto& v : normals) { v = flip_x(v); }
         for (auto& v : tangents) { v = flip_x(v); }
-    }
-    if (yz) {
-        for (auto& v : points) { v = swap_yz(v); }
-        for (auto& v : normals) { v = swap_yz(v); }
-        for (auto& v : tangents) { v = swap_yz(v); }
     }
 }
 
@@ -152,14 +147,10 @@ void BoneData::clear()
     weights.clear();
 }
 
-void BoneData::convertHandedness(bool x, bool yz)
+void BoneData::convertHandedness(bool x, bool /*yz*/)
 {
-    if (x) {
+    if (x)
         bindpose = flip_x(bindpose);
-    }
-    if (yz) {
-        bindpose = swap_yz(bindpose);
-    }
 }
 
 void BoneData::applyScaleFactor(float scale)
@@ -334,19 +325,14 @@ void Mesh::convertHandedness(bool x, bool yz)
     convertHandedness_BlendShapes(x, yz);
     convertHandedness_Bones(x, yz);
 }
-void Mesh::convertHandedness_Mesh(bool x, bool yz)
+
+void Mesh::convertHandedness_Mesh(bool x, bool /*yz*/)
 {
     if (x) {
         mu::InvertX(points.data(), points.size());
         mu::InvertX(normals.data(), normals.size());
         mu::InvertX(tangents.data(), tangents.size());
         mu::InvertX(velocities.data(), velocities.size());
-    }
-    if (yz) {
-        for (auto& v : points) v = swap_yz(v);
-        for (auto& v : normals) v = swap_yz(v);
-        for (auto& v : tangents) v = swap_yz(v);
-        for (auto& v : velocities) v = swap_yz(v);
     }
 }
 void Mesh::convertHandedness_BlendShapes(bool x, bool yz)

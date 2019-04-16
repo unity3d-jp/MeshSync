@@ -384,7 +384,7 @@ void MeshSyncClient3dsMax::kickAsyncSend()
     m_sender.on_prepare = [this, to_meter]() {
         auto& t = m_sender;
         t.client_settings = m_settings.client_settings;
-        t.scene_settings.handedness = ms::Handedness::LeftZUp;
+        t.scene_settings.handedness = ms::Handedness::RightZUp;
         t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
         t.textures = m_texture_manager.getDirtyTextures();
@@ -564,7 +564,7 @@ ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool parent, bool 
     return ret;
 }
 
-static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     auto mat = to_float4x4(n->GetNodeTM(t));
 
@@ -578,6 +578,19 @@ static void ExtractTransform(INode * n, TimeValue t, mu::float3& pos, mu::quatf&
     rot = mu::extract_rotation(mat);
     scale = mu::extract_scale(mat);
     vis = !n->IsHidden();
+
+    {
+        auto *obj = GetBaseObject(n);
+        auto cid = obj->SuperClassID();
+        if (cid == CAMERA_CLASS_ID) {
+            static const auto cr = mu::rotateZ(-180.0f * mu::Deg2Rad) * mu::rotateX(-180.0f * mu::Deg2Rad);
+            rot *= cr;
+        }
+        else if (cid == LIGHT_CLASS_ID) {
+            static const auto cr = mu::rotateX(-180.0f * mu::Deg2Rad);
+            rot *= cr;
+        }
+    }
 }
 
 static void ExtractCameraData(GenCamera *cam, TimeValue t,
@@ -669,8 +682,6 @@ ms::CameraPtr MeshSyncClient3dsMax::exportCamera(TreeNode& n)
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
     ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
-    dst.rotation *= mu::rotateX(-90.0f * mu::Deg2Rad);
-
     ExtractCameraData((GenCamera*)n.baseobj, GetTime(),
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane);
     m_entity_manager.add(ret);
@@ -682,8 +693,6 @@ ms::LightPtr MeshSyncClient3dsMax::exportLight(TreeNode& n)
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
     ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
-    dst.rotation *= mu::rotateX(-90.0f * mu::Deg2Rad);
-
     ExtractLightData((GenLight*)n.baseobj, GetTime(),
         dst.light_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
@@ -998,9 +1007,8 @@ void MeshSyncClient3dsMax::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mes
 
     {
         dst.setupFlags();
-        // request flip faces
         dst.flags.has_refine_settings = 1;
-        dst.refine_settings.flags.swap_faces = 1;
+        dst.refine_settings.flags.swap_faces = m_settings.flip_faces;
         dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     }
@@ -1095,10 +1103,6 @@ void MeshSyncClient3dsMax::extractCameraAnimation(ms::TransformAnimation& dst_, 
 
     float t = m_anim_time;
     auto& dst = (ms::CameraAnimation&)dst_;
-    {
-        auto& last = dst.rotation.back();
-        last.value *= mu::rotateX(-90.0f * mu::Deg2Rad);
-    }
 
     bool ortho;
     float fov, near_plane, far_plane;
@@ -1115,10 +1119,7 @@ void MeshSyncClient3dsMax::extractLightAnimation(ms::TransformAnimation& dst_, I
 
     float t = m_anim_time;
     auto& dst = (ms::LightAnimation&)dst_;
-    {
-        auto& last = dst.rotation.back();
-        last.value *= mu::rotateX(-90.0f * mu::Deg2Rad);
-    }
+
     ms::Light::LightType type;
     mu::float4 color;
     float intensity, spot_angle;

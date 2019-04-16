@@ -20,6 +20,7 @@ public:
         bool sync_normals = true;
         bool sync_uvs = true;
         bool sync_colors = true;
+        bool flip_faces = true;
         bool make_double_sided = false;
         bool bake_modifiers = false;
         bool convert_to_mesh = true;

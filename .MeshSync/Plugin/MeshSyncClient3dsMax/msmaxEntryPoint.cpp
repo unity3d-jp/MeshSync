@@ -41,8 +41,25 @@ msmaxAPI ULONG CanAutoDefer()
     return 0;
 }
 
-def_visible_primitive(UnityMeshSync_Settings, "UnityMeshSync_Settings");
-Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
+
+#include <maxscript\macros\define_instantiation_functions.h>
+def_struct_primitive(Window, UnityMeshSync, "Window");
+def_struct_primitive(Settings, UnityMeshSync, "Settings");
+def_struct_primitive(Export, UnityMeshSync, "Export");
+def_struct_primitive(Import, UnityMeshSync, "Import");
+
+Value* Window_cf(Value** arg_list, int count)
+{
+    if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
+        msmaxInstance().closeWindow();
+    }
+    else {
+        msmaxInstance().openWindow();
+    }
+    return &ok;
+}
+
+Value* Settings_cf(Value** arg_list, int count)
 {
     struct GetterSetter
     {
@@ -78,9 +95,9 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
     }
 
     auto& settings = msmaxInstance().getSettings();
-    if (count >= 2 && wcscmp(arg_list[0]->to_string(), L"-q") == 0) {
+    if (count >= 2 && wcscmp(arg_list[1]->to_string(), L"q") == 0) {
         one_value_local(result);
-        auto it = s_table.find(arg_list[1]->to_string());
+        auto it = s_table.find(arg_list[2]->to_string());
         if (it != s_table.end()) {
             vl.result = it->second.getter();
             return_value(vl.result);
@@ -100,8 +117,7 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
     return &ok;
 }
 
-def_visible_primitive(UnityMeshSync_ExportScene, "UnityMeshSync_Export");
-Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
+Value* Export_cf(Value** arg_list, int count)
 {
     auto target = MeshSyncClient3dsMax::SendTarget::Objects;
     auto scope = MeshSyncClient3dsMax::SendScope::All;
@@ -109,8 +125,8 @@ Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
     // parse args
     for (int i = 0; i < count; /**/) {
         std::wstring name = arg_list[i++]->to_string();
-        if (i + 1 < count) {
-            if (name == L"-target") {
+        if (i + 1 <= count) {
+            if (name == L"target") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"objects")
                     target = MeshSyncClient3dsMax::SendTarget::Objects;
@@ -121,7 +137,7 @@ Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
                 else if (value == L"everything")
                     target = MeshSyncClient3dsMax::SendTarget::Everything;
             }
-            else if (name == L"-scope") {
+            else if (name == L"scope") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"all")
                     scope = MeshSyncClient3dsMax::SendScope::All;
@@ -158,22 +174,8 @@ Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
     return &ok;
 }
 
-def_visible_primitive(UnityMeshSync_Import, "UnityMeshSync_Import");
-Value* UnityMeshSync_Import_cf(Value** arg_list, int count)
+Value* Import_cf(Value** arg_list, int count)
 {
     msmaxInstance().recvScene();
     return &ok;
 }
-
-def_visible_primitive(UnityMeshSync, "UnityMeshSync");
-Value* UnityMeshSync_cf(Value** arg_list, int count)
-{
-    if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
-        msmaxInstance().closeWindow();
-    }
-    else {
-        msmaxInstance().openWindow();
-    }
-    return &ok;
-}
-

@@ -95,7 +95,12 @@ Identifier Entity::getIdentifier() const
     return Identifier{ path, id };
 }
 
-bool Entity::identidy(const Identifier& v) const
+bool Entity::isRoot() const
+{
+    return path.find_last_of('/') == 0;
+}
+
+bool Entity::identify(const Identifier& v) const
 {
     bool ret = path == v.name;
     if (!ret && id != InvalidID && v.id != InvalidID)
@@ -209,15 +214,15 @@ void Transform::applyMatrix(const float4x4& v)
 
 void Transform::convertHandedness(bool x, bool yz)
 {
-    if (!x && !yz) return;
-
     if (x) {
         position = flip_x(position);
         rotation = flip_x(rotation);
     }
-    if (yz) {
-        position = swap_yz(position);
-        rotation = swap_yz(rotation);
+
+    // fbx-compatible Z-up -> Y-up conversion. ugly, but we must follow it.
+    if (yz && isRoot()) {
+        position = flip_z(swap_yz(position));
+        rotation = flip_z(swap_yz(rotation)) * rotateX(-90.0f * Deg2Rad);
         scale = swap_yz(scale);
     }
 }
@@ -469,17 +474,12 @@ EntityPtr PointsData::clone()
 #undef EachArrays
 #undef EachMember
 
-void PointsData::convertHandedness(bool x, bool yz)
+void PointsData::convertHandedness(bool x, bool /*yz*/)
 {
     if (x) {
         mu::InvertX(points.data(), points.size());
         for (auto& v : rotations) v = flip_x(v);
         mu::InvertX(scales.data(), scales.size());
-    }
-    if (yz) {
-        for (auto& v : points) v = swap_yz(v);
-        for (auto& v : rotations) v = swap_yz(v);
-        for (auto& v : scales) v = swap_yz(v);
     }
 }
 
