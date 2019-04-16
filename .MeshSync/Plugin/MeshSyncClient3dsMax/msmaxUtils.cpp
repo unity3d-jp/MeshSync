@@ -66,7 +66,7 @@ Modifier* FindSkin(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (mod->ClassID() == SKIN_CLASSID && !ret) {
+        if (mod->ClassID() == SKIN_CLASSID && mod->IsEnabled() && !ret) {
             ret = mod;
         }
     });
@@ -84,7 +84,7 @@ Modifier* FindMorph(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (mod->ClassID() == MR3_CLASS_ID && !ret) {
+        if (mod->ClassID() == MR3_CLASS_ID && mod->IsEnabled() && !ret) {
             ret = mod;
         }
     });

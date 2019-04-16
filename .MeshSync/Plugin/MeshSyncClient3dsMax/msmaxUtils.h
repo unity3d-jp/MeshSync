@@ -15,9 +15,14 @@ mu::float4x4 GetPivotMatrix(INode *n);
 bool IsInstanced(INode *n);
 Object* GetTopObject(INode *n);
 Object* GetBaseObject(INode *n);
+
+// disabled modifier will be ignored
 Modifier* FindSkin(INode *n);
+// disabled modifier will be ignored
 ISkin* FindSkinInterface(INode *n);
+// disabled modifier will be ignored
 Modifier* FindMorph(INode * n);
+
 bool IsBone(Object *obj);
 bool IsMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
@@ -144,7 +149,7 @@ inline void EnumerateAllNode(const Body& body)
 
 // Body: [](INode *node) -> void
 template<class Body>
-inline void EnumerateInstance(INode *n, const Body& body)
+inline void EachInstance(INode *n, const Body& body)
 {
     INodeTab instances;
     if (IInstanceMgr::GetInstanceMgr()->GetInstances(*n, instances) > 1) {

@@ -41,7 +41,14 @@ public:
         bool bake_cloth = false;
     };
 
-    enum class SendScope
+    enum class SendTarget : int
+    {
+        Objects,
+        Materials,
+        Animations,
+        Everything,
+    };
+    enum class SendScope : int
     {
         None,
         All,
@@ -68,8 +75,10 @@ public:
     void onGeometryUpdated(INode *n);
     void onRepaint();
 
+    void wait();
     void update();
-    bool sendScene(SendScope scope, bool force_all);
+    bool sendObjects(SendScope scope, bool dirty_all);
+    bool sendMaterials(bool dirty_all);
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
@@ -127,7 +136,7 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    ms::TransformPtr exportObject(INode *node, bool force);
+    ms::TransformPtr exportObject(INode *node, bool parent, bool tip = true);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);

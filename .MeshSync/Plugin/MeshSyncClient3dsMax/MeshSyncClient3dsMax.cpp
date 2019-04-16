@@ -100,7 +100,7 @@ void MeshSyncClient3dsMax::onStartup()
 
 void MeshSyncClient3dsMax::onShutdown()
 {
-    m_sender.wait();
+    wait();
     unregisterMenu();
 
     m_texture_manager.clear();
@@ -149,33 +149,20 @@ void MeshSyncClient3dsMax::onNodeDeleted(INode * n)
 void MeshSyncClient3dsMax::onNodeRenamed()
 {
     m_scene_updated = true;
-
-    // search renamed node
-    // (event callback tells name of before & after rename, but doesn't tell node itself...)
-    for (auto& kvp : m_node_records) {
-        if (kvp.second.name != kvp.first->GetName()) {
-            m_entity_manager.erase(kvp.second.getIdentifier());
-        }
-    }
 }
 
-void MeshSyncClient3dsMax::onNodeLinkChanged(INode * n)
+void MeshSyncClient3dsMax::onNodeLinkChanged(INode *n)
 {
     m_scene_updated = true;
-
-    auto it = m_node_records.find(n);
-    if (it != m_node_records.end()) {
-        m_entity_manager.erase(it->second.getIdentifier());
-    }
 }
 
-void MeshSyncClient3dsMax::onNodeUpdated(INode * n)
+void MeshSyncClient3dsMax::onNodeUpdated(INode *n)
 {
     auto& rec = getNodeRecord(n);
     m_dirty = rec.dirty_trans = true;
 }
 
-void MeshSyncClient3dsMax::onGeometryUpdated(INode * n)
+void MeshSyncClient3dsMax::onGeometryUpdated(INode *n)
 {
     auto& rec = getNodeRecord(n);
     m_dirty = rec.dirty_trans = rec.dirty_geom = true;
@@ -186,6 +173,11 @@ void MeshSyncClient3dsMax::onRepaint()
     update();
 }
 
+
+void MeshSyncClient3dsMax::wait()
+{
+    m_sender.wait();
+}
 
 void MeshSyncClient3dsMax::update()
 {
@@ -201,21 +193,20 @@ void MeshSyncClient3dsMax::update()
     }
 
     if (m_pending_request != SendScope::None) {
-        if (sendScene(m_pending_request, false)) {
+        if (sendObjects(m_pending_request, false)) {
             m_pending_request = SendScope::None;
         }
     }
 }
 
-bool MeshSyncClient3dsMax::sendScene(SendScope scope, bool force_all)
+bool MeshSyncClient3dsMax::sendObjects(SendScope scope, bool dirty_all)
 {
     if (m_sender.isSending())
         return false;
 
-    if (force_all) {
-        m_material_manager.makeDirtyAll();
-        m_entity_manager.makeDirtyAll();
-    }
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -245,6 +236,23 @@ bool MeshSyncClient3dsMax::sendScene(SendScope scope, bool force_all)
     m_material_records.clear();
 
     m_dirty = false;
+    return true;
+}
+
+bool MeshSyncClient3dsMax::sendMaterials(bool dirty_all)
+{
+    if (m_sender.isSending())
+        return false;
+
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+
+    // cleanup intermediate data
+    m_material_records.clear();
     return true;
 }
 
@@ -312,10 +320,37 @@ bool MeshSyncClient3dsMax::recvScene()
 
 void MeshSyncClient3dsMax::updateRecords()
 {
+    struct ExistRecord
+    {
+        std::string path;
+        bool exists;
+
+        bool operator<(const ExistRecord& v) const { return path < v.path; }
+        bool operator<(const std::string& v) const { return path < v; }
+    };
+    // create path list to detect rename / re-parent 
+    std::vector<ExistRecord> old_records;
+    old_records.reserve(m_node_records.size());
+    for (auto& kvp : m_node_records)
+        old_records.push_back({ std::move(kvp.second.path), false });
+    std::sort(old_records.begin(), old_records.end());
+
+    // re-construct records
     m_node_records.clear();
     EnumerateAllNode([this](INode *n) {
         getNodeRecord(n);
     });
+
+    // erase renamed / re-parented objects
+    for (auto& kvp : m_node_records) {
+        auto it = std::lower_bound(old_records.begin(), old_records.end(), kvp.second.path);
+        if (it != old_records.end() && it->path == kvp.second.path)
+            it->exists = true;
+    }
+    for (auto& r : old_records) {
+        if (!r.exists)
+            m_entity_manager.erase(r.path);
+    }
 }
 
 MeshSyncClient3dsMax::TreeNode & MeshSyncClient3dsMax::getNodeRecord(INode *n)
@@ -449,77 +484,79 @@ void MeshSyncClient3dsMax::exportMaterials()
     m_material_manager.eraseStaleMaterials();
 }
 
-ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool force)
+ms::TransformPtr MeshSyncClient3dsMax::exportObject(INode *n, bool parent, bool tip)
 {
     if (!n || !n->GetObjectRef())
         return nullptr;
 
     auto& rec = getNodeRecord(n);
     if (rec.dst)
-        return rec.dst;
-
-    ms::TransformPtr ret;
-    // check if the node is instance
-    EnumerateInstance(n, [this, &rec, &ret](INode *instance) {
-        auto& irec = getNodeRecord(instance);
-        if (irec.dst && irec.dst->reference.empty()) {
-            ret = exportInstance(rec, irec.dst);
-        }
-    });
-    if (ret)
-        return ret;
+        return nullptr;
 
     auto *obj = GetBaseObject(n);
     rec.baseobj = obj;
+    ms::TransformPtr ret;
+
+    auto handle_parent = [&]() {
+        if (parent)
+            exportObject(n->GetParentNode(), parent, false);
+    };
+    auto handle_transform = [&]() {
+        handle_parent();
+        ret = exportTransform(rec);
+    };
+    auto handle_instance = [&]() -> bool {
+        // check if the node is instance
+        EachInstance(n, [this, &rec, &ret](INode *instance) {
+            if (ret)
+                return;
+            auto& irec = getNodeRecord(instance);
+            if (irec.dst && irec.dst->reference.empty())
+                ret = exportInstance(rec, irec.dst);
+        });
+        return ret != nullptr;
+    };
+
 
     if (IsMesh(obj)) {
-        exportObject(n->GetParentNode(), true);
-
         // export bones
         // this must be before extractMeshData() because meshes can be bones in 3ds Max
         if (m_settings.sync_bones) {
-            auto mod = FindSkin(n);
-            if (mod && mod->IsEnabled()) {
-                auto skin = (ISkin*)mod->GetInterface(I_SKIN);
-                EachBone(skin, [this](INode *bone) {
-                    exportObject(bone, true);
-                });
-            }
+            EachBone(n, [this](INode *bone) {
+                exportObject(bone, true);
+            });
         }
 
-        if ((m_settings.sync_meshes || m_settings.sync_blendshapes) && rec.dirty_geom) {
-            ret = exportMesh(rec);
+        if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
+            handle_parent();
+            if (!handle_instance())
+                ret = exportMesh(rec);
         }
-        else {
-            ret = exportTransform(rec);
-        }
+        else if (!tip && parent)
+            handle_transform();
     }
     else {
-        switch (obj->SuperClassID()) {
-        case CAMERA_CLASS_ID:
-        {
+        auto cid = obj->SuperClassID();
+        if (cid == CAMERA_CLASS_ID) {
             if (m_settings.sync_cameras) {
-                exportObject(n->GetParentNode(), true);
-                ret = exportCamera(rec);
+                handle_parent();
+                if (!handle_instance())
+                    ret = exportCamera(rec);
             }
-            break;
+            else if (!tip && parent)
+                handle_transform();
         }
-        case LIGHT_CLASS_ID:
-        {
+        else if (cid == LIGHT_CLASS_ID) {
             if (m_settings.sync_lights) {
-                exportObject(n->GetParentNode(), true);
-                ret = exportLight(rec);
+                handle_parent();
+                if (!handle_instance())
+                    ret = exportLight(rec);
             }
-            break;
+            else if (!tip && parent)
+                handle_transform();
         }
-        default:
-        {
-            if (force) {
-                exportObject(n->GetParentNode(), true);
-                ret = exportTransform(rec);
-            }
-            break;
-        }
+        else {
+            handle_transform();
         }
     }
 

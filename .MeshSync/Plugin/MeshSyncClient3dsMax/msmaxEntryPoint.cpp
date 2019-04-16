@@ -57,10 +57,9 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
 #define Entry(Name, From, To) s_table[L#Name] = {\
     []() -> Value* { return From(msmaxInstance().getSettings().Name); },\
     [](Value *v) -> void{ msmaxInstance().getSettings().Name = v->To(); } }
+
         Entry(timeout_ms,           Integer::intern, to_int);
         Entry(scale_factor,         Float::intern, to_float);
-        Entry(animation_time_scale, Float::intern, to_float);
-        Entry(animation_sps,        Float::intern, to_float);
         Entry(auto_sync,            bool_result, to_bool);
         Entry(sync_meshes,          bool_result, to_bool);
         Entry(sync_normals,         bool_result, to_bool);
@@ -70,6 +69,10 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
         Entry(sync_blendshapes,     bool_result, to_bool);
         Entry(sync_cameras,         bool_result, to_bool);
         Entry(sync_lights,          bool_result, to_bool);
+        Entry(animation_time_scale, Float::intern, to_float);
+        Entry(animation_sps,        Float::intern, to_float);
+        Entry(keyframe_reduction,   bool_result, to_bool);
+        Entry(keep_flat_curves,     bool_result, to_bool);
         Entry(multithreaded,        bool_result, to_bool);
 #undef Entry
     }
@@ -100,36 +103,58 @@ Value* UnityMeshSync_Settings_cf(Value** arg_list, int count)
 def_visible_primitive(UnityMeshSync_ExportScene, "UnityMeshSync_Export");
 Value* UnityMeshSync_ExportScene_cf(Value** arg_list, int count)
 {
-    bool animations = false;
+    auto target = MeshSyncClient3dsMax::SendTarget::Objects;
     auto scope = MeshSyncClient3dsMax::SendScope::All;
-    bool force_all = true;
 
+    // parse args
     for (int i = 0; i < count; /**/) {
         std::wstring name = arg_list[i++]->to_string();
         if (i + 1 < count) {
             if (name == L"-target") {
                 std::wstring value = arg_list[i++]->to_string();
-                if (value == L"animations")
-                    animations = true;
+                if (value == L"objects")
+                    target = MeshSyncClient3dsMax::SendTarget::Objects;
+                else if (value == L"materials")
+                    target = MeshSyncClient3dsMax::SendTarget::Materials;
+                else if (value == L"animations")
+                    target = MeshSyncClient3dsMax::SendTarget::Animations;
+                else if (value == L"everything")
+                    target = MeshSyncClient3dsMax::SendTarget::Everything;
             }
             else if (name == L"-scope") {
                 std::wstring value = arg_list[i++]->to_string();
-                if (value == L"selected")
+                if (value == L"all")
+                    scope = MeshSyncClient3dsMax::SendScope::All;
+                else if (value == L"selected")
                     scope = MeshSyncClient3dsMax::SendScope::Selected;
                 else if (value == L"updated")
                     scope = MeshSyncClient3dsMax::SendScope::Updated;
             }
-            else if (name == L"-force_all") {
-                std::wstring value = arg_list[i++]->to_string();
-                force_all = value == L"true" || value == L"1";
-            }
         }
     }
 
-    if (animations)
-        msmaxInstance().sendAnimations(scope);
-    else
-        msmaxInstance().sendScene(scope, force_all);
+    // do send
+    auto& inst = msmaxInstance();
+    if (target == MeshSyncClient3dsMax::SendTarget::Objects) {
+        inst.wait();
+        inst.sendObjects(scope, true);
+    }
+    else if (target == MeshSyncClient3dsMax::SendTarget::Materials) {
+        inst.wait();
+        inst.sendMaterials(true);
+    }
+    else if (target == MeshSyncClient3dsMax::SendTarget::Animations) {
+        inst.wait();
+        inst.sendAnimations(scope);
+    }
+    else if (target == MeshSyncClient3dsMax::SendTarget::Everything) {
+        inst.wait();
+        inst.sendMaterials(true);
+        inst.wait();
+        inst.sendObjects(scope, true);
+        inst.wait();
+        inst.sendAnimations(scope);
+    }
     return &ok;
 }
 
