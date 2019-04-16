@@ -1,8 +1,664 @@
 #define _MApiVersion
 #include "pch.h"
 #include "msmayaUtils.h"
-#include "MeshSyncClientMaya.h"
+#include "msmayaContext.h"
 #include "msmayaCommands.h"
+
+
+bool DAGNode::isInstance() const
+{
+    return branches.size() > 1;
+}
+
+ms::Identifier TreeNode::getIdentifier() const
+{
+    return { path, id };
+}
+
+void TreeNode::clearState()
+{
+    dst_obj = nullptr;
+    dst_anim = nullptr;
+}
+
+bool TreeNode::isInstance() const
+{
+    return shape->branches.size() > 1 ||
+        trans->branches.size() > 1;
+}
+
+TreeNode* TreeNode::getPrimaryInstanceNode() const
+{
+    auto get_primary_parent = [](const MObject& node) -> MObject {
+        Pad<MFnDagNode> dn(node);
+        return dn.parentCount() > 0 ? dn.parent(0) : MObject();
+    };
+
+    if (trans->branches.size() > 1) {
+        auto primary = get_primary_parent(trans->node);
+        for (auto b : trans->branches) {
+            if (b->parent->trans->node == primary)
+                return b;
+        }
+    }
+    if (shape->branches.size() > 1) {
+        auto primary = get_primary_parent(shape->node);
+        for (auto b : shape->branches) {
+            if (b->trans->node == primary)
+                return b;
+        }
+    }
+    return nullptr;
+}
+
+MDagPath TreeNode::getDagPath(bool include_shape) const
+{
+    MDagPath ret;
+    getDagPath_(ret);
+    if (include_shape && shape)
+        ret.push(shape->node);
+    return ret;
+}
+void TreeNode::getDagPath_(MDagPath & dst) const
+{
+    if (parent) {
+        parent->getDagPath_(dst);
+        dst.push(trans->node);
+    }
+    else {
+        MDagPath::getAPathTo(trans->node, dst);
+    }
+}
+
+MObject TreeNode::getTrans() const { return trans ? trans->node : MObject(); }
+MObject TreeNode::getShape() const { return shape ? shape->node : MObject(); }
+
+MDagPath GetDagPath(const TreeNode *branch, const MObject& node)
+{
+    MDagPath ret;
+    branch->getDagPath_(ret);
+    ret.push(node);
+    return ret;
+}
+
+TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath)
+{
+    auto node = dagpath.node();
+    auto it = dnmap.find(node);
+    if (it != dnmap.end()) {
+        const auto& dn = it->second;
+        if (dn.branches.size() == 1) {
+            return dn.branches.front();
+        }
+        else {
+            for (auto *branch : dn.branches) {
+                if (branch->getDagPath() == dagpath) {
+                    return branch;
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+
+static void OnIdle(float elapsedTime, float lastTime, void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->update();
+}
+
+static void OnSceneLoadBegin(void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onSceneLoadBegin();
+}
+
+static void OnSceneLoadEnd(void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onSceneLoadEnd();
+}
+
+static void OnNodeRenamed(void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onNodeRenamed();
+}
+
+static void OnDagChange(MDagMessage::DagMessage msg, MDagPath &child, MDagPath &parent, void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onSceneUpdated();
+}
+
+static void OnTimeChange(MTime& time, void* _this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onTimeChange(time);
+}
+
+static void OnNodeRemoved(MObject& node, void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onNodeRemoved(node);
+}
+
+
+static void OnTransformUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+{
+    if (msg == MNodeMessage::kAttributeEval) { return; }
+    reinterpret_cast<msmayaContext*>(_this)->onNodeUpdated(plug.node());
+}
+
+static void OnCameraUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onNodeUpdated(plug.node());
+}
+
+static void OnLightUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onNodeUpdated(plug.node());
+}
+
+static void OnMeshUpdated(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& other_plug, void *_this)
+{
+    reinterpret_cast<msmayaContext*>(_this)->onNodeUpdated(plug.node());
+}
+
+
+void msmayaContext::onNodeUpdated(const MObject& node)
+{
+    m_dag_nodes[node].dirty = true;
+}
+
+void msmayaContext::onNodeRemoved(const MObject& node)
+{
+    {
+        auto it = m_dag_nodes.find(node);
+        if (it != m_dag_nodes.end()) {
+            for (auto tn : it->second.branches)
+                m_entity_manager.erase(tn->getIdentifier());
+            m_dag_nodes.erase(it);
+        }
+    }
+}
+
+void msmayaContext::onNodeRenamed()
+{
+    m_scene_updated = true;
+}
+
+void msmayaContext::onSceneUpdated()
+{
+    m_scene_updated = true;
+}
+
+void msmayaContext::onSceneLoadBegin()
+{
+    m_ignore_update = true;
+}
+
+void msmayaContext::onSceneLoadEnd()
+{
+    m_ignore_update = false;
+}
+
+void msmayaContext::onTimeChange(const MTime & time)
+{
+    if (m_settings.auto_sync) {
+        m_pending_scope = SendScope::All;
+        // timer callback won't be fired while scrubbing time slider. so call update() immediately
+        update();
+
+        // for timer callback
+        m_pending_scope = SendScope::All;
+    }
+}
+
+
+void msmayaContext::TaskRecord::add(TreeNode *n, const task_t & task)
+{
+    tasks.push_back({ n, task });
+}
+
+void msmayaContext::TaskRecord::process()
+{
+    if (tasks.size() > 1) {
+        auto primary = std::get<0>(tasks[0])->getPrimaryInstanceNode();
+
+        // process primary node first
+        for (auto& t : tasks) {
+            if (std::get<0>(t) == primary) {
+                std::get<1>(t)();
+                break;
+            }
+        }
+        // process others
+        for (auto& t : tasks) {
+            if (std::get<0>(t) != primary)
+                std::get<1>(t)();
+        }
+    }
+    else {
+        for (auto& t : tasks)
+            std::get<1>(t)();
+    }
+
+    tasks.clear();
+}
+
+
+static std::unique_ptr<msmayaContext> g_plugin;
+
+void msmayaInitialize(MObject& obj)
+{
+    g_plugin.reset(new msmayaContext(obj));
+}
+
+void msmayaUninitialize()
+{
+    g_plugin.reset();
+}
+
+msmayaContext& msmayaContext::getInstance()
+{
+    return *g_plugin;
+}
+
+msmayaContext::msmayaContext(MObject obj)
+    : m_obj(obj)
+    , m_iplugin(obj, msVendor, msReleaseDateStr)
+{
+#define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create, CmdType::createSyntax);
+    EachCommand(Body)
+#undef Body
+
+        registerGlobalCallbacks();
+}
+
+msmayaContext::~msmayaContext()
+{
+    wait();
+    removeNodeCallbacks();
+    removeGlobalCallbacks();
+
+#define Body(CmdType) m_iplugin.deregisterCommand(CmdType::name());
+    EachCommand(Body)
+#undef Body
+}
+
+void msmayaContext::registerGlobalCallbacks()
+{
+    MStatus stat;
+    m_cids_global.push_back(MTimerMessage::addTimerCallback(0.03f, OnIdle, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kBeforeNew, OnSceneLoadBegin, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kBeforeOpen, OnSceneLoadBegin, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kAfterNew, OnSceneLoadEnd, this, &stat));
+    m_cids_global.push_back(MSceneMessage::addCallback(MSceneMessage::kAfterOpen, OnSceneLoadEnd, this, &stat));
+    m_cids_global.push_back(MDagMessage::addAllDagChangesCallback(OnDagChange, this, &stat));
+    m_cids_global.push_back(MEventMessage::addEventCallback("NameChanged", OnNodeRenamed, this, &stat));
+    m_cids_global.push_back(MDGMessage::addForceUpdateCallback(OnTimeChange, this));
+    m_cids_global.push_back(MDGMessage::addNodeRemovedCallback(OnNodeRemoved, kDefaultNodeType, this));
+
+    // shut up warning about blendshape
+    MGlobal::executeCommand("cycleCheck -e off");
+}
+
+void msmayaContext::registerNodeCallbacks()
+{
+    // joints
+    EnumerateNode(MFn::kJoint, [this](MObject& node) {
+        auto& rec = m_dag_nodes[node];
+        if (!rec.cid)
+            rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnTransformUpdated, this);
+    });
+
+    auto register_parent_transforms = [this](MObject& n) {
+        EachParentRecursive(n, [this](MObject parent) {
+            if (parent.hasFn(MFn::kTransform)) {
+                auto& rec = m_dag_nodes[parent];
+                if (!rec.cid)
+                    rec.cid = MNodeMessage::addAttributeChangedCallback(parent, OnTransformUpdated, this);
+            }
+        });
+    };
+
+    // cameras
+    EnumerateNode(MFn::kCamera, [&](MObject& node) {
+        Pad<MFnDagNode> fn(node);
+        if (!fn.isIntermediateObject()) {
+            register_parent_transforms(node);
+            auto& rec = m_dag_nodes[node];
+            if (!rec.cid)
+                rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnCameraUpdated, this);
+        }
+    });
+
+    // lights
+    EnumerateNode(MFn::kLight, [&](MObject& node) {
+        Pad<MFnDagNode> fn(node);
+        if (!fn.isIntermediateObject()) {
+            register_parent_transforms(node);
+            auto& rec = m_dag_nodes[node];
+            if (!rec.cid)
+                rec.cid = MNodeMessage::addAttributeChangedCallback(node, OnLightUpdated, this);
+        }
+    });
+
+    //  meshes
+    EnumerateNode(MFn::kMesh, [&](MObject& node) {
+        Pad<MFnDagNode> fn(node);
+        if (!fn.isIntermediateObject()) {
+            register_parent_transforms(node);
+            auto& rec = m_dag_nodes[node];
+            if (!rec.cid)
+                m_dag_nodes[node].cid = MNodeMessage::addAttributeChangedCallback(node, OnMeshUpdated, this);
+        }
+    });
+}
+
+void msmayaContext::removeGlobalCallbacks()
+{
+    for (auto& cid : m_cids_global) {
+        MMessage::removeCallback(cid);
+    }
+    m_cids_global.clear();
+}
+
+void msmayaContext::removeNodeCallbacks()
+{
+    for (auto& rec : m_dag_nodes) {
+        if (rec.second.cid) {
+            MMessage::removeCallback(rec.second.cid);
+            rec.second.cid = 0;
+        }
+    }
+}
+
+
+void msmayaContext::constructTree()
+{
+    struct ExistRecord
+    {
+        std::string path;
+        bool exists;
+
+        bool operator<(const ExistRecord& v) const { return path < v.path; }
+        bool operator<(const std::string& v) const { return path < v; }
+    };
+    // create path list to detect rename / re-parent 
+    std::vector<ExistRecord> old_records;
+    old_records.reserve(m_tree_nodes.size());
+    for (auto& n : m_tree_nodes)
+        old_records.push_back({ std::move(n->path), false });
+    std::sort(old_records.begin(), old_records.end());
+
+    // clear old tree
+    m_tree_roots.clear();
+    m_tree_nodes.clear();
+    for (auto& kvp : m_dag_nodes)
+        kvp.second.branches.clear();
+    m_index_seed = 0;
+
+    // build new tree
+    EnumerateNode(MFn::kTransform, [&](MObject& node) {
+        if (Pad<MFnDagNode>(node).parent(0).hasFn(MFn::kWorld))
+            constructTree(node, nullptr, "");
+    });
+
+    // erase renamed / re-parented objects
+    for (auto& n : m_tree_nodes) {
+        auto it = std::lower_bound(old_records.begin(), old_records.end(), n->path);
+        if (it != old_records.end() && it->path == n->path)
+            it->exists = true;
+    }
+    for (auto& r : old_records) {
+        if (!r.exists)
+            m_entity_manager.erase(r.path);
+    }
+}
+
+void msmayaContext::constructTree(const MObject& node, TreeNode *parent, const std::string& base)
+{
+    MObject shape;
+    {
+        MDagPath dpath;
+        MDagPath::getAPathTo(node, dpath);
+        dpath.extendToShape();
+        shape = dpath.node();
+    }
+
+    std::string name = GetName(node);
+    std::string path = base;
+    path += '/';
+    path += name;
+
+    auto& rec_node = m_dag_nodes[node];
+    auto& rec_shape = m_dag_nodes[shape];
+    if (rec_node.node.isNull()) {
+        rec_node.node = node;
+        rec_shape.node = shape;
+    }
+
+    auto *tn = new TreeNode();
+    m_tree_nodes.emplace_back(tn);
+    tn->trans = &rec_node;
+    tn->shape = &rec_shape;
+    tn->name = name;
+    tn->path = path;
+    tn->index = ++m_index_seed;
+    tn->parent = parent;
+
+    if (parent)
+        parent->children.push_back(tn);
+    else
+        m_tree_roots.push_back(tn);
+
+    rec_node.branches.push_back(tn);
+    if (shape != node)
+        rec_shape.branches.push_back(tn);
+
+    EachChild(node, [&](const MObject & c) {
+        if (c.hasFn(MFn::kTransform))
+            constructTree(c, tn, path);
+    });
+}
+
+
+bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
+{
+    if (m_sender.isSending()) {
+        m_pending_scope = scope;
+        return false;
+    }
+    m_pending_scope = SendScope::None;
+
+    if (scope == SendScope::All) {
+        m_entity_manager.clearEntityRecords();
+    }
+
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
+
+    if (m_settings.sync_meshes)
+        exportMaterials();
+
+    int num_exported = 0;
+    auto export_branches = [&](DAGNode& rec, bool parents) {
+        for (auto *tn : rec.branches) {
+            if (exportObject(tn, parents))
+                ++num_exported;
+        }
+        rec.dirty = false;
+    };
+
+    if (scope == SendScope::All) {
+        //EnumerateAllNode([](MObject& obj) { PrintNodeInfo(obj); });
+
+        auto handler = [&](MObject& node) {
+            export_branches(m_dag_nodes[node], true);
+        };
+        EnumerateNode(MFn::kJoint, handler);
+        EnumerateNode(MFn::kCamera, handler);
+        EnumerateNode(MFn::kLight, handler);
+        EnumerateNode(MFn::kMesh, handler);
+    }
+    else if (scope == SendScope::Updated) {
+        for (auto& kvp : m_dag_nodes) {
+            auto& rec = kvp.second;
+            if (rec.dirty)
+                export_branches(rec, false);
+        }
+    }
+    else if (scope == SendScope::Selected) {
+        MSelectionList list;
+        MGlobal::getActiveSelectionList(list);
+        uint32_t n = list.length();
+        for (uint32_t i = 0; i < n; i++) {
+            MObject node;
+            list.getDependNode(i, node);
+            export_branches(m_dag_nodes[node], true);
+        }
+    }
+
+    if (num_exported > 0 || !m_entity_manager.getDeleted().empty()) {
+        kickAsyncSend();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool msmayaContext::sendMaterials(bool dirty_all)
+{
+    if (m_sender.isSending()) {
+        return false;
+    }
+
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+    return true;
+}
+
+bool msmayaContext::sendAnimations(SendScope scope)
+{
+    m_sender.wait();
+
+    if (exportAnimations(scope) > 0) {
+        kickAsyncSend();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void msmayaContext::wait()
+{
+    m_sender.wait();
+}
+
+void msmayaContext::update()
+{
+    if (m_ignore_update)
+        return;
+
+    if (m_scene_updated) {
+        m_scene_updated = false;
+
+        constructTree();
+        registerNodeCallbacks();
+        if (m_settings.auto_sync) {
+            m_pending_scope = SendScope::All;
+        }
+    }
+
+    if (m_pending_scope != SendScope::None) {
+        sendObjects(m_pending_scope, false);
+    }
+    else if (m_settings.auto_sync) {
+        sendObjects(SendScope::Updated, false);
+    }
+}
+
+
+void msmayaContext::kickAsyncSend()
+{
+    // process parallel extract tasks
+    if (!m_extract_tasks.empty()) {
+        if (m_settings.multithreaded) {
+            mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](TaskRecords::value_type& kvp) {
+                kvp.second.process();
+            });
+        }
+        else {
+            for (auto& kvp : m_extract_tasks) {
+                kvp.second.process();
+            }
+        }
+        m_extract_tasks.clear();
+    }
+
+    // cleanup
+    for (auto& n : m_tree_nodes)
+        n->clearState();
+
+    float to_meter = 1.0f;
+    {
+        MDistance dist;
+        dist.setValue(1.0f);
+        to_meter = (float)dist.asMeters();
+    }
+
+    m_sender.on_prepare = [this, to_meter]() {
+        auto& t = m_sender;
+        t.client_settings = m_settings.client_settings;
+        t.scene_settings.handedness = ms::Handedness::Right;
+        t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+        t.animations = m_animations;
+
+        t.deleted_materials = m_material_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+    m_sender.on_success = [this]() {
+        m_material_ids.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_texture_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+        m_animations.clear();
+    };
+    m_sender.kick();
+}
+
+bool msmayaContext::recvObjects()
+{
+    m_sender.wait();
+
+    ms::Client client(m_settings.client_settings);
+    ms::GetMessage gd;
+    gd.scene_settings.handedness = ms::Handedness::Right;
+    gd.scene_settings.scale_factor = 1.0f / m_settings.scale_factor;
+    gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
+    gd.refine_settings.flags.bake_cloth = m_settings.bake_cloth;
+
+    auto ret = client.send(gd);
+    if (!ret) {
+        return false;
+    }
+
+
+    // todo: 
+
+    return true;
+}
+
+
 
 
 static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu::float4& color, std::string& texpath)
@@ -71,17 +727,17 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
     return true;
 }
 
-std::string MeshSyncClientMaya::handleNamespace(const std::string& path)
+std::string msmayaContext::handleNamespace(const std::string& path)
 {
     return m_settings.remove_namespace ? RemoveNamespace(path) : path;
 }
 
-int MeshSyncClientMaya::exportTexture(const std::string& path, ms::TextureType type)
+int msmayaContext::exportTexture(const std::string& path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
 }
 
-void MeshSyncClientMaya::exportMaterials()
+void msmayaContext::exportMaterials()
 {
     int midx = 0;
     MItDependencyNodes it(MFn::kLambert);
@@ -115,7 +771,7 @@ void MeshSyncClientMaya::exportMaterials()
     m_material_manager.eraseStaleMaterials();
 }
 
-ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool parent, bool tip)
+ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
 {
     if (!n || n->dst_obj)
         return nullptr;
@@ -173,7 +829,7 @@ ms::TransformPtr MeshSyncClientMaya::exportObject(TreeNode *n, bool parent, bool
     return ret;
 }
 
-void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     if (n->trans->isInstance()) {
         n = n->getPrimaryInstanceNode();
@@ -263,7 +919,7 @@ void MeshSyncClientMaya::extractTransformData(TreeNode *n, mu::float3& pos, mu::
     vis = IsVisible(n->trans->node);
 }
 
-void MeshSyncClientMaya::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
 {
     auto& shape = n->shape->node;
@@ -280,7 +936,7 @@ void MeshSyncClientMaya::extractCameraData(TreeNode *n, bool& ortho, float& near
     focus_distance = (float)mcam.focusDistance();
 }
 
-void MeshSyncClientMaya::extractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+void msmayaContext::extractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
 {
     auto& shape = n->shape->node;
     if (shape.hasFn(MFn::kSpotLight)) {
@@ -308,7 +964,7 @@ void MeshSyncClientMaya::extractLightData(TreeNode *n, ms::Light::LightType& typ
 }
 
 template<class T>
-std::shared_ptr<T> MeshSyncClientMaya::createEntity(TreeNode& n)
+std::shared_ptr<T> msmayaContext::createEntity(TreeNode& n)
 {
     auto ret = T::create();
     auto& dst = *ret;
@@ -318,7 +974,7 @@ std::shared_ptr<T> MeshSyncClientMaya::createEntity(TreeNode& n)
     return ret;
 }
 
-ms::TransformPtr MeshSyncClientMaya::exportTransform(TreeNode *n)
+ms::TransformPtr msmayaContext::exportTransform(TreeNode *n)
 {
     auto ret = createEntity<ms::Transform>(*n);
     auto& dst = *ret;
@@ -329,7 +985,7 @@ ms::TransformPtr MeshSyncClientMaya::exportTransform(TreeNode *n)
     return ret;
 }
 
-ms::CameraPtr MeshSyncClientMaya::exportCamera(TreeNode *n)
+ms::CameraPtr msmayaContext::exportCamera(TreeNode *n)
 {
     auto ret = createEntity<ms::Camera>(*n);
     auto& dst = *ret;
@@ -342,7 +998,7 @@ ms::CameraPtr MeshSyncClientMaya::exportCamera(TreeNode *n)
     return ret;
 }
 
-ms::LightPtr MeshSyncClientMaya::exportLight(TreeNode *n)
+ms::LightPtr msmayaContext::exportLight(TreeNode *n)
 {
     auto ret = createEntity<ms::Light>(*n);
     auto& dst = *ret;
@@ -354,7 +1010,7 @@ ms::LightPtr MeshSyncClientMaya::exportLight(TreeNode *n)
     return ret;
 }
 
-ms::MeshPtr MeshSyncClientMaya::exportMesh(TreeNode *n)
+ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
 {
     auto ret = createEntity<ms::Mesh>(*n);
     auto& dst = *ret;
@@ -384,7 +1040,7 @@ ms::MeshPtr MeshSyncClientMaya::exportMesh(TreeNode *n)
     return ret;
 }
 
-void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
+void msmayaContext::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
 {
     auto& shape = n->shape->node;
     if (!shape.hasFn(MFn::kMesh)) { return; }
@@ -420,7 +1076,7 @@ void MeshSyncClientMaya::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n
     dst.setupFlags();
 }
 
-void MeshSyncClientMaya::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape)
+void msmayaContext::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape)
 {
     // get points
     {
@@ -559,7 +1215,7 @@ void MeshSyncClientMaya::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MF
     }
 }
 
-void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
+void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
 {
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
@@ -858,7 +1514,7 @@ void MeshSyncClientMaya::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     dst.setupFlags();
 }
 
-void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
+void msmayaContext::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
 {
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
@@ -896,13 +1552,13 @@ void MeshSyncClientMaya::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
 }
 
 
-void MeshSyncClientMaya::AnimationRecord::operator()(MeshSyncClientMaya *_this)
+void msmayaContext::AnimationRecord::operator()(msmayaContext *_this)
 {
     (_this->*extractor)(*dst, tn);
 }
 
 
-int MeshSyncClientMaya::exportAnimations(SendScope scope)
+int msmayaContext::exportAnimations(SendScope scope)
 {
     // create default clip
     m_animations.clear();
@@ -984,7 +1640,7 @@ int MeshSyncClientMaya::exportAnimations(SendScope scope)
     return num_exported;
 }
 
-bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
+bool msmayaContext::exportAnimation(TreeNode *n, bool force)
 {
     if (!n || n->dst_anim)
         return false; // null or already exported
@@ -998,22 +1654,22 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
     if (shape.hasFn(MFn::kCamera)) {
         exportAnimation(n->parent, true);
         dst = ms::CameraAnimation::create();
-        extractor = &MeshSyncClientMaya::extractCameraAnimationData;
+        extractor = &msmayaContext::extractCameraAnimationData;
     }
     else if (shape.hasFn(MFn::kLight)) {
         exportAnimation(n->parent, true);
         dst = ms::LightAnimation::create();
-        extractor = &MeshSyncClientMaya::extractLightAnimationData;
+        extractor = &msmayaContext::extractLightAnimationData;
     }
     else if (shape.hasFn(MFn::kMesh)) {
         exportAnimation(n->parent, true);
         dst = ms::MeshAnimation::create();
-        extractor = &MeshSyncClientMaya::extractMeshAnimationData;
+        extractor = &msmayaContext::extractMeshAnimationData;
     }
     else if (shape.hasFn(MFn::kJoint) || force) {
         exportAnimation(n->parent, true);
         dst = ms::TransformAnimation::create();
-        extractor = &MeshSyncClientMaya::extractTransformAnimationData;
+        extractor = &msmayaContext::extractTransformAnimationData;
     }
 
     if (dst) {
@@ -1031,7 +1687,7 @@ bool MeshSyncClientMaya::exportAnimation(TreeNode *n, bool force)
     }
 }
 
-void MeshSyncClientMaya::extractTransformAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
+void msmayaContext::extractTransformAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -1048,7 +1704,7 @@ void MeshSyncClientMaya::extractTransformAnimationData(ms::TransformAnimation& d
     dst.visibility.push_back({ t, vis });
 }
 
-void MeshSyncClientMaya::extractCameraAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
+void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
 {
     extractTransformAnimationData(dst_, n);
 
@@ -1072,7 +1728,7 @@ void MeshSyncClientMaya::extractCameraAnimationData(ms::TransformAnimation& dst_
 #endif
 }
 
-void MeshSyncClientMaya::extractLightAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
+void msmayaContext::extractLightAnimationData(ms::TransformAnimation& dst_, TreeNode *n)
 {
     extractTransformAnimationData(dst_, n);
 
@@ -1091,7 +1747,7 @@ void MeshSyncClientMaya::extractLightAnimationData(ms::TransformAnimation& dst_,
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
-void MeshSyncClientMaya::extractMeshAnimationData(ms::TransformAnimation & dst_, TreeNode *n)
+void msmayaContext::extractMeshAnimationData(ms::TransformAnimation & dst_, TreeNode *n)
 {
     extractTransformAnimationData(dst_, n);
 

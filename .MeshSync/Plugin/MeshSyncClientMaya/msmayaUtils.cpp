@@ -1,7 +1,7 @@
 #define _MApiVersion
 #include "pch.h"
 #include "msmayaUtils.h"
-#include "MeshSyncClientMaya.h"
+#include "msmayaContext.h"
 
 std::string GetName(const MObject& node)
 {

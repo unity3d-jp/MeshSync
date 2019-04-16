@@ -15,15 +15,15 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya.cpp" />
-    <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya_extract.cpp" />
-    <ClCompile Include="MeshSyncClientMaya\msmayaCommands.cpp" />
+    <ClCompile Include="MeshSyncClientMaya\msmayaCommand.cpp" />
+    <ClCompile Include="MeshSyncClientMaya\msmayaContext.cpp" />
     <ClCompile Include="MeshSyncClientMaya\msmayaUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMaya/pch.h" />
     <ClInclude Include="MeshSyncClientMaya\MayaLTSupport.h" />
-    <ClInclude Include="MeshSyncClientMaya\MeshSyncClientMaya.h" />
-    <ClInclude Include="MeshSyncClientMaya\msmayaCommands.h" />
+    <ClInclude Include="MeshSyncClientMaya\msmayaCommand.h" />
+    <ClInclude Include="MeshSyncClientMaya\msmayaContext.h" />
     <ClInclude Include="MeshSyncClientMaya\msmayaUtils.h" />
   </ItemGroup>
   <ItemGroup>

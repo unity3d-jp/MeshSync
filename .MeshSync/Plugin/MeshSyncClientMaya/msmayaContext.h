@@ -82,7 +82,7 @@ MDagPath GetDagPath(const TreeNode *branch, const MObject& node);
 TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath);
 
 
-class MeshSyncClientMaya
+class msmayaContext
 {
 public:
     struct Settings
@@ -119,14 +119,14 @@ public:
     };
     Settings m_settings;
 
-    enum class SendTarget
+    enum class SendTarget : int
     {
         Objects,
         Materials,
         Animations,
         Everything,
     };
-    enum class SendScope
+    enum class SendScope : int
     {
         None,
         All,
@@ -134,10 +134,10 @@ public:
         Selected,
     };
 
-    static MeshSyncClientMaya& getInstance();
+    static msmayaContext& getInstance();
 
-    MeshSyncClientMaya(MObject obj);
-    ~MeshSyncClientMaya();
+    msmayaContext(MObject obj);
+    ~msmayaContext();
 
     void onNodeUpdated(const MObject& node);
     void onNodeRemoved(const MObject& node);
@@ -170,13 +170,13 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (MeshSyncClientMaya::*)(ms::TransformAnimation& dst, TreeNode *n);
+        using extractor_t = void (msmayaContext::*)(ms::TransformAnimation& dst, TreeNode *n);
 
         TreeNode *tn = nullptr;
         ms::TransformAnimationPtr dst;
         extractor_t extractor = nullptr;
 
-        void operator()(MeshSyncClientMaya *_this);
+        void operator()(msmayaContext *_this);
     };
     using AnimationRecords = std::map<TreeNode*, AnimationRecord>;
 

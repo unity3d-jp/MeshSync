@@ -1,7 +1,7 @@
 #define _MApiVersion
 #include "pch.h"
-#include "MeshSyncClientMaya.h"
-#include "msmayaCommands.h"
+#include "msmayaContext.h"
+#include "msmayaCommand.h"
 
 
 template<class T> static void get_arg(T& dst, const char *name, MArgParser& args);
@@ -115,7 +115,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
-    auto& settings = MeshSyncClientMaya::getInstance().m_settings;
+    auto& settings = msmayaContext::getInstance().m_settings;
 
     MString result;
 
@@ -131,7 +131,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         else {\
             get_arg(Value, Name, args);\
             if (settings.auto_sync && Sync)\
-                MeshSyncClientMaya::getInstance().sendObjects(MeshSyncClientMaya::SendScope::All, false);\
+                msmayaContext::getInstance().sendObjects(msmayaContext::SendScope::All, false);\
         }\
     }
 
@@ -190,48 +190,48 @@ MStatus CmdExport::doIt(const MArgList& args_)
     MStatus status;
     MArgParser args(syntax(), args_, &status);
 
-    auto target = MeshSyncClientMaya::SendTarget::Objects;
-    auto scope = MeshSyncClientMaya::SendScope::All;
+    auto target = msmayaContext::SendTarget::Objects;
+    auto scope = msmayaContext::SendScope::All;
 
     // parse args
     if (args.isFlagSet("target")) {
         std::string t;
         get_arg(t, "target", args);
         if (t == "objects")
-            target = MeshSyncClientMaya::SendTarget::Objects;
+            target = msmayaContext::SendTarget::Objects;
         else if (t == "materials")
-            target = MeshSyncClientMaya::SendTarget::Materials;
+            target = msmayaContext::SendTarget::Materials;
         else if (t == "animations")
-            target = MeshSyncClientMaya::SendTarget::Animations;
+            target = msmayaContext::SendTarget::Animations;
         else if (t == "everything")
-            target = MeshSyncClientMaya::SendTarget::Everything;
+            target = msmayaContext::SendTarget::Everything;
     }
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
         if (s == "all")
-            scope = MeshSyncClientMaya::SendScope::All;
+            scope = msmayaContext::SendScope::All;
         else if (s == "selection")
-            scope = MeshSyncClientMaya::SendScope::Selected;
+            scope = msmayaContext::SendScope::Selected;
         else if (s == "updated")
-            scope = MeshSyncClientMaya::SendScope::Updated;
+            scope = msmayaContext::SendScope::Updated;
     }
 
     // do send
-    auto& inst = MeshSyncClientMaya::getInstance();
-    if (target == MeshSyncClientMaya::SendTarget::Objects) {
+    auto& inst = msmayaContext::getInstance();
+    if (target == msmayaContext::SendTarget::Objects) {
         inst.wait();
         inst.sendObjects(scope, true);
     }
-    else if (target == MeshSyncClientMaya::SendTarget::Materials) {
+    else if (target == msmayaContext::SendTarget::Materials) {
         inst.wait();
         inst.sendMaterials(true);
     }
-    else if (target == MeshSyncClientMaya::SendTarget::Animations) {
+    else if (target == msmayaContext::SendTarget::Animations) {
         inst.wait();
         inst.sendAnimations(scope);
     }
-    else if (target == MeshSyncClientMaya::SendTarget::Everything) {
+    else if (target == msmayaContext::SendTarget::Everything) {
         inst.wait();
         inst.sendMaterials(true);
         inst.wait();
@@ -262,6 +262,6 @@ MSyntax CmdImport::createSyntax()
 
 MStatus CmdImport::doIt(const MArgList&)
 {
-    MeshSyncClientMaya::getInstance().recvObjects();
+    msmayaContext::getInstance().recvObjects();
     return MStatus::kSuccess;
 }
