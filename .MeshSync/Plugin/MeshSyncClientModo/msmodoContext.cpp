@@ -892,30 +892,45 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
                 dst.refine_settings.local2world = dst.toMatrix();
             }
         }
-    }
 
-    // morph
-    if (!m_settings.bake_deformers && m_settings.sync_blendshapes) {
-        auto get_delta = [&](const char *name, RawVector<mu::float3>& dst_array) -> bool {
-            if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
-                return false;
-
-            dst_array.resize_discard(num_points);
-            auto *write_ptr = dst_array.data();
-
-            auto mmid = mmap.ID();
-            mu::float3 v;
-            for (int pi = 0; pi < num_points; ++pi) {
-                points.SelectByIndex(pi);
-                if (LXx_FAIL(points.MapEvaluate(mmid, &v[0]))) {
-                    dst.clear();
+        // morph
+        if (!m_settings.bake_deformers && m_settings.sync_blendshapes) {
+            auto get_delta = [&](const char *name, RawVector<mu::float3>& dst_array) -> bool {
+                if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
                     return false;
-                }
-                *(write_ptr++) = v;
-            }
-            return true;
-        };
 
+                dst_array.resize_discard(num_points);
+                auto *write_ptr = dst_array.data();
+
+                auto mmid = mmap.ID();
+                mu::float3 v;
+                for (int pi = 0; pi < num_points; ++pi) {
+                    points.SelectByIndex(pi);
+                    if (LXx_FAIL(points.MapEvaluate(mmid, &v[0]))) {
+                        dst.clear();
+                        return false;
+                    }
+                    *(write_ptr++) = v;
+                }
+                return true;
+            };
+
+            eachMorphDeformer(n.item, [&](CLxUser_Item& def) {
+                mdmodoMorphDeformer morph(*this, def);
+
+                auto dst_bs = ms::BlendShapeData::create();
+                dst_bs->name = GetName(def);
+                dst_bs->weight = morph.getWeight();
+
+                auto dst_bsf = ms::BlendShapeFrameData::create();
+                dst_bs->frames.push_back(dst_bsf);
+                dst_bsf->weight = 100.0f;
+                if (get_delta(morph.getMapName(), dst_bsf->points))
+                    dst.blendshapes.push_back(dst_bs);
+            });
+        }
+    }
+    else if (m_settings.sync_blendshapes) {
         eachMorphDeformer(n.item, [&](CLxUser_Item& def) {
             mdmodoMorphDeformer morph(*this, def);
 
@@ -923,11 +938,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             dst_bs->name = GetName(def);
             dst_bs->weight = morph.getWeight();
 
-            auto dst_bsf = ms::BlendShapeFrameData::create();
-            dst_bs->frames.push_back(dst_bsf);
-            dst_bsf->weight = 100.0f;
-            if (get_delta(morph.getMapName(), dst_bsf->points))
-                dst.blendshapes.push_back(dst_bs);
+            dst.blendshapes.push_back(dst_bs);
         });
     }
 
@@ -992,7 +1003,7 @@ int msmodoContext::exportAnimations(SendScope scope)
             eachLight(do_export);
         if (m_settings.sync_bones)
             eachMesh([&](CLxUser_Item& obj) { eachBone(obj, do_export); });
-        if (m_settings.sync_meshes)
+        if (m_settings.sync_meshes || m_settings.sync_blendshapes)
             eachMesh(do_export);
         if (m_settings.sync_mesh_instances)
             eachMeshInstance(do_export);
