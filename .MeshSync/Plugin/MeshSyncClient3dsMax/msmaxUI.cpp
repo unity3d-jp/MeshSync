@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSyncClient3dsMax.h"
+#include "msmaxContext.h"
 #include "msmaxUtils.h"
 #include "resource.h"
 
@@ -56,7 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendObjects(MeshSyncClient3dsMax::SendScope::All, true);
+        msmaxInstance().sendObjects(msmaxContext::SendScope::All, true);
         return TRUE;
     }
 };
@@ -76,7 +76,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
+        msmaxInstance().sendAnimations(msmaxContext::SendScope::All);
         return TRUE;
     }
 };
@@ -107,7 +107,7 @@ public:
 };
 static msmaxActionCallback g_msmaxActionCallback;
 
-void MeshSyncClient3dsMax::registerMenu()
+void msmaxContext::registerMenu()
 {
     unregisterMenu();
 
@@ -170,7 +170,7 @@ void MeshSyncClient3dsMax::registerMenu()
 }
 
 
-void MeshSyncClient3dsMax::unregisterMenu()
+void msmaxContext::unregisterMenu()
 {
     // nothing to do for now
 }
@@ -434,10 +434,10 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { _this->sendObjects(MeshSyncClient3dsMax::SendScope::All, true); });
+            handle_button([&]() { _this->sendObjects(msmaxContext::SendScope::All, true); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
-            handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
+            handle_button([&]() { _this->sendAnimations(msmaxContext::SendScope::All); });
             break;
         default: break;
         }
@@ -450,7 +450,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     return ret;
 }
 
-void MeshSyncClient3dsMax::openWindow()
+void msmaxContext::openWindow()
 {
     if (!g_msmax_settings_window) {
         CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_SETTINGS_WINDOW),
@@ -458,19 +458,19 @@ void MeshSyncClient3dsMax::openWindow()
     }
 }
 
-void MeshSyncClient3dsMax::closeWindow()
+void msmaxContext::closeWindow()
 {
     if (g_msmax_settings_window) {
         PostMessage(g_msmax_settings_window, WM_CLOSE, 0, 0);
     }
 }
 
-bool MeshSyncClient3dsMax::isWindowOpened() const
+bool msmaxContext::isWindowOpened() const
 {
     return g_msmax_settings_window != nullptr;
 }
 
-void MeshSyncClient3dsMax::updateUIText()
+void msmaxContext::updateUIText()
 {
     auto& s = m_settings;
     CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);

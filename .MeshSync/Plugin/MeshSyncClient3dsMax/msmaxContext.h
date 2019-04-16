@@ -6,7 +6,7 @@
 #define msmaxAPI extern "C" __declspec(dllexport)
 
 
-class MeshSyncClient3dsMax
+class msmaxContext
 {
 public:
     struct Settings
@@ -57,10 +57,10 @@ public:
         Selected,
     };
 
-    static MeshSyncClient3dsMax& getInstance();
+    static msmaxContext& getInstance();
 
-    MeshSyncClient3dsMax();
-    ~MeshSyncClient3dsMax();
+    msmaxContext();
+    ~msmaxContext();
     Settings& getSettings();
 
     void onStartup();
@@ -114,13 +114,13 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (MeshSyncClient3dsMax::*)(ms::TransformAnimation& dst, INode *n, Object *obj);
+        using extractor_t = void (msmaxContext::*)(ms::TransformAnimation& dst, INode *n, Object *obj);
         extractor_t extractor = nullptr;
         INode *node = nullptr;
         Object *obj = nullptr;
         ms::TransformAnimationPtr dst;
 
-        void operator()(MeshSyncClient3dsMax *_this);
+        void operator()(msmaxContext *_this);
     };
 
     struct MaterialRecord : public mu::noncopyable
@@ -178,5 +178,5 @@ private:
     ms::AsyncSceneSender m_sender;
 };
 
-#define msmaxInstance() MeshSyncClient3dsMax::getInstance()
+#define msmaxInstance() msmaxContext::getInstance()
 

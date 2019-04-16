@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSyncClient3dsMax.h"
+#include "msmaxContext.h"
 #include "msmaxCallbacks.h"
 #include "msmaxUtils.h"
 
