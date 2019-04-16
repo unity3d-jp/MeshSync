@@ -112,7 +112,7 @@ void msmodoContext::wait()
 void msmodoContext::update()
 {
     if (m_pending_scope != SendScope::None) {
-        sendScene(m_pending_scope, false);
+        sendObjects(m_pending_scope, false);
     }
 }
 
@@ -160,7 +160,7 @@ void msmodoContext::onTreeRestructure()
 void msmodoContext::onTimeChange()
 {
     if (m_settings.auto_sync)
-        sendScene(SendScope::All, false);
+        sendObjects(SendScope::All, false);
 }
 
 void msmodoContext::onIdle()
@@ -324,10 +324,12 @@ void msmodoContext::extractReplicaData(
 
 bool msmodoContext::sendMaterials(bool dirty_all)
 {
-    if (dirty_all) {
-        m_material_manager.setAlwaysMarkDirty(dirty_all);
-        m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    if (m_sender.isSending()) {
+        return false;
     }
+
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
 
     // send
@@ -335,7 +337,7 @@ bool msmodoContext::sendMaterials(bool dirty_all)
     return true;
 }
 
-bool msmodoContext::sendScene(SendScope scope, bool dirty_all)
+bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 {
     if (m_sender.isSending()) {
         m_pending_scope = scope;
@@ -400,7 +402,7 @@ bool msmodoContext::sendAnimations(SendScope scope)
     }
 }
 
-bool msmodoContext::recvScene()
+bool msmodoContext::recvObjects()
 {
     wait();
 

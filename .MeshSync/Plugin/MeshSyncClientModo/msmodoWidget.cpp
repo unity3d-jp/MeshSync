@@ -259,7 +259,7 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     setLayout(layout);
 }
 
-#define msmodoSendScene() msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true)
+#define msmodoSendObjects() msmodoGetInstance().sendObjects(msmodoContext::SendScope::All, true)
 
 void msmodoSettingsWidget::onEditServer(const QString& v)
 {
@@ -285,7 +285,7 @@ void msmodoSettingsWidget::onEditScaleFactor(const QString& v)
     if (ok && val != 0.0f && settings.scale_factor != val) {
         settings.scale_factor = val;
         if (settings.auto_sync)
-            msmodoSendScene();
+            msmodoSendObjects();
     }
 }
 
@@ -295,7 +295,7 @@ void msmodoSettingsWidget::onToggleSyncMeshes(int v)
     settings.sync_meshes = v;
     m_widget_mesh->setShown(settings.sync_meshes);
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleSyncBones(int v)
@@ -303,7 +303,7 @@ void msmodoSettingsWidget::onToggleSyncBones(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_bones = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleSyncBlendshapes(int v)
@@ -311,7 +311,7 @@ void msmodoSettingsWidget::onToggleSyncBlendshapes(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_blendshapes = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleBakeDeformers(int v)
@@ -319,7 +319,7 @@ void msmodoSettingsWidget::onToggleBakeDeformers(int v)
     auto& settings = msmodoGetSettings();
     settings.bake_deformers = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleDoubleSided(int v)
@@ -327,7 +327,7 @@ void msmodoSettingsWidget::onToggleDoubleSided(int v)
     auto& settings = msmodoGetSettings();
     settings.make_double_sided = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleSyncTextures(int v)
@@ -341,7 +341,7 @@ void msmodoSettingsWidget::onToggleSyncMeshInstances(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_mesh_instances = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleSyncReplicators(int v)
@@ -349,7 +349,7 @@ void msmodoSettingsWidget::onToggleSyncReplicators(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_replicators = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleSyncCameras(int v)
@@ -357,7 +357,7 @@ void msmodoSettingsWidget::onToggleSyncCameras(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_cameras = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleSyncLights(int v)
@@ -365,7 +365,7 @@ void msmodoSettingsWidget::onToggleSyncLights(int v)
     auto& settings = msmodoGetSettings();
     settings.sync_lights = v;
     if (settings.auto_sync)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onToggleAutoSync(int v)
@@ -373,12 +373,12 @@ void msmodoSettingsWidget::onToggleAutoSync(int v)
     auto& settings = msmodoGetSettings();
     settings.auto_sync = v;
     if (v)
-        msmodoSendScene();
+        msmodoSendObjects();
 }
 
 void msmodoSettingsWidget::onClickManualSync(bool v)
 {
-    msmodoSendScene();
+    msmodoSendObjects();
 }
 
 

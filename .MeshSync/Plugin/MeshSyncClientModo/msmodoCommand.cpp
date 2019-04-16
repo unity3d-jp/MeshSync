@@ -95,7 +95,7 @@ public:
         auto& settings = msmodoGetSettings();
 #define Handler(Name, Type, Member, Sync)\
         if(getArg(Name, Member) && settings.auto_sync && Sync)\
-            msmodoGetInstance().sendScene(msmodoContext::SendScope::All, true);
+            msmodoGetInstance().sendObjects(msmodoContext::SendScope::All, true);
 
         EachParam(Handler)
 #undef Handler
@@ -130,29 +130,29 @@ public:
 
     void execute() override
     {
-        int target;
-        cmd_read_arg("target", target);
+        auto target = msmodoContext::SendTarget::Objects;
+        cmd_read_arg("target", (int&)target);
 
         auto& inst = msmodoGetInstance();
-        if (target == 3) { // everything
+        if (target == msmodoContext::SendTarget::Objects) {
             inst.wait();
-            inst.sendMaterials(true);
-            inst.wait();
-            inst.sendScene(msmodoContext::SendScope::All, true);
-            inst.wait();
-            inst.sendAnimations(msmodoContext::SendScope::All);
+            inst.sendObjects(msmodoContext::SendScope::All, true);
         }
-        if (target == 2) { // animations
-            inst.wait();
-            inst.sendAnimations(msmodoContext::SendScope::All);
-        }
-        if (target == 1) { // materials
+        else if (target == msmodoContext::SendTarget::Materials) {
             inst.wait();
             inst.sendMaterials(true);
         }
-        else { // objects
+        else if (target == msmodoContext::SendTarget::Animations) {
             inst.wait();
-            inst.sendScene(msmodoContext::SendScope::All, true);
+            inst.sendAnimations(msmodoContext::SendScope::All);
+        }
+        else if (target == msmodoContext::SendTarget::Everything) {
+            inst.wait();
+            inst.sendMaterials(true);
+            inst.wait();
+            inst.sendObjects(msmodoContext::SendScope::All, true);
+            inst.wait();
+            inst.sendAnimations(msmodoContext::SendScope::All);
         }
     }
 };
@@ -163,7 +163,7 @@ class msmodoCmdImport : public CLxCommand
 public:
     void execute() override
     {
-        msmodoGetInstance().recvScene();
+        msmodoGetInstance().recvObjects();
     }
 };
 

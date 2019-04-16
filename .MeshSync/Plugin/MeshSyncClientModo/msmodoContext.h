@@ -66,7 +66,14 @@ class msmodoContext : private msmodoInterface
 {
 using super = msmodoInterface;
 public:
-    enum class SendScope
+    enum class SendTarget : int
+    {
+        Objects,
+        Materials,
+        Animations,
+        Everything,
+    };
+    enum class SendScope : int
     {
         None,
         All,
@@ -84,10 +91,10 @@ public:
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
-    bool sendScene(SendScope scope, bool dirty_all);
+    bool sendObjects(SendScope scope, bool dirty_all);
     bool sendAnimations(SendScope scope);
 
-    bool recvScene();
+    bool recvObjects();
 
     void onItemAdd(CLxUser_Item& item) override;
     void onItemRemove(CLxUser_Item& item) override;
