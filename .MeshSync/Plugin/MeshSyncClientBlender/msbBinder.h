@@ -14,7 +14,7 @@ namespace blender
     const void* CustomData_get(const CustomData& data, int type);
     int CustomData_number_of_layers(const CustomData& data, int type);
     int CustomData_get_offset(const CustomData& data, int type);
-    float3 BM_loop_calc_face_normal(const BMLoop& l);
+    mu::float3 BM_loop_calc_face_normal(const BMLoop& l);
     std::string abspath(const std::string& path);
 
 
@@ -112,8 +112,8 @@ namespace blender
 
         const char *name() const;
         void* data();
-        float4x4 matrix_local() const;
-        float4x4 matrix_world() const;
+        mu::float4x4 matrix_local() const;
+        mu::float4x4 matrix_world() const;
         bool is_visible(Scene *scene) const;
 #if BLENDER_VERSION < 280
         Mesh* to_mesh(Scene *scene) const;
@@ -132,7 +132,7 @@ namespace blender
         barray_range<MEdge> edges();
         barray_range<MPoly> polygons();
         barray_range<MVert> vertices();
-        barray_range<float3> normals();
+        barray_range<mu::float3> normals();
         barray_range<MLoopUV> uv();
         barray_range<MLoopCol> colors();
 
@@ -158,7 +158,7 @@ namespace blender
         Compatible(BID)
 
         const char *name() const;
-        const float3& color() const;
+        const mu::float3& color() const;
         bool use_nodes() const;
         Material* active_node_material() const;
     };

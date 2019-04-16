@@ -1,6 +1,5 @@
 #include "pch.h"
-#include "MeshSyncClientBlender.h"
-using namespace mu;
+#include "msbContext.h"
 
 
 PYBIND11_PLUGIN(MeshSyncClientBlender)

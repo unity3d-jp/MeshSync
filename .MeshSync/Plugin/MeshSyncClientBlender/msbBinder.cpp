@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSyncClientBlender.h"
+#include "msbContext.h"
 #include "msbUtils.h"
 #include "msbBinder.h"
 
@@ -385,16 +385,16 @@ bool BID::is_updated_data() const
 const char *BObject::name() const { return ((BID)*this).name(); }
 void* BObject::data() { return m_ptr->data; }
 
-float4x4 BObject::matrix_local() const
+mu::float4x4 BObject::matrix_local() const
 {
-    float4x4 ret;
+    mu::float4x4 ret;
     get_float_array(m_ptr, (float*)&ret, BObject_matrix_local);
     return ret;
 }
 
-float4x4 BObject::matrix_world() const
+mu::float4x4 BObject::matrix_world() const
 {
-    float4x4 ret;
+    mu::float4x4 ret;
     get_float_array(m_ptr, (float*)&ret, BObject_matrix_world);
     return ret;
 }
@@ -460,10 +460,10 @@ barray_range<MVert> BMesh::vertices()
 {
     return { m_ptr->mvert, (size_t)m_ptr->totvert };
 }
-barray_range<float3> BMesh::normals()
+barray_range<mu::float3> BMesh::normals()
 {
     if (CustomData_number_of_layers(m_ptr->ldata, CD_NORMAL) > 0) {
-        auto data = (float3*)CustomData_get(m_ptr->ldata, CD_NORMAL);
+        auto data = (mu::float3*)CustomData_get(m_ptr->ldata, CD_NORMAL);
         if (data != nullptr)
             return { data, (size_t)m_ptr->totloop };
     }
@@ -518,9 +518,9 @@ const char *BMaterial::name() const
 {
     return m_ptr->id.name + 2;
 }
-const float3& BMaterial::color() const
+const mu::float3& BMaterial::color() const
 {
-    return (float3&)m_ptr->r;
+    return (mu::float3&)m_ptr->r;
 }
 bool BMaterial::use_nodes() const
 {
@@ -653,7 +653,7 @@ int CustomData_get_offset(const CustomData& data, int type)
 }
 
 
-float3 BM_loop_calc_face_normal(const BMLoop& l)
+mu::float3 BM_loop_calc_face_normal(const BMLoop& l)
 {
     float r_normal[3];
     float v1[3], v2[3];
@@ -665,7 +665,7 @@ float3 BM_loop_calc_face_normal(const BMLoop& l)
     if (UNLIKELY(len == 0.0f)) {
         copy_v3_v3(r_normal, l.f->no);
     }
-    return (float3&)r_normal;
+    return (mu::float3&)r_normal;
 }
 
 std::string abspath(const std::string& path)

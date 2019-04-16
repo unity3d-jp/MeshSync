@@ -12,10 +12,10 @@ Bone* find_bone_recursive(Bone *bone, const char *name);
 Bone* find_bone(Object *obj, const char *name);
 bPoseChannel* find_pose(Object *obj, const char *name);
 
-void extract_local_TRS(const Object *obj, float3& t, quatf& r, float3& s);
-void extract_local_TRS(const Bone *bone, float3& t, quatf& r, float3& s);
-void extract_local_TRS(const bPoseChannel *pose, float3& t, quatf& r, float3& s);
-float4x4 extract_bindpose(const Bone *bone);
+void extract_local_TRS(const Object *obj, mu::float3& t, mu::quatf& r, mu::float3& s);
+void extract_local_TRS(const Bone *bone, mu::float3& t, mu::quatf& r, mu::float3& s);
+void extract_local_TRS(const bPoseChannel *pose, mu::float3& t, mu::quatf& r, mu::float3& s);
+mu::float4x4 extract_bindpose(const Bone *bone);
 
 inline Collection* get_instance_collection(Object *obj)
 {
@@ -26,12 +26,12 @@ inline Collection* get_instance_collection(Object *obj)
 #endif
 }
 
-inline const float3& get_instance_offset(const Collection *col)
+inline const mu::float3& get_instance_offset(const Collection *col)
 {
 #if BLENDER_VERSION < 280
-    return (float3&)col->dupli_ofs;
+    return (mu::float3&)col->dupli_ofs;
 #else
-    return (float3&)col->instance_offset;
+    return (mu::float3&)col->instance_offset;
 #endif
 }
 
@@ -96,23 +96,23 @@ static inline void each_key(Mesh *obj, const Body& body)
 
 
 
-inline float3 to_float3(const float(&v)[3])
+inline mu::float3 to_float3(const float(&v)[3])
 {
-    return (float3&)v;
+    return (mu::float3&)v;
 }
 
-inline float3 to_float3(const short(&v)[3])
+inline mu::float3 to_float3(const short(&v)[3])
 {
-    return float3{
+    return mu::float3{
         v[0] * (1.0f / 32767.0f),
         v[1] * (1.0f / 32767.0f),
         v[2] * (1.0f / 32767.0f),
     };
 }
 
-inline float4 to_float4(const MLoopCol& c)
+inline mu::float4 to_float4(const MLoopCol& c)
 {
-    return float4{
+    return mu::float4{
         c.r * (1.0f / 255.0f),
         c.g * (1.0f / 255.0f),
         c.b * (1.0f / 255.0f),

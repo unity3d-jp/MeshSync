@@ -41,9 +41,6 @@
     <ClInclude Include="MeshSyncClientBlender\pch.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientBlender\MeshSyncClientBlender.h">
-      <Filter>MeshSyncClientBlender</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientBlender\msbContext.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>

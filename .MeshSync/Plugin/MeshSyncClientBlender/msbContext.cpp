@@ -1,8 +1,6 @@
 #include "pch.h"
-#include "MeshSyncClientBlender.h"
 #include "msbContext.h"
 #include "msbUtils.h"
-using namespace mu;
 
 
 msbContext::msbContext()
@@ -45,7 +43,7 @@ void msbContext::exportMaterials()
             }
 #endif
         }
-        stdmat.setColor(float4{ color_src->r, color_src->g, color_src->b, 1.0f });
+        stdmat.setColor(mu::float4{ color_src->r, color_src->g, color_src->b, 1.0f });
 
         if (m_settings.sync_textures) {
             auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
@@ -65,7 +63,7 @@ void msbContext::exportMaterials()
 }
 
 
-static void ExtractTransformData(Object *src, float3& t, quatf& r, float3& s, bool& vis)
+static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, bool& vis)
 {
     extract_local_TRS(src, t, r, s);
     vis = is_visible(src);
@@ -89,7 +87,7 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
     fov = bl::BCamera(data).fov_vertical() * mu::Rad2Deg;
 }
 
-static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& color, float& intensity, float& range, float& spot_angle)
+static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
     auto data =
 #if BLENDER_VERSION < 280
@@ -97,7 +95,7 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, float4& co
 #else
         (Light*)src->data;
 #endif
-    color = (float4&)data->r;
+    color = (mu::float4&)data->r;
     intensity = data->energy;
     range = data->dist;
 
@@ -283,7 +281,7 @@ ms::CameraPtr msbContext::exportCamera(Object *src)
     auto& dst = *ret;
     dst.path = get_path(src);
     ExtractTransformData(src, dst);
-    dst.rotation *= rotateX(90.0f * Deg2Rad);
+    dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
 
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov);
     m_entity_manager.add(ret);
@@ -296,7 +294,7 @@ ms::LightPtr msbContext::exportLight(Object *src)
     auto& dst = *ret;
     dst.path = get_path(src);
     ExtractTransformData(src, dst);
-    dst.rotation *= rotateX(90.0f * Deg2Rad);
+    dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
 
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
     m_entity_manager.add(ret);
@@ -399,8 +397,8 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
                 if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
                 if (mirror->mirror_ob) {
                     dst.refine_settings.flags.mirror_basis = 1;
-                    float4x4 wm = bobj.matrix_world();
-                    float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
+                    mu::float4x4 wm = bobj.matrix_world();
+                    mu::float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
                     dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
                 }
             }
@@ -430,7 +428,7 @@ void msbContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *da
     if (!m_settings.bake_modifiers) {
         // blend shapes
         if (m_settings.sync_blendshapes && mesh.key) {
-            RawVector<float3> basis;
+            RawVector<mu::float3> basis;
             int bi = 0;
             each_key(&mesh, [&](const KeyBlock *kb) {
                 if (bi == 0) { // Basis
@@ -468,7 +466,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
     // vertices
     dst.points.resize_discard(num_vertices);
     for (size_t vi = 0; vi < num_vertices; ++vi) {
-        dst.points[vi] = (float3&)vertices[vi].co;
+        dst.points[vi] = (mu::float3&)vertices[vi].co;
     }
 
     // faces
@@ -517,7 +515,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
         if (!loop_uv.empty()) {
             dst.uv0.resize_discard(num_indices);
             for (size_t ii = 0; ii < num_indices; ++ii)
-                dst.uv0[ii] = (float2&)loop_uv[ii].uv;
+                dst.uv0[ii] = (mu::float2&)loop_uv[ii].uv;
         }
     }
 
@@ -574,12 +572,12 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
 
         // blend shapes
         if (m_settings.sync_blendshapes && mesh.key) {
-            RawVector<float3> basis;
+            RawVector<mu::float3> basis;
             int bi = 0;
             each_key(&mesh, [&](const KeyBlock *kb) {
                 if (bi == 0) { // Basis
                     basis.resize_discard(kb->totelem);
-                    memcpy(basis.data(), kb->data, basis.size() * sizeof(float3));
+                    memcpy(basis.data(), kb->data, basis.size() * sizeof(mu::float3));
                 }
                 else {
                     auto bsd = dst.addBlendShape(kb->name);
@@ -589,7 +587,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
                     auto& frame = *bsd->frames.back();
                     frame.weight = 100.0f;
                     frame.points.resize_discard(kb->totelem);
-                    memcpy(frame.points.data(), kb->data, basis.size() * sizeof(float3));
+                    memcpy(frame.points.data(), kb->data, basis.size() * sizeof(mu::float3));
 
                     size_t len = frame.points.size();
                     for (size_t i = 0; i < len; ++i) {
@@ -632,14 +630,14 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
             num_indices = dst.indices.size();
 
             if (!dst.normals.empty() && m_settings.sync_normals == msbNormalSyncMode::PerIndex) {
-                dst.normals.resize(num_indices, float3::zero());
+                dst.normals.resize(num_indices, mu::float3::zero());
             }
             if (!dst.uv0.empty()) {
-                dst.uv0.resize(num_indices, float2::zero());
+                dst.uv0.resize(num_indices, mu::float2::zero());
             }
             if (!dst.colors.empty()) {
                 auto colors = bmesh.colors();
-                dst.colors.resize(num_indices, float4::one());
+                dst.colors.resize(num_indices, mu::float4::one());
                 for (size_t ii = lines_begin; ii < num_indices; ++ii) {
                     int vi = dst.indices[ii];
                     dst.colors[ii] = to_float4(colors[vi]);
@@ -674,7 +672,7 @@ void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     // vertices
     dst.points.resize_discard(num_vertices);
     for (size_t vi = 0; vi < num_vertices; ++vi) {
-        dst.points[vi] = (float3&)vertices[vi]->co;
+        dst.points[vi] = (mu::float3&)vertices[vi]->co;
     }
 
     // faces
@@ -726,7 +724,7 @@ void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
             for (size_t ti = 0; ti < num_triangles; ++ti) {
                 auto& triangle = triangles[ti];
                 for (auto *idx : triangle)
-                    dst.uv0[ii++] = *(float2*)((char*)idx->head.data + offset);
+                    dst.uv0[ii++] = *(mu::float2*)((char*)idx->head.data + offset);
             }
         }
     }
@@ -938,9 +936,9 @@ void msbContext::extractTransformAnimationData(ms::TransformAnimation& dst_, voi
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
-    float3 pos;
-    quatf rot;
-    float3 scale;
+    mu::float3 pos;
+    mu::quatf rot;
+    mu::float3 scale;
     bool vis;
     extract_local_TRS((Object*)obj, pos, rot, scale);
     vis = is_visible((Object*)obj);
@@ -956,9 +954,9 @@ void msbContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * o
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
-    float3 pos;
-    quatf rot;
-    float3 scale;
+    mu::float3 pos;
+    mu::quatf rot;
+    mu::float3 scale;
     extract_local_TRS((bPoseChannel*)obj, pos, rot, scale);
 
     float t = m_anim_time;
@@ -974,7 +972,7 @@ void msbContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *
     auto& dst = (ms::CameraAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
-        last.value *= rotateX(90.0f * Deg2Rad);
+        last.value *= mu::rotateX(90.0f * mu::Deg2Rad);
     }
 
     bool ortho;
@@ -994,11 +992,11 @@ void msbContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *o
     auto& dst = (ms::LightAnimation&)dst_;
     {
         auto& last = dst.rotation.back();
-        last.value *= rotateX(90.0f * Deg2Rad);
+        last.value *= mu::rotateX(90.0f * mu::Deg2Rad);
     }
 
     ms::Light::LightType type;
-    float4 color;
+    mu::float4 color;
     float intensity, range, spot_angle;
     ExtractLightData((Object*)obj, type, color, intensity, range, spot_angle);
 
