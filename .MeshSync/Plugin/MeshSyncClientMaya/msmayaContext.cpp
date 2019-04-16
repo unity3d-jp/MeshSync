@@ -774,6 +774,8 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
         handle_parent();
         n->dst_obj = exportTransform(n);
     };
+
+    // Maya can instantiate any nodes (include its children), but we only care about Meshes (shape).
     auto handle_instance = [&]() -> bool {
         if (n->isInstance() && !n->isPrimaryInstance()) {
             n->dst_obj = exportInstance(n);
@@ -782,12 +784,11 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
         return false;
     };
 
-    ms::TransformPtr ret;
     if (shape.hasFn(MFn::kMesh)) {
         if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
             handle_parent();
             if (!handle_instance())
-                ret = exportMesh(n);
+                n->dst_obj = exportMesh(n);
         }
         else if (!tip && parent)
             handle_transform();
@@ -795,7 +796,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
     else if (shape.hasFn(MFn::kCamera)) {
         if (m_settings.sync_cameras) {
             handle_parent();
-            ret = exportCamera(n);
+            n->dst_obj = exportCamera(n);
         }
         else if (!tip && parent)
             handle_transform();
@@ -803,7 +804,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
     else if (shape.hasFn(MFn::kLight)) {
         if (m_settings.sync_lights) {
             handle_parent();
-            ret = exportLight(n);
+            n->dst_obj = exportLight(n);
         }
         else if (!tip && parent)
             handle_transform();
@@ -811,7 +812,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
     else if (shape.hasFn(MFn::kJoint)) {
         if (m_settings.sync_bones) {
             handle_parent();
-            ret = exportTransform(n);
+            n->dst_obj = exportTransform(n);
         }
         else if (!tip && parent)
             handle_transform();
@@ -821,7 +822,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
         handle_transform();
     }
 
-    return ret;
+    return n->dst_obj;
 }
 
 void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
@@ -1053,10 +1054,12 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
 void msmayaContext::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
 {
     auto& shape = n->shape->node;
-    if (!shape.hasFn(MFn::kMesh)) { return; }
+    if (!shape.hasFn(MFn::kMesh))
+        return;
 
     dst.visible = IsVisible(shape);
-    if (!dst.visible) { return; }
+    if (!dst.visible)
+        return;
 
     MFnMesh mmesh(shape);
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));

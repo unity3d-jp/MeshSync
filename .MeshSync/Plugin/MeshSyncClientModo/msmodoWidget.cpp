@@ -140,16 +140,6 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         layout_mesh->setVerticalSpacing(2);
         layout_mesh->setContentsMargins(10, 0, 0, 0);
 
-        auto ck_bones = new QCheckBox("Sync Joints");
-        ck_bones->setCheckState(to_qcheckstate(settings.sync_bones));
-        layout_mesh->addWidget(ck_bones, iy2++, 0);
-        connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBones(int)));
-
-        auto ck_blendshapes = new QCheckBox("Sync Morphs");
-        ck_blendshapes->setCheckState(to_qcheckstate(settings.sync_blendshapes));
-        layout_mesh->addWidget(ck_blendshapes, iy2++, 0);
-        connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBlendshapes(int)));
-
         auto ck_bake_deformers = new QCheckBox("Bake Deformers");
         ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
         layout_mesh->addWidget(ck_bake_deformers, iy2++, 0);
@@ -167,6 +157,16 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
 
     // other components
     {
+        auto ck_bones = new QCheckBox("Sync Joints");
+        ck_bones->setCheckState(to_qcheckstate(settings.sync_bones));
+        layout->addWidget(ck_bones, iy++, 0);
+        connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBones(int)));
+
+        auto ck_blendshapes = new QCheckBox("Sync Morphs");
+        ck_blendshapes->setCheckState(to_qcheckstate(settings.sync_blendshapes));
+        layout->addWidget(ck_blendshapes, iy++, 0);
+        connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBlendshapes(int)));
+
         auto ck_textures = new QCheckBox("Sync Textures");
         ck_textures->setCheckState(to_qcheckstate(settings.sync_textures));
         layout->addWidget(ck_textures, iy++, 0, 1, 3);

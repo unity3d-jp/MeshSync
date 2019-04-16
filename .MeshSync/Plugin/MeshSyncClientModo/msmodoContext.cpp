@@ -513,17 +513,20 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent, bool
         return n.dst_obj;
     n.item = obj;
 
-    auto name = GetName(obj);
-    auto path = GetPath(obj);
-    if (!n.path.empty() && n.path != path) {
-        // renamed
-        n.eraseFromEntityManager(this);
+    // check rename / re-parent
+    {
+        auto name = GetName(obj);
+        auto path = GetPath(obj);
+        if (!n.path.empty() && n.path != path) {
+            // renamed
+            n.eraseFromEntityManager(this);
+        }
+        if (n.index == 0) {
+            n.index = ++m_entity_index_seed;
+        }
+        n.name = name;
+        n.path = path;
     }
-    if (n.index == 0) {
-        n.index = ++m_entity_index_seed;
-    }
-    n.name = name;
-    n.path = path;
 
     auto handle_parent = [&]() {
         if (parent)
@@ -554,7 +557,7 @@ ms::TransformPtr msmodoContext::exportObject(CLxUser_Item obj, bool parent, bool
         if (m_settings.sync_bones)
             eachBone(obj, [&](CLxUser_Item& bone) { exportObject(bone, true); });
 
-        if (m_settings.sync_meshes) {
+        if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
             handle_parent();
             n.dst_obj = exportMesh(n);
         }
@@ -674,218 +677,220 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     int num_indices = 0;
     int num_points = mesh.NPoints();
 
-    // topology
-    {
-        n.face_types.resize_discard(num_faces);
-        n.material_names.resize_discard(num_faces);
+    if (m_settings.sync_meshes) {
+        // topology
+        {
+            n.face_types.resize_discard(num_faces);
+            n.material_names.resize_discard(num_faces);
 
-        dst.counts.resize_discard(num_faces);
-        dst.indices.reserve_discard(num_faces * 4);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            polygons.SelectByIndex(fi);
-
-            polygons.Type(&n.face_types[fi]);
-
-            const char *material_name;
-            poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
-            n.material_names[fi] = material_name;
-
-            uint32_t count;
-            polygons.VertexCount(&count);
-            dst.counts[fi] = count;
-
-            size_t pos = dst.indices.size();
-            dst.indices.resize(pos + count);
-            for (uint32_t ci = 0; ci < count; ++ci) {
-                LXtPointID pid;
-                polygons.VertexByIndex(ci, &pid);
-                points.Select(pid);
-
-                uint32_t index;
-                points.Index(&index);
-                dst.indices[pos + ci] = index;
-            }
-        }
-        num_indices = (int)dst.indices.size();
-
-        // resolving material ids will be done in kickAsyncSend()
-    }
-
-    //points
-    {
-        dst.points.resize_discard(num_points);
-        for (int pi = 0; pi < num_points; ++pi) {
-            points.SelectByIndex(pi);
-
-            LXtFVector p;
-            points.Pos(p);
-            dst.points[pi] = to_float3(p);
-        }
-    }
-
-    // normals
-    if (m_settings.sync_normals) {
-        auto do_extract_map = [&](const char *name, RawVector<mu::float3>& dst_array) {
-            if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_NORMAL, name)))
-                return;
-
-            dst_array.resize_discard(dst.indices.size());
-            auto *write_ptr = dst_array.data();
-
-            auto mmid = mmap.ID();
-            LXtPointID pid;
-            mu::float3 v;
+            dst.counts.resize_discard(num_faces);
+            dst.indices.reserve_discard(num_faces * 4);
             for (int fi = 0; fi < num_faces; ++fi) {
                 polygons.SelectByIndex(fi);
-                int count = dst.counts[fi];
-                for (int ci = 0; ci < count; ++ci) {
-                    polygons.VertexByIndex(ci, &pid);
-                    if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
-                        dst.clear();
-                        return;
-                    }
-                    *(write_ptr++) = v;
-                }
-            }
-        };
 
-        auto do_extract_poly = [&](RawVector<mu::float3>& dst_array) {
-            dst_array.resize_discard(dst.indices.size());
-            auto *write_ptr = dst_array.data();
+                polygons.Type(&n.face_types[fi]);
 
-            LXtPointID pid;
-            for (int fi = 0; fi < num_faces; ++fi) {
-                polygons.SelectByIndex(fi);
-                auto poly_id = polygons.ID();
+                const char *material_name;
+                poly_tag.Get(LXi_POLYTAG_MATERIAL, &material_name);
+                n.material_names[fi] = material_name;
 
-                int count = dst.counts[fi];
-                for (int ci = 0; ci < count; ++ci) {
+                uint32_t count;
+                polygons.VertexCount(&count);
+                dst.counts[fi] = count;
+
+                size_t pos = dst.indices.size();
+                dst.indices.resize(pos + count);
+                for (uint32_t ci = 0; ci < count; ++ci) {
+                    LXtPointID pid;
                     polygons.VertexByIndex(ci, &pid);
                     points.Select(pid);
 
-                    LXtVector n;
-                    points.Normal(poly_id, n);
-                    *(write_ptr++) = to_float3(n);
+                    uint32_t index;
+                    points.Index(&index);
+                    dst.indices[pos + ci] = index;
                 }
             }
-        };
+            num_indices = (int)dst.indices.size();
 
-        auto map_names = GetMapNames(mmap, LXi_VMAP_NORMAL);
-        if (map_names.size() > 0)
-            do_extract_map(map_names[0], dst.normals);
-        else
-            do_extract_poly(dst.normals);
-    }
+            // resolving material ids will be done in kickAsyncSend()
+        }
 
-    // uv
-    if (m_settings.sync_uvs) {
-        auto do_extract = [&](const char *name, RawVector<mu::float2>& dst_array) {
-            if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_TEXTUREUV, name)))
-                return;
-
-            dst_array.resize_discard(dst.indices.size());
-            auto *write_ptr = dst_array.data();
-
-            auto mmid = mmap.ID();
-            LXtPointID pid;
-            mu::float2 v;
-            for (int fi = 0; fi < num_faces; ++fi) {
-                polygons.SelectByIndex(fi);
-                int count = dst.counts[fi];
-                for (int ci = 0; ci < count; ++ci) {
-                    polygons.VertexByIndex(ci, &pid);
-                    if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
-                        dst.clear();
-                        return;
-                    }
-                    *(write_ptr++) = v;
-                }
-            }
-        };
-
-        auto map_names = GetMapNames(mmap, LXi_VMAP_TEXTUREUV);
-        if (map_names.size() > 0)
-            do_extract(map_names[0], dst.uv0);
-        if (map_names.size() > 1)
-            do_extract(map_names[1], dst.uv1);
-    }
-
-    // vertex color
-    if (m_settings.sync_colors) {
-        auto do_extract = [&](const char *name, RawVector<mu::float4>& dst_array) {
-            if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_RGBA, name)))
-                return;
-
-            dst_array.resize_discard(dst.indices.size());
-            auto *write_ptr = dst_array.data();
-
-            auto mmid = mmap.ID();
-            LXtPointID pid;
-            mu::float4 v;
-            for (int fi = 0; fi < num_faces; ++fi) {
-                polygons.SelectByIndex(fi);
-                int count = dst.counts[fi];
-                for (int ci = 0; ci < count; ++ci) {
-                    polygons.VertexByIndex(ci, &pid);
-                    if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
-                        dst.clear();
-                        return;
-                    }
-                    *(write_ptr++) = v;
-                }
-            }
-        };
-
-        auto map_names = GetMapNames(mmap, LXi_VMAP_RGBA);
-        if (map_names.size() > 0)
-            do_extract(map_names[0], dst.colors);
-    }
-
-    // bone weights
-    if (!m_settings.bake_deformers && m_settings.sync_bones) {
-        auto get_weights = [&](const char *name, RawVector<float>& dst_array) -> bool {
-            if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
-                return false;
-
-            dst_array.resize_discard(dst.points.size());
-            auto *write_ptr = dst_array.data();
-
-            auto mmid = mmap.ID();
-            float v;
+        //points
+        {
+            dst.points.resize_discard(num_points);
             for (int pi = 0; pi < num_points; ++pi) {
                 points.SelectByIndex(pi);
-                if (LXx_FAIL(points.MapEvaluate(mmid, &v))) {
-                    dst.clear();
-                    return false;
+
+                LXtFVector p;
+                points.Pos(p);
+                dst.points[pi] = to_float3(p);
+            }
+        }
+
+        // normals
+        if (m_settings.sync_normals) {
+            auto do_extract_map = [&](const char *name, RawVector<mu::float3>& dst_array) {
+                if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_NORMAL, name)))
+                    return;
+
+                dst_array.resize_discard(num_indices);
+                auto *write_ptr = dst_array.data();
+
+                auto mmid = mmap.ID();
+                LXtPointID pid;
+                mu::float3 v;
+                for (int fi = 0; fi < num_faces; ++fi) {
+                    polygons.SelectByIndex(fi);
+                    int count = dst.counts[fi];
+                    for (int ci = 0; ci < count; ++ci) {
+                        polygons.VertexByIndex(ci, &pid);
+                        if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
+                            dst.clear();
+                            return;
+                        }
+                        *(write_ptr++) = v;
+                    }
                 }
-                *(write_ptr++) = v;
+            };
+
+            auto do_extract_poly = [&](RawVector<mu::float3>& dst_array) {
+                dst_array.resize_discard(num_indices);
+                auto *write_ptr = dst_array.data();
+
+                LXtPointID pid;
+                for (int fi = 0; fi < num_faces; ++fi) {
+                    polygons.SelectByIndex(fi);
+                    auto poly_id = polygons.ID();
+
+                    int count = dst.counts[fi];
+                    for (int ci = 0; ci < count; ++ci) {
+                        polygons.VertexByIndex(ci, &pid);
+                        points.Select(pid);
+
+                        LXtVector n;
+                        points.Normal(poly_id, n);
+                        *(write_ptr++) = to_float3(n);
+                    }
+                }
+            };
+
+            auto map_names = GetMapNames(mmap, LXi_VMAP_NORMAL);
+            if (map_names.size() > 0)
+                do_extract_map(map_names[0], dst.normals);
+            else
+                do_extract_poly(dst.normals);
+        }
+
+        // uv
+        if (m_settings.sync_uvs) {
+            auto do_extract = [&](const char *name, RawVector<mu::float2>& dst_array) {
+                if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_TEXTUREUV, name)))
+                    return;
+
+                dst_array.resize_discard(num_indices);
+                auto *write_ptr = dst_array.data();
+
+                auto mmid = mmap.ID();
+                LXtPointID pid;
+                mu::float2 v;
+                for (int fi = 0; fi < num_faces; ++fi) {
+                    polygons.SelectByIndex(fi);
+                    int count = dst.counts[fi];
+                    for (int ci = 0; ci < count; ++ci) {
+                        polygons.VertexByIndex(ci, &pid);
+                        if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
+                            dst.clear();
+                            return;
+                        }
+                        *(write_ptr++) = v;
+                    }
+                }
+            };
+
+            auto map_names = GetMapNames(mmap, LXi_VMAP_TEXTUREUV);
+            if (map_names.size() > 0)
+                do_extract(map_names[0], dst.uv0);
+            if (map_names.size() > 1)
+                do_extract(map_names[1], dst.uv1);
+        }
+
+        // vertex color
+        if (m_settings.sync_colors) {
+            auto do_extract = [&](const char *name, RawVector<mu::float4>& dst_array) {
+                if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_RGBA, name)))
+                    return;
+
+                dst_array.resize_discard(num_indices);
+                auto *write_ptr = dst_array.data();
+
+                auto mmid = mmap.ID();
+                LXtPointID pid;
+                mu::float4 v;
+                for (int fi = 0; fi < num_faces; ++fi) {
+                    polygons.SelectByIndex(fi);
+                    int count = dst.counts[fi];
+                    for (int ci = 0; ci < count; ++ci) {
+                        polygons.VertexByIndex(ci, &pid);
+                        if (LXx_FAIL(polygons.MapEvaluate(mmid, pid, &v[0]))) {
+                            dst.clear();
+                            return;
+                        }
+                        *(write_ptr++) = v;
+                    }
+                }
+            };
+
+            auto map_names = GetMapNames(mmap, LXi_VMAP_RGBA);
+            if (map_names.size() > 0)
+                do_extract(map_names[0], dst.colors);
+        }
+
+        // bone weights
+        if (!m_settings.bake_deformers && m_settings.sync_bones) {
+            auto get_weights = [&](const char *name, RawVector<float>& dst_array) -> bool {
+                if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
+                    return false;
+
+                dst_array.resize_discard(num_points);
+                auto *write_ptr = dst_array.data();
+
+                auto mmid = mmap.ID();
+                float v;
+                for (int pi = 0; pi < num_points; ++pi) {
+                    points.SelectByIndex(pi);
+                    if (LXx_FAIL(points.MapEvaluate(mmid, &v))) {
+                        dst.clear();
+                        return false;
+                    }
+                    *(write_ptr++) = v;
+                }
+                return true;
+            };
+
+            eachSkinDeformer(n.item, [&](CLxUser_Item& def) {
+                mdmodoSkinDeformer skin(*this, def);
+
+                auto joint = skin.getEffector();
+                if (!joint || !joint.IsA(tLocator))
+                    return;
+
+                auto dst_bone = ms::BoneData::create();
+                dst_bone->path = GetPath(joint);
+                {
+                    // bindpose
+                    CLxUser_Locator loc(joint);
+                    LXtMatrix4 lxmat;
+                    loc.WorldTransform4(m_ch_read_setup, lxmat);
+                    dst_bone->bindpose = mu::invert(to_float4x4(lxmat));
+                }
+                if (get_weights(skin.getMapName(), dst_bone->weights))
+                    dst.bones.push_back(dst_bone);
+                });
+
+            if (!dst.bones.empty()) {
+                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.local2world = dst.toMatrix();
             }
-            return true;
-        };
-
-        eachSkinDeformer(n.item, [&](CLxUser_Item& def) {
-            mdmodoSkinDeformer skin(*this, def);
-
-            auto joint = skin.getEffector();
-            if (!joint || !joint.IsA(tLocator))
-                return;
-
-            auto dst_bone = ms::BoneData::create();
-            dst_bone->path = GetPath(joint);
-            {
-                // bindpose
-                CLxUser_Locator loc(joint);
-                LXtMatrix4 lxmat;
-                loc.WorldTransform4(m_ch_read_setup, lxmat);
-                dst_bone->bindpose = mu::invert(to_float4x4(lxmat));
-            }
-            if (get_weights(skin.getMapName(), dst_bone->weights))
-                dst.bones.push_back(dst_bone);
-        });
-
-        if (!dst.bones.empty()) {
-            dst.refine_settings.flags.apply_local2world = 1;
-            dst.refine_settings.local2world = dst.toMatrix();
         }
     }
 
@@ -895,7 +900,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
                 return false;
 
-            dst_array.resize_discard(dst.points.size());
+            dst_array.resize_discard(num_points);
             auto *write_ptr = dst_array.data();
 
             auto mmid = mmap.ID();
@@ -927,9 +932,11 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     dst.setupFlags();
-    dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-    dst.refine_settings.flags.gen_tangents = 1;
-    dst.refine_settings.flags.swap_faces = 1;
+    if (m_settings.sync_meshes) {
+        dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
+        dst.refine_settings.flags.gen_tangents = 1;
+        dst.refine_settings.flags.swap_faces = 1;
+    }
 
     m_entity_manager.add(n.dst_obj);
     return ret;
