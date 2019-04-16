@@ -21,7 +21,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMotionBuilder/pch.h" />
-    <ClInclude Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.h" />
     <ClInclude Include="MeshSyncClientMotionBuilder\msmbDevice.h" />
     <ClInclude Include="MeshSyncClientMotionBuilder\msmbLayout.h" />
     <ClInclude Include="MeshSyncClientMotionBuilder\msmbUtils.h" />

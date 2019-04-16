@@ -1,5 +1,6 @@
 #include "pch.h"
-#include "MeshSyncClientMotionBuilder.h"
+#include "msmbDevice.h"
+#include "msmbLayout.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "fbsdk.lib")

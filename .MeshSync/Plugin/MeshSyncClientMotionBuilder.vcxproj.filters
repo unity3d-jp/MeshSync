@@ -18,9 +18,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.h">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMotionBuilder\msmbDevice.h">
       <Filter>MeshSyncClientMotionBuilder</Filter>
     </ClInclude>
