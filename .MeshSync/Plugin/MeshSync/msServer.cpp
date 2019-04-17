@@ -449,10 +449,7 @@ std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request,
 
 void Server::sanitizeHierarchyPath(std::string& path)
 {
-    for (char& c : path) {
-        if (c == '.')
-            c = '_';
-    }
+    // nothing to do for now
 }
 
 
