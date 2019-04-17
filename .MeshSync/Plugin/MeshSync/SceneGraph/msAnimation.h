@@ -2,6 +2,7 @@
 
 #include "msAsset.h"
 #include "msSceneGraph.h"
+#include "msMisc.h"
 
 namespace ms {
 

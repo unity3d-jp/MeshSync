@@ -896,7 +896,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
                 mu::MirrorVectors(&f.normals[num_indices_old], num_additional_indices, plane_n);
             }
 
-            if (!f.tangents.size() == num_points_old) {
+            if (f.tangents.size() == num_points_old) {
                 f.tangents.resize(points.size());
                 mu::CopyWithIndices(&f.tangents[num_points_old], &f.tangents[0], copylist);
                 mu::MirrorVectors(&f.tangents[num_points_old], num_additional_points, plane_n);

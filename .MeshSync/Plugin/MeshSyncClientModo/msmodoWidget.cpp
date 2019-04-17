@@ -2,25 +2,7 @@
 #include "MeshSync/MeshSync.h"
 #include "msmodoContext.h"
 
-#define msmodoEnableQt
-
 #ifdef msmodoEnableQt
-#include <QApplication>
-#include <QMainWindow>
-#include <QMenuBar>
-#include <QMenu>
-#include <QAction>
-#include <QWidget>
-#include <QStackedWidget>
-#include <QCheckbox>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QLabel>
-#include <QGridLayout>
-#include <QIntValidator>
-#include <QDoubleValidator>
-#include <QCloseEvent>
-
 #ifdef _WIN32
     #pragma comment(lib, "QtCore4.lib")
     #pragma comment(lib, "QtGui4.lib")

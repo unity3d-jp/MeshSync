@@ -1,4 +1,5 @@
 #pragma once
+#include "msmodoUtils.h"
 
 class msmodoEventListener;
 class msmodoTimerCallbackVisitor;
