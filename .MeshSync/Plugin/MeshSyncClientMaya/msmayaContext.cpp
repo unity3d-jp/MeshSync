@@ -1697,7 +1697,7 @@ void msmayaContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visibility.push_back({ t, vis });
+    dst.visible.push_back({ t, vis });
 }
 
 void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, TreeNode *n)

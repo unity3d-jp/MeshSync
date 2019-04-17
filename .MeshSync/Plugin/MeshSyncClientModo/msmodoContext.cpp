@@ -1133,7 +1133,7 @@ void msmodoContext::extractTransformAnimationData(TreeNode& n)
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    //dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, vis });
 }
 
 void msmodoContext::extractCameraAnimationData(TreeNode& n)

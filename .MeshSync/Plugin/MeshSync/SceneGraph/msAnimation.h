@@ -152,7 +152,7 @@ struct TAnimationCurve
 #define mskTransformTranslation "Transform.translation"
 #define mskTransformRotation    "Transform.rotation"
 #define mskTransformScale       "Transform.scale"
-#define mskTransformVisibility  "Transform.visibility"
+#define mskTransformVisible     "Transform.visible"
 
 class TransformAnimation
 {
@@ -170,7 +170,7 @@ public:
     TAnimationCurve<float3> translation;
     TAnimationCurve<quatf>  rotation;
     TAnimationCurve<float3> scale;
-    TAnimationCurve<int>    visibility;
+    TAnimationCurve<int>    visible;
 };
 msDeclPtr(TransformAnimation);
 

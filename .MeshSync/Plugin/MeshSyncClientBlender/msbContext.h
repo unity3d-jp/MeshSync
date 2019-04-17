@@ -55,7 +55,7 @@ public:
 
     void clear();
     bool prepare();
-    void sendScene(SendScope scope, bool force_all);
+    void sendObjects(SendScope scope, bool force_all);
     void sendAnimations(SendScope scope);
     void flushPendingList();
 
@@ -121,7 +121,7 @@ private:
     msbSettings m_settings;
     std::set<Object*> m_pending;
     std::map<Bone*, ms::TransformPtr> m_bones;
-    std::map<void*, ObjectRecord> m_obj_records;
+    std::map<void*, ObjectRecord> m_obj_records; // key can be object or bone
     std::vector<std::future<void>> m_async_tasks;
     std::vector<Mesh*> m_tmp_meshes;
 

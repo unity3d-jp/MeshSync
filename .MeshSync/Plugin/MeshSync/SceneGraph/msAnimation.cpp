@@ -456,7 +456,7 @@ TransformAnimation::TransformAnimation(AnimationPtr h)
     , translation(host->getCurve(mskTransformTranslation, DataType::Float3))
     , rotation(host->getCurve(mskTransformRotation, DataType::Quaternion))
     , scale(host->getCurve(mskTransformScale, DataType::Float3))
-    , visibility(host->getCurve(mskTransformVisibility, DataType::Int))
+    , visible(host->getCurve(mskTransformVisible, DataType::Int))
 {
     host->entity_type = Entity::Type::Transform;
     translation.curve->data_flags.affect_handedness = true;

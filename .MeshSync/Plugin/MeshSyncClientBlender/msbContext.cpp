@@ -947,7 +947,7 @@ void msbContext::extractTransformAnimationData(ms::TransformAnimation& dst_, voi
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    //dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, vis });
 }
 
 void msbContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
@@ -1049,7 +1049,7 @@ bool msbContext::prepare()
     return true;
 }
 
-void msbContext::sendScene(SendScope scope, bool force_all)
+void msbContext::sendObjects(SendScope scope, bool force_all)
 {
     if (m_sending_animations || !prepare())
         return;
@@ -1062,6 +1062,12 @@ void msbContext::sendScene(SendScope scope, bool force_all)
     if (m_settings.sync_meshes)
         exportMaterials();
 
+    if (scope == SendScope::All) {
+        auto scene = bl::BScene(bl::BContext::get().scene());
+        scene.each_objects([this](Object *obj) {
+            exportObject(obj, false);
+        });
+    }
     if (scope == SendScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
         if (!bpy_data.objects_is_updated())
@@ -1078,13 +1084,6 @@ void msbContext::sendScene(SendScope scope, bool force_all)
     }
     if (scope == SendScope::Selected) {
         // todo
-    }
-    else {
-        // all
-        auto scene = bl::BScene(bl::BContext::get().scene());
-        scene.each_objects([this](Object *obj) {
-            exportObject(obj, false);
-        });
     }
 
     eraseStaleObjects();

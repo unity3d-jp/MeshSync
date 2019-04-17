@@ -233,7 +233,7 @@ msAPI ms::AnimationCurve*   msAnimationFindCurve(ms::Animation *self, const char
 DefGetCurve(TransformTranslation) // -> msAnimationGetTransformTranslation
 DefGetCurve(TransformRotation)
 DefGetCurve(TransformScale)
-DefGetCurve(TransformVisibility)
+DefGetCurve(TransformVisible)
 
 DefGetCurve(CameraFieldOfView)
 DefGetCurve(CameraNearPlane)

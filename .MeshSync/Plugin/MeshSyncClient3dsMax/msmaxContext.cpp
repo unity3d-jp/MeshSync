@@ -1093,6 +1093,7 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
+    dst.visible.push_back({ t, vis });
 }
 
 void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)

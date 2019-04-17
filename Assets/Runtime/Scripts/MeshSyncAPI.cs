@@ -1032,7 +1032,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformTranslation(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformRotation(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformScale(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformVisibility(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformVisible(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFieldOfView(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
@@ -1177,7 +1177,7 @@ namespace UTJ.MeshSync
             {
                 const string Target = "m_Enabled";
                 clip.SetCurve(path, ctx.mainComponentType, Target, null);
-                var curves = GenCurves(msAnimationGetTransformVisibility(self), interpolation);
+                var curves = GenCurves(msAnimationGetTransformVisible(self), InterpolationMode.Constant);
                 if (curves != null && curves.Length == 1)
                     clip.SetCurve(path, ctx.mainComponentType, Target, curves[0]);
             }
