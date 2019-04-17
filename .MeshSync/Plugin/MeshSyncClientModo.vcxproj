@@ -203,7 +203,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MODO_INCLUDE_DIR);$(MODO_QT_DIR)\include\QtGui;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MODO_INCLUDE_DIR);$(MODO_QT_DIR)\include;$(MODO_QT_DIR)\include\QtGui;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>

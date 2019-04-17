@@ -8,7 +8,7 @@ add_dependencies(${MESHSYNC_CLIENT_MODO} MeshUtils MeshSync)
 target_include_directories(${MESHSYNC_CLIENT_MODO} PUBLIC
     "${CMAKE_SOURCE_DIR}"
     "${MODO_SDK_DIR}/include"
-    "${MODO_QT_INCLUDE_DIR}"
+    ${MODO_QT_INCLUDE_DIRS}
 )
 target_link_libraries(${MESHSYNC_CLIENT_MODO} MeshSync MeshUtils ${Poco_LIBRARIES} ${MODO_QT_LIBRARIES})
 if(LINUX)

@@ -51,23 +51,3 @@
 #ifdef GetObject
     #undef GetObject
 #endif
-
-
-#define msmodoEnableQt
-#ifdef msmodoEnableQt
-#include <QApplication>
-#include <QMainWindow>
-#include <QMenuBar>
-#include <QMenu>
-#include <QAction>
-#include <QWidget>
-#include <QStackedWidget>
-#include <QCheckBox>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QLabel>
-#include <QGridLayout>
-#include <QIntValidator>
-#include <QDoubleValidator>
-#include <QCloseEvent>
-#endif
