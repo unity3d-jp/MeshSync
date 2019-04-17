@@ -22,7 +22,7 @@ bool msmbDevice::FBCreate()
 
 void msmbDevice::FBDestroy()
 {
-    m_sender.wait();
+    wait();
 
     FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
     FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
@@ -62,8 +62,7 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     case kFBSceneChangeMergeTransactionEnd:
     case kFBSceneChangeChangeName:
     case kFBSceneChangeChangedName:
-        if (type == kFBSceneChangeLoadEnd ||
-            type == kFBSceneChangeAddChild)
+        if (type == kFBSceneChangeLoadEnd || type == kFBSceneChangeAddChild)
             m_dirty_meshes = m_dirty_textures = true;
         m_data_updated = true;
         break;
@@ -82,7 +81,7 @@ void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 
 void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
 {
-    // note: mocap devices seem doesn't trigger scene change events.
+    // note: mocap devices seem don't trigger scene change events.
     //       so, always set m_pending true on render when auto sync is enabled.
     //       obviously this wastes CPU time, but I couldn't find a better way... (issue #47)
     if (auto_sync /*&& m_data_updated*/)
@@ -99,11 +98,16 @@ void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
     }
 }
 
+void msmbDevice::wait()
+{
+    m_sender.wait();
+}
+
 void msmbDevice::update()
 {
     if (!m_pending)
         return;
-    sendScene(false);
+    sendObjects(false);
 }
 
 void msmbDevice::kickAsyncSend()
@@ -150,13 +154,30 @@ void msmbDevice::kickAsyncSend()
 }
 
 
-bool msmbDevice::sendScene(bool force_all)
+bool msmbDevice::sendMaterials(bool dirty_all)
 {
-    if (force_all) {
-        m_dirty_meshes = m_dirty_textures = true;
-        m_material_manager.makeDirtyAll();
-        m_entity_manager.makeDirtyAll();
+    if (m_sender.isSending()) {
+        return false;
     }
+
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+    return true;
+}
+
+bool msmbDevice::sendObjects(bool dirty_all)
+{
+    if (dirty_all) {
+        m_dirty_meshes = true;
+        m_dirty_textures = true;
+    }
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
     m_data_updated = m_pending = false;
     if (m_sender.isSending()) {

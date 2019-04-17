@@ -9,11 +9,14 @@ FBDeviceDeclare(msmbDevice, FBDevice);
 public:
     bool FBCreate() override;
     void FBDestroy() override;
-
     bool DeviceOperation(kDeviceOperations pOperation) override;
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
 
-    bool sendScene(bool force_all);
+    void wait();
+    void update();
+
+    bool sendMaterials(bool dirty_all);
+    bool sendObjects(bool dirty_all);
     bool sendAnimations();
 
 private:
@@ -64,7 +67,6 @@ private:
     void onRender(HIRegister pCaller, HKEventBase pEvent);
     void onSynchronization(HIRegister pCaller, HKEventBase pEvent);
 
-    void update();
     void kickAsyncSend();
 
     ms::TransformPtr exportObject(FBModel* src, bool force);

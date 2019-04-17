@@ -322,7 +322,7 @@ void msmbLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
     m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
     m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
     if (m_device->auto_sync)
-        m_device->sendScene(true);
+        m_device->sendObjects(true);
 }
 
 void msmbLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
@@ -337,12 +337,12 @@ void msmbLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
     m_device->auto_sync = (bool)(int)m_bu_auto_sync.State;
     if (m_device->auto_sync)
-        m_device->sendScene(false);
+        m_device->sendObjects(false);
 }
 
 void msmbLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->sendScene(true);
+    m_device->sendObjects(true);
 }
 
 void msmbLayout::onSyncAnimation(HIRegister pCaller, HKEventBase pEvent)
