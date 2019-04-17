@@ -69,12 +69,12 @@ private:
 
     void kickAsyncSend();
 
-    ms::TransformPtr exportObject(FBModel* src, bool force);
+    ms::TransformPtr exportObject(FBModel* src, bool parent, bool tip = true);
     template<class T> std::shared_ptr<T> createEntity(NodeRecord& n);
-    ms::TransformPtr exporttTransform(NodeRecord& n);
+    ms::TransformPtr exportTransform(NodeRecord& n);
     ms::CameraPtr exportCamera(NodeRecord& n);
     ms::LightPtr exportLight(NodeRecord& n);
-    ms::MeshPtr exportMeshSimple(NodeRecord& n);
+    ms::MeshPtr exportBlendshapeWeights(NodeRecord& n);
     ms::MeshPtr exportMesh(NodeRecord& n);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
@@ -124,6 +124,7 @@ public:
     bool sync_cameras = true;
     bool sync_lights = true;
     bool sync_bones = true;
+    bool sync_blendshapes = true;
     bool sync_meshes = true;
     bool sync_textures = true;
     bool make_double_sided = false;

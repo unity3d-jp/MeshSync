@@ -223,7 +223,7 @@ bool msmbDevice::sendObjects(bool dirty_all)
     }
 }
 
-ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
+ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool parent, bool tip)
 {
     if (!src)
         return nullptr;
@@ -232,32 +232,48 @@ ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
     if (rec.dst)
         return rec.dst;
 
-    if (rec.name.empty()) {
-        rec.src = src;
-        rec.name = GetName(src);
-        rec.path = GetPath(src);
-        rec.index = ++m_node_index_seed;
+    {
+        // check rename
+        if (rec.name.empty()) {
+            rec.src = src;
+            rec.name = GetName(src);
+            rec.path = GetPath(src);
+            rec.index = ++m_node_index_seed;
+        }
+        else if (rec.name != GetName(src)) {
+            // renamed
+            m_entity_manager.erase(rec.getIdentifier());
+            rec.name = GetName(src);
+            rec.path = GetPath(src);
+        }
+        rec.exist = true;
     }
-    else if (rec.name != GetName(src)) {
-        // renamed
-        m_entity_manager.erase(rec.getIdentifier());
-        rec.name = GetName(src);
-        rec.path = GetPath(src);
-    }
-    rec.exist = true;
 
     ms::TransformPtr ret;
+    auto handle_parent = [&]() {
+        if (parent)
+            exportObject(src->Parent, parent, false);
+    };
+    auto handle_transform = [&]() {
+        handle_parent();
+        ret = exportTransform(rec);
+    };
+
     if (IsCamera(src)) { // camera
         if (sync_cameras) {
-            exportObject(src->Parent, true);
+            handle_parent();
             ret = exportCamera(rec);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else if (IsLight(src)) { // light
         if (sync_lights) {
-            exportObject(src->Parent, true);
+            handle_parent();
             ret = exportLight(rec);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
     else if (IsMesh(src)) { // mesh
         if (sync_bones && !bake_deformars) {
@@ -265,24 +281,25 @@ ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool force)
                 exportObject(bone, true);
             });
         }
-        if (sync_meshes) {
-            exportObject(src->Parent, true);
-            if (m_dirty_meshes)
+        if (sync_meshes || sync_blendshapes) {
+            handle_parent();
+            if (sync_meshes && m_dirty_meshes)
                 ret = exportMesh(rec);
             else
-                ret = exportMeshSimple(rec);
+                ret = exportBlendshapeWeights(rec);
         }
+        else if (!tip && parent)
+            handle_transform();
     }
-    else if (force) {
-        exportObject(src->Parent, true);
-        ret = exporttTransform(rec);
+    else {
+        handle_transform();
     }
 
     return ret;
 }
 
 
-static void ExtractTransformData(FBModel* src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     FBMatrix tmp;
     src->GetMatrix(tmp, kModelTransformation, true, nullptr);
@@ -296,7 +313,12 @@ static void ExtractTransformData(FBModel* src, mu::float3& pos, mu::quatf& rot, 
     pos = extract_position(trs);
     rot = extract_rotation(trs);
     scale = extract_scale(trs);
-    vis = src->Visibility;
+    vis = IsVisibleInHierarchy(src);
+
+    if (IsCamera(src))
+        rot *= mu::rotateY(90.0f * mu::Deg2Rad);
+    else if (IsLight(src))
+        rot *= mu::rotateX(90.0f * mu::Deg2Rad);
 }
 
 static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -358,7 +380,7 @@ inline std::shared_ptr<T> msmbDevice::createEntity(NodeRecord& n)
     return ret;
 }
 
-ms::TransformPtr msmbDevice::exporttTransform(NodeRecord& n)
+ms::TransformPtr msmbDevice::exportTransform(NodeRecord& n)
 {
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
@@ -377,8 +399,6 @@ ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
     auto src = static_cast<FBCamera*>(n.src);
 
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
-    dst.rotation *= mu::rotateY(90.0f * mu::Deg2Rad);
-
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
 
@@ -393,15 +413,13 @@ ms::LightPtr msmbDevice::exportLight(NodeRecord& n)
     auto src = static_cast<FBLight*>(n.src);
 
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
-    dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
-
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
     return ret;
 }
 
-ms::MeshPtr msmbDevice::exportMeshSimple(NodeRecord& n)
+ms::MeshPtr msmbDevice::exportBlendshapeWeights(NodeRecord& n)
 {
     auto ret = createEntity<ms::Mesh>(n);
     auto& dst = *ret;
@@ -524,7 +542,7 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
         }
     }
 
-    if (!bake_deformars) {
+    if (!bake_deformars && sync_bones) {
         // skin cluster
         if (FBCluster *cluster = src->Cluster) {
             int num_links = cluster->LinkGetCount();
@@ -569,7 +587,9 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
                 }
             }
         }
+    }
 
+    if (!bake_deformars && sync_blendshapes) {
         // blendshapes
         if (FBGeometry *geom = src->Geometry) {
             int num_shapes = geom->ShapeGetCount();
@@ -578,7 +598,6 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
                 EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
                     weight_table[name] = (float)value;
                 });
-
 
                 RawVector<mu::float3> tmp_points, tmp_normals;
                 for (int si = 0; si < num_shapes; ++si) {
@@ -876,10 +895,6 @@ void msmbDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* s
     extractTransformAnimation(dst_, src);
 
     auto& dst = static_cast<ms::CameraAnimation&>(dst_);
-    {
-        auto& last = dst.rotation.back();
-        last.value *= mu::rotateY(90.0f * mu::Deg2Rad);
-    }
 
     bool ortho;
     float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
@@ -896,10 +911,6 @@ void msmbDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* sr
     extractTransformAnimation(dst_, src);
 
     auto& dst = static_cast<ms::LightAnimation&>(dst_);
-    {
-        auto& last = dst.rotation.back();
-        last.value *= mu::rotateX(90.0f * mu::Deg2Rad);
-    }
 
     ms::Light::LightType type;
     mu::float4 color;

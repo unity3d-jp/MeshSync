@@ -27,6 +27,13 @@ bool IsMesh(FBModel* src)
     return src && src->ModelVertexData;
 }
 
+bool IsVisibleInHierarchy(FBModel *src)
+{
+    if (src->VisibilityInheritance && src->Parent && !IsVisibleInHierarchy(src->Parent))
+        return false;
+    return src->Visibility;
+}
+
 const char* GetName(FBModel *src)
 {
     return src->LongName;
@@ -50,7 +57,8 @@ std::tuple<double, double> GetTimeRange(FBTake *take)
 
 static void EnumerateAllNodesImpl(FBModel *node, const std::function<void(FBModel*)>& body)
 {
-    body(node);
+    if (IsCamera(node) || IsLight(node) || IsMesh(node))
+        body(node);
 
     int num_children = node->Children.GetCount();
     for (int i = 0; i < num_children; i++)
