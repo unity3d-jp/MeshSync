@@ -447,7 +447,7 @@ std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request,
     }
 }
 
-void Server::sanitizeHierarchyPath(std::string& path)
+void Server::sanitizeHierarchyPath(std::string& /*path*/)
 {
     // nothing to do for now
 }

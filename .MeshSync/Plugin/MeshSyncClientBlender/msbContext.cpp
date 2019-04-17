@@ -5,7 +5,7 @@
 
 msbContext::msbContext()
 {
-    m_settings.scene_settings.handedness = ms::Handedness::LeftZUp;
+    m_settings.scene_settings.handedness = ms::Handedness::RightZUp;
 }
 
 msbContext::~msbContext()
@@ -381,7 +381,6 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
         bl::BMesh bmesh(data);
         bool is_editing = get_edit_mesh(bmesh.ptr()) != nullptr;
 
-        dst.refine_settings.flags.swap_faces = true;
         if (is_editing) {
             doExtractEditMeshData(dst, obj, data);
         }
@@ -403,8 +402,6 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
                 }
             }
         }
-        dst.convertHandedness_Mesh(false, true);
-        dst.convertHandedness_BlendShapes(false, true);
     }
     else {
         if (!m_settings.bake_modifiers && m_settings.sync_blendshapes) {
@@ -419,6 +416,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
         dst.refine_settings.flags.gen_normals = true;
     if (!dst.flags.has_tangents)
         dst.refine_settings.flags.gen_tangents = true;
+    dst.refine_settings.flags.swap_faces = true;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
 }
 
@@ -1125,7 +1123,6 @@ void msbContext::kickAsyncSend()
         t.scene_settings = m_settings.scene_settings;
         float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
         t.scene_settings.scale_factor = 1.0f;
-        t.scene_settings.handedness = ms::Handedness::Left;
 
         t.textures = m_texture_manager.getDirtyTextures();
         t.materials = m_material_manager.getDirtyMaterials();

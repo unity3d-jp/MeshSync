@@ -4,12 +4,12 @@
 #include "msbBinder.h"
 
 
-std::string get_name(const Object * obj)
+std::string get_name(const Object *obj)
 {
     return obj ? std::string(obj->id.name + 2) : "";
 }
 
-std::string get_name(const Bone * obj)
+std::string get_name(const Bone *obj)
 {
     return obj ? std::string(obj->name) : "";
 }
@@ -88,7 +88,7 @@ bPoseChannel* find_pose(Object *obj, const char *name)
 {
     if (!obj || !obj->pose) { return nullptr; }
     for (auto *it = (bPoseChannel*)obj->pose->chanbase.first; it != nullptr; it = it->next)
-        if (strcmp(it->name, name) == 0)
+        if (std::strcmp(it->name, name) == 0)
             return it;
     return nullptr;
 }
@@ -116,15 +116,15 @@ void extract_local_TRS(const Object *obj, mu::float3& t, mu::quatf& r, mu::float
             if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
                 auto arm_obj = obj->parent;
 
-                local *= translate(mu::float3{ 0.0f, length((mu::float3&)bone->tail - (mu::float3&)bone->head), 0.0f });
+                local *= mu::translate(mu::float3{ 0.0f, mu::length((mu::float3&)bone->tail - (mu::float3&)bone->head), 0.0f });
                 local *= g_world_to_arm;
             }
         }
     }
 
-    t = mu::swap_yz(mu::extract_position(local));
-    r = mu::swap_yz(mu::extract_rotation(local));
-    s = mu::swap_yz(mu::extract_scale(local));
+    t = mu::extract_position(local);
+    r = mu::extract_rotation(local);
+    s = mu::extract_scale(local);
 }
 
 
@@ -133,13 +133,14 @@ void extract_local_TRS(const Bone *bone, mu::float3& t, mu::quatf& r, mu::float3
 {
     mu::float4x4 local = (mu::float4x4&)bone->arm_mat;
     if (auto parent = bone->parent)
-        local *= invert((mu::float4x4&)parent->arm_mat);
+        local *= mu::invert((mu::float4x4&)parent->arm_mat);
     else
         local *= g_arm_to_world;
 
-    t = mu::flip_z(mu::extract_position(local));
-    r = mu::flip_z(mu::extract_rotation(local));
-    s = mu::extract_scale(local);
+    // armature-space to world-space
+    t = mu::swap_yz(mu::flip_z(mu::extract_position(local)));
+    r = mu::swap_yz(mu::flip_z(mu::extract_rotation(local)));
+    s = mu::swap_yz(mu::extract_scale(local));
 }
 
 // pose
@@ -147,18 +148,20 @@ void extract_local_TRS(const bPoseChannel *pose, mu::float3& t, mu::quatf& r, mu
 {
     mu::float4x4 local = (mu::float4x4&)pose->pose_mat;
     if (auto parent = pose->parent)
-        local *= invert((mu::float4x4&)parent->pose_mat);
+        local *= mu::invert((mu::float4x4&)parent->pose_mat);
     else
         local *= g_arm_to_world;
 
-    t = mu::flip_z(mu::extract_position(local));
-    r = mu::flip_z(mu::extract_rotation(local));
-    s = mu::extract_scale(local);
+    // armature-space to world-space
+    t = mu::swap_yz(mu::flip_z(mu::extract_position(local)));
+    r = mu::swap_yz(mu::flip_z(mu::extract_rotation(local)));
+    s = mu::swap_yz(mu::extract_scale(local));
 }
 
 mu::float4x4 extract_bindpose(const Bone *bone)
 {
     auto mat_bone = (mu::float4x4&)bone->arm_mat * g_arm_to_world;
-    return invert(mu::flip_z(mat_bone));
+    // armature-space to world-space
+    return mu::invert(mu::swap_yz(mu::flip_z(mat_bone)));
 }
 
