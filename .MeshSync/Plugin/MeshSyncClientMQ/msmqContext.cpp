@@ -387,15 +387,21 @@ void msmqContext::sendCamera(MQDocument doc, bool force)
         return;
 
     // just return if previous request is in progress
-    if (m_send_camera.isSending())
-        return;
+    if (m_send_meshes.isSending() || m_send_camera.isSending()) {
+        if (force) {
+            m_send_meshes.wait();
+            m_send_camera.wait();
+        }
+        else
+            return;
+    }
 
     // gather camera data
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->near_plane *= m_settings.scale_factor;
-            m_camera->far_plane *= m_settings.scale_factor;
+            m_camera->near_plane = 0.0f;
+            m_camera->far_plane = 0.0f;
         }
         auto prev_pos = m_camera->position;
         auto prev_rot = m_camera->rotation;
