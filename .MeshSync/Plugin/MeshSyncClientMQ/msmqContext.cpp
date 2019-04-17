@@ -57,11 +57,9 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
     }
     m_pending_send_meshes = false;
 
-    if (force) {
-        m_material_manager.makeDirtyAll();
-        m_entity_manager.makeDirtyAll();
-    }
-
+    m_material_manager.setAlwaysMarkDirty(force);
+    m_entity_manager.setAlwaysMarkDirty(force);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
     int num_materials = doc->GetMaterialCount();
     int num_objects = doc->GetObjectCount();
@@ -146,6 +144,7 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
     }
 
 #if MQPLUGIN_VERSION >= 0x0464
+    // bones
     if (m_settings.sync_bones) {
         // gather bone data
         MQBoneManager bone_manager(m_plugin, doc);
@@ -266,6 +265,7 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
 #endif
 
 #if MQPLUGIN_VERSION >= 0x0470
+    // morph
     if (m_settings.sync_morphs) {
         // build morph base-target pairs
         for (auto& kvp : m_morph_records) {

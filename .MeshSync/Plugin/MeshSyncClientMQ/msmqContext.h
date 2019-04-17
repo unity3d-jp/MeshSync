@@ -9,7 +9,7 @@ struct msmqSettings
 {
     ms::ClientSettings client_settings;
 
-    float scale_factor = 200.0f;
+    float scale_factor = 100.0f;
     std::string host_camera_path = "/Main Camera";
     bool auto_sync = false;
     bool sync_normals = true;
@@ -40,7 +40,7 @@ public:
     bool importMeshes(MQDocument doc);
 
 private:
-    struct MorphRecord
+    struct MorphRecord : public mu::noncopyable
     {
         MQObject base_obj = nullptr;
         MQObject target_obj = nullptr;
