@@ -60,7 +60,14 @@ void TreeNode::getDagPath_(MDagPath & dst) const
 MObject TreeNode::getTrans() const { return trans ? trans->node : MObject(); }
 MObject TreeNode::getShape() const { return shape ? shape->node : MObject(); }
 
-MDagPath GetDagPath(const TreeNode *branch, const MObject& node)
+bool TreeNode::isVisibleInHierarchy() const
+{
+    if (parent && !parent->isVisibleInHierarchy())
+        return false;
+    return IsVisible(trans->node);
+}
+
+static MDagPath GetDagPath(const TreeNode *branch, const MObject& node)
 {
     MDagPath ret;
     branch->getDagPath_(ret);
@@ -68,7 +75,7 @@ MDagPath GetDagPath(const TreeNode *branch, const MObject& node)
     return ret;
 }
 
-TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath)
+static TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath)
 {
     auto node = dagpath.node();
     auto it = dnmap.find(node);
@@ -912,7 +919,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
         rot = mu::flipY(rot) * mu::rotateZ(180.0f * mu::Deg2Rad);
 
     scale = td.scale;
-    vis = IsVisible(n->trans->node);
+    vis = n->isVisibleInHierarchy();
 }
 
 void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -1027,6 +1034,8 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+
+    // send mesh contents even if the node is hidden.
 
     auto task = [this, ret, &dst, n]() {
         if (m_settings.sync_meshes) {
@@ -1234,10 +1243,6 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     auto& shape = n->shape->node;
 
     if (!shape.hasFn(MFn::kMesh))
-        return;
-
-    dst.visible = IsVisible(shape);
-    if (!dst.visible)
         return;
 
     MStatus mstat;
@@ -1522,22 +1527,13 @@ void msmayaContext::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
 {
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
-
-    if (!shape.hasFn(MFn::kMesh))
-        return;
-
-    dst.visible = IsVisible(shape);
-    if (!dst.visible)
-        return;
-
-    MStatus mstat;
-    MFnMesh mmesh(shape);
-
-    if (!mmesh.object().hasFn(MFn::kMesh)) {
+    if (!shape.hasFn(MFn::kMesh)) {
         // return empty mesh
         return;
     }
 
+    MStatus mstat;
+    MFnMesh mmesh(shape);
     doExtractMeshDataImpl(dst, mmesh, mmesh);
 
     // apply pivot

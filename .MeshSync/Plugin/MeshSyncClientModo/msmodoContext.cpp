@@ -664,6 +664,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
 
+    // send mesh contents even if the node is hidden.
+
     CLxUser_StringTag poly_tag;
     CLxUser_Polygon polygons;
     CLxUser_Point points;

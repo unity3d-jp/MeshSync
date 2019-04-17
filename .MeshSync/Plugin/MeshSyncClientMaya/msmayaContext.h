@@ -76,6 +76,7 @@ struct TreeNode : public mu::noncopyable
     void getDagPath_(MDagPath& dst) const;
     MObject getTrans() const;
     MObject getShape() const;
+    bool isVisibleInHierarchy() const;
 };
 using TreeNodePtr = std::unique_ptr<TreeNode>;
 
@@ -92,7 +93,7 @@ public:
 
         float scale_factor = 0.01f;
         float animation_time_scale = 1.0f;
-        float animation_sps = 2.0f;
+        float animation_sps = 3.0f;
         int  timeout_ms = 5000;
         bool auto_sync = false;
         bool sync_meshes = true;

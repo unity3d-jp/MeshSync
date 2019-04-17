@@ -46,6 +46,14 @@ mu::float4x4 GetPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
+bool IsVisibleInHierarchy(INode *n, TimeValue t)
+{
+    auto parent = n->GetParentNode();
+    if (parent && !IsVisibleInHierarchy(parent, t))
+        return false;
+    return  n->GetVisibility(t) > 0.0f;
+}
+
 bool IsInstanced(INode *n)
 {
     INodeTab instances;

@@ -575,7 +575,7 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
     pos = mu::extract_position(mat);
     rot = mu::extract_rotation(mat);
     scale = mu::extract_scale(mat);
-    vis = !n->IsHidden();
+    vis = (n->IsHidden() || !IsVisibleInHierarchy(n, t)) ? false : true;
 
     {
         auto *obj = GetBaseObject(n);
@@ -816,8 +816,8 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto inode = n.node;
     auto& dst = *ret;
     ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
-    if (!dst.visible)
-        return ret;
+
+    // send mesh contents even if the node is hidden.
 
     Mesh *mesh = nullptr;
     TriObject *tri = nullptr;

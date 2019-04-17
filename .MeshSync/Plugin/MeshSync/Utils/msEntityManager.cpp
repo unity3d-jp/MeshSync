@@ -144,12 +144,13 @@ inline void EntityManager::addGeometry(TransformPtr obj)
                 rec.checksum_trans = checksum_trans;
                 rec.checksum_geom = checksum_geom;
             }
+            else if (m_always_mark_dirty) {
+                rec.dirty_geom = true;
+            }
             else if (rec.checksum_trans != checksum_trans) {
                 rec.dirty_trans = true;
                 rec.checksum_trans = checksum_trans;
             }
-            if (m_always_mark_dirty)
-                rec.dirty_geom = rec.dirty_trans = true;
         });
     }
     obj->order = rec.order;

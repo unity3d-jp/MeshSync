@@ -37,7 +37,7 @@ struct msmodoSettings
 
     float scale_factor = 1.0f;
     float animation_time_scale = 1.0f;
-    float animation_sps = 2.0f;
+    float animation_sps = 3.0f;
     int  timeout_ms = 5000;
     bool auto_sync = false;
     bool sync_meshes = true;
