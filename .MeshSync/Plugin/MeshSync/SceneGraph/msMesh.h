@@ -191,8 +191,8 @@ public:
     std::vector<BlendShapeDataPtr> blendshapes;
 
 
-    // non-serializable fields
-    // (generated in refine())
+    // non-serializable fields (generated in refine())
+    // *DO NOT forget to update clear() when add member*
 
     RawVector<Weights4> weights4;
     RawVector<uint8_t> bone_counts;

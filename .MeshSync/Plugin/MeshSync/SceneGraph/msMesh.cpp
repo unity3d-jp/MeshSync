@@ -211,12 +211,15 @@ void Mesh::clear()
 #define Body(A) vclear(A);
     EachVertexProperty(Body);
 #undef Body
-    vclear(weights4);
 
     root_bone.clear();
     bones.clear();
     blendshapes.clear();
 
+    vclear(weights4);
+    vclear(bone_counts);
+    vclear(bone_offsets);
+    vclear(weights1);
     submeshes.clear();
     splits.clear();
 }
