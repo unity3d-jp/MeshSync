@@ -285,7 +285,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& ba
 
     auto dst = ms::Transform::create();
     dst->path = path;
-    dst->position = -swap_yz(get_instance_offset(group));
+    dst->position = -get_instance_offset(group);
     dst->visible_hierarchy = is_visible(src);
     m_entity_manager.add(dst);
 
@@ -413,13 +413,13 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
             // mirror
             if (auto *mirror = (const MirrorModifierData*)find_modofier(obj, eModifierType_Mirror)) {
                 if (mirror->flag & MOD_MIR_AXIS_X) dst.refine_settings.flags.mirror_x = 1;
-                if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_z = 1;
-                if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_y = 1;
+                if (mirror->flag & MOD_MIR_AXIS_Y) dst.refine_settings.flags.mirror_y = 1;
+                if (mirror->flag & MOD_MIR_AXIS_Z) dst.refine_settings.flags.mirror_z = 1;
                 if (mirror->mirror_ob) {
                     dst.refine_settings.flags.mirror_basis = 1;
                     mu::float4x4 wm = bobj.matrix_world();
                     mu::float4x4 mm = bl::BObject(mirror->mirror_ob).matrix_world();
-                    dst.refine_settings.mirror_basis = mu::swap_yz(wm * mu::invert(mm));
+                    dst.refine_settings.mirror_basis = wm * mu::invert(mm);
                 }
             }
         }
