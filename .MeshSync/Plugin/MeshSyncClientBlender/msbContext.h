@@ -94,8 +94,8 @@ private:
     ms::TransformPtr exportTransform(Object *obj);
     ms::TransformPtr exportPose(Object *armature, bPoseChannel *obj);
     ms::TransformPtr exportArmature(Object *obj);
-    ms::TransformPtr exportReference(Object *obj, const std::string& base_path);
-    ms::TransformPtr exportDupliGroup(Object *obj, const std::string& base_path);
+    ms::TransformPtr exportReference(Object *obj, Object *host, const std::string& base_path);
+    ms::TransformPtr exportDupliGroup(Object *obj, Object *host, const std::string& base_path);
     ms::CameraPtr exportCamera(Object *obj);
     ms::LightPtr exportLight(Object *obj);
     ms::MeshPtr exportMesh(Object *obj);
@@ -105,7 +105,7 @@ private:
     void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
 
     ms::TransformPtr findBone(Object *armature, Bone *bone);
-    ObjectRecord& touchRecord(Object *obj, const std::string& base_path="");
+    ObjectRecord& touchRecord(Object *obj, const std::string& base_path="", bool children = false);
     void eraseStaleObjects();
 
     void exportAnimation(Object *obj, bool force, const std::string base_path="");

@@ -214,7 +214,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool parent, bool tip)
     }
 
     if (ret) {
-        exportDupliGroup(obj, ret->path);
+        exportDupliGroup(obj, obj, ret->path);
         rec.exported = true;
     }
     return ret;
@@ -256,7 +256,7 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
     return ret;
 }
 
-ms::TransformPtr msbContext::exportReference(Object *src, const std::string& base_path)
+ms::TransformPtr msbContext::exportReference(Object *src, Object *host, const std::string& base_path)
 {
     auto local_path = get_path(src);
     auto path = base_path + local_path;
@@ -265,16 +265,18 @@ ms::TransformPtr msbContext::exportReference(Object *src, const std::string& bas
     dst->path = path;
     dst->reference = local_path;
     ExtractTransformData(src, *dst);
-    exportDupliGroup(src, path);
+    dst->visible = true; // todo: correct me
+
+    exportDupliGroup(src, host, path);
     m_entity_manager.add(dst);
 
-    each_child(src, [this, &path](Object *child) {
-        exportReference(child, path);
+    each_child(src, [&](Object *child) {
+        exportReference(child, host, path);
     });
     return dst;
 }
 
-ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& base_path)
+ms::TransformPtr msbContext::exportDupliGroup(Object *src, Object *host, const std::string& base_path)
 {
     auto group = get_instance_collection(src);
     if (!group)
@@ -286,7 +288,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& ba
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->position = -get_instance_offset(group);
-    //dst->visible_hierarchy = is_visible(src);
+    dst->visible_hierarchy = is_visible(host); // todo: correct me
     m_entity_manager.add(dst);
 
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
@@ -295,7 +297,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& ba
         if (auto t = exportObject(obj, false)) {
             t->visible = obj->id.lib == nullptr;
         }
-        exportReference(obj, path);
+        exportReference(obj, host, path);
     }
     return dst;
 }
@@ -754,10 +756,10 @@ ms::TransformPtr msbContext::findBone(Object *armature, Bone *bone)
     return it != m_bones.end() ? it->second : nullptr;
 }
 
-msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string& base_path)
+msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string& base_path, bool children)
 {
     auto& rec = m_obj_records[obj];
-    if (rec.touched)
+    if (rec.touched && base_path.empty())
         return rec; // already touched
 
     rec.touched = true;
@@ -780,14 +782,19 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string
 
     // trace dupli group
     if (auto group = get_instance_collection(obj)) {
-        auto local_path = std::string("/") + (group->id.name + 2);
-        auto group_path = base_path + local_path;
+        auto group_path = path + '/' + (group->id.name + 2);
         m_entity_manager.touch(group_path);
 
         auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
-        for (auto go : gobjects) {
-            touchRecord(obj, group_path);
-        }
+        for (auto go : gobjects)
+            touchRecord(go->ob, group_path, true);
+    }
+
+    // care children
+    if (children) {
+        each_child(obj, [&](Object *child) {
+            touchRecord(child, path, true);
+        });
     }
     return rec;
 }
