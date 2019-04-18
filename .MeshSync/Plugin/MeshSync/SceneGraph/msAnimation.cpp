@@ -280,6 +280,9 @@ void Animation::reduction(bool keep_flat_curves)
 {
     for (auto& c : curves)
         c->reduction(keep_flat_curves);
+    curves.erase(
+        std::remove_if(curves.begin(), curves.end(), [](ms::AnimationCurvePtr& p) { return p->empty(); }),
+        curves.end());
 }
 void Animation::reserve(size_t n)
 {
