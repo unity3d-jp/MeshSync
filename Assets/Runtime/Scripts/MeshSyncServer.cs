@@ -189,6 +189,7 @@ namespace UTJ.MeshSync
         [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
         [HideInInspector] [SerializeField] List<AudioHolder> m_audioList = new List<AudioHolder>();
 
+        ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;
         Server.MessageHandler m_handler;
         bool m_requestRestartServer = false;
@@ -291,15 +292,20 @@ namespace UTJ.MeshSync
         {
             StopServer();
 
-            var settings = ServerSettings.defaultValue;
-            settings.port = (ushort)m_serverPort;
-            m_server = Server.Start(ref settings);
+            m_serverSettings.port = (ushort)m_serverPort;
+            m_server = Server.Start(ref m_serverSettings);
             m_server.fileRootPath = httpFileRootPath;
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneViewGUI;
+#else
             SceneView.onSceneGUIDelegate += OnSceneViewGUI;
 #endif
+#endif
+            if (m_logging)
+                Debug.Log("MeshSync: server started (port: " + m_serverSettings.port + ")");
         }
 
         void StopServer()
@@ -308,10 +314,17 @@ namespace UTJ.MeshSync
             {
 #if UNITY_EDITOR
                 EditorApplication.update -= PollServerEvents;
+#if UNITY_2019_1_OR_NEWER
+                SceneView.duringSceneGui -= OnSceneViewGUI;
+#else
                 SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
+#endif
 #endif
                 m_server.Stop();
                 m_server = default(Server);
+
+                if (m_logging)
+                    Debug.Log("MeshSync: server stopped (port: " + m_serverSettings.port + ")");
             }
         }
 
@@ -1260,6 +1273,10 @@ namespace UTJ.MeshSync
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
                 if (smr != null)
                 {
+                    // disable GameObject while updating mesh and materials
+                    bool active = t.gameObject.activeSelf;
+                    t.gameObject.SetActive(false);
+
                     if (flags.hasIndices)
                     {
                         var collider = t.GetComponent<MeshCollider>();
@@ -1324,6 +1341,8 @@ namespace UTJ.MeshSync
                             smr.SetBlendShapeWeight(bi, bsd.weight);
                         }
                     }
+
+                    t.gameObject.SetActive(active);
                 }
 
                 var renderer = trans.gameObject.GetComponent<Renderer>();
@@ -1705,6 +1724,10 @@ namespace UTJ.MeshSync
                 var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
                 if (srcsmr != null)
                 {
+                    // disable GameObject while updating mesh and materials
+                    bool active = dstgo.activeSelf;
+                    dstgo.SetActive(false);
+
                     var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
                     var mesh = srcsmr.sharedMesh;
                     dstsmr.sharedMesh = mesh;
@@ -1718,14 +1741,7 @@ namespace UTJ.MeshSync
                         for (int bi = 0; bi < blendShapeCount; ++bi)
                             dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
                     }
-#if UNITY_EDITOR
-                    if (!EditorApplication.isPlaying)
-                    {
-                        // force recalculate skinned mesh on editor
-                        dstgo.SetActive(false);
-                        dstgo.SetActive(true);
-                    }
-#endif
+
                     // handle mesh collider
                     if (m_updateMeshColliders)
                     {
@@ -1741,6 +1757,8 @@ namespace UTJ.MeshSync
                             dstmc.cookingOptions = srcmc.cookingOptions;
                         }
                     }
+
+                    dstgo.SetActive(active);
                 }
             }
             else if (src.dataType == EntityType.Points)

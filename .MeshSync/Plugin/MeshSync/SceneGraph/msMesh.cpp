@@ -501,6 +501,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
         // setup submeshes
         {
+            submeshes.clear();
             int nsm = 0;
             int *tri = indices.data();
             for (auto& split : refiner.splits) {
@@ -541,19 +542,19 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     // velocities
-    if (!velocities.empty()) {
+    if (velocities.size()== num_points_old) {
         RawVector<float3> tmp_velocities;
         Remap(tmp_velocities, velocities, refiner.new2old_points);
         tmp_velocities.swap(velocities);
     }
 
     // bone weights
-    if (!weights4.empty()) {
+    if (weights4.size() == num_points_old) {
         RawVector<Weights4> tmp_weights;
         Remap(tmp_weights, weights4, refiner.new2old_points);
         weights4.swap(tmp_weights);
     }
-    if (!weights1.empty() && !bone_counts.empty() && !bone_offsets.empty()) {
+    if (!weights1.empty() && bone_counts.size() == num_points_old && bone_offsets.size() == num_points_old) {
         RawVector<uint8_t> tmp_bone_counts;
         RawVector<int> tmp_bone_offsets;
         RawVector<Weights1> tmp_weights;
@@ -1052,7 +1053,7 @@ void Mesh::setupBoneWeightsVariable()
             search_weight(vi);
         }
         else {
-            // Unity require descending order of weights
+            // Unity requires descending order of weights
             std::sort(dst, dst + num_influence,
                 [&](const Weights1& a, const Weights1& b) { return a.weight > b.weight; });
         }
