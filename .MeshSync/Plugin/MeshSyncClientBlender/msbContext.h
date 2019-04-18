@@ -90,7 +90,7 @@ private:
     int exportTexture(const std::string & path, ms::TextureType type);
     void exportMaterials();
 
-    ms::TransformPtr exportObject(Object *obj, bool force);
+    ms::TransformPtr exportObject(Object *obj, bool parent, bool tip = true);
     ms::TransformPtr exportTransform(Object *obj);
     ms::TransformPtr exportPose(Object *armature, bPoseChannel *obj);
     ms::TransformPtr exportArmature(Object *obj);

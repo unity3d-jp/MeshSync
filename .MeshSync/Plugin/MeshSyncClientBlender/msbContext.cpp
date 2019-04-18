@@ -67,6 +67,15 @@ static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::f
 {
     extract_local_TRS(src, t, r, s);
     vis = is_visible(src);
+
+    if (src->type == OB_CAMERA) {
+        static const auto cr = mu::rotateZ(180.0f * mu::Deg2Rad) * mu::rotateX(-180.0f * mu::Deg2Rad);
+        r *= cr;
+    }
+    else if (src->type == OB_LAMP) {
+        static const auto cr = mu::rotateX(-180.0f * mu::Deg2Rad);
+        r *= cr;
+    }
 }
 static void ExtractTransformData(Object *src, ms::Transform& dst)
 {
@@ -76,7 +85,11 @@ static void ExtractTransformData(Object *src, ms::Transform& dst)
 static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov)
 {
     auto data = (Camera*)src->data;
-    ortho = data->type == CAM_ORTHO;
+
+    // fbx exporter always export as perspective. so we follow it.
+    //ortho = data->type == CAM_ORTHO;
+    ortho = false;
+
 #if BLENDER_VERSION < 280
     near_plane = data->clipsta;
     far_plane = data->clipend;
@@ -117,7 +130,7 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4
 }
 
 
-ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
+ms::TransformPtr msbContext::exportObject(Object *obj, bool parent, bool tip)
 {
     ms::TransformPtr ret;
     if (!obj)
@@ -126,29 +139,35 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     auto& rec = touchRecord(obj);
     if (rec.exported)
         return ret; // already exported
-    rec.exported = true;
 
-    bool exported = false;
-    auto on_export = [this, obj, &exported]() {
-        exportObject(obj->parent, true);
-        exported = true;
+    auto handle_parent = [&]() {
+        if (parent)
+            exportObject(obj->parent, parent, false);
+    };
+    auto handle_transform = [&]() {
+        handle_parent();
+        ret = exportTransform(obj);
     };
 
     switch (obj->type) {
     case OB_ARMATURE:
     {
         if (m_settings.sync_bones) {
-            on_export();
+            handle_parent();
             ret = exportArmature(obj);
         }
+        else if (!tip && parent)
+            handle_transform();
         break;
     }
     case OB_MESH:
     {
         if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
-            on_export();
+            handle_parent();
             ret = exportMesh(obj);
         }
+        else if (!tip && parent)
+            handle_transform();
         break;
     }
     case OB_FONT:  //
@@ -157,41 +176,47 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool force)
     case OB_MBALL: // these can be converted to mesh
     {
         if (m_settings.sync_meshes && m_settings.convert_to_mesh) {
-            on_export();
+            handle_parent();
             ret = exportMesh(obj);
         }
+        else if (!tip && parent)
+            handle_transform();
         break;
     }
     case OB_CAMERA:
     {
         if (m_settings.sync_cameras) {
-            on_export();
+            handle_parent();
             ret = exportCamera(obj);
         }
+        else if (!tip && parent)
+            handle_transform();
         break;
     }
     case OB_LAMP:
     {
         if (m_settings.sync_lights) {
-            on_export();
+            handle_parent();
             ret = exportLight(obj);
         }
+        else if (!tip && parent)
+            handle_transform();
         break;
     }
     default:
     {
-        if (get_instance_collection(obj) || force) {
-            on_export();
+        if (get_instance_collection(obj) || (!tip && parent)) {
+            handle_parent();
             ret = exportTransform(obj);
         }
         break;
     }
     }
 
-    if (ret)
+    if (ret) {
         exportDupliGroup(obj, ret->path);
-    if (!exported)
-        m_entity_manager.erase(rec.path);
+        rec.exported = true;
+    }
     return ret;
 }
 
@@ -281,8 +306,6 @@ ms::CameraPtr msbContext::exportCamera(Object *src)
     auto& dst = *ret;
     dst.path = get_path(src);
     ExtractTransformData(src, dst);
-    dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
-
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov);
     m_entity_manager.add(ret);
     return ret;
@@ -294,8 +317,6 @@ ms::LightPtr msbContext::exportLight(Object *src)
     auto& dst = *ret;
     dst.path = get_path(src);
     ExtractTransformData(src, dst);
-    dst.rotation *= mu::rotateX(90.0f * mu::Deg2Rad);
-
     ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
@@ -938,8 +959,7 @@ void msbContext::extractTransformAnimationData(ms::TransformAnimation& dst_, voi
     mu::quatf rot;
     mu::float3 scale;
     bool vis;
-    extract_local_TRS((Object*)obj, pos, rot, scale);
-    vis = is_visible((Object*)obj);
+    ExtractTransformData((Object*)obj, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
@@ -968,10 +988,6 @@ void msbContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *
     extractTransformAnimationData(dst_, obj);
 
     auto& dst = (ms::CameraAnimation&)dst_;
-    {
-        auto& last = dst.rotation.back();
-        last.value *= mu::rotateX(90.0f * mu::Deg2Rad);
-    }
 
     bool ortho;
     float near_plane, far_plane, fov;
@@ -988,10 +1004,6 @@ void msbContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *o
     extractTransformAnimationData(dst_, obj);
 
     auto& dst = (ms::LightAnimation&)dst_;
-    {
-        auto& last = dst.rotation.back();
-        last.value *= mu::rotateX(90.0f * mu::Deg2Rad);
-    }
 
     ms::Light::LightType type;
     mu::float4 color;
@@ -1063,7 +1075,7 @@ void msbContext::sendObjects(SendScope scope, bool force_all)
     if (scope == SendScope::All) {
         auto scene = bl::BScene(bl::BContext::get().scene());
         scene.each_objects([this](Object *obj) {
-            exportObject(obj, false);
+            exportObject(obj, true);
         });
     }
     if (scope == SendScope::Updated) {
