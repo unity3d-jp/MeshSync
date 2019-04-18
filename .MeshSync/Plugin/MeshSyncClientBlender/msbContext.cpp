@@ -286,7 +286,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, const std::string& ba
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->position = -get_instance_offset(group);
-    dst->visible_hierarchy = is_visible(src);
+    //dst->visible_hierarchy = is_visible(src);
     m_entity_manager.add(dst);
 
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
@@ -357,8 +357,7 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
 
     if (m_settings.sync_meshes) {
         bool need_convert = 
-            (!is_editing && m_settings.bake_modifiers) ||
-            (src->type != OB_MESH);
+            (!is_editing && m_settings.bake_modifiers) || (src->type != OB_MESH);
 
         if (need_convert) {
             Mesh *tmp =

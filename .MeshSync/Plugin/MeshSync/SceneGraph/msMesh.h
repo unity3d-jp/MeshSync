@@ -30,8 +30,8 @@ struct MeshRefineFlags
     uint32_t no_reindexing : 1;
     uint32_t triangulate : 1;
     uint32_t optimize_topology : 1;
-    uint32_t swap_handedness : 1;
-    uint32_t swap_yz : 1;
+    uint32_t flip_x : 1;
+    uint32_t flip_yz : 1;
     uint32_t flip_faces : 1;
     uint32_t gen_normals : 1;
     uint32_t gen_normals_with_smooth_angle : 1;

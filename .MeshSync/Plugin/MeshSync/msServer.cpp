@@ -304,9 +304,9 @@ void Server::beginServeScene()
 
     auto& request = *m_current_get_request;
     request.refine_settings.scale_factor = request.scene_settings.scale_factor;
-    request.refine_settings.flags.swap_handedness =
+    request.refine_settings.flags.flip_x =
         request.scene_settings.handedness == Handedness::Right || request.scene_settings.handedness == Handedness::RightZUp;
-    request.refine_settings.flags.swap_yz =
+    request.refine_settings.flags.flip_yz =
         request.scene_settings.handedness == Handedness::LeftZUp || request.scene_settings.handedness == Handedness::RightZUp;
     m_host_scene->settings = request.scene_settings;
 }
@@ -469,8 +469,8 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
             if (obj->getType() == Entity::Type::Mesh) {
                 auto& mesh = (Mesh&)*obj;
                 mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-                mesh.refine_settings.flags.swap_handedness = swap_x;
-                mesh.refine_settings.flags.swap_yz = swap_yz;
+                mesh.refine_settings.flags.flip_x = swap_x;
+                mesh.refine_settings.flags.flip_yz = swap_yz;
                 mesh.refine_settings.flags.triangulate = 1;
                 mesh.refine_settings.flags.split = 1;
                 mesh.refine_settings.flags.optimize_topology = 1;

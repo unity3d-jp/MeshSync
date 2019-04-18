@@ -404,8 +404,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.scale_factor != 1.0f) {
         applyScaleFactor(mrs.scale_factor);
     }
-    if (mrs.flags.swap_handedness || mrs.flags.swap_yz) {
-        convertHandedness(mrs.flags.swap_handedness, mrs.flags.swap_yz);
+    if (mrs.flags.flip_x || mrs.flags.flip_yz) {
+        convertHandedness(mrs.flags.flip_x, mrs.flags.flip_yz);
     }
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)
