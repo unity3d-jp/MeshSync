@@ -32,8 +32,9 @@ public:
 
     struct DataFlags
     {
-        uint32_t affect_scale : 1;
-        uint32_t affect_handedness : 1;
+        uint32_t affect_scale : 1; // for position values
+        uint32_t affect_handedness : 1; // for TRS values
+        uint32_t ignore_negate : 1; // for scale values
     };
 
 protected:

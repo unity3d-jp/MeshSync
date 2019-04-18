@@ -70,6 +70,8 @@ static void ReduceKeyframes(AnimationCurve& self, bool keep_flat_curve)
 }
 template<> void ReduceKeyframes<void>(AnimationCurve& /*self*/, bool /*keep_flat_curve*/) {}
 
+template<class T> static inline T handle_yz(const T& v) { return flip_z(swap_yz(v)); }
+template<> inline quatf handle_yz(const quatf& v) { return flip_z(swap_yz(v)) * rotateX(-90.0f * Deg2Rad); }
 
 template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x, bool yz)
 {
@@ -77,12 +79,22 @@ template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x
         return;
 
     TAnimationCurve<T> data(self);
-    if (x)
-        for (auto& tvp : data)
-            tvp.value = flip_x(tvp.value);
-    if (yz)
-        for (auto& tvp : data)
-            tvp.value = swap_yz(tvp.value);
+    if (x) {
+        if (!self.data_flags.ignore_negate) {
+            for (auto& tvp : data)
+                tvp.value = flip_x(tvp.value);
+        }
+    }
+    if (yz) {
+        if (!self.data_flags.ignore_negate) {
+            for (auto& tvp : data)
+                tvp.value = handle_yz(tvp.value);
+        }
+        else {
+            for (auto& tvp : data)
+                tvp.value = swap_yz(tvp.value);
+        }
+    }
 }
 template<class T> static void ConvertHandedness(AnimationCurve& /*self*/, bool /*x*/, bool /*yz*/) {}
 template<> void ConvertHandedness<float3>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float3>(self, x, yz); }
@@ -463,6 +475,7 @@ TransformAnimation::TransformAnimation(AnimationPtr h)
     translation.curve->data_flags.affect_scale = true;
     rotation.curve->data_flags.affect_handedness = true;
     scale.curve->data_flags.affect_handedness = true;
+    scale.curve->data_flags.ignore_negate = true;
 }
 
 TransformAnimation::~TransformAnimation()
