@@ -100,7 +100,7 @@ int MeshRefiner::getPointsIndexCountTotal() const
 }
 
 
-void MeshRefiner::retopology(bool swap_faces)
+void MeshRefiner::retopology(bool flip_faces)
 {
     new_indices_tri.resize_discard(getTrianglesIndexCountTotal());
     new_indices_lines.resize_discard(getLinesIndexCountTotal());
@@ -111,8 +111,8 @@ void MeshRefiner::retopology(bool swap_faces)
     auto dst_lines = new_indices_lines.data();
     auto dst_points = new_indices_points.data();
 
-    const int i1 = swap_faces ? 2 : 1;
-    const int i2 = swap_faces ? 1 : 2;
+    const int i1 = flip_faces ? 2 : 1;
+    const int i2 = flip_faces ? 1 : 2;
     size_t num_faces = new_counts.size();
 
     int n = 0;

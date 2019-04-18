@@ -671,7 +671,7 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
         dst.material_ids.resize(dst.material_ids.size() + prim_count, mid);
     }
 
-    dst.refine_settings.flags.swap_faces = 1;
+    dst.refine_settings.flags.flip_faces = 1;
     dst.refine_settings.flags.make_double_sided = make_double_sided;
     dst.setupFlags();
 }

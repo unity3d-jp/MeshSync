@@ -753,7 +753,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
             dst.setupFlags();
             dst.flags.has_refine_settings = 1;
-            dst.refine_settings.flags.swap_faces = true;
+            dst.refine_settings.flags.flip_faces = true;
             dst.refine_settings.flags.gen_tangents = 1;
             dst.refine_settings.flags.flip_u = m_settings.flip_u;
             dst.refine_settings.flags.flip_v = m_settings.flip_v;

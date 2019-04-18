@@ -32,7 +32,7 @@ struct MeshRefineFlags
     uint32_t optimize_topology : 1;
     uint32_t swap_handedness : 1;
     uint32_t swap_yz : 1;
-    uint32_t swap_faces : 1;
+    uint32_t flip_faces : 1;
     uint32_t gen_normals : 1;
     uint32_t gen_normals_with_smooth_angle : 1;
     uint32_t flip_normals : 1; // 10
@@ -53,6 +53,7 @@ struct MeshRefineFlags
     uint32_t mirror_basis : 1;
     uint32_t make_double_sided : 1;
     uint32_t quadify : 1;
+    uint32_t quadify_full_search : 1;
 };
 
 struct MeshRefineSettings

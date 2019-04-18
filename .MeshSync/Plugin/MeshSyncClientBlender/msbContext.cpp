@@ -437,7 +437,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
         dst.refine_settings.flags.gen_normals = true;
     if (!dst.flags.has_tangents)
         dst.refine_settings.flags.gen_tangents = true;
-    dst.refine_settings.flags.swap_faces = true;
+    dst.refine_settings.flags.flip_faces = true;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
 }
 

@@ -415,7 +415,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     }
 
     // normals
-    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.swap_faces;
+    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.flip_faces;
     if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
         GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
     }
@@ -456,7 +456,7 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     // refine
     {
         refiner.refine();
-        refiner.retopology(mrs.flags.swap_faces);
+        refiner.retopology(mrs.flags.flip_faces);
         refiner.genSubmeshes(material_ids);
 
         // remap vertex attributes

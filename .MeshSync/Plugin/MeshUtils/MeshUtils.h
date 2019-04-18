@@ -155,10 +155,10 @@ template<class DstArray, class SrcArray>
 inline int Triangulate(
     DstArray& dst,
     const SrcArray& counts,
-    bool swap_face)
+    bool flip_face)
 {
-    const int i1 = swap_face ? 2 : 1;
-    const int i2 = swap_face ? 1 : 2;
+    const int i1 = flip_face ? 2 : 1;
+    const int i2 = flip_face ? 1 : 2;
     size_t num_faces = counts.size();
 
     int n = 0;
@@ -181,10 +181,10 @@ inline void TriangulateWithIndices(
     DstArray& dst,
     const SrcArray& counts,
     const SrcArray& indices,
-    bool swap_face)
+    bool flip_face)
 {
-    const int i1 = swap_face ? 2 : 1;
-    const int i2 = swap_face ? 1 : 2;
+    const int i1 = flip_face ? 2 : 1;
+    const int i2 = flip_face ? 1 : 2;
     size_t num_faces = counts.size();
 
     int n = 0;
