@@ -169,8 +169,15 @@ namespace blender
         Boilerplate(Camera)
         Compatible(BID)
 
-        float fov_vertical() const;
-        float fov_horizontal() const;
+        float clip_start() const;
+        float clip_end() const;
+        float angle_x() const;
+        float angle_y() const;
+        float lens() const;
+        float sensor_width() const;
+        float sensor_height() const;
+        float shift_x() const;
+        float shift_y() const;
     };
 
     class BScene

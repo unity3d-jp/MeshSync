@@ -34,8 +34,15 @@ Prop(BMaterial, use_nodes);
 Prop(BMaterial, active_node_material);
 
 Def(BCamera);
+Prop(BCamera, clip_start);
+Prop(BCamera, clip_end);
 Prop(BCamera, angle_x);
 Prop(BCamera, angle_y);
+Prop(BCamera, lens);
+Prop(BCamera, sensor_width);
+Prop(BCamera, sensor_height);
+Prop(BCamera, shift_x);
+Prop(BCamera, shift_y);
 
 Def(BScene);
 Prop(BScene, frame_start);
@@ -125,8 +132,15 @@ void setup(py::object bpy_context)
         else if (match_type("Camera")) {
             BCamera::s_type = type;
             each_prop{
+                if (match_prop("clip_start")) BCamera_clip_start = prop;
+                if (match_prop("clip_end")) BCamera_clip_end = prop;
                 if (match_prop("angle_x")) BCamera_angle_x = prop;
                 if (match_prop("angle_y")) BCamera_angle_y = prop;
+                if (match_prop("lens")) BCamera_lens = prop;
+                if (match_prop("sensor_width")) BCamera_sensor_width = prop;
+                if (match_prop("sensor_height")) BCamera_sensor_height = prop;
+                if (match_prop("shift_x")) BCamera_shift_x = prop;
+                if (match_prop("shift_y")) BCamera_shift_y = prop;
             }
         }
         else if (match_type("Material")) {
@@ -531,35 +545,20 @@ Material * BMaterial::active_node_material() const
     return (Material*)get_pointer(m_ptr, BMaterial_active_node_material);
 }
 
-float BCamera::fov_vertical() const
-{
-    return get_float(m_ptr, BCamera_angle_y);
-}
+float BCamera::clip_start() const { return get_float(m_ptr, BCamera_clip_start); }
+float BCamera::clip_end() const { return get_float(m_ptr, BCamera_clip_end); }
+float BCamera::angle_y() const { return get_float(m_ptr, BCamera_angle_y); }
+float BCamera::angle_x() const { return get_float(m_ptr, BCamera_angle_x); }
+float BCamera::lens() const { return get_float(m_ptr, BCamera_lens); }
+float BCamera::sensor_width() const { return get_float(m_ptr, BCamera_sensor_width); }
+float BCamera::sensor_height() const { return get_float(m_ptr, BCamera_sensor_height); }
+float BCamera::shift_x() const { return get_float(m_ptr, BCamera_shift_x); }
+float BCamera::shift_y() const { return get_float(m_ptr, BCamera_shift_y); }
 
-float blender::BCamera::fov_horizontal() const
-{
-    return get_float(m_ptr, BCamera_angle_x);
-}
-
-int BScene::fps()
-{
-    return m_ptr->r.frs_sec;
-}
-
-int BScene::frame_start()
-{
-    return get_int(m_ptr, BScene_frame_start);
-}
-
-int BScene::frame_end()
-{
-    return get_int(m_ptr, BScene_frame_end);
-}
-
-int BScene::frame_current()
-{
-    return get_int(m_ptr, BScene_frame_current);
-}
+int BScene::fps() { return m_ptr->r.frs_sec; }
+int BScene::frame_start() { return get_int(m_ptr, BScene_frame_start); }
+int BScene::frame_end() { return get_int(m_ptr, BScene_frame_end); }
+int BScene::frame_current() { return get_int(m_ptr, BScene_frame_current); }
 
 void BScene::frame_set(int f, float subf)
 {

@@ -592,13 +592,15 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
 }
 
 static void ExtractCameraData(GenCamera *cam, TimeValue t,
-    bool& ortho, float& fov, float& near_plane, float& far_plane)
+    bool& ortho, float& fov, float& near_plane, float& far_plane,
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
+    float aspect = GetCOREInterface()->GetRendImageAspect();
     ortho = cam->IsOrtho();
     {
         float hfov = cam->GetFOV(t);
         // CameraObject::GetFOV() returns horizontal fov. we need vertical one.
-        float vfov = 2.0f * std::atan(std::tan(hfov / 2.0f) / (GetCOREInterface()->GetRendImageAspect()));
+        float vfov = 2.0f * std::atan(std::tan(hfov / 2.0f) / aspect);
         fov = vfov * mu::Rad2Deg;
     }
     if (cam->GetManualClip()) {
@@ -607,6 +609,21 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
     }
     else {
         near_plane = far_plane = 0.0f;
+    }
+
+    if (auto* pcam = dynamic_cast<MaxSDK::IPhysicalCamera*>(cam)) {
+        float to_mm = (float)GetMasterScale(UNITS_MILLIMETERS);
+        Interval interval;
+        focal_length = pcam->GetEffectiveLensFocalLength(t, interval) * to_mm;
+        float film_width = pcam->GetFilmWidth(t, interval) * to_mm;
+        sensor_size.x = film_width;
+        sensor_size.y = film_width / aspect;
+        lens_shift = mu::float2::zero();
+    }
+    else {
+        focal_length = 0.0f;
+        sensor_size = mu::float2::zero();
+        lens_shift = mu::float2::zero();
     }
 }
 
@@ -681,7 +698,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
     auto& dst = *ret;
     ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
     ExtractCameraData((GenCamera*)n.baseobj, GetTime(),
-        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane);
+        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -1104,12 +1121,18 @@ void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, INode *s
     auto& dst = (ms::CameraAnimation&)dst_;
 
     bool ortho;
-    float fov, near_plane, far_plane;
-    ExtractCameraData((GenCamera*)obj, m_current_time_tick, ortho, fov, near_plane, far_plane);
+    float fov, near_plane, far_plane, focal_length;
+    mu::float2 sensor_size, lens_shift;
+    ExtractCameraData((GenCamera*)obj, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
 
     dst.fov.push_back({ t, fov });
     dst.near_plane.push_back({ t, near_plane });
     dst.far_plane.push_back({ t, far_plane });
+    if (focal_length > 0.0f) {
+        dst.focal_length.push_back({ t, focal_length });
+        dst.sensor_size.push_back({ t, sensor_size });
+        dst.lens_shift.push_back({ t, lens_shift });
+    }
 }
 
 void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)

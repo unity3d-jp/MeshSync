@@ -82,22 +82,23 @@ static void ExtractTransformData(Object *src, ms::Transform& dst)
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
 }
 
-static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov)
+static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
-    auto data = (Camera*)src->data;
+    bl::BCamera cam(src->data);
 
-    // fbx exporter always export as perspective. so we follow it.
+    // fbx exporter seems always export as perspective. so we follow it.
     //ortho = data->type == CAM_ORTHO;
     ortho = false;
 
-#if BLENDER_VERSION < 280
-    near_plane = data->clipsta;
-    far_plane = data->clipend;
-#else
-    near_plane = data->clip_start;
-    far_plane = data->clip_end;
-#endif
-    fov = bl::BCamera(data).fov_vertical() * mu::Rad2Deg;
+    near_plane = cam.clip_start();
+    far_plane = cam.clip_end();
+    fov = cam.angle_y() * mu::Rad2Deg;
+    focal_length = cam.lens();
+    sensor_size.x = cam.sensor_width();
+    sensor_size.y = cam.sensor_height();
+    lens_shift.x = cam.shift_x();
+    lens_shift.y = cam.shift_y();
 }
 
 static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle)
@@ -312,7 +313,7 @@ ms::CameraPtr msbContext::exportCamera(Object *src)
     auto& dst = *ret;
     dst.path = get_path(src);
     ExtractTransformData(src, dst);
-    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov);
+    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -931,13 +932,17 @@ void msbContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *
     auto& dst = (ms::CameraAnimation&)dst_;
 
     bool ortho;
-    float near_plane, far_plane, fov;
-    ExtractCameraData((Object*)obj, ortho, near_plane, far_plane, fov);
+    float near_plane, far_plane, fov, focal_length;
+    mu::float2 sensor_size, lens_shift;
+    ExtractCameraData((Object*)obj, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
+    dst.focal_length.push_back({ t , focal_length });
+    dst.sensor_size.push_back({ t , sensor_size });
+    dst.lens_shift.push_back({ t , lens_shift });
 }
 
 void msbContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *obj)
