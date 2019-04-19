@@ -37,7 +37,7 @@ def msb_on_scene_settings_updated(self = None, context = None):
     msb_apply_scene_settings()
     if bpy.context.scene.meshsync_auto_sync:
         msb_context.setup(bpy.context)
-        msb_context.sendSceneAll(False)
+        msb_context.export(msb_context.TARGET_OBJECTS)
     return None
 
 def msb_on_animation_settings_updated(self = None, context = None):
@@ -77,4 +77,4 @@ def on_scene_update(context):
     if(bpy.context.scene.meshsync_auto_sync):
         msb_apply_scene_settings()
         msb_context.setup(bpy.context)
-        msb_context.sendSceneUpdated()
+        msb_context.exportUpdatedObjects()

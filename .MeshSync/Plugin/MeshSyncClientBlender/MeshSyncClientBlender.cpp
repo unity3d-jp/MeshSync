@@ -7,20 +7,50 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
     py::module mod("MeshSyncClientBlender", "Python bindings for MeshSync");
 
 #define BindMethod(Name) .def(#Name, &self_t::Name)
-#define BindMethod2(Name, ...) .def(#Name, __VA_ARGS__)
+#define BindMethodF(Name, ...) .def(#Name, __VA_ARGS__)
 #define BindProperty(Name, ...) .def_property(#Name, __VA_ARGS__)
     {
         using self_t = msbContext;
         py::class_<msbContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
+            .def_property_readonly("VERSION", [](const msbContext& self) { return std::string(msReleaseDateStr); })
+            .def_property_readonly("TARGET_OBJECTS",    [](const msbContext& self) { return (int)msbContext::SendTarget::Objects; })
+            .def_property_readonly("TARGET_MATERIALS",  [](const msbContext& self) { return (int)msbContext::SendTarget::Materials; })
+            .def_property_readonly("TARGET_ANIMATIONS", [](const msbContext& self) { return (int)msbContext::SendTarget::Animations; })
+            .def_property_readonly("TARGET_EVERYTHING", [](const msbContext& self) { return (int)msbContext::SendTarget::Everything; })
+            .def_property_readonly("SCOPE_NONE",        [](const msbContext& self) { return (int)msbContext::SendScope::None; })
+            .def_property_readonly("SCOPE_ALL",         [](const msbContext& self) { return (int)msbContext::SendScope::All; })
+            .def_property_readonly("SCOPE_UPDATED",     [](const msbContext& self) { return (int)msbContext::SendScope::Updated; })
+            .def_property_readonly("SCOPE_SELECTED",    [](const msbContext& self) { return (int)msbContext::SendScope::Selected; })
             BindMethod(flushPendingList)
-            BindMethod2(setup, [](msbContext& self, py::object ctx) { bl::setup(ctx); })
-            BindMethod2(clear, [](msbContext& self, py::object ctx) { self.clear(); })
-            BindMethod2(sendSceneAll, [](msbContext& self, bool force_all) { self.sendObjects(msbContext::SendScope::All, force_all); })
-            BindMethod2(sendSceneUpdated, [](msbContext& self) { self.sendObjects(msbContext::SendScope::Updated, false); })
-            BindMethod2(sendSceneSelected, [](msbContext& self) { self.sendObjects(msbContext::SendScope::Selected, false); })
-            BindMethod2(sendAnimationsAll, [](msbContext& self) { self.sendAnimations(msbContext::SendScope::All); })
-            BindMethod2(sendAnimationsSelected, [](msbContext& self) { self.sendAnimations(msbContext::SendScope::Selected); })
+            BindMethodF(setup, [](msbContext& self, py::object ctx) { bl::setup(ctx); })
+            BindMethodF(clear, [](msbContext& self, py::object ctx) { self.clear(); })
+            BindMethodF(exportUpdatedObjects, [](msbContext& self) {
+                self.sendObjects(msbContext::SendScope::Updated, false);
+            })
+            BindMethodF(export, [](msbContext& self, int _target) {
+                auto target = (msbContext::SendTarget)_target;
+                if (target == msbContext::SendTarget::Objects) {
+                    self.wait();
+                    self.sendObjects(msbContext::SendScope::All, true);
+                }
+                else if (target == msbContext::SendTarget::Materials) {
+                    self.wait();
+                    self.sendMaterials(true);
+                }
+                else if (target == msbContext::SendTarget::Animations) {
+                    self.wait();
+                    self.sendAnimations(msbContext::SendScope::All);
+                }
+                else if (target == msbContext::SendTarget::Everything) {
+                    self.wait();
+                    self.sendMaterials(true);
+                    self.wait();
+                    self.sendObjects(msbContext::SendScope::All, true);
+                    self.wait();
+                    self.sendAnimations(msbContext::SendScope::All);
+                }
+            })
             BindProperty(server_address,
                 [](const msbContext& self) { return self.getSettings().client_settings.server; },
                 [](msbContext& self, const std::string& v) { self.getSettings().client_settings.server = v; })
@@ -87,10 +117,10 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(multithreaded,
                 [](const msbContext& self) { return self.getSettings().multithreaded; },
                 [](msbContext& self, int v) { self.getSettings().multithreaded = v; })
-            .def_property_readonly("version", [](const msbContext& self) { return std::string(msReleaseDateStr); });
+                ;
     }
 #undef BindMethod
-#undef BindMethod2
+#undef BindMethodF
 #undef BindProperty
 
     return mod.ptr();

@@ -39,7 +39,14 @@ struct msbSettings
 class msbContext : public std::enable_shared_from_this<msbContext>
 {
 public:
-    enum class SendScope
+    enum class SendTarget : int
+    {
+        Objects,
+        Materials,
+        Animations,
+        Everything,
+    };
+    enum class SendScope : int
     {
         None,
         All,
@@ -53,10 +60,13 @@ public:
     msbSettings&        getSettings();
     const msbSettings&  getSettings() const;
 
+    void wait();
     void clear();
     bool prepare();
-    void sendObjects(SendScope scope, bool force_all);
-    void sendAnimations(SendScope scope);
+
+    bool sendMaterials(bool dirty_all);
+    bool sendObjects(SendScope scope, bool dirty_all);
+    bool sendAnimations(SendScope scope);
     void flushPendingList();
 
 private:
@@ -105,10 +115,10 @@ private:
     void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
 
     ms::TransformPtr findBone(Object *armature, Bone *bone);
-    ObjectRecord& touchRecord(Object *obj, const std::string& base_path="", bool children = false);
+    ObjectRecord& touchRecord(Object *obj, const std::string& base_path = "", bool children = false);
     void eraseStaleObjects();
 
-    void exportAnimation(Object *obj, bool force, const std::string base_path="");
+    void exportAnimation(Object *obj, bool force, const std::string base_path = "");
     void extractTransformAnimationData(ms::TransformAnimation& dst, void *obj);
     void extractPoseAnimationData(ms::TransformAnimation& dst, void *obj);
     void extractCameraAnimationData(ms::TransformAnimation& dst, void *obj);
@@ -133,8 +143,7 @@ private:
     ms::AsyncSceneSender m_sender;
 
     // animation export
-    using AnimationRecords = std::map<std::string, AnimationRecord>;
-    AnimationRecords m_anim_records;
+    std::map<std::string, AnimationRecord> m_anim_records;
     float m_anim_time = 0.0f;
     bool m_sending_animations = false;
 };

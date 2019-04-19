@@ -70,7 +70,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
         else:
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
-        layout.operator("meshsync.sync_scene", text="Manual Sync")
+        layout.operator("meshsync.export_objects", text="Manual Sync")
 
 
 class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
@@ -88,7 +88,7 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         if scene.meshsync_animation_kfr:
             b = layout.box()
             b.prop(scene, 'meshsync_animation_kfc')
-        layout.operator("meshsync.sync_animations", text="Sync")
+        layout.operator("meshsync.export_animations", text="Sync")
 
 
 class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
@@ -98,26 +98,26 @@ class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
     def draw(self, context):
         scene = bpy.context.scene
         layout = self.layout
-        layout.label(text = msb_context.version)
+        layout.label(text = msb_context.VERSION)
 
 
-class MESHSYNC_OT_SyncScene(bpy.types.Operator):
-    bl_idname = "meshsync.sync_scene"
-    bl_label = "Sync Scene"
+class MESHSYNC_OT_ExportScene(bpy.types.Operator):
+    bl_idname = "meshsync.export_objects"
+    bl_label = "Export Objects"
     def execute(self, context):
         msb_apply_scene_settings()
         msb_context.setup(bpy.context);
-        msb_context.sendSceneAll(True)
+        msb_context.export(msb_context.TARGET_OBJECTS)
         return{'FINISHED'}
 
 
-class MESHSYNC_OT_SyncAnimations(bpy.types.Operator):
-    bl_idname = "meshsync.sync_animations"
-    bl_label = "Sync Animations"
+class MESHSYNC_OT_ExportAnimations(bpy.types.Operator):
+    bl_idname = "meshsync.export_animations"
+    bl_label = "Export Animations"
     def execute(self, context):
         msb_apply_animation_settings()
         msb_context.setup(bpy.context);
-        msb_context.sendAnimationsAll()
+        msb_context.export(msb_context.TARGET_ANIMATIONS)
         return{'FINISHED'}
 
 
@@ -148,7 +148,7 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
         msb_context.flushPendingList();
         msb_apply_scene_settings()
         msb_context.setup(bpy.context);
-        msb_context.sendSceneUpdated()
+        msb_context.exportUpdatedObjects()
 
 
 classes = (
@@ -157,8 +157,8 @@ classes = (
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,
     MESHSYNC_PT_Version,
-    MESHSYNC_OT_SyncScene,
-    MESHSYNC_OT_SyncAnimations,
+    MESHSYNC_OT_ExportScene,
+    MESHSYNC_OT_ExportAnimations,
     MESHSYNC_OT_AutoSync,
 )
 
@@ -170,7 +170,6 @@ def register():
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
-    bpy.app.handlers.scene_update_post.remove(on_scene_update)
 
 if __name__ == "__main__":
     register()

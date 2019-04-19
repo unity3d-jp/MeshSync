@@ -10,7 +10,7 @@ msbContext::msbContext()
 
 msbContext::~msbContext()
 {
-    m_sender.wait();
+    wait();
 }
 
 msbSettings& msbContext::getSettings() { return m_settings; }
@@ -811,75 +811,6 @@ void msbContext::eraseStaleObjects()
 }
 
 
-void msbContext::sendAnimations(SendScope scope)
-{
-    // wait previous request to complete
-    m_sender.wait();
-
-    m_sending_animations = true;
-
-    auto scene = bl::BScene(bl::BContext::get().scene());
-    m_animations.clear();
-    m_animations.push_back(ms::AnimationClip::create()); // create default clip
-
-    // list target objects
-    if (scope == SendScope::Selected) {
-        // todo
-    }
-    else {
-        // all
-        scene.each_objects([this](Object *obj) {
-            exportAnimation(obj, false);
-        });
-    }
-
-    // advance frame and record animations
-    {
-        int frame_current = scene.frame_current();
-        int frame_start = scene.frame_start();
-        int frame_end = scene.frame_end();
-        int interval = std::max(m_settings.animation_frame_interval, 1);
-        float frame_to_seconds = 1.0f / scene.fps();
-        int reserve_size = (frame_end - frame_start) / interval + 1;
-
-        for(auto& kvp : m_anim_records) {
-            kvp.second.dst->reserve(reserve_size);
-        };
-        for (int f = frame_start;;) {
-            scene.frame_set(f);
-
-            m_anim_time = (f - frame_start) * frame_to_seconds * m_settings.animation_timescale;
-            mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](AnimationRecords::value_type& kvp) {
-                kvp.second(this);
-            });
-
-            if (f >= frame_end)
-                break;
-            else
-                f = std::min(f + interval, frame_end);
-        }
-        m_anim_records.clear();
-        scene.frame_set(frame_current);
-    }
-
-    if (m_settings.keyframe_reduction) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_flat_curves);
-
-        // erase empty clip
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
-
-    // send
-    if (!m_animations.empty()) {
-        kickAsyncSend();
-    }
-    m_sending_animations = false;
-}
-
 void msbContext::exportAnimation(Object *obj, bool force, const std::string base_path)
 {
     if (!obj)
@@ -1049,6 +980,11 @@ void msbContext::extractMeshAnimationData(ms::TransformAnimation & dst_, void * 
 
 
 
+void msbContext::wait()
+{
+    m_sender.wait();
+}
+
 void msbContext::clear()
 {
     m_material_ids.clear();
@@ -1059,21 +995,33 @@ void msbContext::clear()
 
 bool msbContext::prepare()
 {
-    if (!bl::ready() || m_sender.isSending())
+    if (!bl::ready())
         return false;
-
     return true;
 }
 
-void msbContext::sendObjects(SendScope scope, bool force_all)
+bool msbContext::sendMaterials(bool dirty_all)
 {
-    if (m_sending_animations || !prepare())
-        return;
+    if (!prepare() || m_sender.isSending() || m_sending_animations)
+        return false;
 
-    if (force_all) {
-        m_material_manager.makeDirtyAll();
-        m_entity_manager.makeDirtyAll();
-    }
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials();
+
+    // send
+    kickAsyncSend();
+    return true;
+}
+
+bool msbContext::sendObjects(SendScope scope, bool dirty_all)
+{
+    if (!prepare() || m_sender.isSending() || m_sending_animations)
+        return false;
+
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
     if (m_settings.sync_meshes)
         exportMaterials();
@@ -1083,11 +1031,12 @@ void msbContext::sendObjects(SendScope scope, bool force_all)
         scene.each_objects([this](Object *obj) {
             exportObject(obj, true);
         });
+        eraseStaleObjects();
     }
     if (scope == SendScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
         if (!bpy_data.objects_is_updated())
-            return; // nothing to send
+            return true; // nothing to send
 
         auto scene = bl::BScene(bl::BContext::get().scene());
         scene.each_objects([this](Object *obj) {
@@ -1097,13 +1046,84 @@ void msbContext::sendObjects(SendScope scope, bool force_all)
             else
                 touchRecord(obj);
         });
+        eraseStaleObjects();
     }
+    if (scope == SendScope::Selected) {
+    }
+
+    kickAsyncSend();
+    return true;
+}
+
+bool msbContext::sendAnimations(SendScope scope)
+{
+    if (!prepare() || m_sender.isSending() || m_sending_animations)
+        return false;
+
+    m_sending_animations = true;
+
+    auto scene = bl::BScene(bl::BContext::get().scene());
+    m_animations.clear();
+    m_animations.push_back(ms::AnimationClip::create()); // create default clip
+
+    // list target objects
     if (scope == SendScope::Selected) {
         // todo
     }
+    else {
+        // all
+        scene.each_objects([this](Object *obj) {
+            exportAnimation(obj, false);
+        });
+    }
 
-    eraseStaleObjects();
-    kickAsyncSend();
+    // advance frame and record animations
+    {
+        int frame_current = scene.frame_current();
+        int frame_start = scene.frame_start();
+        int frame_end = scene.frame_end();
+        int interval = std::max(m_settings.animation_frame_interval, 1);
+        float frame_to_seconds = 1.0f / scene.fps();
+        int reserve_size = (frame_end - frame_start) / interval + 1;
+
+        for (auto& kvp : m_anim_records) {
+            kvp.second.dst->reserve(reserve_size);
+        };
+        for (int f = frame_start;;) {
+            scene.frame_set(f);
+
+            m_anim_time = (f - frame_start) * frame_to_seconds * m_settings.animation_timescale;
+            mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](auto& kvp) {
+                kvp.second(this);
+            });
+
+            if (f >= frame_end)
+                break;
+            else
+                f = std::min(f + interval, frame_end);
+        }
+        m_anim_records.clear();
+        scene.frame_set(frame_current);
+    }
+
+    if (m_settings.keyframe_reduction) {
+        // keyframe reduction
+        for (auto& clip : m_animations)
+            clip->reduction(m_settings.keep_flat_curves);
+
+        // erase empty clip
+        m_animations.erase(
+            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
+            m_animations.end());
+    }
+    m_sending_animations = false;
+
+    // send
+    if (!m_animations.empty()) {
+        kickAsyncSend();
+        return true;
+    }
+    return false;
 }
 
 void msbContext::flushPendingList()
