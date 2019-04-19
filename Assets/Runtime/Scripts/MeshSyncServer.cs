@@ -165,7 +165,7 @@ namespace UTJ.MeshSync
 
 
         #region Fields
-        [SerializeField] int m_serverPort = 8080;
+        [SerializeField] int m_serverPort = ServerSettings.defaultPort;
         [SerializeField] DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
         [SerializeField] Transform m_rootObject;
         [Space(10)]
@@ -1420,20 +1420,25 @@ namespace UTJ.MeshSync
             if (flags.hasBones)
             {
                 mesh.bindposes = data.bindposes;
+                if (m_serverSettings.meshMaxBoneInfluence == 4)
+                {
+                    var tmpWeights4 = new PinnedList<BoneWeight>();
+                    tmpWeights4.Resize(split.numPoints);
+                    data.ReadBoneWeights4(tmpWeights4, split);
+                    mesh.boneWeights = tmpWeights4.Array;
+                    tmpWeights4.Dispose();
+                }
 #if UNITY_2019_1_OR_NEWER
-                var bonesPerVertex = new NativeArray<byte>(split.numPoints, Allocator.Temp);
-                var weights = new NativeArray<BoneWeight1>(split.numBoneWeights, Allocator.Temp);
-                data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex), split);
-                data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights), split);
-                mesh.SetBoneWeights(bonesPerVertex, weights);
-                bonesPerVertex.Dispose();
-                weights.Dispose();
-#else
-                var tmpWeights4 = new PinnedList<BoneWeight>();
-                tmpWeights4.Resize(split.numPoints);
-                data.ReadBoneWeights4(tmpWeights4, split);
-                mesh.boneWeights = tmpWeights4.Array;
-                tmpWeights4.Dispose();
+                else if(m_serverSettings.meshMaxBoneInfluence == -1)
+                {
+                    var bonesPerVertex = new NativeArray<byte>(split.numPoints, Allocator.Temp);
+                    var weights = new NativeArray<BoneWeight1>(split.numBoneWeights, Allocator.Temp);
+                    data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex), split);
+                    data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights), split);
+                    mesh.SetBoneWeights(bonesPerVertex, weights);
+                    bonesPerVertex.Dispose();
+                    weights.Dispose();
+                }
 #endif
             }
             if (flags.hasIndices)
@@ -2363,9 +2368,14 @@ namespace UTJ.MeshSync
             }
         }
 
+        [SerializeField] int m_serverPortPrev = ServerSettings.defaultPort;
         void OnValidate()
         {
-            m_requestRestartServer = true;
+            if (m_serverPort != m_serverPortPrev)
+            {
+                m_serverPortPrev = m_serverPort;
+                m_requestRestartServer = true;
+            }
         }
 #endif
 

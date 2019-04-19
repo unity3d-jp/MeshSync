@@ -136,7 +136,7 @@ namespace UTJ.MeshSync
                 {
                     maxQueue = 512,
                     maxThreads = 8,
-                    port = 8080,
+                    port = defaultPort,
 #if UNITY_2017_3_OR_NEWER
                     meshSplitUnit = 0xffffffff,
 #else
@@ -150,6 +150,8 @@ namespace UTJ.MeshSync
                 };
             }
         }
+
+        public static ushort defaultPort { get { return 8080; } }
     }
     public struct Server
     {

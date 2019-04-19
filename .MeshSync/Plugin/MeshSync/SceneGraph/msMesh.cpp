@@ -952,30 +952,30 @@ void Mesh::setupBoneWeights4()
         }
     };
 
-    if (num_bones <= 4) {
-        weights4.zeroclear();
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            auto& w4 = weights4[vi];
-            for (int bi = 0; bi < num_bones; ++bi) {
-                w4.indices[bi] = bi;
-                w4.weights[bi] = bones[bi]->weights[vi];
+    weights4.zeroclear();
+    auto *tmp = (Weights1*)alloca(sizeof(Weights1) * num_bones);
+    for (int vi = 0; vi < num_vertices; ++vi) {
+        int num_influence = 0;
+        for (int bi = 0; bi < num_bones; ++bi) {
+            float w = bones[bi]->weights[vi];
+            if (w > 0.0f) {
+                tmp[num_influence].index = bi;
+                tmp[num_influence].weight = bones[bi]->weights[vi];
+                ++num_influence;
             }
-            if (w4.normalize() == 0.0f)
-                search_weight(vi);
         }
-    }
-    else {
-        auto *tmp = (Weights1*)alloca(sizeof(Weights1) * num_bones);
-        for (int vi = 0; vi < num_vertices; ++vi) {
-            for (int bi = 0; bi < num_bones; ++bi) {
-                tmp[bi].index = bi;
-                tmp[bi].weight = bones[bi]->weights[vi];
-            }
-            std::nth_element(tmp, tmp + 4, tmp + num_bones,
+        if (num_influence > 4) {
+            std::nth_element(tmp, tmp + 4, tmp + num_influence,
                 [&](const Weights1& a, const Weights1& b) { return a.weight > b.weight; });
+        }
 
+        int n = std::min(4, num_influence);
+        if (n == 0) {
+            // this is an irregular case. should do something?
+        }
+        else {
             auto& w4 = weights4[vi];
-            for (int bi = 0; bi < 4; ++bi) {
+            for (int bi = 0; bi < n; ++bi) {
                 w4.indices[bi] = tmp[bi].index;
                 w4.weights[bi] = tmp[bi].weight;
             }
@@ -1049,7 +1049,10 @@ void Mesh::setupBoneWeightsVariable()
         }
         offset += num_influence;
 
-        if (dst->normalize(num_influence) == 0.0f) {
+        if (num_influence == 0) {
+            // this is an irregular case. should do something?
+        }
+        else if (dst->normalize(num_influence) == 0.0f) {
             search_weight(vi);
         }
         else {
