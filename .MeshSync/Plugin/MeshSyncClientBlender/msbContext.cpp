@@ -69,11 +69,11 @@ static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::f
     vis = is_visible(src);
 
     if (src->type == OB_CAMERA) {
-        static const auto cr = mu::rotateZ(180.0f * mu::Deg2Rad) * mu::rotateX(-180.0f * mu::Deg2Rad);
+        static const auto cr = mu::rotate_z(180.0f * mu::Deg2Rad) * mu::rotate_x(-180.0f * mu::Deg2Rad);
         r *= cr;
     }
     else if (src->type == OB_LAMP) {
-        static const auto cr = mu::rotateX(-180.0f * mu::Deg2Rad);
+        static const auto cr = mu::rotate_x(-180.0f * mu::Deg2Rad);
         r *= cr;
     }
 }

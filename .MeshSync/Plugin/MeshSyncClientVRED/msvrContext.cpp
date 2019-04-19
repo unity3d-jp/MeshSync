@@ -659,7 +659,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             float3 pos;
             quatf rot;
             extract_look_data(view, pos, rot);
-            rot *= mu::rotateX(-90.0f * mu::Deg2Rad);
+            rot *= mu::rotate_x(-90.0f * mu::Deg2Rad);
 
             if (pos != m_camera_pos || rot != m_camera_rot) {
                 m_camera_dirty = true;

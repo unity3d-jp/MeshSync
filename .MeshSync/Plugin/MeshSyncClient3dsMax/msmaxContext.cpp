@@ -581,11 +581,11 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
         auto *obj = GetBaseObject(n);
         auto cid = obj->SuperClassID();
         if (cid == CAMERA_CLASS_ID) {
-            static const auto cr = mu::rotateZ(-180.0f * mu::Deg2Rad) * mu::rotateX(-180.0f * mu::Deg2Rad);
+            static const auto cr = mu::rotate_z(-180.0f * mu::Deg2Rad) * mu::rotate_x(-180.0f * mu::Deg2Rad);
             rot *= cr;
         }
         else if (cid == LIGHT_CLASS_ID) {
-            static const auto cr = mu::rotateX(-180.0f * mu::Deg2Rad);
+            static const auto cr = mu::rotate_x(-180.0f * mu::Deg2Rad);
             rot *= cr;
         }
     }

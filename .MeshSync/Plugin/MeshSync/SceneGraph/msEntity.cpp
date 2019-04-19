@@ -222,7 +222,7 @@ void Transform::convertHandedness(bool x, bool yz)
     // fbx-compatible Z-up -> Y-up conversion. ugly, but we must follow it.
     if (yz && isRoot()) {
         position = flip_z(swap_yz(position));
-        rotation = flip_z(swap_yz(rotation)) * rotateX(-90.0f * Deg2Rad);
+        rotation = flip_z(swap_yz(rotation)) * rotate_x(-90.0f * Deg2Rad);
         scale = swap_yz(scale);
     }
 }

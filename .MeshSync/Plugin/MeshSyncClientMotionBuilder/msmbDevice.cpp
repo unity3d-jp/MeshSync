@@ -316,9 +316,9 @@ static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, 
     vis = IsVisibleInHierarchy(src);
 
     if (IsCamera(src))
-        rot *= mu::rotateY(90.0f * mu::Deg2Rad);
+        rot *= mu::rotate_y(90.0f * mu::Deg2Rad);
     else if (IsLight(src))
-        rot *= mu::rotateX(90.0f * mu::Deg2Rad);
+        rot *= mu::rotate_x(90.0f * mu::Deg2Rad);
 }
 
 static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -579,7 +579,7 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 
                     FBVector3d t, r, s;
                     cluster->VertexGetTransform(t, r, s);
-                    mu::quatf q = mu::invert(mu::rotateXYZ(to_float3(r) * mu::Deg2Rad));
+                    mu::quatf q = mu::invert(mu::rotate_xyz(to_float3(r) * mu::Deg2Rad));
                     bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
                 }
 

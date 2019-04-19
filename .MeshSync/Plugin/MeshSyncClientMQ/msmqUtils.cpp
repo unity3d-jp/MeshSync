@@ -61,7 +61,7 @@ float3 ToEular(const MQAngle& ang, bool flip_head)
 
 quatf ToQuaternion(const MQAngle& ang)
 {
-    return rotateZXY(ToEular(ang));
+    return rotate_zxy(ToEular(ang));
 }
 
 void ExtractLocalTransform(MQObject obj, float3& pos, quatf& rot, float3& scale)

@@ -685,7 +685,7 @@ void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& d
 {
     dst.position = to_float3(scene->GetCameraPosition());
     auto eular = ToEular(scene->GetCameraAngle(), true);
-    dst.rotation = rotateZXY(eular);
+    dst.rotation = rotate_zxy(eular);
 
     dst.fov = scene->GetFOV() * mu::Rad2Deg;
 #if MQPLUGIN_VERSION >= 0x450

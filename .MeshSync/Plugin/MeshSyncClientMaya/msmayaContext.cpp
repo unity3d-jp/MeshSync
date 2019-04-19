@@ -914,9 +914,9 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
 
     rot = td.rotation;
     if (n->shape->node.hasFn(MFn::kCamera))
-        rot = mu::flipY(rot);
+        rot = mu::flip_y(rot);
     else if (n->shape->node.hasFn(MFn::kLight))
-        rot = mu::flipY(rot) * mu::rotateZ(180.0f * mu::Deg2Rad);
+        rot = mu::flip_y(rot) * mu::rotate_z(180.0f * mu::Deg2Rad);
 
     scale = td.scale;
     vis = n->isVisibleInHierarchy();

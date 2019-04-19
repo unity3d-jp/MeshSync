@@ -715,24 +715,19 @@ template<class T> inline tquat<T> invert(const tquat<T>& v)
     return{ -v.x, -v.y, -v.z, v.w };
 }
 
-template<class T> inline tquat<T> flipY(const tquat<T>& v)
-{
-    return{ -v.z, v.w, v.x, -v.y, };
-}
-
-template<class T> inline tquat<T> rotateX(T angle)
+template<class T> inline tquat<T> rotate_x(T angle)
 {
     T c = cos(angle * T(0.5));
     T s = sin(angle * T(0.5));
     return{ s, T(0.0), T(0.0), c };
 }
-template<class T> inline tquat<T> rotateY(T angle)
+template<class T> inline tquat<T> rotate_y(T angle)
 {
     T c = cos(angle * T(0.5));
     T s = sin(angle * T(0.5));
     return{ T(0.0), s, T(0.0), c };
 }
-template<class T> inline tquat<T> rotateZ(T angle)
+template<class T> inline tquat<T> rotate_z(T angle)
 {
     T c = cos(angle * T(0.5));
     T s = sin(angle * T(0.5));
@@ -740,46 +735,46 @@ template<class T> inline tquat<T> rotateZ(T angle)
 }
 
 // euler -> quaternion
-template<class T> inline tquat<T> rotateXYZ(const tvec3<T>& euler)
+template<class T> inline tquat<T> rotate_xyz(const tvec3<T>& euler)
 {
-    auto qX = rotateX(euler.x);
-    auto qY = rotateY(euler.y);
-    auto qZ = rotateZ(euler.z);
+    auto qX = rotate_x(euler.x);
+    auto qY = rotate_y(euler.y);
+    auto qZ = rotate_z(euler.z);
     return (qZ * qY) * qX;
 }
-template<class T> inline tquat<T> rotateXZY(const tvec3<T>& euler)
+template<class T> inline tquat<T> rotate_xzy(const tvec3<T>& euler)
 {
-    auto qX = rotateX(euler.x);
-    auto qY = rotateY(euler.y);
-    auto qZ = rotateZ(euler.z);
+    auto qX = rotate_x(euler.x);
+    auto qY = rotate_y(euler.y);
+    auto qZ = rotate_z(euler.z);
     return (qY * qZ) * qX;
 }
-template<class T> inline tquat<T> rotateYXZ(const tvec3<T>& euler)
+template<class T> inline tquat<T> rotate_yxz(const tvec3<T>& euler)
 {
-    auto qX = rotateX(euler.x);
-    auto qY = rotateY(euler.y);
-    auto qZ = rotateZ(euler.z);
+    auto qX = rotate_x(euler.x);
+    auto qY = rotate_y(euler.y);
+    auto qZ = rotate_z(euler.z);
     return (qZ * qX) * qY;
 }
-template<class T> inline tquat<T> rotateYZX(const tvec3<T>& euler)
+template<class T> inline tquat<T> rotate_yzx(const tvec3<T>& euler)
 {
-    auto qX = rotateX(euler.x);
-    auto qY = rotateY(euler.y);
-    auto qZ = rotateZ(euler.z);
+    auto qX = rotate_x(euler.x);
+    auto qY = rotate_y(euler.y);
+    auto qZ = rotate_z(euler.z);
     return (qX * qZ) * qY;
 }
-template<class T> inline tquat<T> rotateZXY(const tvec3<T>& euler)
+template<class T> inline tquat<T> rotate_zxy(const tvec3<T>& euler)
 {
-    auto qX = rotateX(euler.x);
-    auto qY = rotateY(euler.y);
-    auto qZ = rotateZ(euler.z);
+    auto qX = rotate_x(euler.x);
+    auto qY = rotate_y(euler.y);
+    auto qZ = rotate_z(euler.z);
     return (qY * qX) * qZ;
 }
-template<class T> inline tquat<T> rotateZYX(const tvec3<T>& euler)
+template<class T> inline tquat<T> rotate_zyx(const tvec3<T>& euler)
 {
-    auto qX = rotateX(euler.x);
-    auto qY = rotateY(euler.y);
-    auto qZ = rotateZ(euler.z);
+    auto qX = rotate_x(euler.x);
+    auto qY = rotate_y(euler.y);
+    auto qZ = rotate_z(euler.z);
     return (qX * qY) * qZ;
 }
 
@@ -793,7 +788,7 @@ template<class T> inline tquat<T> rotate(const tvec3<T>& axis, T angle)
     };
 }
 
-template<class T> inline tvec3<T> to_eulerZXY(const tquat<T>& q)
+template<class T> inline tvec3<T> to_euler_zxy(const tquat<T>& q)
 {
     T d[] = {
         q.x*q.x, q.x*q.y, q.x*q.z, q.x*q.w,
@@ -887,6 +882,27 @@ template<class T> inline tmat4x4<T> flip_x(const tmat4x4<T>& m)
         -m[1].x, m[1].y, m[1].z, m[1].w,
         -m[2].x, m[2].y, m[2].z, m[2].w,
         -m[3].x, m[3].y, m[3].z, m[3].w,
+    };
+}
+
+template<class T> inline tvec3<T> flip_y(const tvec3<T>& v) { return { v.x, -v.y, v.z }; }
+template<class T> inline tvec4<T> flip_y(const tvec4<T>& v) { return { v.x, -v.y, v.z, v.w }; }
+template<class T> inline tquat<T> flip_y(const tquat<T>& v) { return { -v.z, v.w, v.x, -v.y }; }
+template<class T> inline tmat3x3<T> flip_y(const tmat3x3<T>& m)
+{
+    return tmat3x3<T> {
+         m[0].x,-m[0].y, m[0].z,
+        -m[1].x, m[1].y,-m[1].z,
+         m[2].x,-m[2].y, m[2].z,
+    };
+}
+template<class T> inline tmat4x4<T> flip_y(const tmat4x4<T>& m)
+{
+    return tmat4x4<T> {
+         m[0].x,-m[0].y, m[0].z, m[0].w,
+        -m[1].x, m[1].y,-m[1].z,-m[1].w,
+         m[2].x,-m[2].y, m[2].z, m[2].w,
+         m[3].x,-m[3].y, m[3].z, m[3].w,
     };
 }
 
