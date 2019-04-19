@@ -179,8 +179,6 @@ msDeclPtr(TransformAnimation);
 #define mskCameraFieldOfView        "Camera.fieldOfView"
 #define mskCameraNearPlane          "Camera.nearPlane"
 #define mskCameraFarPlane           "Camera.farPlane"
-#define mskCameraHorizontalAperture "Camera.horizontalAperture"
-#define mskCameraVerticalAperture   "Camera.verticalAperture"
 #define mskCameraFocalLength        "Camera.focalLength"
 #define mskCameraFocusDistance      "Camera.focusDistance"
 #define mskCameraSensorSize         "Camera.sensorSize"
@@ -196,10 +194,10 @@ public:
     TAnimationCurve<float> fov;
     TAnimationCurve<float> near_plane;
     TAnimationCurve<float> far_plane;
-    TAnimationCurve<float> horizontal_aperture;
-    TAnimationCurve<float> vertical_aperture;
     TAnimationCurve<float> focal_length;
     TAnimationCurve<float> focus_distance;
+    TAnimationCurve<float2> sensor_size;
+    TAnimationCurve<float2> lends_shift;
 };
 
 

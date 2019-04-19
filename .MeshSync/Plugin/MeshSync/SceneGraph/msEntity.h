@@ -96,8 +96,6 @@ public:
     float far_plane = 1000.0f;
 
     // for physical camera
-    float vertical_aperture = 0.0f;
-    float horizontal_aperture = 0.0f;
     float focal_length = 0.0f;
     float focus_distance = 0.0f;
     float2 sensor_size = float2::zero();

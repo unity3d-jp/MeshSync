@@ -259,7 +259,20 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     setLayout(layout);
 }
 
-#define msmodoSendObjects() msmodoGetInstance().sendObjects(msmodoContext::SendScope::All, true)
+
+static inline void msmodoSendObjects()
+{
+    auto& inst = msmodoGetInstance();
+    inst.wait();
+    inst.sendObjects(msmodoContext::SendScope::All, true);
+}
+
+static inline void msmodoSendAnimations()
+{
+    auto& inst = msmodoGetInstance();
+    inst.wait();
+    inst.sendAnimations(msmodoContext::SendScope::All);
+}
 
 void msmodoSettingsWidget::onEditServer(const QString& v)
 {
@@ -417,7 +430,7 @@ void msmodoSettingsWidget::onToggleKeepFlatCurves(int v)
 
 void msmodoSettingsWidget::onClickSyncAnimations(bool v)
 {
-    msmodoGetInstance().sendAnimations(msmodoContext::SendScope::All);
+    msmodoSendAnimations();
 }
 
 

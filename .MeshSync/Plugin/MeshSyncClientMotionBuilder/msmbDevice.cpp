@@ -322,12 +322,17 @@ static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, 
 }
 
 static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
-    float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
+    mu::float2& sensor_size, float& focal_length, float& focus_distance)
 {
     ortho = src->Type == kFBCameraTypeOrthogonal;
     near_plane = (float)src->NearPlaneDistance;
     far_plane = (float)src->FarPlaneDistance;
     fov = (float)src->FieldOfViewY;
+
+    // todo:
+    sensor_size = mu::float2::zero(); 
+    focal_length = 0.0f;
+    focus_distance = 0.0f;
 }
 
 static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
@@ -400,7 +405,7 @@ ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
 
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
-        dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
+        dst.sensor_size, dst.focal_length, dst.focus_distance);
 
     m_entity_manager.add(ret);
     return ret;
@@ -897,13 +902,16 @@ void msmbDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* s
     auto& dst = static_cast<ms::CameraAnimation&>(dst_);
 
     bool ortho;
-    float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
-    ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+    float near_plane, far_plane, fov, focal_length, focus_distance;
+    mu::float2 sensor_size;
+    ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, sensor_size, focal_length, focus_distance);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
+
+    // todo: physical camera params
 }
 
 void msmbDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* src)

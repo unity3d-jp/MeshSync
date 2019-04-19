@@ -161,7 +161,7 @@ private:
 
     void extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
-        float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance);
+        mu::float2& sensor_size, float& focal_length, float& focus_distance);
     void extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle);
     void extractReplicaData(TreeNode& n, CLxUser_Item& geom, int nth, const mu::float4x4& matrix,
         std::string& path, mu::float3& pos, mu::quatf& rot, mu::float3& scale);

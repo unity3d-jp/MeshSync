@@ -238,10 +238,10 @@ DefGetCurve(TransformVisible)
 DefGetCurve(CameraFieldOfView)
 DefGetCurve(CameraNearPlane)
 DefGetCurve(CameraFarPlane)
-DefGetCurve(CameraHorizontalAperture)
-DefGetCurve(CameraVerticalAperture)
 DefGetCurve(CameraFocalLength)
 DefGetCurve(CameraFocusDistance)
+DefGetCurve(CameraSensorSize)
+DefGetCurve(CameraLendsShift)
 
 DefGetCurve(LightColor)
 DefGetCurve(LightIntensity)
@@ -464,22 +464,6 @@ msAPI void msCameraSetFarPlane(ms::Camera *self, float v)
 {
     self->far_plane = v;
 }
-msAPI float msCameraGetHorizontalAperture(ms::Camera *self)
-{
-    return self->horizontal_aperture;
-}
-msAPI void msCameraSetHorizontalAperture(ms::Camera *self, float v)
-{
-    self->horizontal_aperture = v;
-}
-msAPI float msCameraGetVerticalAperture(ms::Camera *self)
-{
-    return self->vertical_aperture;
-}
-msAPI void msCameraSetVerticalAperture(ms::Camera *self, float v)
-{
-    self->vertical_aperture = v;
-}
 msAPI float msCameraGetFocalLength(ms::Camera *self)
 {
     return self->focal_length;
@@ -495,6 +479,22 @@ msAPI float msCameraGetFocusDistance(ms::Camera *self)
 msAPI void msCameraSetFocusDistance(ms::Camera *self, float v)
 {
     self->focus_distance = v;
+}
+msAPI void msCameraGetSensorSize(ms::Camera *self, mu::float2 *v)
+{
+    *v = self->sensor_size;
+}
+msAPI void msCameraSetSensorSize(ms::Camera *self, mu::float2 *v)
+{
+    self->sensor_size = *v;
+}
+msAPI void msCameraGetLendsShift(ms::Camera *self, mu::float2 *v)
+{
+    *v = self->lends_shift;
+}
+msAPI void msCameraSetLendsShift(ms::Camera *self, mu::float2 *v)
+{
+    self->lends_shift = *v;
 }
 #pragma endregion
 

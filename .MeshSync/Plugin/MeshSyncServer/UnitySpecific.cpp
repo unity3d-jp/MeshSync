@@ -204,6 +204,19 @@ static inline void FillCurve(const ms::TAnimationCurve<float>& src, Keyframe *x,
     }
     SetTangentMode(x, n, it);
 }
+static inline void FillCurves(const ms::TAnimationCurve<float2>& src, Keyframe *x, Keyframe *y, InterpolationMode it)
+{
+    int n = (int)src.size();
+    for (int i = 0; i < n; ++i) {
+        const auto v = src[i];
+        x[i].time = v.time;
+        x[i].value = v.value.x;
+        y[i].time = v.time;
+        y[i].value = v.value.y;
+    }
+    SetTangentMode(x, n, it);
+    SetTangentMode(y, n, it);
+}
 static inline void FillCurves(const ms::TAnimationCurve<float3>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
 {
     int n = (int)src.size();
@@ -317,6 +330,13 @@ msAPI bool msCurveFillF(ms::AnimationCurve *self, Keyframe *x, InterpolationMode
     if (self->data_type != ms::AnimationCurve::DataType::Float)
         return false;
     FillCurve(ms::TAnimationCurve<float>(*self), x, it);
+    return true;
+}
+msAPI bool msCurveFillF2(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, InterpolationMode it)
+{
+    if (self->data_type != ms::AnimationCurve::DataType::Float2)
+        return false;
+    FillCurves(ms::TAnimationCurve<float2>(*self), x, y, it);
     return true;
 }
 msAPI bool msCurveFillF3(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)

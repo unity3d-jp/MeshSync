@@ -10,7 +10,7 @@ public:
     msmodoInterface();
     virtual ~msmodoInterface();
 
-    virtual void prepare();
+    virtual bool prepare();
     void startTimer();
 
     // events

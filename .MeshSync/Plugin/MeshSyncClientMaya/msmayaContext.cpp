@@ -923,7 +923,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
 }
 
 void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
-    float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
+    mu::float2& sensor_size, float& focal_length, float& focus_distance)
 {
     auto& shape = n->shape->node;
     MFnCamera mcam(shape);
@@ -933,8 +933,8 @@ void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plan
     far_plane = (float)mcam.farClippingPlane();
     fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
 
-    horizontal_aperture = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
-    vertical_aperture = (float)mcam.verticalFilmAperture() * InchToMillimeter;
+    sensor_size.x = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
+    sensor_size.y = (float)mcam.verticalFilmAperture() * InchToMillimeter;
     focal_length = (float)mcam.focalLength();
     focus_distance = (float)mcam.focusDistance();
 }
@@ -1010,7 +1010,7 @@ ms::CameraPtr msmayaContext::exportCamera(TreeNode *n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
-        dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
+        dst.sensor_size, dst.focal_length, dst.focus_distance);
 
     m_entity_manager.add(ret);
     return ret;
@@ -1703,8 +1703,9 @@ void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, Tre
     auto& dst = (ms::CameraAnimation&)dst_;
 
     bool ortho;
-    float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
-    extractCameraData(n, ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+    float near_plane, far_plane, fov, focal_length, focus_distance;
+    mu::float2 sensor_size;
+    extractCameraData(n, ortho, near_plane, far_plane, fov, sensor_size, focal_length, focus_distance);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t, near_plane });
@@ -1713,10 +1714,9 @@ void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, Tre
 
     // params for physical camera. not needed for now.
 #if 0
-    dst.horizontal_aperture.push_back({ t, horizontal_aperture });
-    dst.vertical_aperture.push_back({ t, vertical_aperture });
     dst.focal_length.push_back({ t, focal_length });
     dst.focus_distance.push_back({ t, focus_distance });
+    dst.sensor_size.push_back({ t, sensor_size });
 #endif
 }
 

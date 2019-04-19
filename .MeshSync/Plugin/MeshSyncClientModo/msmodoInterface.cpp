@@ -129,7 +129,7 @@ msmodoInterface::~msmodoInterface()
     }
 }
 
-void msmodoInterface::prepare()
+bool msmodoInterface::prepare()
 {
     m_svc_layer.SetScene(0);
     m_svc_layer.Scene(m_current_scene);
@@ -173,6 +173,7 @@ void msmodoInterface::prepare()
         m_timer_callback = new msmodoTimerCallbackVisitor(this);
         startTimer();
     }
+    return true;
 }
 
 void msmodoInterface::startTimer()

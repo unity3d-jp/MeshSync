@@ -189,7 +189,7 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
 }
 
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
-    float& horizontal_aperture, float& vertical_aperture, float& focal_length, float& focus_distance)
+    mu::float2& sensor_size, float& focal_length, float& focus_distance)
 {
     static uint32_t ch_proj_type, ch_res_x, ch_res_y, ch_aperture_x, ch_aperture_y, ch_focal_len, ch_focus_dist, ch_clip_dist;
     if (ch_proj_type == 0) {
@@ -213,13 +213,13 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
     m_ch_read.Double(n.item, ch_focal_len, &focal_len);
     m_ch_read.Double(n.item, ch_focus_dist, &focus_dist);
 
-    horizontal_aperture = (float)aperture_x;
-    vertical_aperture = (float)aperture_y;
+    sensor_size.x = (float)aperture_x;
+    sensor_size.y = (float)aperture_y;
     focal_length = (float)focal_len;
     focus_distance = (float)focus_dist;
 
     ortho = proj == 1;
-    fov = mu::compute_fov(vertical_aperture, focal_length);
+    fov = mu::compute_fov((float)aperture_y, focal_length);
 
     // disable near/far plane
     near_plane = far_plane = 0.0f;
@@ -324,9 +324,8 @@ void msmodoContext::extractReplicaData(
 
 bool msmodoContext::sendMaterials(bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (!prepare() || m_sender.isSending())
         return false;
-    }
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
@@ -339,13 +338,12 @@ bool msmodoContext::sendMaterials(bool dirty_all)
 
 bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (!prepare() || m_sender.isSending()) {
         m_pending_scope = scope;
         return false;
     }
     m_pending_scope = SendScope::None;
 
-    prepare();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -362,7 +360,8 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
     }
 
     // materials
-    exportMaterials();
+    if (m_settings.sync_meshes)
+        exportMaterials();
 
     // entities
     if (scope == SendScope::All) {
@@ -376,11 +375,16 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
         eachReplicator(do_export);
     }
     else if (scope == SendScope::Updated) {
+        int num_exported = 0;
         for (auto& kvp : m_tree_nodes) {
             auto& n = kvp.second;
-            if (n.dirty)
+            if (n.dirty) {
                 exportObject(n.item, false);
+                ++num_exported;
+            }
         }
+        if (num_exported == 0)
+            return true;
     }
 
     // send
@@ -390,8 +394,8 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msmodoContext::sendAnimations(SendScope scope)
 {
-    wait();
-    prepare();
+    if (!prepare() || m_sender.isSending())
+        return false;
 
     if (exportAnimations(scope) > 0) {
         kickAsyncSend();
@@ -633,7 +637,7 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
-        dst.horizontal_aperture, dst.vertical_aperture, dst.focal_length, dst.focus_distance);
+        dst.sensor_size, dst.focal_length, dst.focus_distance);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -1145,8 +1149,9 @@ void msmodoContext::extractCameraAnimationData(TreeNode& n)
     auto& dst = (ms::CameraAnimation&)*n.dst_anim;
 
     bool ortho;
-    float near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance;
-    extractCameraData(n, ortho, near_plane, far_plane, fov, horizontal_aperture, vertical_aperture, focal_length, focus_distance);
+    float near_plane, far_plane, fov, focal_length, focus_distance;
+    mu::float2 sensor_size;
+    extractCameraData(n, ortho, near_plane, far_plane, fov, sensor_size, focal_length, focus_distance);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t, near_plane });
@@ -1154,10 +1159,9 @@ void msmodoContext::extractCameraAnimationData(TreeNode& n)
     dst.fov.push_back({ t, fov });
 
 #if 0
-    dst.horizontal_aperture.push_back({ t, horizontal_aperture });
-    dst.vertical_aperture.push_back({ t, vertical_aperture });
     dst.focal_length.push_back({ t, focal_length });
     dst.focus_distance.push_back({ t, focus_distance });
+    dst.sensor_size.push_back({ t, sensor_size });
 #endif
 }
 
