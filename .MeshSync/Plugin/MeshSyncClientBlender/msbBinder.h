@@ -199,9 +199,8 @@ namespace blender
         {
             for (auto *c : list_range(cc)) {
                 each_objects_impl(body, (CollectionChild*)c->collection->children.first);
-                for (auto *o : list_range((CollectionObject*)c->collection->gobject.first)) {
+                for (auto *o : list_range((CollectionObject*)c->collection->gobject.first))
                     body(o->ob);
-                }
             }
         }
 
@@ -209,6 +208,8 @@ namespace blender
         void each_objects(const Body& body)
         {
             each_objects_impl(body, (CollectionChild*)m_ptr->master_collection->children.first);
+            for (auto *o : list_range((CollectionObject*)m_ptr->master_collection->gobject.first))
+                body(o->ob);
         }
 #endif
     };
