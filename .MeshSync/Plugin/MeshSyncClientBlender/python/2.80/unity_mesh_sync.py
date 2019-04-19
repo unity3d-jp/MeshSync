@@ -101,26 +101,6 @@ class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
         layout.label(text = msb_context.VERSION)
 
 
-class MESHSYNC_OT_ExportScene(bpy.types.Operator):
-    bl_idname = "meshsync.export_objects"
-    bl_label = "Export Objects"
-    def execute(self, context):
-        msb_apply_scene_settings()
-        msb_context.setup(bpy.context);
-        msb_context.export(msb_context.TARGET_OBJECTS)
-        return{'FINISHED'}
-
-
-class MESHSYNC_OT_ExportAnimations(bpy.types.Operator):
-    bl_idname = "meshsync.export_animations"
-    bl_label = "Export Animations"
-    def execute(self, context):
-        msb_apply_animation_settings()
-        msb_context.setup(bpy.context);
-        msb_context.export(msb_context.TARGET_ANIMATIONS)
-        return{'FINISHED'}
-
-
 class MESHSYNC_OT_AutoSync(bpy.types.Operator):
     bl_idname = "meshsync.auto_sync"
     bl_label = "Auto Sync"
@@ -157,8 +137,10 @@ classes = (
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,
     MESHSYNC_PT_Version,
-    MESHSYNC_OT_ExportScene,
+    MESHSYNC_OT_ExportObjects,
+    MESHSYNC_OT_ExportMaterials,
     MESHSYNC_OT_ExportAnimations,
+    MESHSYNC_OT_ExportEverything,
     MESHSYNC_OT_AutoSync,
 )
 

@@ -78,3 +78,44 @@ def on_scene_update(context):
         msb_apply_scene_settings()
         msb_context.setup(bpy.context)
         msb_context.exportUpdatedObjects()
+
+
+class MESHSYNC_OT_ExportObjects(bpy.types.Operator):
+    bl_idname = "meshsync.export_objects"
+    bl_label = "Export Objects"
+    def execute(self, context):
+        msb_apply_scene_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_OBJECTS)
+        return{'FINISHED'}
+
+
+class MESHSYNC_OT_ExportMaterials(bpy.types.Operator):
+    bl_idname = "meshsync.export_materials"
+    bl_label = "Export Materials"
+    def execute(self, context):
+        msb_apply_scene_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_MATERIALS)
+        return{'FINISHED'}
+
+
+class MESHSYNC_OT_ExportAnimations(bpy.types.Operator):
+    bl_idname = "meshsync.export_animations"
+    bl_label = "Export Animations"
+    def execute(self, context):
+        msb_apply_animation_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_ANIMATIONS)
+        return{'FINISHED'}
+
+
+class MESHSYNC_OT_ExportEverything(bpy.types.Operator):
+    bl_idname = "meshsync.export_everything"
+    bl_label = "Export Everything"
+    def execute(self, context):
+        msb_apply_scene_settings()
+        msb_apply_animation_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_EVERYTHING)
+        return{'FINISHED'}
