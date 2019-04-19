@@ -1,16 +1,16 @@
 #include "pch.h"
-#include "msmbDevice.h"
-#include "msmbLayout.h"
+#include "msmobuDevice.h"
+#include "msmobuLayout.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "fbsdk.lib")
 #endif
 
 
-FBLibraryDeclare(msmbDevice)
+FBLibraryDeclare(msmobuDevice)
 {
-    FBLibraryRegister(msmbDevice);
-    FBLibraryRegister(msmbLayout);
+    FBLibraryRegister(msmobuDevice);
+    FBLibraryRegister(msmobuLayout);
 }
 FBLibraryDeclareEnd;
 

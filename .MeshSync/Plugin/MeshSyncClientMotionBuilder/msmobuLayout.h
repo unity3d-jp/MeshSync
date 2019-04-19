@@ -1,9 +1,9 @@
 #pragma once
 
 
-class msmbLayout : public FBDeviceLayout
+class msmobuLayout : public FBDeviceLayout
 {
-    FBDeviceLayoutDeclare(msmbLayout, FBDeviceLayout);
+    FBDeviceLayoutDeclare(msmobuLayout, FBDeviceLayout);
 public:
     bool FBCreate() override;
     void FBDestroy() override;
@@ -17,7 +17,7 @@ private:
     void onSyncAnimation(HIRegister pCaller, HKEventBase pEvent);
 
 private:
-    msmbDevice* m_device;
+    msmobuDevice* m_device;
 
     FBLabel m_lb_server;
     FBLabel m_lb_address;

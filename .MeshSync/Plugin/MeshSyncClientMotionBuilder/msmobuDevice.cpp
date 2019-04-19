@@ -1,47 +1,47 @@
 #include "pch.h"
-#include "msmbDevice.h"
-#include "msmbUtils.h"
+#include "msmobuDevice.h"
+#include "msmobuUtils.h"
 
 
-FBDeviceImplementation(msmbDevice);
-FBRegisterDevice("msmbDevice", msmbDevice, "UnityMeshSync", "UnityMeshSync for MotionBuilder", FB_DEFAULT_SDK_ICON);
+FBDeviceImplementation(msmobuDevice);
+FBRegisterDevice("msmbDevice", msmobuDevice, "UnityMeshSync", "UnityMeshSync for MotionBuilder", FB_DEFAULT_SDK_ICON);
 
-ms::Identifier msmbDevice::NodeRecord::getIdentifier() const
+ms::Identifier msmobuDevice::NodeRecord::getIdentifier() const
 {
     return { path,id };
 }
 
-bool msmbDevice::FBCreate()
+bool msmobuDevice::FBCreate()
 {
-    FBSystem::TheOne().Scene->OnChange.Add(this, (FBCallback)&msmbDevice::onSceneChange);
-    FBSystem::TheOne().OnConnectionDataNotify.Add(this, (FBCallback)&msmbDevice::onDataUpdate);
-    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Add(this, (FBCallback)&msmbDevice::onRender);
-    FBEvaluateManager::TheOne().OnSynchronizationEvent.Add(this, (FBCallback)&msmbDevice::onSynchronization);
+    FBSystem::TheOne().Scene->OnChange.Add(this, (FBCallback)&msmobuDevice::onSceneChange);
+    FBSystem::TheOne().OnConnectionDataNotify.Add(this, (FBCallback)&msmobuDevice::onDataUpdate);
+    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Add(this, (FBCallback)&msmobuDevice::onRender);
+    FBEvaluateManager::TheOne().OnSynchronizationEvent.Add(this, (FBCallback)&msmobuDevice::onSynchronization);
     return true;
 }
 
-void msmbDevice::FBDestroy()
+void msmobuDevice::FBDestroy()
 {
     wait();
 
-    FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmbDevice::onSceneChange);
-    FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmbDevice::onDataUpdate);
-    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Remove(this, (FBCallback)&msmbDevice::onRender);
-    FBEvaluateManager::TheOne().OnSynchronizationEvent.Remove(this, (FBCallback)&msmbDevice::onSynchronization);
+    FBSystem::TheOne().Scene->OnChange.Remove(this, (FBCallback)&msmobuDevice::onSceneChange);
+    FBSystem::TheOne().OnConnectionDataNotify.Remove(this, (FBCallback)&msmobuDevice::onDataUpdate);
+    FBEvaluateManager::TheOne().OnRenderingPipelineEvent.Remove(this, (FBCallback)&msmobuDevice::onRender);
+    FBEvaluateManager::TheOne().OnSynchronizationEvent.Remove(this, (FBCallback)&msmobuDevice::onSynchronization);
 }
 
-bool msmbDevice::DeviceOperation(kDeviceOperations pOperation)
+bool msmobuDevice::DeviceOperation(kDeviceOperations pOperation)
 {
     return false;
 }
 
-void msmbDevice::DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem)
+void msmobuDevice::DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem)
 {
     if (auto_sync)
         m_data_updated = true;
 }
 
-void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
+void msmobuDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 {
     FBEventSceneChange SceneChangeEvent = pEvent;
     FBSceneChangeType type = SceneChangeEvent.Type;
@@ -72,14 +72,14 @@ void msmbDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
     }
 }
 
-void msmbDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
+void msmobuDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
     m_data_updated = true;
     if (bake_deformars)
         m_dirty_meshes = true;
 }
 
-void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
+void msmobuDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
 {
     // note: mocap devices seem don't trigger scene change events.
     //       so, always set m_pending true on render when auto sync is enabled.
@@ -88,7 +88,7 @@ void msmbDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
         m_pending = true;
 }
 
-void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
+void msmobuDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
 {
     FBEventEvalGlobalCallback lFBEvent(pEvent);
     FBGlobalEvalCallbackTiming timing = lFBEvent.GetTiming();
@@ -98,19 +98,19 @@ void msmbDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
     }
 }
 
-void msmbDevice::wait()
+void msmobuDevice::wait()
 {
     m_sender.wait();
 }
 
-void msmbDevice::update()
+void msmobuDevice::update()
 {
     if (!m_pending)
         return;
     sendObjects(false);
 }
 
-void msmbDevice::kickAsyncSend()
+void msmobuDevice::kickAsyncSend()
 {
     // process extract tasks
     if (!m_extract_tasks.empty()) {
@@ -154,7 +154,7 @@ void msmbDevice::kickAsyncSend()
 }
 
 
-bool msmbDevice::sendMaterials(bool dirty_all)
+bool msmobuDevice::sendMaterials(bool dirty_all)
 {
     if (m_sender.isSending()) {
         return false;
@@ -169,8 +169,14 @@ bool msmbDevice::sendMaterials(bool dirty_all)
     return true;
 }
 
-bool msmbDevice::sendObjects(bool dirty_all)
+bool msmobuDevice::sendObjects(bool dirty_all)
 {
+    if (m_sender.isSending()) {
+        m_pending = true;
+        return false;
+    }
+    m_data_updated = m_pending = false;
+
     if (dirty_all) {
         m_dirty_meshes = true;
         m_dirty_textures = true;
@@ -178,12 +184,6 @@ bool msmbDevice::sendObjects(bool dirty_all)
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
-
-    m_data_updated = m_pending = false;
-    if (m_sender.isSending()) {
-        m_pending = true;
-        return false;
-    }
 
     if (sync_meshes)
         exportMaterials();
@@ -223,7 +223,7 @@ bool msmbDevice::sendObjects(bool dirty_all)
     }
 }
 
-ms::TransformPtr msmbDevice::exportObject(FBModel* src, bool parent, bool tip)
+ms::TransformPtr msmobuDevice::exportObject(FBModel* src, bool parent, bool tip)
 {
     if (!src)
         return nullptr;
@@ -375,7 +375,7 @@ static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
 
 
 template<class T>
-inline std::shared_ptr<T> msmbDevice::createEntity(NodeRecord& n)
+inline std::shared_ptr<T> msmobuDevice::createEntity(NodeRecord& n)
 {
     auto ret = T::create();
     auto& dst = *ret;
@@ -385,7 +385,7 @@ inline std::shared_ptr<T> msmbDevice::createEntity(NodeRecord& n)
     return ret;
 }
 
-ms::TransformPtr msmbDevice::exportTransform(NodeRecord& n)
+ms::TransformPtr msmobuDevice::exportTransform(NodeRecord& n)
 {
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
@@ -397,7 +397,7 @@ ms::TransformPtr msmbDevice::exportTransform(NodeRecord& n)
     return ret;
 }
 
-ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
+ms::CameraPtr msmobuDevice::exportCamera(NodeRecord& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
@@ -411,7 +411,7 @@ ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
     return ret;
 }
 
-ms::LightPtr msmbDevice::exportLight(NodeRecord& n)
+ms::LightPtr msmobuDevice::exportLight(NodeRecord& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
@@ -424,7 +424,7 @@ ms::LightPtr msmbDevice::exportLight(NodeRecord& n)
     return ret;
 }
 
-ms::MeshPtr msmbDevice::exportBlendshapeWeights(NodeRecord& n)
+ms::MeshPtr msmobuDevice::exportBlendshapeWeights(NodeRecord& n)
 {
     auto ret = createEntity<ms::Mesh>(n);
     auto& dst = *ret;
@@ -459,7 +459,7 @@ ms::MeshPtr msmbDevice::exportBlendshapeWeights(NodeRecord& n)
     return ret;
 }
 
-ms::MeshPtr msmbDevice::exportMesh(NodeRecord& n)
+ms::MeshPtr msmobuDevice::exportMesh(NodeRecord& n)
 {
     auto ret = createEntity<ms::Mesh>(n);
     auto& dst = *ret;
@@ -474,7 +474,7 @@ ms::MeshPtr msmbDevice::exportMesh(NodeRecord& n)
     return ret;
 }
 
-void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
+void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 {
     FBModelVertexData *vd = src->ModelVertexData;
     int num_vertices = vd->GetVertexCount();
@@ -682,7 +682,7 @@ void msmbDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 }
 
 
-int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
+int msmobuDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
 {
     if (!src)
         return -1;
@@ -701,7 +701,7 @@ int msmbDevice::exportTexture(FBTexture* src, FBMaterialTextureType type)
     return -1;
 }
 
-bool msmbDevice::exportMaterial(FBMaterial* src, int index)
+bool msmobuDevice::exportMaterial(FBMaterial* src, int index)
 {
     if (!src)
         return false;
@@ -735,7 +735,7 @@ bool msmbDevice::exportMaterial(FBMaterial* src, int index)
     return true;
 }
 
-bool msmbDevice::exportMaterials()
+bool msmobuDevice::exportMaterials()
 {
     int num_exported = 0;
     auto& materials = FBSystem::TheOne().Scene->Materials;
@@ -756,21 +756,17 @@ bool msmbDevice::exportMaterials()
 }
 
 
-bool msmbDevice::sendAnimations()
+bool msmobuDevice::sendAnimations()
 {
-    // wait for previous request to complete
-    m_sender.wait();
-
-    if (exportAnimations()) {
-        kickAsyncSend();
-        return true;
-    }
-    else {
+    if (m_sender.isSending())
         return false;
-    }
+
+    if (exportAnimations())
+        kickAsyncSend();
+    return true;
 }
 
-bool msmbDevice::exportAnimations()
+bool msmobuDevice::exportAnimations()
 {
     auto& system = FBSystem::TheOne();
     FBPlayerControl control;
@@ -832,7 +828,7 @@ bool msmbDevice::exportAnimations()
     return !m_animations.empty();
 }
 
-bool msmbDevice::exportAnimation(FBModel *src, bool force)
+bool msmobuDevice::exportAnimation(FBModel *src, bool force)
 {
     if (!src || m_anim_records.find(src) != m_anim_records.end())
         return 0;
@@ -843,12 +839,12 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
     if (IsCamera(src)) { // camera
         exportAnimation(src->Parent, true);
         dst = ms::CameraAnimation::create();
-        extractor = &msmbDevice::extractCameraAnimation;
+        extractor = &msmobuDevice::extractCameraAnimation;
     }
     else if (IsLight(src)) { // light
         exportAnimation(src->Parent, true);
         dst = ms::LightAnimation::create();
-        extractor = &msmbDevice::extractLightAnimation;
+        extractor = &msmobuDevice::extractLightAnimation;
     }
     else if (IsMesh(src)) { // mesh
         EachBones(src, [this](FBModel *bone) {
@@ -856,12 +852,12 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
         });
         exportAnimation(src->Parent, true);
         dst = ms::MeshAnimation::create();
-        extractor = &msmbDevice::extractMeshAnimation;
+        extractor = &msmobuDevice::extractMeshAnimation;
     }
     else if (force) { // other
         exportAnimation(src->Parent, true);
         dst = ms::TransformAnimation::create();
-        extractor = &msmbDevice::extractTransformAnimation;
+        extractor = &msmobuDevice::extractTransformAnimation;
     }
 
     if (dst) {
@@ -877,7 +873,7 @@ bool msmbDevice::exportAnimation(FBModel *src, bool force)
     }
 }
 
-void msmbDevice::extractTransformAnimation(ms::TransformAnimation& dst_, FBModel* src)
+void msmobuDevice::extractTransformAnimation(ms::TransformAnimation& dst_, FBModel* src)
 {
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
@@ -895,7 +891,7 @@ void msmbDevice::extractTransformAnimation(ms::TransformAnimation& dst_, FBModel
     dst.path = GetPath(src);
 }
 
-void msmbDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* src)
+void msmobuDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* src)
 {
     extractTransformAnimation(dst_, src);
 
@@ -914,7 +910,7 @@ void msmbDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* s
     // todo: physical camera params
 }
 
-void msmbDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* src)
+void msmobuDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* src)
 {
     extractTransformAnimation(dst_, src);
 
@@ -933,7 +929,7 @@ void msmbDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* sr
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
-void msmbDevice::extractMeshAnimation(ms::TransformAnimation & dst_, FBModel * src)
+void msmobuDevice::extractMeshAnimation(ms::TransformAnimation & dst_, FBModel * src)
 {
     extractTransformAnimation(dst_, src);
 
@@ -951,7 +947,7 @@ void msmbDevice::extractMeshAnimation(ms::TransformAnimation & dst_, FBModel * s
     }
 }
 
-void msmbDevice::AnimationRecord::operator()(msmbDevice *_this)
+void msmobuDevice::AnimationRecord::operator()(msmobuDevice *_this)
 {
     (_this->*extractor)(*dst, src);
 }

@@ -537,15 +537,12 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msmayaContext::sendAnimations(SendScope scope)
 {
-    m_sender.wait();
-
-    if (exportAnimations(scope) > 0) {
-        kickAsyncSend();
-        return true;
-    }
-    else {
+    if (m_sender.isSending())
         return false;
-    }
+
+    if (exportAnimations(scope) > 0)
+        kickAsyncSend();
+    return true;
 }
 
 void msmayaContext::wait()

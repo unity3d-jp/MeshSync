@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msbContext.h"
+#include "msblenContext.h"
 
 
 PYBIND11_PLUGIN(MeshSyncClientBlender)
@@ -10,113 +10,113 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
 #define BindMethodF(Name, ...) .def(#Name, __VA_ARGS__)
 #define BindProperty(Name, ...) .def_property(#Name, __VA_ARGS__)
     {
-        using self_t = msbContext;
-        py::class_<msbContext, msbContextPtr>(mod, "Context")
+        using self_t = msblenContext;
+        py::class_<msblenContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
-            .def_property_readonly("VERSION", [](const msbContext& self) { return std::string(msReleaseDateStr); })
-            .def_property_readonly("TARGET_OBJECTS",    [](const msbContext& self) { return (int)msbContext::SendTarget::Objects; })
-            .def_property_readonly("TARGET_MATERIALS",  [](const msbContext& self) { return (int)msbContext::SendTarget::Materials; })
-            .def_property_readonly("TARGET_ANIMATIONS", [](const msbContext& self) { return (int)msbContext::SendTarget::Animations; })
-            .def_property_readonly("TARGET_EVERYTHING", [](const msbContext& self) { return (int)msbContext::SendTarget::Everything; })
-            .def_property_readonly("SCOPE_NONE",        [](const msbContext& self) { return (int)msbContext::SendScope::None; })
-            .def_property_readonly("SCOPE_ALL",         [](const msbContext& self) { return (int)msbContext::SendScope::All; })
-            .def_property_readonly("SCOPE_UPDATED",     [](const msbContext& self) { return (int)msbContext::SendScope::Updated; })
-            .def_property_readonly("SCOPE_SELECTED",    [](const msbContext& self) { return (int)msbContext::SendScope::Selected; })
+            .def_property_readonly("VERSION", [](const msblenContext& self) { return std::string(msReleaseDateStr); })
+            .def_property_readonly("TARGET_OBJECTS",    [](const msblenContext& self) { return (int)msblenContext::SendTarget::Objects; })
+            .def_property_readonly("TARGET_MATERIALS",  [](const msblenContext& self) { return (int)msblenContext::SendTarget::Materials; })
+            .def_property_readonly("TARGET_ANIMATIONS", [](const msblenContext& self) { return (int)msblenContext::SendTarget::Animations; })
+            .def_property_readonly("TARGET_EVERYTHING", [](const msblenContext& self) { return (int)msblenContext::SendTarget::Everything; })
+            .def_property_readonly("SCOPE_NONE",        [](const msblenContext& self) { return (int)msblenContext::SendScope::None; })
+            .def_property_readonly("SCOPE_ALL",         [](const msblenContext& self) { return (int)msblenContext::SendScope::All; })
+            .def_property_readonly("SCOPE_UPDATED",     [](const msblenContext& self) { return (int)msblenContext::SendScope::Updated; })
+            .def_property_readonly("SCOPE_SELECTED",    [](const msblenContext& self) { return (int)msblenContext::SendScope::Selected; })
             BindMethod(flushPendingList)
-            BindMethodF(setup, [](msbContext& self, py::object ctx) { bl::setup(ctx); })
-            BindMethodF(clear, [](msbContext& self, py::object ctx) { self.clear(); })
-            BindMethodF(exportUpdatedObjects, [](msbContext& self) {
-                self.sendObjects(msbContext::SendScope::Updated, false);
+            BindMethodF(setup, [](msblenContext& self, py::object ctx) { bl::setup(ctx); })
+            BindMethodF(clear, [](msblenContext& self, py::object ctx) { self.clear(); })
+            BindMethodF(exportUpdatedObjects, [](msblenContext& self) {
+                self.sendObjects(msblenContext::SendScope::Updated, false);
             })
-            BindMethodF(export, [](msbContext& self, int _target) {
-                auto target = (msbContext::SendTarget)_target;
-                if (target == msbContext::SendTarget::Objects) {
+            BindMethodF(export, [](msblenContext& self, int _target) {
+                auto target = (msblenContext::SendTarget)_target;
+                if (target == msblenContext::SendTarget::Objects) {
                     self.wait();
-                    self.sendObjects(msbContext::SendScope::All, true);
+                    self.sendObjects(msblenContext::SendScope::All, true);
                 }
-                else if (target == msbContext::SendTarget::Materials) {
+                else if (target == msblenContext::SendTarget::Materials) {
                     self.wait();
                     self.sendMaterials(true);
                 }
-                else if (target == msbContext::SendTarget::Animations) {
+                else if (target == msblenContext::SendTarget::Animations) {
                     self.wait();
-                    self.sendAnimations(msbContext::SendScope::All);
+                    self.sendAnimations(msblenContext::SendScope::All);
                 }
-                else if (target == msbContext::SendTarget::Everything) {
+                else if (target == msblenContext::SendTarget::Everything) {
                     self.wait();
                     self.sendMaterials(true);
                     self.wait();
-                    self.sendObjects(msbContext::SendScope::All, true);
+                    self.sendObjects(msblenContext::SendScope::All, true);
                     self.wait();
-                    self.sendAnimations(msbContext::SendScope::All);
+                    self.sendAnimations(msblenContext::SendScope::All);
                 }
             })
             BindProperty(server_address,
-                [](const msbContext& self) { return self.getSettings().client_settings.server; },
-                [](msbContext& self, const std::string& v) { self.getSettings().client_settings.server = v; })
+                [](const msblenContext& self) { return self.getSettings().client_settings.server; },
+                [](msblenContext& self, const std::string& v) { self.getSettings().client_settings.server = v; })
             BindProperty(server_port,
-                [](const msbContext& self) { return self.getSettings().client_settings.port; },
-                [](msbContext& self, uint16_t v) { self.getSettings().client_settings.port = v; })
+                [](const msblenContext& self) { return self.getSettings().client_settings.port; },
+                [](msblenContext& self, uint16_t v) { self.getSettings().client_settings.port = v; })
             BindProperty(scene_name,
-                [](const msbContext& self) { return self.getSettings().scene_settings.name; },
-                [](msbContext& self, const std::string& v) { self.getSettings().scene_settings.name = v; })
+                [](const msblenContext& self) { return self.getSettings().scene_settings.name; },
+                [](msblenContext& self, const std::string& v) { self.getSettings().scene_settings.name = v; })
             BindProperty(scale_factor,
-                [](const msbContext& self) { return self.getSettings().scene_settings.scale_factor; },
-                [](msbContext& self, float v) { self.getSettings().scene_settings.scale_factor = v; })
+                [](const msblenContext& self) { return self.getSettings().scene_settings.scale_factor; },
+                [](msblenContext& self, float v) { self.getSettings().scene_settings.scale_factor = v; })
             BindProperty(handedness,
-                [](const msbContext& self) { return (int)self.getSettings().scene_settings.handedness; },
-                [](msbContext& self, int v) { (int&)self.getSettings().scene_settings.handedness = v; })
+                [](const msblenContext& self) { return (int)self.getSettings().scene_settings.handedness; },
+                [](msblenContext& self, int v) { (int&)self.getSettings().scene_settings.handedness = v; })
             BindProperty(sync_meshes,
-                [](const msbContext& self) { return (int)self.getSettings().sync_meshes; },
-                [](msbContext& self, int v) { (int&)self.getSettings().sync_meshes = v; })
+                [](const msblenContext& self) { return (int)self.getSettings().sync_meshes; },
+                [](msblenContext& self, int v) { (int&)self.getSettings().sync_meshes = v; })
             BindProperty(sync_normals,
-                [](const msbContext& self) { return (int)self.getSettings().sync_normals; },
-                [](msbContext& self, bool v) { (int&)self.getSettings().sync_normals = v; })
+                [](const msblenContext& self) { return (int)self.getSettings().sync_normals; },
+                [](msblenContext& self, bool v) { (int&)self.getSettings().sync_normals = v; })
             BindProperty(sync_uvs,
-                [](const msbContext& self) { return self.getSettings().sync_uvs; },
-                [](msbContext& self, bool v) { self.getSettings().sync_uvs = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_uvs; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_uvs = v; })
             BindProperty(sync_colors,
-                [](const msbContext& self) { return self.getSettings().sync_colors; },
-                [](msbContext& self, bool v) { self.getSettings().sync_colors = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_colors; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_colors = v; })
             BindProperty(make_double_sided,
-                [](const msbContext& self) { return self.getSettings().make_double_sided; },
-                [](msbContext& self, bool v) { self.getSettings().make_double_sided = v; })
+                [](const msblenContext& self) { return self.getSettings().make_double_sided; },
+                [](msblenContext& self, bool v) { self.getSettings().make_double_sided = v; })
             BindProperty(bake_modifiers,
-                [](const msbContext& self) { return self.getSettings().bake_modifiers; },
-                [](msbContext& self, bool v) { self.getSettings().bake_modifiers = v; })
+                [](const msblenContext& self) { return self.getSettings().bake_modifiers; },
+                [](msblenContext& self, bool v) { self.getSettings().bake_modifiers = v; })
             BindProperty(convert_to_mesh,
-                [](const msbContext& self) { return self.getSettings().convert_to_mesh; },
-                [](msbContext& self, bool v) { self.getSettings().convert_to_mesh = v; })
+                [](const msblenContext& self) { return self.getSettings().convert_to_mesh; },
+                [](msblenContext& self, bool v) { self.getSettings().convert_to_mesh = v; })
             BindProperty(sync_bones,
-                [](const msbContext& self) { return self.getSettings().sync_bones; },
-                [](msbContext& self, bool v) { self.getSettings().sync_bones = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_bones; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_bones = v; })
             BindProperty(sync_blendshapes,
-                [](const msbContext& self) { return self.getSettings().sync_blendshapes; },
-                [](msbContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_blendshapes; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_blendshapes = v; })
             BindProperty(sync_textures,
-                [](const msbContext& self) { return self.getSettings().sync_textures; },
-                [](msbContext& self, bool v) { self.getSettings().sync_textures = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_textures; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_textures = v; })
             BindProperty(sync_cameras,
-                [](const msbContext& self) { return self.getSettings().sync_cameras; },
-                [](msbContext& self, bool v) { self.getSettings().sync_cameras = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_cameras; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_cameras = v; })
             BindProperty(sync_lights,
-                [](const msbContext& self) { return self.getSettings().sync_lights; },
-                [](msbContext& self, bool v) { self.getSettings().sync_lights = v; })
+                [](const msblenContext& self) { return self.getSettings().sync_lights; },
+                [](msblenContext& self, bool v) { self.getSettings().sync_lights = v; })
             BindProperty(animation_ts,
-                [](const msbContext& self) { return self.getSettings().animation_timescale; },
-                [](msbContext& self, float v) { self.getSettings().animation_timescale = v; })
+                [](const msblenContext& self) { return self.getSettings().animation_timescale; },
+                [](msblenContext& self, float v) { self.getSettings().animation_timescale = v; })
             BindProperty(animation_interval,
-                [](const msbContext& self) { return self.getSettings().animation_frame_interval; },
-                [](msbContext& self, int v) { self.getSettings().animation_frame_interval = v; })
+                [](const msblenContext& self) { return self.getSettings().animation_frame_interval; },
+                [](msblenContext& self, int v) { self.getSettings().animation_frame_interval = v; })
             BindProperty(keyframe_reduction,
-                [](const msbContext& self) { return self.getSettings().keyframe_reduction; },
-                [](msbContext& self, int v) { self.getSettings().keyframe_reduction = v; })
+                [](const msblenContext& self) { return self.getSettings().keyframe_reduction; },
+                [](msblenContext& self, int v) { self.getSettings().keyframe_reduction = v; })
             BindProperty(keep_flat_curves,
-                [](const msbContext& self) { return self.getSettings().keep_flat_curves; },
-                [](msbContext& self, int v) { self.getSettings().keep_flat_curves = v; })
+                [](const msblenContext& self) { return self.getSettings().keep_flat_curves; },
+                [](msblenContext& self, int v) { self.getSettings().keep_flat_curves = v; })
             BindProperty(multithreaded,
-                [](const msbContext& self) { return self.getSettings().multithreaded; },
-                [](msbContext& self, int v) { self.getSettings().multithreaded = v; })
+                [](const msblenContext& self) { return self.getSettings().multithreaded; },
+                [](msblenContext& self, int v) { self.getSettings().multithreaded = v; })
                 ;
     }
 #undef BindMethod

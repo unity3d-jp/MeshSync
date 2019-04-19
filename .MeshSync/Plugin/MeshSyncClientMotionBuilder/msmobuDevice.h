@@ -3,9 +3,9 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
 
-class msmbDevice : public FBDevice
+class msmobuDevice : public FBDevice
 {
-FBDeviceDeclare(msmbDevice, FBDevice);
+FBDeviceDeclare(msmobuDevice, FBDevice);
 public:
     bool FBCreate() override;
     void FBDestroy() override;
@@ -51,13 +51,13 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (msmbDevice::*)(ms::TransformAnimation& dst, FBModel *src);
+        using extractor_t = void (msmobuDevice::*)(ms::TransformAnimation& dst, FBModel *src);
 
         ms::TransformAnimationPtr dst;
         FBModel *src = nullptr;
         extractor_t extractor = nullptr;
 
-        void operator()(msmbDevice *_this);
+        void operator()(msmobuDevice *_this);
     };
     using AnimationRecords = std::map<FBModel*, AnimationRecord>;
 

@@ -1,28 +1,28 @@
 #include "pch.h"
-#include "msbContext.h"
-#include "msbUtils.h"
+#include "msblenContext.h"
+#include "msblenUtils.h"
 
 
-msbContext::msbContext()
+msblenContext::msblenContext()
 {
     m_settings.scene_settings.handedness = ms::Handedness::RightZUp;
 }
 
-msbContext::~msbContext()
+msblenContext::~msblenContext()
 {
     wait();
 }
 
-msbSettings& msbContext::getSettings() { return m_settings; }
-const msbSettings& msbContext::getSettings() const { return m_settings; }
+msblenSettings& msblenContext::getSettings() { return m_settings; }
+const msblenSettings& msblenContext::getSettings() const { return m_settings; }
 
 
-int msbContext::exportTexture(const std::string & path, ms::TextureType type)
+int msblenContext::exportTexture(const std::string & path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
 }
 
-void msbContext::exportMaterials()
+void msblenContext::exportMaterials()
 {
     int midx = 0;
     auto bpy_data = bl::BData(bl::BContext::get().data());
@@ -131,7 +131,7 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4
 }
 
 
-ms::TransformPtr msbContext::exportObject(Object *obj, bool parent, bool tip)
+ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
 {
     ms::TransformPtr ret;
     if (!obj)
@@ -225,7 +225,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool parent, bool tip)
     return ret;
 }
 
-ms::TransformPtr msbContext::exportTransform(Object *src)
+ms::TransformPtr msblenContext::exportTransform(Object *src)
 {
     auto ret = ms::Transform::create();
     auto& dst = *ret;
@@ -235,7 +235,7 @@ ms::TransformPtr msbContext::exportTransform(Object *src)
     return ret;
 }
 
-ms::TransformPtr msbContext::exportPose(Object *armature, bPoseChannel *src)
+ms::TransformPtr msblenContext::exportPose(Object *armature, bPoseChannel *src)
 {
     auto ret = ms::Transform::create();
     auto& dst = *ret;
@@ -245,7 +245,7 @@ ms::TransformPtr msbContext::exportPose(Object *armature, bPoseChannel *src)
     return ret;
 }
 
-ms::TransformPtr msbContext::exportArmature(Object *src)
+ms::TransformPtr msblenContext::exportArmature(Object *src)
 {
     auto ret = ms::Transform::create();
     auto& dst = *ret;
@@ -261,7 +261,7 @@ ms::TransformPtr msbContext::exportArmature(Object *src)
     return ret;
 }
 
-ms::TransformPtr msbContext::exportReference(Object *src, Object *host, const std::string& base_path)
+ms::TransformPtr msblenContext::exportReference(Object *src, Object *host, const std::string& base_path)
 {
     auto local_path = get_path(src);
     auto path = base_path + local_path;
@@ -281,7 +281,7 @@ ms::TransformPtr msbContext::exportReference(Object *src, Object *host, const st
     return dst;
 }
 
-ms::TransformPtr msbContext::exportDupliGroup(Object *src, Object *host, const std::string& base_path)
+ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, const std::string& base_path)
 {
     auto group = get_instance_collection(src);
     if (!group)
@@ -307,7 +307,7 @@ ms::TransformPtr msbContext::exportDupliGroup(Object *src, Object *host, const s
     return dst;
 }
 
-ms::CameraPtr msbContext::exportCamera(Object *src)
+ms::CameraPtr msblenContext::exportCamera(Object *src)
 {
     auto ret = ms::Camera::create();
     auto& dst = *ret;
@@ -318,7 +318,7 @@ ms::CameraPtr msbContext::exportCamera(Object *src)
     return ret;
 }
 
-ms::LightPtr msbContext::exportLight(Object *src)
+ms::LightPtr msblenContext::exportLight(Object *src)
 {
     auto ret = ms::Light::create();
     auto& dst = *ret;
@@ -329,7 +329,7 @@ ms::LightPtr msbContext::exportLight(Object *src)
     return ret;
 }
 
-ms::MeshPtr msbContext::exportMesh(Object *src)
+ms::MeshPtr msblenContext::exportMesh(Object *src)
 {
     // ignore particles
     if (//find_modofier(src, eModifierType_ParticleSystem) ||
@@ -401,7 +401,7 @@ ms::MeshPtr msbContext::exportMesh(Object *src)
     return ret;
 }
 
-void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
+void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     if (m_settings.sync_meshes) {
         bl::BObject bobj(obj);
@@ -447,7 +447,7 @@ void msbContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
 }
 
-void msbContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data)
+void msblenContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     auto& mesh = *data;
     if (!m_settings.bake_modifiers) {
@@ -468,7 +468,7 @@ void msbContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *da
     }
 }
 
-void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
+void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     bl::BObject bobj(obj);
     bl::BMesh bmesh(data);
@@ -673,7 +673,7 @@ void msbContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
 #endif
 }
 
-void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
+void msblenContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
 {
     bl::BObject bobj(obj);
     bl::BMesh bmesh(data);
@@ -755,13 +755,13 @@ void msbContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     }
 }
 
-ms::TransformPtr msbContext::findBone(Object *armature, Bone *bone)
+ms::TransformPtr msblenContext::findBone(Object *armature, Bone *bone)
 {
     auto it = m_bones.find(bone);
     return it != m_bones.end() ? it->second : nullptr;
 }
 
-msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string& base_path, bool children)
+msblenContext::ObjectRecord& msblenContext::touchRecord(Object *obj, const std::string& base_path, bool children)
 {
     auto& rec = m_obj_records[obj];
     if (rec.touched && base_path.empty())
@@ -804,7 +804,7 @@ msbContext::ObjectRecord& msbContext::touchRecord(Object *obj, const std::string
     return rec;
 }
 
-void msbContext::eraseStaleObjects()
+void msblenContext::eraseStaleObjects()
 {
     for (auto i = m_obj_records.begin(); i != m_obj_records.end(); /**/) {
         if (!i->second.touched)
@@ -816,7 +816,7 @@ void msbContext::eraseStaleObjects()
 }
 
 
-void msbContext::exportAnimation(Object *obj, bool force, const std::string base_path)
+void msblenContext::exportAnimation(Object *obj, bool force, const std::string base_path)
 {
     if (!obj)
         return;
@@ -844,34 +844,34 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     {
         // camera
         exportAnimation(obj->parent, true, base_path);
-        add_animation(path, obj, ms::CameraAnimation::create(), &msbContext::extractCameraAnimationData);
+        add_animation(path, obj, ms::CameraAnimation::create(), &msblenContext::extractCameraAnimationData);
         break;
     }
     case OB_LAMP:
     {
         // lights
         exportAnimation(obj->parent, true, base_path);
-        add_animation(path, obj, ms::LightAnimation::create(), &msbContext::extractLightAnimationData);
+        add_animation(path, obj, ms::LightAnimation::create(), &msblenContext::extractLightAnimationData);
         break;
     }
     case OB_MESH:
     {
         // meshes
         exportAnimation(obj->parent, true, base_path);
-        add_animation(path, obj, ms::MeshAnimation::create(), &msbContext::extractMeshAnimationData);
+        add_animation(path, obj, ms::MeshAnimation::create(), &msblenContext::extractMeshAnimationData);
         break;
     }
     default:
     if (force || obj->type == OB_ARMATURE || group) {
         exportAnimation(obj->parent, true, base_path);
-        add_animation(path, obj, ms::TransformAnimation::create(), &msbContext::extractTransformAnimationData);
+        add_animation(path, obj, ms::TransformAnimation::create(), &msblenContext::extractTransformAnimationData);
 
         if (obj->type == OB_ARMATURE && (!m_settings.bake_modifiers && m_settings.sync_bones)) {
             // bones
             auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
             for (auto pose : poses) {
                 auto pose_path = base_path + get_path(obj, pose->bone);
-                add_animation(pose_path, pose, ms::TransformAnimation::create(), &msbContext::extractPoseAnimationData);
+                add_animation(pose_path, pose, ms::TransformAnimation::create(), &msblenContext::extractPoseAnimationData);
             }
         }
         break;
@@ -893,7 +893,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
     }
 }
 
-void msbContext::extractTransformAnimationData(ms::TransformAnimation& dst_, void *obj)
+void msblenContext::extractTransformAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -910,7 +910,7 @@ void msbContext::extractTransformAnimationData(ms::TransformAnimation& dst_, voi
     dst.visible.push_back({ t, vis });
 }
 
-void msbContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
+void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -925,7 +925,7 @@ void msbContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * o
     dst.scale.push_back({ t, scale });
 }
 
-void msbContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *obj)
+void msblenContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     extractTransformAnimationData(dst_, obj);
 
@@ -945,7 +945,7 @@ void msbContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *
     dst.lens_shift.push_back({ t , lens_shift });
 }
 
-void msbContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *obj)
+void msblenContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     extractTransformAnimationData(dst_, obj);
 
@@ -965,7 +965,7 @@ void msbContext::extractLightAnimationData(ms::TransformAnimation& dst_, void *o
     }
 }
 
-void msbContext::extractMeshAnimationData(ms::TransformAnimation & dst_, void * obj)
+void msblenContext::extractMeshAnimationData(ms::TransformAnimation & dst_, void * obj)
 {
     extractTransformAnimationData(dst_, obj);
 
@@ -989,12 +989,12 @@ void msbContext::extractMeshAnimationData(ms::TransformAnimation & dst_, void * 
 
 
 
-void msbContext::wait()
+void msblenContext::wait()
 {
     m_sender.wait();
 }
 
-void msbContext::clear()
+void msblenContext::clear()
 {
     m_material_ids.clear();
     m_texture_manager.clear();
@@ -1002,16 +1002,16 @@ void msbContext::clear()
     m_entity_manager.clear();
 }
 
-bool msbContext::prepare()
+bool msblenContext::prepare()
 {
     if (!bl::ready())
         return false;
     return true;
 }
 
-bool msbContext::sendMaterials(bool dirty_all)
+bool msblenContext::sendMaterials(bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending() || m_sending_animations)
+    if (!prepare() || m_sender.isSending() || m_ignore_events)
         return false;
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -1023,9 +1023,9 @@ bool msbContext::sendMaterials(bool dirty_all)
     return true;
 }
 
-bool msbContext::sendObjects(SendScope scope, bool dirty_all)
+bool msblenContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending() || m_sending_animations)
+    if (!prepare() || m_sender.isSending() || m_ignore_events)
         return false;
 
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
@@ -1064,12 +1064,12 @@ bool msbContext::sendObjects(SendScope scope, bool dirty_all)
     return true;
 }
 
-bool msbContext::sendAnimations(SendScope scope)
+bool msblenContext::sendAnimations(SendScope scope)
 {
-    if (!prepare() || m_sender.isSending() || m_sending_animations)
+    if (!prepare() || m_sender.isSending() || m_ignore_events)
         return false;
 
-    m_sending_animations = true;
+    m_ignore_events = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
     m_animations.clear();
@@ -1125,7 +1125,7 @@ bool msbContext::sendAnimations(SendScope scope)
             std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
             m_animations.end());
     }
-    m_sending_animations = false;
+    m_ignore_events = false;
 
     // send
     if (!m_animations.empty()) {
@@ -1135,7 +1135,7 @@ bool msbContext::sendAnimations(SendScope scope)
     return false;
 }
 
-void msbContext::flushPendingList()
+void msblenContext::flushPendingList()
 {
     if (!m_pending.empty() && !m_sender.isSending()) {
         for (auto p : m_pending)
@@ -1145,7 +1145,7 @@ void msbContext::flushPendingList()
     }
 }
 
-void msbContext::kickAsyncSend()
+void msblenContext::kickAsyncSend()
 {
     for (auto& t : m_async_tasks)
         t.wait();

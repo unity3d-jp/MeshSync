@@ -2,14 +2,14 @@
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
-#include "msbBinder.h"
+#include "msblenBinder.h"
 
-struct msbSettings;
-class msbContext;
+struct msblenSettings;
+class msblenContext;
 namespace bl = blender;
 
 
-struct msbSettings
+struct msblenSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
@@ -36,7 +36,7 @@ struct msbSettings
 };
 
 
-class msbContext : public std::enable_shared_from_this<msbContext>
+class msblenContext : public std::enable_shared_from_this<msblenContext>
 {
 public:
     enum class SendTarget : int
@@ -54,11 +54,11 @@ public:
         Selected,
     };
 
-    msbContext();
-    ~msbContext();
+    msblenContext();
+    ~msblenContext();
 
-    msbSettings&        getSettings();
-    const msbSettings&  getSettings() const;
+    msblenSettings&        getSettings();
+    const msblenSettings&  getSettings() const;
 
     void wait();
     void clear();
@@ -85,13 +85,13 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (msbContext::*)(ms::TransformAnimation& dst, void *obj);
+        using extractor_t = void (msblenContext::*)(ms::TransformAnimation& dst, void *obj);
 
         void *obj = nullptr;
         ms::TransformAnimationPtr dst;
         extractor_t extractor = nullptr;
 
-        void operator()(msbContext *_this)
+        void operator()(msblenContext *_this)
         {
             (_this->*extractor)(*dst, obj);
         }
@@ -128,7 +128,7 @@ private:
     void kickAsyncSend();
 
 private:
-    msbSettings m_settings;
+    msblenSettings m_settings;
     std::set<Object*> m_pending;
     std::map<Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records; // key can be object or bone
@@ -145,6 +145,6 @@ private:
     // animation export
     std::map<std::string, AnimationRecord> m_anim_records;
     float m_anim_time = 0.0f;
-    bool m_sending_animations = false;
+    bool m_ignore_events = false;
 };
-using msbContextPtr = std::shared_ptr<msbContext>;
+using msbContextPtr = std::shared_ptr<msblenContext>;
