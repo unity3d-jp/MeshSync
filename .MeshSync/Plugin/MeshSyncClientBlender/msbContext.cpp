@@ -152,7 +152,7 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool parent, bool tip)
     switch (obj->type) {
     case OB_ARMATURE:
     {
-        if (m_settings.sync_bones) {
+        if (!m_settings.bake_modifiers && m_settings.sync_bones) {
             handle_parent();
             ret = exportArmature(obj);
         }
@@ -162,7 +162,11 @@ ms::TransformPtr msbContext::exportObject(Object *obj, bool parent, bool tip)
     }
     case OB_MESH:
     {
-        if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
+        if (!m_settings.bake_modifiers && m_settings.sync_bones) {
+            if (auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature))
+                exportObject(arm_mod->object, parent);
+        }
+        if (m_settings.sync_meshes || (!m_settings.bake_modifiers && m_settings.sync_blendshapes)) {
             handle_parent();
             ret = exportMesh(obj);
         }
@@ -861,7 +865,7 @@ void msbContext::exportAnimation(Object *obj, bool force, const std::string base
         exportAnimation(obj->parent, true, base_path);
         add_animation(path, obj, ms::TransformAnimation::create(), &msbContext::extractTransformAnimationData);
 
-        if (obj->type == OB_ARMATURE) {
+        if (obj->type == OB_ARMATURE && (!m_settings.bake_modifiers && m_settings.sync_bones)) {
             // bones
             auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
             for (auto pose : poses) {
