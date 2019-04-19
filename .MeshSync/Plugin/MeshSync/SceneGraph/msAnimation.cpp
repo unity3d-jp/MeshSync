@@ -503,9 +503,8 @@ CameraAnimation::CameraAnimation(AnimationPtr host)
     , near_plane(host->getCurve(mskCameraNearPlane, DataType::Float))
     , far_plane(host->getCurve(mskCameraFarPlane, DataType::Float))
     , focal_length(host->getCurve(mskCameraFocalLength, DataType::Float))
-    , focus_distance(host->getCurve(mskCameraFocusDistance, DataType::Float))
     , sensor_size(host->getCurve(mskCameraSensorSize, DataType::Float2))
-    , lends_shift(host->getCurve(mskCameraLendsShift, DataType::Float2))
+    , lens_shift(host->getCurve(mskCameraLensShift, DataType::Float2))
 {
     host->entity_type = Entity::Type::Camera;
     near_plane.curve->data_flags.affect_scale = true;

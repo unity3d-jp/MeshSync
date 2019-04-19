@@ -180,9 +180,8 @@ msDeclPtr(TransformAnimation);
 #define mskCameraNearPlane          "Camera.nearPlane"
 #define mskCameraFarPlane           "Camera.farPlane"
 #define mskCameraFocalLength        "Camera.focalLength"
-#define mskCameraFocusDistance      "Camera.focusDistance"
 #define mskCameraSensorSize         "Camera.sensorSize"
-#define mskCameraLendsShift         "Camera.lendsShift"
+#define mskCameraLensShift          "Camera.lensShift"
 
 class CameraAnimation : public TransformAnimation
 {
@@ -195,9 +194,8 @@ public:
     TAnimationCurve<float> near_plane;
     TAnimationCurve<float> far_plane;
     TAnimationCurve<float> focal_length;
-    TAnimationCurve<float> focus_distance;
     TAnimationCurve<float2> sensor_size;
-    TAnimationCurve<float2> lends_shift;
+    TAnimationCurve<float2> lens_shift;
 };
 
 

@@ -923,7 +923,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
 }
 
 void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
-    mu::float2& sensor_size, float& focal_length, float& focus_distance)
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     auto& shape = n->shape->node;
     MFnCamera mcam(shape);
@@ -933,10 +933,11 @@ void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plan
     far_plane = (float)mcam.farClippingPlane();
     fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
 
-    sensor_size.x = (float)mcam.horizontalFilmAperture() * InchToMillimeter;
-    sensor_size.y = (float)mcam.verticalFilmAperture() * InchToMillimeter;
     focal_length = (float)mcam.focalLength();
-    focus_distance = (float)mcam.focusDistance();
+    sensor_size.x = (float)(mcam.horizontalFilmAperture() * InchToMillimeter);
+    sensor_size.y = (float)(mcam.verticalFilmAperture() * InchToMillimeter);
+    lens_shift.x = (float)(mcam.horizontalFilmOffset() * InchToMillimeter);
+    lens_shift.y = (float)(mcam.verticalFilmOffset() * InchToMillimeter);
 }
 
 void msmayaContext::extractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
@@ -1010,7 +1011,7 @@ ms::CameraPtr msmayaContext::exportCamera(TreeNode *n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
-        dst.sensor_size, dst.focal_length, dst.focus_distance);
+        dst.focal_length, dst.sensor_size, dst.lens_shift);
 
     m_entity_manager.add(ret);
     return ret;
@@ -1703,21 +1704,18 @@ void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, Tre
     auto& dst = (ms::CameraAnimation&)dst_;
 
     bool ortho;
-    float near_plane, far_plane, fov, focal_length, focus_distance;
-    mu::float2 sensor_size;
-    extractCameraData(n, ortho, near_plane, far_plane, fov, sensor_size, focal_length, focus_distance);
+    float near_plane, far_plane, fov, focal_length;
+    mu::float2 sensor_size, lens_shift;
+    extractCameraData(n, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t, near_plane });
     dst.far_plane.push_back({ t, far_plane });
     dst.fov.push_back({ t, fov });
 
-    // params for physical camera. not needed for now.
-#if 0
     dst.focal_length.push_back({ t, focal_length });
-    dst.focus_distance.push_back({ t, focus_distance });
     dst.sensor_size.push_back({ t, sensor_size });
-#endif
+    dst.lens_shift.push_back({ t, lens_shift });
 }
 
 void msmayaContext::extractLightAnimationData(ms::TransformAnimation& dst_, TreeNode *n)

@@ -1651,9 +1651,24 @@ namespace UTJ.MeshSync
             var cam = Misc.GetOrAddComponent<Camera>(trans.gameObject);
             cam.orthographic = data.orthographic;
 
-            float fov = data.fov;
-            if (fov > 0.0f)
-                cam.fieldOfView = fov;
+            // use physical camera params if available
+            float focalLength = data.focalLength;
+            if (focalLength > 0.0f)
+            {
+                cam.usePhysicalProperties = true;
+                cam.focalLength = focalLength;
+
+                var sensorSize = data.sensorSize;
+                if (sensorSize.x > 0.0f && sensorSize.y > 0.0f)
+                    cam.sensorSize = sensorSize;
+                cam.lensShift = data.lensShift;
+            }
+            else
+            {
+                float fov = data.fov;
+                if (fov > 0.0f)
+                    cam.fieldOfView = fov;
+            }
 
             float nearClipPlane = data.nearClipPlane;
             float farClipPlane = data.farClipPlane;

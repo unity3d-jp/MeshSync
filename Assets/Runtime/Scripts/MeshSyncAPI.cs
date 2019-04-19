@@ -1041,9 +1041,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFocalLength(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFocusDistance(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraSensorSize(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraLendsShift(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraLensShift(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightColor(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
@@ -1204,6 +1203,40 @@ namespace UTJ.MeshSync
             var path = ctx.path;
             var interpolation = ctx.interpolation;
 
+            // use physical camera params if available
+            bool usePhysicalCameraParams = false;
+            {
+                const string Target = "m_FocalLength";
+                clip.SetCurve(path, tcam, Target, null);
+                var curves = GenCurves(msAnimationGetCameraFocalLength(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                {
+                    clip.SetCurve(path, tcam, Target, curves[0]);
+                    usePhysicalCameraParams = true;
+                }
+            }
+            if (usePhysicalCameraParams)
+            {
+                {
+                    clip.SetCurve(path, tcam, "m_SensorSize", null);
+                    var curves = GenCurves(msAnimationGetCameraSensorSize(self), interpolation);
+                    if (curves != null && curves.Length == 2)
+                    {
+                        clip.SetCurve(path, tcam, "m_SensorSize.x", curves[0]);
+                        clip.SetCurve(path, tcam, "m_SensorSize.y", curves[1]);
+                    }
+                }
+                {
+                    clip.SetCurve(path, tcam, "m_LensShift", null);
+                    var curves = GenCurves(msAnimationGetCameraLensShift(self), interpolation);
+                    if (curves != null && curves.Length == 2)
+                    {
+                        clip.SetCurve(path, tcam, "m_LensShift.x", curves[0]);
+                        clip.SetCurve(path, tcam, "m_LensShift.y", curves[1]);
+                    }
+                }
+            }
+            else
             {
                 const string Target = "field of view";
                 clip.SetCurve(path, tcam, Target, null);
@@ -1211,6 +1244,7 @@ namespace UTJ.MeshSync
                 if (curves != null && curves.Length == 1)
                     clip.SetCurve(path, tcam, Target, curves[0]);
             }
+
             {
                 const string Target = "near clip plane";
                 clip.SetCurve(path, tcam, Target, null);
@@ -1224,33 +1258,6 @@ namespace UTJ.MeshSync
                 var curves = GenCurves(msAnimationGetCameraFarPlane(self), interpolation);
                 if (curves != null && curves.Length == 1)
                     clip.SetCurve(path, tcam, Target, curves[0]);
-            }
-
-            // physical camera params
-            {
-                const string Target = "m_FocalLength";
-                clip.SetCurve(path, tcam, Target, null);
-                var curves = GenCurves(msAnimationGetCameraFocalLength(self), interpolation);
-                if (curves != null && curves.Length == 1)
-                    clip.SetCurve(path, tcam, Target, curves[0]);
-            }
-            {
-                clip.SetCurve(path, tcam, "m_SensorSize", null);
-                var curves = GenCurves(msAnimationGetCameraSensorSize(self), interpolation);
-                if (curves != null && curves.Length == 2)
-                {
-                    clip.SetCurve(path, tcam, "m_SensorSize.x", curves[0]);
-                    clip.SetCurve(path, tcam, "m_SensorSize.y", curves[1]);
-                }
-            }
-            {
-                clip.SetCurve(path, tcam, "m_LensShift", null);
-                var curves = GenCurves(msAnimationGetCameraLendsShift(self), interpolation);
-                if (curves != null && curves.Length == 2)
-                {
-                    clip.SetCurve(path, tcam, "m_LensShift.x", curves[0]);
-                    clip.SetCurve(path, tcam, "m_LensShift.y", curves[1]);
-                }
             }
         }
 
@@ -1537,12 +1544,10 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msCameraSetFarPlane(IntPtr self, float v);
         [DllImport("MeshSyncServer")] static extern float msCameraGetFocalLength(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msCameraSetFocalLength(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetFocusDistance(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetFocusDistance(IntPtr self, float v);
         [DllImport("MeshSyncServer")] static extern void msCameraGetSensorSize(IntPtr self, ref Vector2 v);
         [DllImport("MeshSyncServer")] static extern void msCameraSetSensorSize(IntPtr self, ref Vector2 v);
-        [DllImport("MeshSyncServer")] static extern void msCameraGetLendsShift(IntPtr self, ref Vector2 v);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetLendsShift(IntPtr self, ref Vector2 v);
+        [DllImport("MeshSyncServer")] static extern void msCameraGetLensShift(IntPtr self, ref Vector2 v);
+        [DllImport("MeshSyncServer")] static extern void msCameraSetLensShift(IntPtr self, ref Vector2 v);
         #endregion
 
 
@@ -1576,20 +1581,15 @@ namespace UTJ.MeshSync
             get { return msCameraGetFocalLength(self); }
             set { msCameraSetFocalLength(self, value); }
         }
-        public float focusDistance
-        {
-            get { return msCameraGetFocusDistance(self); }
-            set { msCameraSetFocusDistance(self, value); }
-        }
         public Vector2 sensorSize
         {
             get { var v = Vector2.zero; msCameraGetSensorSize(self, ref v); return v; }
             set { msCameraSetSensorSize(self, ref value); }
         }
-        public Vector2 lendsShift
+        public Vector2 lensShift
         {
-            get { var v = Vector2.zero; msCameraGetLendsShift(self, ref v); return v; }
-            set { msCameraSetLendsShift(self, ref value); }
+            get { var v = Vector2.zero; msCameraGetLensShift(self, ref v); return v; }
+            set { msCameraSetLensShift(self, ref value); }
         }
     }
 

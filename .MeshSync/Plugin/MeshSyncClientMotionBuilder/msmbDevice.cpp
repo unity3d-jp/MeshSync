@@ -322,7 +322,7 @@ static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, 
 }
 
 static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
-    mu::float2& sensor_size, float& focal_length, float& focus_distance)
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     ortho = src->Type == kFBCameraTypeOrthogonal;
     near_plane = (float)src->NearPlaneDistance;
@@ -330,9 +330,9 @@ static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, flo
     fov = (float)src->FieldOfViewY;
 
     // todo:
-    sensor_size = mu::float2::zero(); 
     focal_length = 0.0f;
-    focus_distance = 0.0f;
+    sensor_size = mu::float2::zero();
+    lens_shift = mu::float2::zero();
 }
 
 static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
@@ -405,7 +405,7 @@ ms::CameraPtr msmbDevice::exportCamera(NodeRecord& n)
 
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
     ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
-        dst.sensor_size, dst.focal_length, dst.focus_distance);
+        dst.focal_length, dst.sensor_size, dst.lens_shift);
 
     m_entity_manager.add(ret);
     return ret;
@@ -902,9 +902,9 @@ void msmbDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel* s
     auto& dst = static_cast<ms::CameraAnimation&>(dst_);
 
     bool ortho;
-    float near_plane, far_plane, fov, focal_length, focus_distance;
-    mu::float2 sensor_size;
-    ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, sensor_size, focal_length, focus_distance);
+    float near_plane, far_plane, fov, focal_length;
+    mu::float2 sensor_size, lens_shift;
+    ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });

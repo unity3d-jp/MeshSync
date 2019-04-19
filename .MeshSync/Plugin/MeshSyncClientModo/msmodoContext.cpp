@@ -189,40 +189,42 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
 }
 
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
-    mu::float2& sensor_size, float& focal_length, float& focus_distance)
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
-    static uint32_t ch_proj_type, ch_res_x, ch_res_y, ch_aperture_x, ch_aperture_y, ch_focal_len, ch_focus_dist, ch_clip_dist;
+    static uint32_t ch_proj_type, ch_res_x, ch_res_y, ch_clip_dist, ch_focal_len, ch_aperture_x, ch_aperture_y, ch_offset_x, ch_offset_y;
     if (ch_proj_type == 0) {
         n.item.ChannelLookup(LXsICHAN_CAMERA_PROJTYPE, &ch_proj_type);
         n.item.ChannelLookup(LXsICHAN_CAMERA_RESX, &ch_res_x);
         n.item.ChannelLookup(LXsICHAN_CAMERA_RESY, &ch_res_y);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_CLIPDIST, &ch_clip_dist);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_FOCALLEN, &ch_focal_len);
         n.item.ChannelLookup(LXsICHAN_CAMERA_APERTUREX, &ch_aperture_x);
         n.item.ChannelLookup(LXsICHAN_CAMERA_APERTUREY, &ch_aperture_y);
-        n.item.ChannelLookup(LXsICHAN_CAMERA_FOCALLEN, &ch_focal_len);
-        n.item.ChannelLookup(LXsICHAN_CAMERA_FOCUSDIST, &ch_focus_dist);
-        n.item.ChannelLookup(LXsICHAN_CAMERA_CLIPDIST, &ch_clip_dist);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_OFFSETX, &ch_offset_x);
+        n.item.ChannelLookup(LXsICHAN_CAMERA_OFFSETY, &ch_offset_y);
     }
 
     int proj, res_x, res_y;
-    double aperture_x, aperture_y, focal_len, focus_dist;
+    double focal_len, aperture_x, aperture_y, offset_x, offset_y;
     m_ch_read.Integer(n.item, ch_proj_type, &proj);
     m_ch_read.Integer(n.item, ch_res_x, &res_x);
     m_ch_read.Integer(n.item, ch_res_y, &res_y);
+    m_ch_read.Double(n.item, ch_focal_len, &focal_len);
     m_ch_read.Double(n.item, ch_aperture_x, &aperture_x);
     m_ch_read.Double(n.item, ch_aperture_y, &aperture_y);
-    m_ch_read.Double(n.item, ch_focal_len, &focal_len);
-    m_ch_read.Double(n.item, ch_focus_dist, &focus_dist);
-
-    sensor_size.x = (float)aperture_x;
-    sensor_size.y = (float)aperture_y;
-    focal_length = (float)focal_len;
-    focus_distance = (float)focus_dist;
+    m_ch_read.Double(n.item, ch_offset_x, &offset_x);
+    m_ch_read.Double(n.item, ch_offset_y, &offset_y);
 
     ortho = proj == 1;
     fov = mu::compute_fov((float)aperture_y, focal_length);
-
-    // disable near/far plane
+    // disable clipping planes
     near_plane = far_plane = 0.0f;
+
+    focal_length = (float)focal_len;
+    sensor_size.x = (float)aperture_x;
+    sensor_size.y = (float)aperture_y;
+    lens_shift.x = (float)offset_x;
+    lens_shift.y = (float)offset_y;
 }
 
 void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle)
@@ -637,7 +639,7 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
-        dst.sensor_size, dst.focal_length, dst.focus_distance);
+        dst.focal_length, dst.sensor_size, dst.lens_shift);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -1149,20 +1151,17 @@ void msmodoContext::extractCameraAnimationData(TreeNode& n)
     auto& dst = (ms::CameraAnimation&)*n.dst_anim;
 
     bool ortho;
-    float near_plane, far_plane, fov, focal_length, focus_distance;
-    mu::float2 sensor_size;
-    extractCameraData(n, ortho, near_plane, far_plane, fov, sensor_size, focal_length, focus_distance);
+    float near_plane, far_plane, fov, focal_length;
+    mu::float2 sensor_size, lens_shift;
+    extractCameraData(n, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t, near_plane });
     dst.far_plane.push_back({ t, far_plane });
     dst.fov.push_back({ t, fov });
-
-#if 0
     dst.focal_length.push_back({ t, focal_length });
-    dst.focus_distance.push_back({ t, focus_distance });
     dst.sensor_size.push_back({ t, sensor_size });
-#endif
+    dst.lens_shift.push_back({ t, lens_shift });
 }
 
 void msmodoContext::extractLightAnimationData(TreeNode& n)

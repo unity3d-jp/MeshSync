@@ -245,7 +245,7 @@ Entity::Type Camera::getType() const
 }
 
 #define EachMember(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(focus_distance) F(sensor_size) F(lends_shift)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift)
 
 void Camera::serialize(std::ostream& os) const
 {
@@ -268,9 +268,8 @@ void Camera::clear()
     far_plane = 1000.0f;
 
     focal_length = 0.0f;
-    focus_distance = 0.0f;
     sensor_size = float2::zero();
-    lends_shift = float2::zero();
+    lens_shift = float2::zero();
 }
 
 uint64_t Camera::checksumTrans() const
@@ -295,9 +294,8 @@ bool Camera::lerp(const Entity& s1_, const Entity& s2_, float t)
     DoLerp(near_plane);
     DoLerp(far_plane);
     DoLerp(focal_length);
-    DoLerp(focus_distance);
     DoLerp(sensor_size);
-    DoLerp(lends_shift);
+    DoLerp(lens_shift);
 #undef DoLerp
     return true;
 }
