@@ -934,7 +934,7 @@ void Mesh::setupBoneWeights4()
 
     int num_bones = (int)bones.size();
     int num_vertices = (int)points.size();
-    weights4.resize_discard(num_vertices);
+    weights4.resize_zeroclear(num_vertices);
 
     auto search_weight = [this](int vi) {
         // some DCC tools (mainly MotionBuilder) omit weight data if there are vertices with identical position. so find it.
@@ -952,8 +952,7 @@ void Mesh::setupBoneWeights4()
         }
     };
 
-    weights4.zeroclear();
-    auto *tmp = (Weights1*)alloca(sizeof(Weights1) * num_bones);
+    RawVector<Weights1> tmp(num_bones);
     for (int vi = 0; vi < num_vertices; ++vi) {
         int num_influence = 0;
         for (int bi = 0; bi < num_bones; ++bi) {
@@ -965,13 +964,13 @@ void Mesh::setupBoneWeights4()
             }
         }
         if (num_influence > 4) {
-            std::nth_element(tmp, tmp + 4, tmp + num_influence,
-                [&](const Weights1& a, const Weights1& b) { return a.weight > b.weight; });
+            std::nth_element(&tmp[0], &tmp[4], &tmp[num_influence],
+                [&](auto& a, auto& b) { return a.weight > b.weight; });
         }
 
         int n = std::min(4, num_influence);
         if (n == 0) {
-            // this is an irregular case. should do something?
+            // should do something?
         }
         else {
             auto& w4 = weights4[vi];
@@ -1002,8 +1001,7 @@ void Mesh::setupBoneWeightsVariable()
         for (int bi = 0; bi < num_bones; ++bi) {
             float weight = bones[bi]->weights[vi];
             if (weight > 0.0f) {
-                ++num_influence;
-                if (num_influence == 255)
+                if (++num_influence == 255)
                     break;
             }
         }
@@ -1041,16 +1039,14 @@ void Mesh::setupBoneWeightsVariable()
                 auto& w1 = dst[num_influence];
                 w1.weight = weight;
                 w1.index = bi;
-
-                ++num_influence;
-                if (num_influence == 255)
+                if (++num_influence == 255)
                     break;
             }
         }
         offset += num_influence;
 
         if (num_influence == 0) {
-            // this is an irregular case. should do something?
+            // should do something?
         }
         else if (dst->normalize(num_influence) == 0.0f) {
             search_weight(vi);
@@ -1058,7 +1054,7 @@ void Mesh::setupBoneWeightsVariable()
         else {
             // Unity requires descending order of weights
             std::sort(dst, dst + num_influence,
-                [&](const Weights1& a, const Weights1& b) { return a.weight > b.weight; });
+                [&](auto& a, auto& b) { return a.weight > b.weight; });
         }
     }
 }

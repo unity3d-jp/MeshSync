@@ -183,6 +183,8 @@ msDeclPtr(TransformAnimation);
 #define mskCameraVerticalAperture   "Camera.verticalAperture"
 #define mskCameraFocalLength        "Camera.focalLength"
 #define mskCameraFocusDistance      "Camera.focusDistance"
+#define mskCameraSensorSize         "Camera.sensorSize"
+#define mskCameraLendsShift         "Camera.lendsShift"
 
 class CameraAnimation : public TransformAnimation
 {

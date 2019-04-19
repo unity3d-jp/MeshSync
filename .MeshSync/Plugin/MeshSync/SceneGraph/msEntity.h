@@ -100,6 +100,8 @@ public:
     float horizontal_aperture = 0.0f;
     float focal_length = 0.0f;
     float focus_distance = 0.0f;
+    float2 sensor_size = float2::zero();
+    float2 lends_shift = float2::zero();
 
 protected:
     Camera();

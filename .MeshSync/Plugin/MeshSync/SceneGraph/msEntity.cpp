@@ -245,7 +245,7 @@ Entity::Type Camera::getType() const
 }
 
 #define EachMember(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(vertical_aperture) F(horizontal_aperture) F(focal_length) F(focus_distance)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(vertical_aperture) F(horizontal_aperture) F(focal_length) F(focus_distance) F(sensor_size) F(lends_shift)
 
 void Camera::serialize(std::ostream& os) const
 {
@@ -271,6 +271,8 @@ void Camera::clear()
     horizontal_aperture = 0.0f;
     focal_length = 0.0f;
     focus_distance = 0.0f;
+    sensor_size = float2::zero();
+    lends_shift = float2::zero();
 }
 
 uint64_t Camera::checksumTrans() const
