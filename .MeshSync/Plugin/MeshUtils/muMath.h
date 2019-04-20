@@ -11,9 +11,16 @@
 
 namespace mu {
 
-extern const float PI;
-extern const float Deg2Rad;
-extern const float Rad2Deg;
+constexpr double PI_d = 3.14159265358979323846264338327950288419716939937510;
+constexpr double DegToRad_d = PI_d / 180.0;
+constexpr double RadToDeg_d = 1.0f / (PI_d / 180.0);
+constexpr double InchToMillimeter_d = 25.4;
+
+constexpr float PI = 3.14159265358979323846264338327950288419716939937510f;
+constexpr float DegToRad = PI / 180.0f;
+constexpr float RadToDeg = 1.0f / (PI / 180.0f);
+constexpr float InchToMillimeter = 25.4f;
+
 
 template<class T>
 struct tvec2
@@ -1253,7 +1260,7 @@ template<class T>
 inline void extract_projection_data(const tmat4x4<T>& proj, T& fov, T& aspect, T& near_plane, T& far_plane)
 {
     auto tan_half_fov = T(1.0) / proj[1][1];
-    fov = atan(tan_half_fov) * T(2.0) * Rad2Deg;
+    fov = atan(tan_half_fov) * T(2.0) * RadToDeg;
     aspect = (T(1.0) / proj[0][0]) / tan_half_fov;
 
     auto m22 = -proj[2][2];
@@ -1468,14 +1475,14 @@ template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
 // aperture and focal_length must be millimeter. return fov in degree
 template<class T> inline T compute_fov(T aperture, T focal_length)
 {
-    return T(2.0) * atan(aperture / (T(2.0) * focal_length)) * Rad2Deg;
+    return T(2.0) * atan(aperture / (T(2.0) * focal_length)) * RadToDeg;
 }
 
 // aperture: millimeter
 // fov: degree
 template<class T> inline T compute_focal_length(T aperture, T fov)
 {
-    return aperture / tan(fov * Deg2Rad / T(2.0)) / T(2.0);
+    return aperture / tan(fov * DegToRad / T(2.0)) / T(2.0);
 }
 
 

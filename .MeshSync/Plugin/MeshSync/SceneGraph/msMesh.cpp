@@ -1049,7 +1049,7 @@ void Mesh::setupBoneWeightsVariable()
             // should do something?
         }
         else if (dst->normalize(num_influence) == 0.0f) {
-            search_weight(vi);
+                search_weight(vi);
         }
         else {
             // Unity requires descending order of weights

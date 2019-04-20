@@ -1,7 +1,5 @@
 #pragma  once
 
-#define InchToMillimeter 25.4
-
 std::string GetName(const MObject& node);
 std::string ToString(const MDagPath& path);
 std::string RemoveNamespace(const std::string& path);

@@ -67,7 +67,7 @@ TestCase(Test_SendMesh)
         auto& indices = mesh->indices;
         auto& mids = mesh->material_ids;
 
-        GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::Deg2Rad * i);
+        GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         mids.resize(counts.size(), 0);
 
         osc->addScene(scene, 0.5f * i);
@@ -124,10 +124,10 @@ TestCase(Test_Animation)
         anim->translation.push_back({ 2.0f, {1.0f, 1.0f, 0.0f} });
         anim->translation.push_back({ 3.0f, {1.0f, 1.0f, 1.0f} });
 
-        anim->rotation.push_back({ 0.0f, ms::rotate_x(0.0f * mu::Deg2Rad) });
-        anim->rotation.push_back({ 1.0f, ms::rotate_x(90.0f * mu::Deg2Rad) });
-        anim->rotation.push_back({ 2.0f, ms::rotate_x(180.0f * mu::Deg2Rad) });
-        anim->rotation.push_back({ 3.0f, ms::rotate_x(270.0f * mu::Deg2Rad) });
+        anim->rotation.push_back({ 0.0f, ms::rotate_x(0.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 1.0f, ms::rotate_x(90.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 2.0f, ms::rotate_x(180.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 3.0f, ms::rotate_x(270.0f * mu::DegToRad) });
 
         anim->scale.push_back({ 0.0f, {1.0f, 1.0f, 1.0f} });
         anim->scale.push_back({ 1.0f, {2.0f, 2.0f, 2.0f} });
@@ -380,7 +380,7 @@ static void GenerateAudioSample(T *dst, int n)
 {
     for (int i = 0; i < n; ++i) {
         float s = std::pow(float(n - i) / n, 0.5f);
-        dst[i] = std::sin((float(i) * 1.5f * ms::Deg2Rad)) * s;
+        dst[i] = std::sin((float(i) * 1.5f * ms::DegToRad)) * s;
     }
 }
 

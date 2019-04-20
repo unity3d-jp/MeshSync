@@ -148,7 +148,7 @@ inline bool OnEdgeImpl(const Indices& indices, const Counts& counts, const Offse
         angle += angle_between2(v1, v2, v0);
     }
     // angle_between's precision seems very low on Mac.. it can be like 357.9f on closed edge
-    return angle < 357.0f * Deg2Rad;
+    return angle < 357.0f * DegToRad;
 }
 
 template<class Indices, class Counts, class Offsets>

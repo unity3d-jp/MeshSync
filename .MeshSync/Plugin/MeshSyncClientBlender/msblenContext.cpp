@@ -69,11 +69,11 @@ static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::f
     vis = is_visible(src);
 
     if (src->type == OB_CAMERA) {
-        static const auto cr = mu::rotate_z(180.0f * mu::Deg2Rad) * mu::rotate_x(-180.0f * mu::Deg2Rad);
+        static const auto cr = mu::rotate_z(180.0f * mu::DegToRad) * mu::rotate_x(-180.0f * mu::DegToRad);
         r *= cr;
     }
     else if (src->type == OB_LAMP) {
-        static const auto cr = mu::rotate_x(-180.0f * mu::Deg2Rad);
+        static const auto cr = mu::rotate_x(-180.0f * mu::DegToRad);
         r *= cr;
     }
 }
@@ -93,7 +93,7 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
 
     near_plane = cam.clip_start();
     far_plane = cam.clip_end();
-    fov = cam.angle_y() * mu::Rad2Deg;
+    fov = cam.angle_y() * mu::RadToDeg;
     focal_length = cam.lens();
     sensor_size.x = cam.sensor_width();
     sensor_size.y = cam.sensor_height();
@@ -119,7 +119,7 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4
         break;
     case LA_SPOT:
         type = ms::Light::LightType::Spot;
-        spot_angle = data->spotsize * mu::Rad2Deg;
+        spot_angle = data->spotsize * mu::RadToDeg;
         break;
     case LA_AREA:
         type = ms::Light::LightType::Area;

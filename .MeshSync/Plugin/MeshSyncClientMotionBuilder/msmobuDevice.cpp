@@ -316,9 +316,9 @@ static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, 
     vis = IsVisibleInHierarchy(src);
 
     if (IsCamera(src))
-        rot *= mu::rotate_y(90.0f * mu::Deg2Rad);
+        rot *= mu::rotate_y(90.0f * mu::DegToRad);
     else if (IsLight(src))
-        rot *= mu::rotate_x(90.0f * mu::Deg2Rad);
+        rot *= mu::rotate_x(90.0f * mu::DegToRad);
 }
 
 static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -329,10 +329,11 @@ static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, flo
     far_plane = (float)src->FarPlaneDistance;
     fov = (float)src->FieldOfViewY;
 
-    // todo:
-    focal_length = 0.0f;
-    sensor_size = mu::float2::zero();
-    lens_shift = mu::float2::zero();
+    focal_length = (float)src->FocalLength;
+    sensor_size.x = (float)(src->FilmSizeWidth * mu::InchToMillimeter_d);
+    sensor_size.y = (float)(src->FilmSizeHeight * mu::InchToMillimeter_d);
+    lens_shift.x = (float)src->OpticalCenterX;
+    lens_shift.y = (float)src->OpticalCenterY;
 }
 
 static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
@@ -579,7 +580,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 
                     FBVector3d t, r, s;
                     cluster->VertexGetTransform(t, r, s);
-                    mu::quatf q = mu::invert(mu::rotate_xyz(to_float3(r) * mu::Deg2Rad));
+                    mu::quatf q = mu::invert(mu::rotate_xyz(to_float3(r) * mu::DegToRad));
                     bd->bindpose = mu::transform(to_float3(t), q, to_float3(s));
                 }
 
@@ -907,7 +908,9 @@ void msmobuDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel*
     dst.far_plane.push_back({ t , far_plane });
     dst.fov.push_back({ t , fov });
 
-    // todo: physical camera params
+    dst.focal_length.push_back({ t, focal_length });
+    dst.sensor_size.push_back({ t, sensor_size });
+    dst.lens_shift.push_back({ t, lens_shift });
 }
 
 void msmobuDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* src)

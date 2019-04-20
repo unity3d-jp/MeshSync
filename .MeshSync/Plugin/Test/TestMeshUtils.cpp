@@ -493,7 +493,7 @@ TestCase(TestPolygonInside)
 
     poly.resize(ngon); polyx.resize(ngon); polyy.resize(ngon);
     for (int i = 0; i < ngon; ++i) {
-        float a = (360.0f / ngon) * i * Deg2Rad;
+        float a = (360.0f / ngon) * i * DegToRad;
         poly[i] = { std::sin(a), std::cos(a) };
         polyx[i] = poly[i].x;
         polyy[i] = poly[i].y;
@@ -670,7 +670,7 @@ TestCase(TestHandedness)
         float4 ydir{ 0.0f, 1.0f, 0.0f, 0.0f };
         float4 zdir{ 0.0f, 0.0f, 1.0f, 0.0f };
 
-        quatf rot1 = rotate_y(90.0f * Deg2Rad);
+        quatf rot1 = rotate_y(90.0f * DegToRad);
         quatf rot2 = swap_yz(rot1);
 
         float4
@@ -688,12 +688,12 @@ TestCase(TestMatrixExtraction)
 {
     // parent
     auto pos1 = float3{ 1.0f, 2.0f, 3.0f };
-    auto rot1 = rotate_xyz(float3{ 15.0f * Deg2Rad, 30.0f * Deg2Rad, 60.0f * Deg2Rad });
+    auto rot1 = rotate_xyz(float3{ 15.0f * DegToRad, 30.0f * DegToRad, 60.0f * DegToRad });
     auto scl1 = float3{ 1.0f, -0.5f, 0.25f };
 
     // child
     auto pos2 = float3{ -5.0f, -2.5f, -1.0f };
-    auto rot2 = rotate_xyz(float3{ -90.0f * Deg2Rad, -60.0f * Deg2Rad, -30.0f * Deg2Rad });
+    auto rot2 = rotate_xyz(float3{ -90.0f * DegToRad, -60.0f * DegToRad, -30.0f * DegToRad });
     auto scl2 = float3{ -3.0f, -1.0f, 2.0f };
 
     auto mat_parent = transform(pos1, rot1, scl1);

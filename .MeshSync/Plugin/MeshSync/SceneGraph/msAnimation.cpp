@@ -71,7 +71,7 @@ static void ReduceKeyframes(AnimationCurve& self, bool keep_flat_curve)
 template<> void ReduceKeyframes<void>(AnimationCurve& /*self*/, bool /*keep_flat_curve*/) {}
 
 template<class T> static inline T handle_yz(const T& v) { return flip_z(swap_yz(v)); }
-template<> inline quatf handle_yz(const quatf& v) { return flip_z(swap_yz(v)) * rotate_x(-90.0f * Deg2Rad); }
+template<> inline quatf handle_yz(const quatf& v) { return flip_z(swap_yz(v)) * rotate_x(-90.0f * DegToRad); }
 
 template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x, bool yz)
 {

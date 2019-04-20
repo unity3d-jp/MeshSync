@@ -70,7 +70,7 @@ void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
     dst.resize_discard(indices.size());
     dst.zeroclear();
     offset = 0;
-    const float angle = std::cos(smooth_angle * Deg2Rad) - 0.001f;
+    const float angle = std::cos(smooth_angle * DegToRad) - 0.001f;
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
@@ -190,9 +190,9 @@ void QuadifyTriangles(const IArray<float3> points, const IArray<int> indices, bo
 
             float angles[4]{
                 0.0f,
-                angle_between2_signed(qpoints[0], qpoints[1], center, normal1) * Rad2Deg,
-                angle_between2_signed(qpoints[0], qpoints[2], center, normal1) * Rad2Deg,
-                angle_between2_signed(qpoints[0], qpoints[3], center, normal1) * Rad2Deg,
+                angle_between2_signed(qpoints[0], qpoints[1], center, normal1) * RadToDeg,
+                angle_between2_signed(qpoints[0], qpoints[2], center, normal1) * RadToDeg,
+                angle_between2_signed(qpoints[0], qpoints[3], center, normal1) * RadToDeg,
             };
 
             int cwi[4], quad_tmp[4];
@@ -216,7 +216,7 @@ void QuadifyTriangles(const IArray<float3> points, const IArray<int> indices, bo
                 float angle = angle_between2(
                     qpoints[corners[i][0]],
                     qpoints[corners[i][2]],
-                    qpoints[corners[i][1]]) * Rad2Deg;
+                    qpoints[corners[i][1]]) * RadToDeg;
                 diff = std::max(diff, abs(angle - 90.0f));
             }
             if (diff < threshold_angle && diff < cd.nangle) {

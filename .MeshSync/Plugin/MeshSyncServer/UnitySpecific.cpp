@@ -277,7 +277,7 @@ static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, Keyfra
     float3 prev;
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
-        auto r = mu::to_euler_zxy(v.value) * mu::Rad2Deg;
+        auto r = mu::to_euler_zxy(v.value) * mu::RadToDeg;
         if (i > 0) {
             // make continuous
             auto d = r - mu::mod(prev, 360.0f);

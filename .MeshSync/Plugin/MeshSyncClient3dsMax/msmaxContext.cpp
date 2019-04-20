@@ -581,11 +581,11 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
         auto *obj = GetBaseObject(n);
         auto cid = obj->SuperClassID();
         if (cid == CAMERA_CLASS_ID) {
-            static const auto cr = mu::rotate_z(-180.0f * mu::Deg2Rad) * mu::rotate_x(-180.0f * mu::Deg2Rad);
+            static const auto cr = mu::rotate_z(-180.0f * mu::DegToRad) * mu::rotate_x(-180.0f * mu::DegToRad);
             rot *= cr;
         }
         else if (cid == LIGHT_CLASS_ID) {
-            static const auto cr = mu::rotate_x(-180.0f * mu::Deg2Rad);
+            static const auto cr = mu::rotate_x(-180.0f * mu::DegToRad);
             rot *= cr;
         }
     }
@@ -601,7 +601,7 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
         float hfov = cam->GetFOV(t);
         // CameraObject::GetFOV() returns horizontal fov. we need vertical one.
         float vfov = 2.0f * std::atan(std::tan(hfov / 2.0f) / aspect);
-        fov = vfov * mu::Rad2Deg;
+        fov = vfov * mu::RadToDeg;
     }
     if (cam->GetManualClip()) {
         near_plane = cam->GetClipDist(t, 0);

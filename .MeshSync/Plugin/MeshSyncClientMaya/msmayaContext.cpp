@@ -913,7 +913,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
     if (n->shape->node.hasFn(MFn::kCamera))
         rot = mu::flip_y(rot);
     else if (n->shape->node.hasFn(MFn::kLight))
-        rot = mu::flip_y(rot) * mu::rotate_z(180.0f * mu::Deg2Rad);
+        rot = mu::flip_y(rot) * mu::rotate_z(180.0f * mu::DegToRad);
 
     scale = td.scale;
     vis = n->isVisibleInHierarchy();
@@ -928,13 +928,13 @@ void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plan
     ortho = mcam.isOrtho();
     near_plane = (float)mcam.nearClippingPlane();
     far_plane = (float)mcam.farClippingPlane();
-    fov = (float)mcam.verticalFieldOfView() * ms::Rad2Deg;
+    fov = (float)mcam.verticalFieldOfView() * ms::RadToDeg;
 
     focal_length = (float)mcam.focalLength();
-    sensor_size.x = (float)(mcam.horizontalFilmAperture() * InchToMillimeter);
-    sensor_size.y = (float)(mcam.verticalFilmAperture() * InchToMillimeter);
-    lens_shift.x = (float)(mcam.horizontalFilmOffset() * InchToMillimeter);
-    lens_shift.y = (float)(mcam.verticalFilmOffset() * InchToMillimeter);
+    sensor_size.x = (float)(mcam.horizontalFilmAperture() * mu::InchToMillimeter_d);
+    sensor_size.y = (float)(mcam.verticalFilmAperture() * mu::InchToMillimeter_d);
+    lens_shift.x = (float)(mcam.horizontalFilmOffset() * mu::InchToMillimeter_d);
+    lens_shift.y = (float)(mcam.verticalFilmOffset() * mu::InchToMillimeter_d);
 }
 
 void msmayaContext::extractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
@@ -943,7 +943,7 @@ void msmayaContext::extractLightData(TreeNode *n, ms::Light::LightType& type, mu
     if (shape.hasFn(MFn::kSpotLight)) {
         MFnSpotLight mlight(shape);
         type = ms::Light::LightType::Spot;
-        spot_angle = (float)mlight.coneAngle() * mu::Rad2Deg;
+        spot_angle = (float)mlight.coneAngle() * mu::RadToDeg;
     }
     else if (shape.hasFn(MFn::kDirectionalLight)) {
         //MFnDirectionalLight mlight(shape);

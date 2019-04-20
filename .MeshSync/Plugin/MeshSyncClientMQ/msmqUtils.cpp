@@ -48,14 +48,14 @@ float3 ToEular(const MQAngle& ang, bool flip_head)
             ang.pitch,
             -ang.head + 180.0f, // I can't explain why this modification is needed...
             ang.bank
-        } *mu::Deg2Rad;
+        } *mu::DegToRad;
     }
     else {
         return float3{
             ang.pitch,
             ang.head,
             ang.bank
-        } *mu::Deg2Rad;
+        } *mu::DegToRad;
     }
 }
 

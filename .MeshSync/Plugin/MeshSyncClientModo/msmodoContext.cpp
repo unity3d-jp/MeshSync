@@ -182,7 +182,7 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
     if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
         rot = mu::flip_y(rot);
         if (n.item.IsA(tLight))
-            rot *= mu::rotate_z(180.0f * mu::Deg2Rad);
+            rot *= mu::rotate_z(180.0f * mu::DegToRad);
     }
     scale = extract_scale(mat);
     vis = loc.Visible(m_ch_read) == LXe_TRUE;
@@ -249,7 +249,7 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
         m_ch_read.Double(n.item, ch_radius, &radius);
         m_ch_read.Double(n.item, ch_cone, &cone);
         range = (float)radius;
-        spot_angle = (float)cone * mu::Rad2Deg;
+        spot_angle = (float)cone * mu::RadToDeg;
     }
     else if (t == tPointLight) {
         type = ms::Light::LightType::Point;
