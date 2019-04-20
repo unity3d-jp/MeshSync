@@ -190,6 +190,6 @@ private:
     float m_anim_time = 0.0f;
 };
 
-#define msmodoGetInstance() msmodoContext::getInstance()
-#define msmodoGetSettings() msmodoGetInstance().getSettings()
+#define msmodoGetContext() msmodoContext::getInstance()
+#define msmodoGetSettings() msmodoGetContext().getSettings()
 bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope scope);

@@ -36,6 +36,11 @@ public:
 
     msmobuSettings& getSettings();
 
+    void logInfo(const char *format, ...);
+    void logError(const char *format, ...);
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
+
     void wait();
     void update();
 

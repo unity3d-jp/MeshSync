@@ -197,18 +197,18 @@ void msmodoInterface::onIdle() {}
 
 void msmodoInterface::logInfo(const char *format, ...)
 {
-    const int MaxBuf = 4096;
+    if (!m_master_log.test())
+        return;
+
+    const int MaxBuf = 2048;
     char buf[MaxBuf];
 
     va_list args;
     va_start(args, format);
     vsprintf(buf, format, args);
-    if (m_master_log.test()) {
-        m_svc_log.NewEntry(LXe_INFO, buf, m_log_entry);
-        m_master_log.AddEntry(m_log_entry);
-    }
+    m_svc_log.NewEntry(LXe_INFO, buf, m_log_entry);
+    m_master_log.AddEntry(m_log_entry);
     va_end(args);
-    fflush(stdout);
 }
 
 void msmodoInterface::logError(const char *format, ...)
@@ -216,18 +216,15 @@ void msmodoInterface::logError(const char *format, ...)
     if (!m_master_log.test())
         return;
 
-    const int MaxBuf = 4096;
+    const int MaxBuf = 2048;
     char buf[MaxBuf];
 
     va_list args;
     va_start(args, format);
     vsprintf(buf, format, args);
-    if (m_master_log.test()) {
-        m_svc_log.NewEntry(LXe_WARNING, buf, m_log_entry);
-        m_master_log.AddEntry(m_log_entry);
-    }
+    m_svc_log.NewEntry(LXe_WARNING, buf, m_log_entry);
+    m_master_log.AddEntry(m_log_entry);
     va_end(args);
-    fflush(stdout);
 }
 
 void msmodoInterface::setChannelReadTime(double time)

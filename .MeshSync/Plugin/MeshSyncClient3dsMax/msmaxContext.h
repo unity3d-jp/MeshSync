@@ -5,43 +5,42 @@
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
+struct msmaxSettings
+{
+    ms::ClientSettings client_settings;
+
+    int timeout_ms = 5000;
+    float scale_factor = 1.0f;
+    bool auto_sync = false;
+    bool sync_meshes = true;
+    bool sync_normals = true;
+    bool sync_uvs = true;
+    bool sync_colors = true;
+    bool flip_faces = true;
+    bool make_double_sided = false;
+    bool bake_modifiers = false;
+    bool convert_to_mesh = true;
+    bool sync_bones = true;
+    bool sync_blendshapes = true;
+    bool sync_cameras = true;
+    bool sync_lights = true;
+    bool sync_textures = true;
+
+    float animation_time_scale = 1.0f;
+    float animation_sps = 3.0f;
+    bool keyframe_reduction = true;
+    bool keep_flat_curves = false;
+
+    bool multithreaded = true;
+
+    // import settings
+    bool bake_skin = false;
+    bool bake_cloth = false;
+};
 
 class msmaxContext
 {
 public:
-    struct Settings
-    {
-        ms::ClientSettings client_settings;
-
-        int timeout_ms = 5000;
-        float scale_factor = 1.0f;
-        bool auto_sync = false;
-        bool sync_meshes = true;
-        bool sync_normals = true;
-        bool sync_uvs = true;
-        bool sync_colors = true;
-        bool flip_faces = true;
-        bool make_double_sided = false;
-        bool bake_modifiers = false;
-        bool convert_to_mesh = true;
-        bool sync_bones = true;
-        bool sync_blendshapes = true;
-        bool sync_cameras = true;
-        bool sync_lights = true;
-        bool sync_textures = true;
-
-        float animation_time_scale = 1.0f;
-        float animation_sps = 3.0f;
-        bool keyframe_reduction = true;
-        bool keep_flat_curves = false;
-
-        bool multithreaded = true;
-
-        // import settings
-        bool bake_skin = false;
-        bool bake_cloth = false;
-    };
-
     enum class SendTarget : int
     {
         Objects,
@@ -61,7 +60,7 @@ public:
 
     msmaxContext();
     ~msmaxContext();
-    Settings& getSettings();
+    msmaxSettings& getSettings();
 
     void onStartup();
     void onShutdown();
@@ -75,6 +74,10 @@ public:
     void onNodeUpdated(INode *n);
     void onGeometryUpdated(INode *n);
     void onRepaint();
+
+    void logInfo(const char *format, ...);
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
 
     void wait();
     void update();
@@ -153,7 +156,7 @@ private:
     void extractMeshAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
 
 private:
-    Settings m_settings;
+    msmaxSettings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
     std::map<INode*, TreeNode> m_node_records;
@@ -180,4 +183,4 @@ private:
 
 #define msmaxGetContext() msmaxContext::getInstance()
 #define msmaxGetSettings() msmaxGetContext().getSettings()
-
+bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope);

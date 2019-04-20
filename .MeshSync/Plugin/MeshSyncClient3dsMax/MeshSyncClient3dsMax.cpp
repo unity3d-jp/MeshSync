@@ -159,27 +159,7 @@ Value* Export_cf(Value** arg_list, int count)
     }
 
     // do send
-    auto& inst = msmaxGetContext();
-    if (target == msmaxContext::SendTarget::Objects) {
-        inst.wait();
-        inst.sendObjects(scope, true);
-    }
-    else if (target == msmaxContext::SendTarget::Materials) {
-        inst.wait();
-        inst.sendMaterials(true);
-    }
-    else if (target == msmaxContext::SendTarget::Animations) {
-        inst.wait();
-        inst.sendAnimations(scope);
-    }
-    else if (target == msmaxContext::SendTarget::Everything) {
-        inst.wait();
-        inst.sendMaterials(true);
-        inst.wait();
-        inst.sendObjects(scope, true);
-        inst.wait();
-        inst.sendAnimations(scope);
-    }
+    msmaxExport(target, scope);
     return &ok;
 }
 

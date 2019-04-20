@@ -347,12 +347,22 @@ void msmobuLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 
 void msmobuLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->wait();
-    m_device->sendObjects(true);
+    auto& inst = *m_device;
+    if (!inst.isServerAvailable()) {
+        inst.logError("MeshSync: Server not available. %s\n", inst.getErrorMessage().c_str());
+        return;
+    }
+    inst.wait();
+    inst.sendObjects(true);
 }
 
 void msmobuLayout::onSyncAnimation(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->wait();
-    m_device->sendAnimations();
+    auto& inst = *m_device;
+    if (!inst.isServerAvailable()) {
+        inst.logError("MeshSync: Server not available. %s\n", inst.getErrorMessage().c_str());
+        return;
+    }
+    inst.wait();
+    inst.sendAnimations();
 }

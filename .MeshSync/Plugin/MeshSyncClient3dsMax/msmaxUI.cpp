@@ -56,8 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxGetContext().sendObjects(msmaxContext::SendScope::All, true);
-        return TRUE;
+        return msmaxExport(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All);
     }
 };
 
@@ -76,8 +75,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxGetContext().sendAnimations(msmaxContext::SendScope::All);
-        return TRUE;
+        return msmaxExport(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All);
     }
 };
 
@@ -251,8 +249,8 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     // see this about DisableAccelerators(), EnableAccelerators() and GetCOREInterface()->RegisterDlgWnd()
     // https://help.autodesk.com/view/3DSMAX/2018/ENU/?guid=__developer_3ds_max_sdk_features_user_interface_action_system_keyboard_accelerators_and_dialog_html
 
-    auto *_this = &msmaxGetContext();
-    auto& s = _this->getSettings();
+    auto& ctx = msmaxGetContext();
+    auto& s = msmaxGetSettings();
 
     INT_PTR ret = FALSE;
     switch (msg) {
@@ -261,7 +259,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         g_msmax_settings_window = hDlg;
         GetCOREInterface()->RegisterDlgWnd(g_msmax_settings_window);
         PositionWindowNearCursor(hDlg);
-        _this->updateUIText();
+        ctx.updateUIText();
         break;
 
     case WM_CLOSE:
@@ -305,9 +303,9 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         };
 
         auto notify_scene_update = []() {
-            auto& self = msmaxGetContext();
-            self.onSceneUpdated();
-            self.update();
+            auto& ctx = msmaxGetContext();
+            ctx.onSceneUpdated();
+            ctx.update();
         };
 
         switch (cid) {
@@ -434,10 +432,10 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { _this->sendObjects(msmaxContext::SendScope::All, true); });
+            handle_button([&]() { msmaxExport(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
-            handle_button([&]() { _this->sendAnimations(msmaxContext::SendScope::All); });
+            handle_button([&]() { msmaxExport(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All); });
             break;
         default: break;
         }

@@ -103,6 +103,39 @@ msmobuSettings& msmobuDevice::getSettings()
     return m_settings;
 }
 
+void msmobuDevice::logInfo(const char *format, ...)
+{
+    const int MaxBuf = 2048;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    FBTraceWithLevel(kFBNORMAL_TRACE, buf);
+    va_end(args);
+}
+void msmobuDevice::logError(const char *format, ...)
+{
+    const int MaxBuf = 2048;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    FBTraceWithLevel(kFBCRITICAL_TRACE, buf);
+    va_end(args);
+}
+
+bool msmobuDevice::isServerAvailable()
+{
+    return m_sender.isServerAvaileble();
+}
+const std::string& msmobuDevice::getErrorMessage()
+{
+    return m_sender.getErrorMessage();
+}
+
+
 void msmobuDevice::wait()
 {
     m_sender.wait();

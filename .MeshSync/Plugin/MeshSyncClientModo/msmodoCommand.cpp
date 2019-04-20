@@ -95,7 +95,7 @@ public:
         auto& settings = msmodoGetSettings();
 #define Handler(Name, Type, Member, Sync)\
         if(getArg(Name, Member) && settings.auto_sync && Sync)\
-            msmodoGetInstance().sendObjects(msmodoContext::SendScope::All, true);
+            msmodoGetContext().sendObjects(msmodoContext::SendScope::All, true);
 
         EachParam(Handler)
 #undef Handler
@@ -143,7 +143,7 @@ class msmodoCmdImport : public CLxCommand
 public:
     void execute() override
     {
-        msmodoGetInstance().recvObjects();
+        msmodoGetContext().recvObjects();
     }
 };
 

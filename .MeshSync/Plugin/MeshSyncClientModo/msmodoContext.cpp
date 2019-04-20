@@ -1293,7 +1293,7 @@ void msmodoContext::kickAsyncSend()
 
 bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope scope)
 {
-    auto& inst = msmodoGetInstance();
+    auto& inst = msmodoGetContext();
     if (!inst.isServerAvailable()) {
         inst.logError("MeshSync: Server not available. %s", inst.getErrorMessage().c_str());
         return false;
@@ -1301,7 +1301,7 @@ bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope sco
 
     if (target == msmodoContext::SendTarget::Objects) {
         inst.wait();
-        inst.sendObjects(msmodoContext::SendScope::All, true);
+        inst.sendObjects(scope, true);
     }
     else if (target == msmodoContext::SendTarget::Materials) {
         inst.wait();
@@ -1309,15 +1309,15 @@ bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope sco
     }
     else if (target == msmodoContext::SendTarget::Animations) {
         inst.wait();
-        inst.sendAnimations(msmodoContext::SendScope::All);
+        inst.sendAnimations(scope);
     }
     else if (target == msmodoContext::SendTarget::Everything) {
         inst.wait();
         inst.sendMaterials(true);
         inst.wait();
-        inst.sendObjects(msmodoContext::SendScope::All, true);
+        inst.sendObjects(scope, true);
         inst.wait();
-        inst.sendAnimations(msmodoContext::SendScope::All);
+        inst.sendAnimations(scope);
     }
     return true;
 }

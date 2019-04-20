@@ -206,7 +206,7 @@ void msmayaContext::onTimeChange(const MTime & time)
 
 void msmayaContext::logInfo(const char * format, ...)
 {
-    const int MaxBuf = 4096;
+    const int MaxBuf = 2048;
     char buf[MaxBuf];
 
     va_list args;
@@ -214,12 +214,11 @@ void msmayaContext::logInfo(const char * format, ...)
     vsprintf(buf, format, args);
     MGlobal::displayInfo(buf);
     va_end(args);
-    fflush(stdout);
 }
 
 void msmayaContext::logError(const char * format, ...)
 {
-    const int MaxBuf = 4096;
+    const int MaxBuf = 2048;
     char buf[MaxBuf];
 
     va_list args;
@@ -227,7 +226,6 @@ void msmayaContext::logError(const char * format, ...)
     vsprintf(buf, format, args);
     MGlobal::displayError(buf);
     va_end(args);
-    fflush(stdout);
 }
 
 bool msmayaContext::isServerAvailable()

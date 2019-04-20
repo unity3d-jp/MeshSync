@@ -78,7 +78,7 @@ msmaxContext::~msmaxContext()
     // releasing resources is done by onShutdown()
 }
 
-msmaxContext::Settings & msmaxContext::getSettings()
+msmaxSettings& msmaxContext::getSettings()
 {
     return m_settings;
 }
@@ -171,6 +171,33 @@ void msmaxContext::onGeometryUpdated(INode *n)
 void msmaxContext::onRepaint()
 {
     update();
+}
+
+void msmaxContext::logInfo(const char * format, ...)
+{
+    const int MaxBuf = 2048;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    {
+        auto mes = mu::ToWCS(buf);
+        the_listener->edit_stream->wputs(mes.c_str());
+        the_listener->edit_stream->wflush();
+    }
+    va_end(args);
+}
+
+bool msmaxContext::isServerAvailable()
+{
+    m_sender.client_settings = m_settings.client_settings;
+    return m_sender.isServerAvaileble();
+}
+
+const std::string& msmaxContext::getErrorMessage()
+{
+    return m_sender.getErrorMessage();
 }
 
 
@@ -1176,4 +1203,35 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
             }
         }
     }
+}
+
+bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
+{
+    auto& inst = msmaxGetContext();
+    if (!inst.isServerAvailable()) {
+        inst.logInfo("MeshSync: Server not available. %s", inst.getErrorMessage().c_str());
+        return false;
+    }
+
+    if (target == msmaxContext::SendTarget::Objects) {
+        inst.wait();
+        inst.sendObjects(scope, true);
+    }
+    else if (target == msmaxContext::SendTarget::Materials) {
+        inst.wait();
+        inst.sendMaterials(true);
+    }
+    else if (target == msmaxContext::SendTarget::Animations) {
+        inst.wait();
+        inst.sendAnimations(scope);
+    }
+    else if (target == msmaxContext::SendTarget::Everything) {
+        inst.wait();
+        inst.sendMaterials(true);
+        inst.wait();
+        inst.sendObjects(scope, true);
+        inst.wait();
+        inst.sendAnimations(scope);
+    }
+    return true;
 }
