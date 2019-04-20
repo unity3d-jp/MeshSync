@@ -3,6 +3,28 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
 
+struct msmobuSettings
+{
+    ms::ClientSettings client_settings;
+    int  timeout_ms = 5000;
+    float scale_factor = 100.0f;
+    float animation_time_scale = 1.0f;
+    float animation_sps = 3.0f;
+
+    bool auto_sync = false;
+    bool sync_cameras = true;
+    bool sync_lights = true;
+    bool sync_bones = true;
+    bool sync_blendshapes = true;
+    bool sync_meshes = true;
+    bool sync_textures = true;
+    bool make_double_sided = false;
+    bool bake_deformars = false;
+    bool keyframe_reduction = true;
+    bool keep_flat_curves = false;
+    bool parallel_extraction = true;
+};
+
 class msmobuDevice : public FBDevice
 {
 FBDeviceDeclare(msmobuDevice, FBDevice);
@@ -11,6 +33,8 @@ public:
     void FBDestroy() override;
     bool DeviceOperation(kDeviceOperations pOperation) override;
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
+
+    msmobuSettings& getSettings();
 
     void wait();
     void update();
@@ -90,6 +114,7 @@ private:
     void extractMeshAnimation(ms::TransformAnimation& dst, FBModel* src);
 
 private:
+    msmobuSettings m_settings;
     bool m_data_updated = false;
     bool m_dirty_meshes = true;
     bool m_dirty_textures = true;
@@ -112,24 +137,4 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
-
-public:
-    ms::ClientSettings client_settings;
-    int  timeout_ms = 5000;
-    float scale_factor = 100.0f;
-    float animation_time_scale = 1.0f;
-    float animation_sps = 3.0f;
-
-    bool auto_sync = false;
-    bool sync_cameras = true;
-    bool sync_lights = true;
-    bool sync_bones = true;
-    bool sync_blendshapes = true;
-    bool sync_meshes = true;
-    bool sync_textures = true;
-    bool make_double_sided = false;
-    bool bake_deformars = false;
-    bool keyframe_reduction = true;
-    bool keep_flat_curves = false;
-    bool parallel_extraction = true;
 };

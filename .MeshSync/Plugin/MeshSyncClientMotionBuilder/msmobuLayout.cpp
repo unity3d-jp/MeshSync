@@ -45,6 +45,7 @@ bool msmobuLayout::FBCreate()
 
 
     m_device = (msmobuDevice*)(FBDevice*)Device;
+    auto& settings = m_device->getSettings();
 
     // server settings
     {
@@ -71,7 +72,7 @@ bool msmobuLayout::FBCreate()
             lW, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idLabelAddress, 1);
         SetControl(idEditAddress, m_ed_address);
-        m_ed_address.Text = m_device->client_settings.server.c_str();
+        m_ed_address.Text = settings.client_settings.server.c_str();
         m_ed_address.OnChange.Add(this, (FBCallback)&msmobuLayout::onServerSettingsChange);
 
         AddRegion(idLabelPort, idLabelPort,
@@ -120,7 +121,7 @@ bool msmobuLayout::FBCreate()
             lW, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idLabelScale, 1);
         SetControl(idEditlScale, m_ed_scale);
-        m_ed_scale.Value = (double)m_device->scale_factor;
+        m_ed_scale.Value = (double)settings.scale_factor;
         m_ed_scale.OnChange.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);
 
 
@@ -132,7 +133,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonSyncMeshes, m_bu_sync_meshes);
         m_bu_sync_meshes.Caption = "Sync Meshes";
         m_bu_sync_meshes.Style = kFBCheckbox;
-        m_bu_sync_meshes.State = (int)m_device->sync_meshes;
+        m_bu_sync_meshes.State = (int)settings.sync_meshes;
         m_bu_sync_meshes.OnClick.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);
         m_bu_sync_meshes.Border.Spacing = 0;
 
@@ -144,7 +145,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonBothSided, m_bu_make_double_sided);
         m_bu_make_double_sided.Caption = "Double Sided";
         m_bu_make_double_sided.Style = kFBCheckbox;
-        m_bu_make_double_sided.State = (int)m_device->make_double_sided;
+        m_bu_make_double_sided.State = (int)settings.make_double_sided;
         m_bu_make_double_sided.OnClick.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);
         m_bu_make_double_sided.Border.Spacing = 0;
 
@@ -156,7 +157,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonBakeDeformers, m_bu_bake_deformers);
         m_bu_bake_deformers.Caption = "Bake Deformers";
         m_bu_bake_deformers.Style = kFBCheckbox;
-        m_bu_bake_deformers.State = (int)m_device->bake_deformars;
+        m_bu_bake_deformers.State = (int)settings.bake_deformars;
         m_bu_bake_deformers.OnClick.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);
         m_bu_bake_deformers.Border.Spacing = 0;
 
@@ -168,7 +169,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonSyncCameras, m_bu_sync_cameras);
         m_bu_sync_cameras.Caption = "Sync Cameras";
         m_bu_sync_cameras.Style = kFBCheckbox;
-        m_bu_sync_cameras.State = (int)m_device->sync_cameras;
+        m_bu_sync_cameras.State = (int)settings.sync_cameras;
         m_bu_sync_cameras.OnClick.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);
 
         AddRegion(idButtonSyncLights, idButtonSyncLights,
@@ -179,7 +180,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonSyncLights, m_bu_sync_lights);
         m_bu_sync_lights.Caption = "Sync Lights";
         m_bu_sync_lights.Style = kFBCheckbox;
-        m_bu_sync_lights.State = (int)m_device->sync_lights;
+        m_bu_sync_lights.State = (int)settings.sync_lights;
         m_bu_sync_lights.OnClick.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);
 
 
@@ -191,7 +192,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonAutoSync, m_bu_auto_sync);
         m_bu_auto_sync.Caption = "Auto Sync";
         m_bu_auto_sync.Style = kFBCheckbox;
-        m_bu_auto_sync.State = (int)m_device->auto_sync;
+        m_bu_auto_sync.State = (int)settings.auto_sync;
         m_bu_auto_sync.OnClick.Add(this, (FBCallback)&msmobuLayout::onAutoSync);
 
         AddRegion(idButtonManualSync, idButtonManualSync,
@@ -265,7 +266,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonKFReduction, m_bu_kf_reduction);
         m_bu_kf_reduction.Caption = "Keyframe Reduction";
         m_bu_kf_reduction.Style = kFBCheckbox;
-        m_bu_kf_reduction.State = (int)m_device->keyframe_reduction;
+        m_bu_kf_reduction.State = (int)settings.keyframe_reduction;
         m_bu_kf_reduction.OnClick.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
 
         AddRegion(idButtonKeepEmptyCurves, idButtonKeepEmptyCurves,
@@ -276,7 +277,7 @@ bool msmobuLayout::FBCreate()
         SetControl(idButtonKeepEmptyCurves, m_bu_keep_flat_curves);
         m_bu_keep_flat_curves.Caption = "Keep Flat Curves";
         m_bu_keep_flat_curves.Style = kFBCheckbox;
-        m_bu_keep_flat_curves.State = (int)m_device->keep_flat_curves;
+        m_bu_keep_flat_curves.State = (int)settings.keep_flat_curves;
         m_bu_keep_flat_curves.OnClick.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
 
         AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
@@ -309,34 +310,38 @@ void msmobuLayout::FBDestroy()
 
 void msmobuLayout::onServerSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->client_settings.server = m_ed_address.Text;
-    m_device->client_settings.port = (uint16_t)m_ed_port.Value;
+    auto& settings = m_device->getSettings();
+    settings.client_settings.server = m_ed_address.Text;
+    settings.client_settings.port = (uint16_t)m_ed_port.Value;
 }
 
 void msmobuLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->scale_factor = (float)m_ed_scale.Value;
-    m_device->sync_meshes = (bool)(int)m_bu_sync_meshes.State;
-    m_device->make_double_sided = (bool)(int)m_bu_make_double_sided.State;
-    m_device->bake_deformars = (bool)(int)m_bu_bake_deformers.State;
-    m_device->sync_cameras = (bool)(int)m_bu_sync_cameras.State;
-    m_device->sync_lights = (bool)(int)m_bu_sync_lights.State;
-    if (m_device->auto_sync)
+    auto& settings = m_device->getSettings();
+    settings.scale_factor = (float)m_ed_scale.Value;
+    settings.sync_meshes = (bool)(int)m_bu_sync_meshes.State;
+    settings.make_double_sided = (bool)(int)m_bu_make_double_sided.State;
+    settings.bake_deformars = (bool)(int)m_bu_bake_deformers.State;
+    settings.sync_cameras = (bool)(int)m_bu_sync_cameras.State;
+    settings.sync_lights = (bool)(int)m_bu_sync_lights.State;
+    if (settings.auto_sync)
         m_device->sendObjects(true);
 }
 
 void msmobuLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->animation_time_scale = (float)m_ed_time_scale.Value;
-    m_device->animation_sps = (float)m_ed_sps.Value;
-    m_device->keyframe_reduction = (bool)(int)m_bu_kf_reduction.State;
-    m_device->keep_flat_curves = (bool)(int)m_bu_keep_flat_curves.State;
+    auto& settings = m_device->getSettings();
+    settings.animation_time_scale = (float)m_ed_time_scale.Value;
+    settings.animation_sps = (float)m_ed_sps.Value;
+    settings.keyframe_reduction = (bool)(int)m_bu_kf_reduction.State;
+    settings.keep_flat_curves = (bool)(int)m_bu_keep_flat_curves.State;
 }
 
 void msmobuLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    m_device->auto_sync = (bool)(int)m_bu_auto_sync.State;
-    if (m_device->auto_sync)
+    auto& settings = m_device->getSettings();
+    settings.auto_sync = (bool)(int)m_bu_auto_sync.State;
+    if (settings.auto_sync)
         m_device->sendObjects(false);
 }
 

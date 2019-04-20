@@ -37,7 +37,7 @@ bool msmobuDevice::DeviceOperation(kDeviceOperations pOperation)
 
 void msmobuDevice::DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem)
 {
-    if (auto_sync)
+    if (m_settings.auto_sync)
         m_data_updated = true;
 }
 
@@ -75,7 +75,7 @@ void msmobuDevice::onSceneChange(HIRegister pCaller, HKEventBase pEvent)
 void msmobuDevice::onDataUpdate(HIRegister pCaller, HKEventBase pEvent)
 {
     m_data_updated = true;
-    if (bake_deformars)
+    if (m_settings.bake_deformars)
         m_dirty_meshes = true;
 }
 
@@ -84,7 +84,7 @@ void msmobuDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
     // note: mocap devices seem don't trigger scene change events.
     //       so, always set m_pending true on render when auto sync is enabled.
     //       obviously this wastes CPU time, but I couldn't find a better way... (issue #47)
-    if (auto_sync /*&& m_data_updated*/)
+    if (m_settings.auto_sync /*&& m_data_updated*/)
         m_pending = true;
 }
 
@@ -93,9 +93,14 @@ void msmobuDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
     FBEventEvalGlobalCallback lFBEvent(pEvent);
     FBGlobalEvalCallbackTiming timing = lFBEvent.GetTiming();
     if (timing == kFBGlobalEvalCallbackSyn) {
-        if (auto_sync)
+        if (m_settings.auto_sync)
             update();
     }
+}
+
+msmobuSettings& msmobuDevice::getSettings()
+{
+    return m_settings;
 }
 
 void msmobuDevice::wait()
@@ -114,7 +119,7 @@ void msmobuDevice::kickAsyncSend()
 {
     // process extract tasks
     if (!m_extract_tasks.empty()) {
-        if (parallel_extraction) {
+        if (m_settings.parallel_extraction) {
             mu::parallel_for_each(m_extract_tasks.begin(), m_extract_tasks.end(), [](ExtractTasks::value_type& task) {
                 task();
             });
@@ -130,9 +135,9 @@ void msmobuDevice::kickAsyncSend()
 
     m_sender.on_prepare = [this]() {
         auto& t = m_sender;
-        t.client_settings = client_settings;
+        t.client_settings = m_settings.client_settings;
         t.scene_settings.handedness = ms::Handedness::Right;
-        t.scene_settings.scale_factor = scale_factor;
+        t.scene_settings.scale_factor = m_settings.scale_factor;
 
         t.textures = m_texture_manager.getDirtyTextures();
         t.materials = m_material_manager.getDirtyMaterials();
@@ -185,13 +190,13 @@ bool msmobuDevice::sendObjects(bool dirty_all)
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
-    if (sync_meshes)
+    if (m_settings.sync_meshes)
         exportMaterials();
 
     // export nodes
     int num_exported = 0;
     EnumerateAllNodes([this, &num_exported](FBModel* node) {
-        if (exportObject(node, false))
+        if (exportObject(node, true))
             ++num_exported;
     });
 
@@ -260,7 +265,7 @@ ms::TransformPtr msmobuDevice::exportObject(FBModel* src, bool parent, bool tip)
     };
 
     if (IsCamera(src)) { // camera
-        if (sync_cameras) {
+        if (m_settings.sync_cameras) {
             handle_parent();
             ret = exportCamera(rec);
         }
@@ -268,7 +273,7 @@ ms::TransformPtr msmobuDevice::exportObject(FBModel* src, bool parent, bool tip)
             handle_transform();
     }
     else if (IsLight(src)) { // light
-        if (sync_lights) {
+        if (m_settings.sync_lights) {
             handle_parent();
             ret = exportLight(rec);
         }
@@ -276,14 +281,14 @@ ms::TransformPtr msmobuDevice::exportObject(FBModel* src, bool parent, bool tip)
             handle_transform();
     }
     else if (IsMesh(src)) { // mesh
-        if (sync_bones && !bake_deformars) {
+        if (m_settings.sync_bones && !m_settings.bake_deformars) {
             EachBones(src, [this](FBModel *bone) {
                 exportObject(bone, true);
             });
         }
-        if (sync_meshes || sync_blendshapes) {
+        if (m_settings.sync_meshes || m_settings.sync_blendshapes) {
             handle_parent();
-            if (sync_meshes && m_dirty_meshes)
+            if (m_settings.sync_meshes && m_dirty_meshes)
                 ret = exportMesh(rec);
             else
                 ret = exportBlendshapeWeights(rec);
@@ -482,7 +487,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 
     // points
     {
-        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, bake_deformars);
+        auto points = (const FBVertex*)vd->GetVertexArray(kFBGeometryArrayID_Point, m_settings.bake_deformars);
         if (!points)
             return;
 
@@ -493,7 +498,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 
     // normals
     {
-        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, bake_deformars);
+        auto normals = (const FBNormal*)vd->GetVertexArray(kFBGeometryArrayID_Normal, m_settings.bake_deformars);
         if (normals) {
             dst.normals.resize_discard(num_vertices);
             for (int vi = 0; vi < num_vertices; ++vi)
@@ -532,7 +537,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
     }
 
     // colors
-    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, bake_deformars)) {
+    if (auto colors_ = vd->GetVertexArray(kFBGeometryArrayID_Color, m_settings.bake_deformars)) {
         auto type = vd->GetVertexArrayType(kFBGeometryArrayID_Color);
         if (type == kFBGeometryArrayElementType_Float4) {
             auto colors = (const mu::float4*)colors_;
@@ -548,7 +553,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
         }
     }
 
-    if (!bake_deformars && sync_bones) {
+    if (!m_settings.bake_deformars && m_settings.sync_bones) {
         // skin cluster
         if (FBCluster *cluster = src->Cluster) {
 
@@ -614,7 +619,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
         }
     }
 
-    if (!bake_deformars && sync_blendshapes) {
+    if (!m_settings.bake_deformars && m_settings.sync_blendshapes) {
         // blendshapes
         if (FBGeometry *geom = src->Geometry) {
             int num_shapes = geom->ShapeGetCount();
@@ -697,7 +702,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
     }
 
     dst.refine_settings.flags.flip_faces = 1;
-    dst.refine_settings.flags.make_double_sided = make_double_sided;
+    dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     dst.setupFlags();
 }
 
@@ -746,7 +751,7 @@ bool msmobuDevice::exportMaterial(FBMaterial* src, int index)
     if ((mu::float3&)emissive != mu::float3::zero())
         stdmat.setEmissionColor(emissive);
 
-    if (sync_textures && m_dirty_textures) {
+    if (m_settings.sync_textures && m_dirty_textures) {
         stdmat.setColorMap(exportTexture(src->GetTexture(kFBMaterialTextureDiffuse), kFBMaterialTextureDiffuse));
         stdmat.setEmissionMap(exportTexture(src->GetTexture(kFBMaterialTextureEmissive), kFBMaterialTextureEmissive));
         stdmat.setBumpMap(exportTexture(src->GetTexture(kFBMaterialTextureNormalMap), kFBMaterialTextureNormalMap));
@@ -808,7 +813,7 @@ bool msmobuDevice::exportAnimations()
     FBTime time_current = system.LocalTime;
     double time_begin, time_end;
     std::tie(time_begin, time_end) = GetTimeRange(system.CurrentTake);
-    double interval = 1.0 / std::max(animation_sps, 0.01f);
+    double interval = 1.0 / std::max(m_settings.animation_sps, 0.01f);
 
     int reserve_size = int((time_end - time_begin) / interval) + 1;
     for (auto& kvp : m_anim_records) {
@@ -820,7 +825,7 @@ bool msmobuDevice::exportAnimations()
         FBTime fbt;
         fbt.SetSecondDouble(t);
         control.Goto(fbt);
-        m_anim_time = (float)(t - time_begin) * animation_time_scale;
+        m_anim_time = (float)(t - time_begin) * m_settings.animation_time_scale;
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 
@@ -834,10 +839,10 @@ bool msmobuDevice::exportAnimations()
     m_anim_records.clear();
     control.Goto(time_current);
 
-    if (keyframe_reduction) {
+    if (m_settings.keyframe_reduction) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction(keep_flat_curves);
+            clip->reduction(m_settings.keep_flat_curves);
 
         // erase empty clip
         m_animations.erase(
