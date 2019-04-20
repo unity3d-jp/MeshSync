@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="CrashReporter\CrashReporter.h" />
     <ClInclude Include="MeshUtils\MeshUtils_impl.h" />
+    <ClInclude Include="MeshUtils\muAlgorithm.h" />
     <ClInclude Include="MeshUtils\muAllocator.h" />
     <ClInclude Include="MeshUtils\ampmath.h" />
     <ClInclude Include="MeshUtils\ampmath_impl.h" />
@@ -48,7 +49,6 @@
   <ItemGroup>
     <ClCompile Include="CrashReporter\CrashReporter.cpp" />
     <ClCompile Include="MeshUtils\muAllocator.cpp" />
-    <ClCompile Include="MeshUtils\muColor.cpp" />
     <ClCompile Include="MeshUtils\muCompression.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\muMisc.cpp" />

@@ -76,6 +76,9 @@
     <ClInclude Include="MeshUtils\muCompression.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\muAlgorithm.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
@@ -112,9 +115,6 @@
     </ClCompile>
     <ClCompile Include="CrashReporter\CrashReporter.cpp">
       <Filter>CrashReporter</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshUtils\muColor.cpp">
-      <Filter>MeshUtils</Filter>
     </ClCompile>
     <ClCompile Include="MeshUtils\muCompression.cpp">
       <Filter>MeshUtils</Filter>

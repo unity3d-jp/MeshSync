@@ -1057,3 +1057,32 @@ TestCase(Test_RemoveNamespace)
     Expect(remove_namespace("/ns1::parent/ns1::child") == "/parent/child");
     Expect(remove_namespace("/ns1::ns2::ns3::parent/ns1::ns2::ns3::child") == "/parent/child");
 }
+
+
+TestCase(Test_UniqueUnsorted)
+{
+    int input[] = { 5,1,3,6,2,4,3,4,5,4,6,7,6 };
+    auto pos = unique_unsorted(input, input + std::size(input));
+    auto n = std::distance(input, pos);
+    Expect(n == 7);
+}
+
+
+TestCase(Test_Quadify)
+{
+    {
+        float3 points[] = {
+            {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {2.0f, 0.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {2.0f, 1.0f, 0.0f},
+            {0.0f, 2.0f, 0.0f}, {1.0f, 2.0f, 0.0f}, {2.0f, 2.0f, 0.0f},
+        };
+        int triangles[] = {
+            0,1,4, 0,4,3, 1,2,5, 1,5,4,
+            3,4,7, 3,7,6, 4,5,8, 4,8,7,
+        };
+
+        RawVector<int> dst_indices, dst_counts;
+        QuadifyTriangles(points, triangles, false, 15.0f, dst_indices, dst_counts);
+        Expect(dst_counts.size() == 4);
+    }
+}
