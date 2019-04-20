@@ -551,6 +551,23 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
     if (!bake_deformars && sync_bones) {
         // skin cluster
         if (FBCluster *cluster = src->Cluster) {
+
+            // MotionBuilder omits weight data if there are vertices with identical position.
+            // so generate vertex reference map.
+            struct Ref { int vi, ri; };
+            RawVector<Ref> brefmap;
+            brefmap.reserve(num_vertices / 4);
+            for (int vi = num_vertices - 1; vi >= 0; --vi) {
+                auto beg = dst.points.begin();
+                auto end = beg + vi;
+                auto it = std::find(beg, end, dst.points[vi]);
+                if (it != end)
+                    brefmap.push_back({ vi, (int)std::distance(beg, it) });
+                else
+                    break;
+            }
+
+
             int num_links = cluster->LinkGetCount();
             for (int li = 0; li < num_links; ++li) {
                 ClusterScope scope(cluster, li);
@@ -586,11 +603,13 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 
                 // weights
                 bd->weights.resize_zeroclear(num_vertices);
-                for (int vi = 0; vi < n; ++vi) {
-                    int i = cluster->VertexGetNumber(vi);
-                    float w = (float)cluster->VertexGetWeight(vi);
-                    bd->weights[i] = w;
+                for (int i = 0; i < n; ++i) {
+                    int vi = cluster->VertexGetNumber(i);
+                    float w = (float)cluster->VertexGetWeight(i);
+                    bd->weights[vi] = w;
                 }
+                for (auto& rel : brefmap)
+                    bd->weights[rel.vi] = bd->weights[rel.ri];
             }
         }
     }

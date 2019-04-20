@@ -936,22 +936,6 @@ void Mesh::setupBoneWeights4()
     int num_vertices = (int)points.size();
     weights4.resize_zeroclear(num_vertices);
 
-    auto search_weight = [this](int vi) {
-        // some DCC tools (mainly MotionBuilder) omit weight data if there are vertices with identical position. so find it.
-        auto& dst = weights4[vi];
-        auto beg = points.begin();
-        auto end = beg + vi;
-        auto it = std::find(beg, end, points[vi]);
-        if (it != end) {
-            // found
-            dst = weights4[std::distance(beg, it)];
-        }
-        else {
-            // not found. assign 1 to void divide-by-zero...
-            dst.weights[0] = 1.0f;
-        }
-    };
-
     RawVector<Weights1> tmp(num_bones);
     for (int vi = 0; vi < num_vertices; ++vi) {
         int num_influence = 0;
@@ -978,8 +962,7 @@ void Mesh::setupBoneWeights4()
                 w4.indices[bi] = tmp[bi].index;
                 w4.weights[bi] = tmp[bi].weight;
             }
-            if (w4.normalize() == 0.0f)
-                search_weight(vi);
+            w4.normalize();
         }
     }
 }
@@ -1011,23 +994,6 @@ void Mesh::setupBoneWeightsVariable()
     }
     weights1.resize_zeroclear(offset);
 
-    auto search_weight = [this](int vi) {
-        // some DCC tools (mainly MotionBuilder) omit weight data if there are vertices with identical position. so find it.
-        int n = bone_counts[vi];
-        auto *dst = &weights1[bone_offsets[vi]];
-        auto beg = points.begin();
-        auto end = beg + vi;
-        auto it = std::find(beg, end, points[vi]);
-        if (it != end) {
-            // found
-            weights1[bone_offsets[std::distance(beg, it)]].copy_to(dst, n);
-        }
-        else {
-            // not found. assign 1 to void divide-by-zero...
-            dst[0].weight = 1.0f;
-        }
-    };
-
     // calculate bone weights
     offset = 0;
     for (int vi = 0; vi < num_vertices; ++vi) {
@@ -1048,10 +1014,8 @@ void Mesh::setupBoneWeightsVariable()
         if (num_influence == 0) {
             // should do something?
         }
-        else if (dst->normalize(num_influence) == 0.0f) {
-                search_weight(vi);
-        }
         else {
+            dst->normalize(num_influence);
             // Unity requires descending order of weights
             std::sort(dst, dst + num_influence,
                 [&](auto& a, auto& b) { return a.weight > b.weight; });
