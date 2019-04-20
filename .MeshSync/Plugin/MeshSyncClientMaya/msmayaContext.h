@@ -84,43 +84,42 @@ MDagPath GetDagPath(const TreeNode *branch, const MObject& node);
 TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath);
 
 
+struct msmayaSettings
+{
+    ms::ClientSettings client_settings;
+
+    float scale_factor = 0.01f;
+    float animation_time_scale = 1.0f;
+    float animation_sps = 3.0f;
+    int  timeout_ms = 5000;
+    bool auto_sync = false;
+    bool sync_meshes = true;
+    bool sync_normals = true;
+    bool sync_uvs = true;
+    bool sync_colors = true;
+    bool make_double_sided = false;
+    bool bake_deformers = false;
+    bool apply_tweak = false;
+    bool sync_blendshapes = true;
+    bool sync_bones = true;
+    bool sync_textures = true;
+    bool sync_cameras = true;
+    bool sync_lights = true;
+    bool sync_constraints = false;
+    bool remove_namespace = true;
+    bool reduce_keyframes = true;
+    bool keep_flat_curves = false;
+    bool multithreaded = false;
+    bool fbx_compatible_transform = true;
+
+    // import settings
+    bool bake_skin = false;
+    bool bake_cloth = false;
+};
+
 class msmayaContext
 {
 public:
-    struct Settings
-    {
-        ms::ClientSettings client_settings;
-
-        float scale_factor = 0.01f;
-        float animation_time_scale = 1.0f;
-        float animation_sps = 3.0f;
-        int  timeout_ms = 5000;
-        bool auto_sync = false;
-        bool sync_meshes = true;
-        bool sync_normals = true;
-        bool sync_uvs = true;
-        bool sync_colors = true;
-        bool make_double_sided = false;
-        bool bake_deformers = false;
-        bool apply_tweak = false;
-        bool sync_blendshapes = true;
-        bool sync_bones = true;
-        bool sync_textures = true;
-        bool sync_cameras = true;
-        bool sync_lights = true;
-        bool sync_constraints = false;
-        bool remove_namespace = true;
-        bool reduce_keyframes = true;
-        bool keep_flat_curves = false;
-        bool multithreaded = false;
-        bool fbx_compatible_transform = true;
-
-        // import settings
-        bool bake_skin = false;
-        bool bake_cloth = false;
-    };
-    Settings m_settings;
-
     enum class SendTarget : int
     {
         Objects,
@@ -137,6 +136,7 @@ public:
     };
 
     static msmayaContext& getInstance();
+    msmayaSettings& getSettings();
 
     msmayaContext(MObject obj);
     ~msmayaContext();
@@ -149,6 +149,12 @@ public:
     void onSceneLoadEnd();
     void onTimeChange(const MTime& time);
 
+
+    void logInfo(const char *format, ...);
+    void logError(const char *format, ...);
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
+
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
@@ -159,7 +165,6 @@ public:
 
 
 private:
-
     struct TaskRecord : public mu::noncopyable
     {
         using task_t = std::function<void()>;
@@ -181,12 +186,6 @@ private:
         void operator()(msmayaContext *_this);
     };
     using AnimationRecords = std::map<TreeNode*, AnimationRecord>;
-
-    std::vector<TreeNodePtr> m_tree_nodes;
-    std::vector<TreeNode*>   m_tree_roots;
-    DAGNodeMap               m_dag_nodes;
-    TaskRecords              m_extract_tasks;
-    AnimationRecords         m_anim_records;
 
     std::string handleNamespace(const std::string& path);
 
@@ -228,12 +227,19 @@ private:
     void kickAsyncSend();
 
 private:
-    MObject                     m_obj;
-    MFnPlugin                   m_iplugin;
-    std::vector<MCallbackId>    m_cids_global;
+    msmayaSettings m_settings;
 
-    std::vector<ms::AnimationClipPtr>   m_animations;
+    MObject m_obj;
+    MFnPlugin m_iplugin;
+    std::vector<MCallbackId> m_cids_global;
 
+    std::vector<TreeNodePtr> m_tree_nodes;
+    std::vector<TreeNode*>   m_tree_roots;
+    DAGNodeMap               m_dag_nodes;
+    TaskRecords              m_extract_tasks;
+    AnimationRecords         m_anim_records;
+
+    std::vector<ms::AnimationClipPtr> m_animations;
     ms::IDGenerator<MObject> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
@@ -246,3 +252,6 @@ private:
     int       m_index_seed = 0;
     float     m_anim_time = 0.0f;
 };
+
+#define msmayaGetContext() msmayaContext::getInstance()
+#define msmayaGetSettings() msmayaGetContext().getSettings()

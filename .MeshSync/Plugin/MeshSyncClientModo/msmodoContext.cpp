@@ -104,6 +104,20 @@ msmodoSettings& msmodoContext::getSettings()
     return m_settings;
 }
 
+
+bool msmodoContext::isServerAvailable()
+{
+    prepare();
+    m_sender.client_settings = m_settings.client_settings;
+    return m_sender.isServerAvaileble();
+}
+
+const std::string& msmodoContext::getErrorMessage()
+{
+    return m_sender.getErrorMessage();
+}
+
+
 void msmodoContext::wait()
 {
     m_sender.wait();
@@ -1275,4 +1289,35 @@ void msmodoContext::kickAsyncSend()
         m_animations.clear();
     };
     m_sender.kick();
+}
+
+bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope scope)
+{
+    auto& inst = msmodoGetInstance();
+    if (!inst.isServerAvailable()) {
+        inst.logError("MeshSync: Server not available. %s", inst.getErrorMessage().c_str());
+        return false;
+    }
+
+    if (target == msmodoContext::SendTarget::Objects) {
+        inst.wait();
+        inst.sendObjects(msmodoContext::SendScope::All, true);
+    }
+    else if (target == msmodoContext::SendTarget::Materials) {
+        inst.wait();
+        inst.sendMaterials(true);
+    }
+    else if (target == msmodoContext::SendTarget::Animations) {
+        inst.wait();
+        inst.sendAnimations(msmodoContext::SendScope::All);
+    }
+    else if (target == msmodoContext::SendTarget::Everything) {
+        inst.wait();
+        inst.sendMaterials(true);
+        inst.wait();
+        inst.sendObjects(msmodoContext::SendScope::All, true);
+        inst.wait();
+        inst.sendAnimations(msmodoContext::SendScope::All);
+    }
+    return true;
 }

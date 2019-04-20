@@ -260,18 +260,14 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
 }
 
 
-static inline void msmodoSendObjects()
+static bool msmodoSendObjects()
 {
-    auto& inst = msmodoGetInstance();
-    inst.wait();
-    inst.sendObjects(msmodoContext::SendScope::All, true);
+    return msmodoExport(msmodoContext::SendTarget::Objects, msmodoContext::SendScope::All);
 }
 
-static inline void msmodoSendAnimations()
+static bool msmodoSendAnimations()
 {
-    auto& inst = msmodoGetInstance();
-    inst.wait();
-    inst.sendAnimations(msmodoContext::SendScope::All);
+    return msmodoExport(msmodoContext::SendTarget::Animations, msmodoContext::SendScope::All);
 }
 
 void msmodoSettingsWidget::onEditServer(const QString& v)

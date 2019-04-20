@@ -178,5 +178,6 @@ private:
     ms::AsyncSceneSender m_sender;
 };
 
-#define msmaxInstance() msmaxContext::getInstance()
+#define msmaxGetContext() msmaxContext::getInstance()
+#define msmaxGetSettings() msmaxGetContext().getSettings()
 

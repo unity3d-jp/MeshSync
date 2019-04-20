@@ -115,7 +115,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
-    auto& settings = msmayaContext::getInstance().m_settings;
+    auto& settings = msmayaGetSettings();
 
     MString result;
 
@@ -131,7 +131,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         else {\
             get_arg(Value, Name, args);\
             if (settings.auto_sync && Sync)\
-                msmayaContext::getInstance().sendObjects(msmayaContext::SendScope::All, false);\
+                msmayaGetContext().sendObjects(msmayaContext::SendScope::All, false);\
         }\
     }
 
@@ -218,7 +218,12 @@ MStatus CmdExport::doIt(const MArgList& args_)
     }
 
     // do send
-    auto& inst = msmayaContext::getInstance();
+    auto& inst = msmayaGetContext();
+    if (!inst.isServerAvailable()) {
+        inst.logError("MeshSync: Server not available. %s", inst.getErrorMessage().c_str());
+        return MStatus::kFailure;
+    }
+
     if (target == msmayaContext::SendTarget::Objects) {
         inst.wait();
         inst.sendObjects(scope, true);
@@ -262,6 +267,6 @@ MSyntax CmdImport::createSyntax()
 
 MStatus CmdImport::doIt(const MArgList&)
 {
-    msmayaContext::getInstance().recvObjects();
+    msmayaGetContext().recvObjects();
     return MStatus::kSuccess;
 }

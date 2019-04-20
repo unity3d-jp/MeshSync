@@ -42,6 +42,7 @@ void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerRespons
 {
     if (!m_server->isServing()) {
         m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
+        m_holder->ready = true;
         return;
     }
 
@@ -64,14 +65,23 @@ void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerRespons
     else if (uri == "query") {
         m_server->recvQuery(request, response, *m_holder);
     }
-    else if (uri == "text" || uri.find("/text") != std::string::npos) {
+    else if (uri == "text" || StartWith(uri, "/text")) {
         m_server->recvText(request, response, *m_holder);
     }
-    else if (uri.find("/screenshot") != std::string::npos) {
+    else if (StartWith(uri, "/screenshot")) {
         m_server->recvScreenshot(request, response, *m_holder);
     }
-    else if (uri.find("/poll") != std::string::npos) {
+    else if (StartWith(uri, "/poll")) {
         m_server->recvPoll(request, response, *m_holder);
+    }
+    else if (StartWith(uri, "/protocol_version")) {
+        static const auto res = std::to_string(msProtocolVersion);
+        m_server->serveText(response, res.c_str());
+        m_holder->ready = true;
+    }
+    else if (StartWith(uri, "/plugin_version")) {
+        m_server->serveText(response, msPluginVersionStr);
+        m_holder->ready = true;
     }
     else {
         // note: Poco handles commas in URI

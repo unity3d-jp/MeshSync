@@ -204,6 +204,43 @@ void msmayaContext::onTimeChange(const MTime & time)
     }
 }
 
+void msmayaContext::logInfo(const char * format, ...)
+{
+    const int MaxBuf = 4096;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    MGlobal::displayInfo(buf);
+    va_end(args);
+    fflush(stdout);
+}
+
+void msmayaContext::logError(const char * format, ...)
+{
+    const int MaxBuf = 4096;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    MGlobal::displayError(buf);
+    va_end(args);
+    fflush(stdout);
+}
+
+bool msmayaContext::isServerAvailable()
+{
+    m_sender.client_settings = m_settings.client_settings;
+    return m_sender.isServerAvaileble();
+}
+
+const std::string& msmayaContext::getErrorMessage()
+{
+    return m_sender.getErrorMessage();
+}
+
 
 void msmayaContext::TaskRecord::add(TreeNode *n, const task_t & task)
 {
@@ -252,6 +289,11 @@ void msmayaUninitialize()
 msmayaContext& msmayaContext::getInstance()
 {
     return *g_plugin;
+}
+
+msmayaSettings& msmayaContext::getSettings()
+{
+    return m_settings;
 }
 
 msmayaContext::msmayaContext(MObject obj)

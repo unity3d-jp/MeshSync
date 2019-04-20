@@ -17,7 +17,7 @@ void Message::deserialize(std::istream& is)
 {
     read(is, protocol_version);
     if (protocol_version != msProtocolVersion) {
-        throw std::runtime_error("protocol version not matched");
+        throw std::runtime_error("Protocol version doesn't match");
     }
     read(is, session_id);
     read(is, message_id);

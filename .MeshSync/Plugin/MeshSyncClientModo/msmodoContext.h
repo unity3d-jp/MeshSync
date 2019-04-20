@@ -88,6 +88,11 @@ public:
 
     msmodoSettings& getSettings();
 
+    using super::logInfo;
+    using super::logError;
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
+
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
@@ -187,3 +192,4 @@ private:
 
 #define msmodoGetInstance() msmodoContext::getInstance()
 #define msmodoGetSettings() msmodoGetInstance().getSettings()
+bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope scope);

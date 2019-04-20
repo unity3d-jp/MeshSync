@@ -26,17 +26,17 @@ public:
     void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Window); }
     void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Window); }
     void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
-    BOOL IsChecked() override       { return msmaxInstance().isWindowOpened(); }
+    BOOL IsChecked() override       { return msmaxGetContext().isWindowOpened(); }
     BOOL IsItemVisible() override   { return TRUE; }
     BOOL IsEnabled() override       { return TRUE; }
     void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
-        if(msmaxInstance().isWindowOpened())
-            msmaxInstance().closeWindow();
+        if(msmaxGetContext().isWindowOpened())
+            msmaxGetContext().closeWindow();
         else
-            msmaxInstance().openWindow();
+            msmaxGetContext().openWindow();
         return TRUE;
     }
 };
@@ -56,7 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendObjects(msmaxContext::SendScope::All, true);
+        msmaxGetContext().sendObjects(msmaxContext::SendScope::All, true);
         return TRUE;
     }
 };
@@ -76,7 +76,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendAnimations(msmaxContext::SendScope::All);
+        msmaxGetContext().sendAnimations(msmaxContext::SendScope::All);
         return TRUE;
     }
 };
@@ -96,7 +96,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().recvScene();
+        msmaxGetContext().recvScene();
         return TRUE;
     }
 };
@@ -251,7 +251,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     // see this about DisableAccelerators(), EnableAccelerators() and GetCOREInterface()->RegisterDlgWnd()
     // https://help.autodesk.com/view/3DSMAX/2018/ENU/?guid=__developer_3ds_max_sdk_features_user_interface_action_system_keyboard_accelerators_and_dialog_html
 
-    auto *_this = &msmaxInstance();
+    auto *_this = &msmaxGetContext();
     auto& s = _this->getSettings();
 
     INT_PTR ret = FALSE;
@@ -305,7 +305,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         };
 
         auto notify_scene_update = []() {
-            auto& self = msmaxInstance();
+            auto& self = msmaxGetContext();
             self.onSceneUpdated();
             self.update();
         };

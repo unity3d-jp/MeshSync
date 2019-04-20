@@ -9,7 +9,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, ULONG fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_ATTACH:
         g_msmax_hinstance = hinstDLL;
         MaxSDK::Util::UseLanguagePackLocale();
-        msmaxInstance(); // initialize instance
+        msmaxGetContext(); // initialize instance
         DisableThreadLibraryCalls(hinstDLL);
         break;
     }
@@ -51,10 +51,10 @@ def_struct_primitive(Import, UnityMeshSync, "Import");
 Value* Window_cf(Value** arg_list, int count)
 {
     if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
-        msmaxInstance().closeWindow();
+        msmaxGetContext().closeWindow();
     }
     else {
-        msmaxInstance().openWindow();
+        msmaxGetContext().openWindow();
     }
     return &ok;
 }
@@ -72,8 +72,8 @@ Value* Settings_cf(Value** arg_list, int count)
     static std::map<std::wstring, GetterSetter> s_table;
     if (s_table.empty()) {
 #define Entry(Name, From, To) s_table[L#Name] = {\
-    []() -> Value* { return From(msmaxInstance().getSettings().Name); },\
-    [](Value *v) -> void{ msmaxInstance().getSettings().Name = v->To(); } }
+    []() -> Value* { return From(msmaxGetSettings().Name); },\
+    [](Value *v) -> void{ msmaxGetSettings().Name = v->To(); } }
 
         Entry(timeout_ms,           Integer::intern, to_int);
         Entry(scale_factor,         Float::intern, to_float);
@@ -103,7 +103,7 @@ Value* Settings_cf(Value** arg_list, int count)
 #undef Entry
     }
 
-    auto& settings = msmaxInstance().getSettings();
+    auto& settings = msmaxGetSettings();
     if (count >= 2 && wcscmp(arg_list[1]->to_string(), L"q") == 0) {
         one_value_local(result);
         auto it = s_table.find(arg_list[2]->to_string());
@@ -159,7 +159,7 @@ Value* Export_cf(Value** arg_list, int count)
     }
 
     // do send
-    auto& inst = msmaxInstance();
+    auto& inst = msmaxGetContext();
     if (target == msmaxContext::SendTarget::Objects) {
         inst.wait();
         inst.sendObjects(scope, true);
@@ -185,6 +185,6 @@ Value* Export_cf(Value** arg_list, int count)
 
 Value* Import_cf(Value** arg_list, int count)
 {
-    msmaxInstance().recvScene();
+    msmaxGetContext().recvScene();
     return &ok;
 }

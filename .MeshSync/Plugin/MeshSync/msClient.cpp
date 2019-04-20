@@ -18,16 +18,36 @@ const std::string& Client::getErrorMessage() const
 
 bool Client::isServerAvailable(int timeout_ms)
 {
-    QueryMessage query;
-    query.query_type = QueryMessage::QueryType::ProtocolVersion;
-    auto response = send(query, timeout_ms);
-    if (response) {
-        if (!response->text.empty() && std::atoi(response->text[0].c_str()) == msProtocolVersion) {
-            return true;
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+        session.setTimeout(timeout_ms * 1000);
+
+        HTTPRequest request{ HTTPRequest::HTTP_GET, "/protocol_version" };
+        session.sendRequest(request);
+
+        HTTPResponse response;
+        auto& rs = session.receiveResponse(response);
+        std::ostringstream ostr;
+        StreamCopier::copyStream(rs, ostr);
+        auto content = ostr.str();
+        if (response.getStatus() != HTTPResponse::HTTP_OK) {
+            m_error_message = "Server is not working.";
         }
         else {
-            m_error_message = "Version doesn't match server.";
+            if (std::atoi(content.c_str()) == msProtocolVersion) {
+                return true;
+            }
+            else {
+                m_error_message = "Version doesn't match server.";
+            }
         }
+    }
+    catch (const Poco::TimeoutException& /*e*/) {
+        // in this case e.what() is empty.
+        m_error_message = "Could not reach server (timeout).";
+    }
+    catch (const Poco::Exception& e) {
+        m_error_message = e.what();
     }
     return false;
 }
@@ -161,8 +181,13 @@ ResponseMessagePtr Client::send(const QueryMessage& mes, int timeout_ms)
         {
             HTTPResponse response;
             auto& is = session.receiveResponse(response);
-            ret.reset(new ResponseMessage());
-            ret->deserialize(is);
+            if (response.getStatus() == HTTPResponse::HTTP_OK) {
+                ret.reset(new ResponseMessage());
+                ret->deserialize(is);
+            }
+            else {
+                m_error_message = "Server is stopped.";
+            }
         }
     }
     catch (const Poco::TimeoutException& /*e*/) {

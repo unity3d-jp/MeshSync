@@ -133,28 +133,7 @@ public:
     {
         auto target = msmodoContext::SendTarget::Objects;
         cmd_read_arg("target", (int&)target);
-
-        auto& inst = msmodoGetInstance();
-        if (target == msmodoContext::SendTarget::Objects) {
-            inst.wait();
-            inst.sendObjects(msmodoContext::SendScope::All, true);
-        }
-        else if (target == msmodoContext::SendTarget::Materials) {
-            inst.wait();
-            inst.sendMaterials(true);
-        }
-        else if (target == msmodoContext::SendTarget::Animations) {
-            inst.wait();
-            inst.sendAnimations(msmodoContext::SendScope::All);
-        }
-        else if (target == msmodoContext::SendTarget::Everything) {
-            inst.wait();
-            inst.sendMaterials(true);
-            inst.wait();
-            inst.sendObjects(msmodoContext::SendScope::All, true);
-            inst.wait();
-            inst.sendAnimations(msmodoContext::SendScope::All);
-        }
+        msmodoExport(target, msmodoContext::SendScope::All);
     }
 };
 
@@ -211,7 +190,9 @@ public:
 
 void initialize(void)
 {
-    auto cmd = new CLxPolymorph<msmodoView>();
-    cmd->AddInterface(new CLxIfc_CustomView<msmodoView>());
-    lx::AddServer(msmodoViewName, cmd);
+    {
+        auto view = new CLxPolymorph<msmodoView>();
+        view->AddInterface(new CLxIfc_CustomView<msmodoView>());
+        lx::AddServer(msmodoViewName, view);
+    }
 }

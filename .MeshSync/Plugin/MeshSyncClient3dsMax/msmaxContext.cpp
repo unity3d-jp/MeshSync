@@ -19,24 +19,24 @@
 
 static void OnStartup(void *param, NotifyInfo *info)
 {
-    msmaxInstance().onStartup();
+    msmaxGetContext().onStartup();
 }
 static void OnShutdown(void *param, NotifyInfo *info)
 {
-    msmaxInstance().onShutdown();
+    msmaxGetContext().onShutdown();
 }
 static void OnNodeRenamed(void *param, NotifyInfo *info)
 {
-    msmaxInstance().onNodeRenamed();
-    msmaxInstance().update();
+    msmaxGetContext().onNodeRenamed();
+    msmaxGetContext().update();
 }
 static void OnPreNewScene(void *param, NotifyInfo *info)
 {
-    msmaxInstance().onNewScene();
+    msmaxGetContext().onNewScene();
 }
 static void OnPostNewScene(void *param, NotifyInfo *info)
 {
-    msmaxInstance().update();
+    msmaxGetContext().update();
 }
 
 
