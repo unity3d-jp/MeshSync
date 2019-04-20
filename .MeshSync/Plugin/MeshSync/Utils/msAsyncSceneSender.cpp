@@ -23,6 +23,19 @@ AsyncSceneSender::~AsyncSceneSender()
     wait();
 }
 
+const std::string& AsyncSceneSender::getErrorMessage() const
+{
+    return m_error_message;
+}
+
+bool AsyncSceneSender::isServerAvaileble()
+{
+    ms::Client client(client_settings);
+    bool ret = client.isServerAvailable();
+    m_error_message = client.getErrorMessage();
+    return ret;
+}
+
 bool AsyncSceneSender::isSending()
 {
     if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)

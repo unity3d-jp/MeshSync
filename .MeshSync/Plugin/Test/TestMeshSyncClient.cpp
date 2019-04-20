@@ -457,21 +457,26 @@ TestCase(Test_FileAsset)
 
 TestCase(Test_Query)
 {
-    auto send_query_impl = [](ms::QueryMessage::QueryType qt, const char *query_name) {
-        ms::Client client(GetClientSettings());
+    ms::Client client(GetClientSettings());
+    if (!client.isServerAvailable()) {
+        auto& log = client.getErrorMessage();
+        Print("Server not available. error log: %s\n", log.c_str());
+        return;
+    }
 
+    auto send_query_impl = [&](ms::QueryMessage::QueryType qt, const char *query_name) {
         ms::QueryMessage query;
         query.query_type = qt;
-        auto response = std::dynamic_pointer_cast<ms::ResponseMessage>(client.send(query));
+        auto response = client.send(query);
 
-        printf("query: %s\n", query_name);
-        printf("response:\n");
+        Print("query: %s\n", query_name);
+        Print("response:\n");
         if (response) {
             for (auto& t : response->text)
-                printf("  %s\n", t.c_str());
+                Print("  %s\n", t.c_str());
         }
         else {
-            printf("  (null)\n");
+            Print("  no response. error log: %s\n", client.getErrorMessage().c_str());
         }
     };
 

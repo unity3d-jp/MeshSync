@@ -24,8 +24,11 @@ public:
 
     std::function<void()> on_prepare, on_success, on_error, on_complete;
 
+
     AsyncSceneSender(int session_id = InvalidID);
     ~AsyncSceneSender();
+    const std::string& getErrorMessage() const;
+    bool isServerAvaileble();
     bool isSending();
     void wait();
     void kick();
@@ -34,6 +37,7 @@ private:
     void send();
 
     std::future<void> m_future;
+    std::string m_error_message;
 };
 
 } // namespace ms

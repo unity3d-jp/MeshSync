@@ -11,6 +11,27 @@ Client::Client(const ClientSettings & settings)
 {
 }
 
+const std::string& Client::getErrorMessage() const
+{
+    return m_error_message;
+}
+
+bool Client::isServerAvailable(int timeout_ms)
+{
+    QueryMessage query;
+    query.query_type = QueryMessage::QueryType::ProtocolVersion;
+    auto response = send(query, timeout_ms);
+    if (response) {
+        if (!response->text.empty() && std::atoi(response->text[0].c_str()) == msProtocolVersion) {
+            return true;
+        }
+        else {
+            m_error_message = "Version doesn't match server.";
+        }
+    }
+    return false;
+}
+
 ScenePtr Client::send(const GetMessage& mes)
 {
     ScenePtr ret;
@@ -95,7 +116,7 @@ bool Client::send(const DeleteMessage& mes)
     }
 }
 
-bool Client::send(const FenceMessage & mes)
+bool Client::send(const FenceMessage& mes)
 {
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
@@ -120,12 +141,12 @@ bool Client::send(const FenceMessage & mes)
     }
 }
 
-MessagePtr Client::send(const QueryMessage & mes)
+ResponseMessagePtr Client::send(const QueryMessage& mes, int timeout_ms)
 {
-    MessagePtr ret;
+    ResponseMessagePtr ret;
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
-        session.setTimeout(5000 * 1000);
+        session.setTimeout(timeout_ms * 1000);
 
         {
             HTTPRequest request{ HTTPRequest::HTTP_POST, "query" };
@@ -144,9 +165,19 @@ MessagePtr Client::send(const QueryMessage & mes)
             ret->deserialize(is);
         }
     }
-    catch (...) {
+    catch (const Poco::TimeoutException& /*e*/) {
+        // in this case e.what() is empty.
+        m_error_message = "Could not reach server (timeout).";
+    }
+    catch (const Poco::Exception& e) {
+        m_error_message = e.what();
     }
     return ret;
+}
+
+ResponseMessagePtr Client::send(const QueryMessage& mes)
+{
+    return send(mes, m_settings.timeout_ms);
 }
 
 } // namespace ms
