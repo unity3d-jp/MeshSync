@@ -130,13 +130,13 @@ QueryMessage::QueryMessage()
 void QueryMessage::serialize(std::ostream & os) const
 {
     super::serialize(os);
-    write(os, type);
+    write(os, query_type);
 }
 
 void QueryMessage::deserialize(std::istream & is)
 {
     super::deserialize(is);
-    read(is, type);
+    read(is, query_type);
 }
 
 ResponseMessage::ResponseMessage()

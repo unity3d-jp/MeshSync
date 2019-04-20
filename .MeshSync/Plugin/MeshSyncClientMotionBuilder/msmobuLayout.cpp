@@ -297,7 +297,7 @@ bool msmobuLayout::FBCreate()
             lW2, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idButtonSyncAnimations, 1);
         SetControl(idLabelVersion, m_lb_version);
-        m_lb_version.Caption = "Plugin Version: " msReleaseDateStr;
+        m_lb_version.Caption = "Plugin Version: " msPluginVersionStr;
     }
 
     return true;

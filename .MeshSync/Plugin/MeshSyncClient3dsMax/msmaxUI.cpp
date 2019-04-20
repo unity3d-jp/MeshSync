@@ -494,5 +494,5 @@ void msmaxContext::updateUIText()
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
     CtrlSetCheck(IDC_CHECK_KFREDUCTION,        s.keyframe_reduction);
 
-    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msReleaseDateStr);
+    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);
 }

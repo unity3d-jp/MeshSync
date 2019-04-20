@@ -9,9 +9,13 @@ using ms::ServerPtr;
 static std::map<uint16_t, ServerPtr> g_servers;
 
 #pragma region Server
-msAPI const char* msServerGetVersion()
+msAPI int msGetPluginVersion()
 {
-    return msReleaseDateStr;
+    return msPluginVersion;
+}
+msAPI int msGetProtocolVersion()
+{
+    return msProtocolVersion;
 }
 
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
@@ -312,7 +316,7 @@ msAPI ms::TextMessage::Type msTextGetType(ms::TextMessage *self)
 
 msAPI ms::QueryMessage::QueryType msQueryGetType(ms::QueryMessage *self)
 {
-    return self->type;
+    return self->query_type;
 }
 msAPI void msQueryFinishRespond(ms::QueryMessage *self)
 {

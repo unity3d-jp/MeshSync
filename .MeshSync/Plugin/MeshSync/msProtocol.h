@@ -168,13 +168,15 @@ public:
     enum class QueryType
     {
         Unknown,
-        ClientName,
+        PluginVersion,
+        ProtocolVersion,
+        HostName,
         RootNodes,
         AllNodes,
     };
 
 public:
-    QueryType type = QueryType::Unknown;
+    QueryType query_type = QueryType::Unknown;
 
     std::atomic_bool ready; // non-serializable
     MessagePtr response;    // 

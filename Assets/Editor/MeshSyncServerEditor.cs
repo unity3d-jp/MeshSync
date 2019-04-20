@@ -39,7 +39,7 @@ namespace UTJ.MeshSyncEditor
                 t.ExportMaterials();
             EditorGUILayout.Space();
 
-            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.version);
+            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.pluginVersion);
         }
 
         public static void DrawMaterialList(MeshSyncServer t)

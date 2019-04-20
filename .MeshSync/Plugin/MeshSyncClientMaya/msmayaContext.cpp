@@ -256,7 +256,7 @@ msmayaContext& msmayaContext::getInstance()
 
 msmayaContext::msmayaContext(MObject obj)
     : m_obj(obj)
-    , m_iplugin(obj, msVendor, msReleaseDateStr)
+    , m_iplugin(obj, msVendor, msPluginVersionStr)
 {
 #define Body(CmdType) m_iplugin.registerCommand(CmdType::name(), CmdType::create, CmdType::createSyntax);
     EachCommand(Body)

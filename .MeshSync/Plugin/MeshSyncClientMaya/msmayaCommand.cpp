@@ -120,7 +120,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     MString result;
 
     if (args.isFlagSet("version")) {
-        if (args.isQuery()) to_MString(result, std::string(msReleaseDateStr));
+        if (args.isQuery()) to_MString(result, std::string(msPluginVersionStr));
     }
 
 #define Handle(Name, Value, Sync)\

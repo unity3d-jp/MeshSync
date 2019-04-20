@@ -461,10 +461,10 @@ TestCase(Test_Query)
         ms::Client client(GetClientSettings());
 
         ms::QueryMessage query;
-        query.type = qt;
+        query.query_type = qt;
         auto response = std::dynamic_pointer_cast<ms::ResponseMessage>(client.send(query));
 
-        printf("querty: %s\n", query_name);
+        printf("query: %s\n", query_name);
         printf("response:\n");
         if (response) {
             for (auto& t : response->text)
@@ -475,9 +475,11 @@ TestCase(Test_Query)
         }
     };
 
-#define SendQuery(Q) send_query_impl(Q, #Q)
-    SendQuery(ms::QueryMessage::QueryType::ClientName);
-    SendQuery(ms::QueryMessage::QueryType::RootNodes);
-    SendQuery(ms::QueryMessage::QueryType::AllNodes);
+#define SendQuery(Q) send_query_impl(ms::QueryMessage::QueryType::Q, #Q)
+    SendQuery(PluginVersion);
+    SendQuery(ProtocolVersion);
+    SendQuery(HostName);
+    SendQuery(RootNodes);
+    SendQuery(AllNodes);
 #undef SendQuery
 }

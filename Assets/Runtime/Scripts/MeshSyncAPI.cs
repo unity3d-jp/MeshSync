@@ -157,7 +157,8 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msServerGetVersion();
+        [DllImport("MeshSyncServer")] static extern int msGetPluginVersion();
+        [DllImport("MeshSyncServer")] static extern int msGetProtocolVersion();
         [DllImport("MeshSyncServer")] static extern Server msServerStart(ref ServerSettings settings);
         [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr self);
 
@@ -181,7 +182,8 @@ namespace UTJ.MeshSync
 
         public static implicit operator bool(Server v) { return v.self != IntPtr.Zero; }
 
-        public static string version { get { return Misc.S(msServerGetVersion()); } }
+        public static int pluginVersion { get { return msGetPluginVersion(); } }
+        public static int protocolVersion { get { return msGetProtocolVersion(); } }
 
         public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
         public void Stop() { msServerStop(self); }
@@ -379,7 +381,9 @@ namespace UTJ.MeshSync
         public enum QueryType
         {
             Unknown,
-            ClientName,
+            PluginVersion,
+            ProtocolVersion,
+            HostName,
             RootNodes,
             AllNodes,
         }

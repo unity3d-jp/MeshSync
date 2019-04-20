@@ -124,7 +124,7 @@ SettingsDlg::SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent) : M
     {
         MQFrame *vf = CreateVerticalFrame(this);
 
-        std::string plugin_version = "Plugin Version: " msReleaseDateStr;
+        std::string plugin_version = "Plugin Version: " msPluginVersionStr;
         CreateLabel(vf, ToWCS(plugin_version));
     }
 

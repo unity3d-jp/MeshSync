@@ -252,7 +252,7 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     }
 
     {
-        auto lb_version = new QLabel("Plugin Version: " msReleaseDateStr);
+        auto lb_version = new QLabel("Plugin Version: " msPluginVersionStr);
         lb_version->setContentsMargins(0, space, 0, 0);
         layout->addWidget(lb_version, iy++, 0, 1, 3);
     }

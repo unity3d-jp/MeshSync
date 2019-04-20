@@ -35,7 +35,7 @@ void msmqContext::clear()
 void msmqContext::flushPendingRequests(MQDocument doc)
 {
     if (m_pending_send_meshes) {
-        sendMeshes(doc, true);
+        sendMeshes(doc, false);
     }
 }
 

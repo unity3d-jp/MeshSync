@@ -62,7 +62,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_check_autosync.SetCheck(s.auto_sync);
     m_check_bake_skin.SetCheck(s.bake_skin);
     m_check_bake_cloth.SetCheck(s.bake_cloth);
-    m_txt_version.SetWindowTextA("Plugin Version: " msReleaseDateStr);
+    m_txt_version.SetWindowTextA("Plugin Version: " msPluginVersionStr);
     m_initializing = false;
     return TRUE;
 }

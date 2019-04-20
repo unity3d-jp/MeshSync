@@ -211,7 +211,8 @@ namespace UTJ.MeshSync
 
 
         #region Properties
-        public static string version { get { return Server.version; } }
+        public static int pluginVersion { get { return Server.pluginVersion; } }
+        public static int protocolVersion { get { return Server.protocolVersion; } }
         public int serverPort
         {
             get { return m_serverPort; }
@@ -619,7 +620,13 @@ namespace UTJ.MeshSync
         {
             switch (data.queryType)
             {
-                case QueryMessage.QueryType.ClientName:
+                case QueryMessage.QueryType.PluginVersion:
+                    data.AddResponseText(MeshSyncServer.pluginVersion.ToString());
+                    break;
+                case QueryMessage.QueryType.ProtocolVersion:
+                    data.AddResponseText(MeshSyncServer.protocolVersion.ToString());
+                    break;
+                case QueryMessage.QueryType.HostName:
                     data.AddResponseText("Unity " + Application.unityVersion);
                     break;
                 case QueryMessage.QueryType.RootNodes:

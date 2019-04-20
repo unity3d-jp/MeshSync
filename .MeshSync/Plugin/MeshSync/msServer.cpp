@@ -568,40 +568,53 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, M
     }
 }
 
-void Server::recvQuery(HTTPServerRequest & request, HTTPServerResponse & response, MessageHolder& dst)
+void Server::recvQuery(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
 {
     auto mes = deserializeMessage<QueryMessage>(request, response, dst);
     if (!mes)
         return;
 
-    mes->ready = false;
-    mes->response = ResponseMessagePtr(new ResponseMessage());
-    dst.ready = true;
+    auto respond_immediate = [&](const std::string& v) {
+        auto res = new ResponseMessage();
+        res->text.push_back(v);
+        mes->response.reset(res);
 
-    // wait for data arrive (or timeout)
-    for (int i = 0; i < 300; ++i) {
-        if (mes->ready)
-            break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        dst.message = nullptr;
+        dst.ready = true;
+    };
+
+    if (mes->query_type == QueryMessage::QueryType::PluginVersion) {
+        respond_immediate(msPluginVersionStr);
+    }
+    else if (mes->query_type == QueryMessage::QueryType::ProtocolVersion) {
+        respond_immediate(std::to_string(msProtocolVersion));
+    }
+    else {
+        mes->ready = false;
+        mes->response.reset(new ResponseMessage());
+        dst.ready = true;
+
+        // wait for data arrive (or timeout)
+        for (int i = 0; i < 300; ++i) {
+            if (mes->ready)
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
 
     // serve data
-    if (mes->response) {
+    {
         response.setContentType("application/octet-stream");
-        response.setContentLength(ssize(*mes->response));
-
         auto& os = response.send();
-        mes->response->serialize(os);
+        if (mes->response) {
+            response.setContentLength(ssize(*mes->response));
+            mes->response->serialize(os);
+        }
+        else {
+            response.setContentLength(0);
+        }
         os.flush();
-
         mes->response.reset();
-    }
-    else {
-        response.setContentType("application/octet-stream");
-        response.setContentLength(0);
-
-        auto& os = response.send();
-        os.flush();
     }
 }
 

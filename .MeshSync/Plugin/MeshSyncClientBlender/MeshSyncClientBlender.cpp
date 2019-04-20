@@ -13,7 +13,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
         using self_t = msblenContext;
         py::class_<msblenContext, msbContextPtr>(mod, "Context")
             .def(py::init<>())
-            .def_property_readonly("VERSION", [](const msblenContext& self) { return std::string(msReleaseDateStr); })
+            .def_property_readonly("VERSION", [](const msblenContext& self) { return std::string(msPluginVersionStr); })
             .def_property_readonly("TARGET_OBJECTS",    [](const msblenContext& self) { return (int)msblenContext::SendTarget::Objects; })
             .def_property_readonly("TARGET_MATERIALS",  [](const msblenContext& self) { return (int)msblenContext::SendTarget::Materials; })
             .def_property_readonly("TARGET_ANIMATIONS", [](const msblenContext& self) { return (int)msblenContext::SendTarget::Animations; })

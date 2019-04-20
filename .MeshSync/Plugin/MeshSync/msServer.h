@@ -113,9 +113,6 @@ private:
     ScreenshotMessagePtr m_current_screenshot_request;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
-
-    QueryMessagePtr m_current_query;
-    std::vector<QueryMessagePtr> m_poll_messages;
 };
 msDeclPtr(Server);
 
