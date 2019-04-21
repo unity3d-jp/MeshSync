@@ -2,7 +2,7 @@
 
 #include "msmqContext.h"
 
-class SettingsDlg;
+class msmqSettingsDlg;
 
 class MeshSyncClientPlugin : public MQStationPlugin
 {
@@ -89,11 +89,13 @@ public:
     void SendCamera(bool only_when_autosync);
     void Import();
 
+    void LogInfo(const char *message);
+
 private:
     bool SendAllImpl(MQDocument doc);
     bool SendCameraImpl(MQDocument doc);
     bool ImportImpl(MQDocument doc);
 
     msmqContext m_context;
-    SettingsDlg *m_dlg = nullptr;
+    msmqSettingsDlg *m_dlg = nullptr;
 };

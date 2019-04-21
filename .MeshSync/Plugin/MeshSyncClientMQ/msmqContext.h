@@ -37,10 +37,14 @@ public:
     bool isServerAvailable();
     const std::string& getErrorMessage();
 
+    bool isSending();
+    void wait();
     void clear();
-    void flushPendingRequests(MQDocument doc);
-    void sendMeshes(MQDocument doc, bool force = false);
-    void sendCamera(MQDocument doc, bool force = false);
+    void update(MQDocument doc);
+
+    bool sendMaterials(MQDocument doc, bool dirty_all);
+    bool sendMeshes(MQDocument doc, bool dirty_all);
+    bool sendCamera(MQDocument doc, bool dirty_all);
     bool importMeshes(MQDocument doc);
 
 private:
@@ -71,7 +75,10 @@ private:
 
     using HostMeshes = std::map<int, ms::MeshPtr>;
 
+    void kickAsyncSend();
     int exportTexture(const std::string& path, ms::TextureType type);
+    int exportMaterials(MQDocument doc);
+
     MQObject findMesh(MQDocument doc, const char *name);
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);

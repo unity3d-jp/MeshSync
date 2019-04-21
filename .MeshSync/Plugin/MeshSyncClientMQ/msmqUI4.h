@@ -5,10 +5,10 @@
 
 class MeshSyncClientPlugin;
 
-class SettingsDlg : public MQWindow
+class msmqSettingsDlg : public MQWindow
 {
 public:
-    SettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent);
+    msmqSettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& parent);
 
     BOOL OnHide(MQWidgetBase *sender, MQDocument doc);
     BOOL OnServerChange(MQWidgetBase *sender, MQDocument doc);
@@ -28,6 +28,8 @@ public:
     BOOL OnBakeSkinChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnBakeClothChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnImportClicked(MQWidgetBase *sender, MQDocument doc);
+
+    void LogInfo(const char *message);
 
 private:
     msmqSettings& getSettings();
@@ -54,6 +56,8 @@ private:
     MQCheckBox *m_check_bake_skin = nullptr;
     MQCheckBox *m_check_bake_cloth = nullptr;
     MQButton *m_button_import = nullptr;
+
+    MQLabel *m_log = nullptr;
 
     MeshSyncClientPlugin *m_plugin = nullptr;
 };

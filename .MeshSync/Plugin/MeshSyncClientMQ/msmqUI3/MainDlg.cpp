@@ -47,6 +47,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
     m_check_bake_skin.Attach(GetDlgItem(IDC_CHECK_BAKE_SKIN));
     m_check_bake_cloth.Attach(GetDlgItem(IDC_CHECK_BAKE_CLOTH));
     m_txt_version.Attach(GetDlgItem(IDC_TXT_VERSION));
+    m_txt_log.Attach(GetDlgItem(IDC_TXT_LOG));
 
     auto& s = getSettings();
     char buf[256];
@@ -205,6 +206,11 @@ LRESULT CMainDlg::OnBnClickedButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HW
     return 0;
 }
 
+void CMainDlg::LogInfo(const char *message)
+{
+    m_txt_log.SetWindowTextA(message);
+}
+
 msmqSettings& CMainDlg::getSettings()
 {
     return m_plugin->getContext().getSettings();
@@ -279,4 +285,10 @@ void ShowSettingDialog(bool show)
 bool IsSettingDialogActive()
 {
     return g_dlg && g_dlg->IsWindowVisible();
+}
+
+void msmqLogInfo(const char *message)
+{
+    if (g_dlg)
+        g_dlg->LogInfo(message);
 }
