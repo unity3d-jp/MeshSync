@@ -65,6 +65,65 @@ template<> void to_MString(MString& dst, const float& value)
     dst += value;
 }
 
+template<class T> static void set_result(const T& value);
+
+template<> void set_result(const std::string& value)
+{
+    MPxCommand::setResult(value.c_str());
+}
+template<> void set_result(const bool& value)
+{
+    MPxCommand::setResult(value);
+}
+template<> void set_result(const int& value)
+{
+    MPxCommand::setResult(value);
+}
+template<> void set_result(const uint16_t& value)
+{
+    MPxCommand::setResult(value);
+}
+template<> void set_result(const float& value)
+{
+    MPxCommand::setResult(value);
+}
+
+
+void* CmdServerStats::create()
+{
+    return new CmdServerStats();
+}
+
+const char* CmdServerStats::name()
+{
+    return "UnityMeshSync_ServerStats";
+}
+
+MSyntax CmdServerStats::createSyntax()
+{
+    MSyntax syntax;
+    syntax.enableQuery(true);
+    syntax.enableEdit(false);
+    syntax.addFlag("-ia", "-isAvailable", MSyntax::kBoolean);
+    syntax.addFlag("-em", "-errorMessage", MSyntax::kString);
+    return syntax;
+}
+
+MStatus CmdServerStats::doIt(const MArgList& args_)
+{
+    MStatus status;
+    MArgParser args(syntax(), args_, &status);
+    if (!args.isQuery())
+        return MStatus::kFailure;
+
+    auto& ctx = msmayaGetContext();
+    if (args.isFlagSet("isAvailable"))
+        set_result(ctx.isServerAvailable());
+    else if (args.isFlagSet("errorMessage"))
+        set_result(std::string("MeshSync: ") + ctx.getErrorMessage() + "\n");
+    return MStatus::kSuccess;
+}
+
 
 void* CmdSettings::create()
 {
@@ -82,7 +141,8 @@ MSyntax CmdSettings::createSyntax()
     MSyntax syntax;
     syntax.enableQuery(true);
     syntax.enableEdit(false);
-    syntax.addFlag("-v", "-version", MSyntax::kString);
+    syntax.addFlag("-plv", "-pluginVersion", MSyntax::kString);
+    syntax.addFlag("-prv", "-protocolVersion", MSyntax::kString);
     syntax.addFlag("-a", "-address", MSyntax::kString);
     syntax.addFlag("-p", "-port", MSyntax::kLong);
     syntax.addFlag("-sf", "-scaleFactor", MSyntax::kDouble);
@@ -107,7 +167,6 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-mt", "-multithreaded", MSyntax::kBoolean);
     syntax.addFlag("-fct", "-fbxCompatibleTransform", MSyntax::kBoolean);
-
     return syntax;
 }
 
@@ -117,16 +176,19 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto& settings = msmayaGetSettings();
 
-    MString result;
-
-    if (args.isFlagSet("version")) {
-        if (args.isQuery()) to_MString(result, std::string(msPluginVersionStr));
+    if (args.isFlagSet("pluginVersion")) {
+        if (args.isQuery())
+            set_result(std::string(msPluginVersionStr));
+    }
+    else if (args.isFlagSet("protocolVersion")) {
+        if (args.isQuery())
+            set_result(std::to_string(msProtocolVersion));
     }
 
 #define Handle(Name, Value, Sync)\
     if (args.isFlagSet(Name)) {\
         if(args.isQuery()) {\
-            to_MString(result, Value);\
+            set_result(Value);\
         }\
         else {\
             get_arg(Value, Name, args);\
@@ -161,7 +223,6 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("fbxCompatibleTransform", settings.fbx_compatible_transform, true);
 #undef Handle
 
-    MPxCommand::setResult(result);
     return MStatus::kSuccess;
 }
 

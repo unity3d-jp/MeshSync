@@ -4,7 +4,7 @@ global proc UnityMeshSync_GUI()
     if (`window -exists $Window`) deleteUI -window $Window;
     window -t ("Unity Mesh Sync") -wh 300 660 $Window;
 
-    string $version         = `UnityMeshSync_Settings -q -version`;
+    string $version         = `UnityMeshSync_Settings -q -pluginVersion`;
     string $address         = `UnityMeshSync_Settings -q -address`;
     int    $port            = `UnityMeshSync_Settings -q -port`;
     float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
@@ -34,10 +34,10 @@ global proc UnityMeshSync_GUI()
     setParent ..;
 
     separator -h 20 -w 250;
-    
+
     text -label "Scene" -font "boldLabelFont";
     separator -h 5 -w 250 -style none;
-    
+
     rowLayout -numberOfColumns 2;
         text -label "Scale Factor"; floatField -value $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
     setParent ..;
@@ -57,16 +57,16 @@ global proc UnityMeshSync_GUI()
 
     checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
     checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
-    
+
     separator -h 5 -w 250 -style none;
     checkBox -label "Auto Sync" -value $autosync -cc "umsCBAutoSync" umsCtrlAutoSync;
     button -l "Manual Sync" -c "umsCBManualSync";
-    
+
     separator -h 20 -w 250;
-    
+
     text -label "Animations" -font "boldLabelFont";
     separator -h 8 -w 250 -style none;
-    
+
     rowLayout -numberOfColumns 2;
         text -label "Time Scale"; floatField -w 60 -v $animationTS -cc "umsCBAnimationTS" -minValue 0.01 umsCtrlAnimationTS;
     setParent ..;
@@ -185,8 +185,18 @@ global proc umsCBSyncLights()
 
 global  proc umsCBAutoSync()
 {
-    int $v = `checkBox -q -value umsCtrlAutoSync`;
-    string $ret = `UnityMeshSync_Settings -autosync $v`;
+    if (`checkBox -q -value umsCtrlAutoSync`) {
+        if (`UnityMeshSync_ServerStats -q -isAvailable`) {
+            UnityMeshSync_Settings -autosync 1;
+        }
+        else {
+            print `UnityMeshSync_ServerStats -q -errorMessage`;
+            checkBox -edit -value 0 umsCtrlAutoSync;
+        }
+    }
+    else {
+        UnityMeshSync_Settings -autosync 0;
+    }
 }
 
 global proc umsCBManualSync()
