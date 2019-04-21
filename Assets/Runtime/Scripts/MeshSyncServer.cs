@@ -1339,9 +1339,9 @@ namespace UTJ.MeshSync
                         smr.updateWhenOffscreen = updateWhenOffscreen;
                     }
 
-                    if (flags.hasBlendshapeWeights)
+                    if (flags.hasBlendshapeWeights && rec.editMesh != null)
                     {
-                        int numBlendShapes = data.numBlendShapes;
+                        int numBlendShapes = Math.Min(data.numBlendShapes, rec.editMesh.blendShapeCount);
                         for (int bi = 0; bi < numBlendShapes; ++bi)
                         {
                             var bsd = data.GetBlendShapeData(bi);
