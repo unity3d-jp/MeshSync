@@ -59,7 +59,7 @@ public:
     MeshRefineSettings refine_settings;
 
     // non-serializable
-    std::atomic_bool ready;
+    std::atomic_bool ready{ false };
 
 public:
     GetMessage();
@@ -150,7 +150,7 @@ using super = Message;
 public:
 
     // non-serializable
-    std::atomic_bool ready;
+    std::atomic_bool ready{ false };
 
 public:
     ScreenshotMessage();
@@ -159,6 +159,20 @@ public:
 };
 msSerializable(ScreenshotMessage);
 msDeclPtr(ScreenshotMessage);
+
+
+class ResponseMessage : public Message
+{
+    using super = Message;
+public:
+    std::vector<std::string> text;
+
+    ResponseMessage();
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+msSerializable(ResponseMessage);
+msDeclPtr(ResponseMessage);
 
 
 class QueryMessage : public Message
@@ -178,8 +192,8 @@ public:
 public:
     QueryType query_type = QueryType::Unknown;
 
-    std::atomic_bool ready; // non-serializable
-    MessagePtr response;    // 
+    std::atomic_bool ready{ false };    // non-serializable
+    ResponseMessagePtr response;        // 
 
     QueryMessage();
     void serialize(std::ostream& os) const override;
@@ -187,20 +201,6 @@ public:
 };
 msSerializable(QueryMessage);
 msDeclPtr(QueryMessage);
-
-
-class ResponseMessage : public Message
-{
-using super = Message;
-public:
-    std::vector<std::string> text;
-
-    ResponseMessage();
-    void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
-};
-msSerializable(ResponseMessage);
-msDeclPtr(ResponseMessage);
 
 
 class PollMessage : public Message
@@ -213,7 +213,7 @@ public:
         SceneUpdate,
     };
     PollType type = PollType::Unknown;
-    std::atomic_bool ready; // non-serializable
+    std::atomic_bool ready{ false }; // non-serializable
 
     PollMessage();
     void serialize(std::ostream& os) const override;

@@ -12,12 +12,11 @@ using namespace Poco::Net;
 class RequestHandler : public HTTPRequestHandler
 {
 public:
-    RequestHandler(Server *server, Server::MessageHolder *holder);
+    RequestHandler(Server *server);
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response) override;
 
 private:
     Server *m_server = nullptr;
-    Server::MessageHolder *m_holder = nullptr;
 };
 
 class RequestHandlerFactory : public HTTPRequestHandlerFactory
@@ -31,64 +30,55 @@ private:
 };
 
 
-RequestHandler::RequestHandler(Server *server, Server::MessageHolder *holder)
+RequestHandler::RequestHandler(Server *server)
     : m_server(server)
-    , m_holder(holder)
 {
 }
-
 
 void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     if (!m_server->isServing()) {
         m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
-        m_holder->ready = true;
         return;
     }
 
     auto& uri = request.getURI();
-#ifdef msDebug
-    m_holder->requested_uri = uri;;
-#endif
     if (uri == "set") {
-        m_server->recvSet(request, response, *m_holder);
+        m_server->recvSet(request, response);
     }
     else if (uri == "delete") {
-        m_server->recvDelete(request, response, *m_holder);
+        m_server->recvDelete(request, response);
     }
     else if (uri == "fence") {
-        m_server->recvFence(request, response, *m_holder);
+        m_server->recvFence(request, response);
     }
     else if (uri == "get") {
-        m_server->recvGet(request, response, *m_holder);
+        m_server->recvGet(request, response);
     }
     else if (uri == "query") {
-        m_server->recvQuery(request, response, *m_holder);
+        m_server->recvQuery(request, response);
     }
     else if (uri == "text" || StartWith(uri, "/text")) {
-        m_server->recvText(request, response, *m_holder);
+        m_server->recvText(request, response);
     }
     else if (StartWith(uri, "/screenshot")) {
-        m_server->recvScreenshot(request, response, *m_holder);
+        m_server->recvScreenshot(request, response);
     }
     else if (StartWith(uri, "/poll")) {
-        m_server->recvPoll(request, response, *m_holder);
+        m_server->recvPoll(request, response);
     }
     else if (StartWith(uri, "/protocol_version")) {
         static const auto res = std::to_string(msProtocolVersion);
         m_server->serveText(response, res.c_str());
-        m_holder->ready = true;
     }
     else if (StartWith(uri, "/plugin_version")) {
         m_server->serveText(response, msPluginVersionStr);
-        m_holder->ready = true;
     }
     else {
         // note: Poco handles commas in URI
         // e.g. "hoge/hage/../hige" -> "hoge/hige"
         //      "../../secret_file" -> "/"
         m_server->serveFiles(response, uri);
-        m_holder->ready = true;
     }
 }
 
@@ -99,7 +89,7 @@ RequestHandlerFactory::RequestHandlerFactory(Server *server)
 
 HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest&)
 {
-    return new RequestHandler(m_server, m_server->reserveMessage());
+    return new RequestHandler(m_server);
 }
 
 
@@ -416,16 +406,36 @@ Scene* Server::getHostScene()
     return m_host_scene.get();
 }
 
-Server::MessageHolder* Server::reserveMessage()
+Server::MessageHolder* Server::queueMessage(MessagePtr mes)
 {
-    lock_t l(m_message_mutex);
+    if (!mes)
+        return nullptr;
 
     MessageHolder t;
+    t.message = mes;
+    t.ready = true;
+
+    lock_t l(m_message_mutex);
     m_received_messages.push_back(std::move(t));
     return &m_received_messages.back();
 }
 
-void Server::queueTextMessage(const char * mes, TextMessage::Type type)
+Server::MessageHolder* Server::queueMessage(MessagePtr mes, std::future<void>&& task)
+{
+    if (!mes)
+        return nullptr;
+
+    MessageHolder t;
+    t.message = mes;
+    t.task = std::move(task);
+    t.ready = true;
+
+    lock_t l(m_message_mutex);
+    m_received_messages.push_back(std::move(t));
+    return &m_received_messages.back();
+}
+
+void Server::queueTextMessage(const char *mes, TextMessage::Type type)
 {
     auto txt = new TextMessage();
     txt->type = type;
@@ -441,16 +451,14 @@ void Server::queueTextMessage(const char * mes, TextMessage::Type type)
 
 
 template<class MessageT>
-std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     try {
-        auto ret = std::shared_ptr<MessageT>(new MessageT());
-        ret->deserialize(request.stream());
-        dst.message = ret;
-        return ret;
+        auto mes = std::shared_ptr<MessageT>(new MessageT());
+        mes->deserialize(request.stream());
+        return mes;
     }
     catch (const std::exception& e) {
-        dst.ready = true;
         queueTextMessage(e.what(), TextMessage::Type::Error);
         serveText(response, e.what(), HTTPResponse::HTTP_BAD_REQUEST);
         return nullptr;
@@ -463,23 +471,23 @@ void Server::sanitizeHierarchyPath(std::string& /*path*/)
 }
 
 
-void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = deserializeMessage<SetMessage>(request, response, dst);
+    auto mes = deserializeMessage<SetMessage>(request, response);
     if (!mes)
         return;
 
-    dst.task = std::async(std::launch::async, [this, mes]() {
+    auto task = std::async(std::launch::async, [this, mes]() {
         // receive and convert assets
-        bool swap_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
+        bool flip_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
         bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-        parallel_for_each(mes->scene.entities.begin(), mes->scene.entities.end(), [this, &mes, swap_x, swap_yz](TransformPtr& obj) {
+        parallel_for_each(mes->scene.entities.begin(), mes->scene.entities.end(), [this, &mes, flip_x, swap_yz](TransformPtr& obj) {
             sanitizeHierarchyPath(obj->path);
             sanitizeHierarchyPath(obj->reference);
             if (obj->getType() == Entity::Type::Mesh) {
                 auto& mesh = (Mesh&)*obj;
                 mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
-                mesh.refine_settings.flags.flip_x = swap_x;
+                mesh.refine_settings.flags.flip_x = flip_x;
                 mesh.refine_settings.flags.flip_yz = swap_yz;
                 mesh.refine_settings.flags.triangulate = 1;
                 mesh.refine_settings.flags.split = 1;
@@ -489,64 +497,61 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response, M
                 mesh.refine(mesh.refine_settings);
             }
             else {
-                if (swap_x || swap_yz) {
-                    obj->convertHandedness(swap_x, swap_yz);
+                if (flip_x || swap_yz) {
+                    obj->convertHandedness(flip_x, swap_yz);
                 }
                 if (mes->scene.settings.scale_factor != 1.0f) {
                     float scale = 1.0f / mes->scene.settings.scale_factor;
                     obj->applyScaleFactor(scale);
                 }
             }
-        });
+            });
         for (auto& asset : mes->scene.assets) {
             if (asset->getAssetType() != AssetType::Animation)
                 continue;
 
             auto clip = std::static_pointer_cast<AnimationClip>(asset);
-            parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, swap_x, swap_yz](AnimationPtr& anim) {
+            parallel_for_each(clip->animations.begin(), clip->animations.end(), [this, &mes, flip_x, swap_yz](AnimationPtr& anim) {
                 sanitizeHierarchyPath(anim->path);
-                if (swap_x || swap_yz) {
-                    anim->convertHandedness(swap_x, swap_yz);
+                if (flip_x || swap_yz) {
+                    anim->convertHandedness(flip_x, swap_yz);
                 }
                 if (mes->scene.settings.scale_factor != 1.0f) {
                     float scale = 1.0f / mes->scene.settings.scale_factor;
                     anim->applyScaleFactor(scale);
                 }
-            });
+                });
         }
     });
-    dst.ready = true;
+    queueMessage(mes, std::move(task));
     serveText(response, "ok");
 }
 
-void Server::recvDelete(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvDelete(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = deserializeMessage<DeleteMessage>(request, response, dst);
+    auto mes = deserializeMessage<DeleteMessage>(request, response);
     if (!mes)
         return;
-
-    dst.ready = true;
+    queueMessage(mes);
     serveText(response, "ok");
 }
 
-void Server::recvFence(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvFence(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = deserializeMessage<FenceMessage>(request, response, dst);
+    auto mes = deserializeMessage<FenceMessage>(request, response);
     if (!mes)
         return;
-
-    dst.ready = true;
+    queueMessage(mes);
     serveText(response, "ok");
 }
 
-void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = deserializeMessage<GetMessage>(request, response, dst);
+    auto mes = deserializeMessage<GetMessage>(request, response);
     if (!mes)
         return;
 
-    mes->ready = false;
-    dst.ready = true;
+    queueMessage(mes);
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
@@ -578,31 +583,22 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response, M
     }
 }
 
-void Server::recvQuery(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvQuery(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = deserializeMessage<QueryMessage>(request, response, dst);
+    auto mes = deserializeMessage<QueryMessage>(request, response);
     if (!mes)
         return;
 
-    auto respond_immediate = [&](const std::string& v) {
-        auto res = new ResponseMessage();
-        res->text.push_back(v);
-        mes->response.reset(res);
-
-        dst.message = nullptr;
-        dst.ready = true;
-    };
+    mes->response.reset(new ResponseMessage());
 
     if (mes->query_type == QueryMessage::QueryType::PluginVersion) {
-        respond_immediate(msPluginVersionStr);
+        mes->response->text.push_back(msPluginVersionStr);
     }
     else if (mes->query_type == QueryMessage::QueryType::ProtocolVersion) {
-        respond_immediate(std::to_string(msProtocolVersion));
+        mes->response->text.push_back(std::to_string(msProtocolVersion));
     }
     else {
-        mes->ready = false;
-        mes->response.reset(new ResponseMessage());
-        dst.ready = true;
+        queueMessage(mes);
 
         // wait for data arrive (or timeout)
         for (int i = 0; i < 300; ++i) {
@@ -628,13 +624,13 @@ void Server::recvQuery(HTTPServerRequest& request, HTTPServerResponse& response,
     }
 }
 
-void Server::recvText(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvText(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     bool respond_form = false;
 
     TextMessagePtr mes;
     if (request.getURI() == "text") {
-        mes = deserializeMessage<TextMessage>(request, response, dst);
+        mes = deserializeMessage<TextMessage>(request, response);
     }
     else if (request.getMethod() == HTTPServerRequest::HTTP_GET) {
         auto& uri = request.getURI();
@@ -662,8 +658,7 @@ void Server::recvText(HTTPServerRequest& request, HTTPServerResponse& response, 
     }
 
     if (mes && !mes->text.empty())
-        dst.message = mes;
-    dst.ready = true;
+        queueMessage(mes);
 
     if (respond_form)
         serveFiles(response, "");
@@ -671,13 +666,10 @@ void Server::recvText(HTTPServerRequest& request, HTTPServerResponse& response, 
         serveText(response, "ok");
 }
 
-void Server::recvScreenshot(HTTPServerRequest& /*request*/, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvScreenshot(HTTPServerRequest& /*request*/, HTTPServerResponse& response)
 {
-    auto mes = ScreenshotMessagePtr(new ScreenshotMessage());
-    mes->ready = false;
-
-    dst.message = mes;
-    dst.ready = true;
+    auto mes = std::make_shared<ScreenshotMessage>();
+    queueMessage(mes);
 
     // wait for data arrive (or timeout)
     for (int i = 0; i < 300; ++i) {
@@ -691,13 +683,9 @@ void Server::recvScreenshot(HTTPServerRequest& /*request*/, HTTPServerResponse& 
     response.sendFile(m_screenshot_file_path, "image/png");
 }
 
-void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response, MessageHolder& dst)
+void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    dst.ready = true;
-
-    auto mes = PollMessagePtr(new PollMessage());
-    mes->ready = false;
-
+    auto mes = std::make_shared<PollMessage>();
     if(request.getURI() == "/poll" || request.getURI() == "/poll/scene_update")
         mes->type = PollMessage::PollType::SceneUpdate;
     // ...

@@ -63,31 +63,31 @@ public:
         MessagePtr message;
         std::future<void> task;
         std::atomic_bool ready = { false };
-#ifdef msDebug
-        std::string requested_uri;
-#endif
 
         MessageHolder();
         MessageHolder(MessageHolder&& v);
     };
 
     Scene* getHostScene();
-    MessageHolder* reserveMessage();
     void queueTextMessage(const char *mes, TextMessage::Type type);
-    void recvSet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvDelete(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvFence(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvGet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvQuery(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvSet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvDelete(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvFence(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvGet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvQuery(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 
     static void sanitizeHierarchyPath(std::string& path);
 
 private:
     template<class MessageT>
-    std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+
+    MessageHolder* queueMessage(MessagePtr mes);
+    MessageHolder* queueMessage(MessagePtr mes, std::future<void>&& task);
+
     bool loadMIMETypes(const std::string& path);
     const std::string& getMIMEType(const std::string& filename);
 

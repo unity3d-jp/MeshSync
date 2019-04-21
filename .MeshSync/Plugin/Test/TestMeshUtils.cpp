@@ -1062,9 +1062,15 @@ TestCase(Test_RemoveNamespace)
 TestCase(Test_UniqueUnsorted)
 {
     int input[] = { 5,1,3,6,2,4,3,4,5,4,6,7,6 };
-    auto pos = unique_unsorted(input, input + std::size(input));
+    // std::size() require C++17
+    size_t len = std::distance(std::begin(input), std::end(input));
+    auto pos = unique_unsorted(input, input + len);
     auto n = std::distance(input, pos);
     Expect(n == 7);
+
+    for (size_t i = 0; i < n; ++i)
+        Print("%d ", input[i]);
+    Print("\n");
 }
 
 

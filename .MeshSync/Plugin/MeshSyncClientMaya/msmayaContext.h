@@ -80,9 +80,6 @@ struct TreeNode : public mu::noncopyable
 };
 using TreeNodePtr = std::unique_ptr<TreeNode>;
 
-MDagPath GetDagPath(const TreeNode *branch, const MObject& node);
-TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath);
-
 
 struct msmayaSettings
 {

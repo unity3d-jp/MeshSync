@@ -123,22 +123,6 @@ void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os)
 void ScreenshotMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
 
-QueryMessage::QueryMessage()
-{
-}
-
-void QueryMessage::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    write(os, query_type);
-}
-
-void QueryMessage::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    read(is, query_type);
-}
-
 ResponseMessage::ResponseMessage()
 {
 }
@@ -153,6 +137,23 @@ void ResponseMessage::deserialize(std::istream & is)
 {
     super::deserialize(is);
     read(is, text);
+}
+
+
+QueryMessage::QueryMessage()
+{
+}
+
+void QueryMessage::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, query_type);
+}
+
+void QueryMessage::deserialize(std::istream & is)
+{
+    super::deserialize(is);
+    read(is, query_type);
 }
 
 
