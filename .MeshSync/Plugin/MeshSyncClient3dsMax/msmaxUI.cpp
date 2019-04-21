@@ -396,8 +396,21 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             break;
         case IDC_CHECK_AUTO_SYNC:
             handle_button([&]() {
-                s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC);
-                notify_scene_update();
+                auto& ctx = msmaxGetContext();
+                auto& settings = msmaxGetSettings();
+                if (CtrlIsChecked(IDC_CHECK_AUTO_SYNC)) {
+                    if (ctx.isServerAvailable()) {
+                        settings.auto_sync = true;
+                        notify_scene_update();
+                    }
+                    else {
+                        ctx.logInfo("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
+                        CtrlSetCheck(IDC_CHECK_AUTO_SYNC, false);
+                    }
+                }
+                else {
+                    settings.auto_sync = false;
+                }
             });
             break;
 

@@ -60,6 +60,7 @@ public slots:
 private:
     QWidget *m_widget_mesh = nullptr;
     QWidget *m_widget_kfoptions = nullptr;
+    QCheckBox *m_ck_auto_sync = nullptr;
 };
 
 
@@ -194,11 +195,11 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     }
 
     {
-        auto ck_auto_sync = new QCheckBox("Auto Sync");
-        ck_auto_sync->setContentsMargins(0, space, 0, 0);
-        ck_auto_sync->setCheckState(to_qcheckstate(settings.auto_sync));
-        layout->addWidget(ck_auto_sync, iy++, 0, 1, 3);
-        connect(ck_auto_sync, SIGNAL(stateChanged(int)), this, SLOT(onToggleAutoSync(int)));
+        m_ck_auto_sync = new QCheckBox("Auto Sync");
+        m_ck_auto_sync->setContentsMargins(0, space, 0, 0);
+        m_ck_auto_sync->setCheckState(to_qcheckstate(settings.auto_sync));
+        layout->addWidget(m_ck_auto_sync, iy++, 0, 1, 3);
+        connect(m_ck_auto_sync, SIGNAL(stateChanged(int)), this, SLOT(onToggleAutoSync(int)));
 
         auto bu_manual_sync = new QPushButton("Manual Sync");
         layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
@@ -379,10 +380,21 @@ void msmodoSettingsWidget::onToggleSyncLights(int v)
 
 void msmodoSettingsWidget::onToggleAutoSync(int v)
 {
+    auto& ctx = msmodoGetContext();
     auto& settings = msmodoGetSettings();
-    settings.auto_sync = v;
-    if (v)
-        msmodoSendObjects();
+    if (v) {
+        if (ctx.isServerAvailable()) {
+            settings.auto_sync = true;
+            msmodoSendObjects();
+        }
+        else {
+            ctx.logError("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
+            m_ck_auto_sync->setCheckState(to_qcheckstate(false));
+        }
+    }
+    else {
+        settings.auto_sync = false;
+    }
 }
 
 void msmodoSettingsWidget::onClickManualSync(bool v)

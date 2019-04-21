@@ -1207,31 +1207,31 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
 
 bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
 {
-    auto& inst = msmaxGetContext();
-    if (!inst.isServerAvailable()) {
-        inst.logInfo("MeshSync: Server not available. %s", inst.getErrorMessage().c_str());
+    auto& ctx = msmaxGetContext();
+    if (!ctx.isServerAvailable()) {
+        ctx.logInfo("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
         return false;
     }
 
     if (target == msmaxContext::SendTarget::Objects) {
-        inst.wait();
-        inst.sendObjects(scope, true);
+        ctx.wait();
+        ctx.sendObjects(scope, true);
     }
     else if (target == msmaxContext::SendTarget::Materials) {
-        inst.wait();
-        inst.sendMaterials(true);
+        ctx.wait();
+        ctx.sendMaterials(true);
     }
     else if (target == msmaxContext::SendTarget::Animations) {
-        inst.wait();
-        inst.sendAnimations(scope);
+        ctx.wait();
+        ctx.sendAnimations(scope);
     }
     else if (target == msmaxContext::SendTarget::Everything) {
-        inst.wait();
-        inst.sendMaterials(true);
-        inst.wait();
-        inst.sendObjects(scope, true);
-        inst.wait();
-        inst.sendAnimations(scope);
+        ctx.wait();
+        ctx.sendMaterials(true);
+        ctx.wait();
+        ctx.sendObjects(scope, true);
+        ctx.wait();
+        ctx.sendAnimations(scope);
     }
     return true;
 }
