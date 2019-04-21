@@ -24,6 +24,7 @@
     </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ4.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqPluginBase.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUI4.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp" />
     <ClCompile Include="MeshSyncClientMQ\sdk_MQBasePlugin.cpp" />
@@ -38,6 +39,7 @@
     <ClInclude Include="MeshSyncClientMQ/pch.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ4.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqContext.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqPluginBase.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqUI4.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqUtils.h" />
   </ItemGroup>

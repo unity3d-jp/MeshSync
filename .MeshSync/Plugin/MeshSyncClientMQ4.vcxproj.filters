@@ -37,6 +37,9 @@
     <ClCompile Include="MeshSyncClientMQ\sdk_MQSetting.cpp">
       <Filter>MeshSyncClientMQ</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncClientMQ\msmqPluginBase.cpp">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMQ/pch.h">
@@ -52,6 +55,9 @@
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
     <ClInclude Include="MeshSyncClientMQ\msmqUtils.h">
+      <Filter>MeshSyncClientMQ</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMQ\msmqPluginBase.h">
       <Filter>MeshSyncClientMQ</Filter>
     </ClInclude>
   </ItemGroup>

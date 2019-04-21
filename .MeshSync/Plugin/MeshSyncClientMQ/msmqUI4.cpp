@@ -179,7 +179,7 @@ BOOL msmqSettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
     auto f = std::atof(v.c_str());
     if (f != 0.0) {
         getSettings().scale_factor = (float)f;
-        m_plugin->SendAll(true);
+        m_plugin->AutoSyncMeshes();
     }
     return 0;
 }
@@ -187,21 +187,21 @@ BOOL msmqSettingsDlg::OnScaleChange(MQWidgetBase * sender, MQDocument doc)
 BOOL msmqSettingsDlg::OnSyncNormalsChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_normals = m_check_normals->GetChecked();
-    m_plugin->SendAll(true);
+    m_plugin->AutoSyncMeshes();
     return 0;
 }
 
 BOOL msmqSettingsDlg::OnSyncVertexColorChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_vertex_color = m_check_vcolor->GetChecked();
-    m_plugin->SendAll(true);
+    m_plugin->AutoSyncMeshes();
     return 0;
 }
 
 BOOL msmqSettingsDlg::OnmakeDoubleSidedChange(MQWidgetBase * sender, MQDocument doc)
 {
     getSettings().make_double_sided = m_check_double_sided->GetChecked();
-    m_plugin->SendAll(true);
+    m_plugin->AutoSyncMeshes();
     return 0;
 }
 
@@ -209,21 +209,21 @@ BOOL msmqSettingsDlg::OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_bones = m_check_bones->GetChecked();
     m_frame_poses->SetVisible(m_check_bones->GetChecked());
-    m_plugin->SendAll(true);
+    m_plugin->AutoSyncMeshes();
     return 0;
 }
 
 BOOL msmqSettingsDlg::OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_poses = m_check_poses->GetChecked();
-    m_plugin->SendAll(true);
+    m_plugin->AutoSyncMeshes();
     return 0;
 }
 
 BOOL msmqSettingsDlg::OnSyncTexturesChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_textures = m_check_textures->GetChecked();
-    m_plugin->SendAll(true);
+    m_plugin->AutoSyncMeshes();
     return 0;
 }
 
@@ -232,9 +232,7 @@ BOOL msmqSettingsDlg::OnSyncCameraChange(MQWidgetBase * sender, MQDocument doc)
     bool checked = m_check_camera->GetChecked();
     getSettings().sync_camera = checked;
     m_frame_camera_path->SetVisible(checked);
-    if (checked) {
-        m_plugin->SendCamera(true);
-    }
+    m_plugin->AutoSyncCamera();
     return 0;
 }
 
@@ -247,12 +245,14 @@ BOOL msmqSettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
 BOOL msmqSettingsDlg::OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc)
 {
     if (m_check_autosync->GetChecked()) {
-        if (m_plugin->getContext().isServerAvailable()) {
+        auto& ctx = m_plugin->getContext();
+        if (ctx.isServerAvailable()) {
             getSettings().auto_sync = true;
-            m_plugin->SendAll(true);
+            m_plugin->Export();
         }
         else {
             m_check_autosync->SetChecked(false);
+            LogInfo(ctx.getErrorMessage().c_str());
         }
     }
     else {
@@ -263,7 +263,7 @@ BOOL msmqSettingsDlg::OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc)
 
 BOOL msmqSettingsDlg::OnSyncClicked(MQWidgetBase * sender, MQDocument doc)
 {
-    m_plugin->SendAll(false);
+    m_plugin->Export();
     return 0;
 }
 

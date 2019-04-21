@@ -16,6 +16,7 @@
     </ClCompile>
     <ClCompile Include="MeshSyncClientMQ\MeshSyncClientMQ3.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqContext.cpp" />
+    <ClCompile Include="MeshSyncClientMQ\msmqPluginBase.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUI3\MainDlg.cpp" />
     <ClCompile Include="MeshSyncClientMQ\msmqUtils.cpp" />
     <ClCompile Include="MeshSyncClientMQ\sdk_MQBasePlugin.cpp" />
@@ -27,6 +28,7 @@
     <ClInclude Include="MeshSyncClientMQ/pch.h" />
     <ClInclude Include="MeshSyncClientMQ\MeshSyncClientMQ3.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqContext.h" />
+    <ClInclude Include="MeshSyncClientMQ\msmqPluginBase.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqUI3\MainDlg.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqUI3\resource.h" />
     <ClInclude Include="MeshSyncClientMQ\msmqUI3\stdafx.h" />
