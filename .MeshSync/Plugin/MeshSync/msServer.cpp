@@ -456,6 +456,7 @@ std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request,
     try {
         auto mes = std::make_shared<MessageT>();
         mes->deserialize(request.stream());
+        mes->timestamp_recv = mu::Now();
         return mes;
     }
     catch (const std::exception& e) {
@@ -689,10 +690,10 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     auto mes = std::make_shared<PollMessage>();
     if(request.getURI() == "/poll" || request.getURI() == "/poll/scene_update")
-        mes->type = PollMessage::PollType::SceneUpdate;
+        mes->poll_type = PollMessage::PollType::SceneUpdate;
     // ...
 
-    if (mes->type == PollMessage::PollType::Unknown) {
+    if (mes->poll_type == PollMessage::PollType::Unknown) {
         serveText(response, "", HTTPResponse::HTTP_BAD_REQUEST);
         return;
     }
@@ -724,7 +725,7 @@ void Server::notifyPoll(PollMessage::PollType t)
 {
     lock_t lock(m_poll_mutex);
     for (auto& p : m_polls) {
-        if (p->type == t) {
+        if (p->poll_type == t) {
             p->ready = true;
             p.reset();
         }

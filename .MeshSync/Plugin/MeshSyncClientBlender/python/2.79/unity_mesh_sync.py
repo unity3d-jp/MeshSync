@@ -82,7 +82,7 @@ class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
     def draw(self, context):
         scene = bpy.context.scene
         layout = self.layout
-        layout.label(text = msb_context.VERSION)
+        layout.label(text = msb_context.PLUGIN_VERSION)
 
 
 class MESHSYNC_OT_AutoSync(bpy.types.Operator):

@@ -12,6 +12,7 @@ void Message::serialize(std::ostream& os) const
     write(os, protocol_version);
     write(os, session_id);
     write(os, message_id);
+    write(os, timestamp_send);
 }
 void Message::deserialize(std::istream& is)
 {
@@ -21,6 +22,7 @@ void Message::deserialize(std::istream& is)
     }
     read(is, session_id);
     read(is, message_id);
+    read(is, timestamp_send);
 }
 
 
@@ -163,13 +165,13 @@ PollMessage::PollMessage()
 void PollMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    write(os, type);
+    write(os, poll_type);
 }
 
 void PollMessage::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    read(is, type);
+    read(is, poll_type);
 }
 
 

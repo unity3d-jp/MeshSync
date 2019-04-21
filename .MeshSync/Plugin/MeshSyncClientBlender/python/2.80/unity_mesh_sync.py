@@ -98,7 +98,7 @@ class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
     def draw(self, context):
         scene = bpy.context.scene
         layout = self.layout
-        layout.label(text = msb_context.VERSION)
+        layout.label(text = msb_context.PLUGIN_VERSION)
 
 
 class MESHSYNC_OT_AutoSync(bpy.types.Operator):
@@ -110,6 +110,9 @@ class MESHSYNC_OT_AutoSync(bpy.types.Operator):
         scene = bpy.context.scene
         if not MESHSYNC_OT_AutoSync._timer:
             scene.meshsync_auto_sync = True
+            if not scene.meshsync_auto_sync:
+                # server not available
+                return {'FINISHED'}
             MESHSYNC_OT_AutoSync._timer = context.window_manager.event_timer_add(1.0 / 3.0, window=context.window)
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}

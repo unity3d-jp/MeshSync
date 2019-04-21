@@ -40,6 +40,17 @@ def msb_on_scene_settings_updated(self = None, context = None):
         msb_context.export(msb_context.TARGET_OBJECTS)
     return None
 
+def msb_on_toggle_auto_sync(self = None, context = None):
+    msb_apply_scene_settings()
+    if bpy.context.scene.meshsync_auto_sync:
+        if not msb_context.is_server_available:
+            print("MeshSync: " + msb_context.error_message)
+            bpy.context.scene.meshsync_auto_sync = False
+    if bpy.context.scene.meshsync_auto_sync:
+        msb_context.setup(bpy.context)
+        msb_context.export(msb_context.TARGET_OBJECTS)
+    return None
+
 def msb_on_animation_settings_updated(self = None, context = None):
     # nothing to do for now
     return None
@@ -60,7 +71,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_textures = bpy.props.BoolProperty(default = True, name = "Sync Textures", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_on_toggle_auto_sync)
     bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 1, name = "Time Scale", min = 0.01, update = msb_on_animation_settings_updated)
     bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Step", min = 1, update = msb_on_animation_settings_updated)
     bpy.types.Scene.meshsync_animation_kfr = bpy.props.BoolProperty(default = True, name = "Keyframe Reduction", update = msb_on_animation_settings_updated)

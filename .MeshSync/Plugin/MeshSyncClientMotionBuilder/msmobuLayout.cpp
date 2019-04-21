@@ -339,30 +339,41 @@ void msmobuLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEv
 
 void msmobuLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
 {
+    auto& ctx = *m_device;
     auto& settings = m_device->getSettings();
-    settings.auto_sync = (bool)(int)m_bu_auto_sync.State;
-    if (settings.auto_sync)
-        m_device->sendObjects(false);
+    if ((bool)(int)m_bu_auto_sync.State) {
+        if (ctx.isServerAvailable()) {
+            settings.auto_sync = true;
+            m_device->sendObjects(false);
+        }
+        else {
+            ctx.logError("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
+            m_bu_auto_sync.State = 0;
+        }
+    }
+    else {
+        settings.auto_sync = false;
+    }
 }
 
 void msmobuLayout::onManualSync(HIRegister pCaller, HKEventBase pEvent)
 {
-    auto& inst = *m_device;
-    if (!inst.isServerAvailable()) {
-        inst.logError("MeshSync: Server not available. %s\n", inst.getErrorMessage().c_str());
+    auto& ctx = *m_device;
+    if (!ctx.isServerAvailable()) {
+        ctx.logError("MeshSync: Server not available. %s\n", ctx.getErrorMessage().c_str());
         return;
     }
-    inst.wait();
-    inst.sendObjects(true);
+    ctx.wait();
+    ctx.sendObjects(true);
 }
 
 void msmobuLayout::onSyncAnimation(HIRegister pCaller, HKEventBase pEvent)
 {
-    auto& inst = *m_device;
-    if (!inst.isServerAvailable()) {
-        inst.logError("MeshSync: Server not available. %s\n", inst.getErrorMessage().c_str());
+    auto& ctx = *m_device;
+    if (!ctx.isServerAvailable()) {
+        ctx.logError("MeshSync: Server not available. %s\n", ctx.getErrorMessage().c_str());
         return;
     }
-    inst.wait();
-    inst.sendAnimations();
+    ctx.wait();
+    ctx.sendAnimations();
 }

@@ -23,6 +23,10 @@ public:
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;
     int message_id = 0;
+    nanosec timestamp_send = 0;
+
+    // non-serializable fields
+    nanosec timestamp_recv = 0;
 
     virtual ~Message();
     virtual void serialize(std::ostream& os) const;
@@ -58,7 +62,7 @@ public:
     SceneSettings scene_settings;
     MeshRefineSettings refine_settings;
 
-    // non-serializable
+    // non-serializable fields
     std::atomic_bool ready{ false };
 
 public:
@@ -149,7 +153,7 @@ class ScreenshotMessage : public Message
 using super = Message;
 public:
 
-    // non-serializable
+    // non-serializable fields
     std::atomic_bool ready{ false };
 
 public:
@@ -192,8 +196,9 @@ public:
 public:
     QueryType query_type = QueryType::Unknown;
 
-    std::atomic_bool ready{ false };    // non-serializable
-    ResponseMessagePtr response;        // 
+    // non-serializable fields
+    std::atomic_bool ready{ false };
+    ResponseMessagePtr response;
 
     QueryMessage();
     void serialize(std::ostream& os) const override;
@@ -212,8 +217,10 @@ public:
         Unknown,
         SceneUpdate,
     };
-    PollType type = PollType::Unknown;
-    std::atomic_bool ready{ false }; // non-serializable
+    PollType poll_type = PollType::Unknown;
+
+    // non-serializable fields
+    std::atomic_bool ready{ false };
 
     PollMessage();
     void serialize(std::ostream& os) const override;
