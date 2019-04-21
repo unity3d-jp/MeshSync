@@ -721,21 +721,20 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
     int num_subpatches = vd->GetSubPatchCount();
     auto indices = (const int*)vd->GetIndexArray();
     for (int spi = 0; spi < num_subpatches; ++spi) {
+        // note: quad subpatches should be ignored.
+        // FBModelVertexData contains both triangulated subpatches and original quad ones.
+        // so if import both, excessive unnecessary triangles will be generated.
+        // (possibly we should handle kFBGeometry_POINTS and kFBGeometry_LINES. but leave it on at this point)
+        if (vd->GetSubPatchPrimitiveType(spi) != kFBGeometry_TRIANGLES)
+            continue;
+
         int offset = vd->GetSubPatchIndexOffset(spi);
         int count = vd->GetSubPatchIndexSize(spi);
         int mid = m_material_records[vd->GetSubPatchMaterial(spi)].id;
         auto idx_begin = indices + offset;
         auto idx_end = idx_begin + count;
 
-        int ngon = 1;
-        switch (vd->GetSubPatchPrimitiveType(spi)) {
-        case kFBGeometry_POINTS:    ngon = 1; break;
-        case kFBGeometry_LINES:     ngon = 2; break;
-        case kFBGeometry_TRIANGLES: ngon = 3; break;
-        case kFBGeometry_QUADS:     ngon = 4; break;
-        // todo: support other topologies (triangle strip, etc)
-        default: continue;
-        }
+        int ngon = 3;
         int prim_count = count / ngon;
 
         dst.indices.insert(dst.indices.end(), idx_begin, idx_end);
