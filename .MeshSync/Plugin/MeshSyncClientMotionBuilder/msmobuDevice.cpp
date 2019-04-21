@@ -84,8 +84,11 @@ void msmobuDevice::onRender(HIRegister pCaller, HKEventBase pEvent)
     // note: mocap devices seem don't trigger scene change events.
     //       so, always set m_pending true on render when auto sync is enabled.
     //       obviously this wastes CPU time, but I couldn't find a better way... (issue #47)
-    if (m_settings.auto_sync /*&& m_data_updated*/)
+    if (m_settings.auto_sync /*&& m_data_updated*/) {
         m_pending = true;
+        if (m_settings.bake_deformars)
+            m_dirty_meshes = true;
+    }
 }
 
 void msmobuDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
@@ -395,25 +398,21 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
     intensity = (float)src->Intensity * 0.01f;
 }
 
-// Body: [](const char *name, double *value, int num_elements)->void
+// Body: [](const char *name, double value) -> void
 template<class Body>
-static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
+static inline void EachAnimationNVP(FBModel *src, const Body& body)
 {
     FBAnimationNode *anode = src->AnimationNode;
     if (anode) {
         Each(anode->Nodes, [&body](FBAnimationNode *n) {
-            const char *name = n->Name;
-            int c = n->GetDataDoubleArrayCount();
-
             // FBAnimationNode may have array of double data. (translation: 3 elements, blendshape weight: 1 element, etc)
             // and ReadData() assume dst has enough space. so we must be extremely careful!
-            if (c > 16) {
-                // we don't care this kind of data for now
-            }
-            else {
-                double values[16];
-                n->ReadData(values);
-                body(name, values, c);
+            const char *name = n->Name;
+            int c = n->GetDataDoubleArrayCount();
+            if (c == 1) {
+                double value;
+                n->ReadData(&value);
+                body(name, value);
             }
         });
     }
@@ -483,9 +482,8 @@ ms::MeshPtr msmobuDevice::exportBlendshapeWeights(NodeRecord& n)
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             std::map<std::string, float> weight_table;
-            EnumerateAnimationNVP(src, [&weight_table](const char *name, double *values, int size) {
-                if (size == 1)
-                    weight_table[name] = (float)values[0];
+            EachAnimationNVP(src, [&weight_table](const char *name, double value) {
+                weight_table[name] = (float)value;
             });
 
             for (int si = 0; si < num_shapes; ++si) {
@@ -666,10 +664,9 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
             int num_shapes = geom->ShapeGetCount();
             if (num_shapes) {
                 std::map<std::string, float> weight_table;
-                EnumerateAnimationNVP(src, [&weight_table](const char *name, double *values, int size) {
-                    if (size == 1)
-                        weight_table[name] = (float)values[0];
-                    });
+                EachAnimationNVP(src, [&weight_table](const char *name, double value) {
+                    weight_table[name] = (float)value;
+                });
 
                 RawVector<mu::float3> tmp_points, tmp_normals;
                 for (int si = 0; si < num_shapes; ++si) {
@@ -1008,9 +1005,8 @@ void msmobuDevice::extractMeshAnimation(ms::TransformAnimation & dst_, FBModel *
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             float t = m_anim_time;
-            EnumerateAnimationNVP(src, [&dst, t](const char *name, double *values, int size) {
-                if (size == 1)
-                    dst.getBlendshapeCurve(name).push_back({ t, (float)values[0] });
+            EachAnimationNVP(src, [&dst, t](const char *name, double value) {
+                dst.getBlendshapeCurve(name).push_back({ t, (float)value });
             });
         }
     }
