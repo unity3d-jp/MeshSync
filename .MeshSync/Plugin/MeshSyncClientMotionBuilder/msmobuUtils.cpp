@@ -114,10 +114,10 @@ static void DbgPrintAnimationNodeRecursive(FBAnimationNode * node, int depth = 0
     const char *fullname = node->GetFullName();
     const char *classname = node->ClassName();
 
-    double value;
-    node->ReadData(&value);
+    double values[16];
+    node->ReadData(values);
     mu::Print("%sAnimationNode %s : %lf (classname:%s fullname:%s namespace:%s folder:%s)\n",
-        indent, name, value, classname, fullname, ns, folder);
+        indent, name, values[0], classname, fullname, ns, folder);
 
     Each(node->Nodes, [depth](FBAnimationNode *n) {
         DbgPrintAnimationNodeRecursive(n, depth + 1);

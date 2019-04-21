@@ -395,7 +395,7 @@ static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float
     intensity = (float)src->Intensity * 0.01f;
 }
 
-// Body: [](const char *name, double value)->void
+// Body: [](const char *name, double *value, int num_elements)->void
 template<class Body>
 static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
 {
@@ -403,10 +403,17 @@ static inline void EnumerateAnimationNVP(FBModel *src, const Body& body)
     if (anode) {
         Each(anode->Nodes, [&body](FBAnimationNode *n) {
             const char *name = n->Name;
-            if (name) {
-                double value;
-                n->ReadData(&value);
-                body(name, value);
+            int c = n->GetDataDoubleArrayCount();
+
+            // FBAnimationNode may have array of double data. (translation: 3 elements, blendshape weight: 1 element, etc)
+            // and ReadData() assume dst has enough space. so we must be extremely careful!
+            if (c > 16) {
+                // we don't care this kind of data for now
+            }
+            else {
+                double values[16];
+                n->ReadData(values);
+                body(name, values, c);
             }
         });
     }
@@ -476,8 +483,9 @@ ms::MeshPtr msmobuDevice::exportBlendshapeWeights(NodeRecord& n)
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             std::map<std::string, float> weight_table;
-            EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
-                weight_table[name] = (float)value;
+            EnumerateAnimationNVP(src, [&weight_table](const char *name, double *values, int size) {
+                if (size == 1)
+                    weight_table[name] = (float)values[0];
             });
 
             for (int si = 0; si < num_shapes; ++si) {
@@ -658,9 +666,10 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
             int num_shapes = geom->ShapeGetCount();
             if (num_shapes) {
                 std::map<std::string, float> weight_table;
-                EnumerateAnimationNVP(src, [&weight_table](const char *name, double value) {
-                    weight_table[name] = (float)value;
-                });
+                EnumerateAnimationNVP(src, [&weight_table](const char *name, double *values, int size) {
+                    if (size == 1)
+                        weight_table[name] = (float)values[0];
+                    });
 
                 RawVector<mu::float3> tmp_points, tmp_normals;
                 for (int si = 0; si < num_shapes; ++si) {
@@ -1000,8 +1009,9 @@ void msmobuDevice::extractMeshAnimation(ms::TransformAnimation & dst_, FBModel *
         int num_shapes = geom->ShapeGetCount();
         if (num_shapes) {
             float t = m_anim_time;
-            EnumerateAnimationNVP(src, [&dst, t](const char *name, double value) {
-                dst.getBlendshapeCurve(name).push_back({ t, (float)value });
+            EnumerateAnimationNVP(src, [&dst, t](const char *name, double *values, int size) {
+                if (size == 1)
+                    dst.getBlendshapeCurve(name).push_back({ t, (float)values[0] });
             });
         }
     }
