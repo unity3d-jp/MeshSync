@@ -16,62 +16,6 @@ void msmodoContext::TreeNode::doExtractAnimation(msmodoContext *self)
         (self->*anim_extractor)(*this);
 }
 
-// * run in parallel *
-void msmodoContext::TreeNode::resolveMesh(msmodoContext *self)
-{
-    if (!dst_obj || dst_obj->getType() != ms::Entity::Type::Mesh)
-        return;
-
-    if (!material_names.empty()) {
-        auto& materials = self->m_materials;
-        auto& dst = static_cast<ms::Mesh&>(*dst_obj);
-        int num_faces = (int)dst.counts.size();
-
-        // material names -> material ids
-        dst.material_ids.resize_discard(num_faces);
-        for (int fi = 0; fi < num_faces; ++fi) {
-            auto mname = material_names[fi];
-            int mid = -1;
-            auto it = std::lower_bound(materials.begin(), materials.end(), mname,
-                [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
-            if (it != materials.end() && (*it)->name == mname)
-                mid = (*it)->id;
-            dst.material_ids[fi] = mid;
-        }
-    }
-    if (!face_types.empty()) {
-        // exclude line objects for now
-        bool all_curves = true;
-        for (auto t : face_types) {
-            if (t != LXiPTYP_CURVE && t != LXiPTYP_BEZIER && t != LXiPTYP_LINE && t != LXiPTYP_BSPLINE) {
-                all_curves = false;
-                break;
-            }
-        }
-        if (all_curves) {
-            self->m_entity_manager.eraseThreadSafe(dst_obj);
-            return;
-        }
-    }
-}
-
-// * run in parallel *
-void msmodoContext::TreeNode::resolveReplicas(msmodoContext *self)
-{
-    if (replicas.empty() && prev_replicas.empty())
-        return;
-
-    // erase from entity manager if the replica no longer exists
-    std::sort(replicas.begin(), replicas.end(),
-        [](auto& a, auto& b) { return a->path < b->path; });
-    for (auto& p : prev_replicas) {
-        auto it = std::lower_bound(replicas.begin(), replicas.end(), p, [](auto& r, auto& p) { return r->path < p->path; });
-        if (it == replicas.end() || (*it)->path != p->path)
-            self->m_entity_manager.eraseThreadSafe(p);
-    }
-
-    prev_replicas = replicas;
-}
 
 void msmodoContext::TreeNode::eraseFromEntityManager(msmodoContext *self)
 {
@@ -684,7 +628,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
 
-    // send mesh contents even if the node is hidden.
+    // note: this needs to be done in the main thread because accessing CLxUser_Mesh from worker thread causes a crash.
+    // but some heavy tasks such as resolving materials can be in parallel. (see m_parallel_tasks)
 
     CLxUser_StringTag poly_tag;
     CLxUser_Polygon polygons;
@@ -971,6 +916,41 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         dst.refine_settings.flags.flip_faces = 1;
     }
 
+    m_parallel_tasks.push_back([this, &n, &dst](){
+        // resolve materials (name -> id)
+        if (!n.material_names.empty()) {
+            auto& materials = m_materials;
+            int num_faces = (int)dst.counts.size();
+
+            dst.material_ids.resize_discard(num_faces);
+            for (int fi = 0; fi < num_faces; ++fi) {
+                auto mname = n.material_names[fi];
+                int mid = -1;
+                auto it = std::lower_bound(materials.begin(), materials.end(), mname,
+                    [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
+                if (it != materials.end() && (*it)->name == mname)
+                    mid = (*it)->id;
+                dst.material_ids[fi] = mid;
+            }
+            n.material_names.clear();
+        }
+
+        // exclude line objects
+        if (!n.face_types.empty()) {
+            bool all_curves = true;
+            for (auto t : n.face_types) {
+                if (t != LXiPTYP_CURVE && t != LXiPTYP_BEZIER && t != LXiPTYP_LINE && t != LXiPTYP_BSPLINE) {
+                    all_curves = false;
+                    break;
+                }
+            }
+            if (all_curves) {
+                m_entity_manager.eraseThreadSafe(n.dst_obj);
+            }
+            n.face_types.clear();
+        }
+    });
+
     m_entity_manager.add(n.dst_obj);
     return ret;
 }
@@ -996,6 +976,23 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
         n.replicas.push_back(p);
         m_entity_manager.add(p);
     });
+
+    m_parallel_tasks.push_back([this, &n]() {
+        if (n.replicas.empty() && n.prev_replicas.empty())
+            return;
+
+        // erase from entity manager if the replica no longer exists
+        std::sort(n.replicas.begin(), n.replicas.end(),
+            [](auto& a, auto& b) { return a->path < b->path; });
+        for (auto& p : n.prev_replicas) {
+            auto it = std::lower_bound(n.replicas.begin(), n.replicas.end(), p,
+                [](auto& r, auto& p) { return r->path < p->path; });
+            if (it == n.replicas.end() || (*it)->path != p->path)
+                m_entity_manager.eraseThreadSafe(p);
+        }
+        n.prev_replicas = std::move(n.replicas);
+    });
+
     return ret;
 }
 
@@ -1255,12 +1252,13 @@ void msmodoContext::extractReplicatorAnimationData(TreeNode& n)
 
 void msmodoContext::kickAsyncSend()
 {
-    // resolve
-    ms::parallel_for_each(m_tree_nodes.begin(), m_tree_nodes.end(), [this](auto& kvp) {
-        auto& node = kvp.second;
-        node.resolveMesh(this);
-        node.resolveReplicas(this);
-    });
+    // process parallel tasks
+    if (!m_parallel_tasks.empty()) {
+        mu::parallel_for_each(m_parallel_tasks.begin(), m_parallel_tasks.end(), [](auto& task) {
+            task();
+        });
+        m_parallel_tasks.clear();
+    }
 
     // cleanup
     for (auto& kvp : m_tree_nodes)

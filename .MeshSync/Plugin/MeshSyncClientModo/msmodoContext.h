@@ -135,8 +135,6 @@ private:
         void clearState();
         void doExtractAnimation(msmodoContext *self);
 
-        void resolveMesh(msmodoContext *self);
-        void resolveReplicas(msmodoContext *self);
         void eraseFromEntityManager(msmodoContext *self);
     };
 
@@ -185,6 +183,7 @@ private:
     std::map<LxItemKey, TreeNode> m_tree_nodes;
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;
+    std::vector<std::function<void()>> m_parallel_tasks;
     SendScope m_pending_scope = SendScope::None;
     bool m_ignore_events = false;
     float m_anim_time = 0.0f;
