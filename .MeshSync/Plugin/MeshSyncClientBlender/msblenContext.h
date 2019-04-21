@@ -60,6 +60,10 @@ public:
     msblenSettings&        getSettings();
     const msblenSettings&  getSettings() const;
 
+    void logInfo(const char *format, ...);
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
+
     void wait();
     void clear();
     bool prepare();

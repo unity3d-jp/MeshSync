@@ -19,6 +19,29 @@ msmqSettings& msmqContext::getSettings()
     return m_settings;
 }
 
+void msmqContext::logInfo(const char * format, ...)
+{
+    const int MaxBuf = 2048;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    puts(buf);
+    va_end(args);
+}
+
+bool msmqContext::isServerAvailable()
+{
+    m_send_meshes.client_settings = m_settings.client_settings;
+    return m_send_meshes.isServerAvaileble();
+}
+
+const std::string& msmqContext::getErrorMessage()
+{
+    return m_send_meshes.getErrorMessage();
+}
+
 void msmqContext::clear()
 {
     m_obj_records.clear();

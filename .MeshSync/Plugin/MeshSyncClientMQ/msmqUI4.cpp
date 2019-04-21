@@ -228,10 +228,20 @@ BOOL SettingsDlg::OnCameraPathChange(MQWidgetBase *sender, MQDocument doc)
     return 0;
 }
 
-BOOL SettingsDlg::OnAutoSyncChange(MQWidgetBase * sender, MQDocument doc)
+BOOL SettingsDlg::OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc)
 {
-    getSettings().auto_sync = m_check_autosync->GetChecked();
-    m_plugin->SendAll(true);
+    if (m_check_autosync->GetChecked()) {
+        if (m_plugin->getContext().isServerAvailable()) {
+            getSettings().auto_sync = true;
+            m_plugin->SendAll(true);
+        }
+        else {
+            m_check_autosync->SetChecked(false);
+        }
+    }
+    else {
+        getSettings().auto_sync = false;
+    }
     return 0;
 }
 

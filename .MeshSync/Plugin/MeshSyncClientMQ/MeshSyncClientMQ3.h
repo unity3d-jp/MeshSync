@@ -53,6 +53,6 @@ private:
     bool SendCameraImpl(MQDocument doc);
     bool ImportImpl(MQDocument doc);
 
-    msmqContext m_sync;
+    msmqContext m_context;
     bool m_active = false;
 };

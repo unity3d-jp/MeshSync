@@ -166,8 +166,18 @@ LRESULT CMainDlg::OnEnChangeCameraPath(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
 
 LRESULT CMainDlg::OnBnClickedCheckAutosync(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
-    getSettings().auto_sync = m_check_autosync.GetCheck() != 0;
-    m_plugin->SendAll(true);
+    if (m_check_autosync.GetCheck()) {
+        if (m_plugin->getContext().isServerAvailable()) {
+            getSettings().auto_sync = true;
+            m_plugin->SendAll(true);
+        }
+        else {
+            m_check_autosync.SetCheck(0);
+        }
+    }
+    else {
+        getSettings().auto_sync = false;
+    }
     return 0;
 }
 

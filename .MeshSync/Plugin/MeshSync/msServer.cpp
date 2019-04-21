@@ -454,7 +454,7 @@ template<class MessageT>
 std::shared_ptr<MessageT> Server::deserializeMessage(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     try {
-        auto mes = std::shared_ptr<MessageT>(new MessageT());
+        auto mes = std::make_shared<MessageT>();
         mes->deserialize(request.stream());
         return mes;
     }
@@ -486,6 +486,8 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response)
             sanitizeHierarchyPath(obj->reference);
             if (obj->getType() == Entity::Type::Mesh) {
                 auto& mesh = (Mesh&)*obj;
+                for (auto& bone : mesh.bones)
+                    sanitizeHierarchyPath(bone->path);
                 mesh.refine_settings.scale_factor = 1.0f / mes->scene.settings.scale_factor;
                 mesh.refine_settings.flags.flip_x = flip_x;
                 mesh.refine_settings.flags.flip_yz = swap_yz;

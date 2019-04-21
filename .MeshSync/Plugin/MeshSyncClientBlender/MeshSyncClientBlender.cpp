@@ -1,6 +1,35 @@
 #include "pch.h"
 #include "msblenContext.h"
 
+static bool msblenExport(msblenContext& self, msblenContext::SendTarget target, msblenContext::SendScope scope)
+{
+    if (!self.isServerAvailable()) {
+        self.logInfo("MeshSync: Server not available. %s", self.getErrorMessage().c_str());
+        return false;
+    }
+
+    if (target == msblenContext::SendTarget::Objects) {
+        self.wait();
+        self.sendObjects(msblenContext::SendScope::All, true);
+    }
+    else if (target == msblenContext::SendTarget::Materials) {
+        self.wait();
+        self.sendMaterials(true);
+    }
+    else if (target == msblenContext::SendTarget::Animations) {
+        self.wait();
+        self.sendAnimations(msblenContext::SendScope::All);
+    }
+    else if (target == msblenContext::SendTarget::Everything) {
+        self.wait();
+        self.sendMaterials(true);
+        self.wait();
+        self.sendObjects(msblenContext::SendScope::All, true);
+        self.wait();
+        self.sendAnimations(msblenContext::SendScope::All);
+    }
+    return true;
+}
 
 PYBIND11_PLUGIN(MeshSyncClientBlender)
 {
@@ -29,27 +58,7 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 self.sendObjects(msblenContext::SendScope::Updated, false);
             })
             BindMethodF(export, [](msblenContext& self, int _target) {
-                auto target = (msblenContext::SendTarget)_target;
-                if (target == msblenContext::SendTarget::Objects) {
-                    self.wait();
-                    self.sendObjects(msblenContext::SendScope::All, true);
-                }
-                else if (target == msblenContext::SendTarget::Materials) {
-                    self.wait();
-                    self.sendMaterials(true);
-                }
-                else if (target == msblenContext::SendTarget::Animations) {
-                    self.wait();
-                    self.sendAnimations(msblenContext::SendScope::All);
-                }
-                else if (target == msblenContext::SendTarget::Everything) {
-                    self.wait();
-                    self.sendMaterials(true);
-                    self.wait();
-                    self.sendObjects(msblenContext::SendScope::All, true);
-                    self.wait();
-                    self.sendAnimations(msblenContext::SendScope::All);
-                }
+                msblenExport(self, (msblenContext::SendTarget)_target, msblenContext::SendScope::All);
             })
             BindProperty(server_address,
                 [](const msblenContext& self) { return self.getSettings().client_settings.server; },

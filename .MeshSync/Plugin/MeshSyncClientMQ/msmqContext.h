@@ -33,6 +33,10 @@ public:
 
     msmqSettings& getSettings();
 
+    void logInfo(const char *format, ...);
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
+
     void clear();
     void flushPendingRequests(MQDocument doc);
     void sendMeshes(MQDocument doc, bool force = false);

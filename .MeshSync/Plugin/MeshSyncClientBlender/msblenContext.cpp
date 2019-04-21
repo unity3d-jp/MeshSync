@@ -988,6 +988,28 @@ void msblenContext::extractMeshAnimationData(ms::TransformAnimation & dst_, void
 }
 
 
+void msblenContext::logInfo(const char * format, ...)
+{
+    const int MaxBuf = 2048;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    puts(buf);
+    va_end(args);
+}
+
+bool msblenContext::isServerAvailable()
+{
+    m_sender.client_settings = m_settings.client_settings;
+    return m_sender.isServerAvaileble();
+}
+
+const std::string& msblenContext::getErrorMessage()
+{
+    return m_sender.getErrorMessage();
+}
 
 void msblenContext::wait()
 {
