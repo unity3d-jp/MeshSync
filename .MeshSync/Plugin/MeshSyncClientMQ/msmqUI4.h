@@ -19,6 +19,7 @@ public:
     BOOL OnmakeDoubleSidedChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc);
+    BOOL OnSyncMorphsChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncTexturesChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnSyncCameraChange(MQWidgetBase *sender, MQDocument doc);
     BOOL OnCameraPathChange(MQWidgetBase *sender, MQDocument doc);
@@ -44,6 +45,7 @@ private:
     MQCheckBox *m_check_bones = nullptr;
     MQFrame *m_frame_poses = nullptr;
     MQCheckBox *m_check_poses = nullptr;
+    MQCheckBox *m_check_morphs = nullptr;
 
     MQCheckBox *m_check_textures = nullptr;
 

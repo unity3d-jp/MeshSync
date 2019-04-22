@@ -75,6 +75,12 @@ msmqSettingsDlg::msmqSettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& par
         m_check_poses->AddChangedEvent(this, &msmqSettingsDlg::OnSyncPosesChange);
 #endif
 
+#if MQPLUGIN_VERSION >= 0x0470
+        m_check_morphs = CreateCheckBox(vf, L"Sync Morphs");
+        m_check_morphs->SetChecked(s.sync_morphs);
+        m_check_morphs->AddChangedEvent(this, &msmqSettingsDlg::OnSyncMorphsChange);
+#endif
+
         m_check_textures = CreateCheckBox(vf, L"Sync Textures");
         m_check_textures->SetChecked(s.sync_textures);
         m_check_textures->AddChangedEvent(this, &msmqSettingsDlg::OnSyncTexturesChange);
@@ -216,6 +222,13 @@ BOOL msmqSettingsDlg::OnSyncBonesChange(MQWidgetBase *sender, MQDocument doc)
 BOOL msmqSettingsDlg::OnSyncPosesChange(MQWidgetBase *sender, MQDocument doc)
 {
     getSettings().sync_poses = m_check_poses->GetChecked();
+    m_plugin->AutoSyncMeshes();
+    return 0;
+}
+
+BOOL msmqSettingsDlg::OnSyncMorphsChange(MQWidgetBase * sender, MQDocument doc)
+{
+    getSettings().sync_morphs = m_check_morphs->GetChecked();
     m_plugin->AutoSyncMeshes();
     return 0;
 }
