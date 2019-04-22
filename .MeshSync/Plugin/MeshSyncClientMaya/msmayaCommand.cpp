@@ -89,17 +89,17 @@ template<> void set_result(const float& value)
 }
 
 
-void* CmdServerStats::create()
+void* CmdServerStatus::create()
 {
-    return new CmdServerStats();
+    return new CmdServerStatus();
 }
 
-const char* CmdServerStats::name()
+const char* CmdServerStatus::name()
 {
-    return "UnityMeshSync_ServerStats";
+    return "UnityMeshSync_ServerStatus";
 }
 
-MSyntax CmdServerStats::createSyntax()
+MSyntax CmdServerStatus::createSyntax()
 {
     MSyntax syntax;
     syntax.enableQuery(true);
@@ -109,7 +109,7 @@ MSyntax CmdServerStats::createSyntax()
     return syntax;
 }
 
-MStatus CmdServerStats::doIt(const MArgList& args_)
+MStatus CmdServerStatus::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);

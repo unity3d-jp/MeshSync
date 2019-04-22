@@ -7,7 +7,7 @@
 #endif
 
 
-class CmdServerStats: public MPxCommand
+class CmdServerStatus: public MPxCommand
 {
 public:
     static void* create();
@@ -52,7 +52,7 @@ public:
 };
 
 #define EachCommand(Body)\
-    Body(CmdServerStats)\
+    Body(CmdServerStatus)\
     Body(CmdSettings)\
     Body(CmdExport)\
     Body(CmdImport)

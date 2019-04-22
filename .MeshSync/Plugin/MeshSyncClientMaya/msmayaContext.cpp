@@ -1295,26 +1295,13 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
         return;
     }
 
-    MFnMesh fn_src_mesh(mmesh.object());
+    MFnMesh fn_src_mesh(FindOrigMesh(trans));
     MFnBlendShapeDeformer fn_blendshape(FindBlendShape(mmesh.object()));
     int skin_index = 0;
+    if (m_settings.sync_bones && is_skinned)
+        skin_index = fn_skin.indexForOutputShape(mmesh.object());
 
-    // if target has skinning or blendshape, use pre-deformed mesh as source.
-    // * this code assumes blendshape is applied always after skinning, and there is no multiple blendshapes or skinnings.
-    // * maybe this cause a problem..
-    if (m_settings.sync_blendshapes && !fn_blendshape.object().isNull()) {
-        auto orig_mesh = FindOrigMesh(trans);
-        if (orig_mesh.hasFn(MFn::kMesh)) {
-            fn_src_mesh.setObject(orig_mesh);
-        }
-    }
-    if (m_settings.sync_bones && is_skinned) {
-        auto orig_mesh = FindOrigMesh(trans);
-        if (orig_mesh.hasFn(MFn::kMesh)) {
-            fn_src_mesh.setObject(orig_mesh);
-            skin_index = fn_skin.indexForOutputShape(mmesh.object());
-        }
-    }
+    // this code assumes blendshape is applied always after skinning, and there is no multiple blendshapes or skinnings.
 
     doExtractMeshDataImpl(dst, fn_src_mesh, mmesh);
 

@@ -186,11 +186,11 @@ global proc umsCBSyncLights()
 global  proc umsCBAutoSync()
 {
     if (`checkBox -q -value umsCtrlAutoSync`) {
-        if (`UnityMeshSync_ServerStats -q -isAvailable`) {
+        if (`UnityMeshSync_ServerStatus -q -isAvailable`) {
             UnityMeshSync_Settings -autosync 1;
         }
         else {
-            print `UnityMeshSync_ServerStats -q -errorMessage`;
+            print `UnityMeshSync_ServerStatus -q -errorMessage`;
             checkBox -edit -value 0 umsCtrlAutoSync;
         }
     }
