@@ -115,10 +115,9 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
             auto base_id = base->GetUniqueID();
             morph_manager.GetTargetObjects(base, targets);
             for (auto& target : targets) {
-                MorphRecord rec;
+                auto& rec = m_morph_records[target->GetUniqueID()];
                 rec.base_obj = base;
                 rec.target_obj = target;
-                m_morph_records[target->GetUniqueID()] = rec;
             }
         }
     }

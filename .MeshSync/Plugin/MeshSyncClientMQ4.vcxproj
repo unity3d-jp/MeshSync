@@ -73,7 +73,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External\mqsdk4$(MQ4_VERSION);$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\Poco\include;$(MQ4_SDK_DIR);$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(MQ4_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(MQ4_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>

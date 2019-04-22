@@ -91,7 +91,6 @@ static inline std::string to_stdstring(const QString& v)
     auto raw = v.toAscii();
     auto *data = raw.constData();
     return std::string(data, std::strlen(data));
-
 }
 
 msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)

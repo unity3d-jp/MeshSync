@@ -29,6 +29,9 @@ set MODO_SDK_DIR=LXSDK_525410
 set MODO_INCLUDE_DIR=%cd%\External\%MODO_SDK_DIR%\include
 set MODO_SOURCE_DIR=%cd%\External\%MODO_SDK_DIR%\common
 
+set MQ4_VERSION=.64
+set MQ4_SDK_DIR=%cd%\External\mqsdk464\mqsdk
+
 set XISMO_VERSION=190
 set XISMO_QT_VERSION=5.6.2
 set XISMO_QT_DIR=%cd%\External\Qt\%XISMO_QT_VERSION%\msvc2015_64
