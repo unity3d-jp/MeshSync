@@ -28,11 +28,20 @@ void msmodoContext::TreeNode::eraseFromEntityManager(msmodoContext *self)
 
 
 
+static std::unique_ptr<msmodoContext> g_context;
+
 msmodoContext& msmodoContext::getInstance()
 {
-    static msmodoContext s_instance;
-    return s_instance;
+    if (!g_context)
+        g_context.reset(new msmodoContext());
+    return *g_context;
 }
+
+void msmodoContext::finalizeInstance()
+{
+    g_context.reset();
+}
+
 
 msmodoContext::msmodoContext()
 {

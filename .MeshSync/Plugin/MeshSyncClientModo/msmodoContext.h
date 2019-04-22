@@ -82,6 +82,7 @@ public:
     };
 
     static msmodoContext& getInstance();
+    static void finalizeInstance();
 
     msmodoContext();
     ~msmodoContext();

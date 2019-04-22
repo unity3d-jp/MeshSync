@@ -2,7 +2,8 @@ find_package(Modo)
 set(MESHSYNC_CLIENT_MODO "MeshSyncClientModo")
 
 file(GLOB sources *.cpp *.h "${MODO_SDK_DIR}/common/*.cpp")
-list(FILTER sources EXCLUDE REGEX "initialize.(h|cpp)") 
+list(FILTER sources EXCLUDE REGEX "initialize.cpp") 
+list(FILTER sources EXCLUDE REGEX "clean.cpp") 
 add_library(${MESHSYNC_CLIENT_MODO} SHARED ${sources})
 add_dependencies(${MESHSYNC_CLIENT_MODO} MeshUtils MeshSync)
 target_include_directories(${MESHSYNC_CLIENT_MODO} PUBLIC

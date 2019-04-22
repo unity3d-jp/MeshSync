@@ -85,9 +85,6 @@
     <ClCompile Include="$(MODO_SOURCE_DIR)\util.cpp">
       <Filter>lxsdk</Filter>
     </ClCompile>
-    <ClCompile Include="$(MODO_SOURCE_DIR)\clean.cpp">
-      <Filter>lxsdk</Filter>
-    </ClCompile>
     <ClCompile Include="$(MODO_SOURCE_DIR)\cwrap.cpp">
       <Filter>lxsdk</Filter>
     </ClCompile>

@@ -196,3 +196,8 @@ void initialize(void)
         lx::AddServer(msmodoViewName, view);
     }
 }
+
+void cleanup()
+{
+    msmodoContext::finalizeInstance();
+}
