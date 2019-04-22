@@ -27,7 +27,7 @@ option(BUILD_SERVER "Build MeshSyncServer" ON)
 
 # Metasequoia
 if(MAC)
-    option(BUILD_METASEQUOIA4_CLIENT "Build MeshSyncClient for Metasequoia 4" OFF)
+    option(BUILD_METASEQUOIA4.64_CLIENT "Build MeshSyncClient for Metasequoia 4.64" OFF)
 endif()
 
 # Blender
@@ -78,8 +78,8 @@ if(BUILD_SERVER)
 endif()
 
 # Metasequoia
-if(BUILD_METASEQUOIA4_CLIENT)
-    add_subdirectory(MeshSyncClientMQ)
+if(BUILD_METASEQUOIA4.64_CLIENT)
+    add_subdirectory_link(MeshSyncClientMQ4.64 MeshSyncClientMQ)
 endif()
 
 # Blender

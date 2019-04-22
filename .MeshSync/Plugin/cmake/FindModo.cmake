@@ -33,6 +33,7 @@ else()
         CACHE PATH "Qt include dirs"
     )
 endif()
+mark_as_advanced(MODO_QT_BASE_DIR)
 mark_as_advanced(MODO_QT_INCLUDE_DIRS)
 
 foreach(QT_LIB QtCore QtGui)
