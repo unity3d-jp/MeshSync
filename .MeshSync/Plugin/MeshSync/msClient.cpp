@@ -50,6 +50,12 @@ bool Client::isServerAvailable(int timeout_ms)
     catch (const Poco::Exception& e) {
         m_error_message = e.what();
     }
+
+    if (!m_error_message.empty()) {
+        char buf[512];
+        sprintf(buf, " [%s:%d]", m_settings.server.c_str(), (int)m_settings.port);
+        m_error_message += buf;
+    }
     return false;
 }
 

@@ -84,6 +84,15 @@ static inline Qt::CheckState to_qcheckstate(bool v)
 {
     return v ? Qt::Checked : Qt::Unchecked;
 }
+static inline std::string to_stdstring(const QString& v)
+{
+    // note: on linux, QString::toStdString() returns incorrect result.
+    // QByteArray::length() seems return wrong value. so we reimplement toStdString() with std::strlen()
+    auto raw = v.toAscii();
+    auto *data = raw.constData();
+    return std::string(data, std::strlen(data));
+
+}
 
 msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     : super(parent)
@@ -274,7 +283,7 @@ static bool msmodoSendAnimations()
 void msmodoSettingsWidget::onEditServer(const QString& v)
 {
     auto& settings = msmodoGetSettings();
-    settings.client_settings.server = v.toStdString();
+    settings.client_settings.server = to_stdstring(v);
 }
 
 void msmodoSettingsWidget::onEditPort(const QString& v)
