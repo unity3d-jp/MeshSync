@@ -347,7 +347,7 @@ void msmobuLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
             m_device->sendObjects(false);
         }
         else {
-            ctx.logError("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
+            ctx.logError("MeshSync: Server not available. %s\n", ctx.getErrorMessage().c_str());
             m_bu_auto_sync.State = 0;
         }
     }
