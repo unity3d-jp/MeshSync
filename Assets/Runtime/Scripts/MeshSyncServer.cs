@@ -1293,6 +1293,8 @@ namespace UTJ.MeshSync
                         {
                             var old = smr.sharedMesh;
                             smr.sharedMesh = null;
+                            smr.bones = null;
+                            smr.rootBone = null;
                             DestroyIfNotAsset(old);
                             old = null;
                         }
@@ -1325,12 +1327,6 @@ namespace UTJ.MeshSync
                         }
                         else
                         {
-                            if (smr.rootBone != null)
-                            {
-                                smr.bones = null;
-                                smr.rootBone = null;
-                            }
-
                             if (rec.editMesh != null)
                                 smr.localBounds = rec.editMesh.bounds;
                         }
@@ -1755,33 +1751,46 @@ namespace UTJ.MeshSync
                     bool active = dstgo.activeSelf;
                     dstgo.SetActive(false);
 
-                    var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
-                    var mesh = srcsmr.sharedMesh;
-                    dstsmr.sharedMesh = mesh;
-                    dstsmr.sharedMaterials = srcsmr.sharedMaterials;
-                    dstsmr.bones = srcsmr.bones;
-                    dstsmr.rootBone = srcsmr.rootBone;
-                    dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
-                    if (mesh != null)
+                    var dstpr = dstgo.GetComponent<PointCacheRenderer>();
+                    if (dstpr != null)
                     {
-                        int blendShapeCount = mesh.blendShapeCount;
-                        for (int bi = 0; bi < blendShapeCount; ++bi)
-                            dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
-                    }
+                        dstpr.sharedMesh = srcsmr.sharedMesh;
 
-                    // handle mesh collider
-                    if (m_updateMeshColliders)
+                        var materials = srcsmr.sharedMaterials;
+                        for (int i = 0; i < materials.Length; ++i)
+                            materials[i].enableInstancing = true;
+                        dstpr.sharedMaterials = materials;
+                    }
+                    else
                     {
-                        var srcmc = srcgo.GetComponent<MeshCollider>();
-                        if (srcmc != null && srcmc.sharedMesh == mesh)
+                        var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
+                        var mesh = srcsmr.sharedMesh;
+                        dstsmr.sharedMesh = mesh;
+                        dstsmr.sharedMaterials = srcsmr.sharedMaterials;
+                        dstsmr.bones = srcsmr.bones;
+                        dstsmr.rootBone = srcsmr.rootBone;
+                        dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
+                        if (mesh != null)
                         {
-                            var dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
-                            dstmc.enabled = srcmc.enabled;
-                            dstmc.isTrigger = srcmc.isTrigger;
-                            dstmc.sharedMaterial = srcmc.sharedMaterial;
-                            dstmc.sharedMesh = mesh;
-                            dstmc.convex = srcmc.convex;
-                            dstmc.cookingOptions = srcmc.cookingOptions;
+                            int blendShapeCount = mesh.blendShapeCount;
+                            for (int bi = 0; bi < blendShapeCount; ++bi)
+                                dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+                        }
+
+                        // handle mesh collider
+                        if (m_updateMeshColliders)
+                        {
+                            var srcmc = srcgo.GetComponent<MeshCollider>();
+                            if (srcmc != null && srcmc.sharedMesh == mesh)
+                            {
+                                var dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
+                                dstmc.enabled = srcmc.enabled;
+                                dstmc.isTrigger = srcmc.isTrigger;
+                                dstmc.sharedMaterial = srcmc.sharedMaterial;
+                                dstmc.sharedMesh = mesh;
+                                dstmc.convex = srcmc.convex;
+                                dstmc.cookingOptions = srcmc.cookingOptions;
+                            }
                         }
                     }
 
