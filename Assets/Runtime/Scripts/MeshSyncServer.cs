@@ -845,7 +845,13 @@ namespace UTJ.MeshSync
 
         static Material CreateDefaultMaterial()
         {
-            var ret = new Material(Shader.Find("Standard"));
+            // prefer non Standard shader because it will be pink in HDRP
+            var shader = Shader.Find("HDRP/Lit");
+            if (shader == null)
+                shader = Shader.Find("LWRP/Lit");
+            if (shader == null)
+                shader = Shader.Find("Standard");
+            var ret = new Material(shader);
             return ret;
         }
 
@@ -1096,10 +1102,16 @@ namespace UTJ.MeshSync
 #endif
             if (dst.material == null)
             {
-                var shader = Shader.Find(src.shader);
-                if (shader == null)
-                    shader = Shader.Find("Standard");
-                dst.material = new Material(shader);
+                // prefer non Standard shader because it will be pink in HDRP
+                var shaderName = src.shader;
+                if (shaderName != "Standard")
+                {
+                    var shader = Shader.Find(src.shader);
+                    if (shader != null)
+                        dst.material = new Material(shader);
+                }
+                if (dst.material == null)
+                    dst.material = CreateDefaultMaterial();
                 dst.material.name = materialName;
 
                 dst.materialIID = dst.material.GetInstanceID();
