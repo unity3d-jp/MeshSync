@@ -375,41 +375,28 @@ static inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVe
 
 void Mesh::refine(const MeshRefineSettings& mrs)
 {
-    if (mrs.flags.flip_u) {
+    if (mrs.flags.flip_u)
         mu::InvertU(uv0.data(), uv0.size());
-    }
-    if (mrs.flags.flip_v) {
+    if (mrs.flags.flip_v)
         mu::InvertV(uv0.data(), uv0.size());
-    }
 
-    if (mrs.flags.apply_local2world) {
+    if (mrs.flags.apply_local2world)
         applyTransform(mrs.local2world);
-    }
-    if (mrs.flags.apply_world2local) {
+    if (mrs.flags.apply_world2local)
         applyTransform(mrs.world2local);
-    }
 
-    if (mrs.flags.mirror_x) {
-        float3 plane_n = { 1.0f, 0.0f, 0.0f };
-        float plane_d = 0.0f;
-        applyMirror(plane_n, plane_d, true);
-    }
-    if (mrs.flags.mirror_y) {
-        float3 plane_n = { 0.0f, 1.0f, 0.0f };
-        float plane_d = 0.0f;
-        applyMirror(plane_n, plane_d, true);
-    }
-    if (mrs.flags.mirror_z) {
-        float3 plane_n = { 0.0f, 0.0f, 1.0f };
-        float plane_d = 0.0f;
-        applyMirror(plane_n, plane_d, true);
-    }
-    if (mrs.scale_factor != 1.0f) {
+    if (mrs.flags.mirror_x)
+        applyMirror({ 1.0f, 0.0f, 0.0f }, 0.0f, true);
+    if (mrs.flags.mirror_y)
+        applyMirror({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
+    if (mrs.flags.mirror_z)
+        applyMirror({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
+
+    if (mrs.scale_factor != 1.0f)
         applyScaleFactor(mrs.scale_factor);
-    }
-    if (mrs.flags.flip_x || mrs.flags.flip_yz) {
+    if (mrs.flags.flip_x || mrs.flags.flip_yz)
         convertHandedness(mrs.flags.flip_x, mrs.flags.flip_yz);
-    }
+
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)
             setupBoneWeights4();
@@ -428,9 +415,8 @@ void Mesh::refine(const MeshRefineSettings& mrs)
 
     // generate back faces
     // this must be after generating normals.
-    if (mrs.flags.make_double_sided) {
+    if (mrs.flags.make_double_sided)
         makeDoubleSided();
-    }
 
     size_t num_indices_old = indices.size();
     size_t num_points_old = points.size();

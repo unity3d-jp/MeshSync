@@ -44,6 +44,7 @@ msmaxAPI ULONG CanAutoDefer()
 
 #include <maxscript\macros\define_instantiation_functions.h>
 def_struct_primitive(Window, UnityMeshSync, "Window");
+def_struct_primitive(ServerStatus, UnityMeshSync, "ServerStatus");
 def_struct_primitive(Settings, UnityMeshSync, "Settings");
 def_struct_primitive(Export, UnityMeshSync, "Export");
 def_struct_primitive(Import, UnityMeshSync, "Import");
@@ -57,6 +58,21 @@ Value* Window_cf(Value** arg_list, int count)
         msmaxGetContext().openWindow();
     }
     return &ok;
+}
+
+Value* ServerStatus_cf(Value** arg_list, int count)
+{
+    if (count == 0) {
+        return bool_result(msmaxGetContext().isServerAvailable());
+    }
+    else {
+        std::wstring k = arg_list[0]->to_string();
+        if (k == L"isAvailable")
+            return bool_result(msmaxGetContext().isServerAvailable());
+        else if (k == L"errorMessage")
+            return new String(ms::ToWCS(msmaxGetContext().getErrorMessage()).c_str());
+    }
+    return &undefined;
 }
 
 Value* Settings_cf(Value** arg_list, int count)
@@ -104,9 +120,9 @@ Value* Settings_cf(Value** arg_list, int count)
     }
 
     auto& settings = msmaxGetSettings();
-    if (count >= 2 && wcscmp(arg_list[1]->to_string(), L"q") == 0) {
+    if (count == 1) {
         one_value_local(result);
-        auto it = s_table.find(arg_list[2]->to_string());
+        auto it = s_table.find(arg_list[0]->to_string());
         if (it != s_table.end()) {
             vl.result = it->second.getter();
             return_value(vl.result);

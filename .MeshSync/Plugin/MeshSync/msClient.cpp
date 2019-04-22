@@ -35,6 +35,7 @@ bool Client::isServerAvailable(int timeout_ms)
         }
         else {
             if (std::atoi(content.c_str()) == msProtocolVersion) {
+                m_error_message.clear();
                 return true;
             }
             else {
