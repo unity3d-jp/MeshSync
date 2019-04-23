@@ -12,19 +12,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSyncClientBlender\MeshSyncClientBlender.cpp" />
-    <ClCompile Include="MeshSyncClientBlender\msbBinder.cpp" />
-    <ClCompile Include="MeshSyncClientBlender\msbUtils.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msblenBinder.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msblenContext.cpp" />
+    <ClCompile Include="MeshSyncClientBlender\msblenUtils.cpp" />
     <ClCompile Include="MeshSyncClientBlender\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientBlender\msbContext.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncClientBlender\msbBinder.h" />
-    <ClInclude Include="MeshSyncClientBlender\msbUtils.h" />
+    <ClInclude Include="MeshSyncClientBlender\msblenBinder.h" />
+    <ClInclude Include="MeshSyncClientBlender\msblenContext.h" />
+    <ClInclude Include="MeshSyncClientBlender\msblenUtils.h" />
     <ClInclude Include="MeshSyncClientBlender\pch.h" />
-    <ClInclude Include="MeshSyncClientBlender\MeshSyncClientBlender.h" />
-    <ClInclude Include="MeshSyncClientBlender\msbContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">

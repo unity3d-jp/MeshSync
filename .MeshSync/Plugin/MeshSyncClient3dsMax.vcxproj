@@ -23,7 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClient3dsMax\msmaxCallbacks.h" />
-    <ClInclude Include="MeshSyncClient3dsMax\MeshSyncClient3dsMax.h" />
+    <ClInclude Include="MeshSyncClient3dsMax\msmaxContext.h" />
     <ClInclude Include="MeshSyncClient3dsMax\msmaxUtils.h" />
     <ClInclude Include="MeshSyncClient3dsMax\pch.h" />
     <ClInclude Include="MeshSyncClient3dsMax\resource.h" />
@@ -31,7 +31,7 @@
   <ItemGroup>
     <ClCompile Include="MeshSyncClient3dsMax\msmaxCallbacks.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\MeshSyncClient3dsMax.cpp" />
-    <ClCompile Include="MeshSyncClient3dsMax\msmaxEntryPoint.cpp" />
+    <ClCompile Include="MeshSyncClient3dsMax\msmaxContext.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\msmaxUI.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\msmaxUtils.cpp" />
     <ClCompile Include="MeshSyncClient3dsMax\pch.cpp">

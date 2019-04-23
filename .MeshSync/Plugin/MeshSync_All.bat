@@ -1,4 +1,4 @@
-set MAX_VERSION=2019
+set MAX_VERSION=2020
 set MAX_LIB_DIR=%cd%\External\3ds Max %MAX_VERSION% SDK\maxsdk\lib\x64\Release
 set MAX_INCLUDE_DIR=%cd%\External\3ds Max %MAX_VERSION% SDK\maxsdk\include
 
@@ -22,6 +22,15 @@ set MAYA_INCLUDE_DIR=%cd%\External\Maya%MAYA_VERSION%\include
 set MOTIONBUILDER_VERSION=2019
 set MOTIONBUILDER_LIB_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\lib
 set MOTIONBUILDER_INCLUDE_DIR=%cd%\External\OpenRealitySDK%MOTIONBUILDER_VERSION%\include
+
+set MODO_QT_VERSION=4.8.5
+set MODO_QT_DIR=%cd%\External\Qt\%MODO_QT_VERSION%
+set MODO_SDK_DIR=LXSDK_525410
+set MODO_INCLUDE_DIR=%cd%\External\%MODO_SDK_DIR%\include
+set MODO_SOURCE_DIR=%cd%\External\%MODO_SDK_DIR%\common
+
+set MQ4_VERSION=.64
+set MQ4_SDK_DIR=%cd%\External\mqsdk464\mqsdk
 
 set XISMO_VERSION=190
 set XISMO_QT_VERSION=5.6.2

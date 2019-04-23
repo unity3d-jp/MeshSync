@@ -11,14 +11,15 @@ MaterialManager::~MaterialManager()
 {
 }
 
-void MaterialManager::clear()
-{
-    m_records.clear();
-}
-
 bool MaterialManager::empty() const
 {
     return m_records.empty();
+}
+
+void MaterialManager::clear()
+{
+    m_records.clear();
+    m_deleted.clear();
 }
 
 bool MaterialManager::erase(int id)
@@ -52,6 +53,8 @@ int MaterialManager::add(MaterialPtr material)
         rec.checksum = csum;
         rec.dirty = true;
     }
+    else if (m_always_mark_dirty)
+        rec.dirty = true;
     return 0;
 }
 
@@ -114,6 +117,11 @@ void MaterialManager::eraseStaleMaterials()
         else
             ++it;
     }
+}
+
+void MaterialManager::setAlwaysMarkDirty(bool v)
+{
+    m_always_mark_dirty = v;
 }
 
 MaterialManager::Record& MaterialManager::lockAndGet(int id)

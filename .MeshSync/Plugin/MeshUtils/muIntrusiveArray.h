@@ -15,6 +15,7 @@ public:
     using const_iterator = const_pointer;
 
     IntrusiveArray() : m_data(nullptr), m_size(0) {}
+    template<size_t N> IntrusiveArray(const T (&d)[N]) : m_data(const_cast<T*>(d)), m_size(N) {}
     IntrusiveArray(const T *d, size_t s) : m_data(const_cast<T*>(d)), m_size(s) {}
     IntrusiveArray(const IntrusiveArray& v) : m_data(const_cast<T*>(v.m_data)), m_size(v.m_size) {}
     template<class Container> IntrusiveArray(const Container& v) : m_data(const_cast<T*>(v.data())), m_size(v.size()) {}

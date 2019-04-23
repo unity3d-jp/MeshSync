@@ -1,4 +1,5 @@
 call toolchain.bat
+call :Build 2020
 call :Build 2019
 call :Build 2018
 call :Build 2017

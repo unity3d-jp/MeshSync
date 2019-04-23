@@ -74,6 +74,7 @@ public:
     LRESULT OnBnClickedCheckBakeCloth(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
+    void LogInfo(const char *message);
 
 private:
     msmqSettings& getSettings();
@@ -91,5 +92,6 @@ private:
     CButton m_check_bake_skin;
     CButton m_check_bake_cloth;
     CStatic m_txt_version;
+    CStatic m_txt_log;
     bool m_initializing = true;
 };

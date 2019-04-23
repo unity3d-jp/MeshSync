@@ -12,19 +12,38 @@ void Message::serialize(std::ostream& os) const
     write(os, protocol_version);
     write(os, session_id);
     write(os, message_id);
+    write(os, timestamp_send);
 }
 void Message::deserialize(std::istream& is)
 {
     read(is, protocol_version);
     if (protocol_version != msProtocolVersion) {
-        throw std::runtime_error("protocol version not matched");
+        throw std::runtime_error("Protocol version doesn't match");
     }
     read(is, session_id);
     read(is, message_id);
+    read(is, timestamp_send);
+}
+
+
+void GetFlags::setAllGetFlags()
+{
+    get_transform = 1;
+    get_points = 1;
+    get_normals = 1;
+    get_tangents = 1;
+    get_uv0 = 1;
+    get_uv1 = 1;
+    get_colors = 1;
+    get_indices = 1;
+    get_material_ids = 1;
+    get_bones = 1;
+    get_blendshapes = 1;
 }
 
 GetMessage::GetMessage()
 {
+    flags.setAllGetFlags();
 }
 void GetMessage::serialize(std::ostream& os) const
 {
@@ -106,22 +125,6 @@ void ScreenshotMessage::serialize(std::ostream& os) const { super::serialize(os)
 void ScreenshotMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
 
-QueryMessage::QueryMessage()
-{
-}
-
-void QueryMessage::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    write(os, type);
-}
-
-void QueryMessage::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    read(is, type);
-}
-
 ResponseMessage::ResponseMessage()
 {
 }
@@ -139,19 +142,36 @@ void ResponseMessage::deserialize(std::istream & is)
 }
 
 
+QueryMessage::QueryMessage()
+{
+}
+
+void QueryMessage::serialize(std::ostream & os) const
+{
+    super::serialize(os);
+    write(os, query_type);
+}
+
+void QueryMessage::deserialize(std::istream & is)
+{
+    super::deserialize(is);
+    read(is, query_type);
+}
+
+
 PollMessage::PollMessage()
 {}
 
 void PollMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    write(os, type);
+    write(os, poll_type);
 }
 
 void PollMessage::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    read(is, type);
+    read(is, poll_type);
 }
 
 

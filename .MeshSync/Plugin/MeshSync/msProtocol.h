@@ -23,6 +23,10 @@ public:
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;
     int message_id = 0;
+    nanosec timestamp_send = 0;
+
+    // non-serializable fields
+    nanosec timestamp_recv = 0;
 
     virtual ~Message();
     virtual void serialize(std::ostream& os) const;
@@ -44,10 +48,11 @@ struct GetFlags
     uint32_t get_indices : 1;
     uint32_t get_material_ids : 1;
     uint32_t get_bones : 1;
-    uint32_t get_blendshapes : 1;
+    uint32_t get_blendshapes : 1; // 10
     uint32_t apply_culling : 1;
-};
 
+    void setAllGetFlags();
+};
 
 class GetMessage : public Message
 {
@@ -57,8 +62,8 @@ public:
     SceneSettings scene_settings;
     MeshRefineSettings refine_settings;
 
-    // non-serializable
-    std::atomic_bool ready;
+    // non-serializable fields
+    std::atomic_bool ready{ false };
 
 public:
     GetMessage();
@@ -148,8 +153,8 @@ class ScreenshotMessage : public Message
 using super = Message;
 public:
 
-    // non-serializable
-    std::atomic_bool ready;
+    // non-serializable fields
+    std::atomic_bool ready{ false };
 
 public:
     ScreenshotMessage();
@@ -160,35 +165,9 @@ msSerializable(ScreenshotMessage);
 msDeclPtr(ScreenshotMessage);
 
 
-class QueryMessage : public Message
-{
-using super = Message;
-public:
-    enum class QueryType
-    {
-        Unknown,
-        ClientName,
-        RootNodes,
-        AllNodes,
-    };
-
-public:
-    QueryType type = QueryType::Unknown;
-
-    std::atomic_bool ready; // non-serializable
-    MessagePtr response;    // 
-
-    QueryMessage();
-    void serialize(std::ostream& os) const override;
-    void deserialize(std::istream& is) override;
-};
-msSerializable(QueryMessage);
-msDeclPtr(QueryMessage);
-
-
 class ResponseMessage : public Message
 {
-using super = Message;
+    using super = Message;
 public:
     std::vector<std::string> text;
 
@@ -200,6 +179,35 @@ msSerializable(ResponseMessage);
 msDeclPtr(ResponseMessage);
 
 
+class QueryMessage : public Message
+{
+using super = Message;
+public:
+    enum class QueryType
+    {
+        Unknown,
+        PluginVersion,
+        ProtocolVersion,
+        HostName,
+        RootNodes,
+        AllNodes,
+    };
+
+public:
+    QueryType query_type = QueryType::Unknown;
+
+    // non-serializable fields
+    std::atomic_bool ready{ false };
+    ResponseMessagePtr response;
+
+    QueryMessage();
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+msSerializable(QueryMessage);
+msDeclPtr(QueryMessage);
+
+
 class PollMessage : public Message
 {
 using super = Message;
@@ -209,8 +217,10 @@ public:
         Unknown,
         SceneUpdate,
     };
-    PollType type = PollType::Unknown;
-    std::atomic_bool ready; // non-serializable
+    PollType poll_type = PollType::Unknown;
+
+    // non-serializable fields
+    std::atomic_bool ready{ false };
 
     PollMessage();
     void serialize(std::ostream& os) const override;

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Text;
 using UnityEngine;
 using UnityEditor;
 
@@ -19,7 +20,8 @@ public static class DebugCommands
         var go = Selection.activeGameObject;
         if (go != null)
         {
-            string str = DumpTransform(go.GetComponent<Transform>());
+            var log = new StringBuilder();
+            DumpTransform(log, go.GetComponent<Transform>());
 
             var smr = go.GetComponent<SkinnedMeshRenderer>();
             if (smr != null)
@@ -31,43 +33,41 @@ public static class DebugCommands
                 int numBones = bones.Length;
                 for (int bi = 0; bi < numBones; ++bi)
                 {
-                    str += string.Format("  bindpose {0}:\n", bones[bi].name);
+                    log.AppendFormat("  bindpose {0}:\n", bones[bi].name);
                     for (int i = 0; i < 4; ++i)
                     {
                         var v = bps[bi].GetColumn(i);
-                        str += string.Format("    {0}, {1}, {2}, {3}\n", v.x, v.y, v.z, v.w);
+                        log.AppendFormat("    {0}, {1}, {2}, {3}\n", v.x, v.y, v.z, v.w);
                     }
                 }
 
-                str += "\n";
+                log.Append("\n");
                 for (int bi = 0; bi < numBones; ++bi)
-                {
-                    str += DumpTransform(bones[bi]);
-                    str += "\n";
-                }
+                    DumpTransform(log, bones[bi]);
             }
-            Debug.Log(str);
+            Debug.Log(log);
         }
     }
 
-    public static string DumpTransform(Transform trans)
+    public static string DumpTransform(StringBuilder log, Transform trans)
     {
         var t = trans.position;
         var rq = trans.rotation;
         var re = rq.eulerAngles;
         var s = trans.lossyScale;
 
-        string str = trans.name + ":\n";
-        str += string.Format("  global position: {0}, {1}, {2}\n", t.x, t.y, t.z);
-        str += string.Format("  global rotation (quat): {0}, {1}, {2}, {3}\n", rq.x, rq.y, rq.z, rq.w);
-        str += string.Format("  global rotation (euler): {0}, {1}, {2}\n", re.x, re.y, re.z);
-        str += string.Format("  global scale: {0}, {1}, {2}\n", s.x, s.y, s.z);
-        return str;
+        log.AppendFormat("{0}:\n", trans.name);
+        log.AppendFormat("  global position: {0}, {1}, {2}\n", t.x, t.y, t.z);
+        log.AppendFormat("  global rotation (quat): {0}, {1}, {2}, {3}\n", rq.x, rq.y, rq.z, rq.w);
+        log.AppendFormat("  global rotation (euler): {0}, {1}, {2}\n", re.x, re.y, re.z);
+        log.AppendFormat("  global scale: {0}, {1}, {2}\n", s.x, s.y, s.z);
+        return log.ToString();
     }
 
     [MenuItem("Debug/Dump Mesh")]
     public static void DumpMesh()
     {
+        SkinnedMeshRenderer smr = null;
         var mesh = Selection.activeObject as Mesh;
         if (mesh == null)
         {
@@ -81,7 +81,7 @@ public static class DebugCommands
                 }
                 if (mesh == null)
                 {
-                    var smr = go.GetComponent<SkinnedMeshRenderer>();
+                    smr = go.GetComponent<SkinnedMeshRenderer>();
                     if (smr != null)
                         mesh = smr.sharedMesh;
                 }
@@ -90,36 +90,46 @@ public static class DebugCommands
         if (mesh == null)
             return;
 
-        string log = "Mesh \"" + mesh.name + "\"\n";
+        var log = new StringBuilder();
+        log.AppendFormat("Mesh \"{0}\"\n", mesh.name);
+
+        if (smr != null)
+        {
+            var bones = smr.bones;
+            log.AppendFormat("bones ({0}):\n", bones.Length);
+            foreach (var b in bones)
+                log.AppendFormat("  {0}\n", b == null ? "" : b.name);
+        }
+
         {
             var vertices = mesh.vertices;
-            log += "vertices (" + vertices.Length + "):";
+            log.AppendFormat("vertices ({0}):\n", vertices.Length);
             foreach (var p in vertices)
-                log += string.Format("  {0}, {1}, {2}\n", p.x, p.y, p.z);
+                log.AppendFormat("  {0}, {1}, {2}\n", p.x, p.y, p.z);
         }
         {
             var normals = mesh.normals;
-            log += "normals:";
+            log.AppendFormat("normals:\n");
             foreach (var p in normals)
-                log += string.Format("  {0}, {1}, {2}\n", p.x, p.y, p.z);
+                log.AppendFormat("  {0}, {1}, {2}\n", p.x, p.y, p.z);
         }
         {
             var tangents = mesh.tangents;
-            log += "tangents:";
+            log.AppendFormat("tangents:\n");
             foreach (var p in tangents)
-                log += string.Format("  {0}, {1}, {2}, {3}\n", p.x, p.y, p.z, p.w);
+                log.AppendFormat("  {0}, {1}, {2}, {3}\n", p.x, p.y, p.z, p.w);
         }
         {
             var uv = mesh.uv;
-            log += "uv1:";
+            log.AppendFormat("uv1:\n");
             foreach (var p in uv)
-                log += string.Format("  {0}, {1}\n", p.x, p.y);
+                log.AppendFormat("  {0}, {1}\n", p.x, p.y);
         }
         {
             var weights = mesh.boneWeights;
-            log += "weights:";
+            log.AppendFormat("weights:\n");
             foreach (var p in weights)
-                log += string.Format("  {0}:{1}, {2}:{3}, {4}:{5}, {6}:{7}\n",
+                log.AppendFormat("  {0}:{1}, {2}:{3}, {4}:{5}, {6}:{7}\n",
                     p.boneIndex0, p.weight0,
                     p.boneIndex1, p.weight1,
                     p.boneIndex2, p.weight2,

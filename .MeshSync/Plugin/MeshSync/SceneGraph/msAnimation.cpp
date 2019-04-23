@@ -3,13 +3,6 @@
 #include "msAnimation.h"
 
 
-#define Clear(V) V.clear();
-#define Hash(V) ret += vhash(V);
-#define CSum(V) ret += csum(V);
-#define Empty(V) && V.empty()
-#define Reduce(V) DoReduction(V);
-#define Reserve(V) V.reserve(n);
-
 namespace ms {
 
 template<class T>
@@ -21,454 +14,359 @@ struct Equals
     }
 };
 template<>
-struct Equals<bool>
+struct Equals<int>
 {
-    bool operator()(bool a, bool b) const
+    bool operator()(int a, int b) const
     {
         return a == b;
     }
 };
 
 template<class T>
-static void DoReduction(RawVector<TVP<T>>& data)
+static size_t GetSize(const AnimationCurve& self)
 {
+    TAnimationCurve<T> data(self);
+    return data.size();
+}
+template<> size_t GetSize<void>(const AnimationCurve& /*self*/) { return 0; }
+
+template<class T>
+static void* At(const AnimationCurve& self, int i)
+{
+    TAnimationCurve<T> data(self);
+    return &data[i];
+}
+template<> void* At<void>(const AnimationCurve& /*self*/, int /*i*/) { return nullptr; }
+
+template<class T>
+static void ReserveKeyframes(AnimationCurve& self, size_t n)
+{
+    TAnimationCurve<T> data(self);
+    data.reserve(n);
+}
+template<> void ReserveKeyframes<void>(AnimationCurve& /*self*/, size_t /*n*/) {}
+
+template<class T>
+static void ReduceKeyframes(AnimationCurve& self, bool keep_flat_curve)
+{
+    TAnimationCurve<T> data(self);
+    if (data.size() <= 1)
+        return;
+
+    auto last_key = data.back();
     while (data.size() >= 2) {
         if (Equals<T>()(data[data.size()-2].value, data.back().value))
             data.pop_back();
         else
             break;
     }
+
     if (data.size() == 1) {
-        data.clear();
+        if (keep_flat_curve)
+            data.push_back(last_key); // keep at least 2 keys to prevent Unity's warning
+        else
+            data.clear();
     }
 }
+template<> void ReduceKeyframes<void>(AnimationCurve& /*self*/, bool /*keep_flat_curve*/) {}
+
+template<class T> static inline T handle_yz(const T& v) { return flip_z(swap_yz(v)); }
+template<> inline quatf handle_yz(const quatf& v) { return flip_z(swap_yz(v)) * rotate_x(-90.0f * DegToRad); }
+
+template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x, bool yz)
+{
+    if (!self.data_flags.affect_handedness)
+        return;
+
+    TAnimationCurve<T> data(self);
+    if (x) {
+        if (!self.data_flags.ignore_negate) {
+            for (auto& tvp : data)
+                tvp.value = flip_x(tvp.value);
+        }
+    }
+    if (yz) {
+        if (!self.data_flags.ignore_negate) {
+            for (auto& tvp : data)
+                tvp.value = handle_yz(tvp.value);
+        }
+        else {
+            for (auto& tvp : data)
+                tvp.value = swap_yz(tvp.value);
+        }
+    }
+}
+template<class T> static void ConvertHandedness(AnimationCurve& /*self*/, bool /*x*/, bool /*yz*/) {}
+template<> void ConvertHandedness<float3>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float3>(self, x, yz); }
+template<> void ConvertHandedness<float4>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float4>(self, x, yz); }
+template<> void ConvertHandedness<quatf>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<quatf>(self, x, yz); }
+
+
+template<class T> static void ApplyScaleImpl(AnimationCurve& self, float v)
+{
+    if (!self.data_flags.affect_scale)
+        return;
+
+    TAnimationCurve<T> data(self);
+    for (auto& tvp : data)
+        tvp.value *= v;
+}
+template<class T> static void ApplyScale(AnimationCurve& /*self*/, float /*v*/) {}
+template<> void ApplyScale<float>(AnimationCurve& self, float v) { ApplyScaleImpl<float>(self, v); }
+template<> void ApplyScale<float2>(AnimationCurve& self, float v) { ApplyScaleImpl<float2>(self, v); }
+template<> void ApplyScale<float3>(AnimationCurve& self, float v) { ApplyScaleImpl<float3>(self, v); }
+template<> void ApplyScale<float4>(AnimationCurve& self, float v) { ApplyScaleImpl<float4>(self, v); }
+
+
+struct AnimationCurveFunctionSet
+{
+    size_t(*size)(const AnimationCurve& self);
+    void*(*at)(const AnimationCurve& self, int i);
+    void(*reserve_keyframes)(AnimationCurve& self, size_t n);
+    void(*reduce_keyframes)(AnimationCurve& self, bool keep_flat_curve);
+    void(*convert_handedness)(AnimationCurve& self, bool x, bool yz);
+    void(*apply_scale)(AnimationCurve& self, float v);
+};
+
+#define EachDataTypes(Body)\
+    Body(void) Body(int) Body(float) Body(float2) Body(float3) Body(float4) Body(quatf)
+
+#define DefFunctionSet(T) {&GetSize<T>, &At<T>, &ReserveKeyframes<T>, &ReduceKeyframes<T>, &ConvertHandedness<T>, &ApplyScale<T>},
+
+static AnimationCurveFunctionSet g_curve_fs[] = {
+    EachDataTypes(DefFunctionSet)
+};
+#undef DefFunctionSet
+
+
+
+std::shared_ptr<AnimationCurve> AnimationCurve::create(std::istream& is)
+{
+    auto ret = AnimationCurve::create();
+    ret->deserialize(is);
+    return ret;
+}
+
+AnimationCurve::AnimationCurve() {}
+AnimationCurve::~AnimationCurve() {}
+
+#define EachMember(F) F(name) F(data) F(data_type) F(data_flags)
+
+void AnimationCurve::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+
+void AnimationCurve::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+
+void AnimationCurve::clear()
+{
+    name.clear();
+    data.clear();
+    data_type = DataType::Unknown;
+    data_flags = {};
+}
+
+uint64_t AnimationCurve::hash() const
+{
+    uint64_t ret = 0;
+    ret += vhash(data);
+    return ret;
+}
+
+template<> inline uint64_t csum(const AnimationCurve::DataFlags& v) { return (uint32_t&)v; }
+
+uint64_t AnimationCurve::checksum() const
+{
+    uint64_t ret = 0;
+    EachMember(msCSum);
+    return ret;
+}
+
+size_t AnimationCurve::size() const
+{
+    return g_curve_fs[(int)data_type].size(*this);
+}
+
+bool AnimationCurve::empty() const
+{
+    return data.empty();
+}
+
+template<class T>
+TVP<T>& AnimationCurve::at(int i)
+{
+    return *(TVP<T>*)g_curve_fs[(int)data_type].at(*this, i);
+}
+#define Instantiate(T) template TVP<T>& AnimationCurve::at(int i);
+EachDataTypes(Instantiate)
+#undef Instantiate
+
+
+void AnimationCurve::reserve(size_t n)
+{
+    g_curve_fs[(int)data_type].reserve_keyframes(*this, n);
+}
+void AnimationCurve::reduction(bool keep_flat_curves)
+{
+    g_curve_fs[(int)data_type].reduce_keyframes(*this, keep_flat_curves);
+}
+
+void AnimationCurve::convertHandedness(bool x, bool yz)
+{
+    g_curve_fs[(int)data_type].convert_handedness(*this, x, yz);
+}
+void AnimationCurve::applyScaleFactor(float scale)
+{
+    g_curve_fs[(int)data_type].apply_scale(*this, scale);
+}
+#undef EachMember
+
 
 
 std::shared_ptr<Animation> Animation::create(std::istream & is)
 {
-    std::shared_ptr<Animation> ret;
-
-    int type;
-    read(is, type);
-    switch ((Type)type) {
-    case Type::Transform: ret = TransformAnimation::create(); break;
-    case Type::Camera: ret = CameraAnimation::create(); break;
-    case Type::Light: ret = LightAnimation::create(); break;
-    case Type::Mesh: ret = MeshAnimation::create(); break;
-    case Type::Points: ret = PointsAnimation::create(); break;
-    default: break;
-    }
-    if (ret) {
-        ret->deserialize(is);
-    }
+    auto ret = Animation::create();
+    ret->deserialize(is);
     return ret;
 }
-
 
 Animation::Animation() {}
 Animation::~Animation() {}
 
-Animation::Type Animation::getType() const
-{
-    return Type::Unknown;
-}
-
 void Animation::serialize(std::ostream & os) const
 {
-    int type = (int)getType();
-    write(os, type);
+    write(os, entity_type);
     write(os, path);
+    write(os, curves);
 }
 
 void Animation::deserialize(std::istream & is)
 {
-    // type is consumed by make()
+    read(is, entity_type);
     read(is, path);
+    read(is, curves);
 }
 
 void Animation::clear()
 {
+    entity_type = EntityType::Unknown;
     path.clear();
+    curves.clear();
 }
 
-
-
-TransformAnimation::TransformAnimation() {}
-TransformAnimation::~TransformAnimation() {}
-
-Animation::Type TransformAnimation::getType() const
-{
-    return Type::Transform;
-}
-
-#define EachMember(F)\
-    F(translation) F(rotation) F(scale) F(visible)
-
-void TransformAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-void TransformAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-void TransformAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-uint64_t TransformAnimation::hash() const
+uint64_t Animation::hash() const
 {
     uint64_t ret = 0;
-    EachMember(Hash);
+    for (auto& c : curves)
+        ret += c->hash();
     return ret;
 }
-uint64_t TransformAnimation::checksum() const
+uint64_t Animation::checksum() const
 {
     uint64_t ret = 0;
-    EachMember(CSum);
+    for (auto& c : curves)
+        ret += c->checksum();
     return ret;
 }
-bool TransformAnimation::empty() const
+bool Animation::empty() const
 {
-    bool ret = true;
-    ret = ret EachMember(Empty);
-    return ret;
+    return curves.empty();
 }
-void TransformAnimation::reduction()
+void Animation::reduction(bool keep_flat_curves)
 {
-    EachMember(Reduce);
+    for (auto& c : curves)
+        c->reduction(keep_flat_curves);
+    curves.erase(
+        std::remove_if(curves.begin(), curves.end(), [](ms::AnimationCurvePtr& p) { return p->empty(); }),
+        curves.end());
 }
-void TransformAnimation::reserve(size_t n)
+void Animation::reserve(size_t n)
 {
-    EachMember(Reserve);
+    for (auto& c : curves)
+        c->reserve(n);
 }
-#undef EachMember
 
-void TransformAnimation::convertHandedness(bool x, bool yz)
+void Animation::convertHandedness(bool x, bool yz)
 {
-    if (x) {
-        for (auto& tvp : translation)
-            tvp.value = flip_x(tvp.value);
-        for (auto& tvp : rotation)
-            tvp.value = flip_x(tvp.value);
+    if (yz && !isRoot())
+        yz = false;
+
+    for (auto& c : curves)
+        c->convertHandedness(x, yz);
+}
+void Animation::applyScaleFactor(float scale)
+{
+    for (auto& c : curves)
+        c->applyScaleFactor(scale);
+}
+
+bool Animation::isRoot() const
+{
+    return path.find_last_of('/') == 0;
+}
+
+AnimationCurvePtr Animation::findCurve(const char *name)
+{
+    auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
+        return std::strcmp(curve->name.c_str(), name) < 0;
+    });
+    if (it != curves.end() && (*it)->name == name)
+        return *it;
+    return nullptr;
+}
+AnimationCurvePtr Animation::findCurve(const std::string& name)
+{
+    return findCurve(name.c_str());
+}
+
+AnimationCurvePtr Animation::addCurve(const char *name, DataType type)
+{
+    auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
+        return std::strcmp(curve->name.c_str(), name) < 0;
+    });
+    if (it != curves.end() && (*it)->name == name) {
+        auto& ret = *it;
+        // clear existing one
+        ret->data.clear();
+        ret->data_type = type;
+        return ret;
     }
-    if (yz) {
-        for (auto& tvp : translation)
-            tvp.value = swap_yz(tvp.value);
-        for (auto& tvp : rotation)
-            tvp.value = swap_yz(tvp.value);
-        for (auto& tvp : scale)
-            tvp.value = swap_yz(tvp.value);
+    else {
+        auto ret = AnimationCurve::create();
+        ret->name = name;
+        ret->data_type = type;
+        curves.insert(it, ret);
+        return ret;
     }
 }
-
-void TransformAnimation::applyScaleFactor(float s)
+AnimationCurvePtr Animation::addCurve(const std::string& name, DataType type)
 {
-    for (auto& tvp : translation)
-        tvp.value *= s;
+    return addCurve(name.c_str(), type);
 }
 
+AnimationCurvePtr Animation::getCurve(const char *name, DataType type)
+{
+    auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
+        return std::strcmp(curve->name.c_str(), name) < 0;
+    });
+    if (it != curves.end() && (*it)->name == name)
+        return *it;
 
-
-CameraAnimation::CameraAnimation() {}
-CameraAnimation::~CameraAnimation() {}
-
-Animation::Type CameraAnimation::getType() const
-{
-    return Type::Camera;
-}
-
-#define EachMember(F)\
-    F(fov) F(near_plane) F(far_plane) F(horizontal_aperture) F(vertical_aperture) F(focal_length) F(focus_distance)
-
-void CameraAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-void CameraAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-void CameraAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-uint64_t CameraAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    EachMember(Hash);
-    return ret;
-}
-uint64_t CameraAnimation::checksum() const
-{
-    uint64_t ret = super::checksum();
-    EachMember(CSum);
-    return ret;
-}
-bool CameraAnimation::empty() const
-{
-    return super::empty() EachMember(Empty);
-}
-void CameraAnimation::reduction()
-{
-    super::reduction();
-    EachMember(Reduce);
-}
-void CameraAnimation::reserve(size_t n)
-{
-    super::reserve(n);
-    EachMember(Reserve);
-}
-#undef EachMember
-
-void CameraAnimation::applyScaleFactor(float s)
-{
-    super::applyScaleFactor(s);
-    for (auto& tvp : near_plane)
-        tvp.value *= s;
-    for (auto& tvp : far_plane)
-        tvp.value *= s;
-}
-
-
-LightAnimation::LightAnimation() {}
-LightAnimation::~LightAnimation() {}
-
-Animation::Type LightAnimation::getType() const
-{
-    return Type::Light;
-}
-
-#define EachMember(F)\
-    F(color) F(intensity) F(range) F(spot_angle)
-
-void LightAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-void LightAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-void LightAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-uint64_t LightAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    EachMember(Hash);
-    return ret;
-}
-uint64_t LightAnimation::checksum() const
-{
-    uint64_t ret = super::checksum();
-    EachMember(CSum);
-    return ret;
-}
-bool LightAnimation::empty() const
-{
-    return super::empty() EachMember(Empty);
-}
-void LightAnimation::reduction()
-{
-    super::reduction();
-    EachMember(Reduce);
-}
-void LightAnimation::reserve(size_t n)
-{
-    super::reserve(n);
-    EachMember(Reserve);
-}
-#undef EachMember
-
-void LightAnimation::applyScaleFactor(float s)
-{
-    super::applyScaleFactor(s);
-    for (auto& tvp : range)
-        tvp.value *= s;
-}
-
-
-std::shared_ptr<BlendshapeAnimation> BlendshapeAnimation::create(std::istream & is)
-{
-    auto ret = Pool<BlendshapeAnimation>::instance().pull();
-    ret->deserialize(is);
-    return make_shared_ptr(ret);
-}
-
-BlendshapeAnimation::BlendshapeAnimation() {}
-BlendshapeAnimation::~BlendshapeAnimation() {}
-
-void BlendshapeAnimation::serialize(std::ostream & os) const
-{
-    write(os, name);
-    write(os, weight);
-}
-
-void BlendshapeAnimation::deserialize(std::istream & is)
-{
-    read(is, name);
-    read(is, weight);
-}
-
-void BlendshapeAnimation::clear()
-{
-    name.clear();
-    weight.clear();
-}
-
-bool BlendshapeAnimation::empty() const
-{
-    return weight.empty();
-}
-
-MeshAnimation::MeshAnimation() {}
-MeshAnimation::~MeshAnimation() {}
-
-Animation::Type MeshAnimation::getType() const
-{
-    return Type::Mesh;
-}
-
-void MeshAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    write(os, blendshapes);
-}
-
-void MeshAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    read(is, blendshapes);
-}
-
-void MeshAnimation::clear()
-{
-    super::clear();
-    blendshapes.clear();
-}
-
-uint64_t MeshAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    for (auto& bs : blendshapes)
-        ret += vhash(bs->weight);
+    auto ret = AnimationCurve::create();
+    ret->name = name;
+    ret->data_type = type;
+    curves.insert(it, ret);
     return ret;
 }
 
-uint64_t MeshAnimation::checksum() const
+AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
 {
-    uint64_t ret = 0;
-    for (auto& bs : blendshapes)
-        ret += csum(bs->weight);
-    return ret;
+    return getCurve(name.c_str(), type);
 }
-
-bool MeshAnimation::empty() const
-{
-    return super::empty() && blendshapes.empty();
-}
-
-void MeshAnimation::reduction()
-{
-    super::reduction();
-
-    for (auto& bs : blendshapes)
-        DoReduction(bs->weight);
-    blendshapes.erase(
-        std::remove_if(blendshapes.begin(), blendshapes.end(), [](BlendshapeAnimationPtr& p) { return p->empty(); }),
-        blendshapes.end());
-}
-
-BlendshapeAnimation* MeshAnimation::findOrCreateBlendshapeAnimation(const char * name)
-{
-    BlendshapeAnimation *ret = nullptr;
-    {
-        auto it = std::find_if(blendshapes.begin(), blendshapes.end(),
-            [name](const ms::BlendshapeAnimationPtr& ptr) { return ptr->name == name; });
-        if (it != blendshapes.end()) {
-            ret = it->get();
-        }
-    }
-    if (!ret) {
-        auto bsa = ms::BlendshapeAnimation::create();
-        bsa->name = name;
-        blendshapes.push_back(bsa);
-        ret = bsa.get();
-    }
-    return ret;
-}
-
-
-PointsAnimation::PointsAnimation() {}
-PointsAnimation::~PointsAnimation() {}
-
-Animation::Type PointsAnimation::getType() const
-{
-    return Type::Points;
-}
-#define EachMember(F)\
-    F(time)
-
-void PointsAnimation::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-
-void PointsAnimation::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-
-void PointsAnimation::clear()
-{
-    super::clear();
-    EachMember(Clear);
-}
-
-uint64_t PointsAnimation::hash() const
-{
-    uint64_t ret = super::hash();
-    EachMember(Hash);
-    return ret;
-}
-
-uint64_t PointsAnimation::checksum() const
-{
-    uint64_t ret = super::checksum();
-    EachMember(CSum);
-    return ret;
-}
-
-bool PointsAnimation::empty() const
-{
-    return super::empty() EachMember(Empty);
-}
-
-void PointsAnimation::reduction()
-{
-    super::reduction();
-    EachMember(Reduce);
-}
-
-void PointsAnimation::reserve(size_t n)
-{
-    super::reserve(n);
-    EachMember(Reserve);
-}
-#undef EachMember
 
 
 #define EachMember(F) F(animations)
@@ -526,10 +424,10 @@ bool AnimationClip::empty() const
     return animations.empty();
 }
 
-void AnimationClip::reduction()
+void AnimationClip::reduction(bool keep_flat_curves)
 {
-    mu::parallel_for_each(animations.begin(), animations.end(), [](ms::AnimationPtr& p) {
-        p->reduction();
+    mu::parallel_for_each(animations.begin(), animations.end(), [keep_flat_curves](ms::AnimationPtr& p) {
+        p->reduction(keep_flat_curves);
     });
     animations.erase(
         std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
@@ -547,5 +445,125 @@ void AnimationClip::applyScaleFactor(float scale)
     for (auto& animation : animations)
         animation->applyScaleFactor(scale);
 }
+
+void AnimationClip::addAnimation(AnimationPtr v)
+{
+    if (v)
+        animations.push_back(v);
+}
+void AnimationClip::addAnimation(TransformAnimationPtr v)
+{
+    if (v)
+        addAnimation(v->host);
+}
+
+
+
+std::shared_ptr<TransformAnimation> TransformAnimation::create(AnimationPtr host)
+{
+    if (!host)
+        host = Animation::create();
+    return std::make_shared<TransformAnimation>(host);
+}
+TransformAnimation::TransformAnimation(AnimationPtr h)
+    : host(h)
+    , path(host->path)
+    , translation(host->getCurve(mskTransformTranslation, DataType::Float3))
+    , rotation(host->getCurve(mskTransformRotation, DataType::Quaternion))
+    , scale(host->getCurve(mskTransformScale, DataType::Float3))
+    , visible(host->getCurve(mskTransformVisible, DataType::Int))
+{
+    host->entity_type = Entity::Type::Transform;
+    translation.curve->data_flags.affect_handedness = true;
+    translation.curve->data_flags.affect_scale = true;
+    rotation.curve->data_flags.affect_handedness = true;
+    scale.curve->data_flags.affect_handedness = true;
+    scale.curve->data_flags.ignore_negate = true;
+}
+
+TransformAnimation::~TransformAnimation()
+{
+}
+
+void TransformAnimation::reserve(size_t n)
+{
+    host->reserve(n);
+}
+
+
+std::shared_ptr<CameraAnimation> CameraAnimation::create(AnimationPtr host)
+{
+    if (!host)
+        host = Animation::create();
+    return std::make_shared<CameraAnimation>(host);
+}
+CameraAnimation::CameraAnimation(AnimationPtr host)
+    : super(host)
+    , fov(host->getCurve(mskCameraFieldOfView, DataType::Float))
+    , near_plane(host->getCurve(mskCameraNearPlane, DataType::Float))
+    , far_plane(host->getCurve(mskCameraFarPlane, DataType::Float))
+    , focal_length(host->getCurve(mskCameraFocalLength, DataType::Float))
+    , sensor_size(host->getCurve(mskCameraSensorSize, DataType::Float2))
+    , lens_shift(host->getCurve(mskCameraLensShift, DataType::Float2))
+{
+    host->entity_type = Entity::Type::Camera;
+    near_plane.curve->data_flags.affect_scale = true;
+    far_plane.curve->data_flags.affect_scale = true;
+}
+
+
+std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
+{
+    if (!host)
+        host = Animation::create();
+    return std::make_shared<LightAnimation>(host);
+}
+LightAnimation::LightAnimation(AnimationPtr host)
+    : super(host)
+    , color(host->getCurve(mskLightColor, DataType::Float4))
+    , intensity(host->getCurve(mskLightIntensity, DataType::Float))
+    , range(host->getCurve(mskLightRange, DataType::Float))
+    , spot_angle(host->getCurve(mskLightSpotAngle, DataType::Float))
+{
+    host->entity_type = Entity::Type::Light;
+    range.curve->data_flags.affect_scale = true;
+}
+
+
+std::shared_ptr<MeshAnimation> MeshAnimation::create(AnimationPtr host)
+{
+    if (!host)
+        host = Animation::create();
+    return std::make_shared<MeshAnimation>(host);
+}
+MeshAnimation::MeshAnimation(AnimationPtr host)
+    : super(host)
+{
+    host->entity_type = Entity::Type::Mesh;
+}
+
+TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const char *name)
+{
+    char buf[512];
+    sprintf(buf, mskMeshBlendshape ".%s", name);
+    return host->getCurve(buf, DataType::Float);
+}
+TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name)
+{
+    return getBlendshapeCurve(name.c_str());
+}
+
+std::shared_ptr<PointsAnimation> PointsAnimation::create(AnimationPtr host)
+{
+    if (!host)
+        host = Animation::create();
+    return std::make_shared<PointsAnimation>(host);
+}
+PointsAnimation::PointsAnimation(AnimationPtr host)
+    : super(host)
+    , time(host->getCurve(mskPointsTime, DataType::Float))
+{
+}
+
 
 } // namespace ms

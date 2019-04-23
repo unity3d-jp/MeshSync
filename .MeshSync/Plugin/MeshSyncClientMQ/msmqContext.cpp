@@ -10,13 +10,48 @@ msmqContext::msmqContext(MQBasePlugin *plugin)
 
 msmqContext::~msmqContext()
 {
-    m_send_meshes.wait();
-    m_send_camera.wait();
+    wait();
 }
 
 msmqSettings& msmqContext::getSettings()
 {
     return m_settings;
+}
+
+void msmqLogInfo(const char *message);
+
+void msmqContext::logInfo(const char * format, ...)
+{
+    const int MaxBuf = 2048;
+    char buf[MaxBuf];
+
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    msmqLogInfo(buf);
+    va_end(args);
+}
+
+bool msmqContext::isServerAvailable()
+{
+    m_send_meshes.client_settings = m_settings.client_settings;
+    return m_send_meshes.isServerAvaileble();
+}
+
+const std::string& msmqContext::getErrorMessage()
+{
+    return m_send_meshes.getErrorMessage();
+}
+
+bool msmqContext::isSending()
+{
+    return m_send_meshes.isSending() || m_send_camera.isSending();
+}
+
+void msmqContext::wait()
+{
+    m_send_meshes.wait();
+    m_send_camera.wait();
 }
 
 void msmqContext::clear()
@@ -32,72 +67,74 @@ void msmqContext::clear()
     m_pending_send_meshes = false;
 }
 
-void msmqContext::flushPendingRequests(MQDocument doc)
+void msmqContext::update(MQDocument doc)
 {
     if (m_pending_send_meshes) {
-        sendMeshes(doc, true);
+        sendMeshes(doc, false);
     }
 }
 
-void msmqContext::sendMeshes(MQDocument doc, bool force)
+bool msmqContext::sendMaterials(MQDocument doc, bool dirty_all)
 {
-    if (!force) {
-        if (!m_settings.auto_sync)
-            return;
+    if (isSending()) {
+        return false;
     }
 
-    if (m_send_meshes.isSending()) {
-        if (force) {
-            m_send_meshes.wait();
-        }
-        else {
-            m_pending_send_meshes = true;
-            return;
-        }
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(dirty_all);
+    exportMaterials(doc);
+
+    kickAsyncSend();
+    return true;
+}
+
+bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
+{
+    if (isSending()) {
+        m_pending_send_meshes = true;
+        return false;
     }
     m_pending_send_meshes = false;
 
-    if (force) {
-        m_material_manager.makeDirtyAll();
-        m_entity_manager.makeDirtyAll();
-    }
+    m_material_manager.setAlwaysMarkDirty(dirty_all);
+    m_entity_manager.setAlwaysMarkDirty(dirty_all);
+    m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
 
+    exportMaterials(doc);
+
+    int num_objects = doc->GetObjectCount();
+
+#if MQPLUGIN_VERSION >= 0x0470
+    // list morph targets
     {
-        // gather material data
-        char buf[1024];
-        int nmat = doc->GetMaterialCount();
+        MQMorphManager morph_manager(m_plugin, doc);
 
-        m_material_index_to_id.clear();
-        m_material_index_to_id.resize(nmat, ms::InvalidID);
-
-        for (int mi = 0; mi < nmat; ++mi) {
-            auto src = doc->GetMaterial(mi);
-            if (!src)
-                continue;
-
-            auto dst = ms::Material::create();
-            dst->id = m_material_index_to_id[mi] = m_material_ids.getID(src);
-            dst->index = mi;
-            src->GetName(buf, sizeof(buf));
-            dst->name = ms::ToUTF8(buf);
-
-            auto& stdmat = ms::AsStandardMaterial(*dst);
-            stdmat.setColor(to_float4(src->GetColor()));
-            if (m_settings.sync_textures) {
-                src->GetTextureName(buf, sizeof(buf));
-                stdmat.setColorMap(exportTexture(buf, ms::TextureType::Default));
+        std::vector<MQObject> base_objs, targets;
+        morph_manager.EnumBaseObjects(base_objs);
+        for (auto& base : base_objs) {
+            auto base_id = base->GetUniqueID();
+            morph_manager.GetTargetObjects(base, targets);
+            for (auto& target : targets) {
+                auto& rec = m_morph_records[target->GetUniqueID()];
+                rec.base_obj = base;
+                rec.target_obj = target;
             }
-            m_material_manager.add(dst);
         }
     }
+#endif
 
     {
         // gather meshes
-        int nobj = doc->GetObjectCount();
-        for (int i = 0; i < nobj; ++i) {
+        for (int i = 0; i < num_objects; ++i) {
             auto obj = doc->GetObject(i);
             if (!obj)
                 continue;
+
+#if MQPLUGIN_VERSION >= 0x0470
+            // ignore morph target
+            if (m_morph_records.find(obj->GetUniqueID()) != m_morph_records.end())
+                continue;
+#endif
 
             ObjectRecord rel;
             rel.obj = obj;
@@ -108,7 +145,7 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
 
         // extract mesh data
         parallel_for_each(m_obj_records.begin(), m_obj_records.end(), [this, doc](ObjectRecord& rec) {
-            rec.dst->path = ms::ToUTF8(BuildPath(doc, rec.obj).c_str());
+            rec.dst->path = GetPath(doc, rec.obj);
             ExtractID(rec.dst->path.c_str(), rec.dst->id);
 
             bool visible = rec.obj->GetVisible() != 0;
@@ -120,6 +157,7 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
     }
 
 #if MQPLUGIN_VERSION >= 0x0464
+    // bones
     if (m_settings.sync_bones) {
         // gather bone data
         MQBoneManager bone_manager(m_plugin, doc);
@@ -145,19 +183,35 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
                 bone_manager.GetParent(bid, parent);
                 brec.parent_id = parent;
 
+#if MQPLUGIN_VERSION >= 0x0470
                 MQPoint base_pos;
-                bone_manager.GetBaseRootPos(bid, base_pos);
-                brec.world_pos = (const float3&)base_pos;
-                brec.bindpose = mu::invert(mu::transform(brec.world_pos, quatf::identity(), float3::one()));
+                bone_manager.GetBasePos(bid, base_pos);
+                brec.pose_pos = to_float3(base_pos);
+                brec.bindpose = mu::invert(mu::transform(brec.pose_pos, quatf::identity(), float3::one()));
 
                 if (m_settings.sync_poses) {
                     MQMatrix rot;
                     bone_manager.GetRotationMatrix(bid, rot);
-                    brec.world_rot = mu::invert(mu::to_quat((float4x4&)rot));
+                    brec.pose_rot = mu::invert(mu::to_quat(to_float4x4(rot)));
                 }
                 else {
-                    brec.world_rot = quatf::identity();
+                    brec.pose_rot = quatf::identity();
                 }
+#else
+                MQPoint base_pos;
+                bone_manager.GetBaseRootPos(bid, base_pos);
+                brec.pose_pos = to_float3(base_pos);
+                brec.bindpose = mu::invert(mu::transform(brec.pose_pos, quatf::identity(), float3::one()));
+
+                if (m_settings.sync_poses) {
+                    MQMatrix rot;
+                    bone_manager.GetRotationMatrix(bid, rot);
+                    brec.pose_rot = mu::invert(mu::to_quat(to_float4x4(rot)));
+                }
+                else {
+                    brec.pose_rot = quatf::identity();
+                }
+#endif
             }
 
             for (auto& kvp : m_bone_records) {
@@ -170,11 +224,11 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
 
                 // setup transform
                 auto& dst = *rec.dst;
-                dst.rotation = rec.world_rot;
-                dst.position = rec.world_pos;
+                dst.position = rec.pose_pos;
+                dst.rotation = rec.pose_rot;
                 auto it = m_bone_records.find(rec.parent_id);
                 if (it != m_bone_records.end())
-                    dst.position -= it->second.world_pos;
+                    dst.position -= it->second.pose_pos;
             }
 
             // get weights
@@ -223,6 +277,73 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
     }
 #endif
 
+#if MQPLUGIN_VERSION >= 0x0470
+    // morph
+    if (m_settings.sync_morphs) {
+        // build morph base-target pairs
+        for (auto& kvp : m_morph_records) {
+            auto& morph_record = kvp.second;
+            auto target = kvp.second.target_obj;
+            auto base = kvp.second.base_obj;
+
+            auto it = std::find_if(m_obj_records.begin(), m_obj_records.end(), [base](auto& orec) { return orec.obj == base; });
+            if (it != m_obj_records.end()) {
+                auto& obj_record = *it;
+
+                auto blendshape = ms::BlendShapeData::create();
+                obj_record.dst->blendshapes.push_back(blendshape);
+                blendshape->name = GetName(target);
+
+                auto frame = ms::BlendShapeFrameData::create();
+                blendshape->frames.push_back(frame);
+                frame->weight = 100.0f;
+
+                morph_record.base = obj_record.dst;
+                morph_record.dst = blendshape;
+            }
+        }
+
+        // gen delta in parallel
+        parallel_for_each(m_morph_records.begin(), m_morph_records.end(), [](auto& kvp) {
+            auto& morph_record = kvp.second;
+            auto target = kvp.second.target_obj;
+            auto base = morph_record.base;
+            auto dst = morph_record.dst->frames[0];
+            if (!target || !base || !dst)
+                return;
+
+            auto& counts = base->counts;
+            auto& indices = base->indices;
+            auto& base_points = base->points;
+            auto& dst_points = dst->points;
+            auto& base_normals = base->normals;
+            auto& dst_normals = dst->normals;
+
+            size_t num_faces = counts.size();
+            size_t num_indices = indices.size();
+            size_t num_points = base_points.size();
+
+            dst_points.resize(num_points);
+            target->GetVertexArray((MQPoint*)dst_points.data());
+            for (size_t i = 0; i < num_points; ++i)
+                dst_points[i] -= base_points[i];
+
+            dst_normals.resize(num_indices);
+            auto *normals = dst_normals.data();
+            for (size_t fi = 0; fi < num_faces; ++fi) {
+                int count = counts[fi];
+                BYTE flags;
+                for (int ci = 0; ci < count; ++ci)
+                    target->GetFaceVertexNormal((int)fi, ci, flags, (MQPoint&)*(normals++));
+            }
+            for (size_t i = 0; i < num_indices; ++i)
+                dst_normals[i] -= base_normals[i];
+        });
+    }
+    m_morph_records.clear();
+#endif
+
+
     for (auto& rec : m_bone_records)
         m_entity_manager.add(rec.second.dst);
     m_bone_records.clear();
@@ -231,31 +352,10 @@ void msmqContext::sendMeshes(MQDocument doc, bool force)
         m_entity_manager.add(rec.dst);
     m_obj_records.clear();
 
-    m_material_ids.eraseStaleRecords();
-    m_material_manager.eraseStaleMaterials();
     m_entity_manager.eraseStaleEntities();
 
-    m_send_meshes.on_prepare = [this]() {
-        auto& t = m_send_meshes;
-        t.client_settings = m_settings.client_settings;
-        t.scene_settings.handedness = ms::Handedness::Right;
-        t.scene_settings.scale_factor = m_settings.scale_factor;
-
-        t.textures = m_texture_manager.getDirtyTextures();
-        t.materials = m_material_manager.getDirtyMaterials();
-        t.transforms = m_entity_manager.getDirtyTransforms();
-        t.geometries = m_entity_manager.getDirtyGeometries();
-
-        t.deleted_materials = m_material_manager.getDeleted();
-        t.deleted_entities = m_entity_manager.getDeleted();
-    };
-    m_send_meshes.on_success = [this]() {
-        m_material_ids.clearDirtyFlags();
-        m_texture_manager.clearDirtyFlags();
-        m_material_manager.clearDirtyFlags();
-        m_entity_manager.clearDirtyFlags();
-    };
-    m_send_meshes.kick();
+    kickAsyncSend();
+    return true;
 }
 
 void msmqContext::buildBonePath(std::string& dst, BoneRecord& bd)
@@ -269,25 +369,18 @@ void msmqContext::buildBonePath(std::string& dst, BoneRecord& bd)
 }
 
 
-void msmqContext::sendCamera(MQDocument doc, bool force)
+bool msmqContext::sendCamera(MQDocument doc, bool dirty_all)
 {
-    if (!force) {
-        if (!m_settings.auto_sync)
-            return;
+    if (isSending()) {
+        return false;
     }
-    if (!m_settings.sync_camera)
-        return;
-
-    // just return if previous request is in progress
-    if (m_send_camera.isSending())
-        return;
 
     // gather camera data
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
         if (!m_camera) {
             m_camera = ms::Camera::create();
-            m_camera->near_plane *= m_settings.scale_factor;
-            m_camera->far_plane *= m_settings.scale_factor;
+            m_camera->near_plane = 0.0f;
+            m_camera->far_plane = 0.0f;
         }
         auto prev_pos = m_camera->position;
         auto prev_rot = m_camera->rotation;
@@ -296,13 +389,13 @@ void msmqContext::sendCamera(MQDocument doc, bool force)
         m_camera->path = m_settings.host_camera_path;
         extractCameraData(doc, scene, *m_camera);
 
-        if (!force &&
+        if (!dirty_all &&
             m_camera->position == prev_pos &&
             m_camera->rotation == prev_rot &&
             m_camera->fov == prev_fov)
         {
             // no need to send
-            return;
+            return true;
         }
     }
 
@@ -316,6 +409,7 @@ void msmqContext::sendCamera(MQDocument doc, bool force)
         };
     }
     m_send_camera.kick();
+    return true;
 }
 
 
@@ -323,12 +417,6 @@ bool msmqContext::importMeshes(MQDocument doc)
 {
     ms::Client client(m_settings.client_settings);
     ms::GetMessage gd;
-    gd.flags.get_transform = 1;
-    gd.flags.get_indices = 1;
-    gd.flags.get_points = 1;
-    gd.flags.get_uv0 = 1;
-    gd.flags.get_colors = 1;
-    gd.flags.get_material_ids = 1;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_settings.scale_factor;
     gd.refine_settings.flags.apply_local2world = 1;
@@ -389,9 +477,68 @@ bool msmqContext::importMeshes(MQDocument doc)
     return true;
 }
 
+void msmqContext::kickAsyncSend()
+{
+
+    m_send_meshes.on_prepare = [this]() {
+        auto& t = m_send_meshes;
+        t.client_settings = m_settings.client_settings;
+        t.scene_settings.handedness = ms::Handedness::Right;
+        t.scene_settings.scale_factor = m_settings.scale_factor;
+
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+
+        t.deleted_materials = m_material_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+    m_send_meshes.on_success = [this]() {
+        m_material_ids.clearDirtyFlags();
+        m_texture_manager.clearDirtyFlags();
+        m_material_manager.clearDirtyFlags();
+        m_entity_manager.clearDirtyFlags();
+    };
+    m_send_meshes.kick();
+}
+
 int msmqContext::exportTexture(const std::string& path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
+}
+
+int msmqContext::exportMaterials(MQDocument doc)
+{
+    char buf[1024];
+    int num_materials = doc->GetMaterialCount();
+
+    m_material_index_to_id.clear();
+    m_material_index_to_id.resize(num_materials, ms::InvalidID);
+
+    for (int mi = 0; mi < num_materials; ++mi) {
+        auto src = doc->GetMaterial(mi);
+        if (!src)
+            continue;
+
+        auto dst = ms::Material::create();
+        dst->id = m_material_index_to_id[mi] = m_material_ids.getID(src);
+        dst->index = mi;
+        dst->name = GetName(src);
+
+        auto& stdmat = ms::AsStandardMaterial(*dst);
+        stdmat.setColor(to_float4(src->GetColor()));
+        if (m_settings.sync_textures) {
+            src->GetTextureName(buf, sizeof(buf));
+            stdmat.setColorMap(exportTexture(buf, ms::TextureType::Default));
+        }
+        m_material_manager.add(dst);
+    }
+
+    m_material_ids.eraseStaleRecords();
+    m_material_manager.eraseStaleMaterials();
+
+    return num_materials;
 }
 
 MQObject msmqContext::findMesh(MQDocument doc, const char *name)
@@ -559,9 +706,8 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
             BYTE flags;
             //if (obj->GetFaceVisible(fi))
             {
-                for (int ci = 0; ci < count; ++ci) {
+                for (int ci = 0; ci < count; ++ci)
                     obj->GetFaceVertexNormal(fi, ci, flags, (MQPoint&)*(normals++));
-                }
             }
         }
     }
@@ -578,9 +724,9 @@ void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& d
 {
     dst.position = to_float3(scene->GetCameraPosition());
     auto eular = ToEular(scene->GetCameraAngle(), true);
-    dst.rotation = rotateZXY(eular);
+    dst.rotation = rotate_zxy(eular);
 
-    dst.fov = scene->GetFOV() * mu::Rad2Deg;
+    dst.fov = scene->GetFOV() * mu::RadToDeg;
 #if MQPLUGIN_VERSION >= 0x450
     dst.near_plane = scene->GetFrontClip();
     dst.far_plane = scene->GetBackClip();

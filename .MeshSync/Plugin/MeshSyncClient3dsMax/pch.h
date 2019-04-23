@@ -33,9 +33,11 @@
 #include <systemutilities.h>
 #include <CS/BipedApi.h>
 #include <maxscript/maxscript.h>
+#include <maxscript/util/listener.h>
 #include <maxscript/foundation/numbers.h>
 #include <maxscript/macros/define_instantiation_functions.h>
 #include <MorpherApi.h>
+#include <Scene/IPhysicalCamera.h>
 #if MAX_PRODUCT_YEAR_NUMBER >= 2018
     #include <CATAPI/CATClassID.h>
 #endif

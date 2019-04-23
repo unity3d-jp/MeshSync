@@ -4,7 +4,7 @@ global proc UnityMeshSync_GUI()
     if (`window -exists $Window`) deleteUI -window $Window;
     window -t ("Unity Mesh Sync") -wh 300 660 $Window;
 
-    string $version         = `UnityMeshSync_Settings -q -version`;
+    string $version         = `UnityMeshSync_Settings -q -pluginVersion`;
     string $address         = `UnityMeshSync_Settings -q -address`;
     int    $port            = `UnityMeshSync_Settings -q -port`;
     float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
@@ -24,6 +24,7 @@ global proc UnityMeshSync_GUI()
     int    $animationTS     = `UnityMeshSync_Settings -q -animationTS`;
     int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
     int    $kfReduction     = `UnityMeshSync_Settings -q -keyframeReduction`;
+    int    $keepFlatCurves  = `UnityMeshSync_Settings -q -keepFlatCurves`;
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
@@ -33,39 +34,39 @@ global proc UnityMeshSync_GUI()
     setParent ..;
 
     separator -h 20 -w 250;
-    
+
     text -label "Scene" -font "boldLabelFont";
     separator -h 5 -w 250 -style none;
-    
+
     rowLayout -numberOfColumns 2;
         text -label "Scale Factor"; floatField -value $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
     setParent ..;
     checkBox -label "Remove Namespace" -value $removeNamespace -cc "umsCBRemoveNamespace" umsCtrlRemoveNamespace;
 
     checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
-        columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
+    columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
         checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
         checkBox -label "UVs" -value $syncUVs -cc "umsCBSyncUVs" umsCtrlSyncUVs;
         checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
         checkBox -label "Double Sided" -value $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
         checkBox -label "Bake Deformers" -value $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
-        setParent ..;
+    setParent ..;
     checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
     checkBox -label "Sync Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
     checkBox -label "Sync Textures" -value $syncTextures -cc "umsCBSyncTextures" umsCtrlSyncTextures;
 
     checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
     checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
-    
+
     separator -h 5 -w 250 -style none;
     checkBox -label "Auto Sync" -value $autosync -cc "umsCBAutoSync" umsCtrlAutoSync;
     button -l "Manual Sync" -c "umsCBManualSync";
-    
+
     separator -h 20 -w 250;
-    
+
     text -label "Animations" -font "boldLabelFont";
     separator -h 8 -w 250 -style none;
-    
+
     rowLayout -numberOfColumns 2;
         text -label "Time Scale"; floatField -w 60 -v $animationTS -cc "umsCBAnimationTS" -minValue 0.01 umsCtrlAnimationTS;
     setParent ..;
@@ -73,6 +74,9 @@ global proc UnityMeshSync_GUI()
         text -label "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
     checkBox -label "Keyframe Reduction" -value $kfReduction -cc "umsCBKeyframeReduction" umsCtrlKeyframeReduction;
+    columnLayout -visible $kfReduction -columnOffset "left" 20 msuFoldKeyframeReduction;
+        checkBox -label "Keep Flat Curves" -value $keepFlatCurves -cc "umsCBKeepFlatCurves" umsCtrlKeepFlatCurves;
+    setParent ..;
 
     separator -h 5 -w 250 -style none;
 
@@ -181,8 +185,18 @@ global proc umsCBSyncLights()
 
 global  proc umsCBAutoSync()
 {
-    int $v = `checkBox -q -value umsCtrlAutoSync`;
-    string $ret = `UnityMeshSync_Settings -autosync $v`;
+    if (`checkBox -q -value umsCtrlAutoSync`) {
+        if (`UnityMeshSync_ServerStatus -q -isAvailable`) {
+            UnityMeshSync_Settings -autosync 1;
+        }
+        else {
+            print `UnityMeshSync_ServerStatus -q -errorMessage`;
+            checkBox -edit -value 0 umsCtrlAutoSync;
+        }
+    }
+    else {
+        UnityMeshSync_Settings -autosync 0;
+    }
 }
 
 global proc umsCBManualSync()
@@ -203,10 +217,17 @@ global proc umsCBAnimationSPS()
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
 }
 
-global  proc umsCBKeyframeReduction()
+global proc umsCBKeyframeReduction()
 {
     int $v = `checkBox -q -value umsCtrlKeyframeReduction`;
     string $ret = `UnityMeshSync_Settings -keyframeReduction $v`;
+    columnLayout -e -visible $v msuFoldKeyframeReduction;
+}
+
+global proc umsCBKeepFlatCurves()
+{
+    int $v = `checkBox -q -value umsCtrlKeepFlatCurves`;
+    string $ret = `UnityMeshSync_Settings -keepFlatCurves $v`;
 }
 
 global proc umsCBSyncAnimations()

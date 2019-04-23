@@ -23,6 +23,7 @@ struct ServerSettings
     int max_threads = 8;
     uint16_t port = 8080;
     uint32_t mesh_split_unit = 0xffffffff;
+    int mesh_max_bone_influence = 4; // -1 (variable) or 4
 };
 
 class Server
@@ -47,8 +48,8 @@ public:
     void setServe(bool v);
     bool isServing() const;
 
-    void beginServe();
-    void endServe();
+    void beginServeScene();
+    void endServeScene();
 
     void setScrrenshotFilePath(const std::string& path);
     void setFileRootPath(const std::string& path);
@@ -62,29 +63,31 @@ public:
         MessagePtr message;
         std::future<void> task;
         std::atomic_bool ready = { false };
-#ifdef msDebug
-        std::string requested_uri;
-#endif
 
         MessageHolder();
         MessageHolder(MessageHolder&& v);
     };
 
     Scene* getHostScene();
-    MessageHolder* reserveMessage();
     void queueTextMessage(const char *mes, TextMessage::Type type);
-    void recvSet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvDelete(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvFence(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvGet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvQuery(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
-    void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    void recvSet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvDelete(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvFence(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvGet(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvQuery(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+
+    static void sanitizeHierarchyPath(std::string& path);
 
 private:
     template<class MessageT>
-    std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response, MessageHolder& dst);
+    std::shared_ptr<MessageT> deserializeMessage(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+
+    MessageHolder* queueMessage(MessagePtr mes);
+    MessageHolder* queueMessage(MessagePtr mes, std::future<void>&& task);
+
     bool loadMIMETypes(const std::string& path);
     const std::string& getMIMEType(const std::string& filename);
 
@@ -110,9 +113,6 @@ private:
     ScreenshotMessagePtr m_current_screenshot_request;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
-
-    QueryMessagePtr m_current_query;
-    std::vector<QueryMessagePtr> m_poll_messages;
 };
 msDeclPtr(Server);
 

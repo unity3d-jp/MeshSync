@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSyncClient3dsMax.h"
+#include "msmaxContext.h"
 #include "msmaxUtils.h"
 #include "resource.h"
 
@@ -26,17 +26,17 @@ public:
     void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Window); }
     void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Window); }
     void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
-    BOOL IsChecked() override       { return msmaxInstance().isWindowOpened(); }
+    BOOL IsChecked() override       { return msmaxGetContext().isWindowOpened(); }
     BOOL IsItemVisible() override   { return TRUE; }
     BOOL IsEnabled() override       { return TRUE; }
     void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
-        if(msmaxInstance().isWindowOpened())
-            msmaxInstance().closeWindow();
+        if(msmaxGetContext().isWindowOpened())
+            msmaxGetContext().closeWindow();
         else
-            msmaxInstance().openWindow();
+            msmaxGetContext().openWindow();
         return TRUE;
     }
 };
@@ -56,8 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendScene(MeshSyncClient3dsMax::SendScope::All, true);
-        return TRUE;
+        return msmaxExport(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All);
     }
 };
 
@@ -76,8 +75,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().sendAnimations(MeshSyncClient3dsMax::SendScope::All);
-        return TRUE;
+        return msmaxExport(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All);
     }
 };
 
@@ -96,7 +94,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        msmaxInstance().recvScene();
+        msmaxGetContext().recvScene();
         return TRUE;
     }
 };
@@ -107,7 +105,7 @@ public:
 };
 static msmaxActionCallback g_msmaxActionCallback;
 
-void MeshSyncClient3dsMax::registerMenu()
+void msmaxContext::registerMenu()
 {
     unregisterMenu();
 
@@ -170,7 +168,7 @@ void MeshSyncClient3dsMax::registerMenu()
 }
 
 
-void MeshSyncClient3dsMax::unregisterMenu()
+void msmaxContext::unregisterMenu()
 {
     // nothing to do for now
 }
@@ -251,8 +249,8 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     // see this about DisableAccelerators(), EnableAccelerators() and GetCOREInterface()->RegisterDlgWnd()
     // https://help.autodesk.com/view/3DSMAX/2018/ENU/?guid=__developer_3ds_max_sdk_features_user_interface_action_system_keyboard_accelerators_and_dialog_html
 
-    auto *_this = &msmaxInstance();
-    auto& s = _this->getSettings();
+    auto& ctx = msmaxGetContext();
+    auto& s = msmaxGetSettings();
 
     INT_PTR ret = FALSE;
     switch (msg) {
@@ -261,7 +259,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         g_msmax_settings_window = hDlg;
         GetCOREInterface()->RegisterDlgWnd(g_msmax_settings_window);
         PositionWindowNearCursor(hDlg);
-        _this->updateUIText();
+        ctx.updateUIText();
         break;
 
     case WM_CLOSE:
@@ -305,9 +303,9 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         };
 
         auto notify_scene_update = []() {
-            auto& self = msmaxInstance();
-            self.onSceneUpdated();
-            self.update();
+            auto& ctx = msmaxGetContext();
+            ctx.onSceneUpdated();
+            ctx.update();
         };
 
         switch (cid) {
@@ -398,8 +396,21 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             break;
         case IDC_CHECK_AUTO_SYNC:
             handle_button([&]() {
-                s.auto_sync = CtrlIsChecked(IDC_CHECK_AUTO_SYNC);
-                notify_scene_update();
+                auto& ctx = msmaxGetContext();
+                auto& settings = msmaxGetSettings();
+                if (CtrlIsChecked(IDC_CHECK_AUTO_SYNC)) {
+                    if (ctx.isServerAvailable()) {
+                        settings.auto_sync = true;
+                        notify_scene_update();
+                    }
+                    else {
+                        ctx.logInfo("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
+                        CtrlSetCheck(IDC_CHECK_AUTO_SYNC, false);
+                    }
+                }
+                else {
+                    settings.auto_sync = false;
+                }
             });
             break;
 
@@ -428,11 +439,16 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 s.keyframe_reduction = CtrlIsChecked(IDC_CHECK_KFREDUCTION);
             });
             break;
+        case IDC_CHECK_KEEPFLATCURVES:
+            handle_button([&]() {
+                s.keep_flat_curves = CtrlIsChecked(IDC_CHECK_KEEPFLATCURVES);
+            });
+            break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { _this->sendScene(MeshSyncClient3dsMax::SendScope::All, true); });
+            handle_button([&]() { msmaxExport(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
-            handle_button([&]() { _this->sendAnimations(MeshSyncClient3dsMax::SendScope::All); });
+            handle_button([&]() { msmaxExport(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All); });
             break;
         default: break;
         }
@@ -445,7 +461,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     return ret;
 }
 
-void MeshSyncClient3dsMax::openWindow()
+void msmaxContext::openWindow()
 {
     if (!g_msmax_settings_window) {
         CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_SETTINGS_WINDOW),
@@ -453,19 +469,19 @@ void MeshSyncClient3dsMax::openWindow()
     }
 }
 
-void MeshSyncClient3dsMax::closeWindow()
+void msmaxContext::closeWindow()
 {
     if (g_msmax_settings_window) {
         PostMessage(g_msmax_settings_window, WM_CLOSE, 0, 0);
     }
 }
 
-bool MeshSyncClient3dsMax::isWindowOpened() const
+bool msmaxContext::isWindowOpened() const
 {
     return g_msmax_settings_window != nullptr;
 }
 
-void MeshSyncClient3dsMax::updateUIText()
+void msmaxContext::updateUIText()
 {
     auto& s = m_settings;
     CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);
@@ -489,5 +505,5 @@ void MeshSyncClient3dsMax::updateUIText()
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
     CtrlSetCheck(IDC_CHECK_KFREDUCTION,        s.keyframe_reduction);
 
-    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msReleaseDateStr);
+    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);
 }

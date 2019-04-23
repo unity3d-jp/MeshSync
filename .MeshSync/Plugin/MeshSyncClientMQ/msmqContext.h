@@ -9,13 +9,14 @@ struct msmqSettings
 {
     ms::ClientSettings client_settings;
 
-    float scale_factor = 200.0f;
+    float scale_factor = 100.0f;
     std::string host_camera_path = "/Main Camera";
     bool auto_sync = false;
     bool sync_normals = true;
     bool sync_vertex_color = true;
     bool make_double_sided = false;
     bool sync_camera = true;
+    bool sync_morphs = true;
     bool sync_bones = true;
     bool sync_poses = true;
     bool sync_textures = true;
@@ -32,13 +33,29 @@ public:
 
     msmqSettings& getSettings();
 
+    void logInfo(const char *format, ...);
+    bool isServerAvailable();
+    const std::string& getErrorMessage();
+
+    bool isSending();
+    void wait();
     void clear();
-    void flushPendingRequests(MQDocument doc);
-    void sendMeshes(MQDocument doc, bool force = false);
-    void sendCamera(MQDocument doc, bool force = false);
+    void update(MQDocument doc);
+
+    bool sendMaterials(MQDocument doc, bool dirty_all);
+    bool sendMeshes(MQDocument doc, bool dirty_all);
+    bool sendCamera(MQDocument doc, bool dirty_all);
     bool importMeshes(MQDocument doc);
 
 private:
+    struct MorphRecord : public mu::noncopyable
+    {
+        MQObject base_obj = nullptr;
+        MQObject target_obj = nullptr;
+        ms::MeshPtr base;
+        ms::BlendShapeDataPtr dst;
+    };
+
     struct ObjectRecord : public mu::noncopyable
     {
         MQObject obj = nullptr;
@@ -50,15 +67,18 @@ private:
         UINT bone_id = -1;
         UINT parent_id = -1;
         std::string name;
-        float3 world_pos = float3::zero();
-        quatf world_rot = quatf::identity();
+        float3 pose_pos = float3::zero();
+        quatf pose_rot = quatf::identity();
         float4x4 bindpose = float4x4::identity();
         ms::TransformPtr dst = ms::Transform::create();
     };
 
     using HostMeshes = std::map<int, ms::MeshPtr>;
 
+    void kickAsyncSend();
     int exportTexture(const std::string& path, ms::TextureType type);
+    int exportMaterials(MQDocument doc);
+
     MQObject findMesh(MQDocument doc, const char *name);
     MQObject createMesh(MQDocument doc, const ms::Mesh& data, const char *name);
     void extractMeshData(MQDocument doc, MQObject src, ms::Mesh& dst);
@@ -73,6 +93,7 @@ private:
     HostMeshes m_host_meshes;
 
     std::vector<ObjectRecord> m_obj_records;
+    std::map<UINT, MorphRecord> m_morph_records;
     std::map<UINT, BoneRecord> m_bone_records;
 
     ms::IDGenerator<MQCMaterial*> m_material_ids;

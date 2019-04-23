@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include "msmqContext.h"
+#include "msmqPluginBase.h"
 
-class SettingsDlg;
+class msmqSettingsDlg;
 
-class MeshSyncClientPlugin : public MQStationPlugin
+class MeshSyncClientPlugin : public MQStationPlugin, public msmqPluginBase
 {
 public:
     MeshSyncClientPlugin();
@@ -85,15 +85,13 @@ public:
     msmqContext& getContext();
     bool& getActive();
 
-    void SendAll(bool only_when_autosync);
-    void SendCamera(bool only_when_autosync);
+    void AutoSyncMeshes();
+    void AutoSyncCamera();
+    void Export();
     void Import();
 
-private:
-    bool SendAllImpl(MQDocument doc);
-    bool SendCameraImpl(MQDocument doc);
-    bool ImportImpl(MQDocument doc);
+    void LogInfo(const char *message);
 
-    msmqContext m_sync;
-    SettingsDlg *m_dlg = nullptr;
+private:
+    msmqSettingsDlg *m_dlg_settings = nullptr;
 };

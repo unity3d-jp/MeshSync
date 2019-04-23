@@ -119,7 +119,7 @@ msxmSettingsWidget::msxmSettingsWidget(QWidget *parent)
     auto bu_manual_sync = new QPushButton("Manual Sync");
     layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
 
-    layout->addWidget(new QLabel("Plugin Version: " msReleaseDateStr), iy++, 0, 1, 3);
+    layout->addWidget(new QLabel("Plugin Version: " msPluginVersionStr), iy++, 0, 1, 3);
 
     setLayout(layout);
 

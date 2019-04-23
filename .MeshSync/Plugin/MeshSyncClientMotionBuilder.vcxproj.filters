@@ -4,33 +4,30 @@
     <ClCompile Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.cpp">
       <Filter>MeshSyncClientMotionBuilder</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMotionBuilder\msmbDevice.cpp">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSyncClientMotionBuilder\msmbLayout.cpp">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSyncClientMotionBuilder\msmbUtils.cpp">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMotionBuilder/pch.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmobuUtils.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmobuDevice.cpp">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmobuLayout.cpp">
       <Filter>MeshSyncClientMotionBuilder</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.h">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientMotionBuilder\msmbDevice.h">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientMotionBuilder\msmbLayout.h">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientMotionBuilder\msmbUtils.h">
-      <Filter>MeshSyncClientMotionBuilder</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMotionBuilder/pch.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmobuUtils.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmobuDevice.h">
+      <Filter>MeshSyncClientMotionBuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmobuLayout.h">
       <Filter>MeshSyncClientMotionBuilder</Filter>
     </ClInclude>
   </ItemGroup>

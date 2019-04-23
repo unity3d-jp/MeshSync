@@ -37,7 +37,8 @@ public:
     virtual std::shared_ptr<Entity> clone();
 
     Identifier getIdentifier() const;
-    bool identidy(const Identifier& v) const;
+    bool isRoot() const;
+    bool identify(const Identifier& v) const;
     const char* getName() const; // get name (leaf) from path
 };
 msSerializable(Entity);
@@ -95,10 +96,9 @@ public:
     float far_plane = 1000.0f;
 
     // for physical camera
-    float vertical_aperture = 0.0f;
-    float horizontal_aperture = 0.0f;
     float focal_length = 0.0f;
-    float focus_distance = 0.0f;
+    float2 sensor_size = float2::zero();
+    float2 lens_shift = float2::zero();
 
 protected:
     Camera();

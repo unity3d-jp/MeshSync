@@ -46,6 +46,14 @@ mu::float4x4 GetPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
+bool IsVisibleInHierarchy(INode *n, TimeValue t)
+{
+    auto parent = n->GetParentNode();
+    if (parent && !IsVisibleInHierarchy(parent, t))
+        return false;
+    return  n->GetVisibility(t) > 0.0f;
+}
+
 bool IsInstanced(INode *n)
 {
     INodeTab instances;
@@ -66,7 +74,7 @@ Modifier* FindSkin(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (mod->ClassID() == SKIN_CLASSID && !ret) {
+        if (mod->ClassID() == SKIN_CLASSID && mod->IsEnabled() && !ret) {
             ret = mod;
         }
     });
@@ -84,7 +92,7 @@ Modifier* FindMorph(INode *n)
 {
     Modifier *ret = nullptr;
     EachModifier(n, [&ret](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (mod->ClassID() == MR3_CLASS_ID && !ret) {
+        if (mod->ClassID() == MR3_CLASS_ID && mod->IsEnabled() && !ret) {
             ret = mod;
         }
     });

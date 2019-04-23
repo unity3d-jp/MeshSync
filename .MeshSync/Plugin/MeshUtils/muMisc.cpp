@@ -49,13 +49,17 @@ std::string ToUTF8(const char *src)
 {
 #ifdef _WIN32
     // to UTF-16
-    const int wsize = ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, nullptr, 0);
+    int wsize = ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, nullptr, 0);
+    if (wsize > 0)
+        --wsize; // remove last '\0'
     std::wstring ws;
     ws.resize(wsize);
     ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
 
     // to UTF-8
-    const int u8size = ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
+    int u8size = ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
+    if (u8size > 0)
+        --u8size; // remove last '\0'
     std::string u8s;
     u8s.resize(u8size);
     ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
@@ -73,13 +77,17 @@ std::string ToANSI(const char *src)
 {
 #ifdef _WIN32
     // to UTF-16
-    const int wsize = ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, nullptr, 0);
+    int wsize = ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, nullptr, 0);
+    if (wsize > 0)
+        --wsize; // remove last '\0'
     std::wstring ws;
     ws.resize(wsize);
     ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
 
     // to ANSI
-    const int u8size = ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
+    int u8size = ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, nullptr, 0, nullptr, nullptr);
+    if (u8size > 0)
+        --u8size; // remove last '\0'
     std::string u8s;
     u8s.resize(u8size);
     ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ws.data(), -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);

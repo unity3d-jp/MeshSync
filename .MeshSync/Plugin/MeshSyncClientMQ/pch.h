@@ -36,6 +36,9 @@
 #if MQPLUGIN_VERSION >= 0x0464
     #include "MQBoneManager.h"
 #endif
+#if MQPLUGIN_VERSION >= 0x0470
+    #include "MQMorphManager.h"
+#endif
 
 #define MQPluginProduct 0x483ADF11
 #define MQPluginID 0xB0CC9999

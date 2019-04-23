@@ -30,9 +30,9 @@ struct MeshRefineFlags
     uint32_t no_reindexing : 1;
     uint32_t triangulate : 1;
     uint32_t optimize_topology : 1;
-    uint32_t swap_handedness : 1;
-    uint32_t swap_yz : 1;
-    uint32_t swap_faces : 1;
+    uint32_t flip_x : 1;
+    uint32_t flip_yz : 1;
+    uint32_t flip_faces : 1;
     uint32_t gen_normals : 1;
     uint32_t gen_normals_with_smooth_angle : 1;
     uint32_t flip_normals : 1; // 10
@@ -52,6 +52,8 @@ struct MeshRefineFlags
     uint32_t mirror_z_weld : 1;
     uint32_t mirror_basis : 1;
     uint32_t make_double_sided : 1;
+    uint32_t quadify : 1;
+    uint32_t quadify_full_search : 1;
 };
 
 struct MeshRefineSettings
@@ -59,8 +61,9 @@ struct MeshRefineSettings
     MeshRefineFlags flags = { 0 };
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f; // in degree
+    float quadify_threshold = 15.0f; // in degree
     uint32_t split_unit = 65000;
-    uint32_t max_bones_par_vertices = 4;
+    uint32_t max_bone_influence = 4;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
     float4x4 mirror_basis = float4x4::identity();
@@ -89,6 +92,8 @@ struct SplitData
     int index_offset = 0;
     int vertex_count = 0;
     int vertex_offset = 0;
+    int bone_weight_count = 0;
+    int bone_weight_offset = 0;
     IArray<SubmeshData> submeshes;
     float3 bound_center = float3::zero();
     float3 bound_size = float3::zero();
@@ -96,10 +101,10 @@ struct SplitData
 
 struct BlendShapeFrameData
 {
-    float weight = 0.0f;
-    RawVector<float3> points;
-    RawVector<float3> normals;
-    RawVector<float3> tangents;
+    float weight = 0.0f; // 0.0f - 100.0f
+    RawVector<float3> points; // can be empty or per-vertex data
+    RawVector<float3> normals;  // can be empty, per-vertex or per-index data
+    RawVector<float3> tangents; // can be empty, per-vertex or per-index data
 
 protected:
     BlendShapeFrameData();
@@ -120,7 +125,7 @@ msDeclPtr(BlendShapeFrameData);
 struct BlendShapeData
 {
     std::string name;
-    float weight = 0.0f;
+    float weight = 0.0f; // 0.0f - 100.0f
     std::vector<BlendShapeFrameDataPtr> frames;
 
 protected:
@@ -144,7 +149,7 @@ struct BoneData
 {
     std::string path;
     float4x4 bindpose = float4x4::identity();
-    RawVector<float> weights;
+    RawVector<float> weights; // per-vertex data
 
 protected:
     BoneData();
@@ -166,32 +171,33 @@ class Mesh : public Transform
 {
 using super = Transform;
 public:
+    // serializable fields
+
     MeshDataFlags      flags = { 0 };
     MeshRefineSettings refine_settings;
 
     RawVector<float3> points;
-    RawVector<float3> normals;
-    RawVector<float4> tangents;
-    RawVector<float2> uv0, uv1;
-    RawVector<float4> colors;
-    RawVector<float3> velocities;
+    RawVector<float3> normals;    // can be empty, per-vertex or per-index data
+    RawVector<float4> tangents;   // can be empty, per-vertex or per-index data
+    RawVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
+    RawVector<float4> colors;     // can be empty, per-vertex or per-index data
+    RawVector<float3> velocities; // can be empty or per-vertex data
     RawVector<int>    counts;
     RawVector<int>    indices;
-    RawVector<int>    material_ids;
+    RawVector<int>    material_ids; // can be empty or per-face data
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshapes;
 
-    // non-serializable
-    RawVector<float3> tmp_normals;
-    RawVector<float2> tmp_uv0, tmp_uv1;
-    RawVector<float4> tmp_colors;
-    RawVector<float3> tmp_velocities;
-    RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
-    RawVector<Weights4> tmp_weights4;
+
+    // non-serializable fields (generated in refine())
+    // *DO NOT forget to update clear() when add member*
 
     RawVector<Weights4> weights4;
+    RawVector<uint8_t> bone_counts;
+    RawVector<int> bone_offsets;
+    RawVector<Weights1> weights1;
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
 
@@ -219,7 +225,8 @@ public:
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
 
-    void setupBoneData();
+    void setupBoneWeights4();
+    void setupBoneWeightsVariable();
     void setupFlags();
 
     void convertHandedness_Mesh(bool x, bool yz);

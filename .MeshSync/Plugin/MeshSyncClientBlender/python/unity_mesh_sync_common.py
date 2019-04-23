@@ -30,13 +30,25 @@ def msb_apply_animation_settings(self = None, context = None):
     ctx.animation_ts = scene.meshsync_animation_ts
     ctx.animation_interval = scene.meshsync_animation_fi
     ctx.keyframe_reduction = scene.meshsync_animation_kfr
+    ctx.keep_flat_curves = scene.meshsync_animation_kfc
     return None
 
 def msb_on_scene_settings_updated(self = None, context = None):
     msb_apply_scene_settings()
     if bpy.context.scene.meshsync_auto_sync:
         msb_context.setup(bpy.context)
-        msb_context.sendSceneAll(False)
+        msb_context.export(msb_context.TARGET_OBJECTS)
+    return None
+
+def msb_on_toggle_auto_sync(self = None, context = None):
+    msb_apply_scene_settings()
+    if bpy.context.scene.meshsync_auto_sync:
+        if not msb_context.is_server_available:
+            print("MeshSync: " + msb_context.error_message)
+            bpy.context.scene.meshsync_auto_sync = False
+    if bpy.context.scene.meshsync_auto_sync:
+        msb_context.setup(bpy.context)
+        msb_context.export(msb_context.TARGET_OBJECTS)
     return None
 
 def msb_on_animation_settings_updated(self = None, context = None):
@@ -59,10 +71,11 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_textures = bpy.props.BoolProperty(default = True, name = "Sync Textures", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_on_toggle_auto_sync)
     bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 1, name = "Time Scale", min = 0.01, update = msb_on_animation_settings_updated)
     bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Step", min = 1, update = msb_on_animation_settings_updated)
     bpy.types.Scene.meshsync_animation_kfr = bpy.props.BoolProperty(default = True, name = "Keyframe Reduction", update = msb_on_animation_settings_updated)
+    bpy.types.Scene.meshsync_animation_kfc = bpy.props.BoolProperty(default = False, name = "Keep Flat Curves", update = msb_on_animation_settings_updated)
 
 
 @persistent
@@ -75,4 +88,45 @@ def on_scene_update(context):
     if(bpy.context.scene.meshsync_auto_sync):
         msb_apply_scene_settings()
         msb_context.setup(bpy.context)
-        msb_context.sendSceneUpdated()
+        msb_context.exportUpdatedObjects()
+
+
+class MESHSYNC_OT_ExportObjects(bpy.types.Operator):
+    bl_idname = "meshsync.export_objects"
+    bl_label = "Export Objects"
+    def execute(self, context):
+        msb_apply_scene_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_OBJECTS)
+        return{'FINISHED'}
+
+
+class MESHSYNC_OT_ExportMaterials(bpy.types.Operator):
+    bl_idname = "meshsync.export_materials"
+    bl_label = "Export Materials"
+    def execute(self, context):
+        msb_apply_scene_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_MATERIALS)
+        return{'FINISHED'}
+
+
+class MESHSYNC_OT_ExportAnimations(bpy.types.Operator):
+    bl_idname = "meshsync.export_animations"
+    bl_label = "Export Animations"
+    def execute(self, context):
+        msb_apply_animation_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_ANIMATIONS)
+        return{'FINISHED'}
+
+
+class MESHSYNC_OT_ExportEverything(bpy.types.Operator):
+    bl_idname = "meshsync.export_everything"
+    bl_label = "Export Everything"
+    def execute(self, context):
+        msb_apply_scene_settings()
+        msb_apply_animation_settings()
+        msb_context.setup(bpy.context);
+        msb_context.export(msb_context.TARGET_EVERYTHING)
+        return{'FINISHED'}

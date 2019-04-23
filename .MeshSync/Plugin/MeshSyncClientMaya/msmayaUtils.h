@@ -1,7 +1,5 @@
 #pragma  once
 
-#define InchToMillimeter 25.4f
-
 std::string GetName(const MObject& node);
 std::string ToString(const MDagPath& path);
 std::string RemoveNamespace(const std::string& path);
@@ -10,15 +8,15 @@ bool IsVisible(const MObject& node);
 MDagPath GetParent(const MDagPath& node);
 bool IsInstance(const MObject& node);
 
+MObject FindTransformGeometry(MObject shape);
 MObject FindSkinCluster(MObject node);
 MObject FindBlendShape(MObject node);
 MObject FindOrigMesh(const MObject& node);
+MObject FindInputGeometry(MObject node, int index = 0); // node: geometryFilter
+bool GetTransformGeometryMatrix(MObject shape, mu::float4x4& result);
 
 float ToSeconds(MTime t);
 MTime ToMTime(float seconds);
-
-// rotation pivot. not scale pivot
-mu::float4x4 GetPivotMatrix(MObject node);
 
 #ifdef mscDebug
     void DumpPlugInfoImpl(MPlug plug);

@@ -139,7 +139,7 @@ struct MeshRefiner
 
     void refine();
     void buildConnection();
-    void retopology(bool swap_faces);
+    void retopology(bool flip_faces);
     void genSubmeshes(IArray<int> material_ids);
     void genSubmeshes();
     void clear();

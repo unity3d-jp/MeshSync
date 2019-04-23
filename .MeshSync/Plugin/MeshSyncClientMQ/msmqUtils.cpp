@@ -1,17 +1,34 @@
 #include "pch.h"
 #include "msmqUtils.h"
 
-std::string BuildPath(MQDocument doc, MQObject obj)
+std::string GetName(MQObject obj)
+{
+    char name[MaxNameBuffer];
+    obj->GetName(name, sizeof(name));
+    return ms::ToUTF8(name);
+}
+
+std::string GetName(MQMaterial obj)
+{
+    char name[MaxNameBuffer];
+    obj->GetName(name, sizeof(name));
+    return ms::ToUTF8(name);
+}
+
+static std::string GetPathImpl(MQDocument doc, MQObject obj)
 {
     std::string ret;
-    if (auto parent = doc->GetParentObject(obj)) {
-        ret += BuildPath(doc, parent);
-    }
+    if (auto parent = doc->GetParentObject(obj))
+        ret += GetPathImpl(doc, parent);
     char name[MaxNameBuffer];
     obj->GetName(name, sizeof(name));
     ret += "/";
     ret += name;
     return ret;
+}
+std::string GetPath(MQDocument doc, MQObject obj)
+{
+    return ms::ToUTF8(GetPathImpl(doc, obj));
 }
 
 bool ExtractID(const char *name, int& id)
@@ -31,20 +48,20 @@ float3 ToEular(const MQAngle& ang, bool flip_head)
             ang.pitch,
             -ang.head + 180.0f, // I can't explain why this modification is needed...
             ang.bank
-        } *mu::Deg2Rad;
+        } *mu::DegToRad;
     }
     else {
         return float3{
             ang.pitch,
             ang.head,
             ang.bank
-        } *mu::Deg2Rad;
+        } *mu::DegToRad;
     }
 }
 
 quatf ToQuaternion(const MQAngle& ang)
 {
-    return rotateZXY(ToEular(ang));
+    return rotate_zxy(ToEular(ang));
 }
 
 void ExtractLocalTransform(MQObject obj, float3& pos, quatf& rot, float3& scale)

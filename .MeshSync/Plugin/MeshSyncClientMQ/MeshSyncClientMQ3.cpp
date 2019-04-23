@@ -10,7 +10,7 @@ bool IsSettingDialogActive();
 
 
 MeshSyncClientPlugin::MeshSyncClientPlugin()
-    : m_sync(this)
+    : msmqPluginBase(this)
 {
 }
 
@@ -33,7 +33,7 @@ void MeshSyncClientPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 //---------------------------------------------------------------------------
 const char *MeshSyncClientPlugin::GetPlugInName(void)
 {
-    return "Unity Mesh Sync (Release " msReleaseDateStr ")  Copyright(C) 2017-2018, Unity Technologies";
+    return "Unity Mesh Sync (Release " msPluginVersionStr ")  Copyright(C) 2017-2019, Unity Technologies";
 }
 
 //---------------------------------------------------------------------------
@@ -109,8 +109,8 @@ int MeshSyncClientPlugin::OnReceiveUserMessage(MQDocument doc, DWORD src_product
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
-    m_sync.flushPendingRequests(doc);
-    m_sync.sendCamera(doc);
+    m_context.update(doc);
+    AutoSyncCameraImpl(doc);
 }
 
 
@@ -120,7 +120,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
-    m_sync.sendMeshes(doc);
+    AutoSyncMeshesImpl(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -129,7 +129,7 @@ void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, N
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 {
-    m_sync.clear();
+    m_context.clear();
 }
 
 //---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    m_sync.sendMeshes(doc);
+    AutoSyncMeshesImpl(doc);
     return TRUE;
 }
 
@@ -148,7 +148,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    m_sync.sendMeshes(doc);
+    AutoSyncMeshesImpl(doc);
     return TRUE;
 }
 
@@ -158,7 +158,7 @@ BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
-    m_sync.sendMeshes(doc);
+    AutoSyncMeshesImpl(doc);
 }
 
 //---------------------------------------------------------------------------
@@ -219,55 +219,18 @@ void MeshSyncClientPlugin::Execute(ExecuteCallbackProc proc)
     BeginCallback(&info);
 }
 
-// プラグインのベースクラスを返す
-MQBasePlugin *GetPluginClass()
-{
-    return &g_plugin;
-}
-
-
-
-msmqContext& MeshSyncClientPlugin::getContext()
-{
-    return m_sync;
-}
 bool& MeshSyncClientPlugin::getActive()
 {
     return m_active;
 }
 
-void MeshSyncClientPlugin::SendAll(bool only_when_autosync)
-{
-    if (!only_when_autosync || m_sync.getSettings().auto_sync)
-        Execute(&MeshSyncClientPlugin::SendAllImpl);
-}
+void MeshSyncClientPlugin::AutoSyncMeshes() { Execute(&MeshSyncClientPlugin::AutoSyncMeshesImpl); }
+void MeshSyncClientPlugin::AutoSyncCamera() { Execute(&MeshSyncClientPlugin::AutoSyncCameraImpl); }
+void MeshSyncClientPlugin::Export() { Execute(&MeshSyncClientPlugin::ExportImpl); }
+void MeshSyncClientPlugin::Import() { Execute(&MeshSyncClientPlugin::ImportImpl); }
 
-void MeshSyncClientPlugin::SendCamera(bool only_when_autosync)
+// プラグインのベースクラスを返す
+MQBasePlugin *GetPluginClass()
 {
-    if (!only_when_autosync || m_sync.getSettings().auto_sync)
-        Execute(&MeshSyncClientPlugin::SendCameraImpl);
-}
-
-void MeshSyncClientPlugin::Import()
-{
-    Execute(&MeshSyncClientPlugin::ImportImpl);
-}
-
-bool MeshSyncClientPlugin::SendAllImpl(MQDocument doc)
-{
-    m_sync.sendMeshes(doc, true);
-    m_sync.sendCamera(doc, true);
-    return true;
-}
-
-bool MeshSyncClientPlugin::SendCameraImpl(MQDocument doc)
-{
-    m_sync.sendCamera(doc, true);
-    return true;
-}
-
-bool MeshSyncClientPlugin::ImportImpl(MQDocument doc)
-{
-    m_sync.importMeshes(doc);
-    return true;
+    return &g_plugin;
 }

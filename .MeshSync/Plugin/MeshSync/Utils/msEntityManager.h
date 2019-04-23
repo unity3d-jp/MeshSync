@@ -9,16 +9,23 @@ class EntityManager
 public:
     EntityManager();
     ~EntityManager();
-    void clear();
     bool empty() const;
 
+    // clear all states (both entity and delete record will be cleared)
+    void clear();
+    void clearEntityRecords();
+    void clearDeleteRecords();
+
+    // erase entity and add delete record
     bool erase(const std::string& path);
     bool erase(int id);
     bool erase(const Identifier& identifier);
     bool erase(TransformPtr v);
+    bool eraseThreadSafe(TransformPtr v);
 
     // thread safe
     void add(TransformPtr v); 
+
     void touch(const std::string& path);
 
     std::vector<TransformPtr> getAllEntities();
@@ -30,6 +37,8 @@ public:
 
     std::vector<TransformPtr> getStaleEntities();
     void eraseStaleEntities();
+
+    void setAlwaysMarkDirty(bool v);
 
 private:
     struct Record
@@ -53,6 +62,7 @@ private:
     using kvp = std::map<std::string, Record>::value_type;
 
     int m_order = 0;
+    bool m_always_mark_dirty = false;
     std::map<std::string, Record> m_records;
     std::vector<Identifier> m_deleted;
     std::mutex m_mutex;

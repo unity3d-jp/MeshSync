@@ -10,12 +10,13 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 1. [Maya](#maya)
 2. [Maya LT](#maya-lt)
 3. [3ds Max](#3ds-max)
-3. [Motion Builder](#motion-builder)
-4. [Blender](#blender)
-5. [メタセコイア](#メタセコイア)
-5. [VRED](#vred)
-5. [xismo](#xismo)
-6. [Unity](#unity)
+4. [Motion Builder](#motion-builder)
+5. [Blender](#blender)
+6. [Modo](#modo)
+7. [メタセコイア](#メタセコイア)
+8. [VRED](#vred)
+9. [xismo](#xismo)
+10. [Unity](#unity)
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
@@ -53,11 +54,11 @@ Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で�
 
 
 ### 3ds Max
-3ds Max 2016, 2017, 2018, 2019 + Windows で動作を確認しています。
+3ds Max 2016, 2017, 2018, 2019, 2020 + Windows で動作を確認しています。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_3dsMax_Windows.zip をダウンロード
   - MeshSyncClient3dsMax.dlu をプラグイン用パスとして登録されているディレクトリにコピー
-    - プラグイン用パスは max 内の Configure -> Customize System Paths -> 3rd Party Plug-Ins の Add で追加できます
+    - プラグイン用パスは max 内の Customize -> Configure User and System Paths -> 3rd Party Plug-Ins の Add で追加できます
     - デフォルトで用意されているパス (C:\Program Files\Autodesk\3ds Max 2019\Plugins など) でもおそらく機能しますが、デフォルトとそれ以外で別のパスを用意しておくことをおすすめします
 - インストール後、メインメニューバーに "UnityMeshSync" が追加されているので、それの "Window" から設定ウィンドウを開けます。
   - メニューバーを編集する場合、Action に "UnityMeshSync" カテゴリが追加されているので、そちらから MeshSync の機能にアクセスできます
@@ -73,7 +74,7 @@ Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で�
     - Morph / Skin が複数ある場合、一番下のものが基準として選ばれます。
   - Morh と Skin は Unity 側にそのまま Blendshape / Skin として同期します。
     - Unity 側では常に Blendshape -> Skin の順番で適用されるため、Max 側で順番が逆だと意図しない結果になる可能性があります。
-  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を同期します。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
+  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を送ります。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です。
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
@@ -102,15 +103,16 @@ Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動�
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
 - NURBS などポリゴン以外の形状データは対応していません
 
+
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 
 ### Blender
-Blender 2.79(a,b), 2.80 beta (2019-3-15) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
+Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Blender_*.zip をダウンロードして展開
     - 展開して出てくる UnityMeshSync_Blender_* ディレクトリの中にも zip が入っていますが、これらはそのままで大丈夫です
   - Blender 側で File -> User Preferences -> Add-ons (2.80 以降では Edit -> User Preferences) を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip ファイルを指定します。
-  - **古いバージョンをインストール済みの場合、事前に削除しておく必要があります**。Add-ons メニューから "Import-Export: Unity Mesh Sync" を選択して Remove した後、blender を再起動してから上記手順を踏んでください。
+  - **古いバージョンをインストール済みの場合、事前に削除しておく必要があります**。Add-ons メニューから "Import-Export: Unity Mesh Sync" を選択して  **Remove した後、blender を再起動** してから上記手順を踏んでください。
 - "Import-Export: Unity Mesh Sync" が追加されるので、チェックを入れて有効化します。
 - MeshSync パネルが追加されるので、そちらから設定や手動の同期を行います。
   - 2.8 系ではパネルの場所がややわかりにくい場所になっています。右スクリーンショットを参照ください。
@@ -127,8 +129,42 @@ Blender 2.79(a,b), 2.80 beta (2019-3-15) + Windows, Mac, Linux (CentOS 7) で動
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
 
+
+### Modo
+
+  <img src="https://user-images.githubusercontent.com/1488611/55697991-d9135980-59fe-11e9-8e9f-8fcfba1b234f.png" height=300><img src="https://user-images.githubusercontent.com/1488611/55697990-d9135980-59fe-11e9-9312-29c95e20e5b0.png" height=300>
+
+  Modo 10, 12, 13 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
+  - インストール：
+    - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Modo_*.zip をダウンロードして展開
+    - Modo 内の System -> Add Plug-in で MeshSyncClientModo.fx を指定
+  - インストール後は新たな View が追加されており、ここから各種設定や機能にアクセスできます (Application -> Custom View -> UnityMeshSync)
+  - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
+  - Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+
+  &nbsp;
+
+  - ポリゴンメッシュ、カメラ、ライトの同期に対応しています。Mesh Instance や Replicator も部分的にサポートしています。
+  - ポリゴンメッシュはスキニング / Joint と Morph も Unity へ持ってこれるようになっていますが、デフォーマの扱いには注意が必要です。
+    - MeshSync が解釈できるデフォーマは Joint + Weight Map 方式のスキニング、および Morph のみです。それ以外のデフォーマは無視されます。
+    - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を送ります。複雑なデフォーマ構成であっても Unity 側の Mesh の内容がほぼ一致するようになりますが、代償としてスキニングや Morph/Blendshape の情報が失われます。
+    - Mesh Instance や Replicator のスキニングは正しく Unity 側に反映できません。"Bake Deformers" を使う必要があります。
+  - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
+  - 負のスケールは部分的にしかサポートしていないので注意が必要です
+    - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
+  - コマンドからも MeshSync の機能にアクセスできます。unity.meshsync.settings で設定の変更、unity.meshsync.export でエクスポートできます
+
+  &nbsp;
+
+Modo は 13 以降 [Mood Bridge for Unity](https://learn.foundry.com/modo/content/help/pages/appendices/modo_bridge.html) という機能が搭載されており、Unity に直接 Mesh や Material を送ることができるようになっています。MeshSync と機能的に近い部分もありますが、以下のような違いがあります。(2019/04 現在)
+  - Mood Bridge は Modo <-> Unity の双方向の同期をサポートします。MeshSync は Modo -> Unity の一方向のみをサポートします。
+  - MeshSync は Replicator、Mesh の Skinning/Morph、アニメーションを同期できます。Mood Bridge は現状これらはサポートしていません。
+  - MeshSync は できるだけ FBX 経由で Unity にデータを持っていった時と近い結果になるように努めています。一方、Modo Bridge では座標系が異なる (Z 方向が反転する)、Mesh のインデックスが展開されている (1000 triangles のモデルは 3000 頂点になっている) などの顕著な違いが出ます。
+
+
 ### メタセコイア
 Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
+また、4.7 系以降用は dll が別になっています。これは 4.7 でボーンの仕様が変わり、プラグインの互換性が失われたためです。4.7 ではモーフの出力にも対応しています。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Metasequoia*.zip をダウンロードして展開
   - メタセコイア側で Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
@@ -139,7 +175,7 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
 - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
 
-&nbsp;  
+&nbsp;
 
 - ミラーリング、スムーシングは Unity にも反映されます。
   - ただし、ミラーリングの "左右を接続した鏡面" は非サポートです。
@@ -148,6 +184,7 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - サブディビジョンやメタボールはフリーズするまで Unity には反映されません。
 - メタセコイア 4 系でサポートされた法線の編集は "Sync Normals" にチェックを入れることで反映できます。
 - メタセコイア 4 系でサポートされたボーンは "Sync Bones" にチェックを入れることで反映できます。 "Sync Poses" にチェックを入れると "スキニング" で設定したポーズも反映します。
+
 
 ### VRED
 VRED は API hook を用いた特殊な実装になっています。そのため、使い方が特殊であったり、VRED のマイナーバージョンアップでも動作しなくなる可能性があることにご注意ください。
@@ -203,11 +240,11 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
 - Sync Transform など
   - コンポーネント別の同期の有効/無効指定です。Play モードで物理シミュレーションの挙動を確認したい場合などに Transform の同期が邪魔になるので用意されたオプションです。
 - Update Mesh Collider
-  - これが有効の場合、オブジェクトが MeshCollider を持っていたら Mesh を同期する時に MeshCollider の Mesh も更新します。
+  - これが有効の場合、オブジェクトが MeshCollider を持っていたら Mesh を更新する時に MeshCollider の内容も更新します。
 - Track Material Assignment
   - これが有効の場合、SceneView でマテリアルを D&D でアサインした場合などに、その変更を検知して同じマテリアルを持つ他の Mesh に対しても同様にマテリアルを更新します。
 - Animation Interpolation
-  - アニメーションの補完方法を指定します。
+  - アニメーションの補完方法を指定します。多くの場合はデフォルトのスムース補間で問題ないはずですが、映像作品などの場合、DCC 側でアニメーションのサンプル数をターゲットフレームレートに合わせ、補完を無効 (Constant) にした方が望ましい結果になるかもしれません。
 - Progressive Display
   - これが有効な場合、受信途中のシーンの更新をリアルタイムで反映していきます。無効な場合はシーン全体のデータの受信が完了するまで待ってから更新を反映します。
   
@@ -232,8 +269,10 @@ xismo はプラグインの仕組みを提供していないため (2018/05 現�
   - プラグイン側でボーンのみの編集の場合メッシュは送らないようにすべきなのですが、判定がやや難しく、現状そうなっていません。
 
 
-- Unity の頂点あたりの最大影響ボーン数が 4 であることに注意が必要です。
+- Unity 2019.1 より前のバージョンでは、頂点あたりの最大影響ボーン数が 4 であることに注意が必要です。
   これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
+    - Unity 2019.1 で最大 255 ボーンまで影響できるようになりました (Project Settings -> Quality -> Other の Skin Weights を "Unlimited" に)。
+    これにより、フェイシャルなどの多数のボーンを必要とするアニメーションも問題なく持って来れるはずです。
 
 
 - 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。  

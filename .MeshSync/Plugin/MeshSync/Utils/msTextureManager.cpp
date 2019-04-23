@@ -18,15 +18,15 @@ TextureManager::~TextureManager()
     waitTasks();
 }
 
+bool TextureManager::empty() const
+{
+    return m_records.empty();
+}
+
 void TextureManager::clear()
 {
     waitTasks();
     m_records.clear();
-}
-
-bool TextureManager::empty() const
-{
-    return m_records.empty();
 }
 
 bool TextureManager::erase(const std::string& name)
@@ -63,6 +63,8 @@ int TextureManager::addImage(const std::string& name, int width, int height, con
         tex->data.assign((const char*)data, (const char*)data + size);
         rec.dirty = true;
     }
+    if (m_always_mark_dirty)
+        rec.dirty = true;
     return id;
 }
 
@@ -89,6 +91,8 @@ int TextureManager::addFile(const std::string& path, TextureType type)
                 rec.dirty = true;
             }
         }
+        if (m_always_mark_dirty)
+            rec.dirty = true;
     });
     return id;
 }
@@ -144,6 +148,11 @@ void TextureManager::clearDirtyFlags()
     for (auto& p : m_records) {
         p.second.dirty = false;
     }
+}
+
+void TextureManager::setAlwaysMarkDirty(bool v)
+{
+    m_always_mark_dirty = v;
 }
 
 int TextureManager::genID()

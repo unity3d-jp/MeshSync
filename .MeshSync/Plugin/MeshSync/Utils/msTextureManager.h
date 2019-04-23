@@ -9,8 +9,8 @@ class TextureManager
 public:
     TextureManager();
     ~TextureManager();
-    void clear();
     bool empty() const;
+    void clear();
     bool erase(const std::string& name);
     int find(const std::string& name) const;
 
@@ -25,6 +25,8 @@ public:
     std::vector<TexturePtr> getDirtyTextures();
     void makeDirtyAll();
     void clearDirtyFlags();
+
+    void setAlwaysMarkDirty(bool v);
 
 private:
     struct Record
@@ -42,6 +44,7 @@ private:
     Record& lockAndGet(const std::string& path);
 
     int m_id_seed = 0;
+    bool m_always_mark_dirty = false;
     std::map<std::string, Record> m_records;
     std::mutex m_mutex;
 };

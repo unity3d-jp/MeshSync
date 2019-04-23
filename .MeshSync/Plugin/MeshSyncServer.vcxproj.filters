@@ -12,6 +12,9 @@
     <ClCompile Include="MeshSyncServer\pch.cpp">
       <Filter>MeshSyncServer</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSyncServer\UnitySpecific.cpp">
+      <Filter>MeshSyncServer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncServer\MeshSyncServer.h">

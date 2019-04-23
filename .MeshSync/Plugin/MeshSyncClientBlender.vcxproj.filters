@@ -10,13 +10,13 @@
     <ClCompile Include="MeshSyncClientBlender\pch.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientBlender\msbContext.cpp">
+    <ClCompile Include="MeshSyncClientBlender\msblenUtils.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientBlender\msbBinder.cpp">
+    <ClCompile Include="MeshSyncClientBlender\msblenBinder.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientBlender\msbUtils.cpp">
+    <ClCompile Include="MeshSyncClientBlender\msblenContext.cpp">
       <Filter>MeshSyncClientBlender</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,16 +41,13 @@
     <ClInclude Include="MeshSyncClientBlender\pch.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientBlender\MeshSyncClientBlender.h">
+    <ClInclude Include="MeshSyncClientBlender\msblenUtils.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientBlender\msbContext.h">
+    <ClInclude Include="MeshSyncClientBlender\msblenBinder.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientBlender\msbBinder.h">
-      <Filter>MeshSyncClientBlender</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSyncClientBlender\msbUtils.h">
+    <ClInclude Include="MeshSyncClientBlender\msblenContext.h">
       <Filter>MeshSyncClientBlender</Filter>
     </ClInclude>
   </ItemGroup>

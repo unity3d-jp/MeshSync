@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2019, 3, 15),
+    "version": (2019, 4, 23),
     "blender": (2, 79, 0),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -57,7 +57,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
         else:
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
-        layout.operator("meshsync.sync_scene", text="Manual Sync")
+        layout.operator("meshsync.export_objects", text="Manual Sync")
         layout.separator()
 
 
@@ -70,7 +70,10 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout.prop(scene, 'meshsync_animation_ts')
         layout.prop(scene, 'meshsync_animation_fi')
         layout.prop(scene, 'meshsync_animation_kfr')
-        layout.operator("meshsync.sync_animations", text="Sync")
+        if scene.meshsync_animation_kfr:
+            b = layout.box()
+            b.prop(scene, 'meshsync_animation_kfc')
+        layout.operator("meshsync.export_animations", text="Sync")
 
 
 class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
@@ -79,27 +82,7 @@ class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
     def draw(self, context):
         scene = bpy.context.scene
         layout = self.layout
-        layout.label(text = msb_context.version)
-
-
-class MESHSYNC_OT_SyncScene(bpy.types.Operator):
-    bl_idname = "meshsync.sync_scene"
-    bl_label = "Sync Scene"
-    def execute(self, context):
-        msb_apply_scene_settings()
-        msb_context.setup(bpy.context);
-        msb_context.sendSceneAll(True)
-        return{'FINISHED'}
-
-
-class MESHSYNC_OT_SyncAnimations(bpy.types.Operator):
-    bl_idname = "meshsync.sync_animations"
-    bl_label = "Sync Animations"
-    def execute(self, context):
-        msb_apply_animation_settings()
-        msb_context.setup(bpy.context);
-        msb_context.sendAnimationsAll()
-        return{'FINISHED'}
+        layout.label(text = msb_context.PLUGIN_VERSION)
 
 
 class MESHSYNC_OT_AutoSync(bpy.types.Operator):
@@ -120,8 +103,10 @@ classes = (
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,
     MESHSYNC_PT_Version,
-    MESHSYNC_OT_SyncScene,
-    MESHSYNC_OT_SyncAnimations,
+    MESHSYNC_OT_ExportObjects,
+    MESHSYNC_OT_ExportMaterials,
+    MESHSYNC_OT_ExportAnimations,
+    MESHSYNC_OT_ExportEverything,
     MESHSYNC_OT_AutoSync,
 )
 

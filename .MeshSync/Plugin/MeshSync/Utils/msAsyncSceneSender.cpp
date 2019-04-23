@@ -23,6 +23,19 @@ AsyncSceneSender::~AsyncSceneSender()
     wait();
 }
 
+const std::string& AsyncSceneSender::getErrorMessage() const
+{
+    return m_error_message;
+}
+
+bool AsyncSceneSender::isServerAvaileble()
+{
+    ms::Client client(client_settings);
+    bool ret = client.isServerAvailable();
+    m_error_message = client.getErrorMessage();
+    return ret;
+}
+
 bool AsyncSceneSender::isSending()
 {
     if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
@@ -61,11 +74,16 @@ void AsyncSceneSender::send()
     bool succeeded = true;
     ms::Client client(client_settings);
 
+    auto setup_message = [this](ms::Message& mes) {
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.timestamp_send = mu::Now();
+    };
+
     // notify scene begin
     {
         ms::FenceMessage mes;
-        mes.session_id = session_id;
-        mes.message_id = message_count++;
+        setup_message(mes);
         mes.type = ms::FenceMessage::FenceType::SceneBegin;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
@@ -75,8 +93,7 @@ void AsyncSceneSender::send()
     // assets
     if (!assets.empty()) {
         ms::SetMessage mes;
-        mes.session_id = session_id;
-        mes.message_id = message_count++;
+        setup_message(mes);
         mes.scene.settings = scene_settings;
         mes.scene.assets = assets;
         succeeded = succeeded && client.send(mes);
@@ -88,8 +105,7 @@ void AsyncSceneSender::send()
     if (!textures.empty()) {
         for (auto& tex : textures) {
             ms::SetMessage mes;
-            mes.session_id = session_id;
-            mes.message_id = message_count++;
+            setup_message(mes);
             mes.scene.settings = scene_settings;
             mes.scene.assets = { tex };
             succeeded = succeeded && client.send(mes);
@@ -101,8 +117,7 @@ void AsyncSceneSender::send()
     // materials and non-geometry objects
     if (!materials.empty() || !transforms.empty()) {
         ms::SetMessage mes;
-        mes.session_id = session_id;
-        mes.message_id = message_count++;
+        setup_message(mes);
         mes.scene.settings = scene_settings;
         append(mes.scene.assets, materials);
         mes.scene.entities = transforms;
@@ -115,8 +130,7 @@ void AsyncSceneSender::send()
     if (!geometries.empty()) {
         for (auto& geom : geometries) {
             ms::SetMessage mes;
-            mes.session_id = session_id;
-            mes.message_id = message_count++;
+            setup_message(mes);
             mes.scene.settings = scene_settings;
             mes.scene.entities = { geom };
             succeeded = succeeded && client.send(mes);
@@ -128,8 +142,7 @@ void AsyncSceneSender::send()
     // animations
     if (!animations.empty()) {
         ms::SetMessage mes;
-        mes.session_id = session_id;
-        mes.message_id = message_count++;
+        setup_message(mes);
         mes.scene.settings = scene_settings;
         append(mes.scene.assets, animations);
         succeeded = succeeded && client.send(mes);
@@ -140,8 +153,7 @@ void AsyncSceneSender::send()
     // deleted
     if (!deleted_entities.empty() || !deleted_materials.empty()) {
         ms::DeleteMessage mes;
-        mes.session_id = session_id;
-        mes.message_id = message_count++;
+        setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
         succeeded = succeeded && client.send(mes);
@@ -152,8 +164,7 @@ void AsyncSceneSender::send()
     // notify scene end
     {
         ms::FenceMessage mes;
-        mes.session_id = session_id;
-        mes.message_id = message_count++;
+        setup_message(mes);
         mes.type = ms::FenceMessage::FenceType::SceneEnd;
         succeeded = succeeded && client.send(mes);
     }

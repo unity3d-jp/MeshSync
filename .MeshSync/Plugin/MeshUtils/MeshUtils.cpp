@@ -70,7 +70,7 @@ void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
     dst.resize_discard(indices.size());
     dst.zeroclear();
     offset = 0;
-    const float angle = std::cos(smooth_angle * Deg2Rad) - 0.001f;
+    const float angle = std::cos(smooth_angle * DegToRad) - 0.001f;
     for (size_t fi = 0; fi < num_faces; ++fi)
     {
         int count = counts[fi];
@@ -99,84 +99,7 @@ void GenerateNormalsWithSmoothAngle(RawVector<float3>& dst,
 
 
 
-
-template<int N>
-bool GenerateWeightsN(RawVector<Weights<N>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex)
-{
-    if (bone_indices.size() != bone_weights.size()) {
-        return false;
-    }
-
-    int num_weightsN = (int)bone_indices.size() / bones_per_vertex;
-    dst.resize_discard(num_weightsN);
-
-    if (bones_per_vertex <= N) {
-        dst.zeroclear();
-        int bpvN = std::min<int>(N, bones_per_vertex);
-        for (int wi = 0; wi < num_weightsN; ++wi) {
-            auto *bindices = &bone_indices[bones_per_vertex * wi];
-            auto *bweights = &bone_weights[bones_per_vertex * wi];
-
-            // copy (up to) N elements
-            auto& w4 = dst[wi];
-            for (int oi = 0; oi < bpvN; ++oi) {
-                w4.indices[oi] = bindices[oi];
-                w4.weights[oi] = bweights[oi];
-            }
-        }
-    }
-    else {
-        int *order = (int*)alloca(sizeof(int) * bones_per_vertex);
-        for (int wi = 0; wi < num_weightsN; ++wi) {
-            auto *bindices = &bone_indices[bones_per_vertex * wi];
-            auto *bweights = &bone_weights[bones_per_vertex * wi];
-
-            // sort order
-            std::iota(order, order + bones_per_vertex, 0);
-            std::nth_element(order, order + N, order + bones_per_vertex,
-                [&](int a, int b) { return bweights[a] > bweights[b]; });
-
-            // copy (up to) N elements
-            auto& w4 = dst[wi];
-            float w = 0.0f;
-            for (int oi = 0; oi < N; ++oi) {
-                int o = order[oi];
-                w4.indices[oi] = bindices[o];
-                w4.weights[oi] = bweights[o];
-                w += bweights[o];
-            }
-
-            // normalize weights
-            float rcpw = 1.0f / w;
-            for (int oi = 0; oi < N; ++oi) {
-                w4.weights[oi] *= rcpw;
-            }
-        }
-    }
-    return true;
-}
-template bool GenerateWeightsN(RawVector<Weights<4>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
-template bool GenerateWeightsN(RawVector<Weights<8>>& dst, IArray<int> bone_indices, IArray<float> bone_weights, int bones_per_vertex);
-
-
-inline int check_overlap(const int *a, const int *b)
-{
-    int i00 = a[0], i01 = a[1], i02 = a[2];
-    int i10 = b[0], i11 = b[1], i12 = b[2];
-    int ret = 0;
-    if (i00 == i10) ++ret;
-    if (i00 == i11) ++ret;
-    if (i00 == i12) ++ret;
-    if (i01 == i10) ++ret;
-    if (i01 == i11) ++ret;
-    if (i01 == i12) ++ret;
-    if (i02 == i10) ++ret;
-    if (i02 == i11) ++ret;
-    if (i02 == i12) ++ret;
-    return ret;
-}
-
-void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, float threshold_angle,
+void QuadifyTriangles(const IArray<float3> points, const IArray<int> indices, bool full_search, float threshold_angle,
     RawVector<int>& dst_indices, RawVector<int>& dst_counts)
 {
     struct Connection
@@ -189,6 +112,38 @@ void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, 
     int num_triangles = (int)indices.size() / 3;
     RawVector<Connection> connections(num_triangles);
 
+    auto make_unique = [](int *begin, int *end) {
+        for (auto i = begin; i + 1 < end; ++i) {
+            auto p = std::find(i + 1, end, *i);
+            if (p != end) {
+                // shift elements
+                auto q = p + 1;
+                while (q != end)
+                    *p++ = std::move(*q++);
+                --end;
+            }
+            else
+                break;
+        }
+        return end;
+    };
+
+    auto overlapped = [](const int *a, const int *b) {
+        int i00 = a[0], i01 = a[1], i02 = a[2];
+        int i10 = b[0], i11 = b[1], i12 = b[2];
+        int ret = 0;
+        if (i00 == i10) ++ret;
+        if (i00 == i11) ++ret;
+        if (i00 == i12) ++ret;
+        if (i01 == i10) ++ret;
+        if (i01 == i11) ++ret;
+        if (i01 == i12) ++ret;
+        if (i02 == i10) ++ret;
+        if (i02 == i11) ++ret;
+        if (i02 == i12) ++ret;
+        return ret;
+    };
+
     parallel_for(0, num_triangles, 8192, [&](int ti1) {
         auto& cd = connections[ti1];
         cd.nindex = -1;
@@ -196,16 +151,25 @@ void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, 
         cd.merged = false;
 
         auto *tri1 = indices.data() + (ti1 * 3);
-        const float3 normal1 = normalize(cross(vertices[tri1[1]] - vertices[tri1[0]], vertices[tri1[2]] - vertices[tri1[0]]));
+        const float3 normal1 = normalize(cross(points[tri1[1]] - points[tri1[0]], points[tri1[2]] - points[tri1[0]]));
 
-        // ti1 - 1 is highly likely a triangle that constitutes a quad
-        for (int ti2 = std::max(ti1 - 1, 0); ti2 < num_triangles; ++ti2) {
+        int ti2begin, ti2end;
+        if (full_search) {
+            ti2begin = std::max(ti1 - 1, 0);
+            ti2end = num_triangles;
+        }
+        else {
+            ti2begin = std::max(ti1 - 1, 0);
+            ti2end = std::min(ti1 + 2, num_triangles);
+        }
+
+        for (int ti2 = ti2begin; ti2 != ti2end; ++ti2) {
             auto *tri2 = indices.data() + (ti2 * 3);
 
-            if (check_overlap(tri1, tri2) != 2)
+            if (overlapped(tri1, tri2) != 2)
                 continue;
 
-            float3 normal2 = normalize(cross(vertices[tri2[1]] - vertices[tri2[0]], vertices[tri2[2]] - vertices[tri2[0]]));
+            float3 normal2 = normalize(cross(points[tri2[1]] - points[tri2[0]], points[tri2[2]] - points[tri2[0]]));
             if (dot(normal1, normal2) < 0.0f)
                 continue;
 
@@ -215,20 +179,20 @@ void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, 
             std::sort(quad, quad + 6);
             std::unique(quad, quad + 6);
 
-            float3 qvertices[4];
+            float3 qpoints[4];
             for (int i = 0; i < 4; ++i)
-                qvertices[i] = vertices[quad[i]];
+                qpoints[i] = points[quad[i]];
 
             float3 center = float3::zero();
-            for (auto& v : qvertices)
+            for (auto& v : qpoints)
                 center += v;
             center *= 0.25f;
 
             float angles[4]{
                 0.0f,
-                angle_between2_signed(qvertices[0], qvertices[1], center, normal1),
-                angle_between2_signed(qvertices[0], qvertices[2], center, normal1),
-                angle_between2_signed(qvertices[0], qvertices[3], center, normal1),
+                angle_between2_signed(qpoints[0], qpoints[1], center, normal1) * RadToDeg,
+                angle_between2_signed(qpoints[0], qpoints[2], center, normal1) * RadToDeg,
+                angle_between2_signed(qpoints[0], qpoints[3], center, normal1) * RadToDeg,
             };
 
             int cwi[4], quad_tmp[4];
@@ -238,7 +202,7 @@ void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, 
             });
             for (int i = 0; i < 4; ++i) {
                 quad_tmp[i] = quad[cwi[i]];
-                qvertices[i] = vertices[quad_tmp[i]];
+                qpoints[i] = points[quad_tmp[i]];
             }
 
             int corners[4][3]{
@@ -250,24 +214,23 @@ void QuadifyTriangles(const IArray<float3> vertices, const IArray<int> indices, 
             float diff = 0.0f;
             for (int i = 0; i < 4; ++i) {
                 float angle = angle_between2(
-                    qvertices[corners[i][0]],
-                    qvertices[corners[i][2]],
-                    qvertices[corners[i][1]]) * Rad2Deg;
+                    qpoints[corners[i][0]],
+                    qpoints[corners[i][2]],
+                    qpoints[corners[i][1]]) * RadToDeg;
                 diff = std::max(diff, abs(angle - 90.0f));
             }
-            if (diff < threshold_angle && diff < cd.nangle)
-            {
+            if (diff < threshold_angle && diff < cd.nangle) {
                 cd.nindex = ti2;
                 cd.nangle = diff;
                 std::copy(quad_tmp, quad_tmp + 4, cd.quad);
-                if (diff < threshold_angle * 0.5f) { break; }
             }
         }
     });
 
     for (int ti1 = 0; ti1 < num_triangles; ++ti1) {
         auto& cd = connections[ti1];
-        if (cd.merged) { continue; }
+        if (cd.merged)
+            continue;
 
         if (cd.nindex != -1 && !connections[cd.nindex].merged) {
             connections[cd.nindex].merged = true;

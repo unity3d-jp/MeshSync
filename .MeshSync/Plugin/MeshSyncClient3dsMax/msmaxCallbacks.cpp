@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSyncClient3dsMax.h"
+#include "msmaxContext.h"
 #include "msmaxCallbacks.h"
 #include "msmaxUtils.h"
 
@@ -12,7 +12,7 @@ msmaxViewportDisplayCallback & msmaxViewportDisplayCallback::getInstance()
 
 void msmaxViewportDisplayCallback::Display(TimeValue t, ViewExp * vpt, int flags)
 {
-    msmaxInstance().onRepaint();
+    msmaxGetContext().onRepaint();
 }
 
 void msmaxViewportDisplayCallback::GetViewportRect(TimeValue t, ViewExp * vpt, Rect * rect)
@@ -32,57 +32,57 @@ msmaxNodeCallback & msmaxNodeCallback::getInstance()
 
 void msmaxNodeCallback::Added(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeAdded(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onNodeAdded(n); });
 }
 
 void msmaxNodeCallback::Deleted(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeDeleted(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onNodeDeleted(n); });
 }
 
 void msmaxNodeCallback::LinkChanged(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeLinkChanged(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onNodeLinkChanged(n); });
 }
 
 void msmaxNodeCallback::HierarchyOtherEvent(NodeKeyTab & nodes)
 {
-    msmaxInstance().onSceneUpdated();
+    msmaxGetContext().onSceneUpdated();
 }
 
 void msmaxNodeCallback::ModelStructured(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onGeometryUpdated(n); });
 }
 void msmaxNodeCallback::GeometryChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onGeometryUpdated(n); });
 }
 void msmaxNodeCallback::TopologyChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onGeometryUpdated(n); });
 }
 void msmaxNodeCallback::MappingChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onGeometryUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onGeometryUpdated(n); });
 }
 void msmaxNodeCallback::ExtentionChannelChanged(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onNodeUpdated(n); });
 }
 void msmaxNodeCallback::ModelOtherEvent(NodeKeyTab& nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onNodeUpdated(n); });
 }
 
 void msmaxNodeCallback::ControllerOtherEvent(NodeKeyTab & nodes)
 {
-    msmaxInstance().onSceneUpdated();
+    msmaxGetContext().onSceneUpdated();
 }
 
 void msmaxNodeCallback::HideChanged(NodeKeyTab & nodes)
 {
-    EachNode(nodes, [](INode *n) { msmaxInstance().onNodeUpdated(n); });
+    EachNode(nodes, [](INode *n) { msmaxGetContext().onNodeUpdated(n); });
 }
 
 
@@ -94,6 +94,6 @@ msmaxTimeChangeCallback & msmaxTimeChangeCallback::getInstance()
 
 void msmaxTimeChangeCallback::TimeChanged(TimeValue t)
 {
-    msmaxInstance().onTimeChanged();
+    msmaxGetContext().onTimeChanged();
 }
 

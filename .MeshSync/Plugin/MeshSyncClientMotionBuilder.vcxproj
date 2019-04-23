@@ -15,16 +15,15 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.cpp" />
-    <ClCompile Include="MeshSyncClientMotionBuilder\msmbDevice.cpp" />
-    <ClCompile Include="MeshSyncClientMotionBuilder\msmbLayout.cpp" />
-    <ClCompile Include="MeshSyncClientMotionBuilder\msmbUtils.cpp" />
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmobuDevice.cpp" />
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmobuLayout.cpp" />
+    <ClCompile Include="MeshSyncClientMotionBuilder\msmobuUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientMotionBuilder/pch.h" />
-    <ClInclude Include="MeshSyncClientMotionBuilder\MeshSyncClientMotionBuilder.h" />
-    <ClInclude Include="MeshSyncClientMotionBuilder\msmbDevice.h" />
-    <ClInclude Include="MeshSyncClientMotionBuilder\msmbLayout.h" />
-    <ClInclude Include="MeshSyncClientMotionBuilder\msmbUtils.h" />
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmobuDevice.h" />
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmobuLayout.h" />
+    <ClInclude Include="MeshSyncClientMotionBuilder\msmobuUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">

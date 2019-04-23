@@ -3,41 +3,43 @@
 
 namespace ms {
 
+bool StartWith(const std::string& a, const char *b)
+{
+    if (!b)
+        return false;
+    size_t n = std::strlen(b);
+    return std::strncmp(a.c_str(), b, n) == 0;
+}
+
 bool FileToByteArray(const char *path, RawVector<char> &dst)
 {
-    FILE *f = fopen(path, "rb");
-    if (!f)
+    if (!path)
         return false;
 
-    fseek(f, 0, SEEK_END);
-    dst.resize_discard((size_t)ftell(f));
-    fseek(f, 0, SEEK_SET);
-    fread(dst.data(), 1, dst.size(), f);
-    fclose(f);
+    // note: FILE or std::fstream may fail to open files if path contains multi-byte characters
+    Poco::FileStream f(path, std::ios::in);
+    if (!f)
+        return false;
+    auto size = Poco::File(path).getSize();
+    dst.resize_discard((size_t)size);
+    f.read(dst.data(), (size_t)size);
     return true;
 }
 
 bool ByteArrayToFile(const char *path, const RawVector<char> &data)
 {
-    if (!path)
-        return false;
-    FILE *f = fopen(path, "wb");
-    if (!f)
-        return false;
-    fwrite(data.data(), 1, data.size(), f);
-    fclose(f);
-    return true;
+    return ByteArrayToFile(path, data.data(), data.size());
 }
 
-bool ByteArrayToFile(const char * path, const char *data, size_t size)
+bool ByteArrayToFile(const char *path, const char *data, size_t size)
 {
     if (!path)
         return false;
-    FILE *f = fopen(path, "wb");
+
+    Poco::FileStream f(path, std::ios::out);
     if (!f)
         return false;
-    fwrite(data, 1, size, f);
-    fclose(f);
+    f.write(data, size);
     return true;
 }
 
@@ -48,8 +50,7 @@ bool FileExists(const char *path)
 
     try {
         // this is fater than using fopen()
-        Poco::File f(path);
-        return f.exists();
+        return Poco::File(path).exists();
     }
     catch (...) {
         return false;

@@ -95,7 +95,12 @@ Identifier Entity::getIdentifier() const
     return Identifier{ path, id };
 }
 
-bool Entity::identidy(const Identifier& v) const
+bool Entity::isRoot() const
+{
+    return path.find_last_of('/') == 0;
+}
+
+bool Entity::identify(const Identifier& v) const
 {
     bool ret = path == v.name;
     if (!ret && id != InvalidID && v.id != InvalidID)
@@ -209,15 +214,15 @@ void Transform::applyMatrix(const float4x4& v)
 
 void Transform::convertHandedness(bool x, bool yz)
 {
-    if (!x && !yz) return;
-
     if (x) {
         position = flip_x(position);
         rotation = flip_x(rotation);
     }
-    if (yz) {
-        position = swap_yz(position);
-        rotation = swap_yz(rotation);
+
+    // fbx-compatible Z-up -> Y-up conversion. ugly, but we must follow it.
+    if (yz && isRoot()) {
+        position = flip_z(swap_yz(position));
+        rotation = flip_z(swap_yz(rotation)) * rotate_x(-90.0f * DegToRad);
         scale = swap_yz(scale);
     }
 }
@@ -240,7 +245,7 @@ Entity::Type Camera::getType() const
 }
 
 #define EachMember(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(vertical_aperture) F(horizontal_aperture) F(focal_length) F(focus_distance)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift)
 
 void Camera::serialize(std::ostream& os) const
 {
@@ -262,10 +267,9 @@ void Camera::clear()
     near_plane = 0.3f;
     far_plane = 1000.0f;
 
-    vertical_aperture = 0.0f;
-    horizontal_aperture = 0.0f;
     focal_length = 0.0f;
-    focus_distance = 0.0f;
+    sensor_size = float2::zero();
+    lens_shift = float2::zero();
 }
 
 uint64_t Camera::checksumTrans() const
@@ -289,10 +293,9 @@ bool Camera::lerp(const Entity& s1_, const Entity& s2_, float t)
     DoLerp(fov);
     DoLerp(near_plane);
     DoLerp(far_plane);
-    DoLerp(vertical_aperture);
-    DoLerp(horizontal_aperture);
     DoLerp(focal_length);
-    DoLerp(focus_distance);
+    DoLerp(sensor_size);
+    DoLerp(lens_shift);
 #undef DoLerp
     return true;
 }
@@ -469,17 +472,12 @@ EntityPtr PointsData::clone()
 #undef EachArrays
 #undef EachMember
 
-void PointsData::convertHandedness(bool x, bool yz)
+void PointsData::convertHandedness(bool x, bool /*yz*/)
 {
     if (x) {
         mu::InvertX(points.data(), points.size());
         for (auto& v : rotations) v = flip_x(v);
         mu::InvertX(scales.data(), scales.size());
-    }
-    if (yz) {
-        for (auto& v : points) v = swap_yz(v);
-        for (auto& v : rotations) v = swap_yz(v);
-        for (auto& v : scales) v = swap_yz(v);
     }
 }
 

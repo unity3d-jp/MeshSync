@@ -659,7 +659,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             float3 pos;
             quatf rot;
             extract_look_data(view, pos, rot);
-            rot *= mu::rotateX(-90.0f * mu::Deg2Rad);
+            rot *= mu::rotate_x(-90.0f * mu::DegToRad);
 
             if (pos != m_camera_pos || rot != m_camera_rot) {
                 m_camera_dirty = true;
@@ -753,7 +753,7 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
 
             dst.setupFlags();
             dst.flags.has_refine_settings = 1;
-            dst.refine_settings.flags.swap_faces = true;
+            dst.refine_settings.flags.flip_faces = true;
             dst.refine_settings.flags.gen_tangents = 1;
             dst.refine_settings.flags.flip_u = m_settings.flip_u;
             dst.refine_settings.flags.flip_v = m_settings.flip_v;

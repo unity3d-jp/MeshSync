@@ -27,7 +27,7 @@ option(BUILD_SERVER "Build MeshSyncServer" ON)
 
 # Metasequoia
 if(MAC)
-    option(BUILD_METASEQUOIA4_CLIENT "Build MeshSyncClient for Metasequoia 4" OFF)
+    option(BUILD_METASEQUOIA4.64_CLIENT "Build MeshSyncClient for Metasequoia 4.64" OFF)
 endif()
 
 # Blender
@@ -50,6 +50,9 @@ if(LINUX)
     option(BUILD_MOTIONBUILDER2018_CLIENT "Build MeshSyncClient for MotionBuilder 2018" OFF)
     option(BUILD_MOTIONBUILDER2019_CLIENT "Build MeshSyncClient for MotionBuilder 2019" OFF)
 endif()
+
+# Modo
+option(BUILD_MODO_CLIENT "Build MeshSyncClient for Modo" OFF)
 
 # Tests
 option(BUILD_TESTS "Tests" OFF)
@@ -75,8 +78,8 @@ if(BUILD_SERVER)
 endif()
 
 # Metasequoia
-if(BUILD_METASEQUOIA4_CLIENT)
-    add_subdirectory(MeshSyncClientMQ)
+if(BUILD_METASEQUOIA4.64_CLIENT)
+    add_subdirectory_link(MeshSyncClientMQ4.64 MeshSyncClientMQ)
 endif()
 
 # Blender
@@ -125,6 +128,11 @@ if(BUILD_MOTIONBUILDER2018_CLIENT)
 endif()
 if(BUILD_MOTIONBUILDER2019_CLIENT)
     add_subdirectory_link(MeshSyncClientMotionBuilder2019 MeshSyncClientMotionBuilder)
+endif()
+
+# Modo
+if(BUILD_MODO_CLIENT)
+    add_subdirectory(MeshSyncClientModo)
 endif()
 
 # Tests

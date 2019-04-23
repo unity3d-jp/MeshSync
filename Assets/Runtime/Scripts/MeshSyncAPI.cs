@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
+#if UNITY_2019_1_OR_NEWER
+using Unity.Collections;
+#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -83,6 +86,36 @@ namespace UTJ.MeshSync
                 default: return TextureFormat.Ru8;
             }
         }
+
+#if UNITY_2019_1_OR_NEWER
+        // explicit layout doesn't work with generics...
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct NAByte
+        {
+            [FieldOffset(0)] public NativeArray<byte> nativeArray;
+            [FieldOffset(0)] public IntPtr pointer;
+        }
+        public static IntPtr ForceGetPointer(ref NativeArray<byte> na)
+        {
+            var union = new NAByte();
+            union.nativeArray = na;
+            return union.pointer;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct NABoneWeight1
+        {
+            [FieldOffset(0)] public NativeArray<BoneWeight1> nativeArray;
+            [FieldOffset(0)] public IntPtr pointer;
+        }
+        public static IntPtr ForceGetPointer(ref NativeArray<BoneWeight1> na)
+        {
+            var union = new NABoneWeight1();
+            union.nativeArray = na;
+            return union.pointer;
+        }
+#endif
     }
 
 
@@ -93,6 +126,7 @@ namespace UTJ.MeshSync
         public int maxThreads;
         public ushort port;
         public uint meshSplitUnit;
+        public int meshMaxBoneInfluence; // -1 (variable) or 4
 
         public static ServerSettings defaultValue
         {
@@ -102,21 +136,29 @@ namespace UTJ.MeshSync
                 {
                     maxQueue = 512,
                     maxThreads = 8,
-                    port = 8080,
+                    port = defaultPort,
 #if UNITY_2017_3_OR_NEWER
                     meshSplitUnit = 0xffffffff,
 #else
                     meshSplitUnit = 65000,
 #endif
+#if UNITY_2019_1_OR_NEWER
+                    meshMaxBoneInfluence = -1,
+#else
+                    meshMaxBoneInfluence = 4,
+#endif
                 };
             }
         }
+
+        public static ushort defaultPort { get { return 8080; } }
     }
     public struct Server
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msServerGetVersion();
+        [DllImport("MeshSyncServer")] static extern int msGetPluginVersion();
+        [DllImport("MeshSyncServer")] static extern int msGetProtocolVersion();
         [DllImport("MeshSyncServer")] static extern Server msServerStart(ref ServerSettings settings);
         [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr self);
 
@@ -140,7 +182,8 @@ namespace UTJ.MeshSync
 
         public static implicit operator bool(Server v) { return v.self != IntPtr.Zero; }
 
-        public static string version { get { return Misc.S(msServerGetVersion()); } }
+        public static int pluginVersion { get { return msGetPluginVersion(); } }
+        public static int protocolVersion { get { return msGetProtocolVersion(); } }
 
         public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
         public void Stop() { msServerStop(self); }
@@ -338,7 +381,9 @@ namespace UTJ.MeshSync
         public enum QueryType
         {
             Unknown,
-            ClientName,
+            PluginVersion,
+            ProtocolVersion,
+            HostName,
             RootNodes,
             AllNodes,
         }
@@ -903,607 +948,83 @@ namespace UTJ.MeshSync
 
 
     #region Animations
-    public enum InterpolationType
+    public enum InterpolationMode
     {
         Smooth,
         Linear,
         Constant,
     }
-    public delegate void InterpolationMethod(AnimationCurve curve);
 
-    public struct TransformAnimationData
+
+    public class AnimationImportContext
     {
-        #region internal
-        public IntPtr self;
-
-        [DllImport("MeshSyncServer")] static extern int msTransformAGetNumTranslationSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetTranslationTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetTranslationValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msTransformAGetNumRotationSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetRotationTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Quaternion msTransformAGetRotationValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msTransformAGetNumScaleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetScaleTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Vector3 msTransformAGetScaleValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msTransformAGetNumVisibleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msTransformAGetVisibleTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern byte msTransformAGetVisibleValue(IntPtr self, int i);
-        #endregion
-
-        public static explicit operator TransformAnimationData(IntPtr v)
-        {
-            TransformAnimationData ret;
-            ret.self = v;
-            return ret;
-        }
-        public static implicit operator bool(TransformAnimationData v)
-        {
-            return v.self != IntPtr.Zero;
-        }
-
-        public AnimationCurve[] GenTranslationCurves()
-        {
-            int n = msTransformAGetNumTranslationSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            var y = new Keyframe[n];
-            var z = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetTranslationTime(self, i);
-                var v = msTransformAGetTranslationValue(self, i);
-                x[i].time = y[i].time = z[i].time = t;
-                x[i].value = v.x;
-                y[i].value = v.y;
-                z[i].value = v.z;
-            }
-            var ret = new AnimationCurve[] {
-                    new AnimationCurve(x),
-                    new AnimationCurve(y),
-                    new AnimationCurve(z),
-                };
-            return ret;
-        }
-
-        public AnimationCurve[] GenRotationCurves()
-        {
-            int n = msTransformAGetNumRotationSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            var y = new Keyframe[n];
-            var z = new Keyframe[n];
-            var w = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetRotationTime(self, i);
-                var v = msTransformAGetRotationValue(self, i);
-                x[i].time = y[i].time = z[i].time = w[i].time = t;
-                x[i].value = v.x;
-                y[i].value = v.y;
-                z[i].value = v.z;
-                w[i].value = v.w;
-            }
-            var ret = new AnimationCurve[] {
-                    new AnimationCurve(x),
-                    new AnimationCurve(y),
-                    new AnimationCurve(z),
-                    new AnimationCurve(w),
-                };
-            return ret;
-        }
-
-        public AnimationCurve[] GenScaleCurves()
-        {
-            int n = msTransformAGetNumScaleSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            var y = new Keyframe[n];
-            var z = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetScaleTime(self, i);
-                var v = msTransformAGetScaleValue(self, i);
-                x[i].time = y[i].time = z[i].time = t;
-                x[i].value = v.x;
-                y[i].value = v.y;
-                z[i].value = v.z;
-            }
-            var ret = new AnimationCurve[] {
-                    new AnimationCurve(x),
-                    new AnimationCurve(y),
-                    new AnimationCurve(z),
-                };
-            return ret;
-        }
-
-        public AnimationCurve GenVisibilityCurve()
-        {
-            int n = msTransformAGetNumVisibleSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msTransformAGetVisibleTime(self, i);
-                var v = msTransformAGetVisibleValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-#if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
-        {
-            var ttrans = typeof(Transform);
-            var tgo = typeof(GameObject);
-
-            {
-                clip.SetCurve(path, ttrans, "m_LocalPosition", null);
-                var curves = GenTranslationCurves();
-                if (curves != null)
-                {
-                    foreach (var c in curves)
-                        im(c);
-                    clip.SetCurve(path, ttrans, "m_LocalPosition.x", curves[0]);
-                    clip.SetCurve(path, ttrans, "m_LocalPosition.y", curves[1]);
-                    clip.SetCurve(path, ttrans, "m_LocalPosition.z", curves[2]);
-                }
-            }
-            {
-                clip.SetCurve(path, ttrans, "m_LocalRotation", null);
-                var curves = GenRotationCurves();
-                if (curves != null)
-                {
-                    foreach (var c in curves)
-                        im(c);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
-                    clip.SetCurve(path, ttrans, "m_LocalRotation.w", curves[3]);
-                }
-            }
-            {
-                clip.SetCurve(path, ttrans, "m_LocalScale", null);
-                var curves = GenScaleCurves();
-                if (curves != null)
-                {
-                    foreach (var c in curves)
-                        im(c);
-                    clip.SetCurve(path, ttrans, "m_LocalScale.x", curves[0]);
-                    clip.SetCurve(path, ttrans, "m_LocalScale.y", curves[1]);
-                    clip.SetCurve(path, ttrans, "m_LocalScale.z", curves[2]);
-                }
-            }
-            {
-                clip.SetCurve(path, tgo, "m_IsActive", null);
-                var curve = GenVisibilityCurve();
-                if (curve != null)
-                    im(curve);
-                clip.SetCurve(path, tgo, "m_IsActive", curve);
-            }
-        }
-#endif
+        public AnimationClip clip;
+        public GameObject root;
+        public GameObject target;
+        public string path;
+        public InterpolationMode interpolation;
+        public bool enableVisibility;
+        public Type mainComponentType;
     }
 
-    public struct CameraAnimationData
+    public struct AnimationCurveData
     {
         #region internal
         public IntPtr self;
+        [DllImport("MeshSyncServer")] static extern IntPtr msCurveGetName(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern DataType msCurveGetDataType(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern int msCurveGetNumSamples(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern IntPtr msCurveGetBlendshapeName(IntPtr self);
 
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFovSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFovTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFovValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumNearSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetNearTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetNearValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFarSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFarTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFarValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumHApertureSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetHApertureTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetHApertureValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumVApertureSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetVApertureTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetVApertureValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocalLengthSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocalLengthTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocalLengthValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msCameraAGetNumFocusDistanceSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msCameraAGetFocusDistanceValue(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillI(IntPtr self, Keyframe[] x, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillF(IntPtr self, Keyframe[] x, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillF2(IntPtr self, Keyframe[] x, Keyframe[] y, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillF3(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillF4(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillQuat(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
+        [DllImport("MeshSyncServer")] static extern byte msCurveFillEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
         #endregion
 
-        public static explicit operator CameraAnimationData(IntPtr v)
+        public enum DataType
         {
-            CameraAnimationData ret;
-            ret.self = v;
-            return ret;
+            Unknown,
+            Int,
+            Float,
+            Float2,
+            Float3,
+            Float4,
+            Quaternion,
         }
-        public static implicit operator bool(CameraAnimationData v)
+
+        public static implicit operator bool(AnimationCurveData v)
         {
             return v.self != IntPtr.Zero;
         }
 
-        public AnimationCurve GenFovCurve()
+        public string name
         {
-            int n = msCameraAGetNumFovSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msCameraAGetFovTime(self, i);
-                var v = msCameraAGetFovValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
+            get { return Misc.S(msCurveGetName(self)); }
+        }
+        public DataType dataType
+        {
+            get { return msCurveGetDataType(self); }
+        }
+        public int numSamples
+        {
+            get { return msCurveGetNumSamples(self); }
+        }
+        public string blendshapeName
+        {
+            get { return Misc.S(msCurveGetBlendshapeName(self)); }
         }
 
-        public AnimationCurve GenNearPlaneCurve()
-        {
-            int n = msCameraAGetNumNearSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msCameraAGetNearTime(self, i);
-                var v = msCameraAGetNearValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-        public AnimationCurve GenFarPlaneCurve()
-        {
-            int n = msCameraAGetNumFarSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msCameraAGetFarTime(self, i);
-                var v = msCameraAGetFarValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-#if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
-        {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
-            var tcam = typeof(Camera);
-            {
-                clip.SetCurve(path, tcam, "field of view", null);
-                var curve = GenFovCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tcam, "field of view", curve);
-                }
-            }
-            {
-                clip.SetCurve(path, tcam, "near clip plane", null);
-                var curve = GenNearPlaneCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tcam, "near clip plane", curve);
-                }
-            }
-            {
-                clip.SetCurve(path, tcam, "far clip plane", null);
-                var curve = GenFarPlaneCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tcam, "far clip plane", curve);
-                }
-            }
-        }
-#endif
-    }
-
-    public struct LightAnimationData
-    {
-        #region internal
-        public IntPtr self;
-
-        [DllImport("MeshSyncServer")] static extern int msLightAGetNumColorSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetColorTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Color msLightAGetColorValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msLightAGetNumIntensitySamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetIntensityTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetIntensityValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msLightAGetNumRangeSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetRangeTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetRangeValue(IntPtr self, int i);
-
-        [DllImport("MeshSyncServer")] static extern int msLightAGetNumSpotAngleSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msLightAGetSpotAngleValue(IntPtr self, int i);
-        #endregion
-
-
-        public static explicit operator LightAnimationData(IntPtr v)
-        {
-            LightAnimationData ret;
-            ret.self = v;
-            return ret;
-        }
-        public static implicit operator bool(LightAnimationData v)
-        {
-            return v.self != IntPtr.Zero;
-        }
-
-        public AnimationCurve[] GenColorCurves()
-        {
-            int n = msLightAGetNumColorSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            var y = new Keyframe[n];
-            var z = new Keyframe[n];
-            var w = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetColorTime(self, i);
-                var v = msLightAGetColorValue(self, i);
-                x[i].time = y[i].time = z[i].time = w[i].time = t;
-                x[i].value = v.r;
-                y[i].value = v.g;
-                z[i].value = v.b;
-                w[i].value = v.a;
-            }
-            var ret = new AnimationCurve[] {
-                    new AnimationCurve(x),
-                    new AnimationCurve(y),
-                    new AnimationCurve(z),
-                    new AnimationCurve(w),
-                };
-            return ret;
-        }
-
-        public AnimationCurve GenIntensityCurve()
-        {
-            int n = msLightAGetNumIntensitySamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetIntensityTime(self, i);
-                var v = msLightAGetIntensityValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-        public AnimationCurve GenRangeCurve()
-        {
-            int n = msLightAGetNumRangeSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetRangeTime(self, i);
-                var v = msLightAGetRangeValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-        public AnimationCurve GenSpotAngleCurve()
-        {
-            int n = msLightAGetNumSpotAngleSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msLightAGetSpotAngleTime(self, i);
-                var v = msLightAGetSpotAngleValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-#if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
-        {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
-            var tlight = typeof(Light);
-            {
-                clip.SetCurve(path, tlight, "m_Color", null);
-                var curves = GenColorCurves();
-                if (curves != null)
-                {
-                    foreach (var c in curves)
-                        im(c);
-                    clip.SetCurve(path, tlight, "m_Color.r", curves[0]);
-                    clip.SetCurve(path, tlight, "m_Color.g", curves[1]);
-                    clip.SetCurve(path, tlight, "m_Color.b", curves[2]);
-                    clip.SetCurve(path, tlight, "m_Color.a", curves[3]);
-                }
-            }
-            {
-                clip.SetCurve(path, tlight, "m_Intensity", null);
-                var curve = GenIntensityCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tlight, "m_Intensity", curve);
-                }
-            }
-            {
-                clip.SetCurve(path, tlight, "m_Range", null);
-                var curve = GenRangeCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tlight, "m_Range", curve);
-                }
-            }
-            {
-                clip.SetCurve(path, tlight, "m_SpotAngle", null);
-                var curve = GenSpotAngleCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tlight, "m_SpotAngle", curve);
-                }
-            }
-        }
-#endif
-    }
-
-    public struct MeshAnimationData
-    {
-        #region internal
-        public IntPtr self;
-
-        [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern IntPtr msMeshAGetBlendshapeName(IntPtr self, int bi);
-        [DllImport("MeshSyncServer")] static extern int msMeshAGetNumBlendshapeSamples(IntPtr self, int bi);
-        [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeTime(IntPtr self, int bi, int si);
-        [DllImport("MeshSyncServer")] static extern float msMeshAGetNumBlendshapeWeight(IntPtr self, int bi, int si);
-        #endregion
-
-
-        public static explicit operator MeshAnimationData(IntPtr v)
-        {
-            MeshAnimationData ret;
-            ret.self = v;
-            return ret;
-        }
-        public static implicit operator bool(MeshAnimationData v)
-        {
-            return v.self != IntPtr.Zero;
-        }
-
-#if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
-        {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
-            var tsmr = typeof(SkinnedMeshRenderer);
-            {
-                // blendshape animation
-
-                int numBS = msMeshAGetNumBlendshapes(self);
-                for (int bi = 0; bi < numBS; ++bi)
-                {
-                    string name = "blendShape." + Misc.S(msMeshAGetBlendshapeName(self, bi));
-                    clip.SetCurve(path, tsmr, name, null);
-
-                    int numKeyframes = msMeshAGetNumBlendshapeSamples(self, bi);
-                    if (numKeyframes > 0)
-                    {
-                        var kf = new Keyframe[numKeyframes];
-                        for (int ki = 0; ki < numKeyframes; ++ki)
-                        {
-                            kf[ki].time = msMeshAGetNumBlendshapeTime(self, bi, ki);
-                            kf[ki].value = msMeshAGetNumBlendshapeWeight(self, bi, ki);
-                        }
-
-                        var curve = new AnimationCurve(kf);
-                        im(curve);
-                        clip.SetCurve(path, tsmr, name, curve);
-                    }
-                }
-            }
-        }
-#endif
-    }
-
-    public struct PointsAnimationData
-    {
-        #region internal
-        public IntPtr self;
-
-        [DllImport("MeshSyncServer")] static extern int msPointsAGetNumTimeSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern float msPointsAGetTimeValue(IntPtr self, int i);
-        #endregion
-
-
-        public static explicit operator PointsAnimationData(IntPtr v)
-        {
-            PointsAnimationData ret;
-            ret.self = v;
-            return ret;
-        }
-        public static implicit operator bool(PointsAnimationData v)
-        {
-            return v.self != IntPtr.Zero;
-        }
-
-        public AnimationCurve GenTimeCurve()
-        {
-            int n = msPointsAGetNumTimeSamples(self);
-            if (n == 0)
-                return null;
-            var x = new Keyframe[n];
-            for (int i = 0; i < n; ++i)
-            {
-                var t = msPointsAGetTimeTime(self, i);
-                var v = msPointsAGetTimeValue(self, i);
-                x[i].time = t;
-                x[i].value = v;
-            }
-            var ret = new AnimationCurve(x);
-            return ret;
-        }
-
-#if UNITY_EDITOR
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
-        {
-            ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
-
-            var tpoints = typeof(PointCache);
-            {
-                clip.SetCurve(path, tpoints, "m_time", null);
-                var curve = GenTimeCurve();
-                if (curve != null)
-                {
-                    im(curve);
-                    clip.SetCurve(path, tpoints, "m_time", curve);
-                }
-            }
-        }
-#endif
+        public bool FillI(Keyframe[] x, InterpolationMode im) { return msCurveFillI(self, x, im) != 0; }
+        public bool FillF(Keyframe[] x, InterpolationMode im) { return msCurveFillF(self, x, im) != 0; }
+        public bool FillF2(Keyframe[] x, Keyframe[] y, InterpolationMode im) { return msCurveFillF2(self, x, y, im) != 0; }
+        public bool FillF3(Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im) { return msCurveFillF3(self, x, y, z, im) != 0; }
+        public bool FillF4(Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im) { return msCurveFillF4(self, x, y, z, w, im) != 0; }
+        public bool FillQuat(Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im) { return msCurveFillQuat(self, x, y, z, w, im) != 0; }
+        public bool FillEuler(Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im) { return msCurveFillEuler(self, x, y, z, im) != 0; }
     }
 
     public struct AnimationData
@@ -1511,16 +1032,30 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern TransformData.Type msAnimationGetType(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern EntityType msAnimationGetEntityType(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern int msAnimationGetNumCurves(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCurve(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationFindCurve(IntPtr self, string name);
+
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformTranslation(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformRotation(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformScale(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformVisible(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFieldOfView(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFocalLength(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraSensorSize(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraLensShift(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightColor(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
+        public delegate void msCurveCallback(AnimationCurveData data);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetPointsTime(IntPtr self);
         #endregion
 
-
-        public static explicit operator AnimationData(IntPtr v)
-        {
-            AnimationData ret;
-            ret.self = v;
-            return ret;
-        }
         public static implicit operator bool(AnimationData v)
         {
             return v.self != IntPtr.Zero;
@@ -1530,64 +1065,324 @@ namespace UTJ.MeshSync
         {
             get { return Misc.S(msAnimationGetPath(self)); }
         }
-
-        public TransformData.Type type
+        public EntityType entityType
         {
-            get { return msAnimationGetType(self); }
+            get { return msAnimationGetEntityType(self); }
         }
+
+        AnimationCurve[] GenCurves(AnimationCurveData data, InterpolationMode im)
+        {
+            if (!data)
+                return null;
+            int n = data.numSamples;
+            var t = data.dataType;
+            if (n == 0 || t == AnimationCurveData.DataType.Unknown)
+                return null;
+
+            if (t == AnimationCurveData.DataType.Int)
+            {
+                var x = new Keyframe[n];
+                if (data.FillI(x, im))
+                    return new AnimationCurve[] { new AnimationCurve(x) };
+            }
+            else if (t == AnimationCurveData.DataType.Float)
+            {
+                var x = new Keyframe[n];
+                if (data.FillF(x, im))
+                    return new AnimationCurve[] { new AnimationCurve(x) };
+            }
+            else if (t == AnimationCurveData.DataType.Float2)
+            {
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                if (data.FillF2(x, y, im))
+                    return new AnimationCurve[] { new AnimationCurve(x), new AnimationCurve(y) };
+            }
+            else if (t == AnimationCurveData.DataType.Float3)
+            {
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                if (data.FillF3(x, y, z, im))
+                    return new AnimationCurve[] { new AnimationCurve(x), new AnimationCurve(y), new AnimationCurve(z) };
+            }
+            else if (t == AnimationCurveData.DataType.Float4)
+            {
+                var x = new Keyframe[n];
+                var y = new Keyframe[n];
+                var z = new Keyframe[n];
+                var w = new Keyframe[n];
+                if (data.FillF4(x, y, z, w, im))
+                    return new AnimationCurve[] { new AnimationCurve(x), new AnimationCurve(y), new AnimationCurve(z), new AnimationCurve(w) };
+            }
+            else if (t == AnimationCurveData.DataType.Quaternion)
+            {
+                if (im == InterpolationMode.Constant || im == InterpolationMode.Linear)
+                {
+                    var x = new Keyframe[n];
+                    var y = new Keyframe[n];
+                    var z = new Keyframe[n];
+                    if (data.FillEuler(x, y, z, im))
+                        return new AnimationCurve[] { new AnimationCurve(x), new AnimationCurve(y), new AnimationCurve(z) };
+                }
+                else
+                {
+                    var x = new Keyframe[n];
+                    var y = new Keyframe[n];
+                    var z = new Keyframe[n];
+                    var w = new Keyframe[n];
+                    if (data.FillQuat(x, y, z, w, im))
+                        return new AnimationCurve[] { new AnimationCurve(x), new AnimationCurve(y), new AnimationCurve(z), new AnimationCurve(w) };
+                }
+            }
+            return null;
+        }
+
 
 #if UNITY_EDITOR
-        public static void SmoothInterpolation(AnimationCurve curve)
+        public void ExportTransformAnimation(AnimationImportContext ctx)
         {
-            int len = curve.length;
-            for (int i = 0; i < len; ++i)
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+            var ttrans = typeof(Transform);
+
             {
-                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
-                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.ClampedAuto);
+                clip.SetCurve(path, ttrans, "m_LocalPosition", null);
+                var curves = GenCurves(msAnimationGetTransformTranslation(self), interpolation);
+                if (curves != null && curves.Length == 3)
+                {
+                    clip.SetCurve(path, ttrans, "m_LocalPosition.x", curves[0]);
+                    clip.SetCurve(path, ttrans, "m_LocalPosition.y", curves[1]);
+                    clip.SetCurve(path, ttrans, "m_LocalPosition.z", curves[2]);
+                }
+            }
+            {
+                clip.SetCurve(path, ttrans, "m_LocalRotation", null);
+                var curves = GenCurves(msAnimationGetTransformRotation(self), interpolation);
+                if (curves != null)
+                {
+                    if (curves.Length == 3)
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalEulerAnglesHint.z", curves[2]);
+                    }
+                    else if (curves.Length == 4)
+                    {
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.x", curves[0]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.y", curves[1]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.z", curves[2]);
+                        clip.SetCurve(path, ttrans, "m_LocalRotation.w", curves[3]);
+                    }
+                }
+            }
+            {
+                clip.SetCurve(path, ttrans, "m_LocalScale", null);
+                var curves = GenCurves(msAnimationGetTransformScale(self), interpolation);
+                if (curves != null && curves.Length == 3)
+                {
+                    clip.SetCurve(path, ttrans, "m_LocalScale.x", curves[0]);
+                    clip.SetCurve(path, ttrans, "m_LocalScale.y", curves[1]);
+                    clip.SetCurve(path, ttrans, "m_LocalScale.z", curves[2]);
+                }
+            }
+            if (ctx.enableVisibility && ctx.mainComponentType != null)
+            {
+                const string Target = "m_Enabled";
+                clip.SetCurve(path, ctx.mainComponentType, Target, null);
+                var curves = GenCurves(msAnimationGetTransformVisible(self), InterpolationMode.Constant);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, ctx.mainComponentType, Target, curves[0]);
             }
         }
 
-        public static void LinearInterpolation(AnimationCurve curve)
+        public void ExportCameraAnimation(AnimationImportContext ctx)
         {
-            int len = curve.length;
-            for (int i = 0; i < len; ++i)
+            var tcam = typeof(Camera);
+            ctx.mainComponentType = tcam;
+            ExportTransformAnimation(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
+            // use physical camera params if available
+            bool usePhysicalCameraParams = false;
             {
-                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Linear);
-                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.Linear);
+                const string Target = "m_FocalLength";
+                clip.SetCurve(path, tcam, Target, null);
+                var curves = GenCurves(msAnimationGetCameraFocalLength(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                {
+                    clip.SetCurve(path, tcam, Target, curves[0]);
+                    usePhysicalCameraParams = true;
+                }
+            }
+            if (usePhysicalCameraParams)
+            {
+                {
+                    clip.SetCurve(path, tcam, "m_SensorSize", null);
+                    var curves = GenCurves(msAnimationGetCameraSensorSize(self), interpolation);
+                    if (curves != null && curves.Length == 2)
+                    {
+                        clip.SetCurve(path, tcam, "m_SensorSize.x", curves[0]);
+                        clip.SetCurve(path, tcam, "m_SensorSize.y", curves[1]);
+                    }
+                }
+                {
+                    clip.SetCurve(path, tcam, "m_LensShift", null);
+                    var curves = GenCurves(msAnimationGetCameraLensShift(self), interpolation);
+                    if (curves != null && curves.Length == 2)
+                    {
+                        clip.SetCurve(path, tcam, "m_LensShift.x", curves[0]);
+                        clip.SetCurve(path, tcam, "m_LensShift.y", curves[1]);
+                    }
+                }
+            }
+            else
+            {
+                const string Target = "field of view";
+                clip.SetCurve(path, tcam, Target, null);
+                var curves = GenCurves(msAnimationGetCameraFieldOfView(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tcam, Target, curves[0]);
+            }
+
+            {
+                const string Target = "near clip plane";
+                clip.SetCurve(path, tcam, Target, null);
+                var curves = GenCurves(msAnimationGetCameraNearPlane(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tcam, Target, curves[0]);
+            }
+            {
+                const string Target = "far clip plane";
+                clip.SetCurve(path, tcam, Target, null);
+                var curves = GenCurves(msAnimationGetCameraFarPlane(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tcam, Target, curves[0]);
             }
         }
 
-        public static void ConstantInterpolation(AnimationCurve curve)
+        public void ExportLightAnimation(AnimationImportContext ctx)
         {
-            int len = curve.length;
-            for (int i = 0; i < len; ++i)
+            var tlight = typeof(Light);
+            ctx.mainComponentType = tlight;
+            ExportTransformAnimation(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
             {
-                AnimationUtility.SetKeyBroken(curve, i, true);
-                AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
-                AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
+                clip.SetCurve(path, tlight, "m_Color", null);
+                var curves = GenCurves(msAnimationGetLightColor(self), interpolation);
+                if (curves != null && curves.Length == 4)
+                {
+                    clip.SetCurve(path, tlight, "m_Color.r", curves[0]);
+                    clip.SetCurve(path, tlight, "m_Color.g", curves[1]);
+                    clip.SetCurve(path, tlight, "m_Color.b", curves[2]);
+                    clip.SetCurve(path, tlight, "m_Color.a", curves[3]);
+                }
+            }
+            {
+                const string Target = "m_Intensity";
+                clip.SetCurve(path, tlight, Target, null);
+                var curves = GenCurves(msAnimationGetLightIntensity(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tlight, Target, curves[0]);
+            }
+            {
+                const string Target = "m_Range";
+                clip.SetCurve(path, tlight, Target, null);
+                var curves = GenCurves(msAnimationGetLightRange(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tlight, Target, curves[0]);
+            }
+            {
+                const string Target = "m_SpotAngle";
+                clip.SetCurve(path, tlight, Target, null);
+                var curves = GenCurves(msAnimationGetLightSpotAngle(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tlight, Target, curves[0]);
             }
         }
 
-        public void ExportToClip(AnimationClip clip, GameObject root, GameObject target, string path, InterpolationMethod im)
+        static List<AnimationCurveData> s_blendshapes;
+        static void BlendshapeCallback(AnimationCurveData data)
         {
-            switch (type)
+            s_blendshapes.Add(data);
+        }
+
+        public void ExportMeshAnimation(AnimationImportContext ctx)
+        {
+            var tsmr = typeof(SkinnedMeshRenderer);
+            ctx.mainComponentType = tsmr;
+            ExportTransformAnimation(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
             {
-                case TransformData.Type.Transform:
-                    ((TransformAnimationData)self).ExportToClip(clip, root, target, path, im);
+                // blendshape animation
+                clip.SetCurve(path, tsmr, "blendShape", null);
+
+                s_blendshapes = new List<AnimationCurveData>();
+                msAnimationEachBlendshapeCurves(self, BlendshapeCallback);
+                int numBS = s_blendshapes.Count;
+                for (int bi = 0; bi < numBS; ++bi)
+                {
+                    var data = s_blendshapes[bi];
+                    var curves = GenCurves(data, interpolation);
+                    if (curves != null && curves.Length == 1)
+                        clip.SetCurve(path, tsmr, "blendShape." + data.blendshapeName, curves[0]);
+                }
+                s_blendshapes = null;
+            }
+        }
+
+        public void ExportPointsAnimation(AnimationImportContext ctx)
+        {
+            var tpoints = typeof(PointCache);
+            ctx.mainComponentType = tpoints;
+            ExportTransformAnimation(ctx);
+
+            var clip = ctx.clip;
+            var path = ctx.path;
+            var interpolation = ctx.interpolation;
+
+            {
+                const string Target = "m_time";
+                clip.SetCurve(path, tpoints, Target, null);
+                var curves = GenCurves(msAnimationGetPointsTime(self), interpolation);
+                if (curves != null && curves.Length == 1)
+                    clip.SetCurve(path, tpoints, Target, curves[0]);
+            }
+        }
+
+        public void ExportToClip(AnimationImportContext ctx)
+        {
+            switch (entityType)
+            {
+                case EntityType.Transform:
+                    ExportTransformAnimation(ctx);
                     break;
-                case TransformData.Type.Camera:
-                    ((CameraAnimationData)self).ExportToClip(clip, root, target, path, im);
+                case EntityType.Camera:
+                    ExportCameraAnimation(ctx);
                     break;
-                case TransformData.Type.Light:
-                    ((LightAnimationData)self).ExportToClip(clip, root, target, path, im);
+                case EntityType.Light:
+                    ExportLightAnimation(ctx);
                     break;
-                case TransformData.Type.Mesh:
-                    ((MeshAnimationData)self).ExportToClip(clip, root, target, path, im);
+                case EntityType.Mesh:
+                    ExportMeshAnimation(ctx);
                     break;
-                case TransformData.Type.Points:
-                    ((PointsAnimationData)self).ExportToClip(clip, root, target, path, im);
+                case EntityType.Points:
+                    ExportPointsAnimation(ctx);
                     break;
             }
+
         }
 #endif
     }
@@ -1638,12 +1433,22 @@ namespace UTJ.MeshSync
         public string name { get { return Misc.S(msIdentifierGetName(self)); } }
     }
 
+    public enum EntityType
+    {
+        Unknown,
+        Transform,
+        Camera,
+        Light,
+        Mesh,
+        Points,
+    };
+
     public struct TransformData
     {
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
-        [DllImport("MeshSyncServer")] static extern Type msTransformGetType(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern EntityType msTransformGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr self);
@@ -1664,16 +1469,6 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
-        public enum Type
-        {
-            Unknown,
-            Transform,
-            Camera,
-            Light,
-            Mesh,
-            Points,
-        };
-
         public static explicit operator TransformData(IntPtr v) { return new TransformData { self = v }; }
         public static explicit operator CameraData(TransformData v) { return new CameraData { self = v.self }; }
         public static explicit operator LightData(TransformData v) { return new LightData { self = v.self }; }
@@ -1685,7 +1480,7 @@ namespace UTJ.MeshSync
             return msTransformCreate();
         }
 
-        public Type type
+        public EntityType entityType
         {
             get { return msTransformGetType(self); }
         }
@@ -1751,14 +1546,12 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msCameraSetNearPlane(IntPtr self, float v);
         [DllImport("MeshSyncServer")] static extern float msCameraGetFarPlane(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msCameraSetFarPlane(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetHorizontalAperture(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetHorizontalAperture(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetVerticalAperture(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetVerticalAperture(IntPtr self, float v);
         [DllImport("MeshSyncServer")] static extern float msCameraGetFocalLength(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msCameraSetFocalLength(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetFocusDistance(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetFocusDistance(IntPtr self, float v);
+        [DllImport("MeshSyncServer")] static extern void msCameraGetSensorSize(IntPtr self, ref Vector2 v);
+        [DllImport("MeshSyncServer")] static extern void msCameraSetSensorSize(IntPtr self, ref Vector2 v);
+        [DllImport("MeshSyncServer")] static extern void msCameraGetLensShift(IntPtr self, ref Vector2 v);
+        [DllImport("MeshSyncServer")] static extern void msCameraSetLensShift(IntPtr self, ref Vector2 v);
         #endregion
 
 
@@ -1787,25 +1580,20 @@ namespace UTJ.MeshSync
             get { return msCameraGetFarPlane(self); }
             set { msCameraSetFarPlane(self, value); }
         }
-        public float horizontalAperture
-        {
-            get { return msCameraGetHorizontalAperture(self); }
-            set { msCameraSetHorizontalAperture(self, value); }
-        }
-        public float verticalAperture
-        {
-            get { return msCameraGetVerticalAperture(self); }
-            set { msCameraSetVerticalAperture(self, value); }
-        }
         public float focalLength
         {
             get { return msCameraGetFocalLength(self); }
             set { msCameraSetFocalLength(self, value); }
         }
-        public float focusDistance
+        public Vector2 sensorSize
         {
-            get { return msCameraGetFocusDistance(self); }
-            set { msCameraSetFocusDistance(self, value); }
+            get { var v = Vector2.zero; msCameraGetSensorSize(self, ref v); return v; }
+            set { msCameraSetSensorSize(self, ref value); }
+        }
+        public Vector2 lensShift
+        {
+            get { var v = Vector2.zero; msCameraGetLensShift(self, ref v); return v; }
+            set { msCameraSetLensShift(self, ref value); }
         }
     }
 
@@ -1892,6 +1680,7 @@ namespace UTJ.MeshSync
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern int msSplitGetNumBoneWeights(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsSize(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr self);
@@ -1900,6 +1689,7 @@ namespace UTJ.MeshSync
 
         public int numPoints { get { return msSplitGetNumPoints(self); } }
         public int numIndices { get { return msSplitGetNumIndices(self); } }
+        public int numBoneWeights { get { return msSplitGetNumBoneWeights(self); } }
         public Bounds bounds { get { return new Bounds(msSplitGetBoundsCenter(self), msSplitGetBoundsSize(self)); } }
         public int numSubmeshes { get { return msSplitGetNumSubmeshes(self); } }
 
@@ -1914,7 +1704,9 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msBlendShapeSetName(IntPtr self, string v);
         [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msBlendShapeSetWeight(IntPtr self, float v);
         [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
         [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst, SplitData split);
@@ -1926,10 +1718,12 @@ namespace UTJ.MeshSync
         public string name
         {
             get { return Misc.S(msBlendShapeGetName(self)); }
+            set { msBlendShapeSetName(self, value); }
         }
         public float weight
         {
             get { return msBlendShapeGetWeight(self); }
+            set { msBlendShapeSetWeight(self, value); }
         }
         public float numFrames
         {
@@ -2053,8 +1847,13 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
         [DllImport("MeshSyncServer")] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst, SplitData split);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadWeights4(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteWeights4(IntPtr self, BoneWeight[] weights, int size);
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
+#if UNITY_2019_1_OR_NEWER
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights, int numWeights);
+#endif
         [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr self, IntPtr dst, SplitData split);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
         [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
@@ -2101,7 +1900,11 @@ namespace UTJ.MeshSync
         public void ReadUV1(PinnedList<Vector2> dst, SplitData split) { msMeshReadUV1(self, dst, split); }
         public void ReadColors(PinnedList<Color> dst, SplitData split) { msMeshReadColors(self, dst, split); }
         public void ReadVelocities(PinnedList<Vector3> dst, SplitData split) { msMeshReadVelocities(self, dst, split); }
-        public void ReadBoneWeights(IntPtr dst, SplitData split) { msMeshReadWeights4(self, dst, split); }
+        public void ReadBoneWeights4(IntPtr dst, SplitData split) { msMeshReadBoneWeights4(self, dst, split); }
+#if UNITY_2019_1_OR_NEWER
+        public void ReadBoneCounts(IntPtr dst, SplitData split) { msMeshReadBoneCounts(self, dst, split); }
+        public void ReadBoneWeightsV(IntPtr dst, SplitData split) { msMeshReadBoneWeightsV(self, dst, split); }
+#endif
         public void ReadIndices(IntPtr dst, SplitData split) { msMeshReadIndices(self, dst, split); }
 
         public void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
@@ -2111,7 +1914,13 @@ namespace UTJ.MeshSync
         public void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
         public void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
         public void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
-        public void WriteWeights(BoneWeight[] v) { msMeshWriteWeights4(self, v, v.Length); }
+        public void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
+#if UNITY_2019_1_OR_NEWER
+        public void WriteBoneWeightsV(ref NativeArray<byte> counts, ref NativeArray<BoneWeight1> weights)
+        {
+            msMeshWriteBoneWeightsV(self, Misc.ForceGetPointer(ref counts), counts.Length, Misc.ForceGetPointer(ref weights), weights.Length);
+        }
+#endif
         public void WriteIndices(int[] v) { msMeshWriteIndices(self, v, v.Length); }
 
         public Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }

@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya.cpp">
-      <Filter>MeshSyncClientMaya</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncClientMaya/pch.cpp">
-      <Filter>MeshSyncClientMaya</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya_extract.cpp">
       <Filter>MeshSyncClientMaya</Filter>
     </ClCompile>
     <ClCompile Include="MeshSyncClientMaya\msmayaUtils.cpp">
       <Filter>MeshSyncClientMaya</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientMaya\msmayaCommands.cpp">
+    <ClCompile Include="MeshSyncClientMaya\msmayaContext.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya\MeshSyncClientMaya.cpp">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncClientMaya\msmayaCommand.cpp">
       <Filter>MeshSyncClientMaya</Filter>
     </ClCompile>
   </ItemGroup>
@@ -21,16 +21,16 @@
     <ClInclude Include="MeshSyncClientMaya/pch.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMaya\MeshSyncClientMaya.h">
-      <Filter>MeshSyncClientMaya</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSyncClientMaya\msmayaUtils.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMaya\msmayaCommands.h">
+    <ClInclude Include="MeshSyncClientMaya\MayaLTSupport.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientMaya\MayaLTSupport.h">
+    <ClInclude Include="MeshSyncClientMaya\msmayaContext.h">
+      <Filter>MeshSyncClientMaya</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSyncClientMaya\msmayaCommand.h">
       <Filter>MeshSyncClientMaya</Filter>
     </ClInclude>
   </ItemGroup>
