@@ -60,7 +60,7 @@ public:
     void dbgDumpItem(CLxUser_Item item);
 
 public:
-    LXtItemType tMaterial = 0,
+    LXtItemType tMaterial = 0, tMask,
                 tLocator, tCamera, tLight, tMesh, tMeshInst, tReplicator,
                 tLightMaterial, tPointLight, tDirectionalLight, tSpotLight, tAreaLight,
                 tDeform, tGenInf, tMorph,

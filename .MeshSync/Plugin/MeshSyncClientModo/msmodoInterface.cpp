@@ -146,6 +146,7 @@ bool msmodoInterface::prepare()
 
     if (tMaterial == 0) {
         tMaterial = m_svc_scene.ItemType(LXsITYPE_ADVANCEDMATERIAL);
+        tMask = m_svc_scene.ItemType(LXsITYPE_MASK);
 
         tLocator = m_svc_scene.ItemType(LXsITYPE_LOCATOR);
         tCamera = m_svc_scene.ItemType(LXsITYPE_CAMERA);
