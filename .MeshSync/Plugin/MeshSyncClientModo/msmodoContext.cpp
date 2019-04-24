@@ -393,11 +393,9 @@ bool msmodoContext::recvObjects()
 ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item obj)
 {
     CLxUser_Item mask;
-    std::string ptagtype;
     std::string ptag;
     for (CLxUser_Item i = GetParent(obj); i; i = GetParent(i)) {
-        m_ch_read.GetString(i, LXsICHAN_MASK_PTYP, ptagtype);
-        if (ptagtype == "Material") {
+        if (i.Type() == tMask) {
             mask = i;
             m_ch_read.GetString(i, LXsICHAN_MASK_PTAG, ptag);
             break;
