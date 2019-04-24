@@ -1666,6 +1666,7 @@ namespace UTJ.MeshSync
             var cam = Misc.GetOrAddComponent<Camera>(trans.gameObject);
             cam.orthographic = data.orthographic;
 
+#if UNITY_2018_1_OR_NEWER
             // use physical camera params if available
             float focalLength = data.focalLength;
             if (focalLength > 0.0f)
@@ -1679,6 +1680,7 @@ namespace UTJ.MeshSync
                 cam.lensShift = data.lensShift;
             }
             else
+#endif
             {
                 float fov = data.fov;
                 if (fov > 0.0f)

@@ -1207,6 +1207,7 @@ namespace UTJ.MeshSync
             var path = ctx.path;
             var interpolation = ctx.interpolation;
 
+#if UNITY_2018_1_OR_NEWER
             // use physical camera params if available
             bool usePhysicalCameraParams = false;
             {
@@ -1241,6 +1242,7 @@ namespace UTJ.MeshSync
                 }
             }
             else
+#endif
             {
                 const string Target = "field of view";
                 clip.SetCurve(path, tcam, Target, null);
