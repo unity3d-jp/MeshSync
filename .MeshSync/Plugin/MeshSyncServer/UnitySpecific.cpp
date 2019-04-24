@@ -5,17 +5,106 @@
 
 using namespace mu;
 
-struct Keyframe
+struct KFEditor
+{
+    int tangent_mode;
+
+    int   getTangentMode() const { return tangent_mode; }
+    void  setTangentMode(int v) { tangent_mode = v; }
+};
+
+struct KFRuntime
+{
+    int   getTangentMode() const { return 0; }
+    void  setTangentMode(int v) {}
+};
+
+
+
+struct Keyframe_R
 {
     float time;
     float value;
     float in_tangent;
     float out_tangent;
-    int tangent_mode; // #ifdef UNITY_EDITOR
+
+    int   getTangentMode() const { return 0; }
+    void  setTangentMode(int v) {}
+
+    int   getWeightedMode() const { return 0; }
+    void  setWeightedMode(int v) {}
+    float getInWeight() const { return 0.0f; }
+    void  setInWeight(float v) {}
+    float getOutWeight() const { return 0.0f; }
+    void  setOutWeight(float v) {}
+};
+
+struct Keyframe_E
+{
+    float time;
+    float value;
+    float in_tangent;
+    float out_tangent;
+
+    int tangent_mode; // editor only
+
+    int   getTangentMode() const { return tangent_mode; }
+    void  setTangentMode(int v) { tangent_mode = v; }
+
+    int   getWeightedMode() const { return 0; }
+    void  setWeightedMode(int v) {}
+    float getInWeight() const { return 0.0f; }
+    void  setInWeight(float v) {}
+    float getOutWeight() const { return 0.0f; }
+    void  setOutWeight(float v) {}
+};
+
+struct Keyframe_RW
+{
+    float time;
+    float value;
+    float in_tangent;
+    float out_tangent;
+
     int weighted_mode;
     float in_weight;
     float out_weight;
+
+    int   getTangentMode() const { return 0; }
+    void  setTangentMode(int v) {}
+
+    int   getWeightedMode() const { return weighted_mode; }
+    void  setWeightedMode(int v) { weighted_mode = v; }
+    float getInWeight() const { return in_weight; }
+    void  setInWeight(float v) { in_weight = v; }
+    float getOutWeight() const { return out_weight; }
+    void  setOutWeight(float v) { out_weight = v; }
 };
+
+struct Keyframe_EW
+{
+    float time;
+    float value;
+    float in_tangent;
+    float out_tangent;
+
+    int tangent_mode; // editor only
+
+    int weighted_mode;
+    float in_weight;
+    float out_weight;
+
+    int   getTangentMode() const { return tangent_mode; }
+    void  setTangentMode(int v) { tangent_mode = v; }
+
+    int   getWeightedMode() const { return weighted_mode; }
+    void  setWeightedMode(int v) { weighted_mode = v; }
+    float getInWeight() const { return in_weight; }
+    void  setInWeight(float v) { in_weight = v; }
+    float getOutWeight() const { return out_weight; }
+    void  setOutWeight(float v) { out_weight = v; }
+};
+
 
 enum InterpolationMode
 {
@@ -38,7 +127,8 @@ const float kTimeEpsilon = 0.00001f;
 const float kDefaultWeight = 1.0f / 3.0f;
 const float kCurveTimeEpsilon = 0.00001f;
 
-static inline float LinearTangent(IArray<Keyframe>& curve, int i1, int i2)
+template<class KF>
+static inline float LinearTangent(IArray<KF>& curve, int i1, int i2)
 {
     const auto& k1 = curve[i1];
     const auto& k2 = curve[i2];
@@ -50,14 +140,16 @@ static inline float LinearTangent(IArray<Keyframe>& curve, int i1, int i2)
     return (k2.value - k1.value) / dt;
 }
 
-static inline TangentMode GetLeftTangentMode(const Keyframe& key)
+template<class KF>
+static inline TangentMode GetLeftTangentMode(const KF& key)
 {
-    return static_cast<TangentMode>((key.tangent_mode & kLeftTangentMask) >> 1);
+    return static_cast<TangentMode>((key.getTangentMode() & kLeftTangentMask) >> 1);
 }
 
-static inline TangentMode GetRightTangentMode(const Keyframe& key)
+template<class KF>
+static inline TangentMode GetRightTangentMode(const KF& key)
 {
-    return static_cast<TangentMode>((key.tangent_mode & kRightTangentMask) >> 5);
+    return static_cast<TangentMode>((key.getTangentMode() & kRightTangentMask) >> 5);
 }
 
 static inline float SafeDiv(float y, float x)
@@ -68,7 +160,8 @@ static inline float SafeDiv(float y, float x)
         return 0;
 }
 
-static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias)
+template<class KF>
+static inline void SmoothTangents(IArray<KF>& curve, int index, float bias)
 {
     if (curve.size() < 2)
         return;
@@ -77,14 +170,18 @@ static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias
     if (index == 0) {
         key.in_tangent = key.out_tangent = 0;
 
-        if (curve.size() > 1)
-            key.in_weight = key.out_weight = kDefaultWeight;
+        if (curve.size() > 1) {
+            key.setInWeight(kDefaultWeight);
+            key.setOutWeight(kDefaultWeight);
+        }
     }
     else if (index == curve.size() - 1) {
         key.in_tangent = key.out_tangent = 0;
 
-        if (curve.size() > 1)
-            key.in_weight = key.out_weight = kDefaultWeight;
+        if (curve.size() > 1) {
+            key.setInWeight(kDefaultWeight);
+            key.setOutWeight(kDefaultWeight);
+        }
     }
     else {
         float dx1 = key.time - curve[index - 1].time;
@@ -131,12 +228,13 @@ static inline void SmoothTangents(IArray<Keyframe>& curve, int index, float bias
             key.in_tangent = key.out_tangent = 0.0f;
         }
 
-        key.in_weight = kDefaultWeight;
-        key.out_weight = kDefaultWeight;
+        key.setInWeight(kDefaultWeight);
+        key.setOutWeight(kDefaultWeight);
     }
 }
 
-static inline void UpdateTangents(IArray<Keyframe>& curve, int index)
+template<class KF>
+static inline void UpdateTangents(IArray<KF>& curve, int index)
 {
     auto& key = curve[index];
 
@@ -157,7 +255,8 @@ static inline void UpdateTangents(IArray<Keyframe>& curve, int index)
         key.out_tangent = std::numeric_limits<float>::infinity();
 }
 
-static void SetTangentMode(Keyframe *key, int n, InterpolationMode im)
+template<class KF>
+static void SetTangentMode(KF *key, int n, InterpolationMode im)
 {
     TangentMode tangent_mode;
     switch (im) {
@@ -168,24 +267,27 @@ static void SetTangentMode(Keyframe *key, int n, InterpolationMode im)
 
     for (int i = 0; i < n; ++i) {
         auto& k = key[i];
-        k.tangent_mode |= kBrokenMask;
+        int tm = k.getTangentMode();
+        tm |= kBrokenMask;
+        tm &= ~kLeftTangentMask;
+        tm |= (int)tangent_mode << 1;
+        tm &= ~kRightTangentMask;
+        tm |= (int)tangent_mode << 5;
+        k.setTangentMode(tm);
 
-        k.tangent_mode &= ~kLeftTangentMask;
-        k.tangent_mode |= (int)tangent_mode << 1;
-
-        k.tangent_mode &= ~kRightTangentMask;
-        k.tangent_mode |= (int)tangent_mode << 5;
-
-        k.in_weight = k.out_weight = kDefaultWeight;
+        k.setInWeight(kDefaultWeight);
+        k.setOutWeight(kDefaultWeight);
     }
 
-    IArray<Keyframe> curve{ key, (size_t)n };
+    IArray<KF> curve{ key, (size_t)n };
     for (int i = 0; i < n; ++i)
         UpdateTangents(curve, i);
 }
 
-static inline void FillCurve(const ms::TAnimationCurve<int>& src, Keyframe *x, InterpolationMode it)
+template<class KF>
+static inline void FillCurve(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it)
 {
+    KF *x = (KF*)x_;
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -194,8 +296,11 @@ static inline void FillCurve(const ms::TAnimationCurve<int>& src, Keyframe *x, I
     }
     SetTangentMode(x, n, it);
 }
-static inline void FillCurve(const ms::TAnimationCurve<float>& src, Keyframe *x, InterpolationMode it)
+
+template<class KF>
+static inline void FillCurve(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it)
 {
+    KF *x = (KF*)x_;
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -204,8 +309,12 @@ static inline void FillCurve(const ms::TAnimationCurve<float>& src, Keyframe *x,
     }
     SetTangentMode(x, n, it);
 }
-static inline void FillCurves(const ms::TAnimationCurve<float2>& src, Keyframe *x, Keyframe *y, InterpolationMode it)
+
+template<class KF>
+static inline void FillCurves(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it)
 {
+    KF *x = (KF*)x_;
+    KF *y = (KF*)y_;
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -217,8 +326,14 @@ static inline void FillCurves(const ms::TAnimationCurve<float2>& src, Keyframe *
     SetTangentMode(x, n, it);
     SetTangentMode(y, n, it);
 }
-static inline void FillCurves(const ms::TAnimationCurve<float3>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+
+template<class KF>
+static inline void FillCurves(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it)
 {
+    KF *x = (KF*)x_;
+    KF *y = (KF*)y_;
+    KF *z = (KF*)z_;
+
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -233,8 +348,41 @@ static inline void FillCurves(const ms::TAnimationCurve<float3>& src, Keyframe *
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
 }
-static inline void FillCurves(const ms::TAnimationCurve<float4>& src, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+
+template<class KF>
+static inline void FillCurves(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
 {
+    KF *x = (KF*)x_;
+    KF *y = (KF*)y_;
+    KF *z = (KF*)z_;
+    KF *w = (KF*)w_;
+
+    int n = (int)src.size();
+    for (int i = 0; i < n; ++i) {
+        const auto v = src[i];
+        x[i].time = v.time;
+        x[i].value = v.value.x;
+        y[i].time = v.time;
+        y[i].value = v.value.y;
+        z[i].time = v.time;
+        z[i].value = v.value.z;
+        w[i].time = v.time;
+        w[i].value = v.value.w;
+    }
+    SetTangentMode(x, n, it);
+    SetTangentMode(y, n, it);
+    SetTangentMode(z, n, it);
+    SetTangentMode(w, n, it);
+
+}
+template<class KF>
+static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
+{
+    KF *x = (KF*)x_;
+    KF *y = (KF*)y_;
+    KF *z = (KF*)z_;
+    KF *w = (KF*)w_;
+
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -252,27 +400,14 @@ static inline void FillCurves(const ms::TAnimationCurve<float4>& src, Keyframe *
     SetTangentMode(z, n, it);
     SetTangentMode(w, n, it);
 }
-static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+
+template<class KF>
+static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it)
 {
-    int n = (int)src.size();
-    for (int i = 0; i < n; ++i) {
-        const auto v = src[i];
-        x[i].time = v.time;
-        x[i].value = v.value.x;
-        y[i].time = v.time;
-        y[i].value = v.value.y;
-        z[i].time = v.time;
-        z[i].value = v.value.z;
-        w[i].time = v.time;
-        w[i].value = v.value.w;
-    }
-    SetTangentMode(x, n, it);
-    SetTangentMode(y, n, it);
-    SetTangentMode(z, n, it);
-    SetTangentMode(w, n, it);
-}
-static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
-{
+    KF *x = (KF*)x_;
+    KF *y = (KF*)y_;
+    KF *z = (KF*)z_;
+
     int n = (int)src.size();
     float3 prev;
     for (int i = 0; i < n; ++i) {
@@ -281,23 +416,23 @@ static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, Keyfra
         if (i > 0) {
             // make continuous
             auto d = r - mu::mod(prev, 360.0f);
-            auto x = mu::abs(d);
+            auto x0 = mu::abs(d);
             auto x1 = mu::abs(d - 360.0f);
             auto x2 = mu::abs(d + 360.0f);
 
-            if (x1.x < x.x)
+            if (x1.x < x0.x)
                 r.x -= 360.0f;
-            else if (x2.x < x.x)
+            else if (x2.x < x0.x)
                 r.x += 360.0f;
 
-            if (x1.y < x.y)
+            if (x1.y < x0.y)
                 r.y -= 360.0f;
-            else if (x2.y < x.y)
+            else if (x2.y < x0.y)
                 r.y += 360.0f;
 
-            if (x1.z < x.z)
+            if (x1.z < x0.z)
                 r.z -= 360.0f;
-            else if (x2.z < x.z)
+            else if (x2.z < x0.z)
                 r.z += 360.0f;
 
             auto c = prev / 360.0f;
@@ -318,53 +453,69 @@ static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, Keyfra
     SetTangentMode(z, n, it);
 }
 
-msAPI bool msCurveFillI(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
+static int g_sizeof_keyframe = 0;
+
+msAPI void msSetSizeOfKeyframe(int v)
+{
+    g_sizeof_keyframe = v;
+}
+
+#define Switch(Func, ...)\
+    switch (g_sizeof_keyframe) {\
+        case sizeof(Keyframe_EW): Func<Keyframe_EW>(__VA_ARGS__); break;\
+        case sizeof(Keyframe_RW): Func<Keyframe_EW>(__VA_ARGS__); break;\
+        case sizeof(Keyframe_E): Func<Keyframe_E>(__VA_ARGS__); break;\
+        case sizeof(Keyframe_R): Func<Keyframe_R>(__VA_ARGS__); break;\
+        default: return false;\
+    }\
+
+msAPI bool msCurveFillI(ms::AnimationCurve *self, void *x, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Int)
         return false;
-    FillCurve(ms::TAnimationCurve<int>(*self), x, it);
+    Switch(FillCurve, ms::TAnimationCurve<int>(*self), x, it);
     return true;
 }
-msAPI bool msCurveFillF(ms::AnimationCurve *self, Keyframe *x, InterpolationMode it)
+msAPI bool msCurveFillF(ms::AnimationCurve *self, void *x, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Float)
         return false;
-    FillCurve(ms::TAnimationCurve<float>(*self), x, it);
+    Switch(FillCurve, ms::TAnimationCurve<float>(*self), x, it);
     return true;
 }
-msAPI bool msCurveFillF2(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, InterpolationMode it)
+msAPI bool msCurveFillF2(ms::AnimationCurve *self, void *x, void *y, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Float2)
         return false;
-    FillCurves(ms::TAnimationCurve<float2>(*self), x, y, it);
+    Switch(FillCurves, ms::TAnimationCurve<float2>(*self), x, y, it);
     return true;
 }
-msAPI bool msCurveFillF3(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI bool msCurveFillF3(ms::AnimationCurve *self, void *x, void *y, void *z, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Float3)
         return false;
-    FillCurves(ms::TAnimationCurve<float3>(*self), x, y, z, it);
+    Switch(FillCurves, ms::TAnimationCurve<float3>(*self), x, y, z, it);
     return true;
 }
-msAPI bool msCurveFillF4(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+msAPI bool msCurveFillF4(ms::AnimationCurve *self, void *x, void *y, void *z, void *w, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Float4)
         return false;
-    FillCurves(ms::TAnimationCurve<float4>(*self), x, y, z, w, it);
+    Switch(FillCurves, ms::TAnimationCurve<float4>(*self), x, y, z, w, it);
     return true;
 }
-msAPI bool msCurveFillQuat(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, Keyframe *w, InterpolationMode it)
+msAPI bool msCurveFillQuat(ms::AnimationCurve *self, void *x, void *y, void *z, void *w, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Quaternion)
         return false;
-    FillCurves(ms::TAnimationCurve<quatf>(*self), x, y, z, w, it);
+    Switch(FillCurves, ms::TAnimationCurve<quatf>(*self), x, y, z, w, it);
     return true;
 }
-msAPI bool msCurveFillEuler(ms::AnimationCurve *self, Keyframe *x, Keyframe *y, Keyframe *z, InterpolationMode it)
+msAPI bool msCurveFillEuler(ms::AnimationCurve *self, void *x, void *y, void *z, InterpolationMode it)
 {
     if (self->data_type != ms::AnimationCurve::DataType::Quaternion)
         return false;
-    FillCurvesEuler(ms::TAnimationCurve<quatf>(*self), x, y, z, it);
+    Switch(FillCurvesEuler, ms::TAnimationCurve<quatf>(*self), x, y, z, it);
     return true;
 }
-
+#undef Switch
