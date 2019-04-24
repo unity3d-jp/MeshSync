@@ -176,6 +176,9 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
         [Space(10)]
+#if UNITY_2018_1_OR_NEWER
+        [SerializeField] bool m_usePhysicalCameraParams = false;
+#endif
         [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
@@ -1669,7 +1672,7 @@ namespace UTJ.MeshSync
 #if UNITY_2018_1_OR_NEWER
             // use physical camera params if available
             float focalLength = data.focalLength;
-            if (focalLength > 0.0f)
+            if (m_usePhysicalCameraParams && focalLength > 0.0f)
             {
                 cam.usePhysicalProperties = true;
                 cam.focalLength = focalLength;
@@ -1956,6 +1959,9 @@ namespace UTJ.MeshSync
                     path = animPath,
                     interpolation = m_animtionInterpolation,
                     enableVisibility = m_syncVisibility,
+#if UNITY_2018_1_OR_NEWER
+                    usePhysicalCameraParams = m_usePhysicalCameraParams,
+#endif
                 };
                 data.ExportToClip(ctx);
             }

@@ -964,6 +964,9 @@ namespace UTJ.MeshSync
         public string path;
         public InterpolationMode interpolation;
         public bool enableVisibility;
+#if UNITY_2018_1_OR_NEWER
+        public bool usePhysicalCameraParams;
+#endif
         public Type mainComponentType;
     }
 
@@ -1031,6 +1034,7 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
+        [DllImport("MeshSyncServer")] static extern void msSetSizeOfKeyframe(int v);
         [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr self);
         [DllImport("MeshSyncServer")] static extern EntityType msAnimationGetEntityType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msAnimationGetNumCurves(IntPtr self);
@@ -1074,6 +1078,8 @@ namespace UTJ.MeshSync
         {
             if (!data)
                 return null;
+
+            msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
             int n = data.numSamples;
             var t = data.dataType;
             if (n == 0 || t == AnimationCurveData.DataType.Unknown)
@@ -1209,7 +1215,8 @@ namespace UTJ.MeshSync
 
 #if UNITY_2018_1_OR_NEWER
             // use physical camera params if available
-            bool usePhysicalCameraParams = false;
+            bool isPhysicalCameraParamsAvailable = false;
+            if (ctx.usePhysicalCameraParams)
             {
                 const string Target = "m_FocalLength";
                 clip.SetCurve(path, tcam, Target, null);
@@ -1217,10 +1224,10 @@ namespace UTJ.MeshSync
                 if (curves != null && curves.Length == 1)
                 {
                     clip.SetCurve(path, tcam, Target, curves[0]);
-                    usePhysicalCameraParams = true;
+                    isPhysicalCameraParamsAvailable = true;
                 }
             }
-            if (usePhysicalCameraParams)
+            if (isPhysicalCameraParamsAvailable)
             {
                 {
                     clip.SetCurve(path, tcam, "m_SensorSize", null);
