@@ -679,12 +679,12 @@ namespace UTJ.MeshSync
 #endif
         }
 
-        bool CreateAsset(UnityEngine.Object obj, string assetPath)
+        bool SaveAsset<T>(T obj, string assetPath) where T : UnityEngine.Object
         {
 #if UNITY_EDITOR
             return Try(() =>
             {
-                AssetDatabase.CreateAsset(obj, Misc.SanitizeFileName(assetPath));
+                Misc.SaveAsset(obj, assetPath);
             });
 #else
             return false;
@@ -1939,7 +1939,7 @@ namespace UTJ.MeshSync
                             clipName = root.name;
 
                         var dstPath = assetPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
-                        CreateAsset(clip, dstPath);
+                        SaveAsset(clip, dstPath);
                         animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                         animClipCache[root.gameObject] = clip;
                     }
@@ -2279,7 +2279,7 @@ namespace UTJ.MeshSync
                 if (AssetDatabase.GetAssetPath(material) == "")
                 {
                     string dstPath = assetPath + "/" + material.name + ".mat";
-                    CreateAsset(material, dstPath);
+                    SaveAsset(material, dstPath);
                     if (m_logging)
                         Debug.Log("exported material " + dstPath);
                 }
@@ -2300,7 +2300,7 @@ namespace UTJ.MeshSync
                 return;
 
             var dstPath = assetPath + "/" + mesh.name + ".asset";
-            CreateAsset(mesh, dstPath);
+            SaveAsset(mesh, dstPath);
             if (m_logging)
                 Debug.Log("exported mesh " + dstPath);
 

@@ -51,6 +51,26 @@ namespace UTJ.MeshSync
             return ret;
         }
 
+#if UNITY_EDITOR
+        public static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
+        {
+            path = Misc.SanitizeFileName(path);
+            // to keep meta, rewrite the existing one if already exists.
+            T ret = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (ret == null)
+            {
+                AssetDatabase.CreateAsset(asset, path);
+                ret = asset;
+            }
+            else
+            {
+                EditorUtility.CopySerialized(asset, ret);
+                EditorUtility.SetDirty(ret);
+            }
+            return ret;
+        }
+#endif
+
         public static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
         {
             switch (v)
