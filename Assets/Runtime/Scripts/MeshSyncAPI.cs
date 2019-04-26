@@ -54,20 +54,27 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
         public static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
         {
-            path = Misc.SanitizeFileName(path);
-            // to keep meta, rewrite the existing one if already exists.
-            T ret = AssetDatabase.LoadAssetAtPath<T>(path);
-            if (ret == null)
+            try
             {
-                AssetDatabase.CreateAsset(asset, path);
-                ret = asset;
+                path = Misc.SanitizeFileName(path);
+
+                // to keep meta, rewrite the existing one if already exists.
+                T loadedAsset = AssetDatabase.LoadAssetAtPath<T>(path);
+                if (loadedAsset != null)
+                {
+                    EditorUtility.CopySerialized(asset, loadedAsset);
+                    return loadedAsset;
+                }
+                else
+                {
+                    AssetDatabase.CreateAsset(asset, path);
+                    return asset;
+                }
             }
-            else
+            catch(Exception)
             {
-                EditorUtility.CopySerialized(asset, ret);
-                EditorUtility.SetDirty(ret);
+                return null;
             }
-            return ret;
         }
 #endif
 

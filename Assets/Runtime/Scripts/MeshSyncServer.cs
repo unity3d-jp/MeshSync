@@ -679,16 +679,20 @@ namespace UTJ.MeshSync
 #endif
         }
 
-        bool SaveAsset<T>(T obj, string assetPath) where T : UnityEngine.Object
+        // this function has a complex behavior to keep existing .meta:
+        //  if an asset already exists in assetPath, load it and copy the content of obj to it and replace obj with it.
+        //  otherwise obj is simply saved by AssetDatabase.CreateAsset().
+        bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
         {
 #if UNITY_EDITOR
-            return Try(() =>
+            var ret = Misc.SaveAsset(obj, assetPath);
+            if (ret != null)
             {
-                Misc.SaveAsset(obj, assetPath);
-            });
-#else
-            return false;
+                obj = ret;
+                return true;
+            }
 #endif
+            return false;
         }
 
         bool IsAsset(UnityEngine.Object obj)
@@ -1939,7 +1943,7 @@ namespace UTJ.MeshSync
                             clipName = root.name;
 
                         var dstPath = assetPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
-                        SaveAsset(clip, dstPath);
+                        SaveAsset(ref clip, dstPath);
                         animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                         animClipCache[root.gameObject] = clip;
                     }
@@ -1971,7 +1975,7 @@ namespace UTJ.MeshSync
                     kvp.Value.EnsureQuaternionContinuity();
 
             //Debug.Log("UpdateAnimation() " + (Time.realtimeSinceStartup - start) + " sec");
-            
+
             // fire event
             if (onUpdateAnimation != null)
                 foreach (var kvp in animClipCache)
@@ -2279,7 +2283,7 @@ namespace UTJ.MeshSync
                 if (AssetDatabase.GetAssetPath(material) == "")
                 {
                     string dstPath = assetPath + "/" + material.name + ".mat";
-                    SaveAsset(material, dstPath);
+                    SaveAsset(ref material, dstPath);
                     if (m_logging)
                         Debug.Log("exported material " + dstPath);
                 }
@@ -2300,7 +2304,7 @@ namespace UTJ.MeshSync
                 return;
 
             var dstPath = assetPath + "/" + mesh.name + ".asset";
-            SaveAsset(mesh, dstPath);
+            SaveAsset(ref mesh, dstPath);
             if (m_logging)
                 Debug.Log("exported mesh " + dstPath);
 
