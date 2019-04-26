@@ -1,6 +1,6 @@
 call toolchain.bat
 call :BuildMQ4 .64 mqsdk464
-call :BuildMQ4 .7beta mqsdk47_beta3
+call :BuildMQ4 .70 mqsdk470
 call :BuildMQ3
 exit /B 0
 

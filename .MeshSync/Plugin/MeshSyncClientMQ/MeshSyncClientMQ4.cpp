@@ -54,10 +54,18 @@ const char *MeshSyncClientPlugin::GetPlugInName(void)
 //    ポップアップメニューに表示される文字列を返す。
 //    この関数は起動時に呼び出される。
 //---------------------------------------------------------------------------
+#if MQPLUGIN_VERSION >= 0x0470
+const wchar_t *MeshSyncClientPlugin::EnumString(void)
+{
+    return L"Unity Mesh Sync";
+}
+#else
 const char *MeshSyncClientPlugin::EnumString(void)
 {
     return "Unity Mesh Sync";
 }
+#endif
+
 
 
 //---------------------------------------------------------------------------

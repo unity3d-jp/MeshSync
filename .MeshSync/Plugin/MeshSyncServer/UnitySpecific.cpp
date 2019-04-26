@@ -5,21 +5,6 @@
 
 using namespace mu;
 
-struct KFEditor
-{
-    int tangent_mode;
-
-    int   getTangentMode() const { return tangent_mode; }
-    void  setTangentMode(int v) { tangent_mode = v; }
-};
-
-struct KFRuntime
-{
-    int   getTangentMode() const { return 0; }
-    void  setTangentMode(int v) {}
-};
-
-
 
 struct Keyframe_R
 {
@@ -90,9 +75,9 @@ struct Keyframe_EW
 
     int tangent_mode; // editor only
 
-    int weighted_mode;
-    float in_weight;
-    float out_weight;
+    int weighted_mode;// 
+    float in_weight;  // 
+    float out_weight; // Unity 2018.1-?
 
     int   getTangentMode() const { return tangent_mode; }
     void  setTangentMode(int v) { tangent_mode = v; }

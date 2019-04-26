@@ -6,16 +6,21 @@ cd External
 7z\7za.exe x -aos External.7z
 cd ..
 
+echo "downloading mqsdk470.zip ..."
+powershell.exe -Command "wget http://www.metaseq.net/metaseq/mqsdk470.zip -OutFile External/mqsdk470.zip"
+cd External
+7z\7za.exe x -aos -o"mqsdk470" mqsdk470.zip
+cd ..
+
 echo "downloading mqsdk464.zip ..."
 powershell.exe -Command "wget http://www.metaseq.net/metaseq/mqsdk464.zip -OutFile External/mqsdk464.zip"
 cd External
 7z\7za.exe x -aos mqsdk464.zip
-mklink /J mqsdk4 mqsdk464\mqsdk
 cd ..
 
 echo "downloading mqsdk249c.zip ..."
 powershell.exe -Command "wget http://www.metaseq.net/metaseq/mqsdk249c.zip -OutFile External/mqsdk249c.zip"
 cd External
-7z\7za.exe x -omqsdk249c -aos mqsdk249c.zip
+7z\7za.exe x -aos -o"mqsdk249c" mqsdk249c.zip
 mklink /J mqsdk3 mqsdk249c\mqsdk
 cd ..

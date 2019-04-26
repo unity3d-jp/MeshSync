@@ -20,7 +20,11 @@ public:
     // プラグイン名を返す。
     const char *GetPlugInName(void) override;
     // ポップアップメニューに表示される文字列を返す。
+#if MQPLUGIN_VERSION >= 0x0470
+    const wchar_t *EnumString(void) override;
+#else
     const char *EnumString(void) override;
+#endif
     // サブコマンド前を列挙
     const char *EnumSubCommand(int index) override;
     // サブコマンドの文字列を列挙
