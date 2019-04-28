@@ -2331,7 +2331,15 @@ namespace UTJ.MeshSync
             }
 
             var dstPath = assetPath + "/" + mesh.name + ".asset";
-            CreateAsset(instancedMesh, dstPath);
+
+            // avoid overwrite existing mesh file, update mesh data instead
+            var savedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
+            if (savedMesh != null) {
+                savedMesh.Clear();
+                EditorUtility.CopySerialized(instancedMesh, savedMesh);
+            } else {
+                CreateAsset(instancedMesh, dstPath);
+            }
 
             if (m_logging)
                 Debug.Log("exported mesh " + dstPath);
