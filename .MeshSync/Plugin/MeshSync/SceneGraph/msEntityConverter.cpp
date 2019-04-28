@@ -1,11 +1,12 @@
 #include "pch.h"
 #include "msEntity.h"
 #include "msMesh.h"
+#include "msAnimation.h"
 #include "msEntityConverter.h"
 
 namespace ms {
 
-void EntityConverterBase::convert(Entity &e)
+void EntityConverterBase::convertEntity(Entity &e)
 {
     switch (e.getType()) {
     case Entity::Type::Transform:
@@ -26,6 +27,12 @@ void EntityConverterBase::convert(Entity &e)
     default:
         break;
     }
+}
+
+void EntityConverterBase::convertAnimation(Animation &e)
+{
+    for (auto& c : e.curves)
+        convertAnimationCurve(*c);
 }
 
 
@@ -69,6 +76,28 @@ void ScaleConverter::convertPoints(Points &e)
     }
 }
 
+void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
+{
+    if (!c.data_flags.affect_scale)
+        return;
+
+    switch (c.data_type) {
+    case Animation::DataType::Float:
+        c.each<float>([this](auto& v) { v.value *= scale; });
+        break;
+    case Animation::DataType::Float2:
+        c.each<float2>([this](auto& v) { v.value *= scale; });
+        break;
+    case Animation::DataType::Float3:
+        c.each<float3>([this](auto& v) { v.value *= scale; });
+        break;
+    case Animation::DataType::Float4:
+        c.each<float4>([this](auto& v) { v.value *= scale; });
+        break;
+    default:
+        break;
+    }
+}
 
 
 void FlipXConverter::convertTransform(Transform &e)
@@ -116,6 +145,26 @@ void FlipXConverter::convertPoints(Points &e)
         for (auto& v : p->rotations)
             v = flip_x(v);
         mu::InvertX(p->scales.data(), p->scales.size());
+    }
+}
+
+void FlipXConverter::convertAnimationCurve(AnimationCurve &c)
+{
+    if (!c.data_flags.affect_handedness || c.data_flags.ignore_negate)
+        return;
+
+    switch (c.data_type) {
+    case Animation::DataType::Float3:
+        c.each<float3>([this](auto& v) { v.value = flip_x(v.value); });
+        break;
+    case Animation::DataType::Float4:
+        c.each<float4>([this](auto& v) { v.value = flip_x(v.value); });
+        break;
+    case Animation::DataType::Quaternion:
+        c.each<quatf>([this](auto& v) { v.value = flip_x(v.value); });
+        break;
+    default:
+        break;
     }
 }
 
@@ -169,35 +218,88 @@ void FlipYZConverter::convertPoints(Points &e)
     }
 }
 
-
-
-void FBXZUpToYUpConvertex::convertTransform(Transform &v)
+void FlipYZConverter::convertAnimationCurve(AnimationCurve &c)
 {
-    if (v.isRoot()) {
-        v.position = flip_z(swap_yz(v.position));
-        v.rotation = flip_z(swap_yz(v.rotation)) * rotate_x(-90.0f * DegToRad);
-        v.scale = swap_yz(v.scale);
+    if (!c.data_flags.affect_handedness)
+        return;
+
+    switch (c.data_type) {
+    case Animation::DataType::Float3:
+        c.each<float3>([this](auto& v) { v.value = swap_yz(v.value); });
+        break;
+    case Animation::DataType::Float4:
+        c.each<float4>([this](auto& v) { v.value = swap_yz(v.value); });
+        break;
+    case Animation::DataType::Quaternion:
+        c.each<quatf>([this](auto& v) { v.value = swap_yz(v.value); });
+        break;
+    default:
+        break;
     }
 }
 
-void FBXZUpToYUpConvertex::convertCamera(Camera &v)
+
+
+void FBXZUpToYUpConvertex::convertTransform(Transform &e)
 {
-    convertTransform(v);
+    if (e.isRoot()) {
+        e.position = flip_z(swap_yz(e.position));
+        e.rotation = flip_z(swap_yz(e.rotation)) * rotate_x(-90.0f * DegToRad);
+        e.scale = swap_yz(e.scale);
+    }
 }
 
-void FBXZUpToYUpConvertex::convertLight(Light &v)
+void FBXZUpToYUpConvertex::convertCamera(Camera &e)
 {
-    convertTransform(v);
+    convertTransform(e);
 }
 
-void FBXZUpToYUpConvertex::convertMesh(Mesh &v)
+void FBXZUpToYUpConvertex::convertLight(Light &e)
 {
-    convertTransform(v);
+    convertTransform(e);
 }
 
-void FBXZUpToYUpConvertex::convertPoints(Points &v)
+void FBXZUpToYUpConvertex::convertMesh(Mesh &e)
 {
-    convertTransform(v);
+    convertTransform(e);
+}
+
+void FBXZUpToYUpConvertex::convertPoints(Points &e)
+{
+    convertTransform(e);
+}
+
+void FBXZUpToYUpConvertex::convertAnimation(Animation &e)
+{
+    if (!e.isRoot())
+        return;
+    super::convertAnimation(e);
+}
+
+void FBXZUpToYUpConvertex::convertAnimationCurve(AnimationCurve &c)
+{
+    if (!c.data_flags.affect_handedness)
+        return;
+
+    switch (c.data_type) {
+    case Animation::DataType::Float3:
+        if (!c.data_flags.ignore_negate)
+            c.each<float3>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+        else
+            c.each<float3>([this](auto& v) { v.value = swap_yz(v.value); });
+        break;
+    case Animation::DataType::Float4:
+        if (!c.data_flags.ignore_negate)
+            c.each<float4>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+        else
+            c.each<float4>([this](auto& v) { v.value = swap_yz(v.value); });
+        break;
+    case Animation::DataType::Quaternion:
+        c.each<quatf>([this](auto& v) { v.value = flip_z(swap_yz(v.value)) * rotate_x(-90.0f * DegToRad); });
+        break;
+    default:
+        break;
+    }
 }
 
 } // namespace ms

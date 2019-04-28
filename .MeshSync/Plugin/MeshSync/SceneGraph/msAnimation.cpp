@@ -31,12 +31,12 @@ static size_t GetSize(const AnimationCurve& self)
 template<> size_t GetSize<void>(const AnimationCurve& /*self*/) { return 0; }
 
 template<class T>
-static void* At(const AnimationCurve& self, int i)
+static void* At(const AnimationCurve& self, size_t i)
 {
     TAnimationCurve<T> data(self);
     return &data[i];
 }
-template<> void* At<void>(const AnimationCurve& /*self*/, int /*i*/) { return nullptr; }
+template<> void* At<void>(const AnimationCurve& /*self*/, size_t /*i*/) { return nullptr; }
 
 template<class T>
 static void ReserveKeyframes(AnimationCurve& self, size_t n)
@@ -121,7 +121,7 @@ template<> void ApplyScale<float4>(AnimationCurve& self, float v) { ApplyScaleIm
 struct AnimationCurveFunctionSet
 {
     size_t(*size)(const AnimationCurve& self);
-    void*(*at)(const AnimationCurve& self, int i);
+    void*(*at)(const AnimationCurve& self, size_t i);
     void(*reserve_keyframes)(AnimationCurve& self, size_t n);
     void(*reduce_keyframes)(AnimationCurve& self, bool keep_flat_curve);
     void(*convert_handedness)(AnimationCurve& self, bool x, bool yz);
@@ -197,11 +197,11 @@ bool AnimationCurve::empty() const
 }
 
 template<class T>
-TVP<T>& AnimationCurve::at(int i)
+TVP<T>& AnimationCurve::at(size_t i)
 {
     return *(TVP<T>*)g_curve_fs[(int)data_type].at(*this, i);
 }
-#define Instantiate(T) template TVP<T>& AnimationCurve::at(int i);
+#define Instantiate(T) template TVP<T>& AnimationCurve::at(size_t i);
 EachDataTypes(Instantiate)
 #undef Instantiate
 

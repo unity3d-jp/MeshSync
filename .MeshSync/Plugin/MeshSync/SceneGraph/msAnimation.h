@@ -52,7 +52,18 @@ public:
 
     size_t size() const;
     bool empty() const;
-    template<class T> TVP<T>& at(int i);
+
+    template<class T> TVP<T>& at(size_t i);
+    template<class T, class Body>
+    void each(const Body& body)
+    {
+        size_t n = size();
+        if (n > 0) {
+            auto *p = &at<T>(0);
+            for (size_t i = 0; i < n; ++i)
+                body(p[i]);
+        }
+    }
 
     void reduction(bool keep_flat_curves);
     void reserve(size_t n);
