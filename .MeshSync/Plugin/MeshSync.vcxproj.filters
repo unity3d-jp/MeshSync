@@ -70,6 +70,9 @@
     <ClCompile Include="MeshSync\SceneCache\msEncoder.cpp">
       <Filter>MeshSync\SceneCache</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\SceneGraph\msEntityConverter.cpp">
+      <Filter>MeshSync\SceneGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -155,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="MeshSync\SceneCache\msEncoder.h">
       <Filter>MeshSync\SceneCache</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\SceneGraph\msEntityConverter.h">
+      <Filter>MeshSync\SceneGraph</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -36,6 +36,7 @@
     <ClInclude Include="MeshSync\SceneGraph\msAudio.h" />
     <ClInclude Include="MeshSync\SceneGraph\msConstraints.h" />
     <ClInclude Include="MeshSync\SceneGraph\msEntity.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msEntityConverter.h" />
     <ClInclude Include="MeshSync\SceneGraph\msIdentifier.h" />
     <ClInclude Include="MeshSync\SceneGraph\msMaterial.h" />
     <ClInclude Include="MeshSync\SceneGraph\msMesh.h" />
@@ -64,6 +65,7 @@
     <ClCompile Include="MeshSync\SceneGraph\msAudio.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msConstraints.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msEntity.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msEntityConverter.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msIdentifier.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msMaterial.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msMesh.cpp" />
