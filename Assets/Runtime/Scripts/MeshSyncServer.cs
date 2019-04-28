@@ -186,6 +186,7 @@ namespace UTJ.MeshSync
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
+        [SerializeField] bool m_exportMeshAsYUp = false;
 
         [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
@@ -2299,8 +2300,39 @@ namespace UTJ.MeshSync
             if (mesh == null || AssetDatabase.GetAssetPath(mesh) != "")
                 return;
 
+            // export mesh as y-up (correct orientation) or z-up (match fbx import)
+            // TODO: fix bind poses
+            Mesh instancedMesh = null;
+            if (m_exportMeshAsYUp) {
+                instancedMesh = new Mesh();
+                EditorUtility.CopySerialized(mesh, instancedMesh);
+                var flip = Quaternion.AngleAxis(-90.0f, Vector3.right);
+                Vector3[] vertices = instancedMesh.vertices;
+                for (var i = 0; i < vertices.Length; i++) {
+                    Vector3 v = vertices[i];
+                    vertices[i] = flip * v;
+                }
+                Vector3[] normals = instancedMesh.normals;
+                for (var i = 0; i < normals.Length; i++) {
+                    Vector3 n = normals[i];
+                    normals[i] = flip * n;
+                }
+                Vector4[] tangents = instancedMesh.tangents;
+                for (var i = 0; i < tangents.Length; i++) {
+                    Vector4 t = tangents[i];
+                    tangents[i] = flip * t;
+                }
+                instancedMesh.vertices = vertices;
+                instancedMesh.normals = normals;
+                instancedMesh.tangents = tangents;
+                instancedMesh.RecalculateBounds();
+            } else {
+                instancedMesh = mesh;
+            }
+
             var dstPath = assetPath + "/" + mesh.name + ".asset";
-            CreateAsset(mesh, dstPath);
+            CreateAsset(instancedMesh, dstPath);
+
             if (m_logging)
                 Debug.Log("exported mesh " + dstPath);
 
