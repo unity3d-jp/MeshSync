@@ -323,6 +323,20 @@ AnimationCurvePtr Animation::findCurve(const std::string& name)
     return findCurve(name.c_str());
 }
 
+AnimationCurvePtr Animation::findCurve(const char *name, DataType type)
+{
+    auto ret = findCurve(name);
+    if (ret && ret->data_type == type)
+        return ret;
+    return nullptr;
+}
+
+AnimationCurvePtr Animation::findCurve(const std::string& name, DataType type)
+{
+    return findCurve(name.c_str(), type);
+}
+
+
 AnimationCurvePtr Animation::addCurve(const char *name, DataType type)
 {
     auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
@@ -458,31 +472,59 @@ void AnimationClip::addAnimation(TransformAnimationPtr v)
 }
 
 
+template<class T>
+static inline std::shared_ptr<T> CreateTypedAnimation(AnimationPtr host)
+{
+    if (!host) {
+        auto ret = std::make_shared<T>(Animation::create());
+        ret->setupCurves(true);
+        return ret;
+    }
+    else {
+        auto ret = std::make_shared<T>(host);
+        ret->setupCurves(false);
+        return ret;
+    }
+}
+
+static AnimationCurvePtr GetCurve(AnimationPtr& host, const char *name, AnimationCurve::DataType type, bool create_if_not_exist)
+{
+    if (create_if_not_exist)
+        return host->getCurve(name, type);
+    else
+        return host->findCurve(name, type);
+}
 
 std::shared_ptr<TransformAnimation> TransformAnimation::create(AnimationPtr host)
 {
-    if (!host)
-        host = Animation::create();
-    return std::make_shared<TransformAnimation>(host);
+    return CreateTypedAnimation<TransformAnimation>(host);
 }
+
 TransformAnimation::TransformAnimation(AnimationPtr h)
     : host(h)
     , path(host->path)
-    , translation(host->getCurve(mskTransformTranslation, DataType::Float3))
-    , rotation(host->getCurve(mskTransformRotation, DataType::Quaternion))
-    , scale(host->getCurve(mskTransformScale, DataType::Float3))
-    , visible(host->getCurve(mskTransformVisible, DataType::Int))
 {
     host->entity_type = Entity::Type::Transform;
-    translation.curve->data_flags.affect_handedness = true;
-    translation.curve->data_flags.affect_scale = true;
-    rotation.curve->data_flags.affect_handedness = true;
-    scale.curve->data_flags.affect_handedness = true;
-    scale.curve->data_flags.ignore_negate = true;
 }
 
 TransformAnimation::~TransformAnimation()
 {
+}
+
+void TransformAnimation::setupCurves(bool create_if_not_exist)
+{
+    translation = GetCurve(host, mskTransformTranslation, DataType::Float3, create_if_not_exist);
+    rotation = GetCurve(host, mskTransformRotation, DataType::Quaternion, create_if_not_exist);
+    scale = GetCurve(host, mskTransformScale, DataType::Float3, create_if_not_exist);
+    visible = GetCurve(host, mskTransformVisible, DataType::Int, create_if_not_exist);
+
+    if (create_if_not_exist) {
+        translation.curve->data_flags.affect_handedness = true;
+        translation.curve->data_flags.affect_scale = true;
+        rotation.curve->data_flags.affect_handedness = true;
+        scale.curve->data_flags.affect_handedness = true;
+        scale.curve->data_flags.ignore_negate = true;
+    }
 }
 
 void TransformAnimation::reserve(size_t n)
@@ -493,53 +535,73 @@ void TransformAnimation::reserve(size_t n)
 
 std::shared_ptr<CameraAnimation> CameraAnimation::create(AnimationPtr host)
 {
-    if (!host)
-        host = Animation::create();
-    return std::make_shared<CameraAnimation>(host);
+    return CreateTypedAnimation<CameraAnimation>(host);
 }
+
 CameraAnimation::CameraAnimation(AnimationPtr host)
     : super(host)
-    , fov(host->getCurve(mskCameraFieldOfView, DataType::Float))
-    , near_plane(host->getCurve(mskCameraNearPlane, DataType::Float))
-    , far_plane(host->getCurve(mskCameraFarPlane, DataType::Float))
-    , focal_length(host->getCurve(mskCameraFocalLength, DataType::Float))
-    , sensor_size(host->getCurve(mskCameraSensorSize, DataType::Float2))
-    , lens_shift(host->getCurve(mskCameraLensShift, DataType::Float2))
 {
     host->entity_type = Entity::Type::Camera;
-    near_plane.curve->data_flags.affect_scale = true;
-    far_plane.curve->data_flags.affect_scale = true;
+}
+
+void CameraAnimation::setupCurves(bool create_if_not_exist)
+{
+    super::setupCurves(create_if_not_exist);
+
+    fov = GetCurve(host, mskCameraFieldOfView, DataType::Float, create_if_not_exist);
+    near_plane = GetCurve(host, mskCameraNearPlane, DataType::Float, create_if_not_exist);
+    far_plane = GetCurve(host, mskCameraFarPlane, DataType::Float, create_if_not_exist);
+    focal_length = GetCurve(host, mskCameraFocalLength, DataType::Float, create_if_not_exist);
+    sensor_size = GetCurve(host, mskCameraSensorSize, DataType::Float2, create_if_not_exist);
+    lens_shift = GetCurve(host, mskCameraLensShift, DataType::Float2, create_if_not_exist);
+
+    if (create_if_not_exist) {
+        near_plane.curve->data_flags.affect_scale = true;
+        far_plane.curve->data_flags.affect_scale = true;
+    }
 }
 
 
 std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
 {
-    if (!host)
-        host = Animation::create();
-    return std::make_shared<LightAnimation>(host);
+    return CreateTypedAnimation<LightAnimation>(host);
 }
+
 LightAnimation::LightAnimation(AnimationPtr host)
     : super(host)
-    , color(host->getCurve(mskLightColor, DataType::Float4))
-    , intensity(host->getCurve(mskLightIntensity, DataType::Float))
-    , range(host->getCurve(mskLightRange, DataType::Float))
-    , spot_angle(host->getCurve(mskLightSpotAngle, DataType::Float))
 {
     host->entity_type = Entity::Type::Light;
-    range.curve->data_flags.affect_scale = true;
+}
+
+void LightAnimation::setupCurves(bool create_if_not_exist)
+{
+    super::setupCurves(create_if_not_exist);
+
+    color = GetCurve(host, mskLightColor, DataType::Float4, create_if_not_exist);
+    intensity = GetCurve(host, mskLightIntensity, DataType::Float, create_if_not_exist);
+    range = GetCurve(host, mskLightRange, DataType::Float, create_if_not_exist);
+    spot_angle = GetCurve(host, mskLightSpotAngle, DataType::Float, create_if_not_exist);
+
+    if (create_if_not_exist) {
+        range.curve->data_flags.affect_scale = true;
+    }
 }
 
 
 std::shared_ptr<MeshAnimation> MeshAnimation::create(AnimationPtr host)
 {
-    if (!host)
-        host = Animation::create();
-    return std::make_shared<MeshAnimation>(host);
+    return CreateTypedAnimation<MeshAnimation>(host);
 }
+
 MeshAnimation::MeshAnimation(AnimationPtr host)
     : super(host)
 {
     host->entity_type = Entity::Type::Mesh;
+}
+
+void MeshAnimation::setupCurves(bool create_if_not_exist)
+{
+    super::setupCurves(create_if_not_exist);
 }
 
 TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const char *name)
@@ -553,16 +615,22 @@ TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name
     return getBlendshapeCurve(name.c_str());
 }
 
+
 std::shared_ptr<PointsAnimation> PointsAnimation::create(AnimationPtr host)
 {
-    if (!host)
-        host = Animation::create();
-    return std::make_shared<PointsAnimation>(host);
+    return CreateTypedAnimation<PointsAnimation>(host);
 }
+
 PointsAnimation::PointsAnimation(AnimationPtr host)
     : super(host)
-    , time(host->getCurve(mskPointsTime, DataType::Float))
 {
+}
+
+void PointsAnimation::setupCurves(bool create_if_not_exist)
+{
+    super::setupCurves(create_if_not_exist);
+
+    time = GetCurve(host, mskPointsTime, DataType::Float, create_if_not_exist);
 }
 
 

@@ -101,6 +101,8 @@ public:
     bool isRoot() const;
     AnimationCurvePtr findCurve(const char *name);
     AnimationCurvePtr findCurve(const std::string& name);
+    AnimationCurvePtr findCurve(const char *name, DataType type);
+    AnimationCurvePtr findCurve(const std::string& name, DataType type);
     // erase old one if already exists
     AnimationCurvePtr addCurve(const char *name, DataType type);
     AnimationCurvePtr addCurve(const std::string& name, DataType type);
@@ -118,10 +120,12 @@ struct TAnimationCurve
 {
     using key_t = TVP<T>;
 
-    TAnimationCurve(AnimationCurve& c) : curve(&c) {}
+    TAnimationCurve() {}
     TAnimationCurve(const AnimationCurve& c) : curve(const_cast<AnimationCurve*>(&c)) {}
     TAnimationCurve(AnimationCurvePtr c) : curve(c.get()) {}
 
+    operator bool() const { return curve != nullptr; }
+    bool valid() const { return curve != nullptr; }
     size_t size() const { return curve->data.size() / sizeof(key_t); }
 
           key_t* data()       { return (key_t*)curve->data.data(); }
@@ -145,7 +149,7 @@ struct TAnimationCurve
     key_t& front() { return data()[0]; }
     key_t& back() { return data()[size() - 1]; }
 
-    AnimationCurve *curve;
+    AnimationCurve *curve = nullptr;
 };
 
 
@@ -164,7 +168,8 @@ public:
 
     TransformAnimation(AnimationPtr host);
     virtual ~TransformAnimation();
-    void reserve(size_t n);
+    virtual void setupCurves(bool create_if_not_exist);
+    virtual void reserve(size_t n);
 
     AnimationPtr host;
     std::string& path;
@@ -190,6 +195,8 @@ public:
     static std::shared_ptr<CameraAnimation> create(AnimationPtr host = nullptr);
 
     CameraAnimation(AnimationPtr host);
+    void setupCurves(bool create_if_not_exist) override;
+
     TAnimationCurve<float> fov;
     TAnimationCurve<float> near_plane;
     TAnimationCurve<float> far_plane;
@@ -211,6 +218,8 @@ public:
     static std::shared_ptr<LightAnimation> create(AnimationPtr host = nullptr);
 
     LightAnimation(AnimationPtr host);
+    void setupCurves(bool create_if_not_exist) override;
+
     TAnimationCurve<float4> color;
     TAnimationCurve<float>  intensity;
     TAnimationCurve<float>  range;
@@ -226,7 +235,8 @@ using super = TransformAnimation;
 public:
     static std::shared_ptr<MeshAnimation> create(AnimationPtr host = nullptr);
 
-    MeshAnimation(AnimationPtr host);
+    MeshAnimation(AnimationPtr hos);
+    void setupCurves(bool create_if_not_exist) override;
 
     // find or create curve
     TAnimationCurve<float> getBlendshapeCurve(const char *name);
@@ -259,6 +269,7 @@ public:
     static std::shared_ptr<PointsAnimation> create(AnimationPtr host = nullptr);
 
     PointsAnimation(AnimationPtr host);
+    void setupCurves(bool create_if_not_exist) override;
 
     TAnimationCurve<float> time;
 };
