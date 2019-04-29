@@ -176,6 +176,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
         [Space(10)]
+        [SerializeField] ZUpCorrectionMode m_zUpCorrectionMode = ZUpCorrectionMode.FlipYZ;
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] bool m_usePhysicalCameraParams = false;
 #endif
@@ -296,6 +297,7 @@ namespace UTJ.MeshSync
             StopServer();
 
             m_serverSettings.port = (ushort)m_serverPort;
+            m_serverSettings.zUpCorrectionMode = m_zUpCorrectionMode;
             m_server = Server.Start(ref m_serverSettings);
             m_server.fileRootPath = httpFileRootPath;
             m_handler = OnServerMessage;
@@ -1450,7 +1452,7 @@ namespace UTJ.MeshSync
                     tmpWeights4.Dispose();
                 }
 #if UNITY_2019_1_OR_NEWER
-                else if(m_serverSettings.meshMaxBoneInfluence == -1)
+                else if(m_serverSettings.meshMaxBoneInfluence == 255)
                 {
                     var bonesPerVertex = new NativeArray<byte>(split.numPoints, Allocator.Temp);
                     var weights = new NativeArray<BoneWeight1>(split.numBoneWeights, Allocator.Temp);
@@ -2429,6 +2431,10 @@ namespace UTJ.MeshSync
             {
                 m_serverPortPrev = m_serverPort;
                 m_requestRestartServer = true;
+            }
+            if (m_server)
+            {
+                m_server.zUpCorrectionMode = m_zUpCorrectionMode;
             }
         }
 #endif

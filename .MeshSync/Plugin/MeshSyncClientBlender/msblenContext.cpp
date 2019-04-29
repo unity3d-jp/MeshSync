@@ -1203,9 +1203,10 @@ void msblenContext::kickAsyncSend()
         t.deleted_entities = m_entity_manager.getDeleted();
 
         if (scale_factor != 1.0f) {
-            for (auto& obj : t.transforms) { obj->applyScaleFactor(scale_factor); }
-            for (auto& obj : t.geometries) { obj->applyScaleFactor(scale_factor); }
-            for (auto& obj : t.animations) { obj->applyScaleFactor(scale_factor); }
+            ms::ScaleConverter cv(scale_factor);
+            for (auto& obj : t.transforms) { cv.convert(*obj); }
+            for (auto& obj : t.geometries) { cv.convert(*obj); }
+            for (auto& obj : t.animations) { cv.convert(*obj); }
         }
     };
     m_sender.on_success = [this]() {

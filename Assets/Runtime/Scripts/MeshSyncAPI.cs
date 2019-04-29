@@ -147,6 +147,12 @@ namespace UTJ.MeshSync
 
 
     #region Server
+    public enum ZUpCorrectionMode
+    {
+        FlipYZ,
+        RotateX,
+    }
+
     public struct ServerSettings
     {
         public int maxQueue;
@@ -154,6 +160,7 @@ namespace UTJ.MeshSync
         public ushort port;
         public uint meshSplitUnit;
         public int meshMaxBoneInfluence; // -1 (variable) or 4
+        public ZUpCorrectionMode zUpCorrectionMode;
 
         public static ServerSettings defaultValue
         {
@@ -170,10 +177,11 @@ namespace UTJ.MeshSync
                     meshSplitUnit = 65000,
 #endif
 #if UNITY_2019_1_OR_NEWER
-                    meshMaxBoneInfluence = -1,
+                    meshMaxBoneInfluence = 255,
 #else
                     meshMaxBoneInfluence = 4,
 #endif
+                    zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
                 };
             }
         }
@@ -188,6 +196,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern int msGetProtocolVersion();
         [DllImport("MeshSyncServer")] static extern Server msServerStart(ref ServerSettings settings);
         [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr self);
+
+        [DllImport("MeshSyncServer")] static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
 
         [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr self, MessageHandler handler);
@@ -214,6 +224,11 @@ namespace UTJ.MeshSync
 
         public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
         public void Stop() { msServerStop(self); }
+
+        public ZUpCorrectionMode zUpCorrectionMode
+        {
+            set { msServerSetZUpCorrectionMode(self, value); }
+        }
 
         public int numMessages { get { return msServerGetNumMessages(self); } }
         public void ProcessMessages(MessageHandler handler) { msServerProcessMessages(self, handler); }

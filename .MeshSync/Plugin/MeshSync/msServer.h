@@ -16,6 +16,11 @@ namespace Poco {
 
 namespace ms {
 
+enum class ZUpCorrectionMode : int
+{
+    FlipYZ,
+    RotateX,
+};
 
 struct ServerSettings
 {
@@ -23,7 +28,8 @@ struct ServerSettings
     int max_threads = 8;
     uint16_t port = 8080;
     uint32_t mesh_split_unit = 0xffffffff;
-    int mesh_max_bone_influence = 4; // -1 (variable) or 4
+    int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
+    ZUpCorrectionMode zup_correction_mode = ZUpCorrectionMode::FlipYZ;
 };
 
 class Server

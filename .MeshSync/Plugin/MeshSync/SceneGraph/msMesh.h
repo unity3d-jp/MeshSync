@@ -115,9 +115,6 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
-
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
 };
 msSerializable(BlendShapeFrameData);
 msDeclPtr(BlendShapeFrameData);
@@ -139,8 +136,6 @@ public:
     void clear();
 
     void sort();
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
 };
 msSerializable(BlendShapeData);
 msDeclPtr(BlendShapeData);
@@ -160,9 +155,6 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
-
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
 };
 msSerializable(BoneData);
 msDeclPtr(BoneData);
@@ -217,9 +209,6 @@ public:
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 
-    void convertHandedness(bool x, bool yz) override;
-    void applyScaleFactor(float scale) override;
-
     void refine(const MeshRefineSettings& mrs);
     void makeDoubleSided();
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
@@ -228,10 +217,6 @@ public:
     void setupBoneWeights4();
     void setupBoneWeightsVariable();
     void setupFlags();
-
-    void convertHandedness_Mesh(bool x, bool yz);
-    void convertHandedness_BlendShapes(bool x, bool yz);
-    void convertHandedness_Bones(bool x, bool yz);
 
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);

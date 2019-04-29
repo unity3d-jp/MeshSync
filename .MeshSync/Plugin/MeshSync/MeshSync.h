@@ -11,6 +11,7 @@
 #include "SceneGraph/msMesh.h"
 #include "SceneGraph/msConstraints.h"
 #include "SceneGraph/msSceneGraph.h"
+#include "SceneGraph/msEntityConverter.h"
 #include "SceneCache/msSceneCache.h"
 #include "msClient.h"
 #include "msServer.h"

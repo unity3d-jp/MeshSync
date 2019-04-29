@@ -211,26 +211,6 @@ void Transform::applyMatrix(const float4x4& v)
     if (!near_equal(v, float4x4::identity()))
         assignMatrix(v * toMatrix());
 }
-
-void Transform::convertHandedness(bool x, bool yz)
-{
-    if (x) {
-        position = flip_x(position);
-        rotation = flip_x(rotation);
-    }
-
-    // fbx-compatible Z-up -> Y-up conversion. ugly, but we must follow it.
-    if (yz && isRoot()) {
-        position = flip_z(swap_yz(position));
-        rotation = flip_z(swap_yz(rotation)) * rotate_x(-90.0f * DegToRad);
-        scale = swap_yz(scale);
-    }
-}
-
-void Transform::applyScaleFactor(float v)
-{
-    position *= v;
-}
 #pragma endregion
 
 
@@ -307,13 +287,6 @@ EntityPtr Camera::clone()
     return ret;
 }
 #undef EachMember
-
-void Camera::applyScaleFactor(float v)
-{
-    super::applyScaleFactor(v);
-    near_plane *= v;
-    far_plane *= v;
-}
 #pragma endregion
 
 
@@ -385,13 +358,6 @@ EntityPtr Light::clone()
     return ret;
 }
 #undef EachMember
-
-
-void Light::applyScaleFactor(float v)
-{
-    super::applyScaleFactor(v);
-    range *= v;
-}
 #pragma endregion
 
 
@@ -471,20 +437,6 @@ EntityPtr PointsData::clone()
 }
 #undef EachArrays
 #undef EachMember
-
-void PointsData::convertHandedness(bool x, bool /*yz*/)
-{
-    if (x) {
-        mu::InvertX(points.data(), points.size());
-        for (auto& v : rotations) v = flip_x(v);
-        mu::InvertX(scales.data(), scales.size());
-    }
-}
-
-void PointsData::applyScaleFactor(float v)
-{
-    mu::Scale(points.data(), v, points.size());
-}
 
 void PointsData::setupFlags()
 {
@@ -569,18 +521,6 @@ EntityPtr Points::clone()
 
 #undef EachArrays
 #undef EachMember
-
-void Points::convertHandedness(bool x, bool yz)
-{
-    for (auto& p : data)
-        p->convertHandedness(x, yz);
-}
-
-void Points::applyScaleFactor(float v)
-{
-    for (auto& p : data)
-        p->applyScaleFactor(v);
-}
 
 void Points::setupFlags()
 {

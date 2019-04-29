@@ -78,9 +78,6 @@ public:
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
     void applyMatrix(const float4x4& v);
-
-    virtual void convertHandedness(bool x, bool yz);
-    virtual void applyScaleFactor(float scale);
 };
 msSerializable(Transform);
 msDeclPtr(Transform);
@@ -112,8 +109,6 @@ public:
     uint64_t checksumTrans() const override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
-
-    void applyScaleFactor(float scale) override;
 };
 msSerializable(Camera);
 msDeclPtr(Camera);
@@ -150,8 +145,6 @@ public:
     uint64_t checksumTrans() const override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
-
-    void applyScaleFactor(float scale) override;
 };
 msSerializable(Light);
 msDeclPtr(Light);
@@ -198,8 +191,6 @@ public:
     bool lerp(const PointsData& src1, const PointsData& src2, float t);
     EntityPtr clone();
 
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
     void setupFlags();
 
     void getBounds(float3& center, float3& extents);
@@ -228,9 +219,6 @@ public:
     uint64_t checksumGeom() const override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
-
-    void convertHandedness(bool x, bool yz) override;
-    void applyScaleFactor(float scale) override;
 
     void setupFlags();
 };

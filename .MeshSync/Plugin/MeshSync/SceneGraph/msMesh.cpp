@@ -52,20 +52,6 @@ void BlendShapeFrameData::clear()
 
 #undef EachMember
 
-void BlendShapeFrameData::convertHandedness(bool x, bool /*yz*/)
-{
-    if (x) {
-        for (auto& v : points) { v = flip_x(v); }
-        for (auto& v : normals) { v = flip_x(v); }
-        for (auto& v : tangents) { v = flip_x(v); }
-    }
-}
-
-void BlendShapeFrameData::applyScaleFactor(float scale)
-{
-    mu::Scale(points.data(), scale, points.size());
-}
-
 
 std::shared_ptr<BlendShapeData> BlendShapeData::create(std::istream & is)
 {
@@ -104,18 +90,6 @@ void BlendShapeData::sort()
         [](BlendShapeFrameDataPtr& a, BlendShapeFrameDataPtr& b) { return a->weight < b->weight; });
 }
 
-void BlendShapeData::convertHandedness(bool x, bool yz)
-{
-    for (auto& fp : frames)
-        fp->convertHandedness(x, yz);
-}
-
-void BlendShapeData::applyScaleFactor(float scale)
-{
-    for (auto& fp : frames)
-        fp->applyScaleFactor(scale);
-}
-
 std::shared_ptr<BoneData> BoneData::create(std::istream & is)
 {
     auto ret = Pool<BoneData>::instance().pull();
@@ -145,17 +119,6 @@ void BoneData::clear()
     path.clear();
     bindpose = float4x4::identity();
     weights.clear();
-}
-
-void BoneData::convertHandedness(bool x, bool /*yz*/)
-{
-    if (x)
-        bindpose = flip_x(bindpose);
-}
-
-void BoneData::applyScaleFactor(float scale)
-{
-    (float3&)bindpose[3] *= scale;
 }
 
 
@@ -319,48 +282,6 @@ EntityPtr Mesh::clone()
     return ret;
 }
 
-void Mesh::convertHandedness(bool x, bool yz)
-{
-    if (!x && !yz) return;
-
-    super::convertHandedness(x, yz);
-    convertHandedness_Mesh(x, yz);
-    convertHandedness_BlendShapes(x, yz);
-    convertHandedness_Bones(x, yz);
-}
-
-void Mesh::convertHandedness_Mesh(bool x, bool /*yz*/)
-{
-    if (x) {
-        mu::InvertX(points.data(), points.size());
-        mu::InvertX(normals.data(), normals.size());
-        mu::InvertX(tangents.data(), tangents.size());
-        mu::InvertX(velocities.data(), velocities.size());
-    }
-}
-void Mesh::convertHandedness_BlendShapes(bool x, bool yz)
-{
-    for (auto& bs : blendshapes)
-        bs->convertHandedness(x, yz);
-}
-
-void ms::Mesh::convertHandedness_Bones(bool x, bool yz)
-{
-    for (auto& bone : bones)
-        bone->convertHandedness(x, yz);
-}
-
-
-void Mesh::applyScaleFactor(float v)
-{
-    super::applyScaleFactor(v);
-    mu::Scale(points.data(), v, points.size());
-    for (auto& bone : bones)
-        bone->applyScaleFactor(v);
-    for (auto& bs : blendshapes)
-        bs->applyScaleFactor(v);
-}
-
 template<class T>
 static inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<int>& indices)
 {
@@ -392,15 +313,10 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.mirror_z)
         applyMirror({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
 
-    if (mrs.scale_factor != 1.0f)
-        applyScaleFactor(mrs.scale_factor);
-    if (mrs.flags.flip_x || mrs.flags.flip_yz)
-        convertHandedness(mrs.flags.flip_x, mrs.flags.flip_yz);
-
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)
             setupBoneWeights4();
-        else if (mrs.max_bone_influence == -1)
+        else if (mrs.max_bone_influence == 255)
             setupBoneWeightsVariable();
     }
 

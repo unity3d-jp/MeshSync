@@ -6,7 +6,7 @@
 
 namespace ms {
 
-void EntityConverterBase::convertEntity(Entity &e)
+void EntityConverter::convert(Entity &e)
 {
     switch (e.getType()) {
     case Entity::Type::Transform:
@@ -29,41 +29,58 @@ void EntityConverterBase::convertEntity(Entity &e)
     }
 }
 
-void EntityConverterBase::convertAnimation(Animation &e)
+void EntityConverter::convert(AnimationClip& clip)
 {
-    for (auto& c : e.curves)
-        convertAnimationCurve(*c);
+    for (auto& anim : clip.animations)
+        convert(*anim);
+}
+
+void EntityConverter::convert(Animation &anim)
+{
+    for (auto& curve : anim.curves)
+        convertAnimationCurve(*curve);
 }
 
 
+
+std::shared_ptr<ScaleConverter> ScaleConverter::create(float scale)
+{
+    return std::make_shared<ScaleConverter>(scale);
+}
+
+ScaleConverter::ScaleConverter(float scale)
+    : m_scale(scale)
+{
+}
+
 void ScaleConverter::convertTransform(Transform &e)
 {
-    e.position *= scale;
+    e.position *= m_scale;
 }
 
 void ScaleConverter::convertCamera(Camera &e)
 {
     convertTransform(e);
-    e.near_plane *= scale;
-    e.far_plane *= scale;
+    e.near_plane *= m_scale;
+    e.far_plane *= m_scale;
 }
 
 void ScaleConverter::convertLight(Light &e)
 {
     convertTransform(e);
-    e.range *= scale;
+    e.range *= m_scale;
 }
 
 void ScaleConverter::convertMesh(Mesh &e)
 {
     convertTransform(e);
-    mu::Scale(e.points.data(), scale, e.points.size());
+    mu::Scale(e.points.data(), m_scale, e.points.size());
     for (auto& bone : e.bones) {
-        (float3&)bone->bindpose[3] *= scale;
+        (float3&)bone->bindpose[3] *= m_scale;
     }
     for (auto& bs : e.blendshapes) {
         for (auto& frame : bs->frames) {
-            mu::Scale(frame->points.data(), scale, frame->points.size());
+            mu::Scale(frame->points.data(), m_scale, frame->points.size());
         }
     }
 }
@@ -72,7 +89,7 @@ void ScaleConverter::convertPoints(Points &e)
 {
     convertTransform(e);
     for (auto& p : e.data) {
-        mu::Scale(p->points.data(), scale, p->points.size());
+        mu::Scale(p->points.data(), m_scale, p->points.size());
     }
 }
 
@@ -83,16 +100,16 @@ void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
 
     switch (c.data_type) {
     case Animation::DataType::Float:
-        c.each<float>([this](auto& v) { v.value *= scale; });
+        c.each<float>([this](auto& v) { v.value *= m_scale; });
         break;
     case Animation::DataType::Float2:
-        c.each<float2>([this](auto& v) { v.value *= scale; });
+        c.each<float2>([this](auto& v) { v.value *= m_scale; });
         break;
     case Animation::DataType::Float3:
-        c.each<float3>([this](auto& v) { v.value *= scale; });
+        c.each<float3>([this](auto& v) { v.value *= m_scale; });
         break;
     case Animation::DataType::Float4:
-        c.each<float4>([this](auto& v) { v.value *= scale; });
+        c.each<float4>([this](auto& v) { v.value *= m_scale; });
         break;
     default:
         break;
@@ -100,23 +117,28 @@ void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
 }
 
 
-void FlipXConverter::convertTransform(Transform &e)
+std::shared_ptr<FlipX_HandednessCorrector> FlipX_HandednessCorrector::create()
+{
+    return std::make_shared<FlipX_HandednessCorrector>();
+}
+
+void FlipX_HandednessCorrector::convertTransform(Transform &e)
 {
     e.position = flip_x(e.position);
     e.rotation = flip_x(e.rotation);
 }
 
-void FlipXConverter::convertCamera(Camera &e)
+void FlipX_HandednessCorrector::convertCamera(Camera &e)
 {
     convertTransform(e);
 }
 
-void FlipXConverter::convertLight(Light &e)
+void FlipX_HandednessCorrector::convertLight(Light &e)
 {
     convertTransform(e);
 }
 
-void FlipXConverter::convertMesh(Mesh &e)
+void FlipX_HandednessCorrector::convertMesh(Mesh &e)
 {
     convertTransform(e);
 
@@ -137,7 +159,7 @@ void FlipXConverter::convertMesh(Mesh &e)
     }
 }
 
-void FlipXConverter::convertPoints(Points &e)
+void FlipX_HandednessCorrector::convertPoints(Points &e)
 {
     convertTransform(e);
     for (auto& p : e.data) {
@@ -148,7 +170,7 @@ void FlipXConverter::convertPoints(Points &e)
     }
 }
 
-void FlipXConverter::convertAnimationCurve(AnimationCurve &c)
+void FlipX_HandednessCorrector::convertAnimationCurve(AnimationCurve &c)
 {
     if (!c.data_flags.affect_handedness || c.data_flags.ignore_negate)
         return;
@@ -170,68 +192,79 @@ void FlipXConverter::convertAnimationCurve(AnimationCurve &c)
 
 
 
-void FlipYZConverter::convertTransform(Transform &e)
+std::shared_ptr<FlipYZ_ZUpCorrector> FlipYZ_ZUpCorrector::create()
 {
-    e.position = swap_yz(e.position);
-    e.rotation = swap_yz(e.rotation);
+    return std::make_shared<FlipYZ_ZUpCorrector>();
+}
+
+void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
+{
+    e.position = flip_z(swap_yz(e.position));
+    e.rotation = flip_z(swap_yz(e.rotation));
     e.scale = swap_yz(e.scale);
 }
 
-void FlipYZConverter::convertCamera(Camera &e)
+void FlipYZ_ZUpCorrector::convertCamera(Camera &e)
 {
     convertTransform(e);
 }
 
-void FlipYZConverter::convertLight(Light &e)
+void FlipYZ_ZUpCorrector::convertLight(Light &e)
 {
     convertTransform(e);
 }
 
-void FlipYZConverter::convertMesh(Mesh &e)
+void FlipYZ_ZUpCorrector::convertMesh(Mesh &e)
 {
     convertTransform(e);
 
-    for (auto& v : e.points) v = swap_yz(v);
-    for (auto& v : e.normals) v = swap_yz(v);
-    for (auto& v : e.tangents) v = swap_yz(v);
-    for (auto& v : e.velocities) v = swap_yz(v);
+    for (auto& v : e.points) v = flip_z(swap_yz(v));
+    for (auto& v : e.normals) v = flip_z(swap_yz(v));
+    for (auto& v : e.tangents) v = flip_z(swap_yz(v));
+    for (auto& v : e.velocities) v = flip_z(swap_yz(v));
 
     for (auto& bone : e.bones) {
-        bone->bindpose = swap_yz(bone->bindpose);
+        bone->bindpose = flip_z(swap_yz(bone->bindpose));
     }
     for (auto& bs : e.blendshapes) {
         for (auto& frame : bs->frames) {
-            for (auto& v : frame->points) { v = swap_yz(v); }
-            for (auto& v : frame->normals) { v = swap_yz(v); }
-            for (auto& v : frame->tangents) { v = swap_yz(v); }
+            for (auto& v : frame->points) { v = flip_z(swap_yz(v)); }
+            for (auto& v : frame->normals) { v = flip_z(swap_yz(v)); }
+            for (auto& v : frame->tangents) { v = flip_z(swap_yz(v)); }
         }
     }
 }
 
-void FlipYZConverter::convertPoints(Points &e)
+void FlipYZ_ZUpCorrector::convertPoints(Points &e)
 {
     convertTransform(e);
     for (auto& p : e.data) {
-        for (auto& v : p->points) v = swap_yz(v);
-        for (auto& v : p->rotations) v = swap_yz(v);
+        for (auto& v : p->points) v = flip_z(swap_yz(v));
+        for (auto& v : p->rotations) v = flip_z(swap_yz(v));
         for (auto& v : p->scales) v = swap_yz(v);
     }
 }
 
-void FlipYZConverter::convertAnimationCurve(AnimationCurve &c)
+void FlipYZ_ZUpCorrector::convertAnimationCurve(AnimationCurve &c)
 {
     if (!c.data_flags.affect_handedness)
         return;
 
     switch (c.data_type) {
     case Animation::DataType::Float3:
-        c.each<float3>([this](auto& v) { v.value = swap_yz(v.value); });
+        if (!c.data_flags.ignore_negate)
+            c.each<float3>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+        else
+            c.each<float3>([this](auto& v) { v.value = swap_yz(v.value); });
         break;
     case Animation::DataType::Float4:
-        c.each<float4>([this](auto& v) { v.value = swap_yz(v.value); });
+        if (!c.data_flags.ignore_negate)
+            c.each<float4>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+        else
+            c.each<float4>([this](auto& v) { v.value = swap_yz(v.value); });
         break;
     case Animation::DataType::Quaternion:
-        c.each<quatf>([this](auto& v) { v.value = swap_yz(v.value); });
+        c.each<quatf>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
         break;
     default:
         break;
@@ -240,7 +273,12 @@ void FlipYZConverter::convertAnimationCurve(AnimationCurve &c)
 
 
 
-void FBXZUpToYUpConvertex::convertTransform(Transform &e)
+std::shared_ptr<RotateX_ZUpCorrector> RotateX_ZUpCorrector::create()
+{
+    return std::make_shared<RotateX_ZUpCorrector>();
+}
+
+void RotateX_ZUpCorrector::convertTransform(Transform &e)
 {
     if (e.isRoot()) {
         e.position = flip_z(swap_yz(e.position));
@@ -249,34 +287,34 @@ void FBXZUpToYUpConvertex::convertTransform(Transform &e)
     }
 }
 
-void FBXZUpToYUpConvertex::convertCamera(Camera &e)
+void RotateX_ZUpCorrector::convertCamera(Camera &e)
 {
     convertTransform(e);
 }
 
-void FBXZUpToYUpConvertex::convertLight(Light &e)
+void RotateX_ZUpCorrector::convertLight(Light &e)
 {
     convertTransform(e);
 }
 
-void FBXZUpToYUpConvertex::convertMesh(Mesh &e)
+void RotateX_ZUpCorrector::convertMesh(Mesh &e)
 {
     convertTransform(e);
 }
 
-void FBXZUpToYUpConvertex::convertPoints(Points &e)
+void RotateX_ZUpCorrector::convertPoints(Points &e)
 {
     convertTransform(e);
 }
 
-void FBXZUpToYUpConvertex::convertAnimation(Animation &e)
+void RotateX_ZUpCorrector::convert(Animation &e)
 {
     if (!e.isRoot())
         return;
-    super::convertAnimation(e);
+    super::convert(e);
 }
 
-void FBXZUpToYUpConvertex::convertAnimationCurve(AnimationCurve &c)
+void RotateX_ZUpCorrector::convertAnimationCurve(AnimationCurve &c)
 {
     if (!c.data_flags.affect_handedness)
         return;
