@@ -507,7 +507,9 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response)
         parallel_for_each(mes->scene.entities.begin(), mes->scene.entities.end(), [&](TransformPtr& obj) {
             sanitizeHierarchyPath(obj->path);
             sanitizeHierarchyPath(obj->reference);
-            if (obj->getType() == Entity::Type::Mesh) {
+
+            bool is_mesh = obj->getType() == Entity::Type::Mesh;
+            if (is_mesh) {
                 auto& mesh = static_cast<Mesh&>(*obj);
                 for (auto& bone : mesh.bones)
                     sanitizeHierarchyPath(bone->path);
@@ -518,7 +520,13 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response)
                 mesh.refine_settings.max_bone_influence = m_settings.mesh_max_bone_influence;
                 mesh.refine(mesh.refine_settings);
             }
+
             convert(*obj);
+
+            if (is_mesh) {
+                auto& mesh = static_cast<Mesh&>(*obj);
+                mesh.updateBounds();
+            }
         });
 
         for (auto& asset : mes->scene.assets) {

@@ -68,9 +68,6 @@ public:
     void reduction(bool keep_flat_curves);
     void reserve(size_t n);
 
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
-
 
     std::string name;
     RawVector<char> data;
@@ -105,9 +102,6 @@ public:
     bool empty() const;
     void reduction(bool keep_flat_curves);
     void reserve(size_t n);
-
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
 
     bool isRoot() const;
     AnimationCurvePtr findCurve(const char *name);
@@ -308,8 +302,6 @@ public:
 
     bool empty() const;
     void reduction(bool keep_flat_curves = false);
-    void convertHandedness(bool x, bool yz);
-    void applyScaleFactor(float scale);
 
     void addAnimation(AnimationPtr v);
     void addAnimation(TransformAnimationPtr v);

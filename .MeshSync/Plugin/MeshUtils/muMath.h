@@ -894,7 +894,7 @@ template<class T> inline tmat4x4<T> flip_x(const tmat4x4<T>& m)
 
 template<class T> inline tvec3<T> flip_y(const tvec3<T>& v) { return { v.x, -v.y, v.z }; }
 template<class T> inline tvec4<T> flip_y(const tvec4<T>& v) { return { v.x, -v.y, v.z, v.w }; }
-template<class T> inline tquat<T> flip_y(const tquat<T>& v) { return { -v.z, v.w, v.x, -v.y }; }
+template<class T> inline tquat<T> flip_y(const tquat<T>& v) { return { -v.x, v.y, -v.z, v.w }; }
 template<class T> inline tmat3x3<T> flip_y(const tmat3x3<T>& m)
 {
     return tmat3x3<T> {

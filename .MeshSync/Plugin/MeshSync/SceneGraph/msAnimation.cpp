@@ -70,53 +70,6 @@ static void ReduceKeyframes(AnimationCurve& self, bool keep_flat_curve)
 }
 template<> void ReduceKeyframes<void>(AnimationCurve& /*self*/, bool /*keep_flat_curve*/) {}
 
-template<class T> static inline T handle_yz(const T& v) { return flip_z(swap_yz(v)); }
-template<> inline quatf handle_yz(const quatf& v) { return flip_z(swap_yz(v)) * rotate_x(-90.0f * DegToRad); }
-
-template<class T> static void ConvertHandednessImpl(AnimationCurve& self, bool x, bool yz)
-{
-    if (!self.data_flags.affect_handedness)
-        return;
-
-    TAnimationCurve<T> data(self);
-    if (x) {
-        if (!self.data_flags.ignore_negate) {
-            for (auto& tvp : data)
-                tvp.value = flip_x(tvp.value);
-        }
-    }
-    if (yz) {
-        if (!self.data_flags.ignore_negate) {
-            for (auto& tvp : data)
-                tvp.value = handle_yz(tvp.value);
-        }
-        else {
-            for (auto& tvp : data)
-                tvp.value = swap_yz(tvp.value);
-        }
-    }
-}
-template<class T> static void ConvertHandedness(AnimationCurve& /*self*/, bool /*x*/, bool /*yz*/) {}
-template<> void ConvertHandedness<float3>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float3>(self, x, yz); }
-template<> void ConvertHandedness<float4>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<float4>(self, x, yz); }
-template<> void ConvertHandedness<quatf>(AnimationCurve& self, bool x, bool yz) { ConvertHandednessImpl<quatf>(self, x, yz); }
-
-
-template<class T> static void ApplyScaleImpl(AnimationCurve& self, float v)
-{
-    if (!self.data_flags.affect_scale)
-        return;
-
-    TAnimationCurve<T> data(self);
-    for (auto& tvp : data)
-        tvp.value *= v;
-}
-template<class T> static void ApplyScale(AnimationCurve& /*self*/, float /*v*/) {}
-template<> void ApplyScale<float>(AnimationCurve& self, float v) { ApplyScaleImpl<float>(self, v); }
-template<> void ApplyScale<float2>(AnimationCurve& self, float v) { ApplyScaleImpl<float2>(self, v); }
-template<> void ApplyScale<float3>(AnimationCurve& self, float v) { ApplyScaleImpl<float3>(self, v); }
-template<> void ApplyScale<float4>(AnimationCurve& self, float v) { ApplyScaleImpl<float4>(self, v); }
-
 
 struct AnimationCurveFunctionSet
 {
@@ -124,14 +77,12 @@ struct AnimationCurveFunctionSet
     void*(*at)(const AnimationCurve& self, size_t i);
     void(*reserve_keyframes)(AnimationCurve& self, size_t n);
     void(*reduce_keyframes)(AnimationCurve& self, bool keep_flat_curve);
-    void(*convert_handedness)(AnimationCurve& self, bool x, bool yz);
-    void(*apply_scale)(AnimationCurve& self, float v);
 };
 
 #define EachDataTypes(Body)\
     Body(void) Body(int) Body(float) Body(float2) Body(float3) Body(float4) Body(quatf)
 
-#define DefFunctionSet(T) {&GetSize<T>, &At<T>, &ReserveKeyframes<T>, &ReduceKeyframes<T>, &ConvertHandedness<T>, &ApplyScale<T>},
+#define DefFunctionSet(T) {&GetSize<T>, &At<T>, &ReserveKeyframes<T>, &ReduceKeyframes<T>},
 
 static AnimationCurveFunctionSet g_curve_fs[] = {
     EachDataTypes(DefFunctionSet)
@@ -214,15 +165,6 @@ void AnimationCurve::reduction(bool keep_flat_curves)
 {
     g_curve_fs[(int)data_type].reduce_keyframes(*this, keep_flat_curves);
 }
-
-void AnimationCurve::convertHandedness(bool x, bool yz)
-{
-    g_curve_fs[(int)data_type].convert_handedness(*this, x, yz);
-}
-void AnimationCurve::applyScaleFactor(float scale)
-{
-    g_curve_fs[(int)data_type].apply_scale(*this, scale);
-}
 #undef EachMember
 
 
@@ -288,20 +230,6 @@ void Animation::reserve(size_t n)
 {
     for (auto& c : curves)
         c->reserve(n);
-}
-
-void Animation::convertHandedness(bool x, bool yz)
-{
-    if (yz && !isRoot())
-        yz = false;
-
-    for (auto& c : curves)
-        c->convertHandedness(x, yz);
-}
-void Animation::applyScaleFactor(float scale)
-{
-    for (auto& c : curves)
-        c->applyScaleFactor(scale);
 }
 
 bool Animation::isRoot() const
@@ -446,18 +374,6 @@ void AnimationClip::reduction(bool keep_flat_curves)
     animations.erase(
         std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
         animations.end());
-}
-
-void AnimationClip::convertHandedness(bool x, bool yz)
-{
-    for (auto& animation : animations)
-        animation->convertHandedness(x, yz);
-}
-
-void AnimationClip::applyScaleFactor(float scale)
-{
-    for (auto& animation : animations)
-        animation->applyScaleFactor(scale);
 }
 
 void AnimationClip::addAnimation(AnimationPtr v)

@@ -950,10 +950,14 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
         pos -= n->parent->transform_data.pivot;
 
     rot = td.rotation;
+
+    auto correct_axis = [](mu::quatf v) {
+        return mu::quatf { -v.z, v.w, v.x, -v.y };
+    };
     if (n->shape->node.hasFn(MFn::kCamera))
-        rot = mu::flip_y(rot);
+        rot = correct_axis(rot);
     else if (n->shape->node.hasFn(MFn::kLight))
-        rot = mu::flip_y(rot) * mu::rotate_z(180.0f * mu::DegToRad);
+        rot = correct_axis(rot) * mu::rotate_z(180.0f * mu::DegToRad);
 
     scale = td.scale;
     vis = n->isVisibleInHierarchy();

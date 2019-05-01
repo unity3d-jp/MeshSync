@@ -307,20 +307,47 @@ TestCase(TestNormalsAndTangents)
 }
 
 
-TestCase(TestMatrixSwapHandedness)
+TestCase(TestHandednessConversion)
 {
-    quatf rot1 = rotate(normalize(float3{0.15f, 0.3f, 0.6f}), 60.0f);
-    quatf rot2 = flip_x(rot1);
-    float4x4 mat1 = to_mat4x4(rot1);
-    float4x4 mat2 = to_mat4x4(rot2);
-    float4x4 mat3 = flip_x(mat1);
-    float4x4 imat1 = invert(mat1);
-    float4x4 imat2 = invert(mat2);
-    float4x4 imat3 = flip_x(imat1);
+    {
+        quatf rot1 = rotate(normalize(float3{ 0.15f, 0.3f, 0.6f }), 60.0f);
+        quatf rot2 = flip_x(rot1);
+        float4x4 mat1 = to_mat4x4(rot1);
+        float4x4 mat2 = to_mat4x4(rot2);
+        float4x4 mat3 = flip_x(mat1);
+        float4x4 imat1 = invert(mat1);
+        float4x4 imat2 = invert(mat2);
+        float4x4 imat3 = flip_x(imat1);
 
-    bool r1 = near_equal(mat2, mat3);
-    bool r2 = near_equal(imat2, imat3);
-    Print("    %d, %d\n", (int)r1, (int)r2);
+        Expect(near_equal(mat2, mat3));
+        Expect(near_equal(imat2, imat3));
+    }
+    {
+        quatf rot1 = rotate(normalize(float3{ 0.15f, 0.3f, 0.6f }), 60.0f);
+        quatf rot2 = flip_y(rot1);
+        float4x4 mat1 = to_mat4x4(rot1);
+        float4x4 mat2 = to_mat4x4(rot2);
+        float4x4 mat3 = flip_y(mat1);
+        float4x4 imat1 = invert(mat1);
+        float4x4 imat2 = invert(mat2);
+        float4x4 imat3 = flip_y(imat1);
+
+        Expect(near_equal(mat2, mat3));
+        Expect(near_equal(imat2, imat3));
+    }
+    {
+        quatf rot1 = rotate(normalize(float3{ 0.15f, 0.3f, 0.6f }), 60.0f);
+        quatf rot2 = flip_z(rot1);
+        float4x4 mat1 = to_mat4x4(rot1);
+        float4x4 mat2 = to_mat4x4(rot2);
+        float4x4 mat3 = flip_z(mat1);
+        float4x4 imat1 = invert(mat1);
+        float4x4 imat2 = invert(mat2);
+        float4x4 imat3 = flip_z(imat1);
+
+        Expect(near_equal(mat2, mat3));
+        Expect(near_equal(imat2, imat3));
+    }
 }
 
 

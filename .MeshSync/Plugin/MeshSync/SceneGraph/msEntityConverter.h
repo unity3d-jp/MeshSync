@@ -23,7 +23,7 @@ public:
 
     virtual void convert(AnimationClip& v);
     virtual void convert(Animation& v);
-    virtual void convertAnimationCurve(AnimationCurve& v) = 0;
+    virtual void convertAnimationCurve(AnimationCurve& v);
 };
 msDeclPtr(EntityConverter);
 
@@ -79,7 +79,7 @@ public:
     void convertMesh(Mesh& v) override;
     void convertPoints(Points& v) override;
 
-    void convertAnimationCurve(AnimationCurve& v) override;
+    void convert(Animation &anim) override;
 };
 msDeclPtr(FlipYZ_ZUpCorrector);
 

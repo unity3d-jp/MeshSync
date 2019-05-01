@@ -294,6 +294,18 @@ static inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVe
     }
 }
 
+void Mesh::updateBounds()
+{
+    // bounds
+    for (auto& split : splits) {
+        float3 bmin, bmax;
+        bmin = bmax = float3::zero();
+        MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
+        split.bound_center = (bmax + bmin) * 0.5f;
+        split.bound_size = abs(bmax - bmin);
+    }
+}
+
 void Mesh::refine(const MeshRefineSettings& mrs)
 {
     if (mrs.flags.flip_u)
@@ -425,15 +437,6 @@ void Mesh::refine(const MeshRefineSettings& mrs)
                 nsm += n;
             }
         }
-    }
-
-    // bounds
-    for (auto& split : splits) {
-        float3 bmin, bmax;
-        bmin = bmax = float3::zero();
-        MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
-        split.bound_center = (bmax + bmin) * 0.5f;
-        split.bound_size = abs(bmax - bmin);
     }
 
     // tangents

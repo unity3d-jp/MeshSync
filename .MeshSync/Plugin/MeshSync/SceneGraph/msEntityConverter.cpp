@@ -41,6 +41,10 @@ void EntityConverter::convert(Animation &anim)
         convertAnimationCurve(*curve);
 }
 
+void EntityConverter::convertAnimationCurve(AnimationCurve &/*v*/)
+{
+}
+
 
 
 std::shared_ptr<ScaleConverter> ScaleConverter::create(float scale)
@@ -202,6 +206,13 @@ void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
     e.position = flip_z(swap_yz(e.position));
     e.rotation = flip_z(swap_yz(e.rotation));
     e.scale = swap_yz(e.scale);
+
+    // I have no idea why this is needed...
+    {
+        static const quatf cr = rotate_x(-90.0f * DegToRad);
+        if (e.getType() == Entity::Type::Camera || e.getType() == Entity::Type::Light)
+            e.rotation *= cr;
+    }
 }
 
 void FlipYZ_ZUpCorrector::convertCamera(Camera &e)
@@ -218,19 +229,21 @@ void FlipYZ_ZUpCorrector::convertMesh(Mesh &e)
 {
     convertTransform(e);
 
-    for (auto& v : e.points) v = flip_z(swap_yz(v));
-    for (auto& v : e.normals) v = flip_z(swap_yz(v));
-    for (auto& v : e.tangents) v = flip_z(swap_yz(v));
-    for (auto& v : e.velocities) v = flip_z(swap_yz(v));
+    auto convert = [this](auto& v) { return flip_z(swap_yz(v)); };
+
+    for (auto& v : e.points) v = convert(v);
+    for (auto& v : e.normals) v = convert(v);
+    for (auto& v : e.tangents) v = convert(v);
+    for (auto& v : e.velocities) v = convert(v);
 
     for (auto& bone : e.bones) {
-        bone->bindpose = flip_z(swap_yz(bone->bindpose));
+        bone->bindpose = convert(bone->bindpose);
     }
     for (auto& bs : e.blendshapes) {
         for (auto& frame : bs->frames) {
-            for (auto& v : frame->points) { v = flip_z(swap_yz(v)); }
-            for (auto& v : frame->normals) { v = flip_z(swap_yz(v)); }
-            for (auto& v : frame->tangents) { v = flip_z(swap_yz(v)); }
+            for (auto& v : frame->points) { v = convert(v); }
+            for (auto& v : frame->normals) { v = convert(v); }
+            for (auto& v : frame->tangents) { v = convert(v); }
         }
     }
 }
@@ -244,33 +257,41 @@ void FlipYZ_ZUpCorrector::convertPoints(Points &e)
         for (auto& v : p->scales) v = swap_yz(v);
     }
 }
-
-void FlipYZ_ZUpCorrector::convertAnimationCurve(AnimationCurve &c)
+void FlipYZ_ZUpCorrector::convert(Animation &anim)
 {
-    if (!c.data_flags.affect_handedness)
-        return;
+    auto convert_curve = [&](AnimationCurve& c) {
+        if (!c.data_flags.affect_handedness)
+            return;
 
-    switch (c.data_type) {
-    case Animation::DataType::Float3:
-        if (!c.data_flags.ignore_negate)
-            c.each<float3>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
-        else
-            c.each<float3>([this](auto& v) { v.value = swap_yz(v.value); });
-        break;
-    case Animation::DataType::Float4:
-        if (!c.data_flags.ignore_negate)
-            c.each<float4>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
-        else
-            c.each<float4>([this](auto& v) { v.value = swap_yz(v.value); });
-        break;
-    case Animation::DataType::Quaternion:
-        c.each<quatf>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
-        break;
-    default:
-        break;
+        switch (c.data_type) {
+        case Animation::DataType::Float3:
+            if (!c.data_flags.ignore_negate)
+                c.each<float3>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+            else
+                c.each<float3>([&](auto& v) { v.value = swap_yz(v.value); });
+            break;
+        case Animation::DataType::Float4:
+            if (!c.data_flags.ignore_negate)
+                c.each<float4>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+            else
+                c.each<float4>([&](auto& v) { v.value = swap_yz(v.value); });
+            break;
+        case Animation::DataType::Quaternion:
+            c.each<quatf>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+            if ((anim.entity_type == Entity::Type::Camera || anim.entity_type == Entity::Type::Light) && c.name == mskTransformRotation) {
+                const quatf cr = rotate_x(-90.0f * DegToRad);
+                c.each<quatf>([&](auto& v) { v.value *= rotate_x(-90.0f * DegToRad); });
+            }
+            break;
+        default:
+            break;
+        }
+    };
+
+    for (auto& curve : anim.curves) {
+        convert_curve(*curve);
     }
 }
-
 
 
 std::shared_ptr<RotateX_ZUpCorrector> RotateX_ZUpCorrector::create()

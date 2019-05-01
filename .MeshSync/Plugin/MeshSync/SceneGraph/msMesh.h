@@ -209,6 +209,7 @@ public:
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 
+    void updateBounds();
     void refine(const MeshRefineSettings& mrs);
     void makeDoubleSided();
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);

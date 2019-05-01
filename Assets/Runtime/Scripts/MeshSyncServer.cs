@@ -176,7 +176,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
         [Space(10)]
-        [SerializeField] ZUpCorrectionMode m_zUpCorrectionMode = ZUpCorrectionMode.FlipYZ;
+        [SerializeField] ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] bool m_usePhysicalCameraParams = false;
 #endif
@@ -297,7 +297,7 @@ namespace UTJ.MeshSync
             StopServer();
 
             m_serverSettings.port = (ushort)m_serverPort;
-            m_serverSettings.zUpCorrectionMode = m_zUpCorrectionMode;
+            m_serverSettings.zUpCorrectionMode = m_zUpCorrection;
             m_server = Server.Start(ref m_serverSettings);
             m_server.fileRootPath = httpFileRootPath;
             m_handler = OnServerMessage;
@@ -2434,7 +2434,7 @@ namespace UTJ.MeshSync
             }
             if (m_server)
             {
-                m_server.zUpCorrectionMode = m_zUpCorrectionMode;
+                m_server.zUpCorrectionMode = m_zUpCorrection;
             }
         }
 #endif
