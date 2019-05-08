@@ -184,6 +184,10 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] InterpolationMode m_animtionInterpolation = InterpolationMode.Smooth;
+#if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
+        [SerializeField] bool m_useBoneRenderer = false;
+#endif
+
         [Space(10)]
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
@@ -499,6 +503,10 @@ namespace UTJ.MeshSync
                     }
                 }
 #endif
+#if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
+                if (m_useBoneRenderer)
+                    SetupBoneRenderer();
+#endif
 
                 ForceRepaint();
                 GC.Collect();
@@ -508,6 +516,52 @@ namespace UTJ.MeshSync
                     onSceneUpdateEnd.Invoke();
             }
         }
+
+#if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
+        static Type s_typeBoneRenderer;
+        static MethodInfo s_BoneRenderer_setTransforms;
+
+        bool SetupBoneRenderer()
+        {
+            if (s_BoneRenderer_setTransforms == null)
+            {
+                var asmRigging = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(assembly => assembly.GetName().Name == "Unity.Animation.Rigging");
+                if (asmRigging == null)
+                    return false;
+
+                s_typeBoneRenderer = asmRigging.GetType("UnityEngine.Animations.Rigging.BoneRenderer");
+                if (s_typeBoneRenderer == null)
+                    return false;
+
+                var propsTransforms = s_typeBoneRenderer.GetProperty("transforms");
+                if (propsTransforms == null)
+                    return false;
+
+                s_BoneRenderer_setTransforms = propsTransforms.GetSetMethod();
+                if (s_BoneRenderer_setTransforms == null)
+                    return false;
+            }
+
+            var boneList = new List<Transform>();
+            foreach (var co in m_clientObjects)
+            {
+                var go = co.Value.go;
+                if (go == null)
+                    continue;
+                var smr = go.GetComponent<SkinnedMeshRenderer>();
+                if (smr == null)
+                    continue;
+                var bones = smr.bones;
+                if (bones == null || bones.Length == 0)
+                    continue;
+                boneList.AddRange(smr.bones);
+            }
+
+            var br = Misc.GetOrAddComponent(gameObject, s_typeBoneRenderer);
+            s_BoneRenderer_setTransforms.Invoke(br, new object[] { boneList.Distinct().ToArray() });
+            return true;
+        }
+#endif
 
         void OnRecvText(TextMessage mes)
         {

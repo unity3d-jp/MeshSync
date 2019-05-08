@@ -50,6 +50,13 @@ namespace UTJ.MeshSync
                 ret = go.AddComponent<T>();
             return ret;
         }
+        public static Component GetOrAddComponent(GameObject go, Type type)
+        {
+            var ret = go.GetComponent(type);
+            if (ret == null)
+                ret = go.AddComponent(type);
+            return ret;
+        }
 
 #if UNITY_EDITOR
         public static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
