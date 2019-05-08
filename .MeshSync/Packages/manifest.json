@@ -2,6 +2,7 @@
   "dependencies": {
     "com.unity.ads": "2.3.1",
     "com.unity.analytics": "3.3.2",
+    "com.unity.animation.rigging": "0.1.4-preview",
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.formats.fbx": "2.0.1-preview.11",
     "com.unity.multiplayer-hlapi": "1.0.2",
