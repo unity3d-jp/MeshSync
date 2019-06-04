@@ -20,9 +20,9 @@ MeshSync works as a plugin for Unity and DCC tools, and currently supports: [May
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
 ### Maya
-Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
-- インストール：
-  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Maya_*.zip をダウンロード。
+This tool is compatible with: Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, and Linux (CentOS 7).
+- Installation:
+  - Download UnityMeshSync_Maya_*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases).
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
     - 2016 以前の場合はバージョン名のディレクトリへコピーします。(%MAYA_APP_DIR%\2016 など)
   - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
