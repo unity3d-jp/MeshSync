@@ -5,7 +5,7 @@ MeschSync reflects changes to models made in DCC tools in real time in Unity. Th
 MeshSync works as a plugin for Unity and DCC tools, and currently supports: [Maya](https://www.autodesk.eu/products/maya/overview), [Maya LT](https://www.autodesk.eu/products/maya-lt/overview), [3ds Max](https://www.autodesk.com/products/3ds-max/overview), [Blender](https://blenderartists.org/), [Metaseq](http://www.metaseq.net/), and [xismo](http://mqdl.jpn.org/).
 
 
-## How To
+## Guides
 1. [Maya](#maya)
 2. [Maya LT](#maya-lt)
 3. [3ds Max](#3ds-max)
