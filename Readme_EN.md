@@ -12,7 +12,7 @@ MeshSync works as a plugin for Unity and DCC tools, and currently supports: [May
 4. [Motion Builder](#motion-builder)
 5. [Blender](#blender)
 6. [Modo](#modo)
-7. [メタセコイア](#メタセコイア)
+7. [Metaseq](#Metaseq)
 8. [VRED](#vred)
 9. [xismo](#xismo)
 10. [Unity](#unity)
@@ -20,113 +20,113 @@ MeshSync works as a plugin for Unity and DCC tools, and currently supports: [May
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
 ### Maya
-This tool is compatible with: Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, and Linux (CentOS 7).
+Confirmed functionality with Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, and Linux (CentOS 7).
 - Installation:
   - Download UnityMeshSync_Maya_*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases).
-  - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
-    - 2016 以前の場合はバージョン名のディレクトリへコピーします。(%MAYA_APP_DIR%\2016 など)
-  - Mac: /Users/Shared/Autodesk/modules/maya に UnityMeshSync ディレクトリと .mod ファイルをコピー。
-  - Linux: ~/maya/(Maya のバージョン) に modules ディレクトリをそのままコピー。
-- Maya を起動し、Windows -> Settings/Preferences -> Plug-in Manager を開き、MeshSyncClient の Loaded にチェックを入れてプラグインを有効化します。
-- UnityMeshSync シェルフが追加されているので、それの歯車アイコンで設定メニューを開きます。
-- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+  - Windows: If %MAYA_APP_DIR% is already setup, copy the modules directory there, if not copy it to %USERPROFILE%\Documents\maya (← copy paste into the Explorer address bar).
+    - For versions prior to 2016, copy to the version name directory (%MAYA_APP_DIR%\2016 etc.)
+  - Mac: Copy the UnityMeshSync directory and .mod file to /Users/Shared/Autodesk/modules/maya.
+  - Linux: Copy the modules directory to ~/maya/(Maya version).
+- Start Maya, then go to Windows -> Settings/Preferences -> Plug-in Manager, and activate the plugin by checking Loaded under MeshSyncClient.
+- Now that the UnityMeshSync shelf has been added, click on the gear icon to open the settings menu. 
+- While "Auto Sync" is checked, any edits will automatically be reflected in Unity. When Auyo Sync is deactivated, click the  "Manual Sync" button to sync changes.
+- Clicking Sync under Animations causes the timer to advance from the first frame to the final frame while baking the animation and sending it to Unity. 
 
 &nbsp;  
 
-- 歯車アイコン以外のボタンはそれぞれ手動同期、アニメーション同期相当のボタンになっています。
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
-- ポリゴンメッシュはスキニング/ボーン (SkinCluster) と BlendShape もそのまま Unity へ持ってこれるようになっています。
-  - これら以外のデフォーマも適用を試みますが、前後に SkinCluster があった場合などに正しく適用されない可能性があります。
-  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を同期します。Maya 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
-- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- 負のスケールは部分的にしかサポートしていないので注意が必要です。
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
-- NURBS などポリゴン以外の形状データは対応していません。
-- インスタンシングは対応していますが、スキニングされたメッシュのインスタンスは現在未対応です (Unity 側では全て元インスタンスと同じ位置になっていまいます)。
-- MEL にもコマンドが登録されており、全ての機能に MEL 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClientMaya/msmayaCommands.cpp)。
+- The other buttons correspond to their respective manual sync and animation sync functions. 
+- Polygon mesh, camera, and light sync are supported. 
+- Polygon mesh will carry skinning/bones (SkinCluster) and BlendShapes over to Unity as is.
+  - MeshSync will attempt to apply any additional deformers, but if there is a SkinCluster before or after them they may not apply correctly. 
+  - Check "Bake Deformers" to sync the results of applying all deformers. This will mostly sync the Mesh on both the Maya and Unity sides, but this will result in loss of Skinning and BlendShape information.
+- Checing "Double Sided" will cause the Mesh to become double-sided on the Unity side
+- Be advised that the negative scale is only supported for certain elements. 
+  - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
+- Non-polygon shape data such as NURBS is not supported.
+- Instancing is supported, but instancing for skinned meshes is currently not supported (on the Unity side they all end up in the same position as the original instance). 
+- Commands are also registered to MEL, and all features can be accessed through MEL. See [the source code] (https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClientMaya/msmayaCommands.cpp) for details.
 
 
 ### Maya LT
-現在 Windows のみ対応で、Maya LT 2019 + Windows で動作を確認しています。Maya LT は本来外部プラグインをサポートしないため、問題が起きる可能性が高いことに留意ください。Maya LT 側のマイナーバージョンアップでも互換性が失われる可能性が考えられます。  
-パッケージは別になっているものの、インストールや使い方は [非 LT の Maya](#maya) と同じです。
+Currently, only Windows is supported, and the tool is confirmed to work on Maya LT 2019 + Windows. Maya LT does not natively support outside plugins, so be aware that this may lead to problems. Even small version changes to Maya LT may lead to loss of compatibility.   
+This is a separate package, but the process for installation and use is the same as [Non-LT Maya](#maya).
 
 
 ### 3ds Max
-3ds Max 2016, 2017, 2018, 2019, 2020 + Windows で動作を確認しています。
-- インストール：
-  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_3dsMax_Windows.zip をダウンロード
-  - MeshSyncClient3dsMax.dlu をプラグイン用パスとして登録されているディレクトリにコピー
-    - プラグイン用パスは max 内の Customize -> Configure User and System Paths -> 3rd Party Plug-Ins の Add で追加できます
-    - デフォルトで用意されているパス (C:\Program Files\Autodesk\3ds Max 2019\Plugins など) でもおそらく機能しますが、デフォルトとそれ以外で別のパスを用意しておくことをおすすめします
-- インストール後、メインメニューバーに "UnityMeshSync" が追加されているので、それの "Window" から設定ウィンドウを開けます。
-  - メニューバーを編集する場合、Action に "UnityMeshSync" カテゴリが追加されているので、そちらから MeshSync の機能にアクセスできます
-- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+Confirmed functionality with 3ds Max 2016, 2017, 2018, 2019, 2020 + Windows.
+- Installation: 
+  - Donload UnityMeshSync_3dsMax_Windows.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases)
+  - Copy MeshSyncClient3dsMax.dlu into the directory for plugin paths.
+    - Plugin paths can be added in Max by going to Add under Customize -> Configure User and System Paths -> 3rd Party Plug-Ins
+    - The default path (C:\Program Files\Autodesk\3ds Max 2019\Plugins) should be fine, but using a separate path is recommended
+- After installing, "UnityMeshSync" will be added to the main menu bar, and the settings window can be opened by clicking "Window". 
+  - If you change the menu bar, the "UnityMeshSync" category will be added under Action, where MeshSync features can also be accessed
+- While "Auto Sync" is checked, changes to the Mesh will automatically be reflected in Unity. If Auto Sync is disabled, the "Manual Sync" button can be used to sync changes manually.  
+- Clicking Sync under Animations will cause the timer to advance from the first frame to the final frame while baking the animation before sending it to Unity.
 
 &nbsp;  
 
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
-- モディファイアは大体対応していますが、対応できないケースもあります。以下のルールに従います。
-  - Morph も Skin もない場合、全てのモディファイアを適用した状態で同期します。
-  - Morph か Skin がある場合、その一つ前までのモディファイアを適用した状態で同期します。
-    - Morph / Skin が複数ある場合、一番下のものが基準として選ばれます。
-  - Morh と Skin は Unity 側にそのまま Blendshape / Skin として同期します。
-    - Unity 側では常に Blendshape -> Skin の順番で適用されるため、Max 側で順番が逆だと意図しない結果になる可能性があります。
-  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を送ります。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
-- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- 負のスケールは部分的にしかサポートしていないので注意が必要です。
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
-- Max script にもコマンドが追加されており、全ての機能に Max script 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp)
+- Polygon mesh, camera, and light sync are supported. 
+- Most modifiers are supported, but are unsupported in some cases. Use the following rules.  
+  - When there is no Morph or Skin, all modifiers will be applied during sync. 
+  - If there is a Morph or Skin, all modifiers before them will be applied during sync.  
+    - If there are multiple Morphs / Skins, the one at the bottom will be chosen as the base.
+  - Morphs and Skins will sync on the Unity side as Blendshapes / Skins.
+    - Unity applies them in order of Blendshape -> Skin, so if the order is reversed in Max, unintentional results may occur.
+  - If "Bake Deformers" is checked, the results of applying all deformers will be sent to Unity. This will keep the content of the Mesh mostly consistent between Max and Unity, but will also result in the loss of Skinning and Blendshape information.
+- Checking "Double Sided" will make the Mesh double-sided in Unity.
+- Be advised that the negative scale is only supported for certain elements.
+  - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
+- Commands have also been added to the Max script, so all features can be accessed via the Max script.See [the source code] (https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp) for details. 
 
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/45682175-8a919100-bb7a-11e8-96a1-efe2e28146c3.png" height=200>
 
 ### Motion Builder
-Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動作を確認しています
-- インストール：
-  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_MotionBuilder_*.zip をダウンロード
-  - MeshSyncClientMotionBuilder.dll をプラグイン用パスとして登録されているディレクトリにコピー
-    - プラグイン用パスは Motion Builder 内の Settings -> Preferences -> SDK メニューから追加できます
-- インストール後、Asset Browser 内の Templates -> Devices に UnityMeshSync というオブジェクトが追加されているので、それをシーンに追加します
-- Navigator 内の Devices -> UnityMeshSync を選択することで各種設定や機能にアクセスできます 
-- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+Confirmed functionality with Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) 
+- Installation:
+  - Download UnityMeshSync_MotionBuilder_*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases)
+  - Copy MeshSyncClientMotionBuilder.dll to the directory registered as a plugin path 
+    - Plugin paths can be added in Motion Builder under Settings -> Preferences -> SDK menu
+- After installation an object called UnityMeshSync will be added to the Asset Browser under Templates -> Devices, so add it to the scene  
+- The various settings and features can be accessed in the Navigator by selecting Devices -> UnityMeshSync 
+- While "Auto Sync" is checked, any changes to the Mesh will automatically be reflected in Unity. If Auto Sync is disabled, the "Manual Sync" button can be used to manually reflect changes  
+- Clicking Sync under Animations causes the timer to advance from the first frame to the final frame while baking the animation before sending it to Unity.  
 
 &nbsp;  
 
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
-- ポリゴンメッシュはスキニング/ボーンと BlendShape もそのまま Unity へ持ってこれるようになっています。
-- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- 負のスケールは部分的にしかサポートしていないので注意が必要です
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
-- NURBS などポリゴン以外の形状データは対応していません
+- Polygon mesh, camera, and lighting sync are supported.
+- The Polygon mesh's skinning/bone and BlendShapes will be carried over to Unity unchanged. 
+- Checking "Double Sided" causes the Mesh to become double-sided in Unity. 
+- Be advised that the negative scale is only supported for certain elements.
+  - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
+- Non-polygon shape data such as NURBS is not supported. 
 
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 
 ### Blender
-Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows, Mac, Linux (CentOS 7) で動作を確認しています。実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。現在更新が盛んな 2.8 系は特に注意が必要です。気付き次第対応版を出す予定ではあります。
-- インストール：
-  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Blender_*.zip をダウンロードして展開
-    - 展開して出てくる UnityMeshSync_Blender_* ディレクトリの中にも zip が入っていますが、これらはそのままで大丈夫です
-  - Blender 側で File -> User Preferences -> Add-ons (2.80 以降では Edit -> User Preferences) を開き、画面下部の "Install Add-on from file" を押し、プラグインの zip ファイルを指定します。
-  - **古いバージョンをインストール済みの場合、事前に削除しておく必要があります**。Add-ons メニューから "Import-Export: Unity Mesh Sync" を選択して  **Remove した後、blender を再起動** してから上記手順を踏んでください。
-- "Import-Export: Unity Mesh Sync" が追加されるので、チェックを入れて有効化します。
-- MeshSync パネルが追加されるので、そちらから設定や手動の同期を行います。
-  - 2.8 系ではパネルの場所がややわかりにくい場所になっています。右スクリーンショットを参照ください。
-- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows, Mac, Linux (CentOS 7). Be aware that depending on the implementation, **there is a high possibility that upgrading the Blender version will lead to a loss of compatibility**. Be especially careful when upgrading to the popular 2.8 versions. A supported version will be released when issues become known.
+- Installation: 
+  - Download UnityMeshSync_Blender_*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases) 
+    - When you decompress the file, there will be another zip file in the UnityMeshSync_Blender_* directory, but this can be left alone 
+  - In Blender, go to File -> User Preferences -> Add-ons (2.80 and after: Edit -> User Preferences), click "Install Add-on from file" at the bottom of the screen, and select the plugin zip file. 
+  - **If an older version is already installed, it must be deleted beforehand**. Select "Import-Export: Unity Mesh Sync" from the Add-ons menu, **restart Blender after removing the older version** then follow the above steps.
+- "Import-Export: Unity Mesh Sync" will be added to the menu, so select it to enable it.
+- The MeshSync will also be added, where settings and manual sync can be accessed. 
+  - The panel's location can be difficult to find in 2.8 versions. Use the screenshot at the right for reference.
+- When "Auto Sync" is selected, changes to the Mesh will automatically be reflected in Unity. If Auyo Sync is disabled, use the "Manual Sync" button to sync changes. 
+- Pressing the Animations Sync button will cause the timer to advance from the first frame to the final frame while baking the animation, then send it to Unity. 
 
 &nbsp;  
 
-- ポリゴンメッシュ、カメラ、ライトの同期に対応しています。
-- ポリゴンメッシュはスキニング/ボーン (Armature) と BlendShape もそのまま Unity へ持ってこれるようになっています。Mirror デフォーマも対応しています。これら以外のモディファイアは無視されます。
-  - "Bake Modifiers" をチェックすると、モディファイアを全て適用した結果を同期します。Blender 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
-- "Convert To Mesh" をチェックすると、NURBS などのポリゴンに変換可能なオブジェクトを変換して同期します。
-- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- 負のスケールは部分的にしかサポートしていないので注意が必要です
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
+- Polygon mesh, camera, and lighting sync are supported.
+- The polygon mesh's skinning/bone (Armature) and Blendshape will be sent to Unity unchanged. Mirror deformers are also supported. Other deformers will be ignored. 
+  - Check "Bake Modifiers" to sync the results of applying all modifiers. This will make the Mesh content mostly consistent between  Blender and Unity, but will also result in the loss of Skinning and Blendshape information.  
+- Use "Convert To Mesh" to convert objects such as Nurbs into polygons, if they are able to, then sync. 
+- Check the "Double Sided" option to make the Mesh double-sided in Unity.
+- Be advised that the negative scale is only supported for certain elements.
+  - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
 
 
 ### Modo
