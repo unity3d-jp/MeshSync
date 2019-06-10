@@ -133,13 +133,13 @@ Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows,
 
   <img src="https://user-images.githubusercontent.com/1488611/55697991-d9135980-59fe-11e9-8e9f-8fcfba1b234f.png" height=300><img src="https://user-images.githubusercontent.com/1488611/55697990-d9135980-59fe-11e9-9312-29c95e20e5b0.png" height=300>
 
-  Modo 10, 12, 13 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
-  - インストール：
-    - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Modo_*.zip をダウンロードして展開
-    - Modo 内の System -> Add Plug-in で MeshSyncClientModo.fx を指定
-  - インストール後は新たな View が追加されており、ここから各種設定や機能にアクセスできます (Application -> Custom View -> UnityMeshSync)
-  - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
-  - Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
+  Functionality confirmed with Modo 10, 12, 13 + Windows, Mac, Linux (CentOS 7).
+  - Installation:
+    - Download UnityMeshSync_Modo_*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases)
+    - Designate MeshSyncClientModo.fx in Modo under System -> Add Plug-in
+  - After installing, View will be added to the menu (Application -> Custom View -> UnityMeshSync), where varous options and settings can be accessed 
+  - While "Auto Sync" is checked, changes made to the mesh will automatically be reflected in Unity. If Auto Sync is disabled, the "Manual Sync" button can be used to sync changes
+  - Clicking Sync under Animations will cause the timer to advance from the first frame to the final frame while baking the animation and sending it to Unity. 
 
   &nbsp;
 
