@@ -143,9 +143,9 @@ Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows,
 
   &nbsp;
 
-  - ポリゴンメッシュ、カメラ、ライトの同期に対応しています。Mesh Instance や Replicator も部分的にサポートしています。
-  - ポリゴンメッシュはスキニング / Joint と Morph も Unity へ持ってこれるようになっていますが、デフォーマの扱いには注意が必要です。
-    - MeshSync が解釈できるデフォーマは Joint + Weight Map 方式のスキニング、および Morph のみです。それ以外のデフォーマは無視されます。
+  - Polygon mesh, camera, and light sync are supported. Portions of Mesh Instance and Replicator are also supported.
+  - Polygon mesh Skinning/Joints and Morph will carry over to Unity, but be aware of how deformers are handled.
+    - MeshSync can only handle Joint + Weight Map skinning, or Morph deformers. Any other deformers will be ignored.
     - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を送ります。複雑なデフォーマ構成であっても Unity 側の Mesh の内容がほぼ一致するようになりますが、代償としてスキニングや Morph/Blendshape の情報が失われます。
     - Mesh Instance や Replicator のスキニングは正しく Unity 側に反映できません。"Bake Deformers" を使う必要があります。
   - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
