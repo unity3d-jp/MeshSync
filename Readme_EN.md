@@ -146,57 +146,57 @@ Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows,
   - Polygon mesh, camera, and light sync are supported. Portions of Mesh Instance and Replicator are also supported.
   - Polygon mesh Skinning/Joints and Morph will carry over to Unity, but be aware of how deformers are handled.
     - MeshSync can only handle Joint + Weight Map skinning, or Morph deformers. Any other deformers will be ignored.
-    - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を送ります。複雑なデフォーマ構成であっても Unity 側の Mesh の内容がほぼ一致するようになりますが、代償としてスキニングや Morph/Blendshape の情報が失われます。
-    - Mesh Instance や Replicator のスキニングは正しく Unity 側に反映できません。"Bake Deformers" を使う必要があります。
-  - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-  - 負のスケールは部分的にしかサポートしていないので注意が必要です
-    - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
-  - コマンドからも MeshSync の機能にアクセスできます。unity.meshsync.settings で設定の変更、unity.meshsync.export でエクスポートできます
+    - Checking "Bake Deformers" will send the results of applying all deformers to Unity. This will mostly synchronize the Mesh on the Unity side even with complex deformer compositions, but comes at the cost of losing skinning and Morph/Blendshape information. 
+    - Mesh Instance and Replicator skinning won't display properly in Unity. "Bake Deformers" must be used.
+  - Clicking "Double Sided" will cause the Mesh to be double-sided in Unity. 
+  - Be advised that the negative scale is only supported for certain elements.
+    - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
+  - MeshSync features can also be accessed via commands. Use unity.meshsync.settings to change settings, and unity.meshsync.export to export
 
   &nbsp;
 
-Modo は 13 以降 [Mood Bridge for Unity](https://learn.foundry.com/modo/content/help/pages/appendices/modo_bridge.html) という機能が搭載されており、Unity に直接 Mesh や Material を送ることができるようになっています。MeshSync と機能的に近い部分もありますが、以下のような違いがあります。(2019/04 現在)
-  - Mood Bridge は Modo <-> Unity の双方向の同期をサポートします。MeshSync は Modo -> Unity の一方向のみをサポートします。
-  - MeshSync は Replicator、Mesh の Skinning/Morph、アニメーションを同期できます。Mood Bridge は現状これらはサポートしていません。
-  - MeshSync は できるだけ FBX 経由で Unity にデータを持っていった時と近い結果になるように努めています。一方、Modo Bridge では座標系が異なる (Z 方向が反転する)、Mesh のインデックスが展開されている (1000 triangles のモデルは 3000 頂点になっている) などの顕著な違いが出ます。
+As of Modo 13, the  [Mood Bridge for Unity](https://learn.foundry.com/modo/content/help/pages/appendices/modo_bridge.html) feature is available. This feature allows you to send Meshes and Materials directly to Unity.It has elements that are similar to MeshSync's features, with the following differences (as of 04/2019). 
+  - Mood Bridge supports Modo <-> Unity sync in both directions. MeshSync only supports Modo -> Unity sync.
+  - MeshSync can sync Replicator and Mesh Skinning/Morphs, and animations. Currently, Mood Bridge cannot.
+  - MeshSync attempts to replicate the results of bringing data into Unity via FBX as much as possible. On the other hand Modo Bridge has big differences such as using a different coordinate system (Z direction is reversed), decompressing the Mesh index (a model with 1,000 triangles will have 3,000 vertices), etc.   
 
 
-### メタセコイア
-Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応しています。3 系はたぶん全てのバージョンに対応していますが、4 系は 4.6.4 以上である必要があります。(このバージョン以上でないとボーンの出力がサポートできないため)
-また、4.7 系以降用は dll が別になっています。これは 4.7 でボーンの仕様が変わり、プラグインの互換性が失われたためです。4.7 ではモーフの出力にも対応しています。
-- インストール：
-  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Metasequoia*.zip をダウンロードして展開
-  - メタセコイア側で Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
-  - **古いバージョンをインストール済みの場合、事前に手動で削除しておく必要があります**。メタセコイアを起動していない状態で該当ファイルを削除してください。
-- インストール後 パネル -> Unity Mesh Sync が追加されるのでこれを開き、"Auto Sync" をチェックします。
-- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
-- "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
+### Metasequoia
+Supported in Windows for version 3 and 4 (32bit & 64bit) and Mac (version 4 only). All 3 versions are probably supported, but 4 versions must be 4.6.4 or later (bone output is not supported for earlier versions). 
+Also, dll is different in version 4.7 and later. This is due to changes to the bone system after 4.7 which lead to a loss of plugin compatibility. Morph output is also supported in 4.7 and later. 
+- Installation:
+  - Download  UnityMeshSync_Metasequoia*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases) and decompress
+  - Go to Help -> About Plug-ins in Metasequoia, and select the plugin file under "Install" in the lower left of the dialogue. It's a Station plugin type. 
+  - **If older versions are already installed, remove them manually before hand**. Delete the appropriate files before starting Metasequoia. 
+- After installation Panel -> Unity Mesh Sync will be added, open this and check "Auto Sync".
+- While "Auto Sync" is checked, changes to the mesh will automatically be reflected in Unity. If Auto Sync is disabled, use the "Manual Sync" button to sync changes. 
+- Checking "Double Sided" will cause the Mesh to be double-sided in Unity.
+- Checking "Sync Camera" will sync the camera in Metasequoia. "Camera Path" is the camera path in Unity.
+- Clicking "Import Unity Scene" will import the currently open Unity scene. Changes made to the scene can be reflected in real time. 
 
 &nbsp;
 
-- ミラーリング、スムーシングは Unity にも反映されます。
-  - ただし、ミラーリングの "左右を接続した鏡面" は非サポートです。
-- メタセコイアで非表示のオブジェクトは Unity でも非表示になります。非表示のオブジェクトはメッシュの内容は送られないので、シーン内にオブジェクトが増えて同期が重くなってきた場合適切に非表示にすることで同期も速くなるはずです。
-- マテリアルは Unity には反映されませんが、マテリアル ID に応じて適切にサブメッシュに分割されます。
-- サブディビジョンやメタボールはフリーズするまで Unity には反映されません。
-- メタセコイア 4 系でサポートされた法線の編集は "Sync Normals" にチェックを入れることで反映できます。
-- メタセコイア 4 系でサポートされたボーンは "Sync Bones" にチェックを入れることで反映できます。 "Sync Poses" にチェックを入れると "スキニング" で設定したポーズも反映します。
+- Mirroring and smooting will be reflected in Unity.
+  - However, "reflective surfaces where the left and right are connected" type mirroring is not supported.
+- Hidden objects in Metasequoia will also be hidden in Unity. Mesh details for hidden objects will not be sent to Unity, so when the number of objects in a scene makes sync heavy, making them hidden as appropriate should also speed up the sync process.  
+- Materials will not be reflected in Unity, but they will be split into appropriate sub-meshes depending on the Material ID. 
+- Subdivisions and metaballs will not be reflected in Unity until you freeze them. 
+- Check "Sync Normals" to reflect vector changes supported by Metasequoia 4 versions. 
+- Check "Sync Bones" to reflect bones supported by Metasequoia 4 versions. Checking "Sync Poses" will reflect the pose designated under "Skinning". 
 
 
 ### VRED
-VRED は API hook を用いた特殊な実装になっています。そのため、使い方が特殊であったり、VRED のマイナーバージョンアップでも動作しなくなる可能性があることにご注意ください。
-- インストール：
-  - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_VRED_Windows.zip をダウンロードして展開
-  - VRED のインストール先がデフォルトであれば、VREDPro_2019.bat などの bat ファイルをダブルクリックで MeshSync が付与された状態で VRED が起動します。
-  - VRED のインストール先がデフォルトでない場合、bat ファイルをテキストエディタで開いて "%PROGRAMFILES%\Autodesk\VREDPro-11.0\Bin\WIN64\VREDPro.exe" などの部分をインストール先の VRED の exe ファイルに書き換えてください。(例: "D:\My Install Directory\VREDPro-11.0\Bin\WIN64\VREDPro.exe" など)
-- "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
-- 部分的ながらテクスチャの同期にも対応しています。シェーダ内のパラメータ "colorTexture" "bumpTexture" に設定されているテクスチャをそれぞれカラーテクスチャ、ノーマルマップ用テクスチャとして同期します。
-- "Flip U/V" をチェックするとテクスチャ座標の U/V を反転します。マッピング方法が UV ではない場合でもこれを用いることでつじつまを合わせられるかもしれません。
-- "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- "Sync Deleted" をチェックすると、VRED 側で消えたモデルが Unity 側でも消えるようになります。
-- "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
+VRED has a special implementation using an API hook. This means that it also has special use methods and that minor version updates to VRED can result in loss of functionality. 
+- Installation:
+  - Download UnityMeshSync_VRED_Windows.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases) and extract files
+  - If the VRED install destination is set to default, double clicking bat files like VREDPro_2019.bat will apply MeshSync and start VRED. 
+  - If the install destination is NOT the default, open the bat file in a text editor and overwrite the "%PROGRAMFILES%\Autodesk\VREDPro-11.0\Bin\WIN64\VREDPro.exe" portion to point to the install destination's VRED exe file (Ex:"D:\My Install Directory\VREDPro-11.0\Bin\WIN64\VREDPro.exe").  
+- While "Auto Sync" is checked, changes to the mesh will automatically be reflected in Unity. If Auto Sync is disabled, use the "Manual Sync" button to sync changes.
+- Some portions of texture sync are supported. The textures designated in the "colorTexture" and "bumpTexture" parameters in the shader will be synced as textures for the color texture, normal map, etc.  
+- Checking "Flip U/V" will invert the U/Vs of the texture coordinates. Even if the mapping method doesn't use U/Vs, this option can still help maintain consistency. 
+- Clicking "Double Sided" will cause the Mesh to be double-sided in Unity.
+- Clicking "Sync Deleted" will delete models in Unity that have been deleted in VRED.
+- Clicking "Sync Camera" will sync the VRED camera. "Camera Path" is the Unity camera path.
 
 &nbsp;  
   
