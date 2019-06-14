@@ -256,15 +256,15 @@ xismo doesn't provide a plugin, so the current implementation (05/2018) uses an 
   Click the "Export Mesh "button in the MeshSyncServer to make those meshes into assets (files will be created in the directory designated by the "Asset Export Path").  
 
 
-## Tips や注意事項など
-- 同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
+## Tips and Important Points
+- Sync happens via TCP/IP, so it can still be done even if Unity and the DCC tool are on separate machines. To set up this kind of connection go to the client DCC tool's Server / Port setting and designate the machine running Unity.
 
 
-- Unity 上に MeshSyncServer オブジェクトがあるときにサーバーのアドレス:ポートをブラウザで開くと、サーバー側の Unity の GameView をブラウザで見ることができます。 (デフォルトでは [127.0.0.1:8080](http://127.0.0.1:8080))  
-  このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
+- When there is a MeshSyncServer object in the scene in Unity, open the server's address:port in your browser to view the server's Unity GameView via the browser(the default is [127.0.0.1:8080](http://127.0.0.1:8080)). 
+  If a message is sent from the browser's message form, that message will appear in Unity's Console. This communication method can be useful when Unity and the DCC tool are being used by different people. 
 
 
-- ポーズ/アニメーションのみを編集中の場合、"Sync Meshes" を切っておくことをおすすめします。メッシュデータを送らなくなるので動作が軽快になるでしょう。
+- If only the pose/animation are being edited, we recommend disabling "Sync Meshes". Not sending mesh data can make performance lighter.
   - プラグイン側でボーンのみの編集の場合メッシュは送らないようにすべきなのですが、判定がやや難しく、現状そうなっていません。
 
 
