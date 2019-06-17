@@ -265,13 +265,13 @@ xismo doesn't provide a plugin, so the current implementation (05/2018) uses an 
 
 
 - If only the pose/animation are being edited, we recommend disabling "Sync Meshes". Not sending mesh data can make performance lighter.
-  - プラグイン側でボーンのみの編集の場合メッシュは送らないようにすべきなのですが、判定がやや難しく、現状そうなっていません。
+  - If only the bones are being edited on the plugin side the mesh shouldn't be sent, but this can be difficult to judge so currently that doesn't happen by default.
 
 
-- Unity 2019.1 より前のバージョンでは、頂点あたりの最大影響ボーン数が 4 であることに注意が必要です。
-  これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
-    - Unity 2019.1 で最大 255 ボーンまで影響できるようになりました (Project Settings -> Quality -> Other の Skin Weights を "Unlimited" に)。
-    これにより、フェイシャルなどの多数のボーンを必要とするアニメーションも問題なく持って来れるはずです。
+- Note that in versions prior to Unity 2019.1 the most effective number of bones per vertex is 4. 
+  If there are too many bones, the results won't sync between the DCC tool and Unity. 
+    - In Unity 2019.1 a maximum of 255 bones can be used (See "Unlimited" in Skin Weights under Project Settings -> Quality -> Other).
+    This means that cases which require lots of bones, such as facial animations, should be able to sync with no problem.
 
 
 - 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。  
