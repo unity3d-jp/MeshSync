@@ -274,13 +274,13 @@ xismo doesn't provide a plugin, so the current implementation (05/2018) uses an 
     This means that cases which require lots of bones, such as facial animations, should be able to sync with no problem.
 
 
-- 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。  
-  ランタイムではアニメーションの同期は機能しませんが、モデルの同期は一通り動作します。
+- With these qualities in mind, this plugin is only designed to be used in the Editor, but it will also work if used in the runtime. **Be sure not to accidentally leave this plugin in the final build.**  
+  The animations won't sync in the runtime, but model sync will still work. 
 
 
-##  関連
-- [NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするツール
-- [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール
+##  Related
+- [NormalPainter](https://github.com/unity3d-jp/NormalPainter): Tool for editing vectors in Unity
+- [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Tool for building BlendShapes in Unity
 
-## ライセンス
-[MIT](LICENSE.txt), ただし Blender プラグインは [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt) (Blender のソースの一部を使っているため)
+## License
+[MIT](LICENSE.txt), the Blender plugin license is [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt) (because a portion of the Blender source code is used)
