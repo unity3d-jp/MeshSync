@@ -67,7 +67,7 @@ Confirmed functionality with 3ds Max 2016, 2017, 2018, 2019, 2020 + Windows.
 &nbsp;  
 
 - Polygon mesh, camera, and light sync are supported. 
-- Most modifiers are supported, but are unsupported in some cases. Use the following rules.  
+- Most modifiers are supported, but there are a few which are not. Use the following rules.  
   - When there is no Morph or Skin, all modifiers will be applied during sync. 
   - If there is a Morph or Skin, all modifiers before them will be applied during sync.  
     - If there are multiple Morphs / Skins, the one at the bottom will be chosen as the base.
@@ -77,7 +77,7 @@ Confirmed functionality with 3ds Max 2016, 2017, 2018, 2019, 2020 + Windows.
 - Checking "Double Sided" will make the Mesh double-sided in Unity.
 - Be advised that the negative scale is only supported for certain elements.
   - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
-- Commands have also been added to the Max script, so all features can be accessed via the Max script.See [the source code] (https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp) for details. 
+- Commands have also been added to the Max script, so all features can be accessed via the Max script.See [the source code](https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp) for details. 
 
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/45682175-8a919100-bb7a-11e8-96a1-efe2e28146c3.png" height=200>
