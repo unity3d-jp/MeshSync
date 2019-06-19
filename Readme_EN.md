@@ -67,7 +67,7 @@ Confirmed functionality with 3ds Max 2016, 2017, 2018, 2019, 2020 + Windows.
 &nbsp;  
 
 - Polygon mesh, camera, and light sync are supported. 
-- Most modifiers are supported, but there are a few which are not. Use the following rules.  
+- Most modifiers are supported, but there are a few cases where they are not. Use the following rules.  
   - When there is no Morph or Skin, all modifiers will be applied during sync. 
   - If there is a Morph or Skin, all modifiers before them will be applied during sync.  
     - If there are multiple Morphs / Skins, the one at the bottom will be chosen as the base.
