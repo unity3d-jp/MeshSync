@@ -40,7 +40,7 @@ Confirmed functionality with Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows
   - MeshSync will attempt to apply any additional deformers, but if there is a SkinCluster before or after them they may not apply correctly. 
   - Check "Bake Deformers" to sync the results of applying all deformers. This will mostly sync the Mesh on both the Maya and Unity sides, but this will result in loss of Skinning and BlendShape information.
 - Checing "Double Sided" will cause the Mesh to become double-sided on the Unity side
-- Be advised that the negative scale is only supported for certain elements. 
+- Be advised that the negative scale is only partially supported. 
   - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
 - Non-polygon shape data such as NURBS is not supported.
 - Instancing is supported, but instancing for skinned meshes is currently not supported (on the Unity side they all end up in the same position as the original instance). 
@@ -75,9 +75,9 @@ Confirmed functionality with 3ds Max 2016, 2017, 2018, 2019, 2020 + Windows.
     - Unity applies them in order of Blendshape -> Skin, so if the order is reversed in Max, unintentional results may occur.
   - If "Bake Deformers" is checked, the results of applying all deformers will be sent to Unity. This will keep the content of the Mesh mostly consistent between Max and Unity, but will also result in the loss of Skinning and Blendshape information.
 - Checking "Double Sided" will make the Mesh double-sided in Unity.
-- Be advised that the negative scale is only supported for certain elements.
+- Be advised that the negative scale is only partially supported.
   - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
-- Commands have also been added to the Max script, so all features can be accessed via the Max script.See [the source code](https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp) for details. 
+- Commands have also been added to the Max script, so all features can be accessed via the Max script. See [the source code](https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClient3dsMax/msmaxEntryPoint.cpp) for details. 
 
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/45682175-8a919100-bb7a-11e8-96a1-efe2e28146c3.png" height=200>
@@ -98,7 +98,7 @@ Confirmed functionality with Motion Builder 2015, 2016, 2017, 2018, 2019 + Windo
 - Polygon mesh, camera, and lighting sync are supported.
 - The Polygon mesh's skinning/bone and BlendShapes will be carried over to Unity unchanged. 
 - Checking "Double Sided" causes the Mesh to become double-sided in Unity. 
-- Be advised that the negative scale is only supported for certain elements.
+- Be advised that the negative scale is only partially supported.
   - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
 - Non-polygon shape data such as NURBS is not supported. 
 
@@ -113,8 +113,8 @@ Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows,
   - In Blender, go to File -> User Preferences -> Add-ons (2.80 and after: Edit -> User Preferences), click "Install Add-on from file" at the bottom of the screen, and select the plugin zip file. 
   - **If an older version is already installed, it must be deleted beforehand**. Select "Import-Export: Unity Mesh Sync" from the Add-ons menu, **restart Blender after removing the older version** then follow the above steps.
 - "Import-Export: Unity Mesh Sync" will be added to the menu, so select it to enable it.
-- The MeshSync will also be added, where settings and manual sync can be accessed. 
-  - The panel's location can be difficult to find in 2.8 versions. Use the screenshot at the right for reference.
+- The MeshSync panel will also be added, where settings and manual sync can be accessed. 
+  - The panel's location can be difficult to find in 2.8 versions. Use the screenshot to the right for reference.
 - When "Auto Sync" is selected, changes to the Mesh will automatically be reflected in Unity. If Auyo Sync is disabled, use the "Manual Sync" button to sync changes. 
 - Pressing the Animations Sync button will cause the timer to advance from the first frame to the final frame while baking the animation, then send it to Unity. 
 
@@ -125,7 +125,7 @@ Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows,
   - Check "Bake Modifiers" to sync the results of applying all modifiers. This will make the Mesh content mostly consistent between  Blender and Unity, but will also result in the loss of Skinning and Blendshape information.  
 - Use "Convert To Mesh" to convert objects such as Nurbs into polygons, if they are able to, then sync. 
 - Check the "Double Sided" option to make the Mesh double-sided in Unity.
-- Be advised that the negative scale is only supported for certain elements.
+- Be advised that the negative scale is only partially supported.
   - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
 
 
@@ -149,7 +149,7 @@ Functionality confirmed with Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows,
     - Checking "Bake Deformers" will send the results of applying all deformers to Unity. This will mostly synchronize the Mesh on the Unity side even with complex deformer compositions, but comes at the cost of losing skinning and Morph/Blendshape information. 
     - Mesh Instance and Replicator skinning won't display properly in Unity. "Bake Deformers" must be used.
   - Clicking "Double Sided" will cause the Mesh to be double-sided in Unity. 
-  - Be advised that the negative scale is only supported for certain elements.
+  - Be advised that the negative scale is only partially supported.
     - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
   - MeshSync features can also be accessed via commands. Use unity.meshsync.settings to change settings, and unity.meshsync.export to export
 
