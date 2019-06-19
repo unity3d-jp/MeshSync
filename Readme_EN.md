@@ -2,7 +2,7 @@
 # MeshSync
 
 MeschSync reflects changes to models made in DCC tools in real time in Unity. This allows devs to immediately see how things will look in-game while modelling.  
-MeshSync works as a plugin for Unity and DCC tools, and currently supports: [Maya](https://www.autodesk.eu/products/maya/overview), [Maya LT](https://www.autodesk.eu/products/maya-lt/overview), [3ds Max](https://www.autodesk.com/products/3ds-max/overview), [Blender](https://blenderartists.org/), [Metaseq](http://www.metaseq.net/), and [xismo](http://mqdl.jpn.org/).
+MeshSync works as a plugin for Unity and DCC tools, and currently supports: [Maya](https://www.autodesk.eu/products/maya/overview), [Maya LT](https://www.autodesk.eu/products/maya-lt/overview), [3ds Max](https://www.autodesk.com/products/3ds-max/overview), [Blender](https://blenderartists.org/), [Metasequoia](http://www.metaseq.net/), and [xismo](http://mqdl.jpn.org/).
 
 
 ## Guides
@@ -12,7 +12,7 @@ MeshSync works as a plugin for Unity and DCC tools, and currently supports: [May
 4. [Motion Builder](#motion-builder)
 5. [Blender](#blender)
 6. [Modo](#modo)
-7. [Metaseq](#Metaseq)
+7. [Metasequoia](#Metaseq)
 8. [VRED](#vred)
 9. [xismo](#xismo)
 10. [Unity](#unity)
@@ -29,7 +29,7 @@ Confirmed functionality with Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows
   - Linux: Copy the modules directory to ~/maya/(Maya version).
 - Start Maya, then go to Windows -> Settings/Preferences -> Plug-in Manager, and activate the plugin by checking Loaded under MeshSyncClient.
 - Now that the UnityMeshSync shelf has been added, click on the gear icon to open the settings menu. 
-- While "Auto Sync" is checked, any edits will automatically be reflected in Unity. When Auyo Sync is deactivated, click the  "Manual Sync" button to sync changes.
+- While "Auto Sync" is checked, any edits to the mesh will automatically be reflected in Unity. When Auyo Sync is deactivated, click the  "Manual Sync" button to sync changes.
 - Clicking Sync under Animations causes the timer to advance from the first frame to the final frame while baking the animation and sending it to Unity. 
 
 &nbsp;  
@@ -44,7 +44,7 @@ Confirmed functionality with Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows
   - If XYZ all have negative values, the Mesh will sync properly, however if only one axis has a negative value Unity will treat the Mesh as though every axis has a negative value.
 - Non-polygon shape data such as NURBS is not supported.
 - Instancing is supported, but instancing for skinned meshes is currently not supported (on the Unity side they all end up in the same position as the original instance). 
-- Commands are also registered to MEL, and all features can be accessed through MEL. See [the source code] (https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClientMaya/msmayaCommands.cpp) for details.
+- Commands are also registered to MEL, and all features can be accessed through MEL. See [the source code](https://github.com/unity3d-jp/MeshSync/blob/master/.MeshSync/Plugin/MeshSyncClientMaya/msmayaCommands.cpp) for details.
 
 
 ### Maya LT
