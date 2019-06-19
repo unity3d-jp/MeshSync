@@ -168,7 +168,7 @@ Also, dll is different in version 4.7 and later. This is due to changes to the b
   - Download  UnityMeshSync_Metasequoia*.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases) and decompress
   - Go to Help -> About Plug-ins in Metasequoia, and select the plugin file under "Install" in the lower left of the dialogue. It's a Station plugin type. 
   - **If older versions are already installed, remove them manually before hand**. Delete the appropriate files before starting Metasequoia. 
-- After installation Panel -> Unity Mesh Sync will be added, open this and check "Auto Sync".
+- Panel -> Unity Mesh Sync will be added after installation, open this and check "Auto Sync".
 - While "Auto Sync" is checked, changes to the mesh will automatically be reflected in Unity. If Auto Sync is disabled, use the "Manual Sync" button to sync changes. 
 - Checking "Double Sided" will cause the Mesh to be double-sided in Unity.
 - Checking "Sync Camera" will sync the camera in Metasequoia. "Camera Path" is the camera path in Unity.
@@ -239,7 +239,7 @@ xismo doesn't provide a plugin, so the current implementation (05/2018) uses an 
 - Sync Transform, etc.
   - Setting for enabling/disabling sync for individual components. Created because of situations such as Transform sync getting in the way of checking physics simulation behavior in Play mode.
 - Update Mesh Collider
-  - When enabled, MeshCollidor details will also be updated when the Mesh is updated, if an object has a MeshCollider. 
+  - When enabled, MeshCollider details will also be updated when the Mesh is updated, if an object has a MeshCollider. 
 - Track Material Assignment
   - When enabled, if a material is assigned by dragging and dropping in the SceneView, that update will be detected and any other Mesh using the same material will also have its material updated. 
 - Animation Interpolation
