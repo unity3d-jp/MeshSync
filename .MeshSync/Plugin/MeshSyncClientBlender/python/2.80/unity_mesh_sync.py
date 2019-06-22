@@ -16,9 +16,9 @@ import MeshSyncClientBlender as ms
 from unity_mesh_sync_common import *
 
 class MESHSYNC_PT:
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = ".workspace"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"
 
 
 class MESHSYNC_PT_Main(MESHSYNC_PT, bpy.types.Panel):
