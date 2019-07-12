@@ -156,8 +156,8 @@ Blender 2.79(a,b), 2.80 beta (2019-4-23) + Windows, Mac, Linux (CentOS 7) で動
 
   &nbsp;
 
-Modo は 13 以降 [Mood Bridge for Unity](https://learn.foundry.com/modo/content/help/pages/appendices/modo_bridge.html) という機能が搭載されており、Unity に直接 Mesh や Material を送ることができるようになっています。MeshSync と機能的に近い部分もありますが、以下のような違いがあります。(2019/04 現在)
-  - Mood Bridge は Modo <-> Unity の双方向の同期をサポートします。MeshSync は Modo -> Unity の一方向のみをサポートします。
+Modo は 13 以降 [Modo Bridge for Unity](https://learn.foundry.com/modo/content/help/pages/appendices/modo_bridge.html) という機能が搭載されており、Unity に直接 Mesh や Material を送ることができるようになっています。MeshSync と機能的に近い部分もありますが、以下のような違いがあります。(2019/04 現在)
+  - Modo Bridge は Modo <-> Unity の双方向の同期をサポートします。MeshSync は Modo -> Unity の一方向のみをサポートします。
   - MeshSync は Replicator、Mesh の Skinning/Morph、アニメーションを同期できます。Mood Bridge は現状これらはサポートしていません。
   - MeshSync は できるだけ FBX 経由で Unity にデータを持っていった時と近い結果になるように努めています。一方、Modo Bridge では座標系が異なる (Z 方向が反転する)、Mesh のインデックスが展開されている (1000 triangles のモデルは 3000 頂点になっている) などの顕著な違いが出ます。
 
@@ -168,11 +168,11 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Metasequoia*.zip をダウンロードして展開
   - メタセコイア側で Help -> About Plug-ins を開き、ダイアログ左下の "Install" からプラグインファイルを指定します。ちなみにプラグインのタイプは Station です。
-  - **古いバージョンをインストール済みの場合、事前に手動で削除しておく必要があります**。メタセコイアを起動していない状態で該当ファイルを削除してください。
+  - **古いバージョンをインストール済みの場合、事前に手動で削除しておく必要があります**。メタセコイアを起動していない状態で該当ファイルを削除、または直接新しい dll で置き換えてください。
 - インストール後 パネル -> Unity Mesh Sync が追加されるのでこれを開き、"Auto Sync" をチェックします。
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
-- "Sync Camera" をチェックすると、VRED 側のカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
+- "Sync Camera" をチェックすると、パースペクティブビューのカメラを同期します。"Camera Path" が Unity 側のカメラのパスになります。
 - "Import Unity Scene" を押すと現在 Unity で開かれているシーンをインポートすることができます。インポートしたシーンの編集もリアルタイムに反映可能です。
 
 &nbsp;

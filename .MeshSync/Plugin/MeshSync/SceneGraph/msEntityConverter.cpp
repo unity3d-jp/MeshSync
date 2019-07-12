@@ -209,9 +209,10 @@ void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
 
     // I have no idea why this is needed...
     {
-        static const quatf cr = rotate_x(-90.0f * DegToRad);
-        if (e.getType() == Entity::Type::Camera || e.getType() == Entity::Type::Light)
+        if (e.getType() == Entity::Type::Camera || e.getType() == Entity::Type::Light) {
+            const quatf cr = rotate_x(-90.0f * DegToRad);
             e.rotation *= cr;
+        }
     }
 }
 
@@ -280,7 +281,9 @@ void FlipYZ_ZUpCorrector::convert(Animation &anim)
             c.each<quatf>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
             if ((anim.entity_type == Entity::Type::Camera || anim.entity_type == Entity::Type::Light) && c.name == mskTransformRotation) {
                 const quatf cr = rotate_x(-90.0f * DegToRad);
-                c.each<quatf>([&](auto& v) { v.value *= rotate_x(-90.0f * DegToRad); });
+                c.each<quatf>([&](auto& v) {
+                    v.value *= cr;
+                });
             }
             break;
         default:
