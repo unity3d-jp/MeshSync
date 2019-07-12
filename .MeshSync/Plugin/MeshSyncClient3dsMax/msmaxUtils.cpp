@@ -46,6 +46,18 @@ mu::float4x4 GetPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
+mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers)
+{
+    if (bake_modifiers) {
+        //auto *tm = n->EvalWorldState(t).GetTM();
+        //return tm ? to_float4x4(*tm) : mu::float4x4::identity();
+        return to_float4x4(n->GetObjTMAfterWSM(t));
+    }
+    else {
+        return to_float4x4(n->GetNodeTM(t));
+    }
+}
+
 bool IsVisibleInHierarchy(INode *n, TimeValue t)
 {
     auto parent = n->GetParentNode();
@@ -173,35 +185,19 @@ TriObject* GetSourceMesh(INode * n, bool& needs_delete)
     return ret;
 }
 
-TriObject* GetFinalMesh(INode * n, bool & needs_delete)
+TriObject* GetFinalMesh(INode *n, bool &needs_delete)
 {
-    IDerivedObject *dobj = nullptr;
-    int mod_index = 0;
-    needs_delete = false;
-
-    Object *base = EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (!dobj) {
-            dobj = obj;
-            mod_index = mi;
-        }
-    });
-
-    TriObject *ret = nullptr;
-    auto to_triobject = [&needs_delete, &ret](Object *obj) {
-        if (obj->CanConvertToType(triObjectClassID)) {
-            auto old = obj;
-            ret = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
-            if (ret != old)
-                needs_delete = true;
-        }
-    };
-
-    if (dobj) {
-        auto os = dobj->Eval(GetTime(), mod_index);
-        to_triobject(os.obj);
+    auto name = GetName(n);
+    auto time = GetTime();
+    auto cid = Class_ID(TRIOBJ_CLASS_ID, 0);
+    auto ws = n->EvalWorldState(time);
+    auto valid = ws.tmValid();
+    auto *obj = ws.obj;
+    if (obj->CanConvertToType(cid)) {
+        auto *tri = (TriObject*)obj->ConvertToType(time, cid);
+        if (obj != tri)
+            needs_delete = true;
+        return tri;
     }
-    else {
-        to_triobject(base);
-    }
-    return ret;
+    return nullptr;
 }

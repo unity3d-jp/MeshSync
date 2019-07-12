@@ -399,7 +399,7 @@ void msmaxContext::kickAsyncSend()
     m_async_tasks.clear();
 
     for (auto *t : m_tmp_meshes)
-        t->DeleteThis();
+        t->DeleteMe();
     m_tmp_meshes.clear();
 
     for (auto& kvp : m_node_records)
@@ -589,13 +589,13 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
     return ret;
 }
 
-static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis, bool bake)
 {
-    auto mat = to_float4x4(n->GetNodeTM(t));
+    auto mat = GetTransform(n, t, bake);
 
     // handle parents
     if (auto parent = n->GetParentNode()) {
-        auto pmat = to_float4x4(parent->GetNodeTM(t));
+        auto pmat = GetTransform(parent, t, bake);
         mat *= mu::invert(pmat);
     }
 
@@ -700,7 +700,7 @@ ms::TransformPtr msmaxContext::exportTransform(TreeNode& n)
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -713,7 +713,7 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
@@ -723,7 +723,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     ExtractCameraData((GenCamera*)n.baseobj, GetTime(),
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
@@ -734,7 +734,7 @@ ms::LightPtr msmaxContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     ExtractLightData((GenLight*)n.baseobj, GetTime(),
         dst.light_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
@@ -859,7 +859,7 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto ret = createEntity<ms::Mesh>(n);
     auto inode = n.node;
     auto& dst = *ret;
-    ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
 
     // send mesh contents even if the node is hidden.
 
@@ -896,8 +896,10 @@ void msmaxContext::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mesh)
 {
     if (mesh) {
         // handle pivot
-        dst.refine_settings.flags.apply_local2world = 1;
-        dst.refine_settings.local2world = GetPivotMatrix(n);
+        if (!m_settings.bake_modifiers) {
+            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.local2world = GetPivotMatrix(n);
+        }
 
         // faces
         int num_faces = mesh->numFaces;
@@ -1131,7 +1133,7 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode
     mu::quatf rot;
     mu::float3 scale;
     bool vis;
-    ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis);
+    ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis, m_settings.bake_modifiers);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
