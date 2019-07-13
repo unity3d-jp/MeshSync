@@ -1,5 +1,5 @@
 file(GLOB sources *.cpp *.h)
-set(plugins_dir "${CMAKE_SOURCE_DIR}/../Assets/UTJ/MeshSync/Runtime/Plugins/x86_64")
+set(plugins_dir "${CMAKE_SOURCE_DIR}/../Runtime/Plugins/x86_64")
 add_plugin(MeshSyncServer SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
 
 add_dependencies(MeshSyncServer MeshUtils)
