@@ -242,7 +242,7 @@ namespace blender
         static BContext get();
         Main* data();
         Scene* scene();
-        Depsgraph* depsgraph();
+        Depsgraph* evaluated_depsgraph_get();
     };
 
 #undef Compatible

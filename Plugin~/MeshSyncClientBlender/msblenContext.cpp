@@ -371,33 +371,37 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
 #if BLENDER_VERSION < 280
                 bobj.to_mesh(bl::BContext::get().scene());
 #else
-                bobj.to_mesh(bl::BContext::get().depsgraph());
+                bobj.to_mesh(bl::BContext::get().evaluated_depsgraph_get());
 #endif
             if (tmp) {
                 data = tmp;
-                m_tmp_meshes.push_back(tmp); // need to delete baked meshes later
+                m_tmp_meshes.push_back(tmp); // baked meshes are need to be deleted manually
             }
         }
 
         // calculate per index normals
         // note: when bake_modifiers is enabled, it is done for baked meshes
-        if (m_settings.sync_normals && m_settings.calc_per_index_normals) {
+        if (data && m_settings.sync_normals && m_settings.calc_per_index_normals) {
             // calc_normals_split() seems can't be multi-threaded. it will cause unpredictable crash...
             // todo: calculate normals by myself to be multi-threaded
             bl::BMesh(data).calc_normals_split();
         }
     }
 
-    auto task = [this, ret, src, data]() {
-        auto& dst = *ret;
-        doExtractMeshData(dst, src, data);
-        m_entity_manager.add(ret);
-    };
+    if (data) {
+        auto task = [this, ret, src, data]() {
+            auto& dst = *ret;
+            doExtractMeshData(dst, src, data);
+            m_entity_manager.add(ret);
+        };
 
-    if(m_settings.multithreaded)
-        m_async_tasks.push_back(std::async(std::launch::async, task));
-    else
-        task();
+        if (m_settings.multithreaded)
+            m_async_tasks.push_back(std::async(std::launch::async, task));
+        else
+            task();
+    }
+    else {
+    }
     return ret;
 }
 

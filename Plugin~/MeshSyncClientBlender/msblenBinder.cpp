@@ -57,7 +57,7 @@ static FunctionRNA* BlendDataMeshes_remove;
 Def(BContext);
 Prop(BContext, blend_data);
 Prop(BContext, scene);
-Prop(BContext, depsgraph);
+Func(BContext, evaluated_depsgraph_get);
 
 #undef Prop
 #undef Func
@@ -179,7 +179,9 @@ void setup(py::object bpy_context)
             each_prop{
                 if (match_prop("blend_data")) BContext_blend_data = prop;
                 if (match_prop("scene")) BContext_scene = prop;
-                if (match_prop("depsgraph")) BContext_depsgraph = prop;
+            }
+            each_func{
+                if (match_func("evaluated_depsgraph_get")) BContext_evaluated_depsgraph_get = func;
             }
         }
     }
@@ -443,7 +445,7 @@ Mesh* BObject::to_mesh(Scene *scene) const
 #else
 Mesh* BObject::to_mesh(Depsgraph *deg) const
 {
-    return call<Object, Mesh*, Depsgraph*, bool, bool>(m_ptr, BObject_to_mesh, deg, true, false);
+    return call<Object, Mesh*, bool, Depsgraph*>(m_ptr, BObject_to_mesh, false, deg);
 }
 #endif
 
@@ -579,9 +581,9 @@ Scene* BContext::scene()
     return (Scene*)get_pointer(m_ptr, BContext_scene);
 }
 
-Depsgraph* blender::BContext::depsgraph()
+Depsgraph* blender::BContext::evaluated_depsgraph_get()
 {
-    return (Depsgraph*)get_pointer(m_ptr, BContext_depsgraph);
+    return call<bContext, Depsgraph*>(m_ptr, BContext_evaluated_depsgraph_get);
 }
 
 blist_range<Object> BData::objects()
