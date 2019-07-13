@@ -16,6 +16,7 @@ static bContext *g_context;
 Def(BID);
 Prop(BID, is_updated);
 Prop(BID, is_updated_data);
+Func(BID, evaluated_get);
 
 Def(BObject);
 Prop(BObject, matrix_local);
@@ -99,6 +100,9 @@ void setup(py::object bpy_context)
             each_prop{
                 if (match_prop("is_updated")) BID_is_updated = prop;
                 if (match_prop("is_updated_data")) BID_is_updated_data = prop;
+            }
+            each_func {
+                if (match_func("evaluated_get")) BID_evaluated_get = func;
             }
         }
         else if (match_type("Object")) {
@@ -397,6 +401,11 @@ bool BID::is_updated_data() const
 #endif
 }
 
+ID* blender::BID::evaluated_get(Depsgraph* depsgraph)
+{
+    return call<ID, ID*, Depsgraph*>(m_ptr, BID_evaluated_get, depsgraph);
+}
+
 
 const char *BObject::name() const { return ((BID)*this).name(); }
 void* BObject::data() { return m_ptr->data; }
@@ -438,14 +447,15 @@ bool BObject::is_visible(Scene * scene) const
 }
 
 #if BLENDER_VERSION < 280
-Mesh* BObject::to_mesh(Scene *scene) const
+Mesh* BObject::to_mesh() const
 {
+    auto scene = bl::BContext::get().scene();
     return call<Object, Mesh*, Scene*, int, int, int, int>(m_ptr, BObject_to_mesh, scene, 1, 1, 1, 0);
 }
 #else
-Mesh* BObject::to_mesh(Depsgraph *deg) const
+Mesh* BObject::to_mesh() const
 {
-    return call<Object, Mesh*, bool, Depsgraph*>(m_ptr, BObject_to_mesh, false, deg);
+    return call<Object, Mesh*, bool, Depsgraph*>(m_ptr, BObject_to_mesh, false, nullptr);
 }
 #endif
 

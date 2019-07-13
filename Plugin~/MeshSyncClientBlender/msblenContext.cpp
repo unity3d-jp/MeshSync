@@ -367,13 +367,13 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
             (!is_editing && m_settings.bake_modifiers) || (src->type != OB_MESH);
 
         if (need_convert) {
-            Mesh *tmp =
-#if BLENDER_VERSION < 280
-                bobj.to_mesh(bl::BContext::get().scene());
-#else
-                bobj.to_mesh(bl::BContext::get().evaluated_depsgraph_get());
+#if BLENDER_VERSION >= 280
+            if (m_settings.bake_modifiers) {
+                auto depsgraph = bl::BContext::get().evaluated_depsgraph_get();
+                bobj = (Object*)bl::BID(bobj).evaluated_get(depsgraph);
+            }
 #endif
-            if (tmp) {
+            if (Mesh *tmp = bobj.to_mesh()) {
                 data = tmp;
                 m_tmp_meshes.push_back(tmp); // baked meshes are need to be deleted manually
             }

@@ -99,6 +99,7 @@ namespace blender
         const char *name() const;
         bool is_updated() const;
         bool is_updated_data() const;
+        ID* evaluated_get(Depsgraph *depsgraph);
     };
 
     class BObject
@@ -115,11 +116,7 @@ namespace blender
         mu::float4x4 matrix_local() const;
         mu::float4x4 matrix_world() const;
         bool is_visible(Scene *scene) const;
-#if BLENDER_VERSION < 280
-        Mesh* to_mesh(Scene *scene) const;
-#else
-        Mesh* to_mesh(Depsgraph *deg) const;
-#endif
+        Mesh* to_mesh() const;
     };
 
     class BMesh
