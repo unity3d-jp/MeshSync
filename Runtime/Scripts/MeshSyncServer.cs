@@ -176,6 +176,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
         [Space(10)]
+        [SerializeField] float m_animationFrameRate = 30.0f;
         [SerializeField] ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] bool m_usePhysicalCameraParams = false;
@@ -2003,6 +2004,7 @@ namespace UTJ.MeshSync
                         animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                         animClipCache[root.gameObject] = clip;
                     }
+                    clip.frameRate = m_animationFrameRate; // todo: use DCC side frame rate
                 }
 
                 var animPath = path.Replace("/" + root.name, "");
