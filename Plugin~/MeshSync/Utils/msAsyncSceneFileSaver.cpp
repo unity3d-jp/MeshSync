@@ -100,15 +100,13 @@ void AsyncSceneFileSaver::saveToFile(const std::string& path, const bool forceSa
 	oscz->addScene(m_scene, 0.5f);
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	
-
-	oscz->on_complete = [this]() { 
-		resetScene();
-	};	
-
 	//Wait until the writing is done
 	while (oscz->isWriting()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	}
+
+	resetScene();
+
 }
 
 } // namespace ms
