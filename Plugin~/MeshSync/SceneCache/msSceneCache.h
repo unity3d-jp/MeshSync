@@ -26,6 +26,9 @@ public:
     virtual void addScene(ScenePtr scene, float time) = 0;
     virtual void flush() = 0;
     virtual bool isWriting() = 0;
+
+    std::function<void()> on_complete;
+
 };
 msDeclPtr(OSceneCache);
 

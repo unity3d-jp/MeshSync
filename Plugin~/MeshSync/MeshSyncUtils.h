@@ -6,4 +6,5 @@
 #include "Utils/msMaterialManager.h"
 #include "Utils/msEntityManager.h"
 #include "Utils/msAsyncSceneSender.h"
+#include "Utils/msAsyncSceneFileSaver.h"
 #include "Utils/msMaterialExt.h"

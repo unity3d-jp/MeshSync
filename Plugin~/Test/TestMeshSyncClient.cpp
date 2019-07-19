@@ -488,3 +488,37 @@ TestCase(Test_Query)
     SendQuery(AllNodes);
 #undef SendQuery
 }
+
+TestCase(Test_SaveFile)
+{
+	ms::AsyncSceneFileSaver fileSaver;
+
+	fileSaver.on_prepare = [](ms::AsyncSceneFileSaver& t) { 
+        t.scene_settings.handedness = ms::Handedness::RightZUp;
+        t.scene_settings.scale_factor = 1.0f;
+
+		t.resetScene();
+
+        std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
+		t.AddEntity(mesh);
+
+        mesh->path = "/Test/Wave";
+        mesh->refine_settings.flags.gen_normals = 1;
+        mesh->refine_settings.flags.gen_tangents = 1;
+
+        auto& points = mesh->points;
+        auto& uv = mesh->uv0;
+        auto& counts = mesh->counts;
+        auto& indices = mesh->indices;
+        auto& mids = mesh->material_ids;
+        GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 0);
+        mids.resize(counts.size(), 0);
+
+	};
+
+
+	fileSaver.tryKickAutoSave();
+
+	fileSaver.kickManualSave("wave.scz");
+}
+

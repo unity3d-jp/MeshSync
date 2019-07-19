@@ -113,7 +113,12 @@ void OSceneCacheImpl::doWrite()
             CacheFileSceneHeader header{ m_encoded_buf.size(), desc.time };
             m_ost->write((char*)&header, sizeof(header));
             m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
+		
         }
+
+		if (on_complete)
+			on_complete();
+
     };
 
     {
