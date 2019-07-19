@@ -16,9 +16,9 @@ public:
 
     AsyncSceneFileSaver();
     ~AsyncSceneFileSaver();
-	void AddAsset(AssetPtr);
-	void AddEntity(TransformPtr);
-	void resetScene();
+    void AddAsset(AssetPtr);
+    void AddEntity(TransformPtr);
+    void resetScene();
     const std::string& getErrorMessage() const;
     bool isSaving();
     void wait();
@@ -28,7 +28,7 @@ public:
 private:
     void saveToFile(const std::string& path, const bool force);
 
-	std::shared_ptr<Scene> m_scene = nullptr;
+    std::shared_ptr<Scene> m_scene = nullptr;
     std::future<void> m_future;
     std::string m_error_message;
 };

@@ -491,16 +491,16 @@ TestCase(Test_Query)
 
 TestCase(Test_SaveFile)
 {
-	ms::AsyncSceneFileSaver fileSaver;
+    ms::AsyncSceneFileSaver fileSaver;
 
-	fileSaver.on_prepare = [](ms::AsyncSceneFileSaver& t) { 
+    fileSaver.on_prepare = [](ms::AsyncSceneFileSaver& t) { 
         t.scene_settings.handedness = ms::Handedness::RightZUp;
         t.scene_settings.scale_factor = 1.0f;
 
-		t.resetScene();
+        t.resetScene();
 
         std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
-		t.AddEntity(mesh);
+        t.AddEntity(mesh);
 
         mesh->path = "/Test/Wave";
         mesh->refine_settings.flags.gen_normals = 1;
@@ -514,11 +514,11 @@ TestCase(Test_SaveFile)
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 0);
         mids.resize(counts.size(), 0);
 
-	};
+    };
 
 
-	fileSaver.tryKickAutoSave();
+    fileSaver.tryKickAutoSave();
 
-	fileSaver.kickManualSave("wave.scz");
+    fileSaver.kickManualSave("wave.scz");
 }
 
