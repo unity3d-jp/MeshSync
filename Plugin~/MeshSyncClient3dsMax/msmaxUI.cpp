@@ -352,9 +352,15 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_BOTHSIDED:
+        case IDC_CHECK_DOUBLE_SIDED:
             handle_button([&]() {
-                s.make_double_sided = CtrlIsChecked(IDC_CHECK_BOTHSIDED);
+                s.make_double_sided = CtrlIsChecked(IDC_CHECK_DOUBLE_SIDED);
+                notify_scene_update();
+            });
+            break;
+        case IDC_CHECK_HIDE_BONE_MESHES:
+            handle_button([&]() {
+                s.hide_bone_meshes = CtrlIsChecked(IDC_CHECK_HIDE_BONE_MESHES);
                 notify_scene_update();
             });
             break;
@@ -487,19 +493,20 @@ void msmaxContext::updateUIText()
     CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);
     CtrlSetText(IDC_EDIT_PORT, (int)s.client_settings.port);
 
-    CtrlSetText(IDC_EDIT_SCALE_FACTOR,  s.scale_factor);
-    CtrlSetCheck(IDC_CHECK_MESHES,       s.sync_meshes);
-    CtrlSetCheck(IDC_CHECK_NORMALS,      s.sync_normals);
-    CtrlSetCheck(IDC_CHECK_UVS,          s.sync_uvs);
-    CtrlSetCheck(IDC_CHECK_COLORS,       s.sync_colors);
-    CtrlSetCheck(IDC_CHECK_BOTHSIDED,    s.make_double_sided);
-    CtrlSetCheck(IDC_CHECK_BAKEMODIFIERS, s.bake_modifiers);
-    CtrlSetCheck(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
-    CtrlSetCheck(IDC_CHECK_BONES,        s.sync_bones);
-    CtrlSetCheck(IDC_CHECK_TEXTURES,     s.sync_textures);
-    CtrlSetCheck(IDC_CHECK_CAMERAS,      s.sync_cameras);
-    CtrlSetCheck(IDC_CHECK_LIGHTS,       s.sync_lights);
-    CtrlSetCheck(IDC_CHECK_AUTO_SYNC,    s.auto_sync);
+    CtrlSetText(IDC_EDIT_SCALE_FACTOR,      s.scale_factor);
+    CtrlSetCheck(IDC_CHECK_MESHES,          s.sync_meshes);
+    CtrlSetCheck(IDC_CHECK_NORMALS,         s.sync_normals);
+    CtrlSetCheck(IDC_CHECK_UVS,             s.sync_uvs);
+    CtrlSetCheck(IDC_CHECK_COLORS,          s.sync_colors);
+    CtrlSetCheck(IDC_CHECK_DOUBLE_SIDED,    s.make_double_sided);
+    CtrlSetCheck(IDC_CHECK_HIDE_BONE_MESHES,s.hide_bone_meshes);
+    CtrlSetCheck(IDC_CHECK_BAKEMODIFIERS,   s.bake_modifiers);
+    CtrlSetCheck(IDC_CHECK_BLENDSHAPES,     s.sync_blendshapes);
+    CtrlSetCheck(IDC_CHECK_BONES,           s.sync_bones);
+    CtrlSetCheck(IDC_CHECK_TEXTURES,        s.sync_textures);
+    CtrlSetCheck(IDC_CHECK_CAMERAS,         s.sync_cameras);
+    CtrlSetCheck(IDC_CHECK_LIGHTS,          s.sync_lights);
+    CtrlSetCheck(IDC_CHECK_AUTO_SYNC,       s.auto_sync);
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);

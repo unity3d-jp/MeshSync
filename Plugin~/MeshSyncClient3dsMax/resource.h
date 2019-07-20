@@ -29,9 +29,10 @@
 #define IDC_CHECK_BAKEMODIFIERS         1023
 #define IDC_CHECK_TEXTURES              1024
 #define IDC_TXT_VERSION                 1025
-#define IDC_CHECK_BOTHSIDED             1026
+#define IDC_CHECK_DOUBLE_SIDED          1026
 #define IDC_CHECK_KFREDUCTION           1027
 #define IDC_CHECK_KEEPFLATCURVES        1028
+#define IDC_CHECK_HIDE_BONE_MESHES      1029
 
 // Next default values for new objects
 // 

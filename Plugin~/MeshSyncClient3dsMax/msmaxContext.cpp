@@ -366,6 +366,11 @@ void msmaxContext::updateRecords()
     m_node_records.clear();
     EnumerateAllNode([this](INode *n) {
         getNodeRecord(n);
+
+        // mark bone objects
+        EachBone(n, [this](INode *bone) {
+            getNodeRecord(bone).is_bone = true;
+        });
     });
 
     // erase renamed / re-parented objects
@@ -545,7 +550,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
     };
 
 
-    if (IsMesh(obj)) {
+    if (IsMesh(obj) && (!m_settings.hide_bone_meshes || !rec.is_bone)) {
         // export bones
         // this must be before extractMeshData() because meshes can be bones in 3ds Max
         if (m_settings.sync_bones) {
@@ -892,7 +897,7 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     return ret;
 }
 
-void msmaxContext::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mesh)
+void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
 {
     if (mesh) {
         // handle pivot
@@ -900,6 +905,10 @@ void msmaxContext::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mesh)
             dst.refine_settings.flags.apply_local2world = 1;
             dst.refine_settings.local2world = GetPivotMatrix(n);
         }
+        //if (IsInWorldSpace(n, GetTime())) {
+        //    auto path = GetPath(n);
+        //    logInfo("world space object: %s\n", path.c_str());
+        //}
 
         // faces
         int num_faces = mesh->numFaces;

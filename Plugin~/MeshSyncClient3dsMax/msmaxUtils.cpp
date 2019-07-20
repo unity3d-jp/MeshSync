@@ -66,6 +66,11 @@ bool IsVisibleInHierarchy(INode *n, TimeValue t)
     return  n->GetVisibility(t) > 0.0f;
 }
 
+bool IsInWorldSpace(INode *n, TimeValue t)
+{
+    return n->GetObjTMAfterWSM(t).IsIdentity();
+}
+
 bool IsInstanced(INode *n)
 {
     INodeTab instances;
@@ -111,30 +116,11 @@ Modifier* FindMorph(INode *n)
     return ret;
 }
 
-bool IsBone(Object *obj)
-{
-    if (!obj)
-        return false;
-
-    // not sure this is correct...
-    auto cid = obj->ClassID();
-    return
-        cid == Class_ID(BONE_CLASS_ID, 0) ||
-        cid == BONE_OBJ_CLASSID ||
-        cid == SKELOBJ_CLASS_ID
-#if MAX_PRODUCT_YEAR_NUMBER >= 2018
-        ||
-        cid == CATBONE_CLASS_ID ||
-        cid == CATHUB_CLASS_ID
-#endif
-        ;
-}
-
 bool IsMesh(Object *obj)
 {
     if (!obj)
         return false;
-    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID && !IsBone(obj);
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID;
 }
 
 TriObject* GetSourceMesh(INode * n, bool& needs_delete)
