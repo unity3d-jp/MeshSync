@@ -32,7 +32,7 @@ struct msmaxSettings
     bool keyframe_reduction = true;
     bool keep_flat_curves = false;
 
-    bool multithreaded = false;
+    bool multithreaded = true;
 
     // import settings
     bool bake_skin = false;
@@ -87,6 +87,10 @@ public:
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
+
+    // thread safe. c will be called from main thread
+    void addDeferredCall(const std::function<void()>& c);
+    void feedDeferredCalls();
 
     // UI
     void registerMenu();
@@ -181,6 +185,9 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+
+    std::vector<std::function<void()>> m_deferred_calls;
+    std::mutex m_mutex;
 };
 
 #define msmaxGetContext() msmaxContext::getInstance()

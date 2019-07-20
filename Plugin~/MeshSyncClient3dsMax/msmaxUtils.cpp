@@ -171,13 +171,11 @@ TriObject* GetSourceMesh(INode * n, bool& needs_delete)
     return ret;
 }
 
-TriObject* GetFinalMesh(INode *n, bool &needs_delete)
+TriObject* GetFinalMesh(INode *n, bool& needs_delete)
 {
-    auto name = GetName(n);
     auto time = GetTime();
     auto cid = Class_ID(TRIOBJ_CLASS_ID, 0);
-    auto ws = n->EvalWorldState(time);
-    auto valid = ws.tmValid();
+    auto& ws = n->EvalWorldState(time);
     auto *obj = ws.obj;
     if (obj->CanConvertToType(cid)) {
         auto *tri = (TriObject*)obj->ConvertToType(time, cid);

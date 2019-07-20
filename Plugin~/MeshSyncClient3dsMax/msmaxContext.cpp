@@ -39,6 +39,18 @@ static void OnPostNewScene(void *param, NotifyInfo *info)
     msmaxGetContext().update();
 }
 
+static void FeedDeferredCallsImpl(void*)
+{
+    msmaxGetContext().feedDeferredCalls();
+}
+static void FeedDeferredCalls()
+{
+    // call FeedDeferredCallsImpl from main thread
+    // https://help.autodesk.com/view/3DSMAX/2017/ENU/?guid=__files_GUID_0FA27485_D808_40B7_8465_B1C293077597_htm
+    const UINT WM_TRIGGER_CALLBACK = WM_USER + 4764;
+    ::PostMessage(GetCOREInterface()->GetMAXHWnd(), WM_TRIGGER_CALLBACK, (WPARAM)&FeedDeferredCallsImpl, (LPARAM)nullptr);
+}
+
 
 ms::Identifier msmaxContext::TreeNode::getIdentifier() const
 {
@@ -1215,6 +1227,25 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
         }
     }
 }
+
+
+void msmaxContext::addDeferredCall(const std::function<void()>& c)
+{
+    {
+        std::unique_lock<std::mutex> l(m_mutex);
+        m_deferred_calls.push_back(c);
+    }
+    FeedDeferredCalls();
+}
+
+void msmaxContext::feedDeferredCalls()
+{
+    std::unique_lock<std::mutex> l(m_mutex);
+    for (auto& c : m_deferred_calls)
+        c();
+    m_deferred_calls.clear();
+}
+
 
 bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
 {
