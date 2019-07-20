@@ -49,9 +49,10 @@ mu::float4x4 GetPivotMatrix(INode *n)
 mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers)
 {
     if (bake_modifiers) {
-        //auto *tm = n->EvalWorldState(t).GetTM();
-        //return tm ? to_float4x4(*tm) : mu::float4x4::identity();
-        return to_float4x4(n->GetObjTMAfterWSM(t));
+        auto ret = n->GetObjTMAfterWSM(t);
+        if (ret.IsIdentity())
+            ret = n->GetObjTMBeforeWSM(t);
+        return to_float4x4(ret);
     }
     else {
         return to_float4x4(n->GetNodeTM(t));

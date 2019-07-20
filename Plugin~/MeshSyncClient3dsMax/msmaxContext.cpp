@@ -912,15 +912,19 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
 void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
 {
     if (mesh) {
-        // handle pivot
         if (!m_settings.bake_modifiers) {
+            // handle pivot
             dst.refine_settings.flags.apply_local2world = 1;
             dst.refine_settings.local2world = GetPivotMatrix(n);
         }
-        //if (IsInWorldSpace(n, GetTime())) {
-        //    auto path = GetPath(n);
-        //    logInfo("world space object: %s\n", path.c_str());
-        //}
+        else {
+            // handle world space object ( https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm )
+            auto t = GetTime();
+            if (IsInWorldSpace(n, t)) {
+                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.local2world = invert(GetTransform(n, t, true));
+            }
+        }
 
         // faces
         int num_faces = mesh->numFaces;

@@ -32,7 +32,7 @@ struct msmaxSettings
     bool keyframe_reduction = true;
     bool keep_flat_curves = false;
 
-    bool multithreaded = true;
+    bool multithreaded = false;
 
     // import settings
     bool bake_skin = false;
