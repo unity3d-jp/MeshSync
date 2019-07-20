@@ -32,6 +32,8 @@ struct msmaxSettings
     bool keyframe_reduction = true;
     bool keep_flat_curves = false;
 
+    // parallel mesh extraction.
+    // it seems can cause problems when exporting objects with EvalWorldState()...
     bool multithreaded = false;
 
     // import settings
