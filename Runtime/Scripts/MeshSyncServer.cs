@@ -51,6 +51,7 @@ namespace UTJ.MeshSync
             public int[] materialIDs = new int[0];
             public int[] submeshCounts = new int[0];
             public string reference;
+            public bool visible = true; // for reference
             public bool recved = false;
 
             // return true if modified
@@ -1353,79 +1354,75 @@ namespace UTJ.MeshSync
                 }
 
                 var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
-                if (smr != null)
+                if (m_syncVisibility)
+                    smr.enabled = data.transform.visible;
+
+                // disable GameObject while updating mesh and materials
+                bool active = t.gameObject.activeSelf;
+                t.gameObject.SetActive(false);
+
+                if (flags.hasIndices)
                 {
-                    // disable GameObject while updating mesh and materials
-                    bool active = t.gameObject.activeSelf;
-                    t.gameObject.SetActive(false);
+                    var collider = t.GetComponent<MeshCollider>();
+                    bool updateCollider = m_updateMeshColliders && collider != null &&
+                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
 
-                    if (flags.hasIndices)
                     {
-                        var collider = t.GetComponent<MeshCollider>();
-                        bool updateCollider = m_updateMeshColliders && collider != null &&
-                            (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
-
-                        {
-                            var old = smr.sharedMesh;
-                            smr.sharedMesh = null;
-                            smr.bones = null;
-                            smr.rootBone = null;
-                            DestroyIfNotAsset(old);
-                            old = null;
-                        }
-
-                        if (updateCollider)
-                            collider.sharedMesh = rec.editMesh;
-
-                        bool updateWhenOffscreen = false;
-                        if (skinned)
-                        {
-                            // create bones
-                            var bonePaths = data.GetBonePaths();
-                            var bones = new Transform[data.numBones];
-                            for (int bi = 0; bi < bones.Length; ++bi)
-                            {
-                                bool dummy = false;
-                                bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
-                            }
-
-                            if (bones.Length > 0)
-                            {
-                                bool dummy = false;
-                                var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
-                                if (root == null)
-                                    root = bones[0];
-                                smr.rootBone = root;
-                                smr.bones = bones;
-                                updateWhenOffscreen = true;
-                            }
-                        }
-                        else
-                        {
-                            if (rec.editMesh != null)
-                                smr.localBounds = rec.editMesh.bounds;
-                        }
-
-                        smr.sharedMesh = rec.editMesh;
-                        smr.updateWhenOffscreen = updateWhenOffscreen;
+                        var old = smr.sharedMesh;
+                        smr.sharedMesh = null;
+                        smr.bones = null;
+                        smr.rootBone = null;
+                        DestroyIfNotAsset(old);
+                        old = null;
                     }
 
-                    if (flags.hasBlendshapeWeights && rec.editMesh != null)
+                    if (updateCollider)
+                        collider.sharedMesh = rec.editMesh;
+
+                    bool updateWhenOffscreen = false;
+                    if (skinned)
                     {
-                        int numBlendShapes = Math.Min(data.numBlendShapes, rec.editMesh.blendShapeCount);
-                        for (int bi = 0; bi < numBlendShapes; ++bi)
+                        // create bones
+                        var bonePaths = data.GetBonePaths();
+                        var bones = new Transform[data.numBones];
+                        for (int bi = 0; bi < bones.Length; ++bi)
                         {
-                            var bsd = data.GetBlendShapeData(bi);
-                            smr.SetBlendShapeWeight(bi, bsd.weight);
+                            bool dummy = false;
+                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
+                        }
+
+                        if (bones.Length > 0)
+                        {
+                            bool dummy = false;
+                            var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
+                            if (root == null)
+                                root = bones[0];
+                            smr.rootBone = root;
+                            smr.bones = bones;
+                            updateWhenOffscreen = true;
                         }
                     }
+                    else
+                    {
+                        if (rec.editMesh != null)
+                            smr.localBounds = rec.editMesh.bounds;
+                    }
 
-                    t.gameObject.SetActive(active);
+                    smr.sharedMesh = rec.editMesh;
+                    smr.updateWhenOffscreen = updateWhenOffscreen;
                 }
 
-                var renderer = trans.gameObject.GetComponent<Renderer>();
-                if (renderer != null && m_syncVisibility)
-                    renderer.enabled = data.transform.visible;
+                if (flags.hasBlendshapeWeights && rec.editMesh != null)
+                {
+                    int numBlendShapes = Math.Min(data.numBlendShapes, rec.editMesh.blendShapeCount);
+                    for (int bi = 0; bi < numBlendShapes; ++bi)
+                    {
+                        var bsd = data.GetBlendShapeData(bi);
+                        smr.SetBlendShapeWeight(bi, bsd.weight);
+                    }
+                }
+
+                t.gameObject.SetActive(active);
             }
 
             int numSplits = Math.Max(1, data.numSplits);
@@ -1643,7 +1640,8 @@ namespace UTJ.MeshSync
         {
             var path = data.path;
             int data_id = data.id;
-            if(path.Length == 0) { return null; }
+            if (path.Length == 0)
+                return null;
 
             Transform trans = null;
             EntityRecord rec = null;
@@ -1689,6 +1687,7 @@ namespace UTJ.MeshSync
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
+            rec.visible = data.visible;
             rec.dataType = data.entityType;
 
             // sync TRS
@@ -1701,21 +1700,7 @@ namespace UTJ.MeshSync
 
             // visibility
             if (m_syncVisibility)
-            {
                 trans.gameObject.SetActive(data.visibleHierarchy);
-
-                var smr = trans.GetComponent<SkinnedMeshRenderer>();
-                if (smr != null)
-                    smr.enabled = data.visible;
-
-                var cam = trans.GetComponent<Camera>();
-                if (cam != null)
-                    cam.enabled = data.visible;
-
-                var light = trans.GetComponent<Light>();
-                if (light != null)
-                    light.enabled = data.visible;
-            }
 
             return trans;
         }
@@ -1727,6 +1712,9 @@ namespace UTJ.MeshSync
                 return null;
 
             var cam = Misc.GetOrAddComponent<Camera>(trans.gameObject);
+            if (m_syncVisibility)
+                cam.enabled = data.transform.visible;
+
             cam.orthographic = data.orthographic;
 
 #if UNITY_2018_1_OR_NEWER
@@ -1757,9 +1745,6 @@ namespace UTJ.MeshSync
                 cam.nearClipPlane = data.nearClipPlane;
                 cam.farClipPlane = data.farClipPlane;
             }
-
-            if (m_syncVisibility)
-                cam.enabled = data.transform.visible;
             return cam;
         }
 
@@ -1770,6 +1755,9 @@ namespace UTJ.MeshSync
                 return null;
 
             var lt = Misc.GetOrAddComponent<Light>(trans.gameObject);
+            if (m_syncVisibility)
+                lt.enabled = data.transform.visible;
+
             lt.type = data.type;
             lt.color = data.color;
             lt.intensity = data.intensity;
@@ -1777,8 +1765,6 @@ namespace UTJ.MeshSync
                 lt.range = data.range;
             if (data.spotAngle > 0.0f)
                 lt.spotAngle = data.spotAngle;
-            if (m_syncVisibility)
-                lt.enabled = data.transform.visible;
             return lt;
         }
 
@@ -1792,14 +1778,15 @@ namespace UTJ.MeshSync
 
             var dstgo = dst.go;
             var srcgo = src.go;
-
-            // should copy 'enabled'...?
             if (src.dataType == EntityType.Camera)
             {
                 var srccam = srcgo.GetComponent<Camera>();
                 if (srccam != null)
                 {
                     var dstcam  = Misc.GetOrAddComponent<Camera>(dstgo);
+                    if (m_syncVisibility)
+                        dstcam.enabled = dst.visible;
+                    dstcam.enabled = srccam.enabled;
                     dstcam.orthographic = srccam.orthographic;
                     dstcam.fieldOfView = srccam.fieldOfView;
                     dstcam.nearClipPlane = srccam.nearClipPlane;
@@ -1812,6 +1799,8 @@ namespace UTJ.MeshSync
                 if (srclt != null)
                 {
                     var dstlt = Misc.GetOrAddComponent<Light>(dstgo);
+                    if (m_syncVisibility)
+                        dstlt.enabled = dst.visible;
                     dstlt.type = srclt.type;
                     dstlt.color = srclt.color;
                     dstlt.intensity = srclt.intensity;
@@ -1831,6 +1820,8 @@ namespace UTJ.MeshSync
                     var dstpr = dstgo.GetComponent<PointCacheRenderer>();
                     if (dstpr != null)
                     {
+                        if (m_syncVisibility)
+                            dstpr.enabled = dst.visible;
                         dstpr.sharedMesh = srcsmr.sharedMesh;
 
                         var materials = srcsmr.sharedMaterials;
@@ -1842,6 +1833,8 @@ namespace UTJ.MeshSync
                     {
                         var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
                         var mesh = srcsmr.sharedMesh;
+                        if (m_syncVisibility)
+                            dstsmr.enabled = dst.visible;
                         dstsmr.sharedMesh = mesh;
                         dstsmr.sharedMaterials = srcsmr.sharedMaterials;
                         dstsmr.bones = srcsmr.bones;
