@@ -61,6 +61,13 @@ mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers)
     }
 }
 
+bool IsRenderable(INode *n)
+{
+    if (!n)
+        return false;
+    return n->Renderable() != 0;
+}
+
 bool IsVisibleInHierarchy(INode *n, TimeValue t)
 {
     auto parent = n->GetParentNode();

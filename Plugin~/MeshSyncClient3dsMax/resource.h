@@ -22,17 +22,14 @@
 #define IDC_TXT_TIME_SCALE              1016
 #define IDC_TXT_SPS                     1017
 #define IDC_EDIT_ANIMATION_SPS          1018
-#define IDC_CHECK_NORMALS               1019
-#define IDC_CHECK_UVS                   1020
-#define IDC_CHECK_COLORS                1021
 #define IDC_CHECK_BLENDSHAPES           1022
-#define IDC_CHECK_BAKEMODIFIERS         1023
+#define IDC_CHECK_BAKE_MODIFIERS        1023
 #define IDC_CHECK_TEXTURES              1024
 #define IDC_TXT_VERSION                 1025
-#define IDC_CHECK_DOUBLE_SIDED          1026
+#define IDC_CHECK_MAKE_DOUBLE_SIDED     1026
 #define IDC_CHECK_KFREDUCTION           1027
 #define IDC_CHECK_KEEPFLATCURVES        1028
-#define IDC_CHECK_HIDE_BONE_MESHES      1029
+#define IDC_CHECK_IGNORE_NON_RENDERABLE 1029
 
 // Next default values for new objects
 // 

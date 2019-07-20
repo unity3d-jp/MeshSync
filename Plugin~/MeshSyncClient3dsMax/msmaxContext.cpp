@@ -378,11 +378,6 @@ void msmaxContext::updateRecords()
     m_node_records.clear();
     EnumerateAllNode([this](INode *n) {
         getNodeRecord(n);
-
-        // mark bone objects
-        EachBone(n, [this](INode *bone) {
-            getNodeRecord(bone).is_bone = true;
-        });
     });
 
     // erase renamed / re-parented objects
@@ -562,12 +557,12 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
     };
 
 
-    if (IsMesh(obj) && (!m_settings.hide_bone_meshes || !rec.is_bone)) {
+    if (IsMesh(obj) && (!m_settings.ignore_non_renderable || IsRenderable(n))) {
         // export bones
         // this must be before extractMeshData() because meshes can be bones in 3ds Max
-        if (m_settings.sync_bones) {
+        if (m_settings.sync_bones && !m_settings.bake_modifiers) {
             EachBone(n, [this](INode *bone) {
-                exportObject(bone, true);
+                exportObject(bone, true, false);
             });
         }
 

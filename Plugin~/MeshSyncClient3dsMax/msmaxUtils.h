@@ -12,6 +12,7 @@ std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
 mu::float4x4 GetPivotMatrix(INode *n);
 mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers);
+bool IsRenderable(INode *n);
 bool IsVisibleInHierarchy(INode *n, TimeValue t);
 bool IsInWorldSpace(INode *n, TimeValue t);
 

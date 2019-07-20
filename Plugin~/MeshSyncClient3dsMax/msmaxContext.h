@@ -25,7 +25,7 @@ struct msmaxSettings
     bool sync_cameras = true;
     bool sync_lights = true;
     bool sync_textures = true;
-    bool hide_bone_meshes = true;
+    bool ignore_non_renderable = true;
 
     float animation_time_scale = 1.0f;
     float animation_sps = 3.0f;
@@ -113,7 +113,6 @@ private:
         std::string path;
         int id = ms::InvalidID;
 
-        bool is_bone = false;
         bool dirty_trans = true;
         bool dirty_geom = true;
         ms::TransformPtr dst;
