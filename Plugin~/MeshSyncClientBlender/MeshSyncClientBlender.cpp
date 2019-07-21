@@ -80,10 +80,10 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
                 [](msblenContext& self, int v) { (int&)self.getSettings().scene_settings.handedness = v; })
             BindProperty(sync_meshes,
                 [](const msblenContext& self) { return (int)self.getSettings().sync_meshes; },
-                [](msblenContext& self, int v) { (int&)self.getSettings().sync_meshes = v; })
+                [](msblenContext& self, bool v) { self.getSettings().sync_meshes = v; })
             BindProperty(sync_normals,
                 [](const msblenContext& self) { return (int)self.getSettings().sync_normals; },
-                [](msblenContext& self, bool v) { (int&)self.getSettings().sync_normals = v; })
+                [](msblenContext& self, bool v) { self.getSettings().sync_normals = v; })
             BindProperty(sync_uvs,
                 [](const msblenContext& self) { return self.getSettings().sync_uvs; },
                 [](msblenContext& self, bool v) { self.getSettings().sync_uvs = v; })
