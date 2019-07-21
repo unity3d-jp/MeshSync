@@ -551,7 +551,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
 
         // check if the node is instance
         EachInstance(n, [this, &rec, &ret](INode *instance) {
-            if (ret)
+            if (ret || (m_settings.ignore_non_renderable && !IsRenderable(instance)))
                 return;
             auto& irec = getNodeRecord(instance);
             if (irec.dst && irec.dst->reference.empty())
