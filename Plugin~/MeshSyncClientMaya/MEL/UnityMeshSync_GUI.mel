@@ -2,7 +2,7 @@ global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSync";
     if (`window -exists $Window`) deleteUI -window $Window;
-    window -t ("Unity Mesh Sync") -wh 300 660 $Window;
+    window -t ("Unity Mesh Sync") -wh 300 610 $Window;
 
     string $version         = `UnityMeshSync_Settings -q -pluginVersion`;
     string $address         = `UnityMeshSync_Settings -q -address`;
@@ -10,9 +10,6 @@ global proc UnityMeshSync_GUI()
     float  $scaleFactor     = `UnityMeshSync_Settings -q -scaleFactor`;
     int    $removeNamespace = `UnityMeshSync_Settings -q -removeNamespace`;
     int    $syncMeshes      = `UnityMeshSync_Settings -q -syncMeshes`;
-    int    $syncNormals     = `UnityMeshSync_Settings -q -syncNormals`;
-    int    $syncUVs         = `UnityMeshSync_Settings -q -syncUVs`;
-    int    $syncColors      = `UnityMeshSync_Settings -q -syncColors`;
     int    $makeDoubleSided = `UnityMeshSync_Settings -q -makeDoubleSided`;
     int    $bakeDeformers   = `UnityMeshSync_Settings -q -bakeDeformers`;
     int    $syncBlendShapes = `UnityMeshSync_Settings -q -syncBlendShapes`;
@@ -45,10 +42,7 @@ global proc UnityMeshSync_GUI()
 
     checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
     columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
-        checkBox -label "Normals" -value $syncNormals -cc "umsCBSyncNormals" umsCtrlSyncNormals;
-        checkBox -label "UVs" -value $syncUVs -cc "umsCBSyncUVs" umsCtrlSyncUVs;
-        checkBox -label "Colors" -value $syncColors -cc "umsCBSyncColors" umsCtrlSyncColors;
-        checkBox -label "Double Sided" -value $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
+        checkBox -label "Make Double Sided" -value $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
         checkBox -label "Bake Deformers" -value $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
     setParent ..;
     checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
@@ -121,24 +115,6 @@ global proc umsCBSyncMeshes()
     int $v = `checkBox -q -value umsCtrlSyncMeshes`;
     string $ret = `UnityMeshSync_Settings -syncMeshes $v`;
     columnLayout -e -visible $v msuFoldMeshes;
-}
-
-global proc umsCBSyncNormals()
-{
-    int $v = `checkBox -q -value umsCtrlSyncNormals`;
-    string $ret = `UnityMeshSync_Settings -syncNormals $v`;
-}
-
-global proc umsCBSyncUVs()
-{
-    int $v = `checkBox -q -value umsCtrlSyncUVs`;
-    string $ret = `UnityMeshSync_Settings -syncUVs $v`;
-}
-
-global proc umsCBSyncColors()
-{
-    int $v = `checkBox -q -value umsCtrlSyncColors`;
-    string $ret = `UnityMeshSync_Settings -syncColors $v`;
 }
 
 global proc umsCBMakeDoubleSided()

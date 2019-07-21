@@ -981,31 +981,39 @@ void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plan
     lens_shift.y = (float)(mcam.verticalFilmOffset() * mu::InchToMillimeter_d);
 }
 
-void msmayaContext::extractLightData(TreeNode *n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+void msmayaContext::extractLightData(TreeNode *n,
+    ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
     auto& shape = n->shape->node;
-    if (shape.hasFn(MFn::kSpotLight)) {
-        MFnSpotLight mlight(shape);
-        type = ms::Light::LightType::Spot;
-        spot_angle = (float)mlight.coneAngle() * mu::RadToDeg;
-    }
-    else if (shape.hasFn(MFn::kDirectionalLight)) {
-        //MFnDirectionalLight mlight(shape);
-        type = ms::Light::LightType::Directional;
-    }
-    else if (shape.hasFn(MFn::kPointLight)) {
-        //MFnPointLight mlight(shape);
-        type = ms::Light::LightType::Point;
-    }
-    else if (shape.hasFn(MFn::kAreaLight)) {
-        //MFnAreaLight mlight(shape);
-        type = ms::Light::LightType::Area;
-    }
+    if (shape.hasFn(MFn::kLight)) {
+        MFnLight mlight(shape);
+        auto mcol = mlight.color();
+        color = { mcol.r, mcol.g, mcol.b, mcol.a };
+        intensity = mlight.intensity();
 
-    MFnLight mlight(shape);
-    auto mcol = mlight.color();
-    color = { mcol.r, mcol.g, mcol.b, mcol.a };
-    intensity = mlight.intensity();
+        if (shape.hasFn(MFn::kNonExtendedLight)) {
+            MFnNonExtendedLight melight(shape);
+            stype = (melight.useRayTraceShadows() || melight.useDepthMapShadows()) ? ms::Light::ShadowType::Soft : ms::Light::ShadowType::None;
+        }
+
+        if (shape.hasFn(MFn::kSpotLight)) {
+            MFnSpotLight mlight(shape);
+            ltype = ms::Light::LightType::Spot;
+            spot_angle = (float)mlight.coneAngle() * mu::RadToDeg;
+        }
+        else if (shape.hasFn(MFn::kDirectionalLight)) {
+            //MFnDirectionalLight mlight(shape);
+            ltype = ms::Light::LightType::Directional;
+        }
+        else if (shape.hasFn(MFn::kPointLight)) {
+            //MFnPointLight mlight(shape);
+            ltype = ms::Light::LightType::Point;
+        }
+        else if (shape.hasFn(MFn::kAreaLight)) {
+            //MFnAreaLight mlight(shape);
+            ltype = ms::Light::LightType::Area;
+        }
+    }
 }
 
 template<class T>
@@ -1064,7 +1072,7 @@ ms::LightPtr msmayaContext::exportLight(TreeNode *n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
-    extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+    extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
     return ret;
@@ -1585,6 +1593,9 @@ int msmayaContext::exportAnimations(SendScope scope)
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
+    auto& clip = *m_animations.back();
+    clip.frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
         for (auto *tn : rec.branches) {
@@ -1752,16 +1763,17 @@ void msmayaContext::extractLightAnimationData(ms::TransformAnimation& dst_, Tree
 
     auto& dst = (ms::LightAnimation&)dst_;
 
-    ms::Light::LightType type;
+    ms::Light::LightType ltype;
+    ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity;
     float spot_angle;
-    extractLightData(n, type, color, intensity, spot_angle);
+    extractLightData(n, ltype, stype, color, intensity, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-    if (type == ms::Light::LightType::Spot)
+    if (ltype == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
 }
 

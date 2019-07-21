@@ -55,6 +55,7 @@
 #define MFnTransform                ___IIO11
 #define MFnCamera                   ___I0lIl
 #define MFnLight                    ___IlI1I
+#define MFnNonExtendedLight         ___11OIl
 #define MFnSpotLight                ___IO0Il
 #define MFnDirectionalLight         ___00Il0
 #define MFnMatrixData               ___001l0
