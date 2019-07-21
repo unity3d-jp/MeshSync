@@ -41,7 +41,7 @@ struct msmaxSettings
     bool bake_cloth = false;
 };
 
-class msmaxContext
+class msmaxContext : mu::noncopyable
 {
 public:
     enum class SendTarget : int

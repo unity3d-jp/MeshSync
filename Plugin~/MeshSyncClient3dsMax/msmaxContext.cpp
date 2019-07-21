@@ -1258,25 +1258,28 @@ bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
         return false;
     }
 
-    if (target == msmaxContext::SendTarget::Objects) {
-        ctx.wait();
-        ctx.sendObjects(scope, true);
-    }
-    else if (target == msmaxContext::SendTarget::Materials) {
-        ctx.wait();
-        ctx.sendMaterials(true);
-    }
-    else if (target == msmaxContext::SendTarget::Animations) {
-        ctx.wait();
-        ctx.sendAnimations(scope);
-    }
-    else if (target == msmaxContext::SendTarget::Everything) {
-        ctx.wait();
-        ctx.sendMaterials(true);
-        ctx.wait();
-        ctx.sendObjects(scope, true);
-        ctx.wait();
-        ctx.sendAnimations(scope);
-    }
+    auto body = [&ctx, target, scope]() {
+        if (target == msmaxContext::SendTarget::Objects) {
+            ctx.wait();
+            ctx.sendObjects(scope, true);
+        }
+        else if (target == msmaxContext::SendTarget::Materials) {
+            ctx.wait();
+            ctx.sendMaterials(true);
+        }
+        else if (target == msmaxContext::SendTarget::Animations) {
+            ctx.wait();
+            ctx.sendAnimations(scope);
+        }
+        else if (target == msmaxContext::SendTarget::Everything) {
+            ctx.wait();
+            ctx.sendMaterials(true);
+            ctx.wait();
+            ctx.sendObjects(scope, true);
+            ctx.wait();
+            ctx.sendAnimations(scope);
+        }
+    };
+    ctx.addDeferredCall(body);
     return true;
 }

@@ -304,8 +304,10 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
 
         auto notify_scene_update = []() {
             auto& ctx = msmaxGetContext();
-            ctx.onSceneUpdated();
-            ctx.update();
+            ctx.addDeferredCall([&ctx]() {
+                ctx.onSceneUpdated();
+                ctx.update();
+            });
         };
 
         switch (cid) {
