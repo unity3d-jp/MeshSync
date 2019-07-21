@@ -194,18 +194,19 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
     lens_shift.y = (float)offset_y;
 }
 
-void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle)
+void msmodoContext::extractLightData(TreeNode& n,
+    ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
     // light shape specific data
     auto t = n.item.Type();
     if (t == tDirectionalLight) {
-        type = ms::Light::LightType::Directional;
+        ltype = ms::Light::LightType::Directional;
     }
     else if (t == tAreaLight) {
-        type = ms::Light::LightType::Area;
+        ltype = ms::Light::LightType::Area;
     }
     else if (t == tSpotLight) {
-        type = ms::Light::LightType::Spot;
+        ltype = ms::Light::LightType::Spot;
 
         static uint32_t ch_radius, ch_cone;
         if (ch_radius == 0) {
@@ -219,7 +220,7 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
         spot_angle = (float)cone * mu::RadToDeg;
     }
     else if (t == tPointLight) {
-        type = ms::Light::LightType::Point;
+        ltype = ms::Light::LightType::Point;
 
         static uint32_t ch_radius;
         if (ch_radius == 0) {
@@ -230,7 +231,19 @@ void msmodoContext::extractLightData(TreeNode& n, ms::Light::LightType& type, mu
         range = (float)radius;
     }
     else {
-        type = ms::Light::LightType::Point;
+        ltype = ms::Light::LightType::Point;
+    }
+
+    // shadow
+    {
+        static uint32_t ch_shadow_type;
+        if (ch_shadow_type == 0) {
+            n.item.ChannelLookup(LXsICHAN_LIGHT_SHADTYPE, &ch_shadow_type);
+        }
+
+        int st = 0;
+        m_ch_read.Integer(n.item, ch_shadow_type, &st);
+        stype = st == 0 ? ms::Light::ShadowType::None : ms::Light::ShadowType::Soft;
     }
 
     // radiance
@@ -617,7 +630,7 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     auto& dst = *ret;
 
     extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
-    extractLightData(n, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
+    extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -1191,19 +1204,20 @@ void msmodoContext::extractLightAnimationData(TreeNode& n)
 
     auto& dst = (ms::LightAnimation&)*n.dst_anim;
 
-    ms::Light::LightType type;
+    ms::Light::LightType ltype;
+    ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity;
     float range;
     float spot_angle;
-    extractLightData(n, type, color, intensity, range, spot_angle);
+    extractLightData(n, ltype, stype, color, intensity, range, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-    if (type == ms::Light::LightType::Point || type == ms::Light::LightType::Spot)
+    if (ltype == ms::Light::LightType::Point || ltype == ms::Light::LightType::Spot)
         dst.range.push_back({ t, range });
-    if (type == ms::Light::LightType::Spot)
+    if (ltype == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
