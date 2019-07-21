@@ -301,7 +301,7 @@ Entity::Type Light::getType() const
 }
 
 #define EachMember(F)\
-    F(light_type) F(color) F(intensity) F(range) F(spot_angle)
+    F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle)
 
 void Light::serialize(std::ostream & os) const
 {

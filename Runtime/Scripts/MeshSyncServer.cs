@@ -177,7 +177,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_syncMeshes = true;
         [SerializeField] bool m_syncPoints = true;
         [Space(10)]
-        [SerializeField] float m_animationFrameRate = 30.0f;
+        [SerializeField] InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] bool m_usePhysicalCameraParams = false;
@@ -185,7 +185,6 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_updateMeshColliders = true;
         [SerializeField] bool m_findMaterialFromAssets = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
-        [SerializeField] InterpolationMode m_animtionInterpolation = InterpolationMode.Smooth;
 #if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
         [SerializeField] bool m_useBoneRenderer = false;
 #endif
@@ -1758,7 +1757,14 @@ namespace UTJ.MeshSync
             if (m_syncVisibility)
                 lt.enabled = data.transform.visible;
 
-            lt.type = data.type;
+            var lightType = data.lightType;
+            if ((int)lightType != -1)
+                lt.type = data.lightType;
+
+            var shadowType = data.shadowType;
+            if ((int)shadowType != -1)
+                lt.shadows = shadowType;
+
             lt.color = data.color;
             lt.intensity = data.intensity;
             if (data.range > 0.0f)
@@ -1997,7 +2003,7 @@ namespace UTJ.MeshSync
                         animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                         animClipCache[root.gameObject] = clip;
                     }
-                    clip.frameRate = m_animationFrameRate; // todo: use DCC side frame rate
+                    clip.frameRate = clipData.frameRate;
                 }
 
                 var animPath = path.Replace("/" + root.name, "");
@@ -2011,7 +2017,7 @@ namespace UTJ.MeshSync
                     root = root.gameObject,
                     target = target.gameObject,
                     path = animPath,
-                    interpolation = m_animtionInterpolation,
+                    interpolation = m_animationInterpolation,
                     enableVisibility = m_syncVisibility,
 #if UNITY_2018_1_OR_NEWER
                     usePhysicalCameraParams = m_usePhysicalCameraParams,
@@ -2021,7 +2027,7 @@ namespace UTJ.MeshSync
             }
 
             // smooth rotation curves
-            if (m_animtionInterpolation == InterpolationMode.Smooth)
+            if (m_animationInterpolation == InterpolationMode.Smooth)
                 foreach (var kvp in animClipCache)
                     kvp.Value.EnsureQuaternionContinuity();
 

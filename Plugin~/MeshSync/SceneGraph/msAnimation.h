@@ -284,6 +284,7 @@ class AnimationClip : public Asset
 {
 using super = Asset;
 public:
+    float frame_rate = 30.0f;
     std::vector<AnimationPtr> animations;
 
 protected:

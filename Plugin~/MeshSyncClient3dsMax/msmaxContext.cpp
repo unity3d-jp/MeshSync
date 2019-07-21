@@ -303,6 +303,9 @@ bool msmaxContext::sendAnimations(SendScope scope)
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
+    auto& clip = *m_animations.back();
+    clip.frame_rate = (float)::GetFrameRate();
+
     // gather target data
     int num_exported = 0;
     if (scope == SendScope::All) {
@@ -579,8 +582,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
             handle_transform();
     }
     else {
-        auto cid = obj->SuperClassID();
-        if (cid == CAMERA_CLASS_ID) {
+        if (IsCamera(obj)) {
             if (m_settings.sync_cameras) {
                 handle_parent();
                 ret = exportCamera(rec);
@@ -588,7 +590,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
             else if (!tip && parent)
                 handle_transform();
         }
-        else if (cid == LIGHT_CLASS_ID) {
+        else if (IsLight(obj)) {
             if (m_settings.sync_lights) {
                 handle_parent();
                 ret = exportLight(rec);
@@ -622,8 +624,7 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
 
     {
         auto *obj = GetBaseObject(n);
-        auto cid = obj->SuperClassID();
-        if (cid == CAMERA_CLASS_ID || cid == LIGHT_CLASS_ID) {
+        if (IsCamera(obj) || IsLight(obj)) {
             static const auto cr = mu::rotate_y(180.0f * mu::DegToRad);
             rot *= cr;
         }
@@ -667,29 +668,36 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
 }
 
 static void ExtractLightData(GenLight *light, TimeValue t,
-    ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+    ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
     switch (light->Type()) {
     case TSPOT_LIGHT:
     case FSPOT_LIGHT: // fall through
     {
-        type = ms::Light::LightType::Spot;
+        ltype = ms::Light::LightType::Spot;
         spot_angle = light->GetHotspot(t);
         break;
     }
     case DIR_LIGHT:
     case TDIR_LIGHT: // fall through
+    case LightscapeLight::TARGET_POINT_TYPE:
+    case LightscapeLight::TARGET_LINEAR_TYPE:
+    case LightscapeLight::TARGET_AREA_TYPE:
+    case LightscapeLight::TARGET_DISC_TYPE:
+    case LightscapeLight::TARGET_SPHERE_TYPE:
+    case LightscapeLight::TARGET_CYLINDER_TYPE:
     {
-        type = ms::Light::LightType::Directional;
+        ltype = ms::Light::LightType::Directional;
         break;
     }
     case OMNI_LIGHT:
     default: // fall through
     {
-        type = ms::Light::LightType::Point;
+        ltype = ms::Light::LightType::Point;
         break;
     }
     }
+    stype = light->GetShadow() != 0 ? ms::Light::ShadowType::Soft : ms::Light::ShadowType::None;
 
     (mu::float3&)color = to_float3(light->GetRGBColor(t));
     intensity = light->GetIntensity(t);
@@ -748,7 +756,7 @@ ms::LightPtr msmaxContext::exportLight(TreeNode& n)
     auto& dst = *ret;
     ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     ExtractLightData((GenLight*)n.baseobj, GetTime(),
-        dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+        dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -1109,30 +1117,22 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
         extractor = &msmaxContext::extractMeshAnimation;
     }
     else {
-        switch (obj->SuperClassID()) {
-        case CAMERA_CLASS_ID:
-        {
+        if (IsCamera(obj)) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::CameraAnimation::create();
             extractor = &msmaxContext::extractCameraAnimation;
-            break;
         }
-        case LIGHT_CLASS_ID:
-        {
+        else if (IsLight(obj)) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::LightAnimation::create();
             extractor = &msmaxContext::extractLightAnimation;
-            break;
         }
-        default:
-        {
+        else {
             if (force) {
                 exportAnimations(n->GetParentNode(), true);
                 ret = ms::TransformAnimation::create();
                 extractor = &msmaxContext::extractTransformAnimation;
             }
-            break;
-        }
         }
     }
 
@@ -1195,14 +1195,15 @@ void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *sr
     float t = m_anim_time;
     auto& dst = (ms::LightAnimation&)dst_;
 
-    ms::Light::LightType type;
+    ms::Light::LightType ltype;
+    ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, spot_angle;
-    ExtractLightData((GenLight*)obj, m_current_time_tick, type, color, intensity, spot_angle);
+    ExtractLightData((GenLight*)obj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
 
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-    if (type == ms::Light::LightType::Spot)
+    if (ltype == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
 }
 

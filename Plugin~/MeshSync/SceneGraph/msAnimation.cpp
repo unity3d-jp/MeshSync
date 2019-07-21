@@ -311,7 +311,7 @@ AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
 }
 
 
-#define EachMember(F) F(animations)
+#define EachMember(F) F(frame_rate) F(animations)
 
 std::shared_ptr<AnimationClip> AnimationClip::create(std::istream& is)
 {

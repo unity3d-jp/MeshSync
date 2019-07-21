@@ -27,6 +27,8 @@ ISkin* FindSkinInterface(INode *n);
 // disabled modifier will be ignored
 Modifier* FindMorph(INode * n);
 
+bool IsCamera(Object *obj);
+bool IsLight(Object *obj);
 bool IsMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
 TriObject* GetFinalMesh(INode *n, bool& needs_delete);

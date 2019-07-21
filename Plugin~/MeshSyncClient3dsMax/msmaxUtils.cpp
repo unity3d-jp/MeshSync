@@ -126,6 +126,31 @@ Modifier* FindMorph(INode *n)
     return ret;
 }
 
+bool IsCamera(Object *obj)
+{
+    if (!obj)
+        return false;
+    auto cid = obj->SuperClassID();
+    if (cid == CAMERA_CLASS_ID) {
+        return true;
+    }
+    return false;
+}
+
+bool IsLight(Object *obj)
+{
+    if (!obj)
+        return false;
+    auto cid = obj->SuperClassID();
+    if (cid == LIGHT_CLASS_ID) {
+        return true;
+    }
+    else if (obj->IsSubClassOf(LIGHTSCAPE_LIGHT_CLASS)) {
+        return true;
+    }
+    return false;
+}
+
 bool IsMesh(Object *obj)
 {
     if (!obj)

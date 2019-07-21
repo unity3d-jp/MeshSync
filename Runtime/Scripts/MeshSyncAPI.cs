@@ -1452,6 +1452,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport("MeshSyncServer")] static extern IntPtr msAssetGetName(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern float msAnimationClipGetFrameRate(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msAnimationClipGetNumAnimations(IntPtr self);
         [DllImport("MeshSyncServer")] static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
         #endregion
@@ -1465,6 +1466,10 @@ namespace UTJ.MeshSync
         {
             get { return asset.name; }
             set { asset.name = value; }
+        }
+        public float frameRate
+        {
+            get { return msAnimationClipGetFrameRate(self); }
         }
         public int numAnimations
         {
@@ -1665,6 +1670,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
         [DllImport("MeshSyncServer")] static extern LightType msLightGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr self, LightType v);
+        [DllImport("MeshSyncServer")] static extern LightShadows msLightGetShadowType(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msLightSetShadowType(IntPtr self, LightShadows v);
         [DllImport("MeshSyncServer")] static extern Color msLightGetColor(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msLightSetColor(IntPtr self, Color v);
         [DllImport("MeshSyncServer")] static extern float msLightGetIntensity(IntPtr self);
@@ -1679,10 +1686,15 @@ namespace UTJ.MeshSync
         {
             return msLightCreate();
         }
-        public LightType type
+        public LightType lightType
         {
             get { return msLightGetType(self); }
             set { msLightSetType(self, value); }
+        }
+        public LightShadows shadowType
+        {
+            get { return msLightGetShadowType(self); }
+            set { msLightSetShadowType(self, value); }
         }
         public Color color
         {
