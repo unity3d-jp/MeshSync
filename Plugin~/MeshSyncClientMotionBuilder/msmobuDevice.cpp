@@ -378,22 +378,24 @@ static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, flo
     lens_shift.y = (float)src->OpticalCenterY;
 }
 
-static void ExtractLightData(FBLight* src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+static void ExtractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
     FBLightType light_type = src->LightType;
     if (light_type == kFBLightTypePoint) {
-        type = ms::Light::LightType::Point;
+        ltype = ms::Light::LightType::Point;
     }
     else if (light_type == kFBLightTypeInfinite) {
-        type = ms::Light::LightType::Directional;
+        ltype = ms::Light::LightType::Directional;
     }
     else if (light_type == kFBLightTypeSpot) {
-        type = ms::Light::LightType::Spot;
+        ltype = ms::Light::LightType::Spot;
         spot_angle = (float)src->OuterAngle;
     }
     else if (light_type == kFBLightTypeArea) {
-        type = ms::Light::LightType::Area;
+        ltype = ms::Light::LightType::Area;
     }
+
+    stype = (bool)src->CastShadows ? ms::Light::ShadowType::Soft : ms::Light::ShadowType::None;
 
     color = to_float4(src->DiffuseColor);
     intensity = (float)src->Intensity * 0.01f;
@@ -464,7 +466,7 @@ ms::LightPtr msmobuDevice::exportLight(NodeRecord& n)
     auto src = static_cast<FBLight*>(n.src);
 
     ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
-    ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+    ExtractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
     return ret;
@@ -839,6 +841,9 @@ bool msmobuDevice::exportAnimations()
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
+    auto& clip = *m_animations.back();
+    clip.frame_rate = (float)control.GetTransportFpsValue();
+
     // gather models
     int num_animations = 0;
     EnumerateAllNodes([this, &num_animations](FBModel *node) {
@@ -982,16 +987,17 @@ void msmobuDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* 
 
     auto& dst = static_cast<ms::LightAnimation&>(dst_);
 
-    ms::Light::LightType type;
+    ms::Light::LightType ltype;
+    ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity;
     float spot_angle;
-    ExtractLightData(static_cast<FBLight*>(src), type, color, intensity, spot_angle);
+    ExtractLightData(static_cast<FBLight*>(src), ltype, stype, color, intensity, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-    if (type == ms::Light::LightType::Spot)
+    if (ltype == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
