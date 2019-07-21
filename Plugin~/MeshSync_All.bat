@@ -2,8 +2,8 @@ set MAX_VERSION=2020
 set MAX_LIB_DIR=%cd%\External\3ds Max %MAX_VERSION% SDK\maxsdk\lib\x64\Release
 set MAX_INCLUDE_DIR=%cd%\External\3ds Max %MAX_VERSION% SDK\maxsdk\include
 
-set BLENDER_VERSION=2.79
-set BLENDER_PYTHON_VERSION=35
+set BLENDER_VERSION=2.80
+set BLENDER_PYTHON_VERSION=37
 set BLENDER_INCLUDE_DIRS=^
 %cd%\External\blender-%BLENDER_VERSION%\include\blenkernel;^
 %cd%\External\blender-%BLENDER_VERSION%\include\blenlib;^

@@ -101,7 +101,8 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
     lens_shift.y = cam.shift_y();
 }
 
-static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4& color, float& intensity, float& range, float& spot_angle)
+static void ExtractLightData(Object *src,
+    ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
     auto data =
 #if BLENDER_VERSION < 280
@@ -115,19 +116,20 @@ static void ExtractLightData(Object *src, ms::Light::LightType& type, mu::float4
 
     switch (data->type) {
     case LA_SUN:
-        type = ms::Light::LightType::Directional;
+        ltype = ms::Light::LightType::Directional;
         break;
     case LA_SPOT:
-        type = ms::Light::LightType::Spot;
+        ltype = ms::Light::LightType::Spot;
         spot_angle = data->spotsize * mu::RadToDeg;
         break;
     case LA_AREA:
-        type = ms::Light::LightType::Area;
+        ltype = ms::Light::LightType::Area;
         break;
     default:
-        type = ms::Light::LightType::Point;
+        ltype = ms::Light::LightType::Point;
         break;
     }
+    stype = (data->mode & 1) ? ms::Light::ShadowType::Soft : ms::Light::ShadowType::None;
 }
 
 
@@ -324,7 +326,7 @@ ms::LightPtr msblenContext::exportLight(Object *src)
     auto& dst = *ret;
     dst.path = get_path(src);
     ExtractTransformData(src, dst);
-    ExtractLightData(src, dst.light_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
+    ExtractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -955,16 +957,17 @@ void msblenContext::extractLightAnimationData(ms::TransformAnimation& dst_, void
 
     auto& dst = (ms::LightAnimation&)dst_;
 
-    ms::Light::LightType type;
+    ms::Light::LightType ltype;
+    ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, range, spot_angle;
-    ExtractLightData((Object*)obj, type, color, intensity, range, spot_angle);
+    ExtractLightData((Object*)obj, ltype, stype, color, intensity, range, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
     dst.range.push_back({ t, range });
-    if (type == ms::Light::LightType::Spot) {
+    if (ltype == ms::Light::LightType::Spot) {
         dst.spot_angle.push_back({ t, spot_angle });
     }
 }
@@ -1100,6 +1103,9 @@ bool msblenContext::sendAnimations(SendScope scope)
     auto scene = bl::BScene(bl::BContext::get().scene());
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create()); // create default clip
+
+    auto& clip = *m_animations.back();
+    clip.frame_rate = (float)scene.fps();
 
     // list target objects
     if (scope == SendScope::Selected) {

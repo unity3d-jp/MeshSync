@@ -143,7 +143,7 @@ bool msmobuLayout::FBCreate()
             0, kFBAttachWidth, idButtonSyncMeshes, 1,
             0, kFBAttachHeight, idButtonSyncMeshes, 1);
         SetControl(idButtonBothSided, m_bu_make_double_sided);
-        m_bu_make_double_sided.Caption = "Double Sided";
+        m_bu_make_double_sided.Caption = "Make Double Sided";
         m_bu_make_double_sided.Style = kFBCheckbox;
         m_bu_make_double_sided.State = (int)settings.make_double_sided;
         m_bu_make_double_sided.OnClick.Add(this, (FBCallback)&msmobuLayout::onSceneSettingsChange);

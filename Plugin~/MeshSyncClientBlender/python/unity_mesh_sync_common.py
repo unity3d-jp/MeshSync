@@ -11,9 +11,6 @@ def msb_apply_scene_settings(self = None, context = None):
     ctx.server_port = scene.meshsync_server_port
     ctx.scale_factor = scene.meshsync_scale_factor
     ctx.sync_meshes = scene.meshsync_sync_meshes
-    ctx.sync_normals = scene.meshsync_sync_normals
-    ctx.sync_uvs = scene.meshsync_sync_uvs
-    ctx.sync_colors = scene.meshsync_sync_colors
     ctx.make_double_sided = scene.meshsync_make_double_sided
     ctx.bake_modifiers = scene.meshsync_bake_modifiers
     ctx.convert_to_mesh = scene.meshsync_convert_to_mesh
@@ -60,10 +57,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Port", min = 0, max = 65535, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_normals = bpy.props.BoolProperty(default = True, name = "Normals", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_uvs = bpy.props.BoolProperty(default = True, name = "UVs", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_colors = bpy.props.BoolProperty(default = True, name = "Colors", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(default = False, name = "Double Sided", update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(default = False, name = "Make Double Sided", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(default = False, name = "Bake Modifiers", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_convert_to_mesh = bpy.props.BoolProperty(default = True, name = "Convert To Mesh", update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Sync Bones", update = msb_on_scene_settings_updated)

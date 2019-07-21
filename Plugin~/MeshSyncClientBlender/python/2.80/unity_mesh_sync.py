@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2019, 4, 23),
+    "version": (2019, 7, 22),
     "blender": (2, 80, 57),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -54,9 +54,6 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
         layout.prop(scene, 'meshsync_sync_meshes')
         if scene.meshsync_sync_meshes:
             b = layout.box()
-            b.prop(scene, 'meshsync_sync_normals')
-            b.prop(scene, 'meshsync_sync_uvs')
-            b.prop(scene, 'meshsync_sync_colors')
             b.prop(scene, 'meshsync_convert_to_mesh')
             b.prop(scene, 'meshsync_make_double_sided')
             b.prop(scene, 'meshsync_bake_modifiers')
