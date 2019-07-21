@@ -25,20 +25,23 @@ struct msmaxSettings
     bool sync_cameras = true;
     bool sync_lights = true;
     bool sync_textures = true;
+    bool ignore_non_renderable = true;
 
     float animation_time_scale = 1.0f;
     float animation_sps = 3.0f;
     bool keyframe_reduction = true;
     bool keep_flat_curves = false;
 
-    bool multithreaded = true;
+    // parallel mesh extraction.
+    // it seems can cause problems when exporting objects with EvalWorldState()...
+    bool multithreaded = false;
 
     // import settings
     bool bake_skin = false;
     bool bake_cloth = false;
 };
 
-class msmaxContext
+class msmaxContext : mu::noncopyable
 {
 public:
     enum class SendTarget : int
@@ -86,6 +89,10 @@ public:
     bool sendAnimations(SendScope scope);
 
     bool recvScene();
+
+    // thread safe. c will be called from main thread
+    void addDeferredCall(const std::function<void()>& c);
+    void feedDeferredCalls();
 
     // UI
     void registerMenu();
@@ -179,6 +186,9 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+
+    std::vector<std::function<void()>> m_deferred_calls;
+    std::mutex m_mutex;
 };
 
 #define msmaxGetContext() msmaxContext::getInstance()

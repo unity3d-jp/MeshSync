@@ -24,6 +24,7 @@
 #include <modstack.h>
 #include <stdmat.h>
 #include <imenuman.h>
+#include <lslights.h>
 #include <iskin.h>
 #include <iInstanceMgr.h>
 #include <triobj.h>

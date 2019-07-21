@@ -39,6 +39,18 @@ static void OnPostNewScene(void *param, NotifyInfo *info)
     msmaxGetContext().update();
 }
 
+static void FeedDeferredCallsImpl(void*)
+{
+    msmaxGetContext().feedDeferredCalls();
+}
+static void FeedDeferredCalls()
+{
+    // call FeedDeferredCallsImpl from main thread
+    // https://help.autodesk.com/view/3DSMAX/2017/ENU/?guid=__files_GUID_0FA27485_D808_40B7_8465_B1C293077597_htm
+    const UINT WM_TRIGGER_CALLBACK = WM_USER + 4764;
+    ::PostMessage(GetCOREInterface()->GetMAXHWnd(), WM_TRIGGER_CALLBACK, (WPARAM)&FeedDeferredCallsImpl, (LPARAM)nullptr);
+}
+
 
 ms::Identifier msmaxContext::TreeNode::getIdentifier() const
 {
@@ -291,6 +303,9 @@ bool msmaxContext::sendAnimations(SendScope scope)
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
+    auto& clip = *m_animations.back();
+    clip.frame_rate = (float)::GetFrameRate();
+
     // gather target data
     int num_exported = 0;
     if (scope == SendScope::All) {
@@ -399,7 +414,7 @@ void msmaxContext::kickAsyncSend()
     m_async_tasks.clear();
 
     for (auto *t : m_tmp_meshes)
-        t->DeleteThis();
+        t->DeleteMe();
     m_tmp_meshes.clear();
 
     for (auto& kvp : m_node_records)
@@ -533,9 +548,13 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
         ret = exportTransform(rec);
     };
     auto handle_instance = [&]() -> bool {
+        // always make per-instance meshes if 'bake modifiers' mode
+        if (m_settings.bake_modifiers)
+            return false;
+
         // check if the node is instance
         EachInstance(n, [this, &rec, &ret](INode *instance) {
-            if (ret)
+            if (ret || (m_settings.ignore_non_renderable && !IsRenderable(instance)))
                 return;
             auto& irec = getNodeRecord(instance);
             if (irec.dst && irec.dst->reference.empty())
@@ -545,12 +564,12 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
     };
 
 
-    if (IsMesh(obj)) {
+    if (IsMesh(obj) && (!m_settings.ignore_non_renderable || IsRenderable(n))) {
         // export bones
         // this must be before extractMeshData() because meshes can be bones in 3ds Max
-        if (m_settings.sync_bones) {
+        if (m_settings.sync_bones && !m_settings.bake_modifiers) {
             EachBone(n, [this](INode *bone) {
-                exportObject(bone, true);
+                exportObject(bone, true, false);
             });
         }
 
@@ -563,8 +582,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
             handle_transform();
     }
     else {
-        auto cid = obj->SuperClassID();
-        if (cid == CAMERA_CLASS_ID) {
+        if (IsCamera(obj)) {
             if (m_settings.sync_cameras) {
                 handle_parent();
                 ret = exportCamera(rec);
@@ -572,7 +590,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
             else if (!tip && parent)
                 handle_transform();
         }
-        else if (cid == LIGHT_CLASS_ID) {
+        else if (IsLight(obj)) {
             if (m_settings.sync_lights) {
                 handle_parent();
                 ret = exportLight(rec);
@@ -589,13 +607,13 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
     return ret;
 }
 
-static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis, bool bake)
 {
-    auto mat = to_float4x4(n->GetNodeTM(t));
+    auto mat = GetTransform(n, t, bake);
 
     // handle parents
     if (auto parent = n->GetParentNode()) {
-        auto pmat = to_float4x4(parent->GetNodeTM(t));
+        auto pmat = GetTransform(parent, t, bake);
         mat *= mu::invert(pmat);
     }
 
@@ -606,13 +624,8 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
 
     {
         auto *obj = GetBaseObject(n);
-        auto cid = obj->SuperClassID();
-        if (cid == CAMERA_CLASS_ID) {
-            static const auto cr = mu::rotate_z(180.0f * mu::DegToRad) * mu::rotate_x(180.0f * mu::DegToRad);
-            rot *= cr;
-        }
-        else if (cid == LIGHT_CLASS_ID) {
-            static const auto cr = mu::rotate_x(180.0f * mu::DegToRad);
+        if (IsCamera(obj) || IsLight(obj)) {
+            static const auto cr = mu::rotate_y(180.0f * mu::DegToRad);
             rot *= cr;
         }
     }
@@ -655,29 +668,36 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
 }
 
 static void ExtractLightData(GenLight *light, TimeValue t,
-    ms::Light::LightType& type, mu::float4& color, float& intensity, float& spot_angle)
+    ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
     switch (light->Type()) {
     case TSPOT_LIGHT:
     case FSPOT_LIGHT: // fall through
     {
-        type = ms::Light::LightType::Spot;
+        ltype = ms::Light::LightType::Spot;
         spot_angle = light->GetHotspot(t);
         break;
     }
     case DIR_LIGHT:
     case TDIR_LIGHT: // fall through
+    case LightscapeLight::TARGET_POINT_TYPE:
+    case LightscapeLight::TARGET_LINEAR_TYPE:
+    case LightscapeLight::TARGET_AREA_TYPE:
+    case LightscapeLight::TARGET_DISC_TYPE:
+    case LightscapeLight::TARGET_SPHERE_TYPE:
+    case LightscapeLight::TARGET_CYLINDER_TYPE:
     {
-        type = ms::Light::LightType::Directional;
+        ltype = ms::Light::LightType::Directional;
         break;
     }
     case OMNI_LIGHT:
     default: // fall through
     {
-        type = ms::Light::LightType::Point;
+        ltype = ms::Light::LightType::Point;
         break;
     }
     }
+    stype = light->GetShadow() != 0 ? ms::Light::ShadowType::Soft : ms::Light::ShadowType::None;
 
     (mu::float3&)color = to_float3(light->GetRGBColor(t));
     intensity = light->GetIntensity(t);
@@ -700,7 +720,7 @@ ms::TransformPtr msmaxContext::exportTransform(TreeNode& n)
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -713,7 +733,7 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
@@ -723,7 +743,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     ExtractCameraData((GenCamera*)n.baseobj, GetTime(),
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
@@ -734,9 +754,9 @@ ms::LightPtr msmaxContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
     ExtractLightData((GenLight*)n.baseobj, GetTime(),
-        dst.light_type, dst.color, dst.intensity, dst.spot_angle);
+        dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -859,7 +879,7 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto ret = createEntity<ms::Mesh>(n);
     auto inode = n.node;
     auto& dst = *ret;
-    ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
 
     // send mesh contents even if the node is hidden.
 
@@ -892,12 +912,26 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     return ret;
 }
 
-void msmaxContext::doExtractMeshData(ms::Mesh & dst, INode *n, Mesh *mesh)
+void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
 {
     if (mesh) {
-        // handle pivot
-        dst.refine_settings.flags.apply_local2world = 1;
-        dst.refine_settings.local2world = GetPivotMatrix(n);
+        if (!m_settings.bake_modifiers) {
+            // handle pivot
+            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.local2world = GetPivotMatrix(n);
+        }
+        else {
+            // convert vertices
+            //   (local space) -> world space -> local space without scale
+            // to handle world space problem and complex scale composition
+            // ( https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm )
+            auto t = GetTime();
+            if (IsInWorldSpace(n, t))
+                dst.refine_settings.local2world = mu::invert(GetTransform(n, t, true));
+            else
+                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t)) * mu::invert(GetTransform(n, t, true));
+            dst.refine_settings.flags.apply_local2world = 1;
+        }
 
         // faces
         int num_faces = mesh->numFaces;
@@ -1083,30 +1117,22 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
         extractor = &msmaxContext::extractMeshAnimation;
     }
     else {
-        switch (obj->SuperClassID()) {
-        case CAMERA_CLASS_ID:
-        {
+        if (IsCamera(obj)) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::CameraAnimation::create();
             extractor = &msmaxContext::extractCameraAnimation;
-            break;
         }
-        case LIGHT_CLASS_ID:
-        {
+        else if (IsLight(obj)) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::LightAnimation::create();
             extractor = &msmaxContext::extractLightAnimation;
-            break;
         }
-        default:
-        {
+        else {
             if (force) {
                 exportAnimations(n->GetParentNode(), true);
                 ret = ms::TransformAnimation::create();
                 extractor = &msmaxContext::extractTransformAnimation;
             }
-            break;
-        }
         }
     }
 
@@ -1131,7 +1157,7 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode
     mu::quatf rot;
     mu::float3 scale;
     bool vis;
-    ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis);
+    ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis, m_settings.bake_modifiers);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
@@ -1169,14 +1195,15 @@ void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *sr
     float t = m_anim_time;
     auto& dst = (ms::LightAnimation&)dst_;
 
-    ms::Light::LightType type;
+    ms::Light::LightType ltype;
+    ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, spot_angle;
-    ExtractLightData((GenLight*)obj, m_current_time_tick, type, color, intensity, spot_angle);
+    ExtractLightData((GenLight*)obj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
 
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
-    if (type == ms::Light::LightType::Spot)
+    if (ltype == ms::Light::LightType::Spot)
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
@@ -1205,6 +1232,25 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
     }
 }
 
+
+void msmaxContext::addDeferredCall(const std::function<void()>& c)
+{
+    {
+        std::unique_lock<std::mutex> l(m_mutex);
+        m_deferred_calls.push_back(c);
+    }
+    FeedDeferredCalls();
+}
+
+void msmaxContext::feedDeferredCalls()
+{
+    std::unique_lock<std::mutex> l(m_mutex);
+    for (auto& c : m_deferred_calls)
+        c();
+    m_deferred_calls.clear();
+}
+
+
 bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
 {
     auto& ctx = msmaxGetContext();
@@ -1213,25 +1259,28 @@ bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
         return false;
     }
 
-    if (target == msmaxContext::SendTarget::Objects) {
-        ctx.wait();
-        ctx.sendObjects(scope, true);
-    }
-    else if (target == msmaxContext::SendTarget::Materials) {
-        ctx.wait();
-        ctx.sendMaterials(true);
-    }
-    else if (target == msmaxContext::SendTarget::Animations) {
-        ctx.wait();
-        ctx.sendAnimations(scope);
-    }
-    else if (target == msmaxContext::SendTarget::Everything) {
-        ctx.wait();
-        ctx.sendMaterials(true);
-        ctx.wait();
-        ctx.sendObjects(scope, true);
-        ctx.wait();
-        ctx.sendAnimations(scope);
-    }
+    auto body = [&ctx, target, scope]() {
+        if (target == msmaxContext::SendTarget::Objects) {
+            ctx.wait();
+            ctx.sendObjects(scope, true);
+        }
+        else if (target == msmaxContext::SendTarget::Materials) {
+            ctx.wait();
+            ctx.sendMaterials(true);
+        }
+        else if (target == msmaxContext::SendTarget::Animations) {
+            ctx.wait();
+            ctx.sendAnimations(scope);
+        }
+        else if (target == msmaxContext::SendTarget::Everything) {
+            ctx.wait();
+            ctx.sendMaterials(true);
+            ctx.wait();
+            ctx.sendObjects(scope, true);
+            ctx.wait();
+            ctx.sendAnimations(scope);
+        }
+    };
+    ctx.addDeferredCall(body);
     return true;
 }

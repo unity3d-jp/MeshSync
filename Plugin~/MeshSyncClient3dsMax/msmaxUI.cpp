@@ -304,8 +304,10 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
 
         auto notify_scene_update = []() {
             auto& ctx = msmaxGetContext();
-            ctx.onSceneUpdated();
-            ctx.update();
+            ctx.addDeferredCall([&ctx]() {
+                ctx.onSceneUpdated();
+                ctx.update();
+            });
         };
 
         switch (cid) {
@@ -334,33 +336,21 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_NORMALS:
+        case IDC_CHECK_MAKE_DOUBLE_SIDED:
             handle_button([&]() {
-                s.sync_normals = CtrlIsChecked(IDC_CHECK_NORMALS);
+                s.make_double_sided = CtrlIsChecked(IDC_CHECK_MAKE_DOUBLE_SIDED);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_UVS:
+        case IDC_CHECK_IGNORE_NON_RENDERABLE:
             handle_button([&]() {
-                s.sync_uvs = CtrlIsChecked(IDC_CHECK_UVS);
+                s.ignore_non_renderable = CtrlIsChecked(IDC_CHECK_IGNORE_NON_RENDERABLE);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_COLORS:
+        case IDC_CHECK_BAKE_MODIFIERS:
             handle_button([&]() {
-                s.sync_colors = CtrlIsChecked(IDC_CHECK_COLORS);
-                notify_scene_update();
-            });
-            break;
-        case IDC_CHECK_BOTHSIDED:
-            handle_button([&]() {
-                s.make_double_sided = CtrlIsChecked(IDC_CHECK_BOTHSIDED);
-                notify_scene_update();
-            });
-            break;
-        case IDC_CHECK_BAKEMODIFIERS:
-            handle_button([&]() {
-                s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKEMODIFIERS);
+                s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKE_MODIFIERS);
                 notify_scene_update();
             });
             break;
@@ -487,19 +477,17 @@ void msmaxContext::updateUIText()
     CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);
     CtrlSetText(IDC_EDIT_PORT, (int)s.client_settings.port);
 
-    CtrlSetText(IDC_EDIT_SCALE_FACTOR,  s.scale_factor);
-    CtrlSetCheck(IDC_CHECK_MESHES,       s.sync_meshes);
-    CtrlSetCheck(IDC_CHECK_NORMALS,      s.sync_normals);
-    CtrlSetCheck(IDC_CHECK_UVS,          s.sync_uvs);
-    CtrlSetCheck(IDC_CHECK_COLORS,       s.sync_colors);
-    CtrlSetCheck(IDC_CHECK_BOTHSIDED,    s.make_double_sided);
-    CtrlSetCheck(IDC_CHECK_BAKEMODIFIERS, s.bake_modifiers);
-    CtrlSetCheck(IDC_CHECK_BLENDSHAPES,  s.sync_blendshapes);
-    CtrlSetCheck(IDC_CHECK_BONES,        s.sync_bones);
-    CtrlSetCheck(IDC_CHECK_TEXTURES,     s.sync_textures);
-    CtrlSetCheck(IDC_CHECK_CAMERAS,      s.sync_cameras);
-    CtrlSetCheck(IDC_CHECK_LIGHTS,       s.sync_lights);
-    CtrlSetCheck(IDC_CHECK_AUTO_SYNC,    s.auto_sync);
+    CtrlSetText(IDC_EDIT_SCALE_FACTOR,      s.scale_factor);
+    CtrlSetCheck(IDC_CHECK_MESHES,          s.sync_meshes);
+    CtrlSetCheck(IDC_CHECK_MAKE_DOUBLE_SIDED,    s.make_double_sided);
+    CtrlSetCheck(IDC_CHECK_IGNORE_NON_RENDERABLE, s.ignore_non_renderable);
+    CtrlSetCheck(IDC_CHECK_BAKE_MODIFIERS,   s.bake_modifiers);
+    CtrlSetCheck(IDC_CHECK_BLENDSHAPES,     s.sync_blendshapes);
+    CtrlSetCheck(IDC_CHECK_BONES,           s.sync_bones);
+    CtrlSetCheck(IDC_CHECK_TEXTURES,        s.sync_textures);
+    CtrlSetCheck(IDC_CHECK_CAMERAS,         s.sync_cameras);
+    CtrlSetCheck(IDC_CHECK_LIGHTS,          s.sync_lights);
+    CtrlSetCheck(IDC_CHECK_AUTO_SYNC,       s.auto_sync);
 
     CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
     CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);

@@ -291,6 +291,7 @@ msAPI void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback 
     });
 }
 
+msAPI float             msAnimationClipGetFrameRate(ms::AnimationClip *self) { return self->frame_rate; }
 msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
 msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *self, int i) { return self->animations[i].get(); }
 #pragma endregion
@@ -534,6 +535,14 @@ msAPI ms::Light::LightType msLightGetType(ms::Light *self)
 msAPI void msLightSetType(ms::Light *self, ms::Light::LightType v)
 {
     self->light_type = v;
+}
+msAPI ms::Light::ShadowType msLightGetShadowType(ms::Light *self)
+{
+    return self->shadow_type;
+}
+msAPI void msLightSetShadowType(ms::Light *self, ms::Light::ShadowType v)
+{
+    self->shadow_type = v;
 }
 msAPI float4 msLightGetColor(ms::Light *self)
 {

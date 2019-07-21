@@ -121,13 +121,22 @@ using super = Transform;
 public:
     enum class LightType
     {
+        Unknown = -1,
         Spot,
         Directional,
         Point,
         Area,
     };
+    enum class ShadowType
+    {
+        Unknown = -1,
+        None,
+        Hard,
+        Soft,
+    };
 
     LightType light_type = LightType::Directional;
+    ShadowType shadow_type = ShadowType::Unknown;
     float4 color = float4::one();
     float intensity = 1.0f;
     float range = 0.0f;

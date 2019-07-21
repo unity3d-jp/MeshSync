@@ -207,12 +207,10 @@ void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
     e.rotation = flip_z(swap_yz(e.rotation));
     e.scale = swap_yz(e.scale);
 
-    // I have no idea why this is needed...
-    {
-        if (e.getType() == Entity::Type::Camera || e.getType() == Entity::Type::Light) {
-            const quatf cr = rotate_x(-90.0f * DegToRad);
-            e.rotation *= cr;
-        }
+    auto t = e.getType();
+    if (t == Entity::Type::Camera || t == Entity::Type::Light) {
+        const quatf cr = rotate_x(-90.0f * DegToRad);
+        e.rotation *= cr;
     }
 }
 

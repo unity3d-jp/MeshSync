@@ -46,12 +46,39 @@ mu::float4x4 GetPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
+mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers)
+{
+    if (bake_modifiers) {
+        auto m = n->GetObjTMAfterWSM(t);
+        if (m.IsIdentity())
+            m = n->GetObjTMBeforeWSM(t);
+        auto mat = to_float4x4(m);
+        // cancel scale
+        return mu::transform(extract_position(mat), extract_rotation(mat), mu::float3::one());
+    }
+    else {
+        return to_float4x4(n->GetNodeTM(t));
+    }
+}
+
+bool IsRenderable(INode *n)
+{
+    if (!n)
+        return false;
+    return n->Renderable() != 0;
+}
+
 bool IsVisibleInHierarchy(INode *n, TimeValue t)
 {
     auto parent = n->GetParentNode();
     if (parent && !IsVisibleInHierarchy(parent, t))
         return false;
     return  n->GetVisibility(t) > 0.0f;
+}
+
+bool IsInWorldSpace(INode *n, TimeValue t)
+{
+    return n->GetObjTMAfterWSM(t).IsIdentity();
 }
 
 bool IsInstanced(INode *n)
@@ -99,30 +126,36 @@ Modifier* FindMorph(INode *n)
     return ret;
 }
 
-bool IsBone(Object *obj)
+bool IsCamera(Object *obj)
 {
     if (!obj)
         return false;
+    auto cid = obj->SuperClassID();
+    if (cid == CAMERA_CLASS_ID) {
+        return true;
+    }
+    return false;
+}
 
-    // not sure this is correct...
-    auto cid = obj->ClassID();
-    return
-        cid == Class_ID(BONE_CLASS_ID, 0) ||
-        cid == BONE_OBJ_CLASSID ||
-        cid == SKELOBJ_CLASS_ID
-#if MAX_PRODUCT_YEAR_NUMBER >= 2018
-        ||
-        cid == CATBONE_CLASS_ID ||
-        cid == CATHUB_CLASS_ID
-#endif
-        ;
+bool IsLight(Object *obj)
+{
+    if (!obj)
+        return false;
+    auto cid = obj->SuperClassID();
+    if (cid == LIGHT_CLASS_ID) {
+        return true;
+    }
+    else if (obj->IsSubClassOf(LIGHTSCAPE_LIGHT_CLASS)) {
+        return true;
+    }
+    return false;
 }
 
 bool IsMesh(Object *obj)
 {
     if (!obj)
         return false;
-    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID && !IsBone(obj);
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID;
 }
 
 TriObject* GetSourceMesh(INode * n, bool& needs_delete)
@@ -173,35 +206,17 @@ TriObject* GetSourceMesh(INode * n, bool& needs_delete)
     return ret;
 }
 
-TriObject* GetFinalMesh(INode * n, bool & needs_delete)
+TriObject* GetFinalMesh(INode *n, bool& needs_delete)
 {
-    IDerivedObject *dobj = nullptr;
-    int mod_index = 0;
-    needs_delete = false;
-
-    Object *base = EachModifier(n, [&](IDerivedObject *obj, Modifier *mod, int mi) {
-        if (!dobj) {
-            dobj = obj;
-            mod_index = mi;
-        }
-    });
-
-    TriObject *ret = nullptr;
-    auto to_triobject = [&needs_delete, &ret](Object *obj) {
-        if (obj->CanConvertToType(triObjectClassID)) {
-            auto old = obj;
-            ret = (TriObject*)obj->ConvertToType(GetTime(), triObjectClassID);
-            if (ret != old)
-                needs_delete = true;
-        }
-    };
-
-    if (dobj) {
-        auto os = dobj->Eval(GetTime(), mod_index);
-        to_triobject(os.obj);
+    auto time = GetTime();
+    auto cid = Class_ID(TRIOBJ_CLASS_ID, 0);
+    auto& ws = n->EvalWorldState(time);
+    auto *obj = ws.obj;
+    if (obj->CanConvertToType(cid)) {
+        auto *tri = (TriObject*)obj->ConvertToType(time, cid);
+        if (obj != tri)
+            needs_delete = true;
+        return tri;
     }
-    else {
-        to_triobject(base);
-    }
-    return ret;
+    return nullptr;
 }

@@ -11,7 +11,10 @@ std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
 mu::float4x4 GetPivotMatrix(INode *n);
+mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers);
+bool IsRenderable(INode *n);
 bool IsVisibleInHierarchy(INode *n, TimeValue t);
+bool IsInWorldSpace(INode *n, TimeValue t);
 
 bool IsInstanced(INode *n);
 Object* GetTopObject(INode *n);
@@ -24,7 +27,8 @@ ISkin* FindSkinInterface(INode *n);
 // disabled modifier will be ignored
 Modifier* FindMorph(INode * n);
 
-bool IsBone(Object *obj);
+bool IsCamera(Object *obj);
+bool IsLight(Object *obj);
 bool IsMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
 TriObject* GetFinalMesh(INode *n, bool& needs_delete);
