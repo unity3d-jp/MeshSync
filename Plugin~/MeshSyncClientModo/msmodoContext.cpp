@@ -1015,6 +1015,9 @@ int msmodoContext::exportAnimations(SendScope scope)
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
+    auto& clip = *m_animations.back();
+    clip.frame_rate = (float)getFrameRate();
+
     // gather target objects
     int num_exported = 0;
     {

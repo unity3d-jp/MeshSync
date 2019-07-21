@@ -131,19 +131,6 @@ msmodoInterface::~msmodoInterface()
 
 bool msmodoInterface::prepare()
 {
-    if (!m_master_log.test()) {
-        m_svc_log.GetSubSystem(LXsLOG_LOGSYS, m_master_log);
-    }
-    m_svc_layer.SetScene(0);
-    m_svc_layer.Scene(m_current_scene);
-    m_current_scene.GetChannels(m_ch_read, m_svc_selection.GetTime());
-    m_current_scene.GetSetupChannels(m_ch_read_setup);
-
-    CLxUser_SceneGraph scene_graph;
-    m_current_scene.GetGraph(LXsGRAPH_SHADELOC, scene_graph);
-    if (scene_graph)
-        m_shadeloc_graph.set(scene_graph);
-
     if (tMaterial == 0) {
         tMaterial = m_svc_scene.ItemType(LXsITYPE_ADVANCEDMATERIAL);
         tMask = m_svc_scene.ItemType(LXsITYPE_MASK);
@@ -168,7 +155,24 @@ bool msmodoInterface::prepare()
         tImageMap = m_svc_scene.ItemType(LXsITYPE_IMAGEMAP);
         tTextureLayer = m_svc_scene.ItemType(LXsITYPE_TEXTURELAYER);
         tVideoStill = m_svc_scene.ItemType(LXsITYPE_VIDEOSTILL);
+
+        tScene = m_svc_scene.ItemType(LXsITYPE_SCENE);
     }
+
+    if (!m_master_log.test()) {
+        m_svc_log.GetSubSystem(LXsLOG_LOGSYS, m_master_log);
+    }
+    m_svc_layer.SetScene(0);
+    m_svc_layer.Scene(m_current_scene);
+    m_current_scene.GetChannels(m_ch_read, m_svc_selection.GetTime());
+    m_current_scene.GetSetupChannels(m_ch_read_setup);
+    m_current_scene.GetItem(tScene, 0, m_current_scene_item);
+
+    CLxUser_SceneGraph scene_graph;
+    m_current_scene.GetGraph(LXsGRAPH_SHADELOC, scene_graph);
+    if (scene_graph)
+        m_shadeloc_graph.set(scene_graph);
+
     if (!m_event_listener) {
         m_event_listener = new msmodoEventListener(this);
         m_svc_listener.AddListener(*m_event_listener);
@@ -296,18 +300,28 @@ const char* msmodoInterface::getImageFilePath(CLxUser_Item& image)
 
 std::tuple<double, double> msmodoInterface::getTimeRange()
 {
-    double start = 0.0, end = 1.0;
-    {
-        CLxReadPreferenceValue q;
-        q.Query(LXsPREFERENCE_VALUE_ANIMATION_TIME_RANGE_START);
-        start = q.GetFloat();
+    static uint32_t ch_start, ch_end;
+    if (ch_start == 0) {
+        m_current_scene_item.ChannelLookup(LXsICHAN_SCENE_SCENES, &ch_start);
+        m_current_scene_item.ChannelLookup(LXsICHAN_SCENE_SCENEE, &ch_end);
     }
-    {
-        CLxReadPreferenceValue q;
-        q.Query(LXsPREFERENCE_VALUE_ANIMATION_TIME_RANGE_END);
-        end = q.GetFloat();
-    }
+
+    double start = 0.0, end = 5.0;
+    m_ch_read_setup.Double(m_current_scene_item, ch_start, &start);
+    m_ch_read_setup.Double(m_current_scene_item, ch_end, &end);
     return { start, end };
+}
+
+double msmodoInterface::getFrameRate()
+{
+    static uint32_t ch_fps;
+    if (ch_fps == 0) {
+        m_current_scene_item.ChannelLookup(LXsICHAN_SCENE_FPS, &ch_fps);
+    }
+
+    double ret = 0;
+    m_ch_read_setup.Double(m_current_scene_item, ch_fps, &ret);
+    return ret;
 }
 
 void msmodoInterface::dbgDumpItem(CLxUser_Item item)

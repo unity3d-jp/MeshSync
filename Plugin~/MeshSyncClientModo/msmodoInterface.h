@@ -56,6 +56,7 @@ public:
     template<class Body> void eachReplica(CLxUser_Item& item, const Body& body);
 
     std::tuple<double, double> getTimeRange();
+    double getFrameRate();
 
     void dbgDumpItem(CLxUser_Item item);
 
@@ -64,7 +65,8 @@ public:
                 tLocator, tCamera, tLight, tMesh, tMeshInst, tReplicator,
                 tLightMaterial, tPointLight, tDirectionalLight, tSpotLight, tAreaLight,
                 tDeform, tGenInf, tMorph,
-                tImageMap, tTextureLayer, tVideoStill;
+                tImageMap, tTextureLayer, tVideoStill,
+                tScene;
 
     CLxUser_SceneService     m_svc_scene;
     CLxUser_SelectionService m_svc_selection;
@@ -78,6 +80,7 @@ public:
     CLxUser_LogEntry         m_log_entry;
 
     CLxUser_Scene m_current_scene;
+    CLxUser_Item m_current_scene_item;
     CLxUser_ChannelRead m_ch_read;
     CLxUser_ChannelRead m_ch_read_setup;
     CLxUser_ItemGraph m_shadeloc_graph;

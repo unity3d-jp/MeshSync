@@ -149,15 +149,15 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         layout_mesh->setVerticalSpacing(2);
         layout_mesh->setContentsMargins(10, 0, 0, 0);
 
-        auto ck_bake_deformers = new QCheckBox("Bake Deformers");
-        ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
-        layout_mesh->addWidget(ck_bake_deformers, iy2++, 0);
-        connect(ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
-
         auto ck_double_sided = new QCheckBox("Make Double Sided");
         ck_double_sided->setCheckState(to_qcheckstate(settings.make_double_sided));
         layout_mesh->addWidget(ck_double_sided, iy2++, 0);
         connect(ck_double_sided, SIGNAL(stateChanged(int)), this, SLOT(onToggleDoubleSided(int)));
+
+        auto ck_bake_deformers = new QCheckBox("Bake Deformers");
+        ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
+        layout_mesh->addWidget(ck_bake_deformers, iy2++, 0);
+        connect(ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
 
         m_widget_mesh->setLayout(layout_mesh);
         m_widget_mesh->setShown(settings.sync_meshes);
