@@ -545,6 +545,10 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
         ret = exportTransform(rec);
     };
     auto handle_instance = [&]() -> bool {
+        // always make per-instance meshes if 'bake modifiers' mode
+        if (m_settings.bake_modifiers)
+            return false;
+
         // check if the node is instance
         EachInstance(n, [this, &rec, &ret](INode *instance) {
             if (ret)
