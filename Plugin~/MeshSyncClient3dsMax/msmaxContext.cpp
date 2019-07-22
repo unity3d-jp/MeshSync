@@ -83,6 +83,7 @@ msmaxContext::msmaxContext()
 {
     RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
     RegisterNotification(OnShutdown, this, NOTIFY_SYSTEM_SHUTDOWN);
+    m_fileSaver.on_prepare = std::bind(&msmaxContext::PrepareFileSaver, this, std::placeholders::_1);
 }
 
 msmaxContext::~msmaxContext()
@@ -216,6 +217,7 @@ const std::string& msmaxContext::getErrorMessage()
 void msmaxContext::wait()
 {
     m_sender.wait();
+    m_fileSaver.wait();
 }
 
 void msmaxContext::update()
@@ -446,6 +448,9 @@ void msmaxContext::kickAsyncSend()
         m_animations.clear();
     };
     m_sender.kick();
+
+    //save file
+    m_fileSaver.tryKickAutoSave();
 }
 
 int msmaxContext::exportTexture(const std::string & path, ms::TextureType type)
@@ -1229,6 +1234,24 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
                 dst.getBlendshapeCurve(name).push_back({ t, channel.GetMorphWeight(m_current_time_tick) });
             }
         }
+    }
+}
+
+void msmaxContext::PrepareFileSaver(ms::AsyncSceneFileSaver& t) {
+
+    const float to_meter = (float)GetMasterScale(UNITS_METERS);
+
+    t.scene_settings.handedness = ms::Handedness::RightZUp;
+    t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+    t.resetScene();
+    t.AddAsset<ms::TexturePtr>(m_texture_manager.getAllTextures());
+    t.AddAsset<ms::MaterialPtr>(m_material_manager.getAllMaterials());
+    t.AddEntity(m_entity_manager.getAllEntities());
+    auto animEnumerator = m_animations.begin();
+    while (animEnumerator != m_animations.end()) {
+        t.AddAsset(*animEnumerator);
+        ++animEnumerator;
     }
 }
 

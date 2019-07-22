@@ -16,8 +16,20 @@ public:
 
     AsyncSceneFileSaver();
     ~AsyncSceneFileSaver();
+
+    //[TODO-sindharta: 2019-7-22] All these should use const, like "shared_ptr<const Asset>"
     void AddAsset(AssetPtr);
+    template <typename T>
+    void AddAsset(std::vector<T>& col) {
+        auto& enumerator = col.begin();
+        while (enumerator != col.end()) {
+    	    m_scene->assets.push_back(*enumerator);
+            ++enumerator;
+        }
+    }
     void AddEntity(TransformPtr);
+    void AddEntity(std::vector<TransformPtr>&);
+
     void resetScene();
     const std::string& getErrorMessage() const;
     bool isSaving();

@@ -24,6 +24,15 @@ void AsyncSceneFileSaver::AddAsset(AssetPtr asset) {
 	m_scene->assets.push_back(asset);
 }
 
+void AsyncSceneFileSaver::AddEntity(std::vector<TransformPtr>& entityCollection) {
+    auto enumerator = entityCollection.begin();
+    while (enumerator != entityCollection.end()) {
+    	m_scene->entities.push_back(*enumerator);
+        ++enumerator;
+    }
+}
+
+
 void AsyncSceneFileSaver::AddEntity(TransformPtr t) {
 	m_scene->entities.push_back(t);
 }
