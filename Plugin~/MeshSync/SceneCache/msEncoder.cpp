@@ -55,7 +55,7 @@ void ZSTDBufferEncoder::encode(RawVector<char>& dst, const RawVector<char>& src)
 void ZSTDBufferEncoder::decode(RawVector<char>& dst, const RawVector<char>& src)
 {
     size_t dsize = ZSTD_findDecompressedSize(src.data(), src.size());
-    dst.resize(dsize);
+    dst.resize_discard(dsize);
     dsize = ZSTD_decompress(dst.data(), dst.size(), src.data(), src.size());
     dst.resize(dsize);
 }

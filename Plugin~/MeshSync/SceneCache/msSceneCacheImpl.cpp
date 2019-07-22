@@ -79,7 +79,7 @@ bool OSceneCacheImpl::prepare(ostream_ptr ost, const SceneCacheSettings& setting
 
 bool OSceneCacheImpl::valid() const
 {
-    return m_ost != nullptr;
+    return this && m_ost;
 }
 
 void OSceneCacheImpl::doWrite()
@@ -176,11 +176,13 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
 
 bool ISceneCacheImpl::valid() const
 {
-    return getNumScenes() > 0;
+    return this && !m_descs.empty();
 }
 
 size_t ISceneCacheImpl::getNumScenes() const
 {
+    if (!valid())
+        return 0;
     return m_descs.size();
 }
 
@@ -193,8 +195,8 @@ std::tuple<float, float> ISceneCacheImpl::getTimeRange() const
 
 ScenePtr ISceneCacheImpl::getByIndex(size_t i)
 {
-    if (m_descs.empty())
-        return ScenePtr();
+    if (!valid() || i >= m_descs.size())
+        return nullptr;
 
     auto& desc = m_descs[i];
 
@@ -211,19 +213,18 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
     try {
         m_last_scene = Scene::create();
         m_last_scene->deserialize(m_scene_buf);
-        return m_last_scene;
     }
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());
         m_last_scene = nullptr;
-        return nullptr;
     }
+    return m_last_scene;
 }
 
 ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
 {
-    if (m_descs.empty())
-        return ScenePtr();
+    if (!valid())
+        return nullptr;
 
     if (time <= m_descs.front().time)
         return getByIndex(0);
