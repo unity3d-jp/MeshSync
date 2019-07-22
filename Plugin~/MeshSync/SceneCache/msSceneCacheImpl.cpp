@@ -253,10 +253,12 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
 
 OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheSettings& settings)
 {
-    auto ofs = std::make_shared<std::ofstream>();
-    ofs->open(path, std::ios::binary);
-    if (*ofs) {
-        prepare(ofs, settings);
+    if (path) {
+        auto ofs = std::make_shared<std::ofstream>();
+        ofs->open(path, std::ios::binary);
+        if (*ofs) {
+            prepare(ofs, settings);
+        }
     }
 }
 
@@ -279,10 +281,12 @@ OSceneCachePtr OpenOSceneCacheFile(const char *path, const SceneCacheSettings& s
 
 ISceneCacheFile::ISceneCacheFile(const char *path)
 {
-    auto ifs = std::make_shared<std::ifstream>();
-    ifs->open(path, std::ios::binary);
-    if (*ifs) {
-        prepare(ifs);
+    if (path) {
+        auto ifs = std::make_shared<std::ifstream>();
+        ifs->open(path, std::ios::binary);
+        if (*ifs) {
+            prepare(ifs);
+        }
     }
 }
 

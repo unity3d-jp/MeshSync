@@ -152,6 +152,11 @@ namespace UTJ.MeshSync
 #endif
     }
 
+    public struct TimeRange
+    {
+        public float start, end;
+    }
+
 
     #region Server
     public enum ZUpCorrectionMode
@@ -2316,4 +2321,54 @@ namespace UTJ.MeshSync
         public ConstraintData GetConstraint(int i) { return msSceneGetConstraint(self, i); }
     }
     #endregion Scene
+
+
+    #region SceneCache
+    public struct SceneCacheData
+    {
+        #region internal
+        public IntPtr self;
+        [DllImport("MeshSyncServer")] static extern SceneCacheData msISceneCacheOpen(string path);
+        [DllImport("MeshSyncServer")] static extern void msISceneCacheClose(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
+        [DllImport("MeshSyncServer")] static extern int msISceneCacheGetNumScenes(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
+
+        [DllImport("MeshSyncServer")] static extern int msSendSceneAsync(string addr, int port, SceneData scene);
+        [DllImport("MeshSyncServer")] static extern byte msSendSceneWait(int handle);
+        #endregion
+
+        public static implicit operator bool(SceneCacheData v) { return v.self != IntPtr.Zero; }
+        public static SceneCacheData Open(string path) { return msISceneCacheOpen(path); }
+
+        public void Close() { msISceneCacheClose(self); self = IntPtr.Zero; }
+
+        public int sceneCount {
+            get { return msISceneCacheGetNumScenes(self); }
+        }
+        public TimeRange timeRange {
+            get {
+                var ret = default(TimeRange);
+                msISceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
+                return ret;
+            }
+        }
+
+        public SceneData GetSceneByIndex(int i)
+        {
+            return msISceneCacheGetSceneByIndex(self, i);
+        }
+        public SceneData GetSceneByTime(float t, bool lerp)
+        {
+            return msISceneCacheGetSceneByTime(self, t, lerp);
+        }
+
+        public static bool SendScene(string addr, int port, SceneData scene)
+        {
+            var handle = msSendSceneAsync(addr, port, scene);
+            return msSendSceneWait(handle) != 0;
+        }
+    }
+    #endregion
 }
