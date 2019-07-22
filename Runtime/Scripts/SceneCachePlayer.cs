@@ -1,7 +1,11 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UTJ.MeshSync
 {
+    [RequireComponent(typeof(MeshSyncServer))]
     [ExecuteInEditMode]
     public class SceneCachePlayer : MonoBehaviour
     {
@@ -9,19 +13,20 @@ namespace UTJ.MeshSync
         [SerializeField] DataPath m_cacheFilePath = new DataPath();
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = true;
-        [SerializeField] string m_server = "127.0.0.1";
-        [SerializeField] int m_port = 32434;
+        [SerializeField] int m_port = 0;
 
         SceneCacheData m_sceneCache;
+        TimeRange m_timeRange;
         string m_pathPrev;
         float m_timePrev = -1;
         bool m_needsOpen = false;
         #endregion
 
         #region Properties
-        public DataPath cacheFilePath
+        public string cacheFilePath
         {
-            get { return m_cacheFilePath; }
+            get { return m_cacheFilePath.fullPath; }
+            set { m_cacheFilePath.fullPath = value; CheckParamsUpdated(); }
         }
         public float time
         {
@@ -47,18 +52,59 @@ namespace UTJ.MeshSync
             if (m_sceneCache)
             {
                 m_cacheFilePath.fullPath = path;
+                m_timeRange = m_sceneCache.timeRange;
                 return true;
             }
             return false;
         }
         #endregion
 
+
         #region Impl
+#if UNITY_EDITOR
+        [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
+        public static void CreateSceneCachePlayer(MenuCommand menuCommand)
+        {
+            var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
+            if (path.Length > 0)
+            {
+                var go = new GameObject();
+                go.name = "SceneCachePlayer";
+
+                var server = go.AddComponent<MeshSyncServer>();
+                server.rootObject = go.GetComponent<Transform>();
+
+                var player = go.AddComponent<SceneCachePlayer>();
+                if (!player.OpenCache(path))
+                {
+                    Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
+                    DestroyImmediate(go);
+                }
+                else
+                {
+                    Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+                }
+            }
+        }
+#endif
+
         void Release()
         {
             m_sceneCache.Close();
             m_timePrev = -1;
             m_pathPrev = "";
+        }
+
+        void CheckParamsUpdated()
+        {
+            var path = m_cacheFilePath.fullPath;
+            if (path != m_pathPrev)
+            {
+                m_pathPrev = path;
+                m_needsOpen = true;
+            }
+
+            m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
         }
         #endregion
 
@@ -67,15 +113,12 @@ namespace UTJ.MeshSync
         void Reset()
         {
             m_cacheFilePath.isDirectory = false;
+            m_port = Random.Range(11111, 65000);
+            GetComponent<MeshSyncServer>().serverPort = m_port;
         }
         void OnValidate()
         {
-            var path = m_cacheFilePath.fullPath;
-            if (path != m_pathPrev)
-            {
-                m_pathPrev = path;
-                m_needsOpen = true;
-            }
+            CheckParamsUpdated();
         }
 #endif
 
@@ -101,7 +144,8 @@ namespace UTJ.MeshSync
             {
                 m_timePrev = m_time;
                 var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-                SceneCacheData.SendScene(m_server, m_port, scene);
+                SceneCacheData.SendScene("127.0.0.1", m_port, scene);
+                GetComponent<MeshSyncServer>().PollServerEvents();
             }
         }
         #endregion

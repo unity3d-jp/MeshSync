@@ -200,7 +200,7 @@ namespace UTJ.MeshSync
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;
         Server.MessageHandler m_handler;
-        bool m_requestRestartServer = false;
+        bool m_requestRestartServer = true;
         bool m_captureScreenshotInProgress = false;
         bool m_needReassignMaterials = false;
 
@@ -215,6 +215,7 @@ namespace UTJ.MeshSync
         [HideInInspector] [SerializeField] GameObject[] m_objIDTable_keys;
         [HideInInspector] [SerializeField] int[] m_objIDTable_values;
         [HideInInspector] [SerializeField] int m_objIDSeed = 0;
+        [HideInInspector] [SerializeField] int m_serverPortPrev = 0;
         #endregion
 
 
@@ -224,7 +225,7 @@ namespace UTJ.MeshSync
         public int serverPort
         {
             get { return m_serverPort; }
-            set { m_serverPort = value; }
+            set { m_serverPort = value; CheckParamsUpdated(); }
         }
         public DataPath assetDir
         {
@@ -244,6 +245,83 @@ namespace UTJ.MeshSync
             get { return m_rootObject; }
             set { m_rootObject = value; }
         }
+
+        public bool syncVisibility
+        {
+            get { return m_syncVisibility; }
+            set { m_syncVisibility = value; }
+        }
+        public bool syncTransform
+        {
+            get { return m_syncTransform; }
+            set { m_syncTransform = value; }
+        }
+        public bool syncCameras
+        {
+            get { return m_syncCameras; }
+            set { m_syncCameras = value; }
+        }
+        public bool syncLights
+        {
+            get { return m_syncLights; }
+            set { m_syncLights = value; }
+        }
+        public bool syncMeshes
+        {
+            get { return m_syncMeshes; }
+            set { m_syncMeshes = value; }
+        }
+        public bool syncPoints
+        {
+            get { return m_syncPoints; }
+            set { m_syncPoints = value; }
+        }
+
+        public InterpolationMode animationInterpolation
+        {
+            get { return m_animationInterpolation; }
+            set { m_animationInterpolation = value; }
+        }
+        public ZUpCorrectionMode zUpCorrection
+        {
+            get { return m_zUpCorrection; }
+            set { m_zUpCorrection = value; }
+        }
+
+#if UNITY_2018_1_OR_NEWER
+        public bool usePhysicalCameraParams
+        {
+            get { return m_usePhysicalCameraParams; }
+            set { m_usePhysicalCameraParams = value; }
+        }
+#endif
+        public bool updateMeshColliders
+        {
+            get { return m_updateMeshColliders; }
+            set { m_updateMeshColliders = value; }
+        }
+        public bool findMaterialFromAssets
+        {
+            get { return m_findMaterialFromAssets; }
+            set { m_findMaterialFromAssets = value; }
+        }
+        public bool trackMaterialAssignment
+        {
+            get { return m_trackMaterialAssignment; }
+            set { m_trackMaterialAssignment = value; }
+        }
+
+        public bool progressiveDisplay
+        {
+            get { return m_progressiveDisplay; }
+            set { m_progressiveDisplay = value; }
+        }
+        public bool logging
+        {
+            get { return m_logging; }
+            set { m_logging = value; }
+        }
+
         public List<MaterialHolder> materialData { get { return m_materialList; } }
         public List<TextureHolder> textureData { get { return m_textureList; } }
         #endregion
@@ -296,6 +374,18 @@ namespace UTJ.MeshSync
             DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
 
+        void CheckParamsUpdated()
+        {
+            if (m_serverPort != m_serverPortPrev)
+            {
+                m_serverPortPrev = m_serverPort;
+                m_requestRestartServer = true;
+            }
+            if (m_server)
+            {
+                m_server.zUpCorrectionMode = m_zUpCorrection;
+            }
+        }
 
         void StartServer()
         {
@@ -340,9 +430,9 @@ namespace UTJ.MeshSync
 
 
         #region MessageHandlers
-        void PollServerEvents()
+        public void PollServerEvents()
         {
-            if(m_requestRestartServer)
+            if (m_requestRestartServer)
             {
                 m_requestRestartServer = false;
                 StartServer();
@@ -2479,18 +2569,9 @@ namespace UTJ.MeshSync
             }
         }
 
-        [SerializeField] int m_serverPortPrev = ServerSettings.defaultPort;
         void OnValidate()
         {
-            if (m_serverPort != m_serverPortPrev)
-            {
-                m_serverPortPrev = m_serverPort;
-                m_requestRestartServer = true;
-            }
-            if (m_server)
-            {
-                m_server.zUpCorrectionMode = m_zUpCorrection;
-            }
+            CheckParamsUpdated();
         }
 #endif
 
@@ -2499,7 +2580,6 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
             DeployStreamingAssets.Deploy();
 #endif
-            StartServer();
         }
 
         void OnDestroy()

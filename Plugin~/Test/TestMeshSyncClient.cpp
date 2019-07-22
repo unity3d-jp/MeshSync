@@ -519,6 +519,6 @@ TestCase(Test_SaveFile)
 
     fileSaver.tryKickAutoSave();
 
-    fileSaver.kickManualSave("wave.scz");
+    fileSaver.kickManualSave("wave1f.scz");
 }
 
