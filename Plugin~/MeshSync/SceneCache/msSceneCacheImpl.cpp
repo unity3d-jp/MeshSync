@@ -181,6 +181,7 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
         }
     }
     std::sort(m_descs.begin(), m_descs.end(), [](auto& a, auto& b) { return a.time < b.time; });
+    m_cache.resize(m_descs.size());
     return valid();
 }
 
@@ -208,6 +209,10 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
     if (!valid() || i >= m_descs.size())
         return nullptr;
 
+    auto& ret = m_cache[i];
+    if (ret)
+        return ret;
+
     auto& desc = m_descs[i];
 
     // read
@@ -220,7 +225,6 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
     m_scene_buf.swap(m_tmp_buf);
 
     // deserialize
-    ScenePtr ret;
     try {
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
@@ -229,6 +233,12 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());
         ret = nullptr;
+    }
+
+    m_history.push_back(i);
+    if (m_history.size() >= m_max_history) {
+        m_cache[m_history.front()].reset();
+        m_history.pop_front();
     }
     return ret;
 }

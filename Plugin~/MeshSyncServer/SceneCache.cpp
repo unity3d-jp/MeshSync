@@ -59,6 +59,25 @@ msAPI bool msSendSceneWait(int handle)
     }
     return false;
 }
+
+msAPI void msFeedScene(msMessageHandler handler, ms::Scene *scene)
+{
+    {
+        ms::FenceMessage mes;
+        mes.type = ms::FenceMessage::FenceType::SceneBegin;
+        handler(ms::Message::Type::Fence, &mes);
+    }
+    {
+        ms::SetMessage mes;
+        mes.scene = *scene;
+        handler(ms::Message::Type::Set, &mes);
+    }
+    {
+        ms::FenceMessage mes;
+        mes.type = ms::FenceMessage::FenceType::SceneEnd;
+        handler(ms::Message::Type::Fence, &mes);
+    }
+}
 #pragma endregion
 
 

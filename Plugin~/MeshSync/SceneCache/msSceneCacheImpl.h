@@ -100,6 +100,10 @@ protected:
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;
     RawVector<char> m_encoded_buf, m_tmp_buf;
+
+    std::vector<ScenePtr> m_cache;
+    std::deque<size_t> m_history;
+    size_t m_max_history = 2;
 };
 
 

@@ -92,7 +92,6 @@ namespace UTJ.MeshSync
         {
             m_sceneCache.Close();
             m_timePrev = -1;
-            m_pathPrev = "";
         }
 
         void CheckParamsUpdated()
@@ -130,6 +129,7 @@ namespace UTJ.MeshSync
         void OnDisable()
         {
             Release();
+            m_pathPrev = "";
         }
 
         void Update()
