@@ -1063,9 +1063,16 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
 
                 auto dbs = ms::BlendShapeData::create();
                 for (int ti = 0; ti < num_targets; ++ti) {
+                    if (!channel.IsValidProgressiveMorphTargetIndex(ti))
+                        continue;
+
                     dbs->frames.push_back(ms::BlendShapeFrameData::create());
                     auto& frame = *dbs->frames.back();
                     frame.weight = channel.GetProgressiveMorphWeight(ti);
+
+                    // workaround.
+                    if (frame.weight == 0.0f)
+                        frame.weight = 100.0f;
 
                     // gen delta
                     frame.points.resize_discard(num_points);
