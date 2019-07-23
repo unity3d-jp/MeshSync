@@ -83,7 +83,7 @@ msmaxContext::msmaxContext()
 {
     RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
     RegisterNotification(OnShutdown, this, NOTIFY_SYSTEM_SHUTDOWN);
-    m_fileSaver.on_prepare = std::bind(&msmaxContext::PrepareFileSaver, this, std::placeholders::_1);
+    m_file_saver.on_prepare = std::bind(&msmaxContext::prepareFileSaver, this, std::placeholders::_1);
 }
 
 msmaxContext::~msmaxContext()
@@ -217,7 +217,7 @@ const std::string& msmaxContext::getErrorMessage()
 void msmaxContext::wait()
 {
     m_sender.wait();
-    m_fileSaver.wait();
+    m_file_saver.wait();
 }
 
 void msmaxContext::update()
@@ -450,7 +450,7 @@ void msmaxContext::kickAsyncSend()
     m_sender.kick();
 
     //save file
-    m_fileSaver.tryKickAutoSave();
+    m_file_saver.tryKickAutoSave();
 }
 
 int msmaxContext::exportTexture(const std::string & path, ms::TextureType type)
@@ -1237,7 +1237,7 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
     }
 }
 
-void msmaxContext::PrepareFileSaver(ms::AsyncSceneFileSaver& t) {
+void msmaxContext::prepareFileSaver(ms::AsyncSceneFileSaver& t) {
 
     const float to_meter = (float)GetMasterScale(UNITS_METERS);
 
@@ -1245,14 +1245,11 @@ void msmaxContext::PrepareFileSaver(ms::AsyncSceneFileSaver& t) {
     t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
     t.resetScene();
-    t.AddAsset<ms::TexturePtr>(m_texture_manager.getAllTextures());
-    t.AddAsset<ms::MaterialPtr>(m_material_manager.getAllMaterials());
-    t.AddEntity(m_entity_manager.getAllEntities());
-    auto animEnumerator = m_animations.begin();
-    while (animEnumerator != m_animations.end()) {
-        t.AddAsset(*animEnumerator);
-        ++animEnumerator;
-    }
+    t.addAsset<ms::TexturePtr>(m_texture_manager.getAllTextures());
+    t.addAsset<ms::MaterialPtr>(m_material_manager.getAllMaterials());
+    t.addEntity(m_entity_manager.getAllEntities());
+    for (auto& anim : m_animations)
+        t.addAsset(anim);
 }
 
 

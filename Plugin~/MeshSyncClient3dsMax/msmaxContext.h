@@ -164,7 +164,7 @@ private:
 
 private:
        
-    void PrepareFileSaver(ms::AsyncSceneFileSaver& t);
+    void prepareFileSaver(ms::AsyncSceneFileSaver& t);
 
     msmaxSettings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
@@ -189,7 +189,7 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
-    ms::AsyncSceneFileSaver m_fileSaver;
+    ms::AsyncSceneFileSaver m_file_saver;
 
     std::vector<std::function<void()>> m_deferred_calls;
     std::mutex m_mutex;
