@@ -76,11 +76,31 @@ void AsyncSceneFileSaver::tryKickAutoSave()
 
     m_future = std::async(std::launch::async, [this]() { 
 
-		//In Windows 10, this is C:\Users\sin\AppData\Local\Temp
+
+		//In Windows 10, this is C:\Users\[user_name]\AppData\Local\Temp
 		std::string fullPath(Poco::Path::cacheHome());
 		fullPath+="UTJ\\MeshSync";
 		Poco::File f(fullPath);
 		f.createDirectories();
+
+        //Limit the number of files
+        const uint64_t MAX_CACHE_FILES = 100;
+        std::multimap<uint64_t, std::string> existingFiles;
+        FindFilesSortedByLastModified(fullPath, existingFiles);
+        if (existingFiles.size() > MAX_CACHE_FILES) {
+            size_t num_files_to_delete = existingFiles.size() -  MAX_CACHE_FILES;
+
+            auto enumerator = existingFiles.begin();
+            size_t i=0;
+            while (enumerator != existingFiles.end() && i<num_files_to_delete) {
+            
+                Poco::File file_to_delete( enumerator->second);
+                file_to_delete.remove();
+
+                ++i;
+                ++enumerator;
+            }
+        }
 		
 		//Find time
 		time_t rawtime;
