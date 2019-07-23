@@ -5,6 +5,7 @@
 #include "msAnimation.h"
 #include "msMaterial.h"
 #include "msAudio.h"
+#include "msEntityConverter.h"
 
 
 namespace ms {
@@ -66,6 +67,7 @@ uint64_t Scene::hash() const
 
 void Scene::lerp(const Scene& s1, const Scene& s2, float t)
 {
+    settings = s1.settings;
     entities.resize(s1.entities.size());
     parallel_for(0, (int)entities.size(), 10, [this, &s1, &s2, t](int i) {
         auto e1 = s1.entities[i];
@@ -78,6 +80,76 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
             entities[i] = e1;
         }
     });
+}
+
+void Scene::sanitizeHierarchyPath(std::string& /*path*/)
+{
+    // nothing to do for now
+}
+
+void Scene::import(const SceneImportSettings& cv)
+{
+    // receive and convert assets
+    bool flip_x = settings.handedness == Handedness::Right || settings.handedness == Handedness::RightZUp;
+    bool swap_yz = settings.handedness == Handedness::LeftZUp || settings.handedness == Handedness::RightZUp;
+
+    std::vector<EntityConverterPtr> converters;
+    if (settings.scale_factor != 1.0f) {
+        float scale = 1.0f / settings.scale_factor;
+        converters.push_back(ScaleConverter::create(scale));
+    }
+    if (flip_x) {
+        converters.push_back(FlipX_HandednessCorrector::create());
+    }
+    if (swap_yz) {
+        if (cv.zup_correction_mode == ZUpCorrectionMode::FlipYZ)
+            converters.push_back(FlipYZ_ZUpCorrector::create());
+        else if (cv.zup_correction_mode == ZUpCorrectionMode::RotateX)
+            converters.push_back(RotateX_ZUpCorrector::create());
+    }
+
+    auto convert = [&converters](auto& obj) {
+        for (auto& cv : converters)
+            cv->convert(obj);
+    };
+
+    parallel_for_each(entities.begin(), entities.end(), [&](TransformPtr& obj) {
+        sanitizeHierarchyPath(obj->path);
+        sanitizeHierarchyPath(obj->reference);
+
+        bool is_mesh = obj->getType() == Entity::Type::Mesh;
+        if (is_mesh) {
+            auto& mesh = static_cast<Mesh&>(*obj);
+            for (auto& bone : mesh.bones)
+                sanitizeHierarchyPath(bone->path);
+            mesh.refine_settings.flags.triangulate = 1;
+            mesh.refine_settings.flags.split = 1;
+            mesh.refine_settings.flags.optimize_topology = 1;
+            mesh.refine_settings.split_unit = cv.mesh_split_unit;
+            mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
+            mesh.refine(mesh.refine_settings);
+        }
+
+        convert(*obj);
+
+        if (is_mesh) {
+            auto& mesh = static_cast<Mesh&>(*obj);
+            mesh.updateBounds();
+        }
+    });
+
+    for (auto& asset : assets) {
+        if (asset->getAssetType() == AssetType::Animation) {
+            auto& clip = static_cast<AnimationClip&>(*asset);
+            parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
+                sanitizeHierarchyPath(anim->path);
+                convert(*anim);
+            });
+        }
+    }
+
+    settings.handedness = Handedness::Left;
+    settings.scale_factor = 1.0f;
 }
 
 TransformPtr Scene::findEntity(const std::string& path) const

@@ -22,7 +22,8 @@ public:
     ~AsyncSceneFileSaver();
     void clear();
 
-    bool open(const char *path, const SceneCacheSettings& settings);
+    bool open(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());
+    void close();
     bool valid() const;
 
     bool isSaving();
@@ -30,7 +31,6 @@ public:
     void write(float time);
 
 private:
-
     OSceneCachePtr m_osc;
     std::string m_error_message;
 };

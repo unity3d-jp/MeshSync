@@ -62,6 +62,10 @@ public:
 
     ISceneCacheImpl();
     ~ISceneCacheImpl() override;
+
+    void setImportSettings(const SceneImportSettings& cv) override;
+    const SceneImportSettings& getImportSettings() const override;
+
     size_t getNumScenes() const override;
     std::tuple<float, float> getTimeRange() const override;
     ScenePtr getByIndex(size_t i) override;
@@ -73,6 +77,8 @@ public:
     void prefetchByTime(float t, bool next, bool lerp);
 
 protected:
+    ScenePtr getByIndexImpl(size_t i);
+
     struct SceneDesc {
         uint64_t pos = 0;
         uint64_t size = 0;
@@ -82,6 +88,7 @@ protected:
 
     istream_ptr m_ist;
     SceneCacheSettings m_settings;
+    SceneImportSettings m_import_settings;
 
     std::mutex m_mutex;
     std::vector<SceneDesc> m_descs;

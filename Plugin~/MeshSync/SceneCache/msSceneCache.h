@@ -34,6 +34,10 @@ class ISceneCache
 {
 public:
     virtual ~ISceneCache();
+
+    virtual void setImportSettings(const SceneImportSettings& cv) = 0;
+    virtual const SceneImportSettings& getImportSettings() const = 0;
+
     virtual std::tuple<float, float> getTimeRange() const = 0;
     virtual size_t getNumScenes() const = 0;
     virtual ScenePtr getByIndex(size_t i) = 0;

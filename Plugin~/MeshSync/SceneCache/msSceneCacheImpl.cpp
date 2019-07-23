@@ -134,6 +134,16 @@ ISceneCacheImpl::~ISceneCacheImpl()
 {
 }
 
+void ISceneCacheImpl::setImportSettings(const SceneImportSettings& cv)
+{
+    m_import_settings = cv;
+}
+
+const SceneImportSettings & ISceneCacheImpl::getImportSettings() const
+{
+    return m_import_settings;
+}
+
 bool ISceneCacheImpl::prepare(istream_ptr ist)
 {
     m_ist = ist;
@@ -193,7 +203,7 @@ std::tuple<float, float> ISceneCacheImpl::getTimeRange() const
     return { m_descs.front().time, m_descs.back().time };
 }
 
-ScenePtr ISceneCacheImpl::getByIndex(size_t i)
+ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 {
     if (!valid() || i >= m_descs.size())
         return nullptr;
@@ -210,14 +220,22 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
     m_scene_buf.swap(m_tmp_buf);
 
     // deserialize
+    ScenePtr ret;
     try {
-        m_last_scene = Scene::create();
-        m_last_scene->deserialize(m_scene_buf);
+        ret = Scene::create();
+        ret->deserialize(m_scene_buf);
+        //ret->convert(m_cv); // todo: uncomment this when make file streaming player
     }
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());
-        m_last_scene = nullptr;
+        ret = nullptr;
     }
+    return ret;
+}
+
+ScenePtr ISceneCacheImpl::getByIndex(size_t i)
+{
+    m_last_scene = getByIndexImpl(i);
     return m_last_scene;
 }
 
@@ -227,27 +245,27 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
         return nullptr;
 
     if (time <= m_descs.front().time)
-        return getByIndex(0);
+        m_last_scene = getByIndexImpl(0);
     else if(time >= m_descs.back().time)
-        return getByIndex(m_descs.size() - 1);
+        m_last_scene = getByIndexImpl(m_descs.size() - 1);
     else {
         auto i = std::distance(m_descs.begin(),
             std::lower_bound(m_descs.begin(), m_descs.end(), time, [time](auto& a, float t) { return a.time < t; })) - 1;
         if (lerp) {
             m_scene1 = m_descs[i];
-            m_scene1.scene = getByIndex(i);
+            m_scene1.scene = getByIndexImpl(i);
             m_scene2 = m_descs[i + 1];
-            m_scene2.scene = getByIndex(i + 1);
+            m_scene2.scene = getByIndexImpl(i + 1);
 
             float t = (time - m_scene1.time) / (m_scene2.time - m_scene1.time);
             m_last_scene = Scene::create();
             m_last_scene->lerp(*m_scene1.scene, *m_scene2.scene, t);
-            return m_last_scene;
         }
         else {
-            return getByIndex(i);
+            m_last_scene = getByIndexImpl(i);
         }
     }
+    return m_last_scene;
 }
 
 

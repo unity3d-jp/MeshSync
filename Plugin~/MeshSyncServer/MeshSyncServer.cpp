@@ -45,30 +45,30 @@ msAPI void  msServerStop(ms::Server *server)
 
 msAPI uint32_t msServerGetSplitUnit(ms::Server *server)
 {
-    return server ? server->getSettings().mesh_split_unit : 0;
+    return server ? server->getSettings().import_settings.mesh_split_unit : 0;
 }
 msAPI void msServerSetSplitUnit(ms::Server *server, uint32_t v)
 {
     if (server)
-        server->getSettings().mesh_split_unit = v;
+        server->getSettings().import_settings.mesh_split_unit = v;
 }
 msAPI int msServerGetMaxBoneInfluence(ms::Server *server)
 {
-    return server ? server->getSettings().mesh_max_bone_influence : 0;
+    return server ? server->getSettings().import_settings.mesh_max_bone_influence : 0;
 }
 msAPI void msServerSetMaxBoneInfluence(ms::Server *server, int v)
 {
     if (server)
-        server->getSettings().mesh_max_bone_influence = v;
+        server->getSettings().import_settings.mesh_max_bone_influence = v;
 }
 msAPI ms::ZUpCorrectionMode msServerGetZUpCorrectionMode(ms::Server *server)
 {
-    return server ? server->getSettings().zup_correction_mode : ms::ZUpCorrectionMode::FlipYZ;
+    return server ? server->getSettings().import_settings.zup_correction_mode : ms::ZUpCorrectionMode::FlipYZ;
 }
 msAPI void msServerSetZUpCorrectionMode(ms::Server *server, ms::ZUpCorrectionMode v)
 {
     if (server)
-        server->getSettings().zup_correction_mode = v;
+        server->getSettings().import_settings.zup_correction_mode = v;
 }
 
 msAPI int msServerGetNumMessages(ms::Server *server)

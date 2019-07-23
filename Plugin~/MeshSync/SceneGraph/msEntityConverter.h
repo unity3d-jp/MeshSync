@@ -9,6 +9,7 @@ class Light;
 class Mesh;
 class Points;
 class Animation;
+class AnimationCurve;
 
 class EntityConverter
 {

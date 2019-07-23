@@ -176,7 +176,7 @@ Value* Export_cf(Value** arg_list, int count)
     }
 
     // do send
-    msmaxExport(target, scope);
+    msmaxSendScene(target, scope);
     return &ok;
 }
 

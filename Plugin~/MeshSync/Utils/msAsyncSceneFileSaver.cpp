@@ -19,6 +19,14 @@ bool AsyncSceneFileSaver::open(const char *path, const SceneCacheSettings& setti
     return m_osc != nullptr;
 }
 
+void AsyncSceneFileSaver::close()
+{
+    if (valid()) {
+        wait();
+        m_osc.reset();
+    }
+}
+
 bool AsyncSceneFileSaver::valid() const
 {
     return m_osc != nullptr;

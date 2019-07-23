@@ -216,7 +216,6 @@ const std::string& msmaxContext::getErrorMessage()
 void msmaxContext::wait()
 {
     m_sender.wait();
-    m_file_saver.wait();
 }
 
 void msmaxContext::update()
@@ -355,8 +354,11 @@ bool msmaxContext::sendAnimations(SendScope scope)
     return true;
 }
 
-bool msmaxContext::writeCache(SendScope scope, const std::string& path)
+bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
+    if (!m_file_saver.open(path.c_str()))
+        return false;
+
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.bake_modifiers = true;
@@ -365,15 +367,7 @@ bool msmaxContext::writeCache(SendScope scope, const std::string& path)
     m_entity_manager.setAlwaysMarkDirty(true);
     m_texture_manager.clearDirtyFlags();
 
-    auto time_range = GetCOREInterface()->GetAnimRange();
-    auto time_start = time_range.Start();
-    auto time_end = time_range.End();
-    auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
-    for (TimeValue t = time_start;;) {
-        m_current_time_tick = t;
-        m_anim_time = ToSeconds(t - time_start);
-        GetCOREInterface()->SetTime(m_current_time_tick);
-
+    auto do_export = [&]() {
         int num_exported = 0;
         if (scope == SendScope::All) {
             for (auto& kvp : m_node_records) {
@@ -386,14 +380,33 @@ bool msmaxContext::writeCache(SendScope scope, const std::string& path)
 
         // cleanup intermediate data
         m_material_records.clear();
+    };
 
-        if (t >= time_range.End())
-            break;
-        else
-            t = std::min(t + interval, time_end);
+    if (all_frames) {
+        auto time_range = GetCOREInterface()->GetAnimRange();
+        auto time_start = time_range.Start();
+        auto time_end = time_range.End();
+        auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
+        for (TimeValue t = time_start;;) {
+            m_current_time_tick = t;
+            m_anim_time = ToSeconds(t - time_start);
+            GetCOREInterface()->SetTime(m_current_time_tick);
+
+            do_export();
+
+            if (t >= time_range.End())
+                break;
+            else
+                t = std::min(t + interval, time_end);
+        }
+    }
+    else {
+        m_anim_time = 0.0f;
+        do_export();
     }
 
     m_settings = settings_old;
+    m_file_saver.close();
     return true;
 }
 
@@ -480,7 +493,7 @@ void msmaxContext::kickAsyncSend()
             t.scene_settings.handedness = ms::Handedness::RightZUp;
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
-            t.textures = m_texture_manager.getDirtyTextures();
+            //t.textures = m_texture_manager.getDirtyTextures();
             t.materials = m_material_manager.getDirtyMaterials();
             t.transforms = m_entity_manager.getDirtyTransforms();
             t.geometries = m_entity_manager.getDirtyGeometries();
@@ -1319,7 +1332,7 @@ void msmaxContext::feedDeferredCalls()
 }
 
 
-bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
+bool msmaxSendScene(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
 {
     auto& ctx = msmaxGetContext();
     if (!ctx.isServerAvailable()) {
@@ -1351,4 +1364,15 @@ bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope)
     };
     ctx.addDeferredCall(body);
     return true;
+}
+
+bool msmaxExportCache(msmaxContext::SendScope scope, bool all_frames)
+{
+    auto *ifs = GetCOREInterface8();
+    MSTR wpath = L"cache.scz";
+    if (ifs->DoMaxFileSaveAsDlg(wpath)) {
+        auto& ctx = msmaxGetContext();
+        return ctx.writeCache(scope, all_frames, ms::ToMBS(wpath));
+    }
+    return false;
 }

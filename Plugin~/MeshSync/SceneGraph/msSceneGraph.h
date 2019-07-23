@@ -27,6 +27,12 @@ enum class Handedness
     RightZUp,
 };
 
+enum class ZUpCorrectionMode
+{
+    FlipYZ,
+    RotateX,
+};
+
 struct SceneSettings
 {
     std::string name = "Untitled";
@@ -37,6 +43,13 @@ struct SceneSettings
     void deserialize(std::istream& is);
 };
 msSerializable(SceneSettings);
+
+struct SceneImportSettings
+{
+    uint32_t mesh_split_unit = 0xffffffff;
+    int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
+    ZUpCorrectionMode zup_correction_mode = ZUpCorrectionMode::FlipYZ;
+};
 
 struct Scene
 {
@@ -54,6 +67,9 @@ public:
     void clear();
     uint64_t hash() const;
     void lerp(const Scene& src1, const Scene& src2, float t);
+
+    static void sanitizeHierarchyPath(std::string& path);
+    void import(const SceneImportSettings& cv);
 
     TransformPtr findEntity(const std::string& path) const;
     template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;

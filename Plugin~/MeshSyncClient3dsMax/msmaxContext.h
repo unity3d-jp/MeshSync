@@ -86,7 +86,7 @@ public:
     bool sendObjects(SendScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
     bool sendAnimations(SendScope scope);
-    bool writeCache(SendScope scope, const std::string& path);
+    bool writeCache(SendScope scope, bool all_frames, const std::string& path);
 
     bool recvScene();
 
@@ -194,4 +194,5 @@ private:
 
 #define msmaxGetContext() msmaxContext::getInstance()
 #define msmaxGetSettings() msmaxGetContext().getSettings()
-bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope);
+bool msmaxSendScene(msmaxContext::SendTarget target, msmaxContext::SendScope scope);
+bool msmaxExportCache(msmaxContext::SendScope scope, bool all_frames);
