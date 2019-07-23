@@ -71,4 +71,20 @@ uint64_t FileMTime(const char *path)
     }
 }
 
+void FindFilesSortedByLastModified(const std::string& path, std::multimap<uint64_t, std::string>& ret) {
+
+    using namespace std;
+    Poco::DirectoryIterator dir_itr(path);
+    Poco::DirectoryIterator	end;
+
+    ret.clear();
+    while(dir_itr!= end) {
+        if (dir_itr->isDirectory()) {
+            continue;
+        }
+        ret.insert(multimap<uint64_t, string>::value_type(dir_itr->getLastModified().raw(), dir_itr->path()));
+        ++dir_itr;
+    }
+}
+
 } // namespace ms

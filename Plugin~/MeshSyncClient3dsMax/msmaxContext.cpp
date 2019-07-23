@@ -83,6 +83,7 @@ msmaxContext::msmaxContext()
 {
     RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
     RegisterNotification(OnShutdown, this, NOTIFY_SYSTEM_SHUTDOWN);
+    m_file_saver.on_prepare = std::bind(&msmaxContext::prepareFileSaver, this, std::placeholders::_1);
 }
 
 msmaxContext::~msmaxContext()
@@ -216,6 +217,7 @@ const std::string& msmaxContext::getErrorMessage()
 void msmaxContext::wait()
 {
     m_sender.wait();
+    m_file_saver.wait();
 }
 
 void msmaxContext::update()
@@ -446,6 +448,9 @@ void msmaxContext::kickAsyncSend()
         m_animations.clear();
     };
     m_sender.kick();
+
+    //save file
+    m_file_saver.tryKickAutoSave();
 }
 
 int msmaxContext::exportTexture(const std::string & path, ms::TextureType type)
@@ -1230,6 +1235,21 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
             }
         }
     }
+}
+
+void msmaxContext::prepareFileSaver(ms::AsyncSceneFileSaver& t) {
+
+    const float to_meter = (float)GetMasterScale(UNITS_METERS);
+
+    t.scene_settings.handedness = ms::Handedness::RightZUp;
+    t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+    t.resetScene();
+    t.addAsset<ms::TexturePtr>(m_texture_manager.getAllTextures());
+    t.addAsset<ms::MaterialPtr>(m_material_manager.getAllMaterials());
+    t.addEntity(m_entity_manager.getAllEntities());
+    for (auto& anim : m_animations)
+        t.addAsset(anim);
 }
 
 

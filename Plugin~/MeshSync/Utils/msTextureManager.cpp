@@ -121,7 +121,7 @@ std::vector<TexturePtr> TextureManager::getAllTextures()
         if (p.second.texture->id != -1)
             ret.push_back(p.second.texture);
     }
-    return std::vector<TexturePtr>();
+    return ret;
 }
 
 std::vector<TexturePtr> TextureManager::getDirtyTextures()
