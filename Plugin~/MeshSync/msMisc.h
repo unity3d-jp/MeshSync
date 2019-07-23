@@ -10,4 +10,6 @@ bool ByteArrayToFile(const char *path, const char *data, size_t size);
 bool FileExists(const char *path);
 uint64_t FileMTime(const char *path);
 
+void FindFilesSortedByLastModified(const std::string& path, std::multimap<uint64_t, std::string>& ret);
+
 } // namespace ms

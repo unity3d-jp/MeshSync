@@ -67,7 +67,7 @@
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)$(MAX_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <LibraryPath>$(SolutionDir)External\3ds Max opt\lib64;$(SolutionDir)External\Poco\lib64;$(MAX_LIB_DIR);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)External\3ds Max opt\lib64;$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\zstd\lib64;$(MAX_LIB_DIR);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup>
     <TargetExt>.dlu</TargetExt>
