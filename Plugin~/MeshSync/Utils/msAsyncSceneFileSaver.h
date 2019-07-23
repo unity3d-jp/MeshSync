@@ -1,44 +1,37 @@
 #pragma once
 
-#include "../SceneGraph/msSceneGraph.h"
+#include "../SceneCache/msSceneCache.h"
 
 namespace ms {
 
 class AsyncSceneFileSaver
 {
 public:
-
     SceneSettings scene_settings;
+    std::vector<AssetPtr> assets;
+    std::vector<TexturePtr> textures;
+    std::vector<MaterialPtr> materials;
+    std::vector<TransformPtr> transforms;
+    std::vector<TransformPtr> geometries;
+    std::vector<AnimationClipPtr> animations;
 
-    std::function<void(AsyncSceneFileSaver&)> on_prepare;
-    std::function<void()> on_success, on_error, on_complete;
+    std::function<void()> on_prepare, on_success, on_error, on_complete;
 
 
     AsyncSceneFileSaver();
     ~AsyncSceneFileSaver();
+    void clear();
 
-    //[TODO-sindharta: 2019-7-22] All these should use const, like "shared_ptr<const Asset>"
-    void addAsset(AssetPtr);
-    template <typename T>
-    void addAsset(std::vector<T>& col) {
-        for(auto& c : col)
-            m_scene->assets.push_back(c);
-    }
-    void addEntity(TransformPtr);
-    void addEntity(std::vector<TransformPtr>&);
+    bool open(const char *path, const SceneCacheSettings& settings);
+    bool valid() const;
 
-    void resetScene();
-    const std::string& getErrorMessage() const;
     bool isSaving();
     void wait();
-    void tryKickAutoSave();
-    void kickManualSave(const std::string& path);
+    void write(float time);
 
 private:
-    void saveToFile(const std::string& path, const bool force);
 
-    std::shared_ptr<Scene> m_scene = nullptr;
-    std::future<void> m_future;
+    OSceneCachePtr m_osc;
     std::string m_error_message;
 };
 

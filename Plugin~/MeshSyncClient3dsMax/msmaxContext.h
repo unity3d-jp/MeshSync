@@ -36,9 +36,8 @@ struct msmaxSettings
     // it seems can cause problems when exporting objects with EvalWorldState()...
     bool multithreaded = false;
 
-    // import settings
-    bool bake_skin = false;
-    bool bake_cloth = false;
+    // cache export settings
+    bool export_cache = false;
 };
 
 class msmaxContext : mu::noncopyable
@@ -87,6 +86,7 @@ public:
     bool sendObjects(SendScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
     bool sendAnimations(SendScope scope);
+    bool writeCache(SendScope scope, const std::string& path);
 
     bool recvScene();
 
@@ -163,9 +163,6 @@ private:
     void extractMeshAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
 
 private:
-       
-    void prepareFileSaver(ms::AsyncSceneFileSaver& t);
-
     msmaxSettings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 

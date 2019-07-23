@@ -5,9 +5,7 @@
 namespace ms {
 
 AsyncSceneFileSaver::AsyncSceneFileSaver()
-    : m_scene(nullptr)
 {
-    m_scene = ms::Scene::create();
 }
 
 AsyncSceneFileSaver::~AsyncSceneFileSaver()
@@ -15,126 +13,84 @@ AsyncSceneFileSaver::~AsyncSceneFileSaver()
     wait();
 }
 
-void AsyncSceneFileSaver::resetScene()
+bool AsyncSceneFileSaver::open(const char *path, const SceneCacheSettings& settings)
 {
-    m_scene->assets.clear();
-    m_scene->entities.clear();
+    m_osc = OpenOSceneCacheFile(path, settings);
+    return m_osc != nullptr;
 }
 
-
-void AsyncSceneFileSaver::addAsset(AssetPtr asset)
+bool AsyncSceneFileSaver::valid() const
 {
-    m_scene->assets.push_back(asset);
+    return m_osc != nullptr;
 }
 
-void AsyncSceneFileSaver::addEntity(std::vector<TransformPtr>& collection)
+void AsyncSceneFileSaver::clear()
 {
-    for (auto& c : collection)
-        m_scene->entities.push_back(c);
-}
-
-
-void AsyncSceneFileSaver::addEntity(TransformPtr t)
-{
-    m_scene->entities.push_back(t);
-}
-
-
-const std::string& AsyncSceneFileSaver::getErrorMessage() const
-{
-    return m_error_message;
+    assets.clear();
+    textures.clear();
+    materials.clear();
+    transforms.clear();
+    geometries.clear();
+    animations.clear();
 }
 
 bool AsyncSceneFileSaver::isSaving()
 {
-    if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
-        return true;
-
-    return false;
+    if (!valid())
+        return false;
+    return m_osc->isWriting();
 }
 
 void AsyncSceneFileSaver::wait()
 {
-    if (m_future.valid()) {
-        m_future.wait();
-        m_future = {};
-    }
+    if (!valid())
+        return;
+    m_osc->flush();
 }
 
-void AsyncSceneFileSaver::kickManualSave(const std::string& fullPath)
+void AsyncSceneFileSaver::write(float time)
 {
-    wait();
-
-    m_future = std::async(std::launch::async, [this, fullPath]() {
-        saveToFile(fullPath, false);
-    });
-}
-
-
-void AsyncSceneFileSaver::tryKickAutoSave()
-{
-    if (isSaving())
+    if (!valid())
         return;
 
-    m_future = std::async(std::launch::async, [this]() {
-        //In Windows 10, this is C:\Users\[user_name]\AppData\Local\Temp
-        std::string full_path(Poco::Path::cacheHome());
-        full_path += "UTJ\\MeshSync";
-        Poco::File f(full_path);
-        f.createDirectories();
-
-        //Limit the number of files
-        const uint64_t MAX_CACHE_FILES = 100;
-        std::multimap<uint64_t, std::string> existingFiles;
-        FindFilesSortedByLastModified(full_path, existingFiles);
-        if (existingFiles.size() > MAX_CACHE_FILES) {
-            size_t num_files_to_delete = existingFiles.size() - MAX_CACHE_FILES;
-
-            auto enumerator = existingFiles.begin();
-            size_t i = 0;
-            while (enumerator != existingFiles.end() && i < num_files_to_delete) {
-
-                Poco::File file_to_delete(enumerator->second);
-                file_to_delete.remove();
-
-                ++i;
-                ++enumerator;
-            }
-        }
-
-        //Find time
-        time_t rawtime;
-        time(&rawtime);
-        struct tm * timeinfo = localtime(&rawtime);
-        char date_str[128];
-
-        strftime(date_str, sizeof(date_str), "\\%Y-%m-%d_%H-%M-%S.scz", timeinfo);
-        full_path += date_str;
-
-        saveToFile(full_path, false);
-    });
-}
-
-void AsyncSceneFileSaver::saveToFile(const std::string& path, const bool force)
-{
     if (on_prepare)
-        on_prepare(*this);
+        on_prepare();
 
-    if (!force && m_scene->assets.empty() && m_scene->entities.empty())
+    if (assets.empty() && transforms.empty() && geometries.empty())
         return;
 
-    std::sort(m_scene->entities.begin(), m_scene->entities.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+    std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+    std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
 
-    ms::OSceneCachePtr oscz = ms::OpenOSceneCacheFile(path.c_str(), { ms::SceneCacheEncoding::ZSTD });
-    oscz->addScene(m_scene, 0.5f);
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
-    //Wait until the writing is done
-    while (oscz->isWriting()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    bool succeeded = true;
+
+    auto scene = Scene::create();
+    scene->settings = scene_settings;
+
+    scene->assets = assets;
+    append(scene->assets, textures);
+    append(scene->assets, materials);
+    append(scene->assets, animations);
+
+    scene->entities = transforms;
+    append(scene->entities, geometries);
+
+    m_osc->addScene(scene, time);
+
+    if (succeeded) {
+        if (on_success)
+            on_success();
     }
+    else {
+        if (on_error)
+            on_error();
+    }
+    if (on_complete)
+        on_complete();
 
-    resetScene();
+    clear();
 }
 
 } // namespace ms

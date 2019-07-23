@@ -83,7 +83,6 @@ msmaxContext::msmaxContext()
 {
     RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
     RegisterNotification(OnShutdown, this, NOTIFY_SYSTEM_SHUTDOWN);
-    m_file_saver.on_prepare = std::bind(&msmaxContext::prepareFileSaver, this, std::placeholders::_1);
 }
 
 msmaxContext::~msmaxContext()
@@ -356,6 +355,48 @@ bool msmaxContext::sendAnimations(SendScope scope)
     return true;
 }
 
+bool msmaxContext::writeCache(SendScope scope, const std::string& path)
+{
+    auto settings_old = m_settings;
+    m_settings.export_cache = true;
+    m_settings.bake_modifiers = true;
+
+    m_material_manager.setAlwaysMarkDirty(true);
+    m_entity_manager.setAlwaysMarkDirty(true);
+    m_texture_manager.clearDirtyFlags();
+
+    auto time_range = GetCOREInterface()->GetAnimRange();
+    auto time_start = time_range.Start();
+    auto time_end = time_range.End();
+    auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
+    for (TimeValue t = time_start;;) {
+        m_current_time_tick = t;
+        m_anim_time = ToSeconds(t - time_start);
+        GetCOREInterface()->SetTime(m_current_time_tick);
+
+        int num_exported = 0;
+        if (scope == SendScope::All) {
+            for (auto& kvp : m_node_records) {
+                kvp.second.dirty_trans = kvp.second.dirty_geom = true;
+                if (exportObject(kvp.first, false))
+                    ++num_exported;
+            }
+        }
+        kickAsyncSend();
+
+        // cleanup intermediate data
+        m_material_records.clear();
+
+        if (t >= time_range.End())
+            break;
+        else
+            t = std::min(t + interval, time_end);
+    }
+
+    m_settings = settings_old;
+    return true;
+}
+
 bool msmaxContext::recvScene()
 {
     return false;
@@ -424,33 +465,49 @@ void msmaxContext::kickAsyncSend()
 
     float to_meter = (float)GetMasterScale(UNITS_METERS);
 
-    // begin async send
-    m_sender.on_prepare = [this, to_meter]() {
-        auto& t = m_sender;
-        t.client_settings = m_settings.client_settings;
-        t.scene_settings.handedness = ms::Handedness::RightZUp;
-        t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
-
-        t.textures = m_texture_manager.getDirtyTextures();
-        t.materials = m_material_manager.getDirtyMaterials();
-        t.transforms = m_entity_manager.getDirtyTransforms();
-        t.geometries = m_entity_manager.getDirtyGeometries();
-        t.animations = m_animations;
-
-        t.deleted_materials = m_material_manager.getDeleted();
-        t.deleted_entities = m_entity_manager.getDeleted();
-    };
-    m_sender.on_success = [this]() {
+    auto cleanup = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();
         m_animations.clear();
     };
-    m_sender.kick();
 
-    //save file
-    m_file_saver.tryKickAutoSave();
+    // begin async send
+    if (m_settings.export_cache) {
+        m_file_saver.on_prepare = [this, to_meter]() {
+            auto& t = m_file_saver;
+            t.scene_settings.handedness = ms::Handedness::RightZUp;
+            t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_material_manager.getDirtyMaterials();
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
+            t.animations = m_animations;
+        };
+        m_file_saver.on_success = cleanup;
+        m_file_saver.write(m_anim_time);
+    }
+    else {
+        m_sender.on_prepare = [this, to_meter]() {
+            auto& t = m_sender;
+            t.client_settings = m_settings.client_settings;
+            t.scene_settings.handedness = ms::Handedness::RightZUp;
+            t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+            t.textures = m_texture_manager.getDirtyTextures();
+            t.materials = m_material_manager.getDirtyMaterials();
+            t.transforms = m_entity_manager.getDirtyTransforms();
+            t.geometries = m_entity_manager.getDirtyGeometries();
+            t.animations = m_animations;
+
+            t.deleted_materials = m_material_manager.getDeleted();
+            t.deleted_entities = m_entity_manager.getDeleted();
+        };
+        m_sender.on_success = cleanup;
+        m_sender.kick();
+    }
 }
 
 int msmaxContext::exportTexture(const std::string & path, ms::TextureType type)
@@ -1243,22 +1300,6 @@ void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src
         }
     }
 }
-
-void msmaxContext::prepareFileSaver(ms::AsyncSceneFileSaver& t) {
-
-    const float to_meter = (float)GetMasterScale(UNITS_METERS);
-
-    t.scene_settings.handedness = ms::Handedness::RightZUp;
-    t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
-
-    t.resetScene();
-    t.addAsset<ms::TexturePtr>(m_texture_manager.getAllTextures());
-    t.addAsset<ms::MaterialPtr>(m_material_manager.getAllMaterials());
-    t.addEntity(m_entity_manager.getAllEntities());
-    for (auto& anim : m_animations)
-        t.addAsset(anim);
-}
-
 
 void msmaxContext::addDeferredCall(const std::function<void()>& c)
 {

@@ -23,6 +23,19 @@ AsyncSceneSender::~AsyncSceneSender()
     wait();
 }
 
+void AsyncSceneSender::clear()
+{
+    assets.clear();
+    textures.clear();
+    materials.clear();
+    transforms.clear();
+    geometries.clear();
+    animations.clear();
+
+    deleted_entities.clear();
+    deleted_materials.clear();
+}
+
 const std::string& AsyncSceneSender::getErrorMessage() const
 {
     return m_error_message;
@@ -62,7 +75,8 @@ void AsyncSceneSender::send()
     if (on_prepare)
         on_prepare();
 
-    if (textures.empty() && materials.empty() && transforms.empty() && geometries.empty() && animations.empty() &&
+    if (assets.empty() && textures.empty() && materials.empty() &&
+        transforms.empty() && geometries.empty() && animations.empty() &&
         deleted_entities.empty() && deleted_materials.empty())
         return;
 
@@ -181,14 +195,7 @@ cleanup:
     if (on_complete)
         on_complete();
 
-    assets.clear();
-    textures.clear();
-    materials.clear();
-    transforms.clear();
-    geometries.clear();
-    animations.clear();
-    deleted_entities.clear();
-    deleted_materials.clear();
+    clear();
 }
 
 } // namespace ms

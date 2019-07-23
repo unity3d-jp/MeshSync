@@ -27,6 +27,8 @@ public:
 
     AsyncSceneSender(int session_id = InvalidID);
     ~AsyncSceneSender();
+    void clear();
+
     const std::string& getErrorMessage() const;
     bool isServerAvaileble();
     bool isSending();
