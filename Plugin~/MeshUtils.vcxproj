@@ -38,6 +38,7 @@
     <ClInclude Include="MeshUtils\muQuat32.h" />
     <ClInclude Include="MeshUtils\muS10x3.h" />
     <ClInclude Include="MeshUtils\muSIMDConfig.h" />
+    <ClInclude Include="MeshUtils\muStream.h" />
     <ClInclude Include="MeshUtils\pch.h" />
     <ClInclude Include="MeshUtils\MeshUtils.h" />
     <ClInclude Include="MeshUtils\muRawVector.h" />
@@ -52,6 +53,7 @@
     <ClCompile Include="MeshUtils\muCompression.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\muMisc.cpp" />
+    <ClCompile Include="MeshUtils\muStream.cpp" />
     <ClCompile Include="MeshUtils\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

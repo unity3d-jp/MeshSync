@@ -220,6 +220,9 @@ void Mesh::diff(Entity& base_)
 #undef Body
         flags.unchanged = 1;
     }
+    else {
+        flags.unchanged = 0;
+    }
 }
 
 void Mesh::clear()
