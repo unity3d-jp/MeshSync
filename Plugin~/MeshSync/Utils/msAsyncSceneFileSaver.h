@@ -22,7 +22,7 @@ public:
     ~AsyncSceneFileSaver();
     void clear();
 
-    bool open(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());
+    bool open(const char *path, const OSceneCacheSettings& settings = OSceneCacheSettings());
     void close();
     bool valid() const;
 

@@ -13,12 +13,11 @@ enum class SceneCacheEncoding
     ZSTD,
 };
 
-struct SceneCacheSettings
+struct OSceneCacheSettings
 {
     SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
     bool strip_unchanged = true;
 };
-
 
 class OSceneCache
 {
@@ -30,6 +29,13 @@ public:
 };
 msDeclPtr(OSceneCache);
 
+
+struct ISceneCacheSettings
+{
+    int max_history = 2;
+    bool convert_scene = true;
+    bool preload_entire_file = false;
+};
 
 class ISceneCache
 {
@@ -47,11 +53,11 @@ public:
 msDeclPtr(ISceneCache);
 
 
-OSceneCachePtr OpenOSceneCacheFile(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());
-OSceneCache* OpenOSceneCacheFileRaw(const char *path, const SceneCacheSettings& settings = SceneCacheSettings());
+OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& settings = OSceneCacheSettings());
+OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& settings = OSceneCacheSettings());
 
-ISceneCachePtr OpenISceneCacheFile(const char *path);
-ISceneCache* OpenISceneCacheFileRaw(const char *path);
+ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& settings = ISceneCacheSettings());
+ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& settings = ISceneCacheSettings());
 
 
 } // namespace ms

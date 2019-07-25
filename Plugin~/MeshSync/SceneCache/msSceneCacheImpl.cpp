@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msSceneCache.h"
 #include "msSceneCacheImpl.h"
+#include "msMisc.h"
 
 namespace ms {
 
@@ -58,7 +59,7 @@ bool OSceneCacheImpl::isWriting()
     return m_task.valid() && m_task.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-bool OSceneCacheImpl::prepare(ostream_ptr ost, const SceneCacheSettings& settings)
+bool OSceneCacheImpl::prepare(ostream_ptr ost, const OSceneCacheSettings& settings)
 {
     m_ost = ost;
     m_settings = settings;
@@ -159,12 +160,12 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     CacheFileHeader header;
     header.version = 0;
     m_ist->read((char*)&header, sizeof(header));
-    m_settings = header.settings;
+    m_osc_settings = header.settings;
 
     if (header.version != msProtocolVersion)
         return false;
 
-    m_encoder = CreateEncoder(m_settings.encoding);
+    m_encoder = CreateEncoder(m_osc_settings.encoding);
     if (!m_encoder) {
         // encoder associated with m_settings.encoding is not available
         return false;
@@ -189,7 +190,7 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     std::sort(m_descs.begin(), m_descs.end(), [](auto& a, auto& b) { return a.time < b.time; });
     m_cache.resize(m_descs.size());
 
-    if (m_settings.strip_unchanged)
+    if (m_osc_settings.strip_unchanged)
         m_base_scene = getByIndexImpl(0, false);
 
     return valid();
@@ -238,9 +239,8 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
     try {
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
-        if (m_settings.strip_unchanged && m_base_scene)
+        if (m_osc_settings.strip_unchanged && m_base_scene)
             ret->merge(*m_base_scene);
-
         if (convert)
             ret->import(m_import_settings);
     }
@@ -250,7 +250,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
     }
 
     m_history.push_back(i);
-    if (m_history.size() >= m_max_history) {
+    if (m_history.size() >= m_isc_settings.max_history) {
         m_cache[m_history.front()].reset();
         m_history.pop_front();
     }
@@ -259,11 +259,15 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
 
 ScenePtr ISceneCacheImpl::getByIndex(size_t i)
 {
-    auto ret = getByIndexImpl(i);
+    if (!valid())
+        return nullptr;
+
+    auto ret = getByIndexImpl(i, m_isc_settings.convert_scene);
+
     if (m_last_scene)
         ret->diff(*m_last_scene);
     m_last_scene = ret;
-    return m_last_scene;
+    return ret;
 }
 
 ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
@@ -271,26 +275,28 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
     if (!valid())
         return nullptr;
 
+    bool convert = m_isc_settings.convert_scene;
+
     ScenePtr ret;
     if (time <= m_descs.front().time)
-        ret = getByIndexImpl(0);
+        ret = getByIndexImpl(0, convert);
     else if(time >= m_descs.back().time)
-        ret = getByIndexImpl(m_descs.size() - 1);
+        ret = getByIndexImpl(m_descs.size() - 1, convert);
     else {
         auto i = std::distance(m_descs.begin(),
             std::lower_bound(m_descs.begin(), m_descs.end(), time, [time](auto& a, float t) { return a.time < t; })) - 1;
         if (lerp) {
             m_scene1 = m_descs[i];
-            m_scene1.scene = getByIndexImpl(i);
+            m_scene1.scene = getByIndexImpl(i, convert);
             m_scene2 = m_descs[i + 1];
-            m_scene2.scene = getByIndexImpl(i + 1);
+            m_scene2.scene = getByIndexImpl(i + 1, convert);
 
             float t = (time - m_scene1.time) / (m_scene2.time - m_scene1.time);
             ret = Scene::create();
             ret->lerp(*m_scene1.scene, *m_scene2.scene, t);
         }
         else {
-            ret = getByIndexImpl(i);
+            ret = getByIndexImpl(i, convert);
         }
     }
 
@@ -301,7 +307,7 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
 }
 
 
-OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheSettings& settings)
+OSceneCacheFile::OSceneCacheFile(const char *path, const OSceneCacheSettings& settings)
 {
     if (path) {
         auto ofs = std::make_shared<std::ofstream>();
@@ -312,7 +318,7 @@ OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheSettings& set
     }
 }
 
-OSceneCache* OpenOSceneCacheFileRaw(const char *path, const SceneCacheSettings& settings)
+OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& settings)
 {
     auto ret = new OSceneCacheFile(path, settings);
     if (ret->valid()) {
@@ -323,26 +329,38 @@ OSceneCache* OpenOSceneCacheFileRaw(const char *path, const SceneCacheSettings& 
         return nullptr;
     }
 }
-OSceneCachePtr OpenOSceneCacheFile(const char *path, const SceneCacheSettings& settings)
+OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& settings)
 {
     return OSceneCachePtr(OpenOSceneCacheFileRaw(path, settings));
 }
 
 
-ISceneCacheFile::ISceneCacheFile(const char *path)
+ISceneCacheFile::ISceneCacheFile(const char *path, const ISceneCacheSettings& settings)
 {
+    m_isc_settings = settings;
+
     if (path) {
-        auto ifs = std::make_shared<std::ifstream>();
-        ifs->open(path, std::ios::binary);
-        if (*ifs) {
-            prepare(ifs);
+        if (m_isc_settings.preload_entire_file) {
+            RawVector<char> buf;
+            if (FileToByteArray(path, buf)) {
+                auto ms = std::make_shared<MemoryStream>();
+                ms->swap(buf);
+                prepare(ms);
+            }
+        }
+        else {
+            auto ifs = std::make_shared<std::ifstream>();
+            ifs->open(path, std::ios::binary);
+            if (*ifs) {
+                prepare(ifs);
+            }
         }
     }
 }
 
-ISceneCache* OpenISceneCacheFileRaw(const char *path)
+ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& settings)
 {
-    auto ret = new ISceneCacheFile(path);
+    auto ret = new ISceneCacheFile(path, settings);
     if (ret->valid()) {
         return ret;
     }
@@ -351,9 +369,9 @@ ISceneCache* OpenISceneCacheFileRaw(const char *path)
         return nullptr;
     }
 }
-ISceneCachePtr OpenISceneCacheFile(const char *path)
+ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& settings)
 {
-    return ISceneCachePtr(OpenISceneCacheFileRaw(path));
+    return ISceneCachePtr(OpenISceneCacheFileRaw(path, settings));
 }
 
 } // namespace ms

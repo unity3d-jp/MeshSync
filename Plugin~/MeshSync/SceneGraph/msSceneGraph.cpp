@@ -31,6 +31,15 @@ void SceneSettings::deserialize(std::istream& is)
 #define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
+ScenePtr Scene::clone()
+{
+    auto ret = std::make_shared<Scene>(*this);
+    parallel_for(0, (int)entities.size(), 10, [this, &ret](int ei) {
+        ret->entities[ei] = std::static_pointer_cast<Transform>(entities[ei]->clone());
+    });
+    return ret;
+}
+
 void Scene::serialize(std::ostream& os) const
 {
     uint64_t validation_hash = hash();

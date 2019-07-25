@@ -62,6 +62,7 @@ public:
 public:
     msDefinePool(Scene);
 
+    std::shared_ptr<Scene> clone();
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
     void strip(Scene& base);

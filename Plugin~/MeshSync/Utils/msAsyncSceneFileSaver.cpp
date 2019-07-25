@@ -13,7 +13,7 @@ AsyncSceneFileSaver::~AsyncSceneFileSaver()
     wait();
 }
 
-bool AsyncSceneFileSaver::open(const char *path, const SceneCacheSettings& settings)
+bool AsyncSceneFileSaver::open(const char *path, const OSceneCacheSettings& settings)
 {
     m_osc = OpenOSceneCacheFile(path, settings);
     return m_osc != nullptr;

@@ -8,7 +8,7 @@ struct CacheFileHeader
 {
     char magic[4] = { 'M', 'S', 'S', 'C' };
     int version = msProtocolVersion;
-    SceneCacheSettings settings;
+    OSceneCacheSettings settings;
 };
 
 struct CacheFileSceneHeader
@@ -31,7 +31,7 @@ public:
     void flush() override;
     bool isWriting() override;
 
-    bool prepare(ostream_ptr ost, const SceneCacheSettings& settings);
+    bool prepare(ostream_ptr ost, const OSceneCacheSettings& settings);
     bool valid() const;
 
 protected:
@@ -43,7 +43,7 @@ protected:
     };
 
     ostream_ptr m_ost = nullptr;
-    SceneCacheSettings m_settings;
+    OSceneCacheSettings m_settings;
 
     std::mutex m_mutex;
     std::list<SceneDesc> m_queue;
@@ -78,7 +78,7 @@ public:
     void prefetchByTime(float t, bool next, bool lerp);
 
 protected:
-    ScenePtr getByIndexImpl(size_t i, bool convert = false);
+    ScenePtr getByIndexImpl(size_t i, bool convert);
 
     struct SceneDesc {
         uint64_t pos = 0;
@@ -88,7 +88,8 @@ protected:
     };
 
     istream_ptr m_ist;
-    SceneCacheSettings m_settings;
+    ISceneCacheSettings m_isc_settings;
+    OSceneCacheSettings m_osc_settings;
     SceneImportSettings m_import_settings;
 
     std::mutex m_mutex;
@@ -105,7 +106,6 @@ protected:
 
     std::vector<ScenePtr> m_cache;
     std::deque<size_t> m_history;
-    size_t m_max_history = 2;
 };
 
 
@@ -113,14 +113,14 @@ protected:
 class OSceneCacheFile : public OSceneCacheImpl
 {
 public:
-    OSceneCacheFile(const char *path, const SceneCacheSettings& settings);
+    OSceneCacheFile(const char *path, const OSceneCacheSettings& settings);
 };
 
 
 class ISceneCacheFile : public ISceneCacheImpl
 {
 public:
-    ISceneCacheFile(const char *path);
+    ISceneCacheFile(const char *path, const ISceneCacheSettings& settings);
 };
 
 } // namespace ms
