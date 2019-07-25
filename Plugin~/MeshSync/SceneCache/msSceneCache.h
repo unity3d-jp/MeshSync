@@ -34,6 +34,7 @@ struct ISceneCacheSettings
 {
     int max_history = 2;
     bool convert_scene = true;
+    bool enable_diff = true;
     bool preload_entire_file = false;
 };
 

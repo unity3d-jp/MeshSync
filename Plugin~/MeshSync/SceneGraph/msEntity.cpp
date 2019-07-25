@@ -55,16 +55,32 @@ void Entity::deserialize(std::istream& is)
     read(is, path);
 }
 
-void Entity::strip(Entity&)
+bool Entity::strip(const Entity& base)
 {
+    if (getType() != base.getType())
+        return false;
+    return true;
 }
 
-void Entity::merge(Entity&)
+bool Entity::merge(const Entity& base)
 {
+    if (getType() != base.getType())
+        return false;
+    return true;
 }
 
-void Entity::diff(Entity&)
+bool Entity::diff(const Entity& s1, const Entity& s2)
 {
+    if (s1.getType() != s2.getType())
+        return false;
+    return true;
+}
+
+bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
+{
+    if (s1.getType() != s2.getType())
+        return false;
+    return true;
 }
 
 void Entity::clear()
@@ -86,13 +102,6 @@ uint64_t Entity::checksumTrans() const
 uint64_t Entity::checksumGeom() const
 {
     return 0;
-}
-
-bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
-{
-    if (s1.getType() != s2.getType())
-        return false;
-    return true;
 }
 
 EntityPtr Entity::clone()

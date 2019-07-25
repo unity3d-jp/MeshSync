@@ -33,7 +33,8 @@ void SceneSettings::deserialize(std::istream& is)
 
 ScenePtr Scene::clone()
 {
-    auto ret = std::make_shared<Scene>(*this);
+    auto ret = create();
+    *ret = *this;
     parallel_for(0, (int)entities.size(), 10, [this, &ret](int ei) {
         ret->entities[ei] = std::static_pointer_cast<Transform>(entities[ei]->clone());
     });
@@ -82,15 +83,38 @@ void Scene::merge(Scene& base)
     }
 }
 
-void Scene::diff(Scene& base)
+void Scene::diff(const Scene& s1, const Scene& s2)
 {
-    size_t entity_count = entities.size();
-    if (entity_count == base.entities.size()) {
-        parallel_for(0, (int)entity_count, 10, [this, &base](int ei) {
-            auto& ecur = entities[ei];
-            auto& ebase = base.entities[ei];
-            if (ecur->path == ebase->path)
-                ecur->diff(*ebase);
+    size_t entity_count = s1.entities.size();
+    if (entity_count == s2.entities.size()) {
+        settings = s1.settings;
+        entities.resize(entity_count);
+        parallel_for(0, (int)entity_count, 10, [this, &s1, &s2](int i) {
+            auto& e1 = s1.entities[i];
+            auto& e2 = s2.entities[i];
+            if (e1->path == e2->path) {
+                auto e3 = e1->clone();
+                e3->diff(*e1, *e2);
+                entities[i] = std::static_pointer_cast<Transform>(e3);
+            }
+        });
+    }
+}
+
+void Scene::lerp(const Scene& s1, const Scene& s2, float t)
+{
+    size_t entity_count = s1.entities.size();
+    if (entity_count == s2.entities.size()) {
+        settings = s1.settings;
+        entities.resize(entity_count);
+        parallel_for(0, (int)entity_count, 10, [this, &s1, &s2, t](int i) {
+            auto& e1 = s1.entities[i];
+            auto& e2 = s2.entities[i];
+            if (e1->path == e2->path) {
+                auto e3 = e1->clone();
+                e3->lerp(*e1, *e2, t);
+                entities[i] = std::static_pointer_cast<Transform>(e3);
+            }
         });
     }
 }
@@ -111,23 +135,6 @@ uint64_t Scene::hash() const
     for (auto& e : entities)
         ret += e->hash();
     return ret;
-}
-
-void Scene::lerp(const Scene& s1, const Scene& s2, float t)
-{
-    settings = s1.settings;
-    entities.resize(s1.entities.size());
-    parallel_for(0, (int)entities.size(), 10, [this, &s1, &s2, t](int i) {
-        auto e1 = s1.entities[i];
-        if (auto e2 = s2.findEntity(e1->path)) {
-            auto e3 = e1->clone();
-            e3->lerp(*e1, *e2, t);
-            entities[i] = std::static_pointer_cast<Transform>(e3);
-        }
-        else {
-            entities[i] = e1;
-        }
-    });
 }
 
 void Scene::sanitizeHierarchyPath(std::string& /*path*/)

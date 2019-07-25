@@ -87,7 +87,7 @@ void OSceneCacheImpl::doWrite()
 {
     auto body = [this]() {
         for (;;) {
-            SceneDesc desc;
+            SceneRecord desc;
             {
                 std::unique_lock<std::mutex> l(m_mutex);
                 if (m_queue.empty()) {
@@ -178,17 +178,16 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
             break;
         }
         else {
-            SceneDesc desc;
+            SceneRecord desc;
             desc.pos = (uint64_t)m_ist->tellg();
             desc.size = sh.size;
             desc.time = sh.time;
-            m_descs.push_back(desc);
+            m_records.push_back(desc);
 
             m_ist->seekg(sh.size, std::ios::cur);
         }
     }
-    std::sort(m_descs.begin(), m_descs.end(), [](auto& a, auto& b) { return a.time < b.time; });
-    m_cache.resize(m_descs.size());
+    std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
 
     if (m_osc_settings.strip_unchanged)
         m_base_scene = getByIndexImpl(0, false);
@@ -198,37 +197,37 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
 
 bool ISceneCacheImpl::valid() const
 {
-    return this && !m_descs.empty();
+    return this && !m_records.empty();
 }
 
 size_t ISceneCacheImpl::getNumScenes() const
 {
     if (!valid())
         return 0;
-    return m_descs.size();
+    return m_records.size();
 }
 
 std::tuple<float, float> ISceneCacheImpl::getTimeRange() const
 {
     if (!valid())
         return {0.0f, 0.0f};
-    return { m_descs.front().time, m_descs.back().time };
+    return { m_records.front().time, m_records.back().time };
 }
 
 ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
 {
-    if (!valid() || i >= m_descs.size())
+    if (!valid() || i >= m_records.size())
         return nullptr;
 
-    auto& ret = m_cache[i];
+    auto& rec = m_records[i];
+    auto& ret = rec.scene;
     if (ret)
         return ret;
 
-    auto& desc = m_descs[i];
 
     // read
-    m_encoded_buf.resize(desc.size);
-    m_ist->seekg(desc.pos, std::ios::beg);
+    m_encoded_buf.resize(rec.size);
+    m_ist->seekg(rec.pos, std::ios::beg);
     m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
 
     // decode
@@ -251,10 +250,24 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
 
     m_history.push_back(i);
     if (m_history.size() >= m_isc_settings.max_history) {
-        m_cache[m_history.front()].reset();
+        m_records[m_history.front()].scene.reset();
         m_history.pop_front();
     }
     return ret;
+}
+
+ScenePtr ISceneCacheImpl::applyDiff(ScenePtr& sp)
+{
+    if (m_last_scene && m_isc_settings.enable_diff) {
+        m_last_diff = Scene::create();
+        m_last_diff->diff(*sp, *m_last_scene);
+        m_last_scene = sp;
+        return m_last_diff;
+    }
+    else {
+        m_last_scene = sp;
+        return sp;
+    }
 }
 
 ScenePtr ISceneCacheImpl::getByIndex(size_t i)
@@ -263,11 +276,7 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
         return nullptr;
 
     auto ret = getByIndexImpl(i, m_isc_settings.convert_scene);
-
-    if (m_last_scene)
-        ret->diff(*m_last_scene);
-    m_last_scene = ret;
-    return ret;
+    return applyDiff(ret);
 }
 
 ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
@@ -278,32 +287,29 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
     bool convert = m_isc_settings.convert_scene;
 
     ScenePtr ret;
-    if (time <= m_descs.front().time)
+    if (time <= m_records.front().time)
         ret = getByIndexImpl(0, convert);
-    else if(time >= m_descs.back().time)
-        ret = getByIndexImpl(m_descs.size() - 1, convert);
+    else if(time >= m_records.back().time)
+        ret = getByIndexImpl(m_records.size() - 1, convert);
     else {
-        auto i = std::distance(m_descs.begin(),
-            std::lower_bound(m_descs.begin(), m_descs.end(), time, [time](auto& a, float t) { return a.time < t; })) - 1;
+        auto i = std::distance(m_records.begin(),
+            std::lower_bound(m_records.begin(), m_records.end(), time, [time](auto& a, float t) { return a.time < t; })) - 1;
         if (lerp) {
-            m_scene1 = m_descs[i];
-            m_scene1.scene = getByIndexImpl(i, convert);
-            m_scene2 = m_descs[i + 1];
-            m_scene2.scene = getByIndexImpl(i + 1, convert);
+            auto t1 = m_records[i + 0].time;
+            auto t2 = m_records[i + 1].time;
+            auto s1 = getByIndexImpl(i + 0, convert);
+            auto s2 = getByIndexImpl(i + 1, convert);
 
-            float t = (time - m_scene1.time) / (m_scene2.time - m_scene1.time);
+            float t = (time - t1) / (t2 - t1);
             ret = Scene::create();
-            ret->lerp(*m_scene1.scene, *m_scene2.scene, t);
+            ret->lerp(*s1, *s2, t);
         }
         else {
             ret = getByIndexImpl(i, convert);
         }
     }
 
-    if (m_last_scene)
-        ret->diff(*m_last_scene);
-    m_last_scene = ret;
-    return ret;
+    return applyDiff(ret);
 }
 
 

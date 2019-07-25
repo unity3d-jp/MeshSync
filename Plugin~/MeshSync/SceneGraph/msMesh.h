@@ -69,8 +69,8 @@ struct MeshRefineSettings
     float4x4 mirror_basis = float4x4::identity();
 
     uint64_t checksum() const;
-    bool operator==(MeshRefineSettings& v) const;
-    bool operator!=(MeshRefineSettings& v) const;
+    bool operator==(const MeshRefineSettings& v) const;
+    bool operator!=(const MeshRefineSettings& v) const;
 };
 
 struct SubmeshData
@@ -205,13 +205,13 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
-    void strip(Entity& base) override;
-    void merge(Entity& base) override;
-    void diff(Entity& base) override;
+    bool strip(const Entity& base) override;
+    bool merge(const Entity& base) override;
+    bool diff(const Entity& e1, const Entity& e2) override;
+    bool lerp(const Entity& e1, const Entity& e2, float t) override;
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
-    bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 
     void updateBounds();

@@ -85,10 +85,10 @@ msAPI void msFeedScene(msMessageHandler handler, ms::Scene *scene)
 msAPI ms::ISceneCache* msISceneCacheOpen(const char *path)
 {
     ms::ISceneCacheSettings ps;
-    //ps.max_history = 200;
-    //ps.preload_entire_file = true;
     ps.max_history = 2;
     ps.convert_scene = false;
+    //ps.max_history = 200;
+    //ps.preload_entire_file = true;
     return ms::OpenISceneCacheFileRaw(path, ps);
 }
 msAPI void msISceneCacheClose(ms::ISceneCache *self)

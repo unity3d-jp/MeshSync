@@ -37,7 +37,8 @@ public:
 protected:
     void doWrite();
 
-    struct SceneDesc {
+    struct SceneRecord
+    {
         ScenePtr scene;
         float time;
     };
@@ -46,7 +47,7 @@ protected:
     OSceneCacheSettings m_settings;
 
     std::mutex m_mutex;
-    std::list<SceneDesc> m_queue;
+    std::list<SceneRecord> m_queue;
     std::future<void> m_task;
 
     ScenePtr m_base_scene;
@@ -74,17 +75,17 @@ public:
 
     bool prepare(istream_ptr ist);
     bool valid() const;
-    void prefetchByIndex(size_t i);
-    void prefetchByTime(float t, bool next, bool lerp);
 
 protected:
     ScenePtr getByIndexImpl(size_t i, bool convert);
+    ScenePtr applyDiff(ScenePtr& sp);
 
-    struct SceneDesc {
+    struct SceneRecord
+    {
         uint64_t pos = 0;
         uint64_t size = 0;
-        float time = 0.0f;
         ScenePtr scene;
+        float time = 0.0f;
     };
 
     istream_ptr m_ist;
@@ -93,18 +94,14 @@ protected:
     SceneImportSettings m_import_settings;
 
     std::mutex m_mutex;
-    std::vector<SceneDesc> m_descs;
+    std::vector<SceneRecord> m_records;
 
-    float m_last_time = -1.0f;
-    SceneDesc m_scene1, m_scene2;
-    ScenePtr m_last_scene;
-
-    ScenePtr m_base_scene;
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;
     RawVector<char> m_encoded_buf, m_tmp_buf;
 
-    std::vector<ScenePtr> m_cache;
+    float m_last_time = -1.0f;
+    ScenePtr m_base_scene, m_last_scene, m_last_diff;
     std::deque<size_t> m_history;
 };
 

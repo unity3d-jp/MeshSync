@@ -21,11 +21,11 @@ uint64_t MeshRefineSettings::checksum() const
     return ret;
 }
 
-bool MeshRefineSettings::operator==(MeshRefineSettings& v) const
+bool MeshRefineSettings::operator==(const MeshRefineSettings& v) const
 {
     return memcmp(this, &v, sizeof(*this)) == 0;
 }
-bool MeshRefineSettings::operator!=(MeshRefineSettings& v) const
+bool MeshRefineSettings::operator!=(const MeshRefineSettings& v) const
 {
     return !(*this == v);
 }
@@ -174,47 +174,60 @@ void Mesh::deserialize(std::istream& is)
         bones.end());
 }
 
-void Mesh::strip(Entity& base_)
+bool Mesh::strip(const Entity& base_)
 {
+    if (!super::strip(base_))
+        return false;
+
     auto clear_if_identical = [](auto& cur, const auto& base) {
         if (cur == base)
             cur.clear();
     };
 
-    auto& base = static_cast<Mesh&>(base_);
+    auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) clear_if_identical(A, base.A);
     EachVertexProperty(Body);
 #undef Body
+    return true;
 }
 
-void Mesh::merge(Entity& base_)
+bool Mesh::merge(const Entity& base_)
 {
+    if (!super::merge(base_))
+        return false;
+
     auto assign_if_empty = [](auto& cur, const auto& base) {
         if (cur.empty())
             cur = base;
     };
 
-    auto& base = static_cast<Mesh&>(base_);
+    auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) assign_if_empty(A, base.A);
     EachVertexProperty(Body);
 #undef Body
+    return true;
 }
 
-void Mesh::diff(Entity& base_)
+bool Mesh::diff(const Entity& e1_, const Entity& e2_)
 {
+    if (!super::diff(e1_, e2_))
+        return false;
+
+    auto& e1 = static_cast<const Mesh&>(e1_);
+    auto& e2 = static_cast<const Mesh&>(e2_);
+
     uint32_t change_bits = 0, bit_index = 0;
-    auto compare_attribute = [&](auto& cur, const auto& base) {
-        if (cur != base)
+    auto compare_attribute = [&](auto& s1, const auto& s2) {
+        if (s1 != s2)
             change_bits |= (1 << bit_index);
         ++bit_index;
     };
 
-    auto& base = static_cast<Mesh&>(base_);
-#define Body(A) compare_attribute(A, base.A);
+#define Body(A) compare_attribute(e1.A, e2.A);
     EachVertexProperty(Body);
 #undef Body
 
-    if (change_bits == 0 && refine_settings == base.refine_settings) {
+    if (change_bits == 0 && e1.refine_settings == e2.refine_settings) {
 #define Body(A) A.clear();
         EachVertexProperty(Body);
 #undef Body
@@ -223,7 +236,43 @@ void Mesh::diff(Entity& base_)
     else {
         flags.unchanged = 0;
     }
+    return true;
 }
+
+static inline float4 lerp_tangent(float4 a, float4 b, float w)
+{
+    float4 ret;
+    (float3&)ret = normalize(lerp((float3&)a, (float3&)b, w));
+    ret.w = a.w;
+    return ret;
+}
+
+bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
+{
+    if (!super::lerp(e1_, e2_, t))
+        return false;
+    auto& e1 = static_cast<const Mesh&>(e1_);
+    auto& e2 = static_cast<const Mesh&>(e2_);
+
+    if (e1.points.size() != e2.points.size() || e1.indices.size() != e2.indices.size())
+        return false;
+#define DoLerp(N) N.resize_discard(e1.N.size()); Lerp(N.data(), e1.N.data(), e2.N.data(), N.size(), t)
+    DoLerp(points);
+    DoLerp(normals);
+    DoLerp(uv0);
+    DoLerp(uv1);
+    DoLerp(colors);
+    DoLerp(velocities);
+#undef DoLerp
+    Normalize(normals.data(), normals.size());
+
+    tangents.resize_discard(e1.tangents.size());
+    enumerate(tangents, e1.tangents, e2.tangents, [t](float4& v, const float4& t1, const float4& t2) {
+        v = lerp_tangent(t1, t2, t);
+    });
+    return false;
+}
+
 
 void Mesh::clear()
 {
@@ -301,40 +350,6 @@ uint64_t Mesh::checksumGeom() const
 }
 
 #undef EachVertexProperty
-
-static inline float4 lerp_tangent(float4 a, float4 b, float w)
-{
-    float4 ret;
-    (float3&)ret = normalize(lerp((float3&)a, (float3&)b, w));
-    ret.w = a.w;
-    return ret;
-}
-
-bool Mesh::lerp(const Entity& s1_, const Entity& s2_, float t)
-{
-    if (!super::lerp(s1_, s2_, t))
-        return false;
-    auto& s1 = static_cast<const Mesh&>(s1_);
-    auto& s2 = static_cast<const Mesh&>(s2_);
-
-    if (s1.points.size() != s2.points.size() || s1.indices.size() != s2.indices.size())
-        return false;
-#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
-    DoLerp(points);
-    DoLerp(normals);
-    DoLerp(uv0);
-    DoLerp(uv1);
-    DoLerp(colors);
-    DoLerp(velocities);
-#undef DoLerp
-    Normalize(normals.data(), normals.size());
-
-    tangents.resize_discard(s1.tangents.size());
-    enumerate(tangents, s1.tangents, s2.tangents, [t](float4& v, const float4& t1, const float4& t2) {
-        v = lerp_tangent(t1, t2, t);
-    });
-    return false;
-}
 
 EntityPtr Mesh::clone()
 {

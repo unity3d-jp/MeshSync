@@ -29,14 +29,14 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
-    virtual void strip(Entity& base);
-    virtual void merge(Entity& base);
-    virtual void diff(Entity& base);
+    virtual bool strip(const Entity& base);
+    virtual bool merge(const Entity& base);
+    virtual bool diff(const Entity& e1, const Entity& e2);
+    virtual bool lerp(const Entity& e1, const Entity& e2, float t);
     virtual void clear();
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
     virtual uint64_t checksumGeom() const;
-    virtual bool lerp(const Entity& src1, const Entity& src2, float t);
     virtual std::shared_ptr<Entity> clone();
 
     Identifier getIdentifier() const;
