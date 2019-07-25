@@ -214,8 +214,12 @@ void Mesh::diff(Entity& base_)
     EachVertexProperty(Body);
 #undef Body
 
-    if (change_bits == 0 && refine_settings == base.refine_settings)
+    if (change_bits == 0 && refine_settings == base.refine_settings) {
+#define Body(A) A.clear();
+        EachVertexProperty(Body);
+#undef Body
         flags.unchanged = 1;
+    }
 }
 
 void Mesh::clear()
