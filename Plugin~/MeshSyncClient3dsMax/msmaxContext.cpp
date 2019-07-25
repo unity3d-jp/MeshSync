@@ -354,6 +354,8 @@ bool msmaxContext::sendAnimations(SendScope scope)
     return true;
 }
 
+static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
+
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
     if (!m_file_saver.open(path.c_str()))
@@ -382,23 +384,36 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         m_material_records.clear();
     };
 
+    auto *ifs = GetCOREInterface();
     if (all_frames) {
-        auto time_range = GetCOREInterface()->GetAnimRange();
+        ifs->ProgressStart(L"Exporting Scene Cache", TRUE, CB_Dummy, nullptr);
+
+        auto time_range = ifs->GetAnimRange();
         auto time_start = time_range.Start();
         auto time_end = time_range.End();
         auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
         for (TimeValue t = time_start;;) {
             m_current_time_tick = t;
             m_anim_time = ToSeconds(t - time_start);
-            GetCOREInterface()->SetTime(m_current_time_tick);
+            ifs->SetTime(m_current_time_tick);
 
             do_export();
 
-            if (t >= time_range.End())
+            float progress = float(m_current_time_tick - time_start) / float(time_end - time_start) * 100.0f;
+            ifs->ProgressUpdate((int)progress);
+
+            if (t >= time_range.End()) {
                 break;
-            else
+            }
+            else if (ifs->GetCancel()) {
+                ifs->SetCancel(FALSE);
+                break;
+            }
+            else {
                 t = std::min(t + interval, time_end);
+            }
         }
+        ifs->ProgressEnd();
     }
     else {
         m_anim_time = 0.0f;
@@ -1369,10 +1384,37 @@ bool msmaxSendScene(msmaxContext::SendTarget target, msmaxContext::SendScope sco
 bool msmaxExportCache(msmaxContext::SendScope scope, bool all_frames)
 {
     auto *ifs = GetCOREInterface8();
-    MSTR wpath = L"cache.scz";
-    if (ifs->DoMaxFileSaveAsDlg(wpath)) {
+
+    MSTR filename = ifs->GetCurFileName();
+    {
+        auto len = filename.Length();
+        if (len == 0) {
+            filename = L"Untitles.sc";
+        }
+        else {
+            // replace extention (.max -> .sc)
+            int ext_pos = 0;
+            for (int i = 0; i < len; ++i) {
+                ext_pos = i;
+                if (filename[i] == L'.')
+                    break;
+            }
+            filename.Resize(ext_pos);
+            filename += L".sc";
+        }
+    }
+
+    MSTR dir = L"";
+
+    int filter_index = 0;
+    FilterList filter_list;
+    filter_list.Append(_M("Scene cache files(*.sc)"));
+    filter_list.Append(_M("*.sc"));
+    filter_list.SetFilterIndex(filter_index);
+
+    if (ifs->DoMaxSaveAsDialog(ifs->GetMAXHWnd(), L"Export Scene Cache", filename, dir, filter_list)) {
         auto& ctx = msmaxGetContext();
-        return ctx.writeCache(scope, all_frames, ms::ToMBS(wpath));
+        return ctx.writeCache(scope, all_frames, ms::ToMBS(filename));
     }
     return false;
 }
