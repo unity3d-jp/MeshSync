@@ -25,6 +25,8 @@ public:
     void resize(size_t n);
     void swap(RawVector<char>& buf);
 
+    pos_type seekoff(off_type off, std::ios_base::seekdir dir, std::ios_base::openmode mode) override;
+    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override;
     int overflow(int c) override;
     int underflow() override;
     int sync() override;
