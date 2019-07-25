@@ -2,7 +2,7 @@
 #include "msIdentifier.h"
 
 namespace ms {
-    
+
 class Entity
 {
 public:
@@ -29,6 +29,8 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void strip(Entity& base);
+    virtual void merge(Entity& base);
     virtual void clear();
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;

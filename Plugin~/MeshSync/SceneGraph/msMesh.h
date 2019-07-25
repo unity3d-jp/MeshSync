@@ -203,6 +203,8 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void strip(Entity& base) override;
+    void merge(Entity& base) override;
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;

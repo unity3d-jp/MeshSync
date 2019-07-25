@@ -47,6 +47,32 @@ void Scene::deserialize(std::istream& is)
     }
 }
 
+void Scene::strip(Scene& base)
+{
+    size_t entity_count = entities.size();
+    if (entity_count == base.entities.size()) {
+        for (size_t ei = 0; ei < entity_count; ++ei) {
+            auto& ecur = entities[ei];
+            auto& ebase = base.entities[ei];
+            if (ecur->path == ebase->path)
+                ecur->strip(*ebase);
+        }
+    }
+}
+
+void Scene::merge(Scene& base)
+{
+    size_t entity_count = entities.size();
+    if (entity_count == base.entities.size()) {
+        for (size_t ei = 0; ei < entity_count; ++ei) {
+            auto& ecur = entities[ei];
+            auto& ebase = base.entities[ei];
+            if (ecur->path == ebase->path)
+                ecur->merge(*ebase);
+        }
+    }
+}
+
 void Scene::clear()
 {
     settings = SceneSettings();

@@ -55,6 +55,14 @@ void Entity::deserialize(std::istream& is)
     read(is, path);
 }
 
+void Entity::strip(Entity&)
+{
+}
+
+void Entity::merge(Entity&)
+{
+}
+
 void Entity::clear()
 {
     id = InvalidID;

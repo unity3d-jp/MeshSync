@@ -49,6 +49,7 @@ protected:
     std::list<SceneDesc> m_queue;
     std::future<void> m_task;
 
+    ScenePtr m_base_scene;
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;
     RawVector<char> m_encoded_buf;
@@ -97,6 +98,7 @@ protected:
     SceneDesc m_scene1, m_scene2;
     ScenePtr m_last_scene;
 
+    ScenePtr m_base_scene;
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;
     RawVector<char> m_encoded_buf, m_tmp_buf;

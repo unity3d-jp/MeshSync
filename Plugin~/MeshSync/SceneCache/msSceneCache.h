@@ -16,6 +16,7 @@ enum class SceneCacheEncoding
 struct SceneCacheSettings
 {
     SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
+    bool strip_unchanged = true;
 };
 
 

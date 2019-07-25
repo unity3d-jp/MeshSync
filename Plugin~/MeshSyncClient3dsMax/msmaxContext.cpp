@@ -358,7 +358,9 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
-    if (!m_file_saver.open(path.c_str()))
+    ms::SceneCacheSettings scs;
+    //scs.encoding = ms::SceneCacheEncoding::Plain; // debug
+    if (!m_file_saver.open(path.c_str(), scs))
         return false;
 
     auto settings_old = m_settings;

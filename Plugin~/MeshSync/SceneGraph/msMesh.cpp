@@ -164,6 +164,32 @@ void Mesh::deserialize(std::istream& is)
         bones.end());
 }
 
+void Mesh::strip(Entity& base_)
+{
+    auto clear_if_identical = [](auto& cur, const auto& base) {
+        if (cur == base)
+            cur.clear();
+    };
+
+    auto& base = static_cast<Mesh&>(base_);
+#define Body(A) clear_if_identical(A, base.A);
+    EachVertexProperty(Body);
+#undef Body
+}
+
+void Mesh::merge(Entity& base_)
+{
+    auto assign_if_empty = [](auto& cur, const auto& base) {
+        if (cur.empty())
+            cur = base;
+    };
+
+    auto& base = static_cast<Mesh&>(base_);
+#define Body(A) assign_if_empty(A, base.A);
+    EachVertexProperty(Body);
+#undef Body
+}
+
 void Mesh::clear()
 {
     super::clear();

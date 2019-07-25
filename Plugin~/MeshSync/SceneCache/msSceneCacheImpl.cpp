@@ -100,6 +100,12 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
+            if (m_settings.strip_unchanged) {
+                if (!m_base_scene)
+                    m_base_scene = desc.scene;
+                else
+                    desc.scene->strip(*m_base_scene);
+            }
 
             // serialize
             m_scene_buf.reset();
@@ -182,6 +188,10 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     }
     std::sort(m_descs.begin(), m_descs.end(), [](auto& a, auto& b) { return a.time < b.time; });
     m_cache.resize(m_descs.size());
+
+    if (m_settings.strip_unchanged)
+        m_base_scene = getByIndexImpl(0);
+
     return valid();
 }
 
@@ -229,6 +239,9 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
         //ret->convert(m_cv); // todo: uncomment this when make file streaming player
+
+        if (m_settings.strip_unchanged && m_base_scene)
+            ret->merge(*m_base_scene);
     }
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());
