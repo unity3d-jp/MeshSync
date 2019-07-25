@@ -101,7 +101,7 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
-            if (m_settings.strip_unchanged) {
+            if (m_settings.flags.strip_unchanged) {
                 if (!m_base_scene)
                     m_base_scene = desc.scene;
                 else
@@ -189,7 +189,7 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     }
     std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
 
-    if (m_osc_settings.strip_unchanged)
+    if (m_osc_settings.flags.strip_unchanged)
         m_base_scene = getByIndexImpl(0, false);
 
     return valid();
@@ -238,7 +238,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
     try {
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
-        if (m_osc_settings.strip_unchanged && m_base_scene)
+        if (m_osc_settings.flags.strip_unchanged && m_base_scene)
             ret->merge(*m_base_scene);
         if (convert)
             ret->import(m_import_settings);

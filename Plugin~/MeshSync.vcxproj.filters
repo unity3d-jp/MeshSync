@@ -19,9 +19,6 @@
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\Utils\msAsyncSceneSender.cpp">
-      <Filter>MeshSync\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
@@ -73,7 +70,7 @@
     <ClCompile Include="MeshSync\SceneGraph\msEntityConverter.cpp">
       <Filter>MeshSync\SceneGraph</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\Utils\msAsyncSceneFileSaver.cpp">
+    <ClCompile Include="MeshSync\Utils\msAsyncSceneExporter.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -106,9 +103,6 @@
       <Filter>MeshSync</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\Utils\msEntityManager.h">
-      <Filter>MeshSync\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshSync\Utils\msAsyncSceneSender.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\Utils\msMaterialManager.h">
@@ -165,7 +159,7 @@
     <ClInclude Include="MeshSync\SceneGraph\msEntityConverter.h">
       <Filter>MeshSync\SceneGraph</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSync\Utils\msAsyncSceneFileSaver.h">
+    <ClInclude Include="MeshSync\Utils\msAsyncSceneExporter.h">
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
   </ItemGroup>

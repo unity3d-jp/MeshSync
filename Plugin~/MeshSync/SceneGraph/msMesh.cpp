@@ -7,6 +7,12 @@ namespace ms {
 // Mesh
 #pragma region Mesh
 
+void MeshRefineSettings::clear()
+{
+    *this = {};
+    flags.no_reindexing = 1;
+}
+
 uint64_t MeshRefineSettings::checksum() const
 {
     uint64_t ret = 0;
@@ -29,6 +35,37 @@ bool MeshRefineSettings::operator!=(const MeshRefineSettings& v) const
 {
     return !(*this == v);
 }
+
+
+#define EachMember(F)\
+    F(index_count) F(index_offset) F(topology) F(material_id)
+
+void SubmeshData::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+
+void SubmeshData::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+#undef EachMember
+
+
+#define EachMember(F)\
+    F(index_count) F(index_offset) F(vertex_count) F(vertex_offset) F(bone_weight_count) F(bone_weight_offset)\
+    F(submesh_count) F(submesh_offset) F(bound_center) F(bound_size)
+
+void SplitData::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+
+void SplitData::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+#undef EachMember
 
 
 std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
@@ -153,6 +190,9 @@ void Mesh::serialize(std::ostream& os) const
     write(os, root_bone);
     write(os, bones);
     write(os, blendshapes);
+
+    write(os, splits);
+    write(os, submeshes);
 }
 
 void Mesh::deserialize(std::istream& is)
@@ -168,6 +208,9 @@ void Mesh::deserialize(std::istream& is)
     read(is, root_bone);
     read(is, bones);
     read(is, blendshapes);
+
+    read(is, splits);
+    read(is, submeshes);
 
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
@@ -382,8 +425,10 @@ void Mesh::updateBounds()
     }
 }
 
-void Mesh::refine(const MeshRefineSettings& mrs)
+void Mesh::refine()
 {
+    auto& mrs = refine_settings;
+
     if (mrs.flags.flip_u)
         mu::InvertU(uv0.data(), uv0.size());
     if (mrs.flags.flip_v)
@@ -422,189 +467,196 @@ void Mesh::refine(const MeshRefineSettings& mrs)
     if (mrs.flags.make_double_sided)
         makeDoubleSided();
 
-    size_t num_indices_old = indices.size();
-    size_t num_points_old = points.size();
+    if (!mrs.flags.no_reindexing) {
+        size_t num_indices_old = indices.size();
+        size_t num_points_old = points.size();
 
-    RawVector<float3> tmp_normals;
-    RawVector<float2> tmp_uv0, tmp_uv1;
-    RawVector<float4> tmp_colors;
-    RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
+        RawVector<float3> tmp_normals;
+        RawVector<float2> tmp_uv0, tmp_uv1;
+        RawVector<float4> tmp_colors;
+        RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
 
-    mu::MeshRefiner refiner;
-    refiner.split_unit = mrs.split_unit;
-    refiner.points = points;
-    refiner.indices = indices;
-    refiner.counts = counts;
-    refiner.buildConnection();
+        mu::MeshRefiner refiner;
+        refiner.split_unit = mrs.split_unit;
+        refiner.points = points;
+        refiner.indices = indices;
+        refiner.counts = counts;
+        refiner.buildConnection();
 
-    if (normals.size() == indices.size())
-        refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
-    if (uv0.size() == indices.size())
-        refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);
-    if (uv1.size() == indices.size())
-        refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
-    if (colors.size() == indices.size())
-        refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
+        if (normals.size() == indices.size())
+            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
+        if (uv0.size() == indices.size())
+            refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);
+        if (uv1.size() == indices.size())
+            refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
+        if (colors.size() == indices.size())
+            refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
 
-    // refine
-    {
-        refiner.refine();
-        refiner.retopology(mrs.flags.flip_faces);
-        refiner.genSubmeshes(material_ids);
-
-        // remap vertex attributes
-        refiner.new_points.swap(points);
-        refiner.new_counts.swap(counts);
-        refiner.new_indices_submeshes.swap(indices);
-        if (!normals.empty()) {
-            Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
-            tmp_normals.swap(normals);
-        }
-        if (!uv0.empty()) {
-            Remap(tmp_uv0, uv0, !remap_uv0.empty() ? remap_uv0 : refiner.new2old_points);
-            tmp_uv0.swap(uv0);
-        }
-        if (!uv1.empty()) {
-            Remap(tmp_uv1, uv1, !remap_uv1.empty() ? remap_uv1 : refiner.new2old_points);
-            tmp_uv1.swap(uv1);
-        }
-        if (!colors.empty()) {
-            Remap(tmp_colors, colors, !remap_colors.empty() ? remap_colors : refiner.new2old_points);
-            tmp_colors.swap(colors);
-        }
-
-        // setup splits
-        splits.clear();
-        int offset_indices = 0;
-        int offset_vertices = 0;
-        for (auto& split : refiner.splits) {
-            auto sp = SplitData();
-            sp.index_offset = offset_indices;
-            sp.vertex_offset = offset_vertices;
-            sp.index_count = split.index_count;
-            sp.vertex_count = split.vertex_count;
-            splits.push_back(sp);
-
-            offset_vertices += split.vertex_count;
-            offset_indices += split.index_count;
-        }
-
-        // setup submeshes
+        // refine
         {
-            submeshes.clear();
-            int nsm = 0;
-            int *tri = indices.data();
+            refiner.refine();
+            refiner.retopology(mrs.flags.flip_faces);
+            refiner.genSubmeshes(material_ids);
+
+            // remap vertex attributes
+            refiner.new_points.swap(points);
+            refiner.new_counts.swap(counts);
+            refiner.new_indices_submeshes.swap(indices);
+            if (!normals.empty()) {
+                Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
+                tmp_normals.swap(normals);
+            }
+            if (!uv0.empty()) {
+                Remap(tmp_uv0, uv0, !remap_uv0.empty() ? remap_uv0 : refiner.new2old_points);
+                tmp_uv0.swap(uv0);
+            }
+            if (!uv1.empty()) {
+                Remap(tmp_uv1, uv1, !remap_uv1.empty() ? remap_uv1 : refiner.new2old_points);
+                tmp_uv1.swap(uv1);
+            }
+            if (!colors.empty()) {
+                Remap(tmp_colors, colors, !remap_colors.empty() ? remap_colors : refiner.new2old_points);
+                tmp_colors.swap(colors);
+            }
+
+            // setup splits
+            splits.clear();
+            int offset_indices = 0;
+            int offset_vertices = 0;
             for (auto& split : refiner.splits) {
-                for (int i = 0; i < split.submesh_count; ++i) {
-                    auto& sm = refiner.submeshes[nsm + i];
-                    SubmeshData tmp;
-                    tmp.indices.reset(tri, sm.index_count);
-                    tri += sm.index_count;
-                    tmp.topology = (SubmeshData::Topology)sm.topology;
-                    tmp.material_id = sm.material_id;
-                    submeshes.push_back(tmp);
-                }
-                nsm += split.submesh_count;
+                auto sp = SplitData();
+                sp.index_offset = offset_indices;
+                sp.vertex_offset = offset_vertices;
+                sp.index_count = split.index_count;
+                sp.vertex_count = split.vertex_count;
+                splits.push_back(sp);
+
+                offset_vertices += split.vertex_count;
+                offset_indices += split.index_count;
             }
-            nsm = 0;
-            for (int i = 0; i < splits.size(); ++i) {
-                int n = refiner.splits[i].submesh_count;
-                splits[i].submeshes.reset(&submeshes[nsm], n);
-                nsm += n;
+
+            // setup submeshes
+            {
+                submeshes.clear();
+                int nsm = 0;
+                int *tri = indices.data();
+                for (auto& split : refiner.splits) {
+                    for (int i = 0; i < split.submesh_count; ++i) {
+                        auto& sm = refiner.submeshes[nsm + i];
+                        SubmeshData tmp;
+                        tmp.index_count = sm.index_count;
+                        tmp.index_offset = sm.index_offset;
+                        tmp.topology = (SubmeshData::Topology)sm.topology;
+                        tmp.material_id = sm.material_id;
+
+                        tmp.indices.reset(tri, sm.index_count);
+                        tri += sm.index_count;
+
+                        submeshes.push_back(tmp);
+                    }
+                    nsm += split.submesh_count;
+                }
+                nsm = 0;
+                for (int i = 0; i < splits.size(); ++i) {
+                    int n = refiner.splits[i].submesh_count;
+                    splits[i].submeshes.reset(&submeshes[nsm], n);
+                    nsm += n;
+                }
             }
         }
-    }
 
-    // tangents
-    if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
-        tangents.resize(points.size());
-        GenerateTangentsTriangleIndexed(tangents.data(),
-            points.data(), uv0.data(), normals.data(), indices.data(), (int)indices.size() / 3, (int)points.size());
-    }
-
-    // velocities
-    if (velocities.size()== num_points_old) {
-        RawVector<float3> tmp_velocities;
-        Remap(tmp_velocities, velocities, refiner.new2old_points);
-        tmp_velocities.swap(velocities);
-    }
-
-    // bone weights
-    if (weights4.size() == num_points_old) {
-        RawVector<Weights4> tmp_weights;
-        Remap(tmp_weights, weights4, refiner.new2old_points);
-        weights4.swap(tmp_weights);
-    }
-    if (!weights1.empty() && bone_counts.size() == num_points_old && bone_offsets.size() == num_points_old) {
-        RawVector<uint8_t> tmp_bone_counts;
-        RawVector<int> tmp_bone_offsets;
-        RawVector<Weights1> tmp_weights;
-
-        Remap(tmp_bone_counts, bone_counts, refiner.new2old_points);
-
-        size_t num_points = points.size();
-        tmp_bone_offsets.resize_discard(num_points);
-
-        // calculate offsets
-        int offset = 0;
-        for (size_t i = 0; i < num_points; ++i) {
-            tmp_bone_offsets[i] = offset;
-            offset += tmp_bone_counts[i];
-        }
-        tmp_weights.resize_discard(offset);
-
-        // remap weights
-        for (size_t i = 0; i < num_points; ++i) {
-            int new_offset = tmp_bone_offsets[i];
-            int old_offset = bone_offsets[refiner.new2old_points[i]];
-            weights1[old_offset].copy_to(&tmp_weights[new_offset], tmp_bone_counts[i]);
+        // tangents
+        if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
+            tangents.resize(points.size());
+            GenerateTangentsTriangleIndexed(tangents.data(),
+                points.data(), uv0.data(), normals.data(), indices.data(), (int)indices.size() / 3, (int)points.size());
         }
 
-        bone_counts.swap(tmp_bone_counts);
-        bone_offsets.swap(tmp_bone_offsets);
-        weights1.swap(tmp_weights);
-
-        // setup splits
-        int weight_offset = 0;
-        for (auto& split : splits) {
-            split.bone_weight_offset = weight_offset;
-            int bone_count = 0;
-            for (int vi = 0; vi < split.vertex_count; ++vi)
-                bone_count += bone_counts[split.vertex_offset + vi];
-            split.bone_weight_count = bone_count;
-            weight_offset += bone_count;
+        // velocities
+        if (velocities.size() == num_points_old) {
+            RawVector<float3> tmp_velocities;
+            Remap(tmp_velocities, velocities, refiner.new2old_points);
+            tmp_velocities.swap(velocities);
         }
-    }
 
-    if (!blendshapes.empty()) {
-        RawVector<float3> tmp;
-        for (auto& bs : blendshapes) {
-            bs->sort();
-            for (auto& fp : bs->frames) {
-                auto& f = *fp;
-                if (f.points.size() == num_points_old) {
-                    Remap(tmp, f.points, refiner.new2old_points);
-                    f.points.swap(tmp);
-                }
+        // bone weights
+        if (weights4.size() == num_points_old) {
+            RawVector<Weights4> tmp_weights;
+            Remap(tmp_weights, weights4, refiner.new2old_points);
+            weights4.swap(tmp_weights);
+        }
+        if (!weights1.empty() && bone_counts.size() == num_points_old && bone_offsets.size() == num_points_old) {
+            RawVector<uint8_t> tmp_bone_counts;
+            RawVector<int> tmp_bone_offsets;
+            RawVector<Weights1> tmp_weights;
 
-                if (f.normals.size() == num_points_old) {
-                    Remap(tmp, f.normals, refiner.new2old_points);
-                    f.normals.swap(tmp);
-                }
-                else if (f.normals.size() == num_indices_old) {
-                    Remap(tmp, f.normals, remap_normals);
-                    f.normals.swap(tmp);
-                }
+            Remap(tmp_bone_counts, bone_counts, refiner.new2old_points);
 
-                if (f.tangents.size() == num_points_old) {
-                    Remap(tmp, f.tangents, refiner.new2old_points);
-                    f.tangents.swap(tmp);
+            size_t num_points = points.size();
+            tmp_bone_offsets.resize_discard(num_points);
+
+            // calculate offsets
+            int offset = 0;
+            for (size_t i = 0; i < num_points; ++i) {
+                tmp_bone_offsets[i] = offset;
+                offset += tmp_bone_counts[i];
+            }
+            tmp_weights.resize_discard(offset);
+
+            // remap weights
+            for (size_t i = 0; i < num_points; ++i) {
+                int new_offset = tmp_bone_offsets[i];
+                int old_offset = bone_offsets[refiner.new2old_points[i]];
+                weights1[old_offset].copy_to(&tmp_weights[new_offset], tmp_bone_counts[i]);
+            }
+
+            bone_counts.swap(tmp_bone_counts);
+            bone_offsets.swap(tmp_bone_offsets);
+            weights1.swap(tmp_weights);
+
+            // setup splits
+            int weight_offset = 0;
+            for (auto& split : splits) {
+                split.bone_weight_offset = weight_offset;
+                int bone_count = 0;
+                for (int vi = 0; vi < split.vertex_count; ++vi)
+                    bone_count += bone_counts[split.vertex_offset + vi];
+                split.bone_weight_count = bone_count;
+                weight_offset += bone_count;
+            }
+        }
+
+        if (!blendshapes.empty()) {
+            RawVector<float3> tmp;
+            for (auto& bs : blendshapes) {
+                bs->sort();
+                for (auto& fp : bs->frames) {
+                    auto& f = *fp;
+                    if (f.points.size() == num_points_old) {
+                        Remap(tmp, f.points, refiner.new2old_points);
+                        f.points.swap(tmp);
+                    }
+
+                    if (f.normals.size() == num_points_old) {
+                        Remap(tmp, f.normals, refiner.new2old_points);
+                        f.normals.swap(tmp);
+                    }
+                    else if (f.normals.size() == num_indices_old) {
+                        Remap(tmp, f.normals, remap_normals);
+                        f.normals.swap(tmp);
+                    }
+
+                    if (f.tangents.size() == num_points_old) {
+                        Remap(tmp, f.tangents, refiner.new2old_points);
+                        f.tangents.swap(tmp);
+                    }
                 }
             }
         }
     }
 
     setupFlags();
+    mrs.clear();
 }
 
 void Mesh::makeDoubleSided()
@@ -1006,6 +1058,7 @@ void Mesh::setupBoneWeightsVariable()
 
 void Mesh::setupFlags()
 {
+    flags.has_submeshes= !submeshes.empty();
     flags.has_points = !points.empty();
     flags.has_normals = !normals.empty();
     flags.has_tangents = !tangents.empty();

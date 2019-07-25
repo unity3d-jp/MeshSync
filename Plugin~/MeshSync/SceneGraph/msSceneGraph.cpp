@@ -182,7 +182,7 @@ void Scene::import(const SceneImportSettings& cv)
             mesh.refine_settings.flags.optimize_topology = 1;
             mesh.refine_settings.split_unit = cv.mesh_split_unit;
             mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
-            mesh.refine(mesh.refine_settings);
+            mesh.refine();
         }
 
         convert(*obj);

@@ -1818,80 +1818,65 @@ namespace UTJ.MeshSync
     public struct MeshDataFlags
     {
         public BitFlags flags;
-        public bool hasRefineSettings
-        {
-            get { return flags[0]; }
-            set { flags[0] = value; }
-        }
         public bool hasIndices
-        {
-            get { return flags[1]; }
-            set { flags[1] = value; }
-        }
-        public bool hasCounts
         {
             get { return flags[2]; }
             set { flags[2] = value; }
         }
         public bool hasPoints
         {
-            get { return flags[3]; }
-            set { flags[3] = value; }
-        }
-        public bool hasNormals
-        {
             get { return flags[4]; }
             set { flags[4] = value; }
         }
-        public bool hasTangents
+        public bool hasNormals
         {
             get { return flags[5]; }
             set { flags[5] = value; }
         }
-        public bool hasUV0
+        public bool hasTangents
         {
             get { return flags[6]; }
             set { flags[6] = value; }
         }
-        public bool hasUV1
+        public bool hasUV0
         {
             get { return flags[7]; }
             set { flags[7] = value; }
         }
-        public bool hasColors
+        public bool hasUV1
         {
             get { return flags[8]; }
             set { flags[8] = value; }
         }
-        public bool hasVelocities
+        public bool hasColors
         {
             get { return flags[9]; }
             set { flags[9] = value; }
         }
-        public bool hasMaterialIDs
+        public bool hasVelocities
         {
             get { return flags[10]; }
             set { flags[10] = value; }
         }
         public bool hasBones
         {
-            get { return flags[11]; }
-            set { flags[11] = value; }
-        }
-        public bool hasBlendshapeWeights
-        {
             get { return flags[12]; }
             set { flags[12] = value; }
         }
-        public bool hasBlendshapes
+        public bool hasBlendshapeWeights
         {
             get { return flags[13]; }
             set { flags[13] = value; }
         }
-        public bool unchanged
+        public bool hasBlendshapes
         {
             get { return flags[14]; }
             set { flags[14] = value; }
+        }
+        public bool unchanged
+        {
+            get { return flags[15]; }
+            set { flags[15] = value; }
         }
     };
 

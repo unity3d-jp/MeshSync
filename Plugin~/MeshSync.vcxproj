@@ -42,8 +42,7 @@
     <ClInclude Include="MeshSync\SceneGraph\msMesh.h" />
     <ClInclude Include="MeshSync\SceneGraph\msSceneGraph.h" />
     <ClInclude Include="MeshSync\SceneGraph\msTexture.h" />
-    <ClInclude Include="MeshSync\Utils\msAsyncSceneFileSaver.h" />
-    <ClInclude Include="MeshSync\Utils\msAsyncSceneSender.h" />
+    <ClInclude Include="MeshSync\Utils\msAsyncSceneExporter.h" />
     <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
     <ClInclude Include="MeshSync\Utils\msIDGenerator.h" />
     <ClInclude Include="MeshSync\Utils\msMaterialManager.h" />
@@ -72,8 +71,7 @@
     <ClCompile Include="MeshSync\SceneGraph\msMesh.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msTexture.cpp" />
-    <ClCompile Include="MeshSync\Utils\msAsyncSceneFileSaver.cpp" />
-    <ClCompile Include="MeshSync\Utils\msAsyncSceneSender.cpp" />
+    <ClCompile Include="MeshSync\Utils\msAsyncSceneExporter.cpp" />
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msMaterialExt.cpp" />

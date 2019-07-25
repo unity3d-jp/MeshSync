@@ -8,6 +8,7 @@ namespace ms {
 struct MeshDataFlags
 {
     uint32_t has_refine_settings : 1;
+    uint32_t has_submeshes : 1;
     uint32_t has_indices : 1;
     uint32_t has_counts : 1;
     uint32_t has_points : 1;
@@ -15,8 +16,8 @@ struct MeshDataFlags
     uint32_t has_tangents : 1;
     uint32_t has_uv0 : 1;
     uint32_t has_uv1 : 1;
-    uint32_t has_colors : 1;
-    uint32_t has_velocities : 1; // 10
+    uint32_t has_colors : 1; // 10
+    uint32_t has_velocities : 1;
     uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
     uint32_t has_blendshape_weights : 1;
@@ -26,8 +27,8 @@ struct MeshDataFlags
 
 struct MeshRefineFlags
 {
-    uint32_t split : 1;
     uint32_t no_reindexing : 1;
+    uint32_t split : 1;
     uint32_t triangulate : 1;
     uint32_t optimize_topology : 1;
     uint32_t flip_x : 1;
@@ -68,6 +69,7 @@ struct MeshRefineSettings
     float4x4 world2local = float4x4::identity();
     float4x4 mirror_basis = float4x4::identity();
 
+    void clear();
     uint64_t checksum() const;
     bool operator==(const MeshRefineSettings& v) const;
     bool operator!=(const MeshRefineSettings& v) const;
@@ -75,7 +77,7 @@ struct MeshRefineSettings
 
 struct SubmeshData
 {
-    enum class Topology
+    enum class Topology : int
     {
         Points,
         Lines,
@@ -83,10 +85,18 @@ struct SubmeshData
         Quads,
     };
 
-    IArray<int> indices;
+    int index_count = 0;
+    int index_offset = 0;
     Topology topology = Topology::Triangles;
     int material_id = 0;
+
+    // non-serializable
+    IArray<int> indices;
+
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
 };
+msSerializable(SubmeshData);
 
 struct SplitData
 {
@@ -96,10 +106,18 @@ struct SplitData
     int vertex_offset = 0;
     int bone_weight_count = 0;
     int bone_weight_offset = 0;
-    IArray<SubmeshData> submeshes;
+    int submesh_count = 0;
+    int submesh_offset = 0;
     float3 bound_center = float3::zero();
     float3 bound_size = float3::zero();
+
+    // non-serializable
+    IArray<SubmeshData> submeshes;
+
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
 };
+msSerializable(SplitData);
 
 struct BlendShapeFrameData
 {
@@ -184,6 +202,8 @@ public:
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshapes;
 
+    std::vector<SubmeshData> submeshes;
+    std::vector<SplitData> splits;
 
     // non-serializable fields (generated in refine())
     // *DO NOT forget to update clear() when add member*
@@ -192,8 +212,6 @@ public:
     RawVector<uint8_t> bone_counts;
     RawVector<int> bone_offsets;
     RawVector<Weights1> weights1;
-    std::vector<SubmeshData> submeshes;
-    std::vector<SplitData> splits;
 
 
 protected:
@@ -215,7 +233,7 @@ public:
     EntityPtr clone() override;
 
     void updateBounds();
-    void refine(const MeshRefineSettings& mrs);
+    void refine();
     void makeDoubleSided();
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);

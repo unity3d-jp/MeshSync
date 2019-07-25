@@ -12,7 +12,7 @@ namespace UTJ.MeshSync
         #region Fields
         [SerializeField] DataPath m_cacheFilePath = new DataPath();
         [SerializeField] float m_time;
-        [SerializeField] bool m_interpolation = true;
+        [SerializeField] bool m_interpolation = false;
         [SerializeField] int m_port = 0;
 
         SceneCacheData m_sceneCache;
@@ -73,6 +73,7 @@ namespace UTJ.MeshSync
 
                 var server = go.AddComponent<MeshSyncServer>();
                 server.rootObject = go.GetComponent<Transform>();
+                server.progressiveDisplay = false;
 
                 var player = go.AddComponent<SceneCachePlayer>();
                 if (!player.OpenCache(path))

@@ -5,6 +5,5 @@
 #include "Utils/msTextureManager.h"
 #include "Utils/msMaterialManager.h"
 #include "Utils/msEntityManager.h"
-#include "Utils/msAsyncSceneSender.h"
-#include "Utils/msAsyncSceneFileSaver.h"
+#include "Utils/msAsyncSceneExporter.h"
 #include "Utils/msMaterialExt.h"

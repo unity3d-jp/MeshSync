@@ -16,7 +16,17 @@ enum class SceneCacheEncoding
 struct OSceneCacheSettings
 {
     SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
-    bool strip_unchanged = true;
+    struct Flags
+    {
+        uint32_t strip_unchanged : 1;
+        uint32_t apply_refinement : 1;
+    } flags{};
+
+    OSceneCacheSettings()
+    {
+        flags.strip_unchanged = 1;
+        flags.apply_refinement = 1;
+    }
 };
 
 class OSceneCache
