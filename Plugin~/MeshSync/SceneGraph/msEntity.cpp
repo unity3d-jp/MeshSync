@@ -63,6 +63,10 @@ void Entity::merge(Entity&)
 {
 }
 
+void Entity::diff(Entity&)
+{
+}
+
 void Entity::clear()
 {
     id = InvalidID;

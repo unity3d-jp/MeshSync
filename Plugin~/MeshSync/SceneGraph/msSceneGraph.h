@@ -66,6 +66,7 @@ public:
     void deserialize(std::istream& is); // throw
     void strip(Scene& base);
     void merge(Scene& base);
+    void diff(Scene& base);
     void clear();
     uint64_t hash() const;
     void lerp(const Scene& src1, const Scene& src2, float t);

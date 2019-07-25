@@ -31,6 +31,7 @@ public:
     virtual void deserialize(std::istream& is);
     virtual void strip(Entity& base);
     virtual void merge(Entity& base);
+    virtual void diff(Entity& base);
     virtual void clear();
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;

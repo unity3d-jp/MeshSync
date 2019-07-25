@@ -21,6 +21,16 @@ uint64_t MeshRefineSettings::checksum() const
     return ret;
 }
 
+bool MeshRefineSettings::operator==(MeshRefineSettings& v) const
+{
+    return memcmp(this, &v, sizeof(*this)) == 0;
+}
+bool MeshRefineSettings::operator!=(MeshRefineSettings& v) const
+{
+    return !(*this == v);
+}
+
+
 std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
 {
     auto ret = Pool<BlendShapeFrameData>::instance().pull();
@@ -188,6 +198,24 @@ void Mesh::merge(Entity& base_)
 #define Body(A) assign_if_empty(A, base.A);
     EachVertexProperty(Body);
 #undef Body
+}
+
+void Mesh::diff(Entity& base_)
+{
+    uint32_t change_bits = 0, bit_index = 0;
+    auto compare_attribute = [&](auto& cur, const auto& base) {
+        if (cur != base)
+            change_bits |= (1 << bit_index);
+        ++bit_index;
+    };
+
+    auto& base = static_cast<Mesh&>(base_);
+#define Body(A) compare_attribute(A, base.A);
+    EachVertexProperty(Body);
+#undef Body
+
+    if (change_bits == 0 && refine_settings == base.refine_settings)
+        flags.unchanged = 1;
 }
 
 void Mesh::clear()

@@ -1888,7 +1888,7 @@ namespace UTJ.MeshSync
             get { return flags[13]; }
             set { flags[13] = value; }
         }
-        public bool applyTRS
+        public bool unchanged
         {
             get { return flags[14]; }
             set { flags[14] = value; }

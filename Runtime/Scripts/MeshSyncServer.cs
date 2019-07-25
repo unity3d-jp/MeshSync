@@ -1397,7 +1397,7 @@ namespace UTJ.MeshSync
                     Debug.LogError("Something is wrong");
                 return null;
             }
-            else if(rec.reference != null)
+            else if (rec.reference != null)
             {
                 // update later on UpdateReference()
                 return null;
@@ -1450,7 +1450,8 @@ namespace UTJ.MeshSync
                 bool active = t.gameObject.activeSelf;
                 t.gameObject.SetActive(false);
 
-                if (flags.hasIndices)
+                // ignore unchanged
+                if (flags.hasIndices && (rec.editMesh == null || !data.flags.unchanged))
                 {
                     var collider = t.GetComponent<MeshCollider>();
                     bool updateCollider = m_updateMeshColliders && collider != null &&

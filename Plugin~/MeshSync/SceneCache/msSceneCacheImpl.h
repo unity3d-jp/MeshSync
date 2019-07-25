@@ -78,7 +78,7 @@ public:
     void prefetchByTime(float t, bool next, bool lerp);
 
 protected:
-    ScenePtr getByIndexImpl(size_t i);
+    ScenePtr getByIndexImpl(size_t i, bool convert = false);
 
     struct SceneDesc {
         uint64_t pos = 0;

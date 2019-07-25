@@ -190,7 +190,7 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     m_cache.resize(m_descs.size());
 
     if (m_settings.strip_unchanged)
-        m_base_scene = getByIndexImpl(0);
+        m_base_scene = getByIndexImpl(0, false);
 
     return valid();
 }
@@ -214,7 +214,7 @@ std::tuple<float, float> ISceneCacheImpl::getTimeRange() const
     return { m_descs.front().time, m_descs.back().time };
 }
 
-ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
+ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
 {
     if (!valid() || i >= m_descs.size())
         return nullptr;
@@ -238,10 +238,11 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
     try {
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
-        //ret->convert(m_cv); // todo: uncomment this when make file streaming player
-
         if (m_settings.strip_unchanged && m_base_scene)
             ret->merge(*m_base_scene);
+
+        if (convert)
+            ret->import(m_import_settings);
     }
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());
@@ -258,7 +259,10 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 
 ScenePtr ISceneCacheImpl::getByIndex(size_t i)
 {
-    m_last_scene = getByIndexImpl(i);
+    auto ret = getByIndexImpl(i);
+    if (m_last_scene)
+        ret->diff(*m_last_scene);
+    m_last_scene = ret;
     return m_last_scene;
 }
 
@@ -267,10 +271,11 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
     if (!valid())
         return nullptr;
 
+    ScenePtr ret;
     if (time <= m_descs.front().time)
-        m_last_scene = getByIndexImpl(0);
+        ret = getByIndexImpl(0);
     else if(time >= m_descs.back().time)
-        m_last_scene = getByIndexImpl(m_descs.size() - 1);
+        ret = getByIndexImpl(m_descs.size() - 1);
     else {
         auto i = std::distance(m_descs.begin(),
             std::lower_bound(m_descs.begin(), m_descs.end(), time, [time](auto& a, float t) { return a.time < t; })) - 1;
@@ -281,14 +286,18 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
             m_scene2.scene = getByIndexImpl(i + 1);
 
             float t = (time - m_scene1.time) / (m_scene2.time - m_scene1.time);
-            m_last_scene = Scene::create();
-            m_last_scene->lerp(*m_scene1.scene, *m_scene2.scene, t);
+            ret = Scene::create();
+            ret->lerp(*m_scene1.scene, *m_scene2.scene, t);
         }
         else {
-            m_last_scene = getByIndexImpl(i);
+            ret = getByIndexImpl(i);
         }
     }
-    return m_last_scene;
+
+    if (m_last_scene)
+        ret->diff(*m_last_scene);
+    m_last_scene = ret;
+    return ret;
 }
 
 

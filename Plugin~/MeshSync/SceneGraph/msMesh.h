@@ -21,7 +21,7 @@ struct MeshDataFlags
     uint32_t has_bones : 1;
     uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;
-    uint32_t apply_trs : 1;
+    uint32_t unchanged : 1;
 };
 
 struct MeshRefineFlags
@@ -69,6 +69,8 @@ struct MeshRefineSettings
     float4x4 mirror_basis = float4x4::identity();
 
     uint64_t checksum() const;
+    bool operator==(MeshRefineSettings& v) const;
+    bool operator!=(MeshRefineSettings& v) const;
 };
 
 struct SubmeshData
@@ -205,6 +207,7 @@ public:
     void deserialize(std::istream& is) override;
     void strip(Entity& base) override;
     void merge(Entity& base) override;
+    void diff(Entity& base) override;
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
