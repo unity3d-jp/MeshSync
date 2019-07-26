@@ -45,7 +45,7 @@ const std::string& msmqContext::getErrorMessage()
 
 bool msmqContext::isSending()
 {
-    return m_send_meshes.isSending() || m_send_camera.isSending();
+    return m_send_meshes.isExporting() || m_send_camera.isExporting();
 }
 
 void msmqContext::wait()
@@ -635,10 +635,10 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
-            dst.flags.apply_trs = 0;
+            dst.has_transform = false;
         }
         else {
-            dst.flags.apply_trs = 1;
+            dst.has_transform = true;
             ExtractLocalTransform(obj, dst.position, dst.rotation, dst.scale);
             dst.refine_settings.world2local = invert(ExtractGlobalMatrix(doc, obj));
         }

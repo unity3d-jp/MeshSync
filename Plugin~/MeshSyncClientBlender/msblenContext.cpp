@@ -443,7 +443,6 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     }
 
     dst.setupFlags();
-    dst.flags.apply_trs = true;
     dst.flags.has_refine_settings = true;
     if (!dst.flags.has_normals)
         dst.refine_settings.flags.gen_normals = true;
@@ -1040,7 +1039,7 @@ bool msblenContext::prepare()
 
 bool msblenContext::sendMaterials(bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending() || m_ignore_events)
+    if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -1054,7 +1053,7 @@ bool msblenContext::sendMaterials(bool dirty_all)
 
 bool msblenContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending() || m_ignore_events)
+    if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
 
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
@@ -1095,7 +1094,7 @@ bool msblenContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msblenContext::sendAnimations(SendScope scope)
 {
-    if (!prepare() || m_sender.isSending() || m_ignore_events)
+    if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
 
     m_ignore_events = true;
@@ -1169,7 +1168,7 @@ bool msblenContext::sendAnimations(SendScope scope)
 
 void msblenContext::flushPendingList()
 {
-    if (!m_pending.empty() && !m_sender.isSending()) {
+    if (!m_pending.empty() && !m_sender.isExporting()) {
         for (auto p : m_pending)
             exportObject(p, false);
         m_pending.clear();

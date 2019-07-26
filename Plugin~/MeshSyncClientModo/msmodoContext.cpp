@@ -306,7 +306,7 @@ void msmodoContext::extractReplicaData(
 
 bool msmodoContext::sendMaterials(bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending())
+    if (!prepare() || m_sender.isExporting())
         return false;
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -320,7 +320,7 @@ bool msmodoContext::sendMaterials(bool dirty_all)
 
 bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending()) {
+    if (!prepare() || m_sender.isExporting()) {
         m_pending_scope = scope;
         return false;
     }
@@ -376,7 +376,7 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msmodoContext::sendAnimations(SendScope scope)
 {
-    if (!prepare() || m_sender.isSending())
+    if (!prepare() || m_sender.isExporting())
         return false;
 
     if (exportAnimations(scope) > 0) {

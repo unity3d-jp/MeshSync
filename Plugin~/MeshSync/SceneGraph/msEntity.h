@@ -59,6 +59,7 @@ public:
 
     bool visible = true;
     bool visible_hierarchy = true;
+    bool has_transform = true;
     std::string reference;
 
     // non-serializable

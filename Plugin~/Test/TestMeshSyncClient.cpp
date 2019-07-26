@@ -47,8 +47,11 @@ static void Send(ms::Scene& scene)
 
 TestCase(Test_SendMesh)
 {
-    auto osc = ms::OpenOSceneCacheFile("wave.sc", { ms::SceneCacheEncoding::Plain });
-    auto oscz = ms::OpenOSceneCacheFile("wave.scz", { ms::SceneCacheEncoding::ZSTD });
+    ms::OSceneCacheSettings settings1, settings2;
+    settings1.encoding = ms::SceneCacheEncoding::Plain;
+
+    auto osc = ms::OpenOSceneCacheFile("wave.sc", settings1);
+    auto oscz = ms::OpenOSceneCacheFile("wave.scz", settings2);
 
     for (int i = 0; i < 8; ++i) {
         auto scene = ms::Scene::create();
@@ -86,7 +89,7 @@ TestCase(Test_SceneCacheRead)
 
     auto range = isc->getTimeRange();
     float step = 0.1f;
-    for (float t = std::get<0>(range); t < std::get<1>(range); t += step) {
+    for (float t = range.start; t < range.end; t += step) {
         auto scene = isc->getByTime(t, true);
         if (!scene)
             break;
@@ -489,18 +492,20 @@ TestCase(Test_Query)
 #undef SendQuery
 }
 
-TestCase(Test_SaveFile)
+TestCase(Test_CacheWriter)
 {
-    ms::AsyncSceneFileSaver fileSaver;
+    ms::AsyncSceneCacheWriter writer;
+    writer.open("wave1f.scz");
 
-    fileSaver.on_prepare = [](ms::AsyncSceneFileSaver& t) { 
+    writer.on_prepare = [&writer]() {
+        auto& t = writer;
         t.scene_settings.handedness = ms::Handedness::RightZUp;
         t.scene_settings.scale_factor = 1.0f;
 
-        t.resetScene();
+        t.clear();
 
-        std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
-        t.AddEntity(mesh);
+        auto mesh = ms::Mesh::create();
+        t.geometries.push_back(mesh);
 
         mesh->path = "/Test/Wave";
         mesh->refine_settings.flags.gen_normals = 1;
@@ -517,8 +522,7 @@ TestCase(Test_SaveFile)
     };
 
 
-    fileSaver.tryKickAutoSave();
-
-    fileSaver.kickManualSave("wave1f.scz");
+    writer.kick();
+    writer.wait();
 }
 

@@ -198,7 +198,7 @@ void msmobuDevice::kickAsyncSend()
 
 bool msmobuDevice::sendMaterials(bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         return false;
     }
 
@@ -213,7 +213,7 @@ bool msmobuDevice::sendMaterials(bool dirty_all)
 
 bool msmobuDevice::sendObjects(bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         m_pending = true;
         return false;
     }
@@ -824,7 +824,7 @@ bool msmobuDevice::exportMaterials()
 
 bool msmobuDevice::sendAnimations()
 {
-    if (m_sender.isSending())
+    if (m_sender.isExporting())
         return false;
 
     if (exportAnimations())

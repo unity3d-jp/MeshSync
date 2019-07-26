@@ -155,7 +155,7 @@ Entity::Type Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(reference)
+    F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(has_transform) F(reference)
 
 void Transform::serialize(std::ostream& os) const
 {

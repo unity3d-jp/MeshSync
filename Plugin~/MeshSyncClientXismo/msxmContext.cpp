@@ -201,7 +201,7 @@ msxmSettings& msxmContext::getSettings()
 
 void msxmContext::send(bool force)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         // previous request is not completed yet
         if (force)
             m_sender.wait();

@@ -496,7 +496,7 @@ void msmayaContext::constructTree(const MObject& node, TreeNode *parent, const s
 
 bool msmayaContext::sendMaterials(bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         return false;
     }
 
@@ -511,7 +511,7 @@ bool msmayaContext::sendMaterials(bool dirty_all)
 
 bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         m_pending_scope = scope;
         return false;
     }
@@ -577,7 +577,7 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msmayaContext::sendAnimations(SendScope scope)
 {
-    if (m_sender.isSending())
+    if (m_sender.isExporting())
         return false;
 
     if (exportAnimations(scope) > 0)
@@ -1095,7 +1095,6 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
                 doExtractMeshData(dst, n);
 
             dst.flags.has_refine_settings = 1;
-            dst.flags.apply_trs = 1;
             dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
             dst.refine_settings.flags.gen_tangents = 1;
             dst.refine_settings.flags.flip_faces = 1;
