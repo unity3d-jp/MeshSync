@@ -46,12 +46,31 @@ msSerializable(SceneSettings);
 
 struct SceneImportSettings
 {
+    struct Flags
+    {
+        uint32_t optimize_meshes : 1;
+    } flags{};
     uint32_t mesh_split_unit = 0xffffffff;
     int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
     ZUpCorrectionMode zup_correction_mode = ZUpCorrectionMode::FlipYZ;
+
+    SceneImportSettings()
+    {
+        flags.optimize_meshes = 1;
+    }
 };
 
-struct Scene
+struct EntityMetaData
+{
+    int id;
+    struct Flags
+    {
+        uint32_t constant : 1;
+        uint32_t mesh_constant : 1;
+    };
+};
+
+class Scene
 {
 public:
     SceneSettings settings;
@@ -78,6 +97,10 @@ public:
     TransformPtr findEntity(const std::string& path) const;
     template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;
     template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
+
+    void buildHierarchy();
+    // prerequire buildHierarchy()
+    void flatternHierarchy();
 };
 msSerializable(Scene);
 msDeclPtr(Scene);

@@ -456,13 +456,15 @@ bool msmqContext::importMeshes(MQDocument doc)
     }
     
     // import meshes
+    std::string tmp_name;
     for (auto& data : ret->entities) {
         if (data->getType() == ms::Entity::Type::Mesh) {
             auto& dst = (ms::Mesh&)*data;
 
             // create name that includes ID
             char name[MaxNameBuffer];
-            sprintf(name, "%s [id:%08x]", ms::ToANSI(dst.getName()).c_str(), dst.host_id);
+            dst.getName(tmp_name);
+            sprintf(name, "%s [id:%08x]", ms::ToANSI(tmp_name).c_str(), dst.host_id);
 
             if (auto obj = findMesh(doc, name)) {
                 doc->DeleteObject(doc->GetObjectIndex(obj));

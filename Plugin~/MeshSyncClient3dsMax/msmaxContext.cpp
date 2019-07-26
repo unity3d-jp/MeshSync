@@ -359,6 +359,7 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
     ms::OSceneCacheSettings scs;
+    //scs.flags.flatten_hierarchy = 1;
     //scs.encoding = ms::SceneCacheEncoding::Plain; // debug
     if (!m_cache_writer.open(path.c_str(), scs))
         return false;
@@ -1175,8 +1176,11 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
     }
 
     {
+        if (dst.normals.empty())
+            dst.refine_settings.flags.gen_normals = 1;
+        if (dst.tangents.empty())
+            dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.flip_faces = m_settings.flip_faces;
-        dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         dst.setupMeshDataFlags();
     }

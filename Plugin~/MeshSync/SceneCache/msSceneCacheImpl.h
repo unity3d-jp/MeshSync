@@ -1,6 +1,7 @@
 #pragma once
 #include "msSceneCache.h"
 #include "msEncoder.h"
+#include "Utils/msIDGenerator.h"
 
 namespace ms {
 
@@ -45,11 +46,13 @@ protected:
 
     ostream_ptr m_ost = nullptr;
     OSceneCacheSettings m_settings;
+    SceneImportSettings m_import_settings;
 
     std::mutex m_mutex;
     std::list<SceneRecord> m_queue;
     std::future<void> m_task;
 
+    PathToID m_id_table;
     ScenePtr m_base_scene;
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;

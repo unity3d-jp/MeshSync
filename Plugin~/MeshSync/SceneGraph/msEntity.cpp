@@ -5,6 +5,7 @@
 
 namespace ms {
 
+static_assert(sizeof(EntityID) == sizeof(uint32_t), "");
 static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
@@ -14,11 +15,11 @@ static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream& is)
 {
-    int type;
-    read(is, type);
+    EntityID id;
+    read(is, id);
 
     std::shared_ptr<Entity> ret;
-    switch ((Type)type) {
+    switch ((Type)id.type) {
     case Type::Transform: ret = Transform::create(); break;
     case Type::Camera: ret = Camera::create(); break;
     case Type::Light: ret = Light::create(); break;
@@ -28,8 +29,10 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
         throw std::runtime_error("Entity::create() failed");
         break;
     }
-    if (ret)
+    if (ret) {
+        ret->id = id;
         ret->deserialize(is);
+    }
     return ret;
 }
 
@@ -48,14 +51,13 @@ bool Entity::isGeometry() const
 
 void Entity::serialize(std::ostream& os) const
 {
-    int type = (int)getType();
-    write(os, type);
+    write(os, id);
     write(os, host_id);
     write(os, path);
 }
 void Entity::deserialize(std::istream& is)
 {
-    // type is consumed by create()
+    // id is consumed by create()
     read(is, host_id);
     read(is, path);
 }
@@ -64,6 +66,8 @@ bool Entity::strip(const Entity& base)
 {
     if (getType() != base.getType())
         return false;
+
+    path.clear();
     return true;
 }
 
@@ -71,6 +75,8 @@ bool Entity::merge(const Entity& base)
 {
     if (getType() != base.getType())
         return false;
+
+    path = base.path;
     return true;
 }
 
@@ -84,6 +90,13 @@ bool Entity::diff(const Entity& s1, const Entity& s2)
 bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
 {
     if (s1.getType() != s2.getType())
+        return false;
+    return true;
+}
+
+bool Entity::genVelocity(const Entity& prev)
+{
+    if (getType() != prev.getType())
         return false;
     return true;
 }
@@ -134,12 +147,22 @@ bool Entity::identify(const Identifier& v) const
     return ret;
 }
 
-const char* Entity::getName() const
+void Entity::getParentPath(std::string& dst) const
 {
-    size_t name_pos = path.find_last_of('/');
-    if (name_pos != std::string::npos) { ++name_pos; }
-    else { name_pos = 0; }
-    return path.c_str() + name_pos;
+    auto pos = path.find_last_of('/');
+    if (pos == 0 || pos == std::string::npos)
+        dst.clear();
+    else
+        dst.assign(path.data(), pos);
+}
+
+void Entity::getName(std::string& dst) const
+{
+    auto pos = path.find_last_of('/');
+    if (pos == std::string::npos)
+        dst = path;
+    else
+        dst.assign(path.data() + (pos + 1));
 }
 #pragma endregion
 
@@ -151,7 +174,7 @@ std::shared_ptr<Transform> Transform::create(std::istream& is)
     return std::static_pointer_cast<Transform>(super::create(is));
 }
 
-Transform::Transform() {}
+Transform::Transform() { id.type = (int)getType(); }
 Transform::~Transform() {}
 
 Entity::Type Transform::getType() const
@@ -188,7 +211,11 @@ void Transform::clear()
     visible = true;
     visible_hierarchy = true;
     reference.clear();
+
     order = 0;
+    parent = nullptr;
+    local_matrix = float4x4::identity();
+    global_matrix = float4x4::identity();
 }
 
 uint64_t Transform::checksumTrans() const
@@ -268,7 +295,7 @@ void Transform::applyMatrix(const float4x4& v)
 
 // Camera
 #pragma region Camera
-Camera::Camera() {}
+Camera::Camera() { id.type = (int)getType(); }
 Camera::~Camera() {}
 
 Entity::Type Camera::getType() const
@@ -369,7 +396,7 @@ EntityPtr Camera::clone()
 
 // Light
 #pragma region Light
-Light::Light() {}
+Light::Light() { id.type = (int)getType(); }
 Light::~Light() {}
 
 Entity::Type Light::getType() const
@@ -559,7 +586,7 @@ void PointsData::getBounds(float3 & center, float3 & extents)
 }
 
 
-Points::Points() {}
+Points::Points() { id.type = (int)getType(); }
 Points::~Points() {}
 Entity::Type Points::getType() const { return Type::Points; }
 bool Points::isGeometry() const { return true; }

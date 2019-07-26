@@ -6,6 +6,10 @@
 #include <initializer_list>
 #include "muAllocator.h"
 
+// simpler version of std::vector.
+// T must be POD types because its constructor and destructor are never called.
+// that also means this can be significantly faster than std::vector in some specific situations.
+// (e.g. temporary buffers that can be very large and frequently resized)
 template<class T, int Align = 0x20>
 class RawVector
 {
@@ -180,7 +184,7 @@ public:
     void assign(const_pointer first, const_pointer last)
     {
         resize(std::distance(first, last));
-        // sadly, memcpy() can be way faster than std::copy()
+        // memcpy() can be way faster than std::copy()
         memcpy(m_data, first, sizeof(value_type) * m_size);
     }
     void assign(pointer first, pointer last)

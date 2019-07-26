@@ -26,12 +26,16 @@ struct OSceneCacheSettings
     {
         uint32_t strip_unchanged : 1;
         uint32_t apply_refinement : 1;
+        uint32_t flatten_hierarchy : 1;
+        uint32_t merge_meshes : 1; // todo
     } flags{};
 
     OSceneCacheSettings()
     {
         flags.strip_unchanged = 1;
         flags.apply_refinement = 1;
+        flags.flatten_hierarchy = 0;
+        flags.merge_meshes = 0;
     }
 };
 
@@ -48,10 +52,25 @@ msDeclPtr(OSceneCache);
 
 struct ISceneCacheSettings
 {
+    struct Flags
+    {
+        uint32_t convert_scenes : 1;
+        uint32_t enable_diff : 1;
+        uint32_t preload_scenes : 1; // todo
+        uint32_t preload_entire_file : 1;
+        uint32_t generate_velocities : 1;
+    } flags{};
     int max_history = 2;
-    bool convert_scene = true;
-    bool enable_diff = true;
-    bool preload_entire_file = false;
+
+
+    ISceneCacheSettings()
+    {
+        flags.convert_scenes = 1;
+        flags.enable_diff = 1;
+        flags.preload_scenes = 1;
+        flags.preload_entire_file = 0;
+        flags.generate_velocities = 0;
+    }
 };
 
 class ISceneCache

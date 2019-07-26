@@ -64,7 +64,7 @@ void Scene::strip(Scene& base)
         parallel_for(0, (int)entity_count, 10, [this, &base](int ei) {
             auto& ecur = entities[ei];
             auto& ebase = base.entities[ei];
-            if (ecur->path == ebase->path)
+            if (ecur->id == ebase->id)
                 ecur->strip(*ebase);
         });
     }
@@ -77,7 +77,7 @@ void Scene::merge(Scene& base)
         parallel_for(0, (int)entity_count, 10, [this, &base](int ei) {
             auto& ecur = entities[ei];
             auto& ebase = base.entities[ei];
-            if (ecur->path == ebase->path)
+            if (ecur->id == ebase->id)
                 ecur->merge(*ebase);
         });
     }
@@ -92,7 +92,7 @@ void Scene::diff(const Scene& s1, const Scene& s2)
         parallel_for(0, (int)entity_count, 10, [this, &s1, &s2](int i) {
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
-            if (e1->path == e2->path) {
+            if (e1->id == e2->id) {
                 auto e3 = e1->clone();
                 e3->diff(*e1, *e2);
                 entities[i] = std::static_pointer_cast<Transform>(e3);
@@ -110,7 +110,7 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
         parallel_for(0, (int)entity_count, 10, [this, &s1, &s2, t](int i) {
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
-            if (e1->path == e2->path) {
+            if (e1->id == e2->id) {
                 auto e3 = e1->clone();
                 e3->lerp(*e1, *e2, t);
                 entities[i] = std::static_pointer_cast<Transform>(e3);
@@ -177,19 +177,22 @@ void Scene::import(const SceneImportSettings& cv)
             auto& mesh = static_cast<Mesh&>(*obj);
             for (auto& bone : mesh.bones)
                 sanitizeHierarchyPath(bone->path);
-            mesh.refine_settings.flags.triangulate = 1;
-            mesh.refine_settings.flags.split = 1;
-            mesh.refine_settings.flags.optimize_topology = 1;
+            if (cv.flags.optimize_meshes) {
+                mesh.refine_settings.flags.triangulate = 1;
+                mesh.refine_settings.flags.split = 1;
+                mesh.refine_settings.flags.optimize_topology = 1;
+            }
             mesh.refine_settings.split_unit = cv.mesh_split_unit;
             mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
             mesh.refine();
         }
 
-        convert(*obj);
-
-        if (is_mesh) {
-            auto& mesh = static_cast<Mesh&>(*obj);
-            mesh.updateBounds();
+        if (!converters.empty()) {
+            convert(*obj);
+            if (is_mesh) {
+                auto& mesh = static_cast<Mesh&>(*obj);
+                mesh.updateBounds();
+            }
         }
     });
 
@@ -217,6 +220,82 @@ TransformPtr Scene::findEntity(const std::string& path) const
         }
     }
     return ret;
+}
+
+static float4x4 CalcGlobalMatrix(Transform& t)
+{
+    if (!t.parent)
+        return t.local_matrix;
+    else
+        return t.local_matrix * CalcGlobalMatrix(*t.parent);
+}
+
+void Scene::buildHierarchy()
+{
+    auto sorted = entities;
+    std::sort(sorted.begin(), sorted.end(), [](auto& a, auto& b) { return a->path < b->path; });
+
+    auto find = [&sorted](const std::string& path) {
+        auto it = std::lower_bound(sorted.begin(), sorted.end(), path, [](auto& a, auto& path) { return a->path < path; });
+        return it != sorted.end() && (*it)->path == path ? *it : nullptr;
+    };
+
+    int n = (int)entities.size();
+    parallel_for_blocked(0, n, 32, [&](int begin, int end) {
+        std::string path;
+        for (int i = begin; i < end; ++i) {
+            auto& e = entities[i];
+            e->getParentPath(path);
+            e->parent = find(path).get();
+            e->local_matrix = e->toMatrix();
+        }
+    });
+    parallel_for_blocked(0, n, 32, [&](int begin, int end) {
+        std::string path;
+        for (int i = begin; i < end; ++i) {
+            auto& e = entities[i];
+            e->global_matrix = CalcGlobalMatrix(*e);
+        }
+    });
+}
+
+void Scene::flatternHierarchy()
+{
+    std::map<std::string, TransformPtr> result;
+    std::string name, tmp_name;
+    for (auto& e : entities) {
+        if (e->getType() != Entity::Type::Transform) {
+            e->getName(name);
+            {
+                auto& dst = result[name];
+                if (!dst) {
+                    dst = e;
+                    continue;
+                }
+            }
+            for (int i = 0; ; ++i) {
+                char buf[32];
+                sprintf(buf, "%x", i);
+                tmp_name = name;
+                tmp_name += buf;
+
+                auto& dst = result[tmp_name];
+                if (!dst) {
+                    dst = e;
+                    break;
+                }
+            }
+        }
+    }
+
+    entities.clear();
+    for (auto& kvp : result) {
+        auto& e = kvp.second;
+        e->path = "/";
+        e->path += kvp.first;
+        e->assignMatrix(e->global_matrix);
+        entities.push_back(e);
+    }
 }
 
 template<class AssetType>

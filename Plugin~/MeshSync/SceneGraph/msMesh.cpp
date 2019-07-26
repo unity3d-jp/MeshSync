@@ -175,7 +175,7 @@ void BoneData::clear()
 #define EachVertexAttribute(Body)\
     Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(velocities) Body(counts) Body(indices) Body(material_ids)
 
-Mesh::Mesh() {}
+Mesh::Mesh() { id.type = (int)getType(); }
 Mesh::~Mesh() {}
 Entity::Type Mesh::getType() const { return Type::Mesh; }
 bool Mesh::isGeometry() const { return true; }
@@ -218,6 +218,12 @@ void Mesh::deserialize(std::istream& is)
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
         bones.end());
+
+    for (auto& submesh : submeshes)
+        submesh.indices.reset(indices.data() + submesh.index_offset, submesh.index_count);
+    for (auto& split : splits) {
+        split.submeshes.reset(submeshes.data() + split.submesh_offset, split.submesh_count);
+    }
 }
 
 bool Mesh::strip(const Entity& base_)
@@ -562,6 +568,8 @@ void Mesh::refine()
                 nsm = 0;
                 for (int i = 0; i < splits.size(); ++i) {
                     int n = refiner.splits[i].submesh_count;
+                    splits[i].submesh_offset = nsm;
+                    splits[i].submesh_count = n;
                     splits[i].submeshes.reset(&submeshes[nsm], n);
                     nsm += n;
                 }
@@ -569,6 +577,7 @@ void Mesh::refine()
         }
 
         // tangents
+        // generating tangents require normals and uvs
         if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
             tangents.resize(points.size());
             GenerateTangentsTriangleIndexed(tangents.data(),

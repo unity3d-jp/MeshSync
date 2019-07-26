@@ -101,6 +101,20 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
+            if (m_settings.flags.flatten_hierarchy) {
+                desc.scene->buildHierarchy();
+                desc.scene->flatternHierarchy();
+            }
+
+            mu::parallel_invoke([&]() {
+                AssignIDs(*desc.scene, m_id_table);
+            },
+            [&]() {
+                if (m_settings.flags.apply_refinement) {
+                    desc.scene->import(m_import_settings);
+                }
+            });
+
             if (m_settings.flags.strip_unchanged) {
                 if (!m_base_scene)
                     m_base_scene = desc.scene;
@@ -146,7 +160,7 @@ void ISceneCacheImpl::setImportSettings(const SceneImportSettings& cv)
     m_import_settings = cv;
 }
 
-const SceneImportSettings & ISceneCacheImpl::getImportSettings() const
+const SceneImportSettings& ISceneCacheImpl::getImportSettings() const
 {
     return m_import_settings;
 }
@@ -234,16 +248,16 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
         return ret;
 
 
-    // read
+    // read buffer
     m_encoded_buf.resize(rec.size);
     m_ist->seekg(rec.pos, std::ios::beg);
     m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
 
-    // decode
+    // decode buffer
     m_encoder->decode(m_tmp_buf, m_encoded_buf);
     m_scene_buf.swap(m_tmp_buf);
 
-    // deserialize
+    // deserialize scene
     try {
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
@@ -265,12 +279,17 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 
 ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp)
 {
-    if (m_isc_settings.convert_scene)
-        sp->import(m_import_settings);
+    if (m_isc_settings.flags.convert_scenes) {
+        auto tmp = m_import_settings;
+        if (m_osc_settings.flags.apply_refinement)
+            tmp.flags.optimize_meshes = 0; // already optimized
+
+        sp->import(tmp);
+    }
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
-    if (m_last_scene && m_isc_settings.enable_diff) {
+    if (m_last_scene && m_isc_settings.flags.enable_diff) {
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -360,7 +379,7 @@ ISceneCacheFile::ISceneCacheFile(const char *path, const ISceneCacheSettings& se
     m_isc_settings = settings;
 
     if (path) {
-        if (m_isc_settings.preload_entire_file) {
+        if (m_isc_settings.flags.preload_entire_file) {
             RawVector<char> buf;
             if (FileToByteArray(path, buf)) {
                 auto ms = std::make_shared<MemoryStream>();

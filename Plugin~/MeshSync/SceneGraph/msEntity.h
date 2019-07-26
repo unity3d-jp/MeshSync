@@ -3,6 +3,21 @@
 
 namespace ms {
 
+struct EntityID
+{
+    uint32_t n : 28;
+    uint32_t type : 4;
+
+    operator int() const { return *(int*)this; }
+    bool operator==(EntityID v) const { return (int)*this == (int)v; }
+    bool operator!=(EntityID v) const { return (int)*this != (int)v; }
+    bool operator<(EntityID v) const { return (int)*this < (int)v; }
+    bool operator>(EntityID v) const { return (int)*this > (int)v; }
+
+    EntityID& operator=(int v) { *(int*)this = v; return *this; }
+    EntityID(int v = InvalidID) { *this = v; }
+};
+
 class Entity
 {
 public:
@@ -16,6 +31,7 @@ public:
         Points,
     };
 
+    EntityID id;
     int host_id = InvalidID;
     std::string path;
 
@@ -33,6 +49,7 @@ public:
     virtual bool merge(const Entity& base);
     virtual bool diff(const Entity& e1, const Entity& e2);
     virtual bool lerp(const Entity& e1, const Entity& e2, float t);
+    virtual bool genVelocity(const Entity& prev); // todo
     virtual void clear();
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
@@ -42,7 +59,8 @@ public:
     Identifier getIdentifier() const;
     bool isRoot() const;
     bool identify(const Identifier& v) const;
-    const char* getName() const; // get name (leaf) from path
+    void getParentPath(std::string& dst) const;
+    void getName(std::string& dst) const;
 };
 msSerializable(Entity);
 msDeclPtr(Entity);
@@ -78,6 +96,9 @@ public:
 
     // non-serializable
     int order = 0;
+    Transform *parent = nullptr;
+    float4x4 local_matrix = float4x4::identity();
+    float4x4 global_matrix = float4x4::identity();
 
 protected:
     Transform();

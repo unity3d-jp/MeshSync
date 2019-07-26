@@ -73,6 +73,9 @@
     <ClCompile Include="MeshSync\Utils\msAsyncSceneExporter.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\Utils\msIDGenerator.cpp">
+      <Filter>MeshSync\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">

@@ -443,10 +443,10 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
     }
 
     if (dst.normals.empty())
-        dst.refine_settings.flags.gen_normals = true;
+        dst.refine_settings.flags.gen_normals = 1;
     if (dst.tangents.empty())
-        dst.refine_settings.flags.gen_tangents = true;
-    dst.refine_settings.flags.flip_faces = true;
+        dst.refine_settings.flags.gen_tangents = 1;
+    dst.refine_settings.flags.flip_faces = 1;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     dst.setupMeshDataFlags();
 }

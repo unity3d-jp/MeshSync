@@ -930,8 +930,11 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     }
 
     if (m_settings.sync_meshes) {
+        if (dst.normals.empty())
+            dst.refine_settings.flags.gen_normals = 1;
+        if (dst.tangents.empty())
+            dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-        dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.flip_faces = 1;
     }
     dst.setupMeshDataFlags();
