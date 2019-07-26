@@ -390,11 +390,15 @@ msAPI ms::Entity::Type msTransformGetType(ms::Transform *self)
 }
 msAPI int msTransformGetID(ms::Transform *self)
 {
-    return self->id;
+    return self->host_id;
 }
-msAPI void msTransformSetID(ms::Transform *self, int v)
+msAPI int msTransformGetHostID(ms::Transform *self)
 {
-    self->id = v;
+    return self->host_id;
+}
+msAPI void msTransformSetHostID(ms::Transform *self, int v)
+{
+    self->host_id = v;
 }
 msAPI int msTransformGetIndex(ms::Transform *self)
 {

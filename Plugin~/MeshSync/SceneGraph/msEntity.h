@@ -16,7 +16,7 @@ public:
         Points,
     };
 
-    int id = InvalidID;
+    int host_id = InvalidID;
     std::string path;
 
 protected:

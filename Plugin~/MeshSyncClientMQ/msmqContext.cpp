@@ -146,7 +146,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
         // extract mesh data
         parallel_for_each(m_obj_records.begin(), m_obj_records.end(), [this, doc](ObjectRecord& rec) {
             rec.dst->path = GetPath(doc, rec.obj);
-            ExtractID(rec.dst->path.c_str(), rec.dst->id);
+            ExtractID(rec.dst->path.c_str(), rec.dst->host_id);
 
             bool visible = rec.obj->GetVisible() != 0;
             rec.dst->visible = visible;
@@ -458,19 +458,19 @@ bool msmqContext::importMeshes(MQDocument doc)
     // import meshes
     for (auto& data : ret->entities) {
         if (data->getType() == ms::Entity::Type::Mesh) {
-            auto& mdata = (ms::Mesh&)*data;
+            auto& dst = (ms::Mesh&)*data;
 
             // create name that includes ID
             char name[MaxNameBuffer];
-            sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
+            sprintf(name, "%s [id:%08x]", ms::ToANSI(dst.getName()).c_str(), dst.host_id);
 
             if (auto obj = findMesh(doc, name)) {
                 doc->DeleteObject(doc->GetObjectIndex(obj));
             }
-            auto obj = createMesh(doc, mdata, name);
+            auto obj = createMesh(doc, dst, name);
             doc->AddObject(obj);
 
-            m_host_meshes[mdata.id] = std::static_pointer_cast<ms::Mesh>(data);
+            m_host_meshes[dst.host_id] = std::static_pointer_cast<ms::Mesh>(data);
         }
     }
     return true;
@@ -630,7 +630,7 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     // transform
     {
         dst.refine_settings.flags.apply_world2local = 1;
-        auto ite = m_host_meshes.find(dst.id);
+        auto ite = m_host_meshes.find(dst.host_id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
             dst.td_flags.has_transform = 0;

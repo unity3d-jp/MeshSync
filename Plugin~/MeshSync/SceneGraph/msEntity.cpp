@@ -50,13 +50,13 @@ void Entity::serialize(std::ostream& os) const
 {
     int type = (int)getType();
     write(os, type);
-    write(os, id);
+    write(os, host_id);
     write(os, path);
 }
 void Entity::deserialize(std::istream& is)
 {
     // type is consumed by create()
-    read(is, id);
+    read(is, host_id);
     read(is, path);
 }
 
@@ -90,7 +90,7 @@ bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
 
 void Entity::clear()
 {
-    id = InvalidID;
+    host_id = InvalidID;
     path.clear();
 }
 
@@ -118,7 +118,7 @@ EntityPtr Entity::clone()
 
 Identifier Entity::getIdentifier() const
 {
-    return Identifier{ path, id };
+    return Identifier{ path, host_id };
 }
 
 bool Entity::isRoot() const
@@ -129,8 +129,8 @@ bool Entity::isRoot() const
 bool Entity::identify(const Identifier& v) const
 {
     bool ret = path == v.name;
-    if (!ret && id != InvalidID && v.id != InvalidID)
-        ret = id == v.id;
+    if (!ret && host_id != InvalidID && v.id != InvalidID)
+        ret = host_id == v.id;
     return ret;
 }
 

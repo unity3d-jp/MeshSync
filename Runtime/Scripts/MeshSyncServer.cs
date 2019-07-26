@@ -711,7 +711,7 @@ namespace UTJ.MeshSync
                 int numObjects = scene.numEntities;
                 for (int i = 0; i < numObjects; ++i)
                 {
-                    Component dst = null;
+                    EntityRecord dst = null;
                     var src = scene.GetEntity(i);
                     switch (src.entityType)
                     {
@@ -733,7 +733,7 @@ namespace UTJ.MeshSync
                     }
 
                     if (dst != null && onUpdateEntity != null)
-                        onUpdateEntity.Invoke(dst.gameObject, src);
+                        onUpdateEntity.Invoke(dst.go, src);
                 }
             });
 
@@ -1378,37 +1378,25 @@ namespace UTJ.MeshSync
                 onUpdateMaterial.Invoke(dstmat, src);
         }
 
-        SkinnedMeshRenderer UpdateMesh(MeshData data)
+        EntityRecord UpdateMesh(MeshData data)
         {
-            var trans = UpdateTransform(data.transform);
-            if (trans == null || !m_syncMeshes)
+            var dtrans = data.transform;
+            var dflags = data.dataFlags;
+            var rec = UpdateTransform(dtrans);
+            if (rec == null || !m_syncMeshes || dflags.unchanged)
                 return null;
 
-            var data_trans = data.transform;
-            var data_id = data_trans.id;
-            var path = data_trans.path;
-            var dataFlags = data.dataFlags;
-
-            EntityRecord rec = null;
-            if (!m_clientObjects.TryGetValue(path, out rec) && data_id != Misc.InvalidID)
-                m_hostObjects.TryGetValue(data_id, out rec);
-            if (rec == null)
+            if (rec.reference != null)
             {
-                if (m_logging)
-                    Debug.LogError("Something is wrong");
-                return null;
-            }
-            else if (rec.reference != null)
-            {
-                // update later on UpdateReference()
+                // references will be resolved later in UpdateReference()
                 return null;
             }
 
-            var target = rec.go.GetComponent<Transform>();
-            var go = target.gameObject;
-
+            var path = dtrans.path;
+            var go = rec.go;
+            var trans = go.transform;
             bool activeInHierarchy = go.activeInHierarchy;
-            if (!activeInHierarchy && !dataFlags.hasPoints)
+            if (!activeInHierarchy && !dflags.hasPoints)
                 return null;
 
 
@@ -1419,7 +1407,7 @@ namespace UTJ.MeshSync
             // update mesh
             for (int si = 0; si < data.numSplits; ++si)
             {
-                var t = target;
+                var t = trans;
                 if (si > 0)
                 {
                     // make split mesh
@@ -1428,7 +1416,7 @@ namespace UTJ.MeshSync
                     t.gameObject.SetActive(true);
                 }
 
-                if (dataFlags.hasIndices)
+                if (dflags.hasIndices)
                 {
                     var split = data.GetSplit(si);
                     if (split.numPoints == 0 || split.numIndices == 0)
@@ -1438,7 +1426,7 @@ namespace UTJ.MeshSync
                     else
                     {
                         rec.editMesh = CreateEditedMesh(data, split);
-                        rec.editMesh.name = si == 0 ? target.name : target.name + "[" + si + "]";
+                        rec.editMesh.name = si == 0 ? trans.name : trans.name + "[" + si + "]";
                     }
                 }
 
@@ -1451,7 +1439,7 @@ namespace UTJ.MeshSync
                 t.gameObject.SetActive(false);
 
                 // ignore unchanged
-                if (dataFlags.hasIndices && (rec.editMesh == null || !dataFlags.unchanged))
+                if (dflags.hasIndices)
                 {
                     var collider = t.GetComponent<MeshCollider>();
                     bool updateCollider = m_updateMeshColliders && collider != null &&
@@ -1502,7 +1490,7 @@ namespace UTJ.MeshSync
                     smr.updateWhenOffscreen = updateWhenOffscreen;
                 }
 
-                if (dataFlags.hasBlendshapeWeights && rec.editMesh != null)
+                if (dflags.hasBlendshapeWeights && rec.editMesh != null)
                 {
                     int numBlendShapes = Math.Min(data.numBlendShapes, rec.editMesh.blendShapeCount);
                     for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -1529,7 +1517,7 @@ namespace UTJ.MeshSync
             if (materialsUpdated)
                 AssignMaterials(rec);
 
-            return trans.GetComponent<SkinnedMeshRenderer>();
+            return rec;
         }
 
         PinnedList<int> m_tmpI = new PinnedList<int>();
@@ -1667,18 +1655,17 @@ namespace UTJ.MeshSync
             return mesh;
         }
 
-        PointCache UpdatePoints(PointsData data)
+        EntityRecord UpdatePoints(PointsData data)
         {
-            var trans = UpdateTransform(data.transform);
-            if (trans == null || !m_syncPoints)
+            var dtrans = data.transform;
+            var rec = UpdateTransform(dtrans);
+            if (rec == null || !m_syncPoints)
                 return null;
 
-            // note: reference will be resolved in UpdateReference()
+            // reference (source mesh) will be resolved in UpdateReference()
 
-            var data_trans = data.transform;
-            var data_id = data_trans.id;
-            var path = data_trans.path;
-            var go = trans.gameObject;
+            var path = dtrans.path;
+            var go = rec.go;
 
             Misc.GetOrAddComponent<PointCacheRenderer>(go);
             var pts = Misc.GetOrAddComponent<PointCache>(go);
@@ -1695,7 +1682,7 @@ namespace UTJ.MeshSync
                 for (int di = 0; di < numData; ++di)
                     ReadPointsData(data.GetData(di), dst[di]);
             }
-            return pts;
+            return rec;
         }
 
         void ReadPointsData(PointsCacheData src, PointCache.Data dst)
@@ -1726,27 +1713,29 @@ namespace UTJ.MeshSync
             }
         }
 
-        Transform UpdateTransform(TransformData data)
+        EntityRecord UpdateTransform(TransformData data)
         {
             var path = data.path;
-            int data_id = data.id;
+            int hostID = data.hostID;
             if (path.Length == 0)
                 return null;
 
             Transform trans = null;
             EntityRecord rec = null;
-            if (data_id != Misc.InvalidID)
+            if (hostID != Misc.InvalidID)
             {
-                if (m_hostObjects.TryGetValue(data_id, out rec))
+                if (m_hostObjects.TryGetValue(hostID, out rec))
                 {
                     if (rec.go == null)
                     {
-                        m_hostObjects.Remove(data_id);
+                        m_hostObjects.Remove(hostID);
                         rec = null;
                     }
                 }
+                if (rec == null)
+                    return null;
             }
-            if (rec == null)
+            else
             {
                 if (m_clientObjects.TryGetValue(path, out rec))
                 {
@@ -1756,24 +1745,20 @@ namespace UTJ.MeshSync
                         rec = null;
                     }
                 }
-            }
-
-            if (rec != null)
-            {
-                trans = rec.go.GetComponent<Transform>();
-            }
-            else
-            {
-                bool created = false;
-                trans = FindOrCreateObjectByPath(path, true, ref created);
-                rec = new EntityRecord
+                if (rec == null)
                 {
-                    go = trans.gameObject,
-                    recved = true,
-                };
-                m_clientObjects.Add(path, rec);
+                    bool created = false;
+                    trans = FindOrCreateObjectByPath(path, true, ref created);
+                    rec = new EntityRecord
+                    {
+                        go = trans.gameObject,
+                        recved = true,
+                    };
+                    m_clientObjects.Add(path, rec);
+                }
             }
 
+            trans = rec.go.GetComponent<Transform>();
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
@@ -1795,18 +1780,20 @@ namespace UTJ.MeshSync
                 if (m_syncVisibility)
                     trans.gameObject.SetActive(data.visibleHierarchy);
             }
-            return trans;
+            return rec;
         }
 
-        Camera UpdateCamera(CameraData data)
+        EntityRecord UpdateCamera(CameraData data)
         {
-            var trans = UpdateTransform(data.transform);
-            if (trans == null || !m_syncCameras)
+            var dtrans = data.transform;
+            var dflags = data.dataFlags;
+            var rec = UpdateTransform(dtrans);
+            if (rec == null || !m_syncCameras || dflags.unchanged)
                 return null;
 
-            var cam = Misc.GetOrAddComponent<Camera>(trans.gameObject);
+            var cam = Misc.GetOrAddComponent<Camera>(rec.go);
             if (m_syncVisibility)
-                cam.enabled = data.transform.visible;
+                cam.enabled = dtrans.visible;
 
             cam.orthographic = data.orthographic;
 
@@ -1838,18 +1825,20 @@ namespace UTJ.MeshSync
                 cam.nearClipPlane = data.nearClipPlane;
                 cam.farClipPlane = data.farClipPlane;
             }
-            return cam;
+            return rec;
         }
 
-        Light UpdateLight(LightData data)
+        EntityRecord UpdateLight(LightData data)
         {
-            var trans = UpdateTransform(data.transform);
-            if (trans == null || !m_syncLights)
+            var dtrans = data.transform;
+            var dflags = data.dataFlags;
+            var rec = UpdateTransform(dtrans);
+            if (rec == null || !m_syncLights || dflags.unchanged)
                 return null;
 
-            var lt = Misc.GetOrAddComponent<Light>(trans.gameObject);
+            var lt = Misc.GetOrAddComponent<Light>(rec.go);
             if (m_syncVisibility)
-                lt.enabled = data.transform.visible;
+                lt.enabled = dtrans.visible;
 
             var lightType = data.lightType;
             if ((int)lightType != -1)
@@ -1865,7 +1854,7 @@ namespace UTJ.MeshSync
                 lt.range = data.range;
             if (data.spotAngle > 0.0f)
                 lt.spotAngle = data.spotAngle;
-            return lt;
+            return rec;
         }
 
         void UpdateReference(EntityRecord dst, EntityRecord src)
@@ -2225,24 +2214,25 @@ namespace UTJ.MeshSync
 
             if (ret)
             {
-                var dst_trans = dst.transform;
+                var dstTrans = dst.transform;
                 var trans = renderer.GetComponent<Transform>();
-                dst_trans.id = GetObjectlID(renderer.gameObject);
-                dst_trans.position = trans.localPosition;
-                dst_trans.rotation = trans.localRotation;
-                dst_trans.scale = trans.localScale;
+                dstTrans.hostID = GetObjectlID(renderer.gameObject);
+                dstTrans.position = trans.localPosition;
+                dstTrans.rotation = trans.localRotation;
+                dstTrans.scale = trans.localScale;
                 dst.local2world = trans.localToWorldMatrix;
                 dst.world2local = trans.worldToLocalMatrix;
 
-                if (!m_hostObjects.ContainsKey(dst_trans.id))
+                EntityRecord rec;
+                if(!m_hostObjects.TryGetValue(dstTrans.hostID, out rec))
                 {
-                    m_hostObjects[dst_trans.id] = new EntityRecord();
+                    rec = new EntityRecord();
+                    m_hostObjects.Add(dstTrans.hostID, rec);
                 }
-                var rec = m_hostObjects[dst_trans.id];
                 rec.go = renderer.gameObject;
                 rec.origMesh = origMesh;
 
-                dst_trans.path = BuildPath(renderer.GetComponent<Transform>());
+                dstTrans.path = BuildPath(renderer.GetComponent<Transform>());
                 m_server.ServeMesh(dst);
             }
             return ret;

@@ -1524,8 +1524,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
         [DllImport("MeshSyncServer")] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern EntityType msTransformGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr self, int v);
+        [DllImport("MeshSyncServer")] static extern int msTransformGetHostID(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msTransformSetHostID(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msTransformSetIndex(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetPath(IntPtr self);
@@ -1563,10 +1563,10 @@ namespace UTJ.MeshSync
         {
             get { return msTransformGetType(self); }
         }
-        public int id
+        public int hostID
         {
-            get { return msTransformGetID(self); }
-            set { msTransformSetID(self, value); }
+            get { return msTransformGetHostID(self); }
+            set { msTransformSetHostID(self, value); }
         }
         public int index
         {

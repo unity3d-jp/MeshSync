@@ -51,7 +51,7 @@ bool EntityManager::erase(int id)
 {
     if (id == InvalidID)
         return false;
-    auto it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->id == id; });
+    auto it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->host_id == id; });
     if (it != m_records.end()) {
         it->second.waitTask();
         m_records.erase(it);
@@ -66,7 +66,7 @@ bool EntityManager::erase(const Identifier& identifier)
     auto it = m_records.find(identifier.name);
     if (it == m_records.end() && identifier.id != InvalidID) {
         int id = identifier.id;
-        it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->id == id; });
+        it = std::find_if(m_records.begin(), m_records.end(), [id](const kvp& v) { return v.second.entity->host_id == id; });
     }
     if (it != m_records.end()) {
         it->second.waitTask();
