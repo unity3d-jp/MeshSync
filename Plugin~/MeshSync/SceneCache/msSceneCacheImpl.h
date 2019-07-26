@@ -69,16 +69,17 @@ public:
     const SceneImportSettings& getImportSettings() const override;
 
     size_t getNumScenes() const override;
-    std::tuple<float, float> getTimeRange() const override;
+    TimeRange getTimeRange() const override;
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
 
     bool prepare(istream_ptr ist);
     bool valid() const;
+    int timeToIndex(float time) const;
 
 protected:
-    ScenePtr getByIndexImpl(size_t i, bool convert);
-    ScenePtr applyDiff(ScenePtr& sp);
+    ScenePtr getByIndexImpl(size_t i);
+    ScenePtr postprocess(ScenePtr& sp);
 
     struct SceneRecord
     {

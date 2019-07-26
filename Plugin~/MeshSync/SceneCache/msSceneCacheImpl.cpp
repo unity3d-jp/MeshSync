@@ -190,7 +190,7 @@ bool ISceneCacheImpl::prepare(istream_ptr ist)
     std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
 
     if (m_osc_settings.flags.strip_unchanged)
-        m_base_scene = getByIndexImpl(0, false);
+        m_base_scene = getByIndexImpl(0);
 
     return valid();
 }
@@ -200,6 +200,15 @@ bool ISceneCacheImpl::valid() const
     return this && !m_records.empty();
 }
 
+int ISceneCacheImpl::timeToIndex(float time) const
+{
+    if (!valid())
+        return 0;
+    auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
+    return int(std::distance(m_records.begin(), p) - 1);
+}
+
+
 size_t ISceneCacheImpl::getNumScenes() const
 {
     if (!valid())
@@ -207,14 +216,14 @@ size_t ISceneCacheImpl::getNumScenes() const
     return m_records.size();
 }
 
-std::tuple<float, float> ISceneCacheImpl::getTimeRange() const
+TimeRange ISceneCacheImpl::getTimeRange() const
 {
     if (!valid())
         return {0.0f, 0.0f};
     return { m_records.front().time, m_records.back().time };
 }
 
-ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
+ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 {
     if (!valid() || i >= m_records.size())
         return nullptr;
@@ -240,8 +249,6 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
         ret->deserialize(m_scene_buf);
         if (m_osc_settings.flags.strip_unchanged && m_base_scene)
             ret->merge(*m_base_scene);
-        if (convert)
-            ret->import(m_import_settings);
     }
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());
@@ -256,8 +263,13 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool convert)
     return ret;
 }
 
-ScenePtr ISceneCacheImpl::applyDiff(ScenePtr& sp)
+ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp)
 {
+    if (m_isc_settings.convert_scene)
+        sp->import(m_import_settings);
+
+    // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
+    // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     if (m_last_scene && m_isc_settings.enable_diff) {
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
@@ -265,6 +277,7 @@ ScenePtr ISceneCacheImpl::applyDiff(ScenePtr& sp)
         return m_last_diff;
     }
     else {
+        m_last_diff = nullptr;
         m_last_scene = sp;
         return sp;
     }
@@ -275,41 +288,42 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
     if (!valid())
         return nullptr;
 
-    auto ret = getByIndexImpl(i, m_isc_settings.convert_scene);
-    return applyDiff(ret);
+    auto ret = getByIndexImpl(i);
+    return postprocess(ret);
 }
 
-ScenePtr ISceneCacheImpl::getByTime(float time, bool lerp)
+ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
 {
     if (!valid())
         return nullptr;
 
-    bool convert = m_isc_settings.convert_scene;
-
     ScenePtr ret;
-    if (time <= m_records.front().time)
-        ret = getByIndexImpl(0, convert);
-    else if(time >= m_records.back().time)
-        ret = getByIndexImpl(m_records.size() - 1, convert);
+
+    auto time_range = getTimeRange();
+    if (time <= time_range.start) {
+        ret = getByIndexImpl(0);
+    }
+    else if (time >= time_range.end) {
+        ret = getByIndexImpl(m_records.size() - 1);
+    }
     else {
-        auto i = std::distance(m_records.begin(),
-            std::lower_bound(m_records.begin(), m_records.end(), time, [time](auto& a, float t) { return a.time < t; })) - 1;
-        if (lerp) {
+        int i = timeToIndex(time);
+        if (interpolation) {
             auto t1 = m_records[i + 0].time;
             auto t2 = m_records[i + 1].time;
-            auto s1 = getByIndexImpl(i + 0, convert);
-            auto s2 = getByIndexImpl(i + 1, convert);
+            auto s1 = getByIndexImpl(i + 0);
+            auto s2 = getByIndexImpl(i + 1);
 
             float t = (time - t1) / (t2 - t1);
             ret = Scene::create();
             ret->lerp(*s1, *s2, t);
         }
         else {
-            ret = getByIndexImpl(i, convert);
+            ret = getByIndexImpl(i);
         }
     }
 
-    return applyDiff(ret);
+    return postprocess(ret);
 }
 
 

@@ -13,6 +13,12 @@ enum class SceneCacheEncoding
     ZSTD,
 };
 
+struct TimeRange
+{
+    float start = 0.0f;
+    float end = 0.0f;
+};
+
 struct OSceneCacheSettings
 {
     SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
@@ -56,7 +62,7 @@ public:
     virtual void setImportSettings(const SceneImportSettings& cv) = 0;
     virtual const SceneImportSettings& getImportSettings() const = 0;
 
-    virtual std::tuple<float, float> getTimeRange() const = 0;
+    virtual TimeRange getTimeRange() const = 0;
     virtual size_t getNumScenes() const = 0;
     virtual ScenePtr getByIndex(size_t i) = 0;
     virtual ScenePtr getByTime(float t, bool lerp) = 0;

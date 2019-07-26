@@ -99,7 +99,9 @@ msAPI void msISceneCacheGetTimeRange(ms::ISceneCache *self, float *start, float 
 {
     if (!self)
         return;
-    std::tie(*start, *end) = self->getTimeRange();
+    auto v = self->getTimeRange();
+    *start = v.start;
+    *end = v.end;
 }
 msAPI int msISceneCacheGetNumScenes(ms::ISceneCache *self)
 {
