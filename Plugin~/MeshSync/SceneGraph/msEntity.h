@@ -142,9 +142,10 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    bool diff(const Entity& e1, const Entity& e2) override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
     void clear() override;
     uint64_t checksumTrans() const override;
-    bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 };
 msSerializable(Camera);
@@ -204,9 +205,10 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    bool diff(const Entity& e1, const Entity& e2) override;
+    bool lerp(const Entity& src1, const Entity& src2, float t) override;
     void clear() override;
     uint64_t checksumTrans() const override;
-    bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 };
 msSerializable(Light);
@@ -269,7 +271,7 @@ msDeclPtr(PointsData);
 
 class Points : public Transform
 {
-    using super = Transform;
+using super = Transform;
 public:
     // Transform::reference is used for reference for Mesh
     std::vector<PointsDataPtr> data;

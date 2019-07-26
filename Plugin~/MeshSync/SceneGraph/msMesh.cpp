@@ -4,6 +4,9 @@
 
 namespace ms {
 
+static_assert(sizeof(MeshDataFlags) == sizeof(uint32_t), "");
+static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
+
 // Mesh
 #pragma region Mesh
 
@@ -655,8 +658,8 @@ void Mesh::refine()
         }
     }
 
-    setupMeshDataFlags();
     mrs.clear();
+    setupMeshDataFlags();
 }
 
 void Mesh::makeDoubleSided()

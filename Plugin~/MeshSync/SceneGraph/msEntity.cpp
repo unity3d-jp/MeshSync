@@ -5,6 +5,11 @@
 
 namespace ms {
 
+static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");
+static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
+static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
+static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
+
 // Entity
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream& is)
@@ -214,13 +219,9 @@ bool Transform::diff(const Entity& e1_, const Entity& e2_)
         e1.visible_hierarchy == e2.visible_hierarchy &&
         e1.reference == e2.reference
         )
-    {
         td_flags.unchanged = 1;
-    }
     else
-    {
         td_flags.unchanged = 0;
-    }
     return true;
 }
 
@@ -292,6 +293,45 @@ void Camera::deserialize(std::istream& is)
     EachMember(msRead);
 }
 
+bool Camera::diff(const Entity& e1_, const Entity& e2_)
+{
+    if (!super::diff(e1_, e2_))
+        return false;
+    auto& e1 = static_cast<const Camera&>(e1_);
+    auto& e2 = static_cast<const Camera&>(e2_);
+
+    if (e1.is_ortho == e2.is_ortho &&
+        e1.fov == e2.fov &&
+        e1.near_plane == e2.near_plane &&
+        e1.far_plane == e2.far_plane &&
+        e1.focal_length == e2.focal_length &&
+        e1.sensor_size == e2.sensor_size &&
+        e1.lens_shift == e2.lens_shift
+        )
+        cd_flags.unchanged = 1;
+    else
+        cd_flags.unchanged = 0;
+    return true;
+}
+
+bool Camera::lerp(const Entity& s1_, const Entity& s2_, float t)
+{
+    if (!super::lerp(s1_, s2_, t))
+        return false;
+    auto& s1 = static_cast<const Camera&>(s1_);
+    auto& s2 = static_cast<const Camera&>(s2_);
+
+#define DoLerp(N) N = mu::lerp(s1.N, s2.N, t)
+    DoLerp(fov);
+    DoLerp(near_plane);
+    DoLerp(far_plane);
+    DoLerp(focal_length);
+    DoLerp(sensor_size);
+    DoLerp(lens_shift);
+#undef DoLerp
+    return true;
+}
+
 void Camera::clear()
 {
     super::clear();
@@ -314,24 +354,6 @@ uint64_t Camera::checksumTrans() const
     EachCameraAttribute(Body);
 #undef Body
     return ret;
-}
-
-bool Camera::lerp(const Entity& s1_, const Entity& s2_, float t)
-{
-    if (!super::lerp(s1_, s2_, t))
-        return false;
-    auto& s1 = static_cast<const Camera&>(s1_);
-    auto& s2 = static_cast<const Camera&>(s2_);
-
-#define DoLerp(N) N = mu::lerp(s1.N, s2.N, t)
-    DoLerp(fov);
-    DoLerp(near_plane);
-    DoLerp(far_plane);
-    DoLerp(focal_length);
-    DoLerp(sensor_size);
-    DoLerp(lens_shift);
-#undef DoLerp
-    return true;
 }
 
 EntityPtr Camera::clone()
@@ -372,6 +394,42 @@ void Light::deserialize(std::istream & is)
     EachMember(msRead);
 }
 
+bool Light::diff(const Entity& e1_, const Entity& e2_)
+{
+    if (!super::diff(e1_, e2_))
+        return false;
+    auto& e1 = static_cast<const Light&>(e1_);
+    auto& e2 = static_cast<const Light&>(e2_);
+
+    if (e1.light_type == e2.light_type &&
+        e1.shadow_type == e2.shadow_type &&
+        e1.color == e2.color &&
+        e1.intensity == e2.intensity &&
+        e1.range == e2.range &&
+        e1.spot_angle == e2.spot_angle
+        )
+        ld_flags.unchanged = 1;
+    else
+        ld_flags.unchanged = 0;
+    return true;
+}
+
+bool Light::lerp(const Entity &s1_, const Entity& s2_, float t)
+{
+    if (!super::lerp(s1_, s2_, t))
+        return false;
+    auto& s1 = static_cast<const Light&>(s1_);
+    auto& s2 = static_cast<const Light&>(s2_);
+
+#define DoLerp(N) N = mu::lerp(s1.N, s2.N, t)
+    DoLerp(color);
+    DoLerp(intensity);
+    DoLerp(range);
+    DoLerp(spot_angle);
+#undef DoLerp
+    return true;
+}
+
 void Light::clear()
 {
     super::clear();
@@ -392,22 +450,6 @@ uint64_t Light::checksumTrans() const
     EachLightAttribute(Body);
 #undef Body
     return ret;
-}
-
-bool Light::lerp(const Entity &s1_, const Entity& s2_, float t)
-{
-    if (!super::lerp(s1_, s2_, t))
-        return false;
-    auto& s1 = static_cast<const Light&>(s1_);
-    auto& s2 = static_cast<const Light&>(s2_);
-
-#define DoLerp(N) N = mu::lerp(s1.N, s2.N, t)
-    DoLerp(color);
-    DoLerp(intensity);
-    DoLerp(range);
-    DoLerp(spot_angle);
-#undef DoLerp
-    return true;
 }
 
 EntityPtr Light::clone()

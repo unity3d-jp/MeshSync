@@ -1387,6 +1387,7 @@ namespace UTJ.MeshSync
             var data_trans = data.transform;
             var data_id = data_trans.id;
             var path = data_trans.path;
+            var dataFlags = data.dataFlags;
 
             EntityRecord rec = null;
             if (!m_clientObjects.TryGetValue(path, out rec) && data_id != Misc.InvalidID)
@@ -1407,13 +1408,12 @@ namespace UTJ.MeshSync
             var go = target.gameObject;
 
             bool activeInHierarchy = go.activeInHierarchy;
-            if (!activeInHierarchy && !data.flags.hasPoints)
+            if (!activeInHierarchy && !dataFlags.hasPoints)
                 return null;
 
 
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
-            var flags = data.flags;
             bool skinned = data.numBones > 0;
 
             // update mesh
@@ -1428,7 +1428,7 @@ namespace UTJ.MeshSync
                     t.gameObject.SetActive(true);
                 }
 
-                if (flags.hasIndices)
+                if (dataFlags.hasIndices)
                 {
                     var split = data.GetSplit(si);
                     if (split.numPoints == 0 || split.numIndices == 0)
@@ -1451,7 +1451,7 @@ namespace UTJ.MeshSync
                 t.gameObject.SetActive(false);
 
                 // ignore unchanged
-                if (flags.hasIndices && (rec.editMesh == null || !data.flags.unchanged))
+                if (dataFlags.hasIndices && (rec.editMesh == null || !dataFlags.unchanged))
                 {
                     var collider = t.GetComponent<MeshCollider>();
                     bool updateCollider = m_updateMeshColliders && collider != null &&
@@ -1502,7 +1502,7 @@ namespace UTJ.MeshSync
                     smr.updateWhenOffscreen = updateWhenOffscreen;
                 }
 
-                if (flags.hasBlendshapeWeights && rec.editMesh != null)
+                if (dataFlags.hasBlendshapeWeights && rec.editMesh != null)
                 {
                     int numBlendShapes = Math.Min(data.numBlendShapes, rec.editMesh.blendShapeCount);
                     for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -1545,44 +1545,44 @@ namespace UTJ.MeshSync
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 #endif
 
-            var flags = data.flags;
-            if (flags.hasPoints)
+            var dataFlags = data.dataFlags;
+            if (dataFlags.hasPoints)
             {
                 m_tmpV3.Resize(split.numPoints);
                 data.ReadPoints(m_tmpV3, split);
                 mesh.SetVertices(m_tmpV3.List);
             }
-            if (flags.hasNormals)
+            if (dataFlags.hasNormals)
             {
                 m_tmpV3.Resize(split.numPoints);
                 data.ReadNormals(m_tmpV3, split);
                 mesh.SetNormals(m_tmpV3.List);
             }
-            if (flags.hasTangents)
+            if (dataFlags.hasTangents)
             {
                 m_tmpV4.Resize(split.numPoints);
                 data.ReadTangents(m_tmpV4, split);
                 mesh.SetTangents(m_tmpV4.List);
             }
-            if (flags.hasUV0)
+            if (dataFlags.hasUV0)
             {
                 m_tmpV2.Resize(split.numPoints);
                 data.ReadUV0(m_tmpV2, split);
                 mesh.SetUVs(0, m_tmpV2.List);
             }
-            if (flags.hasUV1)
+            if (dataFlags.hasUV1)
             {
                 m_tmpV2.Resize(split.numPoints);
                 data.ReadUV1(m_tmpV2, split);
                 mesh.SetUVs(1, m_tmpV2.List);
             }
-            if (flags.hasColors)
+            if (dataFlags.hasColors)
             {
                 m_tmpC.Resize(split.numPoints);
                 data.ReadColors(m_tmpC, split);
                 mesh.SetColors(m_tmpC.List);
             }
-            if (flags.hasBones)
+            if (dataFlags.hasBones)
             {
                 mesh.bindposes = data.bindposes;
                 if (m_serverSettings.meshMaxBoneInfluence == 4)
@@ -1606,7 +1606,7 @@ namespace UTJ.MeshSync
                 }
 #endif
             }
-            if (flags.hasIndices)
+            if (dataFlags.hasIndices)
             {
                 mesh.subMeshCount = split.numSubmeshes;
                 for (int smi = 0; smi < mesh.subMeshCount; ++smi)
@@ -1636,7 +1636,7 @@ namespace UTJ.MeshSync
 
                 }
             }
-            if (flags.hasBlendshapes)
+            if (dataFlags.hasBlendshapes)
             {
                 var tmpBSP = new PinnedList<Vector3>(split.numPoints);
                 var tmpBSN = new PinnedList<Vector3>(split.numPoints);
@@ -1780,18 +1780,21 @@ namespace UTJ.MeshSync
             rec.visible = data.visible;
             rec.dataType = data.entityType;
 
-            // sync TRS
-            if (m_syncTransform)
+            var dataFlags = data.dataFlags;
+            if (!dataFlags.unchanged)
             {
-                trans.localPosition = data.position;
-                trans.localRotation = data.rotation;
-                trans.localScale = data.scale;
+                // sync TRS
+                if (m_syncTransform)
+                {
+                    trans.localPosition = data.position;
+                    trans.localRotation = data.rotation;
+                    trans.localScale = data.scale;
+                }
+
+                // visibility
+                if (m_syncVisibility)
+                    trans.gameObject.SetActive(data.visibleHierarchy);
             }
-
-            // visibility
-            if (m_syncVisibility)
-                trans.gameObject.SetActive(data.visibleHierarchy);
-
             return trans;
         }
 

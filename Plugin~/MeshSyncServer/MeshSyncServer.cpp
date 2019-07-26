@@ -3,9 +3,6 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSyncServer.h"
 
-// "incompatible with C"
-#pragma warning(disable : 4190)
-
 using namespace mu;
 
 using ms::ServerPtr;
@@ -383,6 +380,10 @@ msAPI ms::Transform* msTransformCreate()
 {
     return ms::Transform::create_raw();
 }
+msAPI uint32_t msTransformGetDataFlags(ms::Transform *self)
+{
+    return (uint32_t&)self->td_flags;
+}
 msAPI ms::Entity::Type msTransformGetType(ms::Transform *self)
 {
     return self->getType();
@@ -467,6 +468,10 @@ msAPI ms::Camera* msCameraCreate()
 {
     return ms::Camera::create_raw();
 }
+msAPI uint32_t msCameraGetDataFlags(ms::Camera *self)
+{
+    return (uint32_t&)self->cd_flags;
+}
 msAPI bool msCameraIsOrtho(ms::Camera *self)
 {
     return self->is_ortho;
@@ -531,6 +536,10 @@ msAPI ms::Light* msLightCreate()
 {
     return ms::Light::create_raw();
 }
+msAPI uint32_t msLightGetDataFlags(ms::Light *self)
+{
+    return (uint32_t&)self->ld_flags;
+}
 msAPI ms::Light::LightType msLightGetType(ms::Light *self)
 {
     return self->light_type;
@@ -587,13 +596,13 @@ msAPI ms::Mesh* msMeshCreate()
 {
     return ms::Mesh::create_raw();
 }
-msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *self)
+msAPI uint32_t msMeshGetDataFlags(ms::Mesh *self)
 {
-    return self->md_flags;
+    return (uint32_t&)self->md_flags;
 }
-msAPI void msMeshSetFlags(ms::Mesh *self, ms::MeshDataFlags v)
+msAPI void msMeshSetFlags(ms::Mesh *self, uint32_t v)
 {
-    self->md_flags = v;
+    (uint32_t&)self->md_flags = v;
 }
 msAPI int msMeshGetNumPoints(ms::Mesh *self)
 {
@@ -1003,9 +1012,9 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma endregion
 
 #pragma region Points
-msAPI ms::PointsDataFlags msPointsDataGetFlags(ms::PointsData *self)
+msAPI uint32_t msPointsDataGetFlags(ms::PointsData *self)
 {
-    return self->pd_flags;
+    return (uint32_t&)self->pd_flags;
 }
 msAPI float msPointsDataGetTime(ms::PointsData *self)
 {

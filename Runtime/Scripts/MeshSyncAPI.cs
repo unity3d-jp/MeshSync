@@ -1522,6 +1522,7 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
+        [DllImport("MeshSyncServer")] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern EntityType msTransformGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr self, int v);
@@ -1554,6 +1555,10 @@ namespace UTJ.MeshSync
             return msTransformCreate();
         }
 
+        public TransformDataFlags dataFlags
+        {
+            get { return msTransformGetDataFlags(self); }
+        }
         public EntityType entityType
         {
             get { return msTransformGetType(self); }
@@ -1618,6 +1623,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
         [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
+        [DllImport("MeshSyncServer")] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern byte msCameraIsOrtho(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msCameraSetOrtho(IntPtr self, byte v);
         [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr self);
@@ -1640,6 +1646,10 @@ namespace UTJ.MeshSync
             return msCameraCreate();
         }
 
+        public CameraDataFlags dataFlags
+        {
+            get { return msCameraGetDataFlags(self); }
+        }
         public bool orthographic
         {
             get { return msCameraIsOrtho(self) != 0; }
@@ -1677,6 +1687,12 @@ namespace UTJ.MeshSync
         }
     }
 
+    public struct LightDataFlags
+    {
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+    }
+
     [StructLayout(LayoutKind.Explicit)]
     public struct LightData
     {
@@ -1685,6 +1701,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
+        [DllImport("MeshSyncServer")] static extern LightDataFlags msLightGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern LightType msLightGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr self, LightType v);
         [DllImport("MeshSyncServer")] static extern LightShadows msLightGetShadowType(IntPtr self);
@@ -1702,6 +1719,11 @@ namespace UTJ.MeshSync
         public static LightData Create()
         {
             return msLightCreate();
+        }
+
+        public LightDataFlags dataFlags
+        {
+            get { return msLightGetDataFlags(self); }
         }
         public LightType lightType
         {
@@ -1852,7 +1874,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
-        [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetFlags(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
         [DllImport("MeshSyncServer")] static extern int msMeshGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msMeshGetNumIndices(IntPtr self);
@@ -1907,9 +1929,9 @@ namespace UTJ.MeshSync
             return msMeshCreate();
         }
 
-        public MeshDataFlags flags
+        public MeshDataFlags dataFlags
         {
-            get { return msMeshGetFlags(self); }
+            get { return msMeshGetDataFlags(self); }
             set { msMeshSetFlags(self, value); }
         }
 
@@ -2015,36 +2037,13 @@ namespace UTJ.MeshSync
     public struct PointsDataFlags
     {
         public BitFlags flags;
-        public bool hasPoints
-        {
-            get { return flags[0]; }
-            set { flags[0] = value; }
-        }
-        public bool hasRotations
-        {
-            get { return flags[1]; }
-            set { flags[1] = value; }
-        }
-        public bool hasScales
-        {
-            get { return flags[2]; }
-            set { flags[2] = value; }
-        }
-        public bool hasColors
-        {
-            get { return flags[3]; }
-            set { flags[3] = value; }
-        }
-        public bool hasVelocities
-        {
-            get { return flags[4]; }
-            set { flags[4] = value; }
-        }
-        public bool hasIDs
-        {
-            get { return flags[5]; }
-            set { flags[5] = value; }
-        }
+        public bool unchanged       { get { return flags[0]; } }
+        public bool hasPoints       { get { return flags[1]; } }
+        public bool hasRotations    { get { return flags[2]; } }
+        public bool hasScales       { get { return flags[3]; } }
+        public bool hasColors       { get { return flags[4]; } }
+        public bool hasVelocities   { get { return flags[5]; } }
+        public bool hasIDs          { get { return flags[6]; } }
     };
 
     public struct PointsCacheData
