@@ -48,10 +48,25 @@ msSerializable(Entity);
 msDeclPtr(Entity);
 
 
+struct TransformDataFlags
+{
+    uint32_t unchanged : 1;
+    uint32_t has_transform : 3; // TRS
+    uint32_t has_visible : 1;
+    uint32_t has_visible_hierarchy : 1;
+    uint32_t has_reference: 1;
+
+    TransformDataFlags()
+    {
+        *(uint32_t*)this = ~0x1u;
+    }
+};
+
 class Transform : public Entity
 {
 using super = Entity;
 public:
+    TransformDataFlags td_flags;
     float3   position = float3::zero();
     quatf    rotation = quatf::identity();
     float3   scale = float3::one();
@@ -59,7 +74,6 @@ public:
 
     bool visible = true;
     bool visible_hierarchy = true;
-    bool has_transform = true;
     std::string reference;
 
     // non-serializable
@@ -76,6 +90,7 @@ public:
     void deserialize(std::istream& is) override;
     void clear() override;
     uint64_t checksumTrans() const override;
+    bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 
@@ -87,10 +102,28 @@ msSerializable(Transform);
 msDeclPtr(Transform);
 
 
+struct CameraDataFlags
+{
+    uint32_t unchanged : 1;
+    uint32_t has_is_ortho : 1;
+    uint32_t has_fov : 1;
+    uint32_t has_near_plane : 1;
+    uint32_t has_far_plane : 1;
+    uint32_t has_focal_length : 1;
+    uint32_t has_sensor_size : 1;
+    uint32_t has_lens_shift : 1;
+
+    CameraDataFlags()
+    {
+        *(uint32_t*)this = ~0x1u;
+    }
+};
+
 class Camera : public Transform
 {
 using super = Transform;
 public:
+    CameraDataFlags cd_flags;
     bool is_ortho = false;
     float fov = 30.0f;
     float near_plane = 0.3f;
@@ -119,6 +152,22 @@ msDeclPtr(Camera);
 
 
 
+struct LightDataFlags
+{
+    uint32_t unchanged : 1;
+    uint32_t has_light_type : 1;
+    uint32_t has_shadow_type : 1;
+    uint32_t has_color : 1;
+    uint32_t has_intensity : 1;
+    uint32_t has_range : 1;
+    uint32_t has_spot_angle : 1;
+
+    LightDataFlags()
+    {
+        *(uint32_t*)this = ~0x1u;
+    }
+};
+
 class Light : public Transform
 {
 using super = Transform;
@@ -139,6 +188,7 @@ public:
         Soft,
     };
 
+    LightDataFlags ld_flags;
     LightType light_type = LightType::Directional;
     ShadowType shadow_type = ShadowType::Unknown;
     float4 color = float4::one();
@@ -170,17 +220,23 @@ msDeclPtr(Mesh);
 // Points
 struct PointsDataFlags
 {
+    uint32_t unchanged : 1;
     uint32_t has_points : 1;
     uint32_t has_rotations : 1;
     uint32_t has_scales : 1;
     uint32_t has_colors : 1;
     uint32_t has_velocities : 1;
     uint32_t has_ids : 1;
+
+    PointsDataFlags()
+    {
+        *(uint32_t*)this = 0;
+    }
 };
 
 struct PointsData
 {
-    PointsDataFlags flags = { 0 };
+    PointsDataFlags pd_flags;
     float time = -1.0f;
     RawVector<float3> points;
     RawVector<quatf>  rotations;
@@ -204,7 +260,7 @@ public:
     bool lerp(const PointsData& src1, const PointsData& src2, float t);
     EntityPtr clone();
 
-    void setupFlags();
+    void setupPointsDataFlags();
 
     void getBounds(float3& center, float3& extents);
 };
@@ -233,7 +289,7 @@ public:
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone() override;
 
-    void setupFlags();
+    void setupPointsDataFlags();
 };
 msSerializable(Points);
 msDeclPtr(Points);

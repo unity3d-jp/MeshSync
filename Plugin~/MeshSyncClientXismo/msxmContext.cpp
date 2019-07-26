@@ -158,11 +158,10 @@ void BufferRecord::buildMeshDataBody(const msxmSettings& settings)
         mesh.material_ids[ti] = material_id;
     }
 
-    mesh.setupFlags();
-    mesh.flags.has_refine_settings = 1;
-    mesh.refine_settings.flags.flip_faces = true;
+    mesh.refine_settings.flags.flip_faces = 1;
     mesh.refine_settings.flags.gen_tangents = 1;
     mesh.refine_settings.flags.make_double_sided = settings.make_double_sided;
+    mesh.setupMeshDataFlags();
 }
 
 void BufferRecord::wait()

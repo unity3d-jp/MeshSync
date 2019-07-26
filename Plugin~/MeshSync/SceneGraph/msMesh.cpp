@@ -169,7 +169,7 @@ void BoneData::clear()
 }
 
 
-#define EachVertexProperty(Body)\
+#define EachVertexAttribute(Body)\
     Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(velocities) Body(counts) Body(indices) Body(material_ids)
 
 Mesh::Mesh() {}
@@ -181,11 +181,11 @@ void Mesh::serialize(std::ostream& os) const
 {
     super::serialize(os);
 
-    write(os, flags);
+    write(os, md_flags);
     write(os, refine_settings);
 
 #define Body(A) write(os, A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
     write(os, root_bone);
     write(os, bones);
@@ -199,11 +199,11 @@ void Mesh::deserialize(std::istream& is)
 {
     super::deserialize(is);
 
-    read(is, flags);
+    read(is, md_flags);
     read(is, refine_settings);
 
 #define Body(A) read(is, A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
     read(is, root_bone);
     read(is, bones);
@@ -229,7 +229,7 @@ bool Mesh::strip(const Entity& base_)
 
     auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) clear_if_identical(A, base.A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
     return true;
 }
@@ -246,7 +246,7 @@ bool Mesh::merge(const Entity& base_)
 
     auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) assign_if_empty(A, base.A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
     return true;
 }
@@ -267,17 +267,17 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
     };
 
 #define Body(A) compare_attribute(e1.A, e2.A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
 
     if (change_bits == 0 && e1.refine_settings == e2.refine_settings) {
 #define Body(A) A.clear();
-        EachVertexProperty(Body);
+        EachVertexAttribute(Body);
 #undef Body
-        flags.unchanged = 1;
+        md_flags.unchanged = 1;
     }
     else {
-        flags.unchanged = 0;
+        md_flags.unchanged = 0;
     }
     return true;
 }
@@ -321,11 +321,11 @@ void Mesh::clear()
 {
     super::clear();
 
-    flags = { 0 };
+    md_flags = {};
     refine_settings = MeshRefineSettings();
 
 #define Body(A) vclear(A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
 
     root_bone.clear();
@@ -344,13 +344,13 @@ uint64_t Mesh::hash() const
 {
     uint64_t ret = super::hash();
 #define Body(A) ret += vhash(A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
-    if (flags.has_bones) {
+    if (md_flags.has_bones) {
         for(auto& b : bones)
             ret += vhash(b->weights);
     }
-    if (flags.has_blendshape_weights) {
+    if (md_flags.has_blendshape_weights) {
         for (auto& bs : blendshapes) {
             for (auto& b : bs->frames) {
                 ret += vhash(b->points);
@@ -367,9 +367,9 @@ uint64_t Mesh::checksumGeom() const
     uint64_t ret = 0;
     ret += refine_settings.checksum();
 #define Body(A) ret += csum(A);
-    EachVertexProperty(Body);
+    EachVertexAttribute(Body);
 #undef Body
-    if (flags.has_bones) {
+    if (md_flags.has_bones) {
         ret += csum(root_bone);
         for (auto& b : bones) {
             ret += csum(b->path);
@@ -377,7 +377,7 @@ uint64_t Mesh::checksumGeom() const
             ret += csum(b->weights);
         }
     }
-    if (flags.has_blendshape_weights) {
+    if (md_flags.has_blendshape_weights) {
         for (auto& bs : blendshapes) {
             ret += csum(bs->name);
             ret += csum(bs->weight);
@@ -655,7 +655,7 @@ void Mesh::refine()
         }
     }
 
-    setupFlags();
+    setupMeshDataFlags();
     mrs.clear();
 }
 
@@ -1056,24 +1056,24 @@ void Mesh::setupBoneWeightsVariable()
     }
 }
 
-void Mesh::setupFlags()
+void Mesh::setupMeshDataFlags()
 {
-    flags.has_submeshes= !submeshes.empty();
-    flags.has_points = !points.empty();
-    flags.has_normals = !normals.empty();
-    flags.has_tangents = !tangents.empty();
-    flags.has_uv0 = !uv0.empty();
-    flags.has_uv1 = !uv1.empty();
-    flags.has_colors = !colors.empty();
-    flags.has_velocities = !velocities.empty();
-    flags.has_counts = !counts.empty();
-    flags.has_indices = !indices.empty();
-    flags.has_material_ids = !material_ids.empty();
-    flags.has_bones = !bones.empty();
-    flags.has_blendshape_weights = !blendshapes.empty();
-    flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
+    md_flags.has_submeshes= !submeshes.empty();
+    md_flags.has_points = !points.empty();
+    md_flags.has_normals = !normals.empty();
+    md_flags.has_tangents = !tangents.empty();
+    md_flags.has_uv0 = !uv0.empty();
+    md_flags.has_uv1 = !uv1.empty();
+    md_flags.has_colors = !colors.empty();
+    md_flags.has_velocities = !velocities.empty();
+    md_flags.has_counts = !counts.empty();
+    md_flags.has_indices = !indices.empty();
+    md_flags.has_material_ids = !material_ids.empty();
+    md_flags.has_bones = !bones.empty();
+    md_flags.has_blendshape_weights = !blendshapes.empty();
+    md_flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
 
-    flags.has_refine_settings =
+    md_flags.has_refine_settings =
         (uint32_t&)refine_settings.flags != 0 ||
         refine_settings.scale_factor != 1.0f;
 }

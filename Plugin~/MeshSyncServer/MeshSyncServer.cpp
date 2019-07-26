@@ -3,6 +3,9 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSyncServer.h"
 
+// "incompatible with C"
+#pragma warning(disable : 4190)
+
 using namespace mu;
 
 using ms::ServerPtr;
@@ -586,11 +589,11 @@ msAPI ms::Mesh* msMeshCreate()
 }
 msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *self)
 {
-    return self->flags;
+    return self->md_flags;
 }
 msAPI void msMeshSetFlags(ms::Mesh *self, ms::MeshDataFlags v)
 {
-    self->flags = v;
+    self->md_flags = v;
 }
 msAPI int msMeshGetNumPoints(ms::Mesh *self)
 {
@@ -615,7 +618,7 @@ msAPI void msMeshWritePoints(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->points.assign(v, v + size);
-        self->flags.has_points = 1;
+        self->md_flags.has_points = 1;
     }
 }
 msAPI void msMeshReadNormals(ms::Mesh *self, float3 *dst, ms::SplitData *split)
@@ -629,7 +632,7 @@ msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->normals.assign(v, v + size);
-        self->flags.has_normals = 1;
+        self->md_flags.has_normals = 1;
     }
 }
 msAPI void msMeshReadTangents(ms::Mesh *self, float4 *dst, ms::SplitData *split)
@@ -643,7 +646,7 @@ msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->tangents.assign(v, v + size);
-        self->flags.has_tangents = 1;
+        self->md_flags.has_tangents = 1;
     }
 }
 msAPI void msMeshReadUV0(ms::Mesh *self, float2 *dst, ms::SplitData *split)
@@ -664,14 +667,14 @@ msAPI void msMeshWriteUV0(ms::Mesh *self, const float2 *v, int size)
 {
     if (size > 0) {
         self->uv0.assign(v, v + size);
-        self->flags.has_uv0 = 1;
+        self->md_flags.has_uv0 = 1;
     }
 }
 msAPI void msMeshWriteUV1(ms::Mesh *self, const float2 *v, int size)
 {
     if (size > 0) {
         self->uv1.assign(v, v + size);
-        self->flags.has_uv1 = 1;
+        self->md_flags.has_uv1 = 1;
     }
 }
 msAPI void msMeshReadColors(ms::Mesh *self, float4 *dst, ms::SplitData *split)
@@ -685,7 +688,7 @@ msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->colors.assign(v, v + size);
-        self->flags.has_colors = 1;
+        self->md_flags.has_colors = 1;
     }
 }
 msAPI void msMeshReadVelocities(ms::Mesh *self, float3 *dst, ms::SplitData *split)
@@ -699,7 +702,7 @@ msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->velocities.assign(v, v + size);
-        self->flags.has_velocities = 1;
+        self->md_flags.has_velocities = 1;
     }
 }
 msAPI void msMeshReadIndices(ms::Mesh *self, int *dst, ms::SplitData *split)
@@ -715,8 +718,8 @@ msAPI void msMeshWriteIndices(ms::Mesh *self, const int *v, int size)
         self->indices.assign(v, v + size);
         self->counts.clear();
         self->counts.resize(size / 3, 3);
-        self->flags.has_indices = 1;
-        self->flags.has_counts = 1;
+        self->md_flags.has_indices = 1;
+        self->md_flags.has_counts = 1;
     }
 }
 msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, int materialID)
@@ -725,9 +728,9 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->indices.insert(self->indices.end(), v, v + size);
         self->counts.resize(self->counts.size() + (size / 3), 3);
         self->material_ids.resize(self->material_ids.size() + (size / 3), materialID);
-        self->flags.has_indices = 1;
-        self->flags.has_counts = 1;
-        self->flags.has_material_ids = 1;
+        self->md_flags.has_indices = 1;
+        self->md_flags.has_counts = 1;
+        self->md_flags.has_material_ids = 1;
     }
 }
 msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *self, int i)
@@ -1002,7 +1005,7 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma region Points
 msAPI ms::PointsDataFlags msPointsDataGetFlags(ms::PointsData *self)
 {
-    return self->flags;
+    return self->pd_flags;
 }
 msAPI float msPointsDataGetTime(ms::PointsData *self)
 {

@@ -442,14 +442,13 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
         }
     }
 
-    dst.setupFlags();
-    dst.flags.has_refine_settings = true;
-    if (!dst.flags.has_normals)
+    if (dst.normals.empty())
         dst.refine_settings.flags.gen_normals = true;
-    if (!dst.flags.has_tangents)
+    if (dst.tangents.empty())
         dst.refine_settings.flags.gen_tangents = true;
     dst.refine_settings.flags.flip_faces = true;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
+    dst.setupMeshDataFlags();
 }
 
 void msblenContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data)

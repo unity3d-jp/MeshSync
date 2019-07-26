@@ -259,7 +259,6 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
                     auto& bone = m_bone_records[bid];
                     auto bd = ms::BoneData::create();
                     rec.dst->bones.push_back(bd);
-                    rec.dst->flags.has_bones = 1;
                     bd->path = bone.dst->path;
                     bd->bindpose = bone.bindpose;
 
@@ -613,7 +612,6 @@ MQObject msmqContext::createMesh(MQDocument doc, const ms::Mesh& data, const cha
 
 void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
-    dst.flags.has_refine_settings = 1;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.flip_v = 1;
@@ -635,10 +633,10 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         auto ite = m_host_meshes.find(dst.id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
-            dst.has_transform = false;
+            dst.td_flags.has_transform = 0;
         }
         else {
-            dst.has_transform = true;
+            dst.td_flags.has_transform = ~0;
             ExtractLocalTransform(obj, dst.position, dst.rotation, dst.scale);
             dst.refine_settings.world2local = invert(ExtractGlobalMatrix(doc, obj));
         }
@@ -682,7 +680,6 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     // vertex colors
     if (m_settings.sync_vertex_color) {
         dst.colors.resize_discard(nindices);
-        dst.flags.has_colors = 1;
         auto *colors = dst.colors.data();
         for (int fi = 0; fi < nfaces; ++fi) {
             int count = dst.counts[fi];
@@ -699,7 +696,6 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 #if MQPLUGIN_VERSION >= 0x0460
     if (m_settings.sync_normals) {
         dst.normals.resize_discard(nindices);
-        dst.flags.has_normals = 1;
         auto *normals = dst.normals.data();
         for (int fi = 0; fi < nfaces; ++fi) {
             int count = dst.counts[fi];
@@ -717,7 +713,7 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
         dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     }
-    dst.setupFlags();
+    dst.setupMeshDataFlags();
 }
 
 void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)

@@ -21,7 +21,7 @@ static void Send(ms::Scene& scene)
 {
     for (auto& obj : scene.entities) {
         if (auto *mesh = dynamic_cast<ms::Mesh*>(obj.get())) {
-            mesh->setupFlags();
+            mesh->setupMeshDataFlags();
         }
     }
 
@@ -174,7 +174,7 @@ TestCase(Test_Points)
         for (int i = 0; i < c;++i) {
             data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
         }
-        node->setupFlags();
+        node->setupPointsDataFlags();
     }
     {
         auto node = ms::Points::create();
@@ -194,7 +194,7 @@ TestCase(Test_Points)
             data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
             data->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
         }
-        node->setupFlags();
+        node->setupPointsDataFlags();
     }
     {
         auto node = ms::Points::create();
@@ -244,7 +244,7 @@ TestCase(Test_Points)
                 points[i] += velocities[i];
             }
         }
-        node->setupFlags();
+        node->setupPointsDataFlags();
     }
 
     Send(scene);

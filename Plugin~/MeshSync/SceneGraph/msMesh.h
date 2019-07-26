@@ -7,6 +7,7 @@ namespace ms {
 
 struct MeshDataFlags
 {
+    uint32_t unchanged : 1;
     uint32_t has_refine_settings : 1;
     uint32_t has_submeshes : 1;
     uint32_t has_indices : 1;
@@ -22,7 +23,11 @@ struct MeshDataFlags
     uint32_t has_bones : 1;
     uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;
-    uint32_t unchanged : 1;
+
+    MeshDataFlags()
+    {
+        (uint32_t&)*this = 0;
+    }
 };
 
 struct MeshRefineFlags
@@ -55,11 +60,16 @@ struct MeshRefineFlags
     uint32_t make_double_sided : 1;
     uint32_t quadify : 1;
     uint32_t quadify_full_search : 1;
+
+    MeshRefineFlags()
+    {
+        (uint32_t&)*this = 0;
+    }
 };
 
 struct MeshRefineSettings
 {
-    MeshRefineFlags flags = { 0 };
+    MeshRefineFlags flags;
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f; // in degree
     float quadify_threshold = 15.0f; // in degree
@@ -183,9 +193,8 @@ class Mesh : public Transform
 {
 using super = Transform;
 public:
-    // serializable fields
-
-    MeshDataFlags      flags = { 0 };
+    // serializable
+    MeshDataFlags      md_flags;
     MeshRefineSettings refine_settings;
 
     RawVector<float3> points;
@@ -205,7 +214,7 @@ public:
     std::vector<SubmeshData> submeshes;
     std::vector<SplitData> splits;
 
-    // non-serializable fields (generated in refine())
+    // non-serializable
     // *DO NOT forget to update clear() when add member*
 
     RawVector<Weights4> weights4;
@@ -240,7 +249,7 @@ public:
 
     void setupBoneWeights4();
     void setupBoneWeightsVariable();
-    void setupFlags();
+    void setupMeshDataFlags();
 
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);

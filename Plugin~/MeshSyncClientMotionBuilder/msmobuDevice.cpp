@@ -501,7 +501,7 @@ ms::MeshPtr msmobuDevice::exportBlendshapeWeights(NodeRecord& n)
             }
         }
     }
-    dst.setupFlags();
+    dst.setupMeshDataFlags();
 
     m_entity_manager.add(ret);
     return ret;
@@ -744,7 +744,7 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
 
     dst.refine_settings.flags.flip_faces = 1;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-    dst.setupFlags();
+    dst.setupMeshDataFlags();
 }
 
 

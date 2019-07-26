@@ -1175,11 +1175,10 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
     }
 
     {
-        dst.setupFlags();
-        dst.flags.has_refine_settings = 1;
         dst.refine_settings.flags.flip_faces = m_settings.flip_faces;
         dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
+        dst.setupMeshDataFlags();
     }
 }
 

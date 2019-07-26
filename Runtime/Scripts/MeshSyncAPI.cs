@@ -1511,6 +1511,12 @@ namespace UTJ.MeshSync
         Points,
     };
 
+    public struct TransformDataFlags
+    {
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+    }
+
     public struct TransformData
     {
         #region internal
@@ -1597,6 +1603,12 @@ namespace UTJ.MeshSync
             get { return Misc.S(msTransformGetReference(self)); }
             set { msTransformSetReference(self, value); }
         }
+    }
+
+    public struct CameraDataFlags
+    {
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -1818,66 +1830,18 @@ namespace UTJ.MeshSync
     public struct MeshDataFlags
     {
         public BitFlags flags;
-        public bool hasIndices
-        {
-            get { return flags[2]; }
-            set { flags[2] = value; }
-        }
-        public bool hasPoints
-        {
-            get { return flags[4]; }
-            set { flags[4] = value; }
-        }
-        public bool hasNormals
-        {
-            get { return flags[5]; }
-            set { flags[5] = value; }
-        }
-        public bool hasTangents
-        {
-            get { return flags[6]; }
-            set { flags[6] = value; }
-        }
-        public bool hasUV0
-        {
-            get { return flags[7]; }
-            set { flags[7] = value; }
-        }
-        public bool hasUV1
-        {
-            get { return flags[8]; }
-            set { flags[8] = value; }
-        }
-        public bool hasColors
-        {
-            get { return flags[9]; }
-            set { flags[9] = value; }
-        }
-        public bool hasVelocities
-        {
-            get { return flags[10]; }
-            set { flags[10] = value; }
-        }
-        public bool hasBones
-        {
-            get { return flags[12]; }
-            set { flags[12] = value; }
-        }
-        public bool hasBlendshapeWeights
-        {
-            get { return flags[13]; }
-            set { flags[13] = value; }
-        }
-        public bool hasBlendshapes
-        {
-            get { return flags[14]; }
-            set { flags[14] = value; }
-        }
-        public bool unchanged
-        {
-            get { return flags[15]; }
-            set { flags[15] = value; }
-        }
+        public bool unchanged           { get { return flags[0]; } }
+        public bool hasIndices          { get { return flags[3]; } }
+        public bool hasPoints           { get { return flags[5]; } }
+        public bool hasNormals          { get { return flags[6]; } }
+        public bool hasTangents         { get { return flags[7]; } }
+        public bool hasUV0              { get { return flags[8]; } }
+        public bool hasUV1              { get { return flags[9]; } }
+        public bool hasColors           { get { return flags[10]; } }
+        public bool hasVelocities       { get { return flags[11]; } }
+        public bool hasBones            { get { return flags[13]; } }
+        public bool hasBlendshapeWeights{ get { return flags[14]; } }
+        public bool hasBlendshapes      { get { return flags[15]; } }
     };
 
     [StructLayout(LayoutKind.Explicit)]

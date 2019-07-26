@@ -206,8 +206,7 @@ struct vhash_impl<RawVector<T>>
     }
 };
 
-template<class T, bool is_enum = std::is_enum<T>::value> struct csum_impl2;
-template<class T> struct csum_impl2<T, true> { uint64_t operator()(T v) { return static_cast<uint64_t>(v); } };
+template<class T> struct csum_impl2 { uint64_t operator()(const T& v) { return static_cast<uint64_t>(v); } };
 
 template<class T> struct csum_impl { uint64_t operator()(const T& v) { return csum_impl2<T>()(v); } };
 template<> struct csum_impl<bool> { uint64_t operator()(bool v) { return (uint32_t)v; } };

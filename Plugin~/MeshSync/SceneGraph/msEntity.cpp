@@ -155,7 +155,7 @@ Entity::Type Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(has_transform) F(reference)
+    F(td_flags) F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(reference)
 
 void Transform::serialize(std::ostream& os) const
 {
@@ -173,12 +173,17 @@ void Transform::deserialize(std::istream& is)
 void Transform::clear()
 {
     super::clear();
+
+    td_flags = {};
     position = float3::zero();
     rotation = quatf::identity();
     scale = float3::one();
     index = 0;
-    visible = visible_hierarchy = true;
+
+    visible = true;
+    visible_hierarchy = true;
     reference.clear();
+    order = 0;
 }
 
 uint64_t Transform::checksumTrans() const
@@ -194,16 +199,41 @@ uint64_t Transform::checksumTrans() const
     return ret;
 }
 
-bool Transform::lerp(const Entity& s1_, const Entity& s2_, float t)
+bool Transform::diff(const Entity& e1_, const Entity& e2_)
 {
-    if (!super::lerp(s1_, s2_, t))
+    if (!super::diff(e1_, e2_))
         return false;
-    auto& s1 = static_cast<const Transform&>(s1_);
-    auto& s2 = static_cast<const Transform&>(s2_);
+    auto& e1 = static_cast<const Transform&>(e1_);
+    auto& e2 = static_cast<const Transform&>(e2_);
 
-    position = mu::lerp(s1.position, s2.position, t);
-    rotation = mu::slerp(s1.rotation, s2.rotation, t);
-    scale = mu::lerp(s1.scale, s2.scale, t);
+    if (e1.position == e2.position &&
+        e1.rotation == e2.rotation &&
+        e1.scale == e2.scale &&
+        e1.index == e2.index &&
+        e1.visible == e2.visible &&
+        e1.visible_hierarchy == e2.visible_hierarchy &&
+        e1.reference == e2.reference
+        )
+    {
+        td_flags.unchanged = 1;
+    }
+    else
+    {
+        td_flags.unchanged = 0;
+    }
+    return true;
+}
+
+bool Transform::lerp(const Entity& e1_, const Entity& e2_, float t)
+{
+    if (!super::lerp(e1_, e2_, t))
+        return false;
+    auto& e1 = static_cast<const Transform&>(e1_);
+    auto& e2 = static_cast<const Transform&>(e2_);
+
+    position = mu::lerp(e1.position, e2.position, t);
+    rotation = mu::slerp(e1.rotation, e2.rotation, t);
+    scale = mu::lerp(e1.scale, e2.scale, t);
     return true;
 }
 
@@ -245,8 +275,11 @@ Entity::Type Camera::getType() const
     return Type::Camera;
 }
 
-#define EachMember(F)\
+#define EachCameraAttribute(F)\
     F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift)
+
+#define EachMember(F)\
+    F(cd_flags) EachCameraAttribute(F)
 
 void Camera::serialize(std::ostream& os) const
 {
@@ -263,6 +296,7 @@ void Camera::clear()
 {
     super::clear();
 
+    cd_flags = {};
     is_ortho = false;
     fov = 30.0f;
     near_plane = 0.3f;
@@ -276,9 +310,8 @@ void Camera::clear()
 uint64_t Camera::checksumTrans() const
 {
     uint64_t ret = super::checksumTrans();
-    ret += uint32_t(is_ortho) << 10;
 #define Body(A) ret += csum(A);
-    EachMember(Body);
+    EachCameraAttribute(Body);
 #undef Body
     return ret;
 }
@@ -307,6 +340,7 @@ EntityPtr Camera::clone()
     *ret = *this;
     return ret;
 }
+#undef EachCameraAttribute
 #undef EachMember
 #pragma endregion
 
@@ -321,8 +355,11 @@ Entity::Type Light::getType() const
     return Type::Light;
 }
 
-#define EachMember(F)\
+#define EachLightAttribute(F)\
     F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle)
+
+#define EachMember(F)\
+    F(ld_flags) EachLightAttribute(F)
 
 void Light::serialize(std::ostream & os) const
 {
@@ -338,7 +375,10 @@ void Light::deserialize(std::istream & is)
 void Light::clear()
 {
     super::clear();
+
+    ld_flags = {};
     light_type = LightType::Directional;
+    shadow_type = ShadowType::Unknown;
     color = float4::one();
     intensity = 1.0f;
     range = 0.0f;
@@ -348,11 +388,9 @@ void Light::clear()
 uint64_t Light::checksumTrans() const
 {
     uint64_t ret = super::checksumTrans();
-    ret += csum((int&)light_type);
-    ret += csum(color);
-    ret += csum(intensity);
-    ret += csum(range);
-    ret += csum(spot_angle);
+#define Body(A) ret += csum(A);
+    EachLightAttribute(Body);
+#undef Body
     return ret;
 }
 
@@ -378,6 +416,7 @@ EntityPtr Light::clone()
     *ret = *this;
     return ret;
 }
+#undef EachLightAttribute
 #undef EachMember
 #pragma endregion
 
@@ -398,7 +437,7 @@ std::shared_ptr<PointsData> PointsData::create(std::istream & is)
 #define EachArray(F)\
     F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
 #define EachMember(F)\
-    F(flags) F(time) EachArray(F)
+    F(pd_flags) F(time) EachArray(F)
 
 void PointsData::serialize(std::ostream& os) const
 {
@@ -412,7 +451,7 @@ void PointsData::deserialize(std::istream& is)
 
 void PointsData::clear()
 {
-    flags = { 0 };
+    pd_flags = {};
     time = 0.0f;
     EachArray(msClear);
 }
@@ -459,14 +498,14 @@ EntityPtr PointsData::clone()
 #undef EachArrays
 #undef EachMember
 
-void PointsData::setupFlags()
+void PointsData::setupPointsDataFlags()
 {
-    flags.has_points = !points.empty();
-    flags.has_rotations = !rotations.empty();
-    flags.has_scales = !scales.empty();
-    flags.has_colors = !colors.empty();
-    flags.has_velocities = !velocities.empty();
-    flags.has_ids = !ids.empty();
+    pd_flags.has_points = !points.empty();
+    pd_flags.has_rotations = !rotations.empty();
+    pd_flags.has_scales = !scales.empty();
+    pd_flags.has_colors = !colors.empty();
+    pd_flags.has_velocities = !velocities.empty();
+    pd_flags.has_ids = !ids.empty();
 }
 
 void PointsData::getBounds(float3 & center, float3 & extents)
@@ -543,10 +582,10 @@ EntityPtr Points::clone()
 #undef EachArrays
 #undef EachMember
 
-void Points::setupFlags()
+void Points::setupPointsDataFlags()
 {
     for (auto& p : data)
-        p->setupFlags();
+        p->setupPointsDataFlags();
 }
 
 #pragma endregion

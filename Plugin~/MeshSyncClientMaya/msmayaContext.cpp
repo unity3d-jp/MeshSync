@@ -1094,7 +1094,6 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
             else
                 doExtractMeshData(dst, n);
 
-            dst.flags.has_refine_settings = 1;
             dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
             dst.refine_settings.flags.gen_tangents = 1;
             dst.refine_settings.flags.flip_faces = 1;
@@ -1103,6 +1102,7 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
             if (!m_settings.bake_deformers && m_settings.sync_blendshapes)
                 doExtractBlendshapeWeights(dst, n);
         }
+        dst.setupMeshDataFlags();
         m_entity_manager.add(ret);
     };
     m_extract_tasks[n->shape->branches.front()].add(n, task);
@@ -1143,8 +1143,6 @@ void msmayaContext::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
             }
         }
     }
-
-    dst.setupFlags();
 }
 
 void msmayaContext::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh &mshape)
@@ -1555,8 +1553,6 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     }
 
     dst.refine_settings.local2world = dst.refine_settings.local2world * trans_geom;
-
-    dst.setupFlags();
 }
 
 void msmayaContext::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
@@ -1575,8 +1571,6 @@ void msmayaContext::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
     // apply pivot
     dst.refine_settings.flags.apply_local2world = 1;
     dst.refine_settings.local2world = n->model_transform;
-
-    dst.setupFlags();
 }
 
 
