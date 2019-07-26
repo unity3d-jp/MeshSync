@@ -147,7 +147,7 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    ms::TransformPtr exportObject(INode *node, bool parent, bool tip = true);
+    ms::TransformPtr exportObject(INode *node, bool tip);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);
@@ -186,7 +186,7 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
-    ms::AsyncSceneFileSaver m_file_saver;
+    ms::AsyncSceneCacheWriter m_cache_writer;
 
     std::vector<std::function<void()>> m_deferred_calls;
     std::mutex m_mutex;

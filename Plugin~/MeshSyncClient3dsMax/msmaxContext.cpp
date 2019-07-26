@@ -240,7 +240,7 @@ void msmaxContext::update()
 
 bool msmaxContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (m_sender.isSending())
+    if (m_sender.isExporting())
         return false;
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -254,7 +254,7 @@ bool msmaxContext::sendObjects(SendScope scope, bool dirty_all)
     if (scope == SendScope::All) {
         for (auto& kvp : m_node_records) {
             kvp.second.dirty_trans = kvp.second.dirty_geom = true;
-            if (exportObject(kvp.first, false))
+            if (exportObject(kvp.first, true))
                 ++num_exported;
         }
     }
@@ -280,7 +280,7 @@ bool msmaxContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msmaxContext::sendMaterials(bool dirty_all)
 {
-    if (m_sender.isSending())
+    if (m_sender.isExporting())
         return false;
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -358,9 +358,9 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
-    ms::SceneCacheSettings scs;
+    ms::OSceneCacheSettings scs;
     //scs.encoding = ms::SceneCacheEncoding::Plain; // debug
-    if (!m_file_saver.open(path.c_str(), scs))
+    if (!m_cache_writer.open(path.c_str(), scs))
         return false;
 
     auto settings_old = m_settings;
@@ -376,7 +376,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         if (scope == SendScope::All) {
             for (auto& kvp : m_node_records) {
                 kvp.second.dirty_trans = kvp.second.dirty_geom = true;
-                if (exportObject(kvp.first, false))
+                if (exportObject(kvp.first, true))
                     ++num_exported;
             }
         }
@@ -423,7 +423,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     }
 
     m_settings = settings_old;
-    m_file_saver.close();
+    m_cache_writer.close();
     return true;
 }
 
@@ -505,8 +505,10 @@ void msmaxContext::kickAsyncSend()
 
     // begin async send
     if (m_settings.export_cache) {
-        m_file_saver.on_prepare = [this, to_meter]() {
-            auto& t = m_file_saver;
+        m_cache_writer.on_prepare = [this, to_meter]() {
+            auto& t = m_cache_writer;
+            t.time = m_anim_time;
+
             t.scene_settings.handedness = ms::Handedness::RightZUp;
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
@@ -516,13 +518,14 @@ void msmaxContext::kickAsyncSend()
             t.geometries = m_entity_manager.getDirtyGeometries();
             t.animations = m_animations;
         };
-        m_file_saver.on_success = cleanup;
-        m_file_saver.write(m_anim_time);
+        m_cache_writer.on_success = cleanup;
+        m_cache_writer.kick();
     }
     else {
         m_sender.on_prepare = [this, to_meter]() {
             auto& t = m_sender;
             t.client_settings = m_settings.client_settings;
+
             t.scene_settings.handedness = ms::Handedness::RightZUp;
             t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
@@ -618,7 +621,7 @@ void msmaxContext::exportMaterials()
     m_material_manager.eraseStaleMaterials();
 }
 
-ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
+ms::TransformPtr msmaxContext::exportObject(INode *n, bool tip)
 {
     if (!n || !n->GetObjectRef())
         return nullptr;
@@ -632,8 +635,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
     ms::TransformPtr ret;
 
     auto handle_parent = [&]() {
-        if (parent)
-            exportObject(n->GetParentNode(), parent, false);
+        exportObject(n->GetParentNode(), false);
     };
     auto handle_transform = [&]() {
         handle_parent();
@@ -661,7 +663,7 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
         // this must be before extractMeshData() because meshes can be bones in 3ds Max
         if (m_settings.sync_bones && !m_settings.bake_modifiers) {
             EachBone(n, [this](INode *bone) {
-                exportObject(bone, true, false);
+                exportObject(bone, false);
             });
         }
 
@@ -670,27 +672,19 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool parent, bool tip)
             if (!handle_instance())
                 ret = exportMesh(rec);
         }
-        else if (!tip && parent)
+        else if (!tip)
             handle_transform();
     }
     else {
-        if (IsCamera(obj)) {
-            if (m_settings.sync_cameras) {
-                handle_parent();
-                ret = exportCamera(rec);
-            }
-            else if (!tip && parent)
-                handle_transform();
+        if (IsCamera(obj) && m_settings.sync_cameras) {
+            handle_parent();
+            ret = exportCamera(rec);
         }
-        else if (IsLight(obj)) {
-            if (m_settings.sync_lights) {
-                handle_parent();
-                ret = exportLight(rec);
-            }
-            else if (!tip && parent)
-                handle_transform();
+        else if (IsLight(obj) && m_settings.sync_lights) {
+            handle_parent();
+            ret = exportLight(rec);
         }
-        else {
+        else if (!tip) {
             handle_transform();
         }
     }
