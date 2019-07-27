@@ -231,9 +231,9 @@ bool Mesh::strip(const Entity& base_)
     if (!super::strip(base_))
         return false;
 
-    auto clear_if_identical = [](auto& cur, const auto& base) {
-        if (cur == base)
-            cur.clear();
+    auto clear_if_identical = [](auto& a1, const auto& a2) {
+        if (near_equal(a1, a2))
+            a1.clear();
     };
 
     auto& base = static_cast<const Mesh&>(base_);
@@ -269,8 +269,8 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
     auto& e2 = static_cast<const Mesh&>(e2_);
 
     uint32_t change_bits = 0, bit_index = 0;
-    auto compare_attribute = [&](auto& s1, const auto& s2) {
-        if (s1 != s2)
+    auto compare_attribute = [&](const auto& a1, const auto& a2) {
+        if (!near_equal(a1, a2))
             change_bits |= (1 << bit_index);
         ++bit_index;
     };

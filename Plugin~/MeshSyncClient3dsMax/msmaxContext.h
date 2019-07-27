@@ -19,7 +19,6 @@ struct msmaxSettings
     bool flip_faces = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
-    bool convert_to_mesh = true;
     bool sync_bones = true;
     bool sync_blendshapes = true;
     bool sync_cameras = true;

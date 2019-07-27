@@ -103,7 +103,6 @@ Value* Settings_cf(Value** arg_list, int count)
         Entry(make_double_sided,    bool_result, to_bool);
         Entry(ignore_non_renderable,bool_result, to_bool);
         Entry(bake_modifiers,       bool_result, to_bool);
-        Entry(convert_to_mesh,      bool_result, to_bool);
 
         Entry(sync_bones,           bool_result, to_bool);
         Entry(sync_blendshapes,     bool_result, to_bool);
