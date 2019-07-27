@@ -367,6 +367,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.bake_modifiers = true;
+    //m_settings.convert_to_mesh = true;
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
@@ -494,9 +495,35 @@ void msmaxContext::kickAsyncSend()
     for (auto& kvp : m_node_records)
         kvp.second.clearState();
 
-    float to_meter = (float)GetMasterScale(UNITS_METERS);
 
-    auto cleanup = [this]() {
+    float to_meter = (float)GetMasterScale(UNITS_METERS);
+    using Exporter = ms::AsyncSceneExporter;
+    Exporter *exporter = m_settings.export_cache ? (Exporter*)&m_cache_writer : (Exporter*)&m_sender;
+
+    // begin async send
+    exporter->on_prepare = [this, to_meter, exporter]() {
+        if (auto sender = dynamic_cast<ms::AsyncSceneSender*>(exporter)) {
+            sender->client_settings = m_settings.client_settings;
+        }
+        else if (auto writer = dynamic_cast<ms::AsyncSceneCacheWriter*>(exporter)) {
+            writer->time = m_anim_time;
+        }
+
+        auto& t = *exporter;
+        t.scene_settings.handedness = ms::Handedness::RightZUp;
+        t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
+
+        t.textures = m_texture_manager.getDirtyTextures();
+        t.materials = m_material_manager.getDirtyMaterials();
+        t.transforms = m_entity_manager.getDirtyTransforms();
+        t.geometries = m_entity_manager.getDirtyGeometries();
+        t.animations = m_animations;
+
+        t.deleted_materials = m_material_manager.getDeleted();
+        t.deleted_entities = m_entity_manager.getDeleted();
+    };
+
+    exporter->on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
@@ -504,44 +531,7 @@ void msmaxContext::kickAsyncSend()
         m_animations.clear();
     };
 
-    // begin async send
-    if (m_settings.export_cache) {
-        m_cache_writer.on_prepare = [this, to_meter]() {
-            auto& t = m_cache_writer;
-            t.time = m_anim_time;
-
-            t.scene_settings.handedness = ms::Handedness::RightZUp;
-            t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
-
-            //t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_material_manager.getDirtyMaterials();
-            t.transforms = m_entity_manager.getDirtyTransforms();
-            t.geometries = m_entity_manager.getDirtyGeometries();
-            t.animations = m_animations;
-        };
-        m_cache_writer.on_success = cleanup;
-        m_cache_writer.kick();
-    }
-    else {
-        m_sender.on_prepare = [this, to_meter]() {
-            auto& t = m_sender;
-            t.client_settings = m_settings.client_settings;
-
-            t.scene_settings.handedness = ms::Handedness::RightZUp;
-            t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
-
-            t.textures = m_texture_manager.getDirtyTextures();
-            t.materials = m_material_manager.getDirtyMaterials();
-            t.transforms = m_entity_manager.getDirtyTransforms();
-            t.geometries = m_entity_manager.getDirtyGeometries();
-            t.animations = m_animations;
-
-            t.deleted_materials = m_material_manager.getDeleted();
-            t.deleted_entities = m_entity_manager.getDeleted();
-        };
-        m_sender.on_success = cleanup;
-        m_sender.kick();
-    }
+    exporter->kick();
 }
 
 int msmaxContext::exportTexture(const std::string & path, ms::TextureType type)
@@ -694,13 +684,35 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool tip)
     return ret;
 }
 
-static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis, bool bake)
+mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
 {
-    auto mat = GetTransform(n, t, bake);
+    auto t = to_float3(n->GetObjOffsetPos());
+    auto r = to_quatf(n->GetObjOffsetRot());
+    return mu::transform(t, r, mu::float3::one());
+}
+
+mu::float4x4 msmaxContext::getTransform(INode *n, TimeValue t)
+{
+    if (m_settings.bake_modifiers) {
+        auto m = n->GetObjTMAfterWSM(t);
+        if (m.IsIdentity())
+            m = n->GetObjTMBeforeWSM(t);
+        auto mat = to_float4x4(m);
+        // cancel scale
+        return mu::transform(extract_position(mat), extract_rotation(mat), mu::float3::one());
+    }
+    else {
+        return to_float4x4(n->GetNodeTM(t));
+    }
+}
+
+void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+{
+    auto mat = getTransform(n, t);
 
     // handle parents
     if (auto parent = n->GetParentNode()) {
-        auto pmat = GetTransform(parent, t, bake);
+        auto pmat = getTransform(parent, t);
         mat *= mu::invert(pmat);
     }
 
@@ -718,7 +730,7 @@ static void ExtractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& 
     }
 }
 
-static void ExtractCameraData(GenCamera *cam, TimeValue t,
+void msmaxContext::extractCameraData(GenCamera *cam, TimeValue t,
     bool& ortho, float& fov, float& near_plane, float& far_plane,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
@@ -754,7 +766,7 @@ static void ExtractCameraData(GenCamera *cam, TimeValue t,
     }
 }
 
-static void ExtractLightData(GenLight *light, TimeValue t,
+void msmaxContext::extractLightData(GenLight *light, TimeValue t,
     ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
     switch (light->Type()) {
@@ -802,12 +814,13 @@ std::shared_ptr<T> msmaxContext::createEntity(TreeNode& n)
     return ret;
 }
 
+
 ms::TransformPtr msmaxContext::exportTransform(TreeNode& n)
 {
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
+    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -820,7 +833,7 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
+    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
     dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
@@ -830,8 +843,8 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
-    ExtractCameraData((GenCamera*)n.baseobj, GetTime(),
+    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractCameraData((GenCamera*)n.baseobj, GetTime(),
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
     return ret;
@@ -841,8 +854,8 @@ ms::LightPtr msmaxContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
-    ExtractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
-    ExtractLightData((GenLight*)n.baseobj, GetTime(),
+    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractLightData((GenLight*)n.baseobj, GetTime(),
         dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
@@ -966,7 +979,7 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto ret = createEntity<ms::Mesh>(n);
     auto inode = n.node;
     auto& dst = *ret;
-    ExtractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible, m_settings.bake_modifiers);
+    extractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
 
     // send mesh contents even if the node is hidden.
 
@@ -1005,7 +1018,7 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
         if (!m_settings.bake_modifiers) {
             // handle pivot
             dst.refine_settings.flags.apply_local2world = 1;
-            dst.refine_settings.local2world = GetPivotMatrix(n);
+            dst.refine_settings.local2world = getPivotMatrix(n);
         }
         else {
             // convert vertices
@@ -1014,9 +1027,9 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             // ( https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm )
             auto t = GetTime();
             if (IsInWorldSpace(n, t))
-                dst.refine_settings.local2world = mu::invert(GetTransform(n, t, true));
+                dst.refine_settings.local2world = mu::invert(getTransform(n, t));
             else
-                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t)) * mu::invert(GetTransform(n, t, true));
+                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t)) * mu::invert(getTransform(n, t));
             dst.refine_settings.flags.apply_local2world = 1;
         }
 
@@ -1253,7 +1266,7 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode
     mu::quatf rot;
     mu::float3 scale;
     bool vis;
-    ExtractTransform(src, m_current_time_tick, pos, rot, scale, vis, m_settings.bake_modifiers);
+    extractTransform(src, m_current_time_tick, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
@@ -1272,7 +1285,7 @@ void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, INode *s
     bool ortho;
     float fov, near_plane, far_plane, focal_length;
     mu::float2 sensor_size, lens_shift;
-    ExtractCameraData((GenCamera*)obj, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
+    extractCameraData((GenCamera*)obj, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
 
     dst.fov.push_back({ t, fov });
     dst.near_plane.push_back({ t, near_plane });
@@ -1295,7 +1308,7 @@ void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *sr
     ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, spot_angle;
-    ExtractLightData((GenLight*)obj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
+    extractLightData((GenLight*)obj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
 
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });

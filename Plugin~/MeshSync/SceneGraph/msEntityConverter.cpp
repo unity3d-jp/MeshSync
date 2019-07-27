@@ -9,19 +9,19 @@ namespace ms {
 void EntityConverter::convert(Entity &e)
 {
     switch (e.getType()) {
-    case Entity::Type::Transform:
+    case EntityType::Transform:
         convertTransform(static_cast<Transform&>(e));
         break;
-    case Entity::Type::Camera:
+    case EntityType::Camera:
         convertCamera(static_cast<Camera&>(e));
         break;
-    case Entity::Type::Light:
+    case EntityType::Light:
         convertLight(static_cast<Light&>(e));
         break;
-    case Entity::Type::Mesh:
+    case EntityType::Mesh:
         convertMesh(static_cast<Mesh&>(e));
         break;
-    case Entity::Type::Points:
+    case EntityType::Points:
         convertPoints(static_cast<Points&>(e));
         break;
     default:
@@ -208,7 +208,7 @@ void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
     e.scale = swap_yz(e.scale);
 
     auto t = e.getType();
-    if (t == Entity::Type::Camera || t == Entity::Type::Light) {
+    if (t == EntityType::Camera || t == EntityType::Light) {
         const quatf cr = rotate_x(-90.0f * DegToRad);
         e.rotation *= cr;
     }
@@ -277,7 +277,7 @@ void FlipYZ_ZUpCorrector::convert(Animation &anim)
             break;
         case Animation::DataType::Quaternion:
             c.each<quatf>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
-            if ((anim.entity_type == Entity::Type::Camera || anim.entity_type == Entity::Type::Light) && c.name == mskTransformRotation) {
+            if ((anim.entity_type == EntityType::Camera || anim.entity_type == EntityType::Light) && c.name == mskTransformRotation) {
                 const quatf cr = rotate_x(-90.0f * DegToRad);
                 c.each<quatf>([&](auto& v) {
                     v.value *= cr;

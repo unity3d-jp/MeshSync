@@ -3,35 +3,22 @@
 
 namespace ms {
 
-struct EntityID
+enum class EntityType
 {
-    uint32_t n : 28;
-    uint32_t type : 4;
-
-    operator int() const { return *(int*)this; }
-    bool operator==(EntityID v) const { return (int)*this == (int)v; }
-    bool operator!=(EntityID v) const { return (int)*this != (int)v; }
-    bool operator<(EntityID v) const { return (int)*this < (int)v; }
-    bool operator>(EntityID v) const { return (int)*this > (int)v; }
-
-    EntityID& operator=(int v) { *(int*)this = v; return *this; }
-    EntityID(int v = InvalidID) { *this = v; }
+    Unknown,
+    Transform,
+    Camera,
+    Light,
+    Mesh,
+    Points,
 };
 
 class Entity
 {
 public:
-    enum class Type
-    {
-        Unknown,
-        Transform,
-        Camera,
-        Light,
-        Mesh,
-        Points,
-    };
+    using Type = EntityType;
 
-    EntityID id;
+    int id = InvalidID;
     int host_id = InvalidID;
     std::string path;
 

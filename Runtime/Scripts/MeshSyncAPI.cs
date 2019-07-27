@@ -167,9 +167,18 @@ namespace UTJ.MeshSync
 
     public struct ServerSettings
     {
+        public struct Flags
+        {
+            public BitFlags flags;
+            public bool optimizeMeshes { set { flags[0] = value; } }
+        }
+
+
         public int maxQueue;
         public int maxThreads;
         public ushort port;
+
+        public Flags flags;
         public uint meshSplitUnit;
         public int meshMaxBoneInfluence; // -1 (variable) or 4
         public ZUpCorrectionMode zUpCorrectionMode;
@@ -178,7 +187,7 @@ namespace UTJ.MeshSync
         {
             get
             {
-                return new ServerSettings
+                var ret = new ServerSettings
                 {
                     maxQueue = 512,
                     maxThreads = 8,
@@ -195,6 +204,8 @@ namespace UTJ.MeshSync
 #endif
                     zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
                 };
+                ret.flags.optimizeMeshes = true;
+                return ret;
             }
         }
 

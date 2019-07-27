@@ -5,7 +5,6 @@
 
 namespace ms {
 
-static_assert(sizeof(EntityID) == sizeof(uint32_t), "");
 static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
@@ -15,11 +14,11 @@ static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream& is)
 {
-    EntityID id;
-    read(is, id);
+    char type;
+    read(is, type);
 
     std::shared_ptr<Entity> ret;
-    switch ((Type)id.type) {
+    switch ((Type)type) {
     case Type::Transform: ret = Transform::create(); break;
     case Type::Camera: ret = Camera::create(); break;
     case Type::Light: ret = Light::create(); break;
@@ -30,7 +29,6 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
         break;
     }
     if (ret) {
-        ret->id = id;
         ret->deserialize(is);
     }
     return ret;
@@ -39,7 +37,7 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
 Entity::Entity() {}
 Entity::~Entity() {}
 
-Entity::Type Entity::getType() const
+EntityType Entity::getType() const
 {
     return Type::Unknown;
 }
@@ -51,13 +49,16 @@ bool Entity::isGeometry() const
 
 void Entity::serialize(std::ostream& os) const
 {
+    char type = (char)getType();
+    write(os, type);
     write(os, id);
     write(os, host_id);
     write(os, path);
 }
 void Entity::deserialize(std::istream& is)
 {
-    // id is consumed by create()
+    // type is consumed by create()
+    read(is, id);
     read(is, host_id);
     read(is, path);
 }
@@ -174,10 +175,10 @@ std::shared_ptr<Transform> Transform::create(std::istream& is)
     return std::static_pointer_cast<Transform>(super::create(is));
 }
 
-Transform::Transform() { id.type = (int)getType(); }
+Transform::Transform() {}
 Transform::~Transform() {}
 
-Entity::Type Transform::getType() const
+EntityType Transform::getType() const
 {
     return Type::Transform;
 }
@@ -295,10 +296,10 @@ void Transform::applyMatrix(const float4x4& v)
 
 // Camera
 #pragma region Camera
-Camera::Camera() { id.type = (int)getType(); }
+Camera::Camera() {}
 Camera::~Camera() {}
 
-Entity::Type Camera::getType() const
+EntityType Camera::getType() const
 {
     return Type::Camera;
 }
@@ -396,10 +397,10 @@ EntityPtr Camera::clone()
 
 // Light
 #pragma region Light
-Light::Light() { id.type = (int)getType(); }
+Light::Light() {}
 Light::~Light() {}
 
-Entity::Type Light::getType() const
+EntityType Light::getType() const
 {
     return Type::Light;
 }
@@ -586,9 +587,9 @@ void PointsData::getBounds(float3 & center, float3 & extents)
 }
 
 
-Points::Points() { id.type = (int)getType(); }
+Points::Points() {}
 Points::~Points() {}
-Entity::Type Points::getType() const { return Type::Points; }
+EntityType Points::getType() const { return Type::Points; }
 bool Points::isGeometry() const { return true; }
 
 #define EachMember(F)\

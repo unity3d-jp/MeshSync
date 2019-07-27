@@ -420,7 +420,7 @@ TransformAnimation::TransformAnimation(AnimationPtr h)
     : host(h)
     , path(host->path)
 {
-    host->entity_type = Entity::Type::Transform;
+    host->entity_type = EntityType::Transform;
 }
 
 TransformAnimation::~TransformAnimation()
@@ -457,7 +457,7 @@ std::shared_ptr<CameraAnimation> CameraAnimation::create(AnimationPtr host)
 CameraAnimation::CameraAnimation(AnimationPtr host)
     : super(host)
 {
-    host->entity_type = Entity::Type::Camera;
+    host->entity_type = EntityType::Camera;
 }
 
 void CameraAnimation::setupCurves(bool create_if_not_exist)
@@ -486,7 +486,7 @@ std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
 LightAnimation::LightAnimation(AnimationPtr host)
     : super(host)
 {
-    host->entity_type = Entity::Type::Light;
+    host->entity_type = EntityType::Light;
 }
 
 void LightAnimation::setupCurves(bool create_if_not_exist)
@@ -512,7 +512,7 @@ std::shared_ptr<MeshAnimation> MeshAnimation::create(AnimationPtr host)
 MeshAnimation::MeshAnimation(AnimationPtr host)
     : super(host)
 {
-    host->entity_type = Entity::Type::Mesh;
+    host->entity_type = EntityType::Mesh;
 }
 
 void MeshAnimation::setupCurves(bool create_if_not_exist)

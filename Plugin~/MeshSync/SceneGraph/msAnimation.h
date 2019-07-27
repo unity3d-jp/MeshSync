@@ -81,7 +81,7 @@ msDeclPtr(AnimationCurve);
 class Animation
 {
 public:
-    using EntityType = Entity::Type;
+    using EntityType = EntityType;
     using DataType = AnimationCurve::DataType;
 
     EntityType entity_type = EntityType::Unknown;

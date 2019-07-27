@@ -16,6 +16,8 @@ enum class AssetType
 class Asset
 {
 public:
+    using Type = AssetType;
+
     std::string name;
     int id = InvalidID;
 

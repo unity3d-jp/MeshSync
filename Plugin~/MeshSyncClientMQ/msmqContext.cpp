@@ -458,7 +458,7 @@ bool msmqContext::importMeshes(MQDocument doc)
     // import meshes
     std::string tmp_name;
     for (auto& data : ret->entities) {
-        if (data->getType() == ms::Entity::Type::Mesh) {
+        if (data->getType() == ms::EntityType::Mesh) {
             auto& dst = (ms::Mesh&)*data;
 
             // create name that includes ID

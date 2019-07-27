@@ -38,6 +38,8 @@ struct msmaxSettings
 
     // cache export settings
     bool export_cache = false;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
 };
 
 class msmaxContext : mu::noncopyable
@@ -154,6 +156,16 @@ private:
     ms::CameraPtr exportCamera(TreeNode& node);
     ms::LightPtr exportLight(TreeNode& node);
     ms::MeshPtr exportMesh(TreeNode& node);
+
+    mu::float4x4 getPivotMatrix(INode *n);
+    mu::float4x4 getTransform(INode *n, TimeValue t);
+    void extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractCameraData(GenCamera *cam, TimeValue t,
+        bool& ortho, float& fov, float& near_plane, float& far_plane,
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+    void extractLightData(GenLight *light, TimeValue t,
+        ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
+
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
     bool exportAnimations(INode *node, bool force);

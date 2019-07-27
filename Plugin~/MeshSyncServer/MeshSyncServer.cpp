@@ -384,7 +384,7 @@ msAPI uint32_t msTransformGetDataFlags(ms::Transform *self)
 {
     return (uint32_t&)self->td_flags;
 }
-msAPI ms::Entity::Type msTransformGetType(ms::Transform *self)
+msAPI ms::EntityType msTransformGetType(ms::Transform *self)
 {
     return self->getType();
 }

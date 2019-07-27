@@ -172,7 +172,7 @@ void Scene::import(const SceneImportSettings& cv)
         sanitizeHierarchyPath(obj->path);
         sanitizeHierarchyPath(obj->reference);
 
-        bool is_mesh = obj->getType() == Entity::Type::Mesh;
+        bool is_mesh = obj->getType() == EntityType::Mesh;
         if (is_mesh) {
             auto& mesh = static_cast<Mesh&>(*obj);
             for (auto& bone : mesh.bones)
@@ -264,7 +264,7 @@ void Scene::flatternHierarchy()
     std::map<std::string, TransformPtr> result;
     std::string name, tmp_name;
     for (auto& e : entities) {
-        if (e->getType() != Entity::Type::Transform) {
+        if (e->getType() != EntityType::Transform) {
             e->getName(name);
             {
                 auto& dst = result[name];
