@@ -101,8 +101,9 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
+            // flatten hierarchy
+            // this must be before AssignIDs() because paths will be modified
             if (m_settings.flags.flatten_hierarchy) {
-                desc.scene->buildHierarchy();
                 desc.scene->flatternHierarchy();
             }
 

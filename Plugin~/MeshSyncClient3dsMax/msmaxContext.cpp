@@ -359,7 +359,7 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
     ms::OSceneCacheSettings scs;
-    //scs.flags.flatten_hierarchy = 1;
+    scs.flags.flatten_hierarchy = 1;
     //scs.encoding = ms::SceneCacheEncoding::Plain; // debug
     if (!m_cache_writer.open(path.c_str(), scs))
         return false;
@@ -367,7 +367,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.bake_modifiers = true;
-    //m_settings.convert_to_mesh = true;
+    m_settings.flatten_hierarchy = scs.flags.flatten_hierarchy;
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
@@ -691,7 +691,7 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-mu::float4x4 msmaxContext::getTransform(INode *n, TimeValue t)
+mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 {
     if (m_settings.bake_modifiers) {
         auto m = n->GetObjTMAfterWSM(t);
@@ -708,11 +708,11 @@ mu::float4x4 msmaxContext::getTransform(INode *n, TimeValue t)
 
 void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    auto mat = getTransform(n, t);
+    auto mat = getGlobalMatrix(n, t);
 
     // handle parents
     if (auto parent = n->GetParentNode()) {
-        auto pmat = getTransform(parent, t);
+        auto pmat = getGlobalMatrix(parent, t);
         mat *= mu::invert(pmat);
     }
 
@@ -727,6 +727,17 @@ void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::
             static const auto cr = mu::rotate_y(180.0f * mu::DegToRad);
             rot *= cr;
         }
+    }
+}
+
+void msmaxContext::extractTransform(TreeNode& n)
+{
+    auto& dst = *n.dst;
+    auto t = GetTime();
+    extractTransform(n.node, t, dst.position, dst.rotation, dst.scale, dst.visible);
+
+    if (m_settings.bake_modifiers && m_settings.flatten_hierarchy) {
+        n.dst->assignMatrix(getGlobalMatrix(n.node, t));
     }
 }
 
@@ -820,7 +831,7 @@ ms::TransformPtr msmaxContext::exportTransform(TreeNode& n)
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -833,7 +844,7 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n);
     dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
@@ -843,7 +854,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
-    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n);
     extractCameraData((GenCamera*)n.baseobj, GetTime(),
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
@@ -854,7 +865,7 @@ ms::LightPtr msmaxContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
-    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n);
     extractLightData((GenLight*)n.baseobj, GetTime(),
         dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
@@ -979,7 +990,7 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto ret = createEntity<ms::Mesh>(n);
     auto inode = n.node;
     auto& dst = *ret;
-    extractTransform(inode, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n);
 
     // send mesh contents even if the node is hidden.
 
@@ -1014,6 +1025,7 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
 
 void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
 {
+    auto t = GetTime();
     if (mesh) {
         if (!m_settings.bake_modifiers) {
             // handle pivot
@@ -1025,11 +1037,10 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             //   (local space) -> world space -> local space without scale
             // to handle world space problem and complex scale composition
             // ( https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm )
-            auto t = GetTime();
             if (IsInWorldSpace(n, t))
-                dst.refine_settings.local2world = mu::invert(getTransform(n, t));
+                dst.refine_settings.local2world = mu::invert(getGlobalMatrix(n, t));
             else
-                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t)) * mu::invert(getTransform(n, t));
+                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t)) * mu::invert(getGlobalMatrix(n, t));
             dst.refine_settings.flags.apply_local2world = 1;
         }
 
@@ -1181,7 +1192,7 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
                 }
                 if (!dbs->frames.empty()) {
                     dbs->name = mu::ToMBS(channel.GetName());
-                    dbs->weight = channel.GetMorphWeight(GetTime());
+                    dbs->weight = channel.GetMorphWeight(t);
                     dst.blendshapes.push_back(dbs);
                 }
             }

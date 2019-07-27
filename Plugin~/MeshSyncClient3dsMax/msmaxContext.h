@@ -157,8 +157,9 @@ private:
     ms::MeshPtr exportMesh(TreeNode& node);
 
     mu::float4x4 getPivotMatrix(INode *n);
-    mu::float4x4 getTransform(INode *n, TimeValue t);
+    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
     void extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractTransform(TreeNode& node);
     void extractCameraData(GenCamera *cam, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);

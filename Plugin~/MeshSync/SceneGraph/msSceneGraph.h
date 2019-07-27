@@ -98,7 +98,6 @@ public:
     template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
 
     void buildHierarchy();
-    // prerequire buildHierarchy()
     void flatternHierarchy();
 };
 msSerializable(Scene);

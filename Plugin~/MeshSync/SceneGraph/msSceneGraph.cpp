@@ -289,7 +289,6 @@ void Scene::flatternHierarchy()
         auto& e = kvp.second;
         e->path = "/";
         e->path += kvp.first;
-        e->assignMatrix(e->global_matrix);
         entities.push_back(e);
     }
 }
