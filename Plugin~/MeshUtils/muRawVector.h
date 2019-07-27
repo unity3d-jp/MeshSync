@@ -10,7 +10,7 @@
 // T must be POD types because its constructor and destructor are never called.
 // that also means this can be significantly faster than std::vector in some specific situations.
 // (e.g. temporary buffers that can be very large and frequently resized)
-template<class T, int Align = 0x20>
+template<class T, int Align = 0x40>
 class RawVector
 {
 public:

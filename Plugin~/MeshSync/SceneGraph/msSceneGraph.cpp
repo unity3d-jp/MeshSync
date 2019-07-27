@@ -177,11 +177,7 @@ void Scene::import(const SceneImportSettings& cv)
             auto& mesh = static_cast<Mesh&>(*obj);
             for (auto& bone : mesh.bones)
                 sanitizeHierarchyPath(bone->path);
-            if (cv.flags.optimize_meshes) {
-                mesh.refine_settings.flags.triangulate = 1;
-                mesh.refine_settings.flags.split = 1;
-                mesh.refine_settings.flags.optimize_topology = 1;
-            }
+            mesh.refine_settings.flags.split = 1;
             mesh.refine_settings.split_unit = cv.mesh_split_unit;
             mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
             mesh.refine();

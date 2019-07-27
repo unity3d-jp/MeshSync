@@ -460,6 +460,12 @@ void Mesh::refine()
             setupBoneWeights4();
         else if (mrs.max_bone_influence == 255)
             setupBoneWeightsVariable();
+        else {
+            // should not be here
+            msLogWarning("Mesh::refine(): max_bone_influence is %d\n", mrs.max_bone_influence);
+            bones.clear();
+            root_bone.clear();
+        }
     }
 
     // normals
@@ -467,7 +473,7 @@ void Mesh::refine()
     if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
         GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
     }
-    else if (mrs.flags.gen_normals_with_smooth_angle) {
+    else if (mrs.flags.gen_normals_with_smooth_angle && !mrs.flags.no_reindexing) {
         GenerateNormalsWithSmoothAngle(normals, points, counts, indices, mrs.smooth_angle, flip_normals);
     }
 
@@ -486,6 +492,31 @@ void Mesh::refine()
     };
 
     if (mrs.flags.no_reindexing) {
+        size_t num_points = points.size();
+
+#define CheckAttr(A)\
+        if (!A.empty() && A.size() != num_points) {\
+            msLogWarning("Mesh::refine(): invalid attribute (" #A ")\n");\
+            A.clear();\
+        }
+
+        // check attributes are valid
+        CheckAttr(normals);
+        CheckAttr(tangents);
+        CheckAttr(uv0);
+        CheckAttr(uv1);
+        CheckAttr(colors);
+        CheckAttr(velocities);
+        for (auto& bs : blendshapes) {
+            for (auto& fp : bs->frames) {
+                auto& bs_frame = *fp;
+                CheckAttr(bs_frame.points);
+                CheckAttr(bs_frame.normals);
+                CheckAttr(bs_frame.tangents);
+            }
+        }
+#undef CheckAttr
+
         // tangents
         handle_tangents();
     }
@@ -499,7 +530,7 @@ void Mesh::refine()
         RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
 
         mu::MeshRefiner refiner;
-        refiner.split_unit = mrs.split_unit;
+        refiner.split_unit = mrs.flags.split ? mrs.split_unit : INT_MAX;
         refiner.points = points;
         refiner.indices = indices;
         refiner.counts = counts;

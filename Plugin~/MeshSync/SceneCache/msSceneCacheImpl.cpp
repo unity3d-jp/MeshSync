@@ -280,11 +280,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp)
 {
     if (m_isc_settings.flags.convert_scenes) {
-        auto tmp = m_import_settings;
-        if (m_osc_settings.flags.apply_refinement)
-            tmp.flags.optimize_meshes = 0; // already optimized
-
-        sp->import(tmp);
+        sp->import(m_import_settings);
     }
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.

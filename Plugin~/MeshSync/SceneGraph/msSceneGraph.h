@@ -48,7 +48,7 @@ struct SceneImportSettings
 {
     struct Flags
     {
-        uint32_t optimize_meshes : 1;
+        uint32_t dummy : 1;
     } flags{};
     uint32_t mesh_split_unit = 0xffffffff;
     int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
@@ -56,7 +56,6 @@ struct SceneImportSettings
 
     SceneImportSettings()
     {
-        flags.optimize_meshes = 1;
     }
 };
 
