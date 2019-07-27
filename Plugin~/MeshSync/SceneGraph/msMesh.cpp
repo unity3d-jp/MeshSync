@@ -214,16 +214,18 @@ void Mesh::deserialize(std::istream& is)
 
     read(is, splits);
     read(is, submeshes);
+}
 
+void Mesh::resolve()
+{
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
         bones.end());
 
     for (auto& submesh : submeshes)
         submesh.indices.reset(indices.data() + submesh.index_offset, submesh.index_count);
-    for (auto& split : splits) {
+    for (auto& split : splits)
         split.submeshes.reset(submeshes.data() + split.submesh_offset, split.submesh_count);
-    }
 }
 
 bool Mesh::strip(const Entity& base_)
@@ -407,6 +409,7 @@ EntityPtr Mesh::clone()
 {
     auto ret = create();
     *ret = *this;
+    ret->resolve();
     return ret;
 }
 

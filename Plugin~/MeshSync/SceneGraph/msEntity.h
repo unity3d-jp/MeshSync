@@ -32,6 +32,7 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void resolve();
     virtual bool strip(const Entity& base);
     virtual bool merge(const Entity& base);
     virtual bool diff(const Entity& e1, const Entity& e2);

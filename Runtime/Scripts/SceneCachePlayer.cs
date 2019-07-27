@@ -18,9 +18,9 @@ namespace UTJ.MeshSync
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
-        string m_pathPrev;
+        string m_pathPrev = "";
         float m_timePrev = -1;
-        bool m_needsOpen = false;
+        bool m_openRequested = false;
         #endregion
 
         #region Properties
@@ -46,40 +46,6 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Public Methods
-        public bool OpenCache(string path)
-        {
-            CloseCache();
-            m_sceneCache = SceneCacheData.Open(path);
-            if (m_sceneCache)
-            {
-                m_cacheFilePath.fullPath = path;
-                m_timeRange = m_sceneCache.timeRange;
-                if (m_logging)
-                    Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
-                return true;
-            }
-            else
-            {
-                if (m_logging)
-                    Debug.Log(string.Format("SceneCachePlayer: cache open failed ({0})", path));
-                return false;
-            }
-        }
-
-        public void CloseCache()
-        {
-            if (m_sceneCache)
-            {
-                m_sceneCache.Close();
-                if (m_logging)
-                    Debug.Log(string.Format("SceneCachePlayer: cache closed ({0})", m_cacheFilePath));
-            }
-            m_timePrev = -1;
-        }
-        #endregion
-
-
-        #region Impl
 #if UNITY_EDITOR
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
         public static void CreateSceneCachePlayer(MenuCommand menuCommand)
@@ -108,13 +74,50 @@ namespace UTJ.MeshSync
         }
 #endif
 
+        public bool OpenCache(string path)
+        {
+            CloseCache();
+            m_openRequested = false;
+
+            m_sceneCache = SceneCacheData.Open(path);
+            if (m_sceneCache)
+            {
+                m_cacheFilePath.fullPath = path;
+                m_pathPrev = path;
+                m_timeRange = m_sceneCache.timeRange;
+                if (m_logging)
+                    Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
+                return true;
+            }
+            else
+            {
+                if (m_logging)
+                    Debug.Log(string.Format("SceneCachePlayer: cache open failed ({0})", path));
+                return false;
+            }
+        }
+
+        public void CloseCache()
+        {
+            if (m_sceneCache)
+            {
+                m_sceneCache.Close();
+                if (m_logging)
+                    Debug.Log(string.Format("SceneCachePlayer: cache closed ({0})", m_cacheFilePath));
+            }
+            m_timePrev = -1;
+        }
+        #endregion
+
+
+        #region Impl
         void CheckParamsUpdated()
         {
             var path = m_cacheFilePath.fullPath;
             if (path != m_pathPrev)
             {
                 m_pathPrev = path;
-                m_needsOpen = true;
+                m_openRequested = true;
             }
 
             m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
@@ -137,7 +140,7 @@ namespace UTJ.MeshSync
 
         void OnEnable()
         {
-            m_needsOpen = true;
+            CheckParamsUpdated();
         }
 
         void OnDisable()
@@ -152,9 +155,8 @@ namespace UTJ.MeshSync
         // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
         void LateUpdate()
         {
-            if (m_needsOpen)
+            if (m_openRequested)
             {
-                m_needsOpen = false;
                 OpenCache(m_cacheFilePath.fullPath);
             }
 
@@ -162,8 +164,11 @@ namespace UTJ.MeshSync
             {
                 m_timePrev = m_time;
                 var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-                SceneCacheData.SendScene("127.0.0.1", m_port, scene);
-                GetComponent<MeshSyncServer>().PollServerEvents();
+
+                var server = GetComponent<MeshSyncServer>();
+                server.BeforeUpdateScene();
+                server.UpdateScene(scene);
+                server.AfterUpdateScene();
             }
         }
         #endregion

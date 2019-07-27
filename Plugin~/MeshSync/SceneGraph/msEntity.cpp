@@ -30,6 +30,7 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
     }
     if (ret) {
         ret->deserialize(is);
+        ret->resolve();
     }
     return ret;
 }
@@ -61,6 +62,10 @@ void Entity::deserialize(std::istream& is)
     read(is, id);
     read(is, host_id);
     read(is, path);
+}
+
+void Entity::resolve()
+{
 }
 
 bool Entity::strip(const Entity& base)
@@ -127,6 +132,7 @@ EntityPtr Entity::clone()
 {
     auto ret = create();
     *ret = *this;
+    ret->resolve();
     return ret;
 }
 
@@ -270,6 +276,7 @@ EntityPtr Transform::clone()
 {
     auto ret = create();
     *ret = *this;
+    ret->resolve();
     return ret;
 }
 
@@ -390,6 +397,7 @@ EntityPtr Camera::clone()
 {
     auto ret = create();
     *ret = *this;
+    ret->resolve();
     return ret;
 }
 #undef EachCameraAttribute
@@ -486,6 +494,7 @@ EntityPtr Light::clone()
 {
     auto ret = create();
     *ret = *this;
+    ret->resolve();
     return ret;
 }
 #undef EachLightAttribute

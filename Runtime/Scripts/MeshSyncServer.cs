@@ -537,74 +537,12 @@ namespace UTJ.MeshSync
         {
             if(mes.type == FenceMessage.FenceType.SceneBegin)
             {
-                if (onSceneUpdateBegin != null)
-                    onSceneUpdateBegin.Invoke();
+                BeforeUpdateScene();
             }
             else if(mes.type == FenceMessage.FenceType.SceneEnd)
             {
-                // resolve references
-                foreach (var pair in m_clientObjects)
-                {
-                    var dstrec = pair.Value;
-                    if (dstrec.reference == null || dstrec.go == null)
-                        continue;
-
-                    EntityRecord srcrec = null;
-                    if (m_clientObjects.TryGetValue(dstrec.reference, out srcrec) && srcrec.go != null)
-                    {
-                        dstrec.materialIDs = srcrec.materialIDs;
-                        dstrec.submeshCounts = srcrec.submeshCounts;
-                        UpdateReference(dstrec, srcrec);
-                    }
-                }
-
-                // sort objects by index
-                {
-                    var rec = m_clientObjects.Values.OrderBy(v => v.index);
-                    foreach (var r in rec)
-                    {
-                        if (r.go != null)
-                            r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
-                    }
-                }
-
-                // reassign materials
-                m_materialList = m_materialList.OrderBy(v => v.index).ToList();
-                if (m_needReassignMaterials)
-                {
-                    ReassignMaterials();
-                    m_needReassignMaterials = false;
-                }
-
-#if UNITY_EDITOR
-                if (!EditorApplication.isPlaying)
-                {
-                    // force recalculate skinning
-                    foreach (var rec in m_clientObjects)
-                    {
-                        if (rec.Value.editMesh)
-                        {
-                            var go = rec.Value.go;
-                            if (go != null && go.activeInHierarchy)
-                            {
-                                go.SetActive(false); // 
-                                go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
-                            }
-                        }
-                    }
-                }
-#endif
-#if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
-                if (m_useBoneRenderer)
-                    SetupBoneRenderer();
-#endif
-
-                ForceRepaint();
-                GC.Collect();
-
+                AfterUpdateScene();
                 m_server.NotifyPoll(PollMessage.PollType.SceneUpdate);
-                if (onSceneUpdateEnd != null)
-                    onSceneUpdateEnd.Invoke();
             }
         }
 
@@ -661,94 +599,7 @@ namespace UTJ.MeshSync
 
         void OnRecvSet(SetMessage mes)
         {
-            MakeSureAssetDirectoryExists();
-            var scene = mes.scene;
-
-            // assets
-            Try(() =>
-            {
-                int numAssets = scene.numAssets;
-                if (numAssets > 0)
-                {
-                    bool save = false;
-                    for (int i = 0; i < numAssets; ++i)
-                    {
-                        var asset = scene.GetAsset(i);
-                        switch (asset.type)
-                        {
-                            case AssetType.File:
-                                ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
-                                break;
-                            case AssetType.Audio:
-                                UpdateAudio((AudioData)asset);
-                                break;
-                            case AssetType.Texture:
-                                UpdateTexture((TextureData)asset);
-                                break;
-                            case AssetType.Material:
-                                UpdateMaterial((MaterialData)asset);
-                                break;
-                            case AssetType.Animation:
-                                UpdateAnimation((AnimationClipData)asset);
-                                save = true;
-                                break;
-                            default:
-                                if(m_logging)
-                                    Debug.Log("unknown asset: " + asset.name);
-                                break;
-                        }
-                    }
-#if UNITY_EDITOR
-                    if (save)
-                        AssetDatabase.SaveAssets();
-#endif
-                }
-            });
-
-            // objects
-            Try(() =>
-            {
-                int numObjects = scene.numEntities;
-                for (int i = 0; i < numObjects; ++i)
-                {
-                    EntityRecord dst = null;
-                    var src = scene.GetEntity(i);
-                    switch (src.entityType)
-                    {
-                        case EntityType.Transform:
-                            dst = UpdateTransform(src);
-                            break;
-                        case EntityType.Camera:
-                            dst = UpdateCamera((CameraData)src);
-                            break;
-                        case EntityType.Light:
-                            dst = UpdateLight((LightData)src);
-                            break;
-                        case EntityType.Mesh:
-                            dst = UpdateMesh((MeshData)src);
-                            break;
-                        case EntityType.Points:
-                            dst = UpdatePoints((PointsData)src);
-                            break;
-                    }
-
-                    if (dst != null && onUpdateEntity != null)
-                        onUpdateEntity.Invoke(dst.go, src);
-                }
-            });
-
-#if UNITY_2018_1_OR_NEWER
-            // constraints
-            Try(() =>
-            {
-                int numConstraints = scene.numConstraints;
-                for (int i = 0; i < numConstraints; ++i)
-                    UpdateConstraint(scene.GetConstraint(i));
-            });
-#endif
-
-            if(m_progressiveDisplay)
-                ForceRepaint();
+            UpdateScene(mes.scene);
         }
 
         void OnRecvScreenshot(IntPtr data)
@@ -1035,6 +886,169 @@ namespace UTJ.MeshSync
 
 
         #region ReceiveScene
+        public void BeforeUpdateScene()
+        {
+            MakeSureAssetDirectoryExists();
+
+            if (onSceneUpdateBegin != null)
+                onSceneUpdateBegin.Invoke();
+        }
+
+        public void UpdateScene(SceneData scene)
+        {
+            // handle assets
+            Try(() =>
+            {
+                int numAssets = scene.numAssets;
+                if (numAssets > 0)
+                {
+                    bool save = false;
+                    for (int i = 0; i < numAssets; ++i)
+                    {
+                        var asset = scene.GetAsset(i);
+                        switch (asset.type)
+                        {
+                            case AssetType.File:
+                                ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
+                                break;
+                            case AssetType.Audio:
+                                UpdateAudio((AudioData)asset);
+                                break;
+                            case AssetType.Texture:
+                                UpdateTexture((TextureData)asset);
+                                break;
+                            case AssetType.Material:
+                                UpdateMaterial((MaterialData)asset);
+                                break;
+                            case AssetType.Animation:
+                                UpdateAnimation((AnimationClipData)asset);
+                                save = true;
+                                break;
+                            default:
+                                if (m_logging)
+                                    Debug.Log("unknown asset: " + asset.name);
+                                break;
+                        }
+                    }
+#if UNITY_EDITOR
+                    if (save)
+                        AssetDatabase.SaveAssets();
+#endif
+                }
+            });
+
+            // handle entities
+            Try(() =>
+            {
+                int numObjects = scene.numEntities;
+                for (int i = 0; i < numObjects; ++i)
+                {
+                    EntityRecord dst = null;
+                    var src = scene.GetEntity(i);
+                    switch (src.entityType)
+                    {
+                        case EntityType.Transform:
+                            dst = UpdateTransform(src);
+                            break;
+                        case EntityType.Camera:
+                            dst = UpdateCamera((CameraData)src);
+                            break;
+                        case EntityType.Light:
+                            dst = UpdateLight((LightData)src);
+                            break;
+                        case EntityType.Mesh:
+                            dst = UpdateMesh((MeshData)src);
+                            break;
+                        case EntityType.Points:
+                            dst = UpdatePoints((PointsData)src);
+                            break;
+                    }
+
+                    if (dst != null && onUpdateEntity != null)
+                        onUpdateEntity.Invoke(dst.go, src);
+                }
+            });
+
+#if UNITY_2018_1_OR_NEWER
+            // handle constraints
+            Try(() =>
+            {
+                int numConstraints = scene.numConstraints;
+                for (int i = 0; i < numConstraints; ++i)
+                    UpdateConstraint(scene.GetConstraint(i));
+            });
+#endif
+
+            if (m_progressiveDisplay)
+                ForceRepaint();
+        }
+
+        public void AfterUpdateScene()
+        {
+            // resolve references
+            foreach (var pair in m_clientObjects)
+            {
+                var dstrec = pair.Value;
+                if (dstrec.reference == null || dstrec.go == null)
+                    continue;
+
+                EntityRecord srcrec = null;
+                if (m_clientObjects.TryGetValue(dstrec.reference, out srcrec) && srcrec.go != null)
+                {
+                    dstrec.materialIDs = srcrec.materialIDs;
+                    dstrec.submeshCounts = srcrec.submeshCounts;
+                    UpdateReference(dstrec, srcrec);
+                }
+            }
+
+            // sort objects by index
+            {
+                var rec = m_clientObjects.Values.OrderBy(v => v.index);
+                foreach (var r in rec)
+                {
+                    if (r.go != null)
+                        r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
+                }
+            }
+
+            // reassign materials
+            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
+            if (m_needReassignMaterials)
+            {
+                ReassignMaterials();
+                m_needReassignMaterials = false;
+            }
+
+#if UNITY_EDITOR
+            if (!EditorApplication.isPlaying)
+            {
+                // force recalculate skinning
+                foreach (var rec in m_clientObjects)
+                {
+                    if (rec.Value.editMesh)
+                    {
+                        var go = rec.Value.go;
+                        if (go != null && go.activeInHierarchy)
+                        {
+                            go.SetActive(false); // 
+                            go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
+                        }
+                    }
+                }
+            }
+#endif
+#if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
+            if (m_useBoneRenderer)
+                SetupBoneRenderer();
+#endif
+
+            ForceRepaint();
+            GC.Collect();
+
+            if (onSceneUpdateEnd != null)
+                onSceneUpdateEnd.Invoke();
+        }
+
         void UpdateAudio(AudioData src)
         {
             AudioClip ac = null;

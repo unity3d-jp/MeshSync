@@ -230,6 +230,7 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void resolve() override;
     bool strip(const Entity& base) override;
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
