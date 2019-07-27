@@ -14,6 +14,7 @@ namespace UTJ.MeshSync
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = false;
         [SerializeField] int m_port = 0;
+        [SerializeField] bool m_logging = false;
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
@@ -45,17 +46,35 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Public Methods
-        bool OpenCache(string path)
+        public bool OpenCache(string path)
         {
-            Release();
+            CloseCache();
             m_sceneCache = SceneCacheData.Open(path);
             if (m_sceneCache)
             {
                 m_cacheFilePath.fullPath = path;
                 m_timeRange = m_sceneCache.timeRange;
+                if (m_logging)
+                    Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
                 return true;
             }
-            return false;
+            else
+            {
+                if (m_logging)
+                    Debug.Log(string.Format("SceneCachePlayer: cache open failed ({0})", path));
+                return false;
+            }
+        }
+
+        public void CloseCache()
+        {
+            if (m_sceneCache)
+            {
+                m_sceneCache.Close();
+                if (m_logging)
+                    Debug.Log(string.Format("SceneCachePlayer: cache closed ({0})", m_cacheFilePath));
+            }
+            m_timePrev = -1;
         }
         #endregion
 
@@ -88,12 +107,6 @@ namespace UTJ.MeshSync
             }
         }
 #endif
-
-        void Release()
-        {
-            m_sceneCache.Close();
-            m_timePrev = -1;
-        }
 
         void CheckParamsUpdated()
         {
@@ -129,11 +142,15 @@ namespace UTJ.MeshSync
 
         void OnDisable()
         {
-            Release();
+            CloseCache();
             m_pathPrev = "";
         }
 
-        void Update()
+
+        // note:
+        // Update() is called *before* animation update.
+        // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
+        void LateUpdate()
         {
             if (m_needsOpen)
             {

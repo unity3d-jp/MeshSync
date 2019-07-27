@@ -59,6 +59,7 @@ struct TransformDataFlags
     uint32_t has_transform : 3; // TRS
     uint32_t has_visible : 1;
     uint32_t has_visible_hierarchy : 1;
+    uint32_t has_layer : 1;
     uint32_t has_reference: 1;
 
     TransformDataFlags()
@@ -79,6 +80,8 @@ public:
 
     bool visible = true;
     bool visible_hierarchy = true;
+    int layer = 0;
+
     std::string reference;
 
     // non-serializable
@@ -120,6 +123,7 @@ struct CameraDataFlags
     uint32_t has_focal_length : 1;
     uint32_t has_sensor_size : 1;
     uint32_t has_lens_shift : 1;
+    uint32_t has_layer_mask : 1;
 
     CameraDataFlags()
     {
@@ -141,6 +145,8 @@ public:
     float focal_length = 0.0f;
     float2 sensor_size = float2::zero();
     float2 lens_shift = float2::zero();
+
+    int layer_mask = ~0;
 
 protected:
     Camera();
@@ -170,6 +176,7 @@ struct LightDataFlags
     uint32_t has_intensity : 1;
     uint32_t has_range : 1;
     uint32_t has_spot_angle : 1;
+    uint32_t has_layer_mask : 1;
 
     LightDataFlags()
     {
@@ -204,6 +211,8 @@ public:
     float intensity = 1.0f;
     float range = 0.0f;
     float spot_angle = 30.0f; // for spot light
+
+    int layer_mask = ~0;
 
 protected:
     Light();

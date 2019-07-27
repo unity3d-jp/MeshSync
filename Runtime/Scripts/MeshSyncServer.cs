@@ -2578,8 +2578,6 @@ namespace UTJ.MeshSync
 
         void OnDestroy()
         {
-            StopServer();
-
             m_tmpI.Dispose();
             m_tmpV2.Dispose();
             m_tmpV3.Dispose();
@@ -2587,27 +2585,18 @@ namespace UTJ.MeshSync
             m_tmpC.Dispose();
         }
 
-
-#if UNITY_EDITOR
-        bool m_isCompiling;
-#endif
-
-        void Update()
+        void OnEnable()
         {
-#if UNITY_EDITOR
-            if (EditorApplication.isCompiling && !m_isCompiling)
-            {
-                // on compile begin
-                m_isCompiling = true;
-                StopServer();
-            }
-            else if (!EditorApplication.isCompiling && m_isCompiling)
-            {
-                // on compile end
-                m_isCompiling = false;
-                StartServer();
-            }
-#endif
+            m_requestRestartServer = true;
+        }
+
+        void OnDisable()
+        {
+            StopServer();
+        }
+
+        void LateUpdate()
+        {
             PollServerEvents();
         }
         #endregion

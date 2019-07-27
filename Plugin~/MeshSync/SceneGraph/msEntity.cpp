@@ -184,7 +184,7 @@ EntityType Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(td_flags) F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(reference)
+    F(td_flags) F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(layer) F(reference)
 
 void Transform::serialize(std::ostream& os) const
 {
@@ -284,6 +284,8 @@ void Transform::assignMatrix(const float4x4& v)
     position = extract_position(v);
     rotation = extract_rotation(v);
     scale = extract_scale(v);
+    if (near_equal(scale, float3::one()))
+        scale = float3::one();
 }
 
 void Transform::applyMatrix(const float4x4& v)
@@ -305,7 +307,7 @@ EntityType Camera::getType() const
 }
 
 #define EachCameraAttribute(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(layer_mask)
 
 #define EachMember(F)\
     F(cd_flags) EachCameraAttribute(F)
@@ -406,7 +408,7 @@ EntityType Light::getType() const
 }
 
 #define EachLightAttribute(F)\
-    F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle)
+    F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle) F(layer_mask)
 
 #define EachMember(F)\
     F(ld_flags) EachLightAttribute(F)
