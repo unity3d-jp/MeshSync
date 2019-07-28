@@ -101,20 +101,11 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
-            // flatten hierarchy
-            // this must be before AssignIDs() because paths will be modified
-            if (m_settings.flags.flatten_hierarchy) {
+            if (m_settings.flags.flatten_hierarchy)
                 desc.scene->flatternHierarchy();
-            }
 
-            mu::parallel_invoke([&]() {
-                AssignIDs(*desc.scene, m_id_table);
-            },
-            [&]() {
-                if (m_settings.flags.apply_refinement) {
-                    desc.scene->import(m_import_settings);
-                }
-            });
+            if (m_settings.flags.apply_refinement)
+                desc.scene->import(m_import_settings);
 
             if (m_settings.flags.strip_unchanged) {
                 if (!m_base_scene)

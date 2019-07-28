@@ -52,7 +52,6 @@ protected:
     std::list<SceneRecord> m_queue;
     std::future<void> m_task;
 
-    PathToID m_id_table;
     ScenePtr m_base_scene;
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;

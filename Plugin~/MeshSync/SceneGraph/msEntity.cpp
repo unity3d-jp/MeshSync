@@ -10,6 +10,8 @@ static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 
+#define CopyMember(V) V = base.V;
+
 // Entity
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream& is)
@@ -51,14 +53,15 @@ bool Entity::isGeometry() const
 void Entity::serialize(std::ostream& os) const
 {
     char type = (char)getType();
+    // will be consumed by create()
     write(os, type);
+
     write(os, id);
     write(os, host_id);
     write(os, path);
 }
 void Entity::deserialize(std::istream& is)
 {
-    // type is consumed by create()
     read(is, id);
     read(is, host_id);
     read(is, path);
@@ -68,12 +71,18 @@ void Entity::resolve()
 {
 }
 
+bool Entity::isUnchanged() const
+{
+    return false;
+}
+
 bool Entity::strip(const Entity& base)
 {
     if (getType() != base.getType())
         return false;
 
-    path.clear();
+    if (path == base.path)
+        path.clear();
     return true;
 }
 
@@ -82,7 +91,8 @@ bool Entity::merge(const Entity& base)
     if (getType() != base.getType())
         return false;
 
-    path = base.path;
+    if (path.empty())
+        path = base.path;
     return true;
 }
 
@@ -109,6 +119,7 @@ bool Entity::genVelocity(const Entity& prev)
 
 void Entity::clear()
 {
+    id = InvalidID;
     host_id = InvalidID;
     path.clear();
 }
@@ -190,20 +201,86 @@ EntityType Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(td_flags) F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(layer) F(reference)
+    F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(layer) F(reference)
 
 void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
+    write(os, td_flags);
+    if (td_flags.unchanged)
+        return;
     EachMember(msWrite);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
+    read(is, td_flags);
+    if (td_flags.unchanged)
+        return;
     EachMember(msRead);
 }
 
-#undef EachMember
+bool Transform::isUnchanged() const
+{
+    return td_flags.unchanged;
+}
+
+static bool NearEqual(const Transform& a, const Transform& b)
+{
+    return
+        near_equal(a.position, b.position) &&
+        near_equal(a.rotation, b.rotation) &&
+        near_equal(a.scale, b.scale) &&
+        a.index == b.index &&
+        a.visible == b.visible &&
+        a.visible_hierarchy == b.visible_hierarchy &&
+        a.reference == b.reference &&
+        a.layer == b.layer;
+}
+
+bool Transform::strip(const Entity& base_)
+{
+    if (!super::strip(base_))
+        return false;
+
+    td_flags.unchanged = NearEqual(*this, static_cast<const Transform&>(base_));
+    return true;
+}
+
+bool Transform::merge(const Entity& base_)
+{
+    if (!super::merge(base_))
+        return false;
+    auto& base = static_cast<const Transform&>(base_);
+    if (td_flags.unchanged) {
+        EachMember(CopyMember);
+    }
+    return true;
+}
+
+bool Transform::diff(const Entity& e1_, const Entity& e2_)
+{
+    if (!super::diff(e1_, e2_))
+        return false;
+
+    td_flags.unchanged = NearEqual(
+        static_cast<const Transform&>(e1_),
+        static_cast<const Transform&>(e2_));
+    return true;
+}
+
+bool Transform::lerp(const Entity& e1_, const Entity& e2_, float t)
+{
+    if (!super::lerp(e1_, e2_, t))
+        return false;
+    auto& e1 = static_cast<const Transform&>(e1_);
+    auto& e2 = static_cast<const Transform&>(e2_);
+
+    position = mu::lerp(e1.position, e2.position, t);
+    rotation = mu::slerp(e1.rotation, e2.rotation, t);
+    scale = mu::lerp(e1.scale, e2.scale, t);
+    return true;
+}
 
 void Transform::clear()
 {
@@ -238,40 +315,6 @@ uint64_t Transform::checksumTrans() const
     return ret;
 }
 
-bool Transform::diff(const Entity& e1_, const Entity& e2_)
-{
-    if (!super::diff(e1_, e2_))
-        return false;
-    auto& e1 = static_cast<const Transform&>(e1_);
-    auto& e2 = static_cast<const Transform&>(e2_);
-
-    if (e1.position == e2.position &&
-        e1.rotation == e2.rotation &&
-        e1.scale == e2.scale &&
-        e1.index == e2.index &&
-        e1.visible == e2.visible &&
-        e1.visible_hierarchy == e2.visible_hierarchy &&
-        e1.reference == e2.reference
-        )
-        td_flags.unchanged = 1;
-    else
-        td_flags.unchanged = 0;
-    return true;
-}
-
-bool Transform::lerp(const Entity& e1_, const Entity& e2_, float t)
-{
-    if (!super::lerp(e1_, e2_, t))
-        return false;
-    auto& e1 = static_cast<const Transform&>(e1_);
-    auto& e2 = static_cast<const Transform&>(e2_);
-
-    position = mu::lerp(e1.position, e2.position, t);
-    rotation = mu::slerp(e1.rotation, e2.rotation, t);
-    scale = mu::lerp(e1.scale, e2.scale, t);
-    return true;
-}
-
 EntityPtr Transform::clone()
 {
     auto ret = create();
@@ -300,6 +343,7 @@ void Transform::applyMatrix(const float4x4& v)
     if (!near_equal(v, float4x4::identity()))
         assignMatrix(v * toMatrix());
 }
+#undef EachMember
 #pragma endregion
 
 
@@ -313,41 +357,72 @@ EntityType Camera::getType() const
     return Type::Camera;
 }
 
-#define EachCameraAttribute(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(layer_mask)
-
 #define EachMember(F)\
-    F(cd_flags) EachCameraAttribute(F)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(layer_mask)
 
 void Camera::serialize(std::ostream& os) const
 {
     super::serialize(os);
+    write(os, cd_flags);
+    if (cd_flags.unchanged)
+        return;
     EachMember(msWrite);
 }
 void Camera::deserialize(std::istream& is)
 {
     super::deserialize(is);
+    read(is, cd_flags);
+    if (cd_flags.unchanged)
+        return;
     EachMember(msRead);
+}
+
+bool Camera::isUnchanged() const
+{
+    return td_flags.unchanged && cd_flags.unchanged;
+}
+
+static bool NearEqual(const Camera& a, const Camera& b)
+{
+    return
+        a.is_ortho == b.is_ortho &&
+        near_equal(a.fov, b.fov) &&
+        near_equal(a.near_plane, b.near_plane) &&
+        near_equal(a.far_plane, b.far_plane) &&
+        near_equal(a.focal_length, b.focal_length) &&
+        near_equal(a.sensor_size, b.sensor_size) &&
+        near_equal(a.lens_shift, b.lens_shift) &&
+        a.layer_mask == b.layer_mask;
+}
+
+bool Camera::strip(const Entity& base)
+{
+    if (!super::strip(base))
+        return false;
+
+    cd_flags.unchanged = NearEqual(*this, static_cast<const Camera&>(base));
+    return true;
+}
+
+bool Camera::merge(const Entity& base_)
+{
+    if (!super::merge(base_))
+        return false;
+    auto& base = static_cast<const Camera&>(base_);
+    if (cd_flags.unchanged) {
+        EachMember(CopyMember);
+    }
+    return true;
 }
 
 bool Camera::diff(const Entity& e1_, const Entity& e2_)
 {
     if (!super::diff(e1_, e2_))
         return false;
-    auto& e1 = static_cast<const Camera&>(e1_);
-    auto& e2 = static_cast<const Camera&>(e2_);
 
-    if (e1.is_ortho == e2.is_ortho &&
-        e1.fov == e2.fov &&
-        e1.near_plane == e2.near_plane &&
-        e1.far_plane == e2.far_plane &&
-        e1.focal_length == e2.focal_length &&
-        e1.sensor_size == e2.sensor_size &&
-        e1.lens_shift == e2.lens_shift
-        )
-        cd_flags.unchanged = 1;
-    else
-        cd_flags.unchanged = 0;
+    cd_flags.unchanged = NearEqual(
+        static_cast<const Camera&>(e1_),
+        static_cast<const Camera&>(e2_));
     return true;
 }
 
@@ -388,7 +463,7 @@ uint64_t Camera::checksumTrans() const
 {
     uint64_t ret = super::checksumTrans();
 #define Body(A) ret += csum(A);
-    EachCameraAttribute(Body);
+    EachMember(Body);
 #undef Body
     return ret;
 }
@@ -400,7 +475,6 @@ EntityPtr Camera::clone()
     ret->resolve();
     return ret;
 }
-#undef EachCameraAttribute
 #undef EachMember
 #pragma endregion
 
@@ -415,40 +489,69 @@ EntityType Light::getType() const
     return Type::Light;
 }
 
-#define EachLightAttribute(F)\
-    F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle) F(layer_mask)
-
 #define EachMember(F)\
-    F(ld_flags) EachLightAttribute(F)
+    F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle) F(layer_mask)
 
 void Light::serialize(std::ostream & os) const
 {
     super::serialize(os);
+    write(os, ld_flags);
+    if (ld_flags.unchanged)
+        return;
     EachMember(msWrite);
 }
 void Light::deserialize(std::istream & is)
 {
     super::deserialize(is);
+    read(is, ld_flags);
+    if (ld_flags.unchanged)
+        return;
     EachMember(msRead);
+}
+
+bool Light::isUnchanged() const
+{
+    return td_flags.unchanged && ld_flags.unchanged;
+}
+
+static bool NearEqual(const Light& a, const Light& b)
+{
+    return
+        a.light_type == b.light_type &&
+        a.shadow_type == b.shadow_type &&
+        near_equal(a.color, b.color) &&
+        near_equal(a.intensity, b.intensity) &&
+        near_equal(a.range, b.range) &&
+        near_equal(a.spot_angle, b.spot_angle) &&
+        a.layer_mask == b.layer_mask;
+}
+
+bool Light::strip(const Entity& base)
+{
+    if (!super::strip(base))
+        return false;
+
+    ld_flags.unchanged = NearEqual(*this, static_cast<const Light&>(base));
+    return true;
+}
+
+bool Light::merge(const Entity& base_)
+{
+    if (!super::merge(base_))
+        return false;
+    auto& base = static_cast<const Light&>(base_);
+    if (ld_flags.unchanged) {
+        EachMember(CopyMember);
+    }
+    return true;
 }
 
 bool Light::diff(const Entity& e1_, const Entity& e2_)
 {
     if (!super::diff(e1_, e2_))
         return false;
-    auto& e1 = static_cast<const Light&>(e1_);
-    auto& e2 = static_cast<const Light&>(e2_);
 
-    if (e1.light_type == e2.light_type &&
-        e1.shadow_type == e2.shadow_type &&
-        e1.color == e2.color &&
-        e1.intensity == e2.intensity &&
-        e1.range == e2.range &&
-        e1.spot_angle == e2.spot_angle
-        )
-        ld_flags.unchanged = 1;
-    else
-        ld_flags.unchanged = 0;
+    ld_flags.unchanged = NearEqual(static_cast<const Light&>(e1_), static_cast<const Light&>(e2_));
     return true;
 }
 
@@ -485,7 +588,7 @@ uint64_t Light::checksumTrans() const
 {
     uint64_t ret = super::checksumTrans();
 #define Body(A) ret += csum(A);
-    EachLightAttribute(Body);
+    EachMember(Body);
 #undef Body
     return ret;
 }
@@ -497,7 +600,6 @@ EntityPtr Light::clone()
     ret->resolve();
     return ret;
 }
-#undef EachLightAttribute
 #undef EachMember
 #pragma endregion
 
@@ -605,6 +707,11 @@ bool Points::isGeometry() const { return true; }
 
 #define EachMember(F)\
     F(data)
+
+bool Points::isUnchanged() const
+{
+    return td_flags.unchanged; // todo
+}
 
 void Points::serialize(std::ostream & os) const
 {

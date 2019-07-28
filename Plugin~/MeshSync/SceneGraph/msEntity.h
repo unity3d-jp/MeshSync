@@ -18,6 +18,7 @@ class Entity
 public:
     using Type = EntityType;
 
+    // serializable
     int id = InvalidID;
     int host_id = InvalidID;
     std::string path;
@@ -32,12 +33,15 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
-    virtual void resolve();
+    virtual void resolve(); // called after deserialize & clone
+
+    virtual bool isUnchanged() const;
     virtual bool strip(const Entity& base);
     virtual bool merge(const Entity& base);
     virtual bool diff(const Entity& e1, const Entity& e2);
     virtual bool lerp(const Entity& e1, const Entity& e2, float t);
     virtual bool genVelocity(const Entity& prev); // todo
+
     virtual void clear();
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
@@ -73,6 +77,7 @@ class Transform : public Entity
 {
 using super = Entity;
 public:
+    // serializable
     TransformDataFlags td_flags;
     float3   position = float3::zero();
     quatf    rotation = quatf::identity();
@@ -100,10 +105,15 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
-    void clear() override;
-    uint64_t checksumTrans() const override;
+
+    bool isUnchanged() const override;
+    bool strip(const Entity& base) override;
+    bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
+
+    void clear() override;
+    uint64_t checksumTrans() const override;
     EntityPtr clone() override;
 
     float4x4 toMatrix() const;
@@ -136,13 +146,14 @@ class Camera : public Transform
 {
 using super = Transform;
 public:
+    // serializable
     CameraDataFlags cd_flags;
     bool is_ortho = false;
     float fov = 30.0f;
     float near_plane = 0.3f;
     float far_plane = 1000.0f;
 
-    // for physical camera
+    // physical camera params
     float focal_length = 0.0f;
     float2 sensor_size = float2::zero();
     float2 lens_shift = float2::zero();
@@ -157,8 +168,13 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+
+    bool isUnchanged() const override;
+    bool strip(const Entity& base) override;
+    bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
+
     void clear() override;
     uint64_t checksumTrans() const override;
     EntityPtr clone() override;
@@ -205,6 +221,7 @@ public:
         Soft,
     };
 
+    // serializable
     LightDataFlags ld_flags;
     LightType light_type = LightType::Directional;
     ShadowType shadow_type = ShadowType::Unknown;
@@ -223,8 +240,13 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+
+    bool isUnchanged() const override;
+    bool strip(const Entity& base) override;
+    bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
+
     void clear() override;
     uint64_t checksumTrans() const override;
     EntityPtr clone() override;
@@ -256,6 +278,7 @@ struct PointsDataFlags
 
 struct PointsData
 {
+    // serializable
     PointsDataFlags pd_flags;
     float time = -1.0f;
     RawVector<float3> points;
@@ -291,7 +314,9 @@ class Points : public Transform
 {
 using super = Transform;
 public:
-    // Transform::reference is used for reference for Mesh
+    // on Points, Transform::reference refers Mesh object for source mesh
+
+    // serializable
     std::vector<PointsDataPtr> data;
 
 protected:
@@ -301,8 +326,11 @@ public:
     msDefinePool(Points);
     Type getType() const override;
     bool isGeometry() const override;
+
+    bool isUnchanged() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;

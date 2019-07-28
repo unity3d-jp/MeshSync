@@ -67,6 +67,7 @@ struct MeshRefineFlags
 
 struct MeshRefineSettings
 {
+    // serializable
     MeshRefineFlags flags;
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f; // in degree
@@ -108,6 +109,7 @@ msSerializable(SubmeshData);
 
 struct SplitData
 {
+    // serializable
     int index_count = 0;
     int index_offset = 0;
     int vertex_count = 0;
@@ -129,6 +131,7 @@ msSerializable(SplitData);
 
 struct BlendShapeFrameData
 {
+    // serializable
     float weight = 0.0f; // 0.0f - 100.0f
     RawVector<float3> points; // can be empty or per-vertex data
     RawVector<float3> normals;  // can be empty, per-vertex or per-index data
@@ -149,6 +152,7 @@ msDeclPtr(BlendShapeFrameData);
 
 struct BlendShapeData
 {
+    // serializable
     std::string name;
     float weight = 0.0f; // 0.0f - 100.0f
     std::vector<BlendShapeFrameDataPtr> frames;
@@ -170,6 +174,7 @@ msDeclPtr(BlendShapeData);
 
 struct BoneData 
 {
+    // serializable
     std::string path;
     float4x4 bindpose = float4x4::identity();
     RawVector<float> weights; // per-vertex data
@@ -213,8 +218,7 @@ public:
     std::vector<SplitData> splits;
 
     // non-serializable
-    // *DO NOT forget to update clear() when add member*
-
+    // *update clear() when add member*
     RawVector<Weights4> weights4;
     RawVector<uint8_t> bone_counts;
     RawVector<int> bone_offsets;
@@ -231,10 +235,13 @@ public:
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
     void resolve() override;
+
+    bool isUnchanged() const override;
     bool strip(const Entity& base) override;
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& e1, const Entity& e2, float t) override;
+
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;

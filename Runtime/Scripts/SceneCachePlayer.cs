@@ -13,7 +13,6 @@ namespace UTJ.MeshSync
         [SerializeField] DataPath m_cacheFilePath = new DataPath();
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = false;
-        [SerializeField] int m_port = 0;
         [SerializeField] bool m_logging = false;
 
         SceneCacheData m_sceneCache;
@@ -38,10 +37,6 @@ namespace UTJ.MeshSync
         {
             get { return m_interpolation; }
             set { m_interpolation = value; }
-        }
-        public int port
-        {
-            get { return m_port; }
         }
         #endregion
 
@@ -129,8 +124,8 @@ namespace UTJ.MeshSync
         void Reset()
         {
             m_cacheFilePath.isDirectory = false;
-            m_port = Random.Range(11111, 65000);
-            GetComponent<MeshSyncServer>().serverPort = m_port;
+            m_cacheFilePath.readOnly = true;
+            GetComponent<MeshSyncServer>().serverPort = Random.Range(11111, 65000);
         }
         void OnValidate()
         {

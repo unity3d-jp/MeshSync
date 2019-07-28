@@ -7,6 +7,8 @@ namespace ms {
 static_assert(sizeof(MeshDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 
+#define CopyMember(V) V = base.V;
+
 // Mesh
 #pragma region Mesh
 
@@ -172,8 +174,11 @@ void BoneData::clear()
 }
 
 
-#define EachVertexAttribute(Body)\
-    Body(points) Body(normals) Body(tangents) Body(uv0) Body(uv1) Body(colors) Body(velocities) Body(counts) Body(indices) Body(material_ids)
+#define EachVertexAttribute(F)\
+    F(points) F(normals) F(tangents) F(uv0) F(uv1) F(colors) F(velocities) F(counts) F(indices) F(material_ids)
+
+#define EachMember(F)\
+    F(refine_settings) EachVertexAttribute(F) F(root_bone) F(bones) F(blendshapes) F(splits) F(submeshes)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
@@ -183,37 +188,21 @@ bool Mesh::isGeometry() const { return true; }
 void Mesh::serialize(std::ostream& os) const
 {
     super::serialize(os);
-
     write(os, md_flags);
-    write(os, refine_settings);
+    if (md_flags.unchanged)
+        return;
 
-#define Body(A) write(os, A);
-    EachVertexAttribute(Body);
-#undef Body
-    write(os, root_bone);
-    write(os, bones);
-    write(os, blendshapes);
-
-    write(os, splits);
-    write(os, submeshes);
+    EachMember(msWrite);
 }
 
 void Mesh::deserialize(std::istream& is)
 {
     super::deserialize(is);
-
     read(is, md_flags);
-    read(is, refine_settings);
+    if (md_flags.unchanged)
+        return;
 
-#define Body(A) read(is, A);
-    EachVertexAttribute(Body);
-#undef Body
-    read(is, root_bone);
-    read(is, bones);
-    read(is, blendshapes);
-
-    read(is, splits);
-    read(is, submeshes);
+    EachMember(msRead);
 }
 
 void Mesh::resolve()
@@ -228,20 +217,32 @@ void Mesh::resolve()
         split.submeshes.reset(submeshes.data() + split.submesh_offset, split.submesh_count);
 }
 
+bool Mesh::isUnchanged() const
+{
+    return td_flags.unchanged && md_flags.unchanged;
+}
+
 bool Mesh::strip(const Entity& base_)
 {
     if (!super::strip(base_))
         return false;
 
-    auto clear_if_identical = [](auto& a1, const auto& a2) {
+    bool unchanged = true;
+    auto clear_if_identical = [&](auto& a1, const auto& a2) {
         if (near_equal(a1, a2))
             a1.clear();
+        else
+            unchanged = false;
     };
+
+    // note:
+    // ignore skinning & blendshape for now. maybe need to support at some point.
 
     auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) clear_if_identical(A, base.A);
     EachVertexAttribute(Body);
 #undef Body
+    md_flags.unchanged = unchanged && refine_settings == base.refine_settings;
     return true;
 }
 
@@ -249,16 +250,20 @@ bool Mesh::merge(const Entity& base_)
 {
     if (!super::merge(base_))
         return false;
-
-    auto assign_if_empty = [](auto& cur, const auto& base) {
-        if (cur.empty())
-            cur = base;
-    };
-
     auto& base = static_cast<const Mesh&>(base_);
+
+    if (md_flags.unchanged) {
+        EachMember(CopyMember);
+    }
+    else {
+        auto assign_if_empty = [](auto& cur, const auto& base) {
+            if (cur.empty())
+                cur = base;
+        };
 #define Body(A) assign_if_empty(A, base.A);
-    EachVertexAttribute(Body);
+        EachVertexAttribute(Body);
 #undef Body
+    }
     return true;
 }
 
@@ -403,7 +408,8 @@ uint64_t Mesh::checksumGeom() const
     return ret;
 }
 
-#undef EachVertexProperty
+#undef EachVertexAttribute
+#undef EachMember
 
 EntityPtr Mesh::clone()
 {
@@ -503,7 +509,7 @@ void Mesh::refine()
             A.clear();\
         }
 
-        // check attributes are valid
+        // when re-indexing is disabled, all vertex attributes length must be the same as points. check it.
         CheckAttr(normals);
         CheckAttr(tangents);
         CheckAttr(uv0);
@@ -521,6 +527,7 @@ void Mesh::refine()
 #undef CheckAttr
 
         // tangents
+        // normals and tangents can be generated on the fly even if re-indexing is disabled.
         handle_tangents();
     }
     else {

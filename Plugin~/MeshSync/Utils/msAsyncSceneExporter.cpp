@@ -87,6 +87,8 @@ void AsyncSceneSender::send()
 
     std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+    AssignIDs(transforms, id_table);
+    AssignIDs(geometries, id_table);
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -260,6 +262,8 @@ void AsyncSceneCacheWriter::kick()
 
     std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+    AssignIDs(transforms, id_table);
+    AssignIDs(geometries, id_table);
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 

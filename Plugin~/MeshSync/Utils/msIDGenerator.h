@@ -111,6 +111,7 @@ protected:
 };
 
 class Scene;
+void AssignIDs(std::vector<TransformPtr>& entities, PathToID& table);
 void AssignIDs(Scene& scene, PathToID& table);
 
 } // namespace ms

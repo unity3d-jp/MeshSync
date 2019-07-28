@@ -2,6 +2,7 @@
 
 #include "../msClient.h"
 #include "../SceneCache/msSceneCache.h"
+#include "msIDGenerator.h"
 
 namespace ms {
 
@@ -20,6 +21,7 @@ public:
     std::vector<Identifier> deleted_materials;
 
     std::function<void()> on_prepare, on_success, on_error, on_complete;
+    PathToID id_table;
 
 public:
     virtual ~AsyncSceneExporter();
