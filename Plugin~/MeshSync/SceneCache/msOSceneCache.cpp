@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "msOSceneCache.h"
+#include "Utils/msDebug.h"
 
 namespace ms {
 
@@ -76,34 +77,55 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
-            if (m_oscs.flatten_hierarchy)
-                desc.scene->flatternHierarchy();
+            {
+                msDbgTimer("OSceneCacheImpl: scene optimization");
 
-            if (m_oscs.apply_refinement)
-                desc.scene->import(m_oscs);
+                if (m_oscs.flatten_hierarchy)
+                    desc.scene->flatternHierarchy();
 
-            if (m_oscs.strip_unchanged) {
-                if (!m_base_scene)
-                    m_base_scene = desc.scene;
-                else
-                    desc.scene->strip(*m_base_scene);
+                if (m_oscs.apply_refinement)
+                    desc.scene->import(m_oscs);
+
+                if (m_oscs.strip_normals)
+                    desc.scene->stripNormals();
+                if (m_oscs.strip_tangents)
+                    desc.scene->stripTangents();
+
+                if (m_oscs.strip_unchanged) {
+                    if (!m_base_scene)
+                        m_base_scene = desc.scene;
+                    else
+                        desc.scene->strip(*m_base_scene);
+                }
             }
 
             // serialize
-            m_scene_buf.reset();
-            desc.scene->serialize(m_scene_buf);
-            m_scene_buf.flush();
+            {
+                msDbgTimer("OSceneCacheImpl: serialization");
+
+                m_scene_buf.reset();
+                desc.scene->serialize(m_scene_buf);
+                m_scene_buf.flush();
+            }
 
             // encode
-            m_encoder->encode(m_encoded_buf, m_scene_buf.getBuffer());
+            {
+                msDbgTimer("OSceneCacheImpl: encode");
 
+                m_encoder->encode(m_encoded_buf, m_scene_buf.getBuffer());
+            }
+ 
             // write
-            CacheFileSceneHeader header;
-            header.size = m_encoded_buf.size();
-            header.time = desc.time;
-            m_ost->write((char*)&header, sizeof(header));
-            m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
-      
+            {
+                msDbgTimer("OSceneCacheImpl: write");
+
+                CacheFileSceneHeader header;
+                header.size = m_encoded_buf.size();
+                header.time = desc.time;
+                m_ost->write((char*)&header, sizeof(header));
+                m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
+            }
+     
         }
     };
 

@@ -359,8 +359,10 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
     ms::OSceneCacheSettings oscs;
+    oscs.encoder_settings.zstd.compression_level = 100;
     oscs.flatten_hierarchy = 1;
-    //scs.encoding = ms::SceneCacheEncoding::Plain; // debug
+    //oscs.strip_normals = 1;
+    oscs.strip_tangents = 1;
     if (!m_cache_writer.open(path.c_str(), oscs))
         return false;
 

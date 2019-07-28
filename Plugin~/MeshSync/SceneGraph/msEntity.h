@@ -3,6 +3,13 @@
 
 namespace ms {
 
+class Entity;
+class Transform;
+class Camera;
+class Light;
+class Mesh;
+class Points;
+
 enum class EntityType
 {
     Unknown,
@@ -12,6 +19,14 @@ enum class EntityType
     Mesh,
     Points,
 };
+
+template<class T> struct GetEntityType;
+template<> struct GetEntityType<Transform>  { static const EntityType type = EntityType::Transform; };
+template<> struct GetEntityType<Camera>     { static const EntityType type = EntityType::Camera; };
+template<> struct GetEntityType<Light>      { static const EntityType type = EntityType::Light; };
+template<> struct GetEntityType<Mesh>       { static const EntityType type = EntityType::Mesh; };
+template<> struct GetEntityType<Points>     { static const EntityType type = EntityType::Points; };
+
 
 class Entity
 {

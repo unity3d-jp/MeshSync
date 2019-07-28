@@ -501,8 +501,11 @@ void Mesh::refine()
     };
 
     if (mrs.flags.no_reindexing) {
-        size_t num_points = points.size();
+        // tangents
+        // normals and tangents can be generated on the fly even if re-indexing is disabled.
+        handle_tangents();
 
+        size_t num_points = points.size();
 #define CheckAttr(A)\
         if (!A.empty() && A.size() != num_points) {\
             msLogWarning("Mesh::refine(): invalid attribute (" #A ")\n");\
@@ -526,9 +529,6 @@ void Mesh::refine()
         }
 #undef CheckAttr
 
-        // tangents
-        // normals and tangents can be generated on the fly even if re-indexing is disabled.
-        handle_tangents();
     }
     else {
         size_t num_indices_old = indices.size();

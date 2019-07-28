@@ -84,8 +84,19 @@ public:
     template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;
     template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
 
+    template<class EntityType, class Body>
+    void eachEntity(const Body& body)
+    {
+        for (auto& e : entities) {
+            if (e->getType() == GetEntityType<EntityType>::type)
+                body(e);
+        }
+    }
+
     void buildHierarchy();
     void flatternHierarchy();
+    void stripNormals();
+    void stripTangents();
 };
 msSerializable(Scene);
 msDeclPtr(Scene);

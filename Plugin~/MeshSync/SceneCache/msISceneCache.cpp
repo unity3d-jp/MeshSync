@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msISceneCache.h"
 #include "msMisc.h"
+#include "Utils/msDebug.h"
 
 namespace ms {
 
@@ -90,16 +91,26 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 
 
     // read buffer
-    m_encoded_buf.resize(rec.size);
-    m_ist->seekg(rec.pos, std::ios::beg);
-    m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
+    {
+        msDbgTimer("ISceneCacheImpl: read");
+
+        m_encoded_buf.resize(rec.size);
+        m_ist->seekg(rec.pos, std::ios::beg);
+        m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
+    }
 
     // decode buffer
-    m_encoder->decode(m_tmp_buf, m_encoded_buf);
-    m_scene_buf.swap(m_tmp_buf);
+    {
+        msDbgTimer("ISceneCacheImpl: decode");
+
+        m_encoder->decode(m_tmp_buf, m_encoded_buf);
+        m_scene_buf.swap(m_tmp_buf);
+    }
 
     // deserialize scene
     try {
+        msDbgTimer("ISceneCacheImpl: deserialize");
+
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
         if (m_header.oscs.strip_unchanged && m_base_scene)
@@ -122,6 +133,8 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 
 ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp)
 {
+    msDbgTimer("ISceneCacheImpl: postprocess");
+
     if (m_iscs.convert_scenes) {
         sp->import(m_iscs.sis);
     }

@@ -293,6 +293,30 @@ void Scene::flatternHierarchy()
     }
 }
 
+void Scene::stripNormals()
+{
+    eachEntity<Mesh>([](auto& e) {
+        auto& mesh = static_cast<Mesh&>(*e);
+        if (!mesh.normals.empty()) {
+            mesh.normals.clear();
+            mesh.md_flags.has_normals = 0;
+            mesh.refine_settings.flags.gen_normals = 1;
+        }
+    });
+}
+
+void Scene::stripTangents()
+{
+    eachEntity<Mesh>([](auto& e) {
+        auto& mesh = static_cast<Mesh&>(*e);
+        if (!mesh.tangents.empty()) {
+            mesh.tangents.clear();
+            mesh.md_flags.has_tangents = 0;
+            mesh.refine_settings.flags.gen_tangents = 1;
+        }
+    });
+}
+
 template<class AssetType>
 std::vector<std::shared_ptr<AssetType>> Scene::getAssets() const
 {
