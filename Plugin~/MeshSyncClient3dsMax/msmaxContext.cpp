@@ -358,16 +358,16 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
-    ms::OSceneCacheSettings scs;
-    scs.flags.flatten_hierarchy = 1;
+    ms::OSceneCacheSettings oscs;
+    oscs.flatten_hierarchy = 1;
     //scs.encoding = ms::SceneCacheEncoding::Plain; // debug
-    if (!m_cache_writer.open(path.c_str(), scs))
+    if (!m_cache_writer.open(path.c_str(), oscs))
         return false;
 
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.bake_modifiers = true;
-    m_settings.flatten_hierarchy = scs.flags.flatten_hierarchy;
+    m_settings.flatten_hierarchy = oscs.flatten_hierarchy;
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);

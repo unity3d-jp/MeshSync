@@ -216,9 +216,9 @@ AsyncSceneCacheWriter::~AsyncSceneCacheWriter()
     wait();
 }
 
-bool AsyncSceneCacheWriter::open(const char *path, const OSceneCacheSettings& settings)
+bool AsyncSceneCacheWriter::open(const char *path, const OSceneCacheSettings& oscs)
 {
-    m_osc = OpenOSceneCacheFile(path, settings);
+    m_osc = OpenOSceneCacheFile(path, oscs);
     return m_osc != nullptr;
 }
 

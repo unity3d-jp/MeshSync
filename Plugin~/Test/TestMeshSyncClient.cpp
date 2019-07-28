@@ -47,11 +47,21 @@ static void Send(ms::Scene& scene)
 
 TestCase(Test_SendMesh)
 {
-    ms::OSceneCacheSettings settings1, settings2;
-    settings1.encoding = ms::SceneCacheEncoding::Plain;
+    ms::OSceneCacheSettings c0;
+    c0.strip_unchanged = 0;
+    c0.apply_refinement = 0;
+    c0.encoding = ms::SceneCacheEncoding::Plain;
 
-    auto osc = ms::OpenOSceneCacheFile("wave.sc", settings1);
-    auto oscz = ms::OpenOSceneCacheFile("wave.scz", settings2);
+    ms::OSceneCacheSettings c1;
+    c1.apply_refinement = 0;
+
+    ms::OSceneCacheSettings c2;
+    c2.apply_refinement = 0;
+    c2.encoder_settings.zstd.compression_level = 100;
+
+    auto osc_c0 = ms::OpenOSceneCacheFile("wave_c0.sc", c0);
+    auto osc_c1 = ms::OpenOSceneCacheFile("wave_c1.sc", c1);
+    auto osc_c2 = ms::OpenOSceneCacheFile("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
         auto scene = ms::Scene::create();
@@ -73,8 +83,9 @@ TestCase(Test_SendMesh)
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         mids.resize(counts.size(), 0);
 
-        osc->addScene(scene, 0.5f * i);
-        oscz->addScene(scene, 0.5f * i);
+        osc_c0->addScene(scene->clone(), 0.5f * i);
+        osc_c1->addScene(scene->clone(), 0.5f * i);
+        osc_c2->addScene(scene->clone(), 0.5f * i);
         Send(*scene);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }

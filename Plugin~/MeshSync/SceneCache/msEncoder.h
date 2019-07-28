@@ -14,7 +14,10 @@ public:
 msDeclPtr(BufferEncoder);
 
 BufferEncoderPtr CreatePlainEncoder();
-BufferEncoderPtr CreateZSTDEncoder();
+
+std::tuple<int, int> GetZSTDCompressionLevelRange();
+int GetZSTDDefaultCompressionLevel();
+BufferEncoderPtr CreateZSTDEncoder(int compression_level);
 
 
 class MeshEncoder

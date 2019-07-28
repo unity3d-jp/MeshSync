@@ -69,7 +69,7 @@ public:
     AsyncSceneCacheWriter();
     ~AsyncSceneCacheWriter() override;
 
-    bool open(const char *path, const OSceneCacheSettings& settings = OSceneCacheSettings());
+    bool open(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
     void close();
     bool valid() const;
 

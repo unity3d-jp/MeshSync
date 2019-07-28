@@ -252,7 +252,7 @@ public:
     void makeDoubleSided();
     void applyMirror(const float3& plane_n, float plane_d, bool welding = false);
     void applyTransform(const float4x4& t);
-    void mergeMesh(const Mesh& v);
+    void mergeMesh(const Mesh& v); // todo
 
     void setupBoneWeights4();
     void setupBoneWeightsVariable();

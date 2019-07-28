@@ -46,10 +46,7 @@ msSerializable(SceneSettings);
 
 struct SceneImportSettings
 {
-    struct Flags
-    {
-        uint32_t dummy : 1;
-    } flags{};
+    uint32_t flags = 0; // reserved
     uint32_t mesh_split_unit = 0xffffffff;
     int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
     ZUpCorrectionMode zup_correction_mode = ZUpCorrectionMode::FlipYZ;
@@ -57,16 +54,6 @@ struct SceneImportSettings
     SceneImportSettings()
     {
     }
-};
-
-struct EntityMetaData
-{
-    int id;
-    struct Flags
-    {
-        uint32_t constant : 1;
-        uint32_t mesh_constant : 1;
-    };
 };
 
 class Scene

@@ -25,9 +25,6 @@
     <ClCompile Include="MeshSync\Utils\msMaterialExt.cpp">
       <Filter>MeshSync\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\msFoundation.cpp">
-      <Filter>MeshSync</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSync\msMisc.cpp">
       <Filter>MeshSync</Filter>
     </ClCompile>
@@ -75,6 +72,12 @@
     </ClCompile>
     <ClCompile Include="MeshSync\Utils\msIDGenerator.cpp">
       <Filter>MeshSync\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSync\SceneCache\msOSceneCache.cpp">
+      <Filter>MeshSync\SceneCache</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSync\SceneCache\msISceneCache.cpp">
+      <Filter>MeshSync\SceneCache</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +167,12 @@
     </ClInclude>
     <ClInclude Include="MeshSync\Utils\msAsyncSceneExporter.h">
       <Filter>MeshSync\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\SceneCache\msISceneCache.h">
+      <Filter>MeshSync\SceneCache</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\SceneCache\msOSceneCache.h">
+      <Filter>MeshSync\SceneCache</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

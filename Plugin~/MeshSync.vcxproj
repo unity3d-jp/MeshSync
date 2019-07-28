@@ -29,6 +29,8 @@
     <ClInclude Include="MeshSync\msServer.h" />
     <ClInclude Include="MeshSync\pch.h" />
     <ClInclude Include="MeshSync\SceneCache\msEncoder.h" />
+    <ClInclude Include="MeshSync\SceneCache\msISceneCache.h" />
+    <ClInclude Include="MeshSync\SceneCache\msOSceneCache.h" />
     <ClInclude Include="MeshSync\SceneCache\msSceneCache.h" />
     <ClInclude Include="MeshSync\SceneCache\msSceneCacheImpl.h" />
     <ClInclude Include="MeshSync\SceneGraph\msAnimation.h" />
@@ -51,7 +53,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MeshSync\msClient.cpp" />
-    <ClCompile Include="MeshSync\msFoundation.cpp" />
     <ClCompile Include="MeshSync\msMisc.cpp" />
     <ClCompile Include="MeshSync\msProtocol.cpp" />
     <ClCompile Include="MeshSync\msServer.cpp" />
@@ -59,6 +60,8 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSync\SceneCache\msEncoder.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msISceneCache.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msOSceneCache.cpp" />
     <ClCompile Include="MeshSync\SceneCache\msSceneCacheImpl.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msAnimation.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msAsset.cpp" />
