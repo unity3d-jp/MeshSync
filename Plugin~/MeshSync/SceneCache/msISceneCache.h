@@ -37,6 +37,7 @@ protected:
 
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
+    RawVector<CacheFileEntityMeta> m_entity_meta;
 
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;

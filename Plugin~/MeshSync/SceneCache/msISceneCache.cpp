@@ -43,6 +43,19 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
     }
     std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
 
+    {
+        // read meta data
+        CacheFileMetaHeader mh;
+        m_ist->read((char*)&mh, sizeof(mh));
+
+        m_encoded_buf.resize(mh.size);
+        m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
+
+        m_encoder->decode(m_tmp_buf, m_encoded_buf);
+        m_entity_meta.resize_discard(m_tmp_buf.size() / sizeof(CacheFileEntityMeta));
+        m_tmp_buf.copy_to((char*)m_entity_meta.data());
+    }
+
     if (m_header.oscs.strip_unchanged)
         m_base_scene = getByIndexImpl(0);
 }

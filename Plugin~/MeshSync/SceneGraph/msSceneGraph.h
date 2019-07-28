@@ -87,11 +87,18 @@ public:
     template<class EntityType, class Body>
     void eachEntity(const Body& body)
     {
-        for (auto& e : entities) {
+        for (auto& e : entities)
             if (e->getType() == GetEntityType<EntityType>::type)
                 body(e);
-        }
     }
+
+    template<class Body>
+    void eachEntity(const Body& body)
+    {
+        for (auto& e : entities)
+            body(e);
+    }
+
 
     void buildHierarchy();
     void flatternHierarchy();

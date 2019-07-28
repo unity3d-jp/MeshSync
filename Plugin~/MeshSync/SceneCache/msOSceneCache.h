@@ -24,6 +24,13 @@ protected:
         ScenePtr scene;
         float time;
     };
+    struct EntityRecord
+    {
+        EntityType type = EntityType::Unknown;
+        int id = 0;
+        int unchanged_count = 0;
+        int unchanged_topology_count = 0;
+    };
 
     StreamPtr m_ost = nullptr;
     OSceneCacheSettings m_oscs;
@@ -33,6 +40,9 @@ protected:
     std::future<void> m_task;
 
     ScenePtr m_base_scene;
+    int m_scene_count = 0;
+    std::vector<EntityRecord> m_entity_records;
+
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;
     RawVector<char> m_encoded_buf;

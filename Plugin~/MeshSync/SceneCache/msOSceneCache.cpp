@@ -24,12 +24,34 @@ OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const OSceneCacheSettings& oscs)
 
 OSceneCacheImpl::~OSceneCacheImpl()
 {
-    if (valid()) {
-        flush();
+    if (!valid())
+        return;
 
+    flush();
+
+    {
         // add terminator
         auto terminator = CacheFileSceneHeader::terminator();
         m_ost->write((char*)&terminator, sizeof(terminator));
+    }
+
+    {
+        // add meta data
+        m_scene_buf.reset();
+        for (auto& rec : m_entity_records) {
+            CacheFileEntityMeta meta{};
+            meta.id = rec.id;
+            meta.type = (uint32_t)rec.type;
+            meta.constant = rec.unchanged_count == m_scene_count - 1;
+            m_scene_buf.write((char*)&meta, sizeof(meta));
+        }
+        m_scene_buf.flush();
+        m_encoder->encode(m_encoded_buf, m_scene_buf.getBuffer());
+
+        CacheFileMetaHeader header;
+        header.size = m_encoded_buf.size();
+        m_ost->write((char*)&header, sizeof(header));
+        m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
     }
 }
 
@@ -77,25 +99,44 @@ void OSceneCacheImpl::doWrite()
             if (!desc.scene)
                 continue;
 
+            ++m_scene_count;
+            auto& scene = *desc.scene;
             {
                 msDbgTimer("OSceneCacheImpl: scene optimization");
 
                 if (m_oscs.flatten_hierarchy)
-                    desc.scene->flatternHierarchy();
+                    scene.flatternHierarchy();
 
                 if (m_oscs.apply_refinement)
-                    desc.scene->import(m_oscs);
+                    scene.import(m_oscs);
 
                 if (m_oscs.strip_normals)
-                    desc.scene->stripNormals();
+                    scene.stripNormals();
                 if (m_oscs.strip_tangents)
-                    desc.scene->stripTangents();
+                    scene.stripTangents();
 
                 if (m_oscs.strip_unchanged) {
                     if (!m_base_scene)
                         m_base_scene = desc.scene;
                     else
-                        desc.scene->strip(*m_base_scene);
+                        scene.strip(*m_base_scene);
+                }
+
+                // update entity record
+                size_t n = scene.entities.size();
+                m_entity_records.resize(n);
+                for (size_t i = 0; i < n; ++i) {
+                    auto& e = scene.entities[i];
+                    auto& rec = m_entity_records[i];
+                    if (rec.type == EntityType::Unknown) {
+                        rec.type = e->getType();
+                        rec.id = e->id;
+                    }
+                    else if (rec.id != e->id)
+                        continue;
+
+                    if (e->isUnchanged())
+                        rec.unchanged_count++;
                 }
             }
 
@@ -104,7 +145,7 @@ void OSceneCacheImpl::doWrite()
                 msDbgTimer("OSceneCacheImpl: serialization");
 
                 m_scene_buf.reset();
-                desc.scene->serialize(m_scene_buf);
+                scene.serialize(m_scene_buf);
                 m_scene_buf.flush();
             }
 
@@ -125,7 +166,6 @@ void OSceneCacheImpl::doWrite()
                 m_ost->write((char*)&header, sizeof(header));
                 m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
             }
-     
         }
     };
 
