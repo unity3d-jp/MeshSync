@@ -121,7 +121,7 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
 
 void Scene::clear()
 {
-    settings = SceneSettings();
+    settings = {};
     assets.clear();
     entities.clear();
     constraints.clear();

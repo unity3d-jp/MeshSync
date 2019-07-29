@@ -5,6 +5,13 @@
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
+enum class msmaxMaterialScope
+{
+    None,
+    OneFrame,
+    AllFrames,
+};
+
 struct msmaxSettings
 {
     ms::ClientSettings client_settings;
@@ -35,10 +42,11 @@ struct msmaxSettings
     // it seems can cause problems when exporting objects with EvalWorldState()...
     bool multithreaded = false;
 
-    // cache export settings
-    bool export_cache = false;
-    bool flatten_hierarchy = false;
-    bool merge_meshes = false;
+    // scene cache export settings
+    bool export_scene_cache = false;
+    bool sc_flatten_hierarchy = true;
+    bool sc_merge_meshes = false;
+    msmaxMaterialScope sc_material_scope = msmaxMaterialScope::OneFrame;
 };
 
 class msmaxContext : mu::noncopyable

@@ -360,22 +360,25 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
 {
     ms::OSceneCacheSettings oscs;
     oscs.encoder_settings.zstd.compression_level = 100;
-    oscs.flatten_hierarchy = 1;
+    oscs.flatten_hierarchy = m_settings.sc_flatten_hierarchy;
     //oscs.strip_normals = 1;
     oscs.strip_tangents = 1;
     if (!m_cache_writer.open(path.c_str(), oscs))
         return false;
 
     auto settings_old = m_settings;
-    m_settings.export_cache = true;
+    m_settings.export_scene_cache = true;
     m_settings.bake_modifiers = true;
-    m_settings.flatten_hierarchy = oscs.flatten_hierarchy;
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
     m_texture_manager.clearDirtyFlags();
 
+    bool export_materials = m_settings.sc_material_scope != msmaxMaterialScope::None;
     auto do_export = [&]() {
+        if (export_materials)
+            exportMaterials();
+
         int num_exported = 0;
         if (scope == SendScope::All) {
             for (auto& kvp : m_node_records) {
@@ -383,6 +386,9 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
                 if (exportObject(kvp.first, true))
                     ++num_exported;
             }
+        }
+        else if (scope == SendScope::Selected) {
+            // todo
         }
         kickAsyncSend();
 
@@ -404,6 +410,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
             ifs->SetTime(m_current_time_tick);
 
             do_export();
+            export_materials = m_settings.sc_material_scope == msmaxMaterialScope::AllFrames;
 
             float progress = float(m_current_time_tick - time_start) / float(time_end - time_start) * 100.0f;
             ifs->ProgressUpdate((int)progress);
@@ -500,7 +507,7 @@ void msmaxContext::kickAsyncSend()
 
     float to_meter = (float)GetMasterScale(UNITS_METERS);
     using Exporter = ms::AsyncSceneExporter;
-    Exporter *exporter = m_settings.export_cache ? (Exporter*)&m_cache_writer : (Exporter*)&m_sender;
+    Exporter *exporter = m_settings.export_scene_cache ? (Exporter*)&m_cache_writer : (Exporter*)&m_sender;
 
     // begin async send
     exporter->on_prepare = [this, to_meter, exporter]() {
@@ -738,7 +745,7 @@ void msmaxContext::extractTransform(TreeNode& n)
     auto t = GetTime();
     extractTransform(n.node, t, dst.position, dst.rotation, dst.scale, dst.visible);
 
-    if (m_settings.bake_modifiers && m_settings.flatten_hierarchy) {
+    if (m_settings.bake_modifiers && m_settings.sc_flatten_hierarchy) {
         n.dst->assignMatrix(getGlobalMatrix(n.node, t));
     }
 }
