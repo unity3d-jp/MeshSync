@@ -43,6 +43,7 @@ OSceneCacheImpl::~OSceneCacheImpl()
             meta.id = rec.id;
             meta.type = (uint32_t)rec.type;
             meta.constant = rec.unchanged_count == m_scene_count - 1;
+            meta.constant_topology = rec.topology_unchanged_count == m_scene_count - 1;
             m_scene_buf.write((char*)&meta, sizeof(meta));
         }
         m_scene_buf.flush();
@@ -137,6 +138,8 @@ void OSceneCacheImpl::doWrite()
 
                     if (e->isUnchanged())
                         rec.unchanged_count++;
+                    if (e->isTopologyUnchanged())
+                        rec.topology_unchanged_count++;
                 }
             }
 

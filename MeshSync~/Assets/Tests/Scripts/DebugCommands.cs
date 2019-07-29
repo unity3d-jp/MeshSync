@@ -142,7 +142,10 @@ public static class DebugCommands
     public static void EnableAllRenderers()
     {
         foreach (var r in GameObject.FindObjectsOfType<Renderer>())
+        {
+            Undo.RecordObject(r, "EnableAllRenderers");
             r.enabled = true;
+        }
     }
 }
 #endif // UNITY_EDITOR

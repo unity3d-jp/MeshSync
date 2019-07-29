@@ -8,6 +8,7 @@ namespace ms {
 struct MeshDataFlags
 {
     uint32_t unchanged : 1;
+    uint32_t topology_unchanged : 1;
     uint32_t has_refine_settings : 1;
     uint32_t has_submeshes : 1;
     uint32_t has_indices : 1;
@@ -16,8 +17,8 @@ struct MeshDataFlags
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv0 : 1;
-    uint32_t has_uv1 : 1;
-    uint32_t has_colors : 1; // 10
+    uint32_t has_uv1 : 1; // 10
+    uint32_t has_colors : 1;
     uint32_t has_velocities : 1;
     uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
@@ -237,6 +238,7 @@ public:
     void resolve() override;
 
     bool isUnchanged() const override;
+    bool isTopologyUnchanged() const override;
     bool strip(const Entity& base) override;
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;

@@ -128,6 +128,8 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
         ret->deserialize(m_scene_buf);
 
         if (m_header.oscs.strip_unchanged && m_base_scene) {
+            ret->merge(*m_base_scene);
+
             // set cache flags
             size_t n = ret->entities.size();
             if (m_entity_meta.size() == n) {
@@ -140,8 +142,6 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
                     }
                 }
             }
-
-            ret->merge(*m_base_scene);
         }
     }
     catch (std::runtime_error& e) {

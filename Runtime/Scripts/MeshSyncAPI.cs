@@ -1862,17 +1862,18 @@ namespace UTJ.MeshSync
     {
         public BitFlags flags;
         public bool unchanged           { get { return flags[0]; } }
-        public bool hasIndices          { get { return flags[3]; } }
-        public bool hasPoints           { get { return flags[5]; } }
-        public bool hasNormals          { get { return flags[6]; } }
-        public bool hasTangents         { get { return flags[7]; } }
-        public bool hasUV0              { get { return flags[8]; } }
-        public bool hasUV1              { get { return flags[9]; } }
-        public bool hasColors           { get { return flags[10]; } }
-        public bool hasVelocities       { get { return flags[11]; } }
-        public bool hasBones            { get { return flags[13]; } }
-        public bool hasBlendshapeWeights{ get { return flags[14]; } }
-        public bool hasBlendshapes      { get { return flags[15]; } }
+        public bool topologyUnchanged   { get { return flags[1]; } }
+        public bool hasIndices          { get { return flags[4]; } }
+        public bool hasPoints           { get { return flags[6]; } }
+        public bool hasNormals          { get { return flags[7]; } }
+        public bool hasTangents         { get { return flags[8]; } }
+        public bool hasUV0              { get { return flags[9]; } }
+        public bool hasUV1              { get { return flags[10]; } }
+        public bool hasColors           { get { return flags[11]; } }
+        public bool hasVelocities       { get { return flags[12]; } }
+        public bool hasBones            { get { return flags[14]; } }
+        public bool hasBlendshapeWeights{ get { return flags[15]; } }
+        public bool hasBlendshapes      { get { return flags[16]; } }
     };
 
     [StructLayout(LayoutKind.Explicit)]

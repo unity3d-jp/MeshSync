@@ -361,6 +361,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     ms::OSceneCacheSettings oscs;
     oscs.encoder_settings.zstd.compression_level = 100;
     oscs.flatten_hierarchy = m_settings.sc_flatten_hierarchy;
+    //oscs.apply_refinement = 0;
     //oscs.strip_normals = 1;
     oscs.strip_tangents = 1;
     if (!m_cache_writer.open(path.c_str(), oscs))
@@ -376,8 +377,11 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
 
     bool export_materials = m_settings.sc_material_scope != msmaxMaterialScope::None;
     auto do_export = [&]() {
-        if (export_materials)
+        if (export_materials) {
             exportMaterials();
+            if (m_settings.sc_material_scope != msmaxMaterialScope::AllFrames)
+                m_material_manager.clearDirtyFlags();
+        }
 
         int num_exported = 0;
         if (scope == SendScope::All) {
@@ -410,7 +414,6 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
             ifs->SetTime(m_current_time_tick);
 
             do_export();
-            export_materials = m_settings.sc_material_scope == msmaxMaterialScope::AllFrames;
 
             float progress = float(m_current_time_tick - time_start) / float(time_end - time_start) * 100.0f;
             ifs->ProgressUpdate((int)progress);

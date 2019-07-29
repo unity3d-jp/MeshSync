@@ -173,12 +173,17 @@ void BoneData::clear()
     weights.clear();
 }
 
+#define EachTopologyAttribute(F)\
+    F(counts) F(indices) F(material_ids)
 
 #define EachVertexAttribute(F)\
-    F(points) F(normals) F(tangents) F(uv0) F(uv1) F(colors) F(velocities) F(counts) F(indices) F(material_ids)
+    F(points) F(normals) F(tangents) F(uv0) F(uv1) F(colors) F(velocities)
+
+#define EachGeometryAttribute(F)\
+    EachVertexAttribute(F) EachTopologyAttribute(F)
 
 #define EachMember(F)\
-    F(refine_settings) EachVertexAttribute(F) F(root_bone) F(bones) F(blendshapes) F(splits) F(submeshes)
+    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(splits) F(submeshes)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
@@ -203,14 +208,14 @@ void Mesh::deserialize(std::istream& is)
         return;
 
     EachMember(msRead);
+
+    bones.erase(
+        std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
+        bones.end());
 }
 
 void Mesh::resolve()
 {
-    bones.erase(
-        std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
-        bones.end());
-
     for (auto& submesh : submeshes)
         submesh.indices.reset(indices.data() + submesh.index_offset, submesh.index_count);
     for (auto& split : splits)
@@ -220,6 +225,11 @@ void Mesh::resolve()
 bool Mesh::isUnchanged() const
 {
     return td_flags.unchanged && md_flags.unchanged;
+}
+
+bool Mesh::isTopologyUnchanged() const
+{
+    return md_flags.topology_unchanged;
 }
 
 bool Mesh::strip(const Entity& base_)
@@ -240,9 +250,15 @@ bool Mesh::strip(const Entity& base_)
 
     auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) clear_if_identical(A, base.A);
+    EachTopologyAttribute(Body);
+    md_flags.topology_unchanged = unchanged;
     EachVertexAttribute(Body);
 #undef Body
     md_flags.unchanged = unchanged && refine_settings == base.refine_settings;
+
+    //if (!md_flags.topology_unchanged) {
+    //    mu::Print("Mesh::strip() !topology_unchanged %s\n", base.path.c_str());
+    //}
     return true;
 }
 
@@ -261,7 +277,7 @@ bool Mesh::merge(const Entity& base_)
                 cur = base;
         };
 #define Body(A) assign_if_empty(A, base.A);
-        EachVertexAttribute(Body);
+        EachGeometryAttribute(Body);
 #undef Body
     }
     return true;
@@ -283,12 +299,12 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
     };
 
 #define Body(A) compare_attribute(e1.A, e2.A);
-    EachVertexAttribute(Body);
+    EachGeometryAttribute(Body);
 #undef Body
 
     if (change_bits == 0 && e1.refine_settings == e2.refine_settings) {
 #define Body(A) A.clear();
-        EachVertexAttribute(Body);
+        EachGeometryAttribute(Body);
 #undef Body
         md_flags.unchanged = 1;
     }
@@ -341,7 +357,7 @@ void Mesh::clear()
     refine_settings = MeshRefineSettings();
 
 #define Body(A) vclear(A);
-    EachVertexAttribute(Body);
+    EachGeometryAttribute(Body);
 #undef Body
 
     root_bone.clear();
@@ -360,7 +376,7 @@ uint64_t Mesh::hash() const
 {
     uint64_t ret = super::hash();
 #define Body(A) ret += vhash(A);
-    EachVertexAttribute(Body);
+    EachGeometryAttribute(Body);
 #undef Body
     if (md_flags.has_bones) {
         for(auto& b : bones)
@@ -383,7 +399,7 @@ uint64_t Mesh::checksumGeom() const
     uint64_t ret = 0;
     ret += refine_settings.checksum();
 #define Body(A) ret += csum(A);
-    EachVertexAttribute(Body);
+    EachGeometryAttribute(Body);
 #undef Body
     if (md_flags.has_bones) {
         ret += csum(root_bone);
@@ -408,7 +424,9 @@ uint64_t Mesh::checksumGeom() const
     return ret;
 }
 
+#undef EachTopologyAttribute
 #undef EachVertexAttribute
+#undef EachGeometryAttribute
 #undef EachMember
 
 EntityPtr Mesh::clone()

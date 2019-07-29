@@ -76,6 +76,11 @@ bool Entity::isUnchanged() const
     return false;
 }
 
+bool Entity::isTopologyUnchanged() const
+{
+    return false;
+}
+
 bool Entity::strip(const Entity& base)
 {
     if (getType() != base.getType())

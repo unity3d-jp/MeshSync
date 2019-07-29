@@ -2,7 +2,7 @@
 #include "MeshUtils/MeshUtils.h"
 
 #ifdef msDebug
-#define msDbgEnableTimer
+//#define msDbgEnableTimer
 #endif
 
 namespace ms {

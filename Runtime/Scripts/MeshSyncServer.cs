@@ -877,8 +877,11 @@ namespace UTJ.MeshSync
         public void ForceRepaint()
         {
 #if UNITY_EDITOR
-            SceneView.RepaintAll();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            if (!EditorApplication.isPlaying && !EditorApplication.isPaused)
+            {
+                SceneView.RepaintAll();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            }
 #endif
         }
         #endregion
@@ -1043,7 +1046,7 @@ namespace UTJ.MeshSync
 #endif
 
             ForceRepaint();
-            GC.Collect();
+            //GC.Collect();
 
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();

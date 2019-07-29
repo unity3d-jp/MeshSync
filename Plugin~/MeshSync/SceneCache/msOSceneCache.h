@@ -29,7 +29,7 @@ protected:
         EntityType type = EntityType::Unknown;
         int id = 0;
         int unchanged_count = 0;
-        int unchanged_topology_count = 0;
+        int topology_unchanged_count = 0;
     };
 
     StreamPtr m_ost = nullptr;
