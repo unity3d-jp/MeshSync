@@ -445,6 +445,9 @@ void Mesh::updateBounds()
 
 void Mesh::refine()
 {
+    if (cache_flags.constant)
+        return;
+
     auto& mrs = refine_settings;
 
     if (mrs.flags.flip_u)

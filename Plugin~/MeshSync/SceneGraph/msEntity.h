@@ -38,6 +38,13 @@ public:
     int host_id = InvalidID;
     std::string path;
 
+    // non-serializable
+    // flags for scene cache player
+    struct {
+        uint32_t constant : 1;
+        uint32_t constant_topology : 1;
+    } cache_flags{};
+
 protected:
     Entity();
     virtual ~Entity();

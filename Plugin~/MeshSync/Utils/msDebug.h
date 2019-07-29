@@ -1,7 +1,9 @@
 #pragma once
 #include "MeshUtils/MeshUtils.h"
 
+#ifdef msDebug
 #define msDbgEnableTimer
+#endif
 
 namespace ms {
 

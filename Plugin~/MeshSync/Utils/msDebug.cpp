@@ -3,7 +3,7 @@
 
 namespace ms {
 
-#ifdef msDebug
+#ifdef msDbgEnableTimer
 DbgTimerScope::DbgTimerScope(const char *mes)
 {
     m_message = mes;
@@ -15,6 +15,6 @@ DbgTimerScope::~DbgTimerScope()
     float elapsed = mu::NS2MS(mu::Now() - m_begin);
     mu::Print("%s - %.2f\n", m_message, elapsed);
 }
-#endif // msDebug
+#endif // msDbgEnableTimer
 
 } // namespace ms

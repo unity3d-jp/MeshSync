@@ -126,8 +126,23 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
 
         ret = Scene::create();
         ret->deserialize(m_scene_buf);
-        if (m_header.oscs.strip_unchanged && m_base_scene)
+
+        if (m_header.oscs.strip_unchanged && m_base_scene) {
+            // set cache flags
+            size_t n = ret->entities.size();
+            if (m_entity_meta.size() == n) {
+                for (size_t ei = 0; ei < n; ++ei) {
+                    auto& meta = m_entity_meta[ei];
+                    auto& e = ret->entities[ei];
+                    if (meta.id == e->id) {
+                        e->cache_flags.constant = meta.constant;
+                        e->cache_flags.constant_topology = meta.constant_topology;
+                    }
+                }
+            }
+
             ret->merge(*m_base_scene);
+        }
     }
     catch (std::runtime_error& e) {
         msLogError("exception: %s\n", e.what());

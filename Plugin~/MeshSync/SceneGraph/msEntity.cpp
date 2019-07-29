@@ -88,7 +88,7 @@ bool Entity::strip(const Entity& base)
 
 bool Entity::merge(const Entity& base)
 {
-    if (getType() != base.getType())
+    if (cache_flags.constant || getType() != base.getType())
         return false;
 
     if (path.empty())
@@ -98,21 +98,21 @@ bool Entity::merge(const Entity& base)
 
 bool Entity::diff(const Entity& s1, const Entity& s2)
 {
-    if (s1.getType() != s2.getType())
+    if (cache_flags.constant || s1.getType() != s2.getType())
         return false;
     return true;
 }
 
 bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
 {
-    if (s1.getType() != s2.getType())
+    if (cache_flags.constant || s1.getType() != s2.getType())
         return false;
     return true;
 }
 
 bool Entity::genVelocity(const Entity& prev)
 {
-    if (getType() != prev.getType())
+    if (cache_flags.constant || getType() != prev.getType())
         return false;
     return true;
 }
@@ -122,6 +122,9 @@ void Entity::clear()
     id = InvalidID;
     host_id = InvalidID;
     path.clear();
+
+    cache_flags.constant = 0;
+    cache_flags.constant_topology = 0;
 }
 
 uint64_t Entity::hash() const
