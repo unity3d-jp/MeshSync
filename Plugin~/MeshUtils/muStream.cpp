@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "msFoundation.h"
+#include "muStream.h"
 
-namespace ms {
+namespace mu {
 
 MemoryStreamBuf::MemoryStreamBuf()
 {
@@ -10,8 +10,10 @@ MemoryStreamBuf::MemoryStreamBuf()
 
 void MemoryStreamBuf::reset()
 {
-    this->setp(buffer.data(), buffer.data() + buffer.size());
-    this->setg(buffer.data(), buffer.data(), buffer.data() + buffer.size());
+    auto *p = buffer.data();
+    auto *e = p + buffer.size();
+    this->setp(p, p, e);
+    this->setg(p, p, e);
 }
 
 void MemoryStreamBuf::resize(size_t n)
@@ -26,12 +28,38 @@ void MemoryStreamBuf::swap(RawVector<char>& buf)
     reset();
 }
 
+std::ios::pos_type MemoryStreamBuf::seekoff(off_type off, std::ios_base::seekdir dir, std::ios_base::openmode /*mode*/)
+{
+    auto *p = buffer.data();
+    auto *e = p + buffer.size();
+    if (dir == std::ios::beg)
+        this->setg(p, buffer.data() + off, e);
+    if (dir == std::ios::cur)
+        this->setg(p, this->gptr() + off, e);
+    if (dir == std::ios::end)
+        this->setg(p, e - off, e);
+    return uint64_t(this->gptr() - this->eback());
+}
+
+std::ios::pos_type MemoryStreamBuf::seekpos(pos_type pos, std::ios_base::openmode /*mode*/)
+{
+    auto *p = buffer.data();
+    auto *e = p + buffer.size();
+    this->setp(p, p + pos, e);
+    return wcount;
+}
+
 int MemoryStreamBuf::overflow(int c)
 {
     size_t pos = size_t(this->pptr() - this->pbase());
+
+    // expand buffer and reset pptr
     resize(buffer.empty() ? default_bufsize : buffer.size() * 2);
+
+    // recover pptr offset
     this->pbump((int)pos);
 
+    // put overflowed 1 byte
     *this->pptr() = (char)c;
     this->pbump(1);
 
@@ -47,7 +75,8 @@ int MemoryStreamBuf::sync()
 {
     rcount = uint64_t(this->gptr() - this->eback());
     wcount = uint64_t(this->pptr() - this->pbase());
-    buffer.resize(wcount);
+    if (wcount > 0)
+        buffer.resize(wcount);
     return 0;
 }
 
@@ -93,4 +122,4 @@ CounterStream::CounterStream() : std::ostream(&m_buf) {}
 uint64_t CounterStream::size() const { return m_buf.m_size; }
 void CounterStream::reset() { m_buf.reset(); }
 
-} // namespace ms
+} // namespace mu

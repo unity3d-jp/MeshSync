@@ -330,12 +330,12 @@ void Server::endServeScene()
             return;
 
         auto& mesh = *pmesh;
-        mesh.flags.has_refine_settings = 1;
+        mesh.md_flags.has_refine_settings = 1;
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
         mesh.refine_settings.smooth_angle = 180.0f;
         mesh.refine_settings.max_bone_influence = 0;
-        mesh.refine(mesh.refine_settings);
+        mesh.refine();
     });
     request.ready = true;
 }
@@ -480,64 +480,7 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response)
         return;
 
     auto task = std::async(std::launch::async, [this, mes]() {
-        // receive and convert assets
-        bool flip_x = mes->scene.settings.handedness == Handedness::Right || mes->scene.settings.handedness == Handedness::RightZUp;
-        bool swap_yz = mes->scene.settings.handedness == Handedness::LeftZUp || mes->scene.settings.handedness == Handedness::RightZUp;
-
-        std::vector<EntityConverterPtr> converters;
-        if (mes->scene.settings.scale_factor != 1.0f) {
-            float scale = 1.0f / mes->scene.settings.scale_factor;
-            converters.push_back(ScaleConverter::create(scale));
-        }
-        if (flip_x) {
-            converters.push_back(FlipX_HandednessCorrector::create());
-        }
-        if (swap_yz) {
-            if (m_settings.zup_correction_mode == ZUpCorrectionMode::FlipYZ)
-                converters.push_back(FlipYZ_ZUpCorrector::create());
-            else if (m_settings.zup_correction_mode == ZUpCorrectionMode::RotateX)
-                converters.push_back(RotateX_ZUpCorrector::create());
-        }
-
-        auto convert = [&converters](auto& obj) {
-            for (auto& cv : converters)
-                cv->convert(obj);
-        };
-
-        parallel_for_each(mes->scene.entities.begin(), mes->scene.entities.end(), [&](TransformPtr& obj) {
-            sanitizeHierarchyPath(obj->path);
-            sanitizeHierarchyPath(obj->reference);
-
-            bool is_mesh = obj->getType() == Entity::Type::Mesh;
-            if (is_mesh) {
-                auto& mesh = static_cast<Mesh&>(*obj);
-                for (auto& bone : mesh.bones)
-                    sanitizeHierarchyPath(bone->path);
-                mesh.refine_settings.flags.triangulate = 1;
-                mesh.refine_settings.flags.split = 1;
-                mesh.refine_settings.flags.optimize_topology = 1;
-                mesh.refine_settings.split_unit = m_settings.mesh_split_unit;
-                mesh.refine_settings.max_bone_influence = m_settings.mesh_max_bone_influence;
-                mesh.refine(mesh.refine_settings);
-            }
-
-            convert(*obj);
-
-            if (is_mesh) {
-                auto& mesh = static_cast<Mesh&>(*obj);
-                mesh.updateBounds();
-            }
-        });
-
-        for (auto& asset : mes->scene.assets) {
-            if (asset->getAssetType() == AssetType::Animation) {
-                auto& clip = static_cast<AnimationClip&>(*asset);
-                parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
-                    sanitizeHierarchyPath(anim->path);
-                    convert(*anim);
-                });
-            }
-        }
+        mes->scene.import(m_settings.import_settings);
     });
     queueMessage(mes, std::move(task));
     serveText(response, "ok");

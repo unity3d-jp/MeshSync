@@ -39,28 +39,6 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
-mu::float4x4 GetPivotMatrix(INode *n)
-{
-    auto t = to_float3(n->GetObjOffsetPos());
-    auto r = to_quatf(n->GetObjOffsetRot());
-    return mu::transform(t, r, mu::float3::one());
-}
-
-mu::float4x4 GetTransform(INode *n, TimeValue t, bool bake_modifiers)
-{
-    if (bake_modifiers) {
-        auto m = n->GetObjTMAfterWSM(t);
-        if (m.IsIdentity())
-            m = n->GetObjTMBeforeWSM(t);
-        auto mat = to_float4x4(m);
-        // cancel scale
-        return mu::transform(extract_position(mat), extract_rotation(mat), mu::float3::one());
-    }
-    else {
-        return to_float4x4(n->GetNodeTM(t));
-    }
-}
-
 bool IsRenderable(INode *n)
 {
     if (!n)

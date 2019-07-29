@@ -1,7 +1,9 @@
 #pragma once
 
 #include <map>
-#include "../msFoundation.h"
+#include <vector>
+#include "msFoundation.h"
+#include "SceneGraph/msIdentifier.h"
 
 namespace ms {
 
@@ -95,5 +97,21 @@ public:
     }
 };
 
+
+class PathToID
+{
+public:
+    int operator[](const std::string& path);
+    void rename(const std::string& old, const std::string& path);
+    void clear();
+
+protected:
+    int m_seed = 0;
+    std::map<std::string, int> m_table;
+};
+
+class Scene;
+void AssignIDs(std::vector<TransformPtr>& entities, PathToID& table);
+void AssignIDs(Scene& scene, PathToID& table);
 
 } // namespace ms

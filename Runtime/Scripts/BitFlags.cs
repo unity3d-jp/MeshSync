@@ -6,6 +6,7 @@ namespace UTJ.MeshSync
     [Serializable]
     public struct BitFlags
     {
+        // int because uint is not serialized...
         [SerializeField] public int bits;
 
         public bool this[int v]

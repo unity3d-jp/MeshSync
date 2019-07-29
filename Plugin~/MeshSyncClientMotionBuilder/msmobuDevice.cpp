@@ -198,7 +198,7 @@ void msmobuDevice::kickAsyncSend()
 
 bool msmobuDevice::sendMaterials(bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         return false;
     }
 
@@ -213,7 +213,7 @@ bool msmobuDevice::sendMaterials(bool dirty_all)
 
 bool msmobuDevice::sendObjects(bool dirty_all)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         m_pending = true;
         return false;
     }
@@ -501,7 +501,7 @@ ms::MeshPtr msmobuDevice::exportBlendshapeWeights(NodeRecord& n)
             }
         }
     }
-    dst.setupFlags();
+    dst.setupMeshDataFlags();
 
     m_entity_manager.add(ret);
     return ret;
@@ -546,9 +546,6 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
             for (int vi = 0; vi < num_vertices; ++vi)
                 dst.normals[vi] = to_float3(normals[vi]);
         }
-        else {
-            dst.refine_settings.flags.gen_normals = 1;
-        }
     }
 
     // uv
@@ -559,21 +556,18 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
             if (type == kFBGeometryArrayElementType_Float2) {
                 auto uv = (const mu::float2*)uv_;
                 dst.uv0.assign(uv, uv + num_vertices);
-                dst.refine_settings.flags.gen_tangents = 1;
             }
             else if (type == kFBGeometryArrayElementType_Float3) {
                 auto uv = (const mu::float3*)uv_;
                 dst.uv0.resize_discard(num_vertices);
                 for (int vi = 0; vi < num_vertices; ++vi)
                     dst.uv0[vi] = (mu::float2&)uv[vi];
-                dst.refine_settings.flags.gen_tangents = 1;
             }
             else if (type == kFBGeometryArrayElementType_Float4) {
                 auto uv = (const mu::float4*)uv_;
                 dst.uv0.resize_discard(num_vertices);
                 for (int vi = 0; vi < num_vertices; ++vi)
                     dst.uv0[vi] = (mu::float2&)uv[vi];
-                dst.refine_settings.flags.gen_tangents = 1;
             }
         }
     }
@@ -742,9 +736,13 @@ void msmobuDevice::doExtractMesh(ms::Mesh& dst, FBModel * src)
         dst.material_ids.resize(dst.material_ids.size() + prim_count, mid);
     }
 
+    if (dst.normals.empty())
+        dst.refine_settings.flags.gen_normals = 1;
+    if (dst.tangents.empty())
+        dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.flip_faces = 1;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-    dst.setupFlags();
+    dst.setupMeshDataFlags();
 }
 
 
@@ -824,7 +822,7 @@ bool msmobuDevice::exportMaterials()
 
 bool msmobuDevice::sendAnimations()
 {
-    if (m_sender.isSending())
+    if (m_sender.isExporting())
         return false;
 
     if (exportAnimations())

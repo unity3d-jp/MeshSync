@@ -137,5 +137,12 @@ public static class DebugCommands
         }
         Debug.Log(log);
     }
+
+    [MenuItem("Debug/Enable All Renderers")]
+    public static void EnableAllRenderers()
+    {
+        foreach (var r in GameObject.FindObjectsOfType<Renderer>())
+            r.enabled = true;
+    }
 }
 #endif // UNITY_EDITOR

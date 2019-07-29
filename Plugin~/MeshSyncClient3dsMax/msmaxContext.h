@@ -19,7 +19,6 @@ struct msmaxSettings
     bool flip_faces = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
-    bool convert_to_mesh = true;
     bool sync_bones = true;
     bool sync_blendshapes = true;
     bool sync_cameras = true;
@@ -36,9 +35,10 @@ struct msmaxSettings
     // it seems can cause problems when exporting objects with EvalWorldState()...
     bool multithreaded = false;
 
-    // import settings
-    bool bake_skin = false;
-    bool bake_cloth = false;
+    // cache export settings
+    bool export_cache = false;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
 };
 
 class msmaxContext : mu::noncopyable
@@ -87,6 +87,7 @@ public:
     bool sendObjects(SendScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
     bool sendAnimations(SendScope scope);
+    bool writeCache(SendScope scope, bool all_frames, const std::string& path);
 
     bool recvScene();
 
@@ -147,13 +148,24 @@ private:
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
-    ms::TransformPtr exportObject(INode *node, bool parent, bool tip = true);
+    ms::TransformPtr exportObject(INode *node, bool tip);
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);
     ms::CameraPtr exportCamera(TreeNode& node);
     ms::LightPtr exportLight(TreeNode& node);
     ms::MeshPtr exportMesh(TreeNode& node);
+
+    mu::float4x4 getPivotMatrix(INode *n);
+    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
+    void extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractTransform(TreeNode& node);
+    void extractCameraData(GenCamera *cam, TimeValue t,
+        bool& ortho, float& fov, float& near_plane, float& far_plane,
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+    void extractLightData(GenLight *light, TimeValue t,
+        ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
+
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
     bool exportAnimations(INode *node, bool force);
@@ -163,9 +175,6 @@ private:
     void extractMeshAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
 
 private:
-       
-    void prepareFileSaver(ms::AsyncSceneFileSaver& t);
-
     msmaxSettings m_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
@@ -189,7 +198,7 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
-    ms::AsyncSceneFileSaver m_file_saver;
+    ms::AsyncSceneCacheWriter m_cache_writer;
 
     std::vector<std::function<void()>> m_deferred_calls;
     std::mutex m_mutex;
@@ -197,4 +206,5 @@ private:
 
 #define msmaxGetContext() msmaxContext::getInstance()
 #define msmaxGetSettings() msmaxGetContext().getSettings()
-bool msmaxExport(msmaxContext::SendTarget target, msmaxContext::SendScope scope);
+bool msmaxSendScene(msmaxContext::SendTarget target, msmaxContext::SendScope scope);
+bool msmaxExportCache(msmaxContext::SendScope scope, bool all_frames);

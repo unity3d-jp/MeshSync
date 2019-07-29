@@ -59,7 +59,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\MeshSync\Assets\Tests\Plugins\x86_64\</Command>
+      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\MeshSync~\Assets\Tests\Plugins\x86_64\</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -76,7 +76,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PostBuildEvent>
-      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\MeshSync\Assets\Tests\Plugins\x86_64\</Command>
+      <Command>xcopy /Y $(TargetPath) $(SolutionDir)..\MeshSync~\Assets\Tests\Plugins\x86_64\</Command>
     </PostBuildEvent>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>

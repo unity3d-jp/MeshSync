@@ -58,7 +58,7 @@ msvrSettings& msvrContext::getSettings()
 
 void msvrContext::send(bool force)
 {
-    if (m_sender.isSending()) {
+    if (m_sender.isExporting()) {
         // previous request is not completed yet
         if (force)
             m_sender.wait();
@@ -751,13 +751,12 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
                     dst.indices[ii] = src[ii];
             }
 
-            dst.setupFlags();
-            dst.flags.has_refine_settings = 1;
-            dst.refine_settings.flags.flip_faces = true;
+            dst.refine_settings.flags.flip_faces = 1;
             dst.refine_settings.flags.gen_tangents = 1;
             dst.refine_settings.flags.flip_u = m_settings.flip_u;
             dst.refine_settings.flags.flip_v = m_settings.flip_v;
             dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
+            dst.setupMeshDataFlags();
         }
     };
     task();

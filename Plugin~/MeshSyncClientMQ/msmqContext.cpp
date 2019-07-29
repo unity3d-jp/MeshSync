@@ -45,7 +45,7 @@ const std::string& msmqContext::getErrorMessage()
 
 bool msmqContext::isSending()
 {
-    return m_send_meshes.isSending() || m_send_camera.isSending();
+    return m_send_meshes.isExporting() || m_send_camera.isExporting();
 }
 
 void msmqContext::wait()
@@ -146,7 +146,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
         // extract mesh data
         parallel_for_each(m_obj_records.begin(), m_obj_records.end(), [this, doc](ObjectRecord& rec) {
             rec.dst->path = GetPath(doc, rec.obj);
-            ExtractID(rec.dst->path.c_str(), rec.dst->id);
+            ExtractID(rec.dst->path.c_str(), rec.dst->host_id);
 
             bool visible = rec.obj->GetVisible() != 0;
             rec.dst->visible = visible;
@@ -259,7 +259,6 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
                     auto& bone = m_bone_records[bid];
                     auto bd = ms::BoneData::create();
                     rec.dst->bones.push_back(bd);
-                    rec.dst->flags.has_bones = 1;
                     bd->path = bone.dst->path;
                     bd->bindpose = bone.bindpose;
 
@@ -457,21 +456,23 @@ bool msmqContext::importMeshes(MQDocument doc)
     }
     
     // import meshes
+    std::string tmp_name;
     for (auto& data : ret->entities) {
-        if (data->getType() == ms::Entity::Type::Mesh) {
-            auto& mdata = (ms::Mesh&)*data;
+        if (data->getType() == ms::EntityType::Mesh) {
+            auto& dst = (ms::Mesh&)*data;
 
             // create name that includes ID
             char name[MaxNameBuffer];
-            sprintf(name, "%s [id:%08x]", ms::ToANSI(mdata.getName()).c_str(), mdata.id);
+            dst.getName(tmp_name);
+            sprintf(name, "%s [id:%08x]", ms::ToANSI(tmp_name).c_str(), dst.host_id);
 
             if (auto obj = findMesh(doc, name)) {
                 doc->DeleteObject(doc->GetObjectIndex(obj));
             }
-            auto obj = createMesh(doc, mdata, name);
+            auto obj = createMesh(doc, dst, name);
             doc->AddObject(obj);
 
-            m_host_meshes[mdata.id] = std::static_pointer_cast<ms::Mesh>(data);
+            m_host_meshes[dst.host_id] = std::static_pointer_cast<ms::Mesh>(data);
         }
     }
     return true;
@@ -613,7 +614,6 @@ MQObject msmqContext::createMesh(MQDocument doc, const ms::Mesh& data, const cha
 
 void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 {
-    dst.flags.has_refine_settings = 1;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
     dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.flip_v = 1;
@@ -632,13 +632,13 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     // transform
     {
         dst.refine_settings.flags.apply_world2local = 1;
-        auto ite = m_host_meshes.find(dst.id);
+        auto ite = m_host_meshes.find(dst.host_id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
-            dst.flags.apply_trs = 0;
+            dst.td_flags.has_transform = 0;
         }
         else {
-            dst.flags.apply_trs = 1;
+            dst.td_flags.has_transform = ~0;
             ExtractLocalTransform(obj, dst.position, dst.rotation, dst.scale);
             dst.refine_settings.world2local = invert(ExtractGlobalMatrix(doc, obj));
         }
@@ -682,7 +682,6 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     // vertex colors
     if (m_settings.sync_vertex_color) {
         dst.colors.resize_discard(nindices);
-        dst.flags.has_colors = 1;
         auto *colors = dst.colors.data();
         for (int fi = 0; fi < nfaces; ++fi) {
             int count = dst.counts[fi];
@@ -699,7 +698,6 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 #if MQPLUGIN_VERSION >= 0x0460
     if (m_settings.sync_normals) {
         dst.normals.resize_discard(nindices);
-        dst.flags.has_normals = 1;
         auto *normals = dst.normals.data();
         for (int fi = 0; fi < nfaces; ++fi) {
             int count = dst.counts[fi];
@@ -717,7 +715,7 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
         dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     }
-    dst.setupFlags();
+    dst.setupMeshDataFlags();
 }
 
 void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)

@@ -22,6 +22,7 @@ namespace UTJ.MeshSync
         // just for inspector
         [SerializeField] bool m_readOnly = false;
         [SerializeField] bool m_showRootSelector = false;
+        [SerializeField] bool m_isDirectory = true;
 #endif
 
         public Root root
@@ -109,6 +110,11 @@ namespace UTJ.MeshSync
         {
             get { return m_showRootSelector; }
             set { m_showRootSelector = value; }
+        }
+        public bool isDirectory
+        {
+            get { return m_isDirectory; }
+            set { m_isDirectory = value; }
         }
 #endif
 

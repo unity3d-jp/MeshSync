@@ -152,6 +152,11 @@ namespace UTJ.MeshSync
 #endif
     }
 
+    public struct TimeRange
+    {
+        public float start, end;
+    }
+
 
     #region Server
     public enum ZUpCorrectionMode
@@ -162,18 +167,26 @@ namespace UTJ.MeshSync
 
     public struct ServerSettings
     {
+        public struct Flags
+        {
+            public BitFlags flags;
+        }
+
+
         public int maxQueue;
         public int maxThreads;
         public ushort port;
+
+        public Flags flags; // reserved
         public uint meshSplitUnit;
-        public int meshMaxBoneInfluence; // -1 (variable) or 4
+        public int meshMaxBoneInfluence; // 4 or 255 (variable)
         public ZUpCorrectionMode zUpCorrectionMode;
 
         public static ServerSettings defaultValue
         {
             get
             {
-                return new ServerSettings
+                var ret = new ServerSettings
                 {
                     maxQueue = 512,
                     maxThreads = 8,
@@ -190,6 +203,7 @@ namespace UTJ.MeshSync
 #endif
                     zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
                 };
+                return ret;
             }
         }
 
@@ -1506,14 +1520,21 @@ namespace UTJ.MeshSync
         Points,
     };
 
+    public struct TransformDataFlags
+    {
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+    }
+
     public struct TransformData
     {
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
+        [DllImport("MeshSyncServer")] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern EntityType msTransformGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msTransformGetID(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetID(IntPtr self, int v);
+        [DllImport("MeshSyncServer")] static extern int msTransformGetHostID(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msTransformSetHostID(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msTransformSetIndex(IntPtr self, int v);
         [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetPath(IntPtr self);
@@ -1543,14 +1564,18 @@ namespace UTJ.MeshSync
             return msTransformCreate();
         }
 
+        public TransformDataFlags dataFlags
+        {
+            get { return msTransformGetDataFlags(self); }
+        }
         public EntityType entityType
         {
             get { return msTransformGetType(self); }
         }
-        public int id
+        public int hostID
         {
-            get { return msTransformGetID(self); }
-            set { msTransformSetID(self, value); }
+            get { return msTransformGetHostID(self); }
+            set { msTransformSetHostID(self, value); }
         }
         public int index
         {
@@ -1594,6 +1619,12 @@ namespace UTJ.MeshSync
         }
     }
 
+    public struct CameraDataFlags
+    {
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+    }
+
     [StructLayout(LayoutKind.Explicit)]
     public struct CameraData
     {
@@ -1601,6 +1632,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
         [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
+        [DllImport("MeshSyncServer")] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern byte msCameraIsOrtho(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msCameraSetOrtho(IntPtr self, byte v);
         [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr self);
@@ -1623,6 +1655,10 @@ namespace UTJ.MeshSync
             return msCameraCreate();
         }
 
+        public CameraDataFlags dataFlags
+        {
+            get { return msCameraGetDataFlags(self); }
+        }
         public bool orthographic
         {
             get { return msCameraIsOrtho(self) != 0; }
@@ -1660,6 +1696,12 @@ namespace UTJ.MeshSync
         }
     }
 
+    public struct LightDataFlags
+    {
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+    }
+
     [StructLayout(LayoutKind.Explicit)]
     public struct LightData
     {
@@ -1668,6 +1710,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
+        [DllImport("MeshSyncServer")] static extern LightDataFlags msLightGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern LightType msLightGetType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr self, LightType v);
         [DllImport("MeshSyncServer")] static extern LightShadows msLightGetShadowType(IntPtr self);
@@ -1685,6 +1728,11 @@ namespace UTJ.MeshSync
         public static LightData Create()
         {
             return msLightCreate();
+        }
+
+        public LightDataFlags dataFlags
+        {
+            get { return msLightGetDataFlags(self); }
         }
         public LightType lightType
         {
@@ -1813,81 +1861,18 @@ namespace UTJ.MeshSync
     public struct MeshDataFlags
     {
         public BitFlags flags;
-        public bool hasRefineSettings
-        {
-            get { return flags[0]; }
-            set { flags[0] = value; }
-        }
-        public bool hasIndices
-        {
-            get { return flags[1]; }
-            set { flags[1] = value; }
-        }
-        public bool hasCounts
-        {
-            get { return flags[2]; }
-            set { flags[2] = value; }
-        }
-        public bool hasPoints
-        {
-            get { return flags[3]; }
-            set { flags[3] = value; }
-        }
-        public bool hasNormals
-        {
-            get { return flags[4]; }
-            set { flags[4] = value; }
-        }
-        public bool hasTangents
-        {
-            get { return flags[5]; }
-            set { flags[5] = value; }
-        }
-        public bool hasUV0
-        {
-            get { return flags[6]; }
-            set { flags[6] = value; }
-        }
-        public bool hasUV1
-        {
-            get { return flags[7]; }
-            set { flags[7] = value; }
-        }
-        public bool hasColors
-        {
-            get { return flags[8]; }
-            set { flags[8] = value; }
-        }
-        public bool hasVelocities
-        {
-            get { return flags[9]; }
-            set { flags[9] = value; }
-        }
-        public bool hasMaterialIDs
-        {
-            get { return flags[10]; }
-            set { flags[10] = value; }
-        }
-        public bool hasBones
-        {
-            get { return flags[11]; }
-            set { flags[11] = value; }
-        }
-        public bool hasBlendshapeWeights
-        {
-            get { return flags[12]; }
-            set { flags[12] = value; }
-        }
-        public bool hasBlendshapes
-        {
-            get { return flags[13]; }
-            set { flags[13] = value; }
-        }
-        public bool applyTRS
-        {
-            get { return flags[14]; }
-            set { flags[14] = value; }
-        }
+        public bool unchanged           { get { return flags[0]; } }
+        public bool hasIndices          { get { return flags[3]; } }
+        public bool hasPoints           { get { return flags[5]; } }
+        public bool hasNormals          { get { return flags[6]; } }
+        public bool hasTangents         { get { return flags[7]; } }
+        public bool hasUV0              { get { return flags[8]; } }
+        public bool hasUV1              { get { return flags[9]; } }
+        public bool hasColors           { get { return flags[10]; } }
+        public bool hasVelocities       { get { return flags[11]; } }
+        public bool hasBones            { get { return flags[13]; } }
+        public bool hasBlendshapeWeights{ get { return flags[14]; } }
+        public bool hasBlendshapes      { get { return flags[15]; } }
     };
 
     [StructLayout(LayoutKind.Explicit)]
@@ -1898,7 +1883,7 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
-        [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetFlags(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
         [DllImport("MeshSyncServer")] static extern int msMeshGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msMeshGetNumIndices(IntPtr self);
@@ -1953,9 +1938,9 @@ namespace UTJ.MeshSync
             return msMeshCreate();
         }
 
-        public MeshDataFlags flags
+        public MeshDataFlags dataFlags
         {
-            get { return msMeshGetFlags(self); }
+            get { return msMeshGetDataFlags(self); }
             set { msMeshSetFlags(self, value); }
         }
 
@@ -2061,36 +2046,13 @@ namespace UTJ.MeshSync
     public struct PointsDataFlags
     {
         public BitFlags flags;
-        public bool hasPoints
-        {
-            get { return flags[0]; }
-            set { flags[0] = value; }
-        }
-        public bool hasRotations
-        {
-            get { return flags[1]; }
-            set { flags[1] = value; }
-        }
-        public bool hasScales
-        {
-            get { return flags[2]; }
-            set { flags[2] = value; }
-        }
-        public bool hasColors
-        {
-            get { return flags[3]; }
-            set { flags[3] = value; }
-        }
-        public bool hasVelocities
-        {
-            get { return flags[4]; }
-            set { flags[4] = value; }
-        }
-        public bool hasIDs
-        {
-            get { return flags[5]; }
-            set { flags[5] = value; }
-        }
+        public bool unchanged       { get { return flags[0]; } }
+        public bool hasPoints       { get { return flags[1]; } }
+        public bool hasRotations    { get { return flags[2]; } }
+        public bool hasScales       { get { return flags[3]; } }
+        public bool hasColors       { get { return flags[4]; } }
+        public bool hasVelocities   { get { return flags[5]; } }
+        public bool hasIDs          { get { return flags[6]; } }
     };
 
     public struct PointsCacheData
@@ -2316,4 +2278,54 @@ namespace UTJ.MeshSync
         public ConstraintData GetConstraint(int i) { return msSceneGetConstraint(self, i); }
     }
     #endregion Scene
+
+
+    #region SceneCache
+    public struct SceneCacheData
+    {
+        #region internal
+        public IntPtr self;
+        [DllImport("MeshSyncServer")] static extern SceneCacheData msISceneCacheOpen(string path);
+        [DllImport("MeshSyncServer")] static extern void msISceneCacheClose(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
+        [DllImport("MeshSyncServer")] static extern int msISceneCacheGetNumScenes(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
+
+        [DllImport("MeshSyncServer")] static extern int msSendSceneAsync(string addr, int port, SceneData scene);
+        [DllImport("MeshSyncServer")] static extern byte msSendSceneWait(int handle);
+        #endregion
+
+        public static implicit operator bool(SceneCacheData v) { return v.self != IntPtr.Zero; }
+        public static SceneCacheData Open(string path) { return msISceneCacheOpen(path); }
+
+        public void Close() { msISceneCacheClose(self); self = IntPtr.Zero; }
+
+        public int sceneCount {
+            get { return msISceneCacheGetNumScenes(self); }
+        }
+        public TimeRange timeRange {
+            get {
+                var ret = default(TimeRange);
+                msISceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
+                return ret;
+            }
+        }
+
+        public SceneData GetSceneByIndex(int i)
+        {
+            return msISceneCacheGetSceneByIndex(self, i);
+        }
+        public SceneData GetSceneByTime(float t, bool lerp)
+        {
+            return msISceneCacheGetSceneByTime(self, t, lerp);
+        }
+
+        public static bool SendScene(string addr, int port, SceneData scene)
+        {
+            var handle = msSendSceneAsync(addr, port, scene);
+            return msSendSceneWait(handle) != 0;
+        }
+    }
+    #endregion
 }

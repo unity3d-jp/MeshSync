@@ -21,7 +21,7 @@ static void Send(ms::Scene& scene)
 {
     for (auto& obj : scene.entities) {
         if (auto *mesh = dynamic_cast<ms::Mesh*>(obj.get())) {
-            mesh->setupFlags();
+            mesh->setupMeshDataFlags();
         }
     }
 
@@ -47,8 +47,21 @@ static void Send(ms::Scene& scene)
 
 TestCase(Test_SendMesh)
 {
-    auto osc = ms::OpenOSceneCacheFile("wave.sc", { ms::SceneCacheEncoding::Plain });
-    auto oscz = ms::OpenOSceneCacheFile("wave.scz", { ms::SceneCacheEncoding::ZSTD });
+    ms::OSceneCacheSettings c0;
+    c0.strip_unchanged = 0;
+    c0.apply_refinement = 0;
+    c0.encoding = ms::SceneCacheEncoding::Plain;
+
+    ms::OSceneCacheSettings c1;
+    c1.apply_refinement = 0;
+
+    ms::OSceneCacheSettings c2;
+    c2.apply_refinement = 0;
+    c2.encoder_settings.zstd.compression_level = 100;
+
+    auto osc_c0 = ms::OpenOSceneCacheFile("wave_c0.sc", c0);
+    auto osc_c1 = ms::OpenOSceneCacheFile("wave_c1.sc", c1);
+    auto osc_c2 = ms::OpenOSceneCacheFile("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
         auto scene = ms::Scene::create();
@@ -70,8 +83,9 @@ TestCase(Test_SendMesh)
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         mids.resize(counts.size(), 0);
 
-        osc->addScene(scene, 0.5f * i);
-        oscz->addScene(scene, 0.5f * i);
+        osc_c0->addScene(scene->clone(), 0.5f * i);
+        osc_c1->addScene(scene->clone(), 0.5f * i);
+        osc_c2->addScene(scene->clone(), 0.5f * i);
         Send(*scene);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -86,7 +100,7 @@ TestCase(Test_SceneCacheRead)
 
     auto range = isc->getTimeRange();
     float step = 0.1f;
-    for (float t = std::get<0>(range); t < std::get<1>(range); t += step) {
+    for (float t = range.start; t < range.end; t += step) {
         auto scene = isc->getByTime(t, true);
         if (!scene)
             break;
@@ -171,7 +185,7 @@ TestCase(Test_Points)
         for (int i = 0; i < c;++i) {
             data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
         }
-        node->setupFlags();
+        node->setupPointsDataFlags();
     }
     {
         auto node = ms::Points::create();
@@ -191,7 +205,7 @@ TestCase(Test_Points)
             data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
             data->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
         }
-        node->setupFlags();
+        node->setupPointsDataFlags();
     }
     {
         auto node = ms::Points::create();
@@ -241,7 +255,7 @@ TestCase(Test_Points)
                 points[i] += velocities[i];
             }
         }
-        node->setupFlags();
+        node->setupPointsDataFlags();
     }
 
     Send(scene);
@@ -489,18 +503,20 @@ TestCase(Test_Query)
 #undef SendQuery
 }
 
-TestCase(Test_SaveFile)
+TestCase(Test_CacheWriter)
 {
-    ms::AsyncSceneFileSaver fileSaver;
+    ms::AsyncSceneCacheWriter writer;
+    writer.open("wave1f.scz");
 
-    fileSaver.on_prepare = [](ms::AsyncSceneFileSaver& t) { 
+    writer.on_prepare = [&writer]() {
+        auto& t = writer;
         t.scene_settings.handedness = ms::Handedness::RightZUp;
         t.scene_settings.scale_factor = 1.0f;
 
-        t.resetScene();
+        t.clear();
 
-        std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
-        t.AddEntity(mesh);
+        auto mesh = ms::Mesh::create();
+        t.geometries.push_back(mesh);
 
         mesh->path = "/Test/Wave";
         mesh->refine_settings.flags.gen_normals = 1;
@@ -517,8 +533,7 @@ TestCase(Test_SaveFile)
     };
 
 
-    fileSaver.tryKickAutoSave();
-
-    fileSaver.kickManualSave("wave.scz");
+    writer.kick();
+    writer.wait();
 }
 

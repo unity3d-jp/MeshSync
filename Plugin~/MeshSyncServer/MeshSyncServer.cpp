@@ -45,30 +45,30 @@ msAPI void  msServerStop(ms::Server *server)
 
 msAPI uint32_t msServerGetSplitUnit(ms::Server *server)
 {
-    return server ? server->getSettings().mesh_split_unit : 0;
+    return server ? server->getSettings().import_settings.mesh_split_unit : 0;
 }
 msAPI void msServerSetSplitUnit(ms::Server *server, uint32_t v)
 {
     if (server)
-        server->getSettings().mesh_split_unit = v;
+        server->getSettings().import_settings.mesh_split_unit = v;
 }
 msAPI int msServerGetMaxBoneInfluence(ms::Server *server)
 {
-    return server ? server->getSettings().mesh_max_bone_influence : 0;
+    return server ? server->getSettings().import_settings.mesh_max_bone_influence : 0;
 }
 msAPI void msServerSetMaxBoneInfluence(ms::Server *server, int v)
 {
     if (server)
-        server->getSettings().mesh_max_bone_influence = v;
+        server->getSettings().import_settings.mesh_max_bone_influence = v;
 }
 msAPI ms::ZUpCorrectionMode msServerGetZUpCorrectionMode(ms::Server *server)
 {
-    return server ? server->getSettings().zup_correction_mode : ms::ZUpCorrectionMode::FlipYZ;
+    return server ? server->getSettings().import_settings.zup_correction_mode : ms::ZUpCorrectionMode::FlipYZ;
 }
 msAPI void msServerSetZUpCorrectionMode(ms::Server *server, ms::ZUpCorrectionMode v)
 {
     if (server)
-        server->getSettings().zup_correction_mode = v;
+        server->getSettings().import_settings.zup_correction_mode = v;
 }
 
 msAPI int msServerGetNumMessages(ms::Server *server)
@@ -380,17 +380,25 @@ msAPI ms::Transform* msTransformCreate()
 {
     return ms::Transform::create_raw();
 }
-msAPI ms::Entity::Type msTransformGetType(ms::Transform *self)
+msAPI uint32_t msTransformGetDataFlags(ms::Transform *self)
+{
+    return (uint32_t&)self->td_flags;
+}
+msAPI ms::EntityType msTransformGetType(ms::Transform *self)
 {
     return self->getType();
 }
 msAPI int msTransformGetID(ms::Transform *self)
 {
-    return self->id;
+    return self->host_id;
 }
-msAPI void msTransformSetID(ms::Transform *self, int v)
+msAPI int msTransformGetHostID(ms::Transform *self)
 {
-    self->id = v;
+    return self->host_id;
+}
+msAPI void msTransformSetHostID(ms::Transform *self, int v)
+{
+    self->host_id = v;
 }
 msAPI int msTransformGetIndex(ms::Transform *self)
 {
@@ -464,6 +472,10 @@ msAPI ms::Camera* msCameraCreate()
 {
     return ms::Camera::create_raw();
 }
+msAPI uint32_t msCameraGetDataFlags(ms::Camera *self)
+{
+    return (uint32_t&)self->cd_flags;
+}
 msAPI bool msCameraIsOrtho(ms::Camera *self)
 {
     return self->is_ortho;
@@ -528,6 +540,10 @@ msAPI ms::Light* msLightCreate()
 {
     return ms::Light::create_raw();
 }
+msAPI uint32_t msLightGetDataFlags(ms::Light *self)
+{
+    return (uint32_t&)self->ld_flags;
+}
 msAPI ms::Light::LightType msLightGetType(ms::Light *self)
 {
     return self->light_type;
@@ -584,13 +600,13 @@ msAPI ms::Mesh* msMeshCreate()
 {
     return ms::Mesh::create_raw();
 }
-msAPI ms::MeshDataFlags msMeshGetFlags(ms::Mesh *self)
+msAPI uint32_t msMeshGetDataFlags(ms::Mesh *self)
 {
-    return self->flags;
+    return (uint32_t&)self->md_flags;
 }
-msAPI void msMeshSetFlags(ms::Mesh *self, ms::MeshDataFlags v)
+msAPI void msMeshSetFlags(ms::Mesh *self, uint32_t v)
 {
-    self->flags = v;
+    (uint32_t&)self->md_flags = v;
 }
 msAPI int msMeshGetNumPoints(ms::Mesh *self)
 {
@@ -615,7 +631,7 @@ msAPI void msMeshWritePoints(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->points.assign(v, v + size);
-        self->flags.has_points = 1;
+        self->md_flags.has_points = 1;
     }
 }
 msAPI void msMeshReadNormals(ms::Mesh *self, float3 *dst, ms::SplitData *split)
@@ -629,7 +645,7 @@ msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->normals.assign(v, v + size);
-        self->flags.has_normals = 1;
+        self->md_flags.has_normals = 1;
     }
 }
 msAPI void msMeshReadTangents(ms::Mesh *self, float4 *dst, ms::SplitData *split)
@@ -643,7 +659,7 @@ msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->tangents.assign(v, v + size);
-        self->flags.has_tangents = 1;
+        self->md_flags.has_tangents = 1;
     }
 }
 msAPI void msMeshReadUV0(ms::Mesh *self, float2 *dst, ms::SplitData *split)
@@ -664,14 +680,14 @@ msAPI void msMeshWriteUV0(ms::Mesh *self, const float2 *v, int size)
 {
     if (size > 0) {
         self->uv0.assign(v, v + size);
-        self->flags.has_uv0 = 1;
+        self->md_flags.has_uv0 = 1;
     }
 }
 msAPI void msMeshWriteUV1(ms::Mesh *self, const float2 *v, int size)
 {
     if (size > 0) {
         self->uv1.assign(v, v + size);
-        self->flags.has_uv1 = 1;
+        self->md_flags.has_uv1 = 1;
     }
 }
 msAPI void msMeshReadColors(ms::Mesh *self, float4 *dst, ms::SplitData *split)
@@ -685,7 +701,7 @@ msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->colors.assign(v, v + size);
-        self->flags.has_colors = 1;
+        self->md_flags.has_colors = 1;
     }
 }
 msAPI void msMeshReadVelocities(ms::Mesh *self, float3 *dst, ms::SplitData *split)
@@ -699,7 +715,7 @@ msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->velocities.assign(v, v + size);
-        self->flags.has_velocities = 1;
+        self->md_flags.has_velocities = 1;
     }
 }
 msAPI void msMeshReadIndices(ms::Mesh *self, int *dst, ms::SplitData *split)
@@ -715,8 +731,8 @@ msAPI void msMeshWriteIndices(ms::Mesh *self, const int *v, int size)
         self->indices.assign(v, v + size);
         self->counts.clear();
         self->counts.resize(size / 3, 3);
-        self->flags.has_indices = 1;
-        self->flags.has_counts = 1;
+        self->md_flags.has_indices = 1;
+        self->md_flags.has_counts = 1;
     }
 }
 msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, int materialID)
@@ -725,9 +741,9 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->indices.insert(self->indices.end(), v, v + size);
         self->counts.resize(self->counts.size() + (size / 3), 3);
         self->material_ids.resize(self->material_ids.size() + (size / 3), materialID);
-        self->flags.has_indices = 1;
-        self->flags.has_counts = 1;
-        self->flags.has_material_ids = 1;
+        self->md_flags.has_indices = 1;
+        self->md_flags.has_counts = 1;
+        self->md_flags.has_material_ids = 1;
     }
 }
 msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *self, int i)
@@ -1000,9 +1016,9 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma endregion
 
 #pragma region Points
-msAPI ms::PointsDataFlags msPointsDataGetFlags(ms::PointsData *self)
+msAPI uint32_t msPointsDataGetFlags(ms::PointsData *self)
 {
-    return self->flags;
+    return (uint32_t&)self->pd_flags;
 }
 msAPI float msPointsDataGetTime(ms::PointsData *self)
 {

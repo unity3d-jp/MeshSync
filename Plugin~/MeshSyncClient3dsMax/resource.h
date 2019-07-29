@@ -22,6 +22,8 @@
 #define IDC_TXT_TIME_SCALE              1016
 #define IDC_TXT_SPS                     1017
 #define IDC_EDIT_ANIMATION_SPS          1018
+#define IDC_BUTTON_EXPORT_CACHE         1019
+#define IDC_BUTTON_EXPORT_CACHE_ALL     1020
 #define IDC_CHECK_BLENDSHAPES           1022
 #define IDC_CHECK_BAKE_MODIFIERS        1023
 #define IDC_CHECK_TEXTURES              1024
@@ -30,6 +32,7 @@
 #define IDC_CHECK_KFREDUCTION           1027
 #define IDC_CHECK_KEEPFLATCURVES        1028
 #define IDC_CHECK_IGNORE_NON_RENDERABLE 1029
+#define IDC_GROUP_CACHE                 1030
 
 // Next default values for new objects
 // 
@@ -37,7 +40,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

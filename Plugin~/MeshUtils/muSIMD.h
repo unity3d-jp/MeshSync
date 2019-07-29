@@ -1,6 +1,8 @@
 #pragma once
 #include "muSIMDConfig.h"
 #include "muHalf.h"
+#include "muRawVector.h"
+#include "muMath.h"
 
 namespace mu {
 
@@ -256,5 +258,34 @@ void GenerateTangentsTriangleSoA_ISPC(float4 *dst,
     const float *u3x, const float *u3y,
     const float3 *normals, const int *indices,
     int num_triangles, int num_vertices);
+
+
+
+inline bool near_equal(const RawVector<float>& a, const RawVector<float>& b, float epsilon = muEpsilon)
+{
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
+}
+inline bool near_equal(const RawVector<float2>& a, const RawVector<float2>& b, float epsilon = muEpsilon)
+{
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
+}
+inline bool near_equal(const RawVector<float3>& a, const RawVector<float3>& b, float epsilon = muEpsilon)
+{
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
+}
+inline bool near_equal(const RawVector<float4>& a, const RawVector<float4>& b, float epsilon = muEpsilon)
+{
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
+}
+inline bool near_equal(const RawVector<quatf>& a, const RawVector<quatf>& b, float epsilon = muEpsilon)
+{
+    return a.size() == b.size() && NearEqual((const float4*)a.data(), (const float4*)b.data(), a.size(), epsilon);
+}
+
+inline bool near_equal(const RawVector<int>& a, const RawVector<int>& b, float epsilon = muEpsilon)
+{
+    (void)epsilon;
+    return a == b;
+}
 
 } // namespace mu

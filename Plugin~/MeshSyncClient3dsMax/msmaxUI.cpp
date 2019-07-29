@@ -56,7 +56,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        return msmaxExport(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All);
+        return msmaxSendScene(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All);
     }
 };
 
@@ -75,7 +75,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        return msmaxExport(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All);
+        return msmaxSendScene(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All);
     }
 };
 
@@ -435,10 +435,17 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { msmaxExport(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All); });
+            handle_button([&]() { msmaxSendScene(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
-            handle_button([&]() { msmaxExport(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All); });
+            handle_button([&]() { msmaxSendScene(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All); });
+            break;
+
+        case IDC_BUTTON_EXPORT_CACHE:
+            handle_button([&]() { msmaxExportCache(msmaxContext::SendScope::All, false); });
+            break;
+        case IDC_BUTTON_EXPORT_CACHE_ALL:
+            handle_button([&]() { msmaxExportCache(msmaxContext::SendScope::All, true); });
             break;
         default: break;
         }

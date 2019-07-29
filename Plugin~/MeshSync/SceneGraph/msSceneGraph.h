@@ -27,6 +27,12 @@ enum class Handedness
     RightZUp,
 };
 
+enum class ZUpCorrectionMode
+{
+    FlipYZ,
+    RotateX,
+};
+
 struct SceneSettings
 {
     std::string name = "Untitled";
@@ -38,7 +44,19 @@ struct SceneSettings
 };
 msSerializable(SceneSettings);
 
-struct Scene
+struct SceneImportSettings
+{
+    uint32_t flags = 0; // reserved
+    uint32_t mesh_split_unit = 0xffffffff;
+    int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
+    ZUpCorrectionMode zup_correction_mode = ZUpCorrectionMode::FlipYZ;
+
+    SceneImportSettings()
+    {
+    }
+};
+
+class Scene
 {
 public:
     SceneSettings settings;
@@ -49,15 +67,43 @@ public:
 public:
     msDefinePool(Scene);
 
+    std::shared_ptr<Scene> clone();
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
+    void strip(Scene& base);
+    void merge(Scene& base);
+    void diff(const Scene& src1, const Scene& src2);
+    void lerp(const Scene& src1, const Scene& src2, float t);
     void clear();
     uint64_t hash() const;
-    void lerp(const Scene& src1, const Scene& src2, float t);
+
+    static void sanitizeHierarchyPath(std::string& path);
+    void import(const SceneImportSettings& cv);
 
     TransformPtr findEntity(const std::string& path) const;
     template<class AssetType> std::vector<std::shared_ptr<AssetType>> getAssets() const;
     template<class EntityType> std::vector<std::shared_ptr<EntityType>> getEntities() const;
+
+    template<class EntityType, class Body>
+    void eachEntity(const Body& body)
+    {
+        for (auto& e : entities)
+            if (e->getType() == GetEntityType<EntityType>::type)
+                body(e);
+    }
+
+    template<class Body>
+    void eachEntity(const Body& body)
+    {
+        for (auto& e : entities)
+            body(e);
+    }
+
+
+    void buildHierarchy();
+    void flatternHierarchy();
+    void stripNormals();
+    void stripTangents();
 };
 msSerializable(Scene);
 msDeclPtr(Scene);

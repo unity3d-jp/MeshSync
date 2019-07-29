@@ -11,6 +11,7 @@ namespace UTJ.MeshSyncEditor
         {
             bool ro = property.FindPropertyRelative("m_readOnly").boolValue;
             bool showRoot = property.FindPropertyRelative("m_showRootSelector").boolValue;
+            bool isDirectory = property.FindPropertyRelative("m_isDirectory").boolValue;
             if (ro)
                 EditorGUI.BeginDisabledGroup(true);
 
@@ -36,7 +37,9 @@ namespace UTJ.MeshSyncEditor
             if (GUI.Button(buttonRect, "..."))
             {
                 var tmp = new DataPath((DataPath.Root)pRoot.intValue, pLeaf.stringValue);
-                var path = EditorUtility.OpenFolderPanel("Select Directory", tmp.fullPath, "");
+                var path = isDirectory ?
+                    EditorUtility.OpenFolderPanel("Select Directory", tmp.fullPath, "") :
+                    EditorUtility.OpenFilePanel("Select File", tmp.fullPath, "");
                 if (path.Length > 0)
                 {
                     var newPath = new DataPath(path);

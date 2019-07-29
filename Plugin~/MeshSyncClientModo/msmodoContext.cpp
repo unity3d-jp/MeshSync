@@ -306,7 +306,7 @@ void msmodoContext::extractReplicaData(
 
 bool msmodoContext::sendMaterials(bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending())
+    if (!prepare() || m_sender.isExporting())
         return false;
 
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -320,7 +320,7 @@ bool msmodoContext::sendMaterials(bool dirty_all)
 
 bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 {
-    if (!prepare() || m_sender.isSending()) {
+    if (!prepare() || m_sender.isExporting()) {
         m_pending_scope = scope;
         return false;
     }
@@ -376,7 +376,7 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
 
 bool msmodoContext::sendAnimations(SendScope scope)
 {
-    if (!prepare() || m_sender.isSending())
+    if (!prepare() || m_sender.isExporting())
         return false;
 
     if (exportAnimations(scope) > 0) {
@@ -929,12 +929,15 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         });
     }
 
-    dst.setupFlags();
     if (m_settings.sync_meshes) {
+        if (dst.normals.empty())
+            dst.refine_settings.flags.gen_normals = 1;
+        if (dst.tangents.empty())
+            dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-        dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.flip_faces = 1;
     }
+    dst.setupMeshDataFlags();
 
     m_parallel_tasks.push_back([this, &n, &dst](){
         // resolve materials (name -> id)
