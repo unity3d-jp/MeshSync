@@ -89,6 +89,9 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
         public bool AddAnimator(string assetPath)
         {
+            if (m_sceneCache.sceneCount < 2)
+                return false;
+
             var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
             var clip = new AnimationClip();
             var sampleRate = m_sceneCache.sampleRate;
@@ -104,6 +107,25 @@ namespace UTJ.MeshSync
             return true;
         }
 #endif
+
+        public void UpdatePlayer()
+        {
+            if (m_openRequested)
+            {
+                OpenCache(m_cacheFilePath.fullPath);
+            }
+
+            if (m_sceneCache && m_time != m_timePrev)
+            {
+                m_timePrev = m_time;
+                var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
+
+                var server = GetComponent<MeshSyncServer>();
+                server.BeforeUpdateScene();
+                server.UpdateScene(scene);
+                server.AfterUpdateScene();
+            }
+        }
         #endregion
 
 
@@ -153,21 +175,7 @@ namespace UTJ.MeshSync
         // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
         void LateUpdate()
         {
-            if (m_openRequested)
-            {
-                OpenCache(m_cacheFilePath.fullPath);
-            }
-
-            if (m_sceneCache && m_time != m_timePrev)
-            {
-                m_timePrev = m_time;
-                var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-
-                var server = GetComponent<MeshSyncServer>();
-                server.BeforeUpdateScene();
-                server.UpdateScene(scene);
-                server.AfterUpdateScene();
-            }
+            UpdatePlayer();
         }
         #endregion
     }

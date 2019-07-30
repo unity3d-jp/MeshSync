@@ -291,26 +291,22 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
     auto& e1 = static_cast<const Mesh&>(e1_);
     auto& e2 = static_cast<const Mesh&>(e2_);
 
-    uint32_t change_bits = 0, bit_index = 0;
+    bool unchanged = true;
     auto compare_attribute = [&](const auto& a1, const auto& a2) {
         if (!near_equal(a1, a2))
-            change_bits |= (1 << bit_index);
-        ++bit_index;
+            unchanged = false;
     };
 
 #define Body(A) compare_attribute(e1.A, e2.A);
-    EachGeometryAttribute(Body);
+    EachTopologyAttribute(Body);
+    md_flags.topology_unchanged = unchanged;
+    EachVertexAttribute(Body);
 #undef Body
 
-    if (change_bits == 0 && e1.refine_settings == e2.refine_settings) {
-#define Body(A) A.clear();
-        EachGeometryAttribute(Body);
-#undef Body
+    if (unchanged && e1.refine_settings == e2.refine_settings)
         md_flags.unchanged = 1;
-    }
-    else {
+    else
         md_flags.unchanged = 0;
-    }
     return true;
 }
 

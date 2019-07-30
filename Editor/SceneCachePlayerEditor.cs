@@ -20,18 +20,28 @@ namespace UTJ.MeshSyncEditor
                 var server = go.AddComponent<MeshSyncServer>();
                 server.rootObject = go.GetComponent<Transform>();
                 server.progressiveDisplay = false;
+                server.dontSaveAssetsInScene = true;
 
                 var player = go.AddComponent<SceneCachePlayer>();
                 if (!player.OpenCache(path))
                 {
                     Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
                     DestroyImmediate(go);
+                    return;
                 }
                 else
                 {
                     player.AddAnimator("Assets");
                     Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
                 }
+
+                //player.UpdatePlayer();
+                //server.ExportMaterials();
+                //var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/" + go.name + ".prefab");
+                //var index = go.transform.GetSiblingIndex();
+                ////Object.DestroyImmediate(go);
+                //var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                //inst.transform.SetSiblingIndex(index);
             }
         }
 #endif

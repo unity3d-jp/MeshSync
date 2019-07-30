@@ -47,7 +47,7 @@ namespace UTJ.MeshSync
             public int index;
             public GameObject go;
             public Mesh origMesh;
-            public Mesh editMesh;
+            public Mesh mesh;
             public int[] materialIDs = new int[0];
             public int[] submeshCounts = new int[0];
             public string reference;
@@ -193,6 +193,8 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_logging = true;
 
+        [HideInInspector] [SerializeField] bool m_dontSaveAssetsInScene = false;
+
         [HideInInspector] [SerializeField] List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [HideInInspector] [SerializeField] List<TextureHolder> m_textureList = new List<TextureHolder>();
         [HideInInspector] [SerializeField] List<AudioHolder> m_audioList = new List<AudioHolder>();
@@ -320,6 +322,12 @@ namespace UTJ.MeshSync
         {
             get { return m_logging; }
             set { m_logging = value; }
+        }
+
+        public bool dontSaveAssetsInScene
+        {
+            get { return m_dontSaveAssetsInScene; }
+            set { m_dontSaveAssetsInScene = value; }
         }
 
         public List<MaterialHolder> materialData { get { return m_materialList; } }
@@ -992,6 +1000,20 @@ namespace UTJ.MeshSync
                 }
             }
 
+            // reassign materials
+            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
+            if (m_needReassignMaterials)
+            {
+                ReassignMaterials();
+                m_needReassignMaterials = false;
+            }
+
+#if UNITY_EDITOR
+#if UNITY_2019_1_OR_NEWER
+            if (m_useBoneRenderer)
+                SetupBoneRenderer();
+#endif
+
             // sort objects by index
             {
                 var rec = m_clientObjects.Values.OrderBy(v => v.index);
@@ -1002,21 +1024,12 @@ namespace UTJ.MeshSync
                 }
             }
 
-            // reassign materials
-            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
-            if (m_needReassignMaterials)
-            {
-                ReassignMaterials();
-                m_needReassignMaterials = false;
-            }
-
-#if UNITY_EDITOR
-            if (!EditorApplication.isPlaying)
+            if (!EditorApplication.isPlaying || !EditorApplication.isPaused)
             {
                 // force recalculate skinning
                 foreach (var rec in m_clientObjects)
                 {
-                    if (rec.Value.editMesh)
+                    if (rec.Value.mesh)
                     {
                         var go = rec.Value.go;
                         if (go != null && go.activeInHierarchy)
@@ -1026,15 +1039,10 @@ namespace UTJ.MeshSync
                         }
                     }
                 }
+                ForceRepaint();
             }
 #endif
-#if UNITY_2019_1_OR_NEWER && UNITY_EDITOR
-            if (m_useBoneRenderer)
-                SetupBoneRenderer();
-#endif
 
-            ForceRepaint();
-            //GC.Collect();
 
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();
@@ -1413,6 +1421,14 @@ namespace UTJ.MeshSync
             for (int si = 0; si < data.numSplits; ++si)
             {
                 var t = trans;
+                bool active = t.gameObject.activeSelf;
+
+                var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
+                smr.bones = null;
+                smr.rootBone = null;
+                if (m_syncVisibility)
+                    smr.enabled = data.transform.visible;
+
                 if (si > 0)
                 {
                     // make split mesh
@@ -1421,48 +1437,37 @@ namespace UTJ.MeshSync
                     t.gameObject.SetActive(true);
                 }
 
+                // to support fast blendshape preview, mesh data is allowed to have only blendshape weights.
+                // so, in some cases mesh data has no vertices / indices.
                 if (dflags.hasIndices)
                 {
+                    var collider = m_updateMeshColliders ? t.GetComponent<MeshCollider>() : null;
+                    bool updateCollider = collider != null &&
+                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
+
                     var split = data.GetSplit(si);
                     if (split.numPoints == 0 || split.numIndices == 0)
                     {
-                        rec.editMesh = null;
+                        rec.mesh = null;
+                        smr.sharedMesh = null;
+                        if (updateCollider)
+                            collider.sharedMesh = null;
                     }
                     else
                     {
-                        rec.editMesh = CreateEditedMesh(data, split);
-                        rec.editMesh.name = si == 0 ? trans.name : trans.name + "[" + si + "]";
-                    }
-                }
-
-                var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
-                if (m_syncVisibility)
-                    smr.enabled = data.transform.visible;
-
-                // disable GameObject while updating mesh and materials
-                bool active = t.gameObject.activeSelf;
-                t.gameObject.SetActive(false);
-
-                // ignore unchanged
-                if (dflags.hasIndices)
-                {
-                    var collider = t.GetComponent<MeshCollider>();
-                    bool updateCollider = m_updateMeshColliders && collider != null &&
-                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
-
-                    {
-                        var old = smr.sharedMesh;
-                        smr.sharedMesh = null;
-                        smr.bones = null;
-                        smr.rootBone = null;
-                        DestroyIfNotAsset(old);
-                        old = null;
+                        if (rec.mesh == null)
+                        {
+                            rec.mesh = new Mesh();
+                            rec.mesh.name = si == 0 ? trans.name : trans.name + "[" + si + "]";
+                            if (m_dontSaveAssetsInScene)
+                                rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
+#if UNITY_2017_3_OR_NEWER
+                            rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#endif
+                        }
+                        UpdateMesh(ref rec.mesh, data, split);
                     }
 
-                    if (updateCollider)
-                        collider.sharedMesh = rec.editMesh;
-
-                    bool updateWhenOffscreen = false;
                     if (skinned)
                     {
                         // create bones
@@ -1482,30 +1487,34 @@ namespace UTJ.MeshSync
                                 root = bones[0];
                             smr.rootBone = root;
                             smr.bones = bones;
-                            updateWhenOffscreen = true;
+                            smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
                         }
                     }
                     else
                     {
-                        if (rec.editMesh != null)
-                            smr.localBounds = rec.editMesh.bounds;
+                        if (rec.mesh != null)
+                            smr.localBounds = rec.mesh.bounds;
+                        smr.updateWhenOffscreen = false;
                     }
 
-                    smr.sharedMesh = rec.editMesh;
-                    smr.updateWhenOffscreen = updateWhenOffscreen;
+                    smr.sharedMesh = rec.mesh;
+                    if (updateCollider)
+                    {
+                        collider.convex = true;
+                        collider.sharedMesh = rec.mesh;
+                    }
                 }
 
-                if (dflags.hasBlendshapeWeights && rec.editMesh != null)
+                // handle blendshape weights
+                if (dflags.hasBlendshapeWeights && rec.mesh != null)
                 {
-                    int numBlendShapes = Math.Min(data.numBlendShapes, rec.editMesh.blendShapeCount);
+                    int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
                     for (int bi = 0; bi < numBlendShapes; ++bi)
                     {
                         var bsd = data.GetBlendShapeData(bi);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
-
-                t.gameObject.SetActive(active);
             }
 
             int numSplits = Math.Max(1, data.numSplits);
@@ -1531,12 +1540,16 @@ namespace UTJ.MeshSync
         PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> m_tmpC = new PinnedList<Color>();
 
-        Mesh CreateEditedMesh(MeshData data, SplitData split)
+        void UpdateMesh(ref Mesh mesh, MeshData data, SplitData split)
         {
-            var mesh = new Mesh();
-#if UNITY_2017_3_OR_NEWER
-            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-#endif
+            bool keepIndices = false;
+            if (mesh.vertexCount != 0)
+            {
+                if (data.dataFlags.topologyUnchanged)
+                    keepIndices = true;
+                else
+                    mesh.Clear();
+            }
 
             var dataFlags = data.dataFlags;
             if (dataFlags.hasPoints)
@@ -1599,7 +1612,7 @@ namespace UTJ.MeshSync
                 }
 #endif
             }
-            if (dataFlags.hasIndices)
+            if (dataFlags.hasIndices && !keepIndices)
             {
                 mesh.subMeshCount = split.numSubmeshes;
                 for (int smi = 0; smi < mesh.subMeshCount; ++smi)
@@ -1657,7 +1670,6 @@ namespace UTJ.MeshSync
 
             mesh.bounds = split.bounds;
             mesh.UploadMeshData(false);
-            return mesh;
         }
 
         EntityRecord UpdatePoints(PointsData data)
@@ -2412,7 +2424,7 @@ namespace UTJ.MeshSync
                 GenerateLightmapUV(kvp.Value.go);
             foreach (var kvp in m_hostObjects)
             {
-                if(kvp.Value.editMesh != null)
+                if(kvp.Value.mesh != null)
                     GenerateLightmapUV(kvp.Value.go);
             }
         }
@@ -2471,7 +2483,7 @@ namespace UTJ.MeshSync
             foreach (var kvp in m_clientObjects)
             {
                 if(kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
-                if (kvp.Value.editMesh != null)
+                if (kvp.Value.mesh != null)
                     ExportMeshes(kvp.Value.go);
             }
 
@@ -2480,11 +2492,11 @@ namespace UTJ.MeshSync
             foreach (var kvp in m_hostObjects)
             {
                 if (kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
-                if (kvp.Value.editMesh != null)
+                if (kvp.Value.mesh != null)
                 {
                     kvp.Value.origMesh.Clear(); // make editor can recognize mesh has modified by CopySerialized()
-                    EditorUtility.CopySerialized(kvp.Value.editMesh, kvp.Value.origMesh);
-                    kvp.Value.editMesh = null;
+                    EditorUtility.CopySerialized(kvp.Value.mesh, kvp.Value.origMesh);
+                    kvp.Value.mesh = null;
 
                     var mf = kvp.Value.go.GetComponent<MeshFilter>();
                     if (mf != null)
