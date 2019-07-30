@@ -22,6 +22,7 @@ public:
     const AnimationCurvePtr getTimeCurve() const override;
 
     int timeToIndex(float time) const;
+    void preloadAll();
 
 protected:
     ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
@@ -34,6 +35,8 @@ protected:
         uint64_t pos = 0;
         uint64_t size = 0;
         float time = 0.0f;
+
+        float load_time_ms = 0.0f;
         ScenePtr scene;
         std::shared_future<void> preload;
     };
@@ -41,16 +44,12 @@ protected:
     StreamPtr m_ist;
     ISceneCacheSettings m_iscs;
     CacheFileHeader m_header;
+    BufferEncoderPtr m_encoder;
 
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
     RawVector<CacheFileEntityMeta> m_entity_meta;
-
     AnimationCurvePtr m_time_curve;
-
-    BufferEncoderPtr m_encoder;
-    MemoryStream m_scene_buf;
-    RawVector<char> m_encoded_buf, m_tmp_buf;
 
     float m_last_time = -1.0f;
     ScenePtr m_base_scene, m_last_scene, m_last_diff;

@@ -10,6 +10,7 @@ public:
     static const size_t default_bufsize = 1024 * 128;
 
     MemoryStreamBuf();
+    MemoryStreamBuf(RawVector<char>&& buf);
     void reset();
     void resize(size_t n);
     void swap(RawVector<char>& buf);
@@ -29,6 +30,7 @@ class MemoryStream : public std::iostream
 {
 public:
     MemoryStream();
+    MemoryStream(RawVector<char>&& buf);
     void reset();
     void resize(size_t n);
     void swap(RawVector<char>& buf);

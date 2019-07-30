@@ -54,20 +54,24 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
     }
 
     {
+        RawVector<char> encoded_buf, tmp_buf;
+
         // read meta data
         CacheFileMetaHeader mh;
         m_ist->read((char*)&mh, sizeof(mh));
 
-        m_encoded_buf.resize(mh.size);
-        m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
+        encoded_buf.resize(mh.size);
+        m_ist->read(encoded_buf.data(), encoded_buf.size());
 
-        m_encoder->decode(m_tmp_buf, m_encoded_buf);
-        m_entity_meta.resize_discard(m_tmp_buf.size() / sizeof(CacheFileEntityMeta));
-        m_tmp_buf.copy_to((char*)m_entity_meta.data());
+        m_encoder->decode(tmp_buf, encoded_buf);
+        m_entity_meta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
+        tmp_buf.copy_to((char*)m_entity_meta.data());
     }
 
     if (m_header.oscs.strip_unchanged)
         m_base_scene = getByIndexImpl(0);
+
+    //preloadAll(); // for test
 }
 
 ISceneCacheImpl::~ISceneCacheImpl()
@@ -86,6 +90,14 @@ int ISceneCacheImpl::timeToIndex(float time) const
         return 0;
     auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
     return int(std::distance(m_records.begin(), p) - 1);
+}
+
+void ISceneCacheImpl::preloadAll()
+{
+    size_t n = m_records.size();
+    m_iscs.max_history = (int)n;
+    for (size_t i = 0; i < n; ++i)
+        kickPreload(i);
 }
 
 
@@ -115,6 +127,7 @@ float ISceneCacheImpl::getTime(size_t i) const
     return m_records[i].time;
 }
 
+// thread safe
 ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
 {
     if (!valid() || i >= m_records.size())
@@ -131,21 +144,23 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
     if (ret)
         return ret; // already loaded
 
+    auto time_begin = mu::Now();
+    RawVector<char> encoded_buf, tmp_buf;
+
     // read buffer
     {
         msDbgTimer("ISceneCacheImpl: read");
 
-        m_encoded_buf.resize(rec.size);
+        encoded_buf.resize(rec.size);
         m_ist->seekg(rec.pos, std::ios::beg);
-        m_ist->read(m_encoded_buf.data(), m_encoded_buf.size());
+        m_ist->read(encoded_buf.data(), encoded_buf.size());
     }
 
     // decode buffer
     {
         msDbgTimer("ISceneCacheImpl: decode");
 
-        m_encoder->decode(m_tmp_buf, m_encoded_buf);
-        m_scene_buf.swap(m_tmp_buf);
+        m_encoder->decode(tmp_buf, encoded_buf);
     }
 
     // deserialize scene
@@ -153,7 +168,8 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         msDbgTimer("ISceneCacheImpl: deserialize");
 
         ret = Scene::create();
-        ret->deserialize(m_scene_buf);
+        MemoryStream scene_buf(std::move(tmp_buf));
+        ret->deserialize(scene_buf);
 
         if (m_header.oscs.strip_unchanged && m_base_scene) {
             // set cache flags
@@ -175,6 +191,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         msLogError("exception: %s\n", e.what());
         ret = nullptr;
     }
+    rec.load_time_ms = mu::NS2MS(mu::Now() - time_begin);
 
     // push & pop history
     if (!m_header.oscs.strip_unchanged || i != 0) {
@@ -222,8 +239,8 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
 bool ISceneCacheImpl::kickPreload(size_t i)
 {
     auto& rec = m_records[i];
-    if (rec.preload.valid())
-        return false;
+    if (rec.scene || rec.preload.valid())
+        return false; // already loaded or loading
 
     rec.preload = std::async(std::launch::async, [this, i]() { getByIndexImpl(i, false); });
     return true;

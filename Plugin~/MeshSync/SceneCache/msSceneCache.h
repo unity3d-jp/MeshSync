@@ -67,7 +67,7 @@ struct ISceneCacheSettingsBase
 {
     uint32_t convert_scenes : 1;
     uint32_t enable_diff : 1;
-    uint32_t preload_scenes : 1; // todo
+    uint32_t preload_scenes : 1;
     uint32_t preload_entire_file : 1;
     uint32_t generate_velocities : 1;
     int max_history = 3;

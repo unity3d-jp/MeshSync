@@ -8,6 +8,12 @@ MemoryStreamBuf::MemoryStreamBuf()
     resize(default_bufsize);
 }
 
+MemoryStreamBuf::MemoryStreamBuf(RawVector<char>&& buf)
+    : buffer(std::move(buf))
+{
+    reset();
+}
+
 void MemoryStreamBuf::reset()
 {
     auto *p = buffer.data();
@@ -81,6 +87,10 @@ int MemoryStreamBuf::sync()
 }
 
 MemoryStream::MemoryStream() : std::iostream(&m_buf) {}
+MemoryStream::MemoryStream(RawVector<char>&& buf)
+    : std::iostream(&m_buf), m_buf(std::move(buf))
+{
+}
 void MemoryStream::reset() { m_buf.reset(); }
 void MemoryStream::resize(size_t n) { m_buf.resize(n); }
 void MemoryStream::swap(RawVector<char>& buf) { m_buf.swap(buf); }
