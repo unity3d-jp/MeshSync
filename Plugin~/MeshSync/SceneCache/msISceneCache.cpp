@@ -72,6 +72,7 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
 
 ISceneCacheImpl::~ISceneCacheImpl()
 {
+    waitAllPreloads();
 }
 
 bool ISceneCacheImpl::valid() const
@@ -114,16 +115,21 @@ float ISceneCacheImpl::getTime(size_t i) const
     return m_records[i].time;
 }
 
-ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
+ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
 {
     if (!valid() || i >= m_records.size())
         return nullptr;
 
     auto& rec = m_records[i];
+    if (wait_preload && rec.preload.valid()) {
+        // wait preload
+        rec.preload.wait();
+        rec.preload = {};
+    }
+
     auto& ret = rec.scene;
     if (ret)
-        return ret;
-
+        return ret; // already loaded
 
     // read buffer
     {
@@ -161,6 +167,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
                 });
             }
 
+            // merge
             ret->merge(*m_base_scene);
         }
     }
@@ -169,6 +176,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
         ret = nullptr;
     }
 
+    // push & pop history
     if (!m_header.oscs.strip_unchanged || i != 0) {
         m_history.push_back(i);
         if (m_history.size() >= m_iscs.max_history) {
@@ -179,13 +187,16 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
     return ret;
 }
 
-ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp)
+ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
 {
     msDbgTimer("ISceneCacheImpl: postprocess");
 
+    // do import
     if (m_iscs.convert_scenes) {
         sp->import(m_iscs.sis);
     }
+
+    ScenePtr ret;
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
@@ -193,12 +204,38 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp)
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
-        return m_last_diff;
+        ret = m_last_diff;
     }
     else {
         m_last_diff = nullptr;
         m_last_scene = sp;
-        return sp;
+        ret = sp;
+    }
+
+    // preload
+    if (m_iscs.preload_scenes && scene_index + 1 < m_records.size())
+        kickPreload(scene_index + 1);
+
+    return ret;
+}
+
+bool ISceneCacheImpl::kickPreload(size_t i)
+{
+    auto& rec = m_records[i];
+    if (rec.preload.valid())
+        return false;
+
+    rec.preload = std::async(std::launch::async, [this, i]() { getByIndexImpl(i, false); });
+    return true;
+}
+
+void ISceneCacheImpl::waitAllPreloads()
+{
+    for (auto& rec : m_records) {
+        if (rec.preload.valid()) {
+            rec.preload.wait();
+            rec.preload = {};
+        }
     }
 }
 
@@ -208,7 +245,7 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
         return nullptr;
 
     auto ret = getByIndexImpl(i);
-    return postprocess(ret);
+    return postprocess(ret, i);
 }
 
 ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
@@ -218,12 +255,17 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
 
     ScenePtr ret;
 
+    const int scene_count = (int)m_records.size();
+    int scene_index = 0;
+
     auto time_range = getTimeRange();
     if (time <= time_range.start) {
-        ret = getByIndexImpl(0);
+        scene_index = 0;
+        ret = getByIndexImpl(scene_index);
     }
     else if (time >= time_range.end) {
-        ret = getByIndexImpl(m_records.size() - 1);
+        scene_index = scene_count - 1;
+        ret = getByIndexImpl(scene_index);
     }
     else {
         int i = timeToIndex(time);
@@ -236,13 +278,15 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
             float t = (time - t1) / (t2 - t1);
             ret = Scene::create();
             ret->lerp(*s1, *s2, t);
+            scene_index = i + 1;
         }
         else {
             ret = getByIndexImpl(i);
+            scene_index = i;
         }
     }
 
-    return postprocess(ret);
+    return postprocess(ret, scene_index);
 }
 
 const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const

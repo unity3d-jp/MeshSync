@@ -24,15 +24,18 @@ public:
     int timeToIndex(float time) const;
 
 protected:
-    ScenePtr getByIndexImpl(size_t i);
-    ScenePtr postprocess(ScenePtr& sp);
+    ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
+    ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
+    bool kickPreload(size_t i);
+    void waitAllPreloads();
 
     struct SceneRecord
     {
         uint64_t pos = 0;
         uint64_t size = 0;
-        ScenePtr scene;
         float time = 0.0f;
+        ScenePtr scene;
+        std::shared_future<void> preload;
     };
 
     StreamPtr m_ist;

@@ -70,7 +70,7 @@ struct ISceneCacheSettingsBase
     uint32_t preload_scenes : 1; // todo
     uint32_t preload_entire_file : 1;
     uint32_t generate_velocities : 1;
-    int max_history = 2;
+    int max_history = 3;
 
     SceneImportSettings sis;
 

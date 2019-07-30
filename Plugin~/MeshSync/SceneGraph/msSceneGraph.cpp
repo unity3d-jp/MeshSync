@@ -113,9 +113,14 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
             if (e1->id == e2->id) {
-                auto e3 = e1->clone();
-                e3->lerp(*e1, *e2, t);
-                entities[i] = std::static_pointer_cast<Transform>(e3);
+                if (e1->isGeometry() && !e1->cache_flags.constant_topology) {
+                    entities[i] = e1;
+                }
+                else {
+                    auto e3 = e1->clone();
+                    e3->lerp(*e1, *e2, t);
+                    entities[i] = std::static_pointer_cast<Transform>(e3);
+                }
             }
         });
     }
