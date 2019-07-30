@@ -855,21 +855,6 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-        SkinnedMeshRenderer GetOrAddSkinnedMeshRenderer(GameObject go, bool isSplit)
-        {
-            var smr = go.GetComponent<SkinnedMeshRenderer>();
-            if (smr == null)
-            {
-                smr = go.AddComponent<SkinnedMeshRenderer>();
-                if (isSplit)
-                {
-                    var parent = go.GetComponent<Transform>().parent.GetComponent<Renderer>();
-                    smr.sharedMaterials = parent.sharedMaterials;
-                }
-            }
-            return smr;
-        }
-
         public void ForceRepaint()
         {
 #if UNITY_EDITOR
@@ -1417,35 +1402,27 @@ namespace UTJ.MeshSync
             bool materialsUpdated = rec.BuildMaterialData(data);
             bool skinned = data.numBones > 0;
 
-            // update mesh
-            for (int si = 0; si < data.numSplits; ++si)
+            if (data.numSplits >= 1)
             {
-                var t = trans;
-                bool active = t.gameObject.activeSelf;
-
-                var smr = GetOrAddSkinnedMeshRenderer(t.gameObject, si > 0);
+                var smr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
                 smr.bones = null;
                 smr.rootBone = null;
                 if (m_syncVisibility)
                     smr.enabled = data.transform.visible;
 
-                if (si > 0)
-                {
-                    // make split mesh
-                    bool created = false;
-                    t = FindOrCreateObjectByPath(path + "/[" + si + "]", true, ref created);
-                    t.gameObject.SetActive(true);
-                }
-
                 // to support fast blendshape preview, mesh data is allowed to have only blendshape weights.
                 // so, in some cases mesh data has no vertices / indices.
                 if (dflags.hasIndices)
                 {
-                    var collider = m_updateMeshColliders ? t.GetComponent<MeshCollider>() : null;
+                    var collider = m_updateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
                     bool updateCollider = collider != null &&
                         (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
 
-                    var split = data.GetSplit(si);
+                    // note:
+                    // assume there is always only 1 mesh split.
+                    // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
+                    // but that code path was removed for simplicity and my sanity.
+                    var split = data.GetSplit(0);
                     if (split.numPoints == 0 || split.numIndices == 0)
                     {
                         rec.mesh = null;
@@ -1458,7 +1435,7 @@ namespace UTJ.MeshSync
                         if (rec.mesh == null)
                         {
                             rec.mesh = new Mesh();
-                            rec.mesh.name = si == 0 ? trans.name : trans.name + "[" + si + "]";
+                            rec.mesh.name = trans.name;
                             if (m_dontSaveAssetsInScene)
                                 rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
 #if UNITY_2017_3_OR_NEWER
@@ -1515,16 +1492,6 @@ namespace UTJ.MeshSync
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
-            }
-
-            int numSplits = Math.Max(1, data.numSplits);
-            for (int si = numSplits; ; ++si)
-            {
-                bool created = false;
-                var t = FindOrCreateObjectByPath(path + "/[" + si + "]", false, ref created);
-                if (t == null)
-                    break;
-                DestroyImmediate(t.gameObject);
             }
 
             // assign materials if needed
